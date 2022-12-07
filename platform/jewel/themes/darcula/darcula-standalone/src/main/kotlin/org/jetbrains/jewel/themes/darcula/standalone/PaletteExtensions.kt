@@ -25,28 +25,28 @@ val IntelliJPalette.Checkbox.Companion.light
     get() = IntelliJPalette.Checkbox(
         background = Color.IntelliJWhite,
         foreground = Color.Black,
-        foregroundDisabled = Color(0xFF8C8C8C),
+        foregroundDisabled = Color(0xFF8C8C8C)
     )
 
 val IntelliJPalette.Checkbox.Companion.darcula
     get() = IntelliJPalette.Checkbox(
         background = Color.IntelliJGrey,
         foreground = Color(0xFFBBBBBB),
-        foregroundDisabled = Color(0xFF999999),
+        foregroundDisabled = Color(0xFF999999)
     )
 
 val IntelliJPalette.RadioButton.Companion.light
     get() = IntelliJPalette.RadioButton(
         background = Color.IntelliJWhite,
         foreground = Color.Black,
-        foregroundDisabled = Color(0xFF8C8C8C),
+        foregroundDisabled = Color(0xFF8C8C8C)
     )
 
 val IntelliJPalette.RadioButton.Companion.darcula
     get() = IntelliJPalette.RadioButton(
         background = Color.IntelliJGrey,
         foreground = Color(0xFFBBBBBB),
-        foregroundDisabled = Color(0xFF999999),
+        foregroundDisabled = Color(0xFF999999)
     )
 
 val IntelliJPalette.TextField.Companion.light
@@ -76,7 +76,7 @@ val IntelliJPalette.Button.Companion.light
         strokeDisabled = Color(0xFFCFCFCF),
         defaultBackground = Brush.verticalGradient(listOf(Color(0xFF528CC7), Color(0xFF4989CC))),
         defaultForeground = Color.White,
-        defaultStroke = Color(0xFF487EB8).toBrush(), //Brush.verticalGradient(listOf(Color(0xFF487EB8), Color(0xFF346DAD))),
+        defaultStroke = Color(0xFF487EB8).toBrush(), // Brush.verticalGradient(listOf(Color(0xFF487EB8), Color(0xFF346DAD))),
         defaultStrokeFocused = Color(0xFFA9C9F5),
         defaultShadow = Color(0x00A6A6A6)
     )
@@ -100,25 +100,25 @@ val IntelliJPalette.Button.Companion.darcula
 val IntelliJPalette.Separator.Companion.light
     get() = IntelliJPalette.Separator(
         color = Color(0xFFD1D1D1),
-        background = Color.Unspecified,
+        background = Color.Unspecified
     )
 
 val IntelliJPalette.Separator.Companion.darcula
     get() = IntelliJPalette.Separator(
         color = Color(0xFF515151),
-        background = Color.Unspecified,
+        background = Color.Unspecified
     )
 
 val IntelliJPalette.Scrollbar.Companion.light
     get() = IntelliJPalette.Scrollbar(
         thumbIdleColor = if (isMacOs()) Color(0x00000000) else Color(0x33737373),
-        thumbHoverColor = if (isMacOs()) Color(0x80000000) else Color(0x47737373),
+        thumbHoverColor = if (isMacOs()) Color(0x80000000) else Color(0x47737373)
     )
 
 val IntelliJPalette.Scrollbar.Companion.darcula
     get() = IntelliJPalette.Scrollbar(
         thumbIdleColor = if (isMacOs()) Color(0x00808080) else Color(0x47A6A6A6),
-        thumbHoverColor = if (isMacOs()) Color(0x8C808080) else Color(0x59A6A6A6),
+        thumbHoverColor = if (isMacOs()) Color(0x8C808080) else Color(0x59A6A6A6)
     )
 
 val IntelliJPalette.Tab.Companion.light
@@ -157,7 +157,7 @@ val IntelliJPalette.Companion.light
         scrollbar = IntelliJPalette.Scrollbar.light,
         treeView = IntelliJPalette.TreeView.Companion.light,
         slider = IntelliJPalette.Slider.Companion.light,
-        tab = IntelliJPalette.Tab.light,
+        tab = IntelliJPalette.Tab.light
     )
 
 val IntelliJPalette.Companion.darcula
@@ -182,7 +182,7 @@ val IntelliJPalette.Companion.darcula
         scrollbar = IntelliJPalette.Scrollbar.darcula,
         treeView = IntelliJPalette.TreeView.darcula,
         slider = IntelliJPalette.Slider.darcula,
-        tab = IntelliJPalette.Tab.darcula,
+        tab = IntelliJPalette.Tab.darcula
     )
 
 val IntelliJPalette.TreeView.Companion.light

@@ -1,0 +1,31 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+max_line_length = 150
+tab_width = 4
+
+[{*.html,*.js,*.css}]
+indent_size = 2
+
+[*.yml]
+indent_size = 2
+
+[{*.kt,*.kts}]
+ktlint_function_signature_body_expression_wrapping = multiline
+ktlint_ignore_back_ticked_identifier = true
+
+[gradlew.bat]
+end_of_line = crlf
+
+[{*.bash,*.sh,*.zsh}]
+indent_size = 2
+tab_width = 2
+
+[*.md]
+indent_size = 2

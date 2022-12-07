@@ -16,12 +16,16 @@ internal data class MacOsSystemProfilerFontListingOutput(
 
     @Serializable
     internal data class FontData(
-        @Serializable(with = AppleYesNoBooleanSerializer::class) @SerialName("enabled") val enabled: Boolean,
+        @Serializable(with = AppleYesNoBooleanSerializer::class)
+        @SerialName("enabled")
+        val enabled: Boolean,
         @SerialName("_name") val fontFileName: String,
         @SerialName("path") val path: String,
         @SerialName("type") val type: FontType,
         @SerialName("typefaces") val typefaces: List<Typeface>,
-        @Serializable(with = AppleYesNoBooleanSerializer::class) @SerialName("valid") val valid: Boolean
+        @Serializable(with = AppleYesNoBooleanSerializer::class)
+        @SerialName("valid")
+        val valid: Boolean
     ) {
 
         @Serializable
@@ -32,7 +36,9 @@ internal data class MacOsSystemProfilerFontListingOutput(
 //            @SerialName("designer") val designer: String? = null,
 //            @Serializable(with = AppleYesNoBooleanSerializer::class) @SerialName("duplicate") val duplicate: Boolean,
 //            @Serializable(with = AppleYesNoBooleanSerializer::class) @SerialName("embeddable") val embeddable: Boolean,
-            @Serializable(with = AppleYesNoBooleanSerializer::class) @SerialName("enabled") val enabled: Boolean,
+            @Serializable(with = AppleYesNoBooleanSerializer::class)
+            @SerialName("enabled")
+            val enabled: Boolean,
             @SerialName("family") val fontFamilyName: String,
             @SerialName("fullname") val fullName: String,
             @SerialName("_name") val name: String,
@@ -40,7 +46,9 @@ internal data class MacOsSystemProfilerFontListingOutput(
             @SerialName("style") val style: String,
 //            @SerialName("trademark") val trademark: String? = null,
 //            @SerialName("unique") val unique: String,
-            @Serializable(with = AppleYesNoBooleanSerializer::class) @SerialName("valid") val valid: Boolean,
+            @Serializable(with = AppleYesNoBooleanSerializer::class)
+            @SerialName("valid")
+            val valid: Boolean
 //            @SerialName("vendor") val vendor: String? = null,
 //            @SerialName("version") val version: String? = null
         )
@@ -49,10 +57,17 @@ internal data class MacOsSystemProfilerFontListingOutput(
     @Serializable
     enum class FontType {
 
-        @SerialName("postscript") POSTSCRIPT,
-        @SerialName("truetype") TRUETYPE,
-        @SerialName("opentype") OPENTYPE,
-        @SerialName("bitmap") BITMAP
+        @SerialName("postscript")
+        POSTSCRIPT,
+
+        @SerialName("truetype")
+        TRUETYPE,
+
+        @SerialName("opentype")
+        OPENTYPE,
+
+        @SerialName("bitmap")
+        BITMAP
     }
 
     object AppleYesNoBooleanSerializer : KSerializer<Boolean> {

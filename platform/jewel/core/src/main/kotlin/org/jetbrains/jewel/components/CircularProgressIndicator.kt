@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun CircularProgressIndicator(
     modifier: Modifier = Modifier,
-    color: Color = Color.LightGray,
+    color: Color = Color.LightGray
 ) {
     val pathEffect = PathEffect.dashPathEffect(floatArrayOf(3f, 3f), 0f)
     val transition = rememberInfiniteTransition()
@@ -50,8 +50,9 @@ fun CircularProgressIndicator(
                 style = Stroke(
                     4f,
                     cap = StrokeCap.Butt,
-                    pathEffect = pathEffect),
-                radius = 8.dp.value,
+                    pathEffect = pathEffect
+                ),
+                radius = 8.dp.value
             )
         }
     }

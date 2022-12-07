@@ -14,7 +14,6 @@ import org.jetbrains.jewel.IntelliJTypography
 
 @Suppress("FunctionName")
 suspend fun CurrentIntelliJThemeDefinition(): IntelliJThemeDefinition {
-
     val buttonPalette = IntelliJPalette.Button(
         background = Brush.verticalGradient(retrieveColorsOrUnspecified("Button.startBackground", "Button.endBackground")),
         foreground = retrieveColorOrUnspecified("Button.foreground"),
@@ -87,7 +86,7 @@ suspend fun CurrentIntelliJThemeDefinition(): IntelliJThemeDefinition {
         ),
         treeView = IntelliJPalette.TreeView(
             focusedSelectedElementBackground = retrieveColorOrUnspecified("Tree.selectionBackground"),
-            background = retrieveColorOrUnspecified("Tree.background"),
+            background = retrieveColorOrUnspecified("Tree.background")
         ),
         slider = IntelliJPalette.Slider(
             background = retrieveColorOrUnspecified("Slider.background"),
@@ -103,7 +102,7 @@ suspend fun CurrentIntelliJThemeDefinition(): IntelliJThemeDefinition {
         button = IntelliJMetrics.Button(
             strokeWidth = 1.dp,
             arc = CornerSize(retrieveIntAsDp("Button.arc")),
-            padding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+            padding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
         ),
         separator = IntelliJMetrics.Separator(
             strokeWidth = 1.dp
@@ -165,7 +164,7 @@ suspend fun CurrentIntelliJThemeDefinition(): IntelliJThemeDefinition {
         checkBox = retrieveFont("CheckBox.font", palette.checkbox.foreground),
         radioButton = retrieveFont("RadioButton.font", palette.radioButton.foreground),
         textField = retrieveFont("TextField.font", palette.textField.foreground),
-        slider = retrieveFont("Slider.font", palette.slider.foreground),
+        slider = retrieveFont("Slider.font", palette.slider.foreground)
     )
 
     return IntelliJThemeDefinition(

@@ -30,7 +30,7 @@ data class IntelliJPalette(
     val controlHaloError: Color, // Component.errorFocusColor
     val controlHaloWarning: Color, // Component.warningFocusColor
     val scrollbar: Scrollbar,
-    val tab: Tab,
+    val tab: Tab
 ) {
 
     data class Slider(
@@ -90,7 +90,7 @@ data class IntelliJPalette(
         val defaultForeground: Color, // Button.default.foreground
         val defaultStroke: Brush, // Button.default.startBorderColor and Button.default.endBorderColor
         val defaultStrokeFocused: Color, // Button.default.focusedBorderColor
-        val defaultShadow: Color, // Button.default.shadowColor
+        val defaultShadow: Color // Button.default.shadowColor
     ) {
 
         companion object
@@ -98,7 +98,7 @@ data class IntelliJPalette(
 
     data class Separator(
         val color: Color, // Separator.separatorColor
-        val background: Color, // Separator.background
+        val background: Color // Separator.background
     ) {
 
         companion object
@@ -106,7 +106,7 @@ data class IntelliJPalette(
 
     data class Scrollbar(
         val thumbHoverColor: Color, // See com.intellij.ui.components.ScrollBarPainter.THUMB_BACKGROUND
-        val thumbIdleColor: Color,  // See com.intellij.ui.components.ScrollBarPainter.THUMB_HOVERED_BACKGROUND
+        val thumbIdleColor: Color // See com.intellij.ui.components.ScrollBarPainter.THUMB_HOVERED_BACKGROUND
     ) {
 
         companion object

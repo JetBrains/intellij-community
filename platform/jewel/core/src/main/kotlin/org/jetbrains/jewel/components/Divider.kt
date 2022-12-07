@@ -12,8 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.Orientation
 import org.jetbrains.jewel.LocalPalette
+import org.jetbrains.jewel.Orientation
 
 @Composable
 fun Divider(

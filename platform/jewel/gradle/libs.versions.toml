@@ -6,6 +6,7 @@ idea = "223.7571.203"
 ideaGradlePlugin = "1.11.0-SNAPSHOT"
 jna = "5.10.0"
 kotlin = "1.7.10"
+kotlinterGradlePlugin = "3.12.0"
 kotlinxSerialization = "1.3.1"
 
 [libraries]
@@ -24,6 +25,7 @@ idea = ["ij-platform-ide-core", "ij-platform-ide-impl", "ij-platform-core-ui"]
 composeDesktop = { id = "org.jetbrains.compose", version.ref = "composeDesktop" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 ideaGradlePlugin = { id = "org.jetbrains.intellij", version.ref = "ideaGradlePlugin" }
+kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinterGradlePlugin" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

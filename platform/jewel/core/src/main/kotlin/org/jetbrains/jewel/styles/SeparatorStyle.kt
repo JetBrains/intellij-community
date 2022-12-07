@@ -12,14 +12,14 @@ import org.jetbrains.jewel.IntelliJPalette
 
 @Immutable
 data class SeparatorStyle(
-    val appearance: SeparatorAppearance = SeparatorAppearance(),
+    val appearance: SeparatorAppearance = SeparatorAppearance()
 )
 
 const val DEFAULT_SEPARATOR_BORDER_STROKE_COLOR = 0xFFD1D1D1
 
 data class SeparatorAppearance(
     val background: Color = Color.Unspecified,
-    val stroke: BorderStroke = BorderStroke(1.dp, Color(DEFAULT_SEPARATOR_BORDER_STROKE_COLOR)),
+    val stroke: BorderStroke = BorderStroke(1.dp, Color(DEFAULT_SEPARATOR_BORDER_STROKE_COLOR))
 )
 
 val LocalSeparatorStyle = compositionLocalOf { SeparatorStyle() }

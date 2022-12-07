@@ -32,7 +32,7 @@ fun TextField(
     readOnly: Boolean = false,
     singleLine: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: TextFieldStyle = LocalTextFieldStyle.current,
+    style: TextFieldStyle = LocalTextFieldStyle.current
 ) {
     var inputState by remember(interactionSource, enabled) { mutableStateOf(TextFieldState(enabled)) }
 
@@ -47,17 +47,18 @@ fun TextField(
 
     val appearance = style.appearance(inputState, null)
 
-    val shapeModifier = if (appearance.shapeStroke != null || appearance.backgroundColor != Color.Unspecified)
+    val shapeModifier = if (appearance.shapeStroke != null || appearance.backgroundColor != Color.Unspecified) {
         Modifier.shape(appearance.shape, appearance.shapeStroke, appearance.backgroundColor)
-    else
+    } else {
         Modifier
+    }
 
     val haloStroke = appearance.haloStroke
     val haloModifier = when {
         haloStroke != null -> Modifier.drawBehind {
             drawRect(
                 brush = haloStroke.brush,
-                style = Stroke(haloStroke.width.toPx()),
+                style = Stroke(haloStroke.width.toPx())
             )
         }
         else -> Modifier

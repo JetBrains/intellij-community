@@ -57,14 +57,22 @@ fun Checkbox(
     focusable: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: CheckboxStyle = LocalCheckboxStyle.current,
-    variation: Any? = null,
+    variation: Any? = null
 ) {
     CheckboxImpl(
-        state, onClick, modifier, enabled, focusable, interactionSource, style, variation
+        state,
+        onClick,
+        modifier,
+        enabled,
+        focusable,
+        interactionSource,
+        style,
+        variation
     ) { controlModifier, designModifier, _, painter, _, _ ->
         Box(controlModifier.then(designModifier)) {
-            if (painter != null)
+            if (painter != null) {
                 Box(Modifier.paint(painter).fillMaxSize())
+            }
         }
     }
 }
@@ -91,10 +99,11 @@ fun CheckboxImpl(
             when (interaction) {
                 is PressInteraction.Press -> interactionState = interactionState.copy(mouse = ButtonMouseState.Pressed)
                 is PressInteraction.Cancel, is PressInteraction.Release -> interactionState = interactionState.copy(
-                    mouse = if (isHovered)
+                    mouse = if (isHovered) {
                         ButtonMouseState.Hovered
-                    else
+                    } else {
                         ButtonMouseState.None
+                    }
                 )
                 is FocusInteraction.Focus -> interactionState = interactionState.copy(focused = true)
                 is FocusInteraction.Unfocus -> interactionState = interactionState.copy(focused = false)
@@ -105,7 +114,7 @@ fun CheckboxImpl(
     val appearance = style.appearance(interactionState, variation)
 
     val checkboxPainter = appearance.interiorPainter?.invoke()
-    val pointerModifier = if (enabled)
+    val pointerModifier = if (enabled) {
         Modifier.onPointerEvent(
             PointerEventType.Move
         ) {
@@ -118,8 +127,9 @@ fun CheckboxImpl(
                 isHovered = false
                 interactionState = interactionState.copy(mouse = ButtonMouseState.None)
             }
-    else
+    } else {
         Modifier
+    }
 
     val clickModifier = Modifier.triStateToggleable(
         state = state,
@@ -140,17 +150,18 @@ fun CheckboxImpl(
             isSpacebarDown
         }
 
-    val haloModifier = if (appearance.haloStroke != null)
+    val haloModifier = if (appearance.haloStroke != null) {
         Modifier.drawBehind {
             val outline = appearance.haloShape.createOutline(size, layoutDirection, this)
             drawOutline(
                 outline = outline,
                 brush = appearance.haloStroke.brush,
-                style = Stroke(appearance.haloStroke.width.toPx()),
+                style = Stroke(appearance.haloStroke.width.toPx())
             )
         }
-    else
+    } else {
         Modifier
+    }
 
     val designModifier = Modifier.size(appearance.width, appearance.height)
         .shape(appearance.shape, appearance.shapeStroke, appearance.backgroundColor)
@@ -172,7 +183,7 @@ fun CheckboxRow(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: CheckboxStyle = LocalCheckboxStyle.current,
     variation: Any? = null,
-    content: @Composable RowScope.() -> Unit,
+    content: @Composable RowScope.() -> Unit
 ) {
     CheckboxImpl(
         state,
@@ -190,8 +201,9 @@ fun CheckboxRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(designModifier.alignBy { baseLine }) {
-                if (painter != null)
+                if (painter != null) {
                     Box(Modifier.paint(painter).fillMaxSize())
+                }
             }
             Styles.withTextStyle(LocalTextStyle.current.merge(textStyle)) {
                 content()
@@ -209,7 +221,7 @@ fun CheckboxRow(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: CheckboxStyle = LocalCheckboxStyle.current,
     variation: Any? = null,
-    content: @Composable RowScope.() -> Unit,
+    content: @Composable RowScope.() -> Unit
 ) = CheckboxRow(
     ToggleableState(state.value),
     { state.value = !state.value },
@@ -224,12 +236,13 @@ fun Checkbox(
     enabled: Boolean = true,
     focusable: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: CheckboxStyle = LocalCheckboxStyle.current,
+    style: CheckboxStyle = LocalCheckboxStyle.current
 ) = Checkbox(
     ToggleableState(checked),
     { onCheckedChange(!checked) },
     modifier,
-    enabled, focusable,
+    enabled,
+    focusable,
     interactionSource,
     style
 )
@@ -241,12 +254,13 @@ fun Checkbox(
     enabled: Boolean = true,
     focusable: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: CheckboxStyle = LocalCheckboxStyle.current,
+    style: CheckboxStyle = LocalCheckboxStyle.current
 ) = Checkbox(
     ToggleableState(state.value),
     { state.value = !state.value },
     modifier,
-    enabled, focusable,
+    enabled,
+    focusable,
     interactionSource,
     style
 )
@@ -260,7 +274,7 @@ fun Checkbox(
     enabled: Boolean = true,
     focusable: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: CheckboxStyle = LocalCheckboxStyle.current,
+    style: CheckboxStyle = LocalCheckboxStyle.current
 ) = CheckboxRow(checked, onCheckedChange, modifier, enabled, focusable, interactionSource, style) {
     Text(text, Modifier.alignByBaseline())
 }
@@ -273,7 +287,7 @@ fun Checkbox(
     enabled: Boolean = true,
     focusable: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: CheckboxStyle = LocalCheckboxStyle.current,
+    style: CheckboxStyle = LocalCheckboxStyle.current
 ) = CheckboxRow(state, modifier, enabled, focusable, interactionSource, style) {
     Text(text, Modifier.alignByBaseline())
 }
@@ -288,7 +302,7 @@ fun CheckboxRow(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: CheckboxStyle = LocalCheckboxStyle.current,
     variation: Any? = null,
-    content: @Composable RowScope.() -> Unit,
+    content: @Composable RowScope.() -> Unit
 ) = CheckboxRow(
     ToggleableState(checked),
     { onCheckedChange(!checked) },

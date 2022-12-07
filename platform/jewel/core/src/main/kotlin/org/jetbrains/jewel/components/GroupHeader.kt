@@ -10,7 +10,7 @@ import org.jetbrains.jewel.Orientation
 
 @Composable
 fun GroupHeader(text: String, modifier: Modifier = Modifier) {
-    Row (modifier, verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         Text(text)
         Divider(orientation = Orientation.Horizontal, modifier = Modifier.padding(5.dp))
     }

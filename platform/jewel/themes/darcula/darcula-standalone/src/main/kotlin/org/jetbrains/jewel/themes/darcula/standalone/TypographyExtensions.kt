@@ -43,5 +43,5 @@ val IntelliJTypography.Companion.darcula
         checkBox = TextStyle.IntelliJDark,
         radioButton = TextStyle.IntelliJDark,
         textField = TextStyle.IntelliJDark,
-        slider = TextStyle.IntelliJDark,
+        slider = TextStyle.IntelliJDark
     )

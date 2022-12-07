@@ -34,7 +34,6 @@ internal class PKGSDemo : ToolWindowFactory, DumbAware {
         toolWindow.addComposePanel("Packages") {
             IntelliJTheme {
                 Surface {
-
                     var tree by remember { mutableStateOf(Paths.get(project.basePath ?: System.getProperty("user.dir")).asTree(true)) }
 
                     Box {
@@ -47,8 +46,9 @@ internal class PKGSDemo : ToolWindowFactory, DumbAware {
                             onTreeElementDoubleClick = {
                                 when (it) {
                                     is Tree.Element.Leaf -> println("CIAO ${it.data.absolutePath}")
-                                    is Tree.Element.Node -> tree =
-                                        tree.replaceElement(it, it.copy(isOpen = !it.isOpen))
+                                    is Tree.Element.Node ->
+                                        tree =
+                                            tree.replaceElement(it, it.copy(isOpen = !it.isOpen))
                                 }
                             },
                             rowContent = {
@@ -57,7 +57,7 @@ internal class PKGSDemo : ToolWindowFactory, DumbAware {
                                     is Tree.Element.Node -> "[${it.data.name}]"
                                 }
                                 Text(modifier = Modifier.fillMaxWidth(), text = text, softWrap = false)
-                            },
+                            }
                         )
                         if (listState.layoutInfo.totalItemsCount > listState.layoutInfo.visibleItemsInfo.size) {
                             VerticalScrollbar(

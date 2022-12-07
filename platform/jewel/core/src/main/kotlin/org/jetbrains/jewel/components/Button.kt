@@ -91,7 +91,7 @@ fun Button(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: ButtonStyle = LocalButtonStyle.current,
     variation: Any? = null,
-    content: @Composable RowScope.() -> Unit,
+    content: @Composable RowScope.() -> Unit
 ) {
     var isHovered by remember { mutableStateOf(false) }
     var buttonState by remember(interactionSource, enabled) { mutableStateOf(ButtonState(ButtonMouseState.None, enabled)) }
@@ -100,10 +100,11 @@ fun Button(
             when (interaction) {
                 is PressInteraction.Press -> buttonState = buttonState.copy(mouse = ButtonMouseState.Pressed)
                 is PressInteraction.Cancel, is PressInteraction.Release -> buttonState = buttonState.copy(
-                    mouse = if (isHovered)
+                    mouse = if (isHovered) {
                         ButtonMouseState.Hovered
-                    else
+                    } else {
                         ButtonMouseState.None
+                    }
                 )
 
                 is FocusInteraction.Focus -> buttonState = buttonState.copy(focused = true)
@@ -114,25 +115,27 @@ fun Button(
 
     val appearance = style.appearance(buttonState, variation)
 
-    val shapeModifier = if (appearance.shapeStroke != null || appearance.background != null)
+    val shapeModifier = if (appearance.shapeStroke != null || appearance.background != null) {
         Modifier.shape(appearance.shape, appearance.shapeStroke, appearance.background)
-    else
+    } else {
         Modifier
+    }
 
     val haloStroke = appearance.haloStroke
-    val haloModifier = if (haloStroke != null)
+    val haloModifier = if (haloStroke != null) {
         Modifier.drawBehind {
             val outline = appearance.haloShape.createOutline(size, layoutDirection, this)
             drawOutline(
                 outline = outline,
                 brush = haloStroke.brush,
-                style = Stroke(haloStroke.width.toPx()),
+                style = Stroke(haloStroke.width.toPx())
             )
         }
-    else
+    } else {
         Modifier
+    }
 
-    val pointerModifier = if (enabled)
+    val pointerModifier = if (enabled) {
         Modifier
             .onPointerEvent(PointerEventType.Enter) {
                 isHovered = true
@@ -142,8 +145,9 @@ fun Button(
                 isHovered = false
                 buttonState = buttonState.copy(mouse = ButtonMouseState.None)
             }
-    else
+    } else {
         Modifier
+    }
 
     Box(
         modifier

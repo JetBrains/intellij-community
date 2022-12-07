@@ -56,14 +56,22 @@ fun RadioButton(
     focusable: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: RadioButtonStyle = LocalRadioButtonStyle.current,
-    variation: Any? = null,
+    variation: Any? = null
 ) {
     RadioButtonImpl(
-        selected, onClick, modifier, enabled, focusable, interactionSource, style, variation
+        selected,
+        onClick,
+        modifier,
+        enabled,
+        focusable,
+        interactionSource,
+        style,
+        variation
     ) { controlModifier, designModifier, _, painter, _, _ ->
         Box(controlModifier.then(designModifier)) {
-            if (painter != null)
+            if (painter != null) {
                 Box(Modifier.paint(painter).fillMaxSize())
+            }
         }
     }
 }
@@ -90,10 +98,11 @@ fun RadioButtonImpl(
             when (interaction) {
                 is PressInteraction.Press -> interactionState = interactionState.copy(mouse = ButtonMouseState.Pressed)
                 is PressInteraction.Cancel, is PressInteraction.Release -> interactionState = interactionState.copy(
-                    mouse = if (isHovered)
+                    mouse = if (isHovered) {
                         ButtonMouseState.Hovered
-                    else
+                    } else {
                         ButtonMouseState.None
+                    }
                 )
                 is FocusInteraction.Focus -> interactionState = interactionState.copy(focused = true)
                 is FocusInteraction.Unfocus -> interactionState = interactionState.copy(focused = false)
@@ -104,7 +113,7 @@ fun RadioButtonImpl(
     val appearance = style.appearance(interactionState, variation)
 
     val radioButtonPainter = appearance.interiorPainter?.invoke()
-    val pointerModifier = if (enabled)
+    val pointerModifier = if (enabled) {
         Modifier.onPointerEvent(
             PointerEventType.Move
         ) {
@@ -117,8 +126,9 @@ fun RadioButtonImpl(
                 isHovered = false
                 interactionState = interactionState.copy(mouse = ButtonMouseState.None)
             }
-    else
+    } else {
         Modifier
+    }
 
     val clickModifier = Modifier.selectable(
         selected = selected,
@@ -126,7 +136,7 @@ fun RadioButtonImpl(
         indication = null,
         enabled = enabled,
         role = Role.RadioButton,
-        onClick = onClick,
+        onClick = onClick
     )
         .then(pointerModifier)
         .focusable(
@@ -139,17 +149,18 @@ fun RadioButtonImpl(
             isSpacebarDown
         }
 
-    val haloModifier = if (appearance.haloStroke != null)
+    val haloModifier = if (appearance.haloStroke != null) {
         Modifier.drawBehind {
             val outline = appearance.haloShape.createOutline(size, layoutDirection, this)
             drawOutline(
                 outline = outline,
                 brush = appearance.haloStroke.brush,
-                style = Stroke(appearance.haloStroke.width.toPx()),
+                style = Stroke(appearance.haloStroke.width.toPx())
             )
         }
-    else
+    } else {
         Modifier
+    }
 
     val designModifier = Modifier.size(appearance.width, appearance.height)
         .shape(appearance.shape, appearance.shapeStroke, appearance.backgroundColor)
@@ -171,7 +182,7 @@ fun RadioButtonRow(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: RadioButtonStyle = LocalRadioButtonStyle.current,
     variation: Any? = null,
-    content: @Composable RowScope.() -> Unit,
+    content: @Composable RowScope.() -> Unit
 ) {
     RadioButtonImpl(
         selected,
@@ -189,8 +200,9 @@ fun RadioButtonRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(designModifier.alignBy { baseLine }) {
-                if (painter != null)
+                if (painter != null) {
                     Box(Modifier.paint(painter).fillMaxSize())
+                }
             }
             Styles.withTextStyle(LocalTextStyle.current.merge(textStyle)) {
                 content()
@@ -208,7 +220,7 @@ fun RadioButtonRow(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: RadioButtonStyle = LocalRadioButtonStyle.current,
     variation: Any? = null,
-    content: @Composable RowScope.() -> Unit,
+    content: @Composable RowScope.() -> Unit
 ) = RadioButtonRow(
     state.value,
     { state.value = !state.value },
@@ -222,12 +234,13 @@ fun RadioButton(
     enabled: Boolean = true,
     focusable: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: RadioButtonStyle = LocalRadioButtonStyle.current,
+    style: RadioButtonStyle = LocalRadioButtonStyle.current
 ) = RadioButton(
     state.value,
     { state.value = !state.value },
     modifier,
-    enabled, focusable,
+    enabled,
+    focusable,
     interactionSource,
     style
 )
@@ -241,7 +254,7 @@ fun RadioButton(
     enabled: Boolean = true,
     focusable: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: RadioButtonStyle = LocalRadioButtonStyle.current,
+    style: RadioButtonStyle = LocalRadioButtonStyle.current
 ) = RadioButtonRow(selected, { onSelectionChange(!selected) }, modifier, enabled, focusable, interactionSource, style) {
     Text(text, Modifier.alignByBaseline())
 }
@@ -254,7 +267,7 @@ fun RadioButton(
     enabled: Boolean = true,
     focusable: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: RadioButtonStyle = LocalRadioButtonStyle.current,
+    style: RadioButtonStyle = LocalRadioButtonStyle.current
 ) = RadioButtonRow(state, modifier, enabled, focusable, interactionSource, style) {
     Text(text, Modifier.alignByBaseline())
 }

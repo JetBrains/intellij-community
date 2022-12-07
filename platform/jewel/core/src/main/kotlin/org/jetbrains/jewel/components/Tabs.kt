@@ -99,7 +99,7 @@ internal class TabRowScope<T : Any>(
     override val state: TabContainerState<T>,
     override val style: TabStyle,
     override val orientation: Orientation,
-    rowScope: RowScope,
+    rowScope: RowScope
 ) : TabScope<T>,
     RowScope by rowScope
 
@@ -135,14 +135,16 @@ fun <T : Any> TabScope<T>.Tab(
         Orientation.Horizontal -> Modifier.fillMaxHeight()
     }
 
-    val shapeModifier = if (appearance.shapeStroke != null || appearance.backgroundColor != Color.Unspecified)
+    val shapeModifier = if (appearance.shapeStroke != null || appearance.backgroundColor != Color.Unspecified) {
         Modifier.shape(appearance.shape, appearance.shapeStroke, appearance.backgroundColor)
-    else
+    } else {
         Modifier
-    val adornmentModifier = if (appearance.adornmentStroke != null && appearance.adornmentShape != null)
+    }
+    val adornmentModifier = if (appearance.adornmentStroke != null && appearance.adornmentShape != null) {
         Modifier.shape(appearance.adornmentShape, appearance.adornmentStroke)
-    else
+    } else {
         Modifier
+    }
 
     @OptIn(ExperimentalComposeUiApi::class)
     Box(
@@ -150,7 +152,7 @@ fun <T : Any> TabScope<T>.Tab(
             .clickable(
                 onClick = { state.select(key) },
                 enabled = enabled,
-                role = Role.Tab,
+                role = Role.Tab
                 /*
                                 interactionSource = interactionSource,
                                 indication = null
@@ -181,7 +183,7 @@ private fun TabContent(appearance: TabAppearance, content: @Composable (RowScope
         Row(
             Modifier
                 .defaultMinSize(minWidth = appearance.minWidth, minHeight = appearance.minHeight)
-                //.indication(interactionSource, rememberRipple())
+                // .indication(interactionSource, rememberRipple())
                 .padding(appearance.contentPadding),
             horizontalArrangement = appearance.contentArrangement,
             verticalAlignment = appearance.contentAlignment,

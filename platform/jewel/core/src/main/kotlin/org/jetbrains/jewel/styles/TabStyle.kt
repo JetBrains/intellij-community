@@ -35,7 +35,7 @@ data class TabAppearance(
     val adornmentStroke: ShapeStroke<*>? = null,
     val adornmentShape: Shape? = null,
     val minWidth: Dp = 64.dp,
-    val minHeight: Dp = 32.dp,
+    val minHeight: Dp = 32.dp
 )
 
 val LocalTabStyle = compositionLocalOf<TabStyle> { localNotProvided() }
@@ -51,7 +51,7 @@ fun TabStyle(palette: IntelliJPalette, typography: TextStyle): TabStyle = TabSty
             TabAppearance(
                 contentAlignment = Alignment.Bottom,
                 contentArrangement = Arrangement.Center,
-                textStyle = typography.copy(palette.text),
+                textStyle = typography.copy(palette.text)
             )
         )
         state(
@@ -60,7 +60,7 @@ fun TabStyle(palette: IntelliJPalette, typography: TextStyle): TabStyle = TabSty
                 contentAlignment = Alignment.Bottom,
                 contentArrangement = Arrangement.Center,
                 textStyle = typography.copy(palette.text),
-                backgroundColor = palette.tab.hoveredBackgroundColor,
+                backgroundColor = palette.tab.hoveredBackgroundColor
             )
         )
         state(
@@ -70,7 +70,7 @@ fun TabStyle(palette: IntelliJPalette, typography: TextStyle): TabStyle = TabSty
                 contentArrangement = Arrangement.Center,
                 textStyle = typography.copy(palette.text),
                 adornmentShape = BottomLineShape,
-                adornmentStroke = ShapeStroke.SolidColor(3.dp, palette.tab.underlineColor),
+                adornmentStroke = ShapeStroke.SolidColor(3.dp, palette.tab.underlineColor)
             )
         )
         state(
@@ -81,7 +81,7 @@ fun TabStyle(palette: IntelliJPalette, typography: TextStyle): TabStyle = TabSty
                 textStyle = typography.copy(palette.text),
                 backgroundColor = palette.tab.hoveredBackgroundColor,
                 adornmentShape = BottomLineShape,
-                adornmentStroke = ShapeStroke.SolidColor(3.dp, palette.tab.underlineColor),
+                adornmentStroke = ShapeStroke.SolidColor(3.dp, palette.tab.underlineColor)
             )
         )
     }
@@ -93,7 +93,7 @@ fun TabStyle(palette: IntelliJPalette, typography: TextStyle): TabStyle = TabSty
                 contentAlignment = Alignment.CenterVertically,
                 contentArrangement = Arrangement.Start,
                 textStyle = typography.copy(palette.text),
-                backgroundColor = palette.background,
+                backgroundColor = palette.background
             )
         )
         state(
@@ -102,7 +102,7 @@ fun TabStyle(palette: IntelliJPalette, typography: TextStyle): TabStyle = TabSty
                 contentAlignment = Alignment.CenterVertically,
                 contentArrangement = Arrangement.Start,
                 textStyle = typography.copy(palette.text),
-                adornmentStroke = ShapeStroke.SolidColor(1.dp, palette.tab.underlineColor),
+                adornmentStroke = ShapeStroke.SolidColor(1.dp, palette.tab.underlineColor)
             )
         )
         state(
@@ -111,7 +111,7 @@ fun TabStyle(palette: IntelliJPalette, typography: TextStyle): TabStyle = TabSty
                 contentAlignment = Alignment.CenterVertically,
                 contentArrangement = Arrangement.Start,
                 textStyle = typography.copy(palette.text),
-                backgroundColor = palette.tab.hoveredBackgroundColor,
+                backgroundColor = palette.tab.hoveredBackgroundColor
             )
         )
     }

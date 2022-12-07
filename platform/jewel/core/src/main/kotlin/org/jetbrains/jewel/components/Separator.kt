@@ -51,7 +51,6 @@ fun Separator(
                         drawLine(style.appearance.stroke.brush, start, end, strokeWidth = style.appearance.stroke.width.value)
                     }
                 }
-
             }
     )
 }

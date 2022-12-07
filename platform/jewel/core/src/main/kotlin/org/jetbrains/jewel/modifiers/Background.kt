@@ -14,10 +14,14 @@ import org.jetbrains.jewel.components.ImageSliceValues
 
 fun Modifier.background(image: ImageBitmap, maintainAspect: Boolean = true): Modifier =
     then(
-        DrawImageBackgroundModifier(image, maintainAspect, debugInspectorInfo {
-            name = "background"
-            properties["image"] = image
-        })
+        DrawImageBackgroundModifier(
+            image,
+            maintainAspect,
+            debugInspectorInfo {
+                name = "background"
+                properties["image"] = image
+            }
+        )
     )
 
 fun Modifier.background(image: ImageBitmap, slices: ImageSliceValues): Modifier =
@@ -25,11 +29,14 @@ fun Modifier.background(image: ImageBitmap, slices: ImageSliceValues): Modifier 
 
 fun Modifier.background(imageSlice: ImageSlice): Modifier =
     then(
-        DrawImageSliceBackgroundModifier(imageSlice, debugInspectorInfo {
-            name = "background"
-            properties["image"] = imageSlice.image
-            properties["slices"] = imageSlice.slices
-        })
+        DrawImageSliceBackgroundModifier(
+            imageSlice,
+            debugInspectorInfo {
+                name = "background"
+                properties["image"] = imageSlice.image
+                properties["slices"] = imageSlice.slices
+            }
+        )
     )
 
 abstract class CustomBackgroundModifier(

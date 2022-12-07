@@ -36,14 +36,14 @@ val IntelliJMetrics.Scrollbar.Companion.default
     get() = IntelliJMetrics.Scrollbar(
         minSize = 13.dp, // myThickness * 2 (see DefaultScrollBarUI.updateThumbBounds)
         thickness = 13.dp, // myThickness
-        thumbCornerSize = CornerSize(0.dp), // See com.intellij.ui.components.ScrollBarPainter.Thumb.paint
+        thumbCornerSize = CornerSize(0.dp) // See com.intellij.ui.components.ScrollBarPainter.Thumb.paint
     )
 
 val IntelliJMetrics.Scrollbar.Companion.macOs
     get() = IntelliJMetrics.Scrollbar(
         minSize = 13.dp, // myThickness * 2 (see DefaultScrollBarUI.updateThumbBounds)
         thickness = 14.dp, // myThickness
-        thumbCornerSize = CornerSize(14.dp), // See com.intellij.ui.components.ScrollBarPainter.Thumb.paint
+        thumbCornerSize = CornerSize(14.dp) // See com.intellij.ui.components.ScrollBarPainter.Thumb.paint
     )
 
 val IntelliJMetrics.Separator.Companion.default

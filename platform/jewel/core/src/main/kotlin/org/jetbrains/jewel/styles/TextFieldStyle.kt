@@ -33,7 +33,7 @@ data class TextFieldAppearance(
 
     val haloStroke: ShapeStroke<*>? = null,
 
-    val minWidth: Dp = Dp.Unspecified,
+    val minWidth: Dp = Dp.Unspecified
 )
 
 val LocalTextFieldStyle = compositionLocalOf<TextFieldStyle> { localNotProvided() }
@@ -58,7 +58,7 @@ fun TextFieldStyle(
         contentPadding = PaddingValues(7.dp, 4.dp),
         cursorBrush = palette.text.toBrush(),
         shapeStroke = ShapeStroke.SolidColor(1.dp, palette.controlStroke, Insets(0.dp)),
-        minWidth = 8.dp * 8,
+        minWidth = 8.dp * 8
     )
 
     val disabledAppearance = defaultAppearance.copy(

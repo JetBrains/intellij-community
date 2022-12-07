@@ -69,7 +69,7 @@ fun main() = singleWindowApplication {
                                             is Tree.Element.Node -> "[${it.data.name}]"
                                         }
                                         Text(modifier = Modifier.fillMaxWidth(), text = text, softWrap = false)
-                                    },
+                                    }
                                 )
                                 if (listState.layoutInfo.totalItemsCount > listState.layoutInfo.visibleItemsInfo.size) {
                                     VerticalScrollbar(
@@ -86,7 +86,7 @@ fun main() = singleWindowApplication {
                             handle {
                                 Separator(
                                     modifier = Modifier.markAsHandle().cursorForVerticalResize(),
-                                    orientation = Orientation.Vertical,
+                                    orientation = Orientation.Vertical
                                 )
                             }
                         }

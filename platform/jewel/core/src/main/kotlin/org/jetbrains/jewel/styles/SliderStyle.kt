@@ -19,7 +19,7 @@ data class SliderAppearance(
     val paintTicks: Boolean,
     val inverted: Boolean,
     val majorTickSpacing: Int,
-    val minorTickSpacing: Int,
+    val minorTickSpacing: Int
 )
 
 // TODO this is horrible, we should get rid of it (but this is Swing interop so...)
@@ -42,7 +42,7 @@ fun SliderStyle(
     paintTicks: Boolean = false,
     inverted: Boolean = false,
     majorTickSpacing: Int = 10,
-    minorTickSpacing: Int = 1,
+    minorTickSpacing: Int = 1
 ) = SliderStyle {
     // TODO create variants (with/without ticks?) maybe
     default {
@@ -56,7 +56,7 @@ fun SliderStyle(
                 paintTicks = paintTicks,
                 inverted = inverted,
                 majorTickSpacing = majorTickSpacing,
-                minorTickSpacing = minorTickSpacing,
+                minorTickSpacing = minorTickSpacing
             )
         )
     }

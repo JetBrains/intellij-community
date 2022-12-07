@@ -11,10 +11,12 @@ import androidx.compose.ui.unit.LayoutDirection
 @Stable
 val BottomLineShape: Shape = object : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density) =
-        Outline.Generic(Path().apply {
-            moveTo(0f, size.height)
-            lineTo(size.width, size.height)
-        })
+        Outline.Generic(
+            Path().apply {
+                moveTo(0f, size.height)
+                lineTo(size.width, size.height)
+            }
+        )
 
     override fun toString(): String = "BottomLineShape"
 }
@@ -22,10 +24,12 @@ val BottomLineShape: Shape = object : Shape {
 @Stable
 val RightLineShape: Shape = object : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density) =
-        Outline.Generic(Path().apply {
-            moveTo(size.width, 0f)
-            lineTo(size.width, size.height)
-        })
+        Outline.Generic(
+            Path().apply {
+                moveTo(size.width, 0f)
+                lineTo(size.width, size.height)
+            }
+        )
 
     override fun toString(): String = "RightLineShape"
 }

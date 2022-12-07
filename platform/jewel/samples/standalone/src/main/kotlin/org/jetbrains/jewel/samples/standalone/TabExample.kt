@@ -36,7 +36,7 @@ fun main() = singleWindowApplication {
                     Checkbox(checked = isDarkTheme, onCheckedChange = { isDarkTheme = it })
                 }
                 val tabState = rememberTabContainerState("1")
-                TabRow(tabState, ) {
+                TabRow(tabState) {
                     Section("1", "One")
                     Section("2", "Two")
                     Section("3", "Three")

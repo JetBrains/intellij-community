@@ -33,7 +33,7 @@ class IntelliJMetrics(
     }
 
     data class Separator(
-        val strokeWidth: Dp, // N/A in Swing
+        val strokeWidth: Dp // N/A in Swing
     ) {
 
         companion object
@@ -42,7 +42,7 @@ class IntelliJMetrics(
     data class Scrollbar(
         val minSize: Dp, // ScrollBar.minimumThumbSize
         val thickness: Dp, // N/A in Swing
-        val thumbCornerSize: CornerSize, // See com.intellij.ui.components.ScrollBarPainter.Thumb.paint
+        val thumbCornerSize: CornerSize // See com.intellij.ui.components.ScrollBarPainter.Thumb.paint
     ) {
 
         companion object

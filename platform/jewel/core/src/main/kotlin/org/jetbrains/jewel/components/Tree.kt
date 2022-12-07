@@ -103,16 +103,20 @@ data class Tree<T>(val heads: List<Element<T>>) {
      *
      * @return Always a new [Tree], eventually with [old] replaced with [new].
      */
-    fun replaceElement(old: Element<T>, new: Element<T>): Tree<T> = if (old != new)
+    fun replaceElement(old: Element<T>, new: Element<T>): Tree<T> = if (old != new) {
         Tree(heads.map { replaceRecursive(old, new, it, ItemFound(false)) })
-    else this
+    } else {
+        this
+    }
 
     fun selectOnly(element: Element<T>) =
         Tree(heads.map { replaceAndApplyOnAllRecursive(it) { if (it == element) it.withSelection(true) else it.withSelection(false) } })
 
-    fun selectElements(elements: Set<Element<T>>) = if (elements.isNotEmpty())
+    fun selectElements(elements: Set<Element<T>>) = if (elements.isNotEmpty()) {
         Tree(heads.map { replaceAndApplyOnAllRecursive(it) { if (it in elements) it.withSelection(true) else it.withSelection(false) } })
-    else this
+    } else {
+        this
+    }
 
     @Suppress("DataClassShouldBeImmutable") // TODO Lamberto don't use mutable data classes if possible
     private data class ItemFound(var value: Boolean)
@@ -153,17 +157,21 @@ fun File.asTree(isOpen: Boolean = false) = Tree(asTreeElement(isOpen))
 fun Path.asTree(isOpen: Boolean = false) = Tree(toFile().asTreeElement(isOpen))
 
 fun File.asTreeElement(isOpen: Boolean = false): Tree.Element<File> =
-    if (isFile) Tree.Element.Leaf(this, false) else Tree.Element.Node(
-        data = this,
-        isSelected = false,
-        isOpen = isOpen,
-        children = listFiles()?.sortedBy {
-            when {
-                it.isDirectory -> "a"
-                else -> "b"
-            } + it.name
-        }?.map { it.asTreeElement(isOpen) } ?: emptyList()
-    )
+    if (isFile) {
+        Tree.Element.Leaf(this, false)
+    } else {
+        Tree.Element.Node(
+            data = this,
+            isSelected = false,
+            isOpen = isOpen,
+            children = listFiles()?.sortedBy {
+                when {
+                    it.isDirectory -> "a"
+                    else -> "b"
+                } + it.name
+            }?.map { it.asTreeElement(isOpen) } ?: emptyList()
+        )
+    }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -262,7 +270,6 @@ fun <T> BaseTreeLayout(
 
             // if focusedTreeElement has been found in the flattened tree
             if (indexOfFocusedItem >= 0) {
-
                 // drop preloaded first and last item indexes that are not really visible
                 // the second dropped is to match IJ tree view behaviour
                 val visibleRange = state.visibleItemsRange.drop(2).dropLast(4)

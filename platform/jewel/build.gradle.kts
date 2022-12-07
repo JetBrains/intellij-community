@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.ideaGradlePlugin) apply false
     alias(libs.plugins.kotlinSerialization) apply false
     alias(libs.plugins.detekt)
+    alias(libs.plugins.kotlinter)
 }
 
 

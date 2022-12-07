@@ -101,7 +101,7 @@ fun main() = application {
 
 private enum class WizardPage(
     val index: Int,
-    val title: String,
+    val title: String
 ) {
 
     CONFIGURE(index = 0, title = "Configure Image Asset"),
@@ -198,7 +198,7 @@ private fun WizardFooter(
             WizardControls(
                 currentPage = currentPage,
                 onPageChange = onPageChange,
-                onFinish = onFinish,
+                onFinish = onFinish
             )
         }
     }
@@ -229,9 +229,13 @@ fun ResDirectoryLabelComboBox(modifier: Modifier = Modifier, outputDir: MutableS
             .fillMaxWidth()
     ) {
         Text(modifier = Modifier.padding(5.dp), text = "Res Directory:")
-        TextField(modifier = Modifier
-            .fillMaxSize()
-            .padding(5.dp), value = outputDir.value, onValueChange = {})
+        TextField(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(5.dp),
+            value = outputDir.value,
+            onValueChange = {}
+        )
     }
 }
 
@@ -252,13 +256,13 @@ fun OutputDirectoriesLabelTree(modifier: Modifier = Modifier, outputDir: Mutable
                 )
                 Text(
                     modifier = modifier.padding(5.dp),
-                    text = "Loading...",
+                    text = "Loading..."
                 )
             }
         } else {
             Text(
                 modifier = modifier.padding(5.dp),
-                text = "Output Directories:",
+                text = "Output Directories:"
             )
         }
 
@@ -276,7 +280,7 @@ fun OutputDirectoriesLabelTree(modifier: Modifier = Modifier, outputDir: Mutable
                         is Tree.Element.Node -> "[${it.data.name}]"
                     }
                     Text(modifier = Modifier.fillMaxWidth(), text = text, softWrap = false)
-                },
+                }
             )
             if (listState.layoutInfo.totalItemsCount > listState.layoutInfo.visibleItemsInfo.size) {
                 VerticalScrollbar(
@@ -331,7 +335,8 @@ fun TextFieldWithLabel(modifier: Modifier = Modifier, label: String, textFieldTe
     Row(
         modifier
             .fillMaxWidth()
-            .padding(5.dp), horizontalArrangement = Arrangement.Start
+            .padding(5.dp),
+        horizontalArrangement = Arrangement.Start
     ) {
         Text(label)
         Spacer(modifier.width(5.dp))
@@ -607,7 +612,7 @@ fun BackgroundLayer(modifier: Modifier) {
                 rowModifier
             )
         },
-        modifier = modifier,
+        modifier = modifier
     )
 }
 
@@ -680,9 +685,11 @@ fun ConfigurePage(modifier: Modifier = Modifier) {
                 Row(Modifier.height(30.dp)) {
                     Text("Name:", modifier = labelModifier.align(Alignment.CenterVertically))
                     TextField(
-                        value = "ic_launcher", onValueChange = { }, modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.CenterVertically)
+                        value = "ic_launcher",
+                        onValueChange = { },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.CenterVertically)
                     )
                 }
                 val tabState = rememberTabContainerState(OptionTabs.FOREGROUND)
@@ -714,7 +721,7 @@ fun ConfigurePage(modifier: Modifier = Modifier) {
                         modifier = Modifier.padding(horizontal = 10.dp)
                     ) {
                         Text(
-                            "Show safe zone",
+                            "Show safe zone"
                         )
                     }
                     CheckboxRow(checked = showGrid.value, onCheckedChange = { showGrid.value = it }) {

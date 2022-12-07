@@ -11,7 +11,7 @@ typealias FrameStyle = ControlStyle<FrameAppearance, Unit>
 
 @Immutable
 data class FrameAppearance(
-    val backgroundColor: Color = Color.White,
+    val backgroundColor: Color = Color.White
 )
 
 val LocalFrameStyle = compositionLocalOf<FrameStyle> { localNotProvided() }

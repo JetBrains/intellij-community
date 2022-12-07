@@ -37,7 +37,8 @@ data class TreeViewAppearance(
 val LocalTreeViewStyle = compositionLocalOf<TreeViewStyle> { localNotProvided() }
 
 val Styles.treeView: TreeViewStyle
-    @Composable @ReadOnlyComposable get() = LocalTreeViewStyle.current
+    @Composable @ReadOnlyComposable
+    get() = LocalTreeViewStyle.current
 
 class TreeViewAppearanceTransitionState(selectedBackground: State<Color>, background: State<Color>) {
 
@@ -50,7 +51,7 @@ fun updateTreeViewAppearanceTransition(appearance: TreeViewAppearance): TreeView
     val transition = updateTransition(appearance)
     return TreeViewAppearanceTransitionState(
         transition.animateColor(label = "TreeSelectedItemBackground") { it.selectedBackground },
-        transition.animateColor(label = "TreeBackground") { it.background },
+        transition.animateColor(label = "TreeBackground") { it.background }
     )
 }
 

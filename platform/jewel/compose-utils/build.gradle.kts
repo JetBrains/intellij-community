@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.composeDesktop)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.kotlinter)
 }
 
 detekt {
@@ -26,5 +27,3 @@ tasks.named<Detekt>("detekt").configure {
         sarif.outputLocation.set(file(File(rootDir, "build/reports/detekt-${project.archivesName}.sarif")))
     }
 }
-
-

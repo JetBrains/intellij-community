@@ -22,7 +22,7 @@ data class ImageSliceValues(
     val left: Int = 0,
     val top: Int = 0,
     val right: Int = 0,
-    val bottom: Int = 0,
+    val bottom: Int = 0
 ) {
 
     constructor(all: Int) : this(all, all, all, all)
@@ -54,7 +54,8 @@ data class ImageSlice(val image: ImageBitmap, val slices: ImageSliceValues) {
             srcOffset = IntOffset.Zero,
             srcSize = IntSize(slices.left, slices.top),
             dstOffset = IntOffset.Zero,
-            alpha = alpha, colorFilter = colorFilter
+            alpha = alpha,
+            colorFilter = colorFilter
         )
         repeat(hTimes) { h ->
             scope.drawSlice(
@@ -62,7 +63,8 @@ data class ImageSlice(val image: ImageBitmap, val slices: ImageSliceValues) {
                 srcOffset = IntOffset(slices.left, 0),
                 srcSize = IntSize(hMiddleSize, slices.top),
                 dstOffset = IntOffset(slices.left + h * hMiddleSize, 0),
-                alpha = alpha, colorFilter = colorFilter
+                alpha = alpha,
+                colorFilter = colorFilter
             )
         }
 
@@ -72,7 +74,8 @@ data class ImageSlice(val image: ImageBitmap, val slices: ImageSliceValues) {
                 srcOffset = IntOffset(slices.left, 0),
                 srcSize = IntSize(hExtra, slices.top),
                 dstOffset = IntOffset(area.width - slices.right - hExtra, 0),
-                alpha = alpha, colorFilter = colorFilter
+                alpha = alpha,
+                colorFilter = colorFilter
             )
         }
 
@@ -81,7 +84,8 @@ data class ImageSlice(val image: ImageBitmap, val slices: ImageSliceValues) {
             srcOffset = IntOffset(image.width - slices.right, 0),
             srcSize = IntSize(slices.right, slices.top),
             dstOffset = IntOffset(area.width - slices.right, 0),
-            alpha = alpha, colorFilter = colorFilter
+            alpha = alpha,
+            colorFilter = colorFilter
         )
 
         // left and right
@@ -91,14 +95,16 @@ data class ImageSlice(val image: ImageBitmap, val slices: ImageSliceValues) {
                 srcOffset = IntOffset(0, slices.top),
                 srcSize = IntSize(slices.left, vMiddleSize),
                 dstOffset = IntOffset(0, slices.top + v * vMiddleSize),
-                alpha = alpha, colorFilter = colorFilter
+                alpha = alpha,
+                colorFilter = colorFilter
             )
             scope.drawSlice(
                 image,
                 srcOffset = IntOffset(image.width - slices.right, slices.top),
                 srcSize = IntSize(slices.right, vMiddleSize),
                 dstOffset = IntOffset(area.width - slices.right, slices.top + v * vMiddleSize),
-                alpha = alpha, colorFilter = colorFilter
+                alpha = alpha,
+                colorFilter = colorFilter
             )
         }
         if (vExtra > 0) {
@@ -107,14 +113,16 @@ data class ImageSlice(val image: ImageBitmap, val slices: ImageSliceValues) {
                 srcOffset = IntOffset(0, slices.top),
                 srcSize = IntSize(slices.left, vExtra),
                 dstOffset = IntOffset(0, area.height - slices.bottom - vExtra),
-                alpha = alpha, colorFilter = colorFilter
+                alpha = alpha,
+                colorFilter = colorFilter
             )
             scope.drawSlice(
                 image,
                 srcOffset = IntOffset(image.width - slices.right, slices.top),
                 srcSize = IntSize(slices.right, vExtra),
                 dstOffset = IntOffset(area.width - slices.right, area.height - slices.bottom - vExtra),
-                alpha = alpha, colorFilter = colorFilter
+                alpha = alpha,
+                colorFilter = colorFilter
             )
         }
 
@@ -126,7 +134,8 @@ data class ImageSlice(val image: ImageBitmap, val slices: ImageSliceValues) {
                     srcOffset = IntOffset(slices.left, slices.top),
                     srcSize = IntSize(hMiddleSize, vMiddleSize),
                     dstOffset = IntOffset(slices.left + h * hMiddleSize, slices.top + v * vMiddleSize),
-                    alpha = alpha, colorFilter = colorFilter
+                    alpha = alpha,
+                    colorFilter = colorFilter
                 )
             }
             if (hExtra > 0) {
@@ -135,7 +144,8 @@ data class ImageSlice(val image: ImageBitmap, val slices: ImageSliceValues) {
                     srcOffset = IntOffset(slices.left, slices.top),
                     srcSize = IntSize(hExtra, vMiddleSize),
                     dstOffset = IntOffset(area.width - slices.right - hExtra, slices.top + v * vMiddleSize),
-                    alpha = alpha, colorFilter = colorFilter
+                    alpha = alpha,
+                    colorFilter = colorFilter
                 )
             }
         }
@@ -147,7 +157,8 @@ data class ImageSlice(val image: ImageBitmap, val slices: ImageSliceValues) {
                     srcOffset = IntOffset(slices.left, slices.top),
                     srcSize = IntSize(hMiddleSize, vExtra),
                     dstOffset = IntOffset(slices.left + h * hMiddleSize, area.height - slices.bottom - vExtra),
-                    alpha = alpha, colorFilter = colorFilter
+                    alpha = alpha,
+                    colorFilter = colorFilter
                 )
             }
             if (hExtra > 0) {
@@ -159,7 +170,8 @@ data class ImageSlice(val image: ImageBitmap, val slices: ImageSliceValues) {
                         area.width - slices.right - hExtra,
                         area.height - slices.bottom - vExtra
                     ),
-                    alpha = alpha, colorFilter = colorFilter
+                    alpha = alpha,
+                    colorFilter = colorFilter
                 )
             }
         }
@@ -170,7 +182,8 @@ data class ImageSlice(val image: ImageBitmap, val slices: ImageSliceValues) {
             srcOffset = IntOffset(0, image.height - slices.bottom),
             srcSize = IntSize(slices.left, slices.bottom),
             dstOffset = IntOffset(0, area.height - slices.bottom),
-            alpha = alpha, colorFilter = colorFilter
+            alpha = alpha,
+            colorFilter = colorFilter
         )
         repeat(hTimes) {
             scope.drawSlice(
@@ -178,7 +191,8 @@ data class ImageSlice(val image: ImageBitmap, val slices: ImageSliceValues) {
                 srcOffset = IntOffset(slices.left, image.height - slices.bottom),
                 srcSize = IntSize(hMiddleSize, slices.bottom),
                 dstOffset = IntOffset(slices.left + it * hMiddleSize, area.height - slices.bottom),
-                alpha = alpha, colorFilter = colorFilter
+                alpha = alpha,
+                colorFilter = colorFilter
             )
         }
 
@@ -188,7 +202,8 @@ data class ImageSlice(val image: ImageBitmap, val slices: ImageSliceValues) {
                 srcOffset = IntOffset(slices.left, image.height - slices.bottom),
                 srcSize = IntSize(hExtra, slices.bottom),
                 dstOffset = IntOffset(area.width - slices.right - hExtra, area.height - slices.bottom),
-                alpha = alpha, colorFilter = colorFilter
+                alpha = alpha,
+                colorFilter = colorFilter
             )
         }
 
@@ -197,7 +212,8 @@ data class ImageSlice(val image: ImageBitmap, val slices: ImageSliceValues) {
             srcOffset = IntOffset(image.width - slices.right, image.height - slices.bottom),
             srcSize = IntSize(slices.right, slices.bottom),
             dstOffset = IntOffset(area.width - slices.right, area.height - slices.bottom),
-            alpha = alpha, colorFilter = colorFilter
+            alpha = alpha,
+            colorFilter = colorFilter
         )
     }
 }

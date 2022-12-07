@@ -22,7 +22,7 @@ data class RadioButtonState(
     val checked: Boolean,
     val mouse: ButtonMouseState = ButtonMouseState.None,
     val enabled: Boolean = true,
-    val focused: Boolean = false,
+    val focused: Boolean = false
 )
 
 @Immutable
@@ -42,7 +42,7 @@ data class RadioButtonAppearance(
     val baseLine: Dp = 14.dp,
 
     val haloStroke: ShapeStroke<*>? = null,
-    val haloShape: Shape = shape,
+    val haloShape: Shape = shape
 )
 
 val LocalRadioButtonStyle = compositionLocalOf<RadioButtonStyle> { localNotProvided() }

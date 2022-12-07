@@ -84,7 +84,6 @@ internal fun lookupIJSvgIcon(
     editable: Boolean = false,
     pressed: Boolean = false
 ): @Composable () -> Painter {
-
     var key = name
     if (editable) {
         key += "Editable"

@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.composeDesktop)
     alias(libs.plugins.ideaGradlePlugin)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.kotlinter)
 }
 
 detekt {

@@ -37,7 +37,7 @@ data class CheckboxAppearance(
     val baseLine: Dp = 14.dp,
 
     val haloStroke: ShapeStroke<*>? = null,
-    val haloShape: Shape = shape,
+    val haloShape: Shape = shape
 )
 
 val LocalCheckboxStyle = compositionLocalOf<CheckboxStyle> { localNotProvided() }

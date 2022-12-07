@@ -27,7 +27,7 @@ class IntelliJPainters(
         val selectedFocused: PainterProvider,
         val indeterminate: PainterProvider,
         val indeterminateDisabled: PainterProvider,
-        val indeterminateFocused: PainterProvider,
+        val indeterminateFocused: PainterProvider
     ) {
 
         companion object
@@ -39,7 +39,7 @@ class IntelliJPainters(
         val unselectedFocused: PainterProvider,
         val selected: PainterProvider,
         val selectedDisabled: PainterProvider,
-        val selectedFocused: PainterProvider,
+        val selectedFocused: PainterProvider
     ) {
 
         companion object

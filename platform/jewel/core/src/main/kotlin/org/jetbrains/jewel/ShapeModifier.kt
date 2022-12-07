@@ -70,8 +70,9 @@ private fun CacheDrawScope.drawRectangleShape(
             drawRect(brush = fillBrush, topLeft = insetOffset, size = insetSize, style = Fill)
         }
         drawContent()
-        if (stroke != null && strokeBrush != null && enoughSpace)
+        if (stroke != null && strokeBrush != null && enoughSpace) {
             drawRect(brush = strokeBrush, topLeft = insetOffset, size = insetSize, style = stroke)
+        }
     }
 
 private fun CacheDrawScope.drawRoundedShape(
@@ -97,7 +98,7 @@ private fun CacheDrawScope.drawRoundedShape(
                     }
                 }
                 drawContent()
-                if (stroke != null && strokeBrush != null)
+                if (stroke != null && strokeBrush != null) {
                     withTransform({ translate(insetOffset.x, insetOffset.y) }) {
                         drawRoundRect(
                             brush = strokeBrush,
@@ -107,6 +108,7 @@ private fun CacheDrawScope.drawRoundedShape(
                             style = stroke
                         )
                     }
+                }
             }
 
             else -> {
@@ -118,8 +120,9 @@ private fun CacheDrawScope.drawRoundedShape(
                     drawPath(path, brush = fillBrush, style = Fill)
                 }
                 drawContent()
-                if (stroke != null && strokeBrush != null)
+                if (stroke != null && strokeBrush != null) {
                     drawPath(path, strokeBrush, style = stroke)
+                }
             }
         }
     }
@@ -130,8 +133,9 @@ private fun CacheDrawScope.drawPathShape(path: Path, stroke: Stroke?, strokeBrus
             drawPath(path, brush = fillBrush, style = Fill)
         }
         drawContent()
-        if (stroke != null && strokeBrush != null)
+        if (stroke != null && strokeBrush != null) {
             drawPath(path, strokeBrush, style = stroke)
+        }
     }
 
 private fun shapeModifier(shapeStroke: ShapeStroke<*>?, fillBrush: Brush?, shape: Shape) = Modifier.drawWithCache {

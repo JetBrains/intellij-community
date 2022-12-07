@@ -14,13 +14,13 @@ enum class ButtonMouseState {
 data class ButtonState(
     val mouse: ButtonMouseState = ButtonMouseState.None,
     val enabled: Boolean = true,
-    val focused: Boolean = false,
+    val focused: Boolean = false
 )
 
 class ButtonAppearanceTransitionState(
     background: State<Brush?>,
     shapeStroke: State<ShapeStroke<*>?>,
-    haloStroke: State<ShapeStroke<*>?>,
+    haloStroke: State<ShapeStroke<*>?>
 ) {
 
     val background by background

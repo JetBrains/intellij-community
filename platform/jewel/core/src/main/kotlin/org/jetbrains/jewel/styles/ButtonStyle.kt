@@ -47,12 +47,14 @@ typealias ButtonStyle = ControlStyle<ButtonAppearance, ButtonState>
 
 val LocalButtonStyle = compositionLocalOf<ButtonStyle> { localNotProvided() }
 val Styles.button: ButtonStyle
-    @Composable @ReadOnlyComposable get() = LocalButtonStyle.current
+    @Composable @ReadOnlyComposable
+    get() = LocalButtonStyle.current
 
 val LocalIconButtonStyle = compositionLocalOf<ButtonStyle> { localNotProvided() }
 
 val Styles.iconButton: ButtonStyle
-    @Composable @ReadOnlyComposable get() = LocalIconButtonStyle.current
+    @Composable @ReadOnlyComposable
+    get() = LocalIconButtonStyle.current
 
 @Composable
 fun updateButtonAppearanceTransition(appearance: ButtonAppearance): ButtonAppearanceTransitionState {
@@ -73,7 +75,7 @@ fun ButtonStyle(
     controlTextStyle: TextStyle,
     contentPadding: PaddingValues = metrics.button.padding,
     shape: Shape = RoundedCornerShape(metrics.button.arc),
-    minSize: DpSize = DpSize(72.dp, 16.dp),
+    minSize: DpSize = DpSize(72.dp, 16.dp)
 ) = ButtonStyle {
     val focusHaloStroke = ShapeStroke.SolidColor(metrics.controlFocusHaloWidth, palette.controlFocusHalo)
     val defaultAppearance = ButtonAppearance(
@@ -102,7 +104,7 @@ fun ButtonStyle(
                 background = palette.button.defaultBackground,
                 textStyle = controlTextStyle.copy(color = palette.button.defaultForeground),
                 shapeStroke = ShapeStroke.Brush(metrics.button.strokeWidth, strokeBrush, Insets(metrics.button.strokeWidth)),
-                haloStroke = if (focused) focusHaloStroke else null,
+                haloStroke = if (focused) focusHaloStroke else null
             )
 
             populateStates(appearance, focused, focusHaloStroke, controlTextStyle, palette, metrics)

@@ -35,7 +35,6 @@ fun IntelliJTheme(
     app: Application = IntelliJApplication,
     content: @Composable () -> Unit
 ) {
-
     val fm = LocalFocusManager.current
 
     DisposableEffect(composePanel) {

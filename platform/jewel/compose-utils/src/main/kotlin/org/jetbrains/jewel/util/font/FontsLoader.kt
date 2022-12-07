@@ -22,7 +22,6 @@ import java.awt.Font.createFont as createAwtFont
 object FontsLoader {
 
     suspend fun loadFontsFrom(fontFileProviders: List<FileProvider>): Map<String, SystemFontFamily> {
-
         return collectIntoSystemFontFamilies(
             fontFamilyNames = GraphicsEnvironment.getLocalGraphicsEnvironment()
                 .getAvailableFontFamilyNames(Locale.ROOT)

@@ -27,7 +27,7 @@ val IntelliJPainters.CheckboxPainters.Companion.light
         selectedFocused = { painterResource("intellij/checkBoxSelectedFocused.svg") },
         indeterminate = { painterResource("intellij/checkBoxIndeterminateSelected.svg") },
         indeterminateDisabled = { painterResource("intellij/checkBoxIndeterminateSelectedDisabled.svg") },
-        indeterminateFocused = { painterResource("intellij/checkBoxIndeterminateSelectedFocused.svg") },
+        indeterminateFocused = { painterResource("intellij/checkBoxIndeterminateSelectedFocused.svg") }
     )
 
 val IntelliJPainters.CheckboxPainters.Companion.darcula
@@ -40,7 +40,7 @@ val IntelliJPainters.CheckboxPainters.Companion.darcula
         selectedFocused = { painterResource("darcula/checkBoxSelectedFocused.svg") },
         indeterminate = { painterResource("darcula/checkBoxIndeterminateSelected.svg") },
         indeterminateDisabled = { painterResource("darcula/checkBoxIndeterminateSelectedDisabled.svg") },
-        indeterminateFocused = { painterResource("darcula/checkBoxIndeterminateSelectedFocused.svg") },
+        indeterminateFocused = { painterResource("darcula/checkBoxIndeterminateSelectedFocused.svg") }
     )
 
 val IntelliJPainters.RadioButtonPainters.Companion.light
@@ -50,7 +50,7 @@ val IntelliJPainters.RadioButtonPainters.Companion.light
         unselectedFocused = { painterResource("intellij/radioFocused.svg") },
         selected = { painterResource("intellij/radioSelected.svg") },
         selectedDisabled = { painterResource("intellij/radioSelectedDisabled.svg") },
-        selectedFocused = { painterResource("intellij/radioSelectedFocused.svg") },
+        selectedFocused = { painterResource("intellij/radioSelectedFocused.svg") }
     )
 
 val IntelliJPainters.RadioButtonPainters.Companion.darcula
@@ -60,7 +60,7 @@ val IntelliJPainters.RadioButtonPainters.Companion.darcula
         unselectedFocused = { painterResource("darcula/radioFocused.svg") },
         selected = { painterResource("darcula/radioSelected.svg") },
         selectedDisabled = { painterResource("darcula/radioSelectedDisabled.svg") },
-        selectedFocused = { painterResource("darcula/radioSelectedFocused.svg") },
+        selectedFocused = { painterResource("darcula/radioSelectedFocused.svg") }
     )
 
 val IntelliJPainters.TreeViewPainters.Companion.light

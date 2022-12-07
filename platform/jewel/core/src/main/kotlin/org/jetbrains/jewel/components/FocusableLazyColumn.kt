@@ -392,15 +392,20 @@ internal data class LazyItemScopeImpl(
 
     @ExperimentalFoundationApi
     override fun Modifier.animateItemPlacement(animationSpec: FiniteAnimationSpec<IntOffset>) =
-        this.then(AnimateItemPlacementModifier(animationSpec, debugInspectorInfo {
-            name = "animateItemPlacement"
-            value = animationSpec
-        }))
+        this.then(
+            AnimateItemPlacementModifier(
+                animationSpec,
+                debugInspectorInfo {
+                    name = "animateItemPlacement"
+                    value = animationSpec
+                }
+            )
+        )
 }
 
 private class AnimateItemPlacementModifier(
     val animationSpec: FiniteAnimationSpec<IntOffset>,
-    inspectorInfo: InspectorInfo.() -> Unit,
+    inspectorInfo: InspectorInfo.() -> Unit
 ) : ParentDataModifier, InspectorValueInfo(inspectorInfo) {
 
     override fun Density.modifyParentData(parentData: Any?): Any = animationSpec

@@ -25,11 +25,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.singleWindowApplication
 import org.jetbrains.jewel.IntelliJMetrics
-import org.jetbrains.jewel.themes.darcula.standalone.IntelliJTheme
 import org.jetbrains.jewel.IntelliJTheme
 import org.jetbrains.jewel.components.Checkbox
 import org.jetbrains.jewel.components.Slider
 import org.jetbrains.jewel.styles.SliderStyle
+import org.jetbrains.jewel.themes.darcula.standalone.IntelliJTheme
 import org.jetbrains.jewel.themes.darcula.standalone.default
 
 fun main() = singleWindowApplication(
@@ -64,7 +64,7 @@ fun main() = singleWindowApplication(
                     Slider(
                         value,
                         modifier = Modifier.padding(24.dp).fillMaxWidth().height(80.dp),
-                        style = SliderStyle(palette = IntelliJTheme.palette, typography = IntelliJTheme.typography, paintTicks = true),
+                        style = SliderStyle(palette = IntelliJTheme.palette, typography = IntelliJTheme.typography, paintTicks = true)
                     ) { value = it }
                 }
             }
