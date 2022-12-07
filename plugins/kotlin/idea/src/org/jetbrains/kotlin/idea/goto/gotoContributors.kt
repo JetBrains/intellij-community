@@ -29,14 +29,14 @@ class KotlinGotoClassContributor : ChooseByNameContributorEx, GotoClassContribut
 
     override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
         for (index in indices) {
-            StubIndex.getInstance().processAllKeys(index.key, processor, scope, filter)
+            if (!StubIndex.getInstance().processAllKeys(index.key, processor, scope, filter)) break
         }
     }
 
     override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
         val project = parameters.project
         val scope = KotlinSourceFilterScope.projectFiles(parameters.searchScope, project)
-
+        val filter = parameters.idFilter
         val processor2: (t: NavigationItem) -> Boolean = {
             if (it !is KtEnumEntry) {
                 processor.process(it)
@@ -44,8 +44,8 @@ class KotlinGotoClassContributor : ChooseByNameContributorEx, GotoClassContribut
                 true
             }
         }
-        KotlinClassShortNameIndex.processElements(name, project, scope, processor2)
-        KotlinTypeAliasShortNameIndex.processElements(name, project, scope, processor2)
+        if (!KotlinClassShortNameIndex.processElements(name, project, scope, filter, processor2)) return
+        KotlinTypeAliasShortNameIndex.processElements(name, project, scope, filter, processor2)
     }
 
     private val indices = listOf(KotlinClassShortNameIndex, KotlinTypeAliasShortNameIndex)
@@ -59,7 +59,7 @@ class KotlinGotoClassContributor : ChooseByNameContributorEx, GotoClassContribut
 class KotlinGotoSymbolContributor : ChooseByNameContributorEx, GotoClassContributor {
     override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
         for (index in indices) {
-            StubIndex.getInstance().processAllKeys(index.key, processor, scope, filter)
+            if (!StubIndex.getInstance().processAllKeys(index.key, processor, scope, filter)) break
         }
     }
 
@@ -68,31 +68,31 @@ class KotlinGotoSymbolContributor : ChooseByNameContributorEx, GotoClassContribu
         val scope = KotlinSourceFilterScope.projectFiles(parameters.searchScope, project)
 
         val filter = parameters.idFilter
-        KotlinFunctionShortNameIndex.processElements(name, project, scope, filter) {
+        if (!KotlinFunctionShortNameIndex.processElements(name, project, scope, filter) {
             val method = LightClassUtil.getLightClassMethod(it)
             if (method == null || it.name != method.name) {
                 processor.process(it)
             } else {
                 true
             }
-        }
+        }) return
 
-        KotlinPropertyShortNameIndex.processElements(name, project, scope, filter) {
+        if (!KotlinPropertyShortNameIndex.processElements(name, project, scope, filter) {
             if (LightClassUtil.getLightClassBackingField(it) == null || it.containingClass()?.isInterface() == true) {
                 processor.process(it)
             } else {
                 true
             }
-        }
+        }) return
 
-        KotlinClassShortNameIndex.processElements(name, project, scope, filter) {
+        if (!KotlinClassShortNameIndex.processElements(name, project, scope, filter) {
             if (it is KtEnumEntry || it.containingFile.virtualFile?.fileType == KotlinBuiltInFileType) {
                 processor.process(it)
             } else {
                 true
             }
-        }
-        KotlinTypeAliasShortNameIndex.processElements(name, project, scope, filter, processor)
+        }) return
+        if (!KotlinTypeAliasShortNameIndex.processElements(name, project, scope, filter, processor)) return
         KotlinJvmNameAnnotationIndex.processElements(name, project, scope, filter, processor)
     }
 
