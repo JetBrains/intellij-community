@@ -116,7 +116,7 @@ class MacDistributionBuilder(override val context: BuildContext,
       copyDistFiles(context = context, newDir = macDistDir, os = OsFamily.MACOS, arch = arch)
     }
 
-    customizer.copyAdditionalFiles(context = context, targetDirectory = macDistDir.toString())
+    customizer.copyAdditionalFiles(context = context, targetDirectory = macDistDir)
     customizer.copyAdditionalFiles(context = context, targetDirectory = macDistDir, arch = arch)
 
     generateUnixScripts(distBinDir = macDistDir.resolve("bin"),

@@ -119,11 +119,11 @@ abstract class MacDistributionCustomizer(
    * @param context build context that contains information about build directories, product properties and application info
    * @param targetDirectory application bundle directory
    */
-  open fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
+  open fun copyAdditionalFiles(context: BuildContext, targetDirectory: Path) {
     copyAdditionalFilesBlocking(context, targetDirectory)
   }
 
-  protected open fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
+  protected open fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: Path) {
   }
 
   /**

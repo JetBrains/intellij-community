@@ -78,13 +78,13 @@ abstract class WindowsDistributionCustomizer {
    * @param targetDirectory contents of this directory will be packed into zip archive and exe installer, so when the product is installed
    * it'll be placed under its root directory.
    */
-  open suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String, arch: JvmArchitecture) {
-    RepairUtilityBuilder.bundle(context, OsFamily.WINDOWS, arch, Path.of(targetDirectory))
+  open suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: Path, arch: JvmArchitecture) {
+    RepairUtilityBuilder.bundle(context, OsFamily.WINDOWS, arch, targetDirectory)
 
     copyAdditionalFilesBlocking(context, targetDirectory)
   }
 
-  open fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
+  open fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: Path) {
   }
 
   /**
