@@ -23,10 +23,5 @@ And IDEA does not offer you to enable Annotation Processing you can do it manual
 - `Build` -> `Build module ...`
 - Sometimes you need to rebuild the entire project, not just this module
 
-### Why is this module not in the test directory?
-
-We use `JMH` for benchmarking which requires annotation processing. IDEA has some problems with that if the module is located in the test
-directory.
-
 ### Why are benchmarks implemented on java?
-For the same reason. Annotation processing for `JMH` does not support Kotlin.
+We use `JMH` for benchmarking which requires annotation processing. Annotation processing for `JMH` does not support Kotlin.
