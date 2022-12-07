@@ -93,6 +93,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "C4Deployment" { yybegin (c4); return C4.C4_DEPLOYMENT; }
   ";" { return SEMICOLON; }
   [^\s%;{]+ { return BAD_CHARACTER; }
+  [^] { yybegin(YYINITIAL); return BAD_CHARACTER; }
 }
 <directive> {
   "}%%" { yypopstate(); return CLOSE_DIRECTIVE; }
@@ -786,4 +787,6 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "}" { yypopstate(); return CLOSE_CURLY; }
 }
 
+[^\S\n\r]+ { return WHITE_SPACE; }
+[\n\r] { return EOL; }
 [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }

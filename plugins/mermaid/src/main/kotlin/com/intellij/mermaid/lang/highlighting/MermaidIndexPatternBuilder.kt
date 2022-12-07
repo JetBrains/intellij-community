@@ -16,7 +16,9 @@ class MermaidIndexPatternBuilder : IndexPatternBuilder {
     return MermaidLexer()
   }
 
-  override fun getCommentTokenSet(file: PsiFile): TokenSet {
+  override fun getCommentTokenSet(file: PsiFile): TokenSet? {
+    if (file !is MermaidFile) return null
+
     return TokenSet.create(MermaidTokens.LINE_COMMENT)
   }
 
