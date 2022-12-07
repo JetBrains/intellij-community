@@ -166,4 +166,6 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   public String getErrorMessage() {
     return null;
   }
+
+  abstract public TestProxyRoot getRoot();
 }

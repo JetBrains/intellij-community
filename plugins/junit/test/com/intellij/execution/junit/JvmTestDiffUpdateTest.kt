@@ -3,9 +3,13 @@ package com.intellij.execution.junit
 
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.requests.SimpleDiffRequest
+import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.testframework.JavaTestLocator
 import com.intellij.execution.testframework.actions.TestDiffRequestProcessor
+import com.intellij.execution.testframework.sm.runner.MockRuntimeConfiguration
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
+import com.intellij.execution.testframework.sm.runner.SMTestProxy.SMRootTestProxy
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -32,10 +36,14 @@ abstract class JvmTestDiffUpdateTest : JavaCodeInsightFixtureTestCase() {
     fileExt: String
   ) {
     myFixture.configureByText("$testClass.$fileExt", before)
+    val root = SMRootTestProxy()
+    val configuration = MockRuntimeConfiguration(project)
+    root.testConsoleProperties = SMTRunnerConsoleProperties(configuration, "framework", DefaultRunExecutor())
     val testProxy = SMTestProxy(testName, false, "java:test://$testClass/$testName").apply {
       locator = JavaTestLocator.INSTANCE
       setTestFailed("fail", stackTrace, true)
     }
+    root.addChild(testProxy)
     val hyperlink = testProxy.createHyperlink(expected, actual, null, null, true)
     val requestProducer = TestDiffRequestProcessor.createRequestChain(
       myFixture.project, ListSelection.createSingleton(hyperlink)

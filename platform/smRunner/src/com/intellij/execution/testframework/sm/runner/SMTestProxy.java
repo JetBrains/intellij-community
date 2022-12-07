@@ -605,9 +605,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   public List<? extends SMTestProxy> collectChildren() {
     final List<? extends SMTestProxy> allChildren = getChildren();
 
-    final List<SMTestProxy> result = new ArrayList<>();
-
-    result.addAll(allChildren);
+    final List<SMTestProxy> result = new ArrayList<>(allChildren);
 
     for (SMTestProxy p : allChildren) {
       result.addAll(p.collectChildren());
@@ -955,6 +953,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     }
   }
 
+  @Override
   public SMRootTestProxy getRoot() {
     if (this instanceof SMRootTestProxy) {
       return (SMRootTestProxy)this;
@@ -1107,6 +1106,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
       myTestConsoleProperties = properties;
     }
 
+    @Override
     public TestConsoleProperties getTestConsoleProperties() {
       return myTestConsoleProperties;
     }

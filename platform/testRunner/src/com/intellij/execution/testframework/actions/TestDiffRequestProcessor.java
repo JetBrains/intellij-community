@@ -4,7 +4,6 @@ package com.intellij.execution.testframework.actions;
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
-import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.chains.SimpleDiffRequestChain;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
@@ -29,7 +28,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +74,7 @@ public class TestDiffRequestProcessor {
     @Override
     @NotNull
     public DiffRequest process(@NotNull UserDataHolder context,
-                               @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
+                               @NotNull ProgressIndicator indicator) {
       String windowTitle = myHyperlink.getDiffTitle();
       AbstractTestProxy testProxy = myHyperlink.getTestProxy();
       String text1 = myHyperlink.getLeft();
@@ -89,7 +88,7 @@ public class TestDiffRequestProcessor {
         if (provider != null) {
           PsiElement expected = ReadAction.compute(() -> getExpected(provider, testProxy));
           if (expected != null) {
-            file1 = ReadAction.compute(() -> expected.getContainingFile().getVirtualFile());
+            file1 = ReadAction.compute(() -> PsiUtilCore.getVirtualFile(expected));
             content1 = ReadAction.compute(() -> createPsiDiffContent(provider, expected, text1));
           }
         }
@@ -108,7 +107,7 @@ public class TestDiffRequestProcessor {
     }
 
     private @Nullable TestDiffProvider getTestDiffProvider(@NotNull AbstractTestProxy testProxy) {
-      Location<?> loc = testProxy.getLocation(myProject, GlobalSearchScope.projectScope(myProject));
+      Location<?> loc = testProxy.getLocation(myProject, testProxy.getRoot().getTestConsoleProperties().getScope());
       if (loc == null) return null;
       return TestDiffProvider.TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION.forLanguage(loc.getPsiElement().getLanguage());
     }
