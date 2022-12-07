@@ -324,10 +324,10 @@ public final class ExternalSystemUtil {
 
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-
+        String title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
         StructuredIdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(project, externalSystemId, null);
         try {
-          executeImpl(indicator);
+          DumbService.getInstance(project).suspendIndexingAndRun(title, () -> executeImpl(indicator));
         }
         finally {
           activity.finished();
@@ -496,8 +496,7 @@ public final class ExternalSystemUtil {
 
           LOG.info("External project [" + externalProjectPath + "] resolution task started");
           final long startTS = System.currentTimeMillis();
-          String title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
-          DumbService.getInstance(project).suspendIndexingAndRun(title, () -> resolveProjectTask.execute(indicator, taskListener));
+          resolveProjectTask.execute(indicator, taskListener);
           LOG.info("External project [" + externalProjectPath + "] resolution task executed in " +
                    (System.currentTimeMillis() - startTS) + " ms.");
           handExecutionResult(externalSystemTaskActivator, eventDispatcher, finishSyncEventSupplier);
