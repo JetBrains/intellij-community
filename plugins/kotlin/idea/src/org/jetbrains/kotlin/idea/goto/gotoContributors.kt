@@ -86,7 +86,7 @@ class KotlinGotoSymbolContributor : ChooseByNameContributorEx, GotoClassContribu
         }) return
 
         if (!KotlinClassShortNameIndex.processElements(name, project, scope, filter) {
-            if (it is KtEnumEntry || it.containingFile.virtualFile?.fileType == KotlinBuiltInFileType) {
+            if (it is KtEnumEntry || it.containingFile.virtualFile?.extension == KotlinBuiltInFileType.defaultExtension) {
                 processor.process(it)
             } else {
                 true
