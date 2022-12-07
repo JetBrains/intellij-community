@@ -157,8 +157,8 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     myToolbarWrapper.setVisible(false);
     MyEditorLayeredComponentWrapper layeredPane = new MyEditorLayeredComponentWrapper(panel);
     myComponent = layeredPane;
-    LayoutActionsFloatingToolbar toolbar = new LayoutActionsFloatingToolbar(myComponent, myToolbarWrapper.getRightToolbar().getActionGroup());
-    Disposer.register(this, toolbar);
+    ActionGroup toolbarGroup = myToolbarWrapper.getRightToolbar().getActionGroup();
+    LayoutActionsFloatingToolbar toolbar = new LayoutActionsFloatingToolbar(myComponent, toolbarGroup, this);
     layeredPane.add(panel, JLayeredPane.DEFAULT_LAYER);
     myComponent.add(toolbar, JLayeredPane.POPUP_LAYER);
     registerToolbarListeners(panel, toolbar);

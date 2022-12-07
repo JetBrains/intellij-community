@@ -103,7 +103,7 @@ class TransparentComponentAnimator(
       is State.Invisible -> State.Invisible
       is State.Visible -> when {
         !component.autoHideable -> State.Visible(0)
-        component.isComponentUnderMouse() -> State.Visible(0)
+        component.isComponentOnHold() -> State.Visible(0)
         state.count >= RETENTION_COUNT -> State.Hiding(0)
         else -> State.Visible(state.count + 1)
       }

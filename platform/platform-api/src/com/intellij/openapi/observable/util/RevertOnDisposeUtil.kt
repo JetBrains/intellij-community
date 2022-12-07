@@ -5,12 +5,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.ui.EditorTextComponent
+import com.intellij.ui.hover.HoverListener
 import com.intellij.util.ui.TableViewModel
 import java.awt.Component
 import java.awt.Container
 import java.awt.ItemSelectable
 import java.awt.event.*
 import javax.swing.JComboBox
+import javax.swing.JComponent
 import javax.swing.ListModel
 import javax.swing.event.*
 import javax.swing.text.Document
@@ -99,6 +101,13 @@ fun Component.addMouseListener(parentDisposable: Disposable? = null, listener: M
   addMouseListener(listener)
   parentDisposable?.whenDisposed {
     removeMouseListener(listener)
+  }
+}
+
+fun JComponent.addMouseHoverListener(parentDisposable: Disposable? = null, listener: HoverListener) {
+  when (parentDisposable) {
+    null -> listener.addTo(this)
+    else -> listener.addTo(this, parentDisposable)
   }
 }
 

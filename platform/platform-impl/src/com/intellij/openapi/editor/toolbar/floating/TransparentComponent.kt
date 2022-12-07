@@ -10,6 +10,9 @@ interface TransparentComponent {
   val autoHideable: Boolean
 
   @RequiresEdt
+  fun isComponentOnHold(): Boolean
+
+  @RequiresEdt
   fun setOpacity(opacity: Float)
 
   @RequiresEdt
@@ -17,9 +20,6 @@ interface TransparentComponent {
 
   @RequiresEdt
   fun hideComponent()
-
-  @RequiresEdt
-  fun isComponentUnderMouse(): Boolean
 
   @RequiresEdt
   fun repaintComponent()

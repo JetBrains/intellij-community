@@ -18,6 +18,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.ui.ComponentWithEmptyText
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.awt.MouseInfo
@@ -57,11 +58,18 @@ fun JTextComponent.isTextUnderMouse(e: MouseEvent): Boolean {
 }
 
 fun Component.isComponentUnderMouse(): Boolean {
+  if (mousePosition != null) {
+    return true
+  }
   val pointerInfo = MouseInfo.getPointerInfo() ?: return false
   val location = pointerInfo.location
   SwingUtilities.convertPointFromScreen(location, this)
   val bounds = Rectangle(0, 0, width, height)
   return bounds.contains(location)
+}
+
+fun Component.isFocusAncestor(): Boolean {
+  return UIUtil.isFocusAncestor(this)
 }
 
 fun getActionShortcutText(actionId: String): String {

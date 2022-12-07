@@ -12,6 +12,7 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.PopupMenuListenerAdapter
 import com.intellij.ui.components.DropDownLink
+import com.intellij.ui.hover.HoverListener
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.TableViewModel
 import com.intellij.util.ui.tree.TreeModelAdapter
@@ -156,6 +157,16 @@ fun Component.whenMousePressed(parentDisposable: Disposable? = null, listener: (
 fun Component.whenMouseReleased(parentDisposable: Disposable? = null, listener: (MouseEvent) -> Unit) {
   addMouseListener(parentDisposable, object : MouseAdapter() {
     override fun mouseReleased(e: MouseEvent) = listener(e)
+  })
+}
+
+fun JComponent.whenMouseMoved(parentDisposable: Disposable? = null, listener: (MouseEvent) -> Unit) {
+  addMouseHoverListener(parentDisposable, object : HoverListener() {
+    override fun mouseEntered(component: Component, x: Int, y: Int) = Unit
+    override fun mouseExited(component: Component) = Unit
+    override fun mouseMoved(component: Component, x: Int, y: Int) {
+      listener.invoke(MouseEvent(component, MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), 0, x, y, 0, false))
+    }
   })
 }
 
