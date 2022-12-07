@@ -1,3 +1,4 @@
+@file:Suppress("MatchingDeclarationName")
 package org.jetbrains.jewel.themes.expui.standalone.control
 
 import androidx.compose.foundation.clickable
@@ -96,7 +97,7 @@ fun Tab(
                     drawContent()
                     if (selected) {
                         val strokeWidth = 3.dp.toPx()
-                        val start = Offset(strokeWidth / 2f, size.height - (strokeWidth / 2f))
+                        val start = Offset(strokeWidth / 2f, size.height - strokeWidth / 2f)
                         val end = start.copy(x = size.width - strokeWidth / 2f)
                         drawLine(currentColors.focusColor, start, end, strokeWidth, cap = StrokeCap.Round)
                     }
@@ -136,7 +137,7 @@ fun CloseableTab(
                     drawContent()
                     if (selected) {
                         val strokeWidth = 3.dp.toPx()
-                        val start = Offset(strokeWidth / 2f, size.height - (strokeWidth / 2f))
+                        val start = Offset(strokeWidth / 2f, size.height - strokeWidth / 2f)
                         val end = start.copy(x = size.width - strokeWidth / 2f)
                         drawLine(currentColors.focusColor, start, end, strokeWidth, cap = StrokeCap.Round)
                     }
@@ -154,6 +155,7 @@ fun CloseableTab(
                 hover = it
             }.padding(horizontal = 12.dp)
         ) {
+            @Suppress("MagicNumber")
             Row(
                 modifier = Modifier.align(Alignment.Center).graphicsLayer(alpha = if (hover || selected) 1f else 0.7f),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)

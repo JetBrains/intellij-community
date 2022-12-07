@@ -65,6 +65,7 @@ import org.jetbrains.jewel.themes.expui.standalone.style.LocalSelectionInactiveA
 import org.jetbrains.jewel.themes.expui.standalone.style.LocalSmallTextStyle
 import org.jetbrains.jewel.themes.expui.standalone.style.LocalWindowsCloseWindowButtonColors
 
+@Suppress("LargeClass")
 object DarkTheme : Theme {
 
     val Grey1 = Color(0xFF1E1F22)

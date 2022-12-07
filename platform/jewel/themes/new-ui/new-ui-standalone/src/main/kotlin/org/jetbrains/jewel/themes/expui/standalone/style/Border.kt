@@ -87,7 +87,7 @@ fun Modifier.outerBorder(width: Dp, brush: Brush, shape: Shape): Modifier = comp
 
 private fun Ref<BorderCache>.obtain(): BorderCache = this.value ?: BorderCache().also { value = it }
 
-private data class BorderCache(
+private class BorderCache(
     private var imageBitmap: ImageBitmap? = null,
     private var canvas: androidx.compose.ui.graphics.Canvas? = null,
     private var canvasDrawScope: CanvasDrawScope? = null,
@@ -106,7 +106,11 @@ private data class BorderCache(
         // an alpha mask, just re-use the same ImageBitmap instead of allocating a new one
         val compatibleConfig =
             targetImageBitmap?.config == ImageBitmapConfig.Argb8888 || config == targetImageBitmap?.config
-        if (targetImageBitmap == null || targetCanvas == null || size.width > targetImageBitmap.width || size.height > targetImageBitmap.height || !compatibleConfig) {
+        @Suppress("ComplexCondition")
+        if (targetImageBitmap == null || targetCanvas == null
+            || size.width > targetImageBitmap.width
+            || size.height > targetImageBitmap.height
+            || !compatibleConfig) {
             targetImageBitmap = ImageBitmap(
                 borderSize.width, borderSize.height, config = config
             ).also {

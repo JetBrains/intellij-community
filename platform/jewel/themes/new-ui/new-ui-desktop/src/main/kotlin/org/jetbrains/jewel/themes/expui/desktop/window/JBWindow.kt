@@ -90,6 +90,6 @@ fun JBWindow(
             content
         )
 
-        else -> TODO("Unsupported platform")
+        else -> throw UnsupportedOperationException("Unsupported platform")
     }
 }

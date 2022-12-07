@@ -1,3 +1,4 @@
+@file:Suppress("MatchingDeclarationName")
 package org.jetbrains.jewel.themes.expui.standalone.control
 
 import androidx.compose.foundation.Canvas

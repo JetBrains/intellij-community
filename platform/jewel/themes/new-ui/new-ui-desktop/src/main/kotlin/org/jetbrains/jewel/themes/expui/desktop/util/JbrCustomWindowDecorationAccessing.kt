@@ -1,3 +1,4 @@
+@file:Suppress("SwallowedException", "TooGenericExceptionCaught")
 package org.jetbrains.jewel.themes.expui.desktop.util
 
 import org.jetbrains.jewel.themes.expui.standalone.control.CustomWindowDecorationSupport
@@ -20,7 +21,7 @@ internal object JbrCustomWindowDecorationAccessing : CustomWindowDecorationSuppo
         val constructor = customWindowDecoration.declaredConstructors.first()
         constructor.isAccessible = true
         constructor.newInstance()
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         null
     }
 
@@ -41,7 +42,7 @@ internal object JbrCustomWindowDecorationAccessing : CustomWindowDecorationSuppo
             )
             method.isAccessible = true
             method
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             null
         }
     }

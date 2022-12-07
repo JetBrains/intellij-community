@@ -1,3 +1,4 @@
+@file:Suppress("SwallowedException", "TooGenericExceptionCaught")
 package org.jetbrains.jewel.themes.expui.desktop.util
 
 import sun.misc.Unsafe

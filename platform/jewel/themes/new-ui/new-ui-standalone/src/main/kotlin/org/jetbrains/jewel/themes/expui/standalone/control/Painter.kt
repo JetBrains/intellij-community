@@ -183,7 +183,7 @@ private class PainterWithMarkerModifier(
     private fun modifyConstraints(constraints: Constraints): Constraints {
         val hasBoundedDimens = constraints.hasBoundedWidth && constraints.hasBoundedHeight
         val hasFixedDimens = constraints.hasFixedWidth && constraints.hasFixedHeight
-        if ((!useIntrinsicSize && hasBoundedDimens) || hasFixedDimens) {
+        if (!useIntrinsicSize && hasBoundedDimens || hasFixedDimens) {
             // If we have fixed constraints or we are not attempting to size the
             // composable based on the size of the Painter, do not attempt to
             // modify them. Otherwise rely on Alignment and ContentScale
@@ -320,9 +320,18 @@ private class PainterWithMarkerModifier(
 
     override fun equals(other: Any?): Boolean {
         val otherModifier = other as? PainterWithMarkerModifier ?: return false
-        return painter == otherModifier.painter && sizeToIntrinsics == otherModifier.sizeToIntrinsics && alignment == otherModifier.alignment && contentScale == otherModifier.contentScale && alpha == otherModifier.alpha && colorFilter == otherModifier.colorFilter
+        return painter == otherModifier.painter
+            && sizeToIntrinsics == otherModifier.sizeToIntrinsics
+            && alignment == otherModifier.alignment
+            && contentScale == otherModifier.contentScale
+            && alpha == otherModifier.alpha
+            && colorFilter == otherModifier.colorFilter
     }
 
     override fun toString(): String =
-        "PainterWithMarkerModifier(painter=$painter, sizeToIntrinsics=$sizeToIntrinsics, alignment=$alignment, alpha=$alpha, colorFilter=$colorFilter, markerColor=$markerColor)"
+        "PainterWithMarkerModifier(painter=$painter, " +
+            "sizeToIntrinsics=$sizeToIntrinsics, " +
+            "alignment=$alignment, alpha=$alpha, " +
+            "colorFilter=$colorFilter, " +
+            "markerColor=$markerColor)"
 }

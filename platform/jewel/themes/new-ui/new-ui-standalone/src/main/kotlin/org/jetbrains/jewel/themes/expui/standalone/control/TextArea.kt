@@ -104,19 +104,19 @@ private fun TextAreaDecorationBox(
             .areaBorder(shape = shape),
         content = {
             if (footer != null) {
-                Row(modifier = Modifier.layoutId(FooterId), horizontalArrangement = Arrangement.Start) {
+                Row(modifier = Modifier.layoutId(FOOTER_ID), horizontalArrangement = Arrangement.Start) {
                     Box(modifier = Modifier.padding(horizontal = 6.dp)) {
                         footer()
                     }
                 }
             }
             if (placeholder != null) {
-                Box(modifier = Modifier.layoutId(PlaceholderId), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.layoutId(PLACEHOLDER_ID), contentAlignment = Alignment.Center) {
                     placeholder()
                 }
             }
 
-            Box(modifier = Modifier.layoutId(TextFieldId), propagateMinConstraints = true) {
+            Box(modifier = Modifier.layoutId(TEXT_FIELD_ID), propagateMinConstraints = true) {
                 innerTextField()
             }
         }
@@ -129,17 +129,17 @@ private fun TextAreaDecorationBox(
         )
 
         val footerConstraints = constraintsWithoutPadding.copy(minWidth = 0, minHeight = 0)
-        val footerPlaceable = measurables.find { it.layoutId == FooterId }?.measure(footerConstraints)
+        val footerPlaceable = measurables.find { it.layoutId == FOOTER_ID }?.measure(footerConstraints)
         occupiedSpaceVertically += footerPlaceable?.height ?: 0
 
         val textConstraints = constraintsWithoutPadding.offset(
             vertical = -occupiedSpaceVertically
         ).copy(minWidth = 0)
-        val textFieldPlaceable = measurables.first { it.layoutId == TextFieldId }.measure(textConstraints)
+        val textFieldPlaceable = measurables.first { it.layoutId == TEXT_FIELD_ID }.measure(textConstraints)
 
         // measure placeholder
         val placeholderConstraints = textConstraints.copy(minHeight = 0)
-        val placeholderPlaceable = measurables.find { it.layoutId == PlaceholderId }?.measure(placeholderConstraints)
+        val placeholderPlaceable = measurables.find { it.layoutId == PLACEHOLDER_ID }?.measure(placeholderConstraints)
 
         val width = calculateWidth(
             footerPlaceable, textFieldPlaceable, placeholderPlaceable, incomingConstraints
@@ -203,8 +203,8 @@ private fun Placeable.PlacementScope.place(
     placeholderPlaceable?.placeRelative(padding, padding)
 }
 
-private const val PlaceholderId = "Placeholder"
-private const val TextFieldId = "TextField"
-private const val FooterId = "Footer"
+private const val PLACEHOLDER_ID = "Placeholder"
+private const val TEXT_FIELD_ID = "TextField"
+private const val FOOTER_ID = "Footer"
 
 private val TextAreaPadding = 6.dp

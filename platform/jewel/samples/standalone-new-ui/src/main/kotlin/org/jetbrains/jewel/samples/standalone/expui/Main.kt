@@ -235,7 +235,8 @@ fun main() {
 
                     Tooltip("A segmented button, or radio button group") {
                         var selectedIndex by remember { mutableStateOf(0) }
-                        SegmentedButton(3, selectedIndex, {
+                        val segmentedButtonItemCount = 3
+                        SegmentedButton(segmentedButtonItemCount, selectedIndex, {
                             selectedIndex = it
                         }) {
                             when (it) {
@@ -253,23 +254,27 @@ fun main() {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         var selectedIndex by remember { mutableStateOf(0) }
-                        RadioButton(selectedIndex == 0, {
-                            selectedIndex = 0
+                        val firstRadioButtonId = 0
+                        RadioButton(selectedIndex == firstRadioButtonId, {
+                            selectedIndex = firstRadioButtonId
                         }) {
                             Label("First")
                         }
-                        RadioButton(selectedIndex == 1, {
-                            selectedIndex = 1
+                        val secondRadioButtonId = 1
+                        RadioButton(selectedIndex == secondRadioButtonId, {
+                            selectedIndex = secondRadioButtonId
                         }, enabled = false) {
                             Label("Second")
                         }
-                        RadioButton(selectedIndex == 2, {
-                            selectedIndex = 2
+                        val thirdRadioButtonId = 2
+                        RadioButton(selectedIndex == thirdRadioButtonId, {
+                            selectedIndex = thirdRadioButtonId
                         }) {
                             Label("Third")
                         }
-                        RadioButton(selectedIndex == 3, {
-                            selectedIndex = 3
+                        val fourthRadioButtonId = 3
+                        RadioButton(selectedIndex == thirdRadioButtonId, {
+                            selectedIndex = thirdRadioButtonId
                         }) {
                             Label("Fourth")
                         }

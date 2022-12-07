@@ -23,7 +23,8 @@ data class AreaColors(
      */
     val text: Color,
     /**
-     * Overriding the foreground colour for some components that have their own colour like [Icon][org.jetbrains.jewel.themes.expui.standalone.control.Icon].
+     * Overriding the foreground colour for some components that have their own colour
+     * like [Icon][org.jetbrains.jewel.themes.expui.standalone.control.Icon].
      */
     val foreground: Color,
     val startBackground: Color,
@@ -34,9 +35,7 @@ data class AreaColors(
 )
 
 @Composable
-fun Modifier.areaBackground(areaColors: AreaColors = LocalAreaColors.current, shape: Shape = RectangleShape): Modifier {
-    return background(areaColors, shape)
-}
+fun Modifier.areaBackground(areaColors: AreaColors = LocalAreaColors.current, shape: Shape = RectangleShape): Modifier = background(areaColors, shape)
 
 fun Modifier.background(areaColors: AreaColors, shape: Shape = RectangleShape): Modifier {
     if (areaColors.startBackground.isUnspecified) {
@@ -53,9 +52,7 @@ fun Modifier.areaBorder(
     areaColors: AreaColors = LocalAreaColors.current,
     width: Dp = 1.dp,
     shape: Shape = RectangleShape,
-): Modifier {
-    return border(areaColors, width, shape)
-}
+): Modifier = border(areaColors, width, shape)
 
 fun Modifier.border(areaColors: AreaColors, width: Dp = 1.dp, shape: Shape = RectangleShape): Modifier {
     if (areaColors.startBorderColor.isUnspecified) {
@@ -73,9 +70,7 @@ fun Modifier.areaFocusBorder(
     areaColors: AreaColors = LocalAreaColors.current,
     width: Dp = 2.dp,
     shape: Shape = RectangleShape,
-): Modifier {
-    return focusBorder(focused, areaColors, width, shape)
-}
+): Modifier = focusBorder(focused, areaColors, width, shape)
 
 fun Modifier.focusBorder(
     focused: Boolean,

@@ -1,3 +1,4 @@
+@file:Suppress("MatchingDeclarationName")
 package org.jetbrains.jewel.themes.expui.standalone.control
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -205,22 +206,22 @@ private fun TextFieldDecorationBox(
             .areaBorder(shape = shape),
         content = {
             if (leadingIcon != null) {
-                Box(modifier = Modifier.layoutId(LeadingId), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.layoutId(LEADING_ID), contentAlignment = Alignment.Center) {
                     leadingIcon()
                 }
             }
             if (trailingIcon != null) {
-                Box(modifier = Modifier.layoutId(TrailingId), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.layoutId(TRAILING_ID), contentAlignment = Alignment.Center) {
                     trailingIcon()
                 }
             }
             if (placeholder != null) {
-                Box(modifier = Modifier.layoutId(PlaceholderId), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.layoutId(PLACEHOLDER_ID), contentAlignment = Alignment.Center) {
                     placeholder()
                 }
             }
 
-            Box(modifier = Modifier.layoutId(TextFieldId), propagateMinConstraints = true) {
+            Box(modifier = Modifier.layoutId(TEXT_FIELD_ID), propagateMinConstraints = true) {
                 innerTextField()
             }
         }
@@ -236,22 +237,22 @@ private fun TextFieldDecorationBox(
         val iconsConstraints = constraintsWithoutPadding.copy(minWidth = 0, minHeight = 0)
 
         // measure leading icon
-        val leadingPlaceable = measurables.find { it.layoutId == LeadingId }?.measure(iconsConstraints)
+        val leadingPlaceable = measurables.find { it.layoutId == LEADING_ID }?.measure(iconsConstraints)
         occupiedSpaceHorizontally += leadingPlaceable?.width ?: 0
 
         // measure trailing icon
-        val trailingPlaceable = measurables.find { it.layoutId == TrailingId }
+        val trailingPlaceable = measurables.find { it.layoutId == TRAILING_ID }
             ?.measure(iconsConstraints.offset(horizontal = -occupiedSpaceHorizontally))
         occupiedSpaceHorizontally += trailingPlaceable?.width ?: 0
 
         val textConstraints = constraintsWithoutPadding.offset(
             horizontal = -occupiedSpaceHorizontally
         ).copy(minHeight = 0)
-        val textFieldPlaceable = measurables.first { it.layoutId == TextFieldId }.measure(textConstraints)
+        val textFieldPlaceable = measurables.first { it.layoutId == TEXT_FIELD_ID }.measure(textConstraints)
 
         // measure placeholder
         val placeholderConstraints = textConstraints.copy(minWidth = 0)
-        val placeholderPlaceable = measurables.find { it.layoutId == PlaceholderId }?.measure(placeholderConstraints)
+        val placeholderPlaceable = measurables.find { it.layoutId == PLACEHOLDER_ID }?.measure(placeholderConstraints)
 
         val width = calculateWidth(
             leadingPlaceable, trailingPlaceable, textFieldPlaceable, placeholderPlaceable, incomingConstraints
@@ -341,10 +342,10 @@ private fun Placeable.PlacementScope.place(
     }
 }
 
-private const val PlaceholderId = "Placeholder"
-private const val TextFieldId = "TextField"
-private const val LeadingId = "Leading"
-private const val TrailingId = "Trailing"
+private const val PLACEHOLDER_ID = "Placeholder"
+private const val TEXT_FIELD_ID = "TextField"
+private const val LEADING_ID = "Leading"
+private const val TRAILING_ID = "Trailing"
 
 private val HorizontalTextFieldPadding = 6.dp
 private val VerticalTextFieldPadding = 3.dp

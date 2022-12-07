@@ -30,8 +30,8 @@ import org.jetbrains.jewel.themes.expui.standalone.style.LocalAreaColors
 import org.jetbrains.jewel.themes.expui.standalone.style.areaBackground
 import org.jetbrains.jewel.themes.expui.standalone.theme.LightTheme
 import org.jetbrains.jewel.themes.expui.standalone.theme.Theme
+import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import java.awt.event.ComponentListener
 
 @Composable
 internal fun JBWindowOnMacOS(
@@ -95,16 +95,10 @@ fun FrameWindowScope.rememberWindowIsFullscreen(): State<Boolean> {
         mutableStateOf(window.placement == WindowPlacement.Fullscreen)
     }
     DisposableEffect(window) {
-        val listener = object : ComponentListener {
+        val listener = object : ComponentAdapter() {
             override fun componentResized(e: ComponentEvent?) {
                 isFullscreen.value = window.placement == WindowPlacement.Fullscreen
             }
-
-            override fun componentMoved(e: ComponentEvent?) {}
-
-            override fun componentShown(e: ComponentEvent?) {}
-
-            override fun componentHidden(e: ComponentEvent?) {}
         }
         window.addComponentListener(listener)
         onDispose {

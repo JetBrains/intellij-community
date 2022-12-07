@@ -20,15 +20,6 @@ import org.jetbrains.jewel.themes.expui.standalone.style.AreaColors
 import org.jetbrains.jewel.themes.expui.standalone.style.AreaProvider
 import org.jetbrains.jewel.themes.expui.standalone.theme.LightTheme
 
-class ProgressBarColors(
-    override val normalAreaColors: AreaColors,
-    val indeterminateAreaColors: AreaColors,
-) : AreaProvider
-
-val LocalProgressBarColors = compositionLocalOf {
-    LightTheme.ProgressBarColors
-}
-
 @Composable
 fun ProgressBar(
     progress: Float,
@@ -90,4 +81,13 @@ fun ProgressBar(
             brush, Offset(0f, strokeWidth / 2f), Offset(length, strokeWidth / 2f), strokeWidth, cap = StrokeCap.Round
         )
     }
+}
+
+class ProgressBarColors(
+    override val normalAreaColors: AreaColors,
+    val indeterminateAreaColors: AreaColors,
+) : AreaProvider
+
+val LocalProgressBarColors = compositionLocalOf {
+    LightTheme.ProgressBarColors
 }

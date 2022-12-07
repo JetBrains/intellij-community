@@ -95,13 +95,9 @@ internal class MainToolBarChildData(
     inspectorInfo: InspectorInfo.() -> Unit = NoInspectorInfo,
 ) : ParentDataModifier, InspectorValueInfo(inspectorInfo) {
 
-    override fun Density.modifyParentData(parentData: Any?): Any {
-        return this@MainToolBarChildData
-    }
+    override fun Density.modifyParentData(parentData: Any?): Any = this@MainToolBarChildData
 
-    fun spotRule(): Int {
-        return if (draggableArea) 0 else 1
-    }
+    fun spotRule(): Int = if (draggableArea) 0 else 1
 }
 
 class MainToolBarMeasurePolicy(
@@ -208,27 +204,23 @@ internal fun Density.PxToDpRectangle(x: Int, y: Int, width: Int, height: Int): R
 fun rememberMainToolBarMeasurePolicy(
     window: Window,
     customWindowDecorationSupport: CustomWindowDecorationSupport = CustomWindowDecorationSupport
-): MeasurePolicy {
-    return remember(window) { MainToolBarMeasurePolicy(window, customWindowDecorationSupport) }
-}
+): MeasurePolicy = remember(window) { MainToolBarMeasurePolicy(window, customWindowDecorationSupport) }
 
 @Composable
 fun FrameWindowScope.BasicMainToolBar(
     colors: MainToolBarColors = LocalMainToolBarColors.current,
     customWindowDecorationSupport: CustomWindowDecorationSupport = CustomWindowDecorationSupport,
     content: (@Composable MainToolBarScope.() -> Unit)?,
-) {
-    colors.provideArea(LocalContentActivated.current) {
-        Layout(
-            content = {
-                with(MainToolBarScopeInstance) {
-                    content?.invoke(this)
-                }
-            },
-            modifier = Modifier.fillMaxWidth().height(40.dp).areaBackground(),
-            measurePolicy = rememberMainToolBarMeasurePolicy(window, customWindowDecorationSupport)
-        )
-    }
+) = colors.provideArea(LocalContentActivated.current) {
+    Layout(
+        content = {
+            with(MainToolBarScopeInstance) {
+                content?.invoke(this)
+            }
+        },
+        modifier = Modifier.fillMaxWidth().height(40.dp).areaBackground(),
+        measurePolicy = rememberMainToolBarMeasurePolicy(window, customWindowDecorationSupport)
+    )
 }
 
 @Composable

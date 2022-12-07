@@ -1,3 +1,4 @@
+@file:Suppress("MatchingDeclarationName")
 package org.jetbrains.jewel.themes.expui.standalone.control
 
 import androidx.compose.foundation.Canvas
@@ -171,6 +172,7 @@ fun TriStateCheckbox(
     }
 }
 
+@Suppress("MagicNumber")
 private fun Checkmark() = ImageVector.Builder(
     name = "Checkmark", defaultWidth = 14.0.dp, defaultHeight = 14.0.dp, viewportWidth = 14.0f, viewportHeight = 14.0f
 ).apply {
@@ -198,6 +200,7 @@ private fun Checkmark() = ImageVector.Builder(
     }
 }.build()
 
+@Suppress("MagicNumber")
 private fun CheckmarkIndeterminate() = ImageVector.Builder(
     name = "CheckmarkIndeterminate",
     defaultWidth = 14.0.dp,
