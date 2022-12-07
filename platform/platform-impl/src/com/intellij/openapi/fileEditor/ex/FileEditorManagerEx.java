@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.ex;
 
+import com.intellij.ide.impl.DataValidators;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -173,7 +174,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   public final @Nullable Object getData(@NotNull String dataId, @NotNull Editor editor, @NotNull Caret caret) {
     for (final EditorDataProvider dataProvider : myDataProviders) {
       final Object o = dataProvider.getData(dataId, editor, caret);
-      if (o != null) return o;
+      if (o != null) return DataValidators.validOrNull(o, dataId, dataProvider);
     }
     return null;
   }

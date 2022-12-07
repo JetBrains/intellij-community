@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.FakePsiElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -63,14 +65,14 @@ public abstract class DataValidators {
   }
 
   private static boolean isDataValid(@NotNull Object data, @NotNull String dataId, @NotNull Object source) {
-    //noinspection unchecked
-    Validator<Object>[] validators = (Validator<Object>[])getValidators(dataId);
-    if (validators == null) return true;
-    if (data instanceof PsiElement && !(data instanceof FakePsiElement) &&
+    if (isPsiElementProvided(data) &&
         EDT.isCurrentThreadEdt() &&
         SlowOperations.isInsideActivity(SlowOperations.FORCE_ASSERT)) {
       reportPsiElementOnEdt(dataId, source);
     }
+    //noinspection unchecked
+    Validator<Object>[] validators = (Validator<Object>[])getValidators(dataId);
+    if (validators == null) return true;
     try {
       for (Validator<Object> validator : validators) {
         if (!validator.checkValid(data, dataId, source)) return false;
@@ -81,6 +83,13 @@ public abstract class DataValidators {
       return false;
     }
     return true;
+  }
+
+  private static boolean isPsiElementProvided(@Nullable Object data) {
+    if (data instanceof PsiElement && !(data instanceof FakePsiElement)) return true;
+    if (data instanceof Object[] array) return isPsiElementProvided(ArrayUtil.getFirstElement(array));
+    if (data instanceof Collection<?> collection) return isPsiElementProvided(ContainerUtil.getFirstItem(collection));
+    return false;
   }
 
   private static void reportPsiElementOnEdt(@NotNull String dataId, @NotNull Object source) {
