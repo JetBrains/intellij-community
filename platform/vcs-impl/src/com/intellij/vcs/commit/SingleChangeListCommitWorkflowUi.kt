@@ -30,7 +30,7 @@ interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi {
 interface CommitOptionsUi {
   fun setOptions(options: CommitOptions)
 
-  fun setVisible(vcses: Collection<AbstractVcs>)
+  fun setVisible(vcses: Collection<AbstractVcs>?)
 }
 
 interface CommitWorkflowUiStateListener : EventListener {

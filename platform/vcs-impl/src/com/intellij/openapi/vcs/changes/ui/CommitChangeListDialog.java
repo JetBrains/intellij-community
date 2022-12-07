@@ -107,6 +107,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   @NotNull private final List<CommitExecutorAction> myExecutorActions = new ArrayList<>();
 
   @NotNull private final CommitOptionsPanel myCommitOptions;
+  @NotNull private final JComponent myCommitOptionsPanel;
   @NotNull private final ChangeInfoCalculator myChangesInfoCalculator;
   @NotNull private final JComponent myBrowserBottomPanel = createHorizontalBox();
   @NotNull private final MyChangeProcessor myDiffDetails;
@@ -249,11 +250,12 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     mySplitter = new Splitter(true);
     boolean nonFocusable = !UISettings.getInstance().getDisableMnemonicsInControls(); // Or that won't be keyboard accessible at all
     myCommitOptions = new CommitOptionsPanel(myProject, () -> getDefaultCommitActionName(), nonFocusable);
+    myCommitOptionsPanel = myCommitOptions.getComponent();
     myWarningLabel = new JBLabel();
 
     JPanel mainPanel = new JPanel(new MyOptionsLayout(mySplitter, myCommitOptions, JBUIScale.scale(150), JBUIScale.scale(400)));
     mainPanel.add(mySplitter);
-    mainPanel.add(myCommitOptions);
+    mainPanel.add(myCommitOptionsPanel);
 
     JPanel rootPane = JBUI.Panels.simplePanel(mainPanel).addToBottom(myWarningLabel);
     myDetailsSplitter = createDetailsSplitter(rootPane);
@@ -297,7 +299,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
     initCommitActions(myWorkflow.getCommitExecutors());
 
-    myCommitOptions.setBorder(emptyLeft(10));
+    myCommitOptionsPanel.setBorder(emptyLeft(10));
 
     myBrowserBottomPanel.add(myLegend.getComponent());
     BorderLayoutPanel topPanel = JBUI.Panels.simplePanel().addToCenter(getBrowser()).addToBottom(myBrowserBottomPanel);
@@ -828,12 +830,14 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   private static class MyOptionsLayout extends AbstractLayoutManager {
     @NotNull private final JComponent myPanel;
     @NotNull private final CommitOptionsPanel myOptions;
+    @NotNull private final JComponent myOptionsPanel;
     private final int myMinOptionsWidth;
     private final int myMaxOptionsWidth;
 
     MyOptionsLayout(@NotNull JComponent panel, @NotNull CommitOptionsPanel options, int minOptionsWidth, int maxOptionsWidth) {
       myPanel = panel;
       myOptions = options;
+      myOptionsPanel = options.getComponent();
       myMinOptionsWidth = minOptionsWidth;
       myMaxOptionsWidth = maxOptionsWidth;
     }
@@ -841,17 +845,17 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     @Override
     public Dimension preferredLayoutSize(Container parent) {
       Dimension size1 = myPanel.getPreferredSize();
-      Dimension size2 = myOptions.getPreferredSize();
+      Dimension size2 = myOptionsPanel.getPreferredSize();
       return new Dimension(size1.width + size2.width, max(size1.height, size2.height));
     }
 
     @Override
     public void layoutContainer(@NotNull Container parent) {
       Rectangle bounds = parent.getBounds();
-      int preferredWidth = myOptions.getPreferredSize().width;
+      int preferredWidth = myOptionsPanel.getPreferredSize().width;
       int optionsWidth = myOptions.isEmpty() ? 0 : clamp(preferredWidth, myMinOptionsWidth, myMaxOptionsWidth);
       myPanel.setBounds(new Rectangle(0, 0, bounds.width - optionsWidth, bounds.height));
-      myOptions.setBounds(new Rectangle(bounds.width - optionsWidth, 0, optionsWidth, bounds.height));
+      myOptionsPanel.setBounds(new Rectangle(bounds.width - optionsWidth, 0, optionsWidth, bounds.height));
     }
   }
 }

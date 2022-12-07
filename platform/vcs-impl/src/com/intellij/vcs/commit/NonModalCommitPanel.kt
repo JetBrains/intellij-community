@@ -140,22 +140,24 @@ abstract class NonModalCommitPanel(
   }
 
   override fun showCommitOptions(options: CommitOptions, actionName: @Nls String, isFromToolbar: Boolean, dataContext: DataContext) {
-    val commitOptionsPanel = CommitOptionsPanel(project, actionNameSupplier = { actionName }, nonFocusable = false).apply {
+    val commitOptionsPanel = CommitOptionsPanel(project, actionNameSupplier = { actionName }, nonFocusable = false)
+    commitOptionsPanel.setOptions(options)
+
+    val commitOptionsComponent = commitOptionsPanel.component.apply {
       focusTraversalPolicy = LayoutFocusTraversalPolicy()
       isFocusCycleRoot = true
 
-      setOptions(options)
-      border = empty(0, 10)
-
-      // to reflect LaF changes as commit options components are created once per commit
-      if (needUpdateCommitOptionsUi) {
-        needUpdateCommitOptionsUi = false
-        updateComponentTreeUI(this)
-      }
+      border = empty(0, 10, 10, 10)
     }
-    val focusComponent = IdeFocusManager.getInstance(project).getFocusTargetFor(commitOptionsPanel)
+    // to reflect LaF changes as commit options components are created once per commit
+    if (needUpdateCommitOptionsUi) {
+      needUpdateCommitOptionsUi = false
+      updateComponentTreeUI(commitOptionsComponent)
+    }
+
+    val focusComponent = IdeFocusManager.getInstance(project).getFocusTargetFor(commitOptionsComponent)
     val commitOptionsPopup = JBPopupFactory.getInstance()
-      .createComponentPopupBuilder(commitOptionsPanel, focusComponent)
+      .createComponentPopupBuilder(commitOptionsComponent, focusComponent)
       .setRequestFocus(true)
       .addListener(object : JBPopupListener {
         override fun beforeShown(event: LightweightWindowEvent) {
