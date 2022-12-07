@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * If {@link FileEditor} implements this interface it be used instead of
+ * If {@link com.intellij.openapi.fileEditor.FileEditorProvider} implements this interface, it will be used instead of
  * creating a temp FileEditor just to call {@link FileEditor#getStructureViewBuilder()}.
  */
 public interface StructureViewFileEditorProvider {
