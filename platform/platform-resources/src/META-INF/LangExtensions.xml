@@ -1263,9 +1263,10 @@
     <statusBarWidgetFactory id="CodeStyleStatusBarWidget" implementation="com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidgetFactory" order="after InsertOverwrite"/>
     <statusBarWidgetFactory id="ReadOnlyAttribute" implementation="com.intellij.openapi.wm.impl.status.ReadOnlyAttributeWidgetFactory" order="after CodeStyleStatusBarWidget"/>
     <statusBarWidgetFactory id="inspectionProfileWidget" implementation="com.intellij.openapi.wm.impl.status.InspectionProfileWidgetFactory" order="after ReadOnlyAttribute"/>
+
     <statusBarWidgetFactory id="Notifications" implementation="com.intellij.notification.impl.widget.NotificationWidgetFactory" order="after inspectionProfileWidget"/>
     <statusBarWidgetFactory id="FatalError" implementation="com.intellij.openapi.wm.impl.status.FatalErrorWidgetFactory" order="after Notifications"/>
-    <statusBarWidgetFactory id="WriteThread" implementation="com.intellij.openapi.wm.impl.status.WriteThreadIndicatorWidgetFactory" order="after FatalError"/>
+    <statusBarWidgetFactory id="WriteThread" implementation="com.intellij.openapi.wm.impl.status.WriteThreadIndicatorWidgetFactory" order="last"/>
     <statusBarWidgetFactory id="Memory" implementation="com.intellij.openapi.wm.impl.status.MemoryIndicatorWidgetFactory" order="last"/>
     <statusBarWidgetFactory id="settingsEntryPointWidget" implementation="com.intellij.ide.actions.SettingsEntryPointAction$StatusBarManager" order="last"/>
 

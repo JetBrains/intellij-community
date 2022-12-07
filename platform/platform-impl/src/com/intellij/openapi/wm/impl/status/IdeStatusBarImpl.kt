@@ -265,7 +265,7 @@ open class IdeStatusBarImpl internal constructor(
         val component = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           val component = wrap(widget)
           if (component is StatusBarWidgetWrapper) {
-            component.beforeUpdate()
+            component.beforeUpdate(this@IdeStatusBarImpl)
           }
           component
         }
@@ -333,7 +333,7 @@ open class IdeStatusBarImpl internal constructor(
       component.border = if (SystemInfoRt.isMac) JBUI.Borders.empty(2, 0, 2, 4) else JBUI.Borders.empty()
     }
     if (component is StatusBarWidgetWrapper) {
-      component.beforeUpdate()
+      component.beforeUpdate(this)
     }
 
     panel.add(component)
@@ -555,7 +555,7 @@ open class IdeStatusBarImpl internal constructor(
       val widgetComponent = getWidgetComponent(id)
       if (widgetComponent != null) {
         if (widgetComponent is StatusBarWidgetWrapper) {
-          widgetComponent.beforeUpdate()
+          widgetComponent.beforeUpdate(this)
         }
         widgetComponent.repaint()
         fireWidgetUpdated(id)

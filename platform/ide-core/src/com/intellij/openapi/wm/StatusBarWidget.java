@@ -42,7 +42,9 @@ public interface StatusBarWidget extends Disposable {
   interface WidgetPresentation {
     @Nullable @NlsContexts.Tooltip String getTooltipText();
 
-    default @Nullable @Nls String getShortcutText() { return null; }
+    default @Nullable @Nls String getShortcutText() {
+      return null;
+    }
 
     default @Nullable Consumer<MouseEvent> getClickConsumer() {
       return null;
@@ -50,7 +52,17 @@ public interface StatusBarWidget extends Disposable {
   }
 
   interface IconPresentation extends WidgetPresentation {
-    @Nullable Icon getIcon();
+    /**
+     * @deprecated Use {@link #getIcon(StatusBar)}
+     */
+    @Deprecated
+    default @Nullable Icon getIcon() {
+      throw new AbstractMethodError();
+    }
+
+    default @Nullable Icon getIcon(@SuppressWarnings("unused") @NotNull StatusBar statusBar) {
+      return getIcon();
+    }
   }
 
   interface TextPresentation extends WidgetPresentation {

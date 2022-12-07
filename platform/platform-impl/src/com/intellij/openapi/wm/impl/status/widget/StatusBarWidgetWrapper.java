@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.ui.ClickListener;
@@ -41,10 +42,11 @@ public interface StatusBarWidgetWrapper {
   @NotNull
   StatusBarWidget.WidgetPresentation getPresentation();
 
-  void beforeUpdate();
+  void beforeUpdate(@NotNull StatusBar statusBar);
 
   default void setWidgetTooltip(JComponent widgetComponent, @NlsContexts.Tooltip @Nullable String toolTipText, @Nullable String shortcutText) {
     widgetComponent.setToolTipText(toolTipText);
+    //noinspection SpellCheckingInspection
     if (Registry.is("ide.helptooltip.enabled")) {
       widgetComponent.putClientProperty(HelpTooltipManager.SHORTCUT_PROPERTY, shortcutText);
     }
@@ -84,7 +86,7 @@ public interface StatusBarWidgetWrapper {
     }
 
     @Override
-    public void beforeUpdate() {
+    public void beforeUpdate(@NotNull StatusBar statusBar) {
       String value = myPresentation.getSelectedValue();
       setText(value);
       setIcon(myPresentation.getIcon());
@@ -118,7 +120,7 @@ public interface StatusBarWidgetWrapper {
     }
 
     @Override
-    public void beforeUpdate() {
+    public void beforeUpdate(@NotNull StatusBar statusBar) {
       String text = myPresentation.getText();
       setText(text);
       setVisible(!text.isEmpty());
@@ -129,11 +131,9 @@ public interface StatusBarWidgetWrapper {
   final class Icon extends TextPanel.WithIconAndArrows implements StatusBarWidgetWrapper {
     private final StatusBarWidget.IconPresentation myPresentation;
 
-    public Icon(final @NotNull StatusBarWidget.IconPresentation presentation) {
+    Icon(@NotNull StatusBarWidget.IconPresentation presentation) {
       myPresentation = presentation;
       setTextAlignment(Component.CENTER_ALIGNMENT);
-      setIcon(myPresentation.getIcon());
-      setVisible(hasIcon());
       setBorder(JBUI.CurrentTheme.StatusBar.Widget.iconBorder());
       Consumer<MouseEvent> clickConsumer = myPresentation.getClickConsumer();
       if (clickConsumer != null) {
@@ -147,14 +147,14 @@ public interface StatusBarWidgetWrapper {
     }
 
     @Override
-    public void beforeUpdate() {
-      setIcon(myPresentation.getIcon());
+    public void beforeUpdate(@NotNull StatusBar statusBar) {
+      setIcon(myPresentation.getIcon(statusBar));
       setVisible(hasIcon());
       setWidgetTooltip(this, myPresentation.getTooltipText(), myPresentation.getShortcutText());
     }
   }
 
-  class StatusBarWidgetClickListener extends ClickListener {
+  final class StatusBarWidgetClickListener extends ClickListener {
     private final Consumer<? super MouseEvent> myClickConsumer;
 
     public StatusBarWidgetClickListener(@NotNull Consumer<? super MouseEvent> consumer) {

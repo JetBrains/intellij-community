@@ -21,6 +21,6 @@ final class ReadOnlyAttributeWidgetFactory extends StatusBarEditorBasedWidgetFac
 
   @Override
   public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
-    return new ToggleReadOnlyAttributePanel();
+    return new ToggleReadOnlyAttributePanel(project);
   }
 }
