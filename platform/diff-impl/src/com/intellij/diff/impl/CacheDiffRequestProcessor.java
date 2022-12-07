@@ -160,6 +160,10 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
     return ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
   }
 
+  /**
+   * NB: Method may be overridden to check if cached request is up-to-date, or needs to be updated.
+   * Ex: if a reasonable `T.equals()` cannot be implemented.
+   */
   @Nullable
   protected DiffRequest loadRequestFast(@NotNull T provider) {
     return myRequestCache.get(provider);
