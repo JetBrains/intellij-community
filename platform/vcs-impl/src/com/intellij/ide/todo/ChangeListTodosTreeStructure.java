@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class ChangeListTodosTreeStructure extends TodoTreeStructure {
   }
 
   @Override
-  public boolean accept(final PsiFile psiFile) {
+  public boolean accept(final @NotNull PsiFile psiFile) {
     if (!psiFile.isValid()) return false;
 
     VirtualFile file = psiFile.getVirtualFile();

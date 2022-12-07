@@ -18,6 +18,7 @@ package com.intellij.ide.todo;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class AllTodosTreeStructure extends TodoTreeStructure {
   public AllTodosTreeStructure(final Project project) {
@@ -25,7 +26,7 @@ public class AllTodosTreeStructure extends TodoTreeStructure {
   }
 
   @Override
-  public boolean accept(final PsiFile psiFile) {
+  public boolean accept(final @NotNull PsiFile psiFile) {
     return psiFile.isValid() && acceptTodoFilter(psiFile);
   }
 }

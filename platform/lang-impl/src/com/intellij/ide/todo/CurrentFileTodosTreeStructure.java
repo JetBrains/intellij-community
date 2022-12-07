@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 
 public final class CurrentFileTodosTreeStructure extends TodoTreeStructure {
   /**
@@ -64,7 +65,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure {
   }
 
   @Override
-  public boolean accept(PsiFile psiFile) {
+  public boolean accept(@NotNull PsiFile psiFile) {
     if (myFile == null || !myFile.equals(psiFile) || !myFile.isValid()) {
       return false;
     }

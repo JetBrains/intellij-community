@@ -51,7 +51,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
     return new ToDoRootNode(myProject, new Object(), myBuilder, mySummaryElement);
   }
 
-  public abstract boolean accept(PsiFile psiFile);
+  public abstract boolean accept(@NotNull PsiFile psiFile);
 
   /**
    * Validate whole the cache
@@ -117,7 +117,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
     return element == getRootElement() || element == mySummaryElement && (myAreModulesShown || myArePackagesShown);
   }
 
-  protected boolean acceptTodoFilter(PsiFile psiFile) {
+  protected boolean acceptTodoFilter(@NotNull PsiFile psiFile) {
     PsiTodoSearchHelper searchHelper = getSearchHelper();
     return myTodoFilter != null && myTodoFilter.accept(searchHelper, psiFile) ||
            (myTodoFilter == null && searchHelper.getTodoItemsCount(psiFile) > 0);

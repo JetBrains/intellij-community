@@ -18,6 +18,7 @@ package com.intellij.ide.todo;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiTodoSearchHelper;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author irengrig
@@ -31,7 +32,7 @@ public class CustomChangelistTodoTreeStructure extends TodoTreeStructure {
   }
 
   @Override
-  public boolean accept(final PsiFile psiFile) {
+  public boolean accept(final @NotNull PsiFile psiFile) {
     if (!psiFile.isValid()) return false;
     return getSearchHelper().getTodoItemsCount(psiFile) > 0;
   }

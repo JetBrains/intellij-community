@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.NotNull;
 
 public class ScopeBasedTodosTreeStructure extends TodoTreeStructure {
   private final ScopeChooserCombo myScopes;
@@ -31,7 +32,7 @@ public class ScopeBasedTodosTreeStructure extends TodoTreeStructure {
   }
 
   @Override
-  public boolean accept(final PsiFile psiFile) {
+  public boolean accept(final @NotNull PsiFile psiFile) {
     if (!psiFile.isValid()) return false;
 
     SearchScope scope = myScopes.getSelectedScope();
