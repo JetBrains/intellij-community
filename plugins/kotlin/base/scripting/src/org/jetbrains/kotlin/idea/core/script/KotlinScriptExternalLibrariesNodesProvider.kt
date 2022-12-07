@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.applyIf
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.core.script.ucache.*
@@ -24,9 +25,11 @@ class KotlinScriptExternalLibrariesNodesProvider: ExternalLibrariesWorkspaceMode
         if (!scriptsAsEntities) return null
 
         val dependencies = entity.listDependencies()
-        val scriptFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(entity.path))
-            ?: error("Cannot find file: ${entity.path}")
-        val library = KotlinScriptDependenciesLibrary("Script: ${scriptFile.relativeName(project)}",
+        val path = entity.path
+        val scriptFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(path))
+        val scriptFileName = scriptFile?.relativeName(project)
+            ?: path.applyIf(path.startsWith("/")) { path.replaceFirst("/", "") }
+        val library = KotlinScriptDependenciesLibrary("Script: $scriptFileName",
                                                       dependencies.compiled, dependencies.sources)
 
         return SyntheticLibraryElementNode(project, library, library, settings)
