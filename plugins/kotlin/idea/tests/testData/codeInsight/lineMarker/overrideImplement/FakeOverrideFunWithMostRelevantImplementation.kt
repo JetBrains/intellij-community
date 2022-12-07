@@ -9,5 +9,5 @@ interface <lineMarker>B</lineMarker> : A {
 interface <lineMarker>C</lineMarker> : B, A
 
 class SomeClass() : C {
-    override fun <lineMarker descr="Overrides function in 'B'">f</lineMarker>() {}
+    override fun <lineMarker descr="Overrides function in B Press ... to navigate">f</lineMarker>() {}
 }

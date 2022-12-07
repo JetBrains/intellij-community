@@ -13,35 +13,35 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.locks.ReentrantLock
 
-interface <lineMarker descr="Is implemented by     AndroidMain     JvmMain  Click or press ⌥⌘Bto navigate">JvmAndAndroidMain</lineMarker> : CommonMain {
-    override fun <lineMarker descr="Overrides function in 'CommonMain'"><lineMarker descr="Is overridden in     AndroidMain     JvmMain">useKtorApis</lineMarker></lineMarker>(): HttpClient {
+interface <lineMarker descr="Is implemented by AndroidMain JvmMain Press Ctrl+Alt+B to navigate">JvmAndAndroidMain</lineMarker> : CommonMain {
+    override fun <lineMarker descr="Overrides function in CommonMain Press Ctrl+U to navigate"><lineMarker descr="Is overridden in AndroidMain JvmMain Press Ctrl+Alt+B to navigate">useKtorApis</lineMarker></lineMarker>(): HttpClient {
         return super.useKtorApis().config {
             this.useDefaultTransformers = true
         }
     }
 
-    override fun <lineMarker descr="Overrides function in 'CommonMain'"><lineMarker descr="Is overridden in     AndroidMain     JvmMain">useKtorApisCloseable</lineMarker></lineMarker>(): Closeable {
+    override fun <lineMarker descr="Overrides function in CommonMain Press Ctrl+U to navigate"><lineMarker descr="Is overridden in AndroidMain JvmMain Press Ctrl+Alt+B to navigate">useKtorApisCloseable</lineMarker></lineMarker>(): Closeable {
         return Closeable {  }
     }
 
-    override fun <lineMarker descr="Overrides function in 'CommonMain'"><lineMarker descr="Is overridden in     AndroidMain     JvmMain">useCoroutinesApis</lineMarker></lineMarker>(): Deferred<String> {
+    override fun <lineMarker descr="Overrides function in CommonMain Press Ctrl+U to navigate"><lineMarker descr="Is overridden in AndroidMain JvmMain Press Ctrl+Alt+B to navigate">useCoroutinesApis</lineMarker></lineMarker>(): Deferred<String> {
         return runBlocking(Dispatchers.IO) {
             super.useCoroutinesApis()
         }
     }
 
-    override fun <lineMarker descr="Overrides function in 'CommonMain'"><lineMarker descr="Is overridden in     JvmMain">useAtomicFu</lineMarker></lineMarker>(): AtomicInt {
+    override fun <lineMarker descr="Overrides function in CommonMain Press Ctrl+U to navigate"><lineMarker descr="Is overridden in JvmMain Press Ctrl+Alt+B to navigate">useAtomicFu</lineMarker></lineMarker>(): AtomicInt {
         return super.useAtomicFu().also { atomicInt ->
             atomicInt.update { it + 1 }
         }
     }
 
 
-    override fun <lineMarker descr="Overrides function in 'CommonMain'"><lineMarker descr="Is overridden in     JvmMain">androidSdkIsNotVisible</lineMarker></lineMarker>(context: <error descr="[UNRESOLVED_REFERENCE] Unresolved reference: android" textAttributesKey="null">android</error>.<error descr="[DEBUG] Reference is not resolved to anything, but is not marked unresolved" textAttributesKey="KOTLIN_DEBUG_INFO">content</error>.<error descr="[DEBUG] Reference is not resolved to anything, but is not marked unresolved" textAttributesKey="KOTLIN_DEBUG_INFO">Context</error>) {
+    override fun <lineMarker descr="Overrides function in CommonMain Press Ctrl+U to navigate"><lineMarker descr="Is overridden in JvmMain Press Ctrl+Alt+B to navigate">androidSdkIsNotVisible</lineMarker></lineMarker>(context: <error descr="[UNRESOLVED_REFERENCE] Unresolved reference: android" textAttributesKey="null">android</error>.<error descr="[DEBUG] Reference is not resolved to anything, but is not marked unresolved" textAttributesKey="KOTLIN_DEBUG_INFO">content</error>.<error descr="[DEBUG] Reference is not resolved to anything, but is not marked unresolved" textAttributesKey="KOTLIN_DEBUG_INFO">Context</error>) {
 
     }
 
-    fun <lineMarker descr="Is overridden in     AndroidMain     JvmMain">useJdkApis</lineMarker>(): ReentrantLock {
+    fun <lineMarker descr="Is overridden in AndroidMain JvmMain Press Ctrl+Alt+B to navigate">useJdkApis</lineMarker>(): ReentrantLock {
         return ReentrantLock()
     }
 

@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter.markers
 
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
 import com.intellij.ide.util.PsiClassListCellRenderer
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.NavigatablePsiElement
@@ -55,11 +56,9 @@ fun getOverriddenPropertyTooltip(property: KtNamedDeclaration): String? {
     else
         KotlinBundle.message("overridden.marker.overrides")
 
-    val pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{0}"
-    return com.intellij.codeInsight.daemon.impl.GutterIconTooltipHelper.composeText(
+    return KotlinGutterTooltipHelper.buildTooltipText(
         collectedClasses.sortedWith(PsiClassListCellRenderer().comparator),
-        start,
-        pattern
+        start, true, IdeActions.ACTION_GOTO_IMPLEMENTATION
     )
 }
 

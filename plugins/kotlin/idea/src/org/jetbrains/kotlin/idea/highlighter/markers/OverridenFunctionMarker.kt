@@ -1,37 +1,27 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighter.markers
 
 import com.intellij.codeInsight.daemon.DaemonBundle
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask
-import com.intellij.ide.IdeDeprecatedMessagesBundle
 import com.intellij.ide.util.MethodCellRenderer
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.*
-import com.intellij.psi.presentation.java.ClassPresentationUtil
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.search.PsiElementProcessorAdapter
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.util.CommonProcessors
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.elements.isTraitFakeOverride
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.presentation.DeclarationByModuleRenderer
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachDeclaredMemberOverride
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
-import org.jetbrains.kotlin.idea.util.isExpectDeclaration
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
@@ -72,7 +62,7 @@ fun getModuleSpecificSubclassedClassTooltip(klass: PsiClass): String? {
     ClassInheritorsSearch.search(klass).forEach(PsiElementProcessorAdapter(processor))
 
     if (processor.isOverflow) {
-        return if (klass.isInterface) IdeDeprecatedMessagesBundle.message("interface.is.implemented.too.many") else DaemonBundle.message("class.is.subclassed.too.many")
+        return if (klass.isInterface) DaemonBundle.message("method.is.implemented.too.many") else DaemonBundle.message("class.is.subclassed.too.many")
     }
 
     val subclasses = processor.toArray(PsiClass.EMPTY_ARRAY)
@@ -85,33 +75,14 @@ fun getModuleSpecificSubclassedClassTooltip(klass: PsiClass): String? {
             null
     }
 
-    val start = IdeDeprecatedMessagesBundle.message(if (klass.isInterface) "interface.is.implemented.by.header" else "class.is.subclassed.by.header")
-    val shortcuts = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_IMPLEMENTATION).shortcutSet.shortcuts
-    val shortcut = shortcuts.firstOrNull()
-    val shortCutText = if (shortcut != null)
-        KotlinBundle.message("highlighter.text.or.press", KeymapUtil.getShortcutText(shortcut))
-    else
-        ""
+    val comparator = DeclarationByModuleRenderer().comparator
+    val start =
+        KotlinBundle.message(if (klass.isInterface) "tooltip.is.implemented.by" else "tooltip.is.subclassed.by")
 
-    val postfix = "<br><div style=''margin-top: 5px''><font size=''2''>" + KotlinBundle.message(
-        "highlighter.text.click.for.navigate",
-        shortCutText
-    ) + "</font></div>"
-
-    val renderer = DeclarationByModuleRenderer()
-    val comparator = renderer.comparator
-    return subclasses.toList().sortedWith(comparator).joinToString(
-        prefix = "<html><body>$start", postfix = "$postfix</body</html>", separator = "<br>"
-    ) { clazz ->
-        val moduleNameRequired =
-            (clazz.safeAs<KtLightClass>()?.kotlinOrigin ?: clazz.safeAs<KtClassOrObject>())?.let { origin ->
-                origin.hasActualModifier() || origin.isExpectDeclaration()
-            } ?: false
-        val moduleName = clazz.module?.name
-        val elementText = renderer.getElementText(clazz) + (moduleName?.takeIf { moduleNameRequired }?.let { " [$it]" } ?: "")
-        val refText = (moduleName?.let { "$it:" } ?: "") + ClassPresentationUtil.getNameForClass(clazz, /* qualified = */ true)
-        "&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#kotlinClass/$refText\">$elementText</a>"
-    }
+    return KotlinGutterTooltipHelper.buildTooltipText(
+        subclasses.sortedWith(comparator),
+        start, true, IdeActions.ACTION_GOTO_IMPLEMENTATION
+    )
 }
 
 fun getOverriddenMethodTooltip(method: PsiMethod): String? {
@@ -121,7 +92,7 @@ fun getOverriddenMethodTooltip(method: PsiMethod): String? {
     val isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT)
 
     if (processor.isOverflow) {
-        return if (isAbstract) DaemonBundle.message("method.is.implemented.too.many") else DaemonBundle.message("method.is.overridden.too.many")
+        return DaemonBundle.message(if (isAbstract) "method.is.implemented.too.many" else "method.is.overridden.too.many")
     }
 
     val comparator = MethodCellRenderer(false).comparator
@@ -129,12 +100,11 @@ fun getOverriddenMethodTooltip(method: PsiMethod): String? {
     val overridingJavaMethods = processor.collection.filter { !it.isMethodWithDeclarationInOtherClass() }.sortedWith(comparator)
     if (overridingJavaMethods.isEmpty()) return null
 
-    val start = if (isAbstract) DaemonBundle.message("method.is.implemented.header") else DaemonBundle.message("method.is.overriden.header")
+    val start = KotlinBundle.message(if (isAbstract) "overridden.marker.implementation" else "overridden.marker.overrides")
 
-    return com.intellij.codeInsight.daemon.impl.GutterIconTooltipHelper.composeText(
+    return KotlinGutterTooltipHelper.buildTooltipText(
         overridingJavaMethods,
-        start,
-        "&nbsp;&nbsp;&nbsp;&nbsp;{1}"
+        start, true, IdeActions.ACTION_GOTO_IMPLEMENTATION
     )
 }
 

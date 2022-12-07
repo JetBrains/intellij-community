@@ -1,38 +1,38 @@
 class NavigateFromPrivateAbstractClass {
-    private abstract class <lineMarker descr="Is subclassed by Impl in NavigateFromPrivateAbstractClass Impl2 in NavigateFromPrivateAbstractClass  Click or press ... to navigate">Base</lineMarker> {
-        abstract fun <lineMarker descr="Is implemented in  NavigateFromPrivateAbstractClass.Impl  NavigateFromPrivateAbstractClass.Impl2">foo</lineMarker>()
+    private abstract class <lineMarker descr="Is subclassed by Impl in NavigateFromPrivateAbstractClass Impl2 in NavigateFromPrivateAbstractClass Press ... to navigate">Base</lineMarker> {
+        abstract fun <lineMarker descr="Is implemented in Impl in NavigateFromPrivateAbstractClass Impl2 in NavigateFromPrivateAbstractClass Press ... to navigate">foo</lineMarker>()
     }
 
     private class Impl: Base() {
-        override fun <lineMarker descr="Implements function in 'Base'">foo</lineMarker>() {}
+        override fun <lineMarker descr="Implements function in Base in NavigateFromPrivateAbstractClass Press ... to navigate">foo</lineMarker>() {}
     }
 
     private class Impl2: Base() {
-        override fun <lineMarker descr="Implements function in 'Base'">foo</lineMarker>() {}
+        override fun <lineMarker descr="Implements function in Base in NavigateFromPrivateAbstractClass Press ... to navigate">foo</lineMarker>() {}
     }
 
 }
 
 class NestedPrivateClass {
-    private abstract class <lineMarker descr="Is subclassed by Dsds in Base in NestedPrivateClass  Click or press ... to navigate">Base</lineMarker> {
+    private abstract class <lineMarker descr="Is subclassed by Dsds in Base in NestedPrivateClass Press ... to navigate">Base</lineMarker> {
         private abstract class Dsds : Base()
     }
 }
 
 fun localFunctionCase() {
-    open class <lineMarker descr="Is subclassed by B in localFunctionCase() in NavigateFromPrivateAbstractClass.kt C in localFunctionCase() in NavigateFromPrivateAbstractClass.kt  Click or press ... to navigate">A</lineMarker> {}
+    open class <lineMarker descr="Is subclassed by B in localFunctionCase C in localFunctionCase Press ... to navigate">A</lineMarker> {}
     class B : A() {}
     class C : A() {}
 }
 
 fun localFunctionCase2() {
-    open class <lineMarker descr="Is subclassed by D in localFunctionCase2() in NavigateFromPrivateAbstractClass.kt  Click or press ... to navigate">A</lineMarker> {
-        open fun <lineMarker descr="Is overridden in D in localFunctionCase2() in NavigateFromPrivateAbstractClassKt">foo</lineMarker>() = Unit
+    open class <lineMarker descr="Is subclassed by D in doo in localFunctionCase2 Press ... to navigate">A</lineMarker> {
+        open fun <lineMarker descr="Is overridden in D in doo in localFunctionCase2 Press ... to navigate">foo</lineMarker>() = Unit
     }
 
     fun doo() {
         class D : A() {
-            override fun <lineMarker descr="Overrides function in 'A'">foo</lineMarker>() {}
+            override fun <lineMarker descr="Overrides function in A in localFunctionCase2 Press ... to navigate">foo</lineMarker>() {}
         }
     }
 }
@@ -48,12 +48,12 @@ TARGETS:
 */
 
 /*
-LINEMARKER: descr='Is subclassed by Dsds in NestedPrivateClass  Click or press ... to navigate'
+LINEMARKER: descr='Is subclassed by Dsds in Base in NestedPrivateClass  Click or press ... to navigate'
 TARGETS:
 */
 
 /*
-LINEMARKER: descr='Is implemented in NavigateFromPrivateAbstractClass.Impl NavigateFromPrivateAbstractClass.Impl2'
+LINEMARKER: descr='Is implemented in Impl in NavigateFromPrivateAbstractClass Impl2 in NavigateFromPrivateAbstractClass Press ... to navigate'
 TARGETS:
 NavigateFromPrivateAbstractClass.kt
         override fun <1>localFunctionCase() {}
@@ -64,7 +64,7 @@ NavigateFromPrivateAbstractClass.kt
 */
 
 /*
-LINEMARKER: descr='Implements function in 'Base''
+LINEMARKER: descr='Implements function in Base in NavigateFromPrivateAbstractClass Press ... to navigate'
 TARGETS:
 NavigateFromPrivateAbstractClass.kt
         abstract fun <1>localFunctionCase()

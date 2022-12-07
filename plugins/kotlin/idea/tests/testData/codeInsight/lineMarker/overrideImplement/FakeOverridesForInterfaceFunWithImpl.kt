@@ -1,23 +1,23 @@
-interface <lineMarker descr="Is implemented by B C  Click or press ... to navigate">A</lineMarker> {
-    fun <lineMarker descr="<html><body>Is overridden in <br>&nbsp;&nbsp;&nbsp;&nbsp;C</body></html>">foo</lineMarker>(): String = "A"
+interface <lineMarker descr="Is implemented by B C Press ... to navigate">A</lineMarker> {
+    fun <lineMarker descr="Is overridden in C Press ... to navigate">foo</lineMarker>(): String = "A"
 
-    val <lineMarker descr="<html><body>Is implemented in <br/>&nbsp;&nbsp;&nbsp;&nbsp;C</body></html>">some</lineMarker>: String? get() = null
+    val <lineMarker descr="Is implemented in C Press ... to navigate">some</lineMarker>: String? get() = null
 
-    var <lineMarker descr="<html><body>Is implemented in <br/>&nbsp;&nbsp;&nbsp;&nbsp;C</body></html>">other</lineMarker>: String?
+    var <lineMarker descr="Is implemented in C Press ... to navigate">other</lineMarker>: String?
         get() = null
         set(value) {}
 }
 
-open class <lineMarker descr="Is subclassed by C  Click or press ... to navigate">B</lineMarker> : A
+open class <lineMarker descr="Is subclassed by C Press ... to navigate">B</lineMarker> : A
 
 class C: B() {
-    override val <lineMarker descr="Overrides property in 'A'">some</lineMarker>: String = "S"
+    override val <lineMarker descr="Overrides property in A Press ... to navigate">some</lineMarker>: String = "S"
 
-    override var <lineMarker descr="Overrides property in 'A'">other</lineMarker>: String?
+    override var <lineMarker descr="Overrides property in A Press ... to navigate">other</lineMarker>: String?
         get() = null
         set(value) {}
 
-    override fun <lineMarker descr="Overrides function in 'A'">foo</lineMarker>(): String {
+    override fun <lineMarker descr="Overrides function in A Press ... to navigate">foo</lineMarker>(): String {
         return super<S1>.foo()
     }
 }

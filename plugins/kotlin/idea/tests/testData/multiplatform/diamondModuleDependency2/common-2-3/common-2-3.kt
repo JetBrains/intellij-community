@@ -1,7 +1,7 @@
 @file:Suppress("UNUSED_PARAMETER")
 package sample
 
-actual interface <!LINE_MARKER("descr='Has expects in common-1 module'"), LINE_MARKER("descr='Is implemented by D  Click or press ... to navigate'")!>A<!> {
+actual interface <!LINE_MARKER("descr='Has expects in common-1 module'"), LINE_MARKER("descr='Is implemented by D (sample) Press ... to navigate'")!>A<!> {
     actual fun <!LINE_MARKER("descr='Has expects in common-1 module'")!>foo_A<!>()
     fun foo_A_3()
 }

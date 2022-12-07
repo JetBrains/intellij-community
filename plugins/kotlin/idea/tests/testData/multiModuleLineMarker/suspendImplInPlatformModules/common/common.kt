@@ -1,5 +1,5 @@
-interface <!LINE_MARKER("descr='Is implemented by KJs KJvm  Click or press ... to navigate'")!>I<!> {
-    suspend fun <!LINE_MARKER("descr='Is implemented in KJs KJvm'")!>foo<!>(s: String)
+interface <!LINE_MARKER("descr='Is implemented by KJs KJvm Press ... to navigate'")!>I<!> {
+    suspend fun <!LINE_MARKER("descr='Is implemented in KJs KJvm Press ... to navigate'")!>foo<!>(s: String)
 }
 
 /*

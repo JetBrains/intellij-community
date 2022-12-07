@@ -1,5 +1,5 @@
-open class <lineMarker>C</lineMarker>(
-        open val <lineMarker descr="<html><body>Is overridden in <br/>&nbsp;&nbsp;&nbsp;&nbsp;D</body></html>">s</lineMarker>: String
+open class <lineMarker descr="Is subclassed by D Press ... to navigate">C</lineMarker>(
+        open val <lineMarker descr="Is overridden in D Press ... to navigate">s</lineMarker>: String
 ) {
 
 }
@@ -10,7 +10,7 @@ class D : C("") {
 }
 
 /*
-LINEMARKER: descr='Is overridden in D'
+LINEMARKER: descr='Is overridden in D Press ... to navigate'
 TARGETS:
 PrimaryConstructorOpen.kt
     override val <1>s: String get() = "q"

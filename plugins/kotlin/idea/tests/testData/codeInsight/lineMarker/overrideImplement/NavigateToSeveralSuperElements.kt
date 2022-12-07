@@ -7,11 +7,11 @@ interface <lineMarker>B1</lineMarker> {
 }
 
 class C1: A1, B1 {
-    override fun <lineMarker descr="Implements function in 'A1'<br/>Implements function in 'B1'">foo</lineMarker>() {}
+    override fun <lineMarker descr="Implements function in A1 Implements function in B1 Press ... to navigate">foo</lineMarker>() {}
 }
 
 /*
-LINEMARKER: descr='Implements function in 'A1' Implements function in 'B1''
+LINEMARKER: descr='Implements function in A1 Implements function in B1 Press ... to navigate'
 TARGETS:
 NavigateToSeveralSuperElements.kt
     fun <1>foo()

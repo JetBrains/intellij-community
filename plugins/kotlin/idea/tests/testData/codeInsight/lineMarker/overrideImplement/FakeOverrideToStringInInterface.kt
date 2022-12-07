@@ -1,9 +1,9 @@
-interface <lineMarker descr="Is implemented by B C  Click or press ... to navigate">A</lineMarker> {
-    override fun <lineMarker descr="<html><body>Is overridden in <br>&nbsp;&nbsp;&nbsp;&nbsp;C</body></html>"><lineMarker descr="Overrides function in 'Any'">toString</lineMarker></lineMarker>() = "A"
+interface <lineMarker descr="Is implemented by B C Press ... to navigate">A</lineMarker> {
+    override fun <lineMarker descr="Overrides function in Any (kotlin) Press ... to navigate"><lineMarker descr="Is overridden in C Press ... to navigate">toString</lineMarker></lineMarker>() = "A"
 }
 
-abstract class <lineMarker descr="Is subclassed by C  Click or press ... to navigate">B</lineMarker> : A
+abstract class <lineMarker descr="Is subclassed by C Press ... to navigate">B</lineMarker> : A
 
 class C : B() {
-    override fun <lineMarker descr="Overrides function in 'A'">toString</lineMarker>() = "B"
+    override fun <lineMarker descr="Overrides function in A Press ... to navigate">toString</lineMarker>() = "B"
 }

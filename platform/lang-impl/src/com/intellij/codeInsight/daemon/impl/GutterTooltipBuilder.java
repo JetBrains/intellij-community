@@ -43,6 +43,11 @@ public abstract class GutterTooltipBuilder {
   @Nullable
   protected abstract String getPresentableName(@NotNull PsiElement element);
 
+  @Nullable
+  protected String getLocationString(@NotNull PsiElement element) {
+    return null;
+  }
+
 
   /**
    * @param elements        a collection of elements to create a formatted tooltip text
@@ -51,10 +56,10 @@ public abstract class GutterTooltipBuilder {
    * @param actionId        an action identifier to generate context help or {@code null} if not applicable
    */
   @NotNull
-  protected <E extends PsiElement> String buildTooltipText(@NotNull Collection<E> elements,
-                                                           @NotNull String prefix,
-                                                           boolean skipFirstMember,
-                                                           @Nullable String actionId) {
+  public <E extends PsiElement> String buildTooltipText(@NotNull Collection<E> elements,
+                                                        @NotNull String prefix,
+                                                        boolean skipFirstMember,
+                                                        @Nullable String actionId) {
     return buildTooltipText(elements, prefix, skipFirstMember, actionId, "press.to.navigate");
   }
 
@@ -92,7 +97,7 @@ public abstract class GutterTooltipBuilder {
    * @param actionId                 an action identifier to generate context help or {@code null} if not applicable
    */
   @NotNull
-  protected <E extends PsiElement> String buildTooltipText(@NotNull Collection<? extends E> elements,
+  public <E extends PsiElement> String buildTooltipText(@NotNull Collection<? extends E> elements,
                                                            @NotNull Function<? super E, String> elementToPrefix,
                                                            @NotNull Predicate<? super E> skipFirstMemberOfElement,
                                                            @Nullable String actionId) {
@@ -121,6 +126,7 @@ public abstract class GutterTooltipBuilder {
   protected void appendElement(@NotNull StringBuilder sb, @NotNull PsiElement element, boolean skip) {
     boolean useSingleLink = Registry.is("gutter.tooltip.single.link");
     boolean addedSingleLink = useSingleLink && appendLink(sb, element);
+    String locationString = getLocationString(element);
     PsiElement original = element; // use original member as a first separate link
     if (skip && shouldSkipAsFirstElement(element)) {
       element = getContainingElement(element);
@@ -142,9 +148,11 @@ public abstract class GutterTooltipBuilder {
         // if (deprecated) sb.append("</strike>");
         if (addedLink) sb.append("</code></a>");
       }
-      if (element instanceof PsiFile) break;
-      PsiElement parent = getContainingElement(element);
+      PsiElement parent = element instanceof PsiFile? null : getContainingElement(element);
       if (parent == null || parent instanceof PsiFile) {
+        if (locationString != null) {
+          sb.append(locationString);
+        }
         break;
       }
       if (name != null) sb.append(" ").append(LangBundle.message("tooltip.in")).append(" ");

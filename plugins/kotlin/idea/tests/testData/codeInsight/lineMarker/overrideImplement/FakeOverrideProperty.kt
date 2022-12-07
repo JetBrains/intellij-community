@@ -8,5 +8,5 @@ interface <lineMarker>B</lineMarker> : A
 interface <lineMarker>C</lineMarker> : B, A
 
 class SomeClass() : C {
-    override val <lineMarker descr="Overrides property in 'A'">f</lineMarker>: Int = 4
+    override val <lineMarker descr="Overrides property in A Press ... to navigate">f</lineMarker>: Int = 4
 }

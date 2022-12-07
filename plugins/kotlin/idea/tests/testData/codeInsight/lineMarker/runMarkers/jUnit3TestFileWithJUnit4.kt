@@ -7,7 +7,7 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
 
-abstract class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg"><lineMarker descr="Is subclassed by SessionTest  Click or press ... to navigate">AbstractSessionTest</lineMarker></lineMarker>: TestCase() {// LIGHT_CLASS_FALLBACK
+abstract class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg"><lineMarker descr="Is subclassed by SessionTest (testing) Press ... to navigate">AbstractSessionTest</lineMarker></lineMarker>: TestCase() {// LIGHT_CLASS_FALLBACK
 }
 
 class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg">SessionTest</lineMarker>: AbstractSessionTest() { // LIGHT_CLASS_FALLBACK
