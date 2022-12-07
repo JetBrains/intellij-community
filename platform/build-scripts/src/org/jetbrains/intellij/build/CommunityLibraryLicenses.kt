@@ -253,9 +253,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Eclipse JDT Core", attachedTo = "intellij.platform.jps.build", version = "4.2.1", license = "CPL 1.0",
                    url = "https://www.eclipse.org/jdt/core/index.php"),
     LibraryLicense(name = "Eclipse Layout Kernel", url = "https://www.eclipse.org/elk/", libraryName = "eclipse-layout-kernel").eplV1(),
-    LibraryLicense(name = "EditorConfig Java Core", libraryName = "editorconfig-core-java.jar", version = "1.0",
-                   url = "https://github.com/editorconfig/editorconfig-core-java/")
-      .apache("https://github.com/editorconfig/editorconfig-core-java/blob/master/LICENSE"),
     LibraryLicense(name = "emoji-java", libraryName = "com.vdurmont:emoji-java",
                    url = "https://github.com/vdurmont/emoji-java")
       .mit("https://github.com/vdurmont/emoji-java/blob/master/LICENSE.md"),
