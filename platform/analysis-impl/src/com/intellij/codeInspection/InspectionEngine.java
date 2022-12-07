@@ -283,7 +283,7 @@ public final class InspectionEngine {
         boolean inspectionWasRun = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
         long inspectionDuration = TimeoutUtil.getDurationMillis(inspectionStartTime);
 
-        boolean needToReportStatsToQodana = (inspectionWasRun && !isOnTheFly);
+        boolean needToReportStatsToQodana = inspectionWasRun && !isOnTheFly;
         if (needToReportStatsToQodana) {
           publisher.inspectionFinished(inspectionDuration, Thread.currentThread().getId(), holder.getResultCount(), toolWrapper,
                                        InspectListener.InspectionKind.LOCAL, file, file.getProject());
