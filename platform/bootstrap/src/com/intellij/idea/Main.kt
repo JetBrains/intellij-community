@@ -48,6 +48,8 @@ fun main(rawArgs: Array<String>) {
       }
 
       initProjectorIfNeeded(args)
+      // Must be called after projector init
+      initLuxIfNeeded(args)
 
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler()) {
         StartUpMeasurer.appInitPreparationActivity = appInitPreparationActivity
@@ -63,6 +65,16 @@ fun main(rawArgs: Array<String>) {
   catch (e: Throwable) {
     StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), e)
     exitProcess(AppExitCodes.STARTUP_EXCEPTION)
+  }
+}
+
+private fun initLuxIfNeeded(args: List<String>) {
+  if (args.isEmpty() || (AppMode.CWM_HOST_COMMAND != args[0] && AppMode.CWM_HOST_NO_LOBBY_COMMAND != args[0])) {
+    return
+  }
+  if (System.getProperty("lux.enabled").toBoolean()) {
+    System.setProperty("awt.nativeDoubleBuffering", false.toString())
+    System.setProperty("swing.bufferPerWindow", true.toString())
   }
 }
 
