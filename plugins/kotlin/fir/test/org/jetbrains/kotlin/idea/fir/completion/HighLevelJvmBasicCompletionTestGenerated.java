@@ -278,6 +278,29 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/testData/basic/common/backticked")
+        public static class Backticked extends AbstractHighLevelJvmBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("NameWithDollars.kt")
+            public void testNameWithDollars() throws Exception {
+                runTest("../completion/testData/basic/common/backticked/NameWithDollars.kt");
+            }
+
+            @TestMetadata("PropertyAfterBacktick1.kt")
+            public void testPropertyAfterBacktick1() throws Exception {
+                runTest("../completion/testData/basic/common/backticked/PropertyAfterBacktick1.kt");
+            }
+
+            @TestMetadata("PropertyAfterBacktick2.kt")
+            public void testPropertyAfterBacktick2() throws Exception {
+                runTest("../completion/testData/basic/common/backticked/PropertyAfterBacktick2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../completion/testData/basic/common/boldOrGrayed")
         public static class BoldOrGrayed extends AbstractHighLevelJvmBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -2652,11 +2675,6 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
             @TestMetadata("LocalMultideclarationValues.kt")
             public void testLocalMultideclarationValues() throws Exception {
                 runTest("../completion/testData/basic/common/LocalMultideclarationValues.kt");
-            }
-
-            @TestMetadata("NameWithDollars.kt")
-            public void testNameWithDollars() throws Exception {
-                runTest("../completion/testData/basic/common/NameWithDollars.kt");
             }
 
             @TestMetadata("NamedObject.kt")

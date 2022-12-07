@@ -6,6 +6,8 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.Key
+import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
@@ -161,3 +163,15 @@ fun findValueArgument(expression: KtExpression): KtValueArgument? {
     return expression.parent as? KtValueArgument
         ?: expression.parent.parent as? KtValueArgument
 }
+
+infix fun <T> ElementPattern<T>.and(rhs: ElementPattern<T>) = StandardPatterns.and(this, rhs)
+fun <T> ElementPattern<T>.andNot(rhs: ElementPattern<T>) = StandardPatterns.and(this, StandardPatterns.not(rhs))
+infix fun <T> ElementPattern<T>.or(rhs: ElementPattern<T>) = StandardPatterns.or(this, rhs)
+
+fun singleCharPattern(char: Char) = StandardPatterns.character().equalTo(char)
+
+fun kotlinIdentifierStartPattern(): ElementPattern<Char> =
+    StandardPatterns.character().javaIdentifierStart().andNot(singleCharPattern('$'))
+
+fun kotlinIdentifierPartPattern(): ElementPattern<Char> =
+    StandardPatterns.character().javaIdentifierPart().andNot(singleCharPattern('$')) or singleCharPattern('@')

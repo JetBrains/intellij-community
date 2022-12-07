@@ -79,6 +79,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/backticked/PreferMatchingKeyword.kt");
         }
 
+        @TestMetadata("PropertyAfterBacktick.kt")
+        public void testPropertyAfterBacktick() throws Exception {
+            runTest("../completion/testData/handlers/basic/backticked/PropertyAfterBacktick.kt");
+        }
+
         @TestMetadata("VariableNameWithSpace.kt")
         public void testVariableNameWithSpace() throws Exception {
             runTest("../completion/testData/handlers/basic/backticked/VariableNameWithSpace.kt");

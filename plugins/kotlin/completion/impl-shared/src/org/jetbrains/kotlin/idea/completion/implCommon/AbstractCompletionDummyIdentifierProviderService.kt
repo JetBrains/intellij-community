@@ -63,6 +63,7 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
                 ?: specialExtensionReceiverDummyIdentifier(tokenBefore)
                 ?: specialInTypeArgsDummyIdentifier(tokenBefore)
                 ?: specialInArgumentListDummyIdentifier(tokenBefore)
+                ?: specialInNameWithQuotes(tokenBefore)
                 ?: specialInBinaryExpressionDummyIdentifier(tokenBefore)
                 ?: isInValueOrTypeParametersList(tokenBefore)
                 ?: handleDefaultCase(context)
@@ -108,6 +109,17 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
     private fun specialInBinaryExpressionDummyIdentifier(tokenBefore: PsiElement?): String? {
         if (tokenBefore.elementType == KtTokens.IDENTIFIER && tokenBefore?.context?.context is KtBinaryExpression)
             return CompletionUtilCore.DUMMY_IDENTIFIER
+        return null
+    }
+
+    private fun specialInNameWithQuotes(tokenBefore: PsiElement?): String? {
+        val badCharacterBefore = when (tokenBefore?.elementType) {
+            TokenType.BAD_CHARACTER -> tokenBefore
+            KtTokens.IDENTIFIER -> tokenBefore?.prevLeaf(skipEmptyElements = true)?.takeIf { it.elementType == TokenType.BAD_CHARACTER }
+            else -> null
+        }
+        val quote = "`"
+        if (badCharacterBefore?.text == quote) return CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED + quote + "$"
         return null
     }
 
