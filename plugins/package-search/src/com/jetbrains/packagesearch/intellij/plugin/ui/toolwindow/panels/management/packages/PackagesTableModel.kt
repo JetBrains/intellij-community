@@ -16,7 +16,6 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
-import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ActionsColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.NameColumn
@@ -35,12 +34,4 @@ internal class PackagesTableModel(
     override fun getRowCount() = items.size
     override fun getColumnCount() = columns.size
     override fun getColumnClass(columnIndex: Int): Class<out Any> = columns[columnIndex].javaClass
-
-    fun columnIndexOf(info: ColumnInfo<PackagesTableItem<*>, *>) = when (info) {
-        nameColumn -> 0
-        scopeColumn -> 1
-        versionColumn -> 2
-        actionsColumn -> 3
-        else -> error("Column not known")
-    }
 }

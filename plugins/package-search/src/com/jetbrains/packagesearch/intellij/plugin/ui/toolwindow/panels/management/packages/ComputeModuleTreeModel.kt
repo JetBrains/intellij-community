@@ -16,7 +16,7 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -24,14 +24,14 @@ import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 
 internal fun computeModuleTreeModel(
-    modules: List<ModuleModel>
+    modules: List<PackageSearchModule>
 ): TreeModel {
     if (modules.isEmpty()) {
         val rootNode = DefaultMutableTreeNode(TargetModules.None)
         return DefaultTreeModel(rootNode)
     }
 
-    val sortedModules = modules.sortedBy { it.projectModule.name }
+    val sortedModules = modules.sortedBy { it.name }
         .toMutableList()
 
     val rootTargetModules = TargetModules.all(modules)
@@ -42,15 +42,15 @@ internal fun computeModuleTreeModel(
 }
 
 private fun DefaultMutableTreeNode.appendChildren(
-    sortedModules: List<ModuleModel>
+    sortedModules: List<PackageSearchModule>
 ): DefaultMutableTreeNode {
     val childModules = when (val nodeTargetModules = userObject as TargetModules) {
         is TargetModules.None -> emptyList()
         is TargetModules.One -> {
-            sortedModules.filter { nodeTargetModules.module.projectModule == it.projectModule.parent }
+            sortedModules.filter { nodeTargetModules.module == it.parent }
         }
         is TargetModules.All -> {
-            sortedModules.filter { module -> module.projectModule.parent == null }
+            sortedModules.filter { module -> module.parent == null }
         }
     }
 

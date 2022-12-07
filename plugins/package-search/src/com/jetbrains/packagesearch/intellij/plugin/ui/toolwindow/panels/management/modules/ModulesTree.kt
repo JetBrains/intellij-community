@@ -51,7 +51,6 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
-import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 
@@ -147,7 +146,10 @@ internal class ModulesTree(
     }
 
     override fun performCopy(dataContext: DataContext) {
-        val dataToCopy = targetModulesStateFlow.value.takeIf { it !is TargetModules.None }?.joinToString { it.projectModule.getFullName() }
+        val dataToCopy = targetModulesStateFlow.value
+            .takeIf { it !is TargetModules.None }
+            ?.modules
+            ?.joinToString { it.getFullName() }
             ?: return
 
         CopyPasteManager.getInstance().setContents(StringSelection(dataToCopy))
@@ -159,30 +161,6 @@ internal class ModulesTree(
 
     override fun isCopyVisible(dataContext: DataContext) = true
 }
-
-private fun TreeModel.pathTo(selection: DefaultMutableTreeNode): TreePath? {
-    val rootNode = root as? DefaultMutableTreeNode ?: return null
-    val path = recursiveSearch(rootNode, selection)
-    return path?.takeIf { it.isNotEmpty() }?.let { TreePath(it.toTypedArray()) }
-}
-
-private operator fun <T> T.plus(elements: List<T>): List<T> = buildList {
-    add(this@plus)
-    addAll(elements)
-}
-
-private fun recursiveSearch(currentElement: DefaultMutableTreeNode, selection: DefaultMutableTreeNode): MutableList<DefaultMutableTreeNode>? {
-    if (currentElement.userObject == selection.userObject) return mutableListOf(currentElement)
-    else for (child: TreeNode in currentElement.children()) {
-        if (child !is DefaultMutableTreeNode) continue
-        val path = recursiveSearch(child, selection)
-        if (path != null) return path.also { it.add(0, currentElement) }
-    }
-    return null
-}
-
-private operator fun TreeModel.contains(treeNode: DefaultMutableTreeNode) =
-    treeNode in treeNodesSequence().map { it.userObject }
 
 fun TreeModel.treeNodesSequence() = sequence {
     val queue = mutableListOf(root.asSafely<DefaultMutableTreeNode>() ?: return@sequence)

@@ -16,12 +16,12 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions
 
+import com.jetbrains.packagesearch.intellij.plugin.nullIfBlank
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion.Garbage
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion.Semantic
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion.TimestampLike
 import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
-import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
 import kotlinx.coroutines.runBlocking
 
 internal class PackageVersionNormalizer(
@@ -131,7 +131,7 @@ internal class PackageVersionNormalizer(
 
     private fun parseTimestampVersion(version: PackageVersion.Named, timestampPrefix: String): NormalizedPackageVersion<PackageVersion.Named> =
         TimestampLike(
-            original = version,
+            originalVersion = version,
             timestampPrefix = timestampPrefix,
             stabilityMarker = version.stabilitySuffixComponentOrNull(timestampPrefix),
             nonSemanticSuffix = version.nonSemanticSuffix(timestampPrefix)
@@ -150,7 +150,7 @@ internal class PackageVersionNormalizer(
 
     private fun parseSemanticVersion(version: PackageVersion.Named, semanticVersionPrefix: String): NormalizedPackageVersion<PackageVersion.Named> =
         Semantic(
-            original = version,
+            originalVersion = version,
             semanticPart = semanticVersionPrefix,
             stabilityMarker = version.stabilitySuffixComponentOrNull(semanticVersionPrefix),
             nonSemanticSuffix = version.nonSemanticSuffix(semanticVersionPrefix)

@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="jetbrains.kotlinx.coroutines.test" type="repository">
+  <library name="kotlinx-coroutines-test" type="repository">
     <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-test-jvm:1.6.4" />
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.6.4/kotlinx-coroutines-test-jvm-1.6.4.jar!/" />

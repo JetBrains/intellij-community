@@ -52,10 +52,8 @@ class ModulesTreeItemRenderer : ColoredTreeCellRenderer() {
                 )
             }
             is TargetModules.One -> {
-                val projectModule = nodeTarget.module.projectModule
-
-                icon = projectModule.moduleType.icon ?: AllIcons.Nodes.Module
-                append(projectModule.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+                icon = nodeTarget.module.moduleType.icon ?: AllIcons.Nodes.Module
+                append(nodeTarget.module.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
             }
         }
 

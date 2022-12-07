@@ -136,7 +136,7 @@ internal object PackageNameCellRenderer : TableCellRenderer {
     ) = TagPaintingJPanel(columnWidth).apply {
         colors.applyTo(this)
 
-        if (!name.isNullOrBlank() && name != identifier) {
+        if (!name.isNullOrBlank() && name !in identifier) {
             add(
                 JLabel(name).apply {
                     colors.applyTo(this)

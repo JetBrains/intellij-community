@@ -26,11 +26,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtil
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
+import com.jetbrains.packagesearch.intellij.plugin.util.dependencyModifierService
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import kotlinx.coroutines.future.future
 import kotlinx.serialization.Serializable
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.io.File
 import java.util.concurrent.CompletableFuture
 
@@ -39,7 +39,7 @@ import java.util.concurrent.CompletableFuture
  *
  * @param name the name of the module.
  * @param nativeModule the native [Module] it refers to.
- * @param parent the parent [ProjectModule] of this object.
+ * @param parent the parent [PackageSearchModule] of this object.
  * @param buildFile The build file used by this module (e.g. `pom.xml` for Maven, `build.gradle` for Gradle).
  * @param projectDir The corresponding directory instance for this module (a File could also be nonexistent).
  * @param buildSystemType The type of the build system file used in this module (e.g., 'gradle-kotlin', 'gradle-groovy', etc.)
@@ -50,10 +50,10 @@ import java.util.concurrent.CompletableFuture
  * @param dependencyDeclarationCallback Given a [Dependency], it should return the indexes in the build file where given
  * dependency has been declared.
  */
-data class ProjectModule @JvmOverloads constructor(
+data class PackageSearchModule(
     @NlsSafe val name: String,
     val nativeModule: Module,
-    val parent: ProjectModule?,
+    val parent: PackageSearchModule?,
     val buildFile: VirtualFile?,
     val projectDir: File,
     val buildSystemType: BuildSystemType,
@@ -62,22 +62,29 @@ data class ProjectModule @JvmOverloads constructor(
     val dependencyDeclarationCallback: DependencyDeclarationCallback = { _ -> CompletableFuture.completedFuture(null) }
 ) {
 
-    @Suppress("UNUSED_PARAMETER")
-    @Deprecated(
-        "Use main constructor",
-        ReplaceWith("ProjectModule(name, nativeModule, parent, buildFile, projectDir, buildSystemType, moduleType)")
+    data class Dependencies(val declared: List<DeclaredDependency>, val resolved: List<UnifiedDependency>)
+
+    internal suspend fun getDependencies() = Dependencies(
+        readAction { runCatching { nativeModule.project.dependencyModifierService.declaredDependencies(nativeModule) } }
+            .getOrDefault(emptyList()),
+        readAction {
+            runCatching {
+                val providersMap = ResolvedDependenciesProvider.getProvidersMap()
+                val resolvedDependencies = providersMap[buildSystemType]?.firstOrNull()?.resolvedDependencies(this)
+                resolvedDependencies
+            }
+        }
+            .getOrNull()
+            ?: emptyList()
     )
-    @ScheduledForRemoval
-    constructor(
-        name: String,
-        nativeModule: Module,
-        parent: ProjectModule,
-        buildFile: VirtualFile,
-        buildSystemType: BuildSystemType,
-        moduleType: ProjectModuleType,
-        navigatableDependency: (groupId: String, artifactId: String, version: PackageVersion) -> Navigatable?,
-        availableScopes: List<String>
-    ) : this(name, nativeModule, parent, buildFile, buildFile.parent.toNioPath().toFile(), buildSystemType, moduleType, availableScopes)
+
+    internal suspend fun getDeclaredRepositories(knownRepositories: List<RepositoryModel>): List<RepositoryModel> {
+        val declaredReposIds =
+            readAction { runCatching { nativeModule.project.dependencyModifierService.declaredRepositories(nativeModule) } }
+                .getOrDefault(emptyList())
+                .mapNotNull { it.id }
+        return knownRepositories.filter { it.id in declaredReposIds }
+    }
 
     fun getBuildFileNavigatableAtOffset(offset: Int): Navigatable? =
         buildFile?.let { PsiManager.getInstance(nativeModule.project).findFile(it) }
@@ -90,7 +97,7 @@ data class ProjectModule @JvmOverloads constructor(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is ProjectModule) return false
+        if (other !is PackageSearchModule) return false
 
         if (name != other.name) return false
         if (!nativeModule.isTheSameAs(other.nativeModule)) return false // This can't be automated
@@ -109,8 +116,8 @@ data class ProjectModule @JvmOverloads constructor(
         var result = name.hashCode()
         result = 31 * result + nativeModule.hashCodeOrZero()
         result = 31 * result + (parent?.hashCode() ?: 0)
-        result = 31 * result + (buildFile?.path?.hashCode() ?: 0)
-        result = 31 * result + projectDir.path.hashCode()
+        result = 31 * result + kotlin.runCatching { (buildFile?.path?.hashCode() ?: 0) }.getOrDefault(0)
+        result = 31 * result + kotlin.runCatching { projectDir.path.hashCode() }.getOrDefault(0)
         result = 31 * result + buildSystemType.hashCode()
         result = 31 * result + moduleType.hashCode()
         // result = 31 * result + navigatableDependency.hashCode() // Intentionally excluded
@@ -166,23 +173,7 @@ data class DependencyDeclarationIndexes(
 
 data class UnifiedDependencyKey(val scope: String, val groupId: String, val module: String)
 
-val UnifiedDependency.key: UnifiedDependencyKey?
-    get() {
-        return UnifiedDependencyKey(scope ?: return null, coordinates.groupId!!, coordinates.artifactId ?: return null)
-    }
-
-fun UnifiedDependency.asDependency(defaultScope: String? = null): Dependency? {
-    return Dependency(
-        scope = scope ?: defaultScope ?: return null,
-        groupId = coordinates.groupId ?: return null,
-        artifactId = coordinates.artifactId ?: return null,
-        version = coordinates.version ?: return null
-    )
+fun UnifiedDependency.asUnifiedDependencyKeyOrNull(): UnifiedDependencyKey? {
+    return UnifiedDependencyKey(scope ?: return null, coordinates.groupId ?: return null, coordinates.artifactId ?: return null)
 }
 
-data class Dependency(val scope: String, val groupId: String, val artifactId: String, val version: String) {
-
-    override fun toString() = "$scope(\"$groupId:$artifactId:$version\")"
-}
-
-fun Dependency.asUnifiedDependency() = UnifiedDependency(groupId, artifactId, version, scope)

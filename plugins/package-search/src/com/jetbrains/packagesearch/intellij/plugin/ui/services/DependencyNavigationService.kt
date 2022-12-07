@@ -24,7 +24,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackagesListPanelProvider
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
@@ -40,23 +39,18 @@ internal class DependencyNavigationService(private val project: Project) {
      * @param module The native [Module] into which look for the dependency.
      * @param coordinates The [UnifiedCoordinates] to search, the first result will be used.
      */
-    fun navigateToDependency(module: Module, coordinates: UnifiedCoordinates): NavigationResult {
-        val entry = project.packageSearchProjectService.dependenciesByModuleStateFlow.value
-            .entries.find { (k, _) -> k.nativeModule == module }
-        return when {
-            entry != null -> {
-                val (projectModule, installedDependencies) = entry
-                val isFound = installedDependencies.find { it.dependency.coordinates == coordinates }
-                val moduleModel = project.packageSearchProjectService.moduleModelsStateFlow.value
-                    .find { it.projectModule == projectModule }
-                when {
-                    isFound != null && moduleModel != null -> onSuccess(moduleModel, isFound.dependency)
-                    else -> NavigationResult.CoordinatesNotFound(module, coordinates)
-                }
-            }
-            else -> NavigationResult.ModuleNotSupported(module)
-        }
-    }
+    fun navigateToDependency(module: Module, coordinates: UnifiedCoordinates) =
+        project.packageSearchProjectService
+            .installedDependenciesFlow
+            .value
+            .all
+            .find { it.groupId == coordinates.groupId && it.artifactId == coordinates.artifactId }
+            ?.usagesByModule
+            ?.get(module)
+            ?.find { it.declaredVersion.displayName == coordinates.version }
+            ?.let { UnifiedDependency(coordinates, it.scope.displayName) }
+            ?.let { onSuccess(module, it) }
+            ?: NavigationResult.CoordinatesNotFound(module, coordinates)
 
     /**
      * Open the Dependency toolwindows at the selected [module] if found and searches for the exact
@@ -64,32 +58,32 @@ internal class DependencyNavigationService(private val project: Project) {
      * @param module The native [Module] into which look for the dependency.
      * @param dependency The [UnifiedDependency] to search.
      */
-    fun navigateToDependency(module: Module, dependency: UnifiedDependency): NavigationResult {
-        val entry = project.packageSearchProjectService.dependenciesByModuleStateFlow.value
-            .entries.find { (k, _) -> k.nativeModule == module }
+    fun navigateToDependency(module: Module, dependency: UnifiedDependency) =
+        project.packageSearchProjectService
+            .installedDependenciesFlow
+            .value
+            .all
+            .find { it.groupId == dependency.coordinates.groupId && it.artifactId == dependency.coordinates.artifactId }
+            ?.usagesByModule
+            ?.get(module)
+            ?.find { it.declaredVersion.displayName == dependency.coordinates.version && it.scope.displayName == dependency.scope }
+            ?.let { onSuccess(module, dependency) }
+            ?: NavigationResult.CoordinatesNotFound(module, dependency.coordinates)
 
-        return when {
-            entry != null -> {
-                val (projectModule, installedDependencies) = entry
-                val moduleModel = project.packageSearchProjectService.moduleModelsStateFlow.value
-                    .find { it.projectModule == projectModule }
-                when {
-                    installedDependencies.any { it.dependency == dependency } && moduleModel != null -> onSuccess(moduleModel, dependency)
-                    else -> NavigationResult.DependencyNotFound(module, dependency)
+    private fun onSuccess(module: Module, dependency: UnifiedDependency): NavigationResult {
+        val pkgsModule = project.packageSearchProjectService.packageSearchModulesStateFlow
+            .value
+            .find { it.nativeModule == module }
+        if (pkgsModule != null) {
+            project.lifecycleScope.launch(Dispatchers.EDT) {
+                DependencyToolWindowFactory.activateToolWindow(project, PackagesListPanelProvider) {
+                    project.pkgsUiStateModifier.setTargetModules(TargetModules.from(pkgsModule))
+                    project.pkgsUiStateModifier.setDependency(dependency)
                 }
             }
-            else -> NavigationResult.ModuleNotSupported(module)
+            return NavigationResult.Success
         }
-    }
-
-    private fun onSuccess(moduleModel: ModuleModel, dependency: UnifiedDependency): NavigationResult.Success {
-        project.lifecycleScope.launch(Dispatchers.EDT) {
-            DependencyToolWindowFactory.activateToolWindow(project, PackagesListPanelProvider) {
-                project.pkgsUiStateModifier.setTargetModules(TargetModules.from(moduleModel))
-                project.pkgsUiStateModifier.setDependency(dependency)
-            }
-        }
-        return NavigationResult.Success
+        else return NavigationResult.CoordinatesNotFound(module, dependency.coordinates)
     }
 
     companion object {

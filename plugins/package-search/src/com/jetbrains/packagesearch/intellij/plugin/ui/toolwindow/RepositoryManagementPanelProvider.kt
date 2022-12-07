@@ -29,7 +29,7 @@ class RepositoryManagementPanelProvider : DependenciesToolWindowTabProvider {
 
         val isAvailableFlow =
             combine(
-                project.packageSearchProjectService.projectModulesStateFlow.map { it.isNotEmpty() },
+                project.packageSearchProjectService.packageSearchModulesStateFlow.map { it.isNotEmpty() },
                 FeatureFlags.showRepositoriesTabFlow
             ) { isServiceReady, isFlagEnabled -> isServiceReady && isFlagEnabled }
                 .stateIn(project.lifecycleScope, SharingStarted.Eagerly, false)

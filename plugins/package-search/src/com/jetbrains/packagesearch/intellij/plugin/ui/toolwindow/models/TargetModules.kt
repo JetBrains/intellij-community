@@ -17,41 +17,51 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.openapi.project.Project
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 
-sealed class TargetModules(
-    open val modules: List<ModuleModel>,
-    open val isMixedBuildSystems: Boolean
-) : Collection<ModuleModel> by modules {
+sealed class TargetModules {
 
-    val id by lazy { map { it.projectModule.projectDir.absolutePath }.hashCode() }
+    abstract val modules: List<PackageSearchModule>
+    abstract val isMixedBuildSystems: Boolean
+
+    val id by lazy { modules.map { it.projectDir.absolutePath }.hashCode() }
 
     fun declaredScopes(project: Project): List<PackageScope> =
-        modules.flatMap { it.projectModule.moduleType.userDefinedScopes(project) }
-            .map { rawScope -> PackageScope.from(rawScope) }
+        modules.flatMap { it.moduleType.userDefinedScopes(project) }
             .distinct()
             .sorted()
 
     fun defaultScope(project: Project): PackageScope =
         if (!isMixedBuildSystems && this !is None) {
-            PackageScope.from(modules.first().projectModule.moduleType.defaultScope(project))
+            modules.first().moduleType.defaultScope(project)
         } else {
             PackageScope.Missing
         }
 
-    object None : TargetModules(emptyList(), isMixedBuildSystems = false) {
+    object None : TargetModules() {
+
+        override val modules: List<PackageSearchModule>
+            get() = emptyList()
+        override val isMixedBuildSystems: Boolean
+            get() = false
 
         override fun toString() = "None(modules=[], isMixedBuildSystems=false)"
     }
 
-    data class One(val module: ModuleModel) : TargetModules(listOf(module), isMixedBuildSystems = false) {
+    data class One(val module: PackageSearchModule) : TargetModules() {
 
-        override fun toString() = "One(modules=[${module.projectModule.name}], isMixedBuildSystems=false)"
+        override val modules
+            get() = listOf(module)
+        override val isMixedBuildSystems: Boolean
+            get() = false
+
+        override fun toString() = "One(modules=[${module.name}], isMixedBuildSystems=false)"
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other !is One) return false
 
-            if (module.projectModule != other.module.projectModule) return false
+            if (module != other.module) return false
 
             return true
         }
@@ -64,9 +74,9 @@ sealed class TargetModules(
     }
 
     class All(
-        override val modules: List<ModuleModel>,
+        override val modules: List<PackageSearchModule>,
         override val isMixedBuildSystems: Boolean
-    ) : TargetModules(modules, isMixedBuildSystems) {
+    ) : TargetModules() {
 
         init {
             require(modules.isNotEmpty()) { "There must be at least one module in an All target" }
@@ -78,7 +88,7 @@ sealed class TargetModules(
             if (this === other) return true
             if (other !is All) return false
 
-            if (modules.any { module -> other.modules.none { otherModule -> module.projectModule == otherModule.projectModule } }) return false
+            if (modules.any { module -> other.modules.none { otherModule -> module == otherModule } }) return false
             if (isMixedBuildSystems != other.isMixedBuildSystems) return false
 
             return true
@@ -94,16 +104,16 @@ sealed class TargetModules(
 
     companion object {
 
-        fun from(selectedModule: ModuleModel?) = if (selectedModule != null) {
+        fun from(selectedModule: PackageSearchModule?) = if (selectedModule != null) {
             One(selectedModule)
         } else {
             None
         }
 
-        fun all(allModules: List<ModuleModel>) = All(
+        fun all(allModules: List<PackageSearchModule>) = All(
             allModules,
             allModules.asSequence()
-                .map { it.projectModule.buildSystemType }
+                .map { it.buildSystemType }
                 .distinct()
                 .count() > 1
         )

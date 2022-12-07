@@ -16,6 +16,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
+import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.ide.CopyProvider
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.DataContext
@@ -31,11 +32,12 @@ import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.*
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementOperationExecutor
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.changePackage
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ActionsColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.NameColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ScopeColumn
@@ -44,8 +46,8 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import com.jetbrains.packagesearch.intellij.plugin.util.modifyPackages
 import com.jetbrains.packagesearch.intellij.plugin.util.uiStateSource
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOn
@@ -73,13 +75,10 @@ internal typealias SearchResultStateChangeListener =
 @Suppress("MagicNumber") // Swing dimension constants
 internal class PackagesTable(
     private val project: Project,
-    private val operationExecutor: OperationExecutor,
     private val onSearchResultStateChanged: SearchResultStateChangeListener
 ) : JBTable(), CopyProvider, DataProvider {
 
     private var lastSelectedDependency: UnifiedDependency? = null
-
-    private val operationFactory = PackageSearchOperationFactory()
 
     private val tableModel: PackagesTableModel
         get() = model as PackagesTableModel
@@ -101,7 +100,7 @@ internal class PackagesTable(
         updatePackageVersion(packageModel, newVersion)
     }
 
-    private val actionsColumn = ActionsColumn(project, operationExecutor = ::executeActionColumnOperations)
+    private val actionsColumn = ActionsColumn(operationExecutor = ::executeActionColumnOperations)
 
     private val actionsColumnIndex: Int
 
@@ -109,7 +108,8 @@ internal class PackagesTable(
 
     private var targetModules: TargetModules = TargetModules.None
 
-    private var knownRepositoriesInTargetModules = KnownRepositories.InTargetModules.EMPTY
+    private var knownRepositoriesInTargetModules: Map<PackageSearchModule, List<RepositoryModel>> = emptyMap()
+    private var allKnownRepositories: List<RepositoryModel> = emptyList()
 
     val selectedPackageStateFlow = MutableStateFlow<UiPackageModel<*>?>(null)
 
@@ -277,7 +277,8 @@ internal class PackagesTable(
         val items: TableItems,
         val onlyStable: Boolean,
         val targetModules: TargetModules,
-        val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+        val knownRepositoriesInTargetModules: Map<PackageSearchModule, List<RepositoryModel>>,
+        val allKnownRepositories: List<RepositoryModel>,
     ) {
 
         data class TableItems(
@@ -299,11 +300,7 @@ internal class PackagesTable(
         // where the target modules or only stable flags get updated after the items data change, thus
         // causing issues when Swing tries to render things (e.g., targetModules doesn't match packages' usages)
         versionColumn.updateData(viewModel.onlyStable, viewModel.targetModules)
-        actionsColumn.updateData(
-            viewModel.onlyStable,
-            viewModel.targetModules,
-            viewModel.knownRepositoriesInTargetModules
-        )
+        actionsColumn.updateData(viewModel)
 
         selectionModel.removeListSelectionListener(listSelectionListener)
         tableModel.items = viewModel.items
@@ -345,17 +342,21 @@ internal class PackagesTable(
     private fun updatePackageScope(uiPackageModel: UiPackageModel<*>, newScope: PackageScope) {
         when (uiPackageModel) {
             is UiPackageModel.Installed -> {
-                val operations = operationFactory.createChangePackageScopeOperations(
-                    packageModel = uiPackageModel.packageModel,
-                    newScope = newScope,
-                    targetModules = targetModules,
-                    repoToInstall = null
-                )
-
-                logDebug("PackagesTable#updatePackageScope()") {
-                    "The user has selected a new scope for ${uiPackageModel.identifier}: '$newScope'. This resulted in ${operations.size} operation(s)."
+                project.modifyPackages {
+                    targetModules.modules.forEach { module ->
+                        uiPackageModel.filterUsagesInfoByModuleAndScope(module)
+                            .forEach { usage ->
+                                changePackage(
+                                    groupId = uiPackageModel.packageModel.groupId,
+                                    artifactId = uiPackageModel.packageModel.artifactId,
+                                    version = usage.declaredVersion.originalVersion,
+                                    scope = usage.scope,
+                                    packageSearchModule = module,
+                                    newScope = newScope,
+                                )
+                            }
+                    }
                 }
-                operationExecutor.executeOperations(operations)
             }
             is UiPackageModel.SearchResult -> {
                 val selectedVersion = uiPackageModel.selectedVersion
@@ -372,26 +373,32 @@ internal class PackagesTable(
     private fun updatePackageVersion(uiPackageModel: UiPackageModel<*>, newVersion: NormalizedPackageVersion<*>) {
         when (uiPackageModel) {
             is UiPackageModel.Installed -> {
-                val operations = uiPackageModel.packageModel.usageInfo.flatMap {
-                    val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
-                        project = project,
-                        packageModel = uiPackageModel.packageModel,
-                        selectedVersion = newVersion.originalVersion
-                    )
-
-                    operationFactory.createChangePackageVersionOperations(
-                        packageModel = uiPackageModel.packageModel,
-                        newVersion = newVersion.originalVersion,
-                        targetModules = targetModules,
-                        repoToInstall = repoToInstall
-                    )
+                project.modifyPackages {
+                    val repoToInstallByModule = uiPackageModel.packageModel
+                        .repositoryToAddWhenInstallingOrUpgrading(targetModules, knownRepositoriesInTargetModules, allKnownRepositories)
+                    targetModules.modules.forEach { module ->
+                        var operationsCount = 0
+                        repoToInstallByModule[module]?.let { repoToInstall ->
+                            installRepository(UnifiedDependencyRepository(repoToInstall.id, repoToInstall.name, repoToInstall.url), module)
+                        }
+                        uiPackageModel.filterUsagesInfoByModuleAndScope(module)
+                            .forEach { usage ->
+                                operationsCount++
+                                changePackage(
+                                    groupId = uiPackageModel.packageModel.groupId,
+                                    artifactId = uiPackageModel.packageModel.artifactId,
+                                    version = usage.declaredVersion.originalVersion,
+                                    scope = usage.scope,
+                                    packageSearchModule = module,
+                                    newVersion = newVersion.originalVersion,
+                                )
+                            }
+                        logDebug("PackagesTable#updatePackageVersion()") {
+                            "The user has selected a new version for ${uiPackageModel.identifier}: '$newVersion'. " +
+                                "This resulted in operationsCount operation(s)."
+                        }
+                    }
                 }
-
-                logDebug("PackagesTable#updatePackageVersion()") {
-                    "The user has selected a new version for ${uiPackageModel.identifier}: '$newVersion'. " +
-                        "This resulted in ${operations.size} operation(s)."
-                }
-                operationExecutor.executeOperations(operations)
             }
             is UiPackageModel.SearchResult -> {
                 onSearchResultStateChanged(uiPackageModel.packageModel, newVersion, uiPackageModel.selectedScope)
@@ -404,11 +411,17 @@ internal class PackagesTable(
         }
     }
 
-    private fun executeActionColumnOperations(operations: Deferred<List<PackageSearchOperation<*>>>) {
+    private fun UiPackageModel<PackageModel.Installed>.filterUsagesInfoByModuleAndScope(module: PackageSearchModule) =
+        packageModel.usagesByModule
+            .getOrDefault(module.nativeModule, emptyList())
+            .asSequence()
+            .filter { it.scope == selectedScope }
+
+    private fun executeActionColumnOperations(operations: PackageManagementOperationExecutor.() -> Unit) {
         logDebug("PackagesTable#executeActionColumnOperations()") {
             "The user has clicked the action for a package. This resulted in many operation(s)."
         }
-        operationExecutor.executeOperations(operations)
+        project.modifyPackages(operations)
     }
 
     private fun applyColumnSizes(tW: Int, columns: List<TableColumn>, weights: List<Float>) {

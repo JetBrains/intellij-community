@@ -2,6 +2,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.ProjectTopics
+import com.intellij.externalSystem.DependencyModifierService
 import com.intellij.facet.FacetManager
 import com.intellij.ide.impl.TrustStateListener
 import com.intellij.ide.impl.isTrusted
@@ -21,25 +22,28 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.util.Function
 import com.intellij.util.messages.Topic
+import com.jetbrains.packagesearch.intellij.plugin.data.LoadingContainer
+import com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchCachesService
+import com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectCachesService
 import com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectService
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModuleTransformer
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.AsyncModuleTransformer
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.FlowModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.lifecycle.PackageSearchLifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.PkgsUiCommandsService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateModifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateSource
-import com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchCachesService
-import com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectCachesService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizer
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementOperationExecutor
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.launch
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -101,7 +105,7 @@ internal val Project.nativeModulesFlow: Flow<List<Module>>
 
             override fun modulesRenamed(
                 project: Project,
-                modules: List<Module>,
+                modules: MutableList<out Module>,
                 oldNameProvider: Function<in Module, String>
             ) {
                 trySend(getNativeModules())
@@ -109,11 +113,14 @@ internal val Project.nativeModulesFlow: Flow<List<Module>>
         }
     }
 
-val Project.filesChangedEventFlow: Flow<List<VFileEvent>>
+val Project.filesChangedEventFlow: Flow<MutableList<out VFileEvent>>
     get() = messageBusFlow(VirtualFileManager.VFS_CHANGES) {
         object : BulkFileListener {
-            override fun after(events: List<VFileEvent>) {
-                trySend(events)
+            override fun after(events: MutableList<out VFileEvent>) {
+                val result = trySend(events)
+                if (result.isFailure) {
+                    logDebug("filesChangedEventFlow", throwable = result.exceptionOrNull()) { "Failed to send file change" }
+                }
             }
         }
     }
@@ -129,7 +136,7 @@ internal val Project.moduleChangesSignalFlow: Flow<Unit>
 internal val Project.lifecycleScope: PackageSearchLifecycleScope
     get() = service()
 
-internal val ProjectModule.lifecycleScope: PackageSearchLifecycleScope
+internal val PackageSearchModule.lifecycleScope: PackageSearchLifecycleScope
     get() = nativeModule.project.lifecycleScope
 
 internal val Project.pkgsUiStateModifier: UiStateModifier
@@ -147,8 +154,8 @@ suspend fun DumbService.awaitSmart() {
     }
 }
 
-internal val Project.moduleTransformers: List<CoroutineModuleTransformer>
-    get() = CoroutineModuleTransformer.extensions(this) + ModuleTransformer.extensions(this)
+internal val Project.moduleTransformers: List<ModuleTransformer>
+    get() = ModuleTransformer.extensions(this) + AsyncModuleTransformer.extensions(this)
 
 internal val Project.lookAndFeelFlow: Flow<LafManager>
     get() = messageBusFlow(LafManagerListener.TOPIC, { LafManager.getInstance()!! }) {
@@ -161,3 +168,16 @@ internal fun Module.hasKotlinFacet(): Boolean {
     val facetManager = FacetManager.getInstance(this)
     return facetManager.allFacets.any { it.typeId.toString() == "kotlin-language" }
 }
+
+internal fun Project.modifyPackages(builder: PackageManagementOperationExecutor.() -> Unit) =
+    lifecycleScope.launch {
+        PackageManagementOperationExecutor(this@modifyPackages)
+            .apply(builder)
+            .execute()
+    }
+
+val Project.dependencyModifierService
+    get() = DependencyModifierService.getInstance(this)
+
+internal val Project.loadingContainer
+    get() = service<LoadingContainer>()

@@ -17,10 +17,9 @@
 package com.jetbrains.packagesearch.intellij.plugin.maven
 
 import com.intellij.openapi.project.Project
-import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleTypeTerm
 import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfiguration
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import icons.OpenapiIcons
 import javax.swing.Icon
 
@@ -32,12 +31,11 @@ internal object MavenProjectModuleType : ProjectModuleType {
     override val packageIcon: Icon
         get() = icon
 
-    override fun terminologyFor(term: ProjectModuleTypeTerm): String =
-        PackageSearchBundle.message("packagesearch.terminology.dependency.scope")
-
-    override fun defaultScope(project: Project): String =
+    override fun defaultScope(project: Project): PackageScope =
         PackageSearchMavenConfiguration.getInstance(project).determineDefaultMavenScope()
+            .let { if (it == "compile") PackageScope.Missing else PackageScope.from(it) }
 
-    override fun userDefinedScopes(project: Project): List<String> =
+    override fun userDefinedScopes(project: Project): List<PackageScope> =
         PackageSearchMavenConfiguration.getInstance(project).getMavenScopes()
+            .map { PackageScope.from(it) }
 }

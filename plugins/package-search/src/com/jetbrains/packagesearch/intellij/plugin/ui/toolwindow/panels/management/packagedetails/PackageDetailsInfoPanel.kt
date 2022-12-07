@@ -17,13 +17,14 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails
 
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.fus.FUSGroupIds
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.normalizeWhitespace
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.compensateForHighlightableComponentMarginLeft
@@ -114,28 +115,30 @@ internal class PackageDetailsInfoPanel : JPanel() {
     internal data class ViewModel(
         val packageModel: PackageModel,
         val selectedVersion: PackageVersion,
-        val allKnownRepositories: KnownRepositories.All
+        val allKnownRepositories: List<RepositoryModel>,
+        val knownRepositoriesInTargetModules: Map<PackageSearchModule, List<RepositoryModel>>
     )
 
     fun display(viewModel: ViewModel) {
         clearPanelContents()
         background = PackageSearchUI.Colors.panelBackground
         displayUsagesIfAny(viewModel.packageModel)
-        if (viewModel.packageModel.remoteInfo == null) {
+        val remoteInfo = viewModel.packageModel.remoteInfo
+        if (remoteInfo == null) {
             return
         }
 
         noDataLabel.isVisible = false
 
-        displayDescriptionIfAny(viewModel.packageModel.remoteInfo)
+        displayDescriptionIfAny(remoteInfo)
 
-        val selectedVersionInfo = viewModel.packageModel.remoteInfo
+        val selectedVersionInfo = remoteInfo
             .versions.find { it.version == viewModel.selectedVersion.versionName }
         displayRepositoriesIfAny(selectedVersionInfo, viewModel.allKnownRepositories)
 
-        displayAuthorsIfAny(viewModel.packageModel.remoteInfo.authors)
+        displayAuthorsIfAny(remoteInfo.authors)
 
-        val linkExtractor = LinkExtractor(viewModel.packageModel.remoteInfo)
+        val linkExtractor = LinkExtractor(remoteInfo)
         displayGitHubInfoIfAny(linkExtractor.scm())
         displayLicensesIfAny(linkExtractor.licenses())
         displayProjectWebsiteIfAny(linkExtractor.projectWebsite())
@@ -181,7 +184,7 @@ internal class PackageDetailsInfoPanel : JPanel() {
 
     private fun displayRepositoriesIfAny(
         selectedVersionInfo: ApiStandardPackage.ApiStandardVersion?,
-        allKnownRepositories: KnownRepositories.All
+        allKnownRepositories: List<RepositoryModel>
     ) {
         if (selectedVersionInfo == null) {
             repositoriesLabel.isVisible = false
@@ -189,7 +192,7 @@ internal class PackageDetailsInfoPanel : JPanel() {
         }
 
         val repositoryNames = selectedVersionInfo.repositoryIds
-            .mapNotNull { repoId -> allKnownRepositories.findById(repoId)?.displayName }
+            .mapNotNull { repoId -> allKnownRepositories.find { it.id == repoId }?.displayName }
             .filterNot { it.isBlank() }
         val repositoryNamesToDisplay = repositoryNames.joinToString()
 

@@ -31,7 +31,7 @@ internal class PackagesListPanelProvider : DependenciesToolWindowTabProvider {
 
     override fun addIsAvailableChangesListener(project: Project, callback: (Boolean) -> Unit): Subscription {
         val job = project.packageSearchProjectService
-            .projectModulesStateFlow
+            .packageSearchModulesStateFlow
             .onEach { callback(it.isNotEmpty()) }
             .launchIn(project.lifecycleScope)
         return Subscription { job.cancel() }

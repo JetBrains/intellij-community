@@ -32,7 +32,6 @@ import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.modules.ModulesTree
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails.PackageDetailsPanel
@@ -58,11 +57,8 @@ import javax.swing.JScrollPane
 
 @Suppress("MagicNumber") // Swing dimension constants
 internal class PackageManagementPanel(
-    val project: Project,
+    val project: Project
 ) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")) {
-
-    private val operationFactory = PackageSearchOperationFactory()
-    private val operationExecutor = NotifyingOperationExecutor(project)
 
     private val modulesTree = ModulesTree(project)
     private val modulesScrollPanel = JBScrollPane(
@@ -71,25 +67,9 @@ internal class PackageManagementPanel(
         JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
     )
 
-    private val knownRepositoriesInTargetModulesFlow = combine(
-        modulesTree.targetModulesStateFlow,
-        project.packageSearchProjectService.allInstalledKnownRepositoriesStateFlow
-    ) { targetModules, installedRepositories ->
-        installedRepositories.filterOnlyThoseUsedIn(targetModules)
-    }
-
     private val packagesListPanel = PackagesListPanel(
         project = project,
-        operationExecutor = operationExecutor,
-        viewModelFlow = combine(
-            modulesTree.targetModulesStateFlow,
-            project.packageSearchProjectService.installedPackagesStateFlow,
-            project.packageSearchProjectService.packageUpgradesStateFlow,
-            knownRepositoriesInTargetModulesFlow
-        ) { targetModules, installedPackages,
-            packageUpgrades, knownReposInModules ->
-            PackagesListPanel.ViewModel(targetModules, installedPackages, packageUpgrades, knownReposInModules)
-        },
+        targetModulesFlow = modulesTree.targetModulesStateFlow,
         dataProvider = project.packageSearchProjectService.dataProvider
     )
 
@@ -98,7 +78,7 @@ internal class PackageManagementPanel(
         .filterIsInstance<PackageModel.Installed>()
         .stateIn(project.lifecycleScope, SharingStarted.Eagerly, null)
 
-    private val packageDetailsPanel = PackageDetailsPanel(project, operationExecutor)
+    private val packageDetailsPanel = PackageDetailsPanel(project)
 
     private val packagesSplitter = JBSplitter(
         "PackageSearch.PackageManagementPanel.DetailsSplitter",
@@ -131,7 +111,7 @@ internal class PackageManagementPanel(
 
         packagesListPanel.content.minimumSize = Dimension(250.scaled(), 0)
 
-        project.packageSearchProjectService.moduleModelsStateFlow
+        project.packageSearchProjectService.packageSearchModulesStateFlow
             .map { computeModuleTreeModel(it) }
             .onEach { modulesTree.display(it) }
             .flowOn(Dispatchers.EDT)
@@ -147,15 +127,17 @@ internal class PackageManagementPanel(
             .launchIn(project.lifecycleScope)
 
         combine(
-            knownRepositoriesInTargetModulesFlow,
+            project.packageSearchProjectService.allKnownRepositoriesFlow,
+            project.packageSearchProjectService.repositoriesDeclarationsByModuleFlow,
             packagesListPanel.selectedPackageStateFlow,
             modulesTree.targetModulesStateFlow,
             packagesListPanel.onlyStableStateFlow
-        ) { knownRepositoriesInTargetModules, selectedUiPackageModel,
-            targetModules, onlyStable ->
+        ) { allKnownRepositories, repositoriesDeclarationsByModule,
+            selectedUiPackageModel, targetModules, onlyStable ->
             PackageDetailsPanel.ViewModel(
                 selectedPackageModel = selectedUiPackageModel,
-                knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
+                repositoriesDeclarationsByModule = repositoriesDeclarationsByModule,
+                allKnownRepositories = allKnownRepositories,
                 targetModules = targetModules,
                 onlyStable = onlyStable,
                 invokeLaterScope = project.lifecycleScope

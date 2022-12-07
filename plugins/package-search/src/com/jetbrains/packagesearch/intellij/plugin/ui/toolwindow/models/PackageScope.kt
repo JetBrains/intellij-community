@@ -18,17 +18,24 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
-sealed class PackageScope(open val scopeName: String) : Comparable<PackageScope> {
+@Serializable
+sealed interface PackageScope : Comparable<PackageScope> {
+
+    val scopeName: String
 
     @get:Nls
-    abstract val displayName: String
+    val displayName: String
 
     override fun compareTo(other: PackageScope): Int = scopeName.compareTo(other.scopeName)
 
-    object Missing : PackageScope("") {
+    @Serializable
+    object Missing : PackageScope {
+
+        override val scopeName = ""
 
         @Nls
         override val displayName = PackageSearchBundle.message("packagesearch.ui.missingScope")
@@ -36,15 +43,17 @@ sealed class PackageScope(open val scopeName: String) : Comparable<PackageScope>
         @NonNls
         override fun toString() = "[Missing scope]"
     }
-
-    data class Named(@NlsSafe override val scopeName: String) : PackageScope(scopeName) {
+    @JvmInline
+    @Serializable
+    value class Named(@NlsSafe override val scopeName: String) : PackageScope {
 
         init {
             require(scopeName.isNotBlank()) { "A Named scope name cannot be blank." }
         }
 
-        @Nls
-        override val displayName = scopeName
+        override val displayName
+            @Nls
+            get() = scopeName
 
         @NonNls
         override fun toString() = scopeName

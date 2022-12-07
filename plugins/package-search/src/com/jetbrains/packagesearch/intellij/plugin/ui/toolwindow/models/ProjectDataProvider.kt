@@ -16,11 +16,14 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
+import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
+import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.catch
@@ -30,29 +33,51 @@ import org.jetbrains.idea.packagesearch.api.PackageSearchApiClient
 import org.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import org.jetbrains.packagesearch.api.v2.ApiRepository
 import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
+import java.io.Closeable
+
+typealias SearchResponse = ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>
 
 internal class ProjectDataProvider(
-  private val apiClient: PackageSearchApiClient,
-  private val packageCache: CoroutineLRUCache<InstalledDependency, ApiStandardPackage>
-) {
+    private val apiClient: PackageSearchApiClient,
+    private val packageCache: CoroutineLRUCache<InstalledDependency, ApiStandardPackage>
+) : Closeable by apiClient {
 
     suspend fun fetchKnownRepositories(): List<ApiRepository> = apiClient.repositories().repositories
 
     suspend fun doSearch(
         searchQuery: String,
         filterOptions: FilterOptions
-    ): ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion> {
+    ): ParsedSearchResponse {
         val repositoryIds = filterOptions.onlyRepositoryIds
 
-        return apiClient.packagesByQuery(
+        val packagesByQuery = apiClient.packagesByQuery(
             searchQuery = searchQuery,
             onlyStable = filterOptions.onlyStable,
             onlyMpp = filterOptions.onlyKotlinMultiplatform,
             repositoryIds = repositoryIds.toList()
         )
+
+        return ParsedSearchResponse(
+            data = packagesByQuery,
+            parsedVersions = packagesByQuery.packages.associateWith {
+                it.versions
+                    .map { PackageVersion.from(it) }
+                    .filterIsInstance<PackageVersion.Named>()
+                    .parallelMap { packageVersionNormalizer.parse(it) }
+            }
+        )
     }
 
-    suspend fun fetchInfoFor(installedDependencies: List<InstalledDependency>, traceInfo: TraceInfo): Map<InstalledDependency, ApiStandardPackage> {
+    data class ParsedApiStandardPackage(val data: ApiStandardPackage, val parsedVersions: List<NormalizedPackageVersion<PackageVersion.Named>>)
+    data class ParsedSearchResponse(
+        val data: SearchResponse,
+        val parsedVersions: Map<ApiStandardPackage, List<NormalizedPackageVersion<PackageVersion.Named>>>
+    )
+
+    suspend fun fetchInfoFor(
+        installedDependencies: Collection<InstalledDependency>,
+        traceInfo: TraceInfo
+    ): Map<InstalledDependency, ParsedApiStandardPackage> {
         if (installedDependencies.isEmpty()) {
             return emptyMap()
         }
@@ -70,11 +95,19 @@ internal class ProjectDataProvider(
             }
         }
 
-        return successfulApiInfoByDependency.filterNotNullValues()
+        return successfulApiInfoByDependency.filterNotNullValues().mapValues { (_, data) ->
+            ParsedApiStandardPackage(
+                data = data,
+                parsedVersions = data.versions
+                    .map { PackageVersion.from(it) }
+                    .filterIsInstance<PackageVersion.Named>()
+                    .map { packageVersionNormalizer.parse(it) }
+            )
+        }
     }
 
     private suspend fun fetchInfoFromCacheOrApiFor(
-        dependencies: List<InstalledDependency>,
+        dependencies: Collection<InstalledDependency>,
         traceInfo: TraceInfo
     ): Map<InstalledDependency, ApiStandardPackage?> {
         logDebug(traceInfo, "ProjectDataProvider#fetchInfoFromCacheOrApiFor()") {

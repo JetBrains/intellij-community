@@ -25,9 +25,9 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModuleTransformer
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationIndexes
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.dependencyDeclarationCallback
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import org.jetbrains.plugins.gradle.model.ExternalProject
@@ -36,7 +36,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 
-internal class GradleModuleTransformer : CoroutineModuleTransformer {
+internal class GradleModuleTransformer : ModuleTransformer {
 
     companion object {
 
@@ -82,14 +82,14 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
                         )
                     }
                 }
-                currentPsi = currentPsi.parent
+                currentPsi = kotlin.runCatching { currentPsi.parent }.getOrNull() ?: break
                 attempts++
             }
             return null
         }
     }
 
-    override suspend fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> {
+    override suspend fun transformModules(project: Project, nativeModules: List<Module>): List<PackageSearchModule> {
         val nativeModulesByExternalProjectId = mutableMapOf<String, Module>()
 
         val rootProjects = nativeModules
@@ -101,17 +101,17 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
             .mapNotNull { findRootExternalProjectOrNull(project, it) }
             .distinctBy { it.buildDir }
 
-        val projectModulesByProjectDir = mutableMapOf<File, ProjectModule>()
-        rootProjects.forEach { it.buildProjectModulesRecursively(projectModulesByProjectDir, nativeModulesByExternalProjectId, project) }
+        val projectModulesByPackageSearchDir = mutableMapOf<File, PackageSearchModule>()
+        rootProjects.forEach { it.buildProjectModulesRecursively(projectModulesByPackageSearchDir, nativeModulesByExternalProjectId, project) }
 
-        return projectModulesByProjectDir.values.toList()
+        return projectModulesByPackageSearchDir.values.toList()
     }
 
     private suspend fun ExternalProject.buildProjectModulesRecursively(
-        projectModulesByProjectDir: MutableMap<File, ProjectModule>,
+        projectModulesByPackageSearchDir: MutableMap<File, PackageSearchModule>,
         nativeModulesByExternalProjectId: Map<String, Module>,
         project: Project,
-        parent: ProjectModule? = null
+        parent: PackageSearchModule? = null
     ) {
         val nativeModule = checkNotNull(nativeModulesByExternalProjectId[id]) { "Couldn't find native module for '$id'" }
         val buildVirtualFile = buildFile?.absolutePath?.let { LocalFileSystem.getInstance().findFileByPath(it) }
@@ -124,7 +124,7 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
         val scopes: List<String> = GradleExtensionsSettings.getInstance(project)
             .getExtensionsFor(nativeModule)?.configurations?.keys?.toList() ?: emptyList()
 
-        val projectModule = ProjectModule(
+        val packageSearchModule = PackageSearchModule(
             name = name,
             nativeModule = nativeModule,
             parent = parent,
@@ -138,14 +138,14 @@ internal class GradleModuleTransformer : CoroutineModuleTransformer {
 
         for (childExternalProject in childProjects.values) {
             childExternalProject.buildProjectModulesRecursively(
-                projectModulesByProjectDir,
+                projectModulesByPackageSearchDir,
                 nativeModulesByExternalProjectId,
                 project,
-                parent = projectModule
+                parent = packageSearchModule
             )
         }
 
-        projectModulesByProjectDir[projectDir] = projectModule
+        projectModulesByPackageSearchDir[projectDir] = packageSearchModule
     }
 
     private suspend fun isKotlinDsl(

@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import icons.PlatformDependencyToolwindowIcons
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Service(Level.PROJECT)
@@ -44,16 +45,18 @@ class DependencyToolWindowFactory : ProjectPostStartupActivity {
   }
 
   override suspend fun execute(project: Project) {
-    awaitAvailableExtensions(project)
-    withContext(Dispatchers.toolWindowManager(project)) {
-      val toolWindowTask = RegisterToolWindowTask.closable(
-        id = toolWindowId,
-        stripeTitle = DependencyToolWindowBundle.messagePointer("toolwindow.stripe.Dependencies"),
-        icon = PlatformDependencyToolwindowIcons.ArtifactSmall
-      )
-      val toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(toolWindowTask)
-      project.contentIdMap /* init service only */
-      initializeToolWindow(toolWindow, project)
+    project.lifecycleScope.launch {
+      awaitAvailableExtensions(project)
+      withContext(Dispatchers.toolWindowManager(project)) {
+        val toolWindowTask = RegisterToolWindowTask.closable(
+          id = toolWindowId,
+          stripeTitle = DependencyToolWindowBundle.messagePointer("toolwindow.stripe.Dependencies"),
+          icon = PlatformDependencyToolwindowIcons.ArtifactSmall
+        )
+        val toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(toolWindowTask)
+        project.contentIdMap /* init service only */
+        initializeToolWindow(toolWindow, project)
+      }
     }
   }
 }

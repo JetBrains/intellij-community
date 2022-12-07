@@ -83,19 +83,9 @@ class CoroutineLRUCache<K : Any, V>(val maxSize: Int, initialValues: Map<K, V> =
         syncMutex.withLock { cache.put(key, value) }
     }
 
-    suspend fun getOrElse(key: K, default: suspend () -> V) = syncMutex.withLock {
-        val value = cache[key] as? V
-        value ?: default()
-    }
-
-    suspend fun getOrPut(key: K, default: suspend () -> V) = syncMutex.withLock {
-        val value = cache[key] as? V
-        value ?: default().also { cache[key] = it }
-    }
-
     suspend fun getOrTryPutDefault(key: K, default: suspend () -> V) = syncMutex.withLock {
         val value = cache[key] as? V
-        value ?: runCatching { default() }.getOrNull()?.also<V> { cache[key] = it }
+        value ?: default().also { cache[key] = it }
     }
 
     suspend fun clear() {
