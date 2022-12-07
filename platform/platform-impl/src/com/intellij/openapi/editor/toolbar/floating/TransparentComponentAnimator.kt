@@ -22,8 +22,10 @@ class TransparentComponentAnimator(
   private val state = AtomicReference<State>(State.Invisible)
 
   private fun startTimerIfNeeded() {
-    if (!disposable.isDisposed && !clk.isRunning) {
-      clk.start()
+    if (!disposable.isDisposed) {
+      if (!clk.isRunning) {
+        clk.start()
+      }
     }
   }
 
@@ -50,22 +52,40 @@ class TransparentComponentAnimator(
   }
 
   private fun updateState(nextState: (State) -> State) {
-    lateinit var oldState: State
-    val state = state.updateAndGet {
-      oldState = it
-      nextState(it)
-    }
-    updateTimer(state)
-    invokeLaterIfNeeded {
-      updateComponent(oldState, state)
+    if (!disposable.isDisposed) {
+      lateinit var oldState: State
+      val state = state.updateAndGet {
+        oldState = it
+        nextState(it)
+      }
+      updateTimer(state)
+      invokeLaterIfNeeded {
+        updateComponent(oldState, state)
+      }
     }
   }
 
   private fun updateTimer(state: State) {
-    when {
-      state is State.Invisible -> stopTimerIfNeeded()
-      state is State.Visible && !component.autoHideable -> stopTimerIfNeeded()
-      else -> startTimerIfNeeded()
+    val oldDelay = clk.delay
+    val delay = when (state) {
+      is State.Invisible -> Int.MAX_VALUE
+      is State.Visible -> RETENTION_CLK_DELAY
+      is State.Hiding -> CLK_DELAY
+      is State.Showing -> CLK_DELAY
+    }
+    clk.delay = delay
+    clk.initialDelay = delay
+    if (oldDelay != delay) {
+      stopTimerIfNeeded()
+    }
+    when (state) {
+      is State.Invisible -> stopTimerIfNeeded()
+      is State.Visible -> when (component.autoHideable) {
+        true -> startTimerIfNeeded()
+        else -> stopTimerIfNeeded()
+      }
+      is State.Hiding -> startTimerIfNeeded()
+      is State.Showing -> startTimerIfNeeded()
     }
   }
 
@@ -104,15 +124,15 @@ class TransparentComponentAnimator(
       is State.Visible -> when {
         !component.autoHideable -> State.Visible(0)
         component.isComponentOnHold() -> State.Visible(0)
-        state.count >= RETENTION_COUNT -> State.Hiding(0)
+        state.count + 1 >= AUTO_RETENTION_COUNT -> State.Hiding(0)
         else -> State.Visible(state.count + 1)
       }
       is State.Hiding -> when {
-        state.count >= HIDING_COUNT -> State.Invisible
+        state.count + 1 >= HIDING_COUNT -> State.Invisible
         else -> State.Hiding(state.count + 1)
       }
       is State.Showing -> when {
-        state.count >= SHOWING_COUNT -> State.Visible(0)
+        state.count + 1 >= SHOWING_COUNT -> State.Visible(0)
         else -> State.Showing(state.count + 1)
       }
     }
@@ -138,10 +158,12 @@ class TransparentComponentAnimator(
   }
 
   private sealed interface State {
-    object Invisible : State
     data class Visible(val count: Int) : State
     data class Hiding(val count: Int) : State
     data class Showing(val count: Int) : State
+    object Invisible : State {
+      override fun toString() = "Invisible"
+    }
 
     fun isVisible(): Boolean {
       return this !is Invisible
@@ -149,11 +171,12 @@ class TransparentComponentAnimator(
   }
 
   companion object {
-    private const val CLK_FREQUENCY = 60
-    private const val CLK_DELAY = 1000 / CLK_FREQUENCY
-    private const val RETENTION_COUNT = 1500 / CLK_DELAY
+    private const val CLK_DELAY = 1000 / 60
     private const val SHOWING_COUNT = 500 / CLK_DELAY
     private const val HIDING_COUNT = 1000 / CLK_DELAY
+
+    private const val RETENTION_CLK_DELAY = 1500
+    private const val AUTO_RETENTION_COUNT = 1500 / RETENTION_CLK_DELAY
 
     private const val THROTTLING_DELAY = 1000
   }
