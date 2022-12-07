@@ -14,4 +14,3 @@ fun MyClass(): (Int) -> String {
     return { y: Int -> y.toString() }
 }
 
-// IGNORE_FOR_INDY_LAMBDAS

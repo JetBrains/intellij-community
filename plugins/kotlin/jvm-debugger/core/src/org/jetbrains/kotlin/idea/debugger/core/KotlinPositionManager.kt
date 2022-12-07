@@ -322,6 +322,11 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
               DebuggerUtilsEx.locationsOfLine(it, lineNumber + 1).isNotEmpty()
             }
 
+        if (lambdas.size == size) {
+            // All lambdas on the line compiled into methods
+            return this[lambdas.indexOf(method)]
+        }
+        // SAM lambdas compiled into methods, and other non-SAM lambdas on same line compiled into anonymous classes
         return getSamLambdaWithIndex(lambdas.indexOf(method))
     }
 

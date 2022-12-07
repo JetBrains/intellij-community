@@ -76,4 +76,3 @@ fun main() {
         { f3() }, { f4() }
     )
 }
-// IGNORE_FOR_INDY_LAMBDAS
