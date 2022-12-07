@@ -203,6 +203,11 @@ fun doGetProjectFileName(presentableUrl: String?,
   return "${name.trimMiddle(name.length.coerceAtMost(255 - hashSeparator.length - locationHash.length), useEllipsisSymbol = false)}$hashSeparator$locationHash$extensionWithDot"
 }
 
+/**
+ * Returns the path to a directory which can be used to store project-specific caches. Note that directory structure used by this 
+ * function doesn't allow automatic cleaning of all caches related to a given project if it was deleted, so consider using [getProjectDataPath] 
+ * instead.
+ */
 @JvmOverloads
 fun Project.getProjectCachePath(@NonNls cacheDirName: String, isForceNameUse: Boolean = false, extensionWithDot: String = ""): Path {
   return appSystemDir.resolve(cacheDirName).resolve(getProjectCacheFileName(isForceNameUse, extensionWithDot = extensionWithDot))
@@ -220,6 +225,9 @@ fun Project.getProjectDataPath(@NonNls dataDirName: String): Path {
   return getProjectDataPathRoot(this).resolve(dataDirName)
 }
 
+/**
+ * Root directory for all project-specific caches.
+ */
 val projectsDataDir: Path
   get() = appSystemDir.resolve("projects")
 
@@ -234,9 +242,15 @@ fun clearCachesForAllProjects(@NonNls dataDirName: String) {
   }
 }
 
+/**
+ * Returns the root directory for all caches related to [project].
+ */
 @ApiStatus.Internal
 fun getProjectDataPathRoot(project: Project): Path = projectsDataDir.resolve(project.getProjectCacheFileName())
 
+/**
+ * Returns the root directory for all caches related to the project at [projectPath].
+ */
 @ApiStatus.Internal
 fun getProjectDataPathRoot(projectPath: Path): Path = projectsDataDir.resolve(getProjectCacheFileName(projectPath))
 
