@@ -169,7 +169,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       add(cancelButton)
     }
     val statusPanel = JPanel().apply {
-      layout = MigLayout(LC().gridGap("0", "8}").insets("0").fill().flowY().hideMode(3))
+      layout = MigLayout(LC().gridGap("0", "8").insets("0").fill().flowY().hideMode(3))
       border = JBUI.Borders.empty(8)
 
       add(createNoChangesWarningLabel(directionModel, commitsCountModel, createLoadingModel), CC().minWidth("0"))
