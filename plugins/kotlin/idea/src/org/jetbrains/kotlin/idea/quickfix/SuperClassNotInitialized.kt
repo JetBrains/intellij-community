@@ -55,6 +55,9 @@ object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
         if (type.isError) return emptyList()
 
         val superClass = (type.constructor.declarationDescriptor as? ClassDescriptor) ?: return emptyList()
+        if (superClass.kind == ClassKind.ANNOTATION_CLASS || superClass.kind == ClassKind.ENUM_CLASS ||
+            superClass.isData || superClass.isInline || superClass.isValue
+        ) return emptyList()
         val classDescriptor = classOrObjectDeclaration.resolveToDescriptorIfAny(BodyResolveMode.FULL) ?: return emptyList()
         val containingPackage = superClass.classId?.packageFqName
         val inSamePackage = containingPackage != null && containingPackage == classDescriptor.classId?.packageFqName

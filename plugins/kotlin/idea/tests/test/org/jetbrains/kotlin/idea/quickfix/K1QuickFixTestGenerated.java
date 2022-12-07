@@ -13624,6 +13624,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/supertypeInitialization/addParenthesisForSealedClass2.kt");
         }
 
+        @TestMetadata("annotation.kt")
+        public void testAnnotation() throws Exception {
+            runTest("testData/quickfix/supertypeInitialization/annotation.kt");
+        }
+
         @TestMetadata("baseConstructorError.kt")
         public void testBaseConstructorError() throws Exception {
             runTest("testData/quickfix/supertypeInitialization/baseConstructorError.kt");
@@ -13632,6 +13637,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("createConstructor.kt")
         public void testCreateConstructor() throws Exception {
             runTest("testData/quickfix/supertypeInitialization/createConstructor.kt");
+        }
+
+        @TestMetadata("data.kt")
+        public void testData() throws Exception {
+            runTest("testData/quickfix/supertypeInitialization/data.kt");
         }
 
         @TestMetadata("displayLongSignatures1.kt")
@@ -13644,6 +13654,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/supertypeInitialization/displayLongSignatures2.kt");
         }
 
+        @TestMetadata("enum.kt")
+        public void testEnum() throws Exception {
+            runTest("testData/quickfix/supertypeInitialization/enum.kt");
+        }
+
         @TestMetadata("genericClass.kt")
         public void testGenericClass() throws Exception {
             runTest("testData/quickfix/supertypeInitialization/genericClass.kt");
@@ -13652,6 +13667,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("incompleteConstructor.kt")
         public void testIncompleteConstructor() throws Exception {
             runTest("testData/quickfix/supertypeInitialization/incompleteConstructor.kt");
+        }
+
+        @TestMetadata("inline.kt")
+        public void testInline() throws Exception {
+            runTest("testData/quickfix/supertypeInitialization/inline.kt");
         }
 
         @TestMetadata("keywordName.kt")
@@ -13682,6 +13702,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("someParametersAlreadyExist.kt")
         public void testSomeParametersAlreadyExist() throws Exception {
             runTest("testData/quickfix/supertypeInitialization/someParametersAlreadyExist.kt");
+        }
+
+        @TestMetadata("value.kt")
+        public void testValue() throws Exception {
+            runTest("testData/quickfix/supertypeInitialization/value.kt");
         }
 
         @TestMetadata("vararg1.kt")
