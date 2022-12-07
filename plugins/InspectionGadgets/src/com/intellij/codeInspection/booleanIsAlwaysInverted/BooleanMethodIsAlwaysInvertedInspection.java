@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -78,6 +79,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
     if (uMethod == null) return null;
     PsiElement anchor = UDeclarationKt.getAnchorPsi(uMethod);
     if (anchor != null) {
+      if (anchor.getLanguage() != JavaLanguage.INSTANCE) return null;
       final Collection<RefElement> inReferences = refMethod.getInReferences();
       if (inReferences.size() == 1) {
         final RefElement refElement = inReferences.iterator().next();
