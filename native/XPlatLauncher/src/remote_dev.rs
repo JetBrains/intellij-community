@@ -263,7 +263,7 @@ impl RemoteDevLaunchConfiguration {
             default,
             config_dir,
             system_dir,
-            logs_dir: logs_dir
+            logs_dir
         };
 
         Ok(config)
