@@ -17,6 +17,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.indexing.IndexingBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,10 +26,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Single-threaded executor for {@link MergingTaskQueue}.
  */
+@ApiStatus.Experimental
 public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
 
   private static final Logger LOG = Logger.getInstance(MergingQueueGuiExecutor.class);
 
+  @ApiStatus.Experimental
   public interface ExecutorStateListener {
     /**
      * @return false if queue processing should be terminated (afterLastTask will not be invoked in this case). True to start queue processing.
