@@ -153,11 +153,11 @@ public final class FileSystemUtil {
       static final int S_IFLNK = 0120000;  // symbolic link
       static final int S_IFREG = 0100000;  // regular file
       static final int S_IFDIR = 0040000;  // directory
-      static final int WRITE_MASK = 0222;
+      static final int S_IWUSR = 0200;
+      static final int IW_MASK = 0022;
       static final int W_OK = 2;           // write permission flag for access(2)
 
       static native int getuid();
-      static native int getgid();
       static native int access(String path, int mode);
     }
 
@@ -173,19 +173,16 @@ public final class FileSystemUtil {
       static native int __xstat64(int ver, String path, Pointer stat);
     }
 
-    private static final int[] LINUX_64 =  {24, 48, 88, 28, 32};
-    private static final int[] BSD_64 =    { 8, 72, 40, 12, 16};
-
+    private static final int[] LINUX_64 =  {24, 48, 88, 28};
+    private static final int[] DARWIN_64 = { 8, 72, 40, 12};
     private static final int STAT_VER = 1;
     private static final int OFF_MODE = 0;
     private static final int OFF_SIZE = 1;
     private static final int OFF_TIME = 2;
     private static final int OFF_UID  = 3;
-    private static final int OFF_GID  = 4;
 
     private final int[] myOffsets;
     private final int myUid;
-    private final int myGid;
     private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP_KEY, false);
     private final LimitedPool<Memory> myMemoryPool = new LimitedPool.Sync<>(10, () -> new Memory(256));
 
@@ -193,7 +190,7 @@ public final class FileSystemUtil {
       assert JnaLoader.isSupportsDirectMapping() : "Direct mapping not available on " + Platform.RESOURCE_PREFIX;
 
       if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_64;
-      else if ("darwin-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = BSD_64;
+      else if ("darwin-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = DARWIN_64;
       else throw new IllegalStateException("Unsupported OS/arch: " + Platform.RESOURCE_PREFIX);
 
       Map<String, String> options = Collections.singletonMap(Library.OPTION_STRING_ENCODING, CharsetToolkit.getPlatformCharset().name());
@@ -202,7 +199,6 @@ public final class FileSystemUtil {
       Native.register(SystemInfo.isLinux ? LinuxLibC.class : UnixLibC.class, lib);
 
       myUid = LibC.getuid();
-      myGid = LibC.getgid();
     }
 
     @Override
@@ -231,7 +227,19 @@ public final class FileSystemUtil {
         long mTime2 = myCoarseTs ? 0 : Native.LONG_SIZE == 4 ? buffer.getInt(myOffsets[OFF_TIME] + 4) : buffer.getLong(myOffsets[OFF_TIME] + 8);
         long mTime = mTime1 * 1000 + mTime2 / 1000000;
 
-        boolean writable = isDirectory || (ownFile(buffer) ? (mode & LibC.WRITE_MASK) != 0 : LibC.access(path, LibC.W_OK) == 0);
+        boolean writable;
+        if (isDirectory) {
+          writable = true;
+        }
+        else if (buffer.getInt(myOffsets[OFF_UID]) == myUid) {
+          writable = (mode & LibC.S_IWUSR) != 0;
+        }
+        else if ((mode & LibC.IW_MASK) == 0) {
+          writable = false;
+        }
+        else {
+          writable = LibC.access(path, LibC.W_OK) == 0;
+        }
 
         return new FileAttributes(isDirectory, isSpecial, isSymlink, false, size, mTime, writable);
       }
@@ -261,10 +269,6 @@ public final class FileSystemUtil {
 
     private int getModeFlags(Memory buffer) {
       return SystemInfo.isLinux ? buffer.getInt(myOffsets[OFF_MODE]) : buffer.getShort(myOffsets[OFF_MODE]);
-    }
-
-    private boolean ownFile(Memory buffer) {
-      return buffer.getInt(myOffsets[OFF_UID]) == myUid && buffer.getInt(myOffsets[OFF_GID]) == myGid;
     }
   }
 

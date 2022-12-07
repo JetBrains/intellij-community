@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.DosFileAttributeView;
+import java.nio.file.attribute.PosixFilePermissions;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -506,7 +507,7 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void notOwned() {
+  public void notOwned() throws IOException {
     File userHome = new File(SystemProperties.getUserHome());
 
     FileAttributes homeAttributes = getAttributes(userHome);
@@ -516,6 +517,22 @@ public abstract class FileAttributesReadingTest {
     FileAttributes parentAttributes = getAttributes(userHome.getParentFile());
     assertTrue(parentAttributes.isDirectory());
     assertTrue(parentAttributes.isWritable());
+
+    if (SystemInfo.isUnix) {
+      var mutantFile = tempDir.newFile("mutant");
+      Files.setPosixFilePermissions(mutantFile.toPath(), PosixFilePermissions.fromString("r--rw-rw-"));
+      var mutantAttrs = getAttributes(mutantFile);
+      assertTrue(mutantAttrs.isFile());
+      assertFalse(mutantAttrs.isWritable());
+
+      var devNull = getAttributes(new File("/dev/null"));
+      assertTrue(devNull.isSpecial());
+      assertTrue(devNull.isWritable());
+
+      var etcPasswd = getAttributes(new File("/etc/passwd"));
+      assertTrue(etcPasswd.isFile());
+      assertFalse(etcPasswd.isWritable());
+    }
   }
 
   @Test
