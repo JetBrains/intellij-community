@@ -1403,7 +1403,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         Collections.singletonList(ProjectImportCollector.TASK_CLASS.with(MavenImportStats.ImportingTaskOld.class))
       );
       try {
-        setIgnoredState(projectsScheduledToIgnore, true);
+        myProjectsTree.setIgnoredState(projectsScheduledToIgnore, true, true);
         MavenProjectImporter projectImporter = MavenProjectImporter.createImporter(
           myProject, myProjectsTree, projectsToImportWithChanges, projectsScheduledToIgnore, importModuleGroupsRequired,
           modelsProvider, getImportingSettings(), myPreviewModule, activity
