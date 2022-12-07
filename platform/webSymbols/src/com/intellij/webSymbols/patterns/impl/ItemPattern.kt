@@ -3,11 +3,12 @@ package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
+import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.utils.lastWebSymbol
 import kotlin.math.max
 
 internal class ItemPattern(val displayName: String?) : WebSymbolsPattern() {
@@ -27,7 +28,7 @@ internal class ItemPattern(val displayName: String?) : WebSymbolsPattern() {
         start, end, emptyList(),
         problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL,
         displayName = displayName,
-        symbolKinds = itemsProvider?.getSymbolKinds(owner ?: scopeStack.lastOrNull() as? WebSymbol) ?: emptySet()
+        symbolKinds = itemsProvider?.getSymbolKinds(owner ?: scopeStack.lastWebSymbol) ?: emptySet()
       ))))
     }
 
@@ -50,7 +51,7 @@ internal class ItemPattern(val displayName: String?) : WebSymbolsPattern() {
           emptyList(),
           problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL,
           displayName = displayName,
-          symbolKinds = itemsProvider?.getSymbolKinds(owner ?: scopeStack.lastOrNull() as? WebSymbol) ?: emptySet(),
+          symbolKinds = itemsProvider?.getSymbolKinds(owner ?: scopeStack.lastWebSymbol) ?: emptySet(),
         ))
       }
     ))

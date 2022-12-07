@@ -44,8 +44,8 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
           WebSymbolHtmlAttributeValue.Type.BOOLEAN -> typeSupport.createBooleanType(symbol)
           WebSymbolHtmlAttributeValue.Type.NUMBER -> typeSupport.createNumberType(symbol)
           WebSymbolHtmlAttributeValue.Type.ENUM -> {
-            val valuesSymbols = queryExecutor.runNameMatchQuery(
-              listOf(WebSymbol.KIND_HTML_ATTRIBUTE_VALUES), virtualSymbols = false, scope = symbols)
+            val valuesSymbols = queryExecutor.runCodeCompletionQuery(
+              symbol.namespace, WebSymbol.KIND_HTML_ATTRIBUTE_VALUES, "", 0, virtualSymbols = false, scope = symbols)
             typeSupport.createEnumType(symbol, valuesSymbols)
           }
           WebSymbolHtmlAttributeValue.Type.OF_MATCH -> symbol.type
@@ -66,7 +66,7 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
         else if (kind == WebSymbolHtmlAttributeValue.Kind.PLAIN) {
           when (type) {
             WebSymbolHtmlAttributeValue.Type.ENUM -> {
-              queryExecutor.runCodeCompletionQuery(listOf(WebSymbol.KIND_HTML_ATTRIBUTE_VALUES), 0, scope = symbols)
+              queryExecutor.runCodeCompletionQuery(symbol.namespace, WebSymbol.KIND_HTML_ATTRIBUTE_VALUES, "", 0, scope = symbols)
                 .filter { !it.completeAfterInsert }
             }
             WebSymbolHtmlAttributeValue.Type.COMPLEX,

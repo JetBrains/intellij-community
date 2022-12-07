@@ -59,30 +59,24 @@ abstract class WebTypesSymbolsScopeBase : WebSymbolsScope, WebSymbolsContextRule
   override fun getModificationCount(): Long =
     modCount
 
-  final override fun getSymbols(namespace: SymbolNamespace?,
+  final override fun getSymbols(namespace: SymbolNamespace,
                                 kind: String,
                                 name: String?,
                                 params: WebSymbolsNameMatchQueryParams,
                                 scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
-    if (namespace != null) {
-      getMaps(params).flatMap {
-        it.getSymbols(namespace, kind, name, params, Stack(scope))
-      }.toList()
-    }
-    else emptyList()
+    getMaps(params).flatMap {
+      it.getSymbols(namespace, kind, name, params, Stack(scope))
+    }.toList()
 
 
-  final override fun getCodeCompletions(namespace: SymbolNamespace?,
+  final override fun getCodeCompletions(namespace: SymbolNamespace,
                                         kind: String,
                                         name: String?,
                                         params: WebSymbolsCodeCompletionQueryParams,
                                         scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
-    if (namespace != null) {
-      getMaps(params).flatMap {
-        it.getCodeCompletions(namespace, kind, name, params, Stack(scope))
-      }.toList()
-    }
-    else emptyList()
+    getMaps(params).flatMap {
+      it.getCodeCompletions(namespace, kind, name, params, Stack(scope))
+    }.toList()
 
   override fun getContextRules(): MultiMap<ContextKind, WebSymbolsContextKindRules> =
     contextRulesCache.value

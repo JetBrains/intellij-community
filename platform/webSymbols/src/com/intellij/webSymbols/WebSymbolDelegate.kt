@@ -29,7 +29,7 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
     get() = delegate.kind
   override fun getModificationCount(): Long =
     delegate.modificationCount
-  override val queryScope: Sequence<WebSymbolsScope>
+  override val queryScope: List<WebSymbolsScope>
     get() = delegate.queryScope
   override val name: String
     get() = delegate.name
@@ -76,21 +76,21 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     (delegate as? NavigatableSymbol)?.getNavigationTargets(project) ?: emptyList()
 
-  override fun getSymbols(namespace: SymbolNamespace?,
+  override fun getSymbols(namespace: SymbolNamespace,
                           kind: SymbolKind,
                           name: String?,
                           params: WebSymbolsNameMatchQueryParams,
                           scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
     delegate.getSymbols(namespace, kind, name, params, scope)
 
-  override fun getCodeCompletions(namespace: SymbolNamespace?,
+  override fun getCodeCompletions(namespace: SymbolNamespace,
                                   kind: SymbolKind,
                                   name: String?,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
     delegate.getCodeCompletions(namespace, kind, name, params, scope)
 
-  override fun isExclusiveFor(namespace: SymbolNamespace?, kind: SymbolKind): Boolean =
+  override fun isExclusiveFor(namespace: SymbolNamespace, kind: SymbolKind): Boolean =
     delegate.isExclusiveFor(namespace, kind)
 
   protected fun renameTargetFromDelegate(): RenameTarget =

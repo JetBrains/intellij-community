@@ -65,10 +65,11 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
   override val proximity: Int?
     get() = explicitProximity ?: reversedSegments().mapNotNull { it.proximity }.firstOrNull()
 
-  override val queryScope: Sequence<WebSymbolsScope>
+  override val queryScope: List<WebSymbolsScope>
     get() = nameSegments.asSequence()
       .flatMap { it.symbols }
       .flatMap { it.queryScope }
+      .toList()
 
   override val type: Any?
     get() = reversedSegments().flatMap { it.symbols }

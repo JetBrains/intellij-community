@@ -4,6 +4,7 @@ package com.intellij.webSymbols.query
 import com.intellij.model.Pointer
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.webTypes.json.parseWebTypesPath
 
 class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
 
@@ -398,7 +399,7 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
   fun testNestedPattern1() {
     webSymbolsQueryExecutorFactory.addScope(
       object : WebSymbolsScope {
-        override fun getSymbols(namespace: SymbolNamespace?,
+        override fun getSymbols(namespace: SymbolNamespace,
                                 kind: SymbolKind,
                                 name: String?,
                                 params: WebSymbolsNameMatchQueryParams,
@@ -438,7 +439,7 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
     doTest(testPath) {
       registerFiles(framework, *webTypes)
       val matches = webSymbolsQueryExecutorFactory.create(null)
-        .runNameMatchQuery(path, includeVirtual, false)
+        .runNameMatchQuery(parseWebTypesPath(path, null), includeVirtual, false)
       printMatches(matches)
     }
   }

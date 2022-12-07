@@ -5,12 +5,8 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.RecursionManager
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_CSS
-import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_JS
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.impl.selectBest
@@ -59,14 +55,14 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
     }
   }
 
-  override fun runNameMatchQuery(path: List<String>,
+  override fun runNameMatchQuery(path: List<WebSymbolQualifiedName>,
                                  virtualSymbols: Boolean,
                                  abstractSymbols: Boolean,
                                  strictScope: Boolean,
                                  scope: List<WebSymbolsScope>): List<WebSymbol> =
     runNameMatchQuery(path, WebSymbolsNameMatchQueryParams(this, virtualSymbols, abstractSymbols, strictScope), scope)
 
-  override fun runCodeCompletionQuery(path: List<String>,
+  override fun runCodeCompletionQuery(path: List<WebSymbolQualifiedName>,
                                       position: Int,
                                       virtualSymbols: Boolean,
                                       scope: List<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
@@ -78,41 +74,41 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
     else
       WebSymbolsQueryExecutorImpl(rootScope, namesProvider.withRules(rules), resultsCustomizer, context, allowResolve)
 
-  internal fun runNameMatchQuery(path: List<String>, queryParams: WebSymbolsNameMatchQueryParams,
+  internal fun runNameMatchQuery(path: List<WebSymbolQualifiedName>, queryParams: WebSymbolsNameMatchQueryParams,
                                  scope: List<WebSymbolsScope>): List<WebSymbol> =
     runQuery(path, queryParams, scope) { finalContext: Collection<WebSymbolsScope>,
-                                         pathSection: PathSection,
+                                         qualifiedName: WebSymbolQualifiedName,
                                          params: WebSymbolsNameMatchQueryParams ->
-      val kind = pathSection.kind
-      val namespace = pathSection.namespace
+      val kind = qualifiedName.kind
+      val namespace = qualifiedName.namespace
 
       val result = finalContext
         .takeLastUntilExclusiveScopeFor(namespace, kind)
         .asSequence()
-        .flatMap {
-          it.getSymbols(namespace, kind, pathSection.name, params, Stack(finalContext))
+        .flatMap { scope ->
+          scope.getSymbols(namespace, kind, qualifiedName.name.takeIf { it.isNotEmpty() }, params, Stack(finalContext))
         }
         .filterIsInstance<WebSymbol>()
         .filter { it !is WebSymbolMatch || it.nameSegments.size > 1 || (it.nameSegments.isNotEmpty() && it.nameSegments[0].problem == null) }
         .distinct()
         .toList()
-        .let {
-          if (it.isNotEmpty())
-            resultsCustomizer.apply(it, params.strictScope, namespace, kind, pathSection.name)
-          else it
+        .let { list ->
+          if (list.isNotEmpty())
+            resultsCustomizer.apply(list, params.strictScope, namespace, kind, qualifiedName.name.takeIf { it.isNotEmpty() })
+          else list
         }
         .let {
-          if (it.isNotEmpty() && pathSection.name != null)
+          if (it.isNotEmpty() && qualifiedName.name.isNotEmpty())
             it.selectBest(WebSymbol::nameSegments, WebSymbol::priority, WebSymbol::extension)
           else it
         }
       result
     }
 
-  internal fun runCodeCompletionQuery(path: List<String>, queryParams: WebSymbolsCodeCompletionQueryParams,
+  internal fun runCodeCompletionQuery(path: List<WebSymbolQualifiedName>, queryParams: WebSymbolsCodeCompletionQueryParams,
                                       scope: List<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
     runQuery(path, queryParams, scope) { finalContext: Collection<WebSymbolsScope>,
-                                         pathSection: PathSection,
+                                         pathSection: WebSymbolQualifiedName,
                                          params: WebSymbolsCodeCompletionQueryParams ->
       var proximityBase = 0
       var nextProximityBase = 0
@@ -150,41 +146,41 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
     rootScope.sumOf { it.modificationCount } + namesProvider.modificationCount + resultsCustomizer.modificationCount
 
   private fun <T, P : WebSymbolsQueryParams> runQuery(
-    path: List<String>,
+    path: List<WebSymbolQualifiedName>,
     params: P,
     initialScope: List<WebSymbolsScope>,
     finalProcessor: (
       context: Collection<WebSymbolsScope>,
-      pathSection: PathSection,
+      pathSection: WebSymbolQualifiedName,
       params: P,
     ) -> List<T>): List<T> {
     ApplicationManager.getApplication().assertReadAccessAllowed()
-    val sections = parsePath(path)
-    if (sections.isEmpty()) return emptyList()
+    if (path.isEmpty()) return emptyList()
 
     val scope = rootScope.toMutableSet()
     initialScope.flatMapTo(scope) {
       if (it is WebSymbol)
         it.queryScope
       else
-        sequenceOf(it)
+        listOf(it)
     }
-    return RecursionManager.doPreventingRecursion(Pair(sections, params.virtualSymbols), false) {
+    return RecursionManager.doPreventingRecursion(Pair(path, params.virtualSymbols), false) {
       val contextQueryParams = WebSymbolsNameMatchQueryParams(this, true, false)
       var i = 0
-      while (i < sections.size - 1) {
-        val section = sections[i++]
+      while (i < path.size - 1) {
+        val qName = path[i++]
+        if (qName.name.isEmpty()) return@doPreventingRecursion emptyList()
         val scopeSymbols = scope.flatMap {
-          it.getSymbols(section.namespace, section.kind, section.name, contextQueryParams, Stack(scope))
+          it.getSymbols(qName.namespace, qName.kind, qName.name, contextQueryParams, Stack(scope))
         }
         scopeSymbols.flatMapTo(scope) {
           if (it is WebSymbol)
             it.queryScope
           else
-            sequenceOf(it)
+            listOf(it)
         }
       }
-      val lastSection = sections.last()
+      val lastSection = path.last()
       finalProcessor(scope, lastSection, params)
     } ?: run {
       thisLogger().warn("Recursive Web Symbols query: ${path.joinToString("/", "/")} with virtualSymbols=${params.virtualSymbols}.\n" +
@@ -193,9 +189,7 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
     }
   }
 
-  internal data class PathSection(val namespace: SymbolNamespace?, val kind: String, val name: String?)
-
-  private fun Collection<WebSymbolsScope>.takeLastUntilExclusiveScopeFor(namespace: SymbolNamespace?,
+  private fun Collection<WebSymbolsScope>.takeLastUntilExclusiveScopeFor(namespace: SymbolNamespace,
                                                                          kind: String): List<WebSymbolsScope> =
     toList()
       .let { list ->
@@ -225,38 +219,5 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
       ?: item
     }
 
-  companion object {
-
-    internal fun String.asSymbolNamespace(): SymbolNamespace? =
-      takeIf { it == NAMESPACE_JS || it == NAMESPACE_HTML || it == NAMESPACE_CSS }
-
-    internal fun parsePath(path: String?, context: SymbolNamespace? = null): List<PathSection> =
-      if (path != null)
-        parsePath(StringUtil.split(path, "/", true, true), context)
-      else
-        emptyList()
-
-    internal fun parsePath(path: List<String>, context: SymbolNamespace? = null): List<PathSection> {
-      var i = 0
-      var prevRoot: SymbolNamespace? = context
-      val result = mutableListOf<PathSection>()
-      while (i < path.size) {
-        var root = path[i].asSymbolNamespace()
-        if (root != null) {
-          i++
-          prevRoot = root
-        }
-        else {
-          root = prevRoot
-        }
-        if (i >= path.size) break
-        val kind = path[i++]
-        val name = if (i >= path.size) null
-        else path[i++]
-        result.add(PathSection(root, kind, name))
-      }
-      return result
-    }
-  }
 }
 

@@ -56,7 +56,7 @@ abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProv
       val prefixLength = name.length
       val prefixes = mutableSetOf<String>()
       queryExecutor
-        .runCodeCompletionQuery(listOf(namespace, kind, name), position, scope = queryContext)
+        .runCodeCompletionQuery(namespace, kind, name, position, scope = queryContext)
         .asSequence()
         .distinctBy { Triple(it.offset, it.name, it.completeAfterInsert) }
         .customizeItems(queryExecutor.framework, namespace, kind)

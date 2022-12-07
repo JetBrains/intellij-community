@@ -166,7 +166,7 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
       }
     }
 
-    override fun getSymbols(namespace: SymbolNamespace?,
+    override fun getSymbols(namespace: SymbolNamespace,
                             kind: String,
                             name: String?,
                             params: WebSymbolsNameMatchQueryParams,

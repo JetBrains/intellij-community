@@ -21,7 +21,7 @@ class WebSymbolElementDescriptorsProvider : XmlElementDescriptorProvider {
     else {
       val queryExecutor = WebSymbolsQueryExecutorFactory.create(tag)
       queryExecutor
-        .runNameMatchQuery(listOf(NAMESPACE_HTML, KIND_HTML_ELEMENTS, tag.name))
+        .runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ELEMENTS, tag.name)
         .takeIf {
           it.isNotEmpty()
           && !it.hasOnlyExtensions()
