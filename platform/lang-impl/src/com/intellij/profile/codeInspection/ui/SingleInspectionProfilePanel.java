@@ -251,7 +251,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (myOptionsLabel != null)
       myOptionsLabel.setText(
         AnalysisBundle.message("inspections.settings.options.title.specific.scope",
-                               state.getScopeName() == CustomScopesProviderEx.getAllScope().getScopeId()
+                               state.getScopeName().equals(CustomScopesProviderEx.getAllScope().getScopeId())
                                  ? LangBundle.message("scopes.table.everywhere.else")
                                  : state.getScopeName()));
   }
