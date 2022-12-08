@@ -3,14 +3,8 @@
  */
 package org.jetbrains.idea.devkit.inspections
 
-import com.intellij.codeInspection.InspectionManager
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
+import com.intellij.codeInspection.*
+import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.TypeConversionUtil.isAssignable
 import com.intellij.psi.util.TypeConversionUtil.isNullType
@@ -39,6 +33,10 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
         false)
     }.toTypedArray()
   }
+
+  override fun isAllowed(holder: ProblemsHolder): Boolean =
+    super.isAllowed(holder) &&
+    UElement::class.qualifiedName?.let { JavaPsiFacade.getInstance(holder.project).findClass(it, holder.file.resolveScope) } != null
 
   private class CodeVisitor(private val uElementType: PsiClassType, private val psiElementType: PsiClassType) : AbstractUastVisitor() {
 
@@ -92,6 +90,18 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
         node.uastInitializer.sourcePsiElement?.let { reportedElements.add(it) }
       }
       return false
+    }
+
+    override fun visitReturnExpression(node: UReturnExpression): Boolean {
+      val expected = when (val jt = node.jumpTarget) {
+                       is UMethod -> jt.returnType
+                       is ULambdaExpression -> jt.getExpressionType()
+                       else -> null
+                     } ?: return super.visitReturnExpression(node)
+      if (getDimIfUElementType(node.returnExpression?.getExpressionType()) == getDimIfPsiElementType(expected)) {
+        node.returnExpression.sourcePsiElement?.let { reportedElements.add(it) }
+      }
+      return super.visitReturnExpression(node)
     }
 
     private fun getDimIfPsiElementType(type: PsiType?): Int {
