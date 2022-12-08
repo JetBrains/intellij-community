@@ -163,6 +163,9 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         }
     }
 
+    override fun createMethodFromText(methodText: String, context: PsiElement?): UMethod? =
+        psiFactory(context).createFunction(methodText).toUElementOfType()
+
     override fun createCallExpression(
         receiver: UExpression?,
         methodName: String,

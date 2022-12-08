@@ -503,6 +503,9 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     }
   }
 
+  override fun createMethodFromText(methodText: String, context: PsiElement?): UMethod? =
+    psiFactory.createMethodFromText(methodText, context).toUElementOfType()
+
   private val PsiElement.branchStatement: PsiStatement?
     get() = when (this) {
       is PsiExpression -> JavaPsiFacade.getElementFactory(project).createExpressionStatement(this)

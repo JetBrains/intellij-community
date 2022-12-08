@@ -125,6 +125,11 @@ interface UastElementFactory {
 
   fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression?
 
+  /**
+   * Generate method from language-specific text. It's up to the caller to generate the text properly
+   */
+  fun createMethodFromText(methodText: String, context: PsiElement?): UMethod?
+
   fun createParenthesizedExpression(expression: UExpression,
                                     context: PsiElement?): UParenthesizedExpression?
 
