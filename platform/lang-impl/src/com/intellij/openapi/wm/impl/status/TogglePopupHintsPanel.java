@@ -80,7 +80,12 @@ public final class TogglePopupHintsPanel extends EditorBasedWidget implements St
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
 
-    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+    updateStatus();
+  }
+
+  @Override
+  protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         updateStatus();
@@ -92,7 +97,6 @@ public final class TogglePopupHintsPanel extends EditorBasedWidget implements St
       }
     });
 
-    MessageBusConnection connection = myConnection;
     connection.subscribe(PowerSaveMode.TOPIC, this::updateStatus);
     connection.subscribe(ProfileChangeAdapter.TOPIC,  new ProfileChangeAdapter() {
       @Override
@@ -111,7 +115,6 @@ public final class TogglePopupHintsPanel extends EditorBasedWidget implements St
     });
 
     connection.subscribe(FileHighlightingSettingListener.SETTING_CHANGE, (__, ___) -> updateStatus());
-    updateStatus();
   }
 
   @Override

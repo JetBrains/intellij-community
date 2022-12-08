@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.util.EditorGotoLineNumberDialog;
 import com.intellij.ide.util.GotoLineNumberDialog;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
@@ -14,12 +15,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.FocusUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -29,12 +31,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
-public class PositionPanel extends EditorBasedWidget
-  implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation,
-             CaretListener, SelectionListener, BulkAwareDocumentListener.Simple, PropertyChangeListener {
+public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation {
 
   public static final Key<Object> DISABLE_FOR_EDITOR = new Key<>("positionPanel.disableForEditor");
 
@@ -44,11 +42,11 @@ public class PositionPanel extends EditorBasedWidget
   private static final int CHAR_COUNT_SYNC_LIMIT = 500_000;
   private static final String CHAR_COUNT_UNKNOWN = "...";
 
-  private Alarm myAlarm;
-  private MergingUpdateQueue myQueue;
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("PositionPanel", 100, true, null, this);
   private CodePointCountTask myCountTask;
 
-  private @NlsContexts.Label String myText;
+  private @NlsContexts.Label String text;
 
   public PositionPanel(@NotNull Project project) {
     super(project);
@@ -71,7 +69,7 @@ public class PositionPanel extends EditorBasedWidget
 
   @Override
   public @NotNull String getText() {
-    return myText == null ? "" : myText;
+    return text == null ? "" : text;
   }
 
   @Override
@@ -84,7 +82,8 @@ public class PositionPanel extends EditorBasedWidget
     String toolTip = UIBundle.message("go.to.line.command.name");
     String shortcut = getShortcutText();
 
-    if (StringUtil.isNotEmpty(shortcut) && !Registry.is("ide.helptooltip.enabled")) {
+    //noinspection SpellCheckingInspection
+    if (Strings.isNotEmpty(shortcut) && !Registry.is("ide.helptooltip.enabled")) {
       return toolTip + " (" + shortcut + ")";
     }
     return toolTip;
@@ -118,54 +117,57 @@ public class PositionPanel extends EditorBasedWidget
   }
 
   @Override
-  public void install(@NotNull StatusBar statusBar) {
-    super.install(statusBar);
+  protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
+    super.registerCustomListeners(connection);
 
-    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         updatePosition(getEditor());
       }
     });
 
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-    myQueue = new MergingUpdateQueue("PositionPanel", 100, true, null, this);
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
-    multicaster.addCaretListener(this, this);
-    multicaster.addSelectionListener(this, this);
-    multicaster.addDocumentListener(this, this);
-    FocusUtil.addFocusOwnerListener(this, this);
-  }
+    multicaster.addCaretListener(new CaretListener() {
+      @Override
+      public void caretPositionChanged(@NotNull CaretEvent e) {
+        Editor editor = e.getEditor();
+        // When multiple carets exist in editor, we don't show information about caret positions
+        if (editor.getCaretModel().getCaretCount() == 1 && isFocusedEditor(editor)) updatePosition(editor);
+      }
 
-  @Override
-  public void selectionChanged(final @NotNull SelectionEvent e) {
-    Editor editor = e.getEditor();
-    if (isFocusedEditor(editor)) updatePosition(editor);
-  }
+      @Override
+      public void caretAdded(@NotNull CaretEvent e) {
+        updatePosition(e.getEditor());
+      }
 
-  @Override
-  public void caretPositionChanged(final @NotNull CaretEvent e) {
-    Editor editor = e.getEditor();
-    // When multiple carets exist in editor, we don't show information about caret positions
-    if (editor.getCaretModel().getCaretCount() == 1 && isFocusedEditor(editor)) updatePosition(editor);
-  }
+      @Override
+      public void caretRemoved(@NotNull CaretEvent e) {
+        updatePosition(e.getEditor());
+      }
+    }, this);
+    multicaster.addSelectionListener(new SelectionListener() {
+      @Override
+      public void selectionChanged(@NotNull SelectionEvent e) {
+        Editor editor = e.getEditor();
+        if (isFocusedEditor(editor)) updatePosition(editor);
+      }
+    }, this);
+    multicaster.addDocumentListener(new BulkAwareDocumentListener.Simple() {
+      @Override
+      public void afterDocumentChange(@NotNull Document document) {
+        EditorFactory.getInstance().editors(document)
+          .filter(editor -> isFocusedEditor(editor))
+          .findFirst()
+          .ifPresent(editor -> updatePosition(editor));
+      }
+    }, this);
 
-  @Override
-  public void caretAdded(@NotNull CaretEvent e) {
-    updatePosition(e.getEditor());
-  }
-
-  @Override
-  public void caretRemoved(@NotNull CaretEvent e) {
-    updatePosition(e.getEditor());
-  }
-
-  @Override
-  public void afterDocumentChange(@NotNull Document document) {
-    EditorFactory.getInstance().editors(document)
-      .filter(this::isFocusedEditor)
-      .findFirst()
-      .ifPresent(this::updatePosition);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      FocusUtil.addFocusOwnerListener(this, __ -> {
+        updatePosition(getFocusedEditor());
+      });
+    });
   }
 
   private boolean isFocusedEditor(Editor editor) {
@@ -179,9 +181,9 @@ public class PositionPanel extends EditorBasedWidget
       if (!empty && !isOurEditor(editor)) return;
 
       String newText = empty ? "" : getPositionText(editor);
-      if (newText.equals(myText)) return;
+      if (newText.equals(text)) return;
 
-      myText = newText;
+      text = newText;
       if (myStatusBar != null) {
         myStatusBar.updateWidget(ID());
       }
@@ -189,8 +191,8 @@ public class PositionPanel extends EditorBasedWidget
   }
 
   private void updateTextWithCodePointCount(int codePointCount) {
-    if (myText != null) {
-      myText = myText.replace(CHAR_COUNT_UNKNOWN, Integer.toString(codePointCount));
+    if (text != null) {
+      text = text.replace(CHAR_COUNT_UNKNOWN, Integer.toString(codePointCount));
       if (myStatusBar != null) {
         myStatusBar.updateWidget(ID());
       }
@@ -244,12 +246,7 @@ public class PositionPanel extends EditorBasedWidget
       return "";
     }
   }
-
-  @Override
-  public void propertyChange(PropertyChangeEvent e) {
-    updatePosition(getFocusedEditor());
-  }
-
+  
   private final class CodePointCountTask implements Runnable {
     private final CharSequence text;
     private final int startOffset;
