@@ -7,6 +7,7 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.util.ui.JBUI
 import java.beans.PropertyChangeListener
 import javax.swing.JFrame
 import javax.swing.JPanel
@@ -41,5 +42,9 @@ class MacCustomDecorationPath(val frame: JFrame): JPanel() {
 
   private fun updateTitle() {
     label.text = frame.title
+  }
+
+  fun updateBorders(rightGap: Int) {
+    border = JBUI.Borders.empty(2, 0, 0, rightGap)
   }
 }
