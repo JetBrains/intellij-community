@@ -88,7 +88,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val expression = psiFactory.createExpressionFromText("a + b", null).toUElementOfType<UExpression>()
                      ?: fail("Cannot find plugin")
 
-    val returnExpression = uastElementFactory.createReturnExpresion(expression, false, null) ?: fail("cannot create return expression")
+    val returnExpression = uastElementFactory.createReturnExpression(expression, false, null) ?: fail("cannot create return expression")
 
     TestCase.assertEquals("return a + b;", returnExpression.sourcePsi?.text)
   }

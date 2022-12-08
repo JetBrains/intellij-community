@@ -327,9 +327,9 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     return JavaUDeclarationsExpression(null, declarations)
   }
 
-  override fun createReturnExpresion(expression: UExpression?,
-                                     inLambda: Boolean,
-                                     context: PsiElement?): UReturnExpression? {
+  override fun createReturnExpression(expression: UExpression?,
+                                      inLambda: Boolean,
+                                      context: PsiElement?): UReturnExpression? {
     val returnStatement = psiFactory.createStatementFromText("return ;", null) as? PsiReturnStatement ?: return null
 
     expression?.sourcePsi?.node?.let { (returnStatement as CompositeElement).addChild(it, returnStatement.lastChild.node) }

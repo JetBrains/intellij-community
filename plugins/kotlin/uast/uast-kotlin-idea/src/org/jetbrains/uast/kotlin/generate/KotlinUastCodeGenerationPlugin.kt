@@ -343,10 +343,10 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
     @Deprecated("use version with context parameter")
     fun createReturnExpresion(expression: UExpression?, inLambda: Boolean): UReturnExpression {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
-        return createReturnExpresion(expression, inLambda, null)
+        return createReturnExpression(expression, inLambda, null)
     }
 
-    override fun createReturnExpresion(expression: UExpression?, inLambda: Boolean, context: PsiElement?): UReturnExpression {
+    override fun createReturnExpression(expression: UExpression?, inLambda: Boolean, context: PsiElement?): UReturnExpression {
         val label = if (inLambda && context != null) getParentLambdaLabelName(context)?.let { "@$it" } ?: "" else ""
         val returnExpression = psiFactory(context).createExpression("return$label 1") as KtReturnExpression
         val sourcePsi = expression?.sourcePsi

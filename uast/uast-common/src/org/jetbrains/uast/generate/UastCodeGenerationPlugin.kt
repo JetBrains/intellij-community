@@ -133,9 +133,9 @@ interface UastElementFactory {
   fun createParenthesizedExpression(expression: UExpression,
                                     context: PsiElement?): UParenthesizedExpression?
 
-  fun createReturnExpresion(expression: UExpression?,
-                            inLambda: Boolean = false,
-                            context: PsiElement?): UReturnExpression?
+  fun createReturnExpression(expression: UExpression?,
+                             inLambda: Boolean = false,
+                             context: PsiElement?): UReturnExpression?
 
   fun createLocalVariable(suggestedName: String?,
                           type: PsiType?,
