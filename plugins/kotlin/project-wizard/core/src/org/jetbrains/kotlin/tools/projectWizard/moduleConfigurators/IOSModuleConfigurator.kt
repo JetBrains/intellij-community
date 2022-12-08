@@ -67,7 +67,7 @@ object IOSSinglePlatformCocoaPodsModuleConfigurator : IOSSinglePlatformModuleCon
             +fileTemplate("$DEFAULT_APP_NAME.xcodeproj" / "project.pbxproj")
             +fileTemplate(DEFAULT_APP_NAME / "Info.plist")
 
-            +fileTemplate("Podfile".asPath())
+            +fileTemplate("Podfile.vm".asPath())
         }
     }
 }
