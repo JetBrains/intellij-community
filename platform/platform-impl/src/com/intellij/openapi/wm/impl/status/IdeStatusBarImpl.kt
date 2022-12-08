@@ -224,7 +224,9 @@ open class IdeStatusBarImpl internal constructor(
   @ApiStatus.Experimental
   @RequiresEdt
   fun setCentralWidget(id: String, component: JComponent) {
-    val widget = StatusBarWidget { id }
+    val widget = object : StatusBarWidget {
+      override fun ID(): String = id
+    }
     widgetMap.put(id, WidgetBean(widget = widget, position = Position.CENTER, component = component, order = LoadingOrder.ANY))
     infoAndProgressPanel.setCentralComponent(component)
     infoAndProgressPanel.revalidate()
@@ -675,7 +677,7 @@ private fun wrap(widget: StatusBarWidget): JComponent {
     return result
   }
 
-  val presentation = widget.presentation ?: throw IllegalStateException("Widget $widget getPresentation() method must not return null")
+  val presentation = widget.getPresentation() ?: throw IllegalStateException("Widget $widget getPresentation() method must not return null")
   val wrapper = StatusBarWidgetWrapper.wrap(presentation)
   ClientProperty.put(wrapper, WIDGET_ID, widget.ID())
   wrapper.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, java.lang.Boolean.TRUE)

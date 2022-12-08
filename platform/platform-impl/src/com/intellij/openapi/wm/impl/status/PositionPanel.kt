@@ -110,7 +110,7 @@ open class PositionPanel(project: Project) : EditorBasedWidget(project), Multifr
 
       override fun getTooltipText(): String {
         val toolTip = UIBundle.message("go.to.line.command.name")
-        val shortcut = shortcutText
+        val shortcut = getShortcutText()
         @Suppress("SpellCheckingInspection")
         return if (shortcut.isNotEmpty() && !Registry.`is`("ide.helptooltip.enabled")) "$toolTip ($shortcut)" else toolTip
       }
