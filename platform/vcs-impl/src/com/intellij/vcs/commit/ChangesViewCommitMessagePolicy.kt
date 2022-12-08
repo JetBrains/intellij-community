@@ -16,6 +16,6 @@ internal class ChangesViewCommitMessagePolicy(project: Project) : AbstractCommit
   fun save(changeList: LocalChangeList?, commitMessage: String, saveToHistory: Boolean) {
     if (saveToHistory) vcsConfiguration.saveCommitMessage(commitMessage)
     if (!ChangeListManager.getInstance(project).areChangeListsEnabled()) return // Disposal of ChangesViewCommitWorkflowHandler
-    changeList?.let { save(it.name, commitMessage) }
+    if (changeList != null) changeListManager.editComment(changeList.name, commitMessage)
   }
 }

@@ -15,10 +15,6 @@ abstract class AbstractCommitMessagePolicy(protected val project: Project) {
   protected val vcsConfiguration: VcsConfiguration get() = VcsConfiguration.getInstance(project)
   protected val changeListManager: ChangeListManager get() = ChangeListManager.getInstance(project)
 
-  protected fun save(changeListName: String, commitMessage: String) {
-    changeListManager.editComment(changeListName, commitMessage)
-  }
-
   protected fun getCommitMessageFor(changeList: LocalChangeList): String? {
     CommitMessageProvider.EXTENSION_POINT_NAME.extensionList.forEach { provider ->
       val providerMessage = provider.getCommitMessage(changeList, project)

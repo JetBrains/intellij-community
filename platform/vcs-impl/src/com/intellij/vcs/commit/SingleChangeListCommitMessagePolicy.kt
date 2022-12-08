@@ -63,5 +63,9 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, private val
     messagesToSave.remove(listName)
   }
 
-  private fun saveMessages() = messagesToSave.forEach { (changeListName, commitMessage) -> save(changeListName, commitMessage) }
+  private fun saveMessages() {
+    for ((changeListName, commitMessage) in messagesToSave) {
+      changeListManager.editComment(changeListName, commitMessage)
+    }
+  }
 }
