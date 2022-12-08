@@ -7,14 +7,22 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
+import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
+import com.intellij.util.Processors
 import com.intellij.util.indexing.IdFilter
 
 abstract class KotlinStringStubIndexExtension<Psi : PsiElement>(private val valueClass: Class<Psi>) : StringStubIndexExtension<Psi>() {
+    /**
+     * Note: [processor] should not invoke any indices as it could lead to deadlock. Nested index access is forbidden.
+     */
     fun processElements(s: String, project: Project, scope: GlobalSearchScope, processor: Processor<in Psi>): Boolean {
         return processElements(s, project, scope, null, processor)
     }
 
+    /**
+     * Note: [processor] should not invoke any indices as it could lead to deadlock. Nested index access is forbidden.
+     */
     fun processElements(s: String, project: Project, scope: GlobalSearchScope, idFilter: IdFilter? = null, processor: Processor<in Psi>): Boolean {
         return StubIndex.getInstance().processElements(key, s, project, scope, idFilter, valueClass, processor)
     }
@@ -30,24 +38,29 @@ abstract class KotlinStringStubIndexExtension<Psi : PsiElement>(private val valu
 
         // collect all keys, collect all values those fulfill filter into a single collection, process values after that
 
-        processAllKeys(project, CancelableDelegateFilterProcessor(filter) { key ->
+        val allKeys = HashSet<String>()
+        if (!processAllKeys(project, CancelableCollectFilterProcessor(allKeys, filter))) return
+
+        if (allKeys.isNotEmpty()) {
+            val values = HashSet<Psi>(allKeys.size)
+            val collectProcessor = Processors.cancelableCollectProcessor(values)
+            allKeys.forEach { s ->
+                if (!stubIndex.processElements(indexKey, s, project, scope, valueClass, collectProcessor)) return
+            }
             // process until the 1st negative result of processor
-            stubIndex.processElements(indexKey, key, project, scope, valueClass, processor)
-        })
+            values.all(processor::process)
+        }
     }
 }
 
-class CancelableDelegateFilterProcessor<T>(
-    private val filter: (T) -> Boolean,
-    private val delegate: Processor<T>
-) : Processor<T> {
+class CancelableCollectFilterProcessor<T>(
+    collection: Collection<T>,
+    private val filter: (T) -> Boolean
+) : CommonProcessors.CollectProcessor<T>(collection) {
     override fun process(t: T): Boolean {
         ProgressManager.checkCanceled()
-        return if (filter(t)) {
-            delegate.process(t)
-        } else {
-            true
-        }
+        return super.process(t)
     }
 
+    override fun accept(t: T): Boolean = filter(t)
 }
