@@ -205,12 +205,7 @@ public final class CodeStyle {
   }
 
   /**
-   * Returns indent options for the given PSI file. The method attempts to use {@link FileIndentOptionsProvider}
-   * if applicable to the file. If there are no suitable indent options providers, it takes configurable language indent options or
-   * retrieves indent options by file type.
-   * @param file The file to get indent options for.
-   * @return The file indent options.
-   * @see FileIndentOptionsProvider
+   * Works similarly to {@link #getIndentOptions(Project, VirtualFile)} but for a PSI file.
    */
   @NotNull
   public static CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull PsiFile file) {
@@ -218,25 +213,19 @@ public final class CodeStyle {
     return rootSettings.getIndentOptionsByFile(file);
   }
 
+  /**
+   * Returns indent options for the given project and virtual file. The method attempts to use {@link FileIndentOptionsProvider}
+   * if applicable to the file. If there are no suitable indent options providers, it takes configurable language indent options or
+   * retrieves indent options by file type using {@link CodeStyleSettings#getIndentOptions(FileType)}.
+   *
+   * @param project The current project.
+   * @param virtualFile The virtual file to get the indent options for.
+   * @return The resulting indent options.
+   * @see FileIndentOptionsProvider
+   */
   public static CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     CodeStyleSettings rootSetting = getSettings(project, virtualFile);
     return rootSetting.getIndentOptionsByFile(project, virtualFile, null);
-  }
-
-  /**
-   * Returns indent options by virtual file's type. If {@code null} is given instead of the virtual file or the type of the virtual
-   * file doesn't have it's own configuration, returns other indent options configured via "Other File Types" section in Settings.
-   * <p>
-   * <b>Note:</b> This method is faster then {@link #getIndentOptions(PsiFile)} but it doesn't take into account possible configurations
-   * overwriting the default, for example EditorConfig.
-   *
-   * @param project The current project.
-   * @param file    The virtual file to get indent options for or {@code null} if the file is unknown.
-   * @return The indent options for the given project and file.
-   */
-  @NotNull
-  public static CommonCodeStyleSettings.IndentOptions getIndentOptionsByFileType(@NotNull Project project, @Nullable VirtualFile file) {
-    return file != null ? getSettings(project).getIndentOptions(file.getFileType()) : getSettings(project).getIndentOptions();
   }
 
   /**
@@ -448,6 +437,7 @@ public final class CodeStyle {
     if (project == null) return null;
     LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(language);
     String indent = lineIndentProvider != null ? lineIndentProvider.getLineIndent(project, editor, language, offset) : null;
+    //noinspection StringEquality
     if (indent == LineIndentProvider.DO_NOT_ADJUST) {
       return allowDocCommit ? null : indent;
     }
