@@ -52,7 +52,7 @@ class SingleChangeListCommitWorkflowHandler(
 
     ui.addInclusionListener(this, this)
     updateDefaultCommitActionName()
-    initCommitMessage()
+    setCommitMessage(commitMessagePolicy.init(getChangeList(), getIncludedChanges()))
     initCommitOptions()
 
     amendCommitHandler.initialMessage = getCommitMessage()
@@ -68,9 +68,7 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   override fun changeListChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList) {
-    commitMessagePolicy.onChangelistChanged(oldChangeList, newChangeList, getCommitMessage())
-    setCommitMessage(commitMessagePolicy.commitMessage)
-
+    commitMessagePolicy.onChangelistChanged(oldChangeList, newChangeList, ui.commitMessageUi)
     updateCommitOptions()
   }
 
@@ -110,11 +108,6 @@ class SingleChangeListCommitWorkflowHandler(
       if (!addUnversionedFiles(project, getIncludedUnversionedFiles(), getChangeList(), ui.getInclusionModel())) return false
     }
     return super.prepareForCommitExecution(sessionInfo)
-  }
-
-  private fun initCommitMessage() {
-    commitMessagePolicy.init(getChangeList(), getIncludedChanges())
-    setCommitMessage(commitMessagePolicy.commitMessage)
   }
 
   override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(getCommitState(), success)

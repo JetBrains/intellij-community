@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.ui.TextAccessor
 
 internal class SingleChangeListCommitMessagePolicy(project: Project, private val initialCommitMessage: String?) :
   AbstractCommitMessagePolicy(project) {
@@ -12,12 +13,11 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, private val
   var defaultNameChangeListMessage: String? = null
   private val messagesToSave = mutableMapOf<String, String>()
 
-  var commitMessage: String? = null
-    private set
+  private var commitMessage: String? = null
 
-  fun init(changeList: LocalChangeList, includedChanges: List<Change>) {
+  fun init(changeList: LocalChangeList, includedChanges: List<Change>): String? {
     commitMessage = initialCommitMessage
-    if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return
+    if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return commitMessage
 
     if (commitMessage != null) {
       defaultNameChangeListMessage = commitMessage
@@ -29,16 +29,18 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, private val
         commitMessage = getCommitMessageFromVcs(includedChanges) ?: defaultNameChangeListMessage
       }
     }
+    return commitMessage
   }
 
-  fun onChangelistChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList, currentMessage: String) {
-    commitMessage = currentMessage
+  fun onChangelistChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList, currentMessage: TextAccessor) {
+    commitMessage = currentMessage.text
     if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return
 
     if (oldChangeList.name != newChangeList.name) {
-      rememberMessage(oldChangeList.name, currentMessage)
+      rememberMessage(oldChangeList.name, currentMessage.text)
 
       commitMessage = getCommitMessageFor(newChangeList) ?: defaultNameChangeListMessage
+      currentMessage.text = commitMessage
     }
   }
 
