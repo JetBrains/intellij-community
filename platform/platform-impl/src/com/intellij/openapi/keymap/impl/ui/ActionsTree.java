@@ -552,7 +552,7 @@ public final class ActionsTree {
         actionId = (String)userObject;
         boundId = ((KeymapImpl)myKeymap).hasShortcutDefined(actionId) ? null : KeymapManagerEx.getInstanceEx().getActionBinding(actionId);
         AnAction action = ActionManager.getInstance().getAction(actionId);
-        text = getActionText(action, actionId);
+        text = getActionText(action, actionId, null);
         if (action != null) {
           icon = action.getTemplatePresentation().getIcon();
           tooltipText = action.getTemplatePresentation().getDescription();
@@ -614,7 +614,7 @@ public final class ActionsTree {
         append(IdeBundle.message("uses.shortcut.of"), SimpleTextAttributes.GRAY_ATTRIBUTES);
         append(" ");
 
-        String boundText = getActionText(ActionManager.getInstance().getAction(boundId), boundId);
+        String boundText = getActionText(ActionManager.getInstance().getAction(boundId), boundId, actionId);
         append(boundText, GRAY_LINK, new SelectActionRunnable(boundId));
       }
 
@@ -633,11 +633,12 @@ public final class ActionsTree {
     }
 
     @NlsActions.ActionText
-    private String getActionText(@Nullable AnAction action, @NlsSafe String actionId) {
+    private String getActionText(@Nullable AnAction action, @NlsSafe String actionId, @Nullable String boundSourceId) {
       String text = action == null ? null : action.getTemplateText();
       if (text == null || text.length() == 0) { //fill dynamic presentation gaps
         if (myBrokenActions.add(actionId)) {
-          LOG.warn("Template presentation is not defined for '" + actionId + "' - showing internal ID in UI");
+          LOG.warn("Template presentation is not defined for '" + actionId + "' - showing internal ID in UI" +
+                   (boundSourceId != null ? ", bound by " + boundSourceId : ""));
         }
         text = actionId;
       }
