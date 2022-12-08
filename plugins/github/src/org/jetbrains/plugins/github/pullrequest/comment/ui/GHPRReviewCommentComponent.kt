@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentFactory
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType.COMPACT
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBLabel
@@ -24,14 +26,12 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUt
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JPanel
 
 
 object GHPRReviewCommentComponent {
 
-  const val AVATAR_SIZE = GHUIUtil.AVATAR_SIZE
-  const val AVATAR_GAP = 10
+  val CONTENT_SHIFT = COMPACT.iconSize + COMPACT.iconGap
 
   const val GAP_TOP = 4
   const val GAP_BOTTOM = 10
@@ -47,7 +47,6 @@ object GHPRReviewCommentComponent {
              maxContentWidth: Int = GHUIUtil.TEXT_CONTENT_WIDTH): JComponent {
 
     val author = comment.author ?: ghostUser
-    val avatarLabel = JLabel(avatarIconsProvider.getIcon(author.avatarUrl, AVATAR_SIZE))
     val titlePane = GHPRTimelineItemUIUtil.createTitleTextPane(author, comment.dateCreated).apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
@@ -100,7 +99,7 @@ object GHPRReviewCommentComponent {
       add(resolvedLabel)
     }
 
-    val maxTextWidth = maxContentWidth.let { it - AVATAR_SIZE - AVATAR_GAP }
+    val maxTextWidth = maxContentWidth - CONTENT_SHIFT
     return JPanel(null).apply {
       isOpaque = false
       layout = MigLayout(LC()
@@ -109,9 +108,6 @@ object GHPRReviewCommentComponent {
                            .insets("0", "0", "0", "0")
                            .hideMode(3))
 
-      add(avatarLabel, CC().spanY(2).alignY("top")
-        .gapRight("$AVATAR_GAP"))
-
       add(title, CC().push().split(2)
         .minWidth("0").maxWidth("$maxTextWidth"))
 
@@ -119,6 +115,8 @@ object GHPRReviewCommentComponent {
       add(editablePaneHandle.panel, CC().push().grow().newline()
         .gapTop("4")
         .minWidth("0").maxWidth("$maxTextWidth"))
+    }.let {
+      ComponentFactory.wrapWithIcon(COMPACT, it, avatarIconsProvider, author.avatarUrl, author.getPresentableName())
     }.also {
       GHPRTimelineItemUIUtil.actionsVisibleOnHover(it, actionsPanel)
     }

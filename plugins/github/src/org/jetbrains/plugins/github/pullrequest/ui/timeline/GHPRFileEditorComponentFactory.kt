@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.TimelineComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory
@@ -233,7 +234,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
         newLineHint = GithubBundle.message("pull.request.new.line.hint", newLineShortcutText)
       ))
     ))
-    val avatarConfig = AvatarConfig(avatarIconsProvider, currentUser, GHCommentTextFieldFactory.AvatarMode.TIMELINE)
+    val avatarConfig = AvatarConfig(avatarIconsProvider, currentUser, CodeReviewChatItemUIUtil.ComponentType.FULL)
     return GHCommentTextFieldFactory(model).create(actions, avatarConfig)
   }
 

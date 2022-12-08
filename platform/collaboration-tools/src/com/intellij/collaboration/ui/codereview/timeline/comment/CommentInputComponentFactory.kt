@@ -2,9 +2,11 @@
 package com.intellij.collaboration.ui.codereview.timeline.comment
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory.CancelActionConfig
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory.ScrollOnChangePolicy
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory.SubmitActionConfig
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.JComponentOverlay
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
@@ -23,7 +25,6 @@ import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -50,15 +51,16 @@ object CommentInputComponentFactory {
     return textFieldWithOverlay
   }
 
-  fun addIconLeft(component: JComponent, icon: Icon, gap: Int, iconTooltip: @Nls String? = null): JComponent {
-    val iconLabel = JLabel(icon).apply {
+  fun <T> addIconLeft(componentType: CodeReviewChatItemUIUtil.ComponentType, item: JComponent,
+                      iconProvider: IconsProvider<T>, iconKey: T, iconTooltip: @Nls String? = null): JComponent {
+    val iconLabel = JLabel(iconProvider.getIcon(iconKey, componentType.iconSize)).apply {
       toolTipText = iconTooltip
     }
 
-    return JPanel(CommentFieldWithIconLayout(gap - CollaborationToolsUIUtil.getFocusBorderInset())).apply {
+    return JPanel(CommentFieldWithIconLayout(componentType.iconGap - CollaborationToolsUIUtil.getFocusBorderInset())).apply {
       isOpaque = false
       add(CommentFieldWithIconLayout.ICON, iconLabel)
-      add(CommentFieldWithIconLayout.ITEM, component)
+      add(CommentFieldWithIconLayout.ITEM, item)
     }
   }
 

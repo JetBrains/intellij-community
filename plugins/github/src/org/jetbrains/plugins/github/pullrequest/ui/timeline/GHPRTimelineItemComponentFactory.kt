@@ -59,7 +59,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.H_SIDE_BORDER
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.TIMELINE_CONTENT_WIDTH
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.TIMELINE_ICON_AND_GAP_WIDTH
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.CONTENT_SHIFT
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.TIMELINE_ITEM_WIDTH
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
@@ -362,7 +362,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                                      additionalTitle = tagsPanel,
                                                      actionsPanel = actionsPanel)
 
-    val leftGap = H_SIDE_BORDER + TIMELINE_ICON_AND_GAP_WIDTH + 2
+    val leftGap = H_SIDE_BORDER + CONTENT_SHIFT + 2
     val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
                                                                      reviewDataProvider, avatarIconsProvider,
                                                                      suggestedChangeHelper,

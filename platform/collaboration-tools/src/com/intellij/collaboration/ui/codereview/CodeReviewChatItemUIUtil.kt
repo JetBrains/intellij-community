@@ -1,0 +1,36 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.collaboration.ui.codereview
+
+import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.util.ui.JBUI.Panels.simplePanel
+import org.jetbrains.annotations.Nls
+import javax.swing.JComponent
+import javax.swing.JLabel
+
+object CodeReviewChatItemUIUtil {
+
+  enum class ComponentType {
+    FULL {
+      override val iconSize: Int = 30
+      override val iconGap: Int = 14
+    },
+    COMPACT {
+      override val iconSize: Int = 20
+      override val iconGap: Int = 10
+    };
+
+    abstract val iconSize: Int
+    abstract val iconGap: Int
+  }
+
+  object ComponentFactory {
+    fun <T> wrapWithIcon(componentType: ComponentType, item: JComponent,
+                         iconProvider: IconsProvider<T>, iconKey: T, iconTooltip: @Nls String? = null): JComponent {
+      val iconLabel = JLabel(iconProvider.getIcon(iconKey, componentType.iconSize)).apply {
+        toolTipText = iconTooltip
+      }
+      val iconPanel = simplePanel().addToTop(iconLabel).andTransparent()
+      return simplePanel(componentType.iconGap, 0).addToCenter(item).addToLeft(iconPanel).andTransparent()
+    }
+  }
+}

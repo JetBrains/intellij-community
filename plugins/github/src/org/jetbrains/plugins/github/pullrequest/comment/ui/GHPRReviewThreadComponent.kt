@@ -83,7 +83,7 @@ object GHPRReviewThreadComponent {
       GHPRTimelineItemUIUtil.withHoverHighlight(it)
     }
     val commentsPanel = TimelineThreadCommentsPanel(thread, commentComponentFactory, 0,
-                                                    GHPRReviewCommentComponent.AVATAR_SIZE + GHPRReviewCommentComponent.AVATAR_GAP + SIDE_GAP)
+                                                    GHPRReviewCommentComponent.CONTENT_SHIFT + SIDE_GAP)
     panel.add(commentsPanel)
 
     if (reviewDataProvider.canComment()) {
@@ -224,7 +224,7 @@ object GHPRReviewThreadComponent {
 
     return JPanel(HorizontalLayout(8)).apply {
       isOpaque = false
-      border = JBUI.Borders.empty(6, GHPRReviewCommentComponent.AVATAR_SIZE + GHPRReviewCommentComponent.AVATAR_GAP, 6, 0)
+      border = JBUI.Borders.empty(6, GHPRReviewCommentComponent.CONTENT_SHIFT, 6, 0)
 
       add(toggleReplyLink)
       add(unResolveLink)

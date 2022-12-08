@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.ui.JPanelWithBackground
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -24,22 +25,18 @@ import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.awt.BorderLayout
 import java.awt.Component
 import java.util.*
-import javax.swing.Icon
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JPanel
 
 internal object GHPRTimelineItemUIUtil {
-  const val MAIN_AVATAR_SIZE = 30
-  const val AVATAR_CONTENT_GAP = 14
-  const val TIMELINE_ICON_AND_GAP_WIDTH = MAIN_AVATAR_SIZE + AVATAR_CONTENT_GAP
+  val CONTENT_SHIFT = CodeReviewChatItemUIUtil.ComponentType.FULL.iconSize + CodeReviewChatItemUIUtil.ComponentType.FULL.iconGap
 
   const val V_SIDE_BORDER: Int = 10
   const val H_SIDE_BORDER: Int = 16
 
   // 42em
   val TIMELINE_CONTENT_WIDTH = GHUIUtil.TEXT_CONTENT_WIDTH
-  val TIMELINE_ITEM_WIDTH = TIMELINE_CONTENT_WIDTH + TIMELINE_ICON_AND_GAP_WIDTH + (H_SIDE_BORDER * 2)
+  val TIMELINE_ITEM_WIDTH = TIMELINE_CONTENT_WIDTH + CONTENT_SHIFT + (H_SIDE_BORDER * 2)
 
   fun createItem(avatarIconsProvider: GHAvatarIconsProvider,
                  actor: GHActor,
@@ -70,9 +67,8 @@ internal object GHPRTimelineItemUIUtil {
                  content: JComponent,
                  maxContentWidth: Int = TIMELINE_CONTENT_WIDTH,
                  actionsPanel: JComponent? = null): JComponent {
-    val icon = avatarIconsProvider.getIcon(actor.avatarUrl, MAIN_AVATAR_SIZE)
     val titleTextPane = createTitleTextPane(actor, date)
-    return createItem(icon, titleTextPane, content, maxContentWidth,
+    return createItem(avatarIconsProvider, actor, titleTextPane, content, maxContentWidth,
                       actionsPanel = actionsPanel)
   }
 
@@ -83,7 +79,6 @@ internal object GHPRTimelineItemUIUtil {
                  maxContentWidth: Int = TIMELINE_CONTENT_WIDTH,
                  additionalTitle: JComponent? = null,
                  actionsPanel: JComponent? = null): JComponent {
-    val icon = avatarIconsProvider.getIcon(actor.avatarUrl, MAIN_AVATAR_SIZE)
     val titleTextPane = createTitleTextPane(actor, date)
     val titlePanel = Panels.simplePanel(10, 0).addToCenter(titleTextPane).andTransparent().apply {
       if (additionalTitle != null) {
@@ -91,28 +86,24 @@ internal object GHPRTimelineItemUIUtil {
       }
     }
 
-    return createItem(icon, titlePanel, content, maxContentWidth, actionsPanel)
+    return createItem(avatarIconsProvider, actor, titlePanel, content, maxContentWidth, actionsPanel)
   }
 
-  private fun createItem(mainIcon: Icon,
+  private fun createItem(avatarIconsProvider: GHAvatarIconsProvider,
+                         actor: GHActor,
                          title: JComponent,
                          content: JComponent,
                          maxContentWidth: Int = TIMELINE_CONTENT_WIDTH,
                          actionsPanel: JComponent? = null): JComponent {
-    val iconLabel = JLabel(mainIcon)
 
     return JPanel(null).apply {
       isOpaque = false
-      border = JBUI.Borders.empty(V_SIDE_BORDER, H_SIDE_BORDER)
 
       layout = MigLayout(LC()
                            .fillX()
                            .gridGap("0", "0")
                            .insets("0", "0", "0", "0")
                            .hideMode(3))
-
-      add(iconLabel, CC().spanY(2).alignY("top")
-        .gapRight("$AVATAR_CONTENT_GAP"))
 
       add(title, CC().push().split(2)
         .minWidth("0").maxWidth("$TIMELINE_CONTENT_WIDTH"))
@@ -124,6 +115,11 @@ internal object GHPRTimelineItemUIUtil {
         .gapTop("4")
         .minWidth("0").maxWidth("$maxContentWidth"))
     }.let {
+      CodeReviewChatItemUIUtil.ComponentFactory
+        .wrapWithIcon(CodeReviewChatItemUIUtil.ComponentType.FULL, it,
+                      avatarIconsProvider, actor.avatarUrl, actor.getPresentableName())
+    }.let {
+      it.border = JBUI.Borders.empty(V_SIDE_BORDER, H_SIDE_BORDER)
       actionsVisibleOnHover(it, actionsPanel)
       withHoverHighlight(it)
     }
