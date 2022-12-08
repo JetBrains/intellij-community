@@ -49,7 +49,7 @@ public final class NavBarItem extends SimpleColoredComponent implements Disposab
   private final boolean myIsModule;
 
   public static final Icon CHEVRON_ICON = AllIcons.General.ChevronRight;
-  private static final Icon MODULE_ICON = IconManager.getInstance().getIcon("expui/nodes/module8x8.svg", AllIcons.class);
+  static final Icon MODULE_ICON = IconManager.getInstance().getIcon("expui/nodes/module8x8.svg", AllIcons.class);
 
   public NavBarItem(NavBarPanel panel, Object object, int idx, Disposable parent) {
     this(panel, object, idx, parent, false);
