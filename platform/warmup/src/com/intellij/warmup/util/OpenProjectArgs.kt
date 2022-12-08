@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
 import com.intellij.platform.util.ArgsParser
@@ -11,6 +11,9 @@ interface OpenProjectArgs {
   val convertProject: Boolean
   val configureProject: Boolean
 
+  val build: Boolean
+  val rebuild: Boolean
+
   val disabledConfigurators: Set<String>
 }
 
@@ -19,6 +22,9 @@ class OpenProjectArgsImpl(parser: ArgsParser) : OpenProjectArgs {
 
   override val convertProject by parser.arg("convert-project", "Call IntelliJ version converters").optional().boolean { true }
   override val configureProject by parser.arg("configure-project", "Call IntelliJ project configurators").optional().boolean { true }
+
+  override val build: Boolean by parser.arg("build", "Build opened project. Cannot be specified together with --rebuild").flag()
+  override val rebuild: Boolean by parser.arg("rebuild", "Rebuild opened project. Cannot be specified together with --build").flag()
 
   override val disabledConfigurators: Set<String> by lazy {
     val config = projectDir.resolve(".idea").resolve(".disabled-headless-configurators")
