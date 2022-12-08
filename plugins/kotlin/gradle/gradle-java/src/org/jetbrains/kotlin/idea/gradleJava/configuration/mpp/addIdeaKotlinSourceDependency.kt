@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinSourceDependency
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
-fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinSourceDependency): DataNode<ModuleDependencyData>? {
+fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinSourceDependency): DataNode<out ModuleDependencyData>? {
     val dependencyNode = findModuleDependencyNode(dependency.kotlinSourceSetModuleId) ?: run create@{
         /* Create module dependency */
         val projectNode = ExternalSystemApiUtil.findParent(this, ProjectKeys.PROJECT) ?: return null
