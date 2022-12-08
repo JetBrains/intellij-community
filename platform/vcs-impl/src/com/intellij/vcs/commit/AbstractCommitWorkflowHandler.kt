@@ -121,7 +121,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
                   saveCommitOptionsOnCommit()
     if (!proceed) return false
 
-    saveCommitMessage(true)
+    saveCommitMessageBeforeCommit()
     logCommitEvent(sessionInfo)
 
     refreshChanges {
@@ -172,7 +172,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     return true
   }
 
-  protected abstract fun saveCommitMessage(success: Boolean)
+  protected abstract fun saveCommitMessageBeforeCommit()
 
   private fun getVcsOptions(commitPanel: CheckinProjectPanel,
                             vcses: Collection<AbstractVcs>,

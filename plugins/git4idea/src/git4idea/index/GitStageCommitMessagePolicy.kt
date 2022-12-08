@@ -18,7 +18,7 @@ class GitStageCommitMessagePolicy(project: Project) : AbstractCommitMessagePolic
 
   private fun getCommitTemplateMessage(): String? = project.service<GitCommitTemplateTracker>().getTemplateContent()
 
-  fun save(commitMessage: String, saveToHistory: Boolean) {
-    if (saveToHistory) vcsConfiguration.saveCommitMessage(commitMessage)
+  fun onBeforeCommit(commitMessage: String) {
+    vcsConfiguration.saveCommitMessage(commitMessage)
   }
 }

@@ -263,7 +263,9 @@ internal class ChangesViewCommitWorkflowHandler(
     return super.prepareForCommitExecution(sessionInfo)
   }
 
-  override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(currentChangeList, getCommitMessage(), success)
+  override fun saveCommitMessageBeforeCommit() {
+    commitMessagePolicy.save(currentChangeList, getCommitMessage(), true)
+  }
 
   // save state on project close
   // using this method ensures change list comment and commit options are updated before project state persisting
@@ -282,7 +284,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private fun saveStateBeforeDispose() {
     commitOptions.saveState()
-    saveCommitMessage(false)
+    commitMessagePolicy.save(currentChangeList, getCommitMessage(), false)
   }
 
   interface ActivityListener : EventListener {

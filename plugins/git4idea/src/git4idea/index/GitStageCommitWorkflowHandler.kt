@@ -49,7 +49,10 @@ class GitStageCommitWorkflowHandler(
     return true
   }
 
-  override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(getCommitMessage(), success)
+  override fun saveCommitMessageBeforeCommit() {
+    commitMessagePolicy.onBeforeCommit(getCommitMessage())
+  }
+
   override fun refreshChanges(callback: () -> Unit) = callback()
 
   override fun checkCommit(sessionInfo: CommitSessionInfo): Boolean {

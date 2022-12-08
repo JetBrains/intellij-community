@@ -61,7 +61,7 @@ class SingleChangeListCommitWorkflowHandler(
 
   override fun cancelled() {
     commitOptions.saveChangeListSpecificOptions()
-    saveCommitMessage(false)
+    commitMessagePolicy.onDialogClosed(getCommitState(), false)
 
     LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
   }
@@ -109,7 +109,9 @@ class SingleChangeListCommitWorkflowHandler(
     return super.prepareForCommitExecution(sessionInfo)
   }
 
-  override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.onDialogClosed(getCommitState(), success)
+  override fun saveCommitMessageBeforeCommit() {
+    commitMessagePolicy.onDialogClosed(getCommitState(), true)
+  }
 
   private fun initCommitOptions() {
     workflow.initCommitOptions(createCommitOptions())
