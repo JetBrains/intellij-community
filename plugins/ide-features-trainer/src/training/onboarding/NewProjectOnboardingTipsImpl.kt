@@ -8,7 +8,7 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
@@ -128,13 +128,13 @@ private fun installDebugListener(project: Project, pathToRunningFile: @NonNls St
 
       debugProcess.session.addSessionListener(object : XDebugSessionListener {
         override fun sessionPaused() {
-          val pauseAction = ActionManager.getInstance().getAction(XDebuggerActions.PAUSE)
+          val targetAction = ActionManager.getInstance().getAction(XDebuggerActions.STEP_INTO)
 
           ApplicationManager.getApplication().executeOnPooledThread {
-            val toolbarForTooltip = LearningUiUtil.findComponentOrNull(project, ActionToolbarImpl::class.java) { toolbar ->
-              toolbar.actionGroup.getChildren(null).any { it == pauseAction } && toolbar.place == ActionPlaces.DEBUGGER_TOOLBAR
+            val targetComponent = LearningUiUtil.findComponentOrNull(project, ActionButton::class.java) { button ->
+              button.action == targetAction
             }
-            if (toolbarForTooltip != null) {
+            if (targetComponent != null) {
               invokeLater {
                 val stepInIcon = """<icon src="AllIcons.Actions.TraceInto"/>"""
                 val resumeIcon = """<icon src="AllIcons.Actions.Resume"/>"""
@@ -143,7 +143,7 @@ private fun installDebugListener(project: Project, pathToRunningFile: @NonNls St
                 GotItTooltip("onboarding.tips.debug.panel.got.it", LearnBundle.message("onboarding.debug.got.it.text", stepInIcon, resumeIcon, stopIcon))
                   .withHeader(LearnBundle.message("onboarding.debug.got.it.header"))
                   .withPosition(Balloon.Position.above)
-                  .show(toolbarForTooltip.component, GotItTooltip.TOP_MIDDLE)
+                  .show(targetComponent, GotItTooltip.TOP_MIDDLE)
                 project.onboardingTipsDebugPath = null
                 connection.disconnect()
               }
