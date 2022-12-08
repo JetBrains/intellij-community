@@ -27,7 +27,9 @@ import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.PersistentHashMapValueStorage;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
@@ -59,6 +61,11 @@ public final class FSRecords {
   @Deprecated
   static final boolean bulkAttrReadSupport = SystemProperties.getBooleanProperty("idea.bulk.attr.read", false);
 
+  /**
+   * Switches which compression approach to use:
+   * if false, then compression inside {@link com.intellij.util.io.storage.RefCountingContentStorage} is used,
+   * if true -- inside {@link PersistentFSContentAccessor}
+   */
   static final boolean useCompressionUtil = SystemProperties.getBooleanProperty("idea.use.lightweight.compression.for.vfs", false);
   /**
    * If true -> use {@link CompactRecordsTable} for managing attributes record, instead of default {@link com.intellij.util.io.storage.RecordsTable}
