@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
@@ -56,6 +57,10 @@ public final class IndexUpdateRunner {
   private static final long SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY = 20 * FileUtilRt.MEGABYTE;
 
   private static final CopyOnWriteArrayList<IndexingJob> ourIndexingJobs = new CopyOnWriteArrayList<>();
+
+  private static final ExecutorService GLOBAL_INDEXING_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+    "Indexing", UnindexedFilesUpdater.getMaxNumberOfIndexingThreads()
+  );
 
   private final FileBasedIndexImpl myFileBasedIndex;
 
@@ -91,10 +96,9 @@ public final class IndexUpdateRunner {
   private static final Condition ourLoadedBytesAreReleasedCondition = ourLoadedBytesLimitLock.newCondition();
 
   public IndexUpdateRunner(@NotNull FileBasedIndexImpl fileBasedIndex,
-                           @NotNull ExecutorService indexingExecutor,
                            int numberOfIndexingThreads) {
     myFileBasedIndex = fileBasedIndex;
-    myIndexingExecutor = indexingExecutor;
+    myIndexingExecutor = GLOBAL_INDEXING_EXECUTOR;
     myNumberOfIndexingThreads = numberOfIndexingThreads;
   }
 

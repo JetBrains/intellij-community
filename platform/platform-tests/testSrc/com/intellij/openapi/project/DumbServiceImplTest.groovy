@@ -13,7 +13,6 @@ import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.ArrayUtil
-import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
@@ -167,7 +166,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
         try {
           ProgressIndicatorUtils.withTimeout(20_000) {
             def index = FileBasedIndex.getInstance() as FileBasedIndexImpl
-            new IndexUpdateRunner(index, ConcurrencyUtil.newSameThreadExecutorService(), 1)
+            new IndexUpdateRunner(index, 1)
               .indexFiles(project, Collections.singletonList(new IndexUpdateRunner.FileSet(project, "child", [child])),
                           indicator, new ProjectIndexingHistoryImpl(getProject(), "Testing", ScanningType.PARTIAL))
           }

@@ -99,9 +99,7 @@ public final class FileBasedIndexProjectHandler {
       try {
         int numberOfIndexingThreads = UnindexedFilesUpdater.getNumberOfIndexingThreads();
         LOG.info("Using " + numberOfIndexingThreads + " " + StringUtil.pluralize("thread", numberOfIndexingThreads) + " for indexing");
-        IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(
-          index, UnindexedFilesUpdater.GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads
-        );
+        IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(index, numberOfIndexingThreads);
         IndexUpdateRunner.IndexingInterruptedException interruptedException = null;
         projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Indexing);
         String fileSetName = "Refreshed files";

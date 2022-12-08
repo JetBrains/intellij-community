@@ -90,8 +90,7 @@ class UnindexedFilesIndexer extends DumbModeTask {
     LOG.info(
       "Use " + numberOfIndexingThreads + " indexing " + StringUtil.pluralize("thread", numberOfIndexingThreads) +
       " for indexing of " + myProject.getName());
-    IndexUpdateRunner
-      indexUpdateRunner = new IndexUpdateRunner(myIndex, UnindexedFilesUpdater.GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads);
+    IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, numberOfIndexingThreads);
 
     ArrayList<IndexableFilesIterator> providers = new ArrayList<>(providerToFiles.keySet());
     for (int index = 0; index < providers.size(); ) {
