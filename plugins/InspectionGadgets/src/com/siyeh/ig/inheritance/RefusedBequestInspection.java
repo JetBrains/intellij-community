@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -43,7 +43,7 @@ public class RefusedBequestInspection extends BaseInspection {
     final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(annotations, null);
 
     panel.addCheckbox(InspectionGadgetsBundle.message("inspection.refused.bequest.super.annotated.option"), "onlyReportWhenAnnotated");
-    panel.add(annotationsListControl, "growx, wrap");
+    panel.addGrowingX(annotationsListControl);
     panel.addCheckbox(InspectionGadgetsBundle.message("refused.bequest.ignore.empty.super.methods.option"), "ignoreEmptySuperMethods");
     panel.addCheckbox(InspectionGadgetsBundle.message("refused.bequest.ignore.default.super.methods.option"), "ignoreDefaultSuperMethods");
 

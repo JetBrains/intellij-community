@@ -62,7 +62,7 @@ public class InstanceVariableUninitializedUseInspection extends BaseInspection {
     final JPanel annotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       annotationNames, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
 
-    panel.add(annotationsPanel, "growx, wrap");
+    panel.addGrowingX(annotationsPanel);
     panel.addCheckbox(InspectionGadgetsBundle.message("primitive.fields.ignore.option"), "m_ignorePrimitives");
 
     return panel;

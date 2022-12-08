@@ -1,12 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.uiDesigner.core.Spacer;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import net.miginfocom.swing.MigLayout;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +26,8 @@ public class InspectionOptionsPanel extends JPanel implements InspectionOptionCo
   @Nullable
   private final OptionAccessor myOptionAccessor;
   private final @NotNull Map<@NonNls String, @NlsContexts.Checkbox String> myCheckBoxLabels = new HashMap<>();
+  private final GridBag myConstraints = new GridBag();
+  private boolean myHasGrowing = false;
 
   public InspectionOptionsPanel() {
     this((OptionAccessor)null);
@@ -33,7 +38,12 @@ public class InspectionOptionsPanel extends JPanel implements InspectionOptionCo
   }
 
   public InspectionOptionsPanel(@Nullable OptionAccessor optionAccessor) {
-    super(new MigLayout("fillx, ins 0"));
+    super(new GridBagLayout());
+    myConstraints
+      .setDefaultAnchor(GridBagConstraints.NORTHWEST)
+      .setDefaultFill(GridBagConstraints.VERTICAL)
+      .setDefaultInsets(0, 0, UIUtil.DEFAULT_VGAP * 2, 0)
+    ;
     myOptionAccessor = optionAccessor;
   }
 
@@ -46,8 +56,8 @@ public class InspectionOptionsPanel extends JPanel implements InspectionOptionCo
   }
 
   public void addRow(Component label, Component component) {
-    add(label, "");
-    add(component, "pushx, wrap");
+    add(label, myConstraints.nextLine());
+    add(component, myConstraints.next());
   }
 
   public void addLabeledRow(@NlsContexts.Label String labelText, Component component) {
@@ -60,12 +70,20 @@ public class InspectionOptionsPanel extends JPanel implements InspectionOptionCo
    * Adds a row with a single component, using as much vertical and horizontal space as possible.
    */
   public void addGrowing(Component component) {
-    add(component, "push, grow, wrap");
+    add(component, myConstraints.nextLine().weightx(1.0).weighty(1.0).fillCell());
+    myHasGrowing = true;
+  }
+
+  /**
+   * Adds a row with a single component, using as much horizontal space as possible.
+   */
+  public void addGrowingX(Component component) {
+    add(component, myConstraints.nextLine().weightx(1.0).fillCell());
   }
 
   @Override
   public Component add(Component comp) {
-    super.add(comp, "span, wrap");
+    super.add(comp, myConstraints.nextLine());
     return comp;
   }
 
@@ -105,7 +123,15 @@ public class InspectionOptionsPanel extends JPanel implements InspectionOptionCo
   }
 
   public void addComponent(JComponent component) {
-    add(component, "span, wrap, grow");
+    add(component, myConstraints.nextLine());
+  }
+
+  @IntellijInternalApi
+  public void addGlueIfNeeded() {
+    if (!myHasGrowing) {
+      myHasGrowing = true;
+      add(new Spacer(), myConstraints.nextLine().weightx(1.0).weighty(1.0).fillCell().insets(0, 0, 0, 0));
+    }
   }
 
   static public @NotNull Dimension getMinimumListSize() {

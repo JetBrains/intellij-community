@@ -96,7 +96,7 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
         }
       }
     };
-    panel.add(textField, "growx");
+    panel.addGrowingX(textField);
     return panel;
   }
 

@@ -245,7 +245,10 @@ public class SingleInspectionProfilePanel extends JPanel {
     final JComponent additionalConfigPanel = state.getAdditionalConfigPanel();
     if (additionalConfigPanel != null) {
       additionalConfigPanel.setBorder(InspectionUiUtilKt.getBordersForOptions(additionalConfigPanel));
-      configPanelAnchor.add(InspectionUiUtilKt.addScrollPaneIfNecessary(additionalConfigPanel));
+      configPanelAnchor.add(
+        InspectionUiUtilKt.addScrollPaneIfNecessary(additionalConfigPanel),
+        new GridBag().next().weightx(1.0).weighty(1.0).fillCell().anchor(GridBagConstraints.NORTHWEST)
+      );
     }
 
     if (myOptionsLabel != null)
@@ -766,7 +769,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
       myOptionsPanel.removeAll();
       JPanel severityPanel = new JPanel(new GridBagLayout());
-      final JPanel configPanelAnchor = new JPanel(new GridLayout());
+      final JPanel configPanelAnchor = new JPanel(new GridBagLayout());
 
       final boolean showOptionPanel;
       final double severityPanelWeightY;

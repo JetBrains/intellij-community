@@ -340,7 +340,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     panel.add(exceptionConstructorCheck);
 
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    panel.add(new FieldPanel(specifiedExceptions,
+    panel.addGrowingX(new FieldPanel(specifiedExceptions,
                              null,
                              JavaI18nBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"),
                              openProjects.length == 0 ? null :
@@ -350,7 +350,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
                                  createIgnoreExceptionsConfigurationDialog(openProjects[0], specifiedExceptions).show();
                                }
                              },
-                             null), "growx, wrap");
+                             null));
 
     panel.add(classRef);
     panel.add(propertyRef);
@@ -364,7 +364,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
       new FieldPanel(commentPattern, JavaI18nBundle.message("inspection.i18n.option.ignore.comment.pattern"),
                      JavaI18nBundle.message("inspection.i18n.option.ignore.comment.title"), null,
                      () -> setNonNlsCommentPattern(commentPattern.getText()));
-    panel.add(nonNlsCommentPatternComponent, "growx, wrap");
+    panel.addGrowingX(nonNlsCommentPatternComponent);
 
     final JTextField literalPattern = new ExpandableTextField(text -> Collections.singletonList(text),
                                                               strings -> StringUtil.join(strings, "|"));
@@ -373,7 +373,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
       new FieldPanel(literalPattern, JavaI18nBundle.message("inspection.i18n.option.ignore.string.pattern"),
                      JavaI18nBundle.message("inspection.i18n.option.ignore.string.title"), null,
                      () -> setNonNlsLiteralPattern(literalPattern.getText()));
-    panel.add(nonNlsStringPatternComponent, "growx, wrap");
+    panel.addGrowingX(nonNlsStringPatternComponent);
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);

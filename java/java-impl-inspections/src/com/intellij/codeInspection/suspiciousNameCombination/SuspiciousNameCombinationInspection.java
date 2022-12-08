@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.suspiciousNameCombination;
 
@@ -33,7 +33,6 @@ import org.jetbrains.annotations.PropertyKey;
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import java.util.List;
 import java.util.*;
 
 
@@ -84,7 +83,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
       false);
 
     final InspectionOptionsPanel panel = new InspectionOptionsPanel();
-    panel.add(nameGroupsPanel, "growx, wrap");
+    panel.addGrowingX(nameGroupsPanel);
     panel.addGrowing(tablePanel);
     return panel;
   }

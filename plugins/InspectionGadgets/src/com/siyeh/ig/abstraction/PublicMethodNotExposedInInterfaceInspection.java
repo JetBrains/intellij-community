@@ -46,10 +46,11 @@ public class PublicMethodNotExposedInInterfaceInspection extends BaseInspection 
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-        ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
+      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
 
-    panel.add(annotationsListControl, "growx, wrap");
-    panel.addCheckbox(InspectionGadgetsBundle.message("public.method.not.in.interface.option"), "onlyWarnIfContainingClassImplementsAnInterface");
+    panel.addGrowingX(annotationsListControl);
+    panel.addCheckbox(InspectionGadgetsBundle.message("public.method.not.in.interface.option"),
+                      "onlyWarnIfContainingClassImplementsAnInterface");
 
     return panel;
   }
