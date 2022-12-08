@@ -624,6 +624,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
         List<String> hashes = IntCollectionUtil.map2List(batch, value -> myStorage.getCommitId(value).getHash().asString());
         myIndexers.get(myRoot).readFullDetails(myRoot, hashes, myPathsEncoder, detail -> {
+          indicator.checkCanceled();
           storeDetail(detail);
           if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) flush();
 
@@ -634,6 +635,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
     public void indexAll(@NotNull ProgressIndicator indicator) throws VcsException {
       myIndexers.get(myRoot).readAllFullDetails(myRoot, myPathsEncoder, details -> {
+        indicator.checkCanceled();
         storeDetail(details);
 
         if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) flush();
