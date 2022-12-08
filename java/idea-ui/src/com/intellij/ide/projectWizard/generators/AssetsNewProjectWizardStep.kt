@@ -5,11 +5,13 @@ import com.intellij.codeInsight.actions.ReformatCodeProcessor
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.projectView.ProjectView
+import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.local.GeneratorAsset
 import com.intellij.ide.starters.local.GeneratorTemplateFile
 import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
@@ -109,11 +111,17 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
       addTemplateProperties("PACKAGE_NAME" to aPackage)
 
       if (generateOnboardingTips) {
-        addTemplateProperties("SHIFT_SHIFT" to (if (SystemInfo.isMac) "⇧⇧" else "Shift Shift"))
-        addTemplateProperties("INTENTION_SHORTCUT" to KeymapUtil.getShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS))
-        addTemplateProperties("DEFAULT_RUN" to KeymapUtil.getShortcutText(IdeActions.ACTION_DEFAULT_RUNNER))
-        addTemplateProperties("DEFAULT_DEBUG" to KeymapUtil.getShortcutText(IdeActions.ACTION_DEFAULT_DEBUGGER))
-        addTemplateProperties("TOGGLE_BREAKPOINT" to KeymapUtil.getShortcutText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT))
+        addTemplateProperties("SearchEverywhereComment1" to JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.1",
+                                                                                       if (SystemInfo.isMac) "⇧" else "Shift"))
+        addTemplateProperties("SearchEverywhereComment2" to JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.2"))
+
+        addTemplateProperties("ShowIntentionComment1" to JavaStartersBundle.message("onboarding.show.intention.tip.comment.1", KeymapUtil.getShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)))
+        addTemplateProperties("ShowIntentionComment2" to JavaStartersBundle.message("onboarding.show.intention.tip.comment.2", ApplicationNamesInfo.getInstance().fullProductName))
+
+        addTemplateProperties("RunComment" to JavaStartersBundle.message("onboarding.run.comment", KeymapUtil.getShortcutText(IdeActions.ACTION_DEFAULT_RUNNER)))
+
+        addTemplateProperties("DebugComment1" to JavaStartersBundle.message("onboarding.debug.comment.1", KeymapUtil.getShortcutText(IdeActions.ACTION_DEFAULT_DEBUGGER)))
+        addTemplateProperties("DebugComment2" to JavaStartersBundle.message("onboarding.debug.comment.2", KeymapUtil.getShortcutText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)))
       }
     }
 
