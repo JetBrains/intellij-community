@@ -4,12 +4,12 @@ package com.intellij.webSymbols.patterns
 import com.intellij.webSymbols.WebSymbol
 
 data class ComplexPatternOptions(
-  val delegate: WebSymbol?,
+  val additionalScope: WebSymbol?,
   val isDeprecated: Boolean?,
   val isRequired: Boolean,
   val priority: WebSymbol.Priority?,
   val proximity: Int?,
   val repeats: Boolean,
   val unique: Boolean,
-  val itemsProvider: WebSymbolsPatternItemsProvider?,
+  val symbolsResolver: WebSymbolsPatternSymbolsResolver?,
 )
