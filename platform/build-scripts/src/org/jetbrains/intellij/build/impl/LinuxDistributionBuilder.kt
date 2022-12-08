@@ -366,10 +366,6 @@ internal fun generateUnixScripts(distBinDir: Path,
       Files.newDirectoryStream(sourceScriptDir).use {
         for (file in it) {
           val fileName = file.fileName.toString()
-          if (!isRemoteDevEnabled && fileName == REMOTE_DEV_SCRIPT_FILE_NAME) {
-            continue
-          }
-
           val target = distBinDir.resolve(if (fileName == "executable-template.sh") scriptName else fileName)
           copyScript(sourceFile = file,
                      targetFile = target,
@@ -382,16 +378,6 @@ internal fun generateUnixScripts(distBinDir: Path,
         }
       }
       copyInspectScript(context, distBinDir)
-    }
-    OsFamily.MACOS -> {
-      copyScript(sourceFile = sourceScriptDir.resolve(REMOTE_DEV_SCRIPT_FILE_NAME),
-                 targetFile = distBinDir.resolve(REMOTE_DEV_SCRIPT_FILE_NAME),
-                 vmOptionsFileName = baseName,
-                 additionalJvmArgs = additionalJvmArgs,
-                 defaultXmxParameter = defaultXmxParameter,
-                 classPath = classPath,
-                 scriptName = baseName,
-                 context = context)
     }
     else -> {
       throw IllegalStateException("Unsupported OsFamily: $os")
