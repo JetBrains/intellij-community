@@ -10,7 +10,7 @@ import com.intellij.ui.TextAccessor
 internal class SingleChangeListCommitMessagePolicy(project: Project, private val initialCommitMessage: String?) :
   AbstractCommitMessagePolicy(project) {
 
-  private var defaultNameChangeListMessage: String? = null
+  private var lastKnownComment: String? = null
   private val messagesToSave = mutableMapOf<String, String>()
 
   private var commitMessage: String? = null
@@ -20,13 +20,13 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, private val
     if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return commitMessage
 
     if (commitMessage != null) {
-      defaultNameChangeListMessage = commitMessage
+      lastKnownComment = commitMessage
     }
     else {
       commitMessage = getCommitMessageFor(changeList)
       if (commitMessage.isNullOrBlank()) {
-        defaultNameChangeListMessage = vcsConfiguration.LAST_COMMIT_MESSAGE
-        commitMessage = getCommitMessageFromVcs(includedChanges) ?: defaultNameChangeListMessage
+        lastKnownComment = vcsConfiguration.LAST_COMMIT_MESSAGE
+        commitMessage = getCommitMessageFromVcs(includedChanges) ?: lastKnownComment
       }
     }
     return commitMessage
@@ -36,7 +36,7 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, private val
    * Ex: via "Commit Message History" action
    */
   fun onCommitMessageReset(text: String?) {
-    defaultNameChangeListMessage = text
+    lastKnownComment = text
   }
 
   fun onChangelistChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList, currentMessage: TextAccessor) {
@@ -46,7 +46,7 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, private val
     if (oldChangeList.name != newChangeList.name) {
       rememberMessage(oldChangeList.name, currentMessage.text)
 
-      commitMessage = getCommitMessageFor(newChangeList) ?: defaultNameChangeListMessage
+      commitMessage = getCommitMessageFor(newChangeList) ?: lastKnownComment
       currentMessage.text = commitMessage
     }
   }
