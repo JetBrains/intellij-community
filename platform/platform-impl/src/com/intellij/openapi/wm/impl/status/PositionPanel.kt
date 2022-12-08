@@ -1,280 +1,222 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl.status;
+package com.intellij.openapi.wm.impl.status
 
-import com.intellij.ide.util.EditorGotoLineNumberDialog;
-import com.intellij.ide.util.GotoLineNumberDialog;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.ui.UIBundle;
-import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.FocusUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.util.EditorGotoLineNumberDialog
+import com.intellij.ide.util.GotoLineNumberDialog
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarWidget
+import com.intellij.openapi.wm.StatusBarWidget.*
+import com.intellij.ui.UIBundle
+import com.intellij.util.Alarm
+import com.intellij.util.Consumer
+import com.intellij.util.messages.MessageBusConnection
+import com.intellij.util.ui.FocusUtil
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
+import org.jetbrains.annotations.Nls
+import java.awt.Component
+import java.awt.event.MouseEvent
+import javax.swing.SwingUtilities
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseEvent;
+open class PositionPanel(project: Project) : EditorBasedWidget(project), Multiframe {
+  private val myAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
+  private val myQueue = MergingUpdateQueue("PositionPanel", 100, true, null, this)
+  private var countTask: CodePointCountTask? = null
+  private var text: @NlsContexts.Label String? = null
 
-public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation {
+  companion object {
+    @JvmField
+    val DISABLE_FOR_EDITOR = Key<Any>("positionPanel.disableForEditor")
 
-  public static final Key<Object> DISABLE_FOR_EDITOR = new Key<>("positionPanel.disableForEditor");
-
-  public static final String SPACE = "     ";
-  public static final String SEPARATOR = ":";
-
-  private static final int CHAR_COUNT_SYNC_LIMIT = 500_000;
-  private static final String CHAR_COUNT_UNKNOWN = "...";
-
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("PositionPanel", 100, true, null, this);
-  private CodePointCountTask myCountTask;
-
-  private @NlsContexts.Label String text;
-
-  public PositionPanel(@NotNull Project project) {
-    super(project);
+    const val SPACE = "     "
+    const val SEPARATOR = ":"
+    private const val CHAR_COUNT_SYNC_LIMIT = 500000
+    private const val CHAR_COUNT_UNKNOWN = "..."
   }
 
-  @Override
-  public @NotNull String ID() {
-    return StatusBar.StandardWidgets.POSITION_PANEL;
-  }
+  override fun ID(): String = StatusBar.StandardWidgets.POSITION_PANEL
 
-  @Override
-  public StatusBarWidget copy() {
-    return new PositionPanel(getProject());
-  }
+  override fun copy(): StatusBarWidget = PositionPanel(project)
 
-  @Override
-  public WidgetPresentation getPresentation() {
-    return this;
-  }
+  override fun getPresentation(): WidgetPresentation? {
+    return object : TextPresentation {
+      override fun getText(): String = this@PositionPanel.text ?: ""
 
-  @Override
-  public @NotNull String getText() {
-    return text == null ? "" : text;
-  }
+      override fun getAlignment(): Float = Component.CENTER_ALIGNMENT
 
-  @Override
-  public float getAlignment() {
-    return Component.CENTER_ALIGNMENT;
-  }
+      override fun getTooltipText(): String {
+        val toolTip = UIBundle.message("go.to.line.command.name")
+        val shortcut = shortcutText
+        return if (shortcut.isNotEmpty() && !Registry.`is`("ide.helptooltip.enabled")) "$toolTip ($shortcut)" else toolTip
+      }
 
-  @Override
-  public String getTooltipText() {
-    String toolTip = UIBundle.message("go.to.line.command.name");
-    String shortcut = getShortcutText();
+      override fun getShortcutText(): String = KeymapUtil.getFirstKeyboardShortcutText("GotoLine")
 
-    //noinspection SpellCheckingInspection
-    if (Strings.isNotEmpty(shortcut) && !Registry.is("ide.helptooltip.enabled")) {
-      return toolTip + " (" + shortcut + ")";
+      override fun getClickConsumer(): Consumer<MouseEvent> {
+        return Consumer {
+          val project = project
+          val editor = getFocusedEditor() ?: return@Consumer
+          CommandProcessor.getInstance().executeCommand(
+            project,
+            {
+              val dialog: GotoLineNumberDialog = EditorGotoLineNumberDialog(project, editor)
+              dialog.show()
+              IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation()
+            },
+            UIBundle.message("go.to.line.command.name"),
+            null
+          )
+        }
+      }
     }
-    return toolTip;
   }
 
-  @Override
-  public String getShortcutText() {
-    return KeymapUtil.getFirstKeyboardShortcutText("GotoLine");
-  }
-
-  @Override
-  public Consumer<MouseEvent> getClickConsumer() {
-    return mouseEvent -> {
-      Project project = getProject();
-      Editor editor = getFocusedEditor();
-      if (editor == null) {
-        return;
+  override fun registerCustomListeners(connection: MessageBusConnection) {
+    super.registerCustomListeners(connection)
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun selectionChanged(event: FileEditorManagerEvent) {
+        updatePosition(getEditor())
       }
-
-      CommandProcessor.getInstance().executeCommand(
-        project,
-        () -> {
-          GotoLineNumberDialog dialog = new EditorGotoLineNumberDialog(project, editor);
-          dialog.show();
-          IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-        },
-        UIBundle.message("go.to.line.command.name"),
-        null
-      );
-    };
-  }
-
-  @Override
-  protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
-    super.registerCustomListeners(connection);
-
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-      @Override
-      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        updatePosition(getEditor());
-      }
-    });
-
-    EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
-    multicaster.addCaretListener(new CaretListener() {
-      @Override
-      public void caretPositionChanged(@NotNull CaretEvent e) {
-        Editor editor = e.getEditor();
+    })
+    val multicaster = EditorFactory.getInstance().eventMulticaster
+    multicaster.addCaretListener(object : CaretListener {
+      override fun caretPositionChanged(e: CaretEvent) {
+        val editor = e.editor
         // When multiple carets exist in editor, we don't show information about caret positions
-        if (editor.getCaretModel().getCaretCount() == 1 && isFocusedEditor(editor)) updatePosition(editor);
+        if (editor.caretModel.caretCount == 1 && isFocusedEditor(editor)) updatePosition(editor)
       }
 
-      @Override
-      public void caretAdded(@NotNull CaretEvent e) {
-        updatePosition(e.getEditor());
+      override fun caretAdded(e: CaretEvent) {
+        updatePosition(e.editor)
       }
 
-      @Override
-      public void caretRemoved(@NotNull CaretEvent e) {
-        updatePosition(e.getEditor());
+      override fun caretRemoved(e: CaretEvent) {
+        updatePosition(e.editor)
       }
-    }, this);
-    multicaster.addSelectionListener(new SelectionListener() {
-      @Override
-      public void selectionChanged(@NotNull SelectionEvent e) {
-        Editor editor = e.getEditor();
-        if (isFocusedEditor(editor)) updatePosition(editor);
+    }, this)
+    multicaster.addSelectionListener(object : SelectionListener {
+      override fun selectionChanged(e: SelectionEvent) {
+        val editor = e.editor
+        if (isFocusedEditor(editor)) updatePosition(editor)
       }
-    }, this);
-    multicaster.addDocumentListener(new BulkAwareDocumentListener.Simple() {
-      @Override
-      public void afterDocumentChange(@NotNull Document document) {
+    }, this)
+    multicaster.addDocumentListener(object : BulkAwareDocumentListener.Simple {
+      override fun afterDocumentChange(document: Document) {
         EditorFactory.getInstance().editors(document)
-          .filter(editor -> isFocusedEditor(editor))
+          .filter { editor: Editor -> isFocusedEditor(editor) }
           .findFirst()
-          .ifPresent(editor -> updatePosition(editor));
+          .ifPresent { editor: Editor? -> updatePosition(editor) }
       }
-    }, this);
-
-    ApplicationManager.getApplication().invokeLater(() -> {
-      FocusUtil.addFocusOwnerListener(this, __ -> {
-        updatePosition(getFocusedEditor());
-      });
-    });
-  }
-
-  private boolean isFocusedEditor(Editor editor) {
-    Component focusOwner = getFocusedComponent();
-    return focusOwner == editor.getContentComponent();
-  }
-
-  private void updatePosition(final Editor editor) {
-    myQueue.queue(Update.create(this, () -> {
-      boolean empty = editor == null || DISABLE_FOR_EDITOR.isIn(editor);
-      if (!empty && !isOurEditor(editor)) return;
-
-      String newText = empty ? "" : getPositionText(editor);
-      if (newText.equals(text)) return;
-
-      text = newText;
-      if (myStatusBar != null) {
-        myStatusBar.updateWidget(ID());
+    }, this)
+    ApplicationManager.getApplication().invokeLater {
+      FocusUtil.addFocusOwnerListener(this) {
+        updatePosition(getFocusedEditor())
       }
-    }));
+    }
   }
 
-  private void updateTextWithCodePointCount(int codePointCount) {
+  private fun isFocusedEditor(editor: Editor): Boolean {
+    return getFocusedComponent() === editor.contentComponent
+  }
+
+  private fun updatePosition(editor: Editor?) {
+    myQueue.queue(Update.create(this) {
+      val empty = editor == null || DISABLE_FOR_EDITOR.isIn(editor)
+      if (!empty && !isOurEditor(editor)) {
+        return@create
+      }
+
+      val newText = if (empty) "" else getPositionText(editor!!)
+      if (newText == text) {
+        return@create
+      }
+      text = newText
+      myStatusBar?.updateWidget(ID())
+    })
+  }
+
+  private fun updateTextWithCodePointCount(codePointCount: Int) {
     if (text != null) {
-      text = text.replace(CHAR_COUNT_UNKNOWN, Integer.toString(codePointCount));
-      if (myStatusBar != null) {
-        myStatusBar.updateWidget(ID());
-      }
+      text = text!!.replace(CHAR_COUNT_UNKNOWN, codePointCount.toString())
+      myStatusBar?.updateWidget(ID())
     }
   }
 
-  private @NlsContexts.Label String getPositionText(@NotNull Editor editor) {
-    myCountTask = null;
-    if (!editor.isDisposed() && !myAlarm.isDisposed()) {
-      @Nls StringBuilder message = new StringBuilder();
+  @Suppress("HardCodedStringLiteral")
+  private fun getPositionText(editor: Editor): @NlsContexts.Label String {
+    countTask = null
+    if (editor.isDisposed || myAlarm.isDisposed) {
+      return ""
+    }
 
-      SelectionModel selectionModel = editor.getSelectionModel();
-      int caretCount = editor.getCaretModel().getCaretCount();
-      if (caretCount > 1) {
-        message.append(UIBundle.message("position.panel.caret.count", caretCount));
-      }
-      else {
-        LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
-        message.append(caret.line + 1).append(SEPARATOR).append(caret.column + 1);
-        if (selectionModel.hasSelection()) {
-          int selectionStart = selectionModel.getSelectionStart();
-          int selectionEnd = selectionModel.getSelectionEnd();
-          if (selectionEnd > selectionStart) {
-            message.append(" (");
-            CodePointCountTask countTask = new CodePointCountTask(editor.getDocument().getImmutableCharSequence(),
-                                                                  selectionStart, selectionEnd);
-            if (countTask.isQuick()) {
-              int charCount = countTask.calculate();
-              message.append(charCount).append(' ').append(UIBundle.message("position.panel.selected.chars.count", charCount));
-            }
-            else {
-              message.append(CHAR_COUNT_UNKNOWN).append(' ').append(UIBundle.message("position.panel.selected.chars.count", 2));
-              myCountTask = countTask;
-              myAlarm.cancelAllRequests();
-              myAlarm.addRequest(countTask, 0);
-            }
-            int selectionStartLine = editor.getDocument().getLineNumber(selectionStart);
-            int selectionEndLine = editor.getDocument().getLineNumber(selectionEnd);
-            if (selectionEndLine > selectionStartLine) {
-              message.append(", ");
-              message.append(UIBundle.message("position.panel.selected.line.breaks.count", selectionEndLine - selectionStartLine));
-            }
-            message.append(")");
-          }
+    val selectionModel = editor.selectionModel
+    val caretCount = editor.caretModel.caretCount
+    if (caretCount > 1) {
+      return UIBundle.message("position.panel.caret.count", caretCount)
+    }
+
+    val message: @Nls StringBuilder = StringBuilder()
+    val caret = editor.caretModel.logicalPosition
+    message.append(caret.line + 1).append(SEPARATOR).append(caret.column + 1)
+    if (selectionModel.hasSelection()) {
+      val selectionStart = selectionModel.selectionStart
+      val selectionEnd = selectionModel.selectionEnd
+      if (selectionEnd > selectionStart) {
+        message.append(" (")
+        val countTask = CodePointCountTask(editor.document.immutableCharSequence,
+                                           selectionStart, selectionEnd)
+        if (countTask.isQuick) {
+          val charCount = countTask.calculate()
+          message.append(charCount).append(' ').append(UIBundle.message("position.panel.selected.chars.count", charCount))
         }
+        else {
+          message.append(CHAR_COUNT_UNKNOWN).append(' ').append(UIBundle.message("position.panel.selected.chars.count", 2))
+          this.countTask = countTask
+          myAlarm.cancelAllRequests()
+          myAlarm.addRequest(countTask, 0)
+        }
+        val selectionStartLine = editor.document.getLineNumber(selectionStart)
+        val selectionEndLine = editor.document.getLineNumber(selectionEnd)
+        if (selectionEndLine > selectionStartLine) {
+          message.append(", ")
+          message.append(UIBundle.message("position.panel.selected.line.breaks.count", selectionEndLine - selectionStartLine))
+        }
+        message.append(")")
       }
-
-      return message.toString();
     }
-    else {
-      return "";
-    }
+    return message.toString()
   }
-  
-  private final class CodePointCountTask implements Runnable {
-    private final CharSequence text;
-    private final int startOffset;
-    private final int endOffset;
 
-    private CodePointCountTask(CharSequence text, int startOffset, int endOffset) {
-      this.text = text;
-      this.startOffset = startOffset;
-      this.endOffset = endOffset;
-    }
+  private inner class CodePointCountTask(private val text: CharSequence,
+                                         private val startOffset: Int,
+                                         private val endOffset: Int) : Runnable {
+    val isQuick: Boolean
+      get() = (endOffset - startOffset) < CHAR_COUNT_SYNC_LIMIT
 
-    private boolean isQuick() {
-      return endOffset - startOffset < CHAR_COUNT_SYNC_LIMIT;
-    }
+    fun calculate(): Int = Character.codePointCount(text, startOffset, endOffset)
 
-    private int calculate() {
-      return Character.codePointCount(text, startOffset, endOffset);
-    }
-
-    @Override
-    public void run() {
-      int count = calculate();
-      SwingUtilities.invokeLater(() -> {
-        if (this == myCountTask) {
-          updateTextWithCodePointCount(count);
-          myCountTask = null;
+    override fun run() {
+      val count = calculate()
+      SwingUtilities.invokeLater {
+        if (this == countTask) {
+          updateTextWithCodePointCount(count)
+          countTask = null
         }
-      });
+      }
     }
   }
 }
