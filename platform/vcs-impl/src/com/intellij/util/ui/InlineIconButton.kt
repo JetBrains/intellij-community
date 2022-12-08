@@ -96,14 +96,14 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
       buttonBehavior = object : BaseButtonBehavior(c) {
         override fun execute(e: MouseEvent) {
           if (c.isEnabled) {
-            c.actionListener?.actionPerformed(ActionEvent(e, ActionEvent.ACTION_PERFORMED, "execute", e.modifiers))
+            c.actionListener?.actionPerformed(ActionEvent(e.source, ActionEvent.ACTION_PERFORMED, "execute", e.modifiers))
           }
         }
       }
       spaceKeyListener = object : KeyAdapter() {
         override fun keyReleased(e: KeyEvent) {
           if (c.isEnabled && !e.isConsumed && e.modifiers == 0 && e.keyCode == KeyEvent.VK_SPACE) {
-            c.actionListener?.actionPerformed(ActionEvent(e, ActionEvent.ACTION_PERFORMED, "execute", e.modifiers))
+            c.actionListener?.actionPerformed(ActionEvent(e.source, ActionEvent.ACTION_PERFORMED, "execute", e.modifiers))
             e.consume()
             return
           }
@@ -161,9 +161,9 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
   }
 
   companion object {
-    val ACTION_LISTENER_PROPERTY = "action_listener"
-    val ICON_PROPERTY = "icon"
-    val HOVERED_ICON_PROPERTY = "hovered_icon"
-    val DISABLED_ICON_PROPERTY = "disabled_icon"
+    const val ACTION_LISTENER_PROPERTY = "action_listener"
+    const val ICON_PROPERTY = "icon"
+    const val HOVERED_ICON_PROPERTY = "hovered_icon"
+    const val DISABLED_ICON_PROPERTY = "disabled_icon"
   }
 }
