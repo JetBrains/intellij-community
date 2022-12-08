@@ -2628,6 +2628,27 @@ public class PyTypingTest extends PyTestCase {
              """);
   }
 
+  // PY-52656
+  public void testClassInheritsGenericToOrderTypeParameters() {
+    doTest("str",
+           """
+             from typing import Generic, TypeVar
+
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+
+             class Box(Generic[T1]):
+                 def get(self) -> T1:
+                     pass
+
+             class Pair(Box[T2], Generic[T1, T2]):
+                 pass
+
+             xs: Pair[int, str] = ...
+             expr = xs.get()
+             """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

@@ -734,7 +734,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (!isGeneric(cls, context.getTypeContext())) {
       return Collections.emptyList();
     }
-    return StreamEx.of(PyClassElementType.getSubscriptedSuperClassesStubLike(cls))
+    // See https://mypy.readthedocs.io/en/stable/generics.html#defining-sub-classes-of-generic-classes
+    List<PySubscriptionExpression> parameterizedSuperClassExpressions = PyClassElementType.getSubscriptedSuperClassesStubLike(cls);
+    PySubscriptionExpression genericAsSuperClass = ContainerUtil.find(parameterizedSuperClassExpressions, s -> {
+      return resolveToQualifiedNames(s.getOperand(), context.myContext).contains(GENERIC);
+    });
+    return StreamEx.of(genericAsSuperClass != null ? Collections.singletonList(genericAsSuperClass) : parameterizedSuperClassExpressions)
       .peek(expr -> {
         PsiFile containingFile = expr.getContainingFile();
         if (containingFile instanceof PyExpressionCodeFragment) {

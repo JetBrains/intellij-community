@@ -1534,7 +1534,7 @@ public class Py3TypeTest extends PyTestCase {
     assertExpressionType("dict[str, Any]", dict);
   }
 
-  // PY-52656 Requires PY-53896 or patching Typeshed
+  // PY-52656
   public void testDictValuesType() {
     doTest("int",
            """
