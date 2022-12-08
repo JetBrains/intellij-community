@@ -44,7 +44,7 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, private val
     if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return
 
     if (oldChangeList.name != newChangeList.name) {
-      rememberMessage(oldChangeList.name, currentMessage.text)
+      messagesToSave[oldChangeList.name] = currentMessage.text
 
       commitMessage = getCommitMessageFor(newChangeList) ?: lastKnownComment
       currentMessage.text = commitMessage
@@ -55,16 +55,21 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, private val
     val changeList = commitState.changeList
     val currentMessage = commitState.commitMessage
 
-    rememberMessage(changeList.name, currentMessage)
+    messagesToSave[changeList.name] = currentMessage
 
     if (onCommit) {
       vcsConfiguration.saveCommitMessage(currentMessage)
 
       val isChangeListFullyIncluded = changeList.changes.size == commitState.changes.size
-      if (!isChangeListFullyIncluded) forgetMessage(changeList.name)
+      if (!isChangeListFullyIncluded) {
+        // keep original changelist description
+        messagesToSave.remove(changeList.name)
+      }
     }
 
-    saveMessages()
+    for ((changeListName, description) in messagesToSave) {
+      changeListManager.editComment(changeListName, description)
+    }
   }
 
   fun onAfterCommit(commitState: ChangeListCommitState) {
@@ -73,20 +78,6 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, private val
     val isDefaultNameChangeList = changeList.hasDefaultName()
     if (isDefaultNameChangeList && isChangeListFullyIncluded) {
       ChangeListManager.getInstance(project).editComment(changeList.name, "")
-    }
-  }
-
-  private fun rememberMessage(listName: String, message: String) {
-    messagesToSave[listName] = message
-  }
-
-  private fun forgetMessage(listName: String) {
-    messagesToSave.remove(listName)
-  }
-
-  private fun saveMessages() {
-    for ((changeListName, commitMessage) in messagesToSave) {
-      changeListManager.editComment(changeListName, commitMessage)
     }
   }
 }
