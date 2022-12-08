@@ -29,12 +29,43 @@ import kotlin.coroutines.CoroutineContext
  * }
  * ```
  */
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Deprecated(message = "Migrate to `ProgressReporter`")
 fun ProgressSink.asContextElement(): CoroutineContext.Element {
   return ProgressSinkElement(this)
 }
 
-val CoroutineContext.progressSink: ProgressSink? get() = this[ProgressSinkKey]?.sink
+/**
+ * @see progressReporter
+ * @see rawProgressReporter
+ */
+@Deprecated(message = "Migrate to `ProgressReporter`")
+val CoroutineContext.progressSink: ProgressSink? get() = this[ProgressSinkKey]?.sink ?: fromReporter()
 
+private fun CoroutineContext.fromReporter(): ProgressSink? {
+  val reporter = this.rawProgressReporter
+                 ?: return null
+  return object : ProgressSink {
+    override fun update(text: @ProgressText String?, details: @ProgressDetails String?, fraction: Double?) {
+      if (text != null) {
+        reporter.text(text)
+      }
+      if (details != null) {
+        reporter.details(details)
+      }
+      if (fraction != null) {
+        reporter.fraction(fraction)
+      }
+    }
+  }
+}
+
+/**
+ * @see progressReporter
+ * @see rawProgressReporter
+ */
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Deprecated(message = "Migrate to `ProgressReporter`")
 val CoroutineScope.progressSink: ProgressSink? get() = coroutineContext.progressSink
 
 private object ProgressSinkKey : CoroutineContext.Key<ProgressSinkElement>
