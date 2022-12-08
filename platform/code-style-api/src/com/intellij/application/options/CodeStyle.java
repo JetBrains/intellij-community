@@ -218,6 +218,10 @@ public final class CodeStyle {
     return rootSettings.getIndentOptionsByFile(file);
   }
 
+  public static CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    CodeStyleSettings rootSetting = getSettings(project, virtualFile);
+    return rootSetting.getIndentOptionsByFile(project, virtualFile, null);
+  }
 
   /**
    * Returns indent options by virtual file's type. If {@code null} is given instead of the virtual file or the type of the virtual
