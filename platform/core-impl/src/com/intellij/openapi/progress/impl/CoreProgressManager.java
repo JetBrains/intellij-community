@@ -523,10 +523,14 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     };
 
     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    boolean modal = task.isModal() ||
+                    application.isDispatchThread() &&
+                    !isSynchronousHeadless(task) &&
+                    isSynchronous(task.asBackgroundable());
     boolean result = application.runProcessWithProgressSynchronously(taskContainer,
                                                                      task.getTitle(),
                                                                      task.isCancellable(),
-                                                                     task.isModal(),
+                                                                     modal,
                                                                      task.getProject(),
                                                                      task.getParentComponent(),
                                                                      task.getCancelText());
