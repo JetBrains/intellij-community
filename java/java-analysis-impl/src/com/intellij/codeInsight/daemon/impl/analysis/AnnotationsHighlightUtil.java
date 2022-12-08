@@ -626,7 +626,13 @@ public final class AnnotationsHighlightUtil {
     PsiModifierList annotationList = statement.getAnnotationList();
     if (annotationList != null && !PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
       String message = JavaErrorBundle.message("invalid.package.annotation.containing.file");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotationList).descriptionAndTooltip(message);
+      IntentionAction deleteFix =
+        QUICK_FIX_FACTORY.createDeleteFix(annotationList, JavaAnalysisBundle.message("intention.text.remove.annotation"));
+      HighlightInfo.Builder builder =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotationList).descriptionAndTooltip(message);
+      IntentionAction moveAnnotationToPackageInfoFileFix = new MoveAnnotationToPackageInfoFileFix(statement);
+      return builder.registerFix(deleteFix, null, null, null, null)
+        .registerFix(moveAnnotationToPackageInfoFileFix, null, null, null, null);
     }
     return null;
   }
