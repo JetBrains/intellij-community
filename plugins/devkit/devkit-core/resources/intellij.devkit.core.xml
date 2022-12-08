@@ -225,6 +225,11 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PsiElementConcatenationInspection"
                      key="inspection.psi.element.concatenation.display.name"/>
+    <localInspection language="UAST" shortName="MigrateToOptControl"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.MigrateToOptControlInspection"
+                     key="inspection.migrate.to.opt.control.display.name"/>
     <localInspection language="UAST" shortName="NonDefaultConstructor"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
