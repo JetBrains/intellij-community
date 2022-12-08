@@ -41,9 +41,9 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
     val ui = UISettings.getInstance().state
     return panel {
       group(message("group.tab.appearance")) {
-        row(TAB_PLACEMENT + ":") {
-          myEditorTabPlacement = tabPlacementComboBox().component
-        }
+        row {
+          myEditorTabPlacement = tabPlacementComboBox().label("$TAB_PLACEMENT:").component
+        }.bottomGap(BottomGap.SMALL)
 
         if (ExperimentalUI.isNewUI()) {
           @Suppress("DialogTitleCapitalization")
@@ -61,7 +61,7 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
             }.bind(ui::hideTabsIfNeeded)
               .enabledIf(tabsPlacedHorizontally and singleRowButton.selected)
 
-            row { radioButton(message("radio.multiple.rows"), value = false).enabledIf(tabsPlacedOnTop) }
+            row { radioButton(message("radio.multiple.rows"), value = false).enabledIf(tabsPlacedOnTop) }.bottomGap(BottomGap.SMALL)
 
             myEditorTabPlacement.addActionListener {
               // move selection to single row, because it is the only one option in the bottom placement
@@ -90,6 +90,7 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
         row(CLOSE_BUTTON_POSITION + ":") {
           closeButtonPositionComboBox()
         }.enabledIf((myEditorTabPlacement.selectedValueMatches { it != TABS_NONE }))
+          .topGap(TopGap.SMALL)
       }
       group(message("group.tab.order")) {
         row { checkBox(sortTabsAlphabetically).onApply { resetAlwaysKeepSorted() } }
