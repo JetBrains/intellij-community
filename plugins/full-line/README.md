@@ -4,7 +4,7 @@ There's set of run/debug configurations in `Application/Machine Learning` folder
 This instruction explain how to start Completion golf to evaluate quality of 
 Full Line model/plugin on existing project emulating user's behavior.  
 
-Basic configuration:
+Basic configuration for Python:
 1. Clone `fl-pipeline` [repo](https://jetbrains.team/p/ccrm/repositories/fl-pipeline/) to `ml-eval/fl-pipeline` directory 
 on the same level as Intellij repo.
 2. Open it with PyCharm and configure virtual env in `ml-eval/fl-pipeline/venv`.
@@ -12,6 +12,13 @@ on the same level as Intellij repo.
 4. Wait until it finishes.
 5. Check its output in `REPO_ROOT/bin/ml-eval-output/$DATE-$TIME`
 6. To check HTML-report open in browser `$DATE-TIME/reports/WITHOUT COMPARISON/html/ALL/index.html`
+
+Also, you can run Completion Golf on:
+- JavaScript: `sulu` [repo](https://github.com/sulu/sulu)
+- TypeScript: `mudb` [repo](https://github.com/mikolalysenko/mudb)
+1. Clone appropriate for your language repo to `ml-eval` directory
+2. Start `Application/Machine Learning/[full-line] Completion Golf for $LANGUAGE`
+3. Follow all the steps from step 4 in the previous list
 
 Advanced configuration:
    * Completion golf configuration is stored in `$FULL_LINE_PLUGIN_DIR/resources/code-golf/dev/python.json`
