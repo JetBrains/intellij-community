@@ -749,6 +749,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       .nonNull()
       .map(e -> getType(e, context))
       .map(Ref::deref)
+      .flatMap(type -> {
+        PyTypeChecker.Generics typeParams = PyTypeChecker.collectGenerics(type, context.myContext);
+        return StreamEx.<PyType>of(typeParams.getTypeVars()).append(StreamEx.of(typeParams.getParamSpecs()));
+      })
       .filter(type -> type instanceof PyGenericType || type instanceof PyParamSpecType)
       .distinct()
       .toList();

@@ -2586,6 +2586,48 @@ public class PyTypingTest extends PyTestCase {
              expr = f(g)""");
   }
 
+  // PY-53522
+  public void testGenericIteratorParameterizedWithAnotherGeneric() {
+    doTest("Entry[str]",
+           """
+             from typing import Iterator, Generic, TypeVar
+
+             T = TypeVar("T")
+
+             class Entry(Generic[T]):
+                 pass
+
+             class MyIterator(Iterator[Entry[T]]):
+                 def __next__(self) -> Entry[T]: ...
+
+             def iter_entries(path: T) -> MyIterator[T]: ...
+
+             def main() -> None:
+                 for x in iter_entries("some path"):
+                     expr = x
+             """);
+  }
+
+  // PY-53522
+  public void testGenericParameterizedWithGeneric() {
+    doTest("list[int]",
+           """
+             from typing import Generic, TypeVar
+
+             T = TypeVar('T')
+
+             class Box(Generic[T]):
+                 def get(self) -> T:
+                     pass
+
+             class ListBox(Box[list[T]]):
+                 pass
+
+             xs: ListBox[int] = ...
+             expr = xs.get()
+             """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
