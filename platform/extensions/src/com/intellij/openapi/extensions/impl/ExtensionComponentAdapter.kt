@@ -9,8 +9,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 abstract class ExtensionComponentAdapter internal constructor(implementationClassName: String,
                                                               @JvmField val pluginDescriptor: PluginDescriptor,
-                                                              private val orderId: String?,
-                                                              private val order: LoadingOrder,
+                                                              override val orderId: String?,
+                                                              override val order: LoadingOrder,
                                                               @JvmField internal val implementationClassResolver: ImplementationClassResolver) : LoadingOrder.Orderable {
   companion object {
     @JvmField
@@ -24,10 +24,6 @@ abstract class ExtensionComponentAdapter internal constructor(implementationClas
   internal abstract val isInstanceCreated: Boolean
 
   abstract fun <T : Any> createInstance(componentManager: ComponentManager): T?
-
-  override fun getOrder() = order
-
-  override fun getOrderId() = orderId
 
   @Throws(ClassNotFoundException::class)
   fun <T> getImplementationClass(componentManager: ComponentManager): Class<T> {
@@ -43,6 +39,6 @@ abstract class ExtensionComponentAdapter internal constructor(implementationClas
     }
 
   override fun toString(): String {
-    return javaClass.simpleName + "(implementation=" + assignableToClassName + ", plugin=" + pluginDescriptor + ")"
+    return "${javaClass.simpleName}(implementation=$assignableToClassName, plugin=$pluginDescriptor)"
   }
 }
