@@ -157,13 +157,12 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
 
     @Override
     public final boolean equals(Object o) {
-      Object v;
-      Object u;
-      LongEntry<?> e;
-      return ((o instanceof LongEntry) &&
-              (e = (LongEntry<?>)o).getKey() == key &&
-              (v = e.getValue()) != null &&
-              (v == (u = val) || v.equals(u)));
+      if (!(o instanceof LongEntry)) return false;
+      LongEntry<?> e = (LongEntry<?>)o;
+      if (e.getKey() != key) return false;
+      Object v = e.getValue();
+      Object u = val;
+      return v == u || v.equals(u);
     }
 
     /**
@@ -821,11 +820,11 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
           return false;
         }
       }
-      for (LongEntry e : m.entries()) {
+      for (LongEntry<?> e : m.entries()) {
         long mk = e.getKey();
-        Object mv;
-        Object v;
-        if ((mv = e.getValue()) == null || (v = get(mk)) == null || (mv != v && !mv.equals(v))) {
+        Object mv = e.getValue();
+        Object v = get(mk);
+        if (v == null || mv != v && !mv.equals(v)) {
           return false;
         }
       }
@@ -1082,9 +1081,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
              (n = tab.length) < MAXIMUM_CAPACITY) {
         int rs = resizeStamp(n);
         if (sc < 0) {
-          if ((sc >>> RESIZE_STAMP_SHIFT) != rs || sc == rs + 1 ||
-              sc == rs + MAX_RESIZERS || (nt = nextTable) == null ||
-              transferIndex <= 0) {
+          if (sc >>> RESIZE_STAMP_SHIFT != rs || (nt = nextTable) == null || transferIndex <= 0) {
             break;
           }
           if (SIZECTL.compareAndSet(this, sc, sc + 1)) {
@@ -1111,8 +1108,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
       int rs = resizeStamp(tab.length);
       while (nextTab == nextTable && table == tab &&
              (sc = sizeCtl) < 0) {
-        if ((sc >>> RESIZE_STAMP_SHIFT) != rs || sc == rs + 1 ||
-            sc == rs + MAX_RESIZERS || transferIndex <= 0) {
+        if (sc >>> RESIZE_STAMP_SHIFT != rs || transferIndex <= 0) {
           break;
         }
         if (SIZECTL.compareAndSet(this, sc,  sc + 1)) {
@@ -1158,18 +1154,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
       }
       else if (tab == table) {
         int rs = resizeStamp(n);
-        if (sc < 0) {
-          Node<V>[] nt;
-          if ((sc >>> RESIZE_STAMP_SHIFT) != rs || sc == rs + 1 ||
-              sc == rs + MAX_RESIZERS || (nt = nextTable) == null ||
-              transferIndex <= 0) {
-            break;
-          }
-          if (SIZECTL.compareAndSet(this, sc, sc + 1)) {
-            transfer(tab, nt);
-          }
-        }
-        else if (SIZECTL.compareAndSet(this, sc,
+        if (SIZECTL.compareAndSet(this, sc,
                                        (rs << RESIZE_STAMP_SHIFT) + 2)) {
           transfer(tab, null);
         }
@@ -1829,17 +1814,15 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
                 sp.right = p;
               }
             }
-            if ((s.right = pr) != null) {
-              pr.parent = s;
-            }
+            s.right = pr;
+            pr.parent = s;
           }
           p.left = null;
           if ((p.right = sr) != null) {
             sr.parent = p;
           }
-          if ((s.left = pl) != null) {
-            pl.parent = s;
-          }
+          s.left = pl;
+          pl.parent = s;
           if ((s.parent = pp) == null) {
             r = s;
           }
@@ -2037,16 +2020,14 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
             }
             else {
               if (sr == null || !sr.red) {
-                if (sl != null) {
-                  sl.red = false;
-                }
+                sl.red = false;
                 xpr.red = true;
                 root = rotateRight(root, xpr);
                 xpr = (xp = x.parent) == null ?
                       null : xp.right;
               }
               if (xpr != null) {
-                xpr.red = (xp == null) ? false : xp.red;
+                xpr.red = xp.red;
                 if ((sr = xpr.right) != null) {
                   sr.red = false;
                 }
@@ -2078,16 +2059,14 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
             }
             else {
               if (sl == null || !sl.red) {
-                if (sr != null) {
-                  sr.red = false;
-                }
+                sr.red = false;
                 xpl.red = true;
                 root = rotateLeft(root, xpl);
                 xpl = (xp = x.parent) == null ?
                       null : xp.left;
               }
               if (xpl != null) {
-                xpl.red = (xp == null) ? false : xp.red;
+                xpl.red = xp.red;
                 if ((sl = xpl.left) != null) {
                   sl.red = false;
                 }
@@ -2637,23 +2616,20 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
 
     @Override
     public boolean contains(Object o) {
-      Object v;
-      Object r;
-      LongEntry<?> e;
-      return ((o instanceof LongEntry) &&
-              (r = map.get((e = (LongEntry)o).getKey())) != null &&
-              (v = e.getValue()) != null &&
-              (v == r || v.equals(r)));
+      if (!(o instanceof LongEntry)) return false;
+      LongEntry<?> e = (LongEntry<?>)o;
+      Object r = map.get(e.getKey());
+      if (r == null) return false;
+      Object v = e.getValue();
+      return v == r || v.equals(r);
     }
 
     @Override
     public boolean remove(Object o) {
-      Object v;
-      LongEntry<?> e;
-      return ((o instanceof Map.Entry) &&
-              (e = (LongEntry<?>)o) != null &&
-              (v = e.getValue()) != null &&
-              map.remove(e.getKey(), v));
+      if (!(o instanceof LongEntry)) return false;
+      LongEntry<?> e = (LongEntry<?>)o;
+      Object v = e.getValue();
+      return map.remove(e.getKey(), v);
     }
 
     /**
