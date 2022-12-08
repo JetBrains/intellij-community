@@ -3726,6 +3726,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/changeVisibility/private/hasModifier4.kt");
             }
 
+            @TestMetadata("hasModifier5.kt")
+            public void testHasModifier5() throws Exception {
+                runTest("testData/intentions/changeVisibility/private/hasModifier5.kt");
+            }
+
             @TestMetadata("inAnnotation.kt")
             public void testInAnnotation() throws Exception {
                 runTest("testData/intentions/changeVisibility/private/inAnnotation.kt");
@@ -3774,6 +3779,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             @TestMetadata("noModifierListConst.kt")
             public void testNoModifierListConst() throws Exception {
                 runTest("testData/intentions/changeVisibility/private/noModifierListConst.kt");
+            }
+
+            @TestMetadata("noModifierListContext.kt")
+            public void testNoModifierListContext() throws Exception {
+                runTest("testData/intentions/changeVisibility/private/noModifierListContext.kt");
             }
 
             @TestMetadata("noModifierListFun.kt")

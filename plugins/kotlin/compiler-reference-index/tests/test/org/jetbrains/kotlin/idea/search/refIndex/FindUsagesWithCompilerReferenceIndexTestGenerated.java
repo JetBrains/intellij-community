@@ -3778,6 +3778,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
+            public static class TestOverriddenMethodSyntheticAccessorWithFinalModifier extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("OverriddenMethodSyntheticAccessorWithFinalModifier.0.java")
+                public void testOverriddenMethodSyntheticAccessorWithFinalModifier() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/java/findJavaMethodUsages/OverriddenMethodSyntheticAccessorWithFinalModifier.0.java");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestOverridenArrayType extends AbstractFindUsagesWithCompilerReferenceIndexTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);

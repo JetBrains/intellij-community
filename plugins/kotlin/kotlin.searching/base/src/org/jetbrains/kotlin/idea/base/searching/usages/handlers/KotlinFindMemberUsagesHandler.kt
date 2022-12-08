@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFunctionFindUsagesO
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindFunctionUsagesDialog
 import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindPropertyUsagesDialog
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
 import org.jetbrains.kotlin.idea.findUsages.*
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.getTopMostOverriddenElementsToHighlight
@@ -57,6 +58,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected constructor(
     declaration: T,
@@ -137,10 +139,8 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
             }
         }
 
-        private val isPropertyOfDataClass = runReadAction {
-            propertyDeclaration.parent is KtParameterList &&
-                    propertyDeclaration.parent.parent is KtPrimaryConstructor &&
-                    propertyDeclaration.parent.parent.parent.let { it is KtClass && it.isData() }
+        private val isPropertyOfDataClass = true == runReadAction {
+            propertyDeclaration.parents.match(KtParameterList::class, KtPrimaryConstructor::class, last = KtClass::class)?.isData()
         }
 
         override fun getPrimaryElements(): Array<PsiElement> {

@@ -5,7 +5,7 @@ Reports an equality check with <code>Float.NaN</code> or <code>Double.NaN</code>
     According to IEEE 754, equality check against NaN always returns <code>false</code>, even for <code>NaN == NaN</code>.
     Therefore, such a check is likely to be a mistake.
 </p>
-<p>A quick-fix replaces comparison with <code>isNaN()</code> check that uses a different comparison technique and handles <code>NaN</code> values correctly.</p>
+<p>The quick-fix replaces comparison with <code>isNaN()</code> check that uses a different comparison technique and handles <code>NaN</code> values correctly.</p>
 <p><b>Example:</b></p>
 <pre><code>
   fun check(value: Double): Boolean {

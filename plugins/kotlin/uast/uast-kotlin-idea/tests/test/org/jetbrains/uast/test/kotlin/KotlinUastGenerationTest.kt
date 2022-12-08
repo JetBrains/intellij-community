@@ -201,7 +201,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
                 UParameter (name = a)
                     UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                 UParameter (name = b)
-                    UAnnotation (fqName = null)
+                    UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                 UBlockExpression
                     UQualifiedReferenceExpression
                         UQualifiedReferenceExpression
@@ -808,7 +808,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
             """
         ULambdaExpression
             UParameter (name = it)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UReturnExpression
                     UIfExpression

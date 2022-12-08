@@ -150,6 +150,11 @@ public class UltraLightClassLoadingTestGenerated extends AbstractUltraLightClass
         runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/jvmRecord.kt"));
     }
 
+    @TestMetadata("jvmStaticOnPropertySetter.kt")
+    public void testJvmStaticOnPropertySetter() throws Exception {
+        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/jvmStaticOnPropertySetter.kt"));
+    }
+
     @TestMetadata("jvmSynthetic.kt")
     public void testJvmSynthetic() throws Exception {
         runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/jvmSynthetic.kt"));
@@ -163,6 +168,11 @@ public class UltraLightClassLoadingTestGenerated extends AbstractUltraLightClass
     @TestMetadata("jvmWildcardAnnotations.kt")
     public void testJvmWildcardAnnotations() throws Exception {
         runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/jvmWildcardAnnotations.kt"));
+    }
+
+    @TestMetadata("LateinitProperties.kt")
+    public void testLateinitProperties() throws Exception {
+        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/LateinitProperties.kt"));
     }
 
     @TestMetadata("lateinitProperty.kt")

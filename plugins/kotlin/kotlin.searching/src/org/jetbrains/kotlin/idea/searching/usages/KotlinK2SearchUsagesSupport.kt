@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isInheritable
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.ImportPath
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> {
@@ -211,24 +213,15 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         return RootKindFilter.projectSources.copy(includeProjectSourceFiles = includeScriptsOutsideSourceRoots).matches(element)
     }
 
-    override fun isOverridable(declaration: KtDeclaration): Boolean {
-        val parent = declaration.parent
-        if (!(parent is KtClassBody || parent is KtParameterList)) return false
-
-        val klass = if (parent.parent is KtPrimaryConstructor)
-            parent.parent.parent as? KtClass
-        else
-            parent.parent as? KtClass
-
-        if (klass == null || (!klass.isInheritable() && !klass.isEnum())) return false
-
-        if (declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
-            // 'private' is incompatible with 'open'
-            return false
-        }
-
-        return isOverridableBySymbol(declaration)
-    }
+    /**
+     * copy-paste in K1: [org.jetbrains.kotlin.idea.core.isOverridable]
+     */
+    override fun isOverridable(declaration: KtDeclaration): Boolean =
+        !declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) &&  // 'private' is incompatible with 'open'
+        (declaration.parents.match(KtParameterList::class, KtPrimaryConstructor::class, last = KtClass::class)
+                    ?: declaration.parents.match(KtClassBody::class, last = KtClass::class))
+                    ?.let { it.isInheritable() || it.isEnum() } == true &&
+                isOverridableBySymbol(declaration)
 
     override fun isInheritable(ktClass: KtClass): Boolean = isOverridableBySymbol(ktClass)
 

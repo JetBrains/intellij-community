@@ -6,12 +6,14 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class RemoveSingleLambdaParameterFix(element: KtParameter) : KotlinQuickFixAction<KtParameter>(element) {
     override fun getFamilyName() = KotlinBundle.message("remove.single.lambda.parameter.declaration")
@@ -34,7 +36,7 @@ class RemoveSingleLambdaParameterFix(element: KtParameter) : KotlinQuickFixActio
 
             if (parameterList.parameters.size != 1) return null
 
-            val lambda = parameterList.parent.parent as? KtLambdaExpression ?: return null
+            val lambda = parameterList.parents.match(KtFunctionLiteral::class, last = KtLambdaExpression::class) ?: return null
 
             val lambdaParent = lambda.parent
             if (lambdaParent is KtWhenEntry || lambdaParent is KtContainerNodeForControlStructureBody) return null

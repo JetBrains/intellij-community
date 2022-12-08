@@ -20,10 +20,12 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticSink
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
-import org.jetbrains.kotlin.idea.caches.project.*
+import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
+import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
 import org.jetbrains.kotlin.psi.KtElement
@@ -173,7 +175,7 @@ internal class ProjectResolutionFacade(
             }
         }
 
-        return cachedResolverForProject.tryGetResolverForModule(NotUnderContentRootModuleInfo)
+        return cachedResolverForProject.tryGetResolverForModule(NotUnderContentRootModuleInfo(project))
             ?: cachedResolverForProject.diagnoseUnknownModuleInfo(moduleInfos.toList())
     }
 

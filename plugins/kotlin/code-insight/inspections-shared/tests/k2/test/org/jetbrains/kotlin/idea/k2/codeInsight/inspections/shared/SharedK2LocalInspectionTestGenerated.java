@@ -20,6 +20,54 @@ import org.junit.runner.RunWith;
 @TestMetadata("../testData/inspectionsLocal")
 public abstract class SharedK2LocalInspectionTestGenerated extends AbstractSharedK2LocalInspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/ambiguousNonLocalJump")
+    public static class AmbiguousNonLocalJump extends AbstractSharedK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("alreadyLabeled.kt")
+        public void testAlreadyLabeled() throws Exception {
+            runTest("../testData/inspectionsLocal/ambiguousNonLocalJump/alreadyLabeled.kt");
+        }
+
+        @TestMetadata("atMostOnceContract.kt")
+        public void testAtMostOnceContract() throws Exception {
+            runTest("../testData/inspectionsLocal/ambiguousNonLocalJump/atMostOnceContract.kt");
+        }
+
+        @TestMetadata("exactlyOnceContract.kt")
+        public void testExactlyOnceContract() throws Exception {
+            runTest("../testData/inspectionsLocal/ambiguousNonLocalJump/exactlyOnceContract.kt");
+        }
+
+        @TestMetadata("forEach.kt")
+        public void testForEach() throws Exception {
+            runTest("../testData/inspectionsLocal/ambiguousNonLocalJump/forEach.kt");
+        }
+
+        @TestMetadata("lambdaInsideParentheses.kt")
+        public void testLambdaInsideParentheses() throws Exception {
+            runTest("../testData/inspectionsLocal/ambiguousNonLocalJump/lambdaInsideParentheses.kt");
+        }
+
+        @TestMetadata("loopInsideForEach.kt")
+        public void testLoopInsideForEach() throws Exception {
+            runTest("../testData/inspectionsLocal/ambiguousNonLocalJump/loopInsideForEach.kt");
+        }
+
+        @TestMetadata("namedFunctionSyntaxInsteadOfLambda.kt")
+        public void testNamedFunctionSyntaxInsteadOfLambda() throws Exception {
+            runTest("../testData/inspectionsLocal/ambiguousNonLocalJump/namedFunctionSyntaxInsteadOfLambda.kt");
+        }
+
+        @TestMetadata("whileLoop.kt")
+        public void testWhileLoop() throws Exception {
+            runTest("../testData/inspectionsLocal/ambiguousNonLocalJump/whileLoop.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/delegationToVarProperty")
     public static class DelegationToVarProperty extends AbstractSharedK2LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
