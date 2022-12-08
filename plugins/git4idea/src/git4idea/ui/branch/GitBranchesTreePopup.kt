@@ -439,7 +439,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   }
 
   override fun afterShow() {
-    if (!ExperimentalUI.isNewUI()) {
+    if (!isNewUI) {
       selectPreferred()
     }
     expandCurrentBranches()
@@ -611,14 +611,16 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   companion object {
 
+    private inline val isNewUI
+      get() = ExperimentalUI.isNewUI()
 
     internal val POPUP_KEY = DataKey.create<GitBranchesTreePopup>("GIT_BRANCHES_TREE_POPUP")
 
-    private val treeRowHeight = if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.List.rowHeight() else JBUIScale.scale(22)
+    private val treeRowHeight = if (isNewUI) JBUI.CurrentTheme.List.rowHeight() else JBUIScale.scale(22)
 
     @JvmStatic
-    fun isEnabled() = !ExperimentalUI.isNewUI() && Registry.`is`("git.branches.popup.tree", false)
-                      || ExperimentalUI.isNewUI() && Registry.`is`("git.branches.popup.tree.experimental.ui", false)
+    fun isEnabled() = !isNewUI && Registry.`is`("git.branches.popup.tree", false)
+                      || isNewUI && Registry.`is`("git.branches.popup.tree.experimental.ui", false)
 
     @JvmStatic
     fun show(project: Project) {
@@ -756,7 +758,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
           //todo: LAF color
           foreground = if (selected) JBUI.CurrentTheme.Tree.foreground(true, true) else JBColor.GRAY
 
-          border = if (!arrowLabel.isVisible && ExperimentalUI.isNewUI()) {
+          border = if (!arrowLabel.isVisible && isNewUI) {
             JBUI.Borders.empty(0, 10, 0, JBUI.CurrentTheme.Popup.Selection.innerInsets().right)
           }
           else {
