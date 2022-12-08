@@ -1211,6 +1211,11 @@
         <constraint name="t" within="" contains="" />
         <constraint name="e" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="invalid use of ArrayUtil.contains(): always returns false" uuid="676e5e3d-30ef-3f51-88a6-6366b80d5d76" text="com.intellij.util.ArrayUtil.contains($t$, $e$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.ArrayUtil.contains($e$, $t$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="t" nameOfExprType="java\.lang\.Object\[\]" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="e" nameOfExprType="java\.lang\.Object\[\]" exprTypeWithinHierarchy="true" negateExprType="true" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="Lambda can be replaced with Pair.comparingByFirst()" text="java.util.Comparator.comparing((com.intellij.openapi.util.Pair $p$) -&gt; $p$.first)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.Pair.comparingByFirst()">
         <constraint name="__context__" script="&quot;__context__.parent instanceof com.intellij.psi.PsiExpressionList&quot;" within="" contains="" />
         <constraint name="p" within="" contains="" />

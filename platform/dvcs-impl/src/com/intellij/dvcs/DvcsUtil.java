@@ -416,7 +416,7 @@ public final class DvcsUtil {
     // get remembered last visited repository root
     if (defaultRootPathValue != null) {
       VirtualFile recentRoot = VcsUtil.getVirtualFile(defaultRootPathValue);
-      if (ArrayUtil.contains(vcsRoots, recentRoot)) {
+      if (ArrayUtil.contains(recentRoot, vcsRoots)) {
         LOG.debug("Returning the recent root: " + recentRoot);
         return recentRoot;
       }
