@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.PopupHandler
-import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -66,12 +65,12 @@ internal object GHPRDetailsComponentFactory {
     }
   }
 
-  private val indentTop get() = JBUI.scale(if (ExperimentalUI.isNewUI()) 16 else 12)
-  private val indentBottom get() = JBUI.scale(if (ExperimentalUI.isNewUI()) 18 else 15)
-  private val indentLeft get() = JBUI.scale(if (ExperimentalUI.isNewUI()) 17 else 13)
-  private val indentRight get() = JBUI.scale(if (ExperimentalUI.isNewUI()) 13 else 13)
+  private val indentTop get() = if (ExperimentalUI.isNewUI()) 16 else 12
+  private val indentBottom get() = if (ExperimentalUI.isNewUI()) 18 else 15
+  private val indentLeft get() = if (ExperimentalUI.isNewUI()) 17 else 13
+  private val indentRight get() = if (ExperimentalUI.isNewUI()) 13 else 13
 
-  private val gapBetweenTitleAndDescription get() = JBUI.scale(if (ExperimentalUI.isNewUI()) 8 else 8)
-  private val gapBetweenDescriptionAndCommits get() = JBUI.scale(if (ExperimentalUI.isNewUI()) 22 else 18)
-  private val gapBetweenCheckAndActions get() = JBUI.scale(if (ExperimentalUI.isNewUI()) 10 else 10)
+  private val gapBetweenTitleAndDescription get() = if (ExperimentalUI.isNewUI()) 8 else 8
+  private val gapBetweenDescriptionAndCommits get() = if (ExperimentalUI.isNewUI()) 22 else 18
+  private val gapBetweenCheckAndActions get() = if (ExperimentalUI.isNewUI()) 10 else 10
 }
