@@ -15,7 +15,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,6 +24,7 @@ import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
@@ -47,52 +47,20 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   protected DvcsStatusWidget(@NotNull Project project, @NotNull @Nls String vcsName) {
     super(project);
     myVcsName = vcsName;
-
-    project.getMessageBus().connect(this)
-      .subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, new VcsRepositoryMappingListener() {
-        @Override
-        public void mappingChanged() {
-          LOG.debug("repository mappings changed");
-          updateLater();
-        }
-      });
   }
-
-  /**
-   * @see DvcsUtil#guessWidgetRepository
-   */
-  @CalledInAny
-  protected abstract @Nullable T guessCurrentRepository(@NotNull Project project, @Nullable VirtualFile selectedFile);
-
-  protected abstract @Nls @NotNull String getFullBranchName(@NotNull T repository);
-
-  protected @Nullable Icon getIcon(@NotNull T repository) {
-    if (repository.getState() != Repository.State.NORMAL) return AllIcons.General.Warning;
-    return AllIcons.Vcs.Branch;
-  }
-
-  protected abstract boolean isMultiRoot(@NotNull Project project);
-
-  /**
-   * @deprecated use {@link #getWidgetPopup(Project, Repository)}
-   */
-  @SuppressWarnings("unused")
-  @Deprecated(forRemoval = true)
-  protected @NotNull ListPopup getPopup(@NotNull Project project, @NotNull T repository) {
-    throw new UnsupportedOperationException();
-  }
-
-  protected @Nullable JBPopup getWidgetPopup(@NotNull Project project, @NotNull T repository) {
-    return null;
-  }
-
-  protected abstract void rememberRecentRoot(@NotNull String path);
 
   @Override
-  public void install(@NotNull StatusBar statusBar) {
-    super.install(statusBar);
+  protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
+    super.registerCustomListeners(connection);
 
-    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+    connection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, new VcsRepositoryMappingListener() {
+      @Override
+      public void mappingChanged() {
+        LOG.debug("repository mappings changed");
+        updateLater();
+      }
+    });
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         LOG.debug("selection changed");
@@ -111,6 +79,32 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
         updateLater();
       }
     });
+  }
+
+  /**
+   * @see DvcsUtil#guessWidgetRepository
+   */
+  @CalledInAny
+  protected abstract @Nullable T guessCurrentRepository(@NotNull Project project, @Nullable VirtualFile selectedFile);
+
+  protected abstract @Nls @NotNull String getFullBranchName(@NotNull T repository);
+
+  protected @Nullable Icon getIcon(@NotNull T repository) {
+    if (repository.getState() != Repository.State.NORMAL) return AllIcons.General.Warning;
+    return AllIcons.Vcs.Branch;
+  }
+
+  protected abstract boolean isMultiRoot(@NotNull Project project);
+
+  protected @Nullable JBPopup getWidgetPopup(@NotNull Project project, @NotNull T repository) {
+    return null;
+  }
+
+  protected abstract void rememberRecentRoot(@NotNull String path);
+
+  @Override
+  public void install(@NotNull StatusBar statusBar) {
+    super.install(statusBar);
 
     updateLater();
   }
@@ -154,7 +148,9 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
 
   protected void updateLater() {
     UIUtil.invokeLaterIfNeeded(() -> {
-      if (isDisposed()) return;
+      if (isDisposed()) {
+        return;
+      }
 
       VirtualFile selectedFile = DvcsUtil.getSelectedFile(getProject());
       myUpdateBackgroundAlarm.cancelAllRequests();

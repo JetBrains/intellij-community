@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +38,11 @@ final class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
     super(project, vcs.getShortName());
     myVcs = vcs;
     myProjectSettings = projectSettings;
+  }
 
-    project.getMessageBus().connect(this).subscribe(HgVcs.STATUS_TOPIC, (p, root) -> updateLater());
+  @Override
+  protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
+    connection.subscribe(HgVcs.STATUS_TOPIC, (p, root) -> updateLater());
   }
 
   @Override

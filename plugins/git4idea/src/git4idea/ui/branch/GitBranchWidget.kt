@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.messages.MessageBusConnection
 import git4idea.GitBranchesUsageCollector.Companion.branchWidgetClicked
 import git4idea.GitUtil
 import git4idea.GitVcs
@@ -40,9 +41,9 @@ private const val ID: @NonNls String = "git"
  */
 // used externally
 open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(project, GitVcs.DISPLAY_NAME.get()) {
-  init {
-    @Suppress("LeakingThis")
-    val connection = project.messageBus.connect(this)
+  override fun registerCustomListeners(connection: MessageBusConnection) {
+    super.registerCustomListeners(connection)
+
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { updateLater() })
     connection.subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener { updateLater() })
   }
