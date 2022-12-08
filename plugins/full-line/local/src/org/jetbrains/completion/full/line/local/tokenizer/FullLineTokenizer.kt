@@ -124,6 +124,26 @@ data class SpecialTokens(
 }
 
 class FullLineTokenizer private constructor(private var encoder: BaseEncoder) : Tokenizer {
+
+  private inner class IdsByRegexCache {
+    private val cache = hashMapOf<String, Set<Int>>()
+    private val maxCacheSize = 10
+
+    private fun idsByRegexWithoutCaching(regex: Regex): Set<Int> {
+      return vocab.filterKeys { it.contains(regex) }.values.toSet()
+    }
+
+    fun idsByRegex(regex: Regex): Set<Int> {
+      if (!cache.containsKey(regex.pattern) && cache.size < maxCacheSize) {
+        cache[regex.pattern] = idsByRegexWithoutCaching(regex)
+      }
+      return cache.getOrElse(regex.pattern) { idsByRegexWithoutCaching(regex) }
+    }
+  }
+
+  private val idsByRegexCache = IdsByRegexCache()
+
+
   override val vocabSize = encoder.vocabSize()
   override val eosTokenId = this.encoder.bpeState.specialTokens.eosId
   override val invalidIds: Set<Int> = setOf(
@@ -132,6 +152,7 @@ class FullLineTokenizer private constructor(private var encoder: BaseEncoder) : 
     this.encoder.bpeState.specialTokens.bosId,
     this.encoder.bpeState.specialTokens.eosId
   )
+
 
   companion object {
     fun load(modelFile: File): FullLineTokenizer {
@@ -207,9 +228,13 @@ class FullLineTokenizer private constructor(private var encoder: BaseEncoder) : 
   override fun isValidString(s: String): Boolean {
     return true
   }
-  
+
+  /**
+   * This function is slow, but uses cache.
+   * So it can be called every generation, but only if you provide the same [regex]
+   */
   override fun idsByRegex(regex: Regex): Set<Int> {
-    return vocab.filterKeys { it.contains(regex) }.values.toSet()
+    return idsByRegexCache.idsByRegex(regex)
   }
 
   override val vocab: Map<String, Int> = encoder.vocabulary().mapIndexed { index, s -> Pair(s, index) }.toMap()
