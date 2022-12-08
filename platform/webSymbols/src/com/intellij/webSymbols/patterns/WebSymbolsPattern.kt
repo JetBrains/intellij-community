@@ -30,12 +30,12 @@ abstract class WebSymbolsPattern {
 
   internal abstract fun match(owner: WebSymbol?,
                               scopeStack: Stack<WebSymbolsScope>,
-                              itemsProvider: WebSymbolsPatternItemsProvider?,
+                              symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                               params: MatchParameters, start: Int, end: Int): List<MatchResult>
 
   internal abstract fun getCompletionResults(owner: WebSymbol?,
                                              scopeStack: Stack<WebSymbolsScope>,
-                                             itemsProvider: WebSymbolsPatternItemsProvider?,
+                                             symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                                              params: CompletionParameters, start: Int, end: Int): CompletionResults
 
 }

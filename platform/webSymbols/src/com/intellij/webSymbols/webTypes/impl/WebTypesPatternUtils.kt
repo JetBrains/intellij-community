@@ -30,8 +30,8 @@ internal fun NamePatternBase.wrap(defaultDisplayName: String?): WebSymbolsPatter
 internal fun NamePatternTemplate.wrap(defaultDisplayName: String?): WebSymbolsPattern =
   when (val value = value) {
     is String -> when {
-      value == "#item" -> ItemPattern(defaultDisplayName)
-      value.startsWith("#item:") -> ItemPattern(value.substring(6))
+      value == "#item" -> SymbolReferencePattern(defaultDisplayName)
+      value.startsWith("#item:") -> SymbolReferencePattern(value.substring(6))
       value == "#..." -> CompletionAutoPopupPattern(false)
       value == "$..." -> CompletionAutoPopupPattern(true)
       else -> StaticPattern(value)
@@ -62,7 +62,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
         }
       }
       .toList()
-      .ifEmpty { listOf(SequencePattern(ItemPattern(defaultDisplayName))) }
+      .ifEmpty { listOf(SequencePattern(SymbolReferencePattern(defaultDisplayName))) }
 
 
   override val isStaticAndRequired: Boolean
@@ -81,14 +81,14 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
     val repeats = pattern.repeat == true
     val unique = pattern.unique != false
 
-    val itemsProvider = createItemsProvider(delegate)
-    return ComplexPatternOptions(delegate, isDeprecated, isRequired, priority, proximity, repeats, unique, itemsProvider)
+    val symbolsResolver = createSymbolsResolver(delegate)
+    return ComplexPatternOptions(delegate, isDeprecated, isRequired, priority, proximity, repeats, unique, symbolsResolver)
   }
 
-  private fun createItemsProvider(delegate: WebSymbol?) =
+  private fun createSymbolsResolver(delegate: WebSymbol?) =
     if (pattern.delegate != null) {
       if (delegate != null) {
-        PatternDelegateItemsProvider(delegate)
+        PatternDelegateSymbolsResolver(delegate)
       }
       else null
     }
@@ -96,10 +96,10 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
       pattern.items
         ?.takeIf { it.isNotEmpty() }
         ?.let {
-          PatternItemsProvider(it)
+          PatternSymbolsResolver(it)
         }
 
-  private class PatternDelegateItemsProvider(override val delegate: WebSymbol) : com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider {
+  private class PatternDelegateSymbolsResolver(override val delegate: WebSymbol) : com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver {
     override fun getSymbolKinds(context: WebSymbol?): Set<WebSymbolQualifiedKind> =
       setOf(WebSymbolQualifiedKind(delegate.namespace, delegate.kind))
 
@@ -139,7 +139,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
 
   }
 
-  private class PatternItemsProvider(val items: ListReference) : com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider {
+  private class PatternSymbolsResolver(val items: ListReference) : com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver {
     override fun getSymbolKinds(context: WebSymbol?): Set<WebSymbolQualifiedKind> =
       items.asSequence().mapNotNull { it.getSymbolKind(context) }.toSet()
 
