@@ -300,17 +300,22 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   }
 
   private fun installHeaderToolbar() {
+    if (isNewUI) return
+    val toolbar = createToolbar()
+    title.setButtonComponent(object : ActiveComponent.Adapter() {
+      override fun getComponent(): JComponent = toolbar.component
+    }, JBUI.Borders.emptyRight(2))
+  }
+
+  private fun createToolbar(): ActionToolbar {
     val settingsGroup = am.getAction(GitBranchesTreePopupStep.HEADER_SETTINGS_ACTION_GROUP)
     val toolbarGroup = DefaultActionGroup(GitBranchPopupFetchAction(javaClass), settingsGroup)
-    val toolbar = am.createActionToolbar(GitBranchesTreePopupStep.ACTION_PLACE, toolbarGroup, true)
+    return am.createActionToolbar(GitBranchesTreePopupStep.ACTION_PLACE, toolbarGroup, true)
       .apply {
         targetComponent = this@GitBranchesTreePopup.component
         setReservePlaceAutoPopupIcon(false)
         component.isOpaque = false
       }
-    title.setButtonComponent(object : ActiveComponent.Adapter() {
-      override fun getComponent(): JComponent = toolbar.component
-    }, JBUI.Borders.emptyRight(2))
   }
 
   private fun <T> createShortcutAction(action: AnAction,

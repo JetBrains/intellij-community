@@ -193,6 +193,7 @@ class GitBranchesTreePopupStep(private val project: Project,
 
   override fun getTitle(): String? =
     when {
+      ExperimentalUI.isNewUI() -> null
       !isFirstStep -> null
       repositories.size > 1 -> DvcsBundle.message("branch.popup.vcs.name.branches", GitVcs.DISPLAY_NAME.get())
       else -> repositories.single().let {
