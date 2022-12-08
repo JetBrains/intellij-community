@@ -12,10 +12,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -36,9 +34,7 @@ public class PackageViewProjectNode extends AbstractProjectNode {
     if (element instanceof VirtualFile) {
       ProjectRootManager manager = project == null || project.isDisposed() ? null : ProjectRootManager.getInstance(project);
       if (manager != null) {
-        for (VirtualFile root : manager.getContentSourceRoots()) {
-          if (element.equals(root)) return true;
-        }
+        return ArrayUtil.contains(element, manager.getContentSourceRoots());
       }
     }
     return false;

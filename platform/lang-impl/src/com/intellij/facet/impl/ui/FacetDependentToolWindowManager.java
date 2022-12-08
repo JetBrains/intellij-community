@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.WindowInfoImpl;
 import com.intellij.toolWindow.RegisterToolWindowTaskProvider;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -134,13 +135,7 @@ final class FacetDependentToolWindowManager implements RegisterToolWindowTaskPro
   }
 
   private static @NotNull List<FacetDependentToolWindow> getDependentExtensions(@NotNull FacetType<?, ?> facetType) {
-    return ContainerUtil.filter(FacetDependentToolWindow.EXTENSION_POINT_NAME.getExtensionList(), toolWindowEP -> {
-      for (String id : toolWindowEP.getFacetIds()) {
-        if (facetType.getStringId().equals(id)) {
-          return true;
-        }
-      }
-      return false;
-    });
+    return ContainerUtil.filter(FacetDependentToolWindow.EXTENSION_POINT_NAME.getExtensionList(),
+                                toolWindowEP -> ArrayUtil.contains(facetType.getStringId(), toolWindowEP.getFacetIds()));
   }
 }

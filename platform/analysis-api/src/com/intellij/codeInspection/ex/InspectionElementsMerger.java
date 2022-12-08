@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -71,15 +72,8 @@ public abstract class InspectionElementsMerger {
    */
   public static String getMergedToolName(@NotNull String id) {
     for (InspectionElementsMerger merger : EP_NAME.getExtensionList()) {
-      for (String sourceToolName : merger.getSourceToolNames()) {
-        if (id.equals(sourceToolName)) {
-          return merger.getMergedToolName();
-        }
-      }
-      for (String suppressId : merger.getSuppressIds()) {
-        if (id.equals(suppressId)) {
-          return merger.getMergedToolName();
-        }
+      if (ArrayUtil.contains(id, merger.getSourceToolNames()) || ArrayUtil.contains(id, merger.getSuppressIds())) {
+        return merger.getMergedToolName();
       }
     }
     return null;

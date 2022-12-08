@@ -45,10 +45,8 @@ public final class DFAType {
       return this;
     }
     Mixin newMixin = new Mixin(mixin, instruction, instruction != null && instruction.isNegated());
-    for (var existingMixin : mixins) {
-      if (Objects.equals(existingMixin, newMixin)) {
-        return this;
-      }
+    if (mixins.contains(newMixin)) {
+      return this;
     }
     DFAType newDfaType = new DFAType(this.primary);
     newDfaType.mixins.addAll(this.mixins);

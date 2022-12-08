@@ -14,6 +14,7 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
@@ -109,8 +110,8 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
 
     String[] defaultPackages = file instanceof PsiJavaFile ? ((PsiJavaFile)file).getImplicitlyImportedPackages() : DEFAULT_PACKAGES;
     String packageName = StringUtil.getPackageName(fqn);
-    for (String defaultPackage : defaultPackages) {
-      if (defaultPackage.equals(packageName)) return true;
+    if (ArrayUtil.contains(packageName, defaultPackages)) {
+      return true;
     }
 
     // class from my package imported implicitly

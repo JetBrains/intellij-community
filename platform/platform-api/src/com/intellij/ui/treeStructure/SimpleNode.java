@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tree.LeafState;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
@@ -202,12 +203,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor<Object> imple
 
   public int getIndex(SimpleNode child) {
     final SimpleNode[] kids = getChildren();
-    for (int i = 0; i < kids.length; i++) {
-      SimpleNode each = kids[i];
-      if (each.equals(child)) return i;
-    }
-
-    return -1;
+    return ArrayUtil.indexOf(kids, child);
   }
 
   public abstract SimpleNode @NotNull [] getChildren();

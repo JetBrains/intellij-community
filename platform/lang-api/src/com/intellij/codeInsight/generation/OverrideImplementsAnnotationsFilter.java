@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,10 +27,8 @@ public interface OverrideImplementsAnnotationsFilter {
    */
   static boolean keepAnnotationOnOverrideMember(@NotNull String fqName, @NotNull PsiFile file) {
     for (OverrideImplementsAnnotationsFilter filter : EP_NAME.getExtensionList()) {
-      for (String annotation : filter.getAnnotations(file)) {
-        if (fqName.equals(annotation)) {
-          return true;
-        }
+      if (ArrayUtil.contains(fqName, filter.getAnnotations(file))) {
+        return true;
       }
     }
 

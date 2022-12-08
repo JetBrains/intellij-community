@@ -40,6 +40,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -788,12 +789,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
   private static boolean isSuperMethod(PsiMethod method, PsiMethod movedMethod) {
     final PsiMethod[] superMethods = movedMethod.findSuperMethods();
-    for (PsiMethod testMethod : superMethods) {
-      if (testMethod.equals(method)) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.contains(method, superMethods);
   }
 
   private static boolean usesDefaultClone(PsiClass aClass) {

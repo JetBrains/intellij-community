@@ -77,11 +77,9 @@ public final class ObjectUtils extends ObjectUtilsRt {
   }
 
   public static <T> void assertAllElementsNotNull(T @NotNull [] array) {
-    for (int i = 0; i < array.length; i++) {
-      T t = array[i];
-      if (t == null) {
-        throw new NullPointerException("Element [" + i + "] is null");
-      }
+    int i = ArrayUtil.indexOfIdentity(array, null);
+    if (i != -1) {
+      throw new NullPointerException("Element [" + i + "] is null");
     }
   }
 

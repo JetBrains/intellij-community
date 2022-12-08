@@ -13,6 +13,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.Query;
@@ -407,11 +408,7 @@ public final class MethodUtils {
       }
       final PsiClass aClass = (PsiClass)target;
       final String qualifiedName = aClass.getQualifiedName();
-      for (String exception : exceptions) {
-        if (exception.equals(qualifiedName)) {
-          return true;
-        }
-      }
+      if (ArrayUtil.contains(qualifiedName, exceptions)) return true;
     }
     return false;
   }

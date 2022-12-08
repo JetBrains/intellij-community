@@ -7,6 +7,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 
 /**
@@ -137,13 +138,7 @@ public class ClassInstanceScanner extends DelegatingClassReferenceVisitor {
         PsiExpression[] arguments = callExpression.getArgumentList().getExpressions();
         PsiMethod method = callExpression.resolveMethod();
         if(method != null) {
-          int index = -1;
-          for (int i = 0; i < arguments.length; i++) {
-            PsiExpression argument = arguments[i];
-            if(argument.equals(expression)) {
-              index = i; break;
-            }
-          }
+          int index = ArrayUtil.indexOf(arguments, expression);
           if(index >= 0) {
             PsiParameter[] parameters = method.getParameterList().getParameters();
             if(parameters.length > index) {

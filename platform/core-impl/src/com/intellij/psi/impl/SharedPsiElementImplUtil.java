@@ -7,6 +7,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,12 +109,10 @@ public final class SharedPsiElementImplUtil {
   }
 
   private static int getChildIndex(PsiElement[] children, PsiElement child) {
-    for (int i = 0; i < children.length; i++) {
-      PsiElement candidate = children[i];
-      // do not use equals() since some smart-heads are used to override it (e.g. JspxImportStatementImpl)
-      if (candidate == child) {
-        return i;
-      }
+    // do not use equals() since some smart-heads are used to override it (e.g. JspxImportStatementImpl)
+    int i = ArrayUtil.indexOfIdentity(children, child);
+    if (i != -1) {
+      return i;
     }
     LOG.error("Cannot find element among its parent' children." +
               " element: '" + child + "';" +

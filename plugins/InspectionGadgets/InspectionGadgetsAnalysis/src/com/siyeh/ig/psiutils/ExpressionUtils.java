@@ -582,12 +582,7 @@ public final class ExpressionUtils {
       return false;
     }
     final String qualifiedName = containingClass.getQualifiedName();
-    for (String className : classNames) {
-      if (className.equals(qualifiedName)) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.contains(qualifiedName, classNames);
   }
 
   public static boolean isNegative(@NotNull PsiExpression expression) {

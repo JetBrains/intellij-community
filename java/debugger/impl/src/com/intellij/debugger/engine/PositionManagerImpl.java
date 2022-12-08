@@ -553,16 +553,9 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           return null;
         }
         Set<PsiClass> lineClasses = getLineClasses(position.getFile(), rangeEnd);
-        if (lineClasses.size() > 1) {
-          // if there's more than one class on the line - try to match by name
-          for (PsiClass aClass : lineClasses) {
-            if (classToFind.equals(aClass)) {
-              return fromClass;
-            }
-          }
-        }
-        else if (!lineClasses.isEmpty()){
-          return classToFind.equals(lineClasses.iterator().next())? fromClass : null;
+        // if there's more than one class on the line - try to match by name
+        if (lineClasses.contains(classToFind)) {
+          return fromClass;
         }
         return null;
       }

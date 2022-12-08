@@ -16,6 +16,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.CheckBox;
 import com.intellij.util.ui.UI;
@@ -259,12 +260,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
       PsiExpression[] arguments = expression.getArgumentList().getExpressions();
       PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
       if (returnedValue != null && qualifier == returnedValue) return true;
-      for (PsiExpression argument : arguments) {
-        if (returnedValue == argument) {
-          return true;
-        }
-      }
-      return false;
+      return ArrayUtil.indexOfIdentity(arguments, returnedValue) != -1;
     }
 
     @Override

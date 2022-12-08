@@ -11,6 +11,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.TodoPattern;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -350,14 +351,7 @@ public class JDParser {
 
   private static boolean containsTagToKeepIndentsAfter(@NotNull String line) {
     String tag = getStartTag(line);
-    if (tag != null) {
-      for (String keepIndentsTag : TAGS_TO_KEEP_INDENTS_AFTER) {
-        if (keepIndentsTag.equals(tag)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return tag != null && ArrayUtil.contains(tag, TAGS_TO_KEEP_INDENTS_AFTER);
   }
 
   private static String getStartTag(@NotNull String line) {

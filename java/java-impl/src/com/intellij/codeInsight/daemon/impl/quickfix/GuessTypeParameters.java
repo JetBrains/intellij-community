@@ -253,9 +253,6 @@ public class GuessTypeParameters {
   }
 
   private static boolean hasNullSubstitutions(@NotNull PsiSubstitutor substitutor) {
-    for (PsiType type : substitutor.getSubstitutionMap().values()) {
-      if (type == null) return true;
-    }
-    return false;
+    return substitutor.getSubstitutionMap().containsValue(null);
   }
 }

@@ -32,6 +32,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairFunction;
 import com.intellij.util.SmartList;
@@ -112,13 +113,10 @@ public final class PsiImplUtil {
     PsiElement parameterParent = parameter.getParent();
     assert parameterParent == parameterList : parameterList +"; "+parameterParent;
     PsiParameter[] parameters = parameterList.getParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      PsiParameter paramInList = parameters[i];
-      if (parameter.equals(paramInList)) return i;
-    }
+    int i = ArrayUtil.indexOf(parameters, parameter);
+    if (i != -1) return i;
     String name = parameter.getName();
     PsiParameter suspect = null;
-    int i;
     for (i = parameters.length - 1; i >= 0; i--) {
       PsiParameter paramInList = parameters[i];
       if (Objects.equals(name, paramInList.getName())) {

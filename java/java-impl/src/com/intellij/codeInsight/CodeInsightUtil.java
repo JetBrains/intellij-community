@@ -178,9 +178,7 @@ public final class CodeInsightUtil {
   @Nullable
   private static Language findJavaOrLikeLanguage(@NotNull final PsiFile file) {
     final Set<Language> languages = file.getViewProvider().getLanguages();
-    for (final Language language : languages) {
-      if (language == JavaLanguage.INSTANCE) return language;
-    }
+    if (languages.contains(JavaLanguage.INSTANCE)) return JavaLanguage.INSTANCE;
     for (final Language language : languages) {
       if (language.isKindOf(JavaLanguage.INSTANCE)) return language;
     }

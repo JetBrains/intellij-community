@@ -35,6 +35,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
@@ -680,10 +681,7 @@ public class RecentProjectPanel extends JPanel {
     Path path = Paths.get(pathStr), pathRoot = path.getRoot();
     if (pathRoot == null) return false;
     if (SystemInfo.isWindows && pathRoot.toString().startsWith("\\\\")) return true;
-    for (Path fsRoot : pathRoot.getFileSystem().getRootDirectories()) {
-      if (pathRoot.equals(fsRoot)) return Files.exists(path);
-    }
-    return false;
+    return ContainerUtil.find(pathRoot.getFileSystem().getRootDirectories(), pathRoot) != null && Files.exists(path);
   }
 
   @NotNull

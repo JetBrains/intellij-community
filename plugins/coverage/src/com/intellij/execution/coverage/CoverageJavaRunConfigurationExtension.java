@@ -229,13 +229,10 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
           else if (qualifiedName != null){
             final String packageName = StringUtil.getPackageName(qualifiedName);
             if (!StringUtil.isEmpty(packageName)) {
-              for (int i = 0; i < filters.length; i++) {
-                String filter = filters[i];
-                if (filter.equals(packageName + ".*")) {
-                  listener = appendListener(listener,
-                                            new RefactoringListeners.RefactorPackageByClass(new MyClassAccessor(project, patterns, i, filters)));
-                  break;
-                }
+              int i = ArrayUtil.indexOf(filters, packageName + ".*");
+              if (i != -1) {
+                listener = appendListener(listener,
+                                          new RefactoringListeners.RefactorPackageByClass(new MyClassAccessor(project, patterns, i, filters)));
               }
             }
           }

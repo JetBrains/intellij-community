@@ -118,8 +118,8 @@ public abstract class AbstractExternalSystemSettings<
     PS ps = myLinkedProjectsSettings.get(linkedProjectPath);
     if (ps == null) {
       for (PS ps1 : myLinkedProjectsSettings.values()) {
-        for (String modulePath : ps1.getModules()) {
-          if (linkedProjectPath.equals(modulePath)) return ps1;
+        if (ps1.getModules().contains(linkedProjectPath)) {
+          return ps1;
         }
       }
     }

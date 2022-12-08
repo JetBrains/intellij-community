@@ -326,15 +326,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   private boolean shouldKeepTmpFile(@NotNull Path file) {
-    if (myPathsToKeep == null || myPathsToKeep.isEmpty()) {
-      return false;
-    }
-    for (Path pathToKeep : myPathsToKeep) {
-      if (file.equals(pathToKeep)) {
-        return true;
-      }
-    }
-    return false;
+    return myPathsToKeep != null && myPathsToKeep.contains(file);
   }
 
   static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,

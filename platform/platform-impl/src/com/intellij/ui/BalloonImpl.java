@@ -284,10 +284,8 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
     if (!cmp.isShowing()) return true;
     if (cmp instanceof MenuElement) return false;
-    if (myActionButtons != null) {
-      for (ActionButton button : myActionButtons) {
-        if (cmp == button) return true;
-      }
+    if (myActionButtons != null && myActionButtons.contains(cmp)) {
+      return true;
     }
     if (UIUtil.isDescendingFrom(cmp, myComp)) return true;
     if (myComp == null || !myComp.isShowing()) return false;

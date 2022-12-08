@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.storage.MutableEntityStorage;
@@ -106,8 +107,8 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   @Nullable
   public Module getModule() {
     final Module[] all = myModulesProvider.getModules();
-    for (Module each : all) {
-      if (each == myModule) return myModule;
+    if (ArrayUtil.contains(myModule, all)) {
+      return myModule;
     }
 
     return myModulesProvider.getModule(myName);

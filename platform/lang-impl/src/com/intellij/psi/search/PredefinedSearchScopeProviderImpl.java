@@ -387,11 +387,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      for (VirtualFile virtualFile : myFiles) {
-        if (virtualFile.equals(file)) {
-          return true;
-        }
-      }
+      if (myFiles.contains(file)) return true;
       return VfsUtilCore.isUnder(file, myDirectories);
     }
 

@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
@@ -250,9 +251,7 @@ public final class X11UiUtil {
         long window = (Long)X11.getWindow.invoke(peer);
         long[] values = X11.getLongArrayProperty(window, name, XA_ATOM);
         if (values != null) {
-          for (long value : values) {
-            if (value == expected) return true;
-          }
+          return ArrayUtil.indexOf(values, expected) != -1;
         }
       }
       return false;
