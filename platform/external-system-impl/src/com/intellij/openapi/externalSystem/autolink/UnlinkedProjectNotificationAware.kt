@@ -60,7 +60,7 @@ class UnlinkedProjectNotificationAware(private val project: Project) : Persisten
 
     notification.addAction(NotificationAction.createSimple(unlinkedProjectAware.getNotificationText()) {
       notification.expire()
-      unlinkedProjectAware.linkAndLoadProjectWithLoadingConfirmation(project, externalProjectPath)
+      unlinkedProjectAware.linkAndLoadProject(project, externalProjectPath)
     })
     notification.addAction(NotificationAction.createSimple(message("unlinked.project.notification.skip.action")) {
       notification.expire()
