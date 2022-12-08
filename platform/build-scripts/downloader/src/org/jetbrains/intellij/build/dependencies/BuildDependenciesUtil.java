@@ -482,4 +482,22 @@ public final class BuildDependenciesUtil {
       throw new RuntimeException(e);
     }
   }
+
+  public static String directoryContentToString(Path directory) {
+    List<Path> contents = listDirectory(directory);
+    StringBuilder sb = new StringBuilder();
+
+    sb.append("Directory contents of ");
+    sb.append(directory.toAbsolutePath());
+    sb.append(", ");
+    sb.append(contents.size());
+    sb.append(" entries:");
+
+    for (Path p : contents) {
+      sb.append(Files.isDirectory(p) ? "\nD " : "\nF ");
+      sb.append(p.getFileName().toString());
+    }
+
+    return sb.toString();
+  }
 }
