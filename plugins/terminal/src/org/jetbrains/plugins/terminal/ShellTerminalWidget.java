@@ -6,11 +6,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
-import com.intellij.terminal.TerminalSplitAction;
 import com.intellij.terminal.actions.TerminalActionUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
@@ -29,6 +27,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
+import org.jetbrains.plugins.terminal.action.TerminalSplitAction;
 
 import java.awt.event.KeyEvent;
 import java.io.IOException;
@@ -251,8 +250,8 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       return true;
     }).withMnemonicKey(KeyEvent.VK_T));
 
-    actions.add(TerminalSplitAction.create(true, getListener()).withMnemonicKey(KeyEvent.VK_V).separatorBefore(true));
-    actions.add(TerminalSplitAction.create(false, getListener()).withMnemonicKey(KeyEvent.VK_H));
+    actions.add(TerminalSplitAction.create(true, getListener()).separatorBefore(true));
+    actions.add(TerminalSplitAction.create(false, getListener()));
     if (listener != null && listener.isGotoNextSplitTerminalAvailable()) {
       actions.add(settingsProvider.getGotoNextSplitTerminalAction(listener, true));
       actions.add(settingsProvider.getGotoNextSplitTerminalAction(listener, false));
