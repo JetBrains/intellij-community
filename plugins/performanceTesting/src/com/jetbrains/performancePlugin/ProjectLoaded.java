@@ -396,20 +396,29 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
   }
 
   public static void runScript(Project project, String script) {
+    runScript(project, script, true);
+  }
+
+  public static void runScript(Project project, String script, boolean mustExitOnFailure) {
     PlaybackRunner playback = new PlaybackRunnerExtended(script, new CommandLogger(), project);
     ActionCallback scriptCallback = playback.run();
-    runScript(scriptCallback);
+    CommandsRunner.setActionCallback(scriptCallback);
+    runScript(scriptCallback, mustExitOnFailure);
   }
 
   private static void runScriptFromFile(Project project) {
     PlaybackRunner playback = new PlaybackRunnerExtended("%include " + getTestFile(), new CommandLogger(), project);
     playback.setScriptDir(getTestFile().getParentFile());
     ActionCallback scriptCallback = playback.run();
-    CommandsRunner.setStartActionCallback(scriptCallback);
+    CommandsRunner.setActionCallback(scriptCallback);
     runScript(scriptCallback);
   }
 
   private static void runScript(ActionCallback scriptCallback) {
+    runScript(scriptCallback, true);
+  }
+
+  private static void runScript(ActionCallback scriptCallback, boolean mustExitOnFailure) {
     scriptCallback
       .doWhenDone(() -> {
         LOG.info("Execution of the script has been finished successfully");
@@ -433,12 +442,13 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
         if (System.getProperty("ide.performance.screenshot.on.failure") != null) {
           TakeScreenshotCommand.takeScreenshotOfFrame(System.getProperty("ide.performance.screenshot.before.kill"));
         }
-
-        if (MUST_EXIT_PROCESS_WITH_NON_SUCCESS_CODE_ON_IDE_ERROR) {
-          System.exit(1);
-        }
-        else {
-          ApplicationManagerEx.getApplicationEx().exit(true, true);
+        if (mustExitOnFailure) {
+          if (MUST_EXIT_PROCESS_WITH_NON_SUCCESS_CODE_ON_IDE_ERROR) {
+            System.exit(1);
+          }
+          else {
+            ApplicationManagerEx.getApplicationEx().exit(true, true);
+          }
         }
       });
   }
