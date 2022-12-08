@@ -173,44 +173,20 @@ public class SearchEverywhereHeader {
       .sorted(Comparator.comparingInt(SearchEverywhereContributor::getSortWeight))
       .collect(Collectors.toList());
 
+    final Runnable onChanged = () -> {
+      myToolbar.updateActionsImmediately();
+      myScopeChangedCallback.run();
+    };
+
     if (contributors.size() > 1) {
-      Runnable onChanged = () -> {
-        myToolbar.updateActionsImmediately();
-        myScopeChangedCallback.run();
-      };
-      String actionText = IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items");
-      PersistentSearchEverywhereContributorFilter<String> filter = createContributorsFilter(contributors);
-      List<AnAction> actions = Arrays.asList(new CheckBoxSearchEverywhereToggleAction(actionText) {
-        final SearchEverywhereManagerImpl seManager = (SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject);
-        @Override
-        public boolean isEverywhere() {
-          return seManager.isEverywhere();
-        }
-
-        @Override
-        public void setEverywhere(boolean state) {
-          if (isEverywhere() == state) return;
-          seManager.setEverywhere(state);
-
-          myTabs.forEach(tab -> {
-            if (tab.everywhereAction != null) tab.everywhereAction.setEverywhere(state);
-          });
-          onChanged.run();
-        }
-      }, new SearchEverywhereFiltersAction<>(filter, onChanged, new ContributorFilterCollector()));
-      SETab allTab = new SETab(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID,
-                               IdeBundle.message("searcheverywhere.allelements.tab.name"),
-                               contributors, actions, filter);
+      SETab allTab = createAllTab(contributors, onChanged);
       res.add(allTab);
     }
 
     TabsCustomizationStrategy.getInstance()
       .getSeparateTabContributors(contributors)
       .forEach(contributor -> {
-        SETab tab = createTab(contributor, () -> {
-          myToolbar.updateActionsImmediately();
-          myScopeChangedCallback.run();
-        });
+        SETab tab = createTab(contributor, onChanged);
         res.add(tab);
       });
 
@@ -306,6 +282,33 @@ public class SearchEverywhereHeader {
   private static SETab createTab(@NotNull SearchEverywhereContributor<?> contributor, Runnable onChanged) {
     return new SETab(contributor.getSearchProviderId(), contributor.getGroupName(), Collections.singletonList(contributor),
                      contributor.getActions(onChanged), null);
+  }
+
+  @NotNull
+  private SETab createAllTab(List<? extends SearchEverywhereContributor<?>> contributors, @NotNull Runnable onChanged) {
+    String actionText = IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items");
+    PersistentSearchEverywhereContributorFilter<String> filter = createContributorsFilter(contributors);
+    List<AnAction> actions = Arrays.asList(new CheckBoxSearchEverywhereToggleAction(actionText) {
+      final SearchEverywhereManagerImpl seManager = (SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject);
+      @Override
+      public boolean isEverywhere() {
+        return seManager.isEverywhere();
+      }
+
+      @Override
+      public void setEverywhere(boolean state) {
+        if (isEverywhere() == state) return;
+        seManager.setEverywhere(state);
+
+        myTabs.forEach(tab -> {
+          if (tab.everywhereAction != null) tab.everywhereAction.setEverywhere(state);
+        });
+        onChanged.run();
+      }
+    }, new SearchEverywhereFiltersAction<>(filter, onChanged, new ContributorFilterCollector()));
+    return new SETab(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID,
+                     IdeBundle.message("searcheverywhere.allelements.tab.name"),
+                     contributors, actions, filter);
   }
 
   public static class SETab {
