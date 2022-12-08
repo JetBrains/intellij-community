@@ -20,7 +20,6 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import java.util.*;
 
-@SuppressWarnings("UElementAsPsi")
 public class TestDataReferenceCollector {
   private final String myTestDataPath;
   private final String myTestName;
@@ -64,7 +63,7 @@ public class TestDataReferenceCollector {
       if (uMethod == null) {
         return result;
       }
-      String testMetaData = TestDataLineMarkerProvider.annotationValue(uMethod, TestFrameworkConstants.TEST_METADATA_ANNOTATION_QUALIFIED_NAME);
+      String testMetaData = TestDataLineMarkerProvider.annotationValue(method, TestFrameworkConstants.TEST_METADATA_ANNOTATION_QUALIFIED_NAME);
       if (testMetaData != null) {
         result.add(new TestDataFile.LazyResolved(myTestDataPath + testMetaData));
         return result;
@@ -75,11 +74,11 @@ public class TestDataReferenceCollector {
           String callText = expression.getMethodName();
           if (callText == null) return true;
 
-          UMethod callee = UastContextKt.toUElement(expression.resolve(), UMethod.class);
+          PsiMethod callee = expression.resolve();
           if (callee != null && callee.hasModifierProperty(PsiModifier.ABSTRACT)) {
             final PsiClass calleeContainingClass = callee.getContainingClass();
             if (calleeContainingClass != null && myContainingClass.isInheritor(calleeContainingClass, true)) {
-              final UMethod implementation = UastContextKt.toUElement(myContainingClass.findMethodBySignature(callee, true), UMethod.class);
+              final PsiMethod implementation = myContainingClass.findMethodBySignature(callee, true);
               if (implementation != null) {
                 callee = implementation;
               }
@@ -105,7 +104,7 @@ public class TestDataReferenceCollector {
               }
             }
             if (expression.getReceiver() == null && !haveAnnotatedParameters) {
-              result.addAll(collectTestDataReferences(callee.getJavaPsi(), buildArgumentMap(expression, callee.getJavaPsi()), proceed));
+              result.addAll(collectTestDataReferences(callee, buildArgumentMap(expression, callee), proceed));
             }
           }
           return true;
