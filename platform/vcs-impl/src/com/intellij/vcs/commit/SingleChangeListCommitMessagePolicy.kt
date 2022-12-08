@@ -7,29 +7,24 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.ui.TextAccessor
 
-internal class SingleChangeListCommitMessagePolicy(project: Project, private val initialCommitMessage: String?) :
+internal class SingleChangeListCommitMessagePolicy(project: Project, initialCommitMessage: String?) :
   AbstractCommitMessagePolicy(project) {
 
-  private var lastKnownComment: String? = null
+  private var lastKnownComment: String? = initialCommitMessage
   private val messagesToSave = mutableMapOf<String, String>()
 
-  private var commitMessage: String? = null
-
   fun init(changeList: LocalChangeList, includedChanges: List<Change>): String? {
-    commitMessage = initialCommitMessage
-    if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return commitMessage
+    if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return lastKnownComment
 
-    if (commitMessage != null) {
-      lastKnownComment = commitMessage
+    if (lastKnownComment != null) {
+      return lastKnownComment
     }
-    else {
-      commitMessage = getCommitMessageFor(changeList)
-      if (commitMessage.isNullOrBlank()) {
-        lastKnownComment = vcsConfiguration.LAST_COMMIT_MESSAGE
-        commitMessage = getCommitMessageFromVcs(includedChanges) ?: lastKnownComment
-      }
-    }
-    return commitMessage
+
+    val commitMessage = getCommitMessageFor(changeList)?.takeIf { it.isNotBlank() }
+    if (commitMessage != null) return commitMessage
+
+    lastKnownComment = vcsConfiguration.LAST_COMMIT_MESSAGE
+    return getCommitMessageFromVcs(includedChanges) ?: lastKnownComment
   }
 
   /**
@@ -40,15 +35,12 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, private val
   }
 
   fun onChangelistChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList, currentMessage: TextAccessor) {
-    commitMessage = currentMessage.text
     if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return
+    if (oldChangeList.name == newChangeList.name) return
 
-    if (oldChangeList.name != newChangeList.name) {
-      messagesToSave[oldChangeList.name] = currentMessage.text
+    messagesToSave[oldChangeList.name] = currentMessage.text
 
-      commitMessage = getCommitMessageFor(newChangeList) ?: lastKnownComment
-      currentMessage.text = commitMessage
-    }
+    currentMessage.text = getCommitMessageFor(newChangeList) ?: lastKnownComment
   }
 
   fun onDialogClosed(commitState: ChangeListCommitState, onCommit: Boolean) {
