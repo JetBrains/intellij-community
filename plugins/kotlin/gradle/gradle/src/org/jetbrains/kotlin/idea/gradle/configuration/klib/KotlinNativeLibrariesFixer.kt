@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNa
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
 /**
  * Gradle IDE plugin creates [LibraryData] nodes with internal name consisting of two parts:
@@ -30,7 +29,7 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
  */
 @IntellijInternalApi
 object KotlinNativeLibrariesFixer {
-    fun applyTo(ownerNode: DataNode<GradleSourceSetData>, ideProject: DataNode<ProjectData>, resolverCtx: ProjectResolverContext) {
+    fun applyTo(ownerNode: DataNode<out GradleSourceSetData>, ideProject: DataNode<ProjectData>) {
         for (libraryDependencyNode in ExternalSystemApiUtil.findAll(ownerNode, ProjectKeys.LIBRARY_DEPENDENCY)) {
             val libraryData = libraryDependencyNode.data.target
 
