@@ -118,11 +118,6 @@ class MacDistributionBuilder(override val context: BuildContext,
 
     customizer.copyAdditionalFiles(context = context, targetDirectory = macDistDir)
     customizer.copyAdditionalFiles(context = context, targetDirectory = macDistDir, arch = arch)
-
-    generateUnixScripts(distBinDir = macDistDir.resolve("bin"),
-                        os = OsFamily.MACOS,
-                        arch = arch,
-                        context = context)
   }
 
   override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
