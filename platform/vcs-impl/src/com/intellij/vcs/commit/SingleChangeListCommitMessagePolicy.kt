@@ -10,7 +10,7 @@ import com.intellij.ui.TextAccessor
 internal class SingleChangeListCommitMessagePolicy(project: Project, private val initialCommitMessage: String?) :
   AbstractCommitMessagePolicy(project) {
 
-  var defaultNameChangeListMessage: String? = null
+  private var defaultNameChangeListMessage: String? = null
   private val messagesToSave = mutableMapOf<String, String>()
 
   private var commitMessage: String? = null
@@ -32,6 +32,13 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, private val
     return commitMessage
   }
 
+  /**
+   * Ex: via "Commit Message History" action
+   */
+  fun onCommitMessageReset(text: String?) {
+    defaultNameChangeListMessage = text
+  }
+
   fun onChangelistChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList, currentMessage: TextAccessor) {
     commitMessage = currentMessage.text
     if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return
@@ -44,12 +51,14 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, private val
     }
   }
 
-  fun save(commitState: ChangeListCommitState, success: Boolean) {
+  fun onDialogClosed(commitState: ChangeListCommitState, onCommit: Boolean) {
     val changeList = commitState.changeList
-    rememberMessage(changeList.name, commitState.commitMessage)
+    val currentMessage = commitState.commitMessage
 
-    if (success) {
-      vcsConfiguration.saveCommitMessage(commitState.commitMessage)
+    rememberMessage(changeList.name, currentMessage)
+
+    if (onCommit) {
+      vcsConfiguration.saveCommitMessage(currentMessage)
 
       val isChangeListFullyIncluded = changeList.changes.size == commitState.changes.size
       if (!isChangeListFullyIncluded) forgetMessage(changeList.name)

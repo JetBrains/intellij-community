@@ -20,8 +20,7 @@ class SingleChangeListCommitWorkflowHandler(
 
   override val commitPanel: CheckinProjectPanel = object : CommitProjectPanelAdapter(this) {
     override fun setCommitMessage(currentDescription: String?) {
-      commitMessagePolicy.defaultNameChangeListMessage = currentDescription
-
+      commitMessagePolicy.onCommitMessageReset(currentDescription)
       super.setCommitMessage(currentDescription)
     }
   }
@@ -110,7 +109,7 @@ class SingleChangeListCommitWorkflowHandler(
     return super.prepareForCommitExecution(sessionInfo)
   }
 
-  override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(getCommitState(), success)
+  override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.onDialogClosed(getCommitState(), success)
 
   private fun initCommitOptions() {
     workflow.initCommitOptions(createCommitOptions())
