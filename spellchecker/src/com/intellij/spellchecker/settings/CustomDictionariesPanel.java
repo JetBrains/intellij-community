@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.settings;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.dictionary.CustomDictionaryProvider;
@@ -93,7 +94,8 @@ public final class CustomDictionariesPanel extends JPanel {
       }
     };
 
-    FileChooser.chooseFiles(fileChooserDescriptor, project, this.getParent(), project.getBaseDir(), consumer);
+    final var directory = ProjectUtil.guessProjectDir(project);
+    FileChooser.chooseFiles(fileChooserDescriptor, project, this.getParent(), directory, consumer);
   }
 
   public List<String> getRemovedDictionaries() {
