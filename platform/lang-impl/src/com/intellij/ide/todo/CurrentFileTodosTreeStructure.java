@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class CurrentFileTodosTreeStructure extends TodoTreeStructure {
   /**
@@ -51,6 +52,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure {
     }
   }
 
+  @Nullable
   PsiFile getFile() {
     return myFile;
   }
@@ -59,7 +61,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure {
    * Sets {@code file} for which the structure is built. Alter this method is invoked caches should
    * be validated.
    */
-  public void setFile(PsiFile file) {
+  public void setFile(@Nullable PsiFile file) {
     myFile = file;
     myRootElement = createRootElement();
   }

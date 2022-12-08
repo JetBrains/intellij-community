@@ -25,7 +25,7 @@ public interface TodoCacheManager {
     return project.getService(TodoCacheManager.class);
   }
 
-  boolean processFilesWithTodoItems(@NotNull Processor<? super PsiFile> processor);
+  boolean processFilesWithTodoItems(@NotNull Processor<? super @NotNull PsiFile> processor);
 
   /**
    * @return -1 if it's not known

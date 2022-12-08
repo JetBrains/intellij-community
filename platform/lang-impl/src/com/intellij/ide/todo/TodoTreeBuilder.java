@@ -345,7 +345,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   @RequiresBackgroundThread
-  protected void collectFiles(@NotNull Consumer<? super PsiFile> consumer) {
+  protected void collectFiles(@NotNull Consumer<? super @NotNull PsiFile> consumer) {
     TodoTreeStructure treeStructure = getTodoTreeStructure();
     PsiTodoSearchHelper searchHelper = getSearchHelper();
     searchHelper.processFilesWithTodoItems(psiFile -> {
