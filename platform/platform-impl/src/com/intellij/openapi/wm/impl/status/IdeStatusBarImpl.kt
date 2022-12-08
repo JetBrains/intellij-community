@@ -4,8 +4,11 @@
 package com.intellij.openapi.wm.impl.status
 
 import com.intellij.diagnostic.runActivity
+import com.intellij.ide.HelpTooltipManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
+import com.intellij.internal.statistic.service.fus.collectors.StatusBarPopupShown
+import com.intellij.internal.statistic.service.fus.collectors.StatusBarWidgetClicked
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
@@ -22,24 +25,26 @@ import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.BalloonHandler
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.*
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.*
-import com.intellij.openapi.wm.StatusBarWidget.Multiframe
+import com.intellij.openapi.wm.StatusBarWidget.*
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetWrapper
+import com.intellij.openapi.wm.impl.status.TextPanel.WithIconAndArrows
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneProjectListener
-import com.intellij.ui.ClientProperty
-import com.intellij.ui.ComponentUtil
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.PopupHandler
+import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.awt.RelativeRectangle
+import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.NotificationPopup
+import com.intellij.ui.popup.PopupState
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
@@ -651,6 +656,15 @@ private class WidgetBean(
     get() = widget.ID()
 }
 
+private fun createComponentByWidgetPresentation(presentation: WidgetPresentation): JComponent {
+  return when (presentation) {
+    is IconPresentation -> IconPresentationComponent(presentation)
+    is TextPresentation -> TextPresentationComponent(presentation)
+    is MultipleTextValuesPresentation -> MultipleTextValues(presentation)
+    else -> throw IllegalArgumentException("Unable to find a wrapper for presentation: ${presentation.javaClass.simpleName}")
+  }
+}
+
 private fun wrap(widget: StatusBarWidget): JComponent {
   if (widget is CustomStatusBarWidget) {
     val component = widget.component
@@ -678,7 +692,7 @@ private fun wrap(widget: StatusBarWidget): JComponent {
   }
 
   val presentation = widget.getPresentation() ?: throw IllegalStateException("Widget $widget getPresentation() method must not return null")
-  val wrapper = StatusBarWidgetWrapper.wrap(presentation)
+  val wrapper = createComponentByWidgetPresentation(presentation)
   ClientProperty.put(wrapper, WIDGET_ID, widget.ID())
   wrapper.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, java.lang.Boolean.TRUE)
   return wrapper
@@ -688,4 +702,97 @@ private fun createDefaultEditorProvider(frameHelper: ProjectFrameHelper): () -> 
   return {
     frameHelper.project?.getServiceIfCreated(FileEditorManager::class.java)?.selectedEditor
   }
+}
+
+private class IconPresentationComponent(private val presentation: IconPresentation) : WithIconAndArrows(), StatusBarWidgetWrapper {
+  init {
+    setTextAlignment(CENTER_ALIGNMENT)
+    border = JBUI.CurrentTheme.StatusBar.Widget.iconBorder()
+    presentation.getClickConsumer()?.let { clickConsumer ->
+      StatusBarWidgetClickListener(clickConsumer = clickConsumer::consume).installOn(this, true)
+    }
+  }
+
+  override fun beforeUpdate(statusBar: StatusBar) {
+    icon = presentation.getIcon(statusBar)
+    isVisible = hasIcon()
+    setWidgetTooltip(this, presentation.getTooltipText(), presentation.getShortcutText())
+  }
+}
+
+private class TextPresentationComponent(private val presentation: TextPresentation) : TextPanel(), StatusBarWidgetWrapper {
+  init {
+    setTextAlignment(presentation.getAlignment())
+    border = JBUI.CurrentTheme.StatusBar.Widget.border()
+    presentation.getClickConsumer()?.let { clickConsumer ->
+      StatusBarWidgetClickListener(clickConsumer::consume).installOn(this, true)
+    }
+  }
+
+  override fun beforeUpdate(statusBar: StatusBar) {
+    val text = presentation.getText()
+    setText(text)
+    isVisible = !text.isEmpty()
+    setWidgetTooltip(widgetComponent = this, toolTipText = presentation.getTooltipText(), shortcutText = presentation.getShortcutText())
+  }
+}
+
+private class MultipleTextValues(private val presentation: MultipleTextValuesPresentation) : WithIconAndArrows(), StatusBarWidgetWrapper {
+  init {
+    isVisible = !presentation.getSelectedValue().isNullOrEmpty()
+    setTextAlignment(CENTER_ALIGNMENT)
+    border = JBUI.CurrentTheme.StatusBar.Widget.border()
+    object : ClickListener() {
+      val myPopupState = PopupState.forPopup()
+
+      override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
+        if (myPopupState.isRecentlyHidden) {
+          // do not show new popup
+          return false
+        }
+
+        val popup = presentation.getPopup() ?: return false
+        StatusBarPopupShown.log(presentation::class.java)
+        val dimension = getSizeFor(popup)
+        val at = Point(0, -dimension.height)
+        myPopupState.prepareToShow(popup)
+        popup.show(RelativePoint(event.component, at))
+        return true
+      }
+
+      private fun getSizeFor(popup: JBPopup): Dimension {
+        return if (popup is AbstractPopup) popup.sizeForPositioning else popup.content.preferredSize
+      }
+    }.installOn(this, true)
+  }
+
+  override fun beforeUpdate(statusBar: StatusBar) {
+    val value = presentation.getSelectedValue()
+    text = value
+    icon = presentation.getIcon()
+    isVisible = StringUtil.isNotEmpty(value)
+    setWidgetTooltip(this, presentation.getTooltipText(), presentation.getShortcutText())
+  }
+}
+
+private class StatusBarWidgetClickListener(private val clickConsumer: (MouseEvent) -> Unit) : ClickListener() {
+  override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
+    if (!e.isPopupTrigger && MouseEvent.BUTTON1 == e.button) {
+      StatusBarWidgetClicked.log(clickConsumer.javaClass)
+      clickConsumer(e)
+    }
+    return true
+  }
+}
+
+private fun setWidgetTooltip(widgetComponent: JComponent, toolTipText: @NlsContexts.Tooltip String?, shortcutText: String?) {
+  widgetComponent.toolTipText = toolTipText
+  @Suppress("SpellCheckingInspection")
+  if (Registry.`is`("ide.helptooltip.enabled")) {
+    widgetComponent.putClientProperty(HelpTooltipManager.SHORTCUT_PROPERTY, shortcutText)
+  }
+}
+
+private interface StatusBarWidgetWrapper {
+  fun beforeUpdate(statusBar: StatusBar)
 }

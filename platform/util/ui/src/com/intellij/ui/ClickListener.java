@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.util.ui.UIUtil;
@@ -10,7 +10,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public abstract class ClickListener {
-
   private static final int EPS = 4;
   private MouseAdapter myListener;
 
@@ -80,7 +79,7 @@ public abstract class ClickListener {
     c.removeMouseListener(myListener);
   }
 
-  public static class SyntheticClickEvent extends MouseEvent {
+  public static final class SyntheticClickEvent extends MouseEvent {
     public SyntheticClickEvent(Component source,
                                long when, int modifiers,
                                int x, int y, int clickCount, boolean popupTrigger, int button) {

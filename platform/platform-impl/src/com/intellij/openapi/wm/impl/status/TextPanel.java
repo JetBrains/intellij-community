@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ui.AntialiasingType;
@@ -25,7 +25,7 @@ import java.awt.*;
 public class TextPanel extends NonOpaquePanel implements Accessible {
   public static final String PROPERTY_TEXT = "TextPanel.text";
 
-  @Nullable @Nls private String myText;
+  private @Nullable @Nls String myText;
 
   private Integer myPrefHeight;
   private Dimension myExplicitSize;
@@ -50,16 +50,9 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
   }
 
   public void recomputeSize() {
-    final JLabel label = new JLabel("XXX"); //NON-NLS
+    JLabel label = new JLabel("XXX"); //NON-NLS
     label.setFont(getFont());
     myPrefHeight = label.getPreferredSize().height;
-  }
-
-  /**
-   * @deprecated no effect
-   */
-  @Deprecated(forRemoval = true)
-  public void resetColor() {
   }
 
   @Override
@@ -116,8 +109,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     return insets.left;
   }
 
-  @Nls
-  protected String truncateText(@Nls String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
+  protected @Nls String truncateText(@Nls String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
     return SwingUtilities.layoutCompoundLabel(this, fm, text, null, SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.CENTER,
                                               SwingConstants.TRAILING,
                                               bounds, iconR, textR, 0);
@@ -154,9 +146,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     repaint();
   }
 
-  @Nullable
-  @Nls
-  public String getText() {
+  public @Nullable @Nls String getText() {
     return myText;
   }
 
@@ -180,8 +170,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
   /**
    * @return the text that is used to calculate the preferred size
    */
-  @Nullable
-  protected String getTextForPreferredSize() {
+  protected @Nullable String getTextForPreferredSize() {
     return myText;
   }
 
@@ -190,11 +179,11 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
   }
 
   public static class WithIconAndArrows extends TextPanel {
-    private final static int GAP = JBUIScale.scale(2);
-    @Nullable private Icon myIcon;
+    private static final int GAP = JBUIScale.scale(2);
+    private @Nullable Icon myIcon;
 
     @Override
-    protected void paintComponent(@NotNull final Graphics g) {
+    protected void paintComponent(final @NotNull Graphics g) {
       super.paintComponent(g);
       Icon icon = myIcon == null || isEnabled() ? myIcon : IconLoader.getDisabledIcon(myIcon);
       if (icon != null) {
