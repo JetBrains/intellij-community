@@ -29,7 +29,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.idea.packagesearch.api.PackageSearchApiClient
 import org.jetbrains.packagesearch.api.v2.ApiPackagesResponse
-import org.jetbrains.packagesearch.api.v2.ApiRepositoriesResponse
 import org.jetbrains.packagesearch.api.v2.ApiRepository
 import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import java.io.Closeable
@@ -46,7 +45,7 @@ internal class ProjectDataProvider(
     private val cacheFolder: Path = appSystemDir.resolve("caches/pkgs")
 ) : Closeable by apiClient {
 
-    val json = Json {
+    private val json = Json {
         prettyPrint = true
     }
 
