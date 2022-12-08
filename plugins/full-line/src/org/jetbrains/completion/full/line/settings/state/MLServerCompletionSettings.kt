@@ -46,7 +46,7 @@ class MLServerCompletionSettings : PersistentStateComponent<GeneralState> {
                                                     ?: throw IllegalArgumentException("Language ${language.displayName} is not supported")
 
   private fun getLangStateSafe(language: Language): LangState? = state.langStates[language.id]
-                                                                 ?: language.baseLanguage?.let { state.langStates[it.id] }
+                                                                 ?: language.baseLanguage?.let { getLangStateSafe(it) }
 
   // ------------------------------ Common settings getters ---------------------------------- //
 
