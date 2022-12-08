@@ -6,19 +6,19 @@ import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
-import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
+import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.utils.lastWebSymbol
 import kotlin.math.max
 
-internal class ItemPattern(val displayName: String?) : WebSymbolsPattern() {
+internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPattern() {
   override fun getStaticPrefixes(): Sequence<String> = sequenceOf("")
 
   override fun isStaticAndRequired(): Boolean = false
 
   override fun match(owner: WebSymbol?,
                      scopeStack: Stack<WebSymbolsScope>,
-                     itemsProvider: WebSymbolsPatternItemsProvider?,
+                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
                      start: Int,
                      end: Int): List<MatchResult> {
@@ -28,11 +28,11 @@ internal class ItemPattern(val displayName: String?) : WebSymbolsPattern() {
         start, end, emptyList(),
         problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL,
         displayName = displayName,
-        symbolKinds = itemsProvider?.getSymbolKinds(owner ?: scopeStack.lastWebSymbol) ?: emptySet()
+        symbolKinds = symbolsResolver?.getSymbolKinds(owner ?: scopeStack.lastWebSymbol) ?: emptySet()
       ))))
     }
 
-    val hits = itemsProvider
+    val hits = symbolsResolver
                  ?.matchName(params.name.substring(start, end), scopeStack, params.queryExecutor)
                ?: emptyList()
 
@@ -51,7 +51,7 @@ internal class ItemPattern(val displayName: String?) : WebSymbolsPattern() {
           emptyList(),
           problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL,
           displayName = displayName,
-          symbolKinds = itemsProvider?.getSymbolKinds(owner ?: scopeStack.lastWebSymbol) ?: emptySet(),
+          symbolKinds = symbolsResolver?.getSymbolKinds(owner ?: scopeStack.lastWebSymbol) ?: emptySet(),
         ))
       }
     ))
@@ -59,11 +59,11 @@ internal class ItemPattern(val displayName: String?) : WebSymbolsPattern() {
 
   override fun getCompletionResults(owner: WebSymbol?,
                                     scopeStack: Stack<WebSymbolsScope>,
-                                    itemsProvider: WebSymbolsPatternItemsProvider?,
+                                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                                     params: CompletionParameters,
                                     start: Int,
                                     end: Int): CompletionResults =
-    itemsProvider
+    symbolsResolver
       ?.codeCompletion(params.name.substring(start, end), max(params.position - start, 0), scopeStack, params.queryExecutor)
       ?.let { results ->
         val stop = start == end && start == params.position
