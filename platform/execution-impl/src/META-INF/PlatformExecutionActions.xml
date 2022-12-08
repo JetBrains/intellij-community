@@ -65,7 +65,7 @@
                  restartRequired="false"/>
     <registryKey key="ide.experimental.ui.redesigned.run.popup"
                  description="Use redesigned run popup"
-                 defaultValue="TRUE"
+                 defaultValue="FALSE"
                  restartRequired="false"/>
 
     <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarComponentService" preload="await" />
