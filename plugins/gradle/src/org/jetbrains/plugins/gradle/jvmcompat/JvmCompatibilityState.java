@@ -5,4 +5,5 @@ public class JvmCompatibilityState {
   public CompatibilityData data;
   public String ideVersion;
   public boolean isDefault;
+  public long lastUpdateTime;
 }
