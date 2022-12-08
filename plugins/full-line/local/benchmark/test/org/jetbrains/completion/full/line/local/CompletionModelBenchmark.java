@@ -11,6 +11,8 @@ import java.util.concurrent.TimeUnit;
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Fork(3)
+@Measurement(iterations = 5)
+@Warmup(iterations = 5)
 public class CompletionModelBenchmark {
   @State(Scope.Benchmark)
   public static class GenerateCompletionBenchmarkState {
