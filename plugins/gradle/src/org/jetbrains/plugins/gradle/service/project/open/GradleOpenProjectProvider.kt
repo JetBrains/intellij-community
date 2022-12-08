@@ -14,7 +14,6 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.confirmLinkingUntrustedProject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -37,29 +36,27 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
 
     val projectPath = getProjectDirectory(projectFile).toNioPath()
 
-    if (confirmLinkingUntrustedProject(project, systemId, projectPath)) {
-      val settings = createLinkSettings(projectPath, project)
+    val settings = createLinkSettings(projectPath, project)
 
-      validateJavaHome(project, projectPath, settings.resolveGradleVersion())
+    validateJavaHome(project, projectPath, settings.resolveGradleVersion())
 
-      val externalProjectPath = settings.externalProjectPath
-      ExternalSystemApiUtil.getSettings(project, SYSTEM_ID).linkProject(settings)
+    val externalProjectPath = settings.externalProjectPath
+    ExternalSystemApiUtil.getSettings(project, SYSTEM_ID).linkProject(settings)
 
-      if (!Registry.`is`("external.system.auto.import.disabled")) {
+    if (!Registry.`is`("external.system.auto.import.disabled")) {
+      ExternalSystemUtil.refreshProject(
+        externalProjectPath,
+        ImportSpecBuilder(project, SYSTEM_ID)
+          .usePreviewMode()
+          .use(MODAL_SYNC)
+      )
+
+      ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized {
         ExternalSystemUtil.refreshProject(
           externalProjectPath,
           ImportSpecBuilder(project, SYSTEM_ID)
-            .usePreviewMode()
-            .use(MODAL_SYNC)
+            .callback(createFinalImportCallback(project, externalProjectPath))
         )
-
-        ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized {
-          ExternalSystemUtil.refreshProject(
-            externalProjectPath,
-            ImportSpecBuilder(project, SYSTEM_ID)
-              .callback(createFinalImportCallback(project, externalProjectPath))
-          )
-        }
       }
     }
   }
