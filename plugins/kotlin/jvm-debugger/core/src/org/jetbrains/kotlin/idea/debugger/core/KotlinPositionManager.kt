@@ -35,7 +35,6 @@ import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
@@ -274,30 +273,26 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         if (start == null || end == null) return null
 
         val literalsOrFunctions = getLambdasAtLineIfAny(file, lineNumber)
-        if (literalsOrFunctions.isEmpty()) return null
 
-        return literalsOrFunctions.getAppropriateLiteralBasedOnDeclaringClassName(location, currentLocationClassName) ?:
-               literalsOrFunctions.getAppropriateLiteralBasedOnLambdaName(location, lineNumber)
-    }
-
-    private fun List<KtFunction>.getAppropriateLiteralBasedOnDeclaringClassName(
-        location: Location,
-        currentLocationClassName: String
-    ): KtFunction? {
-        val firstLiteral = firstOrNull() ?: return null
-        analyze(firstLiteral) {
-            forEach { literal ->
-                if (isInlinedArgument(literal, true)) {
+        analyze(literalsOrFunctions.firstOrNull() ?: return null) {
+            val notInlinedLambdas = mutableListOf<KtFunction>()
+            for (literal in literalsOrFunctions) {
+                if (isInlinedArgument(literal, checkNonLocalReturn = true)) {
                     if (isInsideInlineArgument(literal, location, debugProcess as DebugProcessImpl)) {
                         return literal
                     }
-                } else if (literal.firstChild.calculatedClassNameMatches(currentLocationClassName)) {
-                    return literal
+                } else {
+                    notInlinedLambdas.add(literal)
                 }
             }
-        }
 
-        return null
+            return notInlinedLambdas.getAppropriateLiteralBasedOnDeclaringClassName(currentLocationClassName) ?:
+                   notInlinedLambdas.getAppropriateLiteralBasedOnLambdaName(location, lineNumber)
+        }
+    }
+
+    private fun List<KtFunction>.getAppropriateLiteralBasedOnDeclaringClassName(currentLocationClassName: String): KtFunction? {
+        return firstOrNull { it.firstChild.calculatedClassNameMatches(currentLocationClassName) }
     }
 
     private fun PsiElement.calculatedClassNameMatches(currentLocationClassName: String): Boolean {

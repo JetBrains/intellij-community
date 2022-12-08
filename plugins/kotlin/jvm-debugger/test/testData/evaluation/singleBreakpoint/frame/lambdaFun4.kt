@@ -28,4 +28,3 @@ fun main() {
 
 // EXPRESSION: this@Foo
 // RESULT: instance of lambdaFun4.LambdaFun4Kt$main$1(id=ID): LlambdaFun4/LambdaFun4Kt$main$1;
-// IGNORE_FOR_INDY_LAMBDAS
