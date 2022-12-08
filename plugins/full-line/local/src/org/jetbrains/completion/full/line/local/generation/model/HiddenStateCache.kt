@@ -40,7 +40,7 @@ open class HiddenStateCache {
     cachedItem = Item(inputIds, modelOutput)
   }
 
-  internal fun reset() {
+  fun reset() {
     cachedItem = null
   }
 

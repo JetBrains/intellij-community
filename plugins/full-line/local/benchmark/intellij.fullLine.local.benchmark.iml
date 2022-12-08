@@ -10,5 +10,7 @@
     <orderEntry type="library" scope="TEST" name="jmh-core" level="project" />
     <orderEntry type="library" scope="TEST" name="jmh-generator-annprocess" level="project" />
     <orderEntry type="module" module-name="intellij.fullLine.local" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="library" scope="TEST" name="commons-lang3" level="project" />
   </component>
 </module>
