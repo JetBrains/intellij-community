@@ -276,11 +276,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     }
     val editorActionsContext = mapOf(PlatformCoreDataKeys.CONTEXT_COMPONENT to mySpeedSearchPatternField.textEditor)
 
-    (ActionManager.getInstance()
-      .getAction(SPEED_SEARCH_DEFAULT_ACTIONS_GROUP) as ActionGroup)
+    (am.getAction(SPEED_SEARCH_DEFAULT_ACTIONS_GROUP) as ActionGroup)
       .getChildren(null)
       .forEach { action ->
-        registerAction(ActionManager.getInstance().getId(action),
+        registerAction(am.getId(action),
                        KeymapUtil.getKeyStroke(action.shortcutSet),
                        createShortcutAction(action, editorActionsContext, updateSpeedSearch, false))
       }
@@ -294,17 +293,16 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       .filterIsInstance<PopupFactoryImpl.ActionItem>()
       .map(PopupFactoryImpl.ActionItem::getAction)
       .forEach { action ->
-        registerAction(ActionManager.getInstance().getId(action),
+        registerAction(am.getId(action),
                        KeymapUtil.getKeyStroke(action.shortcutSet),
                        createShortcutAction<Any>(action))
       }
   }
 
   private fun installHeaderToolbar() {
-    val settingsGroup = ActionManager.getInstance().getAction(GitBranchesTreePopupStep.HEADER_SETTINGS_ACTION_GROUP)
+    val settingsGroup = am.getAction(GitBranchesTreePopupStep.HEADER_SETTINGS_ACTION_GROUP)
     val toolbarGroup = DefaultActionGroup(GitBranchPopupFetchAction(javaClass), settingsGroup)
-    val toolbar = ActionManager.getInstance()
-      .createActionToolbar(GitBranchesTreePopupStep.ACTION_PLACE, toolbarGroup, true)
+    val toolbar = am.createActionToolbar(GitBranchesTreePopupStep.ACTION_PLACE, toolbarGroup, true)
       .apply {
         targetComponent = this@GitBranchesTreePopup.component
         setReservePlaceAutoPopupIcon(false)
@@ -427,7 +425,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   override fun getInputMap(): InputMap = tree.inputMap
 
-  private val selectAllKeyStroke = KeymapUtil.getKeyStroke(ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL).shortcutSet)
+  private val selectAllKeyStroke = KeymapUtil.getKeyStroke(am.getAction(IdeActions.ACTION_SELECT_ALL).shortcutSet)
 
   override fun process(e: KeyEvent?) {
     if (e == null) return
@@ -561,7 +559,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     point.translate(-rowBounds.x, -rowBounds.y)
 
     val rowComponent = tree.cellRenderer
-                     .getTreeCellRendererComponent(tree, selected, true, false, true, row, false) as? JComponent
+                         .getTreeCellRendererComponent(tree, selected, true, false, true, row, false) as? JComponent
                        ?: return false
     val iconComponent = UIUtil.uiTraverser(rowComponent)
                           .filter { ClientProperty.get(it, Renderer.MAIN_ICON) == true }
@@ -608,7 +606,11 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     }
   }
 
+  private val am
+    get() = ActionManager.getInstance()
+
   companion object {
+
 
     internal val POPUP_KEY = DataKey.create<GitBranchesTreePopup>("GIT_BRANCHES_TREE_POPUP")
 
@@ -642,7 +644,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         Disposer.register(parent) { it.cancel() }
       }
 
-    private class BranchesTree(model: TreeModel): Tree(model) {
+    private class BranchesTree(model: TreeModel) : Tree(model) {
 
       init {
         background = JBUI.CurrentTheme.Popup.BACKGROUND
@@ -756,7 +758,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
           border = if (!arrowLabel.isVisible && ExperimentalUI.isNewUI()) {
             JBUI.Borders.empty(0, 10, 0, JBUI.CurrentTheme.Popup.Selection.innerInsets().right)
-          } else {
+          }
+          else {
             JBUI.Borders.emptyLeft(10)
           }
         }
