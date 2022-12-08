@@ -14,7 +14,7 @@ import java.util.*;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * Adapted from Doug Lea ConcurrentHashMap (see http://gee.cs.oswego.edu/dl/concurrency-interest/index.html) to int keys
+ * Adapted from Doug Lea ConcurrentHashMap (see https://gee.cs.oswego.edu/dl/concurrency-interest/index.html) to int keys
  * with following additions/changes:
  * - added hashing strategy argument
  * - added cacheOrGet convenience method
