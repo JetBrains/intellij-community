@@ -640,14 +640,13 @@ private class WidgetBean(
   @JvmField val widget: StatusBarWidget,
   @JvmField val position: Position,
   @JvmField val component: JComponent,
-  private val order: LoadingOrder,
+  override val order: LoadingOrder,
 ) : Orderable {
   val anchor: String
     get() = order.toString()
 
-  override fun getOrderId(): String = widget.ID()
-
-  override fun getOrder(): LoadingOrder = order
+  override val orderId: String
+    get() = widget.ID()
 }
 
 private fun wrap(widget: StatusBarWidget): JComponent {
