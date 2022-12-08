@@ -249,23 +249,19 @@ internal open class FirCallableCompletionContributor(
     ) {
         val possibleReceiverScope = typeOfPossibleReceiver.getTypeScope()?.getDeclarationScope() ?: return
 
-        val nonExtensionMembers = collectNonExtensions(possibleReceiverScope, visibilityChecker, scopeNameFilter) { filter(it) }
+        val nonExtensionMembers = collectNonExtensions(possibleReceiverScope, visibilityChecker, scopeNameFilter) { filter(it) }.toList()
         val extensionNonMembers = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)
 
-        val syntheticPropertyOrigins = mutableSetOf<KtFunctionSymbol>()
-        nonExtensionMembers.toList()
-            .onEach {
-                if (it is KtSyntheticJavaPropertySymbol) {
-                    syntheticPropertyOrigins.add(it.javaGetterSymbol)
-                    syntheticPropertyOrigins.addIfNotNull(it.javaSetterSymbol)
-                }
+        val realJavaGettersAndSetters = nonExtensionMembers.asSequence().filterIsInstance<KtSyntheticJavaPropertySymbol>()
+            .flatMap { listOfNotNull(it.javaGetterSymbol, it.javaSetterSymbol) }
+            .toSet()
+        for (nonExtensionMember in nonExtensionMembers) {
+            // Skip Java getters/setters that are mapped to Kotlin's synthetic properties, because we show the properties in the completion
+            // (K1 has the same behavior)
+            if (nonExtensionMember !in realJavaGettersAndSetters) {
+                addCallableSymbolToCompletion(context, nonExtensionMember, getOptions(nonExtensionMember), explicitReceiverTypeHint = explicitReceiverTypeHint)
             }
-            .forEach {
-                if (it !in syntheticPropertyOrigins) {
-                    // For basic completion, FE1.0 skips Java functions that are mapped to Kotlin properties.
-                    addCallableSymbolToCompletion(context, it, getOptions(it), explicitReceiverTypeHint = explicitReceiverTypeHint)
-                }
-            }
+        }
 
         // Here we can't rely on deduplication in LookupElementSink because extension members can have types substituted, which won't be
         // equal to the same symbols from top level without substitution.
