@@ -6,11 +6,12 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionGroupUtil
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.popup.PopupState
 import com.intellij.util.ui.FilterComponent
 import java.util.function.Supplier
 
-internal abstract class VcsLogPopupComponent(displayName: Supplier<String?>) : FilterComponent(displayName) {
+internal abstract class VcsLogPopupComponent(displayName: Supplier<@NlsContexts.Label String>) : FilterComponent(displayName) {
   private val myPopupState = PopupState.forPopup()
 
   init {

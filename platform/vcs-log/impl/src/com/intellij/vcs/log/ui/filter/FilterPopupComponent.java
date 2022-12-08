@@ -27,7 +27,7 @@ abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> e
 
   @NotNull protected final Model myFilterModel;
 
-  FilterPopupComponent(@NotNull Supplier<String> displayName, @NotNull Model filterModel) {
+  FilterPopupComponent(@NotNull Supplier<@NlsContexts.Label @NotNull String> displayName, @NotNull Model filterModel) {
     super(displayName);
     myFilterModel = filterModel;
   }

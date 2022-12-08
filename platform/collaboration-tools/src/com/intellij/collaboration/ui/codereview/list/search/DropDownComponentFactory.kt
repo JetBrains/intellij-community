@@ -29,7 +29,7 @@ class DropDownComponentFactory<T : Any>(private val state: MutableStateFlow<T?>)
              chooseValue: suspend (RelativePoint, PopupState<JBPopup>) -> T?): JComponent {
     val popupState: PopupState<JBPopup> = PopupState.forPopup()
 
-    return object : FilterComponent(Supplier<@NlsContexts.Label String?> { filterName }) {
+    return object : FilterComponent(Supplier<@NlsContexts.Label String> { filterName }) {
 
       override fun getCurrentText(): String {
         val value = state.value

@@ -32,13 +32,13 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
   protected static final int BORDER_SIZE = 2;
   protected static final int ARC_SIZE = 10;
 
-  @NotNull private final Supplier<@NlsContexts.Label String> myDisplayName;
+  @NotNull private final Supplier<@NlsContexts.Label @NotNull String> myDisplayName;
   @Nullable private JLabel myNameLabel;
   @NotNull private JLabel myValueLabel;
   @NotNull private InlineIconButton myFilterActionButton;
   @Nullable private Runnable myShowPopupAction;
 
-  protected FilterComponent(@NotNull Supplier<@NlsContexts.Label String> displayName) {
+  protected FilterComponent(@NotNull Supplier<@NlsContexts.Label @NotNull String> displayName) {
     super(null);
     myDisplayName = displayName;
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY);
