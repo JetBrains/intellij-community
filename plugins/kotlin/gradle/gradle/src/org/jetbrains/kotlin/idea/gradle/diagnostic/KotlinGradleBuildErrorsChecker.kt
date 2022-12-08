@@ -76,11 +76,11 @@ class KotlinGradleBuildErrorsChecker : StartupActivity.DumbAware, Runnable {
                         val logEvent = LogMessage.createEvent(
                             crashException,
                             logMessage,
-                            Attachment(logMessage, rawException)
+                            Attachment("raw exception", rawException),
+                            Attachment("Kotlin version", crashException.version)
                         )
                         val ideaEvent =
                             IdeaLoggingEvent(logMessage, RuntimeException("Kotlin build exception: $it"), logEvent.data)
-
                         MessagePool.getInstance().addIdeFatalMessage(ideaEvent)
                     }
                     it.delete()
