@@ -9,7 +9,6 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, private val
   AbstractCommitMessagePolicy(project) {
 
   var defaultNameChangeListMessage: String? = null
-  private var lastChangeListName: String? = null
   private val messagesToSave = mutableMapOf<String, String>()
 
   var commitMessage: String? = null
@@ -18,8 +17,6 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, private val
   fun init(changeList: LocalChangeList, includedChanges: List<Change>) {
     commitMessage = initialCommitMessage
     if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return
-
-    lastChangeListName = changeList.name
 
     if (commitMessage != null) {
       defaultNameChangeListMessage = commitMessage
@@ -33,34 +30,38 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, private val
     }
   }
 
-  fun update(changeList: LocalChangeList, currentMessage: String) {
+  fun onChangelistChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList, currentMessage: String) {
     commitMessage = currentMessage
     if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return
 
-    if (changeList.name != lastChangeListName) {
-      rememberMessage(currentMessage)
+    if (oldChangeList.name != newChangeList.name) {
+      rememberMessage(oldChangeList.name, currentMessage)
 
-      lastChangeListName = changeList.name
-      commitMessage = getCommitMessageFor(changeList) ?: defaultNameChangeListMessage
+      commitMessage = getCommitMessageFor(newChangeList) ?: defaultNameChangeListMessage
     }
   }
 
   fun save(commitState: ChangeListCommitState, success: Boolean) {
-    rememberMessage(commitState.commitMessage)
+    val changeList = commitState.changeList
+    rememberMessage(changeList.name, commitState.commitMessage)
 
     if (success) {
       vcsConfiguration.saveCommitMessage(commitState.commitMessage)
 
-      val entireChangeListIncluded = commitState.changeList.changes.size == commitState.changes.size
-      if (!entireChangeListIncluded) forgetMessage()
+      val entireChangeListIncluded = changeList.changes.size == commitState.changes.size
+      if (!entireChangeListIncluded) forgetMessage(changeList.name)
     }
 
     saveMessages()
   }
 
-  private fun rememberMessage(message: String) = lastChangeListName?.let { messagesToSave[it] = message }
+  private fun rememberMessage(listName: String, message: String) {
+    messagesToSave[listName] = message
+  }
 
-  private fun forgetMessage() = lastChangeListName?.let { messagesToSave -= it }
+  private fun forgetMessage(listName: String) {
+    messagesToSave.remove(listName)
+  }
 
   private fun saveMessages() = messagesToSave.forEach { (changeListName, commitMessage) -> save(changeListName, commitMessage) }
 }

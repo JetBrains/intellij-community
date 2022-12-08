@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFilePaths
 import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 
 class SingleChangeListCommitWorkflowHandler(
@@ -66,8 +67,10 @@ class SingleChangeListCommitWorkflowHandler(
     LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
   }
 
-  override fun changeListChanged() {
-    updateCommitMessage()
+  override fun changeListChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList) {
+    commitMessagePolicy.onChangelistChanged(oldChangeList, newChangeList, getCommitMessage())
+    setCommitMessage(commitMessagePolicy.commitMessage)
+
     updateCommitOptions()
   }
 
@@ -111,11 +114,6 @@ class SingleChangeListCommitWorkflowHandler(
 
   private fun initCommitMessage() {
     commitMessagePolicy.init(getChangeList(), getIncludedChanges())
-    setCommitMessage(commitMessagePolicy.commitMessage)
-  }
-
-  private fun updateCommitMessage() {
-    commitMessagePolicy.update(getChangeList(), getCommitMessage())
     setCommitMessage(commitMessagePolicy.commitMessage)
   }
 

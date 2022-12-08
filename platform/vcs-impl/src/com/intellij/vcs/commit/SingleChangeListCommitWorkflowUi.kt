@@ -23,7 +23,7 @@ interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi {
   fun getInclusionModel(): InclusionModel
 
   interface ChangeListListener : EventListener {
-    fun changeListChanged()
+    fun changeListChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList)
   }
 }
 
