@@ -7,21 +7,24 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.parameterInfo.getJvmName
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.psi.*
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
     private fun notImplementedInK2(): Nothing {
@@ -94,7 +97,11 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
     }
 
     override fun getJvmName(element: PsiElement): String? {
-        return null
+        val property = element.unwrapped as? KtDeclaration ?: return null
+        analyseOnEdt(property) {
+            val propertySymbol = property.getSymbol() as? KtCallableSymbol
+            return propertySymbol?.let(::getJvmName)
+        }
     }
 
     override fun isCompanionObjectClassReference(psiReference: PsiReference): Boolean {
@@ -148,11 +155,38 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
     }
 
     override fun getJvmNamesForPropertyAccessors(element: PsiElement): Pair<String?, String?> {
-        return null to null
+        val propertyOrParameter = element.unwrapped as? KtDeclaration ?: return null to null
+
+        analyseOnEdt(propertyOrParameter) {
+            val propertySymbol = when (val symbol = propertyOrParameter.getSymbol()) {
+                is KtKotlinPropertySymbol -> symbol
+                is KtValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty
+                else -> null
+            }
+
+            val getter = propertySymbol?.getter
+            val setter = propertySymbol?.setter
+
+            return getter?.let(::getJvmName) to setter?.let(::getJvmName)
+        }
     }
 
     override fun isLightClassForRegularKotlinClass(element: KtLightClass): Boolean {
         // FIXME make the comparison more robust
         return element.kotlinOrigin?.name == element.name
+    }
+
+    /**
+     * Rename calls a lot of resolve on EDT, so occasionally it's easier to allow resolve
+     * on EDT than to move the whole operation to a background thread.
+     *
+     * Please, do not try to move this function to some util module. Usage of
+     * [allowAnalysisOnEdt] should generally be avoided.
+     */
+    @OptIn(KtAllowAnalysisOnEdt::class, ExperimentalContracts::class)
+    private inline fun <T> analyseOnEdt(element: KtElement, action: KtAnalysisSession.() -> T) {
+        contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
+
+        return allowAnalysisOnEdt { analyze(element, action = action) }
     }
 }

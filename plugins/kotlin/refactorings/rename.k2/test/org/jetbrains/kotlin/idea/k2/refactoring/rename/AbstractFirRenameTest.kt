@@ -18,7 +18,7 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
      *
      * Use this flag locally to find out which tests might be enabled.
      */
-    private val onlyRunEnabledTests: Boolean = true
+    private val onlyRunEnabledTests: Boolean = false
 
     override fun isFirPlugin(): Boolean = true
 

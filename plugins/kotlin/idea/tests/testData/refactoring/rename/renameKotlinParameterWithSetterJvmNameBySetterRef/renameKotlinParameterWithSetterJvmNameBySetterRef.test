@@ -3,5 +3,6 @@
   "mainFile": "test/JavaClient.java",
   "newName": "setBarNew",
   "withRuntime": "true",
-  "byRef": "true"
+  "byRef": "true",
+  "enabledInK2": true
 }
