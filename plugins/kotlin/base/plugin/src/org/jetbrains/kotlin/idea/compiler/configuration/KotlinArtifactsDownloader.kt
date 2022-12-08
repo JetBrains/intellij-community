@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.O
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyZipUnpacker
 import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactDownloader.DownloadContext
+import org.jetbrains.kotlin.idea.util.application.isHeadlessEnvironment
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.awt.EventQueue
 import java.io.File
@@ -144,7 +145,7 @@ object KotlinArtifactsDownloader {
         artifactIsPom: Boolean = false,
         additionalMavenRepos: List<RemoteRepositoryDescription> = emptyList(),
     ): List<File> {
-        check(isUnitTestMode() || !EventQueue.isDispatchThread()) {
+        check((isUnitTestMode() || isHeadlessEnvironment()) || !EventQueue.isDispatchThread()) {
             "Don't call downloadMavenArtifact on UI thread"
         }
 
