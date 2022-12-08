@@ -357,7 +357,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // from any: bg or current if can't
   @Override
   public void run(@NotNull Task task) {
-    if (task.isHeadless() && !shouldKeepTasksAsynchronousInHeadlessMode()) {
+    if (isSynchronousHeadless(task)) {
       if (SwingUtilities.isEventDispatchThread()) {
         runProcessWithProgressSynchronously(task);
       }
@@ -377,6 +377,10 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         runAsynchronously(backgroundable);
       }
     }
+  }
+
+  private static boolean isSynchronousHeadless(Task task) {
+    return task.isHeadless() && !shouldKeepTasksAsynchronousInHeadlessMode();
   }
 
   private static boolean isSynchronous(Task.Backgroundable backgroundable) {
