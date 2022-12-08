@@ -23,13 +23,25 @@ public class CompletionModelBenchmark {
     @Param("5")
     public int maxLen;
 
+    /**
+     * Prefix length
+     */
     @Param({"0", "10"})
     public int prefixLen;
 
+    /**
+     * The length of the context in characters.
+     * The generated context will have the same or 1 more length.
+     */
     @Param("999")
     public int contextTextLen;
+    /**
+     * How much to shift the context at the next launch.
+     * 0 - do not shift at all, caches should work perfectly,
+     * but if the value is greater than contextTextLen, then caches should not have any effect.
+     */
     @Param({"0", "5", "50", "1000"})
-    public int offsetContext;
+    public int shiftContext;
 
     @Param({"false", "true"})
     public boolean useCache;
@@ -56,7 +68,7 @@ public class CompletionModelBenchmark {
     @Setup(Level.Invocation)
     public void setupRun() {
       prefix = helper.randomPrefix(prefixLen);
-      context = helper.continueContextRandomly(context, contextTextLen, offsetContext);
+      context = helper.continueContextRandomly(context, contextTextLen, shiftContext);
       config = helper.getConfig(maxLen, filename);
       if (!useCache) {
         helper.resetCache();
@@ -66,10 +78,10 @@ public class CompletionModelBenchmark {
     @TearDown(Level.Invocation)
     public void teardown() {
       if (useCache) {
-        if (offsetContext <= 10) {
+        if (shiftContext <= 10) {
           assert helper.getCacheHits() > 0;
         }
-        else if (offsetContext > contextTextLen) {
+        else if (shiftContext > contextTextLen) {
           assert helper.getCacheHits() == 0;
         }
         helper.resetCacheHits();

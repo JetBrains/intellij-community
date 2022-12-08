@@ -72,14 +72,14 @@ class CompletionModelBenchmarkHelper(private val random: java.util.Random) {
     }
   }
 
-  fun continueContextRandomly(context: String?, contextLen: Int, offsetContext: Int): String {
+  fun continueContextRandomly(context: String?, contextLen: Int, shiftContext: Int): String {
     require(contextLen >= 0)
-    require(offsetContext >= 0)
-    return if (context == null || offsetContext >= context.length) {
+    require(shiftContext >= 0)
+    return if (context == null || shiftContext >= context.length) {
       randomContext(contextLen)
     }
     else {
-      context.substring(offsetContext) + randomContext(offsetContext)
+      context.substring(shiftContext) + randomContext(shiftContext)
     }
   }
 }
