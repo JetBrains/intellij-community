@@ -3,6 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 
 internal class SingleChangeListCommitMessagePolicy(project: Project, private val initialCommitMessage: String?) :
@@ -48,11 +49,20 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, private val
     if (success) {
       vcsConfiguration.saveCommitMessage(commitState.commitMessage)
 
-      val entireChangeListIncluded = changeList.changes.size == commitState.changes.size
-      if (!entireChangeListIncluded) forgetMessage(changeList.name)
+      val isChangeListFullyIncluded = changeList.changes.size == commitState.changes.size
+      if (!isChangeListFullyIncluded) forgetMessage(changeList.name)
     }
 
     saveMessages()
+  }
+
+  fun onAfterCommit(commitState: ChangeListCommitState) {
+    val changeList = commitState.changeList
+    val isChangeListFullyIncluded = changeList.changes.size == commitState.changes.size
+    val isDefaultNameChangeList = changeList.hasDefaultName()
+    if (isDefaultNameChangeList && isChangeListFullyIncluded) {
+      ChangeListManager.getInstance(project).editComment(changeList.name, "")
+    }
   }
 
   private fun rememberMessage(listName: String, message: String) {
