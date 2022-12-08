@@ -39,6 +39,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   private final ProperTextRange myVisibleRange;
   @NotNull
   private final CanISilentlyChange.Result myCanChangeFileSilently;
+  volatile boolean myIsEssentialHighlightingOnly;
   private final Long2ObjectMap<RangeMarker> myRanges2markersCache = new Long2ObjectOpenHashMap<>();
   private final TransferToEDTQueue<Runnable> myEDTQueue;
 
@@ -101,7 +102,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   @NotNull
-  static HighlightingSession createHighlightingSession(@NotNull PsiFile psiFile,
+  static HighlightingSessionImpl createHighlightingSession(@NotNull PsiFile psiFile,
                                                        @Nullable Editor editor,
                                                        @Nullable EditorColorsScheme editorColorsScheme,
                                                        @NotNull DaemonProgressIndicator progressIndicator) {
@@ -109,7 +110,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     TextRange fileRange = psiFile.getTextRange();
     ProperTextRange visibleRange = editor == null ? ProperTextRange.create(ObjectUtils.notNull(fileRange, TextRange.EMPTY_RANGE)) : VisibleHighlightingPassFactory.calculateVisibleRange(editor);
     CanISilentlyChange.Result canChangeFileSilently = CanISilentlyChange.thisFile(psiFile);
-    return createHighlightingSession(psiFile, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently);
+    return (HighlightingSessionImpl)createHighlightingSession(psiFile, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently);
   }
 
   @NotNull
@@ -208,7 +209,12 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   @Override
+  public boolean isEssentialHighlightingOnly() {
+    return myIsEssentialHighlightingOnly;
+  }
+
+  @Override
   public String toString() {
-    return "HighlightingSessionImpl: myVisibleRange:"+myVisibleRange+"; myPsiFile: "+myPsiFile;
+    return "HighlightingSessionImpl: myVisibleRange:"+myVisibleRange+"; myPsiFile: "+myPsiFile+ (myIsEssentialHighlightingOnly ? "; essentialHighlightingOnly":"");
   }
 }

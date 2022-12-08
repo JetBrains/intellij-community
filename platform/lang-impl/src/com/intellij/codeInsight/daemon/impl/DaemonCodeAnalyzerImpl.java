@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.daemon.*;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
@@ -71,6 +72,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -420,19 +422,18 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       // there can be PCE in FJP during queuePassesCreation
       // no PCE guarantees session is not null
       progress.checkCanceled();
-
       try {
         long start = System.currentTimeMillis();
-        while (progress.isRunning() && System.currentTimeMillis() < start + 10 * 60 * 1000) {
+        waitInOtherThread(600_000, canChangeDocument, () -> {
           progress.checkCanceled();
           if (callbackWhileWaiting != null) {
             callbackWhileWaiting.run();
           }
-          waitInOtherThread(50, canChangeDocument);
           EDT.dispatchAllInvocationEvents();
           Throwable savedException = PassExecutorService.getSavedException((DaemonProgressIndicator)progress);
           if (savedException != null) throw savedException;
-        }
+          return progress.isRunning();
+        });
         if (progress.isRunning() && !progress.isCanceled()) {
           throw new RuntimeException("Highlighting still running after " +
              (System.currentTimeMillis() - start) / 1000 + " seconds. Still submitted passes: " +
@@ -443,9 +444,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
              ThreadDumper.dumpThreadsToString());
         }
 
-        if (!waitInOtherThread(60000, canChangeDocument)) {
-          throw new TimeoutException("Unable to complete in 60s. Thread dump:\n" + ThreadDumper.dumpThreadsToString());
-        }
         ((HighlightingSessionImpl)session).waitForHighlightInfosApplied();
         EDT.dispatchAllInvocationEvents();
         EDT.dispatchAllInvocationEvents();
@@ -467,23 +465,29 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   @TestOnly
-  private boolean waitInOtherThread(int millis, boolean canChangeDocument) throws Throwable {
+  private void waitInOtherThread(int millis, boolean canChangeDocument, @NotNull ThrowableComputable<Boolean, Throwable> runWhile) throws Throwable {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Disposable disposable = Disposer.newDisposable();
+    AtomicBoolean assertOnModification = new AtomicBoolean();
     // last hope protection against PsiModificationTrackerImpl.incCounter() craziness (yes, Kotlin)
     myProject.getMessageBus().connect(disposable).subscribe(PsiModificationTracker.TOPIC,
       () -> {
-        throw new IllegalStateException("You must not perform PSI modifications from inside highlighting");
+        if (assertOnModification.get()) {
+          throw new IllegalStateException("You must not perform PSI modifications from inside highlighting");
+        }
       });
     if (!canChangeDocument) {
       myProject.getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonListener() {
         @Override
         public void daemonCancelEventOccurred(@NotNull String reason) {
-          throw new IllegalStateException("You must not cancel daemon inside highlighting test: "+reason);
+          if (assertOnModification.get()) {
+            throw new IllegalStateException("You must not cancel daemon inside highlighting test: "+reason);
+          }
         }
       });
     }
 
+    long deadline = System.currentTimeMillis() + millis;
     try {
       Future<Boolean> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
         try {
@@ -493,10 +497,19 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           throw new RuntimeException(e);
         }
       });
-      return future.get();
+      do {
+        assertOnModification.set(true);
+        try {
+          future.get(50, TimeUnit.MILLISECONDS);
+        }
+        catch (TimeoutException ignored) {
+        }
+        finally {
+          assertOnModification.set(false); //do not assert during dispatchAllEvents() because that's where all quick fixes happen
+        }
+      } while (runWhile.compute() && System.currentTimeMillis() < deadline);
     }
     catch (InterruptedException ex) {
-      return false;
     }
     finally {
       Disposer.dispose(disposable);
@@ -1018,12 +1031,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       return null;
     }
     EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();
-    HighlightingSession session;
+    HighlightingSessionImpl session;
     try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
       session = HighlightingSessionImpl.createHighlightingSession(psiFile, editor, scheme, progress);
     }
     JobLauncher.getInstance().submitToJobThread(() ->
-      submitInBackground(fileEditor, document, virtualFile, psiFile, highlighter, passesToIgnore, modificationCountBefore, progress),
+      submitInBackground(fileEditor, document, virtualFile, psiFile, highlighter, passesToIgnore, modificationCountBefore, progress, session),
       // manifest exceptions in EDT to avoid storing them in the Future and abandoning
       task -> ApplicationManager.getApplication().invokeLater(() -> ConcurrencyUtil.manifestExceptionsIn(task)));
     return session;
@@ -1042,7 +1055,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                                   @NotNull BackgroundEditorHighlighter backgroundEditorHighlighter,
                                   int @NotNull [] passesToIgnore,
                                   int modificationCountBefore,
-                                  @NotNull DaemonProgressIndicator progress) {
+                                  @NotNull DaemonProgressIndicator progress,
+                                  @NotNull HighlightingSessionImpl session) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (myProject.isDisposed()) {
       stopProcess(false, "project disposed");
@@ -1055,7 +1069,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         // wait for heavy processing to stop, re-schedule daemon but not too soon
-        boolean heavyProcessIsRunning = ReadAction.compute(() -> heavyProcessIsRunning());
+        boolean heavyProcessIsRunning = heavyProcessIsRunning();
         HighlightingPass[] passes = ReadAction.compute(() -> {
           if (myProject.isDisposed() || !fileEditor.isValid() || !psiFile.isValid()) {
             return HighlightingPass.EMPTY_ARRAY;
@@ -1064,10 +1078,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
             // editor or something was changed between commit document notification in EDT and this point in the FJP thread
             throw new ProcessCanceledException();
           }
+          boolean essentialHighlightingOnly = HighlightingLevelManager.getInstance(psiFile.getProject()).runEssentialHighlightingOnly(psiFile);
+          session.myIsEssentialHighlightingOnly = essentialHighlightingOnly;
           try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
             HighlightingPass[] r = backgroundEditorHighlighter instanceof TextEditorBackgroundHighlighter ?
-                                   ((TextEditorBackgroundHighlighter)backgroundEditorHighlighter).getPasses(passesToIgnore)
-                                     .toArray(HighlightingPass.EMPTY_ARRAY) :
+                                   ((TextEditorBackgroundHighlighter)backgroundEditorHighlighter).getPasses(passesToIgnore).toArray(HighlightingPass.EMPTY_ARRAY) :
                                    backgroundEditorHighlighter.createPassesForEditor();
             if (heavyProcessIsRunning) {
               r = ContainerUtil.findAllAsArray(r, DumbService::isDumbAware);
