@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
 import org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
@@ -50,6 +51,7 @@ import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class KotlinIndicesHelper(
     private val resolutionFacade: ResolutionFacade,
@@ -534,7 +536,8 @@ class KotlinIndicesHelper(
         processor: (DeclarationDescriptor) -> Unit
     ) {
         val namedDeclarationProcessor = Processor<KtNamedDeclaration> { declaration ->
-            val objectDeclaration = declaration.parent.parent as? KtObjectDeclaration ?: return@Processor true
+            val objectDeclaration = declaration.parents.match(KtClassBody::class, last = KtObjectDeclaration::class)
+                ?: return@Processor true
             if (objectDeclaration.isObjectLiteral()) return@Processor true
             if (filterOutPrivate && declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)) return@Processor true
             if (!filter(declaration, objectDeclaration)) return@Processor true

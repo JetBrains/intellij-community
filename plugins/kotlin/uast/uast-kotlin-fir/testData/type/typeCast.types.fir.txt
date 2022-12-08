@@ -58,7 +58,7 @@ UFile (package = ) [import java.lang.Runnable...]
                     ULocalVariable (name = r) [var r: java.lang.Object = anonymous object : Runnable {...    }]
                         UObjectLiteralExpression [anonymous object : Runnable {...    }] : PsiType:Runnable
                             UClass (name = null) [final class null : java.lang.Runnable {...}]
-                                UMethod (name = run) [public fun run() : void {...}]
+                                UMethod (name = run) [public final fun run() : void {...}]
                                     UBlockExpression [{...}] : PsiType:void
                                 UMethod (name = ) [private fun () = UastEmptyExpression]
                 UIfExpression [if (foo(r, true) !== UastEmptyExpression <other> UastEmptyExpression) return "Fail: " + r] : PsiType:Unit

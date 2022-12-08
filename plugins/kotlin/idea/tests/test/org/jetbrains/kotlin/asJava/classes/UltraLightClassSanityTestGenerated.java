@@ -570,6 +570,11 @@ public abstract class UltraLightClassSanityTestGenerated extends AbstractUltraLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/InlineReified.kt"));
         }
 
+        @TestMetadata("JavaBetween.kt")
+        public void testJavaBetween() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/JavaBetween.kt"));
+        }
+
         @TestMetadata("JvmNameOnMember.kt")
         public void testJvmNameOnMember() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/JvmNameOnMember.kt"));

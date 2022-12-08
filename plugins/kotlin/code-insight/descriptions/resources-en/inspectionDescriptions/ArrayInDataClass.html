@@ -9,7 +9,7 @@ Reports properties with an <code>Array</code> type in a <code>data</code> class 
 <pre><code>
   data class Text(val lines: Array&lt;String&gt;)
 </code></pre>
-<p>A quick-fix generates missing <code>equals()</code> and <code>hashCode()</code> implementations:</p>
+<p>The quick-fix generates missing <code>equals()</code> and <code>hashCode()</code> implementations:</p>
 <pre><code>
   data class Text(val lines: Array&lt;String&gt;) {
       override fun equals(other: Any?): Boolean {

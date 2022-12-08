@@ -42,7 +42,7 @@ class UnsupportedYieldFix(psiElement: PsiElement) : KotlinQuickFixAction<PsiElem
             val message = Errors.YIELD_IS_RESERVED.cast(diagnostic).a
             if (message == MESSAGE_FOR_YIELD_BEFORE_LAMBDA) {
                 // Identifier -> Expression -> Call (normal call) or Identifier -> Operation Reference -> Binary Expression (for infix usage)
-                val grand = diagnostic.psiElement.parent.parent
+                val grand = (diagnostic.psiElement.parent as? KtNameReferenceExpression)?.parent
                 if (grand is KtBinaryExpression || grand is KtCallExpression) {
                     return UnsupportedYieldFix(grand)
                 }

@@ -52,11 +52,12 @@ interface UastApiFixtureTestBase : UastPluginSelection {
 
     fun checkDetailsOfDeprecatedHidden(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
+            // Example from KTIJ-18039
             "MyClass.kt", """
             @Deprecated(level = DeprecationLevel.WARNING, message="subject to change")
             fun test1() { }
             @Deprecated(level = DeprecationLevel.HIDDEN, message="no longer supported")
-            fun test2() { }
+            fun test2() = Test(22)
             
             class Test(private val parameter: Int)  {
                 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -69,20 +70,31 @@ interface UastApiFixtureTestBase : UastPluginSelection {
 
         val test1 = uFile.findElementByTextFromPsi<UMethod>("test1", strict = false)
         TestCase.assertNotNull("can't convert function test1", test1)
+        // KTIJ-18716
         TestCase.assertTrue("Warning level, hasAnnotation", test1.javaPsi.hasAnnotation("kotlin.Deprecated"))
+        // KTIJ-18039
         TestCase.assertTrue("Warning level, isDeprecated", test1.javaPsi.isDeprecated)
+        // KTIJ-18720
         TestCase.assertTrue("Warning level, public", test1.javaPsi.hasModifierProperty(PsiModifier.PUBLIC))
+        // KTIJ-23807
+        TestCase.assertTrue("Warning level, nullability", test1.javaPsi.annotations.none { it.isNullnessAnnotation })
 
         val test2 = uFile.findElementByTextFromPsi<UMethod>("test2", strict = false)
         TestCase.assertNotNull("can't convert function test2", test2)
+        // KTIJ-18716
         TestCase.assertTrue("Hidden level, hasAnnotation", test2.javaPsi.hasAnnotation("kotlin.Deprecated"))
+        // KTIJ-18039
         TestCase.assertTrue("Hidden level, isDeprecated", test2.javaPsi.isDeprecated)
+        // KTIJ-18720
         TestCase.assertTrue("Hidden level, public", test2.javaPsi.hasModifierProperty(PsiModifier.PUBLIC))
+        // KTIJ-23807
+        TestCase.assertNotNull("Hidden level, nullability", test2.javaPsi.annotations.singleOrNull { it.isNullnessAnnotation })
 
         val testClass = uFile.findElementByTextFromPsi<UClass>("Test", strict = false)
         TestCase.assertNotNull("can't convert class Test", testClass)
         testClass.methods.forEach { mtd ->
             if (mtd.sourcePsi is KtConstructor<*>) {
+                // KTIJ-20200
                 TestCase.assertTrue("$mtd should be marked as a constructor", mtd.isConstructor)
             }
         }

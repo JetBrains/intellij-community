@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNa
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNamesUtils.getArgumentNameIfCanBeUsedForCalls
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 internal class AddNameToArgumentIntention :
     AbstractKotlinApplicableIntentionWithContext<KtValueArgument, AddNameToArgumentIntention.Context>(KtValueArgument::class),
@@ -46,7 +48,7 @@ internal class AddNameToArgumentIntention :
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtValueArgument): Context? {
-        val callElement = element.parent.parent as? KtCallElement ?: return null
+        val callElement = element.parents.match(KtValueArgumentList::class, last = KtCallElement::class) ?: return null
         val resolvedCall = callElement.resolveCall().singleFunctionCallOrNull() ?: return null
 
         if (!resolvedCall.symbol.hasStableParameterNames) {

@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.core.resolveType
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.resolve.jvm.annotations.VOLATILE_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDescriptor() {
     val stable: Boolean = calculateStable()
@@ -125,7 +127,7 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDes
                     if (isTrackableProperty(target)) {
                         val parent = expr.parent
                         var qualifier: DfaVariableValue? = null
-                        if (target.parent is KtClassBody && target.parent.parent is KtObjectDeclaration) {
+                        if (target.parents.match(KtClassBody::class, last = KtObjectDeclaration::class) != null) {
                             // property in object: singleton, can track
                             return varFactory.createVariableValue(KtVariableDescriptor(target), null)
                         }

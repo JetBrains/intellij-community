@@ -93,7 +93,7 @@ internal fun KtAnalysisSession.toPsiMethod(
             when {
                 psi.isLocal ->
                     handleLocalOrSynthetic(psi)
-                overriddenUnwrappedSymbolOrigin(functionSymbol) == KtSymbolOrigin.LIBRARY ->
+                functionSymbol.unwrapFakeOverrides.origin == KtSymbolOrigin.LIBRARY ->
                     // PSI to regular libraries should be handled by [DecompiledPsiDeclarationProvider]
                     // That is, this one is a deserialized declaration.
                     toPsiMethodForDeserialized(functionSymbol, context, psi)
@@ -105,17 +105,6 @@ internal fun KtAnalysisSession.toPsiMethod(
         else -> psi.getRepresentativeLightMethod()
     }
 }
-
-private fun KtAnalysisSession.overriddenUnwrappedSymbolOrigin(ktSymbol: KtCallableSymbol): KtSymbolOrigin =
-    when (val origin = ktSymbol.origin) {
-        KtSymbolOrigin.INTERSECTION_OVERRIDE,
-        KtSymbolOrigin.SUBSTITUTION_OVERRIDE -> {
-            ktSymbol.originalOverriddenSymbol?.let {
-                overriddenUnwrappedSymbolOrigin(it)
-            } ?: origin
-        }
-        else -> origin
-    }
 
 private fun KtAnalysisSession.toPsiMethodForDeserialized(
     functionSymbol: KtFunctionLikeSymbol,
@@ -287,8 +276,8 @@ internal tailrec fun KtAnalysisSession.psiForUast(symbol: KtSymbol, project: Pro
 
     if (symbol is KtCallableSymbol) {
         if (symbol.origin == KtSymbolOrigin.INTERSECTION_OVERRIDE || symbol.origin == KtSymbolOrigin.SUBSTITUTION_OVERRIDE) {
-            val originalSymbol = symbol.originalOverriddenSymbol
-            if (originalSymbol != null && originalSymbol !== symbol) {
+            val originalSymbol = symbol.unwrapFakeOverrides
+            if (originalSymbol !== symbol) {
                 return psiForUast(originalSymbol, project)
             }
         }

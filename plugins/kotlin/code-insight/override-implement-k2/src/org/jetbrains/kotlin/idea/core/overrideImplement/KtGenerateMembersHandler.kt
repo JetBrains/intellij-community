@@ -184,8 +184,8 @@ abstract class KtGenerateMembersHandler(
         // `KtMemberScope` because the latter does not guarantee members are traversed in the original order. For example the
         // FIR implementation groups overloaded functions together.
         outer@ for ((selectedSymbol, generatedPsi) in newMemberSymbolsAndGeneratedPsi) {
-            val superSymbol = selectedSymbol.originalOverriddenSymbol
-            val superPsi = superSymbol?.psi
+            val superSymbol = selectedSymbol.unwrapFakeOverrides
+            val superPsi = superSymbol.psi
             if (superPsi == null) {
                 // This normally should not happen, but we just try to play safe here.
                 sentinelTailNode.prepend(DoublyLinkedNode(MemberEntry.NewEntry(generatedPsi)))

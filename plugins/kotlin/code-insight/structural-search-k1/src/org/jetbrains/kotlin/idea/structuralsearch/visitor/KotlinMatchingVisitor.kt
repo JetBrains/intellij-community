@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -51,6 +52,7 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor) : SSRKtVisitor() {
     /** Gets the next element in the query tree and removes unnecessary parentheses. */
@@ -686,8 +688,10 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
 
     override fun visitObjectDeclaration(declaration: KtObjectDeclaration) {
         val other = getTreeElementDepar<KtObjectDeclaration>() ?: return
-        val inferredNameIdentifier =
-            declaration.nameIdentifier ?: if (declaration.isCompanion()) (declaration.parent.parent as KtClass).nameIdentifier else null
+        val inferredNameIdentifier = declaration.nameIdentifier
+            ?: declaration.takeIf(KtObjectDeclaration::isCompanion)
+                ?.let { it.parents.match(KtClassBody::class, last = KtClass::class) ?: error("Can't typeMatch ${it.parent.parent}") }
+                ?.nameIdentifier
         val handler = inferredNameIdentifier?.let { getHandler(inferredNameIdentifier) }
         val matchIdentifier = if (handler is SubstitutionHandler && handler.maxOccurs > 0 && handler.minOccurs == 0) {
             true // match count filter with companion object without identifier

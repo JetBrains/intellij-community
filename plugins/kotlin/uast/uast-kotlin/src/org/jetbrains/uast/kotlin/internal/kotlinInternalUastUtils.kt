@@ -224,7 +224,7 @@ private fun buildAnnotationProvider(ktType: KotlinType, context: PsiElement): Ty
 
 internal fun KtTypeReference?.toPsiType(source: UElement, boxed: Boolean = false): PsiType {
     if (this == null) return UastErrorType
-    return (analyze()[BindingContext.TYPE, this] ?: return UastErrorType).toPsiType(source, this, this.typeOwnerKind, boxed)
+    return (getType() ?: return UastErrorType).toPsiType(source, this, this.typeOwnerKind, boxed)
 }
 
 internal fun KtElement.analyze(): BindingContext {
@@ -236,6 +236,9 @@ internal fun KtElement.analyze(): BindingContext {
 internal fun KtExpression.getExpectedType(): KotlinType? = analyze()[BindingContext.EXPECTED_EXPRESSION_TYPE, this]
 
 internal fun KtTypeReference.getType(): KotlinType? = analyze()[BindingContext.TYPE, this]
+
+internal fun KtCallableDeclaration.getReturnType(): KotlinType? =
+    (analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, this] as? CallableDescriptor)?.returnType
 
 internal fun KotlinType.getFunctionalInterfaceType(
     source: UElement,

@@ -1648,6 +1648,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 runTest("../idea/tests/testData/findUsages/java/findJavaMethodUsages/OverriddenMethodSyntheticAccessor2.0.java");
             }
 
+            @TestMetadata("OverriddenMethodSyntheticAccessorWithFinalModifier.0.java")
+            public void testOverriddenMethodSyntheticAccessorWithFinalModifier() throws Exception {
+                runTest("../idea/tests/testData/findUsages/java/findJavaMethodUsages/OverriddenMethodSyntheticAccessorWithFinalModifier.0.java");
+            }
+
             @TestMetadata("OverridenArrayType.0.java")
             public void testOverridenArrayType() throws Exception {
                 runTest("../idea/tests/testData/findUsages/java/findJavaMethodUsages/OverridenArrayType.0.java");

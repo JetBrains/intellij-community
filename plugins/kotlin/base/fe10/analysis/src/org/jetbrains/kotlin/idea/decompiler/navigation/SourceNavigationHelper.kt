@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.fileClasses.JvmMultifileClassPartInfo
 import org.jetbrains.kotlin.fileClasses.fileClassInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.binariesScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.debugText.getDebugText
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 object SourceNavigationHelper {
     private val LOG = Logger.getInstance(SourceNavigationHelper::class.java)
@@ -297,7 +299,8 @@ object SourceNavigationHelper {
             findFirstMatchingInIndex(typeAlias, navigationKind, KotlinTopLevelTypeAliasFqNameIndex)
 
         override fun visitParameter(parameter: KtParameter, data: Unit): KtDeclaration? {
-            val callableDeclaration = parameter.parent.parent as KtCallableDeclaration
+            val callableDeclaration = parameter.parents.match(KtParameterList::class, last = KtCallableDeclaration::class)
+                ?: error("Can't typeMatch ${parameter.parent.parent}")
             val parameters = callableDeclaration.valueParameters
             val index = parameters.indexOf(parameter)
 

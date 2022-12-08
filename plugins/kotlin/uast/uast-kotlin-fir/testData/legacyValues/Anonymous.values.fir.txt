@@ -8,7 +8,7 @@ UFile (package = ) [import java.io.Closeable...]
                     ULocalVariable (name = runnable) [var runnable: java.lang.Object = anonymous object : Runnable { override fun run() {} }]
                         UObjectLiteralExpression [anonymous object : Runnable { override fun run() {} }] = Undetermined
                             UClass (name = null) [final class null : java.lang.Runnable {...}]
-                                UMethod (name = run) [public fun run() : void {...}]
+                                UMethod (name = run) [public final fun run() : void {...}]
                                     UBlockExpression [{...}] = Undetermined
                                 UMethod (name = ) [private fun () = UastEmptyExpression]
                 UQualifiedReferenceExpression [runnable.run()] = external run()()
@@ -41,20 +41,20 @@ UFile (package = ) [import java.io.Closeable...]
                     ULocalVariable (name = closeableRunnable) [var closeableRunnable: java.lang.Object = anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }]
                         UObjectLiteralExpression [anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }] = Undetermined
                             UClass (name = null) [final class null : java.lang.Runnable, java.io.Closeable {...}]
-                                UMethod (name = close) [public fun close() : void {...}]
+                                UMethod (name = close) [public final fun close() : void {...}]
                                     UBlockExpression [{...}] = Undetermined
-                                UMethod (name = run) [public fun run() : void {...}]
+                                UMethod (name = run) [public final fun run() : void {...}]
                                     UBlockExpression [{...}] = Undetermined
                                 UMethod (name = ) [private fun () = UastEmptyExpression]
                 UDeclarationsExpression [var runnableIs: java.io.InputStream = anonymous object : InputStream(), Runnable { override fun read(): Int = 0; override fun run() {} }] = Undetermined
                     ULocalVariable (name = runnableIs) [var runnableIs: java.io.InputStream = anonymous object : InputStream(), Runnable { override fun read(): Int = 0; override fun run() {} }]
                         UObjectLiteralExpression [anonymous object : InputStream(), Runnable { override fun read(): Int = 0; override fun run() {} }] = Undetermined
                             UClass (name = null) [final class null : java.io.InputStream, java.lang.Runnable {...}]
-                                UMethod (name = read) [public fun read() : int {...}]
+                                UMethod (name = read) [public final fun read() : int {...}]
                                     UBlockExpression [{...}] = Nothing
                                         UReturnExpression [return 0] = Nothing
                                             ULiteralExpression (value = 0) [0] = 0
-                                UMethod (name = run) [public fun run() : void {...}]
+                                UMethod (name = run) [public final fun run() : void {...}]
                                     UBlockExpression [{...}] = Undetermined
                                 UMethod (name = ) [private fun () {...}]
                                     UBlockExpression [{...}] = external <init>()()

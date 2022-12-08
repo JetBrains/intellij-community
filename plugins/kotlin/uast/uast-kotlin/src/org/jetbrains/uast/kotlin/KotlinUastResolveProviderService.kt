@@ -5,7 +5,6 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.*
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.asJava.toLightAnnotation
-import org.jetbrains.kotlin.backend.common.descriptors.explicitParameters
 import org.jetbrains.kotlin.builtins.createFunctionType
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -360,6 +359,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         }
         if (annotatedElement is KtCallableDeclaration) {
             annotatedElement.typeReference?.getType()?.let { return it }
+            annotatedElement.getReturnType()?.let { return it }
         }
         if (annotatedElement is KtProperty) {
             annotatedElement.initializer?.let { it.getType(it.analyze()) }?.let { return it }
