@@ -14,6 +14,7 @@ import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.facet.platform.TargetPlatformDetector
@@ -100,7 +101,10 @@ internal object ScriptingTargetPlatformDetector : TargetPlatformDetector {
                 parseCommandLineArguments(args.toList(), compilerArguments)
 
                 // TODO: reporting
-                val languageVersionSettings = compilerArguments.toLanguageVersionSettings(MessageCollector.NONE)
+                val languageVersionSettings = compilerArguments.toLanguageVersionSettings(
+                    MessageCollector.NONE,
+                    mapOf(AnalysisFlags.ideMode to true)
+                )
                 val platformVersion = compilerArguments.jvmTarget?.let { JvmTarget.fromString(it) }
                     ?: detectDefaultTargetPlatformVersion(scriptModule?.platform)
 
