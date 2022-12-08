@@ -2,7 +2,7 @@
 package com.intellij.collaboration.ui.util
 
 import com.intellij.util.ui.SingleComponentCenteringLayout
-import java.awt.Dimension
+import java.awt.*
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
 
@@ -12,6 +12,12 @@ object JComponentOverlay {
     val pane = object : JLayeredPane() {
       override fun getPreferredSize(): Dimension = component.preferredSize
 
+      override fun getMinimumSize(): Dimension = component.minimumSize
+
+      override fun getMaximumSize(): Dimension = component.maximumSize
+
+      override fun isVisible(): Boolean = component.isVisible
+
       override fun doLayout() {
         super.doLayout()
         component.setBounds(0, 0, width, height)
@@ -19,8 +25,8 @@ object JComponentOverlay {
       }
     }
     pane.isFocusable = false
-    pane.add(component, JLayeredPane.DEFAULT_LAYER, 0)
-    pane.add(centeredOverlay, JLayeredPane.POPUP_LAYER, 1)
+    pane.add(component, JLayeredPane.DEFAULT_LAYER, -1)
+    pane.add(centeredOverlay, JLayeredPane.PALETTE_LAYER, -1)
     return pane
   }
 }
