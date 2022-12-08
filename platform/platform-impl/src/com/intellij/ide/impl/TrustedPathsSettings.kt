@@ -2,6 +2,7 @@
 package com.intellij.ide.impl
 
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.isAncestor
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.ApiStatus
@@ -14,12 +15,6 @@ fun isPathTrustedInSettings(path: Path): Boolean = service<TrustedPathsSettings>
 @State(name = "Trusted.Paths.Settings", storages = [Storage(value = "trusted-paths.xml", roamingType = RoamingType.DISABLED)])
 @Service(Service.Level.APP)
 internal class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPathsSettings.State>(State()) {
-
-  companion object {
-    @JvmStatic
-    fun getInstance(): TrustedPathsSettings = service()
-  }
-
   class State : BaseState() {
     @get:OptionTag("TRUSTED_PATHS")
     var trustedPaths by list<String>()
@@ -27,7 +22,15 @@ internal class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPath
 
   fun isPathTrusted(path: Path): Boolean {
     return state.trustedPaths.asSequence()
-      .mapNotNull { path.fileSystem.getPath(it) }
+      .mapNotNull {
+        try {
+          Path.of(it)
+        }
+        catch (e: Exception) {
+          logger<TrustedPathsSettings>().warn(e)
+          null
+        }
+      }
       .any { it.isAncestor(path) }
   }
 

@@ -75,7 +75,7 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
           LOG.debug("Auto-linked ${projectId.debugName} project")
         }
         withContext(Dispatchers.EDT) {
-          unlinkedProjectAware.linkAndLoadProject(project, externalProjectPath)
+          unlinkedProjectAware.linkAndLoadProjectWithLoadingConfirmation(project, externalProjectPath)
         }
         return
       }

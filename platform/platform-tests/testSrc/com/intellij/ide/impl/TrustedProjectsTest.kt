@@ -28,8 +28,7 @@ class TrustedProjectsTest {
     assertTrusted(innerDir)
   }
 
-  @Test
-  fun `return unsure if there are no information about ancestors`() {
+  @Test fun `return unsure if there are no information about ancestors`() {
     val projects = memoryFs.fs.getPath("~/projects/")
     TrustedPaths.getInstance().setProjectPathTrusted(projects, true)
 
@@ -37,103 +36,10 @@ class TrustedProjectsTest {
     assertEquals(ThreeState.UNSURE, TrustedPaths.getInstance().getProjectPathTrustedState(path))
   }
 
-  @Test
-  fun `test project roots filtering`() {
-    assertEquals(
-      emptyList<Path>(),
-      filterProjectRoots(emptyList())
-    )
-    assertEquals(
-      listOf(
-        memoryFs.fs.getPath("~/project"),
-      ),
-      filterProjectRoots(listOf(
-        memoryFs.fs.getPath("~/project"),
-      ))
-    )
-    assertEquals(
-      listOf(
-        memoryFs.fs.getPath("~/project"),
-      ),
-      filterProjectRoots(listOf(
-        memoryFs.fs.getPath("~/project"),
-        memoryFs.fs.getPath("~/project/module"),
-      ))
-    )
-    assertEquals(
-      listOf(
-        memoryFs.fs.getPath("~/project"),
-        memoryFs.fs.getPath("~/module"),
-      ),
-      filterProjectRoots(listOf(
-        memoryFs.fs.getPath("~/project"),
-        memoryFs.fs.getPath("~/module"),
-      ))
-    )
-    assertEquals(
-      listOf(
-        memoryFs.fs.getPath("~/project"),
-      ),
-      filterProjectRoots(listOf(
-        memoryFs.fs.getPath("~/project"),
-        memoryFs.fs.getPath("~/project"),
-      ))
-    )
-    assertEquals(
-      listOf(
-        memoryFs.fs.getPath("~/project"),
-      ),
-      filterProjectRoots(listOf(
-        memoryFs.fs.getPath("~/project/module"),
-        memoryFs.fs.getPath("~/project"),
-      ))
-    )
-    assertEquals(
-      listOf(
-        memoryFs.fs.getPath("~/project"),
-        memoryFs.fs.getPath("~/module"),
-      ),
-      filterProjectRoots(listOf(
-        memoryFs.fs.getPath("~/project"),
-        memoryFs.fs.getPath("~/project/module"),
-        memoryFs.fs.getPath("~/project/module/src/main"),
-        memoryFs.fs.getPath("~/project/module/src/test"),
-        memoryFs.fs.getPath("~/project/module2"),
-        memoryFs.fs.getPath("~/project/module2/src/main"),
-        memoryFs.fs.getPath("~/project/module2/src/test"),
-        memoryFs.fs.getPath("~/module"),
-        memoryFs.fs.getPath("~/module/src/main"),
-        memoryFs.fs.getPath("~/module/src/test"),
-      ))
-    )
-    assertEquals(
-      listOf(
-        memoryFs.fs.getPath("~/project"),
-        memoryFs.fs.getPath("~/module"),
-      ),
-      filterProjectRoots(listOf(
-        memoryFs.fs.getPath("~/project/module/src/main"),
-        memoryFs.fs.getPath("~/module/src/test"),
-        memoryFs.fs.getPath("~/project/module2"),
-        memoryFs.fs.getPath("~/project"),
-        memoryFs.fs.getPath("~/project/module"),
-        memoryFs.fs.getPath("~/project/module2/src/main"),
-        memoryFs.fs.getPath("~/module"),
-        memoryFs.fs.getPath("~/project"),
-        memoryFs.fs.getPath("~/module/src/main"),
-        memoryFs.fs.getPath("~/project/module2/src/test"),
-        memoryFs.fs.getPath("~/project/module"),
-        memoryFs.fs.getPath("~/project/module/src/test"),
-      ))
-    )
-  }
-
   private fun assertTrusted(path: Path) = assertEquals(ThreeState.YES, TrustedPaths.getInstance().getProjectPathTrustedState(path))
   private fun assertNotTrusted(path: Path) = assertEquals(ThreeState.NO, TrustedPaths.getInstance().getProjectPathTrustedState(path))
 
   companion object {
-    @ClassRule
-    @JvmField
-    val appRule = ApplicationRule()
+    @ClassRule @JvmField val appRule = ApplicationRule()
   }
 }

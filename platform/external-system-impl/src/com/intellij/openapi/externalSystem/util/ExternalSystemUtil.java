@@ -107,7 +107,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -638,22 +637,6 @@ public final class ExternalSystemUtil {
     }
   }
 
-  public static boolean confirmLinkingUntrustedProject(
-    @NotNull Project project,
-    @NotNull ProjectSystemId systemId,
-    @NotNull Path projectRoot
-  ) {
-    return TrustedProjects.confirmOpeningOrLinkingUntrustedProject(
-      projectRoot,
-      project,
-      IdeBundle.message("untrusted.project.link.dialog.title", systemId.getReadableName(), projectRoot.getFileName()),
-      IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfo.getInstance().getFullApplicationName()),
-      IdeBundle.message("untrusted.project.dialog.trust.button"),
-      IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
-      IdeBundle.message("untrusted.project.link.dialog.cancel.button")
-    );
-  }
-
   public static boolean confirmLoadingUntrustedProject(
     @NotNull Project project,
     @NotNull ProjectSystemId systemId
@@ -666,13 +649,14 @@ public final class ExternalSystemUtil {
     @NotNull Collection<ProjectSystemId> systemIds
   ) {
     String systemsPresentation = naturalJoinSystemIds(systemIds);
-    return TrustedProjects.confirmLoadingUntrustedProject(
-      project,
-      IdeBundle.message("untrusted.project.dialog.title", systemsPresentation, systemIds.size()),
-      IdeBundle.message("untrusted.project.dialog.text", systemsPresentation, systemIds.size()),
-      IdeBundle.message("untrusted.project.dialog.trust.button"),
-      IdeBundle.message("untrusted.project.dialog.distrust.button")
-    );
+    return TrustedProjects.isTrusted(project) ||
+           TrustedProjects.confirmLoadingUntrustedProject(
+             project,
+             IdeBundle.message("untrusted.project.dialog.title", systemsPresentation, systemIds.size()),
+             IdeBundle.message("untrusted.project.dialog.text", systemsPresentation, systemIds.size()),
+             IdeBundle.message("untrusted.project.dialog.trust.button"),
+             IdeBundle.message("untrusted.project.dialog.distrust.button")
+           );
   }
 
   public static @NotNull @Nls String naturalJoinSystemIds(@NotNull Collection<ProjectSystemId> systemIds) {
