@@ -33,6 +33,9 @@ abstract class EditorBasedWidget protected constructor(
   protected val project: Project
     get() = myProject
 
+  protected val statusBar: StatusBar?
+    get() = myStatusBar
+
   init {
     @Suppress("LeakingThis")
     myConnection = project.messageBus.connect(this)

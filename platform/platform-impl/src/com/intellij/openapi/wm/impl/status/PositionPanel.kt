@@ -2,8 +2,8 @@
 package com.intellij.openapi.wm.impl.status
 
 import com.intellij.ide.util.EditorGotoLineNumberDialog
-import com.intellij.ide.util.GotoLineNumberDialog
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -21,22 +21,72 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget.*
 import com.intellij.ui.UIBundle
-import com.intellij.util.Alarm
 import com.intellij.util.Consumer
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.FocusUtil
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.event.MouseEvent
-import javax.swing.SwingUtilities
+import kotlin.time.Duration.Companion.milliseconds
 
+@OptIn(FlowPreview::class)
 open class PositionPanel(project: Project) : EditorBasedWidget(project), Multiframe {
-  private val myAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
-  private val myQueue = MergingUpdateQueue("PositionPanel", 100, true, null, this)
-  private var countTask: CodePointCountTask? = null
+  @Volatile
   private var text: @NlsContexts.Label String? = null
+
+  private val updateTextRequests = MutableSharedFlow<Editor?>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val countRequests = MutableSharedFlow<CodePointCountTask>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  init {
+    @Suppress("DEPRECATION", "LeakingThis")
+    project.coroutineScope.launch {
+      withContext(Dispatchers.EDT) {
+        FocusUtil.addFocusOwnerListener(this@PositionPanel) {
+          updatePosition(getFocusedEditor())
+        }
+      }
+
+      launch {
+        updateTextRequests
+          .debounce(100.milliseconds)
+          .collectLatest { editor ->
+            val empty = editor == null || DISABLE_FOR_EDITOR.isIn(editor)
+            if (!empty && withContext(Dispatchers.EDT) { !isOurEditor(editor) }) {
+              return@collectLatest
+            }
+
+            @Suppress("HardCodedStringLiteral")
+            val newText = if (empty) "" else readAction { getPositionText(editor!!) }
+            if (newText == text) {
+              return@collectLatest
+            }
+            text = newText
+            withContext(Dispatchers.EDT) {
+              statusBar?.updateWidget(ID())
+            }
+          }
+      }
+
+      countRequests.collectLatest { task ->
+        val count = task.calculate()
+        withContext(Dispatchers.EDT) {
+          text?.let {
+            text = it.replace(CHAR_COUNT_UNKNOWN, count.toString())
+            statusBar?.updateWidget(ID())
+          }
+        }
+      }
+    }.cancelOnDispose(this)
+  }
 
   companion object {
     @JvmField
@@ -61,6 +111,7 @@ open class PositionPanel(project: Project) : EditorBasedWidget(project), Multifr
       override fun getTooltipText(): String {
         val toolTip = UIBundle.message("go.to.line.command.name")
         val shortcut = shortcutText
+        @Suppress("SpellCheckingInspection")
         return if (shortcut.isNotEmpty() && !Registry.`is`("ide.helptooltip.enabled")) "$toolTip ($shortcut)" else toolTip
       }
 
@@ -73,7 +124,7 @@ open class PositionPanel(project: Project) : EditorBasedWidget(project), Multifr
           CommandProcessor.getInstance().executeCommand(
             project,
             {
-              val dialog: GotoLineNumberDialog = EditorGotoLineNumberDialog(project, editor)
+              val dialog = EditorGotoLineNumberDialog(project, editor)
               dialog.show()
               IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation()
             },
@@ -122,11 +173,6 @@ open class PositionPanel(project: Project) : EditorBasedWidget(project), Multifr
           .ifPresent { editor: Editor? -> updatePosition(editor) }
       }
     }, this)
-    ApplicationManager.getApplication().invokeLater {
-      FocusUtil.addFocusOwnerListener(this) {
-        updatePosition(getFocusedEditor())
-      }
-    }
   }
 
   private fun isFocusedEditor(editor: Editor): Boolean {
@@ -134,32 +180,12 @@ open class PositionPanel(project: Project) : EditorBasedWidget(project), Multifr
   }
 
   private fun updatePosition(editor: Editor?) {
-    myQueue.queue(Update.create(this) {
-      val empty = editor == null || DISABLE_FOR_EDITOR.isIn(editor)
-      if (!empty && !isOurEditor(editor)) {
-        return@create
-      }
-
-      val newText = if (empty) "" else getPositionText(editor!!)
-      if (newText == text) {
-        return@create
-      }
-      text = newText
-      myStatusBar?.updateWidget(ID())
-    })
-  }
-
-  private fun updateTextWithCodePointCount(codePointCount: Int) {
-    if (text != null) {
-      text = text!!.replace(CHAR_COUNT_UNKNOWN, codePointCount.toString())
-      myStatusBar?.updateWidget(ID())
-    }
+    check(updateTextRequests.tryEmit(editor))
   }
 
   @Suppress("HardCodedStringLiteral")
   private fun getPositionText(editor: Editor): @NlsContexts.Label String {
-    countTask = null
-    if (editor.isDisposed || myAlarm.isDisposed) {
+    if (editor.isDisposed) {
       return ""
     }
 
@@ -177,17 +203,16 @@ open class PositionPanel(project: Project) : EditorBasedWidget(project), Multifr
       val selectionEnd = selectionModel.selectionEnd
       if (selectionEnd > selectionStart) {
         message.append(" (")
-        val countTask = CodePointCountTask(editor.document.immutableCharSequence,
-                                           selectionStart, selectionEnd)
+        val countTask = CodePointCountTask(text = editor.document.immutableCharSequence,
+                                           startOffset = selectionStart,
+                                           endOffset = selectionEnd)
         if (countTask.isQuick) {
           val charCount = countTask.calculate()
           message.append(charCount).append(' ').append(UIBundle.message("position.panel.selected.chars.count", charCount))
         }
         else {
           message.append(CHAR_COUNT_UNKNOWN).append(' ').append(UIBundle.message("position.panel.selected.chars.count", 2))
-          this.countTask = countTask
-          myAlarm.cancelAllRequests()
-          myAlarm.addRequest(countTask, 0)
+          check(countRequests.tryEmit(countTask))
         }
         val selectionStartLine = editor.document.getLineNumber(selectionStart)
         val selectionEndLine = editor.document.getLineNumber(selectionEnd)
@@ -203,20 +228,10 @@ open class PositionPanel(project: Project) : EditorBasedWidget(project), Multifr
 
   private inner class CodePointCountTask(private val text: CharSequence,
                                          private val startOffset: Int,
-                                         private val endOffset: Int) : Runnable {
+                                         private val endOffset: Int) {
     val isQuick: Boolean
       get() = (endOffset - startOffset) < CHAR_COUNT_SYNC_LIMIT
 
     fun calculate(): Int = Character.codePointCount(text, startOffset, endOffset)
-
-    override fun run() {
-      val count = calculate()
-      SwingUtilities.invokeLater {
-        if (this == countTask) {
-          updateTextWithCodePointCount(count)
-          countTask = null
-        }
-      }
-    }
   }
 }
