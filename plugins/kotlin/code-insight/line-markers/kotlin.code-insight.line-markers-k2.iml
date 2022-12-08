@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.java.psi" />
+    <orderEntry type="module" module-name="kotlin.searching.k2" />
   </component>
 </module>

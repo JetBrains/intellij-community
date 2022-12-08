@@ -2,8 +2,9 @@
 package org.jetbrains.kotlin.idea.k2.codeInsight.lineMarkers.test
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
-import com.intellij.testFramework.ExpectedHighlightingData
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
+import org.jetbrains.kotlin.idea.base.test.KotlinExpectedHighlightingData
 import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
 
@@ -15,14 +16,14 @@ abstract class AbstractLineMarkerTest : NewLightKotlinCodeInsightFixtureTestCase
         myFixture.configureByDefaultFile()
 
         val document = editor.document
-        val data = ExpectedHighlightingData(document)
+        val data = KotlinExpectedHighlightingData(document)
         data.init()
 
         myFixture.doHighlighting()
 
 
         val lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, project)
-        data.checkLineMarkers(myFixture.file, lineMarkers, document.text)
+        ActionUtil.underModalProgress(myFixture.project, "") { data.checkLineMarkers(myFixture.file, lineMarkers, document.text) }
     }
 
     override fun getProjectDescriptor() = KotlinJvmLightProjectDescriptor.DEFAULT

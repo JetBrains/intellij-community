@@ -16,7 +16,6 @@ import org.junit.runner.RunWith;
 @TestRoot("code-insight/line-markers")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData")
 public abstract class LineMarkerTestGenerated extends AbstractLineMarkerTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/recursive")
@@ -182,6 +181,150 @@ public abstract class LineMarkerTestGenerated extends AbstractLineMarkerTest {
 
         @TestMetadata("variable.kt")
         public void testVariable() throws Exception {
+            performTest();
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement")
+    public static class OverrideImplement extends AbstractLineMarkerTest {
+        @TestMetadata("BadCodeNoExceptions.kt")
+        public void testBadCodeNoExceptions() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("Class.kt")
+        public void testClass() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("ClassAndProperties.kt")
+        public void testClassAndProperties() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("ClassObjectInStaticNestedClass.kt")
+        public void testClassObjectInStaticNestedClass() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("DelegatedFun.kt")
+        public void testDelegatedFun() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("DelegatedProperty.kt")
+        public void testDelegatedProperty() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("EnumEntry.kt")
+        public void testEnumEntry() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("FakeOverrideForClasses.kt")
+        public void testFakeOverrideForClasses() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("FakeOverrideFun.kt")
+        public void testFakeOverrideFun() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("FakeOverrideFunWithMostRelevantImplementation.kt")
+        public void testFakeOverrideFunWithMostRelevantImplementation() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("FakeOverrideProperty.kt")
+        public void testFakeOverrideProperty() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("FakeOverrideToStringInInterface.kt")
+        public void testFakeOverrideToStringInInterface() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("FakeOverridesForInterfaceFunWithImpl.kt")
+        public void testFakeOverridesForInterfaceFunWithImpl() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("Interface.kt")
+        public void testInterface() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("NavigateFromPrivateAbstractClass.kt")
+        public void testNavigateFromPrivateAbstractClass() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("NavigateToSeveralSuperElements.kt")
+        public void testNavigateToSeveralSuperElements() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("NoOverridingMarkerOnDefaultInterfaceImpl.kt")
+        public void testNoOverridingMarkerOnDefaultInterfaceImpl() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("Overloads.kt")
+        public void testOverloads() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("OverrideFunction.kt")
+        public void testOverrideFunction() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("OverrideIconForOverloadMethodBug.kt")
+        public void testOverrideIconForOverloadMethodBug() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("OverrideMemberOfAbstractClass.kt")
+        public void testOverrideMemberOfAbstractClass() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("OverridenInterfaceDeclarations.kt")
+        public void testOverridenInterfaceDeclarations() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("OverridingTooltipOnDefaultInterfaceImpl.kt")
+        public void testOverridingTooltipOnDefaultInterfaceImpl() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("PrimaryConstructorOpen.kt")
+        public void testPrimaryConstructorOpen() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("PrimaryConstructorOverride.kt")
+        public void testPrimaryConstructorOverride() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("PropertyOverride.kt")
+        public void testPropertyOverride() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("SealedClass.kt")
+        public void testSealedClass() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("ToStringInInterface.kt")
+        public void testToStringInInterface() throws Exception {
             performTest();
         }
     }

@@ -3,7 +3,7 @@ operator fun Any.get(a: Int) {
 }
 
 class Foo {
-    override fun equals(other: Any?): Boolean {
+    override fun <lineMarker descr="Overrides function in Any (kotlin) Press ... to navigate">equals</lineMarker>(other: Any?): Boolean {
         this <lineMarker text="Recursive call">==</lineMarker> other
         return true
     }

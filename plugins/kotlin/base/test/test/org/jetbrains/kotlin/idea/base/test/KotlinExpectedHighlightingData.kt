@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeInsight
+package org.jetbrains.kotlin.idea.base.test
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.openapi.editor.Document
 import com.intellij.testFramework.ExpectedHighlightingData
 import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
 import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
-import org.jetbrains.kotlin.idea.codeInsight.InnerLineMarkerConfiguration.Companion.sanitizeLineMarker
+import org.jetbrains.kotlin.idea.base.test.InnerLineMarkerConfiguration.Companion.sanitizeLineMarker
 
 class KotlinExpectedHighlightingData(document: Document) :
     ExpectedHighlightingData(/* document = */ document,

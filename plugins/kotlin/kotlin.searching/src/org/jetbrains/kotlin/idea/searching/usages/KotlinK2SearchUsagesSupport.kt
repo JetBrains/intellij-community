@@ -226,7 +226,11 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     override fun isInheritable(ktClass: KtClass): Boolean = isOverridableBySymbol(ktClass)
 
     private fun isOverridableBySymbol(declaration: KtDeclaration) = analyzeWithReadAction(declaration) {
-        val symbol = declaration.getSymbol() as? KtSymbolWithModality ?: return@analyzeWithReadAction false
+        var declarationSymbol : KtSymbol? = declaration.getSymbol()
+        if (declarationSymbol is KtValueParameterSymbol) {
+            declarationSymbol = declarationSymbol.generatedPrimaryConstructorProperty
+        }
+        val symbol = declarationSymbol as? KtSymbolWithModality ?: return@analyzeWithReadAction false
         when (symbol.modality) {
             Modality.OPEN, Modality.SEALED, Modality.ABSTRACT -> true
             Modality.FINAL -> false

@@ -43,16 +43,6 @@
     <uastLanguagePlugin implementation="org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin"/>
   </extensions>
 
-  <!-- Line markers -->
-  <extensions defaultExtensionNs="com.intellij">
-    <codeInsight.lineMarkerProvider
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.KotlinSuspendCallLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.KotlinRecursiveCallLineMarkerProvider"/>
-  </extensions>
-
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsProviderIdeImpl"
                     serviceInterface="org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider"/>
@@ -238,6 +228,7 @@
     <module name="kotlin.refactorings.rename.k2"/>
 
     <module name="kotlin.navigation"/>
+    <module name="kotlin.code-insight.line-markers-k2"/>
     <module name="kotlin.highlighting"/>
   </content>
 </idea-plugin>
