@@ -1,10 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight
 
-import com.intellij.codeInsight.CodeInsightActionHandler
+import com.intellij.codeInsight.generation.actions.PresentableCodeInsightActionHandler
 import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.codeInsight.navigation.actions.GotoSuperAction
 import com.intellij.featureStatistics.FeatureUsageTracker
+import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.PopupTitle
@@ -17,7 +19,7 @@ import org.jetbrains.kotlin.idea.codeInsight.SuperDeclaration
 import org.jetbrains.kotlin.idea.codeInsight.SuperDeclarationProvider
 import org.jetbrains.kotlin.psi.*
 
-internal class KotlinGoToSuperDeclarationsHandler : CodeInsightActionHandler {
+internal class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler {
     companion object {
         private val ALLOWED_DECLARATION_CLASSES = arrayOf(
             KtNamedFunction::class.java,
@@ -39,10 +41,10 @@ internal class KotlinGoToSuperDeclarationsHandler : CodeInsightActionHandler {
                     is KtProperty -> KotlinBundle.message("goto.super.chooser.property.title")
                     else -> error("Unexpected declaration $targetDeclaration")
                 }
-
                 return HandlerResult.Multiple(title, superDeclarations)
             }
         }
+
     }
 
     sealed class HandlerResult {
@@ -79,6 +81,18 @@ internal class KotlinGoToSuperDeclarationsHandler : CodeInsightActionHandler {
                 }
             }
             null -> {}
+        }
+    }
+
+    override fun update(editor: Editor, file: PsiFile, presentation: Presentation?) {
+        if (file !is KtFile) return
+        val element = file.findElementAt(editor.caretModel.offset) ?: return
+        val targetDeclaration = PsiTreeUtil.getParentOfType<KtDeclaration>(element, *ALLOWED_DECLARATION_CLASSES) ?: return
+        presentation?.text = when (targetDeclaration) {
+            is KtClass, is PsiClass -> KotlinBundle.message("action.GotoSuperClass.MainMenu.text")
+            is KtFunction, is PsiMethod -> ActionsBundle.actionText("GotoSuperMethod.MainMenu")
+            is KtProperty -> KotlinBundle.message("action.GotoSuperProperty.MainMenu.text")
+            else -> error("Unexpected declaration $targetDeclaration")
         }
     }
 
