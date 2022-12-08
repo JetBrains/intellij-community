@@ -5,7 +5,6 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,13 +22,4 @@ public interface TestDiffProvider {
   @Nullable
   @RequiresReadLock
   PsiElement findExpected(@NotNull Project project, @NotNull String stackTrace);
-
-  /**
-   * Creates the actual literal from text for replacement
-   * @param element The string literal element to replace
-   * @param actual The text used for the replacement
-   */
-  @NotNull
-  @RequiresWriteLock
-  PsiElement createActual(@NotNull Project project, @NotNull PsiElement element, @NotNull String actual);
 }

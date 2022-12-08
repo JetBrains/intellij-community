@@ -2,7 +2,6 @@
 package com.intellij.execution.testframework
 
 import com.intellij.codeInsight.CodeInsightUtil
-import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.util.asSafely
 import com.intellij.util.containers.ContainerUtil
@@ -10,10 +9,6 @@ import com.siyeh.ig.testFrameworks.AssertHint.Companion.createAssertEqualsHint
 import org.jetbrains.uast.UMethod
 
 class JavaTestDiffProvider : JvmTestDiffProvider<PsiMethodCallExpression>() {
-  override fun createActual(project: Project, element: PsiElement, actual: String): PsiElement {
-    return PsiElementFactory.getInstance(project).createExpressionFromText("\"$actual\"", element)
-  }
-
   override fun getParamIndex(param: PsiElement): Int? {
     if (param is PsiParameter) {
       return param.parent.asSafely<PsiParameterList>()?.parameters?.indexOf<PsiElement>(param)

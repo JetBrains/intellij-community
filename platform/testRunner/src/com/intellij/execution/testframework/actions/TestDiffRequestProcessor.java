@@ -89,7 +89,7 @@ public class TestDiffRequestProcessor {
           PsiElement expected = ReadAction.compute(() -> getExpected(provider, testProxy));
           if (expected != null) {
             file1 = ReadAction.compute(() -> PsiUtilCore.getVirtualFile(expected));
-            content1 = ReadAction.compute(() -> createPsiDiffContent(provider, expected, text1));
+            content1 = ReadAction.compute(() -> createPsiDiffContent(expected, text1));
           }
         }
       }
@@ -118,11 +118,9 @@ public class TestDiffRequestProcessor {
       return provider.findExpected(myProject, testProxy.getStacktrace());
     }
 
-    private @Nullable DiffContent createPsiDiffContent(@NotNull TestDiffProvider provider,
-                                                       @NotNull PsiElement element,
-                                                       @NotNull String text) {
+    private @Nullable DiffContent createPsiDiffContent(@NotNull PsiElement element, @NotNull String text) {
       SmartPsiElementPointer<PsiElement> elemPtr = SmartPointerManager.createPointer(element);
-      return TestDiffContent.Companion.create(myProject, text, elemPtr, provider::createActual);
+      return TestDiffContent.Companion.create(myProject, text, elemPtr);
     }
 
     @Override
