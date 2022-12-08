@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.daemon.*;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
@@ -1078,8 +1077,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
             // editor or something was changed between commit document notification in EDT and this point in the FJP thread
             throw new ProcessCanceledException();
           }
-          boolean essentialHighlightingOnly = HighlightingLevelManager.getInstance(psiFile.getProject()).runEssentialHighlightingOnly(psiFile);
-          session.myIsEssentialHighlightingOnly = essentialHighlightingOnly;
+          session.additionalSetupFromBackground(psiFile);
           try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
             HighlightingPass[] r = backgroundEditorHighlighter instanceof TextEditorBackgroundHighlighter ?
                                    ((TextEditorBackgroundHighlighter)backgroundEditorHighlighter).getPasses(passesToIgnore).toArray(HighlightingPass.EMPTY_ARRAY) :
