@@ -1,5 +1,6 @@
 package org.jetbrains.completion.full.line.local.tokenizer
 
+import org.jetbrains.completion.full.line.local.utils.Caching
 import java.io.File
 import java.nio.charset.Charset
 import java.util.*
@@ -124,26 +125,6 @@ data class SpecialTokens(
 }
 
 class FullLineTokenizer private constructor(private var encoder: BaseEncoder) : Tokenizer {
-
-  private inner class IdsByRegexCache {
-    private val cache = hashMapOf<String, Set<Int>>()
-    private val maxCacheSize = 10
-
-    private fun idsByRegexWithoutCaching(regex: Regex): Set<Int> {
-      return vocab.filterKeys { it.contains(regex) }.values.toSet()
-    }
-
-    fun idsByRegex(regex: Regex): Set<Int> {
-      if (!cache.containsKey(regex.pattern) && cache.size < maxCacheSize) {
-        cache[regex.pattern] = idsByRegexWithoutCaching(regex)
-      }
-      return cache.getOrElse(regex.pattern) { idsByRegexWithoutCaching(regex) }
-    }
-  }
-
-  private val idsByRegexCache = IdsByRegexCache()
-
-
   override val vocabSize = encoder.vocabSize()
   override val eosTokenId = this.encoder.bpeState.specialTokens.eosId
   override val invalidIds: Set<Int> = setOf(
@@ -152,7 +133,7 @@ class FullLineTokenizer private constructor(private var encoder: BaseEncoder) : 
     this.encoder.bpeState.specialTokens.bosId,
     this.encoder.bpeState.specialTokens.eosId
   )
-
+  private val idsByRegexCache = Caching.default<String, Set<Int>>()
 
   companion object {
     fun load(modelFile: File): FullLineTokenizer {
@@ -234,7 +215,9 @@ class FullLineTokenizer private constructor(private var encoder: BaseEncoder) : 
    * So it can be called every generation, but only if you provide the same [regex]
    */
   override fun idsByRegex(regex: Regex): Set<Int> {
-    return idsByRegexCache.idsByRegex(regex)
+    return idsByRegexCache.get(regex.pattern) {
+      vocab.filterKeys { it.contains(regex) }.values.toSet()
+    }
   }
 
   override val vocab: Map<String, Int> = encoder.vocabulary().mapIndexed { index, s -> Pair(s, index) }.toMap()
