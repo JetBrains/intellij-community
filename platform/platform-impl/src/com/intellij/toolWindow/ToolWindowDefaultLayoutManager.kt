@@ -172,7 +172,7 @@ private fun convertWindowStateToDescriptor(it: WindowInfoImpl): ToolWindowDescri
 
 @Suppress("DuplicatedCode")
 private fun convertDescriptorListToLayout(list: List<ToolWindowDescriptor>): DesktopLayout {
-  return DesktopLayout(list.map {
+  return DesktopLayout(list.associateTo(hashMapOf()) { it.id to
     WindowInfoImpl().apply {
       id = it.id
       order = it.order

@@ -600,11 +600,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
                                   source: ToolWindowEventSource? = null) {
     LOG.debug { "activateToolWindow($entry)" }
 
-    if (!isIndependentToolWindowResizeEnabled()) {
-      val visibleToolWindow = visibleToolWindow(info.anchor)
-      if (visibleToolWindow != null) {
-        info.weight = visibleToolWindow.readOnlyWindowInfo.weight
-      }
+    if (isUnifiedToolWindowSizesEnabled()) {
+      info.weight = layoutState.getUnifiedAnchorWeight(info.anchor)
     }
 
     if (source != null) {
@@ -638,6 +635,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     fireStateChanged(ToolWindowManagerEventType.ActivateToolWindow)
   }
+
+  private fun isUnifiedToolWindowSizesEnabled(): Boolean =
+    !isIndependentToolWindowResizeEnabled()
 
   private fun isIndependentToolWindowResizeEnabled(): Boolean =
     if (isNewUi)
@@ -1954,7 +1954,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
     else {
       // docked and sliding windows
-      val anchor = if (isNewUi) info.anchor else info.anchor
+      val anchor = info.anchor
       var another: InternalDecoratorImpl? = null
       val wholeSize = getToolWindowPane(toolWindow).rootPane.size
       if (source.parent is Splitter) {
@@ -1975,6 +1975,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       val paneWeight = getAdjustedRatio(partSize = if (anchor.isHorizontal) source.height else source.width,
                                         totalSize = if (anchor.isHorizontal) wholeSize.height else wholeSize.width, direction = 1)
       info.weight = paneWeight
+      layoutState.setUnifiedAnchorWeight(anchor, paneWeight)
       if (another != null) {
         getRegisteredMutableInfoOrLogError(another.toolWindow.id).weight = paneWeight
       }
