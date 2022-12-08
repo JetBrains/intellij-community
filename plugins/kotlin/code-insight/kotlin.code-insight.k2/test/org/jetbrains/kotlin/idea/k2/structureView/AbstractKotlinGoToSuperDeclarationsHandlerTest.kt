@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.structureView
 
+import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.psi.callableIdIfNotLocal
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
@@ -16,6 +17,7 @@ abstract class AbstractKotlinGoToSuperDeclarationsHandlerTest : NewLightKotlinCo
         get() = KotlinPluginKind.FIR_PLUGIN
 
     protected fun performTest() {
+        myFixture.configureAdditionalJavaFile()
         val file = myFixture.configureByDefaultFile() as KtFile
         val superDeclarations = KotlinGoToSuperDeclarationsHandler.findSuperDeclarations(file, editor.caretModel.offset)
         val actualText = render(superDeclarations?.items ?: emptyList())
@@ -28,6 +30,7 @@ abstract class AbstractKotlinGoToSuperDeclarationsHandlerTest : NewLightKotlinCo
                 val description = when (val declaration = superDeclaration.declaration.element) {
                     is KtClassOrObject -> declaration.classIdIfNonLocal?.toString()
                     is KtCallableDeclaration -> declaration.callableIdIfNotLocal?.toString()
+                    is PsiNamedElement -> declaration.toString()
                     else -> declaration?.javaClass?.simpleName
                 }
                 appendLine(superDeclaration::class.simpleName + ": " + (description ?: "null"))

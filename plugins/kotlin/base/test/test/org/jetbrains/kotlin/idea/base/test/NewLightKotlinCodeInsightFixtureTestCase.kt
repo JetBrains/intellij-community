@@ -88,6 +88,14 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         return configureByFile(testMethodPath.toString())
     }
 
+    fun JavaCodeInsightTestFixture.configureAdditionalJavaFile(): PsiFile? {
+        val testFilePath = testMethodPath.toString()
+        if (testFilePath.contains("withJava")) {
+            return myFixture.configureByFile(testFilePath.replace("kt", "java"))
+        }
+        return null
+    }
+
     fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedSuffix: String) {
         val expectedPath = getExpectedPath(expectedSuffix)
         try {

@@ -52,6 +52,11 @@ public abstract class KotlinGoToSuperDeclarationsHandlerTestGenerated extends Ab
             public void testSingleSuperClass() throws Exception {
                 performTest();
             }
+
+            @TestMetadata("withJavaSuperClass.kt")
+            public void testWithJavaSuperClass() throws Exception {
+                performTest();
+            }
         }
     }
 
@@ -92,6 +97,11 @@ public abstract class KotlinGoToSuperDeclarationsHandlerTestGenerated extends Ab
 
             @TestMetadata("singleSuperMethod.kt")
             public void testSingleSuperMethod() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("withJavaSuperClass.kt")
+            public void testWithJavaSuperClass() throws Exception {
                 performTest();
             }
         }

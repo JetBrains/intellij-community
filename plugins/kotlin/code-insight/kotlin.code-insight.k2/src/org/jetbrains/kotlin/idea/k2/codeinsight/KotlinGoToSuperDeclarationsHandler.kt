@@ -8,7 +8,9 @@ import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.PopupTitle
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.SuperDeclaration
@@ -32,8 +34,8 @@ internal class KotlinGoToSuperDeclarationsHandler : CodeInsightActionHandler {
                 return HandlerResult.Single(superDeclarations.single())
             } else {
                 val title = when (targetDeclaration) {
-                    is KtClass -> KotlinBundle.message("goto.super.chooser.class.title")
-                    is KtFunction -> KotlinBundle.message("goto.super.chooser.function.title")
+                    is KtClass, is PsiClass -> KotlinBundle.message("goto.super.chooser.class.title")
+                    is KtFunction, is PsiMethod -> KotlinBundle.message("goto.super.chooser.function.title")
                     is KtProperty -> KotlinBundle.message("goto.super.chooser.property.title")
                     else -> error("Unexpected declaration $targetDeclaration")
                 }
