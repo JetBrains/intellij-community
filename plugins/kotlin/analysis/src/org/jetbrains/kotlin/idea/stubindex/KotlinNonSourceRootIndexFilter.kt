@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.util.indexing.GlobalIndexFilter
 import com.intellij.util.indexing.IndexId
-import org.jetbrains.kotlin.idea.util.isKotlinFileType
+import org.jetbrains.kotlin.idea.KotlinFileType
 
 class KotlinNonSourceRootIndexFilter: GlobalIndexFilter {
     private val enabled = !System.getProperty("kotlin.index.non.source.roots", "false").toBoolean()
@@ -21,7 +21,7 @@ class KotlinNonSourceRootIndexFilter: GlobalIndexFilter {
         project != null &&
                 !virtualFile.isDirectory &&
                 affectsIndex(indexId) &&
-                virtualFile.isKotlinFileType() &&
+                virtualFile.extension == KotlinFileType.EXTENSION &&
                 runReadAction {
                     ProjectRootManager.getInstance(project).fileIndex.getOrderEntriesForFile(virtualFile).isEmpty() &&
                             !ProjectFileIndex.getInstance(project).isInLibrary(virtualFile)
