@@ -39,7 +39,7 @@
     <orderEntry type="library" scope="RUNTIME" name="jna" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library name="org.languagetool:languagetool-core" type="repository">
         <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:6.0" />
         <CLASSES>
@@ -275,7 +275,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library name="ai.grazie.nlp.langs" type="repository">
         <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-langs-jvm:0.2.101" />
         <CLASSES>
