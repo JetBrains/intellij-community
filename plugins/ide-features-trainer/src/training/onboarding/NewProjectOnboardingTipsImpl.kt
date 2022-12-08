@@ -59,6 +59,9 @@ internal val promotedActions = listOf(IdeActions.ACTION_SEARCH_EVERYWHERE,
 private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
   @RequiresEdt
   override fun installTips(project: Project, simpleSampleText: String) {
+    // Set this option explicitly, because its default depends on number of empty projects.
+    PropertiesComponent.getInstance().setValue(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME, true)
+
     val fileEditorManager = FileEditorManager.getInstance(project)
 
     val textEditor = fileEditorManager.selectedEditor as? TextEditor ?: return
