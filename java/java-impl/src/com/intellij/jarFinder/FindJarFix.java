@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarFinder;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.ExpensivePsiIntentionAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -50,7 +51,7 @@ import java.util.regex.Matcher;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class FindJarFix implements IntentionAction, Iconable, LowPriorityAction {
+public abstract class FindJarFix extends ExpensivePsiIntentionAction implements IntentionAction, Iconable, LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(FindJarFix.class);
 
   private static final String CLASS_ROOT_URL = "http://findjar.com/class/";
@@ -60,11 +61,16 @@ public abstract class FindJarFix implements IntentionAction, Iconable, LowPriori
 
   protected final PsiQualifiedReferenceElement myRef;
   protected final Module myModule;
+  private final boolean javaLangObjectResolved;
   protected JComponent myEditorComponent;
+  private final boolean allFqnsAreUnresolved;
 
   public FindJarFix(@NotNull PsiQualifiedReferenceElement ref) {
+    super(ref.getProject());
     myRef = ref;
     myModule = ModuleUtilCore.findModuleForPsiElement(ref);
+    javaLangObjectResolved = JavaPsiFacade.getInstance(myProject).findClass(CommonClassNames.JAVA_LANG_OBJECT, ref.getResolveScope()) != null;
+    allFqnsAreUnresolved = allFqnsAreUnresolved(myProject, getPossibleFqns(myRef));
   }
 
   @NotNull
@@ -81,20 +87,15 @@ public abstract class FindJarFix implements IntentionAction, Iconable, LowPriori
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myRef.isValid()
-           && JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, file.getResolveScope()) != null
-           && myModule != null
-           && isFqnsOk(project, getPossibleFqns(myRef));
+    if (isPsiModificationStampChanged()) return false;
+    return javaLangObjectResolved && myModule != null && allFqnsAreUnresolved;
   }
 
-  private static boolean isFqnsOk(@NotNull Project project, @NotNull List<String> fqns) {
+  private static boolean allFqnsAreUnresolved(@NotNull Project project, @NotNull List<String> fqns) {
     if (fqns.isEmpty()) return false;
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    for (String fqn : fqns) {
-      if (facade.findClass(fqn, scope) != null) return false;
-    }
-    return true;
+    return ContainerUtil.all(fqns, fqn -> facade.findClass(fqn, scope) == null);
   }
 
   @Override
