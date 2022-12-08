@@ -103,7 +103,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     myFilterActionButton.setFocusable(selected);
   }
 
-  public abstract String getCurrentText();
+  public abstract @NotNull @Nls String getCurrentText();
 
   /**
    * @return text that shows when filter value not selected (e.g. "All")
@@ -312,7 +312,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
 
     @Override
     public String getAccessibleName() {
-      return VcsLogBundle.message("vcs.log.filter.accessible.name", myNameLabel.getText(), myValueLabel.getText());
+      return VcsLogBundle.message("vcs.log.filter.accessible.name", myDisplayName.get(), getCurrentText());
     }
 
     @Override

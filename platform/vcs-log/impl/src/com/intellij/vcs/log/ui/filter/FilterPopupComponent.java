@@ -33,7 +33,7 @@ abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> e
   }
 
   @Override
-  public String getCurrentText() {
+  public @NotNull String getCurrentText() {
     Filter filter = myFilterModel.getFilter();
     return filter == null ? getEmptyFilterValue() : getText(filter);
   }
