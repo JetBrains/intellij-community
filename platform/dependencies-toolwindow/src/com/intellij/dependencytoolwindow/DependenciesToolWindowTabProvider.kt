@@ -27,7 +27,7 @@ interface DependenciesToolWindowTabProvider {
       }
     }
 
-    internal fun extensions(project: Project): List<DependenciesToolWindowTabProvider> {
+    fun extensions(project: Project): List<DependenciesToolWindowTabProvider> {
       return extensionPointName.extensionList.filter { it.isAvailable(project) }
     }
   }
