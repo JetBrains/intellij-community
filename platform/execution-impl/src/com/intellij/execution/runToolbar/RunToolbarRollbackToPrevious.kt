@@ -38,6 +38,7 @@ class RunToolbarRollbackToPrevious : DumbAwareAction() {
         properties.setValue(INCLUSION_NAVBAR_STATE, getInstance().showNavigationBar)
         properties.setValue(INCLUSION_TOOLBAR_STATE, getInstance().showMainToolbar)
       }
+      hideListenerDisposable = null
     }
 
     private var hideListenerDisposable: Disposable? = null
@@ -47,6 +48,8 @@ class RunToolbarRollbackToPrevious : DumbAwareAction() {
      */
 
     fun addHideActionHelper() {
+      assert(hideListenerDisposable == null)
+
       val properties = PropertiesComponent.getInstance()
 
       if(properties.getBoolean(ROLLBACK_AVAILABILITY)) {
