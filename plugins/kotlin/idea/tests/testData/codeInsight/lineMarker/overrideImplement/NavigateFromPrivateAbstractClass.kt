@@ -79,7 +79,7 @@ NavigateFromPrivateAbstractClass.kt
  */
 
 /*
-LINEMARKER: descr='Is subclassed by D in localFunctionCase2() in NavigateFromPrivateAbstractClass.kt  Click or press ... to navigate'
+LINEMARKER: descr='Is subclassed by D in doo in localFunctionCase2 Press ... to navigate'
 TARGETS:
 NavigateFromPrivateAbstractClass.kt
         class <1>D : A() {
