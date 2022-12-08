@@ -8,6 +8,8 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.validation.WHEN_STATE_CHANGED
+import com.intellij.openapi.ui.validation.WHEN_TEXT_FIELD_TEXT_CHANGED
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.dsl.builder.*
@@ -57,8 +59,6 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
   private var reset = false
   private var tracking = showSetTrackingOption
   private var branchName = initialName.orEmpty()
-  private var overwriteCheckbox: JCheckBox? = null
-  private var setTrackingCheckbox: JCheckBox? = null
   private val validator = GitRefNameValidator.getInstance()
 
   private val localBranchDirectories = collectDirectories(collectLocalBranchNames().asIterable(), false).toSet()
@@ -75,6 +75,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
   }
 
   override fun createCenterPanel() = panel {
+    val overwriteCheckbox = JCheckBox(GitBundle.message("new.branch.dialog.overwrite.existing.branch.checkbox"))
     row {
       cell(TextFieldWithCompletion(project, createBranchNameCompletion(), branchName,
                                    /*oneLineMode*/ true,
@@ -88,8 +89,10 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
         .applyToComponent {
           selectAll()
         }
-        .validationOnApply(validateBranchName(true))
-        .validationOnInput(validateBranchName(false))
+        .validationRequestor(WHEN_STATE_CHANGED(overwriteCheckbox))
+        .validationRequestor(WHEN_TEXT_FIELD_TEXT_CHANGED)
+        .validationOnApply(validateBranchName(true, overwriteCheckbox))
+        .validationOnInput(validateBranchName(false, overwriteCheckbox))
     }
     row {
       if (showCheckOutOption) {
@@ -97,7 +100,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
           .bindSelected(::checkout)
       }
       if (showResetOption) {
-        overwriteCheckbox = checkBox(GitBundle.message("new.branch.dialog.overwrite.existing.branch.checkbox"))
+        cell(overwriteCheckbox)
           .bindSelected(::reset)
           .applyToComponent {
             isEnabled = false
@@ -105,7 +108,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
           .component
       }
       if (showSetTrackingOption) {
-        setTrackingCheckbox = checkBox(GitBundle.message("new.branch.dialog.set.tracking.branch.checkbox"))
+        checkBox(GitBundle.message("new.branch.dialog.set.tracking.branch.checkbox"))
           .bindSelected(::tracking)
           .component
       }
@@ -145,7 +148,9 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
     return directories
   }
 
-  private fun validateBranchName(onApply: Boolean): ValidationInfoBuilder.(TextFieldWithCompletion) -> ValidationInfo? = {
+  private fun validateBranchName(onApply: Boolean, overwriteCheckbox: JCheckBox)
+    : ValidationInfoBuilder.(TextFieldWithCompletion) -> ValidationInfo? = {
+
     // Do not change Document inside DocumentListener callback
     invokeLater {
       it.cleanBranchNameAndAdjustCursorIfNeeded()
@@ -158,9 +163,9 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
     if (errorInfo != null) error(errorInfo.message)
     else {
       val localBranchConflict = conflictsWithLocalBranch(repositories, branchName)
-      overwriteCheckbox?.isEnabled = localBranchConflict != null
+      overwriteCheckbox.isEnabled = localBranchConflict != null
 
-      if (localBranchConflict == null || overwriteCheckbox?.isSelected == true) null // no conflicts or ask to reset
+      if (localBranchConflict == null || overwriteCheckbox.isSelected == true) null // no conflicts or ask to reset
       else if (localBranchConflict.warning && localConflictsAllowed) {
         warning(HtmlBuilder().append(localBranchConflict.message + ".").br().append(operation.description).toString())
       }
