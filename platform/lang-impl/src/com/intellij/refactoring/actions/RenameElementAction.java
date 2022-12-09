@@ -68,7 +68,10 @@ public class RenameElementAction extends AnAction {
       return;
     }
 
-    List<Renamer> renamers = SlowOperations.allowSlowOperations(() -> getAvailableRenamers(dataContext).collect(Collectors.toList()));
+    List<Renamer> renamers;
+    try (var ignored = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+      renamers = getAvailableRenamers(dataContext).collect(Collectors.toList());
+    }
     if (renamers.isEmpty()) {
       String message = RefactoringBundle.getCannotRefactorMessage(
         RefactoringBundle.message("error.wrong.caret.position.symbol.to.refactor")
