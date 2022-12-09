@@ -7,12 +7,14 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureEx
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class MavenModuleStructureExtension extends ModuleStructureExtension {
   private final Set<Module> myModulesToRemove = new HashSet<>();
-  private final Set<MavenProject> myMavenProjectsToIgnore = new HashSet<>();
+  private final List<MavenProject> myMavenProjectsToIgnore = new ArrayList<>();
   private MavenProjectsManager myMavenProjectsManager = null;
 
   @Override
@@ -42,7 +44,7 @@ public class MavenModuleStructureExtension extends ModuleStructureExtension {
   @Override
   public void disposeUIResources() {
     if (null != myMavenProjectsManager) {
-      myMavenProjectsManager.scheduleMavenProjectsToIgnore(myMavenProjectsToIgnore);
+      myMavenProjectsManager.setIgnoredState(myMavenProjectsToIgnore, true);
     }
 
     myModulesToRemove.clear();

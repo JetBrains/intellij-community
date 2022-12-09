@@ -50,18 +50,15 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
   private final Map<MavenProject, Module> myMavenProjectToModule = new HashMap<>();
   private final Map<MavenProject, String> myMavenProjectToModuleName = new HashMap<>();
   private final Map<MavenProject, String> myMavenProjectToModulePath = new HashMap<>();
-  private final Collection<MavenProject> myNewlyIgnoredProjects;
 
   MavenProjectLegacyImporter(@NotNull Project p,
                              @NotNull MavenProjectsTree projectsTree,
                              @NotNull Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges,
-                             @NotNull Collection<MavenProject> newlyIgnoredProjects,
                              boolean importModuleGroupsRequired,
                              @NotNull IdeModifiableModelsProvider modelsProvider,
                              @NotNull MavenImportingSettings importingSettings,
                              @Nullable Module previewModule) {
     super(p, projectsTree, importingSettings, projectsToImportWithChanges, modelsProvider);
-    myNewlyIgnoredProjects = newlyIgnoredProjects;
     myFileToModuleMapping = getFileToModuleMapping(p, previewModule, modelsProvider);
     myImportModuleGroupsRequired = importModuleGroupsRequired;
     myPreviewModule = previewModule;
@@ -283,11 +280,6 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
   private boolean isDeleteObsoleteModules(@NotNull List<Module> obsoleteModules) {
     if (obsoleteModules.isEmpty()) {
       return false;
-    }
-    var myNewlyIgnoredModules = ContainerUtil.map(myNewlyIgnoredProjects, mavenProject -> myMavenProjectToModule.get(mavenProject));
-    // don't ask about module deletion if it was explicitly deleted by the user in project view or project structure
-    if (myNewlyIgnoredModules.containsAll(obsoleteModules)) {
-      return true;
     }
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() || MavenUtil.isMavenUnitTestModeEnabled()) {
       final int[] result = new int[1];

@@ -60,7 +60,6 @@ var WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE = false
 internal class WorkspaceProjectImporter(
   private val myProjectsTree: MavenProjectsTree,
   private val projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
-  private val newlyIgnoredProjects: Collection<MavenProject>,
   private val myImportingSettings: MavenImportingSettings,
   private val myModifiableModelsProvider: IdeModifiableModelsProvider,
   private val myProject: Project
@@ -73,7 +72,7 @@ internal class WorkspaceProjectImporter(
 
     val storageBeforeImport = WorkspaceModel.getInstance(myProject).entityStorage.current
 
-    var (hasChanges, projectToImport) = collectProjectsAndChanges(storageBeforeImport, projectsToImportWithChanges)
+    var (hasChanges, projectToImport, ignoredFilePaths) = collectProjectsAndChanges(storageBeforeImport, projectsToImportWithChanges)
 
     val externalStorageManager = myProject.getService(ExternalStorageConfigurationManager::class.java)
     if (!externalStorageManager.isEnabled) {
@@ -100,6 +99,8 @@ internal class WorkspaceProjectImporter(
     val mavenProjectToModuleName = buildModuleNameMap(projectToImport)
 
     val builder = MutableEntityStorage.create()
+    builder.addEntity(MavenProjectsTreeSettingsEntity(ignoredFilePaths, MavenProjectsTreeEntitySource))
+
     val contextData = UserDataHolderBase()
 
     val projectsWithModuleEntities = stats.recordPhase(MavenImportCollector.WORKSPACE_POPULATE_PHASE) {
@@ -136,7 +137,8 @@ internal class WorkspaceProjectImporter(
   }
 
   private fun collectProjectsAndChanges(storageBeforeImport: EntityStorage,
-                                        originalProjectsChanges: Map<MavenProject, MavenProjectChanges>): Pair<Boolean, Map<MavenProject, MavenProjectChanges>> {
+                                        originalProjectsChanges: Map<MavenProject, MavenProjectChanges>):
+    Triple<Boolean, Map<MavenProject, MavenProjectChanges>, List<String>> {
     val projectFilesFromPreviousImport = readMavenExternalSystemData(storageBeforeImport)
       .mapTo(FileCollectionFactory.createCanonicalFilePathSet()) { it.mavenProjectFilePath }
 
@@ -147,13 +149,17 @@ internal class WorkspaceProjectImporter(
         if (newProjectToImport) MavenProjectChanges.ALL else originalProjectsChanges.getOrDefault(it, MavenProjectChanges.NONE)
       }
 
-    var hasChanges = allProjectToImport.values.any { it.hasChanges() } || !newlyIgnoredProjects.isEmpty()
+    val ignoredFilePaths = myProjectsTree.ignoredFilesPaths
+
+    var hasChanges = allProjectToImport.values.any { it.hasChanges() }
     if (!hasChanges) {
       // check for a situation, when we have a newly ignored project, but no other changes
-      val listOfProjectChanged = allProjectToImport.size != projectFilesFromPreviousImport.size
-      hasChanges = listOfProjectChanged
+      val mavenProjectsTreeSettingsEntity = storageBeforeImport.entities(MavenProjectsTreeSettingsEntity::class.java).firstOrNull()
+      val storedIgnoredFilePaths = mavenProjectsTreeSettingsEntity?.ignoredFilePaths ?: listOf()
+      val ignoredProjectsChanged = storedIgnoredFilePaths != ignoredFilePaths
+      hasChanges = ignoredProjectsChanged
     }
-    return hasChanges to allProjectToImport
+    return Triple(hasChanges, allProjectToImport, ignoredFilePaths)
   }
 
   private fun buildModuleNameMap(projectToImport: Map<MavenProject, MavenProjectChanges>): HashMap<MavenProject, String> {
@@ -292,6 +298,8 @@ internal class WorkspaceProjectImporter(
       .forEach { currentStorage.removeEntity(it) }
 
     currentStorage.replaceBySource({ isMavenEntity(it) }, newStorage)
+
+    currentStorage.replaceBySource({ it is MavenProjectsTreeEntitySource }, newStorage)
 
     // Now we have some modules with duplicating content roots. One content root existed before and another one exported from maven.
     //   We need to move source roots and excludes from existing content roots to the exported content roots and remove (obsolete) existing.

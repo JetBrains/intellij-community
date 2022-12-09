@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,7 +21,7 @@ public class MavenModuleDeleteProvider extends ModuleDeleteProvider {
   protected void doDetachModules(@NotNull Project project,
                                  Module @Nullable [] modules,
                                  @Nullable List<? extends UnloadedModuleDescription> unloadedModules) {
-    var mavenProjectsToIgnore = new HashSet<MavenProject>();
+    var mavenProjectsToIgnore = new ArrayList<MavenProject>();
     var projectsManager = MavenProjectsManager.getInstance(project);
     if (null != modules) {
       for (var module : modules) {
@@ -34,6 +34,6 @@ public class MavenModuleDeleteProvider extends ModuleDeleteProvider {
 
     super.doDetachModules(project, modules, unloadedModules);
 
-    projectsManager.scheduleMavenProjectsToIgnore(mavenProjectsToIgnore);
+    projectsManager.setIgnoredState(mavenProjectsToIgnore, true);
   }
 }
