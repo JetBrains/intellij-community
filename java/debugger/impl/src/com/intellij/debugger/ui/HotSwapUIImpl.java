@@ -313,25 +313,23 @@ public final class HotSwapUIImpl extends HotSwapUI {
       if (!hasCompilationResults(result)) return;
 
       ProjectTaskContext context = result.getContext();
-      if (!result.hasErrors() && !result.isAborted() && !SKIP_HOT_SWAP_KEY.getRequired(context)) {
-        HotSwapUIImpl instance = (HotSwapUIImpl)getInstance(myProject);
-        for (HotSwapVetoableListener listener : instance.myListeners) {
-          if (!listener.shouldHotSwap(context)) {
-            return;
-          }
-        }
+      if (result.hasErrors() || result.isAborted()) return;
+      if (SKIP_HOT_SWAP_KEY.getRequired(context)) return;
 
-        List<DebuggerSession> sessions = getHotSwappableDebugSessions(myProject);
-        if (!sessions.isEmpty()) {
-          Map<String, Collection<String>> generatedPaths = collectGeneratedPaths(context);
-
-          HotSwapStatusListener callback = context.getUserData(HOT_SWAP_CALLBACK_KEY);
-          NotNullLazyValue<List<String>> outputRoots = context.getDirtyOutputPaths()
-            .map(stream -> NotNullLazyValue.createValue(() -> (List<String>)stream.collect(Collectors.toCollection(SmartList::new))))
-            .orElse(null);
-          instance.hotSwapSessions(sessions, generatedPaths, outputRoots, callback);
-        }
+      HotSwapUIImpl instance = (HotSwapUIImpl)getInstance(myProject);
+      for (HotSwapVetoableListener listener : instance.myListeners) {
+        if (!listener.shouldHotSwap(context)) return;
       }
+
+      List<DebuggerSession> sessions = getHotSwappableDebugSessions(myProject);
+      if (sessions.isEmpty()) return;
+
+      Map<String, Collection<String>> generatedPaths = collectGeneratedPaths(context);
+      HotSwapStatusListener callback = context.getUserData(HOT_SWAP_CALLBACK_KEY);
+      NotNullLazyValue<List<String>> outputRoots = context.getDirtyOutputPaths()
+        .map(stream -> NotNullLazyValue.createValue(() -> (List<String>)stream.collect(Collectors.toCollection(SmartList::new))))
+        .orElse(null);
+      instance.hotSwapSessions(sessions, generatedPaths, outputRoots, callback);
     }
 
     @NotNull
