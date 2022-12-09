@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-class ReloadAllRepositoryLibrariesAction : AnAction() {
+class CheckAllRepositoryLibrariesResolutionAction : AnAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -17,6 +17,6 @@ class ReloadAllRepositoryLibrariesAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    RepositoryLibraryUtils.getInstance(project).reloadAllRepositoryLibrariesBackground()
+    RepositoryLibraryUtils.getInstance(project).checkAllLibrariesCanBeResolvedBackground()
   }
 }

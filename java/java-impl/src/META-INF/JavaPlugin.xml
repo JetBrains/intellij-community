@@ -2396,7 +2396,7 @@
       <action internal="true" id="RebuildRepositoryLibrariesSha256Checksum" class="com.intellij.ide.actions.RebuildRepositoryLibrariesSha256ChecksumAction"/>
       <action internal="true" id="GuessRemoteRepositoryForEachRepositoryLibrary" class="com.intellij.ide.actions.GuessRemoteRepositoryForEachRepositoryLibraryAction"/>
       <action internal="true" id="UnbindRemoteRepositoryForAllRepositoryLibraries" class="com.intellij.ide.actions.UnbindRemoteRepositoryForAllRepositoryLibrariesAction"/>
-      <action internal="true" id="ReloadAllRepositoryLibraries" class="com.intellij.ide.actions.ReloadAllRepositoryLibrariesAction"/>
+      <action internal="true" id="CheckAllRepositoryLibrariesResolution" class="com.intellij.ide.actions.CheckAllRepositoryLibrariesResolutionAction"/>
       <add-to-group group-id="Internal" anchor="after" relative-to-action="Internal.Java"/>
     </group>
   </actions>

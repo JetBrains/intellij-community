@@ -4,12 +4,12 @@ package com.intellij.jarRepository
 import com.intellij.configurationStore.deserialize
 import com.intellij.configurationStore.serialize
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.actions.ShowStructureSettingsAction
 import com.intellij.jarRepository.RepositoryLibraryType.REPOSITORY_LIBRARY_KIND
-import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.Service
@@ -17,13 +17,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.JavadocOrderRootType
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.Strings.join
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
@@ -34,11 +34,9 @@ import com.intellij.workspaceModel.storage.toBuilder
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.concurrency.await
-import org.jetbrains.concurrency.collectResults
+import org.jetbrains.concurrency.*
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
-import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor.ArtifactVerification
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
@@ -67,7 +65,7 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
      * Should be used only in tests. Required to promote errors to tests via [context].
      */
     @TestOnly
-    fun createWithCustomContext(project: Project, context: CoroutineContext): RepositoryLibraryUtils = RepositoryLibraryUtils(project, context)
+    fun createWithCustomContext(project: Project, context: CoroutineContext) = RepositoryLibraryUtils(project, context)
 
     @JvmStatic
     fun buildRepositoryLibraryArtifactsVerification(descriptor: JpsMavenRepositoryLibraryDescriptor,
@@ -75,16 +73,12 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
       val usefulJars = roots.asSequence()
         .filter { it.type == OrderRootType.CLASSES }
         .map { JpsPathUtil.urlToFile(it.file.url) }
-        .toList()
 
-      return buildRepositoryLibraryArtifactsVerificationInternal(descriptor, usefulJars)
+      return buildRepositoryLibraryArtifactsVerification(descriptor, usefulJars)
     }
 
-    /* Reuse notifications group from [JarRepositoryManager] */
-    private val NOTIFICATIONS_GROUP = JarRepositoryManager.GROUP
-
-    private fun buildRepositoryLibraryArtifactsVerificationInternal(descriptor: JpsMavenRepositoryLibraryDescriptor,
-                                                                    verifiableJars: List<File>): List<ArtifactVerification> {
+    private fun buildRepositoryLibraryArtifactsVerification(descriptor: JpsMavenRepositoryLibraryDescriptor,
+                                                            verifiableJars: Sequence<File>): List<ArtifactVerification> {
       /* Build verification only for libraries with stable version and if verification is enabled */
       if (descriptor.version == RepositoryLibraryDescription.LatestVersionId ||
           descriptor.version == RepositoryLibraryDescription.ReleaseVersionId ||
@@ -105,8 +99,11 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
         }
 
         ArtifactVerification(artifactFileUrl, sha256sum)
-      }
+      }.toList()
     }
+
+    /* Reuse notifications group from [JarRepositoryManager] */
+    private val NOTIFICATIONS_GROUP = JarRepositoryManager.GROUP
 
     private val CoroutineScope.progressSinkOrError: ProgressSink get() = requireNotNull(progressSink)
   }
@@ -121,8 +118,6 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
   /**
    * Tries to guess remote jar repository for each [RepositoryLibraryType] library and bind it to
    * the library if found. Global libraries are excluded.
-   *
-   * After finish, it reloads
    *
    * See [JpsMavenRepositoryLibraryDescriptor.getJarRepositoryId], [RemoteRepositoriesConfiguration].
    */
@@ -172,49 +167,138 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
   )
 
   /**
-   * Reload all project libraries in background.
+   * Check whether all libraries can be resolved in background, on finish shows notification with details.
+   *
+   * @return [Deferred] of `true` if all libraries can be resolved, [Deferred] of `false` if not.
    */
-  fun reloadAllRepositoryLibrariesBackground() = myCoroutineScope.launch {
+  fun checkAllLibrariesCanBeResolvedBackground(): Deferred<Boolean> = myCoroutineScope.async {
     withBackgroundProgressIndicator(
       project,
-      JavaUiBundle.message("repository.library.utils.progress.title.delete.and.reload.all.libs")
-    ) { reloadAllRepositoryLibraries() }
+      JavaUiBundle.message("repository.library.utils.progress.title.all.libraries.resolution.check")
+    ) {
+      val snapshot = WorkspaceModel.getInstance(project).entityStorage.current
+      checkLibrariesCanBeResolved(snapshot.entities(LibraryEntity::class.java), snapshot)
+    }
   }
 
   private fun LibrariesModificationJob.runBackground(title: @NlsContexts.ProgressTitle String) = myCoroutineScope.launch {
     withBackgroundProgressIndicator(project, title) { apply() }
   }
 
-  private fun LibrariesModificationJob.runModal(title: @NlsContexts.ProgressTitle String) =
-    myCoroutineScope.launch {
-      withModalProgressIndicator(project, title) { apply() }
-    }
+  private fun LibrariesModificationJob.runModal(title: @NlsContexts.ProgressTitle String) = myCoroutineScope.launch {
+    withModalProgressIndicator(project, title) { apply() }
+  }
 
-  private suspend fun reloadAllRepositoryLibraries() = coroutineScope {
-    val failedList: MutableList<LibraryEx> = CopyOnWriteArrayList()
-    val result = RepositoryLibrarySynchronizer.collectLibraries(project) {
-      (it as? LibraryEx)?.properties is RepositoryLibraryProperties
-    }
-      .filterIsInstance<LibraryEx>()
-      .map { lib -> RepositoryUtils.reloadDependencies(project, lib).onError { failedList.add(lib) } }
-      .collectResults(ignoreErrors = true).await() // We're collecting errors manually, collect silently
+  /**
+   * Checks whether [libraries] can be resolved, show notification with result. Libraries properties used while check are resolved via
+   * [LibraryEntity.symbolicId] with [EntityStorage.resolve].
+   */
+  private suspend fun checkLibrariesCanBeResolved(libraries: Sequence<LibraryEntity>, snapshot: EntityStorage) = coroutineScope {
+    val failedList: MutableList<LibraryEntity> = CopyOnWriteArrayList()
+    val result = libraries.mapNotNull { snapshot.resolve(it.symbolicId) }
+      .map { lib -> lib.tryResolve().onError { failedList.add(lib) } }
+      .toList()
+      .collectResults(ignoreErrors = true).await() // We're collecting errors manually, fail silently
 
     if (failedList.isNotEmpty()) {
-      val failedLibrariesNames = failedList.map {
-        val module = it.module
-        if (module == null) "- ${it.name}" else "- ${it.name} (${module.name})"
+      val showStructureSettingsAction = ShowStructureSettingsAction().apply {
+        templatePresentation.text = JavaUiBundle.message("repository.library.utils.notification.action.open.project.structure")
       }
-      Notifications.Bus.notify(NOTIFICATIONS_GROUP.createNotification(
-        JavaUiBundle.message("repository.library.utils.notification.title"),
-        JavaUiBundle.message("notification.content.libraries.reload.failed", join(failedLibrariesNames, "<p/>")),
-        NotificationType.ERROR), project)
+      showNotification(JavaUiBundle.message("repository.library.utils.notification.content.libraries.resolve.check.fail",
+                                            failedList.joinToString("") { "<br/>- ${it.getDisplayName(snapshot)}" }),
+                       NotificationType.ERROR,
+                       showStructureSettingsAction)
+      return@coroutineScope false
     }
-    else {
-      Notifications.Bus.notify(NOTIFICATIONS_GROUP.createNotification(
-        JavaUiBundle.message("repository.library.utils.notification.title"),
-        JavaUiBundle.message("notification.content.libraries.reloaded", result.size),
-        NotificationType.INFORMATION), project)
+
+    showNotification(JavaUiBundle.message("repository.library.utils.notification.content.libraries.resolve.check.ok", result.size))
+    return@coroutineScope true
+  }
+
+  /**
+   * Returns [LibraryEntity.name] with library [ModuleEntity.name] appended if [library] is module library,
+   * otherwise [LibraryEntity.name].
+   */
+  @NlsSafe
+  private fun LibraryEntity.getDisplayName(snapshot: EntityStorage): String {
+    val moduleId = (this.tableId as? LibraryTableId.ModuleLibraryTableId)?.moduleId
+    val module = if (moduleId != null) snapshot.resolve(moduleId) else null
+    return if (module == null) this.name else "${this.name} (${module.name})"
+  }
+
+  private fun LibraryEntity.tryResolve(): Promise<List<OrderRoot>> {
+    val propertiesEntity = libraryProperties ?: return resolvedPromise()
+    val properties = propertiesEntity.getPropertiesIfRepositoryLibrary() ?: return resolvedPromise()
+
+    val downloadSources = roots.any { it.type == LibraryRootTypeId.SOURCES }
+    val downloadJavadoc = roots.any { it.type.name == JavadocOrderRootType.getInstance().name() }
+
+    return JarRepositoryManager.loadDependenciesAsync(project, properties, downloadSources, downloadJavadoc, null, null).thenAsync {
+      if (it == null || it.isEmpty()) rejectedPromise() else resolvedPromise(it)
     }
+  }
+
+  private fun LibraryEntity.isGlobal() = tableId is LibraryTableId.GlobalLibraryTableId
+  private fun LibraryEntity.getHashableRoots() = roots.asSequence().filter { it.type == LibraryRootTypeId.COMPILED }
+
+  private fun LibraryPropertiesEntity.getPropertiesIfRepositoryLibrary(): RepositoryLibraryProperties? {
+    val propertiesXmlTag = this.propertiesXmlTag ?: return null
+    if (REPOSITORY_LIBRARY_KIND.kindId == libraryType) {
+      return deserialize(JDOMUtil.load(propertiesXmlTag))
+    }
+    return null
+  }
+
+  private fun RepositoryLibraryProperties.rebuildChecksum(propertiesEntity: LibraryPropertiesEntity): RepositoryLibraryProperties {
+    val verifiableJars = propertiesEntity.library.getHashableRoots()
+      .filter { it.type == LibraryRootTypeId.COMPILED }
+      .map { JpsPathUtil.urlToFile(it.url.url) }
+
+    this.isEnableSha256Checksum = true
+    this.artifactsVerification = buildRepositoryLibraryArtifactsVerification(this.repositoryLibraryDescriptor, verifiableJars)
+    return this
+  }
+
+  private suspend fun RepositoryLibraryProperties.tryGuessAndBindRemoteRepository(
+    project: Project,
+    remoteRepositories: List<RemoteRepositoryDescription>
+  ): Boolean {
+    val description = RepositoryLibraryDescription.findDescription(this)
+    val remoteRepositoryId = remoteRepositories.firstOrNull {
+      val versions = JarRepositoryManager.getAvailableVersions(project, description, Collections.singletonList(it)).await()
+      versions.isNotEmpty() && versions.contains(this.version)
+    }?.id
+    jarRepositoryId = remoteRepositoryId
+    return remoteRepositoryId != null
+  }
+
+  private fun LibraryPropertiesEntity.modifyProperties(builder: MutableEntityStorage, newProperties: RepositoryLibraryProperties) {
+    val propertiesElement = serialize(newProperties)!!
+    propertiesElement.name = JpsLibraryTableSerializer.PROPERTIES_TAG
+    val xmlTag = JDOMUtil.writeElement(propertiesElement)
+
+    builder.modifyEntity(this) {
+      propertiesXmlTag = xmlTag
+    }
+  }
+
+  suspend fun WorkspaceModel.applyDiff(builder: MutableEntityStorage) = withContext(Dispatchers.EDT) {
+    WriteAction.run<RuntimeException> {
+      updateProjectModel("RepositoryLibraryUtils update") {
+        it.addDiff(builder)
+      }
+    }
+  }
+
+  private fun showNotification(content: @NotificationContent String,
+                               type: NotificationType = NotificationType.INFORMATION,
+                               action: AnAction? = null) {
+    val notification = NOTIFICATIONS_GROUP.createNotification(JavaUiBundle.message("repository.library.utils.library.update.title"),
+                                                              content, type)
+    if (action != null) {
+      notification.addAction(action)
+    }
+    Notifications.Bus.notify(notification, project)
   }
 
   private inner class GuessAndBindRemoteRepositoriesJob : LibrariesModificationJob() {
@@ -224,14 +308,14 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
 
     override suspend fun transform(): Unit = coroutineScope {
       progressSinkOrError.update(details = JavaUiBundle.message("repository.library.utils.progress.details.complete.for",
-                                                     0, filteredProperties.size),
+                                                                0, filteredProperties.size),
                                  fraction = 0.0)
       filteredProperties.map { (entity, properties) ->
         async(Dispatchers.IO) {
-          properties.jarRepositoryId = tryGuessRemoteRepositoryId(project, properties, availableRepositories)
+          properties.tryGuessAndBindRemoteRepository(project, availableRepositories)
           val currentCounter = progressCounter.incrementAndGet()
           progressSinkOrError.update(details = JavaUiBundle.message("repository.library.utils.progress.details.complete.for",
-                                                         currentCounter, filteredProperties.size),
+                                                                    currentCounter, filteredProperties.size),
                                      fraction = currentCounter.toDouble() / filteredProperties.size)
           entity to properties
         }
@@ -240,37 +324,20 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
       }
     }
 
-    override fun onFinish() {
-      val notification = NOTIFICATIONS_GROUP.createNotification(
-        JavaUiBundle.message("repository.library.utils.notification.title"),
-        JavaUiBundle.message("repository.library.utils.notification.content.repositories.guessed", filteredProperties.size),
-        NotificationType.INFORMATION)
-
-      notification.addAction(NotificationAction.createExpiring(
-        JavaUiBundle.message("repository.library.utils.notification.action.title.reload.all.libraries")) { _, _ ->
-        reloadAllRepositoryLibrariesBackground()
-      })
-      Notifications.Bus.notify(notification, project)
-    }
-
-    private suspend fun tryGuessRemoteRepositoryId(project: Project,
-                                                   properties: RepositoryLibraryProperties,
-                                                   remoteRepositories: List<RemoteRepositoryDescription>): String? {
-      val description = RepositoryLibraryDescription.findDescription(properties)
-      return remoteRepositories.firstOrNull {
-        val versions = JarRepositoryManager.getAvailableVersions(project, description, Collections.singletonList(it)).await()
-        versions.isNotEmpty() && versions.contains(properties.version)
-      }?.id
+    override suspend fun onFinish(): Unit = coroutineScope {
+      val libsCount = filteredProperties.size
+      showNotification(JavaUiBundle.message("repository.library.utils.notification.content.repositories.guessed", libsCount))
+      progressSinkOrError.update(JavaUiBundle.message("repository.library.utils.progress.checking.resolution", libsCount, 1), "")
+      checkLibrariesCanBeResolved(filteredProperties.asSequence().map { it.first.library }, builder)
     }
   }
 
   private inner class UnbindRemoteRepositoriesJob : LibrariesModificationJob() {
-    override fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties) =
-      properties.jarRepositoryId != null
+    override fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties) = properties.jarRepositoryId != null
 
     override suspend fun afterFilter(): Unit = coroutineScope {
       super.afterFilter()
-      progressSinkOrError.details(details = JavaUiBundle.message("repository.library.utils.progress.details.updating.libraries"))
+      progressSinkOrError.details(details = JavaUiBundle.message("repository.library.utils.progress.updating.libraries", 0))
     }
 
     override suspend fun transform() = filteredProperties.forEach { (propertiesEntity, properties) ->
@@ -281,13 +348,14 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
 
   private inner class BuildSha256SumJob(private val rebuildExistingChecksums: Boolean,
                                         private val enableIfChecksumDisabled: Boolean) : LibrariesModificationJob() {
-    private val unresolvedLibrariesIds = mutableListOf<@NlsSafe String>()
+    private val unresolvedLibrariesNames = mutableListOf<@NlsSafe String>()
 
     override fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties): Boolean {
       if (properties.isEnableSha256Checksum && rebuildExistingChecksums ||
           !properties.isEnableSha256Checksum && enableIfChecksumDisabled) {
         if (!entity.library.isCompiledArtifactsResolved()) {
-          unresolvedLibrariesIds.add(properties.mavenId) // Save problem lib, will cancel coroutine in afterFilter() with readable message
+          // Save lib with problems, will cancel coroutine in afterFilter() with readable message
+          unresolvedLibrariesNames.add(entity.library.getDisplayName(stateSnapshot))
         }
         return true
       }
@@ -296,7 +364,7 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
 
     override suspend fun afterFilter(): Unit = coroutineScope {
       super.afterFilter()
-      if (unresolvedLibrariesIds.isNotEmpty()) {
+      if (unresolvedLibrariesNames.isNotEmpty()) {
         showLibraryArtifactsNotResolvedAndCancel()
       }
       progressSinkOrError.details(details = JavaUiBundle.message("repository.library.utils.progress.details.building.checksums"))
@@ -304,41 +372,21 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
 
     override suspend fun transform() = coroutineScope {
       filteredProperties.map { (propertiesEntity, properties) ->
-        async(Dispatchers.IO) { propertiesEntity to rebuildChecksum(propertiesEntity, properties) }
+        async(Dispatchers.IO) { propertiesEntity to properties.rebuildChecksum(propertiesEntity) }
       }.awaitAll().forEach { (propertiesEntity, properties) ->
         propertiesEntity.modifyProperties(properties)
       }
     }
 
-    private fun LibraryEntity.getHashableRoots() = roots.asSequence().filter { it.type == LibraryRootTypeId.COMPILED }
     private fun LibraryEntity.isCompiledArtifactsResolved() = getHashableRoots().all { JpsPathUtil.urlToFile(it.url.url).exists() }
 
     private fun CoroutineScope.showLibraryArtifactsNotResolvedAndCancel() {
-      val displayed = ContainerUtil.getFirstItems(unresolvedLibrariesIds, 10)
-      val leftNotDisplayed = unresolvedLibrariesIds.size - displayed.size
-      val displayedString = displayed.joinToString(separator = "<p/>")
-
-      Notifications.Bus.notify(NOTIFICATIONS_GROUP.createNotification(
-        JavaUiBundle.message("repository.library.utils.notification.title"),
-        JavaUiBundle.message("repository.library.utils.notification.content.unresolved.artifacts", displayedString, leftNotDisplayed),
-        NotificationType.ERROR), project)
+      val displayed = ContainerUtil.getFirstItems(unresolvedLibrariesNames, 10)
+      showNotification(JavaUiBundle.message("repository.library.utils.notification.content.unresolved.artifacts",
+                                            displayed.joinToString { "<br/> - $it" },
+                                            unresolvedLibrariesNames.size - displayed.size),
+                       NotificationType.ERROR)
       cancel()
-    }
-
-    /**
-     * Updates properties in-place
-     */
-    private fun rebuildChecksum(propertiesEntity: LibraryPropertiesEntity,
-                                properties: RepositoryLibraryProperties): RepositoryLibraryProperties {
-      val verifiableJars = propertiesEntity.library.getHashableRoots()
-        .filter { it.type == LibraryRootTypeId.COMPILED }
-        .map { JpsPathUtil.urlToFile(it.url.url) }
-        .toList()
-
-      properties.isEnableSha256Checksum = true
-      properties.artifactsVerification = buildRepositoryLibraryArtifactsVerificationInternal(properties.repositoryLibraryDescriptor,
-                                                                                             verifiableJars)
-      return properties
     }
   }
 
@@ -347,7 +395,7 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
 
     override suspend fun afterFilter(): Unit = coroutineScope {
       super.afterFilter()
-      progressSinkOrError.details(details = JavaUiBundle.message("repository.library.utils.progress.details.updating.libraries"))
+      progressSinkOrError.details(JavaUiBundle.message("repository.library.utils.progress.updating.libraries", 0))
     }
 
     override suspend fun transform() {
@@ -363,8 +411,8 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
     protected val filteredProperties: MutableList<Pair<LibraryPropertiesEntity, RepositoryLibraryProperties>> = mutableListOf()
 
     private val workspaceModel = WorkspaceModel.getInstance(project)
-    private lateinit var stateSnapshot: EntityStorage
-    private lateinit var builder: MutableEntityStorage
+    protected lateinit var stateSnapshot: EntityStorage
+    protected lateinit var builder: MutableEntityStorage
 
     /**
      * Should return `true` if [entity] with [properties] are suitable for further [transform].
@@ -378,10 +426,7 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
      */
     protected open suspend fun afterFilter(): Unit = coroutineScope {
       if (filteredProperties.isEmpty()) {
-        Notifications.Bus.notify(NOTIFICATIONS_GROUP.createNotification(
-          JavaUiBundle.message("repository.library.utils.notification.title"),
-          JavaUiBundle.message("repository.library.utils.notification.content.nothing.to.update"),
-          NotificationType.INFORMATION), project)
+        showNotification(JavaUiBundle.message("repository.library.utils.notification.content.nothing.to.update"))
         cancel()
       }
     }
@@ -396,22 +441,12 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
      * Invoked after all the modifications from [transform] made by [modifyProperties] are committed into project [WorkspaceModel].
      * Can be used to show some messages to user.
      */
-    protected open fun onFinish() {
-      Notifications.Bus.notify(NOTIFICATIONS_GROUP.createNotification(
-        JavaUiBundle.message("repository.library.utils.notification.title"),
-        JavaUiBundle.message("repository.library.utils.notification.content.libraries.updated", filteredProperties.size),
-        NotificationType.INFORMATION), project)
+    protected open suspend fun onFinish() {
+      showNotification(JavaUiBundle.message("repository.library.utils.notification.content.libraries.updated", filteredProperties.size))
     }
 
-    protected fun LibraryPropertiesEntity.modifyProperties(newProperties: RepositoryLibraryProperties) {
-      val propertiesElement = serialize(newProperties)!!
-      propertiesElement.name = JpsLibraryTableSerializer.PROPERTIES_TAG
-      val xmlTag = JDOMUtil.writeElement(propertiesElement)
-
-      builder.modifyEntity(this) {
-        propertiesXmlTag = xmlTag
-      }
-    }
+    protected fun LibraryPropertiesEntity.modifyProperties(newProperties: RepositoryLibraryProperties) =
+      modifyProperties(builder, newProperties)
 
     /**
      * Starts a coroutine of all the steps from other methods. Should not be reused, create a new instance of [LibrariesModificationJob]
@@ -433,45 +468,27 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
           }
         }
 
-        progressSinkOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.updating.libraries"))
+        progressSinkOrError.text(JavaUiBundle.message("repository.library.utils.progress.updating.libraries", 1))
         afterFilter()
 
         builder = stateSnapshot.toBuilder()
         transform()
 
-        progressSinkOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.saving.changes"))
-        withContext(Dispatchers.EDT) {
-          WriteAction.run<RuntimeException> {
-            workspaceModel.updateProjectModel("Build SHA256SUM for each library") {
-              it.addDiff(builder)
-            }
-          }
-        }
+        progressSinkOrError.text(JavaUiBundle.message("repository.library.utils.progress.saving.changes", 1))
+        workspaceModel.applyDiff(builder)
         onFinish()
       }
       job.invokeOnCompletion {
         when (it) {
           null, is CancellationException -> return@invokeOnCompletion
           else -> {
-            Notifications.Bus.notify(NOTIFICATIONS_GROUP.createNotification(
-              JavaUiBundle.message("repository.library.utils.notification.title"),
-              JavaUiBundle.message("repository.library.utils.notification.content.update.failed", it.localizedMessage),
-              NotificationType.ERROR), project)
+            showNotification(JavaUiBundle.message("repository.library.utils.notification.content.update.failed", it.localizedMessage),
+                             NotificationType.ERROR)
             logger.error(it)
           }
         }
       }
       return@coroutineScope job
     }
-
-    private fun LibraryPropertiesEntity.getPropertiesIfRepositoryLibrary(): RepositoryLibraryProperties? {
-      val propertiesXmlTag = this.propertiesXmlTag ?: return null
-      if (REPOSITORY_LIBRARY_KIND.kindId == libraryType) {
-        return deserialize(JDOMUtil.load(propertiesXmlTag))
-      }
-      return null
-    }
-
-    private fun LibraryEntity.isGlobal() = tableId is LibraryTableId.GlobalLibraryTableId
   }
 }

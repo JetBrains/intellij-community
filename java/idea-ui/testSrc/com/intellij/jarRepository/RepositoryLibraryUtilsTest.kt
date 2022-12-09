@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.doNotEnableExternalStorageByDefaultInTests
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,7 +21,12 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.concurrency.await
+import org.jetbrains.concurrency.collectResults
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
+import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Before
 import org.junit.ClassRule
@@ -59,8 +65,11 @@ class RepositoryLibraryUtilsTest {
     pathMacros.setMacro("TEST_REMOTE_REPOSITORIES_ROOT", "file://$testRemoteRepositoriesRoot")
   }
 
+  /**
+   * Ensure internal [reloadAllRepositoryLibraries] test method works correctly
+   */
   @Test
-  fun `test reload all libraries reloads`() = testRepositoryLibraryUtils(baseProject) { project, utils ->
+  fun `test reload all libraries reloads`() = testRepositoryLibraryUtils(baseProject) { project, _ ->
     val workspaceModel = WorkspaceModel.getInstance(project)
     val rootsBeforeReload = workspaceModel.entityStorage.current.entities(LibraryEntity::class.java)
       .map { it.roots }
@@ -69,10 +78,7 @@ class RepositoryLibraryUtilsTest {
       .toList()
     assertFalse("Bad BEFORE state: some roots already resolved", rootsBeforeReload.any { it.exists() })
 
-    utils.reloadAllRepositoryLibrariesBackground().apply {
-      join()
-      assertTrue("Unexpected: job was cancelled", !isCancelled)
-    }
+    reloadAllRepositoryLibraries(project)
 
     val rootsAfterReload = workspaceModel.entityStorage.current.entities(LibraryEntity::class.java)
       .map { it.roots }
@@ -90,14 +96,14 @@ class RepositoryLibraryUtilsTest {
 
   @Test
   fun `test sha256 checksums built correctly`() = testRepositoryLibraryUtils(baseProject) { project, utils ->
-    utils.reloadAllRepositoryLibrariesBackground().join() // reload libraries - checksum build requires compile roots resolved
+    reloadAllRepositoryLibraries(project) // reload libraries - checksum build requires compile roots resolved
     utils.buildMissingSha256ChecksumsBackground().join()
     project.assertContentMatches(projectWithCorrectSha256Checksum)
   }
 
   @Test
   fun `test bad checksums rebuild`() = testRepositoryLibraryUtils(projectWithBadSha256Checksum) { project, utils ->
-    utils.reloadAllRepositoryLibrariesBackground().join() // reload libraries - checksum build requires compile roots resolved
+    reloadAllRepositoryLibraries(project) // reload libraries - checksum build requires compile roots resolved
     utils.buildMissingSha256ChecksumsBackground().join()
     project.assertContentMatches(projectWithBadSha256Checksum) // Ensure build checksums left untouched
     utils.rebuildExistingSha256ChecksumsBackground().join()
@@ -122,6 +128,14 @@ class RepositoryLibraryUtilsTest {
     project.assertContentMatches(baseProject)
   }
 
+  @Test
+  fun `test check all libs can be resolved`() = testRepositoryLibraryUtils(projectWithCorrectGuessedRemoteRepositories) { project, utils ->
+    assertTrue(utils.checkAllLibrariesCanBeResolvedBackground().await())
+    val remoteRepoConfig = RemoteRepositoriesConfiguration.getInstance(project)
+    remoteRepoConfig.repositories = remoteRepoConfig.repositories.toMutableList().apply { removeAt(0) }
+    assertFalse(utils.checkAllLibrariesCanBeResolvedBackground().await())
+  }
+
   private fun getCommunityDirAbsolutePath(relative: String) = PathManagerEx.findFileUnderCommunityHome(relative).absolutePath.toNioPath()
 
   private fun testRepositoryLibraryUtils(sampleProjectPath: Path, checkProject: suspend (Project, RepositoryLibraryUtils) -> Unit) {
@@ -144,5 +158,14 @@ class RepositoryLibraryUtilsTest {
   private suspend fun Project.assertContentMatches(path: Path) {
     stateStore.save()
     path.assertMatches(directoryContentOf(this.basePath!!.toNioPath()))
+  }
+
+  private suspend fun reloadAllRepositoryLibraries(project: Project) = coroutineScope {
+    RepositoryLibrarySynchronizer.collectLibraries(project) {
+      (it as? LibraryEx)?.properties is RepositoryLibraryProperties
+    }
+      .filterIsInstance<LibraryEx>()
+      .map { lib -> RepositoryUtils.reloadDependencies(project, lib) }
+      .collectResults().await()
   }
 }
