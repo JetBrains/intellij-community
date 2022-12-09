@@ -41,7 +41,7 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
                 .get(typeName, project, scope)
                 .asSequence()
                 .mapNotNull { it.name }
-                .onEach { names.add(it) }
+                .filter { names.add(it) }
                 .forEach(::searchForTypeAliasesRecursively)
         }
 
