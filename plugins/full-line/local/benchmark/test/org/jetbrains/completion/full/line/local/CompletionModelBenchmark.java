@@ -43,8 +43,8 @@ public class CompletionModelBenchmark {
     @Param({"0", "5", "50", "1000"})
     public int shiftContext;
 
-    @Param({"false", "true"})
-    public boolean useCache;
+    @Param({"true", "false"})
+    public boolean resetCache;
 
     private String filename;
 
@@ -70,14 +70,14 @@ public class CompletionModelBenchmark {
       prefix = helper.randomPrefix(prefixLen);
       context = helper.continueContextRandomly(context, contextTextLen, shiftContext);
       config = helper.getConfig(maxLen, filename);
-      if (!useCache) {
+      if (resetCache) {
         helper.resetCache();
       }
     }
 
     @TearDown(Level.Invocation)
     public void teardown() {
-      if (useCache) {
+      if (!resetCache) {
         if (shiftContext <= 10) {
           assert helper.getCacheHits() > 0;
         }
