@@ -348,6 +348,21 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     assertEquals("Incorrect content", "Migration Data", (settingsSyncStorage / "options" / "laf.xml").readText())
   }
 
+  @Test fun `regular sync should push if there is nothing on server`() {
+    writeToConfig {
+      fileState("options/editor.xml", "Editor Initial")
+    }
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+    remoteCommunicator.delete()
+
+    SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
+    bridge.waitForAllExecuted()
+
+    assertServerSnapshot {
+      fileState("options/editor.xml", "Editor Initial")
+    }
+  }
+
   private fun suppressFailureOnLogError(expectedException: RuntimeException, activity: () -> Unit) {
     LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
       override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
