@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NonNls
 @Internal
 class DesktopLayout(
   private val idToInfo: MutableMap<String, WindowInfoImpl> = HashMap(),
-  private val unifiedWeights: UnifiedToolWindowWeights = UnifiedToolWindowWeights(),
+  val unifiedWeights: UnifiedToolWindowWeights = UnifiedToolWindowWeights(),
 ) {
   companion object {
     @NonNls const val TAG = "layout"
