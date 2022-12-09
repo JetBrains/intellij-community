@@ -11,13 +11,10 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -54,22 +51,54 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
   private static @Nullable OptPane createOptPane(UExpression body) {
     if (body instanceof UBlockExpression blockExpression) {
       List<UExpression> expressions = blockExpression.getExpressions();
+      if (expressions.isEmpty()) return null;
+      UExpression first = expressions.get(0);
       if (expressions.size() == 1) {
-        body = expressions.get(0);
+        body = first;
+      }
+      else if (first instanceof UDeclarationsExpression decl &&
+               ContainerUtil.getOnlyItem(decl.getDeclarations()) instanceof UVariable var &&
+               var.getUastInitializer() instanceof UCallExpression ctor &&
+               (isConstructor(ctor, "MultipleCheckboxOptionsPanel") ||
+                isConstructor(ctor, "InspectionOptionsPanel")) &&
+               ContainerUtil.getLastItem(expressions) instanceof UReturnExpression returnExpression &&
+               returnExpression.getReturnExpression() instanceof USimpleNameReferenceExpression ref &&
+               var.equals(UastContextKt.toUElement(ref.resolve()))) {
+        List<OptComponent> components = new ArrayList<>();
+        for (int i = 1; i < expressions.size() - 1; i++) {
+          OptComponent component = null;
+          if (expressions.get(i) instanceof UQualifiedReferenceExpression qualRef &&
+              qualRef.getReceiver() instanceof USimpleNameReferenceExpression callRef &&
+              var.equals(UastContextKt.toUElement(callRef.resolve())) &&
+              qualRef.getSelector() instanceof UCallExpression call) {
+            String methodName = call.getMethodName();
+            // TODO: support addDependentCheckBox
+            if (methodName != null && (methodName.equals("addCheckbox") || methodName.equals("addCheckboxEx"))) {
+              List<UExpression> arguments = call.getValueArguments();
+              if (arguments.size() == 2) {
+                String bindId = getExpressionText(arguments.get(1));
+                String messagePsi = getExpressionText(arguments.get(0));
+                if (bindId != null && messagePsi != null) {
+                  component = OptPane.checkbox(bindId, messagePsi);
+                }
+              }
+            }
+          }
+          if (component == null) return null;
+          components.add(component);
+        }
+        return new OptPane(components);
       }
     }
     if (body instanceof UReturnExpression returnExpression) {
       UExpression expression = returnExpression.getReturnExpression();
-      if (expression instanceof UCallExpression callExpression && callExpression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
-        PsiMethod target = callExpression.resolve();
-        if (target != null && target.getName().equals("SingleCheckboxOptionsPanel")) {
-          List<UExpression> arguments = callExpression.getValueArguments();
-          if (arguments.size() == 3) {
-            String bindId = getPropertyName(arguments.get(2));
-            PsiElement messagePsi = arguments.get(0).getSourcePsi();
-            if (bindId != null && messagePsi != null) {
-              return OptPane.pane(OptPane.checkbox(bindId, messagePsi.getText()));
-            }
+      if (expression instanceof UCallExpression ctor && isConstructor(ctor, "SingleCheckboxOptionsPanel")) {
+        List<UExpression> arguments = ctor.getValueArguments();
+        if (arguments.size() == 3) {
+          String bindId = getExpressionText(arguments.get(2));
+          String messagePsi = getExpressionText(arguments.get(0));
+          if (bindId != null && messagePsi != null) {
+            return OptPane.pane(OptPane.checkbox(bindId, messagePsi));
           }
         }
       }
@@ -77,18 +106,19 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
     return null;
   }
 
-  private static String getPropertyName(UExpression expression) {
-    if (expression instanceof ULiteralExpression literal) {
-      return ObjectUtils.tryCast(literal.getValue(), String.class);
+  private static @Nullable @NlsSafe String getExpressionText(UExpression expression) {
+    PsiElement psi = expression.getSourcePsi();
+    if (psi == null) return null;
+    if (psi.getClass().getSimpleName().equals("KtLiteralStringTemplateEntry")) {
+      psi = psi.getParent();
     }
-    if (expression instanceof UQualifiedReferenceExpression ref &&
-        ref.getSelector() instanceof USimpleNameReferenceExpression sel &&
-        sel.getIdentifier().equals("name") &&
-        ref.getReceiver() instanceof UCallableReferenceExpression receiver &&
-        receiver.getQualifierExpression() == null) {
-      return receiver.getCallableName();
-    }
-    return null;
+    return psi.getText();
+  }
+
+  private static boolean isConstructor(UCallExpression callExpression, String className) {
+    if (callExpression.getKind() != UastCallKind.CONSTRUCTOR_CALL) return false;
+    PsiMethod target = callExpression.resolve();
+    return target != null && target.getName().equals(className);
   }
 
   private static class ConvertToOptPaneFix implements LocalQuickFix {
@@ -181,7 +211,7 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
   static void serialize(OptComponent component, StringBuilder builder) {
     if (component instanceof OptCheckbox checkbox) {
       builder.append(OPT_PANE + ".checkbox(");
-      builder.append('"').append(StringUtil.escapeStringCharacters(checkbox.bindId())).append("\", ");
+      builder.append(checkbox.bindId()).append(", ");
       builder.append(checkbox.label().label());
       for (OptComponent child : checkbox.children()) {
         builder.append(",\n");
