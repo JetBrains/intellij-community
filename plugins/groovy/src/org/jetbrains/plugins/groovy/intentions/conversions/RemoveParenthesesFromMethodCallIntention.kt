@@ -24,6 +24,7 @@ import com.intellij.util.IncorrectOperationException
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
@@ -80,6 +81,12 @@ class RemoveParenthesesFromMethodCallIntention : Intention() {
       if (arguments.first() is GrClosableBlock) {
         // foo({}) -> foo {}, but not foo({}, a, b, c)
         return arguments.size == 1
+      }
+      if (arguments.first() is GrListOrMap) {
+        // foo([])
+        // foo([1])
+        // foo([a: 1])
+        return false
       }
       return true
     }
