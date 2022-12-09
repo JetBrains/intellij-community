@@ -34,6 +34,7 @@ import java.awt.Container
 import java.awt.EventQueue
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
 @Internal
@@ -41,6 +42,8 @@ class PlatformTaskSupport : TaskSupport {
 
   data class ProgressStartedEvent(
     val title: @ProgressTitle String,
+    val cancellation: TaskCancellation,
+    val context: CoroutineContext,
     val updates: Flow<ProgressState>, // finite
   )
 
@@ -48,9 +51,18 @@ class PlatformTaskSupport : TaskSupport {
 
   val progressStarted: SharedFlow<ProgressStartedEvent> = _progressStarted.asSharedFlow()
 
-  private suspend fun progressStarted(title: @ProgressTitle String, updates: Flow<ProgressState>) {
-    val job = coroutineContext.job
-    _progressStarted.emit(ProgressStartedEvent(title, updates.takeWhile { job.isActive }))
+  private suspend fun progressStarted(title: @ProgressTitle String, cancellation: TaskCancellation, updates: Flow<ProgressState>) {
+    val context = coroutineContext
+    _progressStarted.emit(ProgressStartedEvent(title, cancellation, context, updates.finishWhenJobCompletes(context.job)))
+  }
+
+  private fun Flow<ProgressState>.finishWhenJobCompletes(job: Job): Flow<ProgressState> {
+    val isActiveFlow = MutableStateFlow(true)
+    job.invokeOnCompletion { isActiveFlow.value = false }
+    val finiteFlow = combine(isActiveFlow) { state, isActive ->
+      state.takeIf { isActive }
+    }.takeWhile { it != null }.map { it!! }
+    return finiteFlow
   }
 
   override fun taskCancellationNonCancellableInternal(): TaskCancellation.NonCancellable = NonCancellableTaskCancellation
@@ -68,7 +80,7 @@ class PlatformTaskSupport : TaskSupport {
     action: suspend CoroutineScope.() -> T
   ): T = coroutineScope {
     TextDetailsProgressReporter(parentScope = this).use { reporter ->
-      progressStarted(title, reporter.progressState)
+      progressStarted(title, cancellation, reporter.progressState)
       val showIndicatorJob = showIndicator(project, taskInfo(title, cancellation), reporter.progressState)
       try {
         withContext(reporter.asContextElement(), action)
@@ -109,7 +121,7 @@ class PlatformTaskSupport : TaskSupport {
       val deferredDialog = CompletableDeferred<DialogWrapper>()
       val mainJob = cs.async(Dispatchers.Default + newModalityState.asContextElement()) {
         TextDetailsProgressReporter(this@async).use { reporter ->
-          progressStarted(descriptor.title, reporter.progressState)
+          progressStarted(descriptor.title, descriptor.cancellation, reporter.progressState)
           val showIndicatorJob = showModalIndicator(descriptor, reporter.progressState, deferredDialog)
           try {
             withContext(reporter.asContextElement(), action)
