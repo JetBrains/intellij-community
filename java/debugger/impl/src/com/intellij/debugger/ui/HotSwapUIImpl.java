@@ -323,24 +323,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
 
         List<DebuggerSession> sessions = getHotSwappableDebugSessions(myProject);
         if (!sessions.isEmpty()) {
-          Map<String, Collection<String>> generatedPaths;
-          Collection<String> generatedFilesRoots = context.getGeneratedFilesRoots();
-          if (!generatedFilesRoots.isEmpty()) {
-            generatedPaths = new HashMap<>();
-            for (String outputRoot : generatedFilesRoots) {
-              // collect only classes under IDE output roots
-              if (!JpsPathUtil.isUnder(myOutputRoots, new File(outputRoot))) continue;
-              Collection<String> relativePaths = context.getGeneratedFilesRelativePaths(outputRoot).stream()
-                .filter(relativePath -> StringUtil.endsWith(relativePath, ".class"))
-                .collect(Collectors.toCollection(SmartList::new));
-              if (!relativePaths.isEmpty()) {
-                generatedPaths.put(outputRoot, relativePaths);
-              }
-            }
-          }
-          else {
-            generatedPaths = Collections.emptyMap();
-          }
+          Map<String, Collection<String>> generatedPaths = collectGeneratedPaths(context);
 
           HotSwapStatusListener callback = context.getUserData(HOT_SWAP_CALLBACK_KEY);
           NotNullLazyValue<? extends List<String>> outputRoots = context.getDirtyOutputPaths()
@@ -348,6 +331,25 @@ public final class HotSwapUIImpl extends HotSwapUI {
           instance.hotSwapSessions(sessions, generatedPaths, outputRoots, callback);
         }
       }
+    }
+
+    @NotNull
+    private Map<String, Collection<String>> collectGeneratedPaths(ProjectTaskContext context) {
+      Collection<String> generatedFilesRoots = context.getGeneratedFilesRoots();
+      if (generatedFilesRoots.isEmpty()) return Collections.emptyMap();
+
+      Map<String, Collection<String>> generatedPaths = new HashMap<>();
+      for (String outputRoot : generatedFilesRoots) {
+        // collect only classes under IDE output roots
+        if (!JpsPathUtil.isUnder(myOutputRoots, new File(outputRoot))) continue;
+        Collection<String> relativePaths = context.getGeneratedFilesRelativePaths(outputRoot).stream()
+          .filter(relativePath -> StringUtil.endsWith(relativePath, ".class"))
+          .collect(Collectors.toCollection(SmartList::new));
+        if (!relativePaths.isEmpty()) {
+          generatedPaths.put(outputRoot, relativePaths);
+        }
+      }
+      return generatedPaths;
     }
 
     private static boolean hasCompilationResults(@NotNull ProjectTaskManager.Result result) {
