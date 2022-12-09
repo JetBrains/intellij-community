@@ -20,6 +20,7 @@ import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
 import java.nio.file.*
 import java.nio.file.attribute.PosixFilePermissions
+import kotlin.io.path.name
 import kotlin.time.Duration.Companion.minutes
 
 class LinuxDistributionBuilder(override val context: BuildContext,
@@ -218,9 +219,10 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           "platform/build-scripts/resources/linux/snap/snapcraft-template.yaml")
         val versionSuffix = appInfo.versionSuffix?.replace(' ', '-') ?: ""
         val version = "${appInfo.majorVersion}.${appInfo.minorVersion}${if (versionSuffix.isEmpty()) "" else "-${versionSuffix}"}"
+        val snapcraftConfig = snapDir.resolve("snapcraft.yaml")
         substituteTemplatePlaceholders(
           inputFile = snapcraftTemplate,
-          outputFile = snapDir.resolve("snapcraft.yaml"),
+          outputFile = snapcraftConfig,
           placeholder = "$",
           values = listOf(
             Pair("NAME", snapName),
@@ -231,6 +233,11 @@ class LinuxDistributionBuilder(override val context: BuildContext,
             Pair("SCRIPT", "bin/${context.productProperties.baseFileName}.sh")
           )
         )
+        context.messages.info("""
+          |# <${snapcraftConfig.name}>
+          |${Files.readString(snapcraftConfig)}
+          |# </${snapcraftConfig.name}>
+        """.trimMargin())
 
         FileSet(unixSnapDistPath)
           .include("bin/*.sh")
@@ -260,7 +267,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         val snapArtifact = snapName + "_" + version + "_amd64.snap"
         runProcess(
           args = listOf(
-            "docker", "run", "--rm", "--volume=$snapDir/snapcraft.yaml:/build/snapcraft.yaml:ro",
+            "docker", "run", "--rm", "--volume=$snapcraftConfig:/build/snapcraft.yaml:ro",
             "--volume=$snapDir/$snapName.desktop:/build/snap/gui/$snapName.desktop:ro",
             "--volume=$snapDir/$snapName.png:/build/prime/meta/gui/icon.png:ro",
             "--volume=$snapDir/result:/build/result",
