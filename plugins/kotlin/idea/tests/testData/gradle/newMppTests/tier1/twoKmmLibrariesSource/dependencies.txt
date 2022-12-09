@@ -1,0 +1,42 @@
+MODULES
+    project
+    project.kmmConsumer
+    project.kmmConsumer.commonMain
+        project.kmmLib.commonMain (COMPILE)
+    project.kmmConsumer.commonTest
+        project.kmmLib.commonMain (TEST)
+    project.kmmConsumer.iosArm64Main
+        project.kmmLib.iosArm64Main (COMPILE)
+        project.kmmLib.commonMain (COMPILE)
+        project.kmmLib.iosMain (COMPILE)
+    project.kmmConsumer.iosArm64Test
+        project.kmmLib.iosArm64Main (TEST)
+        project.kmmLib.commonMain (TEST)
+        project.kmmLib.iosMain (TEST)
+    project.kmmConsumer.iosMain
+        project.kmmLib.commonMain (COMPILE)
+        project.kmmLib.iosMain (COMPILE)
+    project.kmmConsumer.iosTest
+        project.kmmLib.commonMain (TEST)
+        project.kmmLib.iosMain (TEST)
+    project.kmmConsumer.iosX64Main
+        project.kmmLib.iosX64Main (COMPILE)
+        project.kmmLib.commonMain (COMPILE)
+        project.kmmLib.iosMain (COMPILE)
+    project.kmmConsumer.iosX64Test
+        project.kmmLib.iosX64Main (TEST)
+        project.kmmLib.commonMain (TEST)
+        project.kmmLib.iosMain (TEST)
+    project.kmmConsumer.jvmMain
+        project.kmmLib.jvmMain (COMPILE)
+        project.kmmLib.commonMain (COMPILE)
+        project.kmmLib.commonMain (COMPILE)
+    project.kmmConsumer.jvmTest
+        project.kmmLib.commonMain (TEST)
+        project.kmmLib.jvmMain (TEST)
+        project.kmmLib.commonMain (TEST)
+
+Test configuration:
+- hiding source modules matching .*kmmLib.*
+- hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
+- hiding dependencies matching .*kmmConsumer.*
