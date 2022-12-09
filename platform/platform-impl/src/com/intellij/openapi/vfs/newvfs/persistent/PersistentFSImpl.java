@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.*;
+import com.intellij.openapi.vfs.newvfs.persistent.wal.VfsWAL;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Queue;
@@ -67,6 +69,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private final AtomicInteger myStructureModificationCount = new AtomicInteger();
   private BulkFileListener myPublisher;
   private volatile VfsData myVfsData = new VfsData();
+  private @NotNull VfsWAL myWAL;
 
   public PersistentFSImpl() {
     myRoots = SystemInfoRt.isFileSystemCaseSensitive
@@ -99,11 +102,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     connect();
   }
 
+  private void initWAL() {
+    myWAL = new VfsWAL(Paths.get(FSRecords.getCachesDir() + "/wal"));
+  }
+
   @ApiStatus.Internal
   public void connect() {
     myIdToDirCache.clear();
     myVfsData = new VfsData();
     LOG.assertTrue(!myConnected.get());
+    initWAL();
     doConnect();
     PersistentFsConnectionListener.EP_NAME.getExtensionList().forEach(PersistentFsConnectionListener::connectionOpen);
   }
@@ -126,7 +134,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private void doConnect() {
     if (myConnected.compareAndSet(false, true)) {
       Activity activity = StartUpMeasurer.startActivity("connect FSRecords", ActivityCategory.DEFAULT);
-      FSRecords.connect();
+      FSRecords.connect(myWAL);
       activity.end();
     }
   }
@@ -1787,6 +1795,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   public boolean mayHaveChildren(int id) {
     return FSRecords.mayHaveChildren(id);
+  }
+
+  @Override
+  public @NotNull VfsWAL getWAL() {
+    return null;
   }
 
   @TestOnly

@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.openapi.vfs.newvfs.persistent.wal.VfsWAL;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SystemProperties;
@@ -161,13 +162,13 @@ public final class FSRecords {
     return ourCurrentVersion;
   }
 
-  static void connect() {
+  static void connect(@NotNull VfsWAL WAL) {
     if (IOUtil.isSharedCachesEnabled()) {
       IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
     }
     try {
       ourCurrentVersion = calculateVersion();
-      ourConnection = PersistentFSConnector.connect(getCachesDir(), ourCurrentVersion, useContentHashes);
+      ourConnection = PersistentFSConnector.connect(getCachesDir(), ourCurrentVersion, useContentHashes, WAL.getInterceptors());
       ourContentAccessor = new PersistentFSContentAccessor(useContentHashes, ourConnection);
       ourAttributeAccessor = new PersistentFSAttributeAccessor(ourConnection);
       ourTreeAccessor = new PersistentFSTreeAccessor(ourAttributeAccessor, ourConnection);

@@ -11,6 +11,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
+import com.intellij.openapi.vfs.newvfs.persistent.util.ConnectionInterceptor;
+import com.intellij.openapi.vfs.newvfs.persistent.util.ContentsInterceptor;
+import com.intellij.openapi.vfs.newvfs.persistent.util.InterceptorInjection;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.hash.ContentHashEnumerator;
@@ -27,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
+import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -77,7 +81,8 @@ final class PersistentFSConnection {
                          @Nullable ContentHashEnumerator contentHashesEnumerator,
                          @NotNull SimpleStringPersistentEnumerator enumeratedAttributes,
                          @NotNull IntList freeRecords,
-                         boolean markDirty) throws IOException {
+                         boolean markDirty,
+                         @NotNull List<ConnectionInterceptor> interceptors) throws IOException {
     if (!(names instanceof Forceable) || !(names instanceof Closeable)) {
       //RC: there is no simple way to specify type like DataEnumerator & Forceable & Closeable in java,
       //    hence the runtime check here (and in methods below calling Forceable/Closeable methods).
@@ -88,7 +93,7 @@ final class PersistentFSConnection {
     myRecords = records;
     myNames = names;
     myAttributesStorage = attributes;
-    myContents = contents;
+    myContents = wrapContents(contents, interceptors);
     myContentHashesEnumerator = contentHashesEnumerator;
     myPersistentFSPaths = paths;
     myFreeRecords = freeRecords;
@@ -116,6 +121,14 @@ final class PersistentFSConnection {
     else {
       myFlushingFuture = null;
     }
+  }
+
+  private static RefCountingContentStorage wrapContents(RefCountingContentStorage contents, List<ConnectionInterceptor> interceptors) {
+    var contentInterceptors = interceptors.stream()
+      .filter(ContentsInterceptor.class::isInstance)
+      .map(ContentsInterceptor.class::cast)
+      .toList();
+    return InterceptorInjection.INSTANCE.injectInContents(contents, contentInterceptors);
   }
 
   @NotNull("Vfs must be initialized")
