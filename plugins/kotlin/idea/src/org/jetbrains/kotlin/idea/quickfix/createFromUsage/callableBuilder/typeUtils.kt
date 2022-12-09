@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
@@ -29,10 +30,11 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.resolveTopLevelClass
 import org.jetbrains.kotlin.resolve.scopes.HierarchicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.types.*
-import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.types.typeUtil.supertypes
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
 internal operator fun KotlinType.contains(inner: KotlinType): Boolean {
@@ -139,9 +141,11 @@ fun KtExpression.guessTypes(
 ): Array<KotlinType> {
     fun isAcceptable(type: KotlinType) = allowErrorTypes || !ErrorUtils.containsErrorType(type)
 
-    val lambda = getStrictParentOfType<KtLambdaExpression>()
-    if (this.isLastStatementOf(lambda)) {
-        lambda?.expectedReturnType(context)?.let { return arrayOf(it) }
+    val lambdaOrFunction = getParentOfTypes(strict = true, KtLambdaExpression::class.java, KtNamedFunction::class.java)
+    if (lambdaOrFunction.safeAs<KtLambdaExpression>()?.bodyExpression?.statements?.lastOrNull() == this ||
+        lambdaOrFunction.safeAs<KtNamedFunction>()?.initializer == this
+    ) {
+        lambdaOrFunction?.parent.safeAs<KtValueArgument>()?.expectedReturnType(context)?.let { return arrayOf(it) }
     }
 
     if (coerceUnusedToUnit
@@ -267,13 +271,9 @@ fun KtExpression.guessTypes(
     }
 }
 
-private fun KtExpression.isLastStatementOf(lambda: KtLambdaExpression?): Boolean =
-    this == lambda?.bodyExpression?.statements?.lastOrNull()
-
-private fun KtLambdaExpression.expectedReturnType(context: BindingContext): KotlinType? {
-    val argument = parent as? KtValueArgument ?: return null
-    val call = argument.getStrictParentOfType<KtCallExpression>() ?: return null
-    val parameter = call.getResolvedCall(context)?.getParameterForArgument(argument)
+private fun KtValueArgument.expectedReturnType(context: BindingContext): KotlinType? {
+    val call = getStrictParentOfType<KtCallExpression>() ?: return null
+    val parameter = call.getResolvedCall(context)?.getParameterForArgument(this)
     return parameter?.type?.arguments?.lastOrNull()?.type
 }
 
