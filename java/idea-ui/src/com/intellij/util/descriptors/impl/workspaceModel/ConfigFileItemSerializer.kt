@@ -4,6 +4,18 @@ package com.intellij.util.descriptors.impl.workspaceModel
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 
+@NonNls
+private const val DESCRIPTORS_ELEMENT = "descriptors"
+
+@NonNls
+private const val ELEMENT_NAME = "deploymentDescriptor"
+
+@NonNls
+private const val ID_ATTRIBUTE = "name"
+
+@NonNls
+private const val URL_ATTRIBUTE = "url"
+
 interface ConfigFileItemSerializer {
   fun serializeConfigFiles(configFiles: List<ConfigFileItem>, rootElement: Element) {
     val descriptors = Element(DESCRIPTORS_ELEMENT)
@@ -34,19 +46,5 @@ interface ConfigFileItemSerializer {
       }
     }
     return configFiles
-  }
-
-  companion object {
-    @NonNls
-    val DESCRIPTORS_ELEMENT = "descriptors"
-
-    @NonNls
-    val ELEMENT_NAME = "deploymentDescriptor"
-
-    @NonNls
-    val ID_ATTRIBUTE = "name"
-
-    @NonNls
-    val URL_ATTRIBUTE = "url"
   }
 }
