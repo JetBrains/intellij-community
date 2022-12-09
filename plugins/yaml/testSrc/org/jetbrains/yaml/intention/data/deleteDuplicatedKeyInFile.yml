@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+    deployment.kubernetes.io/revision: "1"
+  labels:
+    app: psi-agent
+    version: 2017.2.2057
+    version:
+  name: psi-agent
+  version: 123
+  n<caret>amespace: default
+  namespace:

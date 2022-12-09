@@ -22,6 +22,11 @@ public class YAMLIntentionTest extends BasePlatformTestCase {
     doTest("Remove key");
   }
 
+  public void testDeleteDuplicatedKeyInFile() {
+    myFixture.enableInspections(YAMLDuplicatedKeysInspection.class);
+    doTest("Fix all 'Duplicated YAML keys' problems in file");
+  }
+
   public void testDeleteAnchor1() {
     doDeleteAnchorTest();
   }

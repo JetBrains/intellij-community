@@ -13,6 +13,7 @@ import org.jetbrains.yaml.psi.YAMLMapping;
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
@@ -37,8 +38,13 @@ public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
         }
 
         for (Map.Entry<String, Collection<YAMLKeyValue>> entry : occurrences.entrySet()) {
-          if (entry.getValue().size() > 1) {
-            entry.getValue().forEach((duplicatedKey) -> {
+          Collection<YAMLKeyValue> value = entry.getValue();
+          if (value.size() > 1) {
+            Iterator<YAMLKeyValue> iterator = value.iterator();
+            if (!isOnTheFly) {
+              iterator.next();
+            }
+            iterator.forEachRemaining((duplicatedKey) -> {
               assert duplicatedKey.getKey() != null;
               assert duplicatedKey.getParentMapping() != null : "This key is gotten from mapping";
 
