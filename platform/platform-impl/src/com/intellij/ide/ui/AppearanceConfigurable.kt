@@ -176,8 +176,8 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           .accessibleName(message("label.font.name"))
           .component
 
-        val fontSize = fontSizeComboBox({ settings.fontSize },
-                         { settings.fontSize = it },
+        val fontSize = fontSizeComboBox({ if (settings.overrideLafFonts) settings.fontSize else getDefaultFont().size },
+                                        { settings.fontSize = it },
                          settings.fontSize)
           .label(message("label.font.size"))
           .shouldUpdateLaF()
