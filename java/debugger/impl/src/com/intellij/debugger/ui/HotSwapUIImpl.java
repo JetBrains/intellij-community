@@ -353,8 +353,9 @@ public final class HotSwapUIImpl extends HotSwapUI {
     }
 
     private static boolean hasCompilationResults(@NotNull ProjectTaskManager.Result result) {
-      return result.anyTaskMatches((task, state) -> task instanceof ModuleBuildTask &&
-                                              !state.isFailed() && !state.isSkipped());
+      return result.anyTaskMatches(
+        (task, state) -> task instanceof ModuleBuildTask && !state.isFailed() && !state.isSkipped()
+      );
     }
   }
 
