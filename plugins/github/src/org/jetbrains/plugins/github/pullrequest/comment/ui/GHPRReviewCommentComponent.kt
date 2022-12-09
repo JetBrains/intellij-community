@@ -92,7 +92,7 @@ object GHPRReviewCommentComponent {
       add(deleteButton)
     }
 
-    val title = JPanel(HorizontalLayout(10)).apply {
+    val title = JPanel(HorizontalLayout(12)).apply {
       isOpaque = false
       add(titlePane)
       add(pendingLabel)
@@ -105,16 +105,10 @@ object GHPRReviewCommentComponent {
       layout = MigLayout(LC()
                            .fillX()
                            .gridGap("0", "0")
-                           .insets("0", "0", "0", "0")
-                           .hideMode(3))
-
-      add(title, CC().push().split(2)
-        .minWidth("0").maxWidth("$maxTextWidth"))
-
-      add(actionsPanel, CC().gapLeft("10:push"))
-      add(editablePaneHandle.panel, CC().push().grow().newline()
-        .gapTop("4")
-        .minWidth("0").maxWidth("$maxTextWidth"))
+                           .insets("0", "0", "0", "0"))
+      add(editablePaneHandle.panel, CC().push().grow().minWidth("0").maxWidth("$maxTextWidth"))
+    }.let {
+      ComponentFactory.wrapWithHeader(it, title, actionsPanel)
     }.let {
       ComponentFactory.wrapWithIcon(COMPACT, it, avatarIconsProvider, author.avatarUrl, author.getPresentableName())
     }.also {

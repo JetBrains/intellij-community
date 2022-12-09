@@ -102,15 +102,9 @@ internal object GHPRTimelineItemUIUtil {
                            .insets("0", "0", "0", "0")
                            .hideMode(3))
 
-      add(title, CC().push().split(2)
-        .minWidth("0").maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}"))
-
-      if (actionsPanel != null) {
-        add(actionsPanel, CC().gapLeft("10:push"))
-      }
-      add(content, CC().push().grow().newline()
-        .gapTop("4")
-        .minWidth("0").maxWidth("$maxContentWidth"))
+      add(content, CC().push().grow().minWidth("0").maxWidth("$maxContentWidth"))
+    }.let{
+      CodeReviewChatItemUIUtil.ComponentFactory.wrapWithHeader(it, title, actionsPanel)
     }.let {
       CodeReviewChatItemUIUtil.ComponentFactory
         .wrapWithIcon(CodeReviewChatItemUIUtil.ComponentType.FULL, it,

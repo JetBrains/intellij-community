@@ -2,13 +2,18 @@
 package com.intellij.collaboration.ui.codereview
 
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.hover.HoverStateListener
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.JPanel
 import kotlin.math.roundToInt
 
 object CodeReviewChatItemUIUtil {
@@ -42,6 +47,26 @@ object CodeReviewChatItemUIUtil {
       }
       val iconPanel = simplePanel().addToTop(iconLabel).andTransparent()
       return simplePanel(componentType.iconGap, 0).addToCenter(item).addToLeft(iconPanel).andTransparent()
+    }
+
+    fun wrapWithHeader(item: JComponent, title: JComponent, actions: JComponent?): JComponent {
+      val headerPanel = JPanel(null).apply {
+        layout = MigLayout(LC().gridGap("0", "0").insets("0")
+                             .hideMode(3).fill())
+        isOpaque = false
+
+        add(title, CC().push())
+        if (actions != null) {
+          add(actions, CC().push().gapLeft("10:push"))
+        }
+      }
+
+      return JPanel(VerticalLayout(4)).apply {
+        isOpaque = false
+
+        add(headerPanel)
+        add(item)
+      }
     }
   }
 
