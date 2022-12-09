@@ -2,11 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
-import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentFactory.wrapWithHeader
-import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentFactory.wrapWithIcon
-import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentFactory.wrapWithWidthLimit
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType.COMPACT
-import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.actionsVisibleOnHover
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBLabel
@@ -99,12 +95,12 @@ object GHPRReviewCommentComponent {
       add(resolvedLabel)
     }
 
-    return wrapWithWidthLimit(editablePaneHandle.panel, maxContentWidth - CONTENT_SHIFT).let {
-      wrapWithHeader(it, title, actionsPanel)
-    }.let {
-      wrapWithIcon(COMPACT, it, avatarIconsProvider, author.avatarUrl, author.getPresentableName())
-    }.also {
-      actionsVisibleOnHover(it, actionsPanel)
+    return CodeReviewChatItemUIUtil.build(COMPACT,
+                                          { avatarIconsProvider.getIcon(author.avatarUrl, it) },
+                                          editablePaneHandle.panel) {
+      iconTooltip = author.getPresentableName()
+      header = title to actionsPanel
+      this.maxContentWidth = maxContentWidth - CONTENT_SHIFT
     }
   }
 

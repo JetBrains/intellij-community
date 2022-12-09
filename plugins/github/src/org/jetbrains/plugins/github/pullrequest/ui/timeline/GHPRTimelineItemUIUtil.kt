@@ -2,10 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.ui.JPanelWithBackground
-import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
-import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentFactory.wrapWithHeader
-import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentFactory.wrapWithIcon
-import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentFactory.wrapWithWidthLimit
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType.FULL
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.build
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -27,19 +26,19 @@ import java.util.*
 import javax.swing.JComponent
 
 internal object GHPRTimelineItemUIUtil {
-  val CONTENT_SHIFT = CodeReviewChatItemUIUtil.ComponentType.FULL.iconSize + CodeReviewChatItemUIUtil.ComponentType.FULL.iconGap
+  val CONTENT_SHIFT = FULL.iconSize + FULL.iconGap
 
   const val V_SIDE_BORDER: Int = 10
   const val H_SIDE_BORDER: Int = 16
 
-  val TIMELINE_ITEM_WIDTH = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH + CONTENT_SHIFT + (H_SIDE_BORDER * 2)
+  val TIMELINE_ITEM_WIDTH = TEXT_CONTENT_WIDTH + CONTENT_SHIFT + (H_SIDE_BORDER * 2)
 
   fun createItem(avatarIconsProvider: GHAvatarIconsProvider,
                  actor: GHActor,
                  date: Date?,
                  content: JComponent,
                  actionsPanel: JComponent? = null): JComponent {
-    return createItem(avatarIconsProvider, actor, date, content, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH, actionsPanel = actionsPanel)
+    return createItem(avatarIconsProvider, actor, date, content, TEXT_CONTENT_WIDTH, actionsPanel = actionsPanel)
   }
 
   fun createTitleTextPane(actor: GHActor, date: Date?): HtmlEditorPane {
@@ -61,7 +60,7 @@ internal object GHPRTimelineItemUIUtil {
                  actor: GHActor,
                  date: Date?,
                  content: JComponent,
-                 maxContentWidth: Int = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH,
+                 maxContentWidth: Int = TEXT_CONTENT_WIDTH,
                  actionsPanel: JComponent? = null): JComponent {
     val titleTextPane = createTitleTextPane(actor, date)
     return createItem(avatarIconsProvider, actor, titleTextPane, content, maxContentWidth,
@@ -72,7 +71,7 @@ internal object GHPRTimelineItemUIUtil {
                  actor: GHActor,
                  date: Date?,
                  content: JComponent,
-                 maxContentWidth: Int = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH,
+                 maxContentWidth: Int = TEXT_CONTENT_WIDTH,
                  additionalTitle: JComponent? = null,
                  actionsPanel: JComponent? = null): JComponent {
     val titleTextPane = createTitleTextPane(actor, date)
@@ -91,19 +90,12 @@ internal object GHPRTimelineItemUIUtil {
                          content: JComponent,
                          maxContentWidth: Int?,
                          actionsPanel: JComponent? = null): JComponent {
-    return if (maxContentWidth != null) {
-      wrapWithWidthLimit(content, maxContentWidth)
-    }
-    else {
-      content
-    }.let {
-      wrapWithHeader(it, title, actionsPanel)
-    }.let {
-      wrapWithIcon(CodeReviewChatItemUIUtil.ComponentType.FULL, it,
-                   avatarIconsProvider, actor.avatarUrl, actor.getPresentableName())
+    return build(FULL, { avatarIconsProvider.getIcon(actor.avatarUrl, it) }, content) {
+      iconTooltip = actor.getPresentableName()
+      header = title to actionsPanel
+      this.maxContentWidth = maxContentWidth
     }.let {
       it.border = JBUI.Borders.empty(V_SIDE_BORDER, H_SIDE_BORDER)
-      CodeReviewChatItemUIUtil.actionsVisibleOnHover(it, actionsPanel)
       withHoverHighlight(it)
     }
   }
