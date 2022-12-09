@@ -4,6 +4,7 @@ package com.intellij.util.io.storage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.util.io.ByteArraySequence;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.DataInputStream;
@@ -28,9 +29,9 @@ public interface IStorage extends Disposable, Forceable {
 
   DataInputStream readStream(int record) throws IOException;
 
-  void writeBytes(int record, ByteArraySequence bytes, boolean fixedSize) throws IOException;
+  void writeBytes(int record, @NotNull ByteArraySequence bytes, boolean fixedSize) throws IOException;
 
   void checkSanity(int record) throws IOException;
 
-  void replaceBytes(int record, int offset, ByteArraySequence bytes) throws IOException;
+  void replaceBytes(int record, int offset, @NotNull ByteArraySequence bytes) throws IOException;
 }

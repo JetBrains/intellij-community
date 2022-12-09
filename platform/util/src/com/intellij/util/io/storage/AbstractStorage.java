@@ -308,7 +308,7 @@ public abstract class AbstractStorage implements IStorage {
   }
 
   @Override
-  public void writeBytes(int record, ByteArraySequence bytes, boolean fixedSize) throws IOException {
+  public void writeBytes(int record, @NotNull ByteArraySequence bytes, boolean fixedSize) throws IOException {
     withWriteLock(() -> {
       final int requiredLength = bytes.getLength();
       final int currentCapacity = myRecordsTable.getCapacity(record);
@@ -366,7 +366,7 @@ public abstract class AbstractStorage implements IStorage {
   }
 
   @Override
-  public void replaceBytes(int record, int offset, ByteArraySequence bytes) throws IOException {
+  public void replaceBytes(int record, int offset, @NotNull ByteArraySequence bytes) throws IOException {
     withWriteLock(() -> {
       final int changedBytesLength = bytes.getLength();
 
