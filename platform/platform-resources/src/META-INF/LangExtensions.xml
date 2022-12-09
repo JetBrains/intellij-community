@@ -1412,11 +1412,11 @@
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.SlowLineMarkersPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.ShowIntentionsPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.refactoring.changeSignature.inplace.ChangeSignaturePassFactory"/>
-    <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.CodeFoldingPassFactory"/>
+    <highlightingPassFactory implementation="com.intellij.codeInsight.folding.impl.CodeFoldingPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.openapi.fileEditor.impl.text.FocusModePassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.hints.ParameterHintsPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.IndentsPassFactory"/>
-    <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.InjectedCodeFoldingPassFactory"/>
+    <highlightingPassFactory implementation="com.intellij.codeInsight.folding.impl.InjectedCodeFoldingPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.LocalInspectionsPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.ShowAutoImportPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.documentation.render.DocRenderPassFactory"/>
