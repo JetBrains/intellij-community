@@ -14,7 +14,7 @@ class GroovyScriptBuilder(indent: Int = 0) : AbstractScriptBuilder(indent) {
         add(element.value, indent, false)
       }
       element is CallElement && isNewLine && element.arguments.isNotEmpty() && !hasTrailingBlock(element.arguments) -> {
-        add(element.name, indent, isNewLine)
+        add(element.name, indent, isNewLine = true)
         add(" ", indent, false)
         add(element.arguments, indent)
       }

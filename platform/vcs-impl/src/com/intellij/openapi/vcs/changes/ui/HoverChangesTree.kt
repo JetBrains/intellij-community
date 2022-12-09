@@ -163,8 +163,8 @@ abstract class HoverChangesTree(project: Project, showCheckboxesBoolean: Boolean
 
   companion object {
     fun Tree.getBackground(row: Int, selected: Boolean): Color {
-      if (selected) return RenderingUtil.getBackground(this, selected)
-      return getPathForRow(row)?.let { path -> getPathBackground(path, row) } ?: RenderingUtil.getBackground(this, selected)
+      if (selected) return RenderingUtil.getBackground(this, true)
+      return getPathForRow(row)?.let { path -> getPathBackground(path, row) } ?: RenderingUtil.getBackground(this, false)
     }
 
     fun ChangesTree.getRowHeight(renderer: ChangesTreeCellRenderer): Int {

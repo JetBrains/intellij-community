@@ -27,7 +27,7 @@ object GHEServerVersionChecker {
       majorVersion < REQUIRED_VERSION_MAJOR ->
         throwUnsupportedVersion(majorVersion, minorVersion)
 
-      majorVersion == REQUIRED_VERSION_MAJOR ->
+      else ->
         if (minorVersion < REQUIRED_VERSION_MINOR) throwUnsupportedVersion(majorVersion, minorVersion)
     }
   }

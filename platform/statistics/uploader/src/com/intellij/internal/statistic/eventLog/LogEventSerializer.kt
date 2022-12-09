@@ -26,7 +26,7 @@ object LogEventSerializer {
     obj.addProperty("product", request.product)
     obj.addProperty("device", request.device)
     if (request.internal) {
-      obj.addProperty("internal", request.internal)
+      obj.addProperty("internal", true)
     }
 
     val records = JsonArray()
@@ -117,9 +117,9 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEvent> {
   private fun transformNumbers(value: Any): Any {
     return when {
       value is Double && value % 1 == 0.0 -> value.roundToLong()
-      value is List<*> -> value.map { if (it != null) transformNumbers(it) else it }
+      value is List<*> -> value.map { if (it != null) transformNumbers(it) else null }
       value is Map<*, *> -> value.entries.associate { (entryKey, entryValue) ->
-        val newValue = if (entryValue != null) transformNumbers(entryValue) else entryValue
+        val newValue = if (entryValue != null) transformNumbers(entryValue) else null
         entryKey to newValue
       }
       else -> value

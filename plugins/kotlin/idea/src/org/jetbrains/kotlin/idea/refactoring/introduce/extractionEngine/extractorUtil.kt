@@ -681,8 +681,6 @@ fun ExtractionGeneratorConfiguration.generateDeclaration(
         ShortenReferences.DEFAULT.process(declaration)
     }
 
-    if (generatorOptions.inTempFile) return ExtractionResult(this, declaration, emptyMap())
-
     val duplicateReplacers = HashMap<KotlinPsiRange, () -> Unit>().apply {
         if (generatorOptions.delayInitialOccurrenceReplacement) {
             put(descriptor.extractionData.originalRange, replaceInitialOccurrence)

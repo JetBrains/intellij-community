@@ -129,7 +129,7 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
     val configurationBean = settings.myState.configuration ?: return null
     val configurationSettings = RunManager.getInstance(project).findConfigurationByTypeAndName(configurationBean.configurationId, configurationBean.name)
     if (configurationSettings == null) {
-      return createCommitProblem(listOf(FailureDescription("", 0, 0, configurationSettings, configurationBean.name)))
+      return createCommitProblem(listOf(FailureDescription("", 0, 0, configuration = null, configurationBean.name)))
     }
     coroutineContext.progressSink?.text(SmRunnerBundle.message("progress.text.running.tests", configurationSettings.name))
 
