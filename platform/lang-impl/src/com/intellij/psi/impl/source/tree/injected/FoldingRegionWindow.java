@@ -19,8 +19,7 @@ public class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion
                       @NotNull EditorWindow editorWindow,
                       @NotNull FoldRegion hostRegion,
                       int startShift,
-                      int endShift)
-  {
+                      int endShift) {
     super(documentWindow, (RangeMarkerEx)hostRegion, startShift, endShift);
     myEditorWindow = editorWindow;
     myHostRegion = hostRegion;
@@ -58,7 +57,7 @@ public class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion
   }
 
   @Override
-  public FoldRegionImpl getDelegate() {
+  public @NotNull FoldRegionImpl getDelegate() {
     return (FoldRegionImpl)myHostRegion;
   }
 

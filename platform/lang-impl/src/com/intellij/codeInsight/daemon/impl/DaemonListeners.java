@@ -203,16 +203,15 @@ public final class DaemonListeners implements Disposable {
         Editor editor = event.getEditor();
         Document document = editor.getDocument();
         Project editorProject = editor.getProject();
-        // worthBothering() checks for getCachedPsiFile, so call getPsiFile here
-        PsiFile file = editorProject == null ? null : PsiDocumentManager.getInstance(editorProject).getPsiFile(document);
         boolean showing = UIUtil.isShowing(editor.getContentComponent());
         boolean worthBothering = worthBothering(document, editorProject);
         if (!showing || !worthBothering) {
-          LOG.debug("Not worth bothering about editor created for : " + file + " because editor isShowing(): " +
+          LOG.debug("Not worth bothering about editor created for: " + editor.getVirtualFile() + " because editor isShowing(): " +
                     showing + "; project is open and file is mine: " + worthBothering);
           return;
         }
-
+        // worthBothering() checks for getCachedPsiFile, so call getPsiFile here
+        PsiFile file = editorProject == null ? null : PsiDocumentManager.getInstance(editorProject).getPsiFile(document);
         ErrorStripeUpdateManager.getInstance(myProject).repaintErrorStripePanel(editor, file);
       }
 
@@ -409,7 +408,7 @@ public final class DaemonListeners implements Disposable {
     name.addChangeListener(() -> stopDaemonAndRestartAllFiles(message), this);
   }
 
-  private boolean worthBothering(@Nullable Document document, Project project) {
+  private boolean worthBothering(@Nullable Document document, @Nullable Project project) {
     if (document == null) {
       return true;
     }
@@ -486,19 +485,7 @@ public final class DaemonListeners implements Disposable {
       }
 
       String commandName = event.getCommandName();
-
-      String cutActionName = CUT_ACTION_NAME;
-      if (cutActionName == null) {
-        ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
-        if (actionManager != null) {
-          cutActionName = actionManager.getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
-          //noinspection AssignmentToStaticFieldFromInstanceMethod
-          CUT_ACTION_NAME = cutActionName;
-        }
-      }
-
-      cutOperationJustHappened = commandName != null && !commandName.isEmpty() && !commandName.startsWith("Editor") &&
-                                 commandName.equals(cutActionName);
+      cutOperationJustHappened = commandName != null && commandName.equals(getCutActionName());
       if (!myDaemonCodeAnalyzer.isRunning()) {
         return;
       }
@@ -541,6 +528,19 @@ public final class DaemonListeners implements Disposable {
         stopDaemon(true, "Command finish");
       }
     }
+  }
+
+  private static String getCutActionName() {
+    String cutActionName = CUT_ACTION_NAME;
+    if (cutActionName == null) {
+      ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
+      if (actionManager != null) {
+        cutActionName = actionManager.getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        CUT_ACTION_NAME = cutActionName;
+      }
+    }
+    return cutActionName;
   }
 
   private final class MyTodoListener implements PropertyChangeListener {

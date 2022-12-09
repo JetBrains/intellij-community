@@ -263,7 +263,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  public void insertString(final int offset, @NotNull CharSequence s) {
+  public void insertString(int offset, @NotNull CharSequence s) {
     assert intersectWithEditable(new TextRange(offset, offset)) != null;
     if (isOneLine()) {
       s = StringUtil.replace(s.toString(), "\n", "");
@@ -272,7 +272,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  public void deleteString(final int startOffset, final int endOffset) {
+  public void deleteString(int startOffset, int endOffset) {
     assert intersectWithEditable(new TextRange(startOffset, startOffset)) != null;
     assert intersectWithEditable(new TextRange(endOffset, endOffset)) != null;
 
@@ -313,7 +313,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
       s = StringUtil.replace(s.toString(), "\n", "");
     }
 
-    final CharSequence chars = getCharsSequence();
+    CharSequence chars = getCharsSequence();
     CharSequence toDelete = chars.subSequence(startOffset, endOffset);
 
     int prefixLength = StringUtil.commonPrefixLength(s, toDelete);
@@ -395,7 +395,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  public void addDocumentListener(@NotNull final DocumentListener listener) {
+  public void addDocumentListener(@NotNull DocumentListener listener) {
     myDelegate.addDocumentListener(listener);
   }
 
@@ -405,13 +405,13 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  public void removeDocumentListener(@NotNull final DocumentListener listener) {
+  public void removeDocumentListener(@NotNull DocumentListener listener) {
     myDelegate.removeDocumentListener(listener);
   }
 
   @Override
   @NotNull
-  public RangeMarker createRangeMarker(final int startOffset, final int endOffset) {
+  public RangeMarker createRangeMarker(int startOffset, int endOffset) {
     ProperTextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
     RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange);
     int startShift = Math.max(0, hostToInjected(hostRange.getStartOffset()) - startOffset);
@@ -421,7 +421,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
 
   @Override
   @NotNull
-  public RangeMarker createRangeMarker(final int startOffset, final int endOffset, final boolean surviveOnExternalChange) {
+  public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
     if (!surviveOnExternalChange) {
       return createRangeMarker(startOffset, endOffset);
     }
@@ -434,29 +434,29 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener) {
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myDelegate.addPropertyChangeListener(listener);
   }
 
   @Override
-  public void removePropertyChangeListener(@NotNull final PropertyChangeListener listener) {
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myDelegate.removePropertyChangeListener(listener);
   }
 
   @Override
-  public void setReadOnly(final boolean isReadOnly) {
+  public void setReadOnly(boolean isReadOnly) {
     myDelegate.setReadOnly(isReadOnly);
   }
 
   @Override
   @NotNull
-  public RangeMarker createGuardedBlock(final int startOffset, final int endOffset) {
+  public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
     ProperTextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
     return myDelegate.createGuardedBlock(hostRange.getStartOffset(), hostRange.getEndOffset());
   }
 
   @Override
-  public void removeGuardedBlock(@NotNull final RangeMarker block) {
+  public void removeGuardedBlock(@NotNull RangeMarker block) {
     myDelegate.removeGuardedBlock(block);
   }
 
@@ -485,7 +485,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  public void setCyclicBufferSize(final int bufferSize) {
+  public void setCyclicBufferSize(int bufferSize) {
     myDelegate.setCyclicBufferSize(bufferSize);
   }
 
@@ -531,18 +531,18 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
 
   @Override
   @NotNull
-  public RangeMarker createRangeMarker(@NotNull final TextRange textRange) {
-    final ProperTextRange properTextRange = new ProperTextRange(textRange);
+  public RangeMarker createRangeMarker(@NotNull TextRange textRange) {
+    ProperTextRange properTextRange = new ProperTextRange(textRange);
     return createRangeMarker(properTextRange.getStartOffset(), properTextRange.getEndOffset());
   }
 
   @Override
-  public void setStripTrailingSpacesEnabled(final boolean isEnabled) {
+  public void setStripTrailingSpacesEnabled(boolean isEnabled) {
     myDelegate.setStripTrailingSpacesEnabled(isEnabled);
   }
 
   @Override
-  public int getLineSeparatorLength(final int line) {
+  public int getLineSeparatorLength(int line) {
     return myDelegate.getLineSeparatorLength(injectedToHostLine(line));
   }
 
@@ -553,22 +553,22 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  public void setModificationStamp(final long modificationStamp) {
+  public void setModificationStamp(long modificationStamp) {
     myDelegate.setModificationStamp(modificationStamp);
   }
 
   @Override
-  public void addEditReadOnlyListener(@NotNull final EditReadOnlyListener listener) {
+  public void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
     myDelegate.addEditReadOnlyListener(listener);
   }
 
   @Override
-  public void removeEditReadOnlyListener(@NotNull final EditReadOnlyListener listener) {
+  public void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
     myDelegate.removeEditReadOnlyListener(listener);
   }
 
   @Override
-  public void replaceText(@NotNull final CharSequence chars, final long newModificationStamp) {
+  public void replaceText(@NotNull CharSequence chars, long newModificationStamp) {
     setText(chars);
     myDelegate.setModificationStamp(newModificationStamp);
   }
