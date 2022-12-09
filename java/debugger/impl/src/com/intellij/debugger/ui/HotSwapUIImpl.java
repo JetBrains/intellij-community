@@ -82,7 +82,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
 
   private void hotSwapSessions(@NotNull final List<DebuggerSession> sessions,
                                @Nullable final Map<String, Collection<String>> generatedPaths,
-                               @Nullable final NotNullLazyValue<? extends List<String>> outputPaths,
+                               @Nullable final NotNullLazyValue<List<String>> outputPaths,
                                @Nullable final HotSwapStatusListener callback) {
     final boolean shouldAskBeforeHotswap = myAskBeforeHotswap;
     myAskBeforeHotswap = true;
@@ -229,7 +229,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
 
   @NotNull
   private static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClassesWithProgress(@NotNull List<DebuggerSession> sessions,
-                                                                                                   @Nullable NotNullLazyValue<? extends List<String>> outputPaths,
+                                                                                                   @Nullable NotNullLazyValue<List<String>> outputPaths,
                                                                                                    @NotNull HotSwapProgressImpl progress) {
     return ProgressManager.getInstance().runProcess(() -> {
       try {
@@ -326,8 +326,9 @@ public final class HotSwapUIImpl extends HotSwapUI {
           Map<String, Collection<String>> generatedPaths = collectGeneratedPaths(context);
 
           HotSwapStatusListener callback = context.getUserData(HOT_SWAP_CALLBACK_KEY);
-          NotNullLazyValue<? extends List<String>> outputRoots = context.getDirtyOutputPaths()
-            .map(stream -> NotNullLazyValue.createValue(() -> stream.collect(Collectors.toCollection(SmartList::new)))).orElse(null);
+          NotNullLazyValue<List<String>> outputRoots = context.getDirtyOutputPaths()
+            .map(stream -> NotNullLazyValue.createValue(() -> (List<String>)stream.collect(Collectors.toCollection(SmartList::new))))
+            .orElse(null);
           instance.hotSwapSessions(sessions, generatedPaths, outputRoots, callback);
         }
       }
