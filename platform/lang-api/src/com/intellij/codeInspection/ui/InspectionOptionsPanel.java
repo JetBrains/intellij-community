@@ -55,15 +55,20 @@ public class InspectionOptionsPanel extends JPanel implements InspectionOptionCo
     return panel;
   }
 
-  public void addRow(Component label, Component component) {
-    add(label, myConstraints.nextLine());
-    add(component, myConstraints.next());
+  /**
+   * Adds a row with a single component in the first column.
+   */
+  @Override
+  public Component add(Component comp) {
+    super.add(comp, myConstraints.nextLine());
+    return comp;
   }
 
-  public void addLabeledRow(@NlsContexts.Label String labelText, Component component) {
-    final JLabel label = new JLabel(labelText);
-    label.setLabelFor(component);
-    addRow(label, component);
+  /**
+   * Adds a row with a single component, covering all columns but not resizing.
+   */
+  public void addComponent(JComponent component) {
+    add(component, myConstraints.nextLine().coverLine());
   }
 
   /**
@@ -78,13 +83,24 @@ public class InspectionOptionsPanel extends JPanel implements InspectionOptionCo
    * Adds a row with a single component, using as much horizontal space as possible.
    */
   public void addGrowingX(Component component) {
-    add(component, myConstraints.nextLine().weightx(1.0).fillCell());
+    add(component, myConstraints.nextLine().weightx(1.0).coverLine().fillCell());
   }
 
-  @Override
-  public Component add(Component comp) {
-    super.add(comp, myConstraints.nextLine());
-    return comp;
+  /**
+   * Adds a row with a component and its label.
+   */
+  public void addRow(Component label, Component component) {
+    add(label, myConstraints.nextLine().next());
+    add(component, myConstraints.next().insets(0, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP * 2, 0));
+  }
+
+  /**
+   * Adds a row with a component and its label.
+   */
+  public void addLabeledRow(@NlsContexts.Label String labelText, Component component) {
+    final JLabel label = new JLabel(labelText);
+    label.setLabelFor(component);
+    addRow(label, component);
   }
 
   public void addCheckbox(@NotNull @NlsContexts.Checkbox String label, @NotNull @NonNls String property) {
@@ -122,19 +138,25 @@ public class InspectionOptionsPanel extends JPanel implements InspectionOptionCo
     return checkBox;
   }
 
-  public void addComponent(JComponent component) {
-    add(component, myConstraints.nextLine());
-  }
-
   @IntellijInternalApi
   public void addGlueIfNeeded() {
     if (!myHasGrowing) {
       myHasGrowing = true;
-      add(new Spacer(), myConstraints.nextLine().weightx(1.0).weighty(1.0).fillCell().insets(0, 0, 0, 0));
+      add(new Spacer(), myConstraints.nextLine().weightx(1.0).weighty(1.0).fillCell().coverLine().insets(0, 0, 0, 0));
     }
   }
 
+  /**
+   * Returns the minimum size for lists in inspection options.
+   */
   static public @NotNull Dimension getMinimumListSize() {
     return JBUI.size(150, 100);
+  }
+
+  /**
+   * Returns the minimum size for lists to show at least 3 button controls in their toolbar.
+   */
+  static public @NotNull Dimension getMinimumLongListSize() {
+    return JBUI.size(150, 120);
   }
 }
