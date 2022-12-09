@@ -91,10 +91,10 @@ public final class HotSwapUIImpl extends HotSwapUI {
     final String runHotswap = settings.RUN_HOTSWAP_AFTER_COMPILE;
     final boolean shouldDisplayHangWarning = shouldDisplayHangWarning(settings, sessions);
 
-    HotSwapStatusListener callbackWrapper = makeNullSafe(callback);
+    HotSwapStatusListener statusListener = makeNullSafe(callback);
 
     if (shouldAskBeforeHotswap && DebuggerSettings.RUN_HOTSWAP_NEVER.equals(runHotswap)) {
-      callbackWrapper.onCancel(sessions);
+      statusListener.onCancel(sessions);
       return;
     }
 
@@ -114,9 +114,9 @@ public final class HotSwapUIImpl extends HotSwapUI {
       }
     }
 
-    final HotSwapProgressImpl findClassesProgress = !toScan.isEmpty() ? createHotSwapProgress(callbackWrapper, sessions) : null;
+    final HotSwapProgressImpl findClassesProgress = !toScan.isEmpty() ? createHotSwapProgress(statusListener, sessions) : null;
     final HotSwapProgressImpl outputPathsProgress =
-      !toUseGenerated.isEmpty() && outputPaths != null ? createHotSwapProgress(callbackWrapper, sessions) : null;
+      !toUseGenerated.isEmpty() && outputPaths != null ? createHotSwapProgress(statusListener, sessions) : null;
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses = new HashMap<>();
@@ -139,7 +139,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
       if (modifiedClasses.isEmpty()) {
         final String message = JavaDebuggerBundle.message("status.hotswap.uptodate");
         HotSwapProgressImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION).notify(myProject);
-        callbackWrapper.onSuccess(sessions);
+        statusListener.onSuccess(sessions);
         return;
       }
 
@@ -150,7 +150,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
             for (DebuggerSession session : modifiedClasses.keySet()) {
               session.setModifiedClassesScanRequired(true);
             }
-            callbackWrapper.onCancel(sessions);
+            statusListener.onCancel(sessions);
             return;
           }
           final Set<DebuggerSession> toReload = new HashSet<>(dialog.getSessionsToReload());
@@ -165,7 +165,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
           for (DebuggerSession session : modifiedClasses.keySet()) {
             session.setModifiedClassesScanRequired(true);
           }
-          callbackWrapper.onCancel(sessions);
+          statusListener.onCancel(sessions);
           return;
         }
 
@@ -177,16 +177,16 @@ public final class HotSwapUIImpl extends HotSwapUI {
           progress.addProgressListener(new HotSwapProgressImpl.HotSwapProgressListener() {
             @Override
             public void onCancel() {
-              callbackWrapper.onCancel(sessions);
+              statusListener.onCancel(sessions);
             }
 
             @Override
             public void onFinish() {
               if (progress.getMessages(MessageCategory.ERROR).isEmpty()) {
-                callbackWrapper.onSuccess(sessions);
+                statusListener.onSuccess(sessions);
               }
               else {
-                callbackWrapper.onFailure(sessions);
+                statusListener.onFailure(sessions);
               }
             }
           });
@@ -215,13 +215,13 @@ public final class HotSwapUIImpl extends HotSwapUI {
   }
 
   @NotNull
-  private HotSwapProgressImpl createHotSwapProgress(@NotNull HotSwapStatusListener callbackWrapper,
+  private HotSwapProgressImpl createHotSwapProgress(@NotNull HotSwapStatusListener statusListener,
                                                     @NotNull List<DebuggerSession> sessions) {
     HotSwapProgressImpl progress = new HotSwapProgressImpl(myProject);
     progress.addProgressListener(new HotSwapProgressImpl.HotSwapProgressListener() {
       @Override
       public void onCancel() {
-        callbackWrapper.onCancel(sessions);
+        statusListener.onCancel(sessions);
       }
     });
     return progress;
