@@ -147,7 +147,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     setFont(UIManager.getFont("TextField.font"));
     addHierarchyListener(e -> {
       if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && e.getChanged().isShowing()) {
-        if (myEditor == null) initEditor();
+        if (myEditor == null && !project.isDisposed()) initEditor();
       }
     });
   }
