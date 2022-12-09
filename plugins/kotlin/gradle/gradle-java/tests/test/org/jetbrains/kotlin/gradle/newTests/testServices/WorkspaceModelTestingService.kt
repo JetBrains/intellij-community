@@ -4,18 +4,26 @@ package org.jetbrains.kotlin.gradle.newTests.testServices
 import org.jetbrains.kotlin.gradle.workspace.WorkspacePrintingMode
 import org.jetbrains.kotlin.gradle.newTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
+import org.jetbrains.kotlin.gradle.workspace.WorkspacePrintingMode.*
 import org.jetbrains.kotlin.gradle.workspace.checkWorkspaceModel
 import org.junit.runner.Description
 
 annotation class WorkspaceChecks(vararg val modes: WorkspacePrintingMode)
+
+annotation class FullCheck
 
 class WorkspaceModelTestingService : KotlinBeforeAfterTestRuleWithDescription {
     private var currentModes: List<WorkspacePrintingMode>? = null
 
     override fun before(description: Description) {
         val checksAnnotation = description.getAnnotation(WorkspaceChecks::class.java)
+        val fullCheck = description.getAnnotation(FullCheck::class.java)
 
-        currentModes = checksAnnotation?.modes?.asList() ?: return
+        currentModes = when {
+            fullCheck != null -> listOf(SOURCE_ROOTS, MODULE_DEPENDENCIES, MODULE_FACETS)
+            checksAnnotation != null -> checksAnnotation.modes.asList()
+            else -> return
+        }
     }
 
     fun checkWorkspaceModel(configuration: TestConfiguration, testInstance: AbstractKotlinMppGradleImportingTest) {
