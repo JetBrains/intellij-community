@@ -53,11 +53,11 @@ class WorkspaceModelPrinter(
     }
 
     private fun PrinterContext.filterModules(modules: List<Module>): List<Module> {
-        val config = testConfiguration.getConfiguration(FilterModulesTestFeature) ?: return modules
+        val config = testConfiguration.getConfiguration(FilterModulesTestFeature)
 
         fun Module.shouldRemoveModule(): Boolean {
-            return config.includedModuleNames != null && name !in config.includedModuleNames!! ||
-                    name in config.excludedModuleNames.orEmpty() ||
+            return config.includedModuleNames != null && !config.includedModuleNames!!.matches(name) ||
+                    config.excludedModuleNames != null && config.excludedModuleNames!!.matches(name) ||
                     config.hideTestModules && isTestModule ||
                     config.hideProductionModules && !isTestModule
         }
