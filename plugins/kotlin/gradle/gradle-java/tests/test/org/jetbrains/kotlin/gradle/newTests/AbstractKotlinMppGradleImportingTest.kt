@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.gradle.newTests.testServices.*
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.junit.Rule
@@ -23,7 +24,9 @@ import java.io.PrintStream
 @RunWith(BlockJUnit4ClassRunner::class)
 abstract class AbstractKotlinMppGradleImportingTest(
     testDataRoot: String
-) : GradleImportingTestCase(), WorkspaceFilteringDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl {
+) : GradleImportingTestCase(), WorkspaceFilteringDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl,
+    HighlightingCheckDsl
+{
     val importedProject: Project
         get() = myProject
     val importedProjectRoot: VirtualFile
@@ -55,6 +58,14 @@ abstract class AbstractKotlinMppGradleImportingTest(
     }
 
     private fun doTest(configuration: TestConfiguration) {
+        createProjectSubFile(
+            "local.properties",
+            """
+                |sdk.dir=${KotlinTestUtils.getAndroidSdkSystemIndependentPath()}
+                |org.gradle.java.home=${findJdkPath()}
+            """.trimMargin()
+        )
+
         configureByFiles(testDataDirectoryService.testDataDirectory())
 
         configuration.getConfiguration(LinkedProjectPathsTestsFeature).linkedProjectPaths.forEach {
