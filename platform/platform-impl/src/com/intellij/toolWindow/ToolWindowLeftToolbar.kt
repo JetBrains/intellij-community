@@ -25,7 +25,7 @@ internal class ToolWindowLeftToolbar(paneId: String, private val isPrimary: Bool
     }
   }
 
-  override fun createBorder(): Border = JBUI.Borders.customLine(getBorderColor(), 1, 0, 0, 1)
+  override fun createBorder(): Border = JBUI.Borders.customLineRight(getBorderColor())
 
   fun initMoreButton() {
     if (isPrimary) {
