@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -23,9 +24,12 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
+  private static final String OPT_PANE = "com.intellij.codeInspection.options.OptPane";
+
   @Override
   public ProblemDescriptor @Nullable [] checkMethod(@NotNull UMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (!method.getName().equals("createOptionsPanel")) return null;
@@ -114,7 +118,8 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
       if (kotlin) {
         builder.append("override fun getOptionsPane() = ");
       } else {
-        builder.append("@Override public @NotNull com.intellij.codeInspection.options.OptPane getOptionsPane() {\nreturn ");
+        // Use short name for return type, as import will be added anyway when processing the body
+        builder.append("@Override public @NotNull OptPane getOptionsPane() {\nreturn ");
       }
       serialize(myPane, builder);
       if (!kotlin) {
@@ -124,7 +129,36 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
       if (uMethod == null) return;
       PsiElement newMethod = uMethod.getSourcePsi();
       if (newMethod == null) return;
-      psi.replace(newMethod);
+      shortenReferences(plugin, psi.replace(newMethod));
+    }
+
+    private void shortenReferences(@NotNull UastCodeGenerationPlugin plugin, @NotNull PsiElement element) {
+      var list = new ArrayList<UQualifiedReferenceExpression>();
+      var visitor = new PsiRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitElement(@NotNull PsiElement element) {
+          super.visitElement(element);
+          UQualifiedReferenceExpression expression = UastContextKt.toUElement(element, UQualifiedReferenceExpression.class);
+          if (expression != null && expression.getReceiver() instanceof UReferenceExpression qualifier) {
+            PsiElement target = qualifier.resolve();
+            if (target instanceof PsiClass cls && OPT_PANE.equals(cls.getQualifiedName())) {
+              list.add(expression);
+            }
+          }
+        }
+      };
+      element.accept(visitor);
+      if (!list.isEmpty()) {
+        for (UQualifiedReferenceExpression qr : list) {
+          UReferenceExpression receiver = (UReferenceExpression)qr.getReceiver();
+          if (receiver.isPsiValid()) {
+            plugin.shortenReference(receiver);
+          }
+          if (qr.isPsiValid()) {
+            plugin.importMemberOnDemand(qr);
+          }
+        }
+      }
     }
   }
 
@@ -134,7 +168,7 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
   }
 
   static void serialize(@NotNull OptPane pane, @NotNull StringBuilder builder) {
-    builder.append("com.intellij.codeInspection.options.OptPane.pane(\n");
+    builder.append(OPT_PANE + ".pane(\n");
     List<@NotNull OptComponent> components = pane.components();
     for (OptComponent component : components) {
       serialize(component, builder);
@@ -146,7 +180,7 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
 
   static void serialize(OptComponent component, StringBuilder builder) {
     if (component instanceof OptCheckbox checkbox) {
-      builder.append("com.intellij.codeInspection.options.OptPane.checkbox(");
+      builder.append(OPT_PANE + ".checkbox(");
       builder.append('"').append(StringUtil.escapeStringCharacters(checkbox.bindId())).append("\", ");
       builder.append(checkbox.label().label());
       for (OptComponent child : checkbox.children()) {
