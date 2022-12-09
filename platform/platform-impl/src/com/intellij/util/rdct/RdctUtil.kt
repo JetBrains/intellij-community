@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 class ItemsList(override val name: String, private val knownValuesList: List<String>) : PrimitiveEventField<String?>() {
   override fun addData(fuData: FeatureUsageData, value: String?) {
     val data =
-      if (value.isNullOrEmpty()) ""
+      if (value.isNullOrEmpty()) "unknown"
       else if (knownValuesList.contains(value)) value
       else "unknown"
 
@@ -20,5 +20,5 @@ class ItemsList(override val name: String, private val knownValuesList: List<Str
 }
 
 @JvmField
-val HostProductIds = ItemsList("parentProductId", listOf("IU", "RM", "WS", "PS", "PY", "DS", "OC", "CL", "DB", "RD", "GO"))
+val HostProductCode = ItemsList("parentProductCode", listOf("IU", "RM", "WS", "PS", "PY", "DS", "OC", "CL", "DB", "RD", "GO"))
 
