@@ -36,6 +36,7 @@ import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.system.exitProcess
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 internal suspend fun startSystemHealthMonitor() {
@@ -340,10 +341,11 @@ private fun startDiskSpaceMonitoring() {
     return
   }
 
-  monitorDiskSpace(ApplicationManager.getApplication().coroutineScope, dir, store, initialDelay = 1)
+  @Suppress("DEPRECATION")
+  monitorDiskSpace(ApplicationManager.getApplication().coroutineScope, dir, store, initialDelay = 1.seconds)
 }
 
-private fun monitorDiskSpace(scope: CoroutineScope, dir: Path, store: FileStore, initialDelay: Long) {
+private fun monitorDiskSpace(scope: CoroutineScope, dir: Path, store: FileStore, initialDelay: Duration) {
   scope.launch {
     delay(initialDelay)
 
@@ -363,18 +365,18 @@ private fun monitorDiskSpace(scope: CoroutineScope, dir: Path, store: FileStore,
           Messages.showErrorDialog(IdeBundle.message("no.disk.space.message", store.name()), IdeBundle.message("no.disk.space.title"))
         }
 
-        delay(5)
+        delay(5.seconds)
       }
       else if (usableSpace < LOW_DISK_SPACE_THRESHOLD) {
         LOG.warn("Low disk space: $usableSpace")
         MyNotification(IdeBundle.message("low.disk.space.message", store.name()), NotificationType.WARNING, "low.disk")
           .setTitle(IdeBundle.message("low.disk.space.title"))
-          .whenExpired { monitorDiskSpace(scope, dir, store, initialDelay = 5) }
+          .whenExpired { monitorDiskSpace(scope, dir, store, initialDelay = 5.seconds) }
           .notify(null)
         return@launch
       }
       else {
-        delay(((usableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS).coerceIn(5, 3600))
+        delay(((usableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS).coerceIn(5, 3600).seconds)
       }
     }
   }
