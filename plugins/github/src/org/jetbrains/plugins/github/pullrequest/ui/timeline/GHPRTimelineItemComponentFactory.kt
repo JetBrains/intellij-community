@@ -61,9 +61,11 @@ import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHe
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.CONTENT_SHIFT
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.H_SIDE_BORDER
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.TIMELINE_ITEM_WIDTH
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.buildTimelineItem
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTimelineItem
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTitlePane
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -102,7 +104,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     }
     catch (e: Exception) {
       LOG.warn(e)
-      return createItem(prAuthor, null, HtmlEditorPane(GithubBundle.message("cannot.display.item", e.message ?: "")))
+      return createTimelineItem(avatarIconsProvider, prAuthor ?: ghostUser, null,
+                                HtmlEditorPane(GithubBundle.message("cannot.display.item", e.message ?: "")))
     }
   }
 
@@ -167,7 +170,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       add(StatusMessageComponentFactory.create(commitsPanels))
     }
     val actor = commits.singleOrNull()?.commit?.author?.user ?: prAuthor ?: ghostUser
-    return createItem(actor, commits.singleOrNull()?.commit?.author?.date, contentPanel)
+    return createTimelineItem(avatarIconsProvider, actor ?: ghostUser, commits.singleOrNull()?.commit?.author?.date, contentPanel)
   }
 
   private val noDescriptionHtmlText by lazy {
@@ -206,7 +209,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       actionsPanel = null
     }
 
-    return createItem(details.author, details.createdAt, contentPanel, actionsPanel)
+    return createTimelineItem(avatarIconsProvider, details.author ?: ghostUser, details.createdAt, contentPanel, actionsPanel)
   }
 
   private fun createComponent(comment: GHIssueComment): JComponent {
@@ -222,7 +225,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       })
     }
 
-    return createItem(comment.author, comment.createdAt, panelHandle.panel, actionsPanel)
+    return createTimelineItem(avatarIconsProvider, comment.author ?: ghostUser, comment.createdAt, panelHandle.panel, actionsPanel)
   }
 
   private fun createComponent(review: GHPullRequestReview): JComponent {
@@ -264,8 +267,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
         .maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}")
         .gapLeft("$H_SIDE_BORDER")
         .gapRight("$H_SIDE_BORDER"))
-      add(threadsPanel, CC().grow().push())
-      add(reviewItem, CC().grow().push())
+      add(threadsPanel, CC().minWidth("0").grow().push())
+      add(reviewItem, CC().minWidth("0").grow().push())
     }
   }
 
@@ -357,10 +360,12 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       coroutineScopeProvider.activateWith(it)
     }
 
-    val mainItem = GHPRTimelineItemUIUtil.createItem(avatarIconsProvider, firstComment.author ?: ghostUser, firstComment.dateCreated,
-                                                     content, Int.MAX_VALUE,
-                                                     additionalTitle = tagsPanel,
-                                                     actionsPanel = actionsPanel)
+    val actor = firstComment.author ?: ghostUser
+    val titlePanel = createTitlePane(actor, firstComment.dateCreated, tagsPanel)
+    val mainItem = buildTimelineItem(avatarIconsProvider, actor, content) {
+      header = titlePanel to actionsPanel
+      maxContentWidth = null
+    }
 
     val leftGap = H_SIDE_BORDER + CONTENT_SHIFT + 2
     val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
@@ -426,16 +431,19 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       background = UIUtil.getPanelBackground()
     }.andOpaque()
 
-    thread.addAndInvokeStateChangeListener {
-      outdatedLabel.isVisible = thread.isOutdated
-      resolvedLabel.isVisible = thread.isResolved
-    }
-
     val tagsPanel = JPanel(HorizontalLayout(10)).apply {
       isOpaque = false
       add(outdatedLabel)
       add(resolvedLabel)
     }
+
+    thread.addAndInvokeStateChangeListener {
+      outdatedLabel.isVisible = thread.isOutdated
+      resolvedLabel.isVisible = thread.isResolved
+
+      tagsPanel.isVisible = thread.isOutdated || thread.isResolved
+    }
+
     return tagsPanel
   }
 
@@ -480,19 +488,15 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       if (panelHandle != null) {
         val commentPanel = panelHandle.panel
         add(commentPanel, CC().grow().push()
-          .minWidth("0").maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}"))
+          .minWidth("0"))
       }
 
       add(StatusMessageComponentFactory.create(HtmlEditorPane(stateText), stateType), CC().grow().push()
-        .minWidth("0").maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}"))
+        .minWidth("0"))
     }
 
-    return GHPRTimelineItemUIUtil.createItem(avatarIconsProvider, review.author ?: ghostUser, review.createdAt,
-                                             contentPanel, Int.MAX_VALUE, actionsPanel)
+    return createTimelineItem(avatarIconsProvider, review.author ?: ghostUser, review.createdAt, contentPanel, actionsPanel)
   }
-
-  private fun createItem(actor: GHActor?, date: Date?, content: JComponent, actionsPanel: JComponent? = null): JComponent =
-    GHPRTimelineItemUIUtil.createItem(avatarIconsProvider, actor ?: ghostUser, date, content, actionsPanel)
 
   companion object {
     private val LOG = logger<GHPRTimelineItemComponentFactory>()

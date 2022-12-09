@@ -18,7 +18,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.*
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createDescriptionComponent
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createItem
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTimelineItem
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
@@ -50,7 +50,7 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
   private abstract inner class EventComponentFactory<T : GHPRTimelineEvent> : GHPRTimelineEventComponentFactory<T> {
     protected fun eventItem(event: GHPRTimelineEvent, detailsText: @Nls String): JComponent {
       val content = createDescriptionComponent(detailsText)
-      return createItem(avatarIconsProvider, event.actor ?: ghostUser, event.createdAt, content)
+      return createTimelineItem(avatarIconsProvider, event.actor ?: ghostUser, event.createdAt, content)
     }
 
     protected fun eventItem(event: GHPRTimelineEvent, titleText: @Nls String, detailsText: @Nls String? = null): JComponent {
@@ -65,7 +65,7 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
           add(createDescriptionComponent(detailsText))
         }
       }
-      return createItem(avatarIconsProvider, event.actor ?: ghostUser, event.createdAt, content)
+      return createTimelineItem(avatarIconsProvider, event.actor ?: ghostUser, event.createdAt, content)
     }
   }
 
