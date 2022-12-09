@@ -2,19 +2,14 @@
 package org.jetbrains.kotlin.idea.highlighter.markers
 
 import com.intellij.codeInsight.daemon.DaemonBundle
-import com.intellij.codeInsight.navigation.BackgroundUpdaterTask
 import com.intellij.ide.util.MethodCellRenderer
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.DumbService
 import com.intellij.psi.*
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.search.PsiElementProcessorAdapter
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.FunctionalExpressionSearch
-import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.elements.isTraitFakeOverride
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -22,8 +17,6 @@ import org.jetbrains.kotlin.idea.presentation.DeclarationByModuleRenderer
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachDeclaredMemberOverride
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
-import java.awt.event.MouseEvent
-import javax.swing.JComponent
 
 private fun PsiMethod.isMethodWithDeclarationInOtherClass(): Boolean {
     return this is KtLightMethod && this.isTraitFakeOverride()
@@ -106,80 +99,4 @@ fun getOverriddenMethodTooltip(method: PsiMethod): String? {
         overridingJavaMethods,
         start, true, IdeActions.ACTION_GOTO_IMPLEMENTATION
     )
-}
-
-fun buildNavigateToOverriddenMethodPopup(e: MouseEvent?, element: PsiElement?): NavigationPopupDescriptor? {
-    val method = getPsiMethod(element) ?: return null
-
-    if (DumbService.isDumb(method.project)) {
-        DumbService.getInstance(method.project)
-            ?.showDumbModeNotification(KotlinBundle.message("highlighter.notification.text.navigation.to.overriding.classes.is.not.possible.during.index.update"))
-        return null
-    }
-
-    val processor = PsiElementProcessor.CollectElementsWithLimit(2, HashSet<PsiMethod>())
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            {
-                method.forEachOverridingMethod {
-                    runReadAction {
-                        processor.execute(it)
-                    }
-                }
-            },
-            KotlinBundle.message("highlighter.title.searching.for.overriding.declarations"),
-            true,
-            method.project,
-            e?.component as JComponent?
-        )
-    ) {
-        return null
-    }
-
-    var overridingJavaMethods = processor.collection.filter { !it.isMethodWithDeclarationInOtherClass() }
-    if (overridingJavaMethods.isEmpty()) return null
-
-    val renderer = MethodCellRenderer(false)
-    overridingJavaMethods = overridingJavaMethods.sortedWith(renderer.comparator)
-
-    val methodsUpdater = OverridingMethodsUpdater(method, renderer.comparator)
-    return NavigationPopupDescriptor(
-        overridingJavaMethods,
-        methodsUpdater.getCaption(overridingJavaMethods.size),
-        KotlinBundle.message("highlighter.title.overriding.declarations.of", method.name),
-        renderer,
-        methodsUpdater
-    )
-}
-
-private class OverridingMethodsUpdater(
-    private val myMethod: PsiMethod,
-    comparator: Comparator<PsiMethod>,
-) : BackgroundUpdaterTask(
-    myMethod.project,
-    KotlinBundle.message("highlighter.title.searching.for.overriding.methods"),
-    createComparatorWrapper { o1: PsiElement, o2: PsiElement ->
-        if (o1 is PsiMethod && o2 is PsiMethod) comparator.compare(o1, o2) else 0
-    }
-) {
-    @Suppress("DialogTitleCapitalization")
-    override fun getCaption(size: Int): String {
-        return if (myMethod.hasModifierProperty(PsiModifier.ABSTRACT))
-            DaemonBundle.message("navigation.title.implementation.method", myMethod.name, size)
-        else
-            DaemonBundle.message("navigation.title.overrider.method", myMethod.name, size)
-    }
-
-    override fun run(indicator: ProgressIndicator) {
-        super.run(indicator)
-        val processor = object : CommonProcessors.CollectProcessor<PsiMethod>() {
-            override fun process(psiMethod: PsiMethod): Boolean {
-                if (!updateComponent(psiMethod)) {
-                    indicator.cancel()
-                }
-                indicator.checkCanceled()
-                return super.process(psiMethod)
-            }
-        }
-        myMethod.forEachOverridingMethod { processor.process(it) }
-    }
 }

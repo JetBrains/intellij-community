@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.lineMarkers
 
 import com.intellij.codeInsight.daemon.*
 import com.intellij.codeInsight.daemon.impl.GutterTooltipBuilder
+import com.intellij.codeInsight.daemon.impl.InheritorsLineMarkerNavigator
 import com.intellij.codeInsight.navigation.GotoTargetHandler
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -85,7 +86,7 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
             anchor.textRange,
             icon,
             CallableOverridingsTooltip,
-            CallableOverridingsPopupHandler,
+            ImplementationsPopupHandler,
             GutterIconRenderer.Alignment.RIGHT
         ) { gutter.name }
 
@@ -150,7 +151,7 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
             anchor.textRange,
             icon,
             ClassInheritorsTooltip,
-            ClassInheritorsPopupHandler,
+            ImplementationsPopupHandler,
             GutterIconRenderer.Alignment.RIGHT
         ) { gutter.name }
 
@@ -173,16 +174,8 @@ object SuperDeclarationPopupHandler : GutterIconNavigationHandler<PsiElement> {
     }
 }
 
-object CallableOverridingsPopupHandler : GutterIconNavigationHandler<PsiElement> {
-    override fun navigate(e: MouseEvent?, elt: PsiElement?) {
-        TODO("Not yet implemented")
-    }
-}
-
-object ClassInheritorsPopupHandler : GutterIconNavigationHandler<PsiElement> {
-    override fun navigate(e: MouseEvent?, elt: PsiElement?) {
-        TODO("Not yet implemented")
-    }
+object ImplementationsPopupHandler : InheritorsLineMarkerNavigator() {
+    override fun getMessageForDumbMode() = KotlinBundle.message("notification.navigation.to.overriding.classes")
 }
 
 private fun comparator(): Comparator<PsiElement> = Comparator.comparing { el ->
