@@ -118,10 +118,12 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
           final Document document = getDocumentForFile(worker);
           if (document == null) return;
 
-          int startFileOffset = worker.getInfo().fileLineRange.getStartOffset();
-          int idx = lineText.indexOf(':', startFileOffset);
-          int endIdx = idx == -1 ? worker.getInfo().fileLineRange.getEndOffset() : idx;
-          consumer.consume(new MyAdditionalHighlight(startOffset + lineStartOffset + startFileOffset + 1, startOffset + lineStartOffset + endIdx));
+          TextRange fileLinkRange = worker.getInfo().fileLineRange;
+          int startFileLinkOffset = fileLinkRange.getStartOffset();
+          int idx = lineText.indexOf(':', startFileLinkOffset);
+          int endFileLinkOffset = idx == -1 ? fileLinkRange.getEndOffset() : idx;
+          consumer.consume(new MyAdditionalHighlight(startOffset + lineStartOffset + startFileLinkOffset,
+                                                     startOffset + lineStartOffset + endFileLinkOffset));
 
           if (worker.getPsiClass() != null) {
             // also check method
