@@ -3,6 +3,7 @@ package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -13,23 +14,22 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.ConfigEncodingManager;
 import org.editorconfig.configmanagement.EditorConfigEncodingCache;
-import org.editorconfig.language.psi.EditorConfigFlatOptionKey;
 import org.editorconfig.language.psi.EditorConfigOption;
-import org.editorconfig.language.psi.EditorConfigOptionValueIdentifier;
 import org.editorconfig.language.psi.EditorConfigSection;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class EditorConfigStatusListener implements Disposable {
+public final class EditorConfigStatusListener implements CodeStyleSettingsListener, Disposable {
   private boolean myEnabledStatus;
   private final VirtualFile myVirtualFile;
   private final Project myProject;
@@ -40,10 +40,11 @@ public final class EditorConfigStatusListener implements Disposable {
     myEnabledStatus = Utils.isEnabled(project);
     myVirtualFile = virtualFile;
     myEncodings = extractEncodings();
-    project.getMessageBus().connect(this).subscribe(CodeStyleSettingsListener.TOPIC, this::codeStyleSettingsChanged);
+    CodeStyleSettingsManager.getInstance(project).addListener(this);
   }
 
-  private void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
+  @Override
+  public void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
     CodeStyleSettings settings = CodeStyle.getSettings(myProject);
     if (settings.getCustomSettingsIfCreated(EditorConfigSettings.class) == null) {
       // plugin is currently being unloaded, can't run any updates
@@ -80,6 +81,7 @@ public final class EditorConfigStatusListener implements Disposable {
 
   @Override
   public void dispose() {
+    CodeStyleSettingsManager.removeListener(myProject, this);
   }
 
   private static void onEncodingChanged() {
@@ -90,33 +92,31 @@ public final class EditorConfigStatusListener implements Disposable {
     return ContainerUtil.and(encodings, encoding -> ConfigEncodingManager.toCharset(encoding) != null);
   }
 
-  private @NotNull Set<String> extractEncodings() {
+  @NotNull
+  private Set<String> extractEncodings() {
+    final Set<String> charsets = new HashSet<>();
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myVirtualFile);
-    if (psiFile == null) {
-      return Collections.emptySet();
-    }
-
-    Set<String> charsets = new HashSet<>();
-    PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
-      @Override
-      public void visitElement(@NotNull PsiElement element) {
-        if (element instanceof PsiFile || element instanceof EditorConfigSection) {
-          super.visitElement(element);
-        }
-        else if (element instanceof EditorConfigOption) {
-          EditorConfigFlatOptionKey flatOptionKey = ((EditorConfigOption)element).getFlatOptionKey();
-          String keyName = flatOptionKey == null ? null : flatOptionKey.getName();
-          if (ConfigEncodingManager.charsetKey.equals(keyName)) {
-            EditorConfigOptionValueIdentifier optionValueIdentifier = ((EditorConfigOption)element).getOptionValueIdentifier();
-            String charsetStr = optionValueIdentifier == null ? null : optionValueIdentifier.getName();
-            if (charsetStr != null) {
-              charsets.add(charsetStr);
+    if (psiFile != null) {
+      PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
+        @Override
+        public void visitElement(@NotNull PsiElement element) {
+          if (element instanceof PsiFile || element instanceof EditorConfigSection) {
+            super.visitElement(element);
+          }
+          else if (element instanceof EditorConfigOption) {
+            String keyName = ObjectUtils.doIfNotNull(((EditorConfigOption)element).getFlatOptionKey(), NavigationItem::getName);
+            if (ConfigEncodingManager.charsetKey.equals(keyName)) {
+              String charsetStr =
+                ObjectUtils.doIfNotNull(((EditorConfigOption)element).getOptionValueIdentifier(), NavigationItem::getName);
+              if (charsetStr != null) {
+                charsets.add(charsetStr);
+              }
             }
           }
         }
-      }
-    };
-    psiFile.accept(visitor);
+      };
+      psiFile.accept(visitor);
+    }
     return charsets;
   }
 }

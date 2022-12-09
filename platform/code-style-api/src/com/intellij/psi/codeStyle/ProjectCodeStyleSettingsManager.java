@@ -192,11 +192,6 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
   }
 
   @Override
-  protected @NotNull CodeStyleSettingsChangeEvent createChangeEvent(@Nullable VirtualFile file) {
-    return new CodeStyleSettingsChangeEvent(myProject, file);
-  }
-
-  @Override
   protected @NotNull Project getProject() {
     return myProject;
   }

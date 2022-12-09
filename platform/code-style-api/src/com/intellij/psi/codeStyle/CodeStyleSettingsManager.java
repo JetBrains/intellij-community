@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -16,8 +16,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
-import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -36,17 +36,20 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   /**
    * @deprecated Use {@link #setMainProjectCodeStyle(CodeStyleSettings)} or {@link #getMainProjectCodeStyle()} instead
    */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated(forRemoval = true)
-  public volatile @Nullable CodeStyleSettings PER_PROJECT_SETTINGS;
+  @Nullable
+  public volatile CodeStyleSettings PER_PROJECT_SETTINGS;
 
   public volatile boolean USE_PER_PROJECT_SETTINGS;
   public volatile String PREFERRED_PROJECT_CODE_STYLE;
   private volatile CodeStyleSettings myTemporarySettings;
 
-  private static final WeakList<CodeStyleSettings> ourReferencedSettings = new WeakList<>();
+  private final List<CodeStyleSettingsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public @NotNull CodeStyleSettings createSettings() {
+  private final static WeakList<CodeStyleSettings> ourReferencedSettings = new WeakList<>();
+
+  @NotNull
+  public CodeStyleSettings createSettings() {
     CodeStyleSettings newSettings = new CodeStyleSettings(true, false);
     registerSettings(newSettings);
     return newSettings;
@@ -57,7 +60,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   }
 
   @TestOnly
-  public final @NotNull CodeStyleSettings createTemporarySettings() {
+  @NotNull
+  public final CodeStyleSettings createTemporarySettings() {
     myTemporarySettings = new CodeStyleSettings(true, false);
     return myTemporarySettings;
   }
@@ -140,7 +144,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     }, disposable);
   }
 
-  protected @NotNull Collection<CodeStyleSettings> enumSettings() { return Collections.emptyList(); }
+  @NotNull
+  protected Collection<CodeStyleSettings> enumSettings() { return Collections.emptyList(); }
 
   @ApiStatus.Internal
   public final void registerFileTypeIndentOptions(@NotNull Collection<? extends CodeStyleSettings> allSettings,
@@ -193,11 +198,12 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
    * </ul>
    * If {@code PsiFile} is not applicable, use {@link CodeStyle#getSettings(Project)} but only in cases
    * when using main project settings is <b>logically the only choice</b> in a given context. It shouldn't be used just because the existing
-   * code doesn't allow to easily retrieve a PsiFile. Otherwise, the code will not catch up with proper file code style settings since the
+   * code doesn't allow to easily retrieve a PsiFile. Otherwise the code will not catch up with proper file code style settings since the
    * settings may differ for different files depending on their scope.
    */
+  @NotNull
   @Deprecated
-  public static @NotNull CodeStyleSettings getSettings(final @Nullable Project project) {
+  public static CodeStyleSettings getSettings(@Nullable final Project project) {
     return getInstance(project).getCurrentSettings();
   }
 
@@ -205,7 +211,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
    * @deprecated see comments for {@link #getSettings(Project)} or {@link CodeStyle#getDefaultSettings()}
    */
   @Deprecated
-  public @NotNull CodeStyleSettings getCurrentSettings() {
+  @NotNull
+  public CodeStyleSettings getCurrentSettings() {
     CodeStyleSettings temporarySettings = myTemporarySettings;
     if (temporarySettings != null) return temporarySettings;
     CodeStyleSettings projectSettings = getMainProjectCodeStyle();
@@ -257,7 +264,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   /**
    * @return The main project code style settings. For default project, that's the only code style.
    */
-  public @Nullable CodeStyleSettings getMainProjectCodeStyle() {
+  @Nullable
+  public CodeStyleSettings getMainProjectCodeStyle() {
     return PER_PROJECT_SETTINGS;
   }
 
@@ -274,51 +282,56 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     myTemporarySettings = null;
   }
 
+  @Nullable
   @TestOnly
-  public @Nullable CodeStyleSettings getTemporarySettings() {
+  public CodeStyleSettings getTemporarySettings() {
     return myTemporarySettings;
   }
 
-  /**
-   * @deprecated use {@link #fireCodeStyleSettingsChanged()} for project-wide changes
-   */
-  @Deprecated(forRemoval = true)
-  public void fireCodeStyleSettingsChanged(@Nullable PsiFile file) {
-    if (file == null) {
-      fireCodeStyleSettingsChanged();
+  public void addListener(@NotNull CodeStyleSettingsListener listener) {
+    myListeners.add(listener);
+  }
+
+  private void removeListener(@NotNull CodeStyleSettingsListener listener) {
+    myListeners.remove(listener);
+  }
+
+  public static void removeListener(@Nullable Project project, @NotNull CodeStyleSettingsListener listener) {
+    if (project == null || project.isDefault()) {
+      getInstance().removeListener(listener);
     }
     else {
+      if (!project.isDisposed()) {
+        CodeStyleSettingsManager projectInstance = project.getService(ProjectCodeStyleSettingsManager.class);
+        if (projectInstance != null) {
+          projectInstance.removeListener(listener);
+        }
+      }
+    }
+  }
+
+  /**
+   * @deprecated use {@link #fireCodeStyleSettingsChanged()} for project-wide changes or
+   */
+  @Deprecated
+  public void fireCodeStyleSettingsChanged(@Nullable PsiFile file) {
+    if (file != null) {
       fireCodeStyleSettingsChanged(file.getVirtualFile());
+    }
+    else {
+      fireCodeStyleSettingsChanged();
     }
   }
 
   public void fireCodeStyleSettingsChanged(@NotNull VirtualFile file) {
-    fireCodeStyleSettingsChangedEvent(createChangeEvent(file));
+    for (CodeStyleSettingsListener listener : myListeners) {
+      listener.codeStyleSettingsChanged(new CodeStyleSettingsChangeEvent(getProject(), file));
+    }
   }
 
   public void fireCodeStyleSettingsChanged() {
-    fireCodeStyleSettingsChangedEvent(createChangeEvent(null));
-  }
-
-  protected @Nullable CodeStyleSettingsChangeEvent createChangeEvent(@Nullable VirtualFile file) {
-    ProjectManager projectManager = ProjectManager.getInstance();
-    if (projectManager == null) {
-      // no ProjectManager in ParsingTestCase
-      return null;
-    }
-    return new CodeStyleSettingsChangeEvent(projectManager.getDefaultProject(), file);
-  }
-
-  private static void fireCodeStyleSettingsChangedEvent(@Nullable CodeStyleSettingsChangeEvent event) {
-    if (event == null) {
-      return;
-    }
-
-    Project project = event.getProject();
-    MessageBus bus = project.isDefault() ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
-    // in test mode on tear down
-    if (!bus.isDisposed()) {
-      bus.syncPublisher(CodeStyleSettingsListener.TOPIC).codeStyleSettingsChanged(event);
+    for (CodeStyleSettingsListener listener : myListeners) {
+      listener.codeStyleSettingsChanged(new CodeStyleSettingsChangeEvent(getProject(), null));
     }
   }
 
@@ -328,10 +341,11 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
 
   /**
    * Increase current project's code style modification tracker and notify all the listeners on changed code style. The
-   * method must be called if project code style is changed programmatically so that editors etc. are aware of
+   * method must be called if project code style is changed programmatically so that editors and etc. are aware of
    * code style update and refresh their settings accordingly.
    *
    * @see CodeStyleSettingsListener
+   * @see #addListener(CodeStyleSettingsListener)
    */
   public final void notifyCodeStyleSettingsChanged() {
     updateSettingsTracker();

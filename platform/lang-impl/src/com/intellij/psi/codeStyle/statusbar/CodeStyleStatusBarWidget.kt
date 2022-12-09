@@ -3,9 +3,12 @@ package com.intellij.psi.codeStyle.statusbar
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
@@ -15,7 +18,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.*
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings
-import com.intellij.util.messages.MessageBusConnection
+import com.intellij.util.concurrency.NonUrgentExecutor
 import javax.swing.JPanel
 
 class CodeStyleStatusBarWidget(project: Project) : EditorBasedStatusBarPopup(project = project,
@@ -64,8 +67,16 @@ class CodeStyleStatusBarWidget(project: Project) : EditorBasedStatusBarPopup(pro
     return null
   }
 
-  override fun registerCustomListeners(connection: MessageBusConnection) {
-    connection.subscribe(CodeStyleSettingsListener.TOPIC, this)
+  override fun registerCustomListeners() {
+    val project = project
+    ReadAction
+      .nonBlocking<CodeStyleSettingsManager> { CodeStyleSettingsManager.getInstance(project) }
+      .expireWith(this)
+      .finishOnUiThread(ModalityState.any()
+      ) { manager: CodeStyleSettingsManager ->
+        manager.addListener(this)
+        Disposer.register(this) { CodeStyleSettingsManager.removeListener(project, this) }
+      }.submit(NonUrgentExecutor.getInstance())
   }
 
   override fun codeStyleSettingsChanged(event: CodeStyleSettingsChangeEvent) {

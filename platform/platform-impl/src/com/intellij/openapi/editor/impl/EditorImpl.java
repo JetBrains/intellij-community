@@ -62,6 +62,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
@@ -77,7 +78,6 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import kotlin.Unit;
@@ -123,7 +123,8 @@ import java.util.function.Predicate;
 
 import static com.intellij.openapi.editor.ex.util.EditorUtil.isCaretInsideSelection;
 
-public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable, FocusListener {
+public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable,
+                                                                    CodeStyleSettingsListener, FocusListener {
   public static final int TEXT_ALIGNMENT_LEFT = 0;
   public static final int TEXT_ALIGNMENT_RIGHT = 1;
 
@@ -518,7 +519,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     updateCaretCursor();
 
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && SystemInfoRt.isMac && SystemInfo.isJetBrainsJvm) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && SystemInfo.isMac && SystemInfo.isJetBrainsJvm) {
       MacGestureSupportInstaller.installOnComponent(getComponent(), e -> myForcePushHappened = true);
     }
 
@@ -533,8 +534,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.addPropertyChangeListener(propertyChangeListener);
     Disposer.register(myDisposable, () -> myDocument.removePropertyChangeListener(propertyChangeListener));
 
-    MessageBus messageBus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
-    messageBus.connect(myDisposable).subscribe(CodeStyleSettingsListener.TOPIC, this::codeStyleSettingsChanged);
+    CodeStyleSettingsManager.getInstance(myProject).addListener(this);
 
     myFocusModeModel = new FocusModeModel(this);
     Disposer.register(myDisposable, myFocusModeModel);
@@ -1044,6 +1044,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myGutterComponent.removeMouseListener(myMouseListener);
       myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
       myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
+
+      CodeStyleSettingsManager.removeListener(myProject, this);
 
       Disposer.dispose(myDisposable);
       myVerticalScrollBar.setPersistentUI(JBScrollBar.createUI(null)); // clear error panel's cached image
@@ -4974,24 +4976,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
-    if (myProject == null) {
-      return;
-    }
-
-    VirtualFile eventFile = event.getVirtualFile();
-    if (eventFile != null && !eventFile.equals(getVirtualFile())) {
-      return;
-    }
-    int oldTabSize = EditorUtil.getTabSize(this);
-    mySettings.reinitSettings();
-    int newTabSize = EditorUtil.getTabSize(this);
-    if (oldTabSize != newTabSize) {
-      reinitSettings(false);
-    }
-    else {
-      // cover the case of right margin update
-      myEditorComponent.repaint();
+  @Override
+  public void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
+    if (myProject != null) {
+      VirtualFile eventFile = event.getVirtualFile();
+      if (eventFile != null && !eventFile.equals(getVirtualFile())) {
+        return;
+      }
+      int oldTabSize = EditorUtil.getTabSize(this);
+      mySettings.reinitSettings();
+      int newTabSize = EditorUtil.getTabSize(this);
+      if (oldTabSize != newTabSize) {
+        reinitSettings(false);
+      }
+      else {
+        // cover the case of right margin update
+        myEditorComponent.repaint();
+      }
     }
   }
 
