@@ -896,7 +896,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @ApiStatus.Internal
-  public void setProjectsTree(MavenProjectsTree newTree) {
+  public void setProjectsTree(@NotNull MavenProjectsTree newTree) {
     if (!isInitialized()) {
       initNew(Collections.emptyList(), MavenExplicitProfiles.NONE);
     }
@@ -1392,7 +1392,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       );
       try {
         MavenProjectImporter projectImporter = MavenProjectImporter.createImporter(
-          myProject, myProjectsTree, projectsToImportWithChanges, importModuleGroupsRequired,
+          myProject, getProjectsTree(), projectsToImportWithChanges, importModuleGroupsRequired,
           modelsProvider, getImportingSettings(), myPreviewModule, activity
         );
         importer.set(projectImporter);
