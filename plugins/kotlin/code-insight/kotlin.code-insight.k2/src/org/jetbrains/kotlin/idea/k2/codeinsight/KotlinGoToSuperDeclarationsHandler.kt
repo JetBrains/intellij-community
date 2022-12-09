@@ -9,6 +9,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
@@ -19,18 +20,17 @@ import org.jetbrains.kotlin.idea.codeInsight.SuperDeclaration
 import org.jetbrains.kotlin.idea.codeInsight.SuperDeclarationProvider
 import org.jetbrains.kotlin.psi.*
 
-internal class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler {
+class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler {
     companion object {
-        private val ALLOWED_DECLARATION_CLASSES = arrayOf(
+        val ALLOWED_DECLARATION_CLASSES = arrayOf(
             KtNamedFunction::class.java,
             KtClassOrObject::class.java,
             KtProperty::class.java
         )
 
-        fun findSuperDeclarations(file: KtFile, offset: Int): HandlerResult? {
-            val element = file.findElementAt(offset) ?: return null
-            val targetDeclaration = PsiTreeUtil.getParentOfType<KtDeclaration>(element, *ALLOWED_DECLARATION_CLASSES) ?: return null
-            val superDeclarations = SuperDeclarationProvider.findSuperDeclarations(targetDeclaration).takeIf { it.isNotEmpty() } ?: return null
+        fun findSuperDeclarations(targetDeclaration: KtDeclaration): HandlerResult? {
+            val superDeclarations =
+                SuperDeclarationProvider.findSuperDeclarations(targetDeclaration).takeIf { it.isNotEmpty() } ?: return null
 
             if (superDeclarations.size == 1) {
                 return HandlerResult.Single(superDeclarations.single())
@@ -45,6 +45,28 @@ internal class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightAction
             }
         }
 
+        fun gotoSuperDeclarations(targetDeclaration: KtDeclaration) : JBPopup? {
+            when (val result = findSuperDeclarations(targetDeclaration)) {
+                is HandlerResult.Single -> {
+                    result.item.descriptor
+                        ?.takeIf { it.canNavigate() }
+                        ?.navigate(/* requestFocus = */ true)
+                }
+
+                is HandlerResult.Multiple -> {
+                    val superDeclarationsArray = result.items
+                        .mapNotNull { it.declaration.element }
+                        .toTypedArray()
+
+                    if (superDeclarationsArray.isNotEmpty()) {
+                        return NavigationUtil.getPsiElementPopup(superDeclarationsArray, result.title)
+                    }
+                }
+
+                null -> {}
+            }
+            return null
+        }
     }
 
     sealed class HandlerResult {
@@ -65,23 +87,9 @@ internal class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightAction
 
         FeatureUsageTracker.getInstance().triggerFeatureUsed(GotoSuperAction.FEATURE_ID)
 
-        when (val result = findSuperDeclarations(file, editor.caretModel.offset)) {
-            is HandlerResult.Single -> {
-                result.item.descriptor
-                    ?.takeIf { it.canNavigate() }
-                    ?.navigate(/* requestFocus = */ true)
-            }
-            is HandlerResult.Multiple -> {
-                val superDeclarationsArray = result.items
-                    .mapNotNull { it.declaration.element }
-                    .toTypedArray()
-
-                if (superDeclarationsArray.isNotEmpty()) {
-                    NavigationUtil.getPsiElementPopup(superDeclarationsArray, result.title).showInBestPositionFor(editor)
-                }
-            }
-            null -> {}
-        }
+        val element = file.findElementAt(editor.caretModel.offset) ?: return
+        val targetDeclaration = PsiTreeUtil.getParentOfType<KtDeclaration>(element, *ALLOWED_DECLARATION_CLASSES) ?: return
+        gotoSuperDeclarations(targetDeclaration)?.showInBestPositionFor(editor)
     }
 
     override fun update(editor: Editor, file: PsiFile, presentation: Presentation?) {

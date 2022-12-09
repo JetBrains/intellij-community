@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Function
 import com.intellij.util.containers.toArray
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinGutterTooltipHelper
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
 import org.jetbrains.kotlin.idea.highlighter.markers.OverriddenMergeableLineMarkerInfo
+import org.jetbrains.kotlin.idea.k2.codeinsight.KotlinGoToSuperDeclarationsHandler
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isInheritable
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isOverridable
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
@@ -169,8 +171,9 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
 }
 
 object SuperDeclarationPopupHandler : GutterIconNavigationHandler<PsiElement> {
-    override fun navigate(e: MouseEvent?, elt: PsiElement?) {
-        TODO("Not yet implemented")
+    override fun navigate(e: MouseEvent, element: PsiElement) {
+        val declaration = element.getParentOfType<KtDeclaration>(false) ?: return
+        KotlinGoToSuperDeclarationsHandler.gotoSuperDeclarations(declaration)?.show(RelativePoint(e))
     }
 }
 
