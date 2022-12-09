@@ -21,6 +21,7 @@ import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.swing.SwingUtilities2;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -143,6 +144,13 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return this;
   }
 
+  @NotNull
+  public final SimpleColoredComponent appendWithClipping(@NotNull @Nls String fragment, @NotNull FragmentTextClipper clipper) {
+    _append(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES, clipper, myMainTextLastIndex < 0);
+    revalidateAndRepaint();
+    return this;
+  }
+
   /**
    * Appends string fragments to existing ones. Appended string
    * will have specified {@code attributes}.
@@ -181,13 +189,16 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    * @param isMainText main text of not
    */
   public void append(@NotNull @Nls String fragment, @NotNull final SimpleTextAttributes attributes, boolean isMainText) {
-    _append(fragment, attributes, isMainText);
+    _append(fragment, attributes, null, isMainText);
     revalidateAndRepaint();
   }
 
-  private void _append(@NotNull @Nls String fragment, @NotNull final SimpleTextAttributes attributes, boolean isMainText) {
+  private void _append(@NotNull @Nls String fragment,
+                       @NotNull final SimpleTextAttributes attributes,
+                       @Nullable FragmentTextClipper clipper,
+                       boolean isMainText) {
     synchronized (myFragments) {
-      myCurrentFragment = new ColoredFragment(fragment, attributes);
+      myCurrentFragment = new ColoredFragment(fragment, attributes, this, clipper);
       myFragments.add(myCurrentFragment);
       if (isMainText) {
         myMainTextLastIndex = myFragments.size() - 1;
@@ -501,12 +512,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return frc;
   }
 
-  private void doDrawString(Graphics2D g, @NotNull ColoredFragment fragment, float x, float y) {
+  private void doDrawString(Graphics2D g, @NotNull ColoredFragment fragment, int fragmentIndex, float x, float y) {
     String text = fragment.text;
     if (StringUtil.isEmpty(text)) return;
     Font font = g.getFont();
     FontRenderContext frc = getFontRenderContext(font);
-    fragment.getAndCacheRenderer(font, frc).draw(g, x, y);
+    fragment.getAndCacheRenderer(font, frc).draw(g, fragmentIndex, x, y);
   }
 
   private float computeStringWidth(@NotNull ColoredFragment fragment, int index, Font font) {
@@ -524,7 +535,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
     float first = getFragmentWidth(fragment, font, frc);
     float second = getFragmentWidth(nextFragment, font, frc);
-    float compound = getFragmentWidth(new ColoredFragment(fragment.text + nextFragment.text, fragment.attributes), font, frc);
+    float compound = getFragmentWidth(new ColoredFragment(fragment.text + nextFragment.text, fragment.attributes, this, null), font, frc);
     //return Math.min(w1, w3 - w2);
     //return (w1 + (w3 - w2)) / 2;
     return (first + 2 * (compound - second)) / 3;
@@ -877,7 +888,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
             }
 
             g.setColor(color);
-            doDrawString(g, fragment, offset, textBaseline);
+            doDrawString(g, fragment, i, offset, textBaseline);
 
             // for some reason strokeState here may be incorrect, resetting the stroke helps
             g.setStroke(g.getStroke());
@@ -1284,7 +1295,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         }
         else if (offset > 0) {   // split
           String text = getFragment();
-          ColoredFragment newFragment = new ColoredFragment(text.substring(offset), oldFragment.attributes);
+          ColoredFragment newFragment = new ColoredFragment(text.substring(offset), oldFragment.attributes, oldFragment.myComponent,
+                                                            oldFragment.myClipper);
           oldFragment.setText(text.substring(0, offset));
           oldFragment.attributes = attributes;
           newFragment.tag = oldFragment;
@@ -1346,9 +1358,16 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     volatile int padding;
     volatile int alignment;
 
-    ColoredFragment(@Nls @NotNull String text, @NotNull SimpleTextAttributes attributes) {
+    private final @NotNull JComponent myComponent;
+    private final @Nullable FragmentTextClipper myClipper;
+
+    ColoredFragment(@Nls @NotNull String text, @NotNull SimpleTextAttributes attributes,
+                    @NotNull JComponent component,
+                    @Nullable FragmentTextClipper clipper) {
       this.text = text;
       this.attributes = attributes;
+      this.myComponent = component;
+      this.myClipper = clipper;
     }
 
     private void setText(@Nls @NotNull String text) {
@@ -1369,8 +1388,14 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         String text = this.text;
         if (needFontFallback(font, text)) {
           renderer = new LayoutTextRenderer(createTextLayout(text, font, frc));
-        } else {
-          renderer = new SimpleTextRenderer(text, (float)font.getStringBounds(text, frc).getWidth());
+        }
+        else {
+          if (myClipper != null) {
+            renderer = new ClippedTextRenderer(myComponent, text, myClipper, (float)font.getStringBounds(text, frc).getWidth());
+          }
+          else {
+            renderer = new SimpleTextRenderer(text, (float)font.getStringBounds(text, frc).getWidth());
+          }
         }
         this.renderer = renderer;
       }
@@ -1378,9 +1403,32 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
   }
 
+  public interface FragmentTextClipper {
+    /**
+     * @param text - fragment text to display
+     * @param availTextWidth – Amount of space that the string can be drawn in
+     */
+    @NotNull String clipText(@NotNull Graphics2D g2, int fragmentIndex, @NotNull String text, int availTextWidth);
+  }
+
+  @SuppressWarnings("unused")
+  public static final class DefaultFragmentTextClipper implements FragmentTextClipper {
+
+    private final @NotNull JComponent myComponent;
+
+    public DefaultFragmentTextClipper(@NotNull JComponent component) {
+      myComponent = component;
+    }
+
+    @Override
+    public @NotNull String clipText(@NotNull Graphics2D g, int fragmentIndex, @NotNull String text, int availTextWidth) {
+      return SwingUtilities2.clipStringIfNecessary(myComponent, myComponent.getFontMetrics(g.getFont()), text, availTextWidth);
+    }
+  }
+
   private interface TextRenderer {
     float getWidth();
-    void draw(Graphics2D g2, float x, float y);
+    void draw(Graphics2D g2, int fragmentIndex, float x, float y);
   }
 
   private static final class LayoutTextRenderer implements TextRenderer {
@@ -1396,8 +1444,33 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
 
     @Override
-    public void draw(Graphics2D g2, float x, float y) {
+    public void draw(Graphics2D g2, int fragmentIndex, float x, float y) {
       myLayout.draw(g2, x, y);
+    }
+  }
+
+  private static final class ClippedTextRenderer implements TextRenderer {
+    private final @NotNull String myText;
+    private final @NotNull JComponent myComponent;
+    private final @NotNull SimpleColoredComponent.FragmentTextClipper myFragmentTextClipper;
+    private final float myWidth;
+
+    private ClippedTextRenderer(@NotNull JComponent component, @NotNull String text, @NotNull SimpleColoredComponent.FragmentTextClipper fragmentTextClipper, float width) {
+      myText = text;
+      myWidth = width;
+      myComponent = component;
+      myFragmentTextClipper = fragmentTextClipper;
+    }
+
+    @Override
+    public float getWidth() {
+      return myWidth;
+    }
+
+    @Override
+    public void draw(Graphics2D g2, int fragmentIndex, float x, float y) {
+      String clippedText = myFragmentTextClipper.clipText(g2, fragmentIndex, myText, myComponent.getWidth() - (int)x);
+      g2.drawString(clippedText, x, y);
     }
   }
 
@@ -1416,7 +1489,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
 
     @Override
-    public void draw(Graphics2D g2, float x, float y) {
+    public void draw(Graphics2D g2, int fragmentIndex, float x, float y) {
       g2.drawString(myText, x, y);
     }
   }
