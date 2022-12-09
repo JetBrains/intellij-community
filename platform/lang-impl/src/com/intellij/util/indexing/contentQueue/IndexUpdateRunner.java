@@ -37,9 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.FileNotFoundException;
 import java.nio.file.NoSuchFileException;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -257,23 +255,24 @@ public final class IndexUpdateRunner {
     long contentLoadingTime;
     ContentLoadingResult loadingResult;
 
-    VirtualFile file = indexingJob.myQueueOfFiles.poll();
-    if (file == null) {
+    FileIndexingJob fileIndexingJob = indexingJob.myQueueOfFiles.poll();
+    if (fileIndexingJob == null) {
       indexingJob.myNoMoreFilesInQueue.set(true);
       return;
     }
 
+    VirtualFile file = fileIndexingJob.file;
     try {
       // Propagate ProcessCanceledException and unchecked exceptions. The latter fail the whole indexing (see IndexingJob.myError).
       loadingResult = loadContent(indexingJob.myIndicator, file, indexingJob.myContentLoader);
     }
     catch (ProcessCanceledException e) {
-      indexingJob.myQueueOfFiles.add(file);
+      indexingJob.myQueueOfFiles.add(fileIndexingJob);
       throw e;
     }
     catch (TooLargeContentException e) {
       indexingJob.oneMoreFileProcessed();
-      IndexingFileSetStatistics statistics = indexingJob.getStatistics(e.getFile());
+      IndexingFileSetStatistics statistics = indexingJob.getStatistics(fileIndexingJob);
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (statistics) {
         statistics.addTooLargeForIndexingFile(e.getFile());
@@ -315,11 +314,11 @@ public final class IndexUpdateRunner {
         LOG.trace("File indexing attempts = " + myIndexingAttemptCount.longValue() + ", indexed file count = " + myIndexingSuccessfulCount.longValue());
       }
 
-      writeIndexesForFile(indexingJob, file, applier, startTime, length, contentLoadingTime);
+      writeIndexesForFile(indexingJob, fileIndexingJob, applier, startTime, length, contentLoadingTime);
     }
     catch (ProcessCanceledException e) {
       // Push back the file.
-      indexingJob.myQueueOfFiles.add(file);
+      indexingJob.myQueueOfFiles.add(fileIndexingJob);
       releaseFile(file, length);
       throw e;
     }
@@ -332,29 +331,30 @@ public final class IndexUpdateRunner {
   }
 
   private void writeIndexesForFile(@NotNull IndexingJob indexingJob,
-                                   @NotNull VirtualFile file,
+                                   @NotNull FileIndexingJob fileIndexingJob,
                                    @NotNull FileIndexesValuesApplier applier,
                                    long startTime,
                                    long length,
                                    long contentLoadingTime) {
     if (myIndexWriteExecutor != null) {
-      myIndexWriteExecutor.execute(() -> doWriteIndexesForFile(indexingJob, file, applier, startTime, length, contentLoadingTime));
+      myIndexWriteExecutor.execute(() -> doWriteIndexesForFile(indexingJob, fileIndexingJob, applier, startTime, length, contentLoadingTime));
     }
     else {
-      doWriteIndexesForFile(indexingJob, file, applier, startTime, length, contentLoadingTime);
+      doWriteIndexesForFile(indexingJob, fileIndexingJob, applier, startTime, length, contentLoadingTime);
     }
   }
 
   private static void doWriteIndexesForFile(@NotNull IndexingJob indexingJob,
-                                            @NotNull VirtualFile file,
+                                            @NotNull FileIndexingJob fileIndexingJob,
                                             @NotNull FileIndexesValuesApplier applier,
                                             long startTime,
                                             long length,
                                             long contentLoadingTime) {
+    VirtualFile file = fileIndexingJob.file;
     try {
       applier.apply(file);
       long processingTime = System.nanoTime() - startTime;
-      IndexingFileSetStatistics statistics = indexingJob.getStatistics(file);
+      IndexingFileSetStatistics statistics = indexingJob.getStatistics(fileIndexingJob);
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (statistics) {
         statistics.addFileStatistics(file,
@@ -507,11 +507,20 @@ public final class IndexUpdateRunner {
     return indicator;
   }
 
+  private static class FileIndexingJob {
+    final VirtualFile file;
+    final FileSet fileSet;
+
+    private FileIndexingJob(VirtualFile file, FileSet fileSet) {
+      this.file = file;
+      this.fileSet = fileSet;
+    }
+  }
+
   private static class IndexingJob {
     final Project myProject;
-    private final Map<VirtualFile, FileSet> myFileToSet;
     final CachedFileContentLoader myContentLoader;
-    final BlockingQueue<VirtualFile> myQueueOfFiles;
+    final ConcurrentLinkedQueue<FileIndexingJob> myQueueOfFiles;
     final ProgressIndicator myIndicator;
     final int myTotalFiles;
     final AtomicBoolean myNoMoreFilesInQueue = new AtomicBoolean();
@@ -528,20 +537,21 @@ public final class IndexUpdateRunner {
                 @Nullable ProgressSuspender originalProgressSuspender) {
       myProject = project;
       myIndicator = indicator;
-      myFileToSet = new HashMap<>();
+      myQueueOfFiles = new ConcurrentLinkedQueue<>();
       for (FileSet fileSet : fileSets) {
-        fileSet.files.forEach(file -> myFileToSet.put(file, fileSet));
+        for (VirtualFile file : fileSet.files) {
+          myQueueOfFiles.add(new FileIndexingJob(file, fileSet));
+        }
       }
-      myTotalFiles = myFileToSet.keySet().size();
+      myTotalFiles = myQueueOfFiles.size();
       myContentLoader = contentLoader;
-      myQueueOfFiles = new ArrayBlockingQueue<>(myFileToSet.keySet().size(), false, myFileToSet.keySet());
-      myAllFilesAreProcessedLatch = new CountDownLatch(myFileToSet.keySet().size());
+      myAllFilesAreProcessedLatch = new CountDownLatch(myTotalFiles);
       myOriginalProgressIndicator = originalProgressIndicator;
       myOriginalProgressSuspender = originalProgressSuspender;
     }
 
-    public @NotNull IndexingFileSetStatistics getStatistics(@NotNull VirtualFile file) {
-      return myFileToSet.get(file).statistics;
+    public @NotNull IndexingFileSetStatistics getStatistics(@NotNull FileIndexingJob fileIndexingJob) {
+      return fileIndexingJob.fileSet.statistics;
     }
 
     public void oneMoreFileProcessed() {
