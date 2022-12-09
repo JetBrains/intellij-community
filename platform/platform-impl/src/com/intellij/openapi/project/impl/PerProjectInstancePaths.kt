@@ -4,7 +4,7 @@ package com.intellij.openapi.project.impl
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.util.io.isAncestor
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.div
@@ -13,17 +13,14 @@ import kotlin.io.path.name
 class PerProjectInstancePaths(private val projectStoreBaseDir: Path) {
 
   fun getSystemDir(): Path {
-    @Suppress("TestOnlyProblems")
     return getSystemDir(PathManager.getSystemDir(), ProjectManagerEx.IS_CHILD_PROCESS, ::currentProjectStoreBaseDir, projectStoreBaseDir)
   }
 
   fun getConfigDir(): Path {
-    @Suppress("TestOnlyProblems")
     return getConfigDir(PathManager.getConfigDir(), ProjectManagerEx.IS_CHILD_PROCESS, ::currentProjectStoreBaseDir, projectStoreBaseDir)
   }
 
   fun getPluginsDir(): Path {
-    @Suppress("TestOnlyProblems")
     return getPluginsDir(
       PathManager.getPluginsDir(),
       PathManager.getConfigDir(),
@@ -34,7 +31,6 @@ class PerProjectInstancePaths(private val projectStoreBaseDir: Path) {
   }
 
   fun getLogDir(): Path {
-    @Suppress("TestOnlyProblems")
     return getLogDir(
       PathManager.getLogDir(),
       PathManager.getSystemDir(),
@@ -45,7 +41,7 @@ class PerProjectInstancePaths(private val projectStoreBaseDir: Path) {
   }
 
   companion object {
-    @TestOnly
+    @VisibleForTesting
     fun getSystemDir(currentSystem: Path,
                      currentChildProcess: Boolean,
                      currentProjectStoreBaseDir: () -> Path?,
@@ -53,7 +49,7 @@ class PerProjectInstancePaths(private val projectStoreBaseDir: Path) {
       return adjustPathForNewProject(currentSystem, currentChildProcess, currentProjectStoreBaseDir, newProjectStoreBaseDir)
     }
 
-    @TestOnly
+    @VisibleForTesting
     fun getConfigDir(currentConfig: Path,
                      currentChildProcess: Boolean,
                      currentProjectStoreBaseDir: () -> Path?,
@@ -61,7 +57,7 @@ class PerProjectInstancePaths(private val projectStoreBaseDir: Path) {
       return adjustPathForNewProject(currentConfig, currentChildProcess, currentProjectStoreBaseDir, newProjectStoreBaseDir)
     }
 
-    @TestOnly
+    @VisibleForTesting
     fun getPluginsDir(currentPlugins: Path,
                       currentConfig: Path,
                       currentChildProcess: Boolean,
@@ -76,7 +72,7 @@ class PerProjectInstancePaths(private val projectStoreBaseDir: Path) {
       }
     }
 
-    @TestOnly
+    @VisibleForTesting
     fun getLogDir(currentLog: Path,
                   currentSystem: Path,
                   currentChildProcess: Boolean,
