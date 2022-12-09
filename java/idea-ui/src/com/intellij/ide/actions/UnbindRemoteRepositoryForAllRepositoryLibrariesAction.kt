@@ -12,7 +12,7 @@ class UnbindRemoteRepositoryForAllRepositoryLibrariesAction : AnAction() {
 
   override fun update(e: AnActionEvent) {
     val project = e.project ?: return
-    e.presentation.isEnabledAndVisible = RepositoryLibrarySettings.getInstanceOrDefaults(project).isJarRepositoryBindingFeatureEnabled()
+    e.presentation.isEnabledAndVisible = RepositoryLibrarySettings.getInstanceOrDefaults(project).isBindJarRepositoryUiSettingsDisplayed()
   }
 
   override fun actionPerformed(e: AnActionEvent) {

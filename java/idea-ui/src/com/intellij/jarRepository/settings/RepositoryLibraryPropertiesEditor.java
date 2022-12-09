@@ -133,8 +133,8 @@ public final class RepositoryLibraryPropertiesEditor {
       myRemoteRepositoryOptionsPanel.setVisible(false);
     } else {
       RepositoryLibrarySettings intSettings = RepositoryLibrarySettings.getInstanceOrDefaults(project);
-      myVerificationSettingsPanel.setVisible(intSettings.isSha256ChecksumFeatureEnabled());
-      myRemoteRepositoryOptionsPanel.setVisible(intSettings.isJarRepositoryBindingFeatureEnabled());
+      myVerificationSettingsPanel.setVisible(intSettings.isSha256ChecksumUiSettingsDisplayed());
+      myRemoteRepositoryOptionsPanel.setVisible(intSettings.isBindJarRepositoryUiSettingsDisplayed());
     }
 
     myRemoteRepositoryComboBox.setRenderer(SimpleListCellRenderer.create(
