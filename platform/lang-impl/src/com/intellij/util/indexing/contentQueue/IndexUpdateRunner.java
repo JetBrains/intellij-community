@@ -256,9 +256,20 @@ public final class IndexUpdateRunner {
     long startTime = System.nanoTime();
     long contentLoadingTime;
     ContentLoadingResult loadingResult;
+
+    VirtualFile file = indexingJob.myQueueOfFiles.poll();
+    if (file == null) {
+      indexingJob.myNoMoreFilesInQueue.set(true);
+      return;
+    }
+
     try {
       // Propagate ProcessCanceledException and unchecked exceptions. The latter fail the whole indexing (see IndexingJob.myError).
-      loadingResult = loadNextContent(indexingJob);
+      loadingResult = loadContent(indexingJob.myIndicator, file, indexingJob.myContentLoader);
+    }
+    catch (ProcessCanceledException e) {
+      indexingJob.myQueueOfFiles.add(file);
+      throw e;
     }
     catch (TooLargeContentException e) {
       indexingJob.oneMoreFileProcessed();
@@ -279,12 +290,7 @@ public final class IndexUpdateRunner {
       contentLoadingTime = System.nanoTime() - startTime;
     }
 
-    if (loadingResult == null) {
-      return;
-    }
-
     CachedFileContent fileContent = loadingResult.cachedFileContent;
-    VirtualFile file = fileContent.getVirtualFile();
     long length = loadingResult.fileLength;
 
     if (file.isDirectory()) {
@@ -371,25 +377,6 @@ public final class IndexUpdateRunner {
     signalThatFileIsUnloaded(length);
     IndexingStamp.flushCache(FileBasedIndex.getFileId(file));
     IndexingFlag.unlockFile(file);
-  }
-
-  @Nullable
-  private IndexUpdateRunner.ContentLoadingResult loadNextContent(@NotNull IndexingJob indexingJob) throws FailedToLoadContentException,
-                                                                                                          TooLargeContentException,
-                                                                                                          ProcessCanceledException {
-    VirtualFile file = indexingJob.myQueueOfFiles.poll();
-    if (file == null) {
-      indexingJob.myNoMoreFilesInQueue.set(true);
-      return null;
-    }
-
-    try {
-      return loadContent(indexingJob.myIndicator, file, indexingJob.myContentLoader);
-    }
-    catch (ProcessCanceledException e) {
-      indexingJob.myQueueOfFiles.add(file);
-      throw e;
-    }
   }
 
   private @NotNull ContentLoadingResult loadContent(@NotNull ProgressIndicator indicator,
