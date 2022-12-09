@@ -78,9 +78,18 @@ internal fun prepareVisualPaddings(component: JComponent): Gaps {
 }
 
 internal fun getComponentGaps(left: Int, right: Int, component: JComponent, spacing: SpacingConfiguration): Gaps {
-  val top = getDefaultVerticalGap(component, spacing)
-  val bottom = if (component.getClientProperty(DslComponentProperty.NO_BOTTOM_GAP) == true) 0 else top
-  return Gaps(top = top, left = left, bottom = bottom, right = right)
+  val defaultVerticalGap = getDefaultVerticalGap(component, spacing)
+  val policy = component.getClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP) as VerticalComponentGap?
+  return Gaps(top = calculateVerticalGap(defaultVerticalGap, spacing, policy?.top), left = left,
+              bottom = calculateVerticalGap(defaultVerticalGap, spacing, policy?.bottom), right = right)
+}
+
+private fun calculateVerticalGap(defaultVerticalGap: Int, spacing: SpacingConfiguration, policy: Boolean?): Int {
+  return when (policy) {
+    true -> spacing.verticalComponentGap
+    false -> 0
+    null -> defaultVerticalGap
+  }
 }
 
 /**

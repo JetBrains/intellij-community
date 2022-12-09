@@ -258,7 +258,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
         val row = row {
           @Suppress("DialogTitleCapitalization")
           label(title)
-            .applyToComponent { putClientProperty(DslComponentProperty.NO_BOTTOM_GAP, true) }
+            .applyToComponent { putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(bottom = false)) }
         }
         row.internalBottomGap = spacingConfiguration.buttonGroupHeaderBottomGap
       }
