@@ -122,6 +122,17 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     updateLayout(uiSettings)
+    updateToolbarFromMode()
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    if (parent != null) {
+      updateToolbarFromMode()
+    }
+  }
+
+  private fun updateToolbarFromMode() {
     when (mode) {
       ShowMode.TOOLBAR -> updateToolbar()
       ShowMode.MENU -> removeToolbar()
