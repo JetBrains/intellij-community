@@ -225,6 +225,8 @@ interface Row {
   fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String): SegmentedButton<T>
 
   /**
+   * todo Signature will be changed: more useful data like icons will be added here
+   *
    * @see [SegmentedButton]
    */
   @ApiStatus.Experimental
