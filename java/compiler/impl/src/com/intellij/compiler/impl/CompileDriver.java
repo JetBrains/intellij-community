@@ -713,7 +713,7 @@ public final class CompileDriver {
   }
 
   private <T> T runWithReadAccess(@NotNull final ProgressIndicator progress, Callable<? extends T> task) {
-    return ReadAction.nonBlocking(task).expireWhen(() -> myProject.isDisposed() || progress.isCanceled()).executeSynchronously();
+    return ReadAction.nonBlocking(task).expireWhen(myProject::isDisposed).wrapProgress(progress).executeSynchronously();
   }
 
   private boolean validateJdks(@NotNull List<Module> scopeModules, boolean runUnknownSdkCheck) {
