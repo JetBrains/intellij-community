@@ -69,16 +69,14 @@ class PostHighlightingVisitor {
   private final HighlightInfoType myDeadCodeInfoType;
   private final UnusedDeclarationInspectionBase myDeadCodeInspection;
 
-  private void optimizeImportsOnTheFlyLater(@NotNull ProgressIndicator progress) {
+  private void optimizeImportsOnTheFlyLater(@NotNull ProgressIndicator progress, boolean isInContent) {
     if ((myHasRedundantImports || myHasMisSortedImports) && !progress.isCanceled()) {
-      scheduleOptimizeOnDaemonFinished();
+      scheduleOptimizeOnDaemonFinished(isInContent);
     }
   }
 
-  private void scheduleOptimizeOnDaemonFinished() {
+  private void scheduleOptimizeOnDaemonFinished(final boolean isInContent) {
     Disposable daemonDisposable = Disposer.newDisposable();
-    VirtualFile virtualFile = myFile.getVirtualFile();
-    boolean isInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(myProject, virtualFile, false);
 
     // schedule optimise action after all applyInformation() calls
     myProject.getMessageBus().connect(daemonDisposable)
@@ -97,7 +95,7 @@ class PostHighlightingVisitor {
             });
           }
           else {
-            scheduleOptimizeOnDaemonFinished();
+            scheduleOptimizeOnDaemonFinished(isInContent);
           }
         }
       });
@@ -134,6 +132,7 @@ class PostHighlightingVisitor {
   }
 
   void collectHighlights(@NotNull HighlightInfoHolder result, @NotNull ProgressIndicator progress) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     boolean errorFound = false;
 
     if (isToolEnabled(myDeadCodeKey)) {
@@ -183,7 +182,9 @@ class PostHighlightingVisitor {
       fileStatusMap.setErrorFoundFlag(myProject, myDocument, true);
     }
 
-    optimizeImportsOnTheFlyLater(progress);
+    VirtualFile virtualFile = myFile.getVirtualFile();
+    boolean isInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(myProject, virtualFile, false);
+    optimizeImportsOnTheFlyLater(progress, isInContent);
   }
 
   private boolean isUnusedImportEnabled(HighlightDisplayKey unusedImportKey) {
