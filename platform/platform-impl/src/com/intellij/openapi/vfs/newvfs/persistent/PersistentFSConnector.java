@@ -132,7 +132,7 @@ final class PersistentFSConnector {
 
       attributes = createAttributesStorage(attributesFile);
 
-      contents = new RefCountingContentStorage(contentsFile,
+      contents = new RefCountingContentStorageImpl(contentsFile,
                                                CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
                                                SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
                                                  "FSRecords Content Write Pool"),
