@@ -32,6 +32,7 @@ abstract class AbstractKotlinMppGradleImportingTest(
     val kotlinTestPropertiesService: KotlinTestPropertiesService = KotlinTestPropertiesServiceImpl()
     private val gradleProjectsPublishingService = GradleProjectsPublishingService
     private val gradleProjectLinkingService = GradleProjectLinkingService
+    private val highlightingCheckService = HighlightingCheckService
 
     open fun TestConfigurationDslScope.defaultTestConfiguration() {}
 
@@ -65,7 +66,9 @@ abstract class AbstractKotlinMppGradleImportingTest(
         }
 
         importProject()
+
         workspaceModelTestingService.checkWorkspaceModel(configuration, this)
+        highlightingCheckService.runHighlightingCheckOnAllModules(configuration, this)
     }
 
     final override fun findJdkPath(): String {
