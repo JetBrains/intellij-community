@@ -491,6 +491,11 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
             runTest("testData/resolve/references/AnnotationTypeParameter.kt");
         }
 
+        @TestMetadata("AnnotationWithSingleArgument.kt")
+        public void testAnnotationWithSingleArgument() throws Exception {
+            runTest("testData/resolve/references/AnnotationWithSingleArgument.kt");
+        }
+
         @TestMetadata("ClassInTypeConstraint.kt")
         public void testClassInTypeConstraint() throws Exception {
             runTest("testData/resolve/references/ClassInTypeConstraint.kt");

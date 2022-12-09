@@ -28,6 +28,11 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("AnnotationWithSingleArgumentIsProperlyResolved.kt")
+            public void testAnnotationWithSingleArgumentIsProperlyResolved() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/allUnderImports/AnnotationWithSingleArgumentIsProperlyResolved.kt");
+            }
+
             @TestMetadata("ClassNameConflict.kt")
             public void testClassNameConflict() throws Exception {
                 runTest("testData/editor/optimizeImports/jvm/allUnderImports/ClassNameConflict.kt");
