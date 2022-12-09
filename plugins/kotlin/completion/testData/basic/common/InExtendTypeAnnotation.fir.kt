@@ -6,4 +6,5 @@ class Test : <caret> {
 }
 
 // EXIST: Any, Nothing, Unit, Int, Number, Array
-// EXIST_JAVA_ONLY: Thread
+// ABSENT: Thread
+// ^ we should not complete declarations from indexes on empty prefix for the performance reasons
