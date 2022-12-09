@@ -40,8 +40,11 @@ import static com.intellij.openapi.editor.colors.EditorColors.createInjectedLang
 
 final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
 
+  private Collection<@NotNull TextRange> myReducedRanges;
+
   InjectedGeneralHighlightingPass(@NotNull PsiFile file,
                                   @NotNull Document document,
+                                  @Nullable Collection<@NotNull TextRange> reducedRanges,
                                   int startOffset,
                                   int endOffset,
                                   boolean updateAll,
@@ -49,6 +52,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
                                   @Nullable Editor editor,
                                   @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     super(file, document, startOffset, endOffset, updateAll, priorityRange, editor, highlightInfoProcessor);
+    myReducedRanges = reducedRanges;
   }
 
   @Override
@@ -142,6 +146,9 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
           && context.isValid()
           && !file.getProject().isDisposed()
           && (myUpdateAll || myRestrictRange.contains(context.getTextRange()))) { // consider strict if partial update
+        if (myReducedRanges != null && !myReducedRanges.contains(context.getTextRange())) { // skip if not in reduced
+          continue;
+        }
         hosts.add(context);
       }
     }

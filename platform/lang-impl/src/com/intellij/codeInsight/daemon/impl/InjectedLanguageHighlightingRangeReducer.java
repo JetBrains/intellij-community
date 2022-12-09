@@ -8,8 +8,10 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 @ApiStatus.Experimental
 public interface InjectedLanguageHighlightingRangeReducer {
   ExtensionPointName<InjectedLanguageHighlightingRangeReducer> EP_NAME = new ExtensionPointName<>("com.intellij.codeInsight.daemon.impl.injectedLanguageHighlightingRangeReducer");
-  TextRange reduceRange(@NotNull PsiFile file, @NotNull Editor editor);
+  Collection<@NotNull TextRange> reduceRange(@NotNull PsiFile file, @NotNull Editor editor);
 }
