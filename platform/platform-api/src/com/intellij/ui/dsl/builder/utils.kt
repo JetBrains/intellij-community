@@ -38,12 +38,6 @@ enum class DslComponentProperty {
   VERTICAL_COMPONENT_GAP,
 
   /**
-   * Value: [Boolean]
-   */
-  @Deprecated("Use VERTICAL_COMPONENT_GAP with VerticalComponentGap(true, true) parameter")
-  TOP_BOTTOM_GAP,
-
-  /**
    * By default, we're trying to assign [javax.swing.JLabel.setLabelFor] for the cell component itself.
    * In some cases, a wrapper component needs to be used - and this property allows delegating this feature to a child component.
    *

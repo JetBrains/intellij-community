@@ -78,7 +78,7 @@ internal fun prepareVisualPaddings(component: JComponent): Gaps {
 }
 
 internal fun getComponentGaps(left: Int, right: Int, component: JComponent, spacing: SpacingConfiguration): Gaps {
-  val defaultVerticalGap = getDefaultVerticalGap(component, spacing)
+  val defaultVerticalGap = if (component is JPanel) 0 else spacing.verticalComponentGap
   val policy = component.getClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP) as VerticalComponentGap?
   return Gaps(top = calculateVerticalGap(defaultVerticalGap, spacing, policy?.top), left = left,
               bottom = calculateVerticalGap(defaultVerticalGap, spacing, policy?.bottom), right = right)
@@ -90,16 +90,6 @@ private fun calculateVerticalGap(defaultVerticalGap: Int, spacing: SpacingConfig
     false -> 0
     null -> defaultVerticalGap
   }
-}
-
-/**
- * Returns default top and bottom gap for [component]
- */
-private fun getDefaultVerticalGap(component: JComponent, spacing: SpacingConfiguration): Int {
-  val noDefaultVerticalGap = component is JPanel
-                             && component.getClientProperty(DslComponentProperty.TOP_BOTTOM_GAP) != true
-
-  return if (noDefaultVerticalGap) 0 else spacing.verticalComponentGap
 }
 
 internal fun createComment(@NlsContexts.Label text: String, maxLineLength: Int, action: HyperlinkEventAction): DslLabel {

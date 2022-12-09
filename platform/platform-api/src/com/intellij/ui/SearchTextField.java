@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -164,7 +165,7 @@ public class SearchTextField extends JPanel {
       myTextField.setText("");
       onFieldCleared();
     });
-    putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true);
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, toGaps(myTextField.getInsets()));
     DumbAwareAction.create(event -> {
       showPopup();

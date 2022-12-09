@@ -67,6 +67,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.mac.MacGestureSupportInstaller;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.paint.PaintUtil;
@@ -487,7 +488,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       return Collections.emptyIterator();
     });
-    myPanel.putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true);
+    myPanel.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
 
     myHeaderPanel = new MyHeaderPanel();
     myGutterComponent = new EditorGutterComponentImpl(this);
