@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
-import com.intellij.openapi.externalSystem.util.PathPrefixTreeMap
+import com.intellij.util.containers.prefix.map.PathPrefixTreeMap
 import java.util.concurrent.ConcurrentHashMap
 
 /**
