@@ -72,7 +72,7 @@ public class StaticImportInspection extends BaseInspection {
     final JPanel chooserList =
       UiUtils.createTreeClassChooserList(allowedClasses, InspectionGadgetsBundle.message("static.import.options.border.title"),
                                          InspectionGadgetsBundle.message("static.import.options.chooserTitle"));
-    panel.addGrowingX(chooserList);
+    panel.addGrowing(chooserList);
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.single.field.static.imports.option"), "ignoreSingleFieldImports");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.single.method.static.imports.option"), "ignoreSingeMethodImports");
 

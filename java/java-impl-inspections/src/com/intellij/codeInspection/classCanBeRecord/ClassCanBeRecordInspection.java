@@ -113,7 +113,7 @@ public class ClassCanBeRecordInspection extends BaseInspection {
 
     JPanel annotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       myIgnoredAnnotations, JavaBundle.message("class.can.be.record.suppress.conversion.if.annotated"), true);
-    panel.addGrowingX(annotationsPanel);
+    panel.addGrowing(annotationsPanel);
 
     return panel;
   }

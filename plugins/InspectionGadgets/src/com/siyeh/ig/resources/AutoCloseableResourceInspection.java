@@ -110,12 +110,12 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
       UI.PanelFactory.panel(UiUtils.createAddRemoveTreeClassChooserPanel(table2, JavaBundle.message("dialog.title.choose.class")))
         .withLabel(InspectionGadgetsBundle.message("inspection.autocloseable.resource.ignored.methods.title")).moveLabelOnTop()
         .resizeY(true).createPanel();
-    panel.addGrowingX(tablePanel);
-    panel.addGrowingX(tablePanel2);
+    panel.addGrowing(tablePanel);
+    panel.addGrowing(tablePanel2);
     final CheckBox checkBox =
       new CheckBox(InspectionGadgetsBundle.message("auto.closeable.resource.returned.option"), this, "ignoreFromMethodCall");
     checkBox.addItemListener(e -> table2.setEnabled(e.getStateChange() == ItemEvent.DESELECTED));
-    panel.addGrowingX(checkBox);
+    panel.addComponent(checkBox);
     panel.addCheckbox(InspectionGadgetsBundle.message("any.method.may.close.resource.argument"), "anyMethodMayClose");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.constructor.method.references"), "ignoreConstructorMethodReferences");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.getters.returning.resource"), "ignoreGettersReturningResource");

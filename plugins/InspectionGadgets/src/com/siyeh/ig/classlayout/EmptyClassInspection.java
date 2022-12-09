@@ -55,7 +55,7 @@ public class EmptyClassInspection extends BaseInspection {
     final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
 
-    panel.addGrowingX(annotationsListControl);
+    panel.addGrowing(annotationsListControl);
     panel.addCheckbox(InspectionGadgetsBundle.message("empty.class.ignore.parameterization.option"), "ignoreClassWithParameterization");
     panel.addCheckbox(
       InspectionGadgetsBundle.message("inspection.empty.class.ignore.subclasses.option", CommonClassNames.JAVA_LANG_THROWABLE),

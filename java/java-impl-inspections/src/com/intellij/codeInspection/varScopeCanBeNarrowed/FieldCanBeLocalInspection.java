@@ -115,7 +115,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, JavaBundle.message("special.annotations.annotations.list"));
 
     panel.addCheckbox(JavaBundle.message("checkbox.ignore.fields.used.in.multiple.methods"), "IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS");
-    panel.addGrowingX(listPanel);
+    panel.addGrowing(listPanel);
     return panel;
   }
 

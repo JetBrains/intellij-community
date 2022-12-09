@@ -57,7 +57,7 @@ public class InterfaceNeverImplementedInspection extends BaseInspection {
     final JPanel annotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
 
-    panel.addGrowingX(annotationsPanel);
+    panel.addGrowing(annotationsPanel);
     panel.addCheckbox(InspectionGadgetsBundle.message("interface.never.implemented.option"), "ignoreInterfacesThatOnlyDeclareConstants");
 
     return panel;

@@ -74,7 +74,7 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
                                          InspectionGadgetsBundle.message("choose.class.hierarchy.to.ignore.title"));
 
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addGrowingX(ignoredClassesPanel);
+    panel.addGrowing(ignoredClassesPanel);
     panel.addCheckbox(InspectionGadgetsBundle.message("super.class.logger.option"), "ignoreSuperLoggers");
 
     loggerPanel.setBorder(JBUI.Borders.emptyTop(5));

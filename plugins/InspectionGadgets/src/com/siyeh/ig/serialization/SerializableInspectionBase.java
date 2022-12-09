@@ -53,7 +53,7 @@ public abstract class SerializableInspectionBase extends BaseInspection {
       InspectionGadgetsBundle.message("choose.class"));
     UiUtils.setComponentSize(chooserList, 7, 25);
 
-    panel.addGrowingX(chooserList);
+    panel.addGrowing(chooserList);
 
     final JComponent[] additionalOptions = createAdditionalOptions();
     for (JComponent additionalOption : additionalOptions) {

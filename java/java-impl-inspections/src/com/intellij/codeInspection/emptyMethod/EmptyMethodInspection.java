@@ -273,7 +273,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     final JPanel listPanel = SpecialAnnotationsUtil
       .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, JavaBundle.message("special.annotations.annotations.list"));
 
-    panel.addGrowingX(listPanel);
+    panel.addGrowing(listPanel);
     return panel;
   }
 

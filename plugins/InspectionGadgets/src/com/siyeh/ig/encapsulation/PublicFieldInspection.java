@@ -48,7 +48,7 @@ public class PublicFieldInspection extends BaseInspection {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-    panel.addGrowingX(annotationsListControl);
+    panel.addGrowing(annotationsListControl);
     panel.addCheckbox(InspectionGadgetsBundle.message("public.field.ignore.enum.type.fields.option"), "ignoreEnums");
     return panel;
   }

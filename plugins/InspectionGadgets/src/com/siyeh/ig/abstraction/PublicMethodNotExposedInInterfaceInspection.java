@@ -48,7 +48,7 @@ public class PublicMethodNotExposedInInterfaceInspection extends BaseInspection 
     final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
 
-    panel.addGrowingX(annotationsListControl);
+    panel.addGrowing(annotationsListControl);
     panel.addCheckbox(InspectionGadgetsBundle.message("public.method.not.in.interface.option"),
                       "onlyWarnIfContainingClassImplementsAnInterface");
 

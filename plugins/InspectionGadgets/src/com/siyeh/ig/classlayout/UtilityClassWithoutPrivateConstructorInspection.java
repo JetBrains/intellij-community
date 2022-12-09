@@ -57,7 +57,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     final JPanel annotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-    panel.addGrowingX(annotationsPanel);
+    panel.addGrowing(annotationsPanel);
     panel.addCheckbox(InspectionGadgetsBundle.message("utility.class.without.private.constructor.option"), "ignoreClassesWithOnlyMain");
     return panel;
   }
