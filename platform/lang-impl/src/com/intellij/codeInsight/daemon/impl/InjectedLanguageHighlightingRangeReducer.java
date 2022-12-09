@@ -13,5 +13,15 @@ import java.util.Collection;
 @ApiStatus.Experimental
 public interface InjectedLanguageHighlightingRangeReducer {
   ExtensionPointName<InjectedLanguageHighlightingRangeReducer> EP_NAME = new ExtensionPointName<>("com.intellij.codeInsight.daemon.impl.injectedLanguageHighlightingRangeReducer");
+
+  /**
+   * Provides a way to select particular ranges to be highlighted during the pass instead of the whole file.
+   * It may be useful in documents with lots of editable injectedFiles to process only changed ones on document change event,
+   * like in Kotlin Notebooks.
+   * NB: if several reduced ranges are passed, then restricted analysis area will be {topLeft; topRight} across ranges offsets.
+   *
+   * @return collection of ranges to highlight or null
+   * @see InjectedGeneralHighlightingPassFactory
+   */
   Collection<@NotNull TextRange> reduceRange(@NotNull PsiFile file, @NotNull Editor editor);
 }

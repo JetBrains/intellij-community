@@ -58,6 +58,10 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
     return false;
   }
 
+  /**
+   * Restrict range - the overall area on which highlighting would be triggered.
+   * All reducedRanges are parts of restrictRange
+   */
   @NotNull
   private static TextRange computeRestrictRange(@Nullable Collection<@NotNull TextRange> reduced, @NotNull TextRange fileRange) {
     if (reduced == null) return fileRange;
