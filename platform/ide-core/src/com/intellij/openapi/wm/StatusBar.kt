@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.StatusBar.Info
 import com.intellij.openapi.wm.StatusBar.StandardWidgets
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.awt.Color
 import java.awt.Component
@@ -117,6 +118,7 @@ interface StatusBar : StatusBarInfo {
 
   fun stopRefreshIndication()
 
+  @Internal
   fun addListener(listener: StatusBarListener, parentDisposable: Disposable) {}
 
   val allWidgets: Collection<StatusBarWidget>?
