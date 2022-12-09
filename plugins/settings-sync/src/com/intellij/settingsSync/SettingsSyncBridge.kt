@@ -325,11 +325,18 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     if (force) {
       return remoteCommunicator.push(settingsSnapshot, force = true, versionId)
     }
-    else if (remoteCommunicator.checkServerState() is ServerState.UpdateNeeded) {
-      return SettingsSyncPushResult.Rejected
-    }
     else {
-      return remoteCommunicator.push(settingsSnapshot, force = false, versionId)
+      when (remoteCommunicator.checkServerState()) {
+        is ServerState.UpdateNeeded -> {
+          return SettingsSyncPushResult.Rejected
+        }
+        is ServerState.FileNotExists -> {
+          return remoteCommunicator.push(settingsSnapshot, force = true, versionId)
+        }
+        else -> {
+          return remoteCommunicator.push(settingsSnapshot, force = false, versionId)
+        }
+      }
     }
   }
 
