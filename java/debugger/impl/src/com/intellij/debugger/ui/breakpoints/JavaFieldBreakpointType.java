@@ -126,14 +126,22 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
       protected boolean validateData() {
         final String className = getClassName();
         if (className.length() == 0) {
-          Messages.showMessageDialog(project, JavaDebuggerBundle.message("error.field.breakpoint.class.name.not.specified"),
-                                     JavaDebuggerBundle.message("add.field.breakpoint.dialog.title"), Messages.getErrorIcon());
+          Messages.showMessageDialog(
+            project,
+            JavaDebuggerBundle.message("error.field.breakpoint.class.name.not.specified"),
+            JavaDebuggerBundle.message("add.field.breakpoint.dialog.title"),
+            Messages.getErrorIcon()
+          );
           return false;
         }
         final String fieldName = getFieldName();
         if (fieldName.length() == 0) {
-          Messages.showMessageDialog(project, JavaDebuggerBundle.message("error.field.breakpoint.field.name.not.specified"),
-                                     JavaDebuggerBundle.message("add.field.breakpoint.dialog.title"), Messages.getErrorIcon());
+          Messages.showMessageDialog(
+            project,
+            JavaDebuggerBundle.message("error.field.breakpoint.field.name.not.specified"),
+            JavaDebuggerBundle.message("add.field.breakpoint.dialog.title"),
+            Messages.getErrorIcon()
+          );
           return false;
         }
         PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
@@ -157,21 +165,21 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
               return true;
             }
             else {
-              Messages.showMessageDialog(project,
-                                         JavaDebuggerBundle
-                                           .message("error.field.breakpoint.field.not.found", className, fieldName, fieldName),
-                                         CommonBundle.getErrorTitle(),
-                                         Messages.getErrorIcon()
+              Messages.showMessageDialog(
+                project,
+                JavaDebuggerBundle.message("error.field.breakpoint.field.not.found", className, fieldName, fieldName),
+                CommonBundle.getErrorTitle(),
+                Messages.getErrorIcon()
               );
             }
           }
         }
         else {
-          Messages.showMessageDialog(project,
-                                     JavaDebuggerBundle
-                                       .message("error.field.breakpoint.class.sources.not.found", className, fieldName, className),
-                                     CommonBundle.getErrorTitle(),
-                                     Messages.getErrorIcon()
+          Messages.showMessageDialog(
+            project,
+            JavaDebuggerBundle.message("error.field.breakpoint.class.sources.not.found", className, fieldName, className),
+            CommonBundle.getErrorTitle(),
+            Messages.getErrorIcon()
           );
         }
         return false;
