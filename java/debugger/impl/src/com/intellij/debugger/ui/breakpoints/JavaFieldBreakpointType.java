@@ -2,8 +2,8 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.CommonBundle;
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.HelpID;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
@@ -138,15 +138,20 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
         }
         PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
         if (psiClass != null) {
-          final PsiFile psiFile  = psiClass.getContainingFile();
+          final PsiFile psiFile = psiClass.getContainingFile();
           Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-          if(document != null) {
+          if (document != null) {
             PsiField field = psiClass.findFieldByName(fieldName, false);
-            if(field != null) {
+            if (field != null) {
               final int line = document.getLineNumber(field.getTextOffset());
               WriteAction.run(() -> {
-                XLineBreakpoint<JavaFieldBreakpointProperties> fieldBreakpoint = XDebuggerManager.getInstance(project).getBreakpointManager()
-                  .addLineBreakpoint(JavaFieldBreakpointType.this, psiFile.getVirtualFile().getUrl(), line, new JavaFieldBreakpointProperties(fieldName, className));
+                XLineBreakpoint<JavaFieldBreakpointProperties> fieldBreakpoint =
+                  XDebuggerManager.getInstance(project).getBreakpointManager().addLineBreakpoint(
+                    JavaFieldBreakpointType.this,
+                    psiFile.getVirtualFile().getUrl(),
+                    line,
+                    new JavaFieldBreakpointProperties(fieldName, className)
+                  );
                 result.set(fieldBreakpoint);
               });
               return true;
@@ -160,7 +165,8 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
               );
             }
           }
-        } else {
+        }
+        else {
           Messages.showMessageDialog(project,
                                      JavaDebuggerBundle
                                        .message("error.field.breakpoint.class.sources.not.found", className, fieldName, className),
