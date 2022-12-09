@@ -68,7 +68,7 @@ internal open class FirCallableCompletionContributor(
 
         val extensionChecker = object : ExtensionApplicabilityChecker {
             context(KtAnalysisSession)
-            override fun isApplicable(symbol: KtCallableSymbol): KtExtensionApplicabilityResult {
+            override fun checkApplicability(symbol: KtCallableSymbol): KtExtensionApplicabilityResult {
                 return symbol.checkExtensionIsSuitable(originalKtFile, nameExpression, explicitReceiver)
             }
         }
@@ -304,21 +304,21 @@ internal open class FirCallableCompletionContributor(
             .map { it.getSymbol() as KtCallableSymbol }
             .filter { filter(it) }
             .filter { visibilityChecker.isVisible(it) }
-            .filter { extensionChecker.isApplicable(it).isApplicable }
+            .filter { extensionChecker.checkApplicability(it) is KtExtensionApplicabilityResult.Applicable }
     }
 
     private fun KtAnalysisSession.collectSuitableExtensions(
         scope: KtScope,
         hasSuitableExtensionReceiver: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
-    ): Sequence<Pair<KtCallableSymbol, KtExtensionApplicabilityResult>> =
+    ): Sequence<Pair<KtCallableSymbol, KtExtensionApplicabilityResult.Applicable>> =
         scope.getCallableSymbols(scopeNameFilter)
             .filter { it.isExtension || it is KtVariableLikeSymbol && (it.returnType as? KtFunctionalType)?.hasReceiver == true }
             .filter { visibilityChecker.isVisible(it) }
             .filter { filter(it) }
             .mapNotNull { callable ->
-                val applicabilityResult = hasSuitableExtensionReceiver.isApplicable(callable)
-                if (applicabilityResult.isApplicable) {
+                val applicabilityResult = hasSuitableExtensionReceiver.checkApplicability(callable)
+                if (applicabilityResult is KtExtensionApplicabilityResult.Applicable) {
                     callable to applicabilityResult
                 } else null
             }
