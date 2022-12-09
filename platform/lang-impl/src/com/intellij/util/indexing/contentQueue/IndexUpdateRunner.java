@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -259,7 +258,7 @@ public final class IndexUpdateRunner {
     ContentLoadingResult loadingResult;
     try {
       // Propagate ProcessCanceledException and unchecked exceptions. The latter fail the whole indexing (see IndexingJob.myError).
-      loadingResult = loadNextContent(indexingJob, indexingJob.myIndicator);
+      loadingResult = loadNextContent(indexingJob);
     }
     catch (TooLargeContentException e) {
       indexingJob.oneMoreFileProcessed();
@@ -375,15 +374,29 @@ public final class IndexUpdateRunner {
   }
 
   @Nullable
-  private IndexUpdateRunner.ContentLoadingResult loadNextContent(@NotNull IndexingJob indexingJob,
-                                                                 @NotNull ProgressIndicator indicator) throws FailedToLoadContentException,
-                                                                                                              TooLargeContentException,
-                                                                                                              ProcessCanceledException {
+  private IndexUpdateRunner.ContentLoadingResult loadNextContent(@NotNull IndexingJob indexingJob) throws FailedToLoadContentException,
+                                                                                                          TooLargeContentException,
+                                                                                                          ProcessCanceledException {
     VirtualFile file = indexingJob.myQueueOfFiles.poll();
     if (file == null) {
       indexingJob.myNoMoreFilesInQueue.set(true);
       return null;
     }
+
+    try {
+      return loadContent(indexingJob.myIndicator, file, indexingJob.myContentLoader);
+    }
+    catch (ProcessCanceledException e) {
+      indexingJob.myQueueOfFiles.add(file);
+      throw e;
+    }
+  }
+
+  private @NotNull ContentLoadingResult loadContent(@NotNull ProgressIndicator indicator,
+                                                    @NotNull VirtualFile file,
+                                                    @NotNull CachedFileContentLoader loader)
+    throws TooLargeContentException, FailedToLoadContentException {
+
     if (myFileBasedIndex.isTooLarge(file)) {
       throw new TooLargeContentException(file);
     }
@@ -393,7 +406,6 @@ public final class IndexUpdateRunner {
       fileLength = file.getLength();
     }
     catch (ProcessCanceledException e) {
-      indexingJob.myQueueOfFiles.add(file);
       throw e;
     }
     catch (Throwable e) {
@@ -401,31 +413,15 @@ public final class IndexUpdateRunner {
     }
 
     // Reserve bytes for the file.
-    try {
-      waitForFreeMemoryToLoadFileContent(indicator, fileLength);
-    }
-    catch (ProcessCanceledException e) {
-      indexingJob.myQueueOfFiles.add(file);
-      throw e;
-    } // Propagate other exceptions (if any) and fail the whole indexing (see IndexingJob.myError).
+    waitForFreeMemoryToLoadFileContent(indicator, fileLength);
 
     try {
-      CachedFileContent fileContent = indexingJob.myContentLoader.loadContent(file);
+      CachedFileContent fileContent = loader.loadContent(file);
       return new ContentLoadingResult(fileContent, fileLength);
-    }
-    catch (ProcessCanceledException e) {
-      signalThatFileIsUnloaded(fileLength);
-      indexingJob.myQueueOfFiles.add(file);
-      throw e;
-    }
-    catch (FailedToLoadContentException | TooLargeContentException e) {
-      signalThatFileIsUnloaded(fileLength);
-      throw e;
     }
     catch (Throwable e) {
       signalThatFileIsUnloaded(fileLength);
-      ExceptionUtil.rethrow(e);
-      return null;
+      throw e;
     }
   }
 
