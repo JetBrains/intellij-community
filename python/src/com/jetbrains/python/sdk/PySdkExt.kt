@@ -17,6 +17,7 @@ package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.FullPathOnTarget
+import com.intellij.execution.target.TargetConfigurationWithLocalFsAccess
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.application.ApplicationManager
@@ -109,25 +110,29 @@ fun detectSystemWideSdks(module: Module?,
   val targetModuleSitsOn = module?.let { PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(it) }
   val existingPaths = existingSdks.mapTo(HashSet()) { TargetAndPath(it.targetEnvConfiguration, it.homePath) }
   return PythonSdkFlavor.getApplicableFlavors(false)
-    .asSequence()
-    .flatMap { it.suggestLocalHomePaths(module, context).asSequence() }
+    .flatMap { flavor -> flavor.detectSdks(module, context, targetModuleSitsOn, existingPaths) }
+    .sortedWith(compareBy<PyDetectedSdk>({ it.guessedLanguageLevel },
+                                         { it.homePath }).reversed())
+}
+
+private fun PythonSdkFlavor<*>.detectSdks(module: Module?,
+                                          context: UserDataHolder,
+                                          targetModuleSitsOn: TargetConfigurationWithLocalFsAccess?,
+                                          existingPaths: HashSet<TargetAndPath>): List<PyDetectedSdk> =
+  suggestLocalHomePaths(module, context)
     .mapNotNull {
       // If module sits on target, this target maps its path.
       if (targetModuleSitsOn == null) it.pathString else targetModuleSitsOn.getTargetPathIfLocalPathIsOnTarget(it)
     }
     .filter { TargetAndPath(targetModuleSitsOn?.asTargetConfig, it) !in existingPaths }
-    .map { createDetectedSdk(it, targetModuleSitsOn?.asTargetConfig) }
-    .sortedWith(compareBy<PyDetectedSdk>({ it.guessedLanguageLevel },
-                                         { it.homePath }).reversed())
-    .toList()
-}
+    .map { createDetectedSdk(it, targetModuleSitsOn?.asTargetConfig, this) }
 
 fun resetSystemWideSdksDetectors() {
   PythonSdkFlavor.getApplicableFlavors(false).forEach(PythonSdkFlavor<*>::dropCaches)
 }
 
 fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
-  filterSuggestedPaths(VirtualEnvSdkFlavor.getInstance().suggestLocalHomePaths(module, context), existingSdks, module, context)
+  filterSuggestedPaths(VirtualEnvSdkFlavor.getInstance(), existingSdks, module, context)
 
 fun filterSharedCondaEnvs(module: Module?, existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { it.sdkType is PythonSdkType && PythonSdkUtil.isConda(it) && !it.isAssociatedWithAnotherModule(module) }
@@ -390,7 +395,7 @@ fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
 }
 
 
-private fun filterSuggestedPaths(suggestedPaths: Collection<Path>,
+private fun filterSuggestedPaths(flavor: PythonSdkFlavor<*>,
                                  existingSdks: List<Sdk>,
                                  module: Module?,
                                  context: UserDataHolder,
@@ -398,14 +403,14 @@ private fun filterSuggestedPaths(suggestedPaths: Collection<Path>,
   val targetModuleSitsOn = module?.let { PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(it) }
   val existingPaths = existingSdks.mapTo(HashSet()) { TargetAndPath(it.targetEnvConfiguration, it.homePath) }
   val baseDirFromContext = context.getUserData(BASE_DIR)
-  return suggestedPaths
+  return flavor.suggestLocalHomePaths(module, context)
     .asSequence()
     .filterNot { TargetAndPath(targetModuleSitsOn?.asTargetConfig, it.toString()) in existingPaths }
     .distinct()
     .mapNotNull {
       if (targetModuleSitsOn == null) it.pathString else targetModuleSitsOn.getTargetPathIfLocalPathIsOnTarget(it)
     }
-    .map { createDetectedSdk(it, targetModuleSitsOn?.asTargetConfig) }
+    .map { createDetectedSdk(it, targetModuleSitsOn?.asTargetConfig, flavor) }
     .sortedWith(
       compareBy(
         { !it.isAssociatedWithModule(module) && !it.isLocatedInsideBaseDir(baseDirFromContext) },
