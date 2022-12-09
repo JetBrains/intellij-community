@@ -10,6 +10,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.Consumer
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.flow.Flow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.event.MouseEvent
@@ -24,15 +26,12 @@ interface StatusBarWidget : Disposable {
   fun ID(): @NonNls String
 
   @Suppress("DEPRECATION")
-  @JvmDefault
   fun getPresentation(): WidgetPresentation? {
     return getPresentation(if (SystemInfoRt.isMac) PlatformType.MAC else PlatformType.DEFAULT)
   }
 
-  @JvmDefault
   fun install(statusBar: StatusBar) {}
 
-  @JvmDefault
   override fun dispose() {}
 
   @Suppress("SpellCheckingInspection")
@@ -41,27 +40,29 @@ interface StatusBarWidget : Disposable {
   }
 
   interface WidgetPresentation {
+    /**
+     * Reactive API is not required, because it is called only when tooltip is requested to be shown.
+     */
     fun getTooltipText(): @NlsContexts.Tooltip String?
 
-    @JvmDefault
+    /**
+     * Reactive API is not required, because it is called only when tooltip is requested to be shown.
+     */
     fun getShortcutText(): @Nls String? = null
 
-    @JvmDefault
     fun getClickConsumer(): Consumer<MouseEvent>? = null
   }
 
+  /**
+   * Consider using [IconWidgetPresentation]
+   */
   interface IconPresentation : WidgetPresentation {
-    @Deprecated("Use {@link #getIcon(StatusBar)}")
-    @JvmDefault
-    fun getIcon(): Icon? {
-      throw AbstractMethodError()
-    }
-
-    @Suppress("DEPRECATION")
-    @JvmDefault
-    fun getIcon(@Suppress("unused") statusBar: StatusBar): Icon? = getIcon()
+    fun getIcon(): Icon?
   }
 
+  /**
+   * Consider using [TextWidgetPresentation]
+   */
   interface TextPresentation : WidgetPresentation {
     fun getText(): @NlsContexts.Label String
 
@@ -71,20 +72,16 @@ interface StatusBarWidget : Disposable {
   interface MultipleTextValuesPresentation : WidgetPresentation {
     @Suppress("DeprecatedCallableAddReplaceWith")
     @Deprecated("implement {@link #getPopup()}")
-    @JvmDefault
     fun getPopupStep(): ListPopup? = null
 
     @Suppress("DEPRECATION")
-    @JvmDefault
     fun getPopup(): JBPopup? = getPopupStep()
 
     fun getSelectedValue(): @NlsContexts.StatusBarText String?
 
     @Deprecated("never invoked; please drop ")
-    @JvmDefault
     fun getMaxValue(): String = ""
 
-    @JvmDefault
     fun getIcon(): Icon? = null
   }
 
@@ -95,7 +92,6 @@ interface StatusBarWidget : Disposable {
   }
 
   @Deprecated("implement {@link #getPresentation()} instead ")
-  @JvmDefault
   fun getPresentation(@Suppress("unused", "DEPRECATION") type: PlatformType): WidgetPresentation? = null
 
   @Deprecated("Use {@link JBUI.CurrentTheme.StatusBar.Widget} border methods ")
@@ -111,4 +107,25 @@ interface StatusBarWidget : Disposable {
       val WIDE: Border = JBUI.CurrentTheme.StatusBar.Widget.border()
     }
   }
+}
+
+@ApiStatus.Experimental
+interface TextWidgetPresentation : StatusBarWidget.WidgetPresentation {
+  /**
+   * Taken on account only on a first init — dynamic change is not supported.
+   */
+  val alignment: Float
+
+  /**
+   * Using `distinctUntilChanged` is not required - handled by a platform.
+   */
+  fun text(): Flow<@NlsContexts.Label String>
+}
+
+@ApiStatus.Experimental
+interface IconWidgetPresentation : StatusBarWidget.WidgetPresentation {
+  /**
+   * Using `distinctUntilChanged` is not required - handled by a platform.
+   */
+  fun icon(): Flow<Icon?>
 }

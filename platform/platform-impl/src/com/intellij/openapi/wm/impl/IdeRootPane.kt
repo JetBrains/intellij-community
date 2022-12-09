@@ -384,7 +384,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
   protected open fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl {
     return IdeStatusBarImpl(frameHelper = frameHelper,
-                            addToolWindowsWidget = !ExperimentalUI.isNewUI() && !GeneralSettings.getInstance().isSupportScreenReaders)
+                            addToolWindowWidget = !ExperimentalUI.isNewUI() && !GeneralSettings.getInstance().isSupportScreenReaders)
   }
 
   val statusBarHeight: Int

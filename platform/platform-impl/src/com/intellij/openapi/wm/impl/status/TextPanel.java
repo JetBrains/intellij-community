@@ -4,12 +4,12 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.StatusBarText;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
@@ -21,9 +21,11 @@ import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Supplier;
 
-public class TextPanel extends NonOpaquePanel implements Accessible {
+public class TextPanel extends JPanel implements Accessible {
   public static final String PROPERTY_TEXT = "TextPanel.text";
+  private final Supplier<@Nullable @NlsContexts.Tooltip String> toolTipTextSupplier;
 
   private @Nullable @Nls String myText;
 
@@ -33,7 +35,19 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
   protected float myAlignment;
 
   protected TextPanel() {
+    this(null);
+  }
+
+  protected TextPanel(@Nullable Supplier<@Nullable @NlsContexts.Tooltip String> toolTipTextSupplier) {
+    this.toolTipTextSupplier = toolTipTextSupplier;
+
+    setOpaque(false);
     updateUI();
+  }
+
+  @Override
+  public String getToolTipText() {
+    return toolTipTextSupplier == null ? super.getToolTipText() : toolTipTextSupplier.get();
   }
 
   @Override
@@ -182,6 +196,14 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     private static final int GAP = JBUIScale.scale(2);
     private @Nullable Icon myIcon;
 
+    public WithIconAndArrows() {
+      super(null);
+    }
+
+    public WithIconAndArrows(@Nullable Supplier<@Nullable @NlsContexts.Tooltip String> toolTipTextSupplier) {
+      super(toolTipTextSupplier);
+    }
+
     @Override
     protected void paintComponent(final @NotNull Graphics g) {
       super.paintComponent(g);
@@ -189,14 +211,6 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
       if (icon != null) {
         icon.paintIcon(this, g, getIconX(g), getHeight() / 2 - icon.getIconHeight() / 2);
       }
-    }
-
-    /**
-     * @deprecated arrows are not painted anymore
-     */
-    @Deprecated(forRemoval = true)
-    protected boolean shouldPaintArrows() {
-      return false;
     }
 
     @Override
@@ -246,7 +260,13 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     public @Nullable Icon getIcon() { return myIcon; }
   }
 
+  // used externally
+  @SuppressWarnings("unused")
   public static class ExtraSize extends TextPanel {
+    public ExtraSize() {
+      super(null);
+    }
+
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();

@@ -27,8 +27,7 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.BalloonHandler
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.StatusBarWidget.*
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
@@ -46,9 +45,13 @@ import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.NotificationPopup
 import com.intellij.ui.popup.PopupState
 import com.intellij.util.EventDispatcher
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -56,6 +59,7 @@ import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.util.function.Consumer
+import java.util.function.Supplier
 import javax.accessibility.Accessible
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
@@ -69,7 +73,7 @@ private val MIN_ICON_HEIGHT = JBUI.scale(18 + 1 + 1)
 
 open class IdeStatusBarImpl internal constructor(
   private val frameHelper: ProjectFrameHelper,
-  addToolWindowsWidget: Boolean,
+  addToolWindowWidget: Boolean,
   private var editorProvider: () -> FileEditor? = createDefaultEditorProvider(frameHelper),
 ) : JComponent(), Accessible, StatusBarEx, DataProvider {
   private val infoAndProgressPanel: InfoAndProgressPanel
@@ -122,7 +126,7 @@ open class IdeStatusBarImpl internal constructor(
 
   override fun createChild(frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar {
     EDT.assertIsEdt()
-    val bar = IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowsWidget = false, editorProvider = editorProvider)
+    val bar = IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false, editorProvider = editorProvider)
     bar.isVisible = isVisible
     children.add(bar)
     Disposer.register(frameHelper) { children.remove(bar) }
@@ -160,19 +164,28 @@ open class IdeStatusBarImpl internal constructor(
     infoAndProgressPanel = InfoAndProgressPanel(UISettings.shadowInstance)
     ClientProperty.put(infoAndProgressPanel, WIDGET_ID, infoAndProgressPanel.ID())
     centerPanel.add(infoAndProgressPanel)
-    widgetMap.put(infoAndProgressPanel.ID(),
-                  WidgetBean(widget = infoAndProgressPanel,
-                             position = Position.CENTER,
-                             component = infoAndProgressPanel,
-                             order = LoadingOrder.ANY))
+    widgetMap.put(infoAndProgressPanel.ID(), WidgetBean(widget = infoAndProgressPanel,
+                                                        position = Position.CENTER,
+                                                        component = infoAndProgressPanel,
+                                                        order = LoadingOrder.ANY))
     Disposer.register(frameHelper, infoAndProgressPanel)
 
     registerCloneTasks()
 
-    updateUI()
-    if (addToolWindowsWidget) {
-      addWidget(ToolWindowsWidget(frameHelper), Position.LEFT, LoadingOrder.ANY)
+    if (addToolWindowWidget) {
+      val toolWindowWidget = ToolWindowsWidget(frameHelper, this)
+      val toolWindowWidgetComponent = wrapCustomStatusBarWidget(toolWindowWidget)
+      widgetMap.put(toolWindowWidget.ID(), WidgetBean(widget = toolWindowWidget,
+                                                      position = Position.LEFT,
+                                                      component = toolWindowWidgetComponent,
+                                                      order = LoadingOrder.ANY))
+      Disposer.register(frameHelper, toolWindowWidget)
+      toolWindowWidgetComponent.border = if (SystemInfoRt.isMac) JBUI.Borders.empty(2, 0, 2, 4) else JBUI.Borders.empty()
+      leftPanel().add(toolWindowWidgetComponent)
     }
+
+    updateUI()
+
     enableEvents(AWTEvent.MOUSE_EVENT_MASK)
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK)
     IdeEventQueue.getInstance().addDispatcher({ e -> if (e is MouseEvent) dispatchMouseEvent(e) else false }, frameHelper)
@@ -260,17 +273,17 @@ open class IdeStatusBarImpl internal constructor(
       service.init()
     }
     runActivity("status bar init") {
-      doInit(widgets = items + extraItems, parentDisposable = service)
+      doInit(project = project, widgets = items + extraItems, parentDisposable = service)
     }
   }
 
-  private suspend fun doInit(widgets: List<kotlin.Pair<StatusBarWidget, LoadingOrder>>, parentDisposable: Disposable) {
+  private suspend fun doInit(project: Project, widgets: List<kotlin.Pair<StatusBarWidget, LoadingOrder>>, parentDisposable: Disposable) {
     val items = runActivity("status bar widget creating") {
       widgets.map { (widget, anchor) ->
         val component = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          val component = wrap(widget)
+          val component = wrap(widget, project)
           if (component is StatusBarWidgetWrapper) {
-            component.beforeUpdate(this@IdeStatusBarImpl)
+            component.beforeUpdate()
           }
           component
         }
@@ -326,7 +339,7 @@ open class IdeStatusBarImpl internal constructor(
 
   @RequiresEdt
   private fun addWidget(widget: StatusBarWidget, position: Position, anchor: LoadingOrder) {
-    val component = wrap(widget)
+    val component = wrap(widget, project!!)
 
     widgetMap.put(widget.ID(), WidgetBean(widget = widget, position = position, component = component, order = anchor))
     Disposer.register(frameHelper, widget)
@@ -338,7 +351,7 @@ open class IdeStatusBarImpl internal constructor(
       component.border = if (SystemInfoRt.isMac) JBUI.Borders.empty(2, 0, 2, 4) else JBUI.Borders.empty()
     }
     if (component is StatusBarWidgetWrapper) {
-      component.beforeUpdate(this)
+      component.beforeUpdate()
     }
 
     panel.add(component)
@@ -560,7 +573,7 @@ open class IdeStatusBarImpl internal constructor(
       val widgetComponent = getWidgetComponent(id)
       if (widgetComponent != null) {
         if (widgetComponent is StatusBarWidgetWrapper) {
-          widgetComponent.beforeUpdate(this)
+          widgetComponent.beforeUpdate()
         }
         widgetComponent.repaint()
         fireWidgetUpdated(id)
@@ -656,46 +669,92 @@ private class WidgetBean(
     get() = widget.ID()
 }
 
-private fun createComponentByWidgetPresentation(presentation: WidgetPresentation): JComponent {
+@RequiresEdt
+private fun createComponentByWidgetPresentation(widget: StatusBarWidget, project: Project): JComponent {
+  val presentation = widget.getPresentation() ?: throw IllegalStateException("Widget $widget getPresentation() method must not return null")
+  // todo somehow avoid using widget as a disposable, create scope per widget and cancel it explicitly
+  @Suppress("DEPRECATION")
+  val scope = project.coroutineScope
   return when (presentation) {
     is IconPresentation -> IconPresentationComponent(presentation)
     is TextPresentation -> TextPresentationComponent(presentation)
+    is TextWidgetPresentation -> {
+      val panel = TextPanel(Supplier(presentation::getTooltipText))
+      panel.setTextAlignment(presentation.alignment)
+      panel.border = JBUI.CurrentTheme.StatusBar.Widget.border()
+      configurePresentationComponent(presentation, panel)
+
+      scope.launch {
+        presentation.text()
+          .distinctUntilChanged()
+          .collectLatest { text ->
+            panel.text = text
+            panel.isVisible = !text.isEmpty()
+          }
+      }.cancelOnDispose(widget)
+      panel
+    }
+    is IconWidgetPresentation -> {
+      val panel = WithIconAndArrows(Supplier(presentation::getTooltipText))
+      panel.border = JBUI.CurrentTheme.StatusBar.Widget.iconBorder()
+      configurePresentationComponent(presentation, panel)
+
+      scope.launch {
+        presentation.icon()
+          .distinctUntilChanged()
+          .collectLatest { icon ->
+            panel.icon = icon
+            panel.isVisible = icon != null
+          }
+      }.cancelOnDispose(widget)
+      panel
+    }
     is MultipleTextValuesPresentation -> MultipleTextValues(presentation)
     else -> throw IllegalArgumentException("Unable to find a wrapper for presentation: ${presentation.javaClass.simpleName}")
   }
 }
 
-private fun wrap(widget: StatusBarWidget): JComponent {
-  if (widget is CustomStatusBarWidget) {
-    val component = widget.component
-    if (component.border == null) {
-      component.border = if (widget is IconLikeCustomStatusBarWidget) {
-        JBUI.CurrentTheme.StatusBar.Widget.iconBorder()
-      }
-      else {
-        JBUI.CurrentTheme.StatusBar.Widget.border()
-      }
-    }
+private fun configurePresentationComponent(presentation: WidgetPresentation, panel: JComponent) {
+  presentation.getClickConsumer()?.let {
+    StatusBarWidgetClickListener(it::consume).installOn(panel, true)
+  }
+  ClientProperty.put(panel, HelpTooltipManager.SHORTCUT_PROPERTY, Supplier(presentation::getShortcutText))
+}
 
-    // wrap with a panel, so it will fill the entire status bar height
-    val result = if (component is JLabel) {
-      val panel = JPanel(BorderLayout())
-      panel.add(component, BorderLayout.CENTER)
-      panel.isOpaque = false
-      panel
-    }
-    else {
-      component
-    }
-    ClientProperty.put(result, WIDGET_ID, widget.ID())
-    return result
+private fun wrap(widget: StatusBarWidget, project: Project): JComponent {
+  if (widget is CustomStatusBarWidget) {
+    return wrapCustomStatusBarWidget(widget)
   }
 
-  val presentation = widget.getPresentation() ?: throw IllegalStateException("Widget $widget getPresentation() method must not return null")
-  val wrapper = createComponentByWidgetPresentation(presentation)
+  val wrapper = createComponentByWidgetPresentation(widget, project)
   ClientProperty.put(wrapper, WIDGET_ID, widget.ID())
   wrapper.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, java.lang.Boolean.TRUE)
   return wrapper
+}
+
+private fun wrapCustomStatusBarWidget(widget: CustomStatusBarWidget): JComponent {
+  val component = widget.component
+  if (component.border == null) {
+    component.border = if (widget is IconLikeCustomStatusBarWidget) {
+      JBUI.CurrentTheme.StatusBar.Widget.iconBorder()
+    }
+    else {
+      JBUI.CurrentTheme.StatusBar.Widget.border()
+    }
+  }
+
+  // wrap with a panel, so it will fill the entire status bar height
+  val result = if (component is JLabel) {
+    val panel = JPanel(BorderLayout())
+    panel.add(component, BorderLayout.CENTER)
+    panel.isOpaque = false
+    panel
+  }
+  else {
+    component
+  }
+  ClientProperty.put(result, WIDGET_ID, widget.ID())
+  return result
 }
 
 private fun createDefaultEditorProvider(frameHelper: ProjectFrameHelper): () -> FileEditor? {
@@ -711,29 +770,29 @@ private class IconPresentationComponent(private val presentation: IconPresentati
     presentation.getClickConsumer()?.let { clickConsumer ->
       StatusBarWidgetClickListener(clickConsumer = clickConsumer::consume).installOn(this, true)
     }
+    ClientProperty.put(this, HelpTooltipManager.SHORTCUT_PROPERTY, Supplier(presentation::getShortcutText))
   }
 
-  override fun beforeUpdate(statusBar: StatusBar) {
-    icon = presentation.getIcon(statusBar)
+  override fun beforeUpdate() {
+    icon = presentation.getIcon()
     isVisible = hasIcon()
-    setWidgetTooltip(this, presentation.getTooltipText(), presentation.getShortcutText())
   }
 }
 
-private class TextPresentationComponent(private val presentation: TextPresentation) : TextPanel(), StatusBarWidgetWrapper {
+private class TextPresentationComponent(private val presentation: TextPresentation) : TextPanel(Supplier(presentation::getTooltipText)), StatusBarWidgetWrapper {
   init {
     setTextAlignment(presentation.getAlignment())
     border = JBUI.CurrentTheme.StatusBar.Widget.border()
     presentation.getClickConsumer()?.let { clickConsumer ->
       StatusBarWidgetClickListener(clickConsumer::consume).installOn(this, true)
     }
+    ClientProperty.put(this, HelpTooltipManager.SHORTCUT_PROPERTY, Supplier(presentation::getShortcutText))
   }
 
-  override fun beforeUpdate(statusBar: StatusBar) {
+  override fun beforeUpdate() {
     val text = presentation.getText()
     setText(text)
     isVisible = !text.isEmpty()
-    setWidgetTooltip(widgetComponent = this, toolTipText = presentation.getTooltipText(), shortcutText = presentation.getShortcutText())
   }
 }
 
@@ -764,14 +823,15 @@ private class MultipleTextValues(private val presentation: MultipleTextValuesPre
         return if (popup is AbstractPopup) popup.sizeForPositioning else popup.content.preferredSize
       }
     }.installOn(this, true)
+
+    ClientProperty.put(this, HelpTooltipManager.SHORTCUT_PROPERTY, Supplier(presentation::getShortcutText))
   }
 
-  override fun beforeUpdate(statusBar: StatusBar) {
+  override fun beforeUpdate() {
     val value = presentation.getSelectedValue()
     text = value
     icon = presentation.getIcon()
-    isVisible = StringUtil.isNotEmpty(value)
-    setWidgetTooltip(this, presentation.getTooltipText(), presentation.getShortcutText())
+    isVisible = !Strings.isEmpty(value)
   }
 }
 
@@ -785,14 +845,6 @@ private class StatusBarWidgetClickListener(private val clickConsumer: (MouseEven
   }
 }
 
-private fun setWidgetTooltip(widgetComponent: JComponent, toolTipText: @NlsContexts.Tooltip String?, shortcutText: String?) {
-  widgetComponent.toolTipText = toolTipText
-  @Suppress("SpellCheckingInspection")
-  if (Registry.`is`("ide.helptooltip.enabled")) {
-    widgetComponent.putClientProperty(HelpTooltipManager.SHORTCUT_PROPERTY, shortcutText)
-  }
-}
-
 private interface StatusBarWidgetWrapper {
-  fun beforeUpdate(statusBar: StatusBar)
+  fun beforeUpdate()
 }

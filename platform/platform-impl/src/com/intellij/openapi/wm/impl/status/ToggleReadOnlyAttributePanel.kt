@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.openapi.wm.IconWidgetPresentation
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget.Multiframe
@@ -21,12 +22,19 @@ import com.intellij.openapi.wm.StatusBarWidget.WidgetPresentation
 import com.intellij.ui.UIBundle
 import com.intellij.util.Consumer
 import com.intellij.util.io.ReadOnlyAttributeUtil
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.*
 import java.awt.event.MouseEvent
 import java.io.IOException
 import javax.swing.Icon
+import kotlin.time.Duration.Companion.milliseconds
 
 internal class ToggleReadOnlyAttributePanel(private val project: Project) : Multiframe {
   private var statusBar: StatusBar? = null
+
+  private val updateIconRequests = MutableSharedFlow<StatusBar>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
     val connection = project.messageBus.connect(this)
@@ -34,27 +42,48 @@ internal class ToggleReadOnlyAttributePanel(private val project: Project) : Mult
       override fun after(events: List<VFileEvent>) {
         for (event in events) {
           if (event is VFilePropertyChangeEvent && VirtualFile.PROP_WRITABLE == event.propertyName) {
-            statusBar?.updateWidget(ID())
+            scheduleIconUpdate()
+            return
           }
         }
       }
     })
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun selectionChanged(event: FileEditorManagerEvent) {
-        statusBar?.updateWidget(ID())
+        scheduleIconUpdate()
       }
     })
+  }
+
+  private fun scheduleIconUpdate() {
+    statusBar?.let {
+      check(updateIconRequests.tryEmit(it))
+    }
   }
 
   override fun ID(): String = StatusBar.StandardWidgets.READONLY_ATTRIBUTE_PANEL
 
   override fun copy(): StatusBarWidget = ToggleReadOnlyAttributePanel(project)
 
+  @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
   override fun getPresentation(): WidgetPresentation {
-    return object : StatusBarWidget.IconPresentation {
-      override fun getIcon(statusBar: StatusBar): Icon? {
-        val file = statusBar.currentEditor()?.file?.takeIf(::isReadOnlyApplicableForFile) ?: return null
-        return if (file.isWritable) AllIcons.Ide.Readwrite else AllIcons.Ide.Readonly
+    return object : IconWidgetPresentation {
+      private fun createFileFlow(): Flow<VirtualFile?> {
+        return updateIconRequests
+          .debounce(100.milliseconds)
+          .mapLatest { statusBar ->
+            statusBar.currentEditor()?.file
+          }
+          .distinctUntilChanged()
+      }
+
+      override fun icon(): Flow<Icon?> {
+        return createFileFlow()
+          .mapLatest {
+            // todo current editor should be also as a flow
+            val file = it?.takeIf(::isReadOnlyApplicableForFile) ?: return@mapLatest null
+            if (file.isWritable) AllIcons.Ide.Readwrite else AllIcons.Ide.Readonly
+          }
       }
 
       override fun getTooltipText(): String? {

@@ -43,14 +43,14 @@ final class ColumnSelectionModePanel extends EditorBasedWidget implements Status
   }
 
   @Override
-  public StatusBarWidget copy() {
+  public @NotNull StatusBarWidget copy() {
     return new ColumnSelectionModePanel(getProject());
   }
 
   @Override
   public JComponent getComponent() {
     if (textPanel == null) {
-      textPanel = new TextPanel();
+      textPanel = new TextPanel(() -> UIBundle.message("status.bar.column.status.tooltip.text"));
       textPanel.setVisible(false);
     }
     return textPanel;
@@ -113,7 +113,6 @@ final class ColumnSelectionModePanel extends EditorBasedWidget implements Status
     else {
       textPanel.setVisible(true);
       textPanel.setText(UIBundle.message("status.bar.column.status.text"));
-      textPanel.setToolTipText(UIBundle.message("status.bar.column.status.tooltip.text"));
     }
   }
 }

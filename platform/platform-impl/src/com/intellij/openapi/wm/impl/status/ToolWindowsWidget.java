@@ -20,9 +20,11 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.CustomStatusBarWidget;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.toolWindow.ToolWindowEventSource;
 import com.intellij.ui.awt.RelativePoint;
@@ -35,24 +37,22 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
-final class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusBarWidget, Disposable,
-                                                        UISettingsListener, PropertyChangeListener {
+final class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, Disposable, UISettingsListener {
 
   private final Alarm myAlarm;
-  private StatusBar myStatusBar;
+  private final StatusBar myStatusBar;
   private JBPopup popup;
   private boolean wasExited = false;
 
-  ToolWindowsWidget(@NotNull Disposable parent) {
-    setBorder(JBUI.Borders.empty());
+  ToolWindowsWidget(@NotNull Disposable parent, StatusBar statusBar) {
+    myStatusBar = statusBar;
+
     new BaseButtonBehavior(this, TimedDeadzone.NULL) {
       @Override
       protected void execute(MouseEvent e) {
@@ -68,8 +68,12 @@ final class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, S
     }, parent);
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, this);
-    FocusUtil.addFocusOwnerListener(this, this);
+    FocusUtil.addFocusOwnerListener(this, __ -> {
+      updateIcon();
+    });
     myAlarm = new Alarm(parent);
+
+    updateIcon();
   }
 
   private void dispatchMouseEvent(MouseEvent e) {
@@ -78,7 +82,8 @@ final class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, S
       int id = e.getID();
       if (id == MouseEvent.MOUSE_MOVED && isShowing()) {
         mouseMoved(e);
-      } else if (id == MouseEvent.MOUSE_EXITED) {
+      }
+      else if (id == MouseEvent.MOUSE_EXITED) {
         //mouse exits WND
         mouseExited(e.getLocationOnScreen());
       }
@@ -169,11 +174,6 @@ final class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, S
   }
 
   @Override
-  public void propertyChange(PropertyChangeEvent evt) {
-    updateIcon();
-  }
-
-  @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     updateIcon();
   }
@@ -202,18 +202,6 @@ final class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, S
         changes = true;
       }
 
-      //Set<Integer> vks = ToolWindowManagerImpl.getActivateToolWindowVKs();
-      //String text = "Click to show or hide the tool window bars";
-      //if (vks.size() == 1) {
-      //  Integer stroke = vks.iterator().next();
-      //  String keystrokeText = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(stroke.intValue(), 0));
-      //  text += ".\nDouble-press and hold " + keystrokeText + " to show tool window bars when hidden.";
-      //}
-      //if (!text.equals(getToolTipText())) {
-      //  setToolTipText(text);
-      //  changes = true;
-      //}
-
       if (changes) {
         revalidate();
         repaint();
@@ -226,7 +214,7 @@ final class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, S
   }
 
   private boolean isActive() {
-    return myStatusBar != null && myStatusBar.getProject() != null && Registry.is("ide.windowSystem.showTooWindowButtonsSwitcher");
+    return myStatusBar.getProject() != null;
   }
 
   @Override
@@ -234,9 +222,8 @@ final class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, S
     return this;
   }
 
-  @NotNull
   @Override
-  public String ID() {
+  public @NotNull String ID() {
     return "ToolWindows Widget";
   }
 
@@ -246,15 +233,8 @@ final class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, S
   }
 
   @Override
-  public void install(@NotNull StatusBar statusBar) {
-    myStatusBar = statusBar;
-    updateIcon();
-  }
-
-  @Override
   public void dispose() {
     Disposer.dispose(this);
-    myStatusBar = null;
     popup = null;
   }
 
