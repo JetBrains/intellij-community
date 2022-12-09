@@ -2,9 +2,11 @@
 package com.intellij.collaboration.ui.codereview
 
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.ui.hover.HoverStateListener
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import org.jetbrains.annotations.Nls
+import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JLabel
 import kotlin.math.roundToInt
@@ -40,6 +42,19 @@ object CodeReviewChatItemUIUtil {
       }
       val iconPanel = simplePanel().addToTop(iconLabel).andTransparent()
       return simplePanel(componentType.iconGap, 0).addToCenter(item).addToLeft(iconPanel).andTransparent()
+    }
+  }
+
+  fun actionsVisibleOnHover(comp: JComponent, actionsPanel: JComponent?) {
+    if (actionsPanel != null) {
+      object : HoverStateListener() {
+        override fun hoverChanged(component: Component, hovered: Boolean) {
+          actionsPanel.isVisible = hovered
+        }
+      }.apply {
+        // reset hover to false
+        mouseExited(comp)
+      }.addTo(comp)
     }
   }
 }

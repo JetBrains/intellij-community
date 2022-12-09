@@ -118,7 +118,7 @@ object GHPRReviewCommentComponent {
     }.let {
       ComponentFactory.wrapWithIcon(COMPACT, it, avatarIconsProvider, author.avatarUrl, author.getPresentableName())
     }.also {
-      GHPRTimelineItemUIUtil.actionsVisibleOnHover(it, actionsPanel)
+      CodeReviewChatItemUIUtil.actionsVisibleOnHover(it, actionsPanel)
     }
   }
 

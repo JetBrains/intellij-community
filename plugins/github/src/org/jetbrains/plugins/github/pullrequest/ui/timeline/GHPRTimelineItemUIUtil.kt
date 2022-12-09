@@ -117,21 +117,8 @@ internal object GHPRTimelineItemUIUtil {
                       avatarIconsProvider, actor.avatarUrl, actor.getPresentableName())
     }.let {
       it.border = JBUI.Borders.empty(V_SIDE_BORDER, H_SIDE_BORDER)
-      actionsVisibleOnHover(it, actionsPanel)
+      CodeReviewChatItemUIUtil.actionsVisibleOnHover(it, actionsPanel)
       withHoverHighlight(it)
-    }
-  }
-
-  fun actionsVisibleOnHover(comp: JComponent, actionsPanel: JComponent?) {
-    if (actionsPanel != null) {
-      object : HoverStateListener() {
-        override fun hoverChanged(component: Component, hovered: Boolean) {
-          actionsPanel.isVisible = hovered
-        }
-      }.apply {
-        // reset hover to false
-        mouseExited(comp)
-      }.addTo(comp)
     }
   }
 
