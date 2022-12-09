@@ -11,7 +11,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.file.CanonicalPathUtil.getRelativePath
-import com.intellij.openapi.file.NioFileUtil.toCanonicalPath
+import com.intellij.openapi.file.NioPathUtil.toCanonicalPath
 import com.intellij.openapi.file.VirtualFileUtil
 import com.intellij.openapi.file.VirtualFileUtil.getAbsoluteNioPath
 import com.intellij.openapi.fileSystem.LocalFileSystemUtil

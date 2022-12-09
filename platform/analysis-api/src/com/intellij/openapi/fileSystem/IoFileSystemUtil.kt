@@ -10,61 +10,61 @@ object IoFileSystemUtil {
 
   @JvmStatic
   fun findFileOrDirectory(file: File): File? {
-    return NioFileSystemUtil.findFileOrDirectory(file.toPath())?.toFile()
+    return NioPathSystemUtil.findFileOrDirectory(file.toPath())?.toFile()
   }
 
   @JvmStatic
   fun getFileOrDirectory(file: File): File {
-    return NioFileSystemUtil.getFileOrDirectory(file.toPath()).toFile()
+    return NioPathSystemUtil.getFileOrDirectory(file.toPath()).toFile()
   }
 
   @JvmStatic
   fun findFile(file: File): File? {
-    return NioFileSystemUtil.findFile(file.toPath())?.toFile()
+    return NioPathSystemUtil.findFile(file.toPath())?.toFile()
   }
 
   @JvmStatic
   fun getFile(file: File): File {
-    return NioFileSystemUtil.getFile(file.toPath()).toFile()
+    return NioPathSystemUtil.getFile(file.toPath()).toFile()
   }
 
   @JvmStatic
   fun findDirectory(file: File): File? {
-    return NioFileSystemUtil.findDirectory(file.toPath())?.toFile()
+    return NioPathSystemUtil.findDirectory(file.toPath())?.toFile()
   }
 
   @JvmStatic
   fun getDirectory(file: File): File {
-    return NioFileSystemUtil.getDirectory(file.toPath()).toFile()
+    return NioPathSystemUtil.getDirectory(file.toPath()).toFile()
   }
 
   @JvmStatic
   fun findOrCreateFile(file: File): File {
-    return NioFileSystemUtil.findOrCreateFile(file.toPath()).toFile()
+    return NioPathSystemUtil.findOrCreateFile(file.toPath()).toFile()
   }
 
   @JvmStatic
   fun findOrCreateDirectory(file: File): File {
-    return NioFileSystemUtil.findOrCreateDirectory(file.toPath()).toFile()
+    return NioPathSystemUtil.findOrCreateDirectory(file.toPath()).toFile()
   }
 
   @JvmStatic
   fun createFile(file: File): File {
-    return NioFileSystemUtil.createFile(file.toPath()).toFile()
+    return NioPathSystemUtil.createFile(file.toPath()).toFile()
   }
 
   @JvmStatic
   fun createDirectory(file: File): File {
-    return NioFileSystemUtil.createDirectory(file.toPath()).toFile()
+    return NioPathSystemUtil.createDirectory(file.toPath()).toFile()
   }
 
   @JvmStatic
   fun deleteFileOrDirectory(file: File) {
-    NioFileSystemUtil.deleteFileOrDirectory(file.toPath())
+    NioPathSystemUtil.deleteFileOrDirectory(file.toPath())
   }
 
   @JvmStatic
   fun deleteChildren(file: File, predicate: (File) -> Boolean = { true }) {
-    NioFileSystemUtil.deleteChildren(file.toPath()) { predicate(it.toFile()) }
+    NioPathSystemUtil.deleteChildren(file.toPath()) { predicate(it.toFile()) }
   }
 }

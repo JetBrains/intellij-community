@@ -9,7 +9,7 @@ import com.intellij.openapi.file.CanonicalPathUtil.getAbsolutePath
 import com.intellij.openapi.file.CanonicalPathUtil.getRelativeNioPath
 import com.intellij.openapi.file.CanonicalPathUtil.getRelativePath
 import com.intellij.openapi.file.CanonicalPathUtil.isAncestor
-import com.intellij.openapi.fileSystem.NioFileSystemUtil
+import com.intellij.openapi.fileSystem.NioPathSystemUtil
 import com.intellij.util.io.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -17,7 +17,7 @@ import java.nio.file.Path
 import kotlin.io.path.writeText
 
 @ApiStatus.Experimental
-object NioFileUtil {
+object NioPathUtil {
 
   @JvmStatic
   fun exists(path: Path): Boolean {
@@ -56,62 +56,62 @@ object NioFileUtil {
 
   @JvmStatic
   fun findFileOrDirectory(path: Path, relativePath: String): Path? {
-    return NioFileSystemUtil.findFileOrDirectory(path.getAbsoluteNioPath(relativePath))
+    return NioPathSystemUtil.findFileOrDirectory(path.getAbsoluteNioPath(relativePath))
   }
 
   @JvmStatic
   fun getFileOrDirectory(path: Path, relativePath: String): Path {
-    return NioFileSystemUtil.getFileOrDirectory(path.getAbsoluteNioPath(relativePath))
+    return NioPathSystemUtil.getFileOrDirectory(path.getAbsoluteNioPath(relativePath))
   }
 
   @JvmStatic
   fun findFile(path: Path, relativePath: String): Path? {
-    return NioFileSystemUtil.findFile(path.getAbsoluteNioPath(relativePath))
+    return NioPathSystemUtil.findFile(path.getAbsoluteNioPath(relativePath))
   }
 
   @JvmStatic
   fun getFile(path: Path, relativePath: String): Path {
-    return NioFileSystemUtil.getFile(path.getAbsoluteNioPath(relativePath))
+    return NioPathSystemUtil.getFile(path.getAbsoluteNioPath(relativePath))
   }
 
   @JvmStatic
   fun findDirectory(path: Path, relativePath: String): Path? {
-    return NioFileSystemUtil.findDirectory(path.getAbsoluteNioPath(relativePath))
+    return NioPathSystemUtil.findDirectory(path.getAbsoluteNioPath(relativePath))
   }
 
   @JvmStatic
   fun getDirectory(path: Path, relativePath: String): Path {
-    return NioFileSystemUtil.getDirectory(path.getAbsoluteNioPath(relativePath))
+    return NioPathSystemUtil.getDirectory(path.getAbsoluteNioPath(relativePath))
   }
 
   @JvmStatic
   fun findOrCreateFile(path: Path, relativePath: String): Path {
-    return NioFileSystemUtil.findOrCreateFile(path.getAbsoluteNioPath(relativePath))
+    return NioPathSystemUtil.findOrCreateFile(path.getAbsoluteNioPath(relativePath))
   }
 
   @JvmStatic
   fun findOrCreateDirectory(path: Path, relativePath: String): Path {
-    return NioFileSystemUtil.findOrCreateDirectory(path.getAbsoluteNioPath(relativePath))
+    return NioPathSystemUtil.findOrCreateDirectory(path.getAbsoluteNioPath(relativePath))
   }
 
   @JvmStatic
   fun createFile(path: Path, relativePath: String): Path {
-    return NioFileSystemUtil.createFile(path.getAbsoluteNioPath(relativePath))
+    return NioPathSystemUtil.createFile(path.getAbsoluteNioPath(relativePath))
   }
 
   @JvmStatic
   fun createDirectory(path: Path, relativePath: String): Path {
-    return NioFileSystemUtil.createDirectory(path.getAbsoluteNioPath(relativePath))
+    return NioPathSystemUtil.createDirectory(path.getAbsoluteNioPath(relativePath))
   }
 
   @JvmStatic
   fun deleteFileOrDirectory(path: Path, relativePath: String = ".") {
-    NioFileSystemUtil.deleteFileOrDirectory(path.getAbsoluteNioPath(relativePath))
+    NioPathSystemUtil.deleteFileOrDirectory(path.getAbsoluteNioPath(relativePath))
   }
 
   @JvmStatic
   fun deleteChildren(path: Path, relativePath: String = ".", predicate: (Path) -> Boolean = { true }) {
-    NioFileSystemUtil.deleteChildren(path.getAbsoluteNioPath(relativePath), predicate)
+    NioPathSystemUtil.deleteChildren(path.getAbsoluteNioPath(relativePath), predicate)
   }
 
   @JvmStatic

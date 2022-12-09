@@ -7,7 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
-import com.intellij.openapi.file.NioFileUtil
+import com.intellij.openapi.file.NioPathUtil
 import com.intellij.openapi.file.VirtualFileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
@@ -95,21 +95,21 @@ class AssetsProcessorImpl : AbstractAssetsProcessor() {
   private val LOG: Logger = logger<AssetsProcessor>()
 
   override fun setTextContent(file: Path, content: String) {
-    NioFileUtil.setTextContent(file, content)
+    NioPathUtil.setTextContent(file, content)
   }
 
   override fun setBinaryContent(file: Path, content: ByteArray) {
-    NioFileUtil.setBinaryContent(file, content)
+    NioPathUtil.setBinaryContent(file, content)
   }
 
   override fun findOrCreateFile(outputDirectory: Path, relativePath: String): Path {
     LOG.info("Creating file $relativePath in $outputDirectory")
-    return NioFileUtil.findOrCreateFile(outputDirectory, relativePath)
+    return NioPathUtil.findOrCreateFile(outputDirectory, relativePath)
   }
 
   override fun findOrCreateDirectory(outputDirectory: Path, relativePath: String): Path {
     LOG.info("Creating directory $relativePath in $outputDirectory")
-    return NioFileUtil.findOrCreateDirectory(outputDirectory, relativePath)
+    return NioPathUtil.findOrCreateDirectory(outputDirectory, relativePath)
   }
 }
 
@@ -141,7 +141,7 @@ class TestAssetsProcessorImpl : AbstractAssetsProcessor() {
     if (file is TestFileSystemLocation) {
       VirtualFileUtil.setTextContent(file.virtualFile, content)
     } else {
-      NioFileUtil.setTextContent(file, content)
+      NioPathUtil.setTextContent(file, content)
     }
   }
 
@@ -149,7 +149,7 @@ class TestAssetsProcessorImpl : AbstractAssetsProcessor() {
     if (file is TestFileSystemLocation) {
       VirtualFileUtil.setBinaryContent(file.virtualFile, content)
     } else {
-      NioFileUtil.setBinaryContent(file, content)
+      NioPathUtil.setBinaryContent(file, content)
     }
   }
 
@@ -158,7 +158,7 @@ class TestAssetsProcessorImpl : AbstractAssetsProcessor() {
       val vFile = VirtualFileUtil.findOrCreateFile(outputDirectory.virtualFile, relativePath)
       return TestFileSystemLocation(vFile, outputDirectory.debugPath.resolve(relativePath.toNioPath()))
     } else {
-      return NioFileUtil.findOrCreateFile(outputDirectory, relativePath)
+      return NioPathUtil.findOrCreateFile(outputDirectory, relativePath)
     }
   }
 
@@ -168,7 +168,7 @@ class TestAssetsProcessorImpl : AbstractAssetsProcessor() {
 
       return TestFileSystemLocation(vFile, outputDirectory.debugPath.resolve(relativePath.toNioPath()))
     } else {
-      return NioFileUtil.findOrCreateDirectory(outputDirectory, relativePath)
+      return NioPathUtil.findOrCreateDirectory(outputDirectory, relativePath)
     }
   }
 }

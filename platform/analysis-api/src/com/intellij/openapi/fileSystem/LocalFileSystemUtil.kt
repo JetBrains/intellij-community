@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
 import com.intellij.openapi.file.IoFileUtil.toCanonicalPath
-import com.intellij.openapi.file.NioFileUtil.toCanonicalPath
+import com.intellij.openapi.file.NioPathUtil.toCanonicalPath
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
