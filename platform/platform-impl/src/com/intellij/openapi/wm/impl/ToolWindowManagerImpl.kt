@@ -1527,7 +1527,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   fun setVisibleOnLargeStripe(id: String, visible: Boolean) {
     val info = getRegisteredMutableInfoOrLogError(id)
     info.isShowStripeButton = visible
-    val entry = idToEntry.get(info.id)!!
+    val entry = idToEntry.get(id)!!
     entry.applyWindowInfo(info.copy())
     fireStateChanged(ToolWindowManagerEventType.SetVisibleOnLargeStripe, entry.toolWindow)
   }
@@ -1619,7 +1619,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   fun setContentUiType(id: String, type: ToolWindowContentUiType) {
     val info = getRegisteredMutableInfoOrLogError(id)
     info.contentUiType = type
-    val entry = idToEntry.get(info.id!!)!!
+    val entry = idToEntry.get(id)!!
     entry.applyWindowInfo(info.copy())
     fireStateChanged(ToolWindowManagerEventType.SetContentUiType, entry.toolWindow)
   }
