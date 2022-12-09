@@ -491,6 +491,11 @@ public abstract class FirReferenceResolveTestGenerated extends AbstractFirRefere
             runTest("../idea/tests/testData/resolve/references/AnnotationTypeParameter.kt");
         }
 
+        @TestMetadata("AnnotationWithSingleArgument.kt")
+        public void testAnnotationWithSingleArgument() throws Exception {
+            runTest("../idea/tests/testData/resolve/references/AnnotationWithSingleArgument.kt");
+        }
+
         @TestMetadata("ClassInTypeConstraint.kt")
         public void testClassInTypeConstraint() throws Exception {
             runTest("../idea/tests/testData/resolve/references/ClassInTypeConstraint.kt");

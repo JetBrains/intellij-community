@@ -28,6 +28,11 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("AnnotationWithSingleArgumentIsProperlyResolved.kt")
+            public void testAnnotationWithSingleArgumentIsProperlyResolved() throws Exception {
+                runTest("../idea/tests/testData/editor/optimizeImports/jvm/allUnderImports/AnnotationWithSingleArgumentIsProperlyResolved.kt");
+            }
+
             @TestMetadata("ClassNameConflict.kt")
             public void testClassNameConflict() throws Exception {
                 runTest("../idea/tests/testData/editor/optimizeImports/jvm/allUnderImports/ClassNameConflict.kt");
