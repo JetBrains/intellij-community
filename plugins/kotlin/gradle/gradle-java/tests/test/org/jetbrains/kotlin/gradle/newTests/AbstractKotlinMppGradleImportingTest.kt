@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.junit.Rule
 import org.junit.runner.RunWith
 import org.junit.runners.BlockJUnit4ClassRunner
@@ -81,6 +82,10 @@ abstract class AbstractKotlinMppGradleImportingTest(
         // @Parametrized
         this.gradleVersion = kotlinTestPropertiesService.gradleVersion
         super.setUp()
+
+        // Otherwise Gradle Daemon fails with Metaspace exhausted periodically
+        GradleSystemSettings.getInstance().gradleVmOptions =
+            "-XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${System.getProperty("user.dir")}"
     }
 
     private fun configureByFiles(rootDir: File, properties: Map<String, String>? = null): List<VirtualFile> {
