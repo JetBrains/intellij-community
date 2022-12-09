@@ -125,7 +125,7 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
       @Override
       protected boolean validateData() {
         String className = getClassName();
-        if (className.length() == 0) {
+        if (className.isEmpty()) {
           Messages.showMessageDialog(
             project,
             JavaDebuggerBundle.message("error.field.breakpoint.class.name.not.specified"),
@@ -135,7 +135,7 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
           return false;
         }
         String fieldName = getFieldName();
-        if (fieldName.length() == 0) {
+        if (fieldName.isEmpty()) {
           Messages.showMessageDialog(
             project,
             JavaDebuggerBundle.message("error.field.breakpoint.field.name.not.specified"),
