@@ -9,7 +9,7 @@ import com.intellij.openapi.file.CanonicalPathUtil.getAbsolutePath
 import com.intellij.openapi.file.CanonicalPathUtil.getRelativeNioPath
 import com.intellij.openapi.file.CanonicalPathUtil.getRelativePath
 import com.intellij.openapi.file.CanonicalPathUtil.isAncestor
-import com.intellij.openapi.fileSystem.NioPathSystemUtil
+import com.intellij.openapi.file.system.NioPathSystemUtil
 import com.intellij.util.io.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.File

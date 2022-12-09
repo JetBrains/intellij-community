@@ -16,7 +16,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileSystem.LocalFileSystemUtil
+import com.intellij.openapi.file.system.LocalFileSystemUtil
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo

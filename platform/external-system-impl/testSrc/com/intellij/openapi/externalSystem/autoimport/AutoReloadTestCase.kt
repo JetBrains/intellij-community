@@ -27,7 +27,7 @@ import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.file.VirtualFileUtil
 import com.intellij.openapi.file.VirtualFileUtil.getAbsoluteNioPath
-import com.intellij.openapi.fileSystem.LocalFileSystemUtil
+import com.intellij.openapi.file.system.LocalFileSystemUtil
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
 import com.intellij.platform.externalSystem.testFramework.TestExternalSystemManager
