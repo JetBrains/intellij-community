@@ -3,6 +3,9 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.ui.JPanelWithBackground
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentFactory.wrapWithHeader
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentFactory.wrapWithIcon
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentFactory.wrapWithWidthLimit
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -14,9 +17,6 @@ import com.intellij.util.text.JBDateFormat
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels
 import com.intellij.util.ui.UIUtil
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
@@ -25,7 +25,6 @@ import java.awt.BorderLayout
 import java.awt.Component
 import java.util.*
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 internal object GHPRTimelineItemUIUtil {
   val CONTENT_SHIFT = CodeReviewChatItemUIUtil.ComponentType.FULL.iconSize + CodeReviewChatItemUIUtil.ComponentType.FULL.iconGap
@@ -90,25 +89,18 @@ internal object GHPRTimelineItemUIUtil {
                          actor: GHActor,
                          title: JComponent,
                          content: JComponent,
-                         maxContentWidth: Int = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH,
+                         maxContentWidth: Int?,
                          actionsPanel: JComponent? = null): JComponent {
-
-    return JPanel(null).apply {
-      isOpaque = false
-
-      layout = MigLayout(LC()
-                           .fillX()
-                           .gridGap("0", "0")
-                           .insets("0", "0", "0", "0")
-                           .hideMode(3))
-
-      add(content, CC().push().grow().minWidth("0").maxWidth("$maxContentWidth"))
-    }.let{
-      CodeReviewChatItemUIUtil.ComponentFactory.wrapWithHeader(it, title, actionsPanel)
+    return if (maxContentWidth != null) {
+      wrapWithWidthLimit(content, maxContentWidth)
+    }
+    else {
+      content
     }.let {
-      CodeReviewChatItemUIUtil.ComponentFactory
-        .wrapWithIcon(CodeReviewChatItemUIUtil.ComponentType.FULL, it,
-                      avatarIconsProvider, actor.avatarUrl, actor.getPresentableName())
+      wrapWithHeader(it, title, actionsPanel)
+    }.let {
+      wrapWithIcon(CodeReviewChatItemUIUtil.ComponentType.FULL, it,
+                   avatarIconsProvider, actor.avatarUrl, actor.getPresentableName())
     }.let {
       it.border = JBUI.Borders.empty(V_SIDE_BORDER, H_SIDE_BORDER)
       CodeReviewChatItemUIUtil.actionsVisibleOnHover(it, actionsPanel)

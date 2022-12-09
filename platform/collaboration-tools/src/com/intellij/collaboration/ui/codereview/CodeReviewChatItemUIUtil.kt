@@ -39,6 +39,7 @@ object CodeReviewChatItemUIUtil {
     abstract val iconGap: Int
   }
 
+  // TODO: custom layouts
   object ComponentFactory {
     fun <T> wrapWithIcon(componentType: ComponentType, item: JComponent,
                          iconProvider: IconsProvider<T>, iconKey: T, iconTooltip: @Nls String? = null): JComponent {
@@ -66,6 +67,16 @@ object CodeReviewChatItemUIUtil {
 
         add(headerPanel)
         add(item)
+      }
+    }
+
+    fun wrapWithWidthLimit(item: JComponent, maxWidth: Int): JComponent {
+      return JPanel(null).apply {
+        layout = MigLayout(LC().gridGap("0", "0").insets("0", "0", "0", "0").fill()).apply {
+          columnConstraints = "[][]"
+        }
+        isOpaque = false
+        add(item, CC().grow().push().minWidth("0").maxWidth("${maxWidth}"))
       }
     }
   }

@@ -2,8 +2,11 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
-import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentFactory
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentFactory.wrapWithHeader
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentFactory.wrapWithIcon
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentFactory.wrapWithWidthLimit
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType.COMPACT
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.actionsVisibleOnHover
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBLabel
@@ -11,9 +14,6 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
@@ -99,20 +99,12 @@ object GHPRReviewCommentComponent {
       add(resolvedLabel)
     }
 
-    val maxTextWidth = maxContentWidth - CONTENT_SHIFT
-    return JPanel(null).apply {
-      isOpaque = false
-      layout = MigLayout(LC()
-                           .fillX()
-                           .gridGap("0", "0")
-                           .insets("0", "0", "0", "0"))
-      add(editablePaneHandle.panel, CC().push().grow().minWidth("0").maxWidth("$maxTextWidth"))
+    return wrapWithWidthLimit(editablePaneHandle.panel, maxContentWidth - CONTENT_SHIFT).let {
+      wrapWithHeader(it, title, actionsPanel)
     }.let {
-      ComponentFactory.wrapWithHeader(it, title, actionsPanel)
-    }.let {
-      ComponentFactory.wrapWithIcon(COMPACT, it, avatarIconsProvider, author.avatarUrl, author.getPresentableName())
+      wrapWithIcon(COMPACT, it, avatarIconsProvider, author.avatarUrl, author.getPresentableName())
     }.also {
-      CodeReviewChatItemUIUtil.actionsVisibleOnHover(it, actionsPanel)
+      actionsVisibleOnHover(it, actionsPanel)
     }
   }
 
