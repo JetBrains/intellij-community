@@ -92,8 +92,11 @@ sealed class CallType<TReceiver : KtElement?>(val descriptorKindFilter: Descript
     }
 
     private class LocalsAndSyntheticExclude(private val settings: LanguageVersionSettings) : DescriptorKindExclude() {
-        override fun excludes(descriptor: DeclarationDescriptor) /* currently not supported for locals and synthetic */ =
-            descriptor !is CallableMemberDescriptor || descriptor.kind == CallableMemberDescriptor.Kind.SYNTHESIZED
+        // Currently, Kotlin doesn't support references to local variables
+        // References to Java synthetic properties are supported only since Kotlin 1.9
+        override fun excludes(descriptor: DeclarationDescriptor): Boolean  =
+            descriptor !is CallableMemberDescriptor || descriptor.kind == CallableMemberDescriptor.Kind.SYNTHESIZED &&
+                    !settings.supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties)
 
         override val fullyExcludedDescriptorKinds: Int
             get() = 0
