@@ -47,7 +47,8 @@ data class HighlightingCheck(
     operator fun invoke(module: Module) {
         for (sourceRoot in module.sourceRoots) {
             VfsUtilCore.processFilesRecursively(sourceRoot) { file ->
-                if (file.isDirectory || file.extension != "kt" && file.extension != "java") return@processFilesRecursively true
+                if (file.isDirectory || file.extension != "kt" && file.extension != "java" || file.path.contains("build/generated"))
+                    return@processFilesRecursively true
                 runInEdtAndWait {
                     checker.checkFile(
                         file,
