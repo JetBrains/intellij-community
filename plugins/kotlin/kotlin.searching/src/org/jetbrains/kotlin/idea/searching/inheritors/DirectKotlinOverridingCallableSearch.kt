@@ -58,18 +58,18 @@ class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiEleme
         val klass = parameters.ktCallableDeclaration.containingClassOrObject
         if (klass !is KtClass) return null
 
+        val superFunction = runReadAction {
+            analyze(parameters.ktCallableDeclaration) {
+                val symbol = parameters.ktCallableDeclaration.getSymbol()
+                (if (symbol is KtValueParameterSymbol) symbol.generatedPrimaryConstructorProperty
+                else symbol)?.createPointer()
+            }
+        }
+
         return CollectionQuery(klass.findAllInheritors(parameters.searchScope).mapNotNull { it.unwrapped as? KtClassOrObject }.toList())
             .flatMapping { ktClassOrObject ->
                 object : AbstractQuery<PsiElement>() {
                     override fun processResults(consumer: Processor<in PsiElement>): Boolean {
-                        val superFunction = runReadAction {
-                            analyze(parameters.ktCallableDeclaration) {
-                                val symbol = parameters.ktCallableDeclaration.getSymbol()
-                                if (symbol is KtValueParameterSymbol) symbol.generatedPrimaryConstructorProperty
-                                else symbol
-                            }
-                        }
-
                         return runReadAction {
                             analyze(ktClassOrObject) {
                                 (ktClassOrObject.getSymbol() as KtSymbolWithMembers).getDeclaredMemberScope()
@@ -77,7 +77,7 @@ class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiEleme
                                     .forEach { overridingSymbol ->
                                         val function = overridingSymbol.psi
                                         if (function != null &&
-                                            overridingSymbol.getDirectlyOverriddenSymbols().any { it.psi == superFunction?.psi } &&
+                                            overridingSymbol.getDirectlyOverriddenSymbols().any { it.psi == superFunction?.restoreSymbol()?.psi } &&
                                             !consumer.process(function)
                                         ) {
                                             return@runReadAction false
