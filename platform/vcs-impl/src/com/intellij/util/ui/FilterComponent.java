@@ -279,13 +279,14 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
   }
 
   private static final class DynamicLabel extends JLabel {
-    private final Supplier<@NlsContexts.Label String> myText;
+    private final @NotNull Supplier<@NlsContexts.Label String> myText;
 
     private DynamicLabel(@NotNull Supplier<@NlsContexts.Label String> text) { myText = text; }
 
     @Override
     @NlsContexts.Label
     public String getText() {
+      //noinspection ConstantValue -- can be called during superclass initialization
       if (myText == null) return "";
       return myText.get();
     }
