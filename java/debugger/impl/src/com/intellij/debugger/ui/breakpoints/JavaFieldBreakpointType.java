@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
@@ -85,18 +86,25 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
 
   @Override
   public String getShortText(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
-    return getText(breakpoint);
+    return getText(breakpoint, true);
   }
 
   @Nls
   public String getText(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
+    return getText(breakpoint, false);
+  }
+
+  @Nls
+  private static String getText(XBreakpoint<JavaFieldBreakpointProperties> breakpoint, boolean simple) {
     //if(!isValid()) {
     //  return JavaDebuggerBundle.message("status.breakpoint.invalid");
     //}
 
     JavaFieldBreakpointProperties properties = breakpoint.getProperties();
-    final String className = properties.myClassName;
-    return className != null && !className.isEmpty() ? className + "." + properties.myFieldName : properties.myFieldName;
+    String className = properties.myClassName;
+    if (className == null || className.isEmpty()) return properties.myFieldName;
+    String displayedClassName = simple ? ClassUtil.extractClassName(className) : className;
+    return displayedClassName + "." + properties.myFieldName;
   }
 
   @Nullable
