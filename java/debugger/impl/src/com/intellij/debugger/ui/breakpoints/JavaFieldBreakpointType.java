@@ -119,12 +119,12 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
 
   @Nullable
   @Override
-  public XLineBreakpoint<JavaFieldBreakpointProperties> addBreakpoint(final Project project, JComponent parentComponent) {
-    final Ref<XLineBreakpoint<JavaFieldBreakpointProperties>> result = Ref.create(null);
+  public XLineBreakpoint<JavaFieldBreakpointProperties> addBreakpoint(Project project, JComponent parentComponent) {
+    Ref<XLineBreakpoint<JavaFieldBreakpointProperties>> result = Ref.create(null);
     AddFieldBreakpointDialog dialog = new AddFieldBreakpointDialog(project) {
       @Override
       protected boolean validateData() {
-        final String className = getClassName();
+        String className = getClassName();
         if (className.length() == 0) {
           Messages.showMessageDialog(
             project,
@@ -134,7 +134,7 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
           );
           return false;
         }
-        final String fieldName = getFieldName();
+        String fieldName = getFieldName();
         if (fieldName.length() == 0) {
           Messages.showMessageDialog(
             project,
@@ -154,7 +154,7 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
           );
           return false;
         }
-        final PsiFile psiFile = psiClass.getContainingFile();
+        PsiFile psiFile = psiClass.getContainingFile();
         Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
         if (document == null) {
           return false;
@@ -169,7 +169,7 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
           );
           return false;
         }
-        final int line = document.getLineNumber(field.getTextOffset());
+        int line = document.getLineNumber(field.getTextOffset());
         WriteAction.run(() -> {
           XLineBreakpoint<JavaFieldBreakpointProperties> fieldBreakpoint =
             XDebuggerManager.getInstance(project).getBreakpointManager().addLineBreakpoint(
