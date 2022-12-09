@@ -152,7 +152,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   private void updateModel(Consumer<List<JreComboBoxItem>> consumer) {
     ReadAction.nonBlocking(() -> buildModel(getComponent().isEditable())).coalesceBy(this).
       expireWhen(() -> !getComponent().isVisible()).
-      finishOnUiThread(ModalityState.current(), consumer).submit(AppExecutorUtil.getAppExecutorService());
+      finishOnUiThread(ModalityState.any(), consumer).submit(AppExecutorUtil.getAppExecutorService());
   }
 
   /**
