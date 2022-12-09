@@ -150,7 +150,6 @@ private class GitToolbarWidget(val presentation: Presentation) : ToolbarComboWid
           .createActionGroupPopup(null, group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, place)
       }
       PopupImplUtil.setPopupToggleButton(popup, this)
-      popup.setRequestFocus(false)
       popup.showUnderneathOf(this)
     }
   }
