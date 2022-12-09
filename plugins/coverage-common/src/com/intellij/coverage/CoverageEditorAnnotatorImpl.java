@@ -25,7 +25,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -126,19 +125,15 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
   }
 
   private static String @NotNull [] getUpToDateLines(final Document document) {
-    final Ref<String[]> linesRef = new Ref<>();
-    final Runnable runnable = () -> {
+    return ReadAction.compute(() -> {
       final int lineCount = document.getLineCount();
       final String[] lines = new String[lineCount];
       final CharSequence chars = document.getCharsSequence();
       for (int i = 0; i < lineCount; i++) {
         lines[i] = chars.subSequence(document.getLineStartOffset(i), document.getLineEndOffset(i)).toString();
       }
-      linesRef.set(lines);
-    };
-    ApplicationManager.getApplication().runReadAction(runnable);
-
-    return linesRef.get();
+      return lines;
+    });
   }
 
   private static Int2IntMap getCoverageVersionToCurrentLineMapping(Diff.Change change, int firstNLines) {
@@ -334,7 +329,6 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
     final boolean subCoverageActive = CoverageDataManager.getInstance(myProject).isSubCoverageActive();
     final boolean coverageByTestApplicable = suite.isCoverageByTestApplicable() && !(subCoverageActive && suite.isCoverageByTestEnabled());
     final TreeMap<Integer, LineData> executableLines = new TreeMap<>();
-    final TreeMap<Integer, Object[]> classLines = new TreeMap<>();
     final TreeMap<Integer, String> classNames = new TreeMap<>();
     class HighlightersCollector {
       private void collect(File outputFile, final String qualifiedName) {
@@ -361,7 +355,6 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
                 if (engine.isGeneratedCode(myProject, qualifiedName, lineData)) continue;
                 executableLines.put(line, (LineData)lineData);
 
-                classLines.put(line, postProcessedLines);
                 classNames.put(line, qualifiedName);
 
                 ApplicationManager.getApplication().invokeLater(() -> {
@@ -369,7 +362,7 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
                   if (editorBean.isDisposed()) return;
                   final RangeHighlighter highlighter =
                     createRangeHighlighter(suite.getLastCoverageTimeStamp(), markupModel, coverageByTestApplicable, executableLines,
-                                           qualifiedName, line, lineNumberInCurrent, suite, postProcessedLines, editorBean);
+                                           qualifiedName, line, lineNumberInCurrent, suite, editorBean);
                   highlighters.add(highlighter);
                 });
               }
@@ -438,8 +431,7 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
                   if (lineData != null) {
                     RangeHighlighter rangeHighlighter =
                       createRangeHighlighter(suite.getLastCoverageTimeStamp(), markupModel, coverageByTestApplicable, executableLines,
-                                             classNames.get(oldLineNumber), oldLineNumber, line, suite,
-                                             classLines.get(oldLineNumber), editorBean);
+                                             classNames.get(oldLineNumber), oldLineNumber, line, suite, editorBean);
                     highlighters.add(rangeHighlighter);
                   }
                 }
@@ -468,7 +460,7 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
                                                   final TreeMap<Integer, LineData> executableLines, @Nullable final String className,
                                                   final int line,
                                                   final int lineNumberInCurrent,
-                                                  @NotNull final CoverageSuitesBundle coverageSuite, Object[] lines,
+                                                  @NotNull final CoverageSuitesBundle coverageSuite,
                                                   @NotNull MyEditorBean editorBean) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     final TextAttributesKey attributesKey = CoverageLineMarkerRenderer.getAttributesKey(line, executableLines);
@@ -477,12 +469,9 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
     if (attributes.getBackgroundColor() != null) {
       textAttributes = attributes;
     }
-    Document document = editorBean.getDocument();
     Editor editor = editorBean.getEditor();
-    final int startOffset = document.getLineStartOffset(lineNumberInCurrent);
-    final int endOffset = document.getLineEndOffset(lineNumberInCurrent);
     final RangeHighlighter highlighter =
-      markupModel.addRangeHighlighter(startOffset, endOffset, HighlighterLayer.ADDITIONAL_SYNTAX - 1, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
+      markupModel.addLineHighlighter(lineNumberInCurrent, HighlighterLayer.ADDITIONAL_SYNTAX - 1, textAttributes);
     final Function<Integer, Integer> newToOldConverter = newLine -> {
       if (editor == null) return -1;
       final Int2IntMap oldLineMapping = getNewToOldLineMapping(date, editorBean);
@@ -601,7 +590,7 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
       if (updatedLineNumber >= editorBean.getDocument().getLineCount()) return;
       final RangeHighlighter highlighter =
         createRangeHighlighter(outputFile.lastModified(), markupModel, coverageByTestApplicable, executableLines, null, lineNumber,
-                               updatedLineNumber, coverageSuite, null, editorBean);
+                               updatedLineNumber, coverageSuite, editorBean);
       highlighters.add(highlighter);
     });
   }

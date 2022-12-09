@@ -98,8 +98,8 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     }
     if (bgColor != null) {
       g.setColor(bgColor);
+      g.fillRect(r.x, r.y, r.width, r.height);
     }
-    g.fillRect(r.x, r.y, r.width, r.height);
     final LineData lineData = getLineData(getCurrentLineNumber(editor, new Point(0, r.y)));
     if (lineData != null && lineData.isCoveredByOneTest()) {
       AllIcons.Gutter.Unique.paintIcon(editor.getComponent(), g, r.x, r.y);
