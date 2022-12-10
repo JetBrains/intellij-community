@@ -277,8 +277,7 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
         modCount.incrementAndGet();
       }
       catch (Throwable t) {
-        FSRecords.handleError(t);
-        throw new RuntimeException(t);
+        throw FSRecords.handleError(t);
       }
       finally {
         lock.writeLock().unlock();

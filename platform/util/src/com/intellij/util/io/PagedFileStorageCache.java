@@ -4,6 +4,11 @@ package com.intellij.util.io;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Small (max 3 items) per-{@link PagedFileStorage} MRU cache of pages ({@link DirectBufferWrapper}).
+ * Used to avoid relatively expensive (and guarded by global locks) access to {@link FilePageCache}
+ * for the most recent pages -- which are very likely to be accessed more than once.
+ */
 @ApiStatus.Internal
 class PagedFileStorageCache {
   private volatile CachedBuffer myLastBuffer;

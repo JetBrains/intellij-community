@@ -208,7 +208,7 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
   }
 
   @Override
-  public boolean putTimestamp(int id, long value) throws IOException {
+  public boolean setTimestamp(int id, long value) throws IOException {
     return putRecordLong(id, TIMESTAMP_OFFSET, value);
   }
 
@@ -220,7 +220,7 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
   }
 
   @Override
-  public boolean putLength(int id, long value) throws IOException {
+  public boolean setLength(int id, long value) throws IOException {
     return putRecordLong(id, LENGTH_OFFSET, value);
   }
 

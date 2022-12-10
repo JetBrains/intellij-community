@@ -104,16 +104,16 @@ public final class FSRecords {
     return nextMask(59 + (PersistentFSRecordsStorage.RECORDS_STORAGE_KIND.ordinal()),  // acceptable range is [0..255]
                     8,
                     nextMask(useContentHashes,
-                    nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
-                    nextMask(bulkAttrReadSupport,
-                    nextMask(inlineAttributes,
-                    nextMask(SystemProperties.getBooleanProperty(IDE_USE_FS_ROOTS_DATA_LOADER, false),
-                    nextMask(useCompressionUtil,
-                    nextMask(useSmallAttrTable,
+                             nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
+                                      nextMask(bulkAttrReadSupport,
+                                               nextMask(inlineAttributes,
+                                                        nextMask(SystemProperties.getBooleanProperty(IDE_USE_FS_ROOTS_DATA_LOADER, false),
+                                                                 nextMask(useCompressionUtil,
+                                                                          nextMask(useSmallAttrTable,
                     nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
-                    nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
+                                                                                     nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
                     nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
-                    nextMask(USE_FAST_NAMES_IMPLEMENTATION,
+                                                                                                nextMask(USE_FAST_NAMES_IMPLEMENTATION,
                     nextMask(USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION, 0 )))))))))))));
   }
 
@@ -137,8 +137,7 @@ public final class FSRecords {
       fillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
 
     InvertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
@@ -183,8 +182,8 @@ public final class FSRecords {
         ourTreeAccessor.ensureLoaded();
       }
       catch (IOException e) {
-        LOG.error(e);
-        handleError(e);
+        LOG.error(e);//because we need more details
+        throw handleError(e);
       }
     }
     finally {
@@ -202,8 +201,7 @@ public final class FSRecords {
       return getConnectionOrFail().getTimestamp();
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -213,8 +211,7 @@ public final class FSRecords {
       return ourRecordAccessor.createRecord();
     }
     catch (Exception e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -230,8 +227,7 @@ public final class FSRecords {
       getConnectionOrFail().markDirty();
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -254,8 +250,7 @@ public final class FSRecords {
       return ourTreeAccessor.listRoots();
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -265,8 +260,7 @@ public final class FSRecords {
       getConnectionOrFail().doForce();
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -280,8 +274,7 @@ public final class FSRecords {
       return getConnectionOrFail().getRecords().getFlags(id);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -300,8 +293,7 @@ public final class FSRecords {
       return ourRecordAccessor.isDeleted(id);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -310,8 +302,7 @@ public final class FSRecords {
       return ourTreeAccessor.findOrCreateRootRecord(rootUrl);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -320,8 +311,7 @@ public final class FSRecords {
       ourTreeAccessor.loadRootData(id, path, fs);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -330,8 +320,7 @@ public final class FSRecords {
       ourTreeAccessor.loadDirectoryData(id, path, fs);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -340,8 +329,7 @@ public final class FSRecords {
       ourTreeAccessor.deleteRootRecord(fileId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -350,8 +338,7 @@ public final class FSRecords {
       return ourTreeAccessor.listIds(fileId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -360,8 +347,7 @@ public final class FSRecords {
       return ourTreeAccessor.mayHaveChildren(fileId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -374,8 +360,7 @@ public final class FSRecords {
       return ourTreeAccessor.doLoadChildren(parentId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -388,8 +373,7 @@ public final class FSRecords {
       return ourTreeAccessor.wereChildrenAccessed(id);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -397,7 +381,9 @@ public final class FSRecords {
   // Obtain fresh children and try to apply `childrenConvertor` to the children of `parentId`.
   // If everything is still valid (i.e. no one changed the list in the meantime), commit.
   // Failing that, repeat pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
-  static @NotNull ListResult update(@NotNull VirtualFile parent, int parentId, @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
+  static @NotNull ListResult update(@NotNull VirtualFile parent,
+                                    int parentId,
+                                    @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
     SlowOperations.assertSlowOperationsAreAllowed();
 
     assert parentId > 0 : parentId;
@@ -433,9 +419,7 @@ public final class FSRecords {
       throw e;
     }
     catch (Throwable e) {
-      handleError(e);
-      ExceptionUtil.rethrow(e);
-      return result;
+      throw handleError(e);
     }
     finally {
       updateLock.unlock(parentId);
@@ -475,8 +459,7 @@ public final class FSRecords {
           throw e;
         }
         catch (Throwable e) {
-          handleError(e);
-          ExceptionUtil.rethrow(e);
+          throw handleError(e);
         }
       }
       finally {
@@ -521,12 +504,11 @@ public final class FSRecords {
         String result = StringUtil.nullize(IOUtil.readUTF(stream));
         return result == null ? null : FileUtil.toSystemIndependentName(result);
       }
+      return null;
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
-    return null;
   }
 
   static void storeSymlinkTarget(int id, @Nullable String symlinkTarget) {
@@ -537,8 +519,7 @@ public final class FSRecords {
       }
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -563,8 +544,7 @@ public final class FSRecords {
       return parentId;
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -629,8 +609,7 @@ public final class FSRecords {
       finder.compute();
     }
     catch (Exception e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
     VirtualFileSystemEntry file = finder.findDescendantByIdPath();
     if (file != null) {
@@ -667,8 +646,7 @@ public final class FSRecords {
       getConnectionOrFail().markDirty();
     }
     catch (Throwable e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -677,8 +655,7 @@ public final class FSRecords {
       return getConnectionOrFail().getNames().processAllDataObjects(processor);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -698,8 +675,7 @@ public final class FSRecords {
       throw e;
     }
     catch (Throwable e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -713,8 +689,7 @@ public final class FSRecords {
       return nameId == 0 ? "" : FileNameCache.getVFileName(nameId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -723,8 +698,7 @@ public final class FSRecords {
       return doGetNameByNameId(nameId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -743,8 +717,7 @@ public final class FSRecords {
       InvertedNameIndex.updateFileName(fileId, nameId, oldNameId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -755,8 +728,7 @@ public final class FSRecords {
       }
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -765,20 +737,18 @@ public final class FSRecords {
       return getConnectionOrFail().getRecords().getLength(id);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
   static void setLength(int id, long len) {
     try {
-      if (getConnectionOrFail().getRecords().putLength(id, len)) {
+      if (getConnectionOrFail().getRecords().setLength(id, len)) {
         getConnectionOrFail().markDirty();
       }
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -793,20 +763,18 @@ public final class FSRecords {
       return getConnectionOrFail().getRecords().getTimestamp(id);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
   static void setTimestamp(int id, long value) {
     try {
-      if (getConnectionOrFail().getRecords().putTimestamp(id, value)) {
+      if (getConnectionOrFail().getRecords().setTimestamp(id, value)) {
         getConnectionOrFail().markDirty();
       }
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -815,8 +783,7 @@ public final class FSRecords {
       return getConnectionOrFail().getRecords().getModCount(id);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -849,8 +816,7 @@ public final class FSRecords {
       return readAttribute(fileId, attribute);
     }
     catch (Throwable e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -864,8 +830,7 @@ public final class FSRecords {
       return ourContentAccessor.acquireContentRecord(fileId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -874,8 +839,7 @@ public final class FSRecords {
       ourContentAccessor.releaseContentRecord(contentId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -884,8 +848,7 @@ public final class FSRecords {
       return ourConnection.getRecords().getContentRecordId(fileId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -895,8 +858,7 @@ public final class FSRecords {
       return ourContentAccessor.getContentHash(fileId);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -911,7 +873,7 @@ public final class FSRecords {
           }
         }
         catch (IOException e) {
-          handleError(e);
+          throw handleError(e);
         }
       }
     };
@@ -922,8 +884,7 @@ public final class FSRecords {
       ourContentAccessor.writeContent(fileId, bytes, readOnly);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -932,8 +893,7 @@ public final class FSRecords {
       return ourContentAccessor.allocateContentRecordAndStore(bytes);
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
@@ -962,25 +922,36 @@ public final class FSRecords {
       ourRecordAccessor.checkSanity();
     }
     catch (IOException e) {
-      handleError(e);
-      throw new RuntimeException(e);
+      throw handleError(e);
     }
   }
 
+  /**
+   * Method is supposed to be called in a pattern like this:
+   * <pre>
+   * try{
+   *  ...
+   * }
+   * catch(Throwable t){
+   *   throw handeError(e);
+   * }
+   * </pre>
+   * i.e. in a 'throw' statement -- to make clear, it will throw an exception. Method made return
+   * RuntimeException specifically for that purpose: to be used in a 'throw' statement, so compiler
+   * understands it is as a method exit point.
+   */
   @Contract("_->fail")
-  public static void handleError(Throwable e) throws RuntimeException, Error {
+  public static RuntimeException handleError(final Throwable e) throws RuntimeException, Error {
     if (e instanceof ClosedPageFilesStorageException) {
       // no connection means IDE is closing...
       throw new AlreadyDisposedException("VFS already disposed");
     }
+    if (e instanceof ProcessCanceledException) {
+      throw (ProcessCanceledException)e;
+    }
     if (ourConnection != null) {
       ourConnection.handleError(e);
     }
-    //TODO RC: connection.handleError re-throw the exception, but in almost all
-    // callsites it is called in pair with throw new RuntimeException(e). Would
-    // be cleaner if handleError() do that 'throw' in a branch ourConnection==null,
-    // and remove all throw new RuntimeException(e) statement from callsites
-
     // no connection means IDE is closing...
     throw new ServiceNotReadyException();
   }

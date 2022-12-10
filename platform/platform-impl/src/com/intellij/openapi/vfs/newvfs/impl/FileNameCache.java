@@ -67,7 +67,7 @@ public final class FileNameCache {
   @NotNull
   private static IntObjectLRUMap.MapEntry<CharSequence> cacheData(CharSequence name, int id, int stripe) {
     if (name == null) {
-      FSRecords.handleError(new RuntimeException("VFS name enumerator corrupted"));
+      throw FSRecords.handleError(new RuntimeException("VFS name enumerator corrupted"));
     }
 
     IntSLRUCache<CharSequence> cache = ourNameCache[stripe];
