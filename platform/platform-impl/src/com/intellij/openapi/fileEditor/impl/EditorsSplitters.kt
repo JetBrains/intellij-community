@@ -58,7 +58,6 @@ import java.awt.datatransfer.Transferable
 import java.awt.event.ContainerEvent
 import java.awt.event.FocusEvent
 import java.beans.PropertyChangeListener
-import java.lang.Runnable
 import java.lang.ref.Reference
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -556,13 +555,12 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   }
 
   fun closeFile(file: VirtualFile, moveFocus: Boolean) {
-    val windows = findWindows(file)
-    closeFileInWindows(file, windows, moveFocus)
+    closeFileInWindows(file = file, windows = findWindows(file), moveFocus = moveFocus)
   }
 
   internal fun closeFileEditor(file: VirtualFile, editor: FileEditor, moveFocus: Boolean) {
     // we can't close individual tab in EditorComposite
-    val windows = windows.filter { it.composites.any { it.allEditors.contains(editor) } }
+    val windows = windows.filter { window -> window.composites.any { it.allEditors.contains(editor) } }
     closeFileInWindows(file, windows, moveFocus)
   }
 
@@ -659,16 +657,16 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
    */
   fun setCurrentWindow(window: EditorWindow?, requestFocus: Boolean) {
     val newComposite = window?.selectedComposite
-    val fireRunnable = Runnable { manager.fireSelectionChanged(newComposite) }
+    val fireRunnable = { manager.fireSelectionChanged(newComposite) }
     currentWindow = window
     manager.updateFileName(window?.selectedFile)
     if (window == null) {
-      fireRunnable.run()
+      fireRunnable()
     }
     else {
       val selectedComposite = window.selectedComposite
       if (selectedComposite != null) {
-        fireRunnable.run()
+        fireRunnable()
       }
       if (requestFocus) {
         window.requestFocus(true)

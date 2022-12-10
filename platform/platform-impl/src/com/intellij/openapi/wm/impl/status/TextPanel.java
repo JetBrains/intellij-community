@@ -7,8 +7,9 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.StatusBarText;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
@@ -54,13 +55,15 @@ public class TextPanel extends JPanel implements Accessible {
   public void updateUI() {
     GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
     Object value = UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS);
-    if (value == null) value = RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
+    if (value == null) {
+      value = RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
+    }
     putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, value);
   }
 
   @Override
   public Font getFont() {
-    return SystemInfo.isMac && !ExperimentalUI.isNewUI() ? JBFont.small() : JBFont.label();
+    return SystemInfoRt.isMac && !ExperimentalUI.isNewUI() ? JBFont.small() : JBFont.label();
   }
 
   public void recomputeSize() {
@@ -94,7 +97,7 @@ public class TextPanel extends JPanel implements Accessible {
       y += fm.getLeading(); // See SimpleColoredComponent.getTextBaseline
     }
 
-    var effect = ComponentUtil.getClientProperty(this, IdeStatusBarImpl.WIDGET_EFFECT_KEY);
+    var effect = ClientProperty.get(this, IdeStatusBarImpl.Companion.getWIDGET_EFFECT_KEY());
     Color foreground;
     foreground = isEnabled() ? effect == IdeStatusBarImpl.WidgetEffect.PRESSED ? JBUI.CurrentTheme.StatusBar.Widget.PRESSED_FOREGROUND :
                                effect == IdeStatusBarImpl.WidgetEffect.HOVER ? JBUI.CurrentTheme.StatusBar.Widget.HOVER_FOREGROUND :

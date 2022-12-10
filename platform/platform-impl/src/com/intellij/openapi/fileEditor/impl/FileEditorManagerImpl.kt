@@ -100,7 +100,6 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
@@ -1677,8 +1676,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     return null
   }
 
-  @ApiStatus.Internal
-  fun fireSelectionChanged(newSelectedComposite: EditorComposite?) {
+  internal fun fireSelectionChanged(newSelectedComposite: EditorComposite?) {
     val composite = lastSelectedComposite?.get()
     val oldEditorWithProvider = composite?.selectedWithProvider
     val newEditorWithProvider = newSelectedComposite?.selectedWithProvider
@@ -2113,7 +2111,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     }
   }
 
-  @Internal
+  @ApiStatus.Internal
   open fun forceUseUiInHeadlessMode() = false
 }
 
