@@ -84,8 +84,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseI
       if (superMethod == null) {
         return;
       }
-      final PsiParameter[] parameters = parameterList.getParameters();
-      checkParameters(superMethod, parameters);
+      checkParameters(superMethod, parameterList.getParameters());
     }
 
     @Override
@@ -123,8 +122,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseI
       final PsiParameter[] parameters = targetMethod.getParameterList().getParameters();
       final PsiExpression[] arguments = argumentList.getExpressions();
       for (int i = 0, length = Math.min(arguments.length, parameters.length); i < length; i++) {
-        PsiExpression argument = arguments[i];
-        argument = PsiUtil.skipParenthesizedExprDown(argument);
+        final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[i]);
         if (!(argument instanceof PsiReferenceExpression)) {
           continue;
         }
@@ -133,7 +131,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseI
           continue;
         }
         final PsiElement target = referenceExpression.resolve();
-        if (!(target instanceof PsiParameter)) {
+        if (!(target instanceof PsiParameter parameter) || !(parameter.getDeclarationScope() instanceof PsiMethod)) {
           continue;
         }
         final String parameterName = parameters[i].getName();
@@ -163,9 +161,8 @@ public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseI
       final PsiParameter[] superParameters = superParameterList.getParameters();
       for (int i = 0; i < parameters.length; i++) {
         final PsiParameter parameter = parameters[i];
-        final String parameterName = parameter.getName();
         final String superParameterName = superParameters[i].getName();
-        if (superParameterName.equals(parameterName)) {
+        if (superParameterName.equals(parameter.getName())) {
           continue;
         }
         if (m_ignoreSingleCharacterNames && superParameterName.length() == 1) {
