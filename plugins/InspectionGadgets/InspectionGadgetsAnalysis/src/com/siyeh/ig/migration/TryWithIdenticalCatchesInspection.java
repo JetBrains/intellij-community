@@ -4,7 +4,7 @@ package com.siyeh.ig.migration;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -29,17 +29,20 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.function.BiPredicate;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class TryWithIdenticalCatchesInspection extends BaseInspection {
   public boolean ignoreBlocksWithDifferentComments = true;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return InspectionOptionsPanel.singleCheckBox(
-      this, InspectionGadgetsBundle.message("try.with.identical.catches.checkbox.different.comments"), "ignoreBlocksWithDifferentComments");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreBlocksWithDifferentComments",
+               InspectionGadgetsBundle.message("try.with.identical.catches.checkbox.different.comments")));
   }
 
   @Override
