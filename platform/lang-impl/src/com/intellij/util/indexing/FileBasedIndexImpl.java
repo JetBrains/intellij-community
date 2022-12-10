@@ -1265,6 +1265,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Override
   public void requestRebuild(@NotNull final ID<?, ?> indexId, final @NotNull Throwable throwable) {
+    LOG.info("Requesting index rebuild for: " + indexId.getName(), throwable);
     if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) {
       advanceIndexVersion(indexId);
     }

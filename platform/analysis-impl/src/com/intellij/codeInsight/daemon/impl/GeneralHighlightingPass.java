@@ -34,6 +34,7 @@ import com.intellij.psi.impl.search.PsiTodoSearchHelperImpl;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.SmartList;
@@ -344,7 +345,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         try {
           visitor.visit(element);
         }
-        catch (ProcessCanceledException | IndexNotReadyException e) {
+        catch (ProcessCanceledException | IndexNotReadyException | AlreadyDisposedException e) {
           throw e;
         }
         catch (Exception e) {

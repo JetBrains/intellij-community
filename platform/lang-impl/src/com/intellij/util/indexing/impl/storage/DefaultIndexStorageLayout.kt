@@ -113,6 +113,7 @@ object DefaultIndexStorageLayout {
     }
 
     override fun clearIndexData() {
+      log.info("Clearing storage data for: $extension")
       deleteIndexDirectory(extension)
     }
   }
