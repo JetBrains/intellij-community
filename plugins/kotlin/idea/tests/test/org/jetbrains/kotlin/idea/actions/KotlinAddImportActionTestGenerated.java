@@ -28,6 +28,16 @@ public class KotlinAddImportActionTestGenerated extends AbstractKotlinAddImportA
         runTest("testData/idea/actions/kotlinAddImportAction/ConstructorOverloadsPresent.kt");
     }
 
+    @TestMetadata("KotlinMinCollections.kt")
+    public void testKotlinMinCollections() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/KotlinMinCollections.kt");
+    }
+
+    @TestMetadata("KotlinMinInt.kt")
+    public void testKotlinMinInt() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/KotlinMinInt.kt");
+    }
+
     @TestMetadata("MultipleMethodsAvailable.kt")
     public void testMultipleMethodsAvailable() throws Exception {
         runTest("testData/idea/actions/kotlinAddImportAction/MultipleMethodsAvailable.kt");
@@ -41,5 +51,20 @@ public class KotlinAddImportActionTestGenerated extends AbstractKotlinAddImportA
     @TestMetadata("SingleMethodAvailable.kt")
     public void testSingleMethodAvailable() throws Exception {
         runTest("testData/idea/actions/kotlinAddImportAction/SingleMethodAvailable.kt");
+    }
+
+    @TestMetadata("Varargs.kt")
+    public void testVarargs() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/Varargs.kt");
+    }
+
+    @TestMetadata("Varargs2.kt")
+    public void testVarargs2() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/Varargs2.kt");
+    }
+
+    @TestMetadata("Varargs3.kt")
+    public void testVarargs3() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/Varargs3.kt");
     }
 }

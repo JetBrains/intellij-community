@@ -136,7 +136,7 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 
         val ktFile = element?.containingKtFile ?: return KotlinBundle.message("fix.import")
         val languageVersionSettings = ktFile.languageVersionSettings
-        val prioritizer = Prioritizer(ktFile)
+        val prioritizer = Prioritizer(ktFile, element?.parent as? KtCallExpression)
 
         val kindNameGroupedByKind = descriptors.mapNotNull { descriptor ->
             val kind = when {
@@ -170,7 +170,7 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
                 }
             }
             ImportName(kind, name, prioritizer.priority(descriptor, languageVersionSettings))
-        }.groupBy(keySelector = { it.kind }) { it }
+        }.toSortedSet(compareBy({ it.kind }, { it.name })).groupBy(keySelector = { it.kind }) { it }
 
         return if (kindNameGroupedByKind.size == 1) {
             val (kind, names) = kindNameGroupedByKind.entries.first()
