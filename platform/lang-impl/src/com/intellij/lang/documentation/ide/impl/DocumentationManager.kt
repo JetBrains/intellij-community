@@ -56,7 +56,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
 
   private val toolWindowManager: DocumentationToolWindowManager get() = DocumentationToolWindowManager.instance(project)
 
-  fun actionPerformed(dataContext: DataContext) {
+  fun actionPerformed(dataContext: DataContext, popupClosedCallback: (() -> Unit)? = null) {
     EDT.assertIsEdt()
 
     val editor = dataContext.getData(CommonDataKeys.EDITOR)
@@ -93,7 +93,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     // so we create pointer and presentation right in the UI thread.
     val request = target.documentationRequest()
     val popupContext = secondaryPopupContext ?: DefaultPopupContext(project, editor)
-    showDocumentation(request, popupContext)
+    showDocumentation(request, popupContext, popupClosedCallback)
   }
 
   private var popup: WeakReference<AbstractPopup>? = null
@@ -120,16 +120,17 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     return popup
   }
 
-  private fun setPopup(popup: AbstractPopup) {
+  private fun setPopup(popup: AbstractPopup, popupClosedCallback: (() -> Unit)?) {
     EDT.assertIsEdt()
     this.popup = WeakReference(popup)
     Disposer.register(popup) {
       EDT.assertIsEdt()
       this.popup = null
+      popupClosedCallback?.let { it() }
     }
   }
 
-  private fun showDocumentation(request: DocumentationRequest, popupContext: PopupContext) {
+  private fun showDocumentation(request: DocumentationRequest, popupContext: PopupContext, popupClosedCallback: (() -> Unit)? = null) {
     if (skipPopup) {
       toolWindowManager.showInToolWindow(request)
       return
@@ -144,7 +145,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     popupScope.coroutineContext.job.cancelChildren()
     popupScope.launch(context = Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
       val popup = showDocumentationPopup(project, request, popupContext)
-      setPopup(popup)
+      setPopup(popup, popupClosedCallback)
     }
   }
 
