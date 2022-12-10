@@ -3,6 +3,8 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 rootProject.name = "jewel"
 
 pluginManagement {
+    includeBuild("build-logic")
+
     repositories {
         gradlePluginPortal()
         maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/")
@@ -13,7 +15,6 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
-    // TODO investigate why it's not picked up in submodules
     repositories {
         google()
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")

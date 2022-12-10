@@ -47,6 +47,6 @@ dependencies {
 tasks.named<Detekt>("detekt").configure {
     reports {
         sarif.required.set(true)
-        sarif.outputLocation.set(file(File(rootDir, "build/reports/detekt-${project.archivesName}.sarif")))
+        sarif.outputLocation.set(file(rootDir.resolve("build/reports/detekt-${project.archivesName}.sarif")))
     }
 }

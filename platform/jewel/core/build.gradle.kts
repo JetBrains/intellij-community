@@ -1,29 +1,10 @@
-import io.gitlab.arturbosch.detekt.Detekt
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.archivesName
-
 plugins {
-    alias(libs.plugins.kotlinJvm)
+    id("org.jetbrains.jewel.kotlin")
     alias(libs.plugins.composeDesktop)
     alias(libs.plugins.kotlinSerialization)
     `maven-publish`
-    alias(libs.plugins.detekt)
-    alias(libs.plugins.kotlinter)
-}
-
-detekt {
-    config = files(File(rootDir, "detekt.yml"))
-    buildUponDefaultConfig = true
-}
-
-kotlin {
-    target {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = "17"
-                freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn")
-            }
-        }
-    }
+    id("org.jetbrains.jewel.detekt")
+    id("org.jetbrains.jewel.ktlint")
 }
 
 dependencies {
@@ -42,12 +23,5 @@ publishing {
             artifact(sourcesJar)
             artifactId = rootProject.name
         }
-    }
-}
-
-tasks.named<Detekt>("detekt").configure {
-    reports {
-        sarif.required.set(true)
-        sarif.outputLocation.set(file(File(rootDir, "build/reports/detekt-${project.archivesName}.sarif")))
     }
 }
