@@ -16,6 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -31,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class UnnecessaryReturnInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @SuppressWarnings("PublicField")
@@ -59,8 +62,9 @@ public class UnnecessaryReturnInspection extends BaseInspection implements Clean
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unnecessary.return.option"), this, "ignoreInThenBranch");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreInThenBranch", InspectionGadgetsBundle.message("unnecessary.return.option")));
   }
 
   @Override

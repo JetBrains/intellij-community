@@ -17,7 +17,7 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,7 +34,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ConfusingFloatingPointLiteralInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -47,11 +48,10 @@ public class ConfusingFloatingPointLiteralInspection extends BaseInspection impl
     return InspectionGadgetsBundle.message("confusing.floating.point.literal.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("confusing.floating.point.literal.option"), this,
-                                          "ignoreScientificNotation");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreScientificNotation", InspectionGadgetsBundle.message("confusing.floating.point.literal.option")));
   }
 
   @Override

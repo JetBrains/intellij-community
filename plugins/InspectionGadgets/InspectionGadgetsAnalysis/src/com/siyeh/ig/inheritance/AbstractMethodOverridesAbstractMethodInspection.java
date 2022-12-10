@@ -19,7 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -40,11 +40,13 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspection {
 
@@ -63,11 +65,10 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message(
-      "abstract.method.overrides.abstract.method.ignore.different.javadoc.option"), "ignoreJavaDoc");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreJavaDoc", InspectionGadgetsBundle.message(
+        "abstract.method.overrides.abstract.method.ignore.different.javadoc.option")));
   }
 
   private static class AbstractMethodOverridesAbstractMethodFix extends InspectionGadgetsFix {

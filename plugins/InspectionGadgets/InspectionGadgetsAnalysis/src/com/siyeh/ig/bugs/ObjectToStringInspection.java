@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -34,21 +35,21 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class ObjectToStringInspection extends BaseInspection {
   public boolean IGNORE_NONNLS = false;
   public boolean IGNORE_EXCEPTION = false;
   public boolean IGNORE_ASSERT = false;
   public boolean IGNORE_TOSTRING = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.nonnls"), "IGNORE_NONNLS");
-    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.exceptions"), "IGNORE_EXCEPTION");
-    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.assert"), "IGNORE_ASSERT");
-    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.in.tostring"), "IGNORE_TOSTRING");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("IGNORE_NONNLS", InspectionGadgetsBundle.message("inspection.option.ignore.nonnls")),
+      checkbox("IGNORE_EXCEPTION", InspectionGadgetsBundle.message("inspection.option.ignore.exceptions")),
+      checkbox("IGNORE_ASSERT", InspectionGadgetsBundle.message("inspection.option.ignore.assert")),
+      checkbox("IGNORE_TOSTRING", InspectionGadgetsBundle.message("inspection.option.ignore.in.tostring")));
   }
 
   @Override

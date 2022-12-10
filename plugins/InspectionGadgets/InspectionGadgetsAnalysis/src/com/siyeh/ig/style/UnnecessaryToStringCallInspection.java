@@ -20,6 +20,7 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
@@ -40,14 +41,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class UnnecessaryToStringCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   public boolean notNullQualifierOnly = true;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.redundant.tostring.option.notnull.qualifier"), this,
-                                          "notNullQualifierOnly");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("notNullQualifierOnly", JavaAnalysisBundle.message("inspection.redundant.tostring.option.notnull.qualifier")));
   }
 
   @Override

@@ -2,6 +2,7 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -23,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class RedundantMethodOverrideInspection extends BaseInspection {
 
   public boolean checkLibraryMethods = false;
@@ -37,9 +40,9 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
   }
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("redundant.method.override.option.check.library.methods"),
-                                          this, "checkLibraryMethods");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("checkLibraryMethods", InspectionGadgetsBundle.message("redundant.method.override.option.check.library.methods")));
   }
 
   @Override

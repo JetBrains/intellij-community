@@ -15,7 +15,7 @@ import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -41,10 +41,11 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.java.JavaBundle.message;
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -55,15 +56,11 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
   public boolean REPORT_CONSTANT_REFERENCE_VALUES = true;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    InspectionOptionsPanel panel = new InspectionOptionsPanel(this);
-    panel.addCheckbox(message("inspection.data.flow.true.asserts.option"),
-                      "DONT_REPORT_TRUE_ASSERT_STATEMENTS");
-    panel.addCheckbox(message("inspection.data.flow.ignore.assert.statements"),
-                      "IGNORE_ASSERT_STATEMENTS");
-    panel.addCheckbox(message("inspection.data.flow.warn.when.reading.a.value.guaranteed.to.be.constant"),
-                      "REPORT_CONSTANT_REFERENCE_VALUES");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("DONT_REPORT_TRUE_ASSERT_STATEMENTS", message("inspection.data.flow.true.asserts.option")),
+      checkbox("IGNORE_ASSERT_STATEMENTS", message("inspection.data.flow.ignore.assert.statements")),
+      checkbox("REPORT_CONSTANT_REFERENCE_VALUES", message("inspection.data.flow.warn.when.reading.a.value.guaranteed.to.be.constant")));
   }
 
   @Override

@@ -18,6 +18,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -40,6 +41,8 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class PointlessBooleanExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
   public enum BooleanExpressionKind {
     USELESS, USELESS_WITH_SIDE_EFFECTS, UNKNOWN
@@ -52,10 +55,9 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
   public boolean m_ignoreExpressionsContainingConstants = true;
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("pointless.boolean.expression.ignore.option"), this, "m_ignoreExpressionsContainingConstants"
-    );
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreExpressionsContainingConstants", InspectionGadgetsBundle.message("pointless.boolean.expression.ignore.option")));
   }
 
   @Override

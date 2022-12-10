@@ -18,7 +18,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -39,7 +39,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ConditionalExpressionInspection extends BaseInspection {
 
@@ -59,11 +60,10 @@ public class ConditionalExpressionInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("conditional.expression.option"), "ignoreSimpleAssignmentsAndReturns");
-    panel.addCheckbox(InspectionGadgetsBundle.message("conditional.expression.expression.context.option"), "ignoreExpressionContext");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreSimpleAssignmentsAndReturns", InspectionGadgetsBundle.message("conditional.expression.option")),
+      checkbox("ignoreExpressionContext", InspectionGadgetsBundle.message("conditional.expression.expression.context.option")));
   }
 
   @Nullable

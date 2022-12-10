@@ -3,7 +3,7 @@ package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SetInspectionOptionFix;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ParenthesesUtils.getParentSkipParentheses;
 
@@ -50,12 +50,10 @@ public class ForCanBeForeachInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("for.can.be.foreach.option"), "REPORT_INDEXED_LOOP");
-    panel.addCheckbox(InspectionGadgetsBundle.message("for.can.be.foreach.option2"), "ignoreUntypedCollections");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("REPORT_INDEXED_LOOP", InspectionGadgetsBundle.message("for.can.be.foreach.option")),
+      checkbox("ignoreUntypedCollections", InspectionGadgetsBundle.message("for.can.be.foreach.option2")));
   }
 
   static boolean isIndexedListLoopStatement(PsiForStatement forStatement, boolean ignoreUntypedCollections) {

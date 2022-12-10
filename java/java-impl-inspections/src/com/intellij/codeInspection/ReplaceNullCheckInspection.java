@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -37,12 +39,10 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
   @SuppressWarnings("PublicField")
   public boolean noWarningReplacementBigger = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(JavaBundle.message("inspection.require.non.null.no.warning.replacement.bigger"), "noWarningReplacementBigger");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("noWarningReplacementBigger", JavaBundle.message("inspection.require.non.null.no.warning.replacement.bigger")));
   }
 
   @NotNull

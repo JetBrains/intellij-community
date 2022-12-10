@@ -19,6 +19,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
@@ -47,6 +48,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings({"PublicField", "unused"})
@@ -64,10 +67,10 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
     return InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.problem.descriptor1");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("ignore.in.module.statements.option"), this, "ignoreInModuleStatements");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreInModuleStatements", InspectionGadgetsBundle.message("ignore.in.module.statements.option")));
   }
 
   @Override

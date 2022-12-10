@@ -16,6 +16,7 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class OverlyStrongTypeCastInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
@@ -46,10 +49,10 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("overly.strong.type.cast.ignore.in.matching.instanceof.option"),
-                                          this, "ignoreInMatchingInstanceof");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreInMatchingInstanceof",
+               InspectionGadgetsBundle.message("overly.strong.type.cast.ignore.in.matching.instanceof.option")));
   }
 
   @Override

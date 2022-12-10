@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.maturity;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class ObsoleteCollectionInspection extends BaseInspection {
   private static final int MAX_OCCURRENCES = 20;
@@ -53,11 +56,11 @@ public class ObsoleteCollectionInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "use.obsolete.collection.type.ignore.library.arguments.option"
-    ), this, "ignoreRequiredObsoleteCollectionTypes");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreRequiredObsoleteCollectionTypes", InspectionGadgetsBundle.message(
+        "use.obsolete.collection.type.ignore.library.arguments.option"
+      )));
   }
 
   @Override

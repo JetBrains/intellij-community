@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -29,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class UnnecessaryConstructorInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
@@ -41,11 +44,10 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "unnecessary.constructor.annotation.option"),
-      this, "ignoreAnnotations");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreAnnotations", InspectionGadgetsBundle.message(
+        "unnecessary.constructor.annotation.option")));
   }
 
   @Override

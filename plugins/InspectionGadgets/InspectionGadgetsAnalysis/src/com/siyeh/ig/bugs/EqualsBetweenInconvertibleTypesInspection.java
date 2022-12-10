@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -27,21 +27,22 @@ import com.siyeh.ig.psiutils.InconvertibleTypesChecker.Convertible;
 import com.siyeh.ig.psiutils.InconvertibleTypesChecker.TypeMismatch;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Objects;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean WARN_IF_NO_MUTUAL_SUBCLASS_FOUND = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("equals.between.inconvertible.types.mutual.subclass.option"),
-                                          this, "WARN_IF_NO_MUTUAL_SUBCLASS_FOUND");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("WARN_IF_NO_MUTUAL_SUBCLASS_FOUND",
+               InspectionGadgetsBundle.message("equals.between.inconvertible.types.mutual.subclass.option")));
   }
 
   @Override

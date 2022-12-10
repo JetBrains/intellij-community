@@ -6,8 +6,11 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.json.*;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.json.JsonBundle;
+import com.intellij.json.JsonDialectUtil;
+import com.intellij.json.JsonElementTypes;
+import com.intellij.json.JsonLanguage;
 import com.intellij.json.jsonLines.JsonLinesFileType;
 import com.intellij.json.psi.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -22,7 +25,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * Compliance checks include
@@ -68,13 +72,12 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.comments"), "myWarnAboutComments");
-    optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.multiple.top.level.values"), "myWarnAboutMultipleTopLevelValues");
-    optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.trailing.comma"), "myWarnAboutTrailingCommas");
-    optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.nan.infinity"), "myWarnAboutNanInfinity");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myWarnAboutComments", JsonBundle.message("inspection.compliance.option.comments")),
+      checkbox("myWarnAboutMultipleTopLevelValues", JsonBundle.message("inspection.compliance.option.multiple.top.level.values")),
+      checkbox("myWarnAboutTrailingCommas", JsonBundle.message("inspection.compliance.option.trailing.comma")),
+      checkbox("myWarnAboutNanInfinity", JsonBundle.message("inspection.compliance.option.nan.infinity")));
   }
 
   protected static @NotNull String escapeSingleQuotedStringContent(@NotNull String content) {

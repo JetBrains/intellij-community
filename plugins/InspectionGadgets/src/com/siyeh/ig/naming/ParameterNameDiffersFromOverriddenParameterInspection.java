@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseInspection {
 
   /**
@@ -44,13 +47,12 @@ public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseI
   public boolean m_ignoreOverridesOfLibraryMethods = false;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.name.differs.from.overridden.parameter.ignore.character.option"),
-                             "m_ignoreSingleCharacterNames");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("parameter.name.differs.from.overridden.parameter.ignore.library.option"),
-                             "m_ignoreOverridesOfLibraryMethods");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreSingleCharacterNames",
+               InspectionGadgetsBundle.message("parameter.name.differs.from.overridden.parameter.ignore.character.option")),
+      checkbox("m_ignoreOverridesOfLibraryMethods",
+               InspectionGadgetsBundle.message("parameter.name.differs.from.overridden.parameter.ignore.library.option")));
   }
 
   @Override

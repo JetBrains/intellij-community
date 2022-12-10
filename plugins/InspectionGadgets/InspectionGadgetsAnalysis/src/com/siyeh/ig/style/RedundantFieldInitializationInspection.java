@@ -17,6 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
@@ -34,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class RedundantFieldInitializationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
@@ -45,10 +48,10 @@ public class RedundantFieldInitializationInspection extends BaseInspection imple
     return InspectionGadgetsBundle.message("redundant.field.initialization.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.redundant.field.initialization.option"), this, "onlyWarnOnNull");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyWarnOnNull", JavaAnalysisBundle.message("inspection.redundant.field.initialization.option")));
   }
 
   @Override

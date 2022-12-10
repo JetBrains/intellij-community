@@ -17,6 +17,7 @@ package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -36,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class StringConcatenationInspection extends BaseInspection {
 
@@ -151,16 +154,14 @@ public class StringConcatenationInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.assert"), "ignoreAsserts");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.system.out"), "ignoreSystemOuts");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.system.err"), "ignoreSystemErrs");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.exceptions"), "ignoreThrowableArguments");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.constant.initializers"), "ignoreConstantInitializers");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.in.tostring"), "ignoreInToString");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreAsserts", InspectionGadgetsBundle.message("inspection.option.ignore.assert")),
+      checkbox("ignoreSystemOuts", InspectionGadgetsBundle.message("inspection.option.ignore.system.out")),
+      checkbox("ignoreSystemErrs", InspectionGadgetsBundle.message("inspection.option.ignore.system.err")),
+      checkbox("ignoreThrowableArguments", InspectionGadgetsBundle.message("inspection.option.ignore.exceptions")),
+      checkbox("ignoreConstantInitializers", InspectionGadgetsBundle.message("inspection.option.ignore.constant.initializers")),
+      checkbox("ignoreInToString", InspectionGadgetsBundle.message("inspection.option.ignore.in.tostring")));
   }
 
   @Override

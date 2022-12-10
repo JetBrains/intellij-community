@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,6 +26,8 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class StringReplaceableByStringBufferInspection extends BaseInspection {
 
@@ -45,10 +48,10 @@ public class StringReplaceableByStringBufferInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "string.replaceable.by.string.buffer.in.loop.option"),
-                                          this, "onlyWarnOnLoop");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyWarnOnLoop", InspectionGadgetsBundle.message(
+        "string.replaceable.by.string.buffer.in.loop.option")));
   }
 
   @Override

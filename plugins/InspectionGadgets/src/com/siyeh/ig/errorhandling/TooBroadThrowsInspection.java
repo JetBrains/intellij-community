@@ -17,6 +17,7 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -33,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class TooBroadThrowsInspection extends BaseInspection {
 
@@ -81,12 +84,11 @@ public class TooBroadThrowsInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("too.broad.catch.option"), "onlyWarnOnRootExceptions");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.exceptions.declared.on.library.override.option"), "ignoreLibraryOverrides");
-    panel.addCheckbox(InspectionGadgetsBundle.message("overly.broad.throws.clause.ignore.thrown.option"), "ignoreThrown");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyWarnOnRootExceptions", InspectionGadgetsBundle.message("too.broad.catch.option")),
+      checkbox("ignoreLibraryOverrides", InspectionGadgetsBundle.message("ignore.exceptions.declared.on.library.override.option")),
+      checkbox("ignoreThrown", InspectionGadgetsBundle.message("overly.broad.throws.clause.ignore.thrown.option")));
   }
 
   @NotNull

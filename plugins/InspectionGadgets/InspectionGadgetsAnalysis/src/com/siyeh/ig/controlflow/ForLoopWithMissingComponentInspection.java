@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,9 +25,9 @@ import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ForLoopWithMissingComponentInspection extends BaseInspection {
 
@@ -68,10 +68,9 @@ public class ForLoopWithMissingComponentInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("for.loop.with.missing.component.collection.loop.option"),
-                                          this, "ignoreCollectionLoops");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreCollectionLoops", InspectionGadgetsBundle.message("for.loop.with.missing.component.collection.loop.option")));
   }
 
   @Override

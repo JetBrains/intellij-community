@@ -17,6 +17,7 @@ package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -40,6 +41,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
   private static final CallMatcher THREAD_ON_SPIN_WAIT = CallMatcher.staticCall("java.lang.Thread", "onSpinWait");
 
@@ -59,10 +62,9 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("while.loop.spins.on.field.ignore.non.empty.loops.option"),
-                                          this, "ignoreNonEmtpyLoops");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreNonEmtpyLoops", InspectionGadgetsBundle.message("while.loop.spins.on.field.ignore.non.empty.loops.option")));
   }
 
   @Override
