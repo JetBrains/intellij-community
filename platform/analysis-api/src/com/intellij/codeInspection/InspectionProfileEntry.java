@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
+import com.intellij.codeInspection.options.OptComponent;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.InspectionOptionPaneRenderer;
 import com.intellij.configurationStore.XmlSerializer;
@@ -22,6 +23,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.serialization.SerializationException;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.CollectionFactory;
@@ -39,6 +41,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -342,9 +345,56 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   public @Nullable JComponent createOptionsPanel() {
     return InspectionOptionPaneRenderer.getInstance().render(this);
   }
-  
+
+  /**
+   * @return declarative representation of the inspection options.
+   * @see OptPane#pane(OptComponent...) 
+   */
   public @NotNull OptPane getOptionsPane() {
     return OptPane.EMPTY;
+  }
+
+  /**
+   * Fetches the inspection option with given ID. Default implementation reads the instance field
+   * with name equals to the specified ID. A particular inspection may override this method
+   * if it requires custom logic.
+   *
+   * @param bindId ID of inspection option; identifier of some control inside the {@link OptPane}
+   *               returned by {@link #getOptionsPane()} call
+   * @return inspection option with a given ID
+   * @throws IllegalArgumentException if bindId is unknown
+   * @see #setOption(String, Object)
+   */
+  public Object getOption(@NotNull String bindId) {
+    Field field;
+    try {
+      field = ReflectionUtil.findAssignableField(getClass(), null, bindId);
+    }
+    catch (NoSuchFieldException e) {
+      throw new IllegalArgumentException("Inspection " + getClass().getName() + ": Unable to find bindId = " + bindId, e);
+    }
+    return ReflectionUtil.getFieldValue(field, this);
+  }
+
+  /**
+   * Updates the inspection option with given ID. Default implementation writes the instance field
+   * with name equals to the specified ID. A particular inspection may override this method
+   * if it requires custom logic.
+   *
+   * @param bindId ID of inspection option; identifier of some control inside the {@link OptPane}
+   *               returned by {@link #getOptionsPane()} call
+   * @param value  new value for the option
+   * @throws IllegalArgumentException if bindId is unknown
+   * @see #getOption(String)
+   */
+  public void setOption(@NotNull String bindId, Object value) {
+    try {
+      final Field field = ReflectionUtil.findAssignableField(getClass(), null, bindId);
+      field.set(this, value);
+    }
+    catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new IllegalArgumentException("Inspection " + getClass().getName() + ": Unable to find bindId = " + bindId, e);
+    }
   }
 
   /**

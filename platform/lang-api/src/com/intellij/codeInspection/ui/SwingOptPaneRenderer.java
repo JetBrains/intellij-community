@@ -10,7 +10,17 @@ import javax.swing.*;
 public class SwingOptPaneRenderer implements InspectionOptionPaneRenderer {
   @Override
   public @NotNull JComponent render(@NotNull InspectionProfileEntry tool, @NotNull OptPane pane, @NotNull CustomComponentProvider customControls) {
-    InspectionOptionsPanel panel = new InspectionOptionsPanel(tool);
+    InspectionOptionsPanel panel = new InspectionOptionsPanel(new OptionAccessor() {
+      @Override
+      public boolean getOption(String optionName) {
+        return (boolean)tool.getOption(optionName);
+      }
+
+      @Override
+      public void setOption(String optionName, boolean optionValue) {
+        tool.setOption(optionName, optionValue);
+      }
+    });
     for (OptComponent component : pane.components()) {
       if (component instanceof OptCheckbox checkbox) {
         panel.addCheckbox(checkbox.label().label(), checkbox.bindId());
@@ -22,6 +32,7 @@ public class SwingOptPaneRenderer implements InspectionOptionPaneRenderer {
         panel.addLabeledRow(prefixSuffix.prefix(), field);
         // TODO: support suffix
         // TODO: range validation
+        // TODO: route via tool.getOption/tool.setOption instead of field read/write directly
       }
       else if (component instanceof OptCustom custom) {
         JComponent jComponent = customControls.getCustomOptionComponent(custom, panel);
