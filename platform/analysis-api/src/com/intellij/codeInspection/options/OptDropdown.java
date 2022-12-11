@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.options;
 
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -10,7 +11,9 @@ import java.util.List;
  * @param splitLabel label to display around the control
  * @param options drop-down options
  */
-public record OptDropdown(@NotNull String bindId, @NotNull LocMessage splitLabel, @NotNull List<@NotNull Option> options) implements OptControl {
+public record OptDropdown(@Language("jvm-field-name") @NotNull String bindId, 
+                          @NotNull LocMessage splitLabel, 
+                          @NotNull List<@NotNull Option> options) implements OptControl {
   /**
    * Drop down option
    * 

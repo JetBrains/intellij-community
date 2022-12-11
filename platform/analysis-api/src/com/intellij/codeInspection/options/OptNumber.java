@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.options;
 
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,5 +12,6 @@ import org.jetbrains.annotations.NotNull;
  * @param minValue minimal allowed value of the variable
  * @param maxValue maximal allowed value of the variable
  */
-public record OptNumber(@NotNull String bindId, @NotNull LocMessage splitLabel, int minValue, int maxValue) implements OptControl {
+public record OptNumber(@Language("jvm-field-name") @NotNull String bindId, 
+                        @NotNull LocMessage splitLabel, int minValue, int maxValue) implements OptControl {
 }

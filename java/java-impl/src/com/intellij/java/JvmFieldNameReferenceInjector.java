@@ -7,27 +7,26 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UElementKt;
-import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UField;
 import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.expressions.UInjectionHost;
 
 import javax.swing.*;
 
-public class JvmMethodNameReferenceInjector extends ReferenceInjector {
+public class JvmFieldNameReferenceInjector extends ReferenceInjector {
   @Override
   public @NotNull String getId() {
-    return "jvm-method-name";
+    return "jvm-field-name";
   }
 
   @Override
   public @NotNull @NlsContexts.Label String getDisplayName() {
-    return JavaBundle.message("label.jvm.method.name");
+    return JavaBundle.message("label.jvm.field.name");
   }
 
   @Override
@@ -42,41 +41,40 @@ public class JvmMethodNameReferenceInjector extends ReferenceInjector {
     if (uClass == null) return PsiReference.EMPTY_ARRAY;
     PsiClass containingClass = UElementKt.getAsJavaPsiElement(uClass, PsiClass.class);
     if (containingClass == null) return PsiReference.EMPTY_ARRAY;
-    PsiMethod[] methods = containingClass.findMethodsByName(text, true);
-    if (methods.length == 0) {
-      return new JavaMethodReference[]{new JavaMethodReference(element, range, null, uClass)};
+    PsiField field = containingClass.findFieldByName(text, true);
+    if (field != null && !field.hasModifierProperty(PsiModifier.STATIC)) {
+      return new JavaFieldReference[]{new JavaFieldReference(element, range, field, uClass)};
     }
-    return ContainerUtil.map2Array(methods, JavaMethodReference.class, 
-                                   m -> new JavaMethodReference(element, range, m, uClass));
+    return new JavaFieldReference[]{new JavaFieldReference(element, range, null, uClass)};
   }
 
   @Override
   public @NotNull Icon getIcon() {
-    return AllIcons.Nodes.Method;
+    return AllIcons.Nodes.Field;
   }
 
-  private static final class JavaMethodReference extends PsiReferenceBase<PsiElement> {
-    private final @Nullable PsiMethod myMethod;
+  private static final class JavaFieldReference extends PsiReferenceBase<PsiElement> {
+    private final @Nullable PsiField myField;
     private final @NotNull UClass myContainingClass;
 
-    JavaMethodReference(@NotNull PsiElement literal, @NotNull TextRange range,
-                        @Nullable PsiMethod method, @NotNull UClass containingClass) {
-      super(literal, range, method == null);
-      myMethod = method;
+    JavaFieldReference(@NotNull PsiElement literal, @NotNull TextRange range,
+                        @Nullable PsiField field, @NotNull UClass containingClass) {
+      super(literal, range, field == null);
+      myField = field;
       myContainingClass = containingClass;
     }
 
     @Override
     public Object @NotNull [] getVariants() {
-      return StreamEx.of(myContainingClass.getJavaPsi().getAllMethods())
-        .remove(method -> method.hasModifierProperty(PsiModifier.STATIC))
-        .distinct(PsiMethod::getName).toArray(PsiMethod.EMPTY_ARRAY);
+      return StreamEx.of(myContainingClass.getJavaPsi().getAllFields())
+        .remove(field -> field.hasModifierProperty(PsiModifier.STATIC))
+        .distinct(PsiField::getName).toArray(PsiField.EMPTY_ARRAY);
     }
 
     @Override
     public @Nullable PsiElement resolve() {
-      UMethod uMethod = UastContextKt.toUElement(myMethod, UMethod.class);
-      return uMethod == null ? null : uMethod.getSourcePsi();
+      UField uField = UastContextKt.toUElement(myField, UField.class);
+      return uField == null ? null : uField.getSourcePsi();
     }
   }
 }

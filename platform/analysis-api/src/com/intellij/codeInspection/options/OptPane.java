@@ -3,6 +3,7 @@ package com.intellij.codeInspection.options;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.NlsContexts;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +82,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @param children optional list of children controls to display next to checkbox. They are disabled if checkbox is unchecked
    * @return a checkbox
    */
-  public static @NotNull OptCheckbox checkbox(@NotNull String bindId,
+  public static @NotNull OptCheckbox checkbox(@Language("jvm-field-name") @NotNull String bindId,
                                               @NotNull @NlsContexts.Label String label,
                                               @NotNull OptComponent @NotNull ... children) {
     return new OptCheckbox(bindId, new PlainMessage(label), List.of(children));
@@ -102,7 +103,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @param maxValue   maximal allowed value of the variable
    * @return an edit box to enter a number
    */
-  public static @NotNull OptNumber number(@NotNull String bindId,
+  public static @NotNull OptNumber number(@Language("jvm-field-name") @NotNull String bindId,
                                           @NotNull @NlsContexts.Label String splitLabel,
                                           int minValue,
                                           int maxValue) {
@@ -114,7 +115,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @param splitLabel label to display around the control
    * @return an edit box to enter a string
    */
-  public static @NotNull OptString string(@NotNull String bindId,
+  public static @NotNull OptString string(@Language("jvm-field-name") @NotNull String bindId,
                                           @NotNull @NlsContexts.Label String splitLabel) {
     return new OptString(bindId, new PlainMessage(splitLabel), null, -1);
   }
@@ -125,7 +126,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @param width      width of the control in approximate number of characters; if -1 then it will be determined automatically
    * @return an edit box to enter a string
    */
-  public static @NotNull OptString string(@NotNull String bindId,
+  public static @NotNull OptString string(@Language("jvm-field-name") @NotNull String bindId,
                                           @NotNull @NlsContexts.Label String splitLabel,
                                           int width) {
     return new OptString(bindId, new PlainMessage(splitLabel), null, width);
@@ -138,7 +139,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    *                   (e.g., validate that a string is a class-name which is a subclass of specific class)
    * @return an edit box to enter a string
    */
-  public static @NotNull OptString string(@NotNull String bindId,
+  public static @NotNull OptString string(@Language("jvm-field-name") @NotNull String bindId,
                                           @NotNull @NlsContexts.Label String splitLabel,
                                           @NotNull StringValidator validator) {
     return new OptString(bindId, new PlainMessage(splitLabel), validator, -1);
@@ -152,7 +153,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    *                   (e.g., validate that a string is a class-name which is a subclass of specific class)
    * @return an edit box to enter a string
    */
-  public static @NotNull OptString string(@NotNull String bindId,
+  public static @NotNull OptString string(@Language("jvm-field-name") @NotNull String bindId,
                                           @NotNull @NlsContexts.Label String splitLabel,
                                           int width,
                                           @NotNull StringValidator validator) {
@@ -166,7 +167,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @return a drop-down control to select a single option from
    * @see #option(String, String)
    */
-  public static @NotNull OptDropdown dropdown(@NotNull String bindId,
+  public static @NotNull OptDropdown dropdown(@Language("jvm-field-name") @NotNull String bindId,
                                               @NotNull @NlsContexts.Label String splitLabel,
                                               @NotNull OptDropdown.Option @NotNull ... options) {
     return new OptDropdown(bindId, new PlainMessage(splitLabel), List.of(options));
@@ -198,7 +199,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @param label  label above the control
    * @return editable sorted list of unique strings
    */
-  public static @NotNull OptSet stringSet(@NotNull String bindId, @NotNull @NlsContexts.Label String label) {
+  public static @NotNull OptSet stringSet(@Language("jvm-field-name") @NotNull String bindId, @NotNull @NlsContexts.Label String label) {
     return new OptSet(bindId, new PlainMessage(label), null);
   }
 
@@ -210,7 +211,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    *                  (e.g., validate that a string is a class-name which is a subclass of specific class)
    * @return editable sorted list of unique strings
    */
-  public static @NotNull OptSet stringSet(@NotNull String bindId, @NotNull @NlsContexts.Label String label,
+  public static @NotNull OptSet stringSet(@Language("jvm-field-name") @NotNull String bindId, @NotNull @NlsContexts.Label String label,
                                           @NotNull StringValidator validator) {
     return new OptSet(bindId, new PlainMessage(label), validator);
   }
@@ -221,7 +222,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @param label          label above the control
    * @return editable two-column table of strings; strings in the left column are unique and sorted
    */
-  public static @NotNull OptMap stringMap(@NotNull String bindId, @NotNull @NlsContexts.Label String label) {
+  public static @NotNull OptMap stringMap(@Language("jvm-field-name") @NotNull String bindId, @NotNull @NlsContexts.Label String label) {
     return new OptMap(bindId, new PlainMessage(label), null, null);
   }
 
@@ -233,7 +234,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @param valueValidator optional validator for values column
    * @return editable two-column table of strings; strings in the left column are unique and sorted
    */
-  public static @NotNull OptMap stringMap(@NotNull String bindId, @NotNull @NlsContexts.Label String label,
+  public static @NotNull OptMap stringMap(@Language("jvm-field-name") @NotNull String bindId, @NotNull @NlsContexts.Label String label,
                                           @NotNull StringValidator keyValidator, @NotNull StringValidator valueValidator) {
     return new OptMap(bindId, new PlainMessage(label), keyValidator, valueValidator);
   }
@@ -283,7 +284,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
 
   /**
    * @param label tab label
-   * @param content tab content
+   * @param children tab content
    * @return tab description
    * @see #tabs(OptTabSet.TabInfo...) 
    */
