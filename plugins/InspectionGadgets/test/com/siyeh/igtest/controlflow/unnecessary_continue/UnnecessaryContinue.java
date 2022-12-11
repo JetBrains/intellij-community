@@ -96,4 +96,16 @@ class Switch {
             }
         }
     }
+
+  void continueInFinally() {
+    for (int i = 0; i < 10; i++) {
+      try {
+        String x = null;
+        x.toString();
+      } finally {
+        System.out.println("in finally");
+        continue;
+      }
+    }
+  }
 }
