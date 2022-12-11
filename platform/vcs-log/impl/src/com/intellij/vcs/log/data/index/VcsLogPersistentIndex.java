@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
@@ -18,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.EmptyConsumer;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
@@ -30,7 +32,7 @@ import com.intellij.vcs.log.data.SingleTaskController;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.data.VcsLogStorageImpl;
-import com.intellij.vcs.log.impl.HeavyAwareExecutor;
+import com.intellij.vcs.log.impl.HeavyAwareListener;
 import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogIndexer;
@@ -51,6 +53,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static com.intellij.vcs.log.data.index.VcsLogFullDetailsIndex.INDEX;
@@ -77,6 +80,9 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   @Nullable private final IndexDataGetter myDataGetter;
 
   @NotNull private final SingleTaskController<IndexingRequest, Void> mySingleTaskController;
+  @NotNull private final MyHeavyAwareListener myHeavyAwareListener;
+  @NotNull private final AtomicReference<Boolean> myPostponedIndex = new AtomicReference<>(null);
+
   @NotNull private final Map<VirtualFile, AtomicInteger> myNumberOfTasks = new HashMap<>();
   @NotNull private final Map<VirtualFile, AtomicLong> myIndexingTime = new HashMap<>();
   @NotNull private final Map<VirtualFile, AtomicInteger> myIndexingLimit = new HashMap<>();
@@ -122,7 +128,9 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       myIndexingErrors.put(root, ConcurrentCollectionFactory.createConcurrentIntObjectMap());
     }
 
-    mySingleTaskController = new MySingleTaskController(project, myIndexStorage != null ? myIndexStorage : this);
+    mySingleTaskController = new MySingleTaskController(myIndexStorage != null ? myIndexStorage : this);
+    myHeavyAwareListener = new MyHeavyAwareListener(100);
+    myHeavyAwareListener.start();
 
     Disposer.register(disposableParent, this);
     Disposer.register(this, myDisposableFlag);
@@ -150,6 +158,18 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
   @Override
   public void scheduleIndex(boolean full) {
+    if (myHeavyAwareListener.isHeavy()) {
+      LOG.debug("Indexing is postponed due to heavy activity");
+      myPostponedIndex.updateAndGet(oldFull -> {
+        if (oldFull == null) return full;
+        return oldFull || full;
+      });
+    } else {
+      doScheduleIndex(full);
+    }
+  }
+
+  private void doScheduleIndex(boolean full) {
     doScheduleIndex(full, request -> mySingleTaskController.request(request));
   }
 
@@ -287,6 +307,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
   @Override
   public void dispose() {
+    myPostponedIndex.set(null);
   }
 
   @NotNull
@@ -415,13 +436,30 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     }
   }
 
+  private class MyHeavyAwareListener extends HeavyAwareListener {
+
+    private MyHeavyAwareListener(int delay) {
+      super(myProject, delay, VcsLogPersistentIndex.this);
+    }
+
+    @Override
+    public void heavyActivityEnded() {
+      Boolean indexRequest = myPostponedIndex.getAndSet(null);
+      if (indexRequest == null) return;
+      doScheduleIndex(indexRequest);
+    }
+
+    @Override
+    public void heavyActivityStarted() {
+      mySingleTaskController.cancelCurrentTask();
+    }
+  }
+
   private class MySingleTaskController extends SingleTaskController<IndexingRequest, Void> {
     private static final int LOW_PRIORITY = Thread.MIN_PRIORITY;
-    @NotNull private final HeavyAwareExecutor myHeavyAwareExecutor;
 
-    MySingleTaskController(@NotNull Project project, @NotNull Disposable parent) {
+    MySingleTaskController(@NotNull Disposable parent) {
       super("index", EmptyConsumer.getInstance(), parent);
-      myHeavyAwareExecutor = new HeavyAwareExecutor(project, 50, 100, VcsLogPersistentIndex.this);
     }
 
     @NotNull
@@ -450,7 +488,11 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
           resetPriority(previousPriority);
         }
       };
-      Future<?> future = myHeavyAwareExecutor.executeOutOfHeavyOrPowerSave(task, indicator);
+      Future<?> future = AppExecutorUtil.getAppExecutorService().submit(() -> {
+        ProgressManager.getInstance().runProcess(() -> {
+          task.consume(indicator);
+        }, indicator);
+      });
       return new SingleTaskImpl(future, indicator);
     }
 

@@ -168,6 +168,14 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
     }
   }
 
+  public void cancelCurrentTask() {
+    synchronized (LOCK) {
+      if (myRunningTask != null) {
+        myRunningTask.cancel();
+      }
+    }
+  }
+
   private void closeQueue() {
     synchronized (LOCK) {
       if (myIsClosed) return;

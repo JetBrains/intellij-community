@@ -15,7 +15,9 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -240,7 +242,7 @@ public final class VcsProjectLog implements Disposable {
     if (PostponableLogRefresher.keepUpToDate()) {
       VcsLogCachesInvalidator invalidator = requireNonNull(CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class));
       if (invalidator.isValid()) {
-        HeavyAwareExecutor.executeOutOfHeavyProcessLater(logManager::scheduleInitialization, 5000);
+        HeavyAwareListener.executeOutOfHeavyProcessLater(logManager::scheduleInitialization, 5000);
         return;
       }
     }
