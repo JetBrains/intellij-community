@@ -2,9 +2,7 @@
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.util.NlsContexts.ProgressText
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -68,11 +66,12 @@ import kotlin.coroutines.coroutineContext
  * The text of the current reporter is the last reported text of any the child steps.
  * The fraction of the current reporter is a sum of scaled child fractions.
  *
- * Concurrent steps should be created in a sequential way to reason about the growth of end fraction.
+ * To reason about the growth of end fraction, each end fraction is expected to be greater than the previous one.
  * For example, the following might throw depending on execution order:
  * ```
  * fun CoroutineScope.run(topLevelStep: ProgressReporter) {
  *   launch {
+ *     // will throw if executed after creating a child step with endFraction = 1.0
  *     topLevelStep.progressStep(endFraction = 0.5) { ... }
  *   }
  *   launch {
@@ -80,28 +79,60 @@ import kotlin.coroutines.coroutineContext
  *   }
  * }
  * ```
- *
- * The correct way:
+ * Instead, concurrent child steps should be created by specifying the duration:
  * ```
  * fun CoroutineScope.run(topLevelStep: ProgressReporter) {
- *   val step1 = topLevelStep.step(endFraction = 0.5)
  *   launch {
- *     try {
+ *     // note duration parameter
+ *     topLevelStep.durationStep(duration = 0.5) { ... }
+ *   }
+ *   launch {
+ *     topLevelStep.durationStep(duration = 0.5) { ... }
+ *   }
+ * }
+ * ```
+ *
+ * ### Examples
+ *
+ * #### How to process a list sequentially
+ * ```
+ * val items: List<X> = ...
+ * withBackgroundProgressIndicator(...) {
+ *   items.mapWithProgress {
+ *     // will show the item string as progress text in the UI
+ *     progressStep(text = item.presentableString()) {
  *       ...
- *     }
- *     finally {
- *       step1.close()
  *     }
  *   }
- *   // Note, step2 is created strictly after step1 sequentially.
- *   // After creation, both can report their state and can be closed concurrently.
- *   val step2 = topLevelStep.step(endFraction = 1.0)
- *   launch {
- *     try {
+ *   // or
+ *   progressStep(text = "Processing items", endFraction = ...) {
+ *     items.mapWithProgress {
+ *       // will show the item string as progress details in the UI
+ *       progressStep(text = item.presentableString()) {
+ *         ...
+ *       }
+ *     }
+ *   }
+ * }
+ * ```
+ *
+ * #### How to process a list in parallel
+ * ```
+ * val items: List<X> = ...
+ * withBackgroundProgressIndicator(...) {
+ *   items.mapParallelWithProgress {
+ *     // will show the item string as progress text in the UI
+ *     progressStep(text = item.presentableString()) {
  *       ...
  *     }
- *     finally {
- *       step2.close()
+ *   }
+ *   // or
+ *   progressStep(text = "Processing items", endFraction = ...) {
+ *     items.mapParallelWithProgress {
+ *       // will show the item string as progress details in the UI
+ *       progressStep(text = item.presentableString()) {
+ *         ...
+ *       }
  *     }
  *   }
  * }
@@ -121,12 +152,30 @@ interface ProgressReporter : AutoCloseable {
    * If the text is not `null`, then the text will be used as text of this reporter,
    * while the text of the returned child step will be used as details of this reporter.
    *
-   * @param endFraction value which is used to advance the fraction of the current step after the returned child step is [closed][close],
-   * or `null` if this step is indeterminate, in which case the fraction advancements in the returned step will be ignored in this reporter
+   * @param endFraction value greater than 0.0 and less or equal to 1.0,
+   * which is used to advance the fraction of the current step after the returned child step is [closed][close],
+   * or `null` if this step is indeterminate, in which case the fraction advancements in the returned step will be ignored in this reporter.
+   * If [endFraction] is not `null, then the duration of the returned step
+   * would be the difference between the previous [endFraction] and the currently requested one,
+   * which means that each subsequent call should request [endFraction] greater than the previously requested [endFraction].
    *
    * @see close
    */
   fun step(text: @ProgressText String?, endFraction: Double?): ProgressReporter
+
+  /**
+   * Starts a child step.
+   *
+   * @param duration duration of the step relative to this reporter.
+   * It's used to advance the fraction of the current step after the returned child step is [closed][close].
+   * The sum of durations of all child steps cannot exceed 1.0.
+   *
+   * @param text text of the current step.
+   * If the text is `null`, then the returned child step text will be used as text of this reporter.
+   * If the text is not `null`, then the text will be used as text of this reporter,
+   * while the text of the returned child step will be used as details of this reporter.
+   */
+  fun durationStep(duration: Double, text: @ProgressText String?): ProgressReporter
 
   /**
    * Marks current step as completed.
@@ -173,6 +222,19 @@ interface ProgressReporter : AutoCloseable {
       endFraction: Double = 1.0,
       action: ProgressReporter.() -> T,
     ): T = step(text, endFraction).use(action)
+
+    @JvmStatic
+    fun <T, R> ProgressReporter.mapWithProgress(
+      items: List<T>,
+      mapper: ProgressReporter.(T) -> R,
+    ): List<R> {
+      val itemDuration = 1.0 / items.size
+      return items.map { item ->
+        durationStep(itemDuration, text = null).use { itemStep ->
+          itemStep.mapper(item)
+        }
+      }
+    }
   }
 }
 
@@ -204,6 +266,57 @@ private suspend fun <T> progressStep(
   return parent.step(text, endFraction).use { step: ProgressReporter ->
     withContext(step.asContextElement(), action)
   }
+}
+
+suspend fun <T> durationStep(duration: Double, text: @ProgressText String? = null, action: suspend CoroutineScope.() -> T): T {
+  val reporter = coroutineContext.progressReporter
+                 ?: return coroutineScope(action)
+  return reporter.durationStep(duration, text).use { step ->
+    withContext(step.asContextElement(), action)
+  }
+}
+
+suspend fun <T, R> List<T>.mapWithProgress(mapper: suspend CoroutineScope.(T) -> R): List<R> = coroutineScope {
+  val items = this@mapWithProgress
+  val reporter = progressReporter
+  if (reporter == null) {
+    items.map {
+      mapper(it)
+    }
+  }
+  else {
+    val duration = 1.0 / size
+    items.map { item ->
+      reporter.durationStep(duration, text = null).use { durationStep ->
+        withContext(durationStep.asContextElement()) {
+          mapper(item)
+        }
+      }
+    }
+  }
+}
+
+suspend fun <T, R> List<T>.mapParallelWithProgress(mapper: suspend CoroutineScope.(T) -> R): List<R> = coroutineScope {
+  val reporter = progressReporter
+  val deferredList: List<Deferred<R>> = if (reporter == null) {
+    map { item ->
+      async {
+        mapper(item)
+      }
+    }
+  }
+  else {
+    val duration = 1.0 / size
+    map { item ->
+      val step = reporter.durationStep(duration, text = null)
+      async(step.asContextElement()) {
+        step.use {
+          mapper(item)
+        }
+      }
+    }
+  }
+  deferredList.awaitAll()
 }
 
 /**

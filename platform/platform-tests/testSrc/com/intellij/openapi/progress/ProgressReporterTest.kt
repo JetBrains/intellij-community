@@ -55,6 +55,40 @@ class ProgressReporterTest {
   }
 
   @Test
+  fun `duration must be greater than 0 and less or equal to 1`() {
+    assertThrows<IllegalArgumentException> {
+      progressReporterTest {
+        durationStep(duration = -0.4) { fail() }
+      }
+    }
+    assertThrows<IllegalArgumentException> {
+      progressReporterTest {
+        durationStep(duration = -0.0) { fail() }
+      }
+    }
+    assertThrows<IllegalArgumentException> {
+      progressReporterTest {
+        durationStep(duration = 0.0) { fail() }
+      }
+    }
+    assertThrows<IllegalArgumentException> {
+      progressReporterTest {
+        durationStep(duration = 1.4) { fail() }
+      }
+    }
+  }
+
+  @Test
+  fun `total duration cannot exceed 1`() {
+    assertThrows<IllegalStateException> {
+      progressReporterTest {
+        durationStep(duration = 0.5) {}
+        durationStep(duration = 0.51) { fail() }
+      }
+    }
+  }
+
+  @Test
   fun `indeterminate step no text`() {
     progressReporterTest {
       indeterminateStep {}
@@ -288,20 +322,24 @@ class ProgressReporterTest {
       ProgressState(text = "s1s1", fraction = 0.3 * 1.0 + 0.7 * 0.5), // s0s1 finished
       // s1s1 finished
     ) {
-      val step1 = launchStep(text = null, endFraction = 0.3) {
-        progressStep("s0s0", endFraction = 0.4) {
-          yield()
-        }
-        progressStep("s0s1") {
-          awaitCancellation()
+      val step1 = launch {
+        durationStep(duration = 0.3, text = null) {
+          progressStep("s0s0", endFraction = 0.4) {
+            yield()
+          }
+          progressStep("s0s1") {
+            awaitCancellation()
+          }
         }
       }
-      launchStep(text = null) {
-        progressStep(text = "s1s0", endFraction = 0.5) {
-          yield()
-        }
-        progressStep(text = "s1s1") {
-          step1.cancelAndJoin()
+      launch {
+        durationStep(duration = 0.7, text = null) {
+          progressStep(text = "s1s0", endFraction = 0.5) {
+            yield()
+          }
+          progressStep(text = "s1s1") {
+            step1.cancelAndJoin()
+          }
         }
       }
     }
@@ -311,8 +349,8 @@ class ProgressReporterTest {
   fun `concurrent steps with text`() {
     progressReporterTest(
       ProgressState(text = "s0", details = null, fraction = 0.3 * 0.0),               // s0 started
+      ProgressState(text = "s0", details = "s0s0", fraction = 0.3 * 0.0),             // s0s0 started
       ProgressState(text = "s1", details = null, fraction = 0.3 * 0.0 + 0.7 * 0.0),   // s1 started
-      ProgressState(text = "s0", details = "s0s0", fraction = 0.3 * 0.0 + 0.7 * 0.0), // s0s0 started
       ProgressState(text = "s1", details = "s1s0", fraction = 0.3 * 0.0 + 0.7 * 0.0), // s1s0 started
       ProgressState(text = "s0", details = null, fraction = 0.3 * 0.4 + 0.7 * 0.0),   // s0s0 finished
       ProgressState(text = "s0", details = "s0s1", fraction = 0.3 * 0.4 + 0.7 * 0.0), // s0s1 started
@@ -323,31 +361,25 @@ class ProgressReporterTest {
       ProgressState(text = "s1", details = null, fraction = 1.0),                     // s1s1 finished
       // s1 finished
     ) {
-      val step1 = launchStep(text = "s0", endFraction = 0.3) {
-        progressStep("s0s0", endFraction = 0.4) {
-          yield()
-        }
-        progressStep("s0s1") {
-          awaitCancellation()
-        }
-      }
-      launchStep(text = "s1") {
-        progressStep(text = "s1s0", endFraction = 0.5) {
-          yield()
-        }
-        progressStep(text = "s1s1") {
-          step1.cancelAndJoin()
+      val step1 = launch {
+        durationStep(duration = 0.3, text = "s0") {
+          progressStep("s0s0", endFraction = 0.4) {
+            yield()
+          }
+          progressStep("s0s1") {
+            awaitCancellation()
+          }
         }
       }
-    }
-  }
-
-  private fun CoroutineScope.launchStep(text: String?, endFraction: Double? = 1.0, action: suspend CoroutineScope.() -> Unit): Job {
-    val reporter = checkNotNull(progressReporter)
-    val step = reporter.step(text, endFraction)
-    return launch(step.asContextElement()) {
-      step.use {
-        action()
+      launch {
+        durationStep(duration = 0.7, text = "s1") {
+          progressStep(text = "s1s0", endFraction = 0.5) {
+            yield()
+          }
+          progressStep(text = "s1s1") {
+            step1.cancelAndJoin()
+          }
+        }
       }
     }
   }
@@ -462,17 +494,25 @@ class ProgressReporterTest {
 
     suspend fun concurrentSteps(inner: suspend CoroutineScope.() -> Unit) {
       coroutineScope {
-        launchStep(text = null, endFraction = null) {
-          inner()
+        launch {
+          indeterminateStep {
+            inner()
+          }
         }
-        launchStep(text = null, endFraction = 0.6) {
-          inner()
+        launch {
+          durationStep(duration = 0.6, text = null) {
+            inner()
+          }
         }
-        launchStep(text = i0, endFraction = null) {
-          inner()
+        launch {
+          indeterminateStep(text = i0) {
+            inner()
+          }
         }
-        launchStep(text = s0) {
-          inner()
+        launch {
+          durationStep(duration = 0.4, text = s0) {
+            inner()
+          }
         }
       }
     }
@@ -552,7 +592,21 @@ class ProgressReporterTest {
     }
     assertThrows<IllegalStateException> {
       progressReporterTest {
+        indeterminateStep {}
+        durationStep(0.1) {}
+        checkNotNull(progressReporter).rawReporter()
+      }
+    }
+    assertThrows<IllegalStateException> {
+      progressReporterTest {
         progressStep {}
+        indeterminateStep {}
+        checkNotNull(progressReporter).rawReporter()
+      }
+    }
+    assertThrows<IllegalStateException> {
+      progressReporterTest {
+        durationStep(0.1) {}
         indeterminateStep {}
         checkNotNull(progressReporter).rawReporter()
       }
@@ -567,6 +621,12 @@ class ProgressReporterTest {
       progressReporterTest {
         checkNotNull(progressReporter).rawReporter()
         progressStep {}
+      }
+    }
+    assertThrows<IllegalStateException> {
+      progressReporterTest {
+        checkNotNull(progressReporter).rawReporter()
+        durationStep(0.1) {}
       }
     }
     assertThrows<IllegalStateException> {

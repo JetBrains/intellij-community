@@ -61,6 +61,24 @@ abstract class BaseProgressReporter(parentScope: CoroutineScope) : ProgressRepor
     return createStep(duration(endFraction), text)
   }
 
+  final override fun durationStep(duration: Double, text: ProgressText?): ProgressReporter {
+    require(.0 < duration && duration <= 1.0) {
+      "Duration must be in (0.0; 1.0], got: $duration"
+    }
+    lastFraction.getAndUpdate {
+      when {
+        it > 1.0 -> error("Cannot start a child because this reporter is raw.")
+        it <= .0 -> duration
+        else -> {
+          val newValue = it + duration
+          check(.0 < newValue && newValue <= 1.0)
+          newValue
+        }
+      }
+    }
+    return createStep(duration, text)
+  }
+
   protected abstract fun createStep(duration: Double?, text: ProgressText?): ProgressReporter
 
   final override fun rawReporter(): RawProgressReporter {
