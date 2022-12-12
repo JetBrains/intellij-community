@@ -17,11 +17,10 @@ import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-class SimpleCustomDecorationPath(val frame: JFrame): JPanel(), UISettingsListener {
+class SimpleCustomDecorationPath(val frame: JFrame, private val isGrey: Boolean = false): JPanel(), UISettingsListener {
   private val frameTitleListener = PropertyChangeListener { updateTitle() }
   private val label = JBLabel().apply {
     horizontalAlignment = SwingConstants.CENTER
-    foreground = JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground())
   }
 
   val expectedHeight: Int
@@ -35,6 +34,7 @@ class SimpleCustomDecorationPath(val frame: JFrame): JPanel(), UISettingsListene
                                                      resizableColumn = true)
 
     updateMinimumSize()
+    updateLabelForeground()
   }
 
   override fun addNotify() {
@@ -45,6 +45,14 @@ class SimpleCustomDecorationPath(val frame: JFrame): JPanel(), UISettingsListene
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     updateMinimumSize()
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    if (parent != null) {
+      updateMinimumSize()
+      updateLabelForeground()
+    }
   }
 
   override fun removeNotify() {
@@ -62,5 +70,11 @@ class SimpleCustomDecorationPath(val frame: JFrame): JPanel(), UISettingsListene
 
   private fun updateMinimumSize() {
     minimumSize = Dimension(0, expectedHeight)
+  }
+
+  private fun updateLabelForeground() {
+    label.foreground =
+      if (isGrey) JBUI.CurrentTheme.Popup.headerForeground(false)
+      else JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground())
   }
 }
