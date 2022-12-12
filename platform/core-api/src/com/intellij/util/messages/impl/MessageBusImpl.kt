@@ -15,6 +15,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.messages.*
 import com.intellij.util.messages.Topic.BroadcastDirection
+import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.lang.invoke.MethodHandle
@@ -32,7 +33,7 @@ open class MessageBusImpl : MessageBus {
   interface MessageHandlerHolder {
     val isDisposed: Boolean
 
-    fun collectHandlers(topic: Topic<*>, result: MutableList<Any>)
+    fun collectHandlers(topic: Topic<*>, result: MutableList<in Any>)
 
     fun disconnectIfNeeded(predicate: Predicate<Class<*>>)
   }
@@ -49,7 +50,7 @@ open class MessageBusImpl : MessageBus {
 
   // caches subscribers for this bus and its children or parent, depending on the topic's broadcast policy
   @JvmField
-  internal val subscriberCache = ConcurrentHashMap<Topic<*>, Array<Any?>>()
+  internal val subscriberCache: ConcurrentMap<Topic<*>, Array<Any?>> = ConcurrentHashMap()
   @JvmField
   internal val parentBus: CompositeMessageBus?
   @JvmField
@@ -57,8 +58,8 @@ open class MessageBusImpl : MessageBus {
   @JvmField
   internal val owner: MessageBusOwner
 
-  // 0 active, 1 dispose in progress 2 disposed
-  private var disposeState = 0
+  @MagicConstant(intValues = [ALIVE.toLong(), DISPOSED_STATE.toLong(), DISPOSE_IN_PROGRESS.toLong()])
+  private var disposeState: Int = ALIVE
 
   // separate disposable must be used, because container will dispose bus connections in a separate step
   private var connectionDisposable: Disposable? = Disposer.newDisposable()
@@ -83,9 +84,9 @@ open class MessageBusImpl : MessageBus {
 
   override fun getParent(): MessageBus? = parentBus
 
-  override fun toString() = "MessageBus(owner=$owner, disposeState= $disposeState)"
+  override fun toString(): String = "MessageBus(owner=$owner, disposeState= $disposeState)"
 
-  override fun connect() = connect(connectionDisposable!!)
+  override fun connect(): MessageBusConnection = connect(connectionDisposable!!)
 
   override fun connect(parentDisposable: Disposable): MessageBusConnection {
     checkNotDisposed()
@@ -157,7 +158,7 @@ open class MessageBusImpl : MessageBus {
   protected open fun disposeChildren() {
   }
 
-  override fun isDisposed() = disposeState == DISPOSED_STATE || owner.isDisposed
+  override fun isDisposed(): Boolean = disposeState == DISPOSED_STATE || owner.isDisposed
 
   override fun hasUndeliveredEvents(topic: Topic<*>): Boolean {
     if (isDisposed) {
@@ -178,7 +179,7 @@ open class MessageBusImpl : MessageBus {
     }
   }
 
-  open fun doComputeSubscribers(topic: Topic<*>, result: MutableList<Any>, subscribeLazyListeners: Boolean) {
+  open fun doComputeSubscribers(topic: Topic<*>, result: MutableList<in Any>, subscribeLazyListeners: Boolean) {
     // todo check that handler implements method (not a default implementation)
     for (subscriber in subscribers) {
       if (!subscriber.isDisposed) {
@@ -189,7 +190,7 @@ open class MessageBusImpl : MessageBus {
 
   open fun computeSubscribers(topic: Topic<*>): Array<Any?> {
     val result = mutableListOf<Any>()
-    doComputeSubscribers(topic = topic, result = result, subscribeLazyListeners = true)
+    doComputeSubscribers(topic, result, true)
     return if (result.isEmpty()) ArrayUtilRt.EMPTY_OBJECT_ARRAY else result.toTypedArray()
   }
 
@@ -222,7 +223,7 @@ open class MessageBusImpl : MessageBus {
   }
 
   open fun notifyConnectionTerminated(topicAndHandlerPairs: Array<Any>): Boolean {
-    if (disposeState != 0) {
+    if (disposeState != ALIVE) {
       return false
     }
 
@@ -349,9 +350,10 @@ internal class MessageQueue {
   var current: Message? = null
 }
 
-private val NA = Any()
-private const val DISPOSE_IN_PROGRESS = 1
-private const val DISPOSED_STATE = 2
+private val NA: Any = Any()
+private const val ALIVE: Int = 0
+private const val DISPOSE_IN_PROGRESS: Int = 1
+private const val DISPOSED_STATE: Int = 2
 
 private fun pumpWaiting(jobQueue: MessageQueue) {
   var exceptions: MutableList<Throwable>? = null
@@ -441,13 +443,7 @@ internal open class MessagePublisher<L>(@JvmField protected val topic: Topic<L>,
       return false
     }
 
-    executeOrAddToQueue(topic = topic,
-                        method = method,
-                        args = args,
-                        handlers = handlers,
-                        jobQueue = queue,
-                        prevExceptions = null,
-                        bus = bus)?.let(::throwExceptions)
+    executeOrAddToQueue(topic, method, args, handlers, queue, null, bus)?.let(::throwExceptions)
     return true
   }
 }
@@ -501,7 +497,7 @@ internal class ToParentMessagePublisher<L>(topic: Topic<L>, bus: MessageBusImpl)
         }
       }
 
-      if (!handlers.isEmpty()) {
+      if (handlers.isNotEmpty()) {
         hasHandlers = true
         exceptions = executeOrAddToQueue(topic, method, args, handlers, queue, exceptions, bus)
       }
@@ -568,7 +564,7 @@ private fun deliverImmediately(connection: MessageBusConnectionImpl, jobs: Deque
   val jobIterator = jobs.iterator()
   while (jobIterator.hasNext()) {
     val job = jobIterator.next()
-    var connectionHandlers: MutableList<Any>? = null
+    var handlers: MutableList<Any>? = null
     val allHandlers = job.handlers
     var i = 0
     val length = allHandlers.size
@@ -576,27 +572,22 @@ private fun deliverImmediately(connection: MessageBusConnectionImpl, jobs: Deque
       val handler = allHandlers[i]
       if (handler != null && connection.bus === job.bus && connection.isMyHandler(job.topic, handler)) {
         allHandlers[i] = null
-        if (connectionHandlers == null) {
-          connectionHandlers = mutableListOf()
+        if (handlers == null) {
+          handlers = mutableListOf()
         }
-        connectionHandlers.add(handler)
+        handlers.add(handler)
       }
       i++
     }
 
-    if (connectionHandlers == null) {
+    if (handlers == null) {
       continue
     }
 
-    if (allHandlers.size == connectionHandlers.size) {
+    if (allHandlers.size == handlers.size) {
       jobIterator.remove()
     }
-    val filteredJob = Message(topic = job.topic,
-                              method = job.method,
-                              methodName = job.methodName,
-                              args = job.args,
-                              handlers = connectionHandlers.toTypedArray(),
-                              bus = job.bus)
+    val filteredJob = Message(job.topic, job.method, job.methodName, job.args, handlers.toTypedArray(), job.bus)
     if (newJobs == null) {
       newJobs = mutableListOf()
     }

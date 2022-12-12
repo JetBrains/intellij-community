@@ -39,9 +39,9 @@ class MessageBusTest : MessageBusOwner {
 
   override fun createListener(descriptor: ListenerDescriptor): Any = throw UnsupportedOperationException()
 
-  override fun isDisposed() = parentDisposable!!.isDisposed
+  override fun isDisposed(): Boolean = parentDisposable!!.isDisposed
 
-  override fun isParentLazyListenersIgnored() = true
+  override fun isParentLazyListenersIgnored(): Boolean = true
 
   interface T1Listener {
     fun t11()

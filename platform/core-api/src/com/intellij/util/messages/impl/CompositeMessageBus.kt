@@ -19,7 +19,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentMap
-import java.util.function.BiConsumer
 import java.util.function.Predicate
 
 private val EMPTY_MAP = HashMap<String, MutableList<ListenerDescriptor>>()
@@ -56,7 +55,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
     }
   }
 
-  override fun hasChildren() = !childBuses.isEmpty()
+  override fun hasChildren(): Boolean = childBuses.isNotEmpty()
 
   fun addChild(bus: MessageBusImpl) {
     childrenListChanged(this)
@@ -88,7 +87,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
     return if (owner.isDisposed) ArrayUtilRt.EMPTY_OBJECT_ARRAY else super.computeSubscribers(topic)
   }
 
-  override fun doComputeSubscribers(topic: Topic<*>, result: MutableList<Any>, subscribeLazyListeners: Boolean) {
+  override fun doComputeSubscribers(topic: Topic<*>, result: MutableList<in Any>, subscribeLazyListeners: Boolean) {
     if (subscribeLazyListeners) {
       subscribeLazyListeners(topic)
     }
@@ -127,9 +126,9 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
           LOG.error("Cannot create listener", e)
         }
       }
-      listenerMap.forEach(BiConsumer { key, listeners ->
+      listenerMap.forEach { (key, listeners) ->
         subscribers.add(DescriptorBasedMessageBusConnection(key, topic, listeners))
-      })
+      }
     }
   }
 
@@ -163,7 +162,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
   override fun removeEmptyConnectionsRecursively() {
     super.removeEmptyConnectionsRecursively()
 
-    childBuses.forEach(MessageBusImpl::removeEmptyConnectionsRecursively)
+    childBuses.forEach { it.removeEmptyConnectionsRecursively() }
   }
 
   /**
@@ -211,7 +210,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
       val newHandlers = computeNewHandlers(connection.handlers, listenerClassNames) ?: continue
       isChanged = true
       connectionIterator.remove()
-      if (!newHandlers.isEmpty()) {
+      if (newHandlers.isNotEmpty()) {
         if (newSubscribers == null) {
           newSubscribers = mutableListOf()
         }
@@ -221,7 +220,9 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
 
     // todo it means that order of subscribers is not preserved
     // it is very minor requirement, but still, makes sense to comply it
-    newSubscribers?.let(subscribers::addAll)
+    if (newSubscribers != null) {
+      subscribers.addAll(newSubscribers)
+    }
     if (isChanged) {
       // we can check it more precisely, but for simplicity, just clear all
       // adding project level listener for app level topic is not recommended, but supported
@@ -259,13 +260,7 @@ private class ToDirectChildrenMessagePublisher<L>(topic: Topic<L>, bus: Composit
     var hasHandlers = false
     var handlers = bus.subscriberCache.computeIfAbsent(topic, bus::computeSubscribers)
     if (handlers.isNotEmpty()) {
-      exceptions = executeOrAddToQueue(topic = topic,
-                                       method = method,
-                                       args = args,
-                                       handlers = handlers,
-                                       jobQueue = queue,
-                                       prevExceptions = null,
-                                       bus = bus)
+      exceptions = executeOrAddToQueue(topic, method, args, handlers, queue, null, bus)
       hasHandlers = true
     }
 
@@ -277,9 +272,7 @@ private class ToDirectChildrenMessagePublisher<L>(topic: Topic<L>, bus: Composit
 
       handlers = childBus.subscriberCache.computeIfAbsent(topic) { topic1 ->
         val result = mutableListOf<Any>()
-        childBus.doComputeSubscribers(topic = topic1,
-                                      result = result,
-                                      subscribeLazyListeners = !childBus.owner.isParentLazyListenersIgnored)
+        childBus.doComputeSubscribers(topic1, result, !childBus.owner.isParentLazyListenersIgnored)
         if (result.isEmpty()) {
           ArrayUtilRt.EMPTY_OBJECT_ARRAY
         }
@@ -292,13 +285,7 @@ private class ToDirectChildrenMessagePublisher<L>(topic: Topic<L>, bus: Composit
       }
 
       hasHandlers = true
-      exceptions = executeOrAddToQueue(topic = topic,
-                                       method = method,
-                                       args = args,
-                                       handlers = handlers,
-                                       jobQueue = queue,
-                                       prevExceptions = exceptions,
-                                       bus = childBus)
+      exceptions = executeOrAddToQueue(topic, method, args, handlers, queue, exceptions, childBus)
     }
     exceptions?.let(::throwExceptions)
     return hasHandlers
