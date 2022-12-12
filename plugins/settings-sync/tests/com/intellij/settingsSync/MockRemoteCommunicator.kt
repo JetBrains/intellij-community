@@ -1,41 +1,43 @@
 package com.intellij.settingsSync
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.settingsSync.CloudConfigServerCommunicator.Companion.getSnapshotFilePath
 import org.junit.Assert
 import java.io.ByteArrayOutputStream
 import java.util.*
 import java.util.concurrent.CountDownLatch
 
 internal class MockRemoteCommunicator : TestRemoteCommunicator() {
-  private var version: Version? = null
+  private val filesAndVersions = mutableMapOf<String, Version>()
+  private val snapshotFile get() = filesAndVersions[getSnapshotFilePath()]
 
   private lateinit var pushedLatch: CountDownLatch
 
   override fun prepareFileOnServer(snapshot: SettingsSnapshot) {
     ByteArrayOutputStream().use { stream ->
       SettingsSnapshotZipSerializer.serializeToStream(snapshot, stream)
-      version = generateNewVersion(stream.toByteArray())
+      filesAndVersions[getSnapshotFilePath()] = generateNewVersion(stream.toByteArray())
     }
   }
 
   override fun getVersionOnServer(): SettingsSnapshot? {
-    return getSnapshotFromVersion(version?.content)
+    return getSnapshotFromVersion(snapshotFile?.content)
   }
 
   override fun checkServerState(): ServerState {
     return when {
-      version == null -> ServerState.FileNotExists
-      version!!.id == SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId -> ServerState.UpToDate
+      snapshotFile == null -> ServerState.FileNotExists
+      snapshotFile!!.id == SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId -> ServerState.UpToDate
       else -> ServerState.UpdateNeeded
     }
   }
 
   override fun receiveUpdates(): UpdateResult {
-    if (version == null) {
+    if (snapshotFile == null) {
       return UpdateResult.NoFileOnServer
     }
-    val snapshot = getSnapshotFromVersion(version!!.content)!!
-    return if (snapshot.isDeleted()) UpdateResult.FileDeletedFromServer else UpdateResult.Success(snapshot, version!!.id)
+    val snapshot = getSnapshotFromVersion(snapshotFile!!.content)!!
+    return if (snapshot.isDeleted()) UpdateResult.FileDeletedFromServer else UpdateResult.Success(snapshot, snapshotFile!!.id)
   }
 
   override fun awaitForPush(): SettingsSnapshot? {
@@ -45,16 +47,28 @@ internal class MockRemoteCommunicator : TestRemoteCommunicator() {
   }
 
   override fun push(snapshot: SettingsSnapshot, force: Boolean, expectedServerVersionId: String?): SettingsSyncPushResult {
-    if (version?.id != expectedServerVersionId && !force) {
+    if (snapshotFile?.id != expectedServerVersionId && !force) {
       return SettingsSyncPushResult.Rejected
     }
     prepareFileOnServer(snapshot)
     if (::pushedLatch.isInitialized) pushedLatch.countDown()
-    return SettingsSyncPushResult.Success(version!!.id)
+    return SettingsSyncPushResult.Success(snapshotFile!!.id)
   }
 
-  override fun delete() {
-    version = null
+  override fun createFile(filePath: String, content: String) {
+    filesAndVersions[filePath] = generateNewVersion(content.toByteArray())
+  }
+
+  override fun isFileExists(filePath: String): Boolean {
+    return filesAndVersions.containsKey(filePath)
+  }
+
+  override fun deleteFile(filePath: String) {
+    filesAndVersions - filePath
+  }
+
+  override fun deleteAllFiles() {
+    filesAndVersions.clear()
   }
 
   private class Version(val content: ByteArray, val id: String)
