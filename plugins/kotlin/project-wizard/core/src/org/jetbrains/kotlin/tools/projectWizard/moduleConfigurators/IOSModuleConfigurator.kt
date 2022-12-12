@@ -36,6 +36,8 @@ object IOSSinglePlatformModuleConfigurator : IOSSinglePlatformModuleConfigurator
 
 object IOSSinglePlatformCocoaPodsModuleConfigurator : IOSSinglePlatformModuleConfiguratorBase() {
     override val moduleTemplatePath: String get() = "singleplatformCocoaPodsProject"
+    override val canContainSubModules: Boolean
+        get() = false
 
     override fun Writer.runArbitraryTask(
         configurationData: ModulesToIrConversionData,
