@@ -9,5 +9,10 @@ interface ContentsInterceptor : ConnectionInterceptor {
   fun onWriteBytes(record: Int, bytes: ByteArraySequence, fixedSize: Boolean)
 }
 
-interface RecordsInterceptor : ConnectionInterceptor
-interface AttributesInterceptor : ConnectionInterceptor
+interface RecordsInterceptor : ConnectionInterceptor {
+
+}
+
+interface AttributesInterceptor : ConnectionInterceptor {
+
+}

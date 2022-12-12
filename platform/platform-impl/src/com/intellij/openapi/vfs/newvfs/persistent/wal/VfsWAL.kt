@@ -3,19 +3,26 @@ package com.intellij.openapi.vfs.newvfs.persistent.wal
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.persistent.util.ConnectionInterceptor
+import kotlinx.coroutines.*
 import java.nio.file.Path
 import kotlin.io.path.div
 
 class VfsWAL(
   private val storagePath: Path
 ) {
-
-  val interceptors = listOf<ConnectionInterceptor>(
-    ContentsWALInterceptor(storagePath / "contents")
-  )
+  @OptIn(DelicateCoroutinesApi::class)
+  private val coroutineDispatcher = newSingleThreadContext("VFS WAL dispatcher")
+  private val coroutineScope = CoroutineScope(SupervisorJob() + coroutineDispatcher)
 
   init {
     FileUtil.ensureExists(storagePath.toFile())
   }
 
+  val interceptors = listOf<ConnectionInterceptor>(
+    ContentsWALInterceptor(storagePath / "contents")
+  )
+
+  fun dispose() {
+    coroutineScope.cancel("dispose")
+  }
 }

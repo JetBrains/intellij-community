@@ -128,6 +128,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       LOG.info("VFS dispose started");
       FSRecords.dispose();
       LOG.info("VFS dispose completed in " + (System.currentTimeMillis() - ms) + "ms.");
+      myWAL.dispose();
     }
   }
 

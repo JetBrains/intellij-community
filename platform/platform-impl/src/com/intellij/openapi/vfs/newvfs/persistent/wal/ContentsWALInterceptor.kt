@@ -23,7 +23,7 @@ class ContentsWALInterceptor(
   override fun onWriteBytes(record: Int, bytes: ByteArraySequence, fixedSize: Boolean) {
     LOG.info("${++count}")
     contentsStoragePath.appendLines(listOf(
-      "$record: ${if (fixedSize) "(fixed size)" else ""} ${bytes.toBytes().joinToString("", "[", "]")}"
+      "$record: ${if (fixedSize) "(fixed size)" else ""} len ${bytes.length}"
     ))
   }
 }
