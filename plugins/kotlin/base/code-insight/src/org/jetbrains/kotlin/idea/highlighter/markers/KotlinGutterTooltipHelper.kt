@@ -2,10 +2,7 @@
 package org.jetbrains.kotlin.idea.highlighter.markers
 
 import com.intellij.codeInsight.daemon.impl.GutterTooltipBuilder
-import com.intellij.psi.PsiClassOwner
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
@@ -20,13 +17,14 @@ object KotlinGutterTooltipHelper : GutterTooltipBuilder() {
     }
 
     override fun shouldSkipAsFirstElement(element: PsiElement): Boolean {
-        return element.unwrapped is KtCallableDeclaration || element is PsiMethod
+        return element.unwrapped is KtCallableDeclaration || element.unwrapped is PsiMethod
     }
 
     override fun getLinkReferenceText(element: PsiElement): String? {
         val moduleName = element.module?.name?.let { "$it:" } ?: ""
         val qualifiedName = when (val el = element.unwrapped) {
             is PsiMethod -> el.containingClass?.qualifiedName
+            is PsiClass -> el.qualifiedName
             is KtClass -> el.fqName?.asString()
             else -> PsiTreeUtil.getStubOrPsiParentOfType(el, KtClass::class.java)?.fqName?.asString()
         } ?: return null
@@ -37,6 +35,10 @@ object KotlinGutterTooltipHelper : GutterTooltipBuilder() {
         val unwrapped = element.unwrapped
         if (unwrapped is PsiMethod) {
             return unwrapped.containingClass
+        }
+
+        if (unwrapped is PsiClass) {
+            return unwrapped.containingClass ?: unwrapped.containingFile
         }
 
         var member: KtDeclaration?
@@ -60,10 +62,7 @@ object KotlinGutterTooltipHelper : GutterTooltipBuilder() {
     }
 
     override fun getPresentableName(element: PsiElement): String? {
-       if (element is PsiNamedElement) {
-            return element.name
-        }
-        return null
+        return (element as? PsiNamedElement)?.name
     }
 
     override fun appendElement(sb: StringBuilder, element: PsiElement, skip: Boolean) {

@@ -96,6 +96,16 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         return null
     }
 
+    fun JavaCodeInsightTestFixture.configureDependencies() {
+        val dependencySuffixes = listOf(".dependency.kt", ".dependency.java", ".dependency1.kt", ".dependency2.kt")
+        for (suffix in dependencySuffixes) {
+            val dependencyPath = testMethodPath.toString().replace(".kt", suffix)
+            if (File(testRoot, dependencyPath).exists()) {
+                myFixture.configureByFile(dependencyPath)
+            }
+        }
+    }
+
     fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedSuffix: String) {
         val expectedPath = getExpectedPath(expectedSuffix)
         try {
