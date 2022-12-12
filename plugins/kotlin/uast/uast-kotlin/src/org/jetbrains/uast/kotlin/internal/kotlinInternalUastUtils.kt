@@ -13,6 +13,7 @@ import com.intellij.psi.impl.compiled.SignatureParsing
 import com.intellij.psi.impl.compiled.StubBuildingVisitor
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.SmartList
+import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
@@ -83,22 +84,23 @@ val kotlinUastPlugin: UastLanguagePlugin by lz {
 internal fun KotlinType.toPsiType(
     source: UElement?,
     element: KtElement,
-    typeOwnerKind: TypeOwnerKind,
-    boxed: Boolean
+    config: PsiTypeConversionConfiguration,
 ): PsiType =
-    toPsiType(source?.getParentOfType<UDeclaration>(false)?.javaPsi as? PsiModifierListOwner, element, typeOwnerKind, boxed)
+    toPsiType(
+        source?.getParentOfType<UDeclaration>(false)?.javaPsi as? PsiModifierListOwner,
+        element,
+        config
+    )
 
 internal fun KotlinType.toPsiType(
     containingLightDeclaration: PsiModifierListOwner?,
     context: KtElement,
-    typeOwnerKind: TypeOwnerKind,
-    boxed: Boolean,
-    isForFake: Boolean = false,
+    config: PsiTypeConversionConfiguration,
 ): PsiType {
     if (this.isError) return UastErrorType
 
     (constructor.declarationDescriptor as? TypeAliasDescriptor)?.let { typeAlias ->
-        return typeAlias.expandedType.toPsiType(containingLightDeclaration, context, typeOwnerKind, boxed, isForFake)
+        return typeAlias.expandedType.toPsiType(containingLightDeclaration, context, config)
     }
 
     if (contains { type -> type.constructor is TypeVariableTypeConstructor }) {
@@ -110,12 +112,12 @@ internal fun KotlinType.toPsiType(
             ?.typeParameterList?.typeParameters?.getOrNull(typeParameter.index)
             ?.let { return PsiTypesUtil.getClassType(it) }
         return CommonSupertypes.commonSupertype(typeParameter.upperBounds)
-            .toPsiType(containingLightDeclaration, context, typeOwnerKind, boxed, isForFake)
+            .toPsiType(containingLightDeclaration, context, config)
     }
 
     if (arguments.isEmpty()) {
         val typeFqName = this.constructor.declarationDescriptor?.fqNameSafe
-        fun PsiPrimitiveType.orBoxed() = if (boxed) getBoxedType(context) else this
+        fun PsiPrimitiveType.orBoxed() = if (config.boxed) getBoxedType(context) else this
         val psiType = when (typeFqName) {
             StandardClassIds.Int.asSingleFqName() -> PsiType.INT.orBoxed()
             StandardClassIds.Long.asSingleFqName() -> PsiType.LONG.orBoxed()
@@ -125,16 +127,16 @@ internal fun KotlinType.toPsiType(
             StandardClassIds.Char.asSingleFqName() -> PsiType.CHAR.orBoxed()
             StandardClassIds.Double.asSingleFqName() -> PsiType.DOUBLE.orBoxed()
             StandardClassIds.Float.asSingleFqName() -> PsiType.FLOAT.orBoxed()
-            StandardClassIds.Unit.asSingleFqName() -> convertUnitToVoidIfNeeded(context, typeOwnerKind, boxed)
+            StandardClassIds.Unit.asSingleFqName() -> convertUnitToVoidIfNeeded(context, config.typeOwnerKind, config.boxed)
             StandardClassIds.String.asSingleFqName() -> PsiType.getJavaLangString(context.manager, context.resolveScope)
             else -> {
                 when (val typeConstructor = this.constructor) {
                     is IntegerValueTypeConstructor ->
                         TypeUtils.getDefaultPrimitiveNumberType(typeConstructor)
-                            .toPsiType(containingLightDeclaration, context, typeOwnerKind, boxed, isForFake)
+                            .toPsiType(containingLightDeclaration, context, config)
                     is IntegerLiteralTypeConstructor ->
                         typeConstructor.getApproximatedType()
-                            .toPsiType(containingLightDeclaration, context, typeOwnerKind, boxed, isForFake)
+                            .toPsiType(containingLightDeclaration, context, config)
                     else -> null
                 }
             }
@@ -154,21 +156,21 @@ internal fun KotlinType.toPsiType(
     val approximatedType =
         TypeApproximator(this.builtIns, languageVersionSettings).approximateDeclarationType(this, true)
     val typeMappingMode =
-        when {
-            isForFake && context is KtParameter -> {
+        when (config.typeMappingMode) {
+            KtTypeMappingMode.VALUE_PARAMETER -> {
                 KotlinUastTypeMapper.typeSystem.getOptimalModeForValueParameter(
                     approximatedType,
                     isForUast = true
                 )
             }
-            isForFake && context is KtCallableDeclaration -> {
+            KtTypeMappingMode.RETURN_TYPE -> {
                 KotlinUastTypeMapper.typeSystem.getOptimalModeForReturnType(
                     approximatedType,
                     isAnnotationMethod = context.containingClass()?.isAnnotation() == true,
                     isForUast = true
                 )
             }
-            boxed -> TypeMappingMode.GENERIC_ARGUMENT_UAST
+            KtTypeMappingMode.GENERIC_ARGUMENT -> TypeMappingMode.GENERIC_ARGUMENT_UAST
             else -> TypeMappingMode.DEFAULT_UAST
         }
     KotlinUastTypeMapper.mapType(approximatedType, signatureWriter, typeMappingMode)
@@ -248,7 +250,8 @@ private fun buildAnnotationProvider(ktType: KotlinType, context: PsiElement): Ty
 
 internal fun KtTypeReference?.toPsiType(source: UElement, boxed: Boolean = false): PsiType {
     if (this == null) return UastErrorType
-    return (getType() ?: return UastErrorType).toPsiType(source, this, this.typeOwnerKind, boxed)
+    return (getType() ?: return UastErrorType)
+        .toPsiType(source, this, PsiTypeConversionConfiguration.create(this, boxed))
 }
 
 internal fun KtElement.analyze(): BindingContext {
@@ -269,7 +272,8 @@ internal fun KotlinType.getFunctionalInterfaceType(
     element: KtElement,
     typeOwnerKind: TypeOwnerKind,
 ): PsiType? =
-    takeIf { it.isInterface() && !it.isBuiltinFunctionalTypeOrSubtype }?.toPsiType(source, element, typeOwnerKind, false)
+    takeIf { it.isInterface() && !it.isBuiltinFunctionalTypeOrSubtype }
+        ?.toPsiType(source, element, PsiTypeConversionConfiguration(typeOwnerKind))
 
 internal fun KotlinULambdaExpression.getFunctionalInterfaceType(): PsiType? {
     val parent = if (sourcePsi.parent is KtLabeledExpression) {
@@ -469,8 +473,7 @@ private fun resolveContainingDeserializedClass(context: KtElement, memberDescrip
             val declaredPsiType = containingDeclaration.defaultType.toPsiType(
                 null as PsiModifierListOwner?,
                 context,
-                TypeOwnerKind.DECLARATION,
-                boxed = false
+                PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)
             )
             (declaredPsiType as? PsiClassType)?.resolve() ?: return null
         }
@@ -485,7 +488,11 @@ private fun resolveToPsiClass(uElement: () -> UElement?, declarationDescriptor: 
         is TypeParameterDescriptor -> declarationDescriptor.defaultType
         is TypeAliasDescriptor -> declarationDescriptor.expandedType
         else -> null
-    }?.toPsiType(uElement.invoke(), context, TypeOwnerKind.DECLARATION, boxed = true).let { PsiTypesUtil.getPsiClass(it) }
+    }?.toPsiType(
+        uElement.invoke(),
+        context,
+        PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION, boxed = true)
+    ).let { PsiTypesUtil.getPsiClass(it) }
 
 private fun DeclarationDescriptor.toSource(): PsiElement? {
     return try {
@@ -575,7 +582,8 @@ private fun PsiMethod.matchesDesc(desc: String) = desc == this.desc
 
 private fun getMethodSignatureFromDescriptor(context: KtElement, descriptor: CallableDescriptor): JvmMemberSignature? {
     fun PsiType.raw() = (this as? PsiClassType)?.rawType() ?: PsiPrimitiveType.getUnboxedType(this) ?: this
-    fun KotlinType.toPsiType() = toPsiType(null as PsiModifierListOwner?, context, TypeOwnerKind.DECLARATION, boxed = false).raw()
+    fun KotlinType.toPsiType() =
+        toPsiType(null as PsiModifierListOwner?, context, PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)).raw()
 
     val originalDescriptor = descriptor.original
     val receiverType = originalDescriptor.extensionReceiverParameter?.type?.toPsiType()
