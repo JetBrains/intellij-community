@@ -95,6 +95,14 @@ open class IdeRootPane internal constructor(frame: JFrame,
   }
 
   private val helper: Helper
+  private val isToolbarVisible: Boolean
+    get() {
+      val uiSettings = UISettings.shadowInstance
+      val isNewToolbar = ExperimentalUI.isNewUI()
+      return ((isNewToolbar && !isToolbarInHeader(uiSettings) && !ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled())
+              || (!isNewToolbar && uiSettings.showMainToolbar))
+             && !uiSettings.presentationMode
+    }
 
   init {
     if (SystemInfoRt.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
@@ -166,9 +174,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     if (helper.toolbarHolder == null) {
       toolbar = createToolbar()
       northPanel.add(toolbar, 0)
-      val uiSettings = UISettings.shadowInstance
-      val visible = !isToolbarInHeader(uiSettings) && !uiSettings.presentationMode
-      toolbar!!.isVisible = visible
+      toolbar!!.isVisible = isToolbarVisible
     }
 
     if (SystemInfoRt.isMac && JdkEx.isTabbingModeAvailable()) {
@@ -338,12 +344,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     }
     toolbar = createToolbar()
     northPanel.add(toolbar, 0)
-
-    val uiSettings = UISettings.shadowInstance
-    val isNewToolbar = ExperimentalUI.isNewUI()
-    val visible = ((isNewToolbar && !isToolbarInHeader(uiSettings)) || (!isNewToolbar && uiSettings.showMainToolbar)) && !uiSettings.presentationMode
-    toolbar!!.isVisible = visible
-
+    toolbar!!.isVisible = isToolbarVisible
     contentPane!!.revalidate()
   }
 
@@ -400,10 +401,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
       northPanel.add(toolbar, 0)
     }
 
-    val uiSettings = UISettings.shadowInstance
-    val isNewToolbar = ExperimentalUI.isNewUI()
-    val visible = (isNewToolbar && !isToolbarInHeader(uiSettings) || !isNewToolbar && uiSettings.showMainToolbar) && !uiSettings.presentationMode
-    toolbar!!.isVisible = visible
+    toolbar!!.isVisible = isToolbarVisible
   }
 
   private fun updateStatusBarVisibility() {
