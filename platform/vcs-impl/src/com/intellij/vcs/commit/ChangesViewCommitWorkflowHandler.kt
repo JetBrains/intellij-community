@@ -43,7 +43,7 @@ internal class ChangesViewCommitWorkflowHandler(
   private val inclusionModel = PartialCommitInclusionModel(project)
 
   private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project)
-  private var currentChangeList: LocalChangeList? = null
+  private var currentChangeList: LocalChangeList
 
   init {
     Disposer.register(this, inclusionModel)
@@ -66,7 +66,11 @@ internal class ChangesViewCommitWorkflowHandler(
     setupCommitChecksResultTracking()
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
-    setCurrentChangeList(workflow.getAffectedChangeList(emptySet()))
+    currentChangeList = workflow.getAffectedChangeList(emptySet())
+    val initialCommitMessage = getCommitMessageFromPolicy(currentChangeList)
+    setCommitMessage(initialCommitMessage)
+    commitOptions.changeListChanged(currentChangeList)
+    changeListDataChanged()
 
     if (isToggleMode()) deactivate(false)
 
@@ -95,7 +99,7 @@ internal class ChangesViewCommitWorkflowHandler(
   }
 
   override fun commitOptionsCreated() {
-    currentChangeList?.let { commitOptions.changeListChanged(it) }
+    commitOptions.changeListChanged(currentChangeList)
   }
 
   override fun executionEnded() {
@@ -178,45 +182,41 @@ internal class ChangesViewCommitWorkflowHandler(
     return block().also { if (oldValue != isActive) activityEventDispatcher.multicaster.activityStateChanged() }
   }
 
-  private fun setCurrentChangeList(newChangeList: LocalChangeList?) {
+  private fun setCurrentChangeList(newChangeList: LocalChangeList) {
     val oldChangeList = currentChangeList
     currentChangeList = newChangeList
 
-    if (oldChangeList?.id != newChangeList?.id) {
-      oldChangeList?.let { commitMessagePolicy.save(it, getCommitMessage(), false) }
+    if (oldChangeList.id != newChangeList.id) {
+      commitMessagePolicy.save(oldChangeList, getCommitMessage(), false)
 
       val newCommitMessage = getCommitMessageFromPolicy(newChangeList)
       setCommitMessage(newCommitMessage)
 
-      newChangeList?.let { commitOptions.changeListChanged(it) }
-
-      changeListDataChanged()
+      commitOptions.changeListChanged(newChangeList)
     }
-    else if (oldChangeList?.data != newChangeList?.data) {
+    if (oldChangeList.data != newChangeList.data) {
       changeListDataChanged()
     }
   }
 
-  private fun getCommitMessageFromPolicy(changeList: LocalChangeList?): String? {
-    if (changeList == null) return null
-
+  private fun getCommitMessageFromPolicy(changeList: LocalChangeList): String? {
     return commitMessagePolicy.getCommitMessage(changeList) { getIncludedChanges() }
   }
 
   private fun changeListDataChanged() {
-    ui.commitAuthor = currentChangeList?.author
-    ui.commitAuthorDate = currentChangeList?.authorDate
+    ui.commitAuthor = currentChangeList.author
+    ui.commitAuthorDate = currentChangeList.authorDate
   }
 
   override fun commitAuthorChanged() {
-    val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
+    val changeList = changeListManager.getChangeList(currentChangeList.id) ?: return
     if (ui.commitAuthor == changeList.author) return
 
     changeListManager.editChangeListData(changeList.name, ChangeListData.of(ui.commitAuthor, ui.commitAuthorDate))
   }
 
   override fun commitAuthorDateChanged() {
-    val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
+    val changeList = changeListManager.getChangeList(currentChangeList.id) ?: return
     if (ui.commitAuthorDate == changeList.authorDate) return
 
     changeListManager.editChangeListData(changeList.name, ChangeListData.of(ui.commitAuthor, ui.commitAuthorDate))
