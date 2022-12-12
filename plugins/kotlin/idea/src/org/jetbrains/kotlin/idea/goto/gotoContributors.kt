@@ -6,6 +6,7 @@ import com.intellij.ide.util.gotoByName.AbstractPrimeSymbolNavigationContributor
 import com.intellij.navigation.ChooseByNameContributorEx
 import com.intellij.navigation.GotoClassContributor
 import com.intellij.navigation.NavigationItem
+import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.util.Processor
@@ -56,44 +57,22 @@ class KotlinGotoClassContributor : ChooseByNameContributorEx, GotoClassContribut
 * For Kotlin classes it works using light class generation.
 * We have to process Kotlin builtIn classes separately since no light classes are built for them.
 * */
-class KotlinGotoSymbolContributor : ChooseByNameContributorEx, GotoClassContributor {
+abstract class AbstractKotlinGotoSymbolContributor<T: PsiElement>(private val index: KotlinStringStubIndexExtension<T>) : ChooseByNameContributorEx, GotoClassContributor {
     override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
-        for (index in indices) {
-            if (!StubIndex.getInstance().processAllKeys(index.key, processor, scope, filter)) break
-        }
+        StubIndex.getInstance().processAllKeys(index.key, processor, scope, filter)
     }
 
     override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
         val project = parameters.project
         val scope = KotlinSourceFilterScope.projectFiles(parameters.searchScope, project)
-
         val filter = parameters.idFilter
-        if (!KotlinFunctionShortNameIndex.processElements(name, project, scope, filter) {
-            val method = LightClassUtil.getLightClassMethod(it)
-            if (method == null || it.name != method.name) {
-                processor.process(it)
-            } else {
-                true
-            }
-        }) return
+        index.processElements(name, project, scope, filter, wrapProcessor(processor))
+    }
 
-        if (!KotlinPropertyShortNameIndex.processElements(name, project, scope, filter) {
-            if (LightClassUtil.getLightClassBackingField(it) == null || it.containingClass()?.isInterface() == true) {
-                processor.process(it)
-            } else {
-                true
-            }
-        }) return
-
-        if (!KotlinClassShortNameIndex.processElements(name, project, scope, filter) {
-            if (it is KtEnumEntry || it.containingFile.virtualFile?.extension == KotlinBuiltInFileType.defaultExtension) {
-                processor.process(it)
-            } else {
-                true
-            }
-        }) return
-        if (!KotlinTypeAliasShortNameIndex.processElements(name, project, scope, filter, processor)) return
-        KotlinJvmNameAnnotationIndex.processElements(name, project, scope, filter, processor)
+    open fun wrapProcessor(processor: Processor<in NavigationItem>): Processor<T> {
+        return Processor {
+            processor.process(it as? NavigationItem ?: return@Processor true)
+        }
     }
 
     override fun getQualifiedName(item: NavigationItem): String? {
@@ -111,15 +90,48 @@ class KotlinGotoSymbolContributor : ChooseByNameContributorEx, GotoClassContribu
     }
 
     override fun getQualifiedNameSeparator(): String = "."
-
-    private val indices = listOf(
-        KotlinFunctionShortNameIndex,
-        KotlinPropertyShortNameIndex,
-        KotlinClassShortNameIndex,
-        KotlinTypeAliasShortNameIndex,
-        KotlinJvmNameAnnotationIndex
-    )
-
 }
+
+class KotlinGotoFunctionSymbolContributor: AbstractKotlinGotoSymbolContributor<KtNamedFunction>(KotlinFunctionShortNameIndex) {
+    override fun wrapProcessor(processor: Processor<in NavigationItem>): Processor<KtNamedFunction> {
+        return Processor {
+            val method = LightClassUtil.getLightClassMethod(it)
+            if (method == null || it.name != method.name) {
+                processor.process(it)
+            } else {
+                true
+            }
+        }
+    }
+}
+
+class KotlinGotoPropertySymbolContributor: AbstractKotlinGotoSymbolContributor<KtNamedDeclaration>(KotlinPropertyShortNameIndex) {
+
+    override fun wrapProcessor(processor: Processor<in NavigationItem>): Processor<KtNamedDeclaration> {
+        return Processor {
+            if (LightClassUtil.getLightClassBackingField(it) == null || it.containingClass()?.isInterface() == true) {
+                processor.process(it)
+            } else {
+                true
+            }
+        }
+    }
+}
+
+class KotlinGotoClassSymbolContributor: AbstractKotlinGotoSymbolContributor<KtClassOrObject>(KotlinClassShortNameIndex) {
+    override fun wrapProcessor(processor: Processor<in NavigationItem>): Processor<KtClassOrObject> {
+        return Processor {
+            if (it is KtEnumEntry || it.containingFile.virtualFile?.extension == KotlinBuiltInFileType.defaultExtension) {
+                processor.process(it)
+            } else {
+                true
+            }
+        }
+    }
+}
+
+class KotlinGotoTypeAliasSymbolContributor: AbstractKotlinGotoSymbolContributor<KtTypeAlias>(KotlinTypeAliasShortNameIndex)
+
+class KotlinGotoJvmNameSymbolContributor: AbstractKotlinGotoSymbolContributor<KtAnnotationEntry>(KotlinJvmNameAnnotationIndex)
 
 class KotlinGotoPrimeSymbolContributor : AbstractPrimeSymbolNavigationContributor(KotlinPrimeSymbolNameIndex.key)
