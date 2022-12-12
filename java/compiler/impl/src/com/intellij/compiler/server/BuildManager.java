@@ -118,7 +118,8 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -2078,14 +2079,21 @@ public final class BuildManager implements Disposable {
 
     @Override
     public void projectClosing(@NotNull Project project) {
-      String projectPath = Objects.requireNonNull(getProjectPath(project));
-      ProgressManager.getInstance().run(new Task.Modal(project, JavaCompilerBundle.message("progress.title.cancelling.auto.make.builds"), false) {
+      final String projectPath = getProjectPath(project);
+      ProgressManager.getInstance().run(new Task.Modal(project, JavaCompilerBundle.message("progress.title.cancelling.running.builds"), false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
+          final TaskFuture<?> currentBuild = myBuildsInProgress.get(projectPath);
+          if (currentBuild != null) {
+            currentBuild.cancel(false);
+          }
           myAutoMakeTask.cancelPendingExecution();
           cancelPreloadedBuilds(projectPath);
           for (TaskFuture<?> future : cancelAutoMakeTasks(project)) {
             future.waitFor(500, TimeUnit.MILLISECONDS);
+          }
+          if (currentBuild != null) {
+            currentBuild.waitFor(15, TimeUnit.SECONDS);
           }
         }
       });
