@@ -111,7 +111,7 @@ internal class DirectKotlinOverridingMethodDelegatedSearcher : Searcher<SearchPa
         val methods = baseFunction.toLightMethods()
 
         val queries = methods.map { it ->
-            EVERYTHING_BUT_KOTLIN.createQuery(JavaOverridingMethodsSearcherFromKotlinParameters(it, parameters.searchScope, false))
+            EVERYTHING_BUT_KOTLIN.createQuery(JavaOverridingMethodsSearcherFromKotlinParameters(it, parameters.searchScope, true))
         }
 
         return queries

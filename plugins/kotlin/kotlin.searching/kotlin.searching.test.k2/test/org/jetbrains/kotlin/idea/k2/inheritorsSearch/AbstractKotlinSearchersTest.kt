@@ -79,7 +79,7 @@ abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCa
         KotlinTestUtils.assertEqualsToSibling(Paths.get(testFilePath), ".result.kt", actual)
     }
 
-    private fun render(elements: Collection<PsiElement>): String = buildList {
+    protected fun render(elements: Collection<PsiElement>): String = buildList {
         for (declaration in elements) {
           val name = ElementDescriptionUtil.getElementDescription(declaration, UsageViewLongNameLocation.INSTANCE)
           add(declaration::class.simpleName!! + ": " + name)
