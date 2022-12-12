@@ -16,7 +16,6 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -31,9 +30,8 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseInspection {
 
@@ -97,29 +95,22 @@ public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseI
         return;
       }
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final boolean constructorCall;
-      if (!JavaPsiConstructorUtil.isConstructorCall(expression)) {
-        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true);
-        if (method == null) {
-          return;
-        }
-        final String name = methodExpression.getReferenceName();
-        if (!method.getName().equals(name)) {
-          return;
-        }
-        constructorCall = false;
-      }
-      else {
-        constructorCall = true;
+      final boolean constructorCall = JavaPsiConstructorUtil.isConstructorCall(expression);
+      final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true);
+      if (method == null || !constructorCall && !method.getName().equals(methodExpression.getReferenceName())) {
+        return;
       }
       final PsiMethod targetMethod = expression.resolveMethod();
       if (targetMethod == null) {
         return;
       }
-      if (m_ignoreOverridesOfLibraryMethods && constructorCall) {
-        if (targetMethod instanceof PsiCompiledElement) {
-          return;
-        }
+      final PsiClass containingClass = targetMethod.getContainingClass();
+      final PsiClass aClass = method.getContainingClass();
+      if (containingClass == null || aClass == null || containingClass != aClass && !aClass.isInheritor(containingClass, true)) {
+        return;
+      }
+      if (m_ignoreOverridesOfLibraryMethods && targetMethod instanceof PsiCompiledElement) {
+        return;
       }
       final PsiParameter[] parameters = targetMethod.getParameterList().getParameters();
       final PsiExpression[] arguments = argumentList.getExpressions();

@@ -82,3 +82,15 @@ class H extends G {
   private void configureMethod(final Class<? extends String> daoAnnotation, final Integer method) {
   }
 }
+class I {
+  static J applicationContext = null;
+
+  public static <T> T getBean(final Class<T> beanType) {
+    return applicationContext.getBean(beanType);
+  }
+}
+class J { // unrelated to I
+  public <T> T getBean(Class<T> requiredType) {
+    return null;
+  }
+}
