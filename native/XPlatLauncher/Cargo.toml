@@ -14,7 +14,7 @@ publish = false
 opt-level = "z"  # Optimize for size.
 lto = true
 codegen-units = 1
-panic = "abort"
+#panic = "abort" # 100KB
 
 [features]
 
