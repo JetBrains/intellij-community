@@ -35,6 +35,9 @@ import javax.swing.*;
  * }.setCancelText("Stop loading").queue();
  * </pre>
  *
+ * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgressIndicator
+ * @see com.intellij.openapi.progress.TasksKt#withModalProgressIndicator
+ * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
  * @see ProgressManager#run(Task)
  */
 public abstract class Task implements TaskInfo, Progressive {
@@ -244,6 +247,7 @@ public abstract class Task implements TaskInfo, Progressive {
  }
 
   /**
+   * @see com.intellij.openapi.progress.TasksKt#withModalProgressIndicator
    * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
    */
   public abstract static class Modal extends Task {
@@ -262,6 +266,11 @@ public abstract class Task implements TaskInfo, Progressive {
     }
   }
 
+  /**
+   * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgressIndicator
+   * @see com.intellij.openapi.progress.TasksKt#withModalProgressIndicator
+   * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
+   */
   public abstract static class ConditionalModal extends Backgroundable {
     public ConditionalModal(@Nullable Project project,
                             @ProgressTitle @NotNull String title,
