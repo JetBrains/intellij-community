@@ -116,7 +116,7 @@
     <openapi.vcs.history.actions.GetVersionAction.ExtensionProvider
       implementation="com.intellij.vcs.CompareWithLocalDialog$GetVersionActionProvider"/>
     <openapi.vcs.history.actions.GetVersionAction.ExtensionProvider
-      implementation="com.intellij.openapi.vcs.changes.actions.GetVersionFromRepositoryActionProvider"/>
+      implementation="com.intellij.openapi.vcs.changes.actions.GetVersionFromRepositoryActionProvider" order="last"/>
 
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog$MyDiffAfterWithLocalAction"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog$MyDiffAction"/>
