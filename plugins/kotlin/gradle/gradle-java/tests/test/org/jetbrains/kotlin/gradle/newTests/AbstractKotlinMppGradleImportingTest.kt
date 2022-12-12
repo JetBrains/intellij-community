@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.VfsTestUtil
 import org.jetbrains.kotlin.gradle.newTests.testFeatures.*
 import org.jetbrains.kotlin.gradle.newTests.testServices.*
@@ -22,9 +23,9 @@ import java.io.File
 import java.io.PrintStream
 
 @RunWith(BlockJUnit4ClassRunner::class)
-abstract class AbstractKotlinMppGradleImportingTest(
-    testDataRoot: String
-) : GradleImportingTestCase(), WorkspaceFilteringDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl,
+@TestDataPath("\$PROJECT_ROOT/community/plugins/kotlin/idea/tests/testData/gradle")
+abstract class AbstractKotlinMppGradleImportingTest :
+    GradleImportingTestCase(), WorkspaceFilteringDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl,
     HighlightingCheckDsl
 {
     val importedProject: Project
@@ -46,7 +47,7 @@ abstract class AbstractKotlinMppGradleImportingTest(
     val noErrorEventsDuringImportService = NoErrorEventsDuringImportService()
 
     @get:Rule
-    val testDataDirectoryService = TestDataDirectoryService(testDataRoot)
+    val testDataDirectoryService = TestDataDirectoryService()
 
     @get:Rule
     val gradleDaemonWatchdogService = GradleDaemonWatchdogService
