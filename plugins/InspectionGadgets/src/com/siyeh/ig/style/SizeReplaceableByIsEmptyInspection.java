@@ -15,6 +15,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.siyeh.ig.psiutils.OrderedBinaryExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
@@ -83,14 +84,11 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)startElement;
-      PsiExpression operand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getLOperand());
-      if (!(operand instanceof PsiMethodCallExpression)) {
-        operand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
-      }
-      if (!(operand instanceof PsiMethodCallExpression methodCallExpression)) {
+      final OrderedBinaryExpression<PsiMethodCallExpression, PsiExpression> orderedBinaryExpression = OrderedBinaryExpression.from((PsiExpression)startElement, PsiMethodCallExpression.class);
+      if (orderedBinaryExpression == null) {
         return;
       }
+      final PsiMethodCallExpression methodCallExpression = orderedBinaryExpression.getFirstOperand();
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (qualifierExpression == null) {
@@ -98,13 +96,17 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
       }
       CommentTracker commentTracker = new CommentTracker();
       @NonNls String newExpression = commentTracker.text(qualifierExpression);
-      final IElementType tokenType = binaryExpression.getOperationTokenType();
-      if (!JavaTokenType.EQEQ.equals(tokenType)) {
+      final Object object = ExpressionUtils.computeConstantExpression(orderedBinaryExpression.getSecondOperand());
+      if (!(object instanceof Integer) && !(object instanceof Long)) {
+        return;
+      }
+      int comparedValue = ((Number)object).intValue();
+      if ((comparedValue == 0 && !JavaTokenType.EQEQ.equals(orderedBinaryExpression.getTokenType())) || (comparedValue == 1 && !JavaTokenType.LT.equals(orderedBinaryExpression.getTokenType()))) {
         newExpression = '!' + newExpression;
       }
       newExpression += ".isEmpty()";
 
-      PsiReplacementUtil.replaceExpression(binaryExpression, newExpression, commentTracker);
+      PsiReplacementUtil.replaceExpression((PsiExpression)startElement, newExpression, commentTracker);
     }
   }
 
@@ -128,19 +130,11 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
       if (!ComparisonUtils.isComparison(expression)) {
         return;
       }
-      final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
-      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
-      final boolean flipped;
-      if (lhs instanceof PsiMethodCallExpression) {
-        flipped = false;
-      }
-      else if (rhs instanceof PsiMethodCallExpression) {
-        flipped = true;
-      }
-      else {
+      final OrderedBinaryExpression<PsiMethodCallExpression, PsiExpression> orderedBinaryExpression = OrderedBinaryExpression.from(expression, PsiMethodCallExpression.class);
+      if (orderedBinaryExpression == null) {
         return;
       }
-      final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)(flipped ? rhs : lhs);
+      final PsiMethodCallExpression callExpression = orderedBinaryExpression.getFirstOperand();
       @NonNls String isEmptyCall = null;
       final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
       final String referenceName = methodExpression.getReferenceName();
@@ -173,27 +167,34 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
       if (isEmptyCall == null) {
         return;
       }
-      final Object object = ExpressionUtils.computeConstantExpression(flipped ? lhs : rhs);
-      if (!(object instanceof Integer) || ((Integer)object).intValue() != 0) {
+      final Object object = ExpressionUtils.computeConstantExpression(orderedBinaryExpression.getSecondOperand());
+      if (!(object instanceof Integer) && !(object instanceof Long)) {
         return;
       }
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (JavaTokenType.EQEQ.equals(tokenType)) {
-        registerError(expression, isEmptyCall, qualifierExpression, referenceName);
-      }
-      if (ignoreNegations) {
-        return;
-      }
-      if (JavaTokenType.NE.equals(tokenType)) {
-        registerError(expression, '!' + isEmptyCall, qualifierExpression, referenceName);
-      }
-      else if (flipped) {
-        if (JavaTokenType.LT.equals(tokenType)) {
+      int comparedValue = ((Number)object).intValue();
+      if (comparedValue == 0) {
+        final IElementType tokenType = orderedBinaryExpression.getTokenType();
+        if (JavaTokenType.EQEQ.equals(tokenType)) {
+          registerError(expression, isEmptyCall, qualifierExpression, referenceName);
+        }
+        if (ignoreNegations) {
+          return;
+        }
+        if (JavaTokenType.NE.equals(tokenType) || JavaTokenType.GT.equals(tokenType)) {
           registerError(expression, '!' + isEmptyCall, qualifierExpression, referenceName);
         }
       }
-      else if (JavaTokenType.GT.equals(tokenType)) {
-        registerError(expression, '!' + isEmptyCall, qualifierExpression, referenceName);
+      else if (comparedValue == 1) {
+        final IElementType tokenType = orderedBinaryExpression.getTokenType();
+        if (JavaTokenType.LT.equals(tokenType)) {
+          registerError(expression, isEmptyCall, qualifierExpression, referenceName);
+        }
+        if (ignoreNegations) {
+          return;
+        }
+        if (JavaTokenType.GE.equals(tokenType)) {
+          registerError(expression, '!' + isEmptyCall, qualifierExpression, referenceName);
+        }
       }
     }
   }

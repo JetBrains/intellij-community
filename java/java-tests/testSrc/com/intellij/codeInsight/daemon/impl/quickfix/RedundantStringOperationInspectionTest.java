@@ -19,9 +19,10 @@ public class RedundantStringOperationInspectionTest extends LightJavaInspectionT
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_9;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_11;
   }
 
+  public void testShouldReplaceStripByIsBlank() {doTest();}
   public void testEmptyStringArgument() {doTest();}
   public void testStringLengthArgument() {doTest();}
   public void testZeroArgument() {doTest();}
