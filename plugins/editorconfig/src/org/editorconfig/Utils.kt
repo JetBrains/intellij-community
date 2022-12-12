@@ -48,6 +48,10 @@ object Utils {
   private val UNSET_VALUES = arrayOf("none", "unset")
   private var ourIsFullSettingsSupportEnabledInTest = false
 
+  @TestOnly
+  @JvmStatic
+  var isEnabledInTests = false
+
   fun ResourceProperties.configValueForKey(key: String): String {
     val value = properties[key]
     return if (value == null || value.sourceValue in UNSET_VALUES) "" else value.sourceValue
@@ -229,4 +233,10 @@ object Utils {
 
   fun isEditorConfigFile(virtualFile: VirtualFile): Boolean =
     EDITOR_CONFIG_FILE_NAME.equals(virtualFile.name, ignoreCase = true)
+
+  fun isEnabledFor(project: Project, virtualFile: VirtualFile): Boolean {
+    return isEnabled(CodeStyle.getSettings(project)) &&
+           isApplicableTo(virtualFile) && !isEditorConfigFile(virtualFile) &&
+           (!ApplicationManager.getApplication().isUnitTestMode() || isEnabledInTests)
+  }
 }

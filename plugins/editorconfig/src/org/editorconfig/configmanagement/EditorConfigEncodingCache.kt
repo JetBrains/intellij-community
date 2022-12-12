@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFileEvent
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter
 import com.intellij.util.ObjectUtils
+import org.editorconfig.Utils
 import org.editorconfig.Utils.configValueForKey
 import org.editorconfig.Utils.isApplicableTo
 import org.editorconfig.Utils.isEditorConfigFile
@@ -76,7 +77,7 @@ class EditorConfigEncodingCache : PersistentStateComponent<Element?> {
     getCharsetData(project, virtualFile, true)?.isUseBom ?: false
 
   fun getCharsetData(project: Project?, virtualFile: VirtualFile, withCache: Boolean): CharsetData? {
-    if (project == null || !isApplicableTo(virtualFile) || isEditorConfigFile(virtualFile)) return null
+    if (project == null || !Utils.isEnabledFor (project, virtualFile)) return null
     if (withCache) {
       val cached = getCachedCharsetData(virtualFile)
       if (cached != null) return cached
@@ -128,7 +129,7 @@ class EditorConfigEncodingCache : PersistentStateComponent<Element?> {
     override fun fileCreated(event: VirtualFileEvent) {
       val file = event.file
       val project = ProjectLocator.getInstance().guessProjectForFile(file)
-      if (project != null && ConfigEncodingManager.isEnabledFor(project, file)) {
+      if (project != null && Utils.isEnabledFor(project, file)) {
         getInstance().computeAndCacheEncoding(project, event.file)
       }
     }

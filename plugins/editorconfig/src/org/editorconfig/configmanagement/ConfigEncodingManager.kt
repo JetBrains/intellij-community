@@ -2,20 +2,20 @@
 package org.editorconfig.configmanagement
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.FileEncodingProvider
-import com.intellij.util.ObjectUtils
-import com.intellij.util.containers.ContainerUtil
 import org.editorconfig.Utils
+import org.jetbrains.annotations.TestOnly
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 
 class ConfigEncodingManager : FileEncodingProvider {
   override fun getEncoding(virtualFile: VirtualFile): Charset? {
     val project = ProjectLocator.getInstance().guessProjectForFile(virtualFile)
-    return if (project != null && isEnabledFor(project, virtualFile))
+    return if (project != null && Utils.isEnabledFor(project, virtualFile))
       EditorConfigEncodingCache.getInstance().getCachedEncoding(virtualFile)
     else
       null
@@ -46,11 +46,6 @@ class ConfigEncodingManager : FileEncodingProvider {
 
     fun toCharset(str: String): Charset? {
       return encodingMap[str]
-    }
-
-    fun isEnabledFor(project: Project, virtualFile: VirtualFile): Boolean {
-      return Utils.isEnabled(CodeStyle.getSettings(project)) &&
-             Utils.isApplicableTo(virtualFile) && !Utils.isEditorConfigFile(virtualFile)
     }
   }
 }

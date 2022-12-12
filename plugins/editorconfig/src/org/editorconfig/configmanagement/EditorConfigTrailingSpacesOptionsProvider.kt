@@ -1,18 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement
 
-import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.fileEditor.TrailingSpacesOptionsProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.ec4j.core.ResourceProperties
+import org.editorconfig.Utils
 import org.editorconfig.Utils.configValueForKey
-import org.editorconfig.Utils.isEnabled
 import org.editorconfig.plugincomponents.SettingsProviderComponent
 
 class EditorConfigTrailingSpacesOptionsProvider : TrailingSpacesOptionsProvider, StandardEditorConfigProperties {
   override fun getOptions(project: Project, file: VirtualFile): TrailingSpacesOptionsProvider.Options? {
-    if (isEnabled(CodeStyle.getSettings(project))) {
+    if (Utils.isEnabledFor(project, file)) {
       val properties = SettingsProviderComponent.getInstance(project).getProperties(file)
       val trimTrailingWhitespace = getBooleanValue(properties, StandardEditorConfigProperties.TRIM_TRAILING_WHITESPACE)
       val insertFinalNewline = getBooleanValue(properties, StandardEditorConfigProperties.INSERT_FINAL_NEWLINE)
