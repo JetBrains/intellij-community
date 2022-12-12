@@ -678,6 +678,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/renameJavaSyntheticIsPropertyByGetterRef/renameJavaSyntheticIsPropertyByGetterRef.test");
     }
 
+    @TestMetadata("renameJavaSyntheticIsPropertyBySetterRef/renameJavaSyntheticIsPropertyBySetterRef.test")
+    public void testRenameJavaSyntheticIsPropertyBySetterRef_RenameJavaSyntheticIsPropertyBySetterRef() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameJavaSyntheticIsPropertyBySetterRef/renameJavaSyntheticIsPropertyBySetterRef.test");
+    }
+
     @TestMetadata("renameJavaSyntheticPropertyByGetterRef/renameJavaSyntheticPropertyByGetterRef.test")
     public void testRenameJavaSyntheticPropertyByGetterRef_RenameJavaSyntheticPropertyByGetterRef() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/renameJavaSyntheticPropertyByGetterRef/renameJavaSyntheticPropertyByGetterRef.test");
