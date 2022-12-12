@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 0.0.5
+- [IDEA-306721](https://youtrack.jetbrains.com/issue/IDEA-306721) Fixed lexer non-progressing in some cases
+- Updated plugin description
+
 ## 0.0.3-nightly
 - Updated Mermaid.js version to 9.2.0
 - Added integration with [Markdown](https://plugins.jetbrains.com/plugin/7793-markdown) plugin
