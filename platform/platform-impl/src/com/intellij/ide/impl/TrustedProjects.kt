@@ -13,20 +13,21 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
-import com.intellij.openapi.file.NioFileUtil.isAncestor
 import com.intellij.openapi.file.VirtualFileUtil.toNioPathOrNull
+import com.intellij.openapi.file.converter.NioPathPrefixTreeFactory
 import com.intellij.openapi.project.*
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.ThreeState
-import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import java.util.function.Consumer
 
@@ -231,41 +232,29 @@ private fun mergeTrustedProjectStates(states: List<ThreeState>): ThreeState {
 
 @ApiStatus.Internal
 fun Project.getProjectRoots(): List<Path> {
-  val projectRoots = ArrayList<Path>()
-  projectRoots.addIfNotNull(basePath?.toNioPath())
-  for (module in modules) {
+  val project = this
+  return CachedValuesManager.getManager(project).getCachedValue(project) {
+    val projectRoots = collectProjectRoots(project)
+    val projectRootManager = ProjectRootManager.getInstance(project)
+    CachedValueProvider.Result.create(projectRoots, projectRootManager)
+  }
+}
+
+private fun collectProjectRoots(project: Project): List<Path> {
+  val index = NioPathPrefixTreeFactory.createSet()
+  val basePath = project.basePath?.toNioPath()
+  if (basePath != null) {
+    index.add(basePath)
+  }
+  for (module in project.modules) {
     for (contentRoot in module.rootManager.contentRoots) {
       val contentPath = contentRoot.toNioPathOrNull()
-      projectRoots.addIfNotNull(contentPath)
-    }
-  }
-  return filterProjectRoots(projectRoots)
-}
-
-@ApiStatus.Internal
-@VisibleForTesting
-fun filterProjectRoots(roots: List<Path>): List<Path> {
-  @Suppress("ComplexRedundantLet")
-  return roots
-    .let { filterProjectRootsOneWave(it) }.reversed()
-    .let { filterProjectRootsOneWave(it) }.reversed()
-}
-
-private fun filterProjectRootsOneWave(roots: List<Path>): List<Path> {
-  val result = ArrayList(roots)
-  var index = 0
-  while (index < result.size) {
-    val root = result[index]
-    val iterator = result.listIterator(index + 1)
-    while (iterator.hasNext()) {
-      val child = iterator.next()
-      if (root.isAncestor(child, strict = false)) {
-        iterator.remove()
+      if (contentPath != null) {
+        index.add(contentPath)
       }
     }
-    index++
   }
-  return result
+  return index.getRoots().toList()
 }
 
 @JvmOverloads
