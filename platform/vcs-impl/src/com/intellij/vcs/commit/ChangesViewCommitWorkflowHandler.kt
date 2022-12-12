@@ -271,7 +271,6 @@ internal class ChangesViewCommitWorkflowHandler(
   override fun projectClosingBeforeSave(project: Project) {
     saveStateBeforeDispose()
     disposeCommitOptions()
-    setCurrentChangeList(null)
   }
 
   // save state on other events - like "settings changed to use commit dialog"
