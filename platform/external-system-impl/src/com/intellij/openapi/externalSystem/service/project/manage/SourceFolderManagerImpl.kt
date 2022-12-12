@@ -9,7 +9,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.util.containers.prefix.map.PathPrefixTreeMap
+import com.intellij.openapi.file.converter.CanonicalPathPrefixTreeFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener
@@ -52,7 +52,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   private val moduleNamesToSourceFolderState: MultiMap<String, SourceFolderModelState> = MultiMap.create()
   private var isDisposed = false
   private val mutex = Any()
-  private var sourceFolders = PathPrefixTreeMap<SourceFolderModel>()
+  private var sourceFolders = CanonicalPathPrefixTreeFactory.createMap<SourceFolderModel>()
   private var sourceFoldersByModule = HashMap<String, ModuleModel>()
 
   private val operationsStates = mutableListOf<Future<*>>()
@@ -155,7 +155,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
 
     for (event in fileCreateEvents) {
       val allDescendantValues = synchronized(mutex) {
-        sourceFolders.getAllDescendantValues(VfsUtilCore.pathToUrl(event.path))
+        sourceFolders.getDescendantValues(VfsUtilCore.pathToUrl(event.path))
       }
 
       for (sourceFolder in allDescendantValues) {
@@ -253,9 +253,10 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
 
   override fun getState(): SourceFolderManagerState {
     synchronized(mutex) {
-      return SourceFolderManagerState(sourceFolders.valueSequence
+      return SourceFolderManagerState(sourceFolders.getValueSequence()
                                         .mapNotNull { model ->
-                                          val modelTypeName = dictionary.entries.find { it.value == model.type }?.key ?: return@mapNotNull null
+                                          val modelTypeName = dictionary.entries.find { it.value == model.type }?.key
+                                                              ?: return@mapNotNull null
                                           SourceFolderModelState(model.module.name,
                                                                  model.url,
                                                                  modelTypeName,
@@ -272,7 +273,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
       if (isDisposed) {
         return
       }
-      sourceFolders = PathPrefixTreeMap()
+      sourceFolders = CanonicalPathPrefixTreeFactory.createMap()
       sourceFoldersByModule = HashMap()
 
       if (state.sourceFolders.isEmpty()) {

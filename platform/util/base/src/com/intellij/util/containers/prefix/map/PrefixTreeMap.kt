@@ -1,172 +1,71 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers.prefix.map
 
-import com.intellij.util.containers.FList
-import java.util.*
-import kotlin.collections.component1
-import kotlin.collections.component2
+import org.jetbrains.annotations.ApiStatus
 
 /**
- * Map for fast finding values by the prefix of their keys
+ * @see com.intellij.util.containers.prefix.set.PrefixTreeSet
  */
-internal class PrefixTreeMap<K, V> : Map<List<K>, V> {
-  /**
-   * Gets all descendant entries for [key]
-   *
-   * @return descendant entries, [emptyList] if [key] not found
-   */
-  fun getAllDescendants(key: List<K>) = root.getAllDescendants(key.toFList()).toSet()
+@ApiStatus.NonExtendable
+interface PrefixTreeMap<Key, Value> : Map<Key, Value> {
+
+  fun getKeySequence(): Sequence<Key>
+
+  fun getValueSequence(): Sequence<Value>
+
+  fun getEntrySequence(): Sequence<Pair<Key, Value>>
 
   /**
-   * Gets all ancestor entries for [key]
+   * Returns descendant keys for [key].
    *
-   * @return ancestor entries, [emptyList] if [key] not found
+   * For example, we have a map of `[a,b,c]`, `[a,b,c,d]`, `[a,b,c,e]` and `[a,f,g]`.
+   * Then ancestor keys for [key]`=[a,b]` are `[a,b,c]`, `[a,b,c,d]` and `[a,b,c,e]`.
    */
-  fun getAllAncestors(key: List<K>) = root.getAllAncestors(key.toFList()).toList()
+  fun getDescendantKeys(key: Key): Set<Key>
 
-  fun getAllDescendantKeys(key: List<K>) = root.getAllDescendants(key.toFList()).map { it.key }.toSet()
-  fun getAllDescendantValues(key: List<K>) = root.getAllDescendants(key.toFList()).map { it.value }.toSet()
-  fun getAllAncestorKeys(key: List<K>) = root.getAllAncestors(key.toFList()).map { it.key }.toList()
-  fun getAllAncestorValues(key: List<K>) = root.getAllAncestors(key.toFList()).map { it.value }.toList()
+  fun getDescendantValues(key: Key): List<Value>
 
-  private val root = Node()
+  fun getDescendantEntries(key: Key): Map<Key, Value>
 
-  override val size get() = root.size
-  override val keys get() = root.getEntries().map { it.key }.toSet()
+  fun getDescendantKeySequence(key: Key): Sequence<Key>
 
-  override val values: List<V>
-    get() = valueSequence.toList()
+  fun getDescendantValueSequence(key: Key): Sequence<Value>
 
-  val valueSequence: Sequence<V>
-    get() = root.getEntries().map { it.value }
+  fun getDescendantEntrySequence(key: Key): Sequence<Pair<Key, Value>>
 
-  override val entries get() = root.getEntries().toSet()
-  override fun get(key: List<K>) = root.get(key.toFList())?.value?.getOrNull()
-  override fun containsKey(key: List<K>) = root.containsKey(key.toFList())
-  override fun containsValue(value: V) = root.getEntries().any { it.value == value }
-  override fun isEmpty() = root.isEmpty
+  /**
+   * Returns ancestor elements for [key].
+   *
+   * For example, we have a map of `[a,b,c]`, `[a,b,c,d]`, `[a,b,c,e]` and `[a,f,g]`.
+   * Then descendant keys for [key]`=[a,b,c,d,e]` are `[a,b,c]` and `[a,b,c,d]`.
+   */
+  fun getAncestorKeys(key: Key): Set<Key>
 
-  operator fun set(path: List<K>, value: V) = root.put(path.toFList(), value).getOrNull()
-  fun remove(path: List<K>) = root.remove(path.toFList()).getOrNull()
+  fun getAncestorValues(key: Key): List<Value>
 
-  private inner class Node {
-    private val children = LinkedHashMap<K, Node>()
+  fun getAncestorEntries(key: Key): Map<Key, Value>
 
-    val isLeaf get() = children.isEmpty()
-    val isEmpty get() = isLeaf && !value.isPresent
+  fun getAncestorKeySequence(key: Key): Sequence<Key>
 
-    var size: Int = 0
-      private set
+  fun getAncestorValueSequence(key: Key): Sequence<Value>
 
-    var value = Value.empty<V>()
-      private set
+  fun getAncestorEntrySequence(key: Key): Sequence<Pair<Key, Value>>
 
-    private fun calculateCurrentSize() =
-      children.values.sumOf { it.size } + if (value.isPresent) 1 else 0
+  /**
+   * Returns root keys in this map.
+   *
+   * For example, we have a map of `[a,b,c]`, `[a,b,c,d]`, `[a,b,c,e]` and `[a,f,g]`.
+   * Then root keys are `[a,b,c]` and `[a,f,g]`.
+   */
+  fun getRootKeys(): Set<Key>
 
-    private fun getAndSet(value: Value<V>) =
-      this.value.also {
-        this.value = value
-        size = calculateCurrentSize()
-      }
+  fun getRootValues(): List<Value>
 
-    fun put(path: FList<K>, value: V): Value<V> {
-      val (head, tail) = path
-      val child = children.getOrPut(head) { Node() }
-      val previousValue = when {
-        tail.isEmpty() -> child.getAndSet(Value.of(value))
-        else -> child.put(tail, value)
-      }
-      size = calculateCurrentSize()
-      return previousValue
-    }
+  fun getRootEntries(): Map<Key, Value>
 
-    fun remove(path: FList<K>): Value<V> {
-      val (head, tail) = path
-      val child = children[head] ?: return Value.EMPTY
-      val value = when {
-        tail.isEmpty() -> child.getAndSet(Value.EMPTY)
-        else -> child.remove(tail)
-      }
-      if (child.isEmpty) children.remove(head)
-      size = calculateCurrentSize()
-      return value
-    }
+  fun getRootKeySequence(): Sequence<Key>
 
-    fun containsKey(path: FList<K>): Boolean {
-      val (head, tail) = path
-      val child = children[head] ?: return false
-      return when {
-        tail.isEmpty() -> child.value.isPresent
-        else -> child.containsKey(tail)
-      }
-    }
+  fun getRootValueSequence(): Sequence<Value>
 
-    fun get(path: FList<K>): Node? {
-      val (head, tail) = path
-      val child = children[head] ?: return null
-      return when {
-        tail.isEmpty() -> child
-        else -> child.get(tail)
-      }
-    }
-
-    fun getEntries(): Sequence<Map.Entry<FList<K>, V>> {
-      return sequence {
-        if (value.isPresent) {
-          yield(AbstractMap.SimpleImmutableEntry(FList.emptyList(), value.get()))
-        }
-        for ((key, child) in children) {
-          for ((path, value) in child.getEntries()) {
-            yield(AbstractMap.SimpleImmutableEntry(path.prepend(key), value))
-          }
-        }
-      }
-    }
-
-    fun getAllAncestors(path: FList<K>): Sequence<Map.Entry<FList<K>, V>> {
-      return sequence {
-        if (value.isPresent) {
-          yield(java.util.Map.entry(FList.emptyList(), value.get()))
-        }
-        if (path.isEmpty()) return@sequence
-        val (head, tail) = path
-        val child = children[head] ?: return@sequence
-        for ((relative, value) in child.getAllAncestors(tail)) {
-          yield(java.util.Map.entry(relative.prepend(head), value))
-        }
-      }
-    }
-
-    fun getAllDescendants(path: FList<K>): Sequence<MutableMap.MutableEntry<List<K>, V>> {
-      return root.get(path)?.getEntries()?.map { java.util.Map.entry(path + it.key, it.value) } ?: emptySequence()
-    }
-  }
-
-  private class Value<out T : Any?> private constructor(val isPresent: Boolean, private val value: Any?) {
-    fun get(): T {
-      @Suppress("UNCHECKED_CAST")
-      if (isPresent) {
-        return value as T
-      }
-      throw NoSuchElementException("No value present")
-    }
-
-    fun getOrNull() = if (isPresent) get() else null
-
-    companion object {
-      val EMPTY = Value<Nothing>(false, null)
-
-      fun <T> empty() = EMPTY as Value<T>
-      fun <T> of(value: T) = Value<T>(true, value)
-    }
-  }
-
-  companion object {
-    private operator fun <E> FList<E>.component1() = head
-
-    private operator fun <E> FList<E>.component2() = tail
-
-    private fun <E> List<E>.toFList() = FList.createFromReversed(asReversed())
-  }
+  fun getRootEntrySequence(): Sequence<Pair<Key, Value>>
 }
