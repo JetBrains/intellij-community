@@ -537,12 +537,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     val activity = StartUpMeasurer.startActivity("project opening preparation")
 
     if (!checkTrustedState(projectStoreBaseDir)) {
-      LOG.info("Project is not trusted -> return null")
-      return null
+      LOG.info("Project is not trusted, aborting")
+      activity.end()
+      throw ProcessCanceledException()
     }
 
     val shouldOpenInChildProcess = IS_PER_PROJECT_INSTANCE_ENABLED && openProjects.isNotEmpty()
-
     if (shouldOpenInChildProcess) {
       openInChildProcess(projectStoreBaseDir)
       return null
