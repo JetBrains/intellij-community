@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
 @ApiStatus.Internal
@@ -50,6 +51,9 @@ object SuperDeclarationProvider {
 
                 return buildList {
                     for (superSymbol in superSymbols) {
+                        if (superSymbol is KtClassOrObjectSymbol && StandardClassIds.Any == superSymbol.classIdIfNonLocal) {
+                            continue
+                        }
                         when (val psi = superSymbol.psi) {
                             is KtClass -> add(SuperDeclaration.Class(psi.createSmartPointer()))
                             is KtNamedFunction -> add(SuperDeclaration.Function(psi.createSmartPointer()))

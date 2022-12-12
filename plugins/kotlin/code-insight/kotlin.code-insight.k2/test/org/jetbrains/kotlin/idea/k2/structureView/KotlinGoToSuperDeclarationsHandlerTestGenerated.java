@@ -48,6 +48,11 @@ public abstract class KotlinGoToSuperDeclarationsHandlerTestGenerated extends Ab
                 performTest();
             }
 
+            @TestMetadata("noSuper.kt")
+            public void testNoSuper() throws Exception {
+                performTest();
+            }
+
             @TestMetadata("singleSuperClass.kt")
             public void testSingleSuperClass() throws Exception {
                 performTest();
