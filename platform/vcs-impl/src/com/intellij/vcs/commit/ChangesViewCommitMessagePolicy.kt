@@ -39,7 +39,7 @@ internal class ChangesViewCommitMessagePolicy(project: Project,
 
   private fun getCommitMessage(changeList: LocalChangeList): String? {
     if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return null
-    return getCommitMessageFor(changeList)?.takeIf { it.isNotBlank() }
+    return getCommitMessageForList(changeList)?.takeIf { it.isNotBlank() }
            ?: getCommitMessageFromVcs(includedChanges())
            ?: vcsConfiguration.LAST_COMMIT_MESSAGE
   }

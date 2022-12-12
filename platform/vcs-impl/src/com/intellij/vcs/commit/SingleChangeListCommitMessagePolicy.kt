@@ -20,7 +20,7 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, initialComm
       return lastKnownComment
     }
 
-    val commitMessage = getCommitMessageFor(changeList)?.takeIf { it.isNotBlank() }
+    val commitMessage = getCommitMessageForList(changeList)?.takeIf { it.isNotBlank() }
     if (commitMessage != null) return commitMessage
 
     lastKnownComment = vcsConfiguration.LAST_COMMIT_MESSAGE
@@ -40,7 +40,7 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, initialComm
 
     messagesToSave[oldChangeList.name] = currentMessage.text
 
-    currentMessage.text = getCommitMessageFor(newChangeList) ?: lastKnownComment
+    currentMessage.text = getCommitMessageForList(newChangeList) ?: lastKnownComment
   }
 
   fun onDialogClosed(commitState: ChangeListCommitState, onBeforeCommit: Boolean) {
