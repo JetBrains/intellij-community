@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.uast.kotlin.PsiTypeConversionConfiguration
 import org.jetbrains.uast.kotlin.TypeOwnerKind
 import org.jetbrains.uast.kotlin.lz
 import org.jetbrains.uast.kotlin.toPsiType
@@ -34,8 +35,7 @@ internal class UastDescriptorLightMethod(
                                     bound.toPsiType(
                                         this@UastDescriptorLightMethod,
                                         context,
-                                        TypeOwnerKind.DECLARATION,
-                                        boxed = false
+                                        PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)
                                     ).safeAs<PsiClassType>()
                                         ?.let { addReference(it) }
                                 }
@@ -66,8 +66,7 @@ internal class UastDescriptorLightMethod(
                             receiver.type.toPsiType(
                                 this@UastDescriptorLightMethod,
                                 context,
-                                TypeOwnerKind.DECLARATION,
-                                boxed = false
+                                PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)
                             ),
                             parameterList,
                             receiver
@@ -82,8 +81,7 @@ internal class UastDescriptorLightMethod(
                             p.type.toPsiType(
                                 this@UastDescriptorLightMethod,
                                 context,
-                                TypeOwnerKind.DECLARATION,
-                                boxed = false
+                                PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)
                             ),
                             parameterList,
                             p
@@ -115,7 +113,11 @@ internal abstract class UastDescriptorLightMethodBase<T: CallableMemberDescripto
     }
 
     override fun getReturnType(): PsiType? {
-        return original.returnType?.toPsiType(this, context, TypeOwnerKind.DECLARATION, boxed = false)
+        return original.returnType?.toPsiType(
+            this,
+            context,
+            PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)
+        )
     }
 
     override fun getParent(): PsiElement? = containingClass
