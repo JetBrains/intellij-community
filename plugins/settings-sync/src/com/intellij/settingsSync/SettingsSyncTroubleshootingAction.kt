@@ -18,6 +18,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.settingsSync.CloudConfigServerCommunicator.Companion.getSnapshotFilePath
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.ui.components.JBLabel
@@ -61,7 +62,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
     try {
       val version =
         ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-          val fileVersion = remoteCommunicator.getLatestVersion()
+          val fileVersion = remoteCommunicator.getLatestVersion(getSnapshotFilePath())
           if (fileVersion == null) {
             null
           }
@@ -307,7 +308,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
         try {
           ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
             SettingsSyncSettings.getInstance().syncEnabled = false
-            remoteCommunicator.delete()
+            remoteCommunicator.deleteFile(getSnapshotFilePath())
           }, SettingsSyncBundle.message("troubleshooting.delete.file.from.server.progress.title"), false, project)
         }
         catch (e: Exception) {

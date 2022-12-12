@@ -85,7 +85,6 @@ internal class SettingsSyncPluginManager : Disposable {
 
   private fun getLineIfNotEmpty(prefix: String, plugins: Collection<*>) = if (plugins.isNotEmpty()) "$prefix: $plugins\n" else ""
   private fun getLineIfNotEmpty(prefix: String, plugins: Map<*, *>) = if (plugins.isNotEmpty()) "$prefix: $plugins\n" else ""
-  private fun enabledOrDisabled(value: Boolean?) = if (value == null) "null" else if (value) "enabled" else "disabled"
 
   private fun getPluginData(plugin: IdeaPluginDescriptor, explicitEnabled: Boolean? = null): PluginData {
     val isEnabled = if (explicitEnabled != null) {

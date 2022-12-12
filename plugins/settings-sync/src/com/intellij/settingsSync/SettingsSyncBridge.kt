@@ -47,8 +47,15 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
   private val settingsChangeListener = SettingsChangeListener { event ->
     LOG.debug("Adding settings changed event $event to the queue")
-    pendingEvents.add(event)
-    queue.queue(updateObject)
+    if (isEventExclusive(event)) { // such events will be processed separately from all others
+      queue.queue(Update.create(event) {
+        processExclusiveEvent(event)
+      })
+    }
+    else {
+      pendingEvents.add(event)
+      queue.queue(updateObject)
+    }
   }
 
   @RequiresBackgroundThread
@@ -76,6 +83,8 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     val previousState = collectCurrentState()
 
     settingsLog.logExistingSettings()
+
+    SettingsSynchronizer.checkCrossIdeSyncStatusOnServer(remoteCommunicator)
 
     try {
       when (initMode) {
@@ -148,6 +157,28 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     object PushToServer : InitMode()
   }
 
+  private fun isEventExclusive(event: SyncSettingsEvent): Boolean {
+    return event is SyncSettingsEvent.CrossIdeSyncStateChanged
+  }
+
+  private fun processExclusiveEvent(event: SyncSettingsEvent) {
+    when (event) {
+      is SyncSettingsEvent.CrossIdeSyncStateChanged -> {
+        LOG.info("Cross-ide sync state changed to: " + event.isCrossIdeSyncEnabled)
+        if (event.isCrossIdeSyncEnabled) {
+          remoteCommunicator.createFile(CROSS_IDE_SYNC_MARKER_FILE, "")
+        }
+        else {
+          remoteCommunicator.deleteFile(CROSS_IDE_SYNC_MARKER_FILE)
+        }
+        forcePushToCloud(settingsLog.getMasterPosition())
+      }
+      else -> {
+        LOG.error("Unexpected event $event. It should be processed within ordinary events")
+      }
+    }
+  }
+
   @RequiresBackgroundThread
   private fun processPendingEvents() {
     val previousState = collectCurrentState()
@@ -182,6 +213,9 @@ class SettingsSyncBridge(parentDisposable: Disposable,
             stopSyncingAndRollback(previousState)
           }
           SyncSettingsEvent.PingRequest -> {}
+          is SyncSettingsEvent.CrossIdeSyncStateChanged -> {
+            LOG.error("Unexpected event $event. It should have been processed separately")
+          }
         }
       }
 

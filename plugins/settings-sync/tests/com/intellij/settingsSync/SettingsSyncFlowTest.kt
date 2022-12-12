@@ -353,7 +353,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       fileState("options/editor.xml", "Editor Initial")
     }
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
-    remoteCommunicator.delete()
+    remoteCommunicator.deleteAllFiles()
 
     SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
     bridge.waitForAllExecuted()

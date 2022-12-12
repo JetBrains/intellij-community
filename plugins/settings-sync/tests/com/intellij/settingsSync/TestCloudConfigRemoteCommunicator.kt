@@ -24,6 +24,10 @@ internal class TestCloudConfigRemoteCommunicator : TestRemoteCommunicator() {
 
   override fun receiveUpdates(): UpdateResult = cloudConfigServerCommunicator.receiveUpdates()
 
+  override fun deleteAllFiles() {
+    client.delete("*")
+  }
+
   override fun getVersionOnServer(): SettingsSnapshot? {
     val updateResult = receiveUpdates()
     return when (updateResult) {
@@ -49,5 +53,15 @@ internal class TestCloudConfigRemoteCommunicator : TestRemoteCommunicator() {
     return result
   }
 
-  override fun delete() = cloudConfigServerCommunicator.delete()
+  override fun createFile(filePath: String, content: String) {
+    cloudConfigServerCommunicator.createFile(filePath, content)
+  }
+
+  override fun isFileExists(filePath: String): Boolean {
+    return cloudConfigServerCommunicator.isFileExists(filePath)
+  }
+
+  override fun deleteFile(filePath: String) {
+    cloudConfigServerCommunicator.deleteFile(filePath)
+  }
 }
