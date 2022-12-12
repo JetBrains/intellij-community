@@ -8,6 +8,7 @@ import com.intellij.nastradamus.model.*
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.tool.HttpClient
 import com.intellij.tool.mapConcurrently
+import com.intellij.tool.withErrorThreshold
 import com.intellij.tool.withRetry
 import kotlinx.coroutines.runBlocking
 import org.apache.http.client.methods.HttpPost
@@ -63,17 +64,19 @@ class NastradamusClient(
       println("Requesting $uri with payload $stringJson")
     }
 
-    withRetry {
-      HttpClient.sendRequest(httpPost) { response ->
-        if (response.statusLine.statusCode != 200) {
-          if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
-            System.err.apply {
-              println(response)
-              println(response.entity.content.reader().readText())
+    withErrorThreshold("NastradamusClient") {
+      withRetry {
+        HttpClient.sendRequest(httpPost) { response ->
+          if (response.statusLine.statusCode != 200) {
+            if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
+              System.err.apply {
+                println(response)
+                println(response.entity.content.reader().readText())
+              }
             }
-          }
 
-          throw RuntimeException("Couldn't store test run results on Nastradamus")
+            throw RuntimeException("Couldn't store test run results on Nastradamus")
+          }
         }
       }
     }
@@ -101,24 +104,32 @@ class NastradamusClient(
       println("Requesting $uri with payload $stringJson")
     }
 
-    val jsonTree = withRetry {
-      HttpClient.sendRequest(httpPost) {
-        jacksonMapper.readTree(it.entity.content)
+    return withErrorThreshold("NastradamusClient") {
+      val jsonTree = withRetry {
+        HttpClient.sendRequest(httpPost) {
+          jacksonMapper.readTree(it.entity.content)
+        }
+      }
+
+      requireNotNull(jsonTree) { "Received data from $uri must not be null" }
+
+      if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
+        println("Received data from $uri: $jsonTree")
+      }
+
+      try {
+        jsonTree.fields().asSequence()
+          .single { it.key == "sorted_tests" }.value
+          .get(TestCaseLoader.TEST_RUNNER_INDEX.toString())
+          .map {
+            TestCaseEntity(it.findValue("name").asText())
+          }
+      }
+      catch (e: Throwable) {
+        System.err.println("Response from $uri with failure: $jsonTree")
+        throw e
       }
     }
-
-    requireNotNull(jsonTree) { "Received data from $uri must not be null" }
-
-    if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
-      println("Received data from $uri: $jsonTree")
-    }
-
-    return jsonTree.fields().asSequence()
-      .single { it.key == "sorted_tests" }.value
-      .get(TestCaseLoader.TEST_RUNNER_INDEX.toString())
-      .map {
-        TestCaseEntity(it.findValue("name").asText())
-      }
   }
 
   /**
@@ -176,22 +187,30 @@ class NastradamusClient(
     println("Getting sorted (& bucketed) test classes from Nastradamus ...")
 
     return try {
-      val changesets = getTeamCityChangesDetails()
-      val cases = unsortedClasses.map { TestCaseEntity(it.name) }
-      val sortedCases = sendSortingRequest(SortRequestEntity(buildInfo = getBuildInfo(), changes = changesets, tests = cases))
+      withErrorThreshold("NastradamusClient") {
+        try {
+          val changesets = getTeamCityChangesDetails()
+          val cases = unsortedClasses.map { TestCaseEntity(it.name) }
+          val sortedCases = sendSortingRequest(SortRequestEntity(buildInfo = getBuildInfo(), changes = changesets, tests = cases))
 
-      var rank = 1
-      val ranked = sortedCases.associate { case -> case.name to rank++ }
-      sortedClassesCachedResult = unsortedClasses.associateWith { clazz -> ranked[clazz.name] ?: Int.MAX_VALUE }
-      println("Fetching sorted test classes from Nastradamus completed")
-      sortedClassesCachedResult
+          var rank = 1
+          val ranked = sortedCases.associate { case -> case.name to rank++ }
+          sortedClassesCachedResult = unsortedClasses.associateWith { clazz -> ranked[clazz.name] ?: Int.MAX_VALUE }
+          println("Fetching sorted test classes from Nastradamus completed")
+          sortedClassesCachedResult
+        }
+        catch (e: Throwable) {
+          e.printStackTrace()
+          throw e
+        }
+      }
     }
     catch (e: Throwable) {
       // fallback in case of any failure (just to get aggregator running)
-      System.err.println("Failure during sorting test classes via Nastradamus. Fallback to simple reverse sorting")
-      System.err.println(e)
+      System.err.println(
+        "Failure during sorting test classes via Nastradamus. Fallback to simple natural sorting. For more details take a look at failures above in the log")
       var rank = 1
-      unsortedClasses.sortedByDescending { it.name }.associateWith { rank++ }
+      unsortedClasses.sortedBy { it.name }.associateWith { rank++ }
     }
   }
 

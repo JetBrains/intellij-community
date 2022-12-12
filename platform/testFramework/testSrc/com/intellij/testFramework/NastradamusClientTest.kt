@@ -6,6 +6,7 @@ import com.intellij.nastradamus.NastradamusClient
 import com.intellij.nastradamus.model.*
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.tool.Cache
+import com.intellij.tool.withErrorThreshold
 import com.intellij.util.io.readText
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -78,15 +79,18 @@ class NastradamusClientTest {
     .addHeader("Content-Type", "application/json")
 
 
-  @Test
-  fun collectingChangesetOnTC() {
+  private fun setFakeResponsesForTeamCityChanges() {
     tcClient = getTeamCityClientWithMock(Pair("teamcity.build.id", "225659992"))
 
     tcMockServer.enqueue(getOkResponse("teamcity/Changes.json"))
     tcMockServer.enqueue(getOkResponse("teamcity/Change_Personal_789287.json"))
     tcMockServer.enqueue(getOkResponse("teamcity/Change_85867377.json"))
     tcMockServer.enqueue(getOkResponse("teamcity/Change_85866796.json"))
+  }
 
+  @Test
+  fun collectingChangesetOnTC() {
+    setFakeResponsesForTeamCityChanges()
     nastradamus = getNastradamusClientWithMock(teamCityClient = tcClient)
     val changesEntities = nastradamus.getTeamCityChangesDetails()
 
@@ -189,6 +193,23 @@ class NastradamusClientTest {
 
     Assert.assertEquals("Payload is in wrong format", jacksonMapper.writeValueAsString(sortEntity), request.body.readUtf8())
   }
+
+  @Test(expected = RuntimeException::class)
+  fun errorThresholdTest() {
+
+    (1..3).forEach {
+      try {
+        withErrorThreshold("TestErrorThreshold", errorThreshold = 3) {
+          throw Exception("Badums")
+        }
+      }
+      catch (e: Throwable) {
+      }
+    }
+
+    withErrorThreshold("TestErrorThreshold", errorThreshold = 3) { }
+  }
+
 
   @Test
   @Ignore("Do not use dedicated instance. Use mocks / spin up a new server")

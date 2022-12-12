@@ -23,7 +23,7 @@ suspend fun <T> withRetryAsync(retries: Long = 3,
       t.printStackTrace()
 
       if (failureCount < retries) {
-        System.err.println("Retrying in 10 sec ...")
+        System.err.println("Retrying in $delay ...")
         delay(delay)
       }
     }

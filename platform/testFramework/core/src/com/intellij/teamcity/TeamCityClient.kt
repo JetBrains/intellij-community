@@ -7,6 +7,7 @@ import com.intellij.TestCaseLoader
 import com.intellij.nastradamus.model.ChangeEntity
 import com.intellij.tool.Cache
 import com.intellij.tool.HttpClient
+import com.intellij.tool.withErrorThreshold
 import com.intellij.tool.withRetry
 import org.apache.http.HttpRequest
 import org.apache.http.auth.UsernamePasswordCredentials
@@ -100,16 +101,19 @@ class TeamCityClient(
       println("Request to TeamCity: $fullUrl")
     }
 
-    val result = withRetry {
-      HttpClient.sendRequest(request = request) {
-        if (it.statusLine.statusCode != 200) {
-          System.err.println(InputStreamReader(it.entity.content).readText())
-          throw RuntimeException("TeamCity returned not successful status code ${it.statusLine.statusCode}")
-        }
+    val result =
+      withErrorThreshold("TeamCityClient") {
+        withRetry {
+          HttpClient.sendRequest(request = request) {
+            if (it.statusLine.statusCode != 200) {
+              System.err.println(InputStreamReader(it.entity.content).readText())
+              throw RuntimeException("TeamCity returned not successful status code ${it.statusLine.statusCode}")
+            }
 
-        jacksonMapper.readTree(it.entity.content)
+            jacksonMapper.readTree(it.entity.content)
+          }
+        }
       }
-    }
 
     return requireNotNull(result) { "Request ${request.uri} failed" }
   }
