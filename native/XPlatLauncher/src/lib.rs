@@ -56,12 +56,7 @@ use crate::remote_dev::RemoteDevLaunchConfiguration;
 pub fn main_lib() {
     let show_error_ui = match env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR) {
         Ok(_) => false,
-        Err(_) => {
-            let cmd_args: Vec<String> = env::args().collect();
-            let is_remote_dev = cmd_args.len() > 1 && cmd_args[1] == "--remote-dev";
-
-            !is_remote_dev
-        }
+        Err(_) => !is_remote_dev(),
     };
 
     let main_result = main_impl();

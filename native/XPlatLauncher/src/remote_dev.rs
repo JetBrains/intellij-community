@@ -7,14 +7,15 @@ use std::path::{Path, PathBuf};
 use log::{debug, info};
 use path_absolutize::Absolutize;
 use anyhow::{bail, Context, Result};
-use utils::{get_path_from_env_var, PathExt, read_file_to_end};
+use utils::{get_current_exe, get_path_from_env_var, PathExt, read_file_to_end};
 use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_logs_home, LaunchConfiguration};
 
 pub struct RemoteDevLaunchConfiguration {
     default: DefaultLaunchConfiguration,
     config_dir: PathBuf,
     system_dir: PathBuf,
-    logs_dir: Option<PathBuf>
+    logs_dir: Option<PathBuf>,
+    ij_starter_command: String,
 }
 
 impl LaunchConfiguration for RemoteDevLaunchConfiguration {
@@ -49,11 +50,21 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
 
     #[cfg(any(target_os = "macos", target_os = "windows"))]
     fn prepare_for_launch(&self) -> Result<PathBuf> {
+        init_env_vars()?;
+        let project_trust_file = self.init_project_trust_file_if_needed()?;
+        debug!("Project trust file is: {:?}", project_trust_file);
+
+        self.set_ij_stored_host_password_if_needed()?;
+
         self.default.prepare_for_launch()
     }
 
     #[cfg(target_os = "linux")]
     fn prepare_for_launch(&self) -> Result<PathBuf> {
+        init_env_vars()?;
+        self.init_project_trust_file_if_needed()?;
+        self.set_ij_stored_host_password_if_needed()?;
+
         // TODO: ld patching
         self.default.prepare_for_launch()
     }
@@ -258,12 +269,14 @@ impl RemoteDevLaunchConfiguration {
         let config_dir = default.prepare_host_config_dir(&per_project_config_dir_name)?;
         let system_dir = default.prepare_host_system_dir(&per_project_config_dir_name)?;
         let logs_dir = default.prepare_host_logs_dir(&per_project_config_dir_name)?;
+        let ij_starter_command = default.args[0].to_string();
 
         let config = RemoteDevLaunchConfiguration {
             default,
             config_dir,
             system_dir,
-            logs_dir
+            logs_dir,
+            ij_starter_command,
         };
 
         Ok(config)
@@ -377,6 +390,59 @@ impl RemoteDevLaunchConfiguration {
         Ok(path)
     }
 
+    fn init_project_trust_file_if_needed(&self) -> Result<PathBuf> {
+        let ij_starter_command = &self.ij_starter_command;
+        let ij_host_config_dir = &self.config_dir;
+        let trust_file_path = ij_host_config_dir.join("accepted-trust-warning");
+
+        if ij_starter_command != "cwmHostNoLobby" {
+            return Ok(trust_file_path)
+        }
+
+        if !trust_file_path.exists() &&
+            std::env::var("REMOTE_DEV_TRUST_PROJECTS").is_err() &&
+            std::env::var("REMOTE_DEV_NON_INTERACTIVE").is_err() {
+
+            create_trust_file(&trust_file_path)
+                .context("Failed to create a trust file")?;
+        }
+
+        Ok(trust_file_path)
+    }
+
+    fn set_ij_stored_host_password_if_needed(&self) -> Result<()> {
+        let ij_host_config_dir = &self.config_dir;
+        let ij_stored_host_passwd = ij_host_config_dir.join("cwm-passwd");
+
+        if ij_stored_host_passwd.exists() {
+            info!("{:?} already exists", ij_stored_host_passwd);
+            return Ok(());
+        }
+
+        if std::env::var("CWM_NO_PASSWORD").is_ok()
+            && std::env::var("CWM_HOST_PASSWORD").is_ok()
+            && std::env::var("REMOTE_DEV_NON_INTERACTIVE").is_ok() {
+
+            info!("No password required. As CWM_NO_PASSWORD, CWM_HOST_PASSWORD and REMOTE_DEV_NON_INTERACTIVE are set");
+            return Ok(());
+        }
+
+        info!(
+            "\n***\n\
+            Connecting via Lobby Server requires a password for security.\n\
+            You may also specify this password by setting CWM_HOST_PASSWORD environment variable or by putting it into {:?}\n\
+            Disable password by setting REMOTE_DEV_NON_INTERACTIVE environment variable to any non-empty value\n\n\
+            Enter a password that will be used to connect to the host\n", ij_stored_host_passwd
+        );
+
+        let password = rpassword::read_password()?;
+        std::env::set_var("CWM_HOST_PASSWORD", &password);
+
+        info!("Delete {:?} and re-run host if you want to change provided password.", ij_stored_host_passwd);
+
+        Ok(())
+    }
+
     #[cfg(any(target_os = "macos", target_os = "windows"))]
     pub fn setup_font_config() -> Result<()> {
         Ok(())
@@ -401,4 +467,65 @@ pub struct RemoteDevArgs {
 
 fn print_help() {
     todo!("")
+}
+
+fn init_env_vars() -> Result<()> {
+    let remote_dev_launcher_name_for_usage = get_remote_dev_launcher_name_for_usage()?;
+
+    let remote_dev_original_env_vars = vec![
+        ("INTELLIJ_ORIGINAL_ENV_ORG_JETBRAINS_PROJECTOR_SERVER_ENABLE_WS_SERVER", "ORG_JETBRAINS_PROJECTOR_SERVER_ENABLE_WS_SERVER"),
+        ("INTELLIJ_ORIGINAL_ENV_ORG_JETBRAINS_PROJECTOR_SERVER_ATTACH_TO_IDE", "ORG_JETBRAINS_PROJECTOR_SERVER_ATTACH_TO_IDE"),
+    ];
+
+    let remote_dev_env_vars = vec![
+        ("IDEA_RESTART_VIA_EXIT_CODE", "88"),
+        ("ORG_JETBRAINS_PROJECTOR_SERVER_ENABLE_WS_SERVER", "false"),
+        ("ORG_JETBRAINS_PROJECTOR_SERVER_ATTACH_TO_IDE", "false"),
+        ("REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE", &remote_dev_launcher_name_for_usage),
+    ];
+
+    for (env_var, original_env_var) in remote_dev_original_env_vars {
+        match std::env::var(original_env_var) {
+            Ok(original_env_var_value) => std::env::set_var(env_var, &original_env_var_value),
+            Err(_) => debug!("Original env var '{original_env_var}' is empty. Skip"),
+        }
+    }
+
+    for (env_var, value) in remote_dev_env_vars {
+        match std::env::var(env_var) {
+            Ok(value) => bail!("'{env_var}' has already been assigned the value {value}"),
+            Err(_) => std::env::set_var(env_var, value),
+        }
+    }
+
+    return Ok(())
+}
+
+fn create_trust_file(trust_file_path: &PathBuf) -> Result<()> {
+    info!(
+            "\nOpening the project with this launcher will trust it and execute build scripts in it.\n\
+            You can read more about this at https://www.jetbrains.com/help/idea/project-security.html\n\
+            This warning is only shown once per project\n\
+            Run ./remote-dev-server --help to see how to automate this check\n\n\
+            Press ENTER to continue, or Ctrl-C to abort execution\n"
+        );
+
+    let mut input = String::new();
+    let _i = std::io::stdin().read_line(&mut input).context("Failed to read from stdin")?;
+
+    let file = File::create(&trust_file_path).context("Failed to create trust file")?;
+    debug!("File '{:?}' has been created", file);
+
+    Ok(())
+}
+
+fn get_remote_dev_launcher_name_for_usage() -> Result<String>{
+    let current_exe = get_current_exe();
+    let remote_dev_launcher_name_for_usage_with_exit_code_check = current_exe.file_name()
+        .context("Failed to get current filename")?.to_os_string();
+
+    let result = remote_dev_launcher_name_for_usage_with_exit_code_check.into_string()
+        .expect("Failed to convert current executable name to string");
+
+    Ok(result)
 }
