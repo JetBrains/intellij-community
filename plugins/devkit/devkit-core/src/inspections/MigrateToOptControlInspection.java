@@ -38,6 +38,9 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
     if (!method.getUastParameters().isEmpty()) return null;
     PsiClass psiClass = method.getJavaPsi().getContainingClass();
     if (psiClass == null || !InheritanceUtil.isInheritor(psiClass, "com.intellij.codeInspection.InspectionProfileEntry")) return null;
+    Language language = psiClass.getLanguage();
+    // Currently only Java and Kotlin are supported
+    if (!language.equals(JavaLanguage.INSTANCE) && !language.getID().equals("kotlin")) return null;
     UExpression body = method.getUastBody();
     if (body == null) return null;
     OptPane pane = createOptPane(body);
