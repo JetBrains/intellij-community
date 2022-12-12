@@ -10,6 +10,7 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,7 @@ public class InspectionOptionsPanel extends JPanel implements InspectionOptionCo
 
   public static InspectionOptionsPanel singleCheckBox(@NotNull InspectionProfileEntry owner,
                                                       @NotNull @NlsContexts.Checkbox String label,
-                                                      @NonNls String property) {
+                                                      @Language("jvm-field-name") @NonNls String property) {
     var panel = new InspectionOptionsPanel(owner);
     panel.addCheckbox(label, property);
     return panel;
@@ -103,11 +104,11 @@ public class InspectionOptionsPanel extends JPanel implements InspectionOptionCo
     addRow(label, component);
   }
 
-  public void addCheckbox(@NotNull @NlsContexts.Checkbox String label, @NotNull @NonNls String property) {
+  public void addCheckbox(@NotNull @NlsContexts.Checkbox String label, @Language("jvm-field-name") @NotNull @NonNls String property) {
     addCheckboxEx(label, property);
   }
 
-  public JCheckBox addCheckboxEx(@NotNull @NlsContexts.Checkbox String label, @NotNull @NonNls String property) {
+  public JCheckBox addCheckboxEx(@NotNull @NlsContexts.Checkbox String label, @Language("jvm-field-name") @NotNull @NonNls String property) {
     if (myOptionAccessor == null) {
       throw new IllegalStateException("No option accessor or owner specified in constructor call");
     }
@@ -120,7 +121,7 @@ public class InspectionOptionsPanel extends JPanel implements InspectionOptionCo
   }
 
   @Override
-  public @NotNull HtmlChunk getLabelForCheckbox(@NotNull @NonNls String property) {
+  public @NotNull HtmlChunk getLabelForCheckbox(@Language("jvm-field-name") @NotNull @NonNls String property) {
     String label = myCheckBoxLabels.get(property);
     if (label == null) {
       throw new IllegalArgumentException("Invalid property name: " + property);
@@ -128,7 +129,7 @@ public class InspectionOptionsPanel extends JPanel implements InspectionOptionCo
     return HtmlChunk.text(label);
   }
 
-  public JCheckBox addDependentCheckBox(@NotNull @NlsContexts.Checkbox String label, @NotNull @NonNls String property,
+  public JCheckBox addDependentCheckBox(@NotNull @NlsContexts.Checkbox String label, @Language("jvm-field-name") @NotNull @NonNls String property,
                                         @NotNull JCheckBox controller) {
     final JCheckBox checkBox = addCheckboxEx(label, property);
     checkBox.setBorder(new EmptyBorder(new JBInsets(0, 20, 0, 0)));

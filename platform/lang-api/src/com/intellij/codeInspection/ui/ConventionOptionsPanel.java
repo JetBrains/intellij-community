@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,15 +26,19 @@ public class ConventionOptionsPanel extends InspectionOptionsPanel {
 
   private static final Logger LOG = Logger.getInstance(ConventionOptionsPanel.class);
   public ConventionOptionsPanel(@NotNull final InspectionProfileEntry owner,
-                                @NonNls final String minLengthProperty, @NonNls final String maxLengthProperty,
-                                @NonNls final String regexProperty, @NonNls final String regexPatternProperty,
+                                @Language("jvm-field-name") @NonNls final String minLengthProperty,
+                                @Language("jvm-field-name") @NonNls final String maxLengthProperty,
+                                @Language("jvm-field-name") @NonNls final String regexProperty,
+                                @Language("jvm-field-name") @NonNls final String regexPatternProperty,
                                 JComponent... extraOptions) {
     this((Object)owner, minLengthProperty, maxLengthProperty, regexProperty, regexPatternProperty, extraOptions);
   }
 
   public ConventionOptionsPanel(@NotNull final Object owner,
-                                @NonNls final String minLengthProperty, @NonNls final String maxLengthProperty,
-                                @NonNls final String regexProperty, @NonNls final String regexPatternProperty,
+                                @Language("jvm-field-name") @NonNls final String minLengthProperty,
+                                @Language("jvm-field-name") @NonNls final String maxLengthProperty,
+                                @Language("jvm-field-name") @NonNls final String regexProperty,
+                                @Language("jvm-field-name") @NonNls final String regexPatternProperty,
                                 JComponent... extraOptions) {
     final JLabel patternLabel = new JLabel(InspectionsBundle.message("label.pattern"));
     final JLabel minLengthLabel = new JLabel(InspectionsBundle.message("label.min.length"));
