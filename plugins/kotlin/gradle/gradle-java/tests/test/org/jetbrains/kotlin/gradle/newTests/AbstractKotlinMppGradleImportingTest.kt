@@ -7,9 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.VfsTestUtil
-import org.jetbrains.kotlin.gradle.newTests.testFeatures.GradleProjectsPublishingDsl
-import org.jetbrains.kotlin.gradle.newTests.testFeatures.GradleProjectsPublishingTestsFeature
-import org.jetbrains.kotlin.gradle.newTests.testFeatures.WorkspaceFilteringDsl
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.*
 import org.jetbrains.kotlin.gradle.newTests.testServices.*
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
@@ -19,11 +17,12 @@ import org.junit.Rule
 import org.junit.runner.RunWith
 import org.junit.runners.BlockJUnit4ClassRunner
 import java.io.File
+import java.io.PrintStream
 
 @RunWith(BlockJUnit4ClassRunner::class)
 abstract class AbstractKotlinMppGradleImportingTest(
     testDataRoot: String
-) : GradleImportingTestCase(), WorkspaceFilteringDsl, GradleProjectsPublishingDsl {
+) : GradleImportingTestCase(), WorkspaceFilteringDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl {
     val importedProject: Project
         get() = myProject
     val importedProjectRoot: VirtualFile
@@ -31,8 +30,9 @@ abstract class AbstractKotlinMppGradleImportingTest(
 
     val kotlinTestPropertiesService: KotlinTestPropertiesService = KotlinTestPropertiesServiceImpl()
     private val gradleProjectsPublishingService = GradleProjectsPublishingService
+    private val gradleProjectLinkingService = GradleProjectLinkingService
 
-    open fun TestConfigurationDslScope.defaultTestConfiguration() { }
+    open fun TestConfigurationDslScope.defaultTestConfiguration() {}
 
     @get:Rule
     val workspaceModelTestingService = WorkspaceModelTestingService()
@@ -54,6 +54,10 @@ abstract class AbstractKotlinMppGradleImportingTest(
 
     private fun doTest(configuration: TestConfiguration) {
         configureByFiles(testDataDirectoryService.testDataDirectory())
+
+        configuration.getConfiguration(LinkedProjectPathsTestsFeature).linkedProjectPaths.forEach {
+            gradleProjectLinkingService.linkGradleProject(it, importedProjectRoot.toNioPath(), importedProject)
+        }
 
         configuration.getConfiguration(GradleProjectsPublishingTestsFeature).publishedSubprojectNames.forEach {
             gradleProjectsPublishingService.publishSubproject(it, importedProjectRoot.toNioPath(), importedProject)
@@ -117,5 +121,9 @@ abstract class AbstractKotlinMppGradleImportingTest(
         return ImportSpecBuilder(super.createImportSpec())
             .createDirectoriesForEmptyContentRoots()
             .build()
+    }
+
+    override fun printOutput(stream: PrintStream, text: String) {
+        stream.println(text)
     }
 }
