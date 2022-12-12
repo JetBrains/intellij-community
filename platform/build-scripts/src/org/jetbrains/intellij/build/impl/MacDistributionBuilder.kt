@@ -345,9 +345,13 @@ class MacDistributionBuilder(override val context: BuildContext,
       "bin/fsnotifier",
       "bin/printenv",
       "bin/restarter",
-      "bin/repair",
       "MacOS/*"
     )
+
+    if (!context.isStepSkipped(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
+      executableFilePatterns = executableFilePatterns.add("bin/repair")
+    }
+
     if (includeRuntime) {
       executableFilePatterns = executableFilePatterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS))
     }
