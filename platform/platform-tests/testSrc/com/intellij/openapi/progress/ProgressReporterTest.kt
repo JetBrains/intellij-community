@@ -761,7 +761,7 @@ class ProgressReporterTest {
   }
 }
 
-private fun progressReporterTest(
+internal fun progressReporterTest(
   vararg expectedUpdates: ProgressState,
   action: suspend CoroutineScope.() -> Unit,
 ) = timeoutRunBlocking {
