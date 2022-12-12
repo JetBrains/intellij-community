@@ -13,6 +13,7 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestProxyRoot;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.application.ReadAction;
@@ -107,7 +108,9 @@ public class TestDiffRequestProcessor {
     }
 
     private @Nullable TestDiffProvider getTestDiffProvider(@NotNull AbstractTestProxy testProxy) {
-      Location<?> loc = testProxy.getLocation(myProject, testProxy.getRoot().getTestConsoleProperties().getScope());
+      TestProxyRoot testRoot = AbstractTestProxy.getTestRoot(testProxy);
+      if (testRoot == null) return null;
+      Location<?> loc = testProxy.getLocation(myProject, testRoot.getTestConsoleProperties().getScope());
       if (loc == null) return null;
       return TestDiffProvider.TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION.forLanguage(loc.getPsiElement().getLanguage());
     }
