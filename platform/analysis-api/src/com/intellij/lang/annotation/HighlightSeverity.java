@@ -120,7 +120,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
    * Standard severity levels.
    */
   public static final HighlightSeverity[] DEFAULT_SEVERITIES =
-    {INFORMATION, GENERIC_SERVER_ERROR_OR_WARNING, INFO, WEAK_WARNING, WARNING, ERROR};
+    {INFORMATION, TEXT_ATTRIBUTES, GENERIC_SERVER_ERROR_OR_WARNING, INFO, WEAK_WARNING, WARNING, ERROR};
 
   /**
    * Creates a new highlighting severity level with the specified name and value.
