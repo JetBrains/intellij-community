@@ -224,15 +224,13 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       PsiExpression equalTo = PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]);
 
       //case: "foo".equals(s.toLowerCase())
-      if (equalTo instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression equalsToCallExpression = (PsiMethodCallExpression)equalTo;
-        if (isChangeCaseCall(equalsToCallExpression, call.getMethodExpression().getQualifierExpression())) {
-          PsiElement anchor = equalsToCallExpression.getMethodExpression().getReferenceNameElement();
-          if (anchor == null) {
-            return null;
-          }
-          return createChangeCaseProblem(equalsToCallExpression, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.RIGHT);
+      if (equalTo instanceof PsiMethodCallExpression equalsToCallExpression &&
+          isChangeCaseCall(equalsToCallExpression, call.getMethodExpression().getQualifierExpression())) {
+        PsiElement anchor = equalsToCallExpression.getMethodExpression().getReferenceNameElement();
+        if (anchor == null) {
+          return null;
         }
+        return createChangeCaseProblem(equalsToCallExpression, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.RIGHT);
       }
 
       PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
@@ -250,11 +248,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       }
 
       //case: text1.toLowerCase().equals(text2.toLowerCase())
-      if (equalTo instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression secondCall = (PsiMethodCallExpression)equalTo;
-        if (isEqualChangeCaseCall(qualifierCall, secondCall)) {
-          return createChangeCaseProblem(secondCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.BOTH);
-        }
+      if (equalTo instanceof PsiMethodCallExpression secondCall && isEqualChangeCaseCall(qualifierCall, secondCall)) {
+        return createChangeCaseProblem(secondCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.BOTH);
       }
 
       return null;
@@ -308,11 +303,10 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         if (lengthMatches) {
           PsiElement anchor = qualifierCall.getMethodExpression().getReferenceNameElement();
           if (anchor != null) {
-            if (equalTo instanceof PsiLiteralExpression) {
-              final Object equalsValue = ((PsiLiteralExpression)equalTo).getValue();
-              if (equalsValue instanceof String && StringUtil.length((String)equalsValue) == 1) {
-                return createSubstringToCharAtProblemDescriptor(call, anchor);
-              }
+            if (equalTo instanceof PsiLiteralExpression literal &&
+                literal.getValue() instanceof String str &&
+                StringUtil.length(str) == 1) {
+              return createSubstringToCharAtProblemDescriptor(call, anchor);
             }
             RemoveRedundantSubstringFix fix = new RemoveRedundantSubstringFix(isLengthOf(args[1], receiver) ? "endsWith" : "startsWith");
             return myManager.createProblemDescriptor(anchor, (TextRange)null,
@@ -446,12 +440,9 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       PsiExpression secondArg = call.getArgumentList().getExpressions()[1];
       PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(secondArg);
       // s.lastIndexOf(..., s.length()) or s.lastIndexOf(..., s.length() - 1)
-      if (stripped instanceof PsiBinaryExpression) {
-        PsiBinaryExpression binOp = (PsiBinaryExpression)stripped;
-        if (binOp.getOperationTokenType() == JavaTokenType.MINUS &&
-            ExpressionUtils.isLiteral(PsiUtil.skipParenthesizedExprDown(binOp.getROperand()), 1)) {
-          stripped = binOp.getLOperand();
-        }
+      if (stripped instanceof PsiBinaryExpression binOp && binOp.getOperationTokenType() == JavaTokenType.MINUS &&
+          ExpressionUtils.isLiteral(PsiUtil.skipParenthesizedExprDown(binOp.getROperand()), 1)) {
+        stripped = binOp.getLOperand();
       }
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (!isLengthOf(stripped, qualifier)) return null;
@@ -526,16 +517,14 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                                                  new SubstringToCharAtQuickFix(call.getText(), converted, false));
       }
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
-      if (parent instanceof PsiExpressionList && ((PsiExpressionList)parent).getExpressionCount() == 1) {
-        PsiMethodCallExpression parentCall = tryCast(parent.getParent(), PsiMethodCallExpression.class);
-        if (STRING_BUILDER_APPEND.test(parentCall)) {
-          PsiElement nameElement = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
-          return myManager.createProblemDescriptor(nameElement,
-                                                   InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
-                                                   new RemoveRedundantStringCallFix(
-                                                     nameElement.getText(), FixType.REPLACE_WITH_ARGUMENTS),
-                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly);
-        }
+      if (parent instanceof PsiExpressionList list && list.getExpressionCount() == 1 &&
+          parent.getParent() instanceof PsiMethodCallExpression parentCall && STRING_BUILDER_APPEND.test(parentCall)) {
+        PsiElement nameElement = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
+        return myManager.createProblemDescriptor(nameElement,
+                                                 InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
+                                                 new RemoveRedundantStringCallFix(
+                                                   nameElement.getText(), FixType.REPLACE_WITH_ARGUMENTS),
+                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly);
       }
       return null;
     }
@@ -849,8 +838,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       switch (myFixType) {
         case REPLACE_WITH_QUALIFIER -> {
           PsiExpression result = (PsiExpression)ct.replaceAndRestoreComments(call, qualifier);
-          if (result.getParent() instanceof PsiExpressionStatement) {
-            extractSideEffects(result, (PsiExpressionStatement)result.getParent());
+          if (result.getParent() instanceof PsiExpressionStatement expr) {
+            extractSideEffects(result, expr);
           }
         }
         case REPLACE_WITH_ARGUMENTS -> {
