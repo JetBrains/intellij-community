@@ -88,7 +88,7 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
       }
 
       return verifiableJars.map {
-        require(it.exists()) { "Verifiable JAR not exists" }
+        require(it.exists()) { "Verifiable JAR not exists: $it" }
         val artifactFileUrl = VfsUtilCore.fileToUrl(it)
         val sha256sum = try {
           JpsChecksumUtil.getSha256Checksum(it.toPath())
@@ -178,6 +178,53 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
     ) {
       val snapshot = WorkspaceModel.getInstance(project).entityStorage.current
       checkLibrariesCanBeResolved(snapshot.entities(LibraryEntity::class.java), snapshot)
+    }
+  }
+
+  /**
+   * Build SHA256 checksums if [buildSha256Checksum]` == true`,
+   * guess and bind remote repository if [guessAndBindRemoteRepository]` == true`.
+   *
+   * Expected to be used when new library is added and its properties should be filled.
+   *
+   * Does nothing if [library] is not [RepositoryLibraryType], if [library] is global, if checksums or bind repository already exists.
+   */
+  fun computePropertiesForNewLibrary(library: LibraryEntity, buildSha256Checksum: Boolean, guessAndBindRemoteRepository: Boolean): Job? {
+    if (!buildSha256Checksum && !guessAndBindRemoteRepository) return null
+    if (library.isGlobal()) return null
+
+    val propertiesEntity = library.libraryProperties ?: return null
+    val properties = propertiesEntity.getPropertiesIfRepositoryLibrary() ?: return null
+
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    val snapshot = workspaceModel.entityStorage.current
+    val libraryDisplayName = library.getDisplayName(snapshot)
+
+    return myCoroutineScope.launch {
+      withBackgroundProgressIndicator(project, JavaUiBundle.message("repository.library.utils.library.update.title")) {
+        progressSinkOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.processing.library", libraryDisplayName))
+        var checksumBuiltFlag = 0
+        var repoBindFlag = 0
+        if (buildSha256Checksum && !properties.isEnableSha256Checksum) {
+          progressSinkOrError.details(JavaUiBundle.message("repository.library.utils.progress.details.building.checksums"))
+          properties.rebuildChecksum(propertiesEntity)
+          checksumBuiltFlag = 1
+        }
+
+        if (guessAndBindRemoteRepository && properties.jarRepositoryId == null) {
+          progressSinkOrError.details(JavaUiBundle.message("repository.library.utils.progress.details.guessing.remote.repo"))
+          properties.tryGuessAndBindRemoteRepository(project, RemoteRepositoriesConfiguration.getInstance(project).repositories)
+          repoBindFlag = 1
+        }
+
+        val builder = snapshot.toBuilder()
+        propertiesEntity.modifyProperties(builder, properties)
+        workspaceModel.applyDiff(builder)
+        showNotification(JavaUiBundle.message("repository.library.utils.notification.content.new.library.update.done", libraryDisplayName,
+                                              checksumBuiltFlag, repoBindFlag))
+        progressSinkOrError.details(JavaUiBundle.message("repository.library.utils.progress.checking.resolution", 1, 0))
+        checkLibrariesCanBeResolved(sequenceOf(library), workspaceModel.entityStorage.current)
+      }
     }
   }
 

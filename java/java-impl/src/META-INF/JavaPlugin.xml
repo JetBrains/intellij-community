@@ -2404,4 +2404,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.jarRepository.RepositoryLibrarySettings$Service" configurationSchemaKey="repositoryLibrary"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.jarRepository.RepositoryLibraryCreationListener"
+              topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
+  </projectListeners>
 </idea-plugin>

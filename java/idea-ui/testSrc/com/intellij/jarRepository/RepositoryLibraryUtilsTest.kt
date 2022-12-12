@@ -55,6 +55,7 @@ class RepositoryLibraryUtilsTest {
   private val projectWithBadSha256Checksum = getCommunityDirAbsolutePath("java/idea-ui/testData/testProjectBadChecksum")
   private val projectWithCorrectSha256Checksum = getCommunityDirAbsolutePath("java/idea-ui/testData/testProjectChecksumBuilt")
   private val projectWithCorrectGuessedRemoteRepositories = getCommunityDirAbsolutePath("java/idea-ui/testData/testProjectJarReposGuessed")
+  private val projectWithAllPropertiesFilled = getCommunityDirAbsolutePath("java/idea-ui/testData/testProjectAllPropertiesFilled")
 
   @Before
   fun setUp() {
@@ -134,6 +135,37 @@ class RepositoryLibraryUtilsTest {
     val remoteRepoConfig = RemoteRepositoriesConfiguration.getInstance(project)
     remoteRepoConfig.repositories = remoteRepoConfig.repositories.toMutableList().apply { removeAt(0) }
     assertFalse(utils.checkAllLibrariesCanBeResolvedBackground().await())
+  }
+
+  @Test
+  fun `test compute properties for new library builds checksums`() = testRepositoryLibraryUtils(baseProject) { project, utils ->
+    reloadAllRepositoryLibraries(project)
+    val entityStorage = WorkspaceModel.getInstance(project).entityStorage
+    val snapshot = entityStorage.current
+    snapshot.entities(LibraryEntity::class.java).forEach {
+      utils.computePropertiesForNewLibrary(it, buildSha256Checksum = true, guessAndBindRemoteRepository = false)!!.join()
+    }
+    project.assertContentMatches(projectWithCorrectSha256Checksum)
+  }
+
+  @Test
+  fun `test compute properties for new library guesses repositories`() = testRepositoryLibraryUtils(baseProject) { project, utils ->
+    reloadAllRepositoryLibraries(project)
+    val snapshot = WorkspaceModel.getInstance(project).entityStorage.current
+    snapshot.entities(LibraryEntity::class.java).forEach {
+      utils.computePropertiesForNewLibrary(it, buildSha256Checksum = false, guessAndBindRemoteRepository = true)!!.join()
+    }
+    project.assertContentMatches(projectWithCorrectGuessedRemoteRepositories)
+  }
+
+  @Test
+  fun `test compute properties for new library fills all properties`() = testRepositoryLibraryUtils(baseProject) { project, utils ->
+    reloadAllRepositoryLibraries(project)
+    val snapshot = WorkspaceModel.getInstance(project).entityStorage.current
+    snapshot.entities(LibraryEntity::class.java).forEach {
+      utils.computePropertiesForNewLibrary(it, buildSha256Checksum = true, guessAndBindRemoteRepository = true)!!.join()
+    }
+    project.assertContentMatches(projectWithAllPropertiesFilled)
   }
 
   private fun getCommunityDirAbsolutePath(relative: String) = PathManagerEx.findFileUnderCommunityHome(relative).absolutePath.toNioPath()
