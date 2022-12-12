@@ -613,6 +613,10 @@
               <synonym key="action.ToggleZenMode.enter"/>
             </action>
             <separator/>
+            <group id="Appearance.Density" popup="true">
+              <action id="Appearance.Density.Default" class="com.intellij.ide.actions.SetDefaultDensityAction"/>
+              <action id="Appearance.Density.Compact" class="com.intellij.ide.actions.SetCompactDensityAction"/>
+            </group>
             <action id="ZoomInIdeAction" class="com.intellij.ide.actions.ZoomInIdeAction">
               <synonym key="action.ZoomInIdeAction.text"/>
             </action>
