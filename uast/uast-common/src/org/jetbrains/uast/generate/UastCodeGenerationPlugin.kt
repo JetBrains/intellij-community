@@ -127,8 +127,9 @@ interface UastElementFactory {
 
   /**
    * Generate method from language-specific text. It's up to the caller to generate the text properly
+   * May return null if not implemented by a specific plugin.
    */
-  fun createMethodFromText(methodText: String, context: PsiElement?): UMethod?
+  fun createMethodFromText(methodText: String, context: PsiElement?): UMethod? = null
 
   fun createParenthesizedExpression(expression: UExpression,
                                     context: PsiElement?): UParenthesizedExpression?
