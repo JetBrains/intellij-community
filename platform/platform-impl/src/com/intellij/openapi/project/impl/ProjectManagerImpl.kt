@@ -571,8 +571,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     if (!checkTrustedState(projectStoreBaseDir)) {
-      LOG.info("Project is not trusted -> return null")
-      return null
+      LOG.info("Project is not trusted, aborting")
+      throw ProcessCanceledException()
     }
 
     val isChildProcess = isChildProcessPath(PathManager.getSystemDir())
