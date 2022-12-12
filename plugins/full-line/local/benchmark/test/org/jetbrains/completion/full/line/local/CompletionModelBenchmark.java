@@ -26,21 +26,21 @@ public class CompletionModelBenchmark {
     /**
      * Prefix length
      */
-    @Param({"0", "10"})
+    @Param("0")
     public int prefixLen;
 
     /**
      * The length of the context in characters.
      * The generated context will have the same or 1 more length.
      */
-    @Param("999")
+    @Param("9999")
     public int contextTextLen;
     /**
      * How much to shift the context at the next launch.
      * 0 - do not shift at all, caches should work perfectly,
      * but if the value is greater than contextTextLen, then caches should not have any effect.
      */
-    @Param({"0", "5", "50", "1000"})
+    @Param({"0", "5", "50", "10000"})
     public int shiftContext;
 
     @Param({"true", "false"})
