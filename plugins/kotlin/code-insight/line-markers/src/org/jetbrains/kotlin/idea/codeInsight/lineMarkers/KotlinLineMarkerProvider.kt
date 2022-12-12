@@ -256,11 +256,12 @@ object SuperDeclarationMarkerTooltip : Function<PsiElement, String> {
             return KotlinGutterTooltipHelper.buildTooltipText(
                 supers.sortedWith(comparator()),
                 { superMethod: PsiElement? ->
+                    val isProperty = superMethod is KtProperty || superMethod is KtParameter
                     val key =
                         if (abstracts.contains(superMethod) && !isAbstract) {
-                            if (superMethod is KtProperty || superMethod is KtParameter) "tooltip.implements.property" else "tooltip.implements.function"
+                            if (isProperty) "tooltip.implements.property" else "tooltip.implements.function"
                         } else {
-                            if (superMethod is KtProperty || superMethod is KtParameter) "tooltip.overrides.property" else "tooltip.overrides.function"
+                            if (isProperty) "tooltip.overrides.property" else "tooltip.overrides.function"
                         }
                     reference.getAndSet(divider) + KotlinBundle.message(key) + " "
                 },
