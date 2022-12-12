@@ -100,9 +100,7 @@ object VirtualFileSystemUtil {
 
   @JvmStatic
   fun createFile(fileSystem: VirtualFileSystem, path: String): VirtualFile {
-    val parentPath = path.getParentPath()
-    requireNotNull(parentPath) { "Cannot create FS root. Use findDirectory instead. $path" }
-    val parentFile = findOrCreateDirectory(fileSystem, parentPath)
+    val parentFile = findOrCreateParentDirectory(fileSystem, path)
     return parentFile.createChildData(null, path.getFileName())
   }
 
@@ -113,9 +111,7 @@ object VirtualFileSystemUtil {
 
   @JvmStatic
   fun createDirectory(fileSystem: VirtualFileSystem, path: String): VirtualFile {
-    val parentPath = path.getParentPath()
-    requireNotNull(parentPath) { "Cannot create FS root. Use findDirectory instead. $path" }
-    val parentFile = findOrCreateDirectory(fileSystem, parentPath)
+    val parentFile = findOrCreateParentDirectory(fileSystem, path)
     return parentFile.createChildDirectory(null, path.getFileName())
   }
 
@@ -148,5 +144,13 @@ object VirtualFileSystemUtil {
   @JvmStatic
   fun deleteChildren(fileSystem: VirtualFileSystem, path: Path, predicate: (VirtualFile) -> Boolean = { true }) {
     deleteChildren(fileSystem, path.toCanonicalPath(), predicate)
+  }
+
+  private fun findOrCreateParentDirectory(fileSystem: VirtualFileSystem, path: String): VirtualFile {
+    val parentPath = path.getParentPath()
+    if (parentPath == null) {
+      return getDirectory(fileSystem, "/")
+    }
+    return findOrCreateDirectory(fileSystem, parentPath)
   }
 }
