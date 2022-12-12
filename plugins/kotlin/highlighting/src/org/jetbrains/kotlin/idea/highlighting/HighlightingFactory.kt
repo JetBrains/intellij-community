@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 
-internal object HiglightingFactory {
+internal object HighlightingFactory {
     fun createInfoAnnotation(holder: AnnotationHolder, textRange: TextRange, message: String?, textAttributes: TextAttributesKey?) {
         val builder =
             if (message == null) holder.newSilentAnnotation(HighlightSeverity.INFORMATION)

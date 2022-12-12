@@ -5,10 +5,10 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.base.highlighting.visitor.AbstractHighlightingVisitor
-import org.jetbrains.kotlin.idea.highlighting.HiglightingFactory
+import org.jetbrains.kotlin.idea.highlighting.HighlightingFactory
 
 abstract class AbstractBeforeResolveHiglightingVisitory(protected val holder: AnnotationHolder): AbstractHighlightingVisitor() {
     override fun createInfoAnnotation(textRange: TextRange, message: String?, textAttributes: TextAttributesKey?) {
-        HiglightingFactory.createInfoAnnotation(holder, textRange, message, textAttributes)
+        HighlightingFactory.createInfoAnnotation(holder, textRange, message, textAttributes)
     }
 }
