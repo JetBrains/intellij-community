@@ -63,6 +63,9 @@ class ConfigFileInfoSetBridge(private val myMetaDataProvider: ConfigFileMetaData
   }
 
   private fun onChange() {
+    if (myContainer != null) {
+      myContainer!!.updateDescriptors(configFiles)
+    }
   }
 
   override fun getMetaDataProvider(): ConfigFileMetaDataProvider {
