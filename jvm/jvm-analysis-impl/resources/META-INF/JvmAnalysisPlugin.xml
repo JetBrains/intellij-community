@@ -67,12 +67,6 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit5.converter.display.name"
                      implementationClass="com.intellij.codeInspection.test.junit.JUnit5ConverterInspection"/>
-    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="UnconstructableTestCase"
-                     suppressId="UnconstructableJUnitTestCase"
-                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
-                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
-                     key="jvm.inspections.unconstructable.test.case.display.name"
-                     implementationClass="com.intellij.codeInspection.test.junit.JUnitUnconstructableTestCaseInspection"/>
     <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="IgnoredJUnitTest"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"

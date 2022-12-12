@@ -34,6 +34,7 @@ import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.asSafely
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
 import com.siyeh.ig.psiutils.TestUtils
+import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import javax.swing.JComponent
@@ -66,6 +67,7 @@ private class JUnitMalformedSignatureVisitor(
   private val ignorableAnnotations: List<String>
 ) : AbstractUastNonRecursiveVisitor() {
   override fun visitClass(node: UClass): Boolean {
+    checkMalformedClass(node)
     checkMalformedNestedClass(node)
     return true
   }
@@ -230,6 +232,49 @@ private class JUnitMalformedSignatureVisitor(
       }
     }
     return false
+  }
+
+  private fun checkMalformedClass(aClass: UClass) {
+    val javaNode = aClass.javaPsi
+    if (javaNode.isInterface || javaNode.isEnum || javaNode.isAnnotationType) return
+    if (javaNode.hasModifier(JvmModifier.ABSTRACT)) return
+    if (javaNode is PsiTypeParameter) return
+    if (TestUtils.isJUnitTestClass(javaNode)) { // JUnit 3
+      if (!javaNode.hasModifier(JvmModifier.PUBLIC) && !aClass.isAnonymousOrLocal()) {
+        val message = JvmAnalysisBundle.message("jvm.inspections.unconstructable.test.case.not.public.descriptor")
+        holder.registerUProblem(aClass, message)
+        return
+      }
+      val constructors = javaNode.constructors.toList()
+      if (constructors.isNotEmpty()) {
+        val compatibleConstr = constructors.firstOrNull {
+          val parameters = it.parameterList.parameters
+          it.hasModifier(JvmModifier.PUBLIC)
+          && (it.parameterList.isEmpty || parameters.size == 1 && TypeUtils.isJavaLangString(parameters.first().type))
+        }
+        if (compatibleConstr == null) {
+          val message = JvmAnalysisBundle.message("jvm.inspections.unconstructable.test.case.junit3.descriptor")
+          holder.registerUProblem(aClass, message)
+          return
+        }
+      }
+    } else if (TestUtils.isJUnit4TestClass(javaNode, false)) { // JUnit 4
+      if (!javaNode.hasModifier(JvmModifier.PUBLIC) && !aClass.isAnonymousOrLocal()) {
+        val message = JvmAnalysisBundle.message("jvm.inspections.unconstructable.test.case.not.public.descriptor")
+        holder.registerUProblem(aClass, message)
+        return
+      }
+      val constructors = javaNode.constructors.toList()
+      if (constructors.isNotEmpty()) {
+        val publicConstructors = constructors.filter { it.hasModifier(JvmModifier.PUBLIC) }
+        if (publicConstructors.size != 1 || !publicConstructors.first().parameterList.isEmpty) {
+          val message = JvmAnalysisBundle.message("jvm.inspections.unconstructable.test.case.junit4.descriptor")
+          holder.registerUProblem(aClass, message)
+          return
+        }
+      }
+    }
+    return
   }
 
   private fun checkMalformedNestedClass(aClass: UClass) {
