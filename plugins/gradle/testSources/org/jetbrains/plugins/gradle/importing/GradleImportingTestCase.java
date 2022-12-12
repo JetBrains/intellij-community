@@ -88,7 +88,7 @@ import static org.junit.Assume.assumeThat;
 @RunWith(Parameterized.class)
 public abstract class GradleImportingTestCase extends JavaExternalSystemImportingTestCase {
   public static final String BASE_GRADLE_VERSION = VersionMatcherRule.BASE_GRADLE_VERSION;
-  protected static final String GRADLE_JDK_NAME = "Gradle JDK";
+  public static final String GRADLE_JDK_NAME = "Gradle JDK";
   private static final int GRADLE_DAEMON_TTL_MS = 10000;
 
   @Rule public TestName name = new TestName();
