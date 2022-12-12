@@ -297,7 +297,7 @@ public class StreamInlining {
     if (<warning descr="Condition 'count6 < 0' is always 'false'">count6 < 0</warning>) {}
     if (count6 > 4) {}
     
-    long count7 = Stream.of("foo", "bar").filter(x -> <warning descr="Condition '!x.isEmpty()' is always 'true'">!<warning descr="Result of 'x.isEmpty()' is always 'false'">x.isEmpty()</warning></warning>).count();
+    long count7 = Stream.of("foo", "bar").filter(x -> <warning descr="Condition '!x.isEmpty()' is always 'true'">!x.isEmpty()</warning>).count();
     if (<warning descr="Condition 'count7 == 0 || count7 == 1 || count7 == 2' is always 'true'">count7 == 0 || count7 == 1 || <warning descr="Condition 'count7 == 2' is always 'true'">count7 == 2</warning></warning>) {}
     long count8 = <warning descr="Result of 'Stream.of(\"foo\", \"bar\").filter(x -> x.isEmpty()).count()' is always '0'">Stream.of("foo", "bar").filter(x -> <warning descr="Result of 'x.isEmpty()' is always 'false'">x.isEmpty()</warning>).count()</warning>;
     if (<warning descr="Condition 'count8 == 0' is always 'true'">count8 == 0</warning>) {}
