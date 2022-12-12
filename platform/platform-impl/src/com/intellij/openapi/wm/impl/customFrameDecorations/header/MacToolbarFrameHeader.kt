@@ -13,7 +13,6 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.Sim
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.mac.MacMainFrameDecorator
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.jetbrains.CustomWindowDecoration
 import com.jetbrains.JBR
@@ -64,11 +63,6 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   private fun addHeaderTitle() {
     headerTitle.isOpaque = false
     add(headerTitle, PATH_CARD)
-    updatePathTitleMinimumSize()
-  }
-
-  private fun updatePathTitleMinimumSize() {
-    headerTitle.minimumSize = Dimension(0, JBUIScale.scale(30))
     updateBorders()
   }
 
@@ -76,7 +70,6 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     super.updateUI()
 
     if (parent != null) {
-      updatePathTitleMinimumSize()
       updateBorders()
     }
   }
@@ -162,32 +155,5 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     updateVisibleCard()
-  }
-
-  private class AdjustableSizeCardLayout: CardLayout() {
-    override fun preferredLayoutSize(parent: Container): Dimension {
-      val current = findCurrentComponent(parent)
-      if (current != null) {
-        val insets: Insets = parent.getInsets()
-        val pref: Dimension = current.preferredSize
-
-        if (pref.height < current.minimumSize.height) pref.height = current.minimumSize.height
-        if (pref.width < current.minimumSize.width) pref.width = current.minimumSize.width
-
-        pref.width += insets.left + insets.right
-        pref.height += insets.top + insets.bottom
-        return pref
-      }
-      return super.preferredLayoutSize(parent)
-    }
-
-    private fun findCurrentComponent(parent: Container): Component? {
-      for (comp in parent.getComponents()) {
-        if (comp.isVisible) {
-          return comp
-        }
-      }
-      return null
-    }
   }
 }
