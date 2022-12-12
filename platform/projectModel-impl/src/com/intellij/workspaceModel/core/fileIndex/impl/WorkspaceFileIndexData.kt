@@ -374,7 +374,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
       }
     }
 
-    private fun isResolvesTo(reference: EntityReference<*>, entity: WorkspaceEntity) = reference == entity.createReference<WorkspaceEntity>() 
+    private fun isResolvesTo(reference: EntityReference<*>, entity: WorkspaceEntity) = reference.isReferenceTo(entity) 
 
     override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, entity: WorkspaceEntity) {
       val excludedRootFile = rootFileSupplier.findFile(excludedRoot)

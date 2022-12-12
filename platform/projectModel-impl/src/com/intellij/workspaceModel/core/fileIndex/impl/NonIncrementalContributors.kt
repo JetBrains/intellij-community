@@ -151,4 +151,5 @@ internal class NonIncrementalContributors(private val project: Project,
 
 private object NonIncrementalMarker : EntityReference<WorkspaceEntity>() {
   override fun resolve(storage: EntityStorage): WorkspaceEntity? = null
+  override fun isReferenceTo(entity: WorkspaceEntity): Boolean = false
 }

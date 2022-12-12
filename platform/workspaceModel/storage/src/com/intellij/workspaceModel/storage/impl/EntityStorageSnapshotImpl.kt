@@ -32,6 +32,10 @@ internal data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: Ent
     return (storage as AbstractEntityStorage).entityDataById(id)?.createEntity(storage) as? E
   }
 
+  override fun isReferenceTo(entity: WorkspaceEntity): Boolean {
+    return id == (entity as? WorkspaceEntityBase)?.id
+  }
+
   override fun equals(other: Any?): Boolean {
     return id == (other as? EntityReferenceImpl<*>)?.id
   }

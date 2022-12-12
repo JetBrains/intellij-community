@@ -189,8 +189,10 @@ internal class LibrariesAndSdkContributors(private val project: Project,
 
 private class GlobalLibraryReference(val library: Library) : EntityReference<WorkspaceEntity>() {
   override fun resolve(storage: EntityStorage): WorkspaceEntity? = null
+  override fun isReferenceTo(entity: WorkspaceEntity): Boolean = false
 }
 
 private class SdkReference(val sdk: Sdk) : EntityReference<WorkspaceEntity>() {
   override fun resolve(storage: EntityStorage): WorkspaceEntity? = null
+  override fun isReferenceTo(entity: WorkspaceEntity): Boolean = false
 }
