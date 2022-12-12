@@ -13,7 +13,7 @@ import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-class MacCustomDecorationPath(val frame: JFrame): JPanel() {
+class SimpleCustomDecorationPath(val frame: JFrame): JPanel() {
 
   private val frameTitleListener = PropertyChangeListener { updateTitle() }
   private val label = JBLabel().apply {

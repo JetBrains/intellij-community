@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.MacCustomDecorationPath
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.mac.MacMainFrameDecorator
@@ -33,7 +33,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
                                      private val root: JRootPane) : CustomHeader(frame), MainFrameCustomHeader, ToolbarHolder, UISettingsListener {
   private val ideMenu: IdeMenuBar = IdeMenuBar()
   private var toolbar: MainToolbar? = null
-  private val headerTitle = MacCustomDecorationPath(frame)
+  private val headerTitle = SimpleCustomDecorationPath(frame)
 
   private val TOOLBAR_CARD = "TOOLBAR_CARD"
   private val PATH_CARD = "PATH_CARD"
