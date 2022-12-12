@@ -24,7 +24,7 @@ class JavaTestDiffProvider : JvmTestDiffProvider<PsiMethodCallExpression>() {
     if (failedCalls.isEmpty()) return null
     if (failedCalls.size == 1) return failedCalls.first()
     if (method == null) return null
-    return failedCalls.firstOrNull { it.resolveMethod() == method.sourcePsi }
+    return failedCalls.firstOrNull { it.resolveMethod()?.isEquivalentTo(method.sourcePsi) == true }
   }
 
   override fun getExpected(call: PsiMethodCallExpression, argIndex: Int?): PsiElement? {

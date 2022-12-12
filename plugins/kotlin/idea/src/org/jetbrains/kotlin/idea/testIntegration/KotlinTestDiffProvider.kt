@@ -28,7 +28,7 @@ class KotlinTestDiffProvider : JvmTestDiffProvider<KtCallExpression>() {
         if (failedCalls.isEmpty()) return null
         if (failedCalls.size == 1) return failedCalls.first()
         if (method == null) return null
-        return failedCalls.firstOrNull { it.resolveToCall()?.resultingDescriptor?.psiElement == method.sourcePsi }
+        return failedCalls.firstOrNull { it.resolveToCall()?.resultingDescriptor?.psiElement?.isEquivalentTo(method.sourcePsi) == true }
     }
 
     override fun getExpected(call: KtCallExpression, argIndex: Int?): PsiElement? {

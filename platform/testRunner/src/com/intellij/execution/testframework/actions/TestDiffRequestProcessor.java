@@ -118,7 +118,7 @@ public class TestDiffRequestProcessor {
     private @Nullable PsiElement getExpected(@NotNull TestDiffProvider provider, @NotNull AbstractTestProxy testProxy) {
       String stackTrace = testProxy.getStacktrace();
       if (stackTrace == null) return null;
-      return provider.findExpected(myProject, testProxy.getStacktrace());
+      return provider.findExpected(myProject, stackTrace);
     }
 
     private @Nullable DiffContent createPsiDiffContent(@NotNull PsiElement element, @NotNull String text) {
