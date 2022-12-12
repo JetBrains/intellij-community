@@ -55,11 +55,11 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
         val noLibrarySourceScope = KotlinSourceFilterScope.projectFiles(scope, project)
         return object : AbstractQuery<PsiElement>() {
             override fun processResults(consumer: Processor<in PsiElement>): Boolean {
-                if (runReadAction { baseClass.isEnum() && !collectEnumConstants(consumer) }) return false
+                if (runReadAction { baseClass.isEnum() && !processEnumConstantsWithClassInitializers(consumer) }) return false
                 return names.all { name -> runReadAction { processBaseName(name, consumer) } }
             }
 
-            private fun collectEnumConstants(consumer: Processor<in PsiElement>) =
+            private fun processEnumConstantsWithClassInitializers(consumer: Processor<in PsiElement>) =
                 baseClass.collectDescendantsOfType<KtEnumEntry>().all { enumEntry ->
                     enumEntry.body == null || consumer.process(enumEntry)
                 }
