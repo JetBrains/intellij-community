@@ -42,11 +42,10 @@ abstract class USerializableInspectionBase(vararg hint: Class<out UElement>) : A
         InspectionGadgetsBundle.message("choose.class")
       )
       UiUtils.setComponentSize(chooserList, 7, 25)
-      add(chooserList, "growx, wrap")
+      addGrowing(chooserList)
       val additionalOptions = createAdditionalOptions()
       for (additionalOption in additionalOptions) {
-        val constraints = if (additionalOption is JPanel) "grow, wrap" else "growx, wrap"
-        add(additionalOption, constraints)
+        if (additionalOption is JPanel) addGrowing(additionalOption) else addGrowingX(additionalOption)
       }
       addCheckbox(InspectionGadgetsBundle.message("ignore.anonymous.inner.classes"), "ignoreAnonymousInnerClasses")
     }
