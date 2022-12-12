@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.CollectionFactory
 import java.util.*
-import kotlin.properties.Delegates.observable
 
 private fun Collection<Change>.toPartialAwareSet() =
   CollectionFactory.createCustomHashingStrategySet(ChangeListChange.HASHING_STRATEGY)
@@ -44,15 +43,7 @@ internal class ChangesViewCommitWorkflowHandler(
   private val inclusionModel = PartialCommitInclusionModel(project)
 
   private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project)
-  private var currentChangeList by observable<LocalChangeList?>(null) { _, oldValue, newValue ->
-    if (oldValue?.id != newValue?.id) {
-      changeListChanged(oldValue, newValue)
-      changeListDataChanged()
-    }
-    else if (oldValue?.data != newValue?.data) {
-      changeListDataChanged()
-    }
-  }
+  private var currentChangeList: LocalChangeList? = null
 
   init {
     Disposer.register(this, inclusionModel)
@@ -75,7 +66,7 @@ internal class ChangesViewCommitWorkflowHandler(
     setupCommitChecksResultTracking()
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
-    currentChangeList = workflow.getAffectedChangeList(emptySet())
+    setCurrentChangeList(workflow.getAffectedChangeList(emptySet()))
 
     if (isToggleMode()) deactivate(false)
 
@@ -187,13 +178,23 @@ internal class ChangesViewCommitWorkflowHandler(
     return block().also { if (oldValue != isActive) activityEventDispatcher.multicaster.activityStateChanged() }
   }
 
-  private fun changeListChanged(oldChangeList: LocalChangeList?, newChangeList: LocalChangeList?) {
-    oldChangeList?.let { commitMessagePolicy.save(it, getCommitMessage(), false) }
+  private fun setCurrentChangeList(newChangeList: LocalChangeList?) {
+    val oldChangeList = currentChangeList
+    currentChangeList = newChangeList
 
-    val newCommitMessage = getCommitMessageFromPolicy(newChangeList)
-    setCommitMessage(newCommitMessage)
+    if (oldChangeList?.id != newChangeList?.id) {
+      oldChangeList?.let { commitMessagePolicy.save(it, getCommitMessage(), false) }
 
-    newChangeList?.let { commitOptions.changeListChanged(it) }
+      val newCommitMessage = getCommitMessageFromPolicy(newChangeList)
+      setCommitMessage(newCommitMessage)
+
+      newChangeList?.let { commitOptions.changeListChanged(it) }
+
+      changeListDataChanged()
+    }
+    else if (oldChangeList?.data != newChangeList?.data) {
+      changeListDataChanged()
+    }
   }
 
   private fun getCommitMessageFromPolicy(changeList: LocalChangeList?): String? {
@@ -229,7 +230,7 @@ internal class ChangesViewCommitWorkflowHandler(
     // ensure all included active changes are known => if user explicitly checks and unchecks some change, we know it is unchecked
     knownActiveChanges = knownActiveChanges.union(includedActiveChanges)
 
-    currentChangeList = workflow.getAffectedChangeList(inclusion.filterIsInstance<Change>())
+    setCurrentChangeList(workflow.getAffectedChangeList(inclusion.filterIsInstance<Change>()))
     super.inclusionChanged()
   }
 
@@ -270,7 +271,7 @@ internal class ChangesViewCommitWorkflowHandler(
   override fun projectClosingBeforeSave(project: Project) {
     saveStateBeforeDispose()
     disposeCommitOptions()
-    currentChangeList = null
+    setCurrentChangeList(null)
   }
 
   // save state on other events - like "settings changed to use commit dialog"
