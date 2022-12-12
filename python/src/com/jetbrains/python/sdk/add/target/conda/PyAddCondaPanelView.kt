@@ -56,7 +56,7 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
         runBlockingModalWithRawProgressReporter(model.project, PyBundle.message("python.sdk.conda.getting.list.envs")) {
           model.onLoadEnvsClicked(Dispatchers.EDT, this.progressSink)
         }.onFailure {
-          showError(it.localizedMessage)
+          showError(PyBundle.message("python.sdk.conda.getting.list.envs"), it.localizedMessage)
         }
       }.enabledIf(model.showCondaPathSetOkButtonRoProp)
 
@@ -88,8 +88,8 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
 
   }.also { it.registerValidators(disposable) }
 
-  private fun showError(@Nls error: String) {
-    JOptionPane.showMessageDialog(panel, error, PyBundle.message("python.add.sdk.error"), ERROR_MESSAGE)
+  private fun showError(@Nls title: String, @Nls error: String) {
+    JOptionPane.showMessageDialog(panel, error, title, ERROR_MESSAGE)
   }
 
   override val component: Component
@@ -102,8 +102,8 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
 
   override fun onSelected() {
       runBlockingModalWithRawProgressReporter(model.project, PyBundle.message("python.add.sdk.conda.detecting")) {
-        model.detectConda(Dispatchers.EDT, progressSink)
-      }
+      model.detectConda(Dispatchers.EDT, progressSink)
+    }
   }
 
   override val actions: Map<PyAddSdkDialogFlowAction, Boolean> = emptyMap()
@@ -118,7 +118,9 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
   override fun getOrCreateSdk(): Sdk? = runBlockingModalWithRawProgressReporter(model.project, PyBundle.message("python.add.sdk.panel.wait")) {
     model.onCondaCreateSdkClicked((Dispatchers.EDT + ModalityState.any().asContextElement()), progressSink).onFailure {
       logger<PyAddCondaPanelModel>().warn(it)
-      showError(it.localizedMessage)
+      showError(
+        PyBundle.message("python.sdk.conda.cant.create.title"),
+        PyBundle.message("python.sdk.conda.cant.create.body", it.localizedMessage))
     }.getOrNull()
   }
 }
