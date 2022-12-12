@@ -67,8 +67,6 @@ internal class ChangesViewCommitWorkflowHandler(
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
     currentChangeList = workflow.getAffectedChangeList(emptySet())
-    val initialCommitMessage = getCommitMessageFromPolicy(currentChangeList)
-    setCommitMessage(initialCommitMessage)
     commitOptions.changeListChanged(currentChangeList)
     changeListDataChanged()
 
@@ -87,7 +85,9 @@ internal class ChangesViewCommitWorkflowHandler(
       }
     })
 
-    DelayedCommitMessageProvider.init(project, ui, getCommitMessageFromPolicy(currentChangeList))
+    val initialCommitMessage = getCommitMessageFromPolicy(currentChangeList)
+    setCommitMessage(initialCommitMessage)
+    DelayedCommitMessageProvider.init(project, ui, initialCommitMessage)
   }
 
   override fun createDataProvider(): DataProvider = object : DataProvider {
