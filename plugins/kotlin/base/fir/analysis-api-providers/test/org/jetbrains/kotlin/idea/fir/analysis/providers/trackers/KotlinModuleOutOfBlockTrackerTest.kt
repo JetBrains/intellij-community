@@ -128,6 +128,35 @@ class KotlinModuleOutOfBlockTrackerTest : AbstractMultiModuleTest() {
                                     "}", ktFile.text)
 
     }
+
+    fun testCommentFunction() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt", "class Main {" +
+                            "    fun main() {}\n" +
+                            "}"
+                )
+            )
+        }
+
+        val moduleAWithTracker = ModuleWithModificationTracker(moduleA)
+
+        val file = "${moduleA.sourceRoots.first().url}/${"main.kt"}"
+        val virtualFile = VirtualFileManager.getInstance().findFileByUrl(file)!!
+        val ktFile = PsiManager.getInstance(moduleA.project).findFile(virtualFile) as KtFile
+        configureByExistingFile(virtualFile)
+        val singleFunction = (ktFile.declarations[0] as KtClass).declarations.single()
+        val startOffset = singleFunction.textRange.startOffset
+        editor.caretModel.moveToOffset(startOffset)
+        type("//")
+        PsiDocumentManager.getInstance(moduleA.project).commitAllDocuments()
+
+        Assert.assertTrue(
+            "Out of block modification count for module A should change after commenting, modification count is ${moduleAWithTracker.modificationCount}",
+            moduleAWithTracker.changed()
+        )
+    }
     
     fun testThatAddModifierDoesLeadToOutOfBlockChange() {
         val moduleA = createModuleInTmpDir("a") {
