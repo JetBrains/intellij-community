@@ -140,12 +140,13 @@ public final class LookupUsageTracker {
       FeatureUsageData featureUsageData = new FeatureUsageData();
       getCommonUsageInfo(finishType, currentItem, completionChar).forEach(pair -> pair.addData(featureUsageData));
 
+      ArrayList<EventPair<?>> additionalData = new ArrayList<>();
       LookupUsageDescriptor.EP_NAME.forEachExtensionSafe(usageDescriptor -> {
         if (PluginInfoDetectorKt.getPluginInfo(usageDescriptor.getClass()).isSafeToReport()) {
           List<EventPair<?>> data = usageDescriptor.getAdditionalUsageData(
             new MyLookupResultDescriptor(myLookup, currentItem, finishType, myLanguage));
           if (!data.isEmpty()) {
-            ADDITIONAL.addData(featureUsageData, new ObjectEventData(data));
+            additionalData.addAll(data);
           }
           else {
             // it is required to support usages in Iren plugin
@@ -153,6 +154,11 @@ public final class LookupUsageTracker {
           }
         }
       });
+
+      if (!additionalData.isEmpty()) {
+        ADDITIONAL.addData(featureUsageData, new ObjectEventData(additionalData));
+      }
+
       FUCounterUsageLogger.getInstance().logEvent(myLookup.getProject(), GROUP.getId(), FINISHED_EVENT_ID, featureUsageData);
     }
 
