@@ -23,34 +23,42 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
             ?.modulesWhoseInternalsAreVisible()
             .orEmpty()
 
-
-
-        indented {
+        val orderEntriesRendered = buildList {
             for (entry in filteredEntries) {
                 val moduleInfo: IdeaModuleInfo? = getModuleInfo(entry)
                 val orderEntryModule = (entry as? ModuleOrderEntry)?.module
-                println(
-                    entry.render(
+                add(
+                    render(
+                        orderEntry = entry,
                         isDependsOn = orderEntryModule in dependsOnModules,
                         isFriend = friendModules.contains<ModuleInfo?>(moduleInfo)
                     )
                 )
             }
         }
+
+        val orderEntriesFoldedIfNecessary = if (testConfiguration.getConfiguration(OrderEntriesFilteringTestFeature).hideKonanDist)
+            orderEntriesRendered
+        else
+            foldKonanDist(orderEntriesRendered, module)
+
+        indented {
+            orderEntriesFoldedIfNecessary.forEach { println(it) }
+        }
     }
 
-    private fun OrderEntry.render(isDependsOn: Boolean, isFriend: Boolean): String {
+    private fun PrinterContext.render(orderEntry: OrderEntry, isDependsOn: Boolean, isFriend: Boolean): String {
         val modifiers = buildList<String> {
             if (isDependsOn) add("refines")
             if (isFriend) add("friend")
-            if (this@render is ExportableOrderEntry) add(this@render.scope.name)
+            if (orderEntry is ExportableOrderEntry) add(orderEntry.scope.name)
         }
 
         val renderedModifiersIfAny = if (modifiers.isNotEmpty())
             modifiers.joinToString(prefix = " (", postfix = ")")
         else
             ""
-        return "${presentableName}$renderedModifiersIfAny"
+        return "${presentableNameWithoutVersion(orderEntry)}$renderedModifiersIfAny"
     }
 
     private fun PrinterContext.shouldRemoveOrderEntry(entry: OrderEntry): Boolean {
@@ -118,6 +126,8 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
         }
         return sourceModuleInfos.singleOrNull()
     }
+
+
 
     companion object {
         private val STDLIB_MODULES = setOf(
