@@ -5,14 +5,19 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.options.OptCheckbox;
 import com.intellij.codeInspection.options.OptComponent;
+import com.intellij.codeInspection.options.OptNumber;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +53,7 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
     return new ProblemDescriptor[]{descriptor};
   }
 
+  @SuppressWarnings("LanguageMismatch")
   private static @Nullable OptPane createOptPane(UExpression body) {
     if (body instanceof UBlockExpression blockExpression) {
       List<UExpression> expressions = blockExpression.getExpressions();
@@ -92,13 +98,19 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
     }
     if (body instanceof UReturnExpression returnExpression) {
       UExpression expression = returnExpression.getReturnExpression();
-      if (expression instanceof UCallExpression ctor && isConstructor(ctor, "SingleCheckboxOptionsPanel")) {
-        List<UExpression> arguments = ctor.getValueArguments();
-        if (arguments.size() == 3) {
-          String bindId = getExpressionText(arguments.get(2));
-          String messagePsi = getExpressionText(arguments.get(0));
-          if (bindId != null && messagePsi != null) {
-            return OptPane.pane(OptPane.checkbox(bindId, messagePsi));
+      if (expression instanceof UCallExpression ctor) {
+        boolean checkbox = isConstructor(ctor, "SingleCheckboxOptionsPanel");
+        boolean intField = isConstructor(ctor, "SingleIntegerFieldOptionsPanel");
+        if (checkbox || intField) {
+          List<UExpression> arguments = ctor.getValueArguments();
+          if (arguments.size() == 3 || (intField && arguments.size() == 4)) {
+            String bindId = getExpressionText(arguments.get(2));
+            String messagePsi = getExpressionText(arguments.get(0));
+            if (bindId != null && messagePsi != null) {
+              return OptPane.pane(intField ?
+                                  OptPane.number(bindId, messagePsi, Integer.MIN_VALUE, Integer.MAX_VALUE) :
+                                  OptPane.checkbox(bindId, messagePsi));
+            }
           }
         }
       }
@@ -149,7 +161,7 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
         builder.append("override fun getOptionsPane() = ");
       } else {
         // Use short name for return type, as import will be added anyway when processing the body
-        builder.append("@Override public @NotNull OptPane getOptionsPane() {\nreturn ");
+        builder.append("@Override public @org.jetbrains.annotations.NotNull " + OPT_PANE + " getOptionsPane() {\nreturn ");
       }
       serialize(myPane, builder);
       if (!kotlin) {
@@ -163,8 +175,25 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
     }
 
     private void shortenReferences(@NotNull UastCodeGenerationPlugin plugin, @NotNull PsiElement element) {
-      var list = new ArrayList<UQualifiedReferenceExpression>();
-      var visitor = new PsiRecursiveElementWalkingVisitor() {
+      var refProcessor = new PsiRecursiveElementWalkingVisitor() {
+        final List<UReferenceExpression> list = new ArrayList<>();
+
+        @Override
+        public void visitElement(@NotNull PsiElement element) {
+          super.visitElement(element);
+          ContainerUtil.addIfNotNull(list, UastContextKt.toUElement(element, UReferenceExpression.class));
+        }
+      };
+      element.accept(refProcessor);
+      for (UReferenceExpression expression : refProcessor.list) {
+        if (expression.isPsiValid()) {
+          plugin.shortenReference(expression);
+        }
+      }
+
+      var staticImportProcessor = new PsiRecursiveElementWalkingVisitor() {
+        final List<UQualifiedReferenceExpression> list = new ArrayList<>();
+
         @Override
         public void visitElement(@NotNull PsiElement element) {
           super.visitElement(element);
@@ -177,16 +206,10 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
           }
         }
       };
-      element.accept(visitor);
-      if (!list.isEmpty()) {
-        for (UQualifiedReferenceExpression qr : list) {
-          UReferenceExpression receiver = (UReferenceExpression)qr.getReceiver();
-          if (receiver.isPsiValid()) {
-            plugin.shortenReference(receiver);
-          }
-          if (qr.isPsiValid()) {
-            plugin.importMemberOnDemand(qr);
-          }
+      element.accept(staticImportProcessor);
+      for (UQualifiedReferenceExpression expression : staticImportProcessor.list) {
+        if (expression.isPsiValid()) {
+          plugin.importMemberOnDemand(expression);
         }
       }
     }
@@ -217,6 +240,14 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
         builder.append(",\n");
         serialize(child, builder);
       }
+      builder.append(")");
+    }
+    if (component instanceof OptNumber number) {
+      builder.append(OPT_PANE + ".number(");
+      builder.append(number.bindId()).append(", ");
+      builder.append(number.splitLabel().label()).append(", ");
+      builder.append(LongRangeSet.point(number.minValue()).getPresentationText(LongRangeSet.all())).append(", ");
+      builder.append(LongRangeSet.point(number.maxValue()).getPresentationText(LongRangeSet.all()));
       builder.append(")");
     }
   }
