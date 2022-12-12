@@ -108,4 +108,16 @@ class Switch {
       }
     }
   }
+
+  void continueInFinally2() {
+    try {
+    } finally {
+      for (int i = 0; i < 10; i++) {
+        String x = null;
+        x.toString();
+        System.out.println("in finally");
+        <warning descr="'continue' is unnecessary as the last statement in a loop">continue</warning>;
+      }
+    }
+  }
 }
