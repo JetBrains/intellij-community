@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -11,8 +12,8 @@ import java.io.IOException;
  * just propagate this exception or catch it somewhere and rethrow PCE.
  */
 @ApiStatus.Internal
-public final class ClosedPageFilesStorageException extends IOException {
-  ClosedPageFilesStorageException(String message) {
+public final class ClosedStorageException extends IOException {
+  ClosedStorageException(@NotNull String message) {
     super(message);
   }
 }

@@ -24,12 +24,11 @@ import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.serviceContainer.AlreadyDisposedException;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.ClosedPageFilesStorageException;
+import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentHashMapValueStorage;
@@ -104,16 +103,16 @@ public final class FSRecords {
     return nextMask(59 + (PersistentFSRecordsStorage.RECORDS_STORAGE_KIND.ordinal()),  // acceptable range is [0..255]
                     8,
                     nextMask(useContentHashes,
-                             nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
-                                      nextMask(bulkAttrReadSupport,
-                                               nextMask(inlineAttributes,
-                                                        nextMask(SystemProperties.getBooleanProperty(IDE_USE_FS_ROOTS_DATA_LOADER, false),
-                                                                 nextMask(useCompressionUtil,
-                                                                          nextMask(useSmallAttrTable,
+                    nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
+                    nextMask(bulkAttrReadSupport,
+                    nextMask(inlineAttributes,
+                    nextMask(SystemProperties.getBooleanProperty(IDE_USE_FS_ROOTS_DATA_LOADER, false),
+                    nextMask(useCompressionUtil,
+                    nextMask(useSmallAttrTable,
                     nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
-                                                                                     nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
+                    nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
                     nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
-                                                                                                nextMask(USE_FAST_NAMES_IMPLEMENTATION,
+                    nextMask(USE_FAST_NAMES_IMPLEMENTATION,
                     nextMask(USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION, 0 )))))))))))));
   }
 
@@ -942,7 +941,7 @@ public final class FSRecords {
    */
   @Contract("_->fail")
   public static RuntimeException handleError(final Throwable e) throws RuntimeException, Error {
-    if (e instanceof ClosedPageFilesStorageException) {
+    if (e instanceof ClosedStorageException) {
       // no connection means IDE is closing...
       throw new AlreadyDisposedException("VFS already disposed");
     }

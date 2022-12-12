@@ -302,7 +302,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
             myStreamPool.recycle(bytes);
           }
         }
-        catch (ClosedPageFilesStorageException ex) {
+        catch (ClosedStorageException ex) {
           //TODO rethrow original
           throw new RuntimeException(ex);
         }
@@ -421,7 +421,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     try {
       doPut(key, value);
     }
-    catch (ClosedPageFilesStorageException ex) {
+    catch (ClosedStorageException ex) {
       throw ex;
     }
     catch (IOException ex) {
@@ -512,7 +512,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     try {
       doAppendData(key, appender);
     }
-    catch (ClosedPageFilesStorageException e) {
+    catch (ClosedStorageException e) {
       throw e;
     }
     catch (IOException ex) {
@@ -555,7 +555,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       flushAppendCache();
       return myEnumerator.iterateData(processor);
     }
-    catch (ClosedPageFilesStorageException e) {
+    catch (ClosedStorageException e) {
       throw e;
     }
     catch (IOException e) {
@@ -594,7 +594,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
         }
       });
     }
-    catch (ClosedPageFilesStorageException ex) {
+    catch (ClosedStorageException ex) {
       throw ex;
     }
     catch (IOException e) {
@@ -612,7 +612,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     try {
       return doGet(key);
     }
-    catch (ClosedPageFilesStorageException ex) {
+    catch (ClosedStorageException ex) {
       throw ex;
     }
     catch (IOException ex) {

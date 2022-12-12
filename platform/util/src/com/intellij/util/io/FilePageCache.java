@@ -457,12 +457,12 @@ final class FilePageCache {
   /* ======================= implementation ==================================================================================== */
 
   @NotNull("Seems accessed storage has been closed")
-  private PagedFileStorage getRegisteredPagedFileStorageByIndex(long storageId) throws ClosedPageFilesStorageException {
+  private PagedFileStorage getRegisteredPagedFileStorageByIndex(long storageId) throws ClosedStorageException {
     int storageIndex = (int)((storageId & FILE_INDEX_MASK) >> 32);
     synchronized (storageById) {
       PagedFileStorage storage = storageById.get(storageIndex);
       if (storage == null) {
-        throw new ClosedPageFilesStorageException("storage is already closed");
+        throw new ClosedStorageException("storage is already closed");
       }
       return storage;
     }
