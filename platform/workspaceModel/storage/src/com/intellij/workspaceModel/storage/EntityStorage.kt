@@ -152,6 +152,12 @@ interface DummyParentEntitySource : EntitySource
  */
 abstract class EntityReference<out E : WorkspaceEntity> {
   abstract fun resolve(storage: EntityStorage): E?
+
+  /**
+   * Checks whether this reference points to the given [entity].
+   * This function works faster than resolving the reference and comparing the result.
+   */
+  abstract fun isReferenceTo(entity: WorkspaceEntity): Boolean
 }
 
 /**
