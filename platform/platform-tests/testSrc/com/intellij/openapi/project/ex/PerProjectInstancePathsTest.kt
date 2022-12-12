@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.project.impl
+package com.intellij.openapi.project.ex
 
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import org.junit.Test
 import java.nio.file.Paths

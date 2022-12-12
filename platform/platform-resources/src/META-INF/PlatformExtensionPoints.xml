@@ -119,6 +119,9 @@
                     dynamic="true"/>
     <extensionPoint name="projectSetProcessor"
                     interface="com.intellij.projectImport.ProjectSetProcessor"/>
+    <extensionPoint name="lowLevelProjectOpenProcessor"
+                    interface="com.intellij.openapi.project.ex.LowLevelProjectOpenProcessor"
+                    dynamic="true"/>
 
     <extensionPoint name="codeInsight.linkHandler"
                     beanClass="com.intellij.codeInsight.hint.TooltipLinkHandlerEP" dynamic="true">

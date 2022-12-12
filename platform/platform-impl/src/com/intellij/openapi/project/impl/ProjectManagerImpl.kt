@@ -43,6 +43,8 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.*
+import com.intellij.openapi.project.ex.LowLevelProjectOpenProcessor
+import com.intellij.openapi.project.ex.PerProjectInstancePaths
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl.Companion.preloadServicesAndCreateComponents
@@ -542,10 +544,14 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       throw ProcessCanceledException()
     }
 
-    val shouldOpenInChildProcess = IS_PER_PROJECT_INSTANCE_ENABLED && openProjects.isNotEmpty()
-    if (shouldOpenInChildProcess) {
+    if (shouldOpenInChildProcess(projectStoreBaseDir)) {
       openInChildProcess(projectStoreBaseDir)
       return null
+    }
+    else if (IS_PER_PROJECT_INSTANCE_ENABLED) {
+      LowLevelProjectOpenProcessor.EP_NAME.extensions.forEach {
+        it.beforeProjectOpened(projectStoreBaseDir)
+      }
     }
 
     // if we are opening project in current process (not yet PER_PROJECT), lock per-project directory
@@ -1376,8 +1382,43 @@ private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
   return confirmOpeningAndSetProjectTrustedStateIfNeeded(projectStoreBaseDir)
 }
 
+private suspend fun shouldOpenInChildProcess(projectStoreBaseDir: Path): Boolean {
+  if (!ProjectManagerEx.IS_PER_PROJECT_INSTANCE_READY) {
+    return false
+  }
+
+  if (!ApplicationManager.getApplication().isHeadlessEnvironment &&
+      ApplicationManager.getApplication().isInternal) {
+    withContext(Dispatchers.EDT) {
+      @Suppress("HardCodedStringLiteral")
+      Messages.showMessageDialog(
+        null,
+        "Start `Remote JVM Debug` configuration now",
+        "Debugger Guard",
+        null
+      )
+    }
+  }
+
+  val sameSystemPath = withContext(Dispatchers.IO) {
+    val childSystemPath = PerProjectInstancePaths(projectStoreBaseDir).getSystemDir()
+    childSystemPath.exists() && Files.isSameFile(PathManager.getSystemDir(), childSystemPath)
+  }
+
+  if (sameSystemPath) {
+    return false
+  }
+
+  return LowLevelProjectOpenProcessor.EP_NAME.extensions.any { it.shouldOpenInNewProcess(projectStoreBaseDir) }
+}
+
 private suspend fun openInChildProcess(projectStoreBaseDir: Path) {
   try {
+    val instancePaths = PerProjectInstancePaths(projectStoreBaseDir)
+    LowLevelProjectOpenProcessor.EP_NAME.extensions.forEach {
+      it.preparePathsForNewProcess(projectStoreBaseDir, instancePaths)
+    }
+
     withContext(Dispatchers.IO) {
       ProcessBuilder(openProjectInstanceCommand(projectStoreBaseDir))
         .redirectErrorStream(true)

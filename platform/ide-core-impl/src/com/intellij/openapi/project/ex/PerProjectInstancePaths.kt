@@ -1,8 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.project.impl
+package com.intellij.openapi.project.ex
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.util.io.isAncestor
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
