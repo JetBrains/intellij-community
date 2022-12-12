@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,6 +32,7 @@ import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.BidirectionalMap;
@@ -204,7 +206,7 @@ public final class XLineBreakpointManager {
     myBreakpointsUpdateQueue.queue(new Update(breakpoint) {
       @Override
       public void run() {
-        breakpoint.doUpdateUI(callOnUpdate);
+        breakpoint.doUpdateUI(ObjectUtils.notNull(callOnUpdate, EmptyRunnable.INSTANCE));
       }
     });
   }
@@ -213,7 +215,7 @@ public final class XLineBreakpointManager {
     myBreakpointsUpdateQueue.queue(new Update("all breakpoints") {
       @Override
       public void run() {
-        breakpoints().forEach(b -> b.doUpdateUI(null));
+        breakpoints().forEach(b -> b.doUpdateUI(EmptyRunnable.INSTANCE));
       }
     });
     // skip waiting
