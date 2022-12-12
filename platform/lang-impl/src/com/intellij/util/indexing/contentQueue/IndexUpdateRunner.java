@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -110,11 +111,19 @@ public final class IndexUpdateRunner {
 
   public static final class FileSet {
     public final String debugName;
+    public final @Nullable @NlsContexts.ProgressText String progressText;
     public final Collection<VirtualFile> files;
     public final IndexingFileSetStatistics statistics;
+
     public FileSet(@NotNull Project project, @NotNull String debugName, @NotNull Collection<VirtualFile> files) {
+      this(project, debugName, files, null);
+    }
+
+    public FileSet(@NotNull Project project, @NotNull String debugName, @NotNull Collection<VirtualFile> files,
+                   @Nullable @NlsContexts.ProgressText String progressText) {
       this.debugName = debugName;
       this.files = files;
+      this.progressText = progressText;
       statistics = new IndexingFileSetStatistics(project, debugName);
     }
   }
@@ -297,7 +306,7 @@ public final class IndexUpdateRunner {
     }
     
     try {
-      indexingJob.setLocationBeingIndexed(file);
+      indexingJob.setLocationBeingIndexed(fileIndexingJob);
       @NotNull Supplier<@NotNull Boolean> fileTypeChangeChecker = CachedFileType.getFileTypeChangeChecker();
       FileType type = FileTypeRegistry.getInstance().getFileTypeByFile(file, fileContent.getBytes());
       FileIndexesValuesApplier applier = ReadAction
@@ -569,12 +578,16 @@ public final class IndexUpdateRunner {
       return myAllFilesAreProcessedLatch.getCount() == 0;
     }
 
-    public void setLocationBeingIndexed(@NotNull VirtualFile virtualFile) {
-      String presentableLocation = getPresentableLocationBeingIndexed(myProject, virtualFile);
+    public void setLocationBeingIndexed(@NotNull FileIndexingJob fileIndexingJob) {
+      String presentableLocation = getPresentableLocationBeingIndexed(myProject, fileIndexingJob.file);
       if (myIndicator instanceof SubTaskProgressIndicator) {
         myIndicator.setText(presentableLocation);
       }
       else {
+        FileSet fileSet = fileIndexingJob.fileSet;
+        if (fileSet.progressText != null && !fileSet.progressText.equals(myIndicator.getText())) {
+          myIndicator.setText(fileSet.progressText);
+        }
         myIndicator.setText2(presentableLocation);
       }
     }
