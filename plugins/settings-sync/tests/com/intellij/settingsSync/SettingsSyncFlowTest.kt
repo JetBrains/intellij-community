@@ -201,15 +201,21 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     assertEquals("Incorrect content", "Migration Data", (settingsSyncStorage / "options" / "laf.xml").readText())
   }
 
-  @Test fun `enable settings with migration and data on server should prefer server data`() {
-    val migration = migrationFromLafXml()
+  @Test fun `enable settings with migration and data on server should merge but prefer server data in case of conflicts`() {
+    val migration = migration(settingsSnapshot {
+      fileState("options/laf.xml", "Migration Data")
+      fileState("options/editor.xml", "Migration Data")
+    })
     remoteCommunicator.prepareFileOnServer(settingsSnapshot {
       fileState("options/laf.xml", "Server Data")
+      fileState("options/keymap.xml", "Server Data")
     })
 
     initSettingsSync(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration))
 
-    assertEquals("Incorrect content", "Server Data", (settingsSyncStorage / "options" / "laf.xml").readText())
+    assertFileWithContent("Migration Data", (settingsSyncStorage / "options" / "editor.xml"))
+    assertFileWithContent("Server Data", (settingsSyncStorage / "options" / "laf.xml"))
+    assertFileWithContent("Server Data", (settingsSyncStorage / "options" / "keymap.xml"))
   }
 
   //@Test
@@ -352,17 +358,23 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     }
   }
 
-  private fun migrationFromLafXml() = object : SettingsSyncMigration {
+  private fun migrationFromLafXml() = migration(
+    settingsSnapshot {
+      fileState("options/laf.xml", "Migration Data")
+    }
+  )
+
+  private fun migration(snapshotToMigrate: SettingsSnapshot) = object : SettingsSyncMigration {
     override fun isLocalDataAvailable(appConfigDir: Path): Boolean {
-      TODO("Not yet implemented")
+      throw UnsupportedOperationException("Should not have been called")
     }
 
     override fun getLocalDataIfAvailable(appConfigDir: Path): SettingsSnapshot {
-      return settingsSnapshot {
-        fileState("options/laf.xml", "Migration Data")
-      }
+      return snapshotToMigrate
     }
-    override fun migrateCategoriesSyncStatus(appConfigDir: Path, syncSettings: SettingsSyncSettings) {}
+
+    override fun migrateCategoriesSyncStatus(appConfigDir: Path, syncSettings: SettingsSyncSettings) {
+    }
   }
 
   private fun assertAppliedToIde(fileSpec: String, expectedContent: String) {
