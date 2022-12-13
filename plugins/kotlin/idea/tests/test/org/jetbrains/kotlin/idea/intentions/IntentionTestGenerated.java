@@ -18130,6 +18130,31 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/usePropertyAccessSyntax/propertyTypeIsMoreSpecific2.kt");
         }
 
+        @TestMetadata("referenceGetter0.kt")
+        public void testReferenceGetter0() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/referenceGetter0.kt");
+        }
+
+        @TestMetadata("referenceGetter1.kt")
+        public void testReferenceGetter1() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/referenceGetter1.kt");
+        }
+
+        @TestMetadata("referenceGetterOldLv.kt")
+        public void testReferenceGetterOldLv() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/referenceGetterOldLv.kt");
+        }
+
+        @TestMetadata("referenceIsGetter.kt")
+        public void testReferenceIsGetter() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/referenceIsGetter.kt");
+        }
+
+        @TestMetadata("referenceSetter.kt")
+        public void testReferenceSetter() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/referenceSetter.kt");
+        }
+
         @TestMetadata("set.kt")
         public void testSet() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/set.kt");
