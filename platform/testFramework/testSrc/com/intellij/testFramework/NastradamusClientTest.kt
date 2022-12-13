@@ -22,6 +22,7 @@ class NastradamusClientTest {
     Cache.eraseCache()
   }
 
+  private val jacksonMapper = jacksonObjectMapper()
   private val tcMockServer = MockWebServer()
   private val nastradamusMockServer = MockWebServer()
   private lateinit var tcClient: TeamCityClient
@@ -160,8 +161,6 @@ class NastradamusClientTest {
 
   @Test
   fun sendSortingDataToNostradamus() {
-    val jacksonMapper = jacksonObjectMapper()
-
     val testCases = listOf(TestCaseEntity("org.jetbrains.xx"), TestCaseEntity("com.intellij.bxjs"))
 
     val sortEntity = SortRequestEntity(
@@ -197,7 +196,6 @@ class NastradamusClientTest {
 
   @Test(expected = RuntimeException::class)
   fun errorThresholdTest() {
-
     (1..3).forEach {
       try {
         withErrorThreshold("TestErrorThreshold", errorThreshold = 3) {
@@ -211,33 +209,22 @@ class NastradamusClientTest {
     withErrorThreshold("TestErrorThreshold", errorThreshold = 3) { }
   }
 
-
   @Test
-  @Ignore("Do not use dedicated instance. Use mocks / spin up a new server")
   fun sendTestRunResultToNostradamus() {
-    val client = NastradamusClient(URI("http://127.0.0.1:8000/").normalize(), unsortedClasses = listOf())
+    tcMockServer.enqueue(getOkResponse("teamcity/TestOccurences.json"))
+    tcMockServer.enqueue(getOkResponse("teamcity/EmptyTestOccurences.json"))
+    tcMockServer.enqueue(getOkResponse("teamcity/Build_Info_Triggered_By_Aggregator.json"))
 
-    val testRunResult = TestResultRequestEntity(
-      testRunResults = listOf(
-        TestResultEntity(
-          name = "org.jetbrains.xx",
-          status = TestStatus.FAILED,
-          runOrder = -1,
-          duration = 10,
-          buildType = "build_type_x",
-          buildStatusMessage = "okay"
-        ),
-        TestResultEntity(
-          name = "com.intellij.bxjs",
-          status = TestStatus.SUCCESS,
-          runOrder = 10,
-          duration = 0,
-          buildType = "new_build_type",
-          buildStatusMessage = ""
-        ),
-      )
-    )
+    nastradamusMockServer.enqueue(MockResponse()
+                                    .setBody("")
+                                    .addHeader("Content-Type", "application/json"))
 
-    client.sendTestRunResults(testRunResult)
+    val testResultRequestEntity = nastradamus.collectTestRunResults()
+    nastradamus.sendTestRunResults(testResultRequestEntity)
+
+    val request = nastradamusMockServer.takeRequest()
+
+    Assert.assertEquals("Requested path should be equal", "/result/?build_id=100500", request.path)
+    Assert.assertEquals("POST request should be sent", "POST", request.method)
   }
 }

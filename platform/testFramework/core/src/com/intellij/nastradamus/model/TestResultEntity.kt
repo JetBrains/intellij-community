@@ -4,16 +4,17 @@ package com.intellij.nastradamus.model
 import com.fasterxml.jackson.annotation.JsonProperty
 
 enum class TestStatus(status: String) {
-  SUCCESS("success"),
-  FAILED("failed"),
-  IGNORED("ignored"),
-  UNKNOWN("unknown");
+  SUCCESS("SUCCESS"),
+  FAILURE("FAILURE"),
+  IGNORED("IGNORED"),
+  ABORTED("ABORTED"),
+  UNKNOWN("UNKNOWN");
 
   val status: String = status.lowercase()
 
   companion object {
     fun fromString(input: String): TestStatus {
-      return values().single { input.lowercase() == it.status }
+      return values().singleOrNull { input.lowercase() == it.status } ?: UNKNOWN
     }
   }
 }
