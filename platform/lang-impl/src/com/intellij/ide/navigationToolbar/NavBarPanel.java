@@ -263,13 +263,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   @Override
   public void enter() {
-    if (isNodePopupActive()) {
-      Selection indexes = mySelection;
-      List<Object> popupObjects = mySelection == null ? null : mySelection.myNodePopupObjects;
-      if (popupObjects != null && !popupObjects.isEmpty()) {
-        navigateInsideBar(indexes.myBarIndex, popupObjects.get(0), false);
-        return;
-      }
+    Object selectedPopupObject = getSelectedPopupObject();
+    if (selectedPopupObject != null) {
+      navigateInsideBar(mySelection.myBarIndex, selectedPopupObject, false);
     }
 
     int index = myModel.getSelectedIndex();
@@ -283,9 +279,24 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   @Override
   public void navigate() {
-    if (myModel.getSelectedIndex() != -1) {
-      doubleClick(myModel.getSelectedIndex());
+    Object selectedPopupObject = getSelectedPopupObject();
+    if (selectedPopupObject != null) {
+      navigateInsideBar(mySelection.myBarIndex, selectedPopupObject, true);
     }
+
+    int index = myModel.getSelectedIndex();
+    if (index != -1) doubleClick(index);
+  }
+
+  private @Nullable Object getSelectedPopupObject() {
+    if (!isNodePopupActive()) return null;
+
+    List<Object> popupObjects = mySelection == null ? null : mySelection.myNodePopupObjects;
+    if (popupObjects != null && !popupObjects.isEmpty()) {
+      return popupObjects.get(0);
+    }
+
+    return null;
   }
 
   @Override
