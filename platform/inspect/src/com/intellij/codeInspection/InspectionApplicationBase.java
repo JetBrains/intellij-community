@@ -718,10 +718,11 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
     if (myStubProfile != null) {
       if (!myRunWithEditorSettings) {
-        profile = loadProfileByName(project, myStubProfile);
+        InspectionProfileLoader inspectionProfileLoader = getInspectionProfileLoader(project);
+        profile = inspectionProfileLoader.loadProfileByName(myStubProfile);
         if (profile != null) return profile;
 
-        profile = loadProfileByPath(myStubProfile);
+        profile = inspectionProfileLoader.loadProfileByPath(myStubProfile);
         if (profile != null) return profile;
       }
     }
@@ -736,9 +737,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
                                                                @Nullable String profileName,
                                                                @Nullable String profilePath,
                                                                @NotNull String configSource) throws IOException, JDOMException {
+    InspectionProfileLoader inspectionProfileLoader = getInspectionProfileLoader(project);
     //fetch profile by name from project file (project profiles can be disabled)
     if (profileName != null && !profileName.isEmpty()) {
-      InspectionProfileImpl inspectionProfile = loadProfileByName(project, profileName);
+      InspectionProfileImpl inspectionProfile = inspectionProfileLoader.loadProfileByName(profileName);
       if (inspectionProfile == null) {
         onFailure(InspectionsBundle.message("inspection.application.profile.was.not.found.by.name.0.1", profileName, configSource));
       }
@@ -746,20 +748,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     }
 
     if (profilePath != null && !profilePath.isEmpty()) {
-      if (YamlInspectionProfileImpl.isYamlFile(profilePath)) {
-        if (!new File(profilePath).isFile()) {
-          throw new InspectionApplicationException("Inspection profile '" + profilePath + "' does not exist");
-        }
-        try {
-          return YamlInspectionProfileImpl.loadFrom(project, profilePath).buildEffectiveProfile();
-        }
-        catch (ParserException e) {
-          // snakeyaml doesn't provide any information about where the YAML stream comes from,
-          // its StreamReader constructor hardcodes the name to "'reader'".
-          throw new InspectionApplicationException("Parse error in '" + profilePath + "': " + e);
-        }
-      }
-      InspectionProfileImpl inspectionProfile = loadProfileByPath(profilePath);
+      InspectionProfileImpl inspectionProfile = inspectionProfileLoader.loadProfileByPath(profilePath);
       if (inspectionProfile == null) {
         onFailure(InspectionsBundle.message("inspection.application.profile.failed.configure.by.path.0.1", profilePath, configSource));
       }
@@ -768,30 +757,38 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     return null;
   }
 
-  public @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) throws IOException, JDOMException {
-    InspectionProfileImpl inspectionProfile = ApplicationInspectionProfileManagerBase.getInstanceBase().loadProfile(profilePath);
-    if (inspectionProfile != null) {
-      reportMessage(1, "Loaded the '" + inspectionProfile.getName() + "' profile from the file '" + profilePath + "'");
-    }
-    return inspectionProfile;
-  }
-
-  public @Nullable InspectionProfileImpl loadProfileByName(@NotNull Project project, @NotNull String profileName) {
-    InspectionProfileManager.getInstance().getProfiles(); //  force init provided profiles
-    InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-    InspectionProfileImpl inspectionProfile = profileManager.getProfile(profileName, false);
-    if (inspectionProfile == null) {  // check if the IDE profile is used for the project
-      for (InspectionProfileImpl profile : profileManager.getProfiles()) {
-        if (Comparing.strEqual(profile.getName(), profileName)) {
-          inspectionProfile = profile;
-          break;
+  public @NotNull InspectionProfileLoader getInspectionProfileLoader(@NotNull Project project) {
+    return new InspectionProfileLoaderBase(project) {
+      @Override
+      public @Nullable InspectionProfileImpl loadProfileByName(@NotNull String profileName) {
+        InspectionProfileManager.getInstance().getProfiles(); //  force init provided profiles
+        InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
+        InspectionProfileImpl inspectionProfile = profileManager.getProfile(profileName, false);
+        if (inspectionProfile == null) {  // check if the IDE profile is used for the project
+          for (InspectionProfileImpl profile : profileManager.getProfiles()) {
+            if (Comparing.strEqual(profile.getName(), profileName)) {
+              inspectionProfile = profile;
+              break;
+            }
+          }
         }
+
+        return inspectionProfile;
       }
-    }
 
-    return inspectionProfile;
+      @Override
+      public @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) throws IOException, JDOMException {
+        InspectionProfileImpl inspectionProfileFromYaml = tryLoadProfileFromYaml(profilePath);
+        if (inspectionProfileFromYaml != null) return inspectionProfileFromYaml;
+
+        InspectionProfileImpl inspectionProfile = ApplicationInspectionProfileManagerBase.getInstanceBase().loadProfile(profilePath);
+        if (inspectionProfile != null) {
+          reportMessage(1, "Loaded the '" + inspectionProfile.getName() + "' profile from the file '" + profilePath + "'");
+        }
+        return inspectionProfile;
+      }
+    };
   }
-
 
   private ConversionListener createConversionListener(StringBuilder errorBuffer) {
     return new ConversionListener() {
