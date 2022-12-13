@@ -143,7 +143,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
 
       for (Project project : projectManager.getOpenProjects()) {
         FileStatusManagerImpl manager = (FileStatusManagerImpl)project.getServiceIfCreated(FileStatusManager.class);
-        if (manager != null) manager.refreshFileStatusFromDocument(file, document);
+        if (manager != null) manager.refreshFileStatusFromDocument(file);
       }
     }
   }
@@ -330,38 +330,39 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
   }
 
   @RequiresEdt
-  private void refreshFileStatusFromDocument(@NotNull final VirtualFile virtualFile, @NotNull final Document doc) {
+  private void refreshFileStatusFromDocument(@NotNull VirtualFile file) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("refreshFileStatusFromDocument: file.getModificationStamp()=" + virtualFile.getModificationStamp() +
-                ", document.getModificationStamp()=" + doc.getModificationStamp());
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+      LOG.debug("refreshFileStatusFromDocument: file.getModificationStamp()=" + file.getModificationStamp() +
+                ", document.getModificationStamp()=" + (document != null ? document.getModificationStamp() : null));
     }
 
-    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
+    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
     if (vcs == null) return;
 
-    FileStatus cachedStatus = myCachedStatuses.get(virtualFile);
-    boolean isDocumentModified = isDocumentModified(virtualFile);
+    FileStatus cachedStatus = myCachedStatuses.get(file);
+    boolean isDocumentModified = isDocumentModified(file);
 
     if (cachedStatus == FileStatus.MODIFIED && !isDocumentModified) {
       if (!((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject)).getState().SHOW_DIALOG) {
         RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
         if (rollbackEnvironment != null) {
-          rollbackEnvironment.rollbackIfUnchanged(virtualFile);
+          rollbackEnvironment.rollbackIfUnchanged(file);
         }
       }
     }
 
     boolean isStatusChanged = cachedStatus != null && cachedStatus != FileStatus.NOT_CHANGED;
     if (isStatusChanged != isDocumentModified) {
-      fileStatusChanged(virtualFile);
+      fileStatusChanged(file);
     }
 
     ChangeProvider cp = vcs.getChangeProvider();
     if (cp != null && cp.isModifiedDocumentTrackingRequired()) {
-      FileStatus status = ChangeListManager.getInstance(myProject).getStatus(virtualFile);
+      FileStatus status = ChangeListManager.getInstance(myProject).getStatus(file);
       boolean isClmStatusChanged = status != FileStatus.NOT_CHANGED;
       if (isClmStatusChanged != isDocumentModified) {
-        VcsDirtyScopeManager.getInstance(myProject).fileDirty(virtualFile);
+        VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
       }
     }
   }
