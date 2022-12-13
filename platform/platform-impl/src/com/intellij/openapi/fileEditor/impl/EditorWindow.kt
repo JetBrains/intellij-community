@@ -51,7 +51,6 @@ import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
-import java.util.function.BiFunction
 import java.util.function.Function
 import javax.swing.*
 import kotlin.math.roundToInt
@@ -110,6 +109,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
 
   val manager: FileEditorManagerImpl
     get() = owner.manager
+
   val tabCount: Int
     get() = tabbedPane.tabCount
 
@@ -228,7 +228,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
 
   private fun getAdjacentEditors(): Map<RelativePosition, EditorWindow> {
     checkConsistency()
-    val adjacentEditors = HashMap<RelativePosition, EditorWindow>(4) // can't have more than 4
+    // can't have more than 4
+    val adjacentEditors = HashMap<RelativePosition, EditorWindow>(4)
     val windows = owner.getOrderedWindows()
     windows.remove(this)
     val panelToWindow = HashMap<JPanel, EditorWindow>()
@@ -237,34 +238,36 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     }
     val relativePoint = RelativePoint(panel.locationOnScreen)
     val point = relativePoint.getPoint(owner)
-    val nearestComponent = BiFunction { x: Int, y: Int ->
+    val nearestComponent: (Int, Int) -> Component = { x, y ->
       SwingUtilities.getDeepestComponentAt(owner, x, y)
     }
-    val findAdjacentEditor = Function<Component, EditorWindow?> { startComponent ->
+
+    fun findAdjacentEditor(startComponent: Component): EditorWindow? {
       var component = startComponent
       while (component !== owner) {
         if (panelToWindow.containsKey(component)) {
-          return@Function panelToWindow.get(component)
+          return panelToWindow.get(component)
         }
         component = component.parent ?: break
       }
-      null
+      return null
     }
-    val biConsumer: (EditorWindow?, RelativePosition) -> Unit = { window, position ->
+
+    fun biConsumer(window: EditorWindow?, position: RelativePosition) {
       if (window != null) {
         adjacentEditors.put(position, window)
       }
     }
 
     // Even if above/below adjacent editor is shifted a bit to the right from left edge of current editor,
-    // still try to choose editor that is visually above/below - shifted nor more then quater of editor width.
+    // still try to choose editor that is visually above/below - shifted nor more than quarter of editor width.
     val x = point.x + panel.width / 4
     // Splitter has width of one pixel - we need to step at least 2 pixels to be over adjacent editor
     val searchStep = 2
-    biConsumer(findAdjacentEditor.apply(nearestComponent.apply(x, point.y - searchStep)), RelativePosition.UP)
-    biConsumer(findAdjacentEditor.apply(nearestComponent.apply(x, point.y + panel.height + searchStep)), RelativePosition.DOWN)
-    biConsumer(findAdjacentEditor.apply(nearestComponent.apply(point.x - searchStep, point.y)), RelativePosition.LEFT)
-    biConsumer(findAdjacentEditor.apply(nearestComponent.apply(point.x + panel.width + searchStep, point.y)), RelativePosition.RIGHT)
+    biConsumer(findAdjacentEditor(nearestComponent(x, point.y - searchStep)), RelativePosition.UP)
+    biConsumer(findAdjacentEditor(nearestComponent(x, point.y + panel.height + searchStep)), RelativePosition.DOWN)
+    biConsumer(findAdjacentEditor(nearestComponent(point.x - searchStep, point.y)), RelativePosition.LEFT)
+    biConsumer(findAdjacentEditor(nearestComponent(point.x + panel.width + searchStep, point.y)), RelativePosition.RIGHT)
     return adjacentEditors
   }
 
@@ -327,7 +330,6 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       file.putUserData(DRAG_START_INDEX_KEY, null)
       file.putUserData(DRAG_START_PINNED_KEY, null)
       trimToSize(fileToIgnore = file, transferFocus = false)
-      owner.updateFileIconImmediately(file = file, icon = IconUtil.computeBaseFileIcon(file))
       owner.updateFileIcon(file)
       owner.updateFileColorAsync(file)
     }
@@ -463,6 +465,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     }
 
     val scrollOffset = editorFrom.scrollingModel.verticalScrollOffset
+    @Suppress("DuplicatedCode")
     for (fileEditor in toSync) {
       if (fileEditor !is TextEditor) {
         continue
@@ -628,6 +631,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       }
       else -> throw IllegalStateException("Unknown container: $parent")
     }
+    @Suppress("SSBasedInspection")
     dispose()
   }
 
@@ -1086,10 +1090,10 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
   }
 
   fun trimToSize(fileToIgnore: VirtualFile?, transferFocus: Boolean) {
-    manager.getReady(this).doWhenDone {
-      if (!isDisposed) {
-        doTrimSize(fileToIgnore, UISettings.getInstance().state.closeNonModifiedFilesFirst, transferFocus)
-      }
+    if (!isDisposed) {
+      doTrimSize(fileToIgnore = fileToIgnore,
+                 closeNonModifiedFilesFirst = UISettings.getInstance().state.closeNonModifiedFilesFirst,
+                 transferFocus = transferFocus)
     }
   }
 
@@ -1103,16 +1107,15 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     }
 
     // close all preview tabs
-    val previews = composites.filter { it.isPreview }.map { it.file }.distinct().toList()
-    for (preview in previews) {
-      if (preview != fileToIgnore) {
-        defaultCloseFile(preview, transferFocus)
-      }
+    for (file in composites.filter { it.isPreview }.map { it.file }.filter { it != fileToIgnore }.distinct().toList()) {
+      defaultCloseFile(file = file, transferFocus = transferFocus)
     }
+
     for (file in closingOrder) {
       if (tabbedPane.tabCount <= limit || tabbedPane.tabCount == 0 || areAllTabsPinned(fileToIgnore)) {
         return
       }
+
       if (fileCanBeClosed(file, fileToIgnore)) {
         defaultCloseFile(file, transferFocus)
       }
@@ -1174,23 +1177,22 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     if (!isFileOpen(file) || isFilePinned(file)) {
       return false
     }
-    if (file == fileToIgnore) return false
+    if (file == fileToIgnore) {
+      return false
+    }
     val composite = getComposite(file) ?: return false
-    //Don't check focus in unit test mode
+    // don't check focus in unit test mode
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       val owner = IdeFocusManager.getInstance(owner.manager.project).focusOwner
-      if (owner == null || !SwingUtilities.isDescendingFrom(owner, composite.selectedEditor.component)) return false
+      if (owner == null || !SwingUtilities.isDescendingFrom(owner, composite.selectedEditor.component)) {
+        return false
+      }
     }
     return !owner.manager.isChanged(composite)
   }
 
   private fun areAllTabsPinned(fileToIgnore: VirtualFile?): Boolean {
-    for (i in tabbedPane.tabCount - 1 downTo 0) {
-      if (fileCanBeClosed(getFileAt(i), fileToIgnore)) {
-        return false
-      }
-    }
-    return true
+    return (tabbedPane.tabCount - 1 downTo 0).none { fileCanBeClosed(getFileAt(it), fileToIgnore) }
   }
 
   private fun defaultCloseFile(file: VirtualFile, transferFocus: Boolean) {
@@ -1198,19 +1200,15 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
   }
 
   private fun fileCanBeClosed(file: VirtualFile, fileToIgnore: VirtualFile?): Boolean {
-    if (file is BackedVirtualFile) {
-      val backedVirtualFile = file as BackedVirtualFile
-      val originalFile = backedVirtualFile.originFile
-      if (originalFile == fileToIgnore) {
-        return false
-      }
+    if (file is BackedVirtualFile && file.originFile == fileToIgnore) {
+      return false
     }
     return isFileOpen(file) && file != fileToIgnore && !isFilePinned(file)
   }
 
   internal fun getFileAt(i: Int): VirtualFile = getCompositeAt(i).file
 
-  override fun toString() = "EditorWindow(files=${files.joinToString()})"
+  override fun toString() = "EditorWindow(files=${composites.joinToString { it.file.path }})"
 }
 
 private fun shouldReservePreview(file: VirtualFile, options: FileEditorOpenOptions, project: Project): Boolean {

@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -86,8 +87,7 @@ public final class Switcher extends BaseSwitcherAction {
    * @deprecated Please use {@link Switcher#createAndShowSwitcher(AnActionEvent, String, boolean, boolean)}
    */
   @Deprecated(forRemoval = true)
-  @Nullable
-  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull @Nls String title, boolean pinned, final VirtualFile @Nullable [] vFiles) {
+  public static @Nullable SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull @Nls String title, boolean pinned, final VirtualFile @Nullable [] vFiles) {
     Project project = e.getProject();
     if (project == null) return null;
     SwitcherPanel switcher = SWITCHER_KEY.get(project);
@@ -96,7 +96,7 @@ public final class Switcher extends BaseSwitcherAction {
     return new SwitcherPanel(project, title, event, pinned ? vFiles != null : null, event == null || !event.isShiftDown());
   }
 
-  public static class SwitcherPanel extends BorderLayoutPanel implements DataProvider, QuickSearchComponent, Disposable {
+  public static final class SwitcherPanel extends BorderLayoutPanel implements DataProvider, QuickSearchComponent, Disposable {
     static final int SWITCHER_ELEMENTS_LIMIT = 30;
 
     final JBPopup myPopup;
@@ -114,9 +114,8 @@ public final class Switcher extends BaseSwitcherAction {
     final String myTitle;
     private JBPopup myHint;
 
-    @Nullable
     @Override
-    public Object getData(@NotNull @NonNls String dataId) {
+    public @Nullable Object getData(@NotNull @NonNls String dataId) {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return this.project;
       }
@@ -268,13 +267,12 @@ public final class Switcher extends BaseSwitcherAction {
       resetListModelAndUpdateNames(filesModel, filesToShow);
 
       final ListSelectionListener filesSelectionListener = new ListSelectionListener() {
-        private @NlsSafe String getTitle2Text(@Nullable String fullText) {
-          if (StringUtil.isEmpty(fullText)) return " ";
-          return fullText;
+        private static @NlsSafe String getTitle2Text(@Nullable String fullText) {
+          return Strings.isEmpty(fullText) ? " " : fullText;
         }
 
         @Override
-        public void valueChanged(@NotNull final ListSelectionEvent e) {
+        public void valueChanged(final @NotNull ListSelectionEvent e) {
           if (e.getValueIsAdjusting()) return;
           updatePathLabel();
           PopupUpdateProcessorBase popupUpdater = myHint == null || !myHint.isVisible() ?
@@ -394,8 +392,7 @@ public final class Switcher extends BaseSwitcherAction {
       return onlyEdited ? IdeDocumentHistory.getInstance(project).getChangedFiles() : getRecentFiles(project);
     }
 
-    @NotNull
-    private static List<SwitcherVirtualFile> getFilesToShow(@NotNull Project project, boolean onlyEdited, int toolWindowsCount, boolean pinned) {
+    private static @NotNull List<SwitcherVirtualFile> getFilesToShow(@NotNull Project project, boolean onlyEdited, int toolWindowsCount, boolean pinned) {
       FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
       List<SwitcherVirtualFile> filesData = new ArrayList<>();
       ArrayList<SwitcherVirtualFile> editors = new ArrayList<>();
@@ -477,8 +474,7 @@ public final class Switcher extends BaseSwitcherAction {
       return svf != null && svf.getFile().equals(currentFile) && (svf.getWindow() == null || svf.getWindow().equals(currentWindow));
     }
 
-    @NotNull
-    private static List<VirtualFile> getRecentFiles(@NotNull Project project) {
+    private static @NotNull List<VirtualFile> getRecentFiles(@NotNull Project project) {
       List<VirtualFile> recentFiles = EditorHistoryManager.getInstance(project).getFileList();
       VirtualFile[] openFiles = FileEditorManager.getInstance(project).getOpenFiles();
 

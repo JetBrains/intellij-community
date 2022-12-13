@@ -139,7 +139,9 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   }
 
   public @NotNull ActionCallback setSelectedIndex(int indexToSelect, boolean focusEditor) {
-    if (indexToSelect >= myTabs.getTabCount()) return ActionCallback.REJECTED;
+    if (indexToSelect >= myTabs.getTabCount()) {
+      return ActionCallback.REJECTED;
+    }
     return myTabs.select(myTabs.getTabAt(indexToSelect), focusEditor);
   }
 

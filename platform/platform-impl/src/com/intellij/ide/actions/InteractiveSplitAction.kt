@@ -1,132 +1,108 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.actions;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.actions
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.actions.OpenFileAction.Companion.openFile
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.EditorWindow
+import com.intellij.openapi.fileEditor.impl.EditorWindow.SplitterService
+import com.intellij.openapi.fileEditor.impl.EditorWindow.SplitterService.Companion.getInstance
+import com.intellij.openapi.project.DumbAware
 
-final class InteractiveSplitAction extends AnAction implements DumbAware {
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(e.getProject() != null && e.getData(CommonDataKeys.VIRTUAL_FILE) != null);
+internal class InteractiveSplitAction : AnAction(), DumbAware {
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = e.project != null && e.getData(CommonDataKeys.VIRTUAL_FILE) != null
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    EditorWindow editorWindow = e.getData(EditorWindow.DATA_KEY);
-    // When invoked from editor VF in context can be different from actual editor VF, e.g. for diff in editor tab
-    VirtualFile file;
-    if (editorWindow != null && editorWindow.getSelectedFile() != null) {
-      file = editorWindow.getSelectedFile();
-    }
-    else {
-      file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    }
-    boolean openedFromEditor = true;
+  override fun actionPerformed(e: AnActionEvent) {
+    var editorWindow = e.getData(EditorWindow.DATA_KEY)
+    // When invoked from editor VF in context can be different from the actual editor VF, e.g. for diff in editor tab
+    val file = if (editorWindow?.selectedFile == null) e.getData(CommonDataKeys.VIRTUAL_FILE) else editorWindow.selectedFile
+    var openedFromEditor = true
     if (editorWindow == null) {
-      openedFromEditor = false;
-      editorWindow = FileEditorManagerEx.getInstanceEx(e.getProject()).getSplitters().getCurrentWindow();
+      openedFromEditor = false
+      editorWindow = FileEditorManagerEx.getInstanceEx(e.project!!).splitters.currentWindow
     }
     if (editorWindow == null) {
-      // If no editor is currently opened just open file
-      OpenFileAction.openFile(file, e.getProject());
+      // If no editor is currently opened, just open file
+      openFile(file = file!!, project = e.project!!)
     }
     else {
-      EditorWindow.SplitterService.getInstance().activateSplitChooser(editorWindow, file, openedFromEditor);
+      getInstance().activateSplitChooser(window = editorWindow, file = file!!, openedFromEditor = openedFromEditor)
     }
   }
 
-  public static abstract class Key extends AnAction implements DumbAware {
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+  abstract class Key : AnAction(), DumbAware {
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
     }
 
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      final EditorWindow.SplitterService splitterService =
-        ApplicationManager.getApplication().getServiceIfCreated(EditorWindow.SplitterService.class);
-      e.getPresentation()
-        .setEnabledAndVisible(!ActionPlaces.MAIN_MENU.equals(e.getPlace()) && splitterService != null && splitterService.isActive());
+    override fun update(e: AnActionEvent) {
+      val splitterService = ApplicationManager.getApplication().serviceIfCreated<SplitterService>()
+      e.presentation.isEnabledAndVisible = ActionPlaces.MAIN_MENU != e.place && splitterService != null && splitterService.isActive
     }
 
-    public static final class NextWindow extends Key {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        EditorWindow.SplitterService.getInstance().nextWindow();
+    internal class NextWindow : Key() {
+      override fun actionPerformed(e: AnActionEvent) {
+        getInstance().nextWindow()
       }
     }
 
-    public static final class PreviousWindow extends Key {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        EditorWindow.SplitterService.getInstance().previousWindow();
+    internal class PreviousWindow : Key() {
+      override fun actionPerformed(e: AnActionEvent) {
+        getInstance().previousWindow()
       }
     }
 
-    public static final class Exit extends Key {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        EditorWindow.SplitterService.getInstance().stopSplitChooser(true);
+    internal class Exit : Key() {
+      override fun actionPerformed(e: AnActionEvent) {
+        getInstance().stopSplitChooser(true)
       }
     }
 
-    public static final class Split extends Key {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        EditorWindow.SplitterService.getInstance().split(true);
+    internal class Split : Key() {
+      override fun actionPerformed(e: AnActionEvent) {
+        getInstance().split(true)
       }
     }
 
-    public static final class Duplicate extends Key {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        EditorWindow.SplitterService.getInstance().split(false);
+    internal class Duplicate : Key() {
+      override fun actionPerformed(e: AnActionEvent) {
+        getInstance().split(false)
       }
     }
 
-    public static final class SplitCenter extends Key {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        EditorWindow.SplitterService.getInstance().setSplitSide(EditorWindow.RelativePosition.CENTER);
+    internal class SplitCenter : Key() {
+      override fun actionPerformed(e: AnActionEvent) {
+        getInstance().setSplitSide(EditorWindow.RelativePosition.CENTER)
       }
     }
 
-    public static final class SplitTop extends Key {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        EditorWindow.SplitterService.getInstance().setSplitSide(EditorWindow.RelativePosition.UP);
+    internal class SplitTop : Key() {
+      override fun actionPerformed(e: AnActionEvent) {
+        getInstance().setSplitSide(EditorWindow.RelativePosition.UP)
       }
     }
 
-    public static final class SplitLeft extends Key {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        EditorWindow.SplitterService.getInstance().setSplitSide(EditorWindow.RelativePosition.LEFT);
+    internal class SplitLeft : Key() {
+      override fun actionPerformed(e: AnActionEvent) {
+        getInstance().setSplitSide(EditorWindow.RelativePosition.LEFT)
       }
     }
 
-    public static final class SplitDown extends Key {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        EditorWindow.SplitterService.getInstance().setSplitSide(EditorWindow.RelativePosition.DOWN);
+    internal class SplitDown : Key() {
+      override fun actionPerformed(e: AnActionEvent) {
+        getInstance().setSplitSide(EditorWindow.RelativePosition.DOWN)
       }
     }
 
-    public static final class SplitRight extends Key {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        EditorWindow.SplitterService.getInstance().setSplitSide(EditorWindow.RelativePosition.RIGHT);
+    internal class SplitRight : Key() {
+      override fun actionPerformed(e: AnActionEvent) {
+        getInstance().setSplitSide(EditorWindow.RelativePosition.RIGHT)
       }
     }
   }
