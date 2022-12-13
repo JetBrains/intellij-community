@@ -204,7 +204,7 @@ class KotlinModuleOutOfBlockTrackerTest : AbstractMultiModuleTest() {
         PsiDocumentManager.getInstance(moduleA.project).commitAllDocuments()
 
         Assert.assertTrue(
-            "Out of block modification count for module A should not change after commenting, local classes are not available outside of the method," +
+            "Out of block modification count for module A should change after commenting, local classes are not available outside of the method," +
                     "modification count is ${moduleAWithTracker.modificationCount}",
             moduleAWithTracker.changed()
         )
