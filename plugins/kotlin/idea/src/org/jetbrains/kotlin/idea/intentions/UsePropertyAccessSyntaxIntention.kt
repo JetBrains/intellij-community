@@ -263,18 +263,23 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
         return callExpression.replaced(newExpression)
     }
 
-    private fun replaceWithPropertySet(callExpression: KtCallExpression, propertyName: Name, reformat: Boolean): KtExpression {
-        val call = callExpression.getQualifiedExpressionForSelector() ?: callExpression
+    private fun KtCallExpression.convertExpressionBodyToBlockBodyIfPossible(): KtCallExpression {
+        val call = getQualifiedExpressionForSelector() ?: this
         val callParent = call.parent
-        var callToConvert = callExpression
         if (callParent is KtDeclarationWithBody && call == callParent.bodyExpression) {
             ConvertToBlockBodyIntention.convert(callParent, true)
             val firstStatement = callParent.bodyBlockExpression?.statements?.first()
-            callToConvert = (firstStatement as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression
+            return (firstStatement as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression
                 ?: firstStatement as? KtCallExpression
-                        ?: throw KotlinExceptionWithAttachments("Unexpected contents of function after conversion: ${callParent::class.java}")
+                ?: throw KotlinExceptionWithAttachments("Unexpected contents of function after conversion: ${callParent::class.java}")
                     .withPsiAttachment("callParent", callParent)
         }
+        return this
+    }
+
+    private fun replaceWithPropertySet(callExpression: KtCallExpression, propertyName: Name, reformat: Boolean): KtExpression {
+        // TODO: consider common case when setter is used as an expression
+        val callToConvert = callExpression.convertExpressionBodyToBlockBodyIfPossible()
 
         val qualifiedExpression = callToConvert.getQualifiedExpressionForSelector()
         val argument = callToConvert.valueArguments.single()
