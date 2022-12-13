@@ -5,7 +5,6 @@ import com.intellij.openapi.util.text.StringUtilRt
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
-import kotlin.io.path.name
 
 object BuildUtils {
   @JvmStatic
