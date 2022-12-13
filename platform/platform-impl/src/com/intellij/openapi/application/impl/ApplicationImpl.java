@@ -1399,7 +1399,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     boolean writeActionPending = isWriteActionPending();
     boolean writeActionInProgress = isWriteActionInProgress();
     boolean writeAccessAllowed = isWriteAccessAllowed();
-    return "Application "
+    return "Application"
            + (getContainerState().get() == ContainerState.COMPONENT_CREATED ? "" : " (containerState "+getContainerStateName() + ") ")
            + (isUnitTestMode() ? " (unit test)" : "")
            + (isInternal() ? " (internal)" : "")
