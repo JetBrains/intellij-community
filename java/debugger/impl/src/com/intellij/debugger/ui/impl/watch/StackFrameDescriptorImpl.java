@@ -270,7 +270,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     if (myThisObject == null) {
       try {
         myThisObject = myFrame.thisObject();
-      } catch (EvaluateException e) {
+      }
+      catch (EvaluateException e) {
         LOG.info(e);
       }
       if (myThisObject != null) {

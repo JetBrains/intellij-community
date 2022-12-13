@@ -61,7 +61,8 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
       ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(myProgressIndicator);
 
       return result;
-    } catch (final EvaluateException e) {
+    }
+    catch (final EvaluateException e) {
       if (myEditor != null) {
         DebuggerInvocationUtil.invokeLater(myElement.getProject(),
                                            () -> showEvaluationHint(myEditor, myElement, e),

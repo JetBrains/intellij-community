@@ -493,11 +493,13 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     super.readExternal(breakpointNode);
     try {
       getProperties().WATCH_ENTRY = Boolean.parseBoolean(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_ENTRY"));
-    } catch (Exception ignored) {
+    }
+    catch (Exception ignored) {
     }
     try {
       getProperties().WATCH_EXIT = Boolean.parseBoolean(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_EXIT"));
-    } catch (Exception ignored) {
+    }
+    catch (Exception ignored) {
     }
   }
 

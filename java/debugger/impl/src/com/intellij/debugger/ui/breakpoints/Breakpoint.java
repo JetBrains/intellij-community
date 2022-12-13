@@ -731,11 +731,14 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   static SuspendPolicy transformSuspendPolicy(String policy) {
     if (DebuggerSettings.SUSPEND_ALL.equals(policy)) {
       return SuspendPolicy.ALL;
-    } else if (DebuggerSettings.SUSPEND_THREAD.equals(policy)) {
+    }
+    else if (DebuggerSettings.SUSPEND_THREAD.equals(policy)) {
       return SuspendPolicy.THREAD;
-    } else if (DebuggerSettings.SUSPEND_NONE.equals(policy)) {
+    }
+    else if (DebuggerSettings.SUSPEND_NONE.equals(policy)) {
       return SuspendPolicy.NONE;
-    } else {
+    }
+    else {
       throw new IllegalArgumentException("unknown suspend policy");
     }
   }

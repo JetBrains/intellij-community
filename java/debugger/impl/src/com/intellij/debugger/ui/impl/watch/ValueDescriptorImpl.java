@@ -601,7 +601,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         res = promise.then(__ -> ReadAction.nonBlocking(() -> JavaPsiFacade.getElementFactory(myProject)
           .createExpressionFromText(markName + CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX,
                                     PositionUtil.getContextElement(context))).executeSynchronously());
-      } else {
+      }
+      else {
         res = Promises.resolvedPromise(null);
       }
     }
@@ -731,7 +732,9 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     try {
       Type type = objRef.type();
       return type instanceof ClassType && ((ClassType)type).isEnum();
-    } catch (ObjectCollectedException ignored) {}
+    }
+    catch (ObjectCollectedException ignored) {
+    }
     return false;
   }
 

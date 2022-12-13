@@ -139,7 +139,8 @@ public final class TipManager implements Disposable, PopupMenuListener {
         if (isInsideComponent(e)) {
           tryTooltip(e, true);
         }
-      } else {
+      }
+      else {
         if (!isOverTip(e)) {
           tryTooltip(e, true);
         }
@@ -178,7 +179,8 @@ public final class TipManager implements Disposable, PopupMenuListener {
 
     if (e instanceof MouseEvent) {
       sourceEvent = (MouseEvent)e;
-    } else if (e instanceof KeyEvent) {
+    }
+    else if (e instanceof KeyEvent) {
       sourceEvent = myTipFactory.createTooltipEvent(myLastMouseEvent);
     }
 
@@ -231,7 +233,8 @@ public final class TipManager implements Disposable, PopupMenuListener {
       myTipPopup.hide();
       myTipPopup = null;
       myCurrentTooltip = null;
-    } else {
+    }
+    else {
       myHideAlarm.addRequest(() -> {
         if (myInsideComponent) {
           hideTooltip(true);
@@ -321,9 +324,11 @@ public final class TipManager implements Disposable, PopupMenuListener {
     public void eventDispatched(AWTEvent event) {
       if (event.getID() == MouseEvent.MOUSE_MOVED) {
         preventFromHideIfInsideTooltip(event);
-      } else if (event.getID() == MouseEvent.MOUSE_PRESSED || event.getID() == MouseEvent.MOUSE_RELEASED) {
+      }
+      else if (event.getID() == MouseEvent.MOUSE_PRESSED || event.getID() == MouseEvent.MOUSE_RELEASED) {
         hideTooltipIfCloseClick((MouseEvent)event);
-      } else if (event instanceof KeyEvent) {
+      }
+      else if (event instanceof KeyEvent) {
         tryToShowTooltipIfRequested((KeyEvent)event);
       }
     }
@@ -339,7 +344,8 @@ public final class TipManager implements Disposable, PopupMenuListener {
     private void tryToShowTooltipIfRequested(KeyEvent event) {
       if (KeymapUtil.isTooltipRequest(event)) {
         tryTooltip(event, false);
-      } else {
+      }
+      else {
         if (event.getID() == KeyEvent.KEY_PRESSED) {
           myLastMouseEvent = null;
         }

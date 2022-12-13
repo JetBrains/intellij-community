@@ -93,7 +93,8 @@ public abstract class TreeBuilder implements TreeModel {
     if (parent != null) {
       int anIndex = parent.getIndex(node);
       event = new TreeModelEvent(this, getPathToRoot(parent, 0), new int[]{anIndex}, new Object[]{node});
-    } else if (node == getRoot()) {
+    }
+    else if (node == getRoot()) {
       event = new TreeModelEvent(this, getPathToRoot(node, 0), null, null);
     }
     if (event != null) {

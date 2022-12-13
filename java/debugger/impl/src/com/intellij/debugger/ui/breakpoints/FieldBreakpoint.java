@@ -104,7 +104,9 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
       if (field != null) {
         return field;
       }
-    } catch (IndexNotReadyException ignored) {}
+    }
+    catch (IndexNotReadyException ignored) {
+    }
     return PositionUtil.getPsiElementAt(myProject, PsiField.class, sourcePosition);
   }
 
@@ -336,11 +338,13 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
     }
     try {
       getProperties().WATCH_MODIFICATION = Boolean.parseBoolean(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_MODIFICATION"));
-    } catch (Exception ignored) {
+    }
+    catch (Exception ignored) {
     }
     try {
       getProperties().WATCH_ACCESS = Boolean.parseBoolean(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_ACCESS"));
-    } catch (Exception ignored) {
+    }
+    catch (Exception ignored) {
     }
   }
   //

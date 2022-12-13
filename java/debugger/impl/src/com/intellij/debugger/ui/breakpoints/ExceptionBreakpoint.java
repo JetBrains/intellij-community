@@ -232,11 +232,13 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
     try {
       getProperties().NOTIFY_CAUGHT = Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "NOTIFY_CAUGHT"));
-    } catch (Exception ignore) {
+    }
+    catch (Exception ignore) {
     }
     try {
       getProperties().NOTIFY_UNCAUGHT = Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "NOTIFY_UNCAUGHT"));
-    } catch (Exception ignore) {
+    }
+    catch (Exception ignore) {
     }
 
     String className = parentNode.getAttributeValue("class_name");
