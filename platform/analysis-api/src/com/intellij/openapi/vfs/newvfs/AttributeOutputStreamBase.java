@@ -2,19 +2,21 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
+import com.intellij.util.io.UnsyncByteArrayBackedOutputStreamMarker;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 @ApiStatus.Experimental
 public final class AttributeOutputStreamBase extends AttributeOutputStream {
   private final @NotNull SimpleStringPersistentEnumerator myStringEnumerator;
 
   @ApiStatus.Internal
-  public AttributeOutputStreamBase(@NotNull OutputStream out, @NotNull SimpleStringPersistentEnumerator stringEnumerator) {
+  public <T extends DataOutputStream & UnsyncByteArrayBackedOutputStreamMarker> AttributeOutputStreamBase(@NotNull T out,
+                                                                                                          @NotNull SimpleStringPersistentEnumerator stringEnumerator) {
     super(out);
     myStringEnumerator = stringEnumerator;
   }

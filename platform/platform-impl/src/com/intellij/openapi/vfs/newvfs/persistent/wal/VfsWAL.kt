@@ -19,7 +19,8 @@ class VfsWAL(
   }
 
   val interceptors = listOf<ConnectionInterceptor>(
-    ContentsWALInterceptor(storagePath / "contents")
+    ContentsWALInterceptor(storagePath / "contents"),
+    AttributesWALInterceptor(storagePath / "attributes")
   )
 
   fun dispose() {

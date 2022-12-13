@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
+import com.intellij.openapi.vfs.newvfs.persistent.util.AttributesInterceptor;
 import com.intellij.openapi.vfs.newvfs.persistent.util.ConnectionInterceptor;
 import com.intellij.openapi.vfs.newvfs.persistent.util.ContentsInterceptor;
 import com.intellij.openapi.vfs.newvfs.persistent.util.InterceptorInjection;
@@ -24,17 +25,15 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.RefCountingContentStorage;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-final class PersistentFSConnection {
+@ApiStatus.Internal
+final public class PersistentFSConnection {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnection.class);
 
   static final int RESERVED_ATTR_ID = FSRecords.bulkAttrReadSupport ? 1 : 0;
@@ -92,7 +91,7 @@ final class PersistentFSConnection {
     }
     myRecords = records;
     myNames = names;
-    myAttributesStorage = attributes;
+    myAttributesStorage = wrapAttributes(attributes, interceptors);
     myContents = wrapContents(contents, interceptors);
     myContentHashesEnumerator = contentHashesEnumerator;
     myPersistentFSPaths = paths;
@@ -128,7 +127,17 @@ final class PersistentFSConnection {
       .filter(ContentsInterceptor.class::isInstance)
       .map(ContentsInterceptor.class::cast)
       .toList();
+    if (contentInterceptors.isEmpty()) return contents;
     return InterceptorInjection.INSTANCE.injectInContents(contents, contentInterceptors);
+  }
+
+  private static AbstractAttributesStorage wrapAttributes(AbstractAttributesStorage attributes, List<ConnectionInterceptor> interceptors) {
+    var attributesInterceptors = interceptors.stream()
+      .filter(AttributesInterceptor.class::isInstance)
+      .map(AttributesInterceptor.class::cast)
+      .toList();
+    if (attributesInterceptors.isEmpty()) return attributes;
+    return InterceptorInjection.INSTANCE.injectInAttributes(attributes, attributesInterceptors);
   }
 
   @NotNull("Vfs must be initialized")

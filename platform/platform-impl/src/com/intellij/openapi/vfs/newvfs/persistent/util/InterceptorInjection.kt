@@ -3,6 +3,10 @@ package com.intellij.openapi.vfs.newvfs.persistent.util
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.ByteArraySequence
+import com.intellij.openapi.vfs.newvfs.AttributeOutputStream
+import com.intellij.openapi.vfs.newvfs.FileAttribute
+import com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection
 import com.intellij.util.io.storage.IAppenderStream
 import com.intellij.util.io.storage.IStorageDataOutput
 import com.intellij.util.io.storage.RefCountingContentStorage
@@ -49,5 +53,25 @@ object InterceptorInjection {
       override fun releaseRecord(record: Int) = storage.releaseRecord(record).also {
         LOG.warn("releaseRecord $record")
       }
+    }
+
+  fun injectInAttributes(storage: AbstractAttributesStorage, interceptors: List<AttributesInterceptor>): AbstractAttributesStorage =
+    object : AbstractAttributesStorage by storage {
+      private val LOG = Logger.getInstance(AbstractAttributesStorage::class.java)
+
+      override fun deleteAttributes(connection: PersistentFSConnection?, fileId: Int) {
+        interceptors.forEach { it.onDeleteAttributes(fileId) }
+        storage.deleteAttributes(connection, fileId)
+      }
+
+      override fun setVersion(version: Int) = storage.setVersion(version).also {
+        LOG.warn("setVersion $version")
+      }
+
+      // leftmost interceptor in the list is the outer interceptor
+      override fun writeAttribute(connection: PersistentFSConnection?, fileId: Int, attribute: FileAttribute): AttributeOutputStream =
+        interceptors.foldRight(storage.writeAttribute(connection, fileId, attribute)) { interceptor, aos ->
+          interceptor.onWriteAttribute(aos, fileId, attribute)
+        }
     }
 }
