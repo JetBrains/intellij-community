@@ -13,7 +13,7 @@ import org.junit.Test
 class MppCompositeBuildImportTest : AbstractKotlinMppGradleImportingTest("gradle/newMppTests/compositeBuild") {
 
     @Test
-    @WorkspaceChecks(MODULE_DEPENDENCIES, SOURCE_ROOTS)
+    @WorkspaceChecks(MODULE_DEPENDENCIES)
     fun sample0() {
         // TODO: Run highlighting check as well
         assumeTrue("Requires next bootstrap", kotlinTestPropertiesService.kotlinGradlePluginVersion > "1.8.20-dev-3308")
