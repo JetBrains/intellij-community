@@ -64,7 +64,7 @@ class NastradamusClient(
       println("Requesting $uri with payload $stringJson")
     }
 
-    withErrorThreshold("NastradamusClient") {
+    withErrorThreshold("NastradamusClient-sendTestRunResults") {
       withRetry {
         HttpClient.sendRequest(httpPost) { response ->
           if (response.statusLine.statusCode != 200) {
@@ -104,7 +104,7 @@ class NastradamusClient(
       println("Requesting $uri with payload $stringJson")
     }
 
-    return withErrorThreshold("NastradamusClient") {
+    return withErrorThreshold("NastradamusClient-sendSortingRequest") {
       val jsonTree = withRetry {
         HttpClient.sendRequest(httpPost) {
           jacksonMapper.readTree(it.entity.content)
@@ -187,7 +187,7 @@ class NastradamusClient(
     println("Getting sorted (& bucketed) test classes from Nastradamus ...")
 
     return try {
-      withErrorThreshold("NastradamusClient") {
+      withErrorThreshold(objName = "NastradamusClient-getRankedClasses", errorThreshold = 1) {
         try {
           val changesets = getTeamCityChangesDetails()
           val cases = unsortedClasses.map { TestCaseEntity(it.name) }
@@ -220,7 +220,10 @@ class NastradamusClient(
 
   fun isClassInBucket(testIdentifier: String): Boolean {
     if (!this::sortedClassesCachedResult.isInitialized) getRankedClasses()
-    val isMatch = sortedClassesCachedResult.keys.any { it.name == testIdentifier }
+
+    val isMatch: Boolean = withErrorThreshold("NastradamusClient-isClassInBucket") {
+      sortedClassesCachedResult.keys.any { it.name == testIdentifier }
+    }
 
     if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
       println("Nastradamus. Class $testIdentifier matches current bucket ${TestCaseLoader.TEST_RUNNER_INDEX} - $isMatch")

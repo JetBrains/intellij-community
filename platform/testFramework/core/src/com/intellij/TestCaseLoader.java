@@ -104,7 +104,7 @@ public class TestCaseLoader {
   private static final NastradamusClient nastradamusClient = initNastradamus();
 
   static {
-    initFairBuckets();
+    initFairBuckets(false);
   }
 
   public TestCaseLoader(String classFilterName) {
@@ -226,12 +226,15 @@ public class TestCaseLoader {
       return nastradamusClient.isClassInBucket(testIdentifier);
     }
     catch (Exception e) {
-      System.err.println("Unexpected exception during bucketing via Nastradamus");
-      e.printStackTrace();
+      System.err.printf("Unexpected exception during bucketing via Nastradamus %s", e);
 
-      // if fails, just return that test in the bucket
-      return true;
+      // if fails, just fallback to consistent hashing
+      return matchesCurrentBucketViaHashing(testIdentifier);
     }
+  }
+
+  static boolean matchesCurrentBucketViaHashing(@NotNull String testIdentifier) {
+    return MathUtil.nonNegativeAbs(testIdentifier.hashCode()) % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX;
   }
 
   /**
@@ -242,19 +245,19 @@ public class TestCaseLoader {
    * @see TestCaseLoader#TEST_RUNNER_INDEX
    */
   public static boolean matchesCurrentBucket(@NotNull String testIdentifier) {
-    // just run aggregator "as usual", but send the data to nastradamus
+    // just run aggregator "as usual", but send the data to Nastradamus
     if (IS_NASTRADAMUS_SHADOW_DATA_COLLECTION_ENABLED) {
-      // do not return result until nastradamus is "production" ready
+      // do not return result until Nastradamus is "production-ready"
       matchesBucketViaNastradamus(testIdentifier);
     }
 
     if (IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED) return matchesBucketViaNastradamus(testIdentifier);
 
     if (!IS_FAIR_BUCKETING) {
-      return MathUtil.nonNegativeAbs(testIdentifier.hashCode()) % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX;
+      return matchesCurrentBucketViaHashing(testIdentifier);
     }
 
-    initFairBuckets();
+    initFairBuckets(false);
 
     return matchesCurrentBucketFair(testIdentifier, TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX);
   }
@@ -322,8 +325,12 @@ public class TestCaseLoader {
   /**
    * Init fair buckets for all test classes
    */
-  public static synchronized void initFairBuckets() {
-    if (!IS_FAIR_BUCKETING || !BUCKETS.isEmpty()) return;
+  public static synchronized void initFairBuckets(boolean useAsNastradamusFallback) {
+    if (useAsNastradamusFallback) {
+      // buckets were already initialized
+      if (!BUCKETS.isEmpty()) return;
+    }
+    else if (!IS_FAIR_BUCKETING || !BUCKETS.isEmpty()) return;
 
     System.out.println("Fair bucketing initialization started ...");
 

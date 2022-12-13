@@ -102,7 +102,7 @@ class TeamCityClient(
     }
 
     val result =
-      withErrorThreshold("TeamCityClient") {
+      withErrorThreshold("TeamCityClient-get") {
         withRetry {
           HttpClient.sendRequest(request = request) {
             if (it.statusLine.statusCode != 200) {
