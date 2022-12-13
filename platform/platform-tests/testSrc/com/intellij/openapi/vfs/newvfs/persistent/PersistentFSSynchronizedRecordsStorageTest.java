@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorage.openRMappedFile;
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.openRMappedFile;
 
 /**
  */

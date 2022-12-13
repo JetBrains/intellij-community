@@ -85,8 +85,8 @@ final class PersistentFSRecordAccessor {
     final long startedAtNs = System.nanoTime();
 
     final int fileLength = recordsFileLength();
-    assert fileLength % PersistentFSRecordsStorage.recordsLength() == 0;
-    final int recordCount = fileLength / PersistentFSRecordsStorage.recordsLength();
+    assert fileLength % PersistentFSRecordsStorageFactory.recordsLength() == 0;
+    final int recordCount = fileLength / PersistentFSRecordsStorageFactory.recordsLength();
 
     final IntList usedAttributeRecordIds = new IntArrayList();
     final IntList validAttributeIds = new IntArrayList();

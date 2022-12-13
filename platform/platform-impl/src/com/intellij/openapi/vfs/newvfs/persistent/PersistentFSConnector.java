@@ -151,7 +151,7 @@ final class PersistentFSConnector {
       SimpleStringPersistentEnumerator enumeratedAttributes = new SimpleStringPersistentEnumerator(enumeratedAttributesFile);
 
 
-      records = PersistentFSRecordsStorage.createStorage(recordsFile);
+      records = PersistentFSRecordsStorageFactory.createStorage(recordsFile);
 
       final boolean initial = records.length() == 0;
 
