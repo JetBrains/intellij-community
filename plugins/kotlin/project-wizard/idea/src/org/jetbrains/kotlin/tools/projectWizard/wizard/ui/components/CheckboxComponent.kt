@@ -12,7 +12,7 @@ import javax.swing.JComponent
 class CheckboxComponent(
     context: Context,
     @NlsContexts.Checkbox labelText: String? = null,
-    description: String? = null,
+    @NlsContexts.Label description: String? = null,
     initialValue: Boolean? = null,
     validator: SettingValidator<Boolean>? = null,
     onValueUpdate: (Boolean, isByUser: Boolean) -> Unit = { _, _ -> }

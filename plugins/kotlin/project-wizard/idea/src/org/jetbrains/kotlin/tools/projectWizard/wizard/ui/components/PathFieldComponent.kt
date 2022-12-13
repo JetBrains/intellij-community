@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.components
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.asPath
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.SettingValidator
@@ -17,8 +18,8 @@ import javax.swing.JComponent
 
 class PathFieldComponent(
     context: Context,
-    labelText: String? = null,
-    description: String? = null,
+    labelText: @NlsContexts.Label String? = null,
+    description: @NlsContexts.Label String? = null,
     initialValue: Path? = null,
     validator: SettingValidator<Path>? = null,
     onValueUpdate: (Path, isByUser: Boolean) -> Unit = { _, _ -> }

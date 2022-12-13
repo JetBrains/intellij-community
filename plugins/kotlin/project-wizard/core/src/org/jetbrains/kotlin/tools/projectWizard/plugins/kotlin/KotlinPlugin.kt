@@ -212,7 +212,7 @@ enum class ProjectKind(
     @Nls override val text: String,
     val supportedBuildSystems: Set<BuildSystemType>,
     val shortName: String = text,
-    val message: String? = null,
+    val message: @Nls String? = null,
 ) : DisplayableSettingItem {
     Singleplatform(
         KotlinNewProjectWizardBundle.message("project.kind.singleplatform"),
