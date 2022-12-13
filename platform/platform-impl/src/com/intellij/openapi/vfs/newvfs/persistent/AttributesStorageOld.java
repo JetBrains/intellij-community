@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
+import com.intellij.openapi.vfs.newvfs.AttributeOutputStreamBase;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -25,7 +26,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  *
  */
-public class AttributesStorageOld extends AbstractAttributesStorage {
+public class AttributesStorageOld implements AbstractAttributesStorage {
 
   /**
    * RC: this flag influences storage layout, but used nowhere. Seems like it is an unfinished effort to
@@ -144,7 +145,7 @@ public class AttributesStorageOld extends AbstractAttributesStorage {
   public AttributeOutputStream writeAttribute(final PersistentFSConnection connection,
                                               final int fileId,
                                               final @NotNull FileAttribute attribute) {
-    return new AttributeOutputStream(
+    return new AttributeOutputStreamBase(
       new AttributeOutputStreamImpl(connection, fileId, attribute),
       connection.getEnumeratedAttributes()
     );

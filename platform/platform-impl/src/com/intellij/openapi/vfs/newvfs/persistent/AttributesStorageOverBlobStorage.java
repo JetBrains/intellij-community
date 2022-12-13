@@ -5,6 +5,7 @@ import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
+import com.intellij.openapi.vfs.newvfs.AttributeOutputStreamBase;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
 import com.intellij.util.io.DataOutputStream;
@@ -25,7 +26,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  *
  */
-public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage {
+public class AttributesStorageOverBlobStorage implements AbstractAttributesStorage {
   public static final int MAX_ATTRIBUTE_ID = Byte.MAX_VALUE;
   //Persistent format (see AttributesRecord/AttributeEntry):
   //  Storage := (AttributeDirectoryRecord | AttributeDedicatedRecord)*
@@ -120,7 +121,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
   public @NotNull AttributeOutputStream writeAttribute(final PersistentFSConnection connection,
                                                        final int fileId,
                                                        final @NotNull FileAttribute attribute) {
-    return new AttributeOutputStream(
+    return new AttributeOutputStreamBase(
       new AttributeOutputStreamImpl(connection, fileId, attribute),
       connection.getEnumeratedAttributes()
     );
