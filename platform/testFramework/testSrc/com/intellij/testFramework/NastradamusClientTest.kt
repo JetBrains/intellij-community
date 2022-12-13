@@ -41,6 +41,7 @@ class NastradamusClientTest {
   @After
   fun afterEach() {
     tcMockServer.shutdown()
+    Cache.eraseCache()
   }
 
   private fun setBuildParams(vararg buildProperties: Pair<String, String>): Path {
@@ -185,10 +186,10 @@ class NastradamusClientTest {
                                     .setBody(response)
                                     .addHeader("Content-Type", "application/json"))
 
-    val sortedCases = nastradamus.sendSortingRequest(sortEntity)
+    val sortedCases = nastradamus.sendSortingRequest(sortRequestEntity = sortEntity, bucketsCount = 2, currentBucketIndex = 0)
     val request = nastradamusMockServer.takeRequest()
 
-    Assert.assertEquals("Requested path should be equal", "/sort/?buckets=1", request.path)
+    Assert.assertEquals("Requested path should be equal", "/sort/?buckets=2", request.path)
     Assert.assertEquals("POST request should be sent", "POST", request.method)
 
     Assert.assertEquals("Payload is in wrong format", jacksonMapper.writeValueAsString(sortEntity), request.body.readUtf8())

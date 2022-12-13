@@ -85,9 +85,9 @@ class NastradamusClient(
   /**
    * Will return tests for this particular bucket
    */
-  fun sendSortingRequest(sortRequestEntity: SortRequestEntity): List<TestCaseEntity> {
+  fun sendSortingRequest(sortRequestEntity: SortRequestEntity, bucketsCount: Int, currentBucketIndex: Int): List<TestCaseEntity> {
     val uri = URIBuilder(baseUrl.resolve("/sort/").normalize())
-      .addParameter("buckets", TestCaseLoader.TEST_RUNNERS_COUNT.toString())
+      .addParameter("buckets", bucketsCount.toString())
       .build()
 
     val stringJson = jacksonMapper.writeValueAsString(sortRequestEntity)
@@ -120,7 +120,7 @@ class NastradamusClient(
       try {
         jsonTree.fields().asSequence()
           .single { it.key == "sorted_tests" }.value
-          .get(TestCaseLoader.TEST_RUNNER_INDEX.toString())
+          .get(currentBucketIndex.toString())
           .map {
             TestCaseEntity(it.findValue("name").asText())
           }
@@ -191,7 +191,11 @@ class NastradamusClient(
         try {
           val changesets = getTeamCityChangesDetails()
           val cases = unsortedClasses.map { TestCaseEntity(it.name) }
-          val sortedCases = sendSortingRequest(SortRequestEntity(buildInfo = getBuildInfo(), changes = changesets, tests = cases))
+          val sortedCases = sendSortingRequest(
+            sortRequestEntity = SortRequestEntity(buildInfo = getBuildInfo(), changes = changesets, tests = cases),
+            bucketsCount = TestCaseLoader.TEST_RUNNERS_COUNT,
+            currentBucketIndex = TestCaseLoader.TEST_RUNNER_INDEX
+          )
 
           var rank = 1
           val ranked = sortedCases.associate { case -> case.name to rank++ }
