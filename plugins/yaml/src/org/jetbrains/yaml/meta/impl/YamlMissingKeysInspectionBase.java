@@ -73,8 +73,10 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
       myMissingKeys = missingKeys;
     }
 
+    @Nls
+    @NotNull
     @Override
-    public @NotNull String getText() {
+    public String getText() {
       return getFamilyName();
     }
 
@@ -83,6 +85,16 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
     @Override
     public String getFamilyName() {
       return YAMLBundle.message("YamlMissingKeysInspectionBase.add.missing.keys.quickfix.name");
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project,
+                               @NotNull PsiFile file,
+                               @Nullable Editor editor,
+                               @NotNull PsiElement startElement,
+                               @NotNull PsiElement endElement) {
+      PsiElement mapping = getMappingFromHighlightElement(startElement);
+      return mapping != null;
     }
 
     @Override
