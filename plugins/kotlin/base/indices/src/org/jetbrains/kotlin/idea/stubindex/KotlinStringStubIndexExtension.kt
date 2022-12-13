@@ -52,9 +52,8 @@ abstract class KotlinStringStubIndexExtension<PsiNav : NavigatablePsiElement>(pr
         }
     }
 
-    fun processAllKeys(scope: GlobalSearchScope, filter: IdFilter? = null, processor: Processor<in String>) {
+    fun processAllKeys(scope: GlobalSearchScope, filter: IdFilter? = null, processor: Processor<in String>): Boolean =
         StubIndex.getInstance().processAllKeys(key, processor, scope, filter)
-    }
 }
 
 class CancelableCollectFilterProcessor<T>(
