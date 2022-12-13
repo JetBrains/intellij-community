@@ -337,8 +337,15 @@ internal class CallExpressionWeigher(element: KtNameReferenceExpression?) {
     fun weigh(descriptor: DeclarationDescriptor): Int {
         val base = descriptor.importableFqName?.asString()?.let { fqName ->
             when {
-                // kotlin packages are higher than java, but java is higher than any 3rd party library
-                fqName.startsWith("kotlin.") || fqName.startsWith("kotlinx.") -> 5
+                /**
+                 * package rating calculation rule:
+                 * - (highest) current project source
+                 * - `kotlin.` and `kotlinx.`
+                 * - `java.`
+                 * - (lowest) all other 3rd party libs
+                 */
+                fqName.startsWith("kotlin.") -> 6
+                fqName.startsWith("kotlinx.") -> 5
                 fqName.startsWith("java.") -> 2
                 descriptor is DeclarationDescriptorWithSource -> run {
                     val psiElement = descriptor.psiElement
@@ -354,6 +361,7 @@ internal class CallExpressionWeigher(element: KtNameReferenceExpression?) {
         val weight =
             when (descriptor) {
                 is CallableMemberDescriptor -> calculateWeight(descriptor, kotlinTypes)
+                // TODO: some constructors could be not visible
                 is ClassDescriptor -> descriptor.constructors.maxOf { calculateWeight(it, kotlinTypes) }
                 else -> 0
             }
