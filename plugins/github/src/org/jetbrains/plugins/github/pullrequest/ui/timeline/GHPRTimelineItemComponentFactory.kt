@@ -25,6 +25,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.text.JBDateFormat
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SingleComponentCenteringLayout
@@ -276,14 +277,13 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
 
     val tagsPanel = createThreadTagsPanel(thread)
 
-    val textPane = HtmlEditorPane()
+    val bodyPanel = Wrapper()
     val textFlow = MutableStateFlow<@Nls String>(firstComment.body)
+    firstComment.addChangesListener { textFlow.value = firstComment.body }
 
-    val panelHandle = GHEditableHtmlPaneHandle(project, textPane, firstComment::body) { newText ->
+    val panelHandle = GHEditableHtmlPaneHandle(project, bodyPanel, firstComment::body) { newText ->
       reviewDataProvider.updateComment(EmptyProgressIndicator(), firstComment.id, newText)
-        .successOnEdt { textFlow.value = it.body }
-    }.apply {
-      maxPaneHeight = UIUtil.getUnscaledLineHeight(textPane) * 2
+        .successOnEdt { firstComment.update(it) }
     }
 
     val actionsPanel = NonOpaquePanel(HorizontalLayout(8)).apply {
@@ -322,10 +322,14 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     }.apply {
       coroutineScopeProvider.launchInScope {
         combineAndCollect(thread.collapsedState, textFlow) { collapsed, text ->
-          textPane.foreground = if (collapsed) UIUtil.getContextHelpForeground() else UIUtil.getLabelForeground()
           removeAll()
           if (collapsed) {
-            textPane.setBody(text)
+            panelHandle.maxPaneHeight = UIUtil.getUnscaledLineHeight(bodyPanel) * 2
+            val textPane = HtmlEditorPane(text).apply {
+              foreground = UIUtil.getContextHelpForeground()
+            }
+
+            bodyPanel.setContent(textPane)
             add(panelHandle.panel, CC()
               .grow()
               .maxWidth("$TIMELINE_CONTENT_WIDTH"))
@@ -334,7 +338,10 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
               .maxWidth("$TIMELINE_CONTENT_WIDTH"))
           }
           else {
-            textPane.setBody(text.convertToHtml(project))
+            panelHandle.maxPaneHeight = null
+            val commentComponent = GHPRReviewCommentComponent
+              .createCommentBodyComponent(project, suggestedChangeHelper, thread, text)
+            bodyPanel.setContent(commentComponent)
             add(diff, CC().grow())
             add(panelHandle.panel, CC()
               .grow()

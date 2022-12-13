@@ -5,12 +5,13 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -60,7 +61,7 @@ object GHPRReviewCommentComponent {
       background = UIUtil.getPanelBackground()
     }.andOpaque()
 
-    val commentPanel = JPanel(VerticalLayout(8, VerticalLayout.FILL)).apply {
+    val commentWrapper = Wrapper().apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
       isOpaque = false
     }
@@ -68,10 +69,10 @@ object GHPRReviewCommentComponent {
     Controller(project,
                thread, comment,
                suggestedChangeHelper,
-               pendingLabel, resolvedLabel, commentPanel,
+               pendingLabel, resolvedLabel, commentWrapper,
                showResolvedMarker)
 
-    val editablePaneHandle = GHEditableHtmlPaneHandle(project, commentPanel, comment::body) {
+    val editablePaneHandle = GHEditableHtmlPaneHandle(project, commentWrapper, comment::body) {
       reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, it)
     }
 
@@ -129,7 +130,7 @@ object GHPRReviewCommentComponent {
                            private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
                            private val pendingLabel: JComponent,
                            private val resolvedLabel: JComponent,
-                           private val commentPanel: JComponent,
+                           private val commentWrapper: Wrapper,
                            private val showResolvedMarker: Boolean) {
     init {
       comment.addChangesListener {
@@ -139,19 +140,9 @@ object GHPRReviewCommentComponent {
     }
 
     private fun update() {
-      val commentComponentFactory = GHPRReviewCommentComponentFactory(project)
-      val commentComponent = if (GHSuggestedChange.containsSuggestedChange(comment.body)) {
-        val suggestedChange = GHSuggestedChange.create(comment.body,
-                                                       thread.diffHunk, thread.filePath,
-                                                       thread.startLine ?: thread.line, thread.line)
-        commentComponentFactory.createCommentWithSuggestedChangeComponent(thread, suggestedChange, suggestedChangeHelper)
-      }
-      else {
-        commentComponentFactory.createCommentComponent(comment.body)
-      }
-
-      commentPanel.removeAll()
-      commentPanel.add(commentComponent)
+      val commentComponent = createCommentBodyComponent(project, suggestedChangeHelper, thread, comment.body)
+      commentWrapper.setContent(commentComponent)
+      commentWrapper.repaint()
 
       when (comment.state) {
         GHPullRequestReviewCommentState.PENDING -> {
@@ -165,6 +156,23 @@ object GHPRReviewCommentComponent {
 
       resolvedLabel.isVisible = comment.isFirstInResolvedThread && showResolvedMarker
     }
+  }
+
+  fun createCommentBodyComponent(project: Project,
+                                 suggestedChangeHelper: GHPRSuggestedChangeHelper,
+                                 thread: GHPRReviewThreadModel,
+                                 commentBody: @Nls String): JComponent {
+    val commentComponentFactory = GHPRReviewCommentComponentFactory(project)
+    val commentComponent = if (GHSuggestedChange.containsSuggestedChange(commentBody)) {
+      val suggestedChange = GHSuggestedChange.create(commentBody,
+                                                     thread.diffHunk, thread.filePath,
+                                                     thread.startLine ?: thread.line, thread.line)
+      commentComponentFactory.createCommentWithSuggestedChangeComponent(thread, suggestedChange, suggestedChangeHelper)
+    }
+    else {
+      commentComponentFactory.createCommentComponent(commentBody)
+    }
+    return commentComponent
   }
 
   fun factory(project: Project,
