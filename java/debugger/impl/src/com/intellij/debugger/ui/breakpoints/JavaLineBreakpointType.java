@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.HelpID;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.PositionManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;

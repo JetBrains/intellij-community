@@ -6,8 +6,8 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
@@ -33,7 +33,10 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.sun.jdi.*;
+import com.sun.jdi.Field;
+import com.sun.jdi.Location;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
 import com.sun.jdi.event.AccessWatchpointEvent;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.event.ModificationWatchpointEvent;

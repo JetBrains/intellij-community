@@ -16,8 +16,8 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
