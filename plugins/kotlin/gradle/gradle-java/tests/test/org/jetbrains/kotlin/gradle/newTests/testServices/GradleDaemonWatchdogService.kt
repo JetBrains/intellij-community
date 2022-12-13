@@ -40,6 +40,7 @@ object GradleDaemonWatchdogService : TestRule {
 
 
     fun before(description: Description) {
+        if (!AbstractKotlinMppGradleImportingTest.healthchecksEnabled) return
         finishedWithException = false
         performDaemonsHealthcheck("Test ${description.methodName} starting")
         atLeastOneTestStarted = true
@@ -47,7 +48,7 @@ object GradleDaemonWatchdogService : TestRule {
 
     fun after(description: Description) {
         // Don't run checks if test has failed as it could cause unpredictable issues
-        if (finishedWithException) return
+        if (!AbstractKotlinMppGradleImportingTest.healthchecksEnabled || finishedWithException) return
         performDaemonsHealthcheck("Test ${description.methodName} finished")
         atLeastOneTestFinished = true
     }
