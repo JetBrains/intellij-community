@@ -12,8 +12,10 @@ import org.jetbrains.kotlin.gradle.newTests.testFeatures.*
 import org.jetbrains.kotlin.gradle.newTests.testServices.*
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
+import org.jetbrains.kotlin.idea.codeInsight.gradle.PluginTargetVersionsRule
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.junit.Rule
@@ -25,15 +27,23 @@ import java.io.PrintStream
 @RunWith(BlockJUnit4ClassRunner::class)
 @TestDataPath("\$PROJECT_ROOT/community/plugins/kotlin/idea/tests/testData/gradle")
 abstract class AbstractKotlinMppGradleImportingTest :
-    GradleImportingTestCase(), WorkspaceFilteringDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl,
-    HighlightingCheckDsl
+    GradleImportingTestCase(), WorkspaceFilteringDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl,HighlightingCheckDsl,
+    TestWithKotlinPluginAndGradleVersions
 {
+    val kotlinTestPropertiesService: KotlinTestPropertiesService = KotlinTestPropertiesServiceImpl()
+
+    override val gradleVersion: String
+        // equal to this.gradleVersion, going through the Service for the sake of consistency
+        get() = kotlinTestPropertiesService.gradleVersion
+
+    override val kotlinPluginVersion: KotlinToolingVersion
+        get() = kotlinTestPropertiesService.kotlinGradlePluginVersion
+
     val importedProject: Project
         get() = myProject
     val importedProjectRoot: VirtualFile
         get() = myProjectRoot
 
-    val kotlinTestPropertiesService: KotlinTestPropertiesService = KotlinTestPropertiesServiceImpl()
     private val gradleProjectsPublishingService = GradleProjectsPublishingService
     private val gradleProjectLinkingService = GradleProjectLinkingService
     private val highlightingCheckService = HighlightingCheckService
@@ -51,6 +61,9 @@ abstract class AbstractKotlinMppGradleImportingTest :
 
     @get:Rule
     val gradleDaemonWatchdogService = GradleDaemonWatchdogService
+
+    @get:Rule
+    val pluginTargetVersionRule = PluginTargetVersionsRule()
 
     protected fun doTest(configuration: TestConfigurationDslScope.() -> Unit = { }) {
         val defaultConfig = TestConfiguration().apply { defaultTestConfiguration() }
@@ -143,6 +156,8 @@ abstract class AbstractKotlinMppGradleImportingTest :
             .build()
     }
 
+    // super does plain `print` instead of `println`, so we need to
+    // override it to preserve line breaks in output of Gradle-process
     override fun printOutput(stream: PrintStream, text: String) {
         stream.println(text)
     }
