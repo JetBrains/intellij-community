@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl.livePreview;
 
 
@@ -298,7 +298,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     int maxOffset = Math.min(range.getEndOffset(), charSequence.length());
     FindManager findManager = FindManager.getInstance(getProject());
 
-    while (true) {
+    while (offset < maxOffset) {
       FindResult result;
       try {
         CharSequence bombedCharSequence = StringUtil.newBombedCharSequence(charSequence, 3000);
@@ -310,16 +310,9 @@ public class SearchResults implements DocumentListener, CaretListener {
       }
       if (result == null || !result.isStringFound()) break;
       final int newOffset = result.getEndOffset();
-      if (result.getEndOffset() > maxOffset) break;
-      if (offset == newOffset || newOffset == result.getStartOffset()) {
-        offset = newOffset;
-        if (offset < maxOffset - 1) {
-          offset++; // skip zero-width result
-        }
-        else {
-          results.add(result);
-          break;
-        }
+      if (newOffset > maxOffset) break;
+      if (offset == newOffset) {
+        offset++; // skip zero-width result
       }
       else {
         offset = newOffset;
