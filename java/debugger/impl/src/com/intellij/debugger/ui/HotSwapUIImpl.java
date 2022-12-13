@@ -80,16 +80,16 @@ public final class HotSwapUIImpl extends HotSwapUI {
     return ContainerUtil.exists(sessions, DebuggerSession::isPaused);
   }
 
-  private void hotSwapSessions(@NotNull final List<DebuggerSession> sessions,
-                               @Nullable final Map<String, Collection<String>> generatedPaths,
-                               @Nullable final NotNullLazyValue<List<String>> outputPaths,
-                               @Nullable final HotSwapStatusListener callback) {
-    final boolean shouldAskBeforeHotswap = myAskBeforeHotswap;
+  private void hotSwapSessions(@NotNull List<DebuggerSession> sessions,
+                               @Nullable Map<String, Collection<String>> generatedPaths,
+                               @Nullable NotNullLazyValue<List<String>> outputPaths,
+                               @Nullable HotSwapStatusListener callback) {
+    boolean shouldAskBeforeHotswap = myAskBeforeHotswap;
     myAskBeforeHotswap = true;
 
-    final DebuggerSettings settings = DebuggerSettings.getInstance();
-    final String runHotswap = settings.RUN_HOTSWAP_AFTER_COMPILE;
-    final boolean shouldDisplayHangWarning = shouldDisplayHangWarning(settings, sessions);
+    DebuggerSettings settings = DebuggerSettings.getInstance();
+    String runHotswap = settings.RUN_HOTSWAP_AFTER_COMPILE;
+    boolean shouldDisplayHangWarning = shouldDisplayHangWarning(settings, sessions);
 
     HotSwapStatusListener statusListener = makeNullSafe(callback);
 
@@ -98,8 +98,8 @@ public final class HotSwapUIImpl extends HotSwapUI {
       return;
     }
 
-    final List<DebuggerSession> toScan = new ArrayList<>(sessions); // by default scan all sessions
-    final List<DebuggerSession> toUseGenerated = new ArrayList<>();
+    List<DebuggerSession> toScan = new ArrayList<>(sessions); // by default scan all sessions
+    List<DebuggerSession> toUseGenerated = new ArrayList<>();
 
     if (generatedPaths != null) {
       toScan.clear();
@@ -114,8 +114,8 @@ public final class HotSwapUIImpl extends HotSwapUI {
       }
     }
 
-    final HotSwapProgressImpl findClassesProgress = !toScan.isEmpty() ? createHotSwapProgress(statusListener, sessions) : null;
-    final HotSwapProgressImpl outputPathsProgress =
+    HotSwapProgressImpl findClassesProgress = !toScan.isEmpty() ? createHotSwapProgress(statusListener, sessions) : null;
+    HotSwapProgressImpl outputPathsProgress =
       !toUseGenerated.isEmpty() && outputPaths != null ? createHotSwapProgress(statusListener, sessions) : null;
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -137,7 +137,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
       }
 
       if (modifiedClasses.isEmpty()) {
-        final String message = JavaDebuggerBundle.message("status.hotswap.uptodate");
+        String message = JavaDebuggerBundle.message("status.hotswap.uptodate");
         HotSwapProgressImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION).notify(myProject);
         statusListener.onSuccess(sessions);
         return;
@@ -145,7 +145,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
 
       ApplicationManager.getApplication().invokeLater(() -> {
         if (shouldAskBeforeHotswap && !DebuggerSettings.RUN_HOTSWAP_ALWAYS.equals(runHotswap)) {
-          final RunHotswapDialog dialog = new RunHotswapDialog(myProject, sessions, shouldDisplayHangWarning);
+          RunHotswapDialog dialog = new RunHotswapDialog(myProject, sessions, shouldDisplayHangWarning);
           if (!dialog.showAndGet()) {
             for (DebuggerSession session : modifiedClasses.keySet()) {
               session.setModifiedClassesScanRequired(true);
@@ -153,7 +153,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
             statusListener.onCancel(sessions);
             return;
           }
-          final Set<DebuggerSession> toReload = new HashSet<>(dialog.getSessionsToReload());
+          Set<DebuggerSession> toReload = new HashSet<>(dialog.getSessionsToReload());
           for (DebuggerSession session : modifiedClasses.keySet()) {
             if (!toReload.contains(session)) {
               session.setModifiedClassesScanRequired(true);
@@ -170,7 +170,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
         }
 
         if (!modifiedClasses.isEmpty()) {
-          final HotSwapProgressImpl progress = new HotSwapProgressImpl(myProject);
+          HotSwapProgressImpl progress = new HotSwapProgressImpl(myProject);
           if (modifiedClasses.keySet().size() == 1) {
             progress.setSessionForActions(ContainerUtil.getFirstItem(modifiedClasses.keySet()));
           }
@@ -241,8 +241,8 @@ public final class HotSwapUIImpl extends HotSwapUI {
     }, progress.getProgressIndicator());
   }
 
-  private static void reloadModifiedClasses(final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses,
-                                            final HotSwapProgressImpl progress) {
+  private static void reloadModifiedClasses(Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses,
+                                            HotSwapProgressImpl progress) {
     ProgressManager.getInstance().runProcess(() -> {
       HotSwapManager.reloadModifiedClasses(modifiedClasses, progress);
       progress.finished();
@@ -297,7 +297,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
     private MyCompilationStatusListener(Project project) {
       myProject = project;
       myOutputRoots = FileCollectionFactory.createCanonicalFileSet();
-      for (final String path : CompilerPaths.getOutputPaths(ModuleManager.getInstance(myProject).getModules())) {
+      for (String path : CompilerPaths.getOutputPaths(ModuleManager.getInstance(myProject).getModules())) {
         myOutputRoots.add(new File(path));
       }
     }
@@ -409,7 +409,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
     public void sessionDetached(DebuggerSession session) {
       if (!getHotSwappableDebugSessions(myProject).isEmpty()) return;
 
-      final MessageBusConnection conn = myConn;
+      MessageBusConnection conn = myConn;
       if (conn != null) {
         Disposer.dispose(conn);
         myConn = null;
