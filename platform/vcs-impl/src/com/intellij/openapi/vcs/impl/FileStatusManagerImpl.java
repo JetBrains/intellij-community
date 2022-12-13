@@ -39,10 +39,12 @@ import java.util.List;
 import java.util.Map;
 
 public final class FileStatusManagerImpl extends FileStatusManager implements Disposable {
+  private final Project myProject;
+
+  private final List<FileStatusListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+
   private final Map<VirtualFile, FileStatus> myCachedStatuses = Collections.synchronizedMap(new HashMap<>());
   private final Map<VirtualFile, Boolean> myWhetherExactlyParentToChanged = Collections.synchronizedMap(new HashMap<>());
-  private final Project myProject;
-  private final List<FileStatusListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private static class FileStatusNull implements FileStatus {
     private static final FileStatus INSTANCE = new FileStatusNull();
@@ -76,26 +78,28 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     MessageBusConnection projectBus = project.getMessageBus().connect();
     projectBus.subscribe(EditorColorsManager.TOPIC, __ -> fileStatusesChanged());
     projectBus.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this::fileStatusesChanged);
-    projectBus.subscribe(ChangeListListener.TOPIC, new ChangeListListener() {
-      @Override
-      public void changeListAdded(ChangeList list) {
-        fileStatusesChanged();
-      }
-
-      @Override
-      public void changeListRemoved(ChangeList list) {
-        fileStatusesChanged();
-      }
-
-      @Override
-      public void changeListUpdateDone() {
-        fileStatusesChanged();
-      }
-    });
-
-    StartupManager.getInstance(project).runAfterOpened(this::fileStatusesChanged);
+    projectBus.subscribe(ChangeListListener.TOPIC, new MyChangeListListener());
 
     FileStatusProvider.EP_NAME.addChangeListener(myProject, this::fileStatusesChanged, project);
+
+    StartupManager.getInstance(project).runAfterOpened(this::fileStatusesChanged);
+  }
+
+  private class MyChangeListListener implements ChangeListListener {
+    @Override
+    public void changeListAdded(ChangeList list) {
+      fileStatusesChanged();
+    }
+
+    @Override
+    public void changeListRemoved(ChangeList list) {
+      fileStatusesChanged();
+    }
+
+    @Override
+    public void changeListUpdateDone() {
+      fileStatusesChanged();
+    }
   }
 
   static final class FileStatusManagerDocumentListener implements FileDocumentManagerListener, DocumentListener {
@@ -189,6 +193,16 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     return status;
   }
 
+  @NotNull
+  private ThreeState getNotChangedDirectoryParentingStatus(@NotNull VirtualFile virtualFile) {
+    if (VcsConfiguration.getInstance(myProject).SHOW_DIRTY_RECURSIVELY) {
+      return ChangeListManager.getInstance(myProject).haveChangesUnder(virtualFile);
+    }
+    else {
+      return ThreeState.NO;
+    }
+  }
+
   private static boolean isDocumentModified(VirtualFile virtualFile) {
     if (virtualFile.isDirectory()) return false;
     return FileDocumentManager.getInstance().isFileModified(virtualFile);
@@ -233,32 +247,6 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     }
   }
 
-  private void cacheChangedFileStatus(final VirtualFile virtualFile, final FileStatus fs) {
-    myCachedStatuses.put(virtualFile, fs);
-    if (FileStatus.NOT_CHANGED.equals(fs)) {
-      final ThreeState parentingStatus = getNotChangedDirectoryParentingStatus(virtualFile);
-      if (ThreeState.YES.equals(parentingStatus)) {
-        myWhetherExactlyParentToChanged.put(virtualFile, true);
-      }
-      else if (ThreeState.UNSURE.equals(parentingStatus)) {
-        myWhetherExactlyParentToChanged.put(virtualFile, false);
-      }
-    }
-    else {
-      myWhetherExactlyParentToChanged.remove(virtualFile);
-    }
-  }
-
-  @NotNull
-  private ThreeState getNotChangedDirectoryParentingStatus(@NotNull VirtualFile virtualFile) {
-    if (VcsConfiguration.getInstance(myProject).SHOW_DIRTY_RECURSIVELY) {
-      return ChangeListManager.getInstance(myProject).haveChangesUnder(virtualFile);
-    }
-    else {
-      return ThreeState.NO;
-    }
-  }
-
   @Override
   public void fileStatusChanged(final VirtualFile file) {
     final Application application = ApplicationManager.getApplication();
@@ -285,6 +273,22 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     }
   }
 
+  private void cacheChangedFileStatus(final VirtualFile virtualFile, final FileStatus fs) {
+    myCachedStatuses.put(virtualFile, fs);
+    if (FileStatus.NOT_CHANGED.equals(fs)) {
+      final ThreeState parentingStatus = getNotChangedDirectoryParentingStatus(virtualFile);
+      if (ThreeState.YES.equals(parentingStatus)) {
+        myWhetherExactlyParentToChanged.put(virtualFile, true);
+      }
+      else if (ThreeState.UNSURE.equals(parentingStatus)) {
+        myWhetherExactlyParentToChanged.put(virtualFile, false);
+      }
+    }
+    else {
+      myWhetherExactlyParentToChanged.remove(virtualFile);
+    }
+  }
+
   @Override
   public @NotNull FileStatus getStatus(@NotNull final VirtualFile file) {
     if (file.getFileSystem() instanceof NonPhysicalFileSystem) {
@@ -301,6 +305,16 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     }
 
     return status;
+  }
+
+  @NotNull
+  @Override
+  public FileStatus getRecursiveStatus(@NotNull VirtualFile file) {
+    FileStatus status = getStatus(file);
+    if (status != FileStatus.NOT_CHANGED || !file.isValid() || !file.isDirectory()) return status;
+    Boolean immediate = myWhetherExactlyParentToChanged.get(file);
+    if (immediate == null) return FileStatus.NOT_CHANGED;
+    return immediate ? FileStatus.NOT_CHANGED_IMMEDIATE : FileStatus.NOT_CHANGED_RECURSIVE;
   }
 
   @RequiresEdt
@@ -343,15 +357,5 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
   @Override
   public void removeFileStatusListener(@NotNull FileStatusListener listener) {
     myListeners.remove(listener);
-  }
-
-  @NotNull
-  @Override
-  public FileStatus getRecursiveStatus(@NotNull VirtualFile file) {
-    FileStatus status = getStatus(file);
-    if (status != FileStatus.NOT_CHANGED || !file.isValid() || !file.isDirectory()) return status;
-    Boolean immediate = myWhetherExactlyParentToChanged.get(file);
-    if (immediate == null) return FileStatus.NOT_CHANGED;
-    return immediate ? FileStatus.NOT_CHANGED_IMMEDIATE : FileStatus.NOT_CHANGED_RECURSIVE;
   }
 }
