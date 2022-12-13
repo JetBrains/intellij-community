@@ -14,49 +14,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 
-internal fun ToolWindow.initializeToolWindow(project: Project) {
-  contentManager.addSelectionChangedListener { event ->
-    if (this is ToolWindowEx) {
-      setAdditionalGearActions(null)
-      (event.content.component as? HasToolWindowActions)
-        ?.also { setAdditionalGearActions(it.gearActions) }
-    }
-    setTitleActions(emptyList())
-    (event.content.component as? HasToolWindowActions)
-      ?.titleActions
-      ?.also { setTitleActions(it.toList()) }
-  }
-
-  contentManager.removeAllContents(true)
-
-  DependenciesToolWindowTabProvider.availableTabsFlow(project)
-    .flowOn(project.lifecycleScope.dispatcher)
-    .map { it.map { provider -> provider.provideTab(project) } }
-    .onEach { change ->
-      val removedContent = contentManager.contents.filter { it !in change }.toSet()
-      val newContent = change.filter { it !in contentManager.contents }
-      val contentOrder = (contentManager.contents.toList() - removedContent + newContent)
-        .sortedBy { it.toolwindowTitle }
-        .mapIndexed { index, content -> content to index }
-        .toMap()
-      removedContent.forEach { contentManager.removeContent(it, true) }
-      newContent.forEach { content ->
-        contentOrder[content]?.let { order -> contentManager.addContent(content, order) }
-        ?: contentManager.addContent(content)
-      }
-    }
-    .flowOn(Dispatchers.EDT)
-    .launchIn(project.lifecycleScope)
-
-  project.lookAndFeelFlow
-    .onEach {
-      contentManager.component.invalidate()
-      contentManager.component.repaint()
-    }
-    .flowOn(Dispatchers.EDT)
-    .launchIn(project.lifecycleScope)
-}
-
 @Suppress("FunctionName")
 internal fun SelectionChangedListener(action: (ContentManagerEvent) -> Unit): ContentManagerListener {
   return object : ContentManagerListener {

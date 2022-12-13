@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.SimpleTextAttributes
@@ -35,17 +36,16 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.ComponentActionWrapper
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.FilterOptions
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstalledDependenciesUsages
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SearchResultUiState
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.get
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.toUiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onOpacityChanged
@@ -68,19 +68,13 @@ import com.jetbrains.packagesearch.intellij.plugin.util.moduleChangesSignalFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.onEach
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectCachesService
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
-import com.jetbrains.packagesearch.intellij.plugin.util.shareInAndCatchAndLog
 import com.jetbrains.packagesearch.intellij.plugin.util.timer
-import com.jetbrains.packagesearch.intellij.plugin.util.uiStateSource
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNot
@@ -89,6 +83,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.miginfocom.swing.MigLayout
@@ -114,22 +109,9 @@ internal class PackagesListPanel(
         project.packageSearchProjectCachesService.searchCache
 ) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")) {
 
-    private val searchFieldFocus = Channel<Unit>()
+    internal val packagesTable = PackagesTable(project, ::onSearchResultStateChanged)
 
-    private val packagesTable = PackagesTable(project, ::onSearchResultStateChanged)
-
-    private val onlyStableMutableStateFlow = MutableStateFlow(true)
-
-    val onlyStableStateFlow: StateFlow<Boolean> = onlyStableMutableStateFlow
-    val selectedPackageStateFlow: StateFlow<UiPackageModel<*>?> = packagesTable.selectedPackageStateFlow
-
-    private val onlyMultiplatformStateFlow = MutableStateFlow(false)
-    private val searchQueryStateFlow = MutableStateFlow("")
-
-    private val searchResultsUiStateOverridesState: MutableStateFlow<Map<PackageIdentifier, SearchResultUiState>> =
-        MutableStateFlow(emptyMap())
-
-    private val searchTextField = PackagesSmartSearchField(searchFieldFocus.consumeAsFlow(), project)
+    internal val searchTextField = PackagesSmartSearchField(project)
         .apply {
             goToTable = {
                 if (packagesTable.hasInstalledItems) {
@@ -277,9 +259,9 @@ internal class PackagesListPanel(
         registerForUiEvents()
 
         val searchResultsFlow = combineLatest(
-            onlyStableStateFlow,
-            onlyMultiplatformStateFlow,
-            searchQueryStateFlow.debounce(150.milliseconds),
+            project.service<PackageManagementPanel.UIState>().packagesListPanel.onlyStableStateFlow,
+            project.service<PackageManagementPanel.UIState>().packagesListPanel.onlyMultiplatformStateFlow,
+            project.service<PackageManagementPanel.UIState>().packagesListPanel.searchQueryStateFlow.debounce(150.milliseconds),
             project.loadingContainer
         ) { onlyStable, onlyMultiplatform, searchQuery ->
             SearchResultsModel(
@@ -298,10 +280,10 @@ internal class PackagesListPanel(
             project.packageSearchProjectService.repositoriesDeclarationsByModuleFlow,
             project.packageSearchProjectService.allKnownRepositoriesFlow,
             targetModulesFlow,
-            onlyStableStateFlow,
-            onlyMultiplatformStateFlow,
+            project.service<PackageManagementPanel.UIState>().packagesListPanel.onlyStableStateFlow,
+            project.service<PackageManagementPanel.UIState>().packagesListPanel.onlyMultiplatformStateFlow,
             searchResultsFlow,
-            searchResultsUiStateOverridesState,
+            project.service<PackageManagementPanel.UIState>().packagesListPanel.searchResultsUiStateOverridesState,
             project.loadingContainer
         ) { installedDependencies, repositoriesDeclarationsByModule,
             allKnownRepositories, targetModules, onlyStable, onlyMultiplatform,
@@ -465,22 +447,24 @@ internal class PackagesListPanel(
         }
 
         searchTextField.addOnTextChangedListener { text ->
-            searchQueryStateFlow.tryEmit(text)
+            project.lifecycleScope.launch {
+                project.service<PackageManagementPanel.UIState>().packagesListPanel.searchQueryStateFlow.emit(text)
+            }
         }
 
         onlyStableCheckBox.addSelectionChangedListener { selected ->
-            onlyStableMutableStateFlow.tryEmit(selected)
+            project.lifecycleScope.launch {
+                project.service<PackageManagementPanel.UIState>().packagesListPanel.onlyStableStateFlow.emit(selected)
+            }
             PackageSearchEventsLogger.logToggle(FUSGroupIds.ToggleTypes.OnlyStable, selected)
         }
 
         onlyMultiplatformCheckBox.addSelectionChangedListener { selected ->
-            onlyMultiplatformStateFlow.tryEmit(selected)
+            project.lifecycleScope.launch {
+                project.service<PackageManagementPanel.UIState>().packagesListPanel.onlyMultiplatformStateFlow.emit(selected)
+            }
             PackageSearchEventsLogger.logToggle(FUSGroupIds.ToggleTypes.OnlyKotlinMp, selected)
         }
-
-        project.uiStateSource.searchQueryFlow.onEach { searchTextField.text = it }
-            .flowOn(Dispatchers.EDT)
-            .launchIn(project.lifecycleScope)
     }
 
     private suspend fun updateUiOnLafChange() = withContext(Dispatchers.EDT) {
@@ -510,11 +494,13 @@ internal class PackagesListPanel(
         overrideVersion: NormalizedPackageVersion<*>?,
         overrideScope: PackageScope?
     ) {
-        project.lifecycleScope.launch {
-            val uiStates = searchResultsUiStateOverridesState.value.toMutableMap()
-            uiStates[searchResult.identifier] = SearchResultUiState(overrideVersion, overrideScope)
-            searchResultsUiStateOverridesState.emit(uiStates)
-        }
+        project.service<PackageManagementPanel.UIState>()
+            .packagesListPanel
+            .searchResultsUiStateOverridesState
+            .update {
+                it.toMutableMap()
+                    .also { it[searchResult.identifier] = SearchResultUiState(overrideVersion, overrideScope) }
+            }
     }
 }
 

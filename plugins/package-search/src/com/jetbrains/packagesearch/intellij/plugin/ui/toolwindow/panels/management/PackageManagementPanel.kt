@@ -19,9 +19,11 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.util.asSafely
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.actions.PkgsToDAAction
@@ -30,7 +32,10 @@ import com.jetbrains.packagesearch.intellij.plugin.actions.TogglePackageDetailsA
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SearchResultUiState
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.modules.ModulesTree
@@ -42,41 +47,58 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
 import java.awt.Dimension
 import javax.swing.JScrollPane
 
-@Suppress("MagicNumber") // Swing dimension constants
-internal class PackageManagementPanel(
-    val project: Project
-) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")) {
 
-    private val modulesTree = ModulesTree(project)
+@Suppress("MagicNumber") // Swing dimension constants
+internal class PackageManagementPanel(private val project: Project) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")) {
+
+    internal class UIState {
+
+        internal val modulesTree = ModulesTree()
+        internal val packagesListPanel = PackagesListPanel()
+
+        internal class ModulesTree {
+            internal val targetModulesStateFlow: MutableStateFlow<TargetModules> = MutableStateFlow(TargetModules.None)
+        }
+
+        internal class PackagesListPanel {
+            internal val onlyMultiplatformStateFlow = MutableStateFlow(false)
+            internal val onlyStableStateFlow = MutableStateFlow(false)
+            internal val searchQueryStateFlow = MutableStateFlow("")
+            internal val searchResultsUiStateOverridesState: MutableStateFlow<Map<PackageIdentifier, SearchResultUiState>> =
+                MutableStateFlow(emptyMap())
+
+            internal val table = PackagesTable()
+
+            internal class PackagesTable {
+                internal val selectedPackageStateFlow = MutableStateFlow<UiPackageModel<*>?>(null)
+            }
+
+        }
+    }
+
+    internal val modulesTree = ModulesTree(project)
+
     private val modulesScrollPanel = JBScrollPane(
         modulesTree,
         JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
         JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
     )
 
-    private val packagesListPanel = PackagesListPanel(
+    internal val packagesListPanel = PackagesListPanel(
         project = project,
-        targetModulesFlow = modulesTree.targetModulesStateFlow,
+        targetModulesFlow = project.service<UIState>().modulesTree.targetModulesStateFlow,
         dataProvider = project.packageSearchProjectService.dataProvider
     )
-
-    private val dataModelStateFlow = packagesListPanel.selectedPackageStateFlow
-        .mapNotNull { it?.packageModel }
-        .filterIsInstance<PackageModel.Installed>()
-        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, null)
 
     private val packageDetailsPanel = PackageDetailsPanel(project)
 
@@ -117,21 +139,26 @@ internal class PackageManagementPanel(
             .flowOn(Dispatchers.EDT)
             .launchIn(project.lifecycleScope)
 
-        packagesListPanel.selectedPackageStateFlow
+        project.service<UIState>()
+            .packagesListPanel
+            .table
+            .selectedPackageStateFlow
             .filterNotNull()
             .onEach { PackageSearchEventsLogger.logPackageSelected(it is UiPackageModel.Installed) }
             .launchIn(project.lifecycleScope)
 
-        modulesTree.targetModulesStateFlow
+        project.service<UIState>()
+            .modulesTree
+            .targetModulesStateFlow
             .onEach { PackageSearchEventsLogger.logTargetModuleSelected(it) }
             .launchIn(project.lifecycleScope)
 
         combine(
             project.packageSearchProjectService.allKnownRepositoriesFlow,
             project.packageSearchProjectService.repositoriesDeclarationsByModuleFlow,
-            packagesListPanel.selectedPackageStateFlow,
-            modulesTree.targetModulesStateFlow,
-            packagesListPanel.onlyStableStateFlow
+            project.service<UIState>().packagesListPanel.table.selectedPackageStateFlow,
+            project.service<UIState>().modulesTree.targetModulesStateFlow,
+            project.service<UIState>().packagesListPanel.onlyStableStateFlow
         ) { allKnownRepositories, repositoriesDeclarationsByModule,
             selectedUiPackageModel, targetModules, onlyStable ->
             PackageDetailsPanel.ViewModel(
@@ -177,7 +204,13 @@ internal class PackageManagementPanel(
 
     override fun getData(dataId: String): PackageModel.Installed? {
         return when {
-            PkgsToDAAction.PACKAGES_LIST_PANEL_DATA_KEY.`is`(dataId) -> dataModelStateFlow.value
+            PkgsToDAAction.PACKAGES_LIST_PANEL_DATA_KEY.`is`(dataId) -> project.service<UIState>()
+                .packagesListPanel
+                .table
+                .selectedPackageStateFlow
+                .value
+                ?.packageModel
+                ?.asSafely<PackageModel.Installed>()
             else -> null
         }
     }

@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SpeedSearchComparator
 import com.intellij.ui.TableSpeedSearch
@@ -37,6 +38,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.*
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementOperationExecutor
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.changePackage
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ActionsColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.NameColumn
@@ -47,12 +49,9 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.modifyPackages
-import com.jetbrains.packagesearch.intellij.plugin.util.uiStateSource
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.Color
 import java.awt.Cursor
 import java.awt.KeyboardFocusManager
@@ -111,16 +110,17 @@ internal class PackagesTable(
     private var knownRepositoriesInTargetModules: Map<PackageSearchModule, List<RepositoryModel>> = emptyMap()
     private var allKnownRepositories: List<RepositoryModel> = emptyList()
 
-    val selectedPackageStateFlow = MutableStateFlow<UiPackageModel<*>?>(null)
-
     private val listSelectionListener = ListSelectionListener {
-        val item = getSelectedTableItem()
-        if (selectedIndex >= 0 && item != null) {
-            TableUtil.scrollSelectionToVisible(this)
-            updateAndRepaint()
-            selectedPackageStateFlow.tryEmit(item.uiPackageModel)
-        } else {
-            selectedPackageStateFlow.tryEmit(null)
+        project.lifecycleScope.launch {
+            val item = getSelectedTableItem()
+            val packageModel = if (selectedIndex >= 0 && item != null) {
+                withContext(Dispatchers.EDT) {
+                    TableUtil.scrollSelectionToVisible(this@PackagesTable)
+                    updateAndRepaint()
+                }
+                item.uiPackageModel
+            } else null
+            project.service<PackageManagementPanel.UIState>().packagesListPanel.table.selectedPackageStateFlow.emit(packageModel)
         }
     }
 
@@ -245,14 +245,9 @@ internal class PackagesTable(
             }
         }
         hoverListener.addTo(this)
-
-        project.uiStateSource.selectedDependencyFlow.onEach { lastSelectedDependency = it }
-            .onEach { setSelection(it) }
-            .flowOn(Dispatchers.EDT)
-            .launchIn(project.lifecycleScope)
     }
 
-    private fun setSelection(lastSelectedDependencyCopy: UnifiedDependency): Boolean {
+    internal fun setSelection(lastSelectedDependencyCopy: UnifiedDependency): Boolean {
         val index = tableModel.items.map { it.uiPackageModel }
             .indexOfFirst {
                 it is UiPackageModel.Installed &&

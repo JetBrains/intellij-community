@@ -34,9 +34,9 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchMo
 import com.jetbrains.packagesearch.intellij.plugin.lifecycle.PackageSearchLifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.PkgsUiCommandsService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateModifier
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateSource
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementOperationExecutor
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementPanel
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -140,9 +140,6 @@ internal val PackageSearchModule.lifecycleScope: PackageSearchLifecycleScope
     get() = nativeModule.project.lifecycleScope
 
 internal val Project.pkgsUiStateModifier: UiStateModifier
-    get() = service<PkgsUiCommandsService>()
-
-internal val Project.uiStateSource: UiStateSource
     get() = service<PkgsUiCommandsService>()
 
 val Project.dumbService: DumbService
