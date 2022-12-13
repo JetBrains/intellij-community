@@ -27,8 +27,11 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.completion.ImportableFqNameClassifier
@@ -36,25 +39,20 @@ import org.jetbrains.kotlin.idea.completion.KotlinStatisticsInfo
 import org.jetbrains.kotlin.idea.completion.isDeprecatedAtCallSite
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.imports.importableFqName
+import org.jetbrains.kotlin.idea.inspections.dfa.getArrayElementType
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.inspections.dfa.getArrayElementType
-import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode
 import org.jetbrains.kotlin.idea.util.application.underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.isOneSegmentFQN
 import org.jetbrains.kotlin.name.parentOrNull
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
@@ -75,7 +73,7 @@ internal fun createSingleImportAction(
     fqNames: Collection<FqName>
 ): KotlinAddImportAction {
     val file = element.containingKtFile
-    val prioritizer = Prioritizer(file, element.parent as? KtCallExpression)
+    val prioritizer = Prioritizer(file, element)
     val variants = fqNames.asSequence().mapNotNull {fqName ->
         val sameFqNameDescriptors = file.resolveImportReference(fqName)
         createVariantWithPriority(fqName, sameFqNameDescriptors, file, prioritizer, project)
@@ -311,12 +309,13 @@ internal interface ComparablePriority : Comparable<ComparablePriority>
 
 internal data class VariantWithPriority(val variant: AutoImportVariant, val priority: ComparablePriority)
 
-internal class CallExpressionWeigher(callExpression: KtCallExpression?) {
+internal class CallExpressionWeigher(element: KtNameReferenceExpression?) {
 
     private val kotlinTypes: List<KotlinType>?
     private val valueArgumentsSize: Int
 
     init {
+        val callExpression = element?.getParentOfType<KtCallElement>(false)
         val valueArgumentList = callExpression?.valueArgumentList
         val valueArguments = callExpression?.valueArguments
         valueArgumentsSize = valueArguments?.size ?: 0
@@ -351,10 +350,21 @@ internal class CallExpressionWeigher(callExpression: KtCallExpression?) {
                 else -> 0
             }
         } ?: 0
-
         if (kotlinTypes == null) return base
+        val weight =
+            when (descriptor) {
+                is CallableMemberDescriptor -> calculateWeight(descriptor, kotlinTypes)
+                is ClassDescriptor -> descriptor.constructors.maxOf { calculateWeight(it, kotlinTypes) }
+                else -> 0
+            }
+        return base + weight
+    }
 
-        val callableMemberDescriptor = descriptor as? CallableMemberDescriptor ?: return base
+    private fun calculateWeight(
+        callableMemberDescriptor: CallableMemberDescriptor?,
+        kotlinTypes: List<KotlinType>
+    ): Int {
+        if (callableMemberDescriptor == null) return 0
 
         val descriptorParameters = callableMemberDescriptor.valueParameters.size
         val descriptorHasVarargParameter = callableMemberDescriptor.valueParameters.any(ValueParameterDescriptor::isVararg)
@@ -364,7 +374,7 @@ internal class CallExpressionWeigher(callExpression: KtCallExpression?) {
             if (descriptorParameters == valueArgumentsSize || descriptorHasVarargParameter) 1 else 0
         } else {
             // apply only base weigh if target has fewer parameters than expected
-            return base
+            return 0
         }
         val typeChecker = KotlinTypeChecker.DEFAULT
 
@@ -402,14 +412,13 @@ internal class CallExpressionWeigher(callExpression: KtCallExpression?) {
             }
             weight = 100 * weight + 10
         }
-
-        return base + weight
+        return weight
     }
 }
 
 internal class Prioritizer(
     private val file: KtFile,
-    callExpression: KtCallExpression? = null,
+    element: PsiElement? = null,
     private val compareNames: Boolean = true
 ) {
     private val classifier = ImportableFqNameClassifier(file){
@@ -417,7 +426,7 @@ internal class Prioritizer(
     }
     private val statsManager = StatisticsManager.getInstance()
     private val proximityLocation = ProximityLocation(file, file.module)
-    private val callExpressionWeigher = CallExpressionWeigher(callExpression)
+    private val callExpressionWeigher = CallExpressionWeigher(element as? KtNameReferenceExpression)
 
     inner class Priority(descriptor: DeclarationDescriptor, languageVersionSettings: LanguageVersionSettings) : ComparablePriority {
         private val isDeprecated = isDeprecatedAtCallSite(descriptor) { languageVersionSettings }
