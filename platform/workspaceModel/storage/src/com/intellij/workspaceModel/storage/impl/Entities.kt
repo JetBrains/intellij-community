@@ -545,7 +545,7 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: WorkspaceEn
   }
 
   // For generated entities
-  fun index(entity: WorkspaceEntity, propertyName: String, virtualFileUrls: Set<VirtualFileUrl>) {
+  fun index(entity: WorkspaceEntity, propertyName: String, virtualFileUrls: Collection<VirtualFileUrl>) {
     val builder = diff as MutableEntityStorageImpl
     (builder.getMutableVirtualFileUrlIndex() as VirtualFileIndex.MutableVirtualFileIndex).index((entity as WorkspaceEntityBase).id,
                                                                                                 propertyName, virtualFileUrls)

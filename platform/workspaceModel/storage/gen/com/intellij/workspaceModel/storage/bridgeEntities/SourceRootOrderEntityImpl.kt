@@ -77,7 +77,7 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
       // Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
 
-      index(this, "orderOfSourceRoots", this.orderOfSourceRoots.toHashSet())
+      index(this, "orderOfSourceRoots", this.orderOfSourceRoots)
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
@@ -169,7 +169,7 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
 
     private val orderOfSourceRootsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
-      if (_diff != null) index(this, "orderOfSourceRoots", value.toHashSet())
+      if (_diff != null) index(this, "orderOfSourceRoots", value)
       changedProperty.add("orderOfSourceRoots")
     }
     override var orderOfSourceRoots: MutableList<VirtualFileUrl>

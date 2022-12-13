@@ -44,8 +44,7 @@ ${
         line("this.currentEntityData = null")
         line()
         list(vfuFields) {
-          val suffix = if (valueType is ValueType.Collection<*, *>) ".toHashSet()" else ""
-          "index(this, \"$name\", this.$name$suffix)"
+          "index(this, \"$name\", this.$name)"
         }
         if (name == LibraryEntity::class.simpleName) {
           line("indexLibraryRoots(${LibraryEntity::roots.name})")

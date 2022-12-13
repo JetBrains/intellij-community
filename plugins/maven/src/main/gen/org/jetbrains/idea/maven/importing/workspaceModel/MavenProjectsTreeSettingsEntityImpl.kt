@@ -15,6 +15,8 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
@@ -92,8 +94,7 @@ open class MavenProjectsTreeSettingsEntityImpl(val dataSource: MavenProjectsTree
       dataSource as MavenProjectsTreeSettingsEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.ignoredFilePaths != dataSource.ignoredFilePaths) this.ignoredFilePaths = dataSource.ignoredFilePaths.toMutableList()
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

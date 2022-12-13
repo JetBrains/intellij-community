@@ -72,7 +72,7 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
 
       index(this, "simpleUrl", this.simpleUrl)
       index(this, "nullableUrl", this.nullableUrl)
-      index(this, "listOfUrls", this.listOfUrls.toHashSet())
+      index(this, "listOfUrls", this.listOfUrls)
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
@@ -148,7 +148,7 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
 
     private val listOfUrlsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
-      if (_diff != null) index(this, "listOfUrls", value.toHashSet())
+      if (_diff != null) index(this, "listOfUrls", value)
       changedProperty.add("listOfUrls")
     }
     override var listOfUrls: MutableList<VirtualFileUrl>
