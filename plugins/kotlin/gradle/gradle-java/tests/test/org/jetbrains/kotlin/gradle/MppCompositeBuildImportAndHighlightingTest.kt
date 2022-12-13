@@ -16,7 +16,6 @@ class MppCompositeBuildImportTest : AbstractKotlinMppGradleImportingTest("gradle
     @WorkspaceChecks(MODULE_DEPENDENCIES, SOURCE_ROOTS)
     fun sample0() {
         // TODO: Run highlighting check as well
-        // FIXME: jvmMain -> jvmMain ist not properly resolved, yet
         assumeTrue("Requires next bootstrap", kotlinTestPropertiesService.kotlinGradlePluginVersion > "1.8.20-dev-3308")
         doTest {
             linkProject("consumerBuild")

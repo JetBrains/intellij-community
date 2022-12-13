@@ -674,6 +674,8 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             mppModel: KotlinMPPGradleModel,
             dependencies: IdeaKotlinDependenciesContainer
         ) {
+            mppModel.dependencyMap.values.modifyDependenciesOnMppModules(ideProject, resolverCtx)
+
             mppModel.sourceSetsByName.values.forEach { sourceSet ->
                 val sourceSetModuleIde = KotlinSourceSetModuleId(resolverCtx, gradleModule, sourceSet)
                 val sourceSetDataNode = ideModule.findSourceSetNode(sourceSetModuleIde) ?: return@forEach
