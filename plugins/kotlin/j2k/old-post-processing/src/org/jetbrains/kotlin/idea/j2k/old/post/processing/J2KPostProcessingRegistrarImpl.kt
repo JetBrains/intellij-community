@@ -274,7 +274,7 @@ internal class J2KPostProcessingRegistrarImpl : J2KPostProcessingRegistrar {
 
         override fun createAction(element: KtElement, diagnostics: Diagnostics): (() -> Unit)? {
             if (element !is KtCallExpression) return null
-            val propertyName = intention.detectPropertyNameToUse(element) ?: return null
+            val propertyName = intention.detectPropertyNameToUseForCall(element) ?: return null
             return { intention.applyTo(element, propertyName, reformat = true) }
         }
     }
