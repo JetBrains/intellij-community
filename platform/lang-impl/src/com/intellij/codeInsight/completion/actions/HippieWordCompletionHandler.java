@@ -258,8 +258,8 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
 
     if (includeWordsFromOtherFiles) {
       for(FileEditor fileEditor: FileEditorManager.getInstance(file.getProject()).getAllEditors()) {
-        if (fileEditor instanceof TextEditor) {
-          Editor anotherEditor = ((TextEditor)fileEditor).getEditor();
+        if (fileEditor instanceof TextEditor textEditor) {
+          Editor anotherEditor = textEditor.getEditor();
           if (anotherEditor != editor) {
             addWordsForEditor(anotherEditor, matcher, words, afterWords, false);
           }
@@ -312,7 +312,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     }
     else {
       primaryCaretOffset = 0;
-      caretOffsets = new int[1];
+      caretOffsets = new int[0];
     }
     TokenProcessor processor = new TokenProcessor() {
       @Override
