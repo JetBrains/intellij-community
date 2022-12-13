@@ -198,7 +198,7 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
   }
 
   @Override
-  protected @NotNull Project getProject() {
+  protected @Nullable Project getProject() {
     return myProject;
   }
 }
