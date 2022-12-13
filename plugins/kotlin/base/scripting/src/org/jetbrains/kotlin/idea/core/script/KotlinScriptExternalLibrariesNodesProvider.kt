@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.applyIf
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.core.script.ucache.*
@@ -24,7 +25,7 @@ class KotlinScriptExternalLibrariesNodesProvider: ExternalLibrariesWorkspaceMode
     override fun createNode(entity: KotlinScriptEntity, project: Project, settings: ViewSettings?): AbstractTreeNode<*>? {
         if (!scriptsAsEntities) return null
 
-        val dependencies = entity.listDependencies()
+        val dependencies = entity.listDependencies(project)
         val path = entity.path
         val scriptFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(path))
         val scriptFileName = scriptFile?.relativeName(project)
@@ -49,13 +50,16 @@ private data class KotlinScriptDependenciesLibrary(val name: String, val classes
     override fun getIcon(unused: Boolean): Icon = KotlinIcons.SCRIPT
 }
 
-private fun KotlinScriptEntity.listDependencies(): ScriptDependencies {
+private fun KotlinScriptEntity.listDependencies(project: Project): ScriptDependencies {
+    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+
     fun List<KotlinScriptLibraryRoot>.files() = asSequence()
         .mapNotNull { it.url.virtualFile }
         .filter { it.isValid }
         .toList()
 
     val (compiledRoots, sourceRoots) = dependencies.asSequence()
+        .map { storage.resolve(it) ?: error("Unresolvable library: ${it.name}, script=$path") }
         .flatMap { it.roots }
         .partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
 

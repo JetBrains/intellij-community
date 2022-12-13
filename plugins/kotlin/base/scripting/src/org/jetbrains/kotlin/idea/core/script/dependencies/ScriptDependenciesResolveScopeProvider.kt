@@ -43,7 +43,7 @@ class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
 
         if (scriptsAsEntities) {
             val scripts = file.findUsedInScripts(project) ?: return null
-            val dependencies = scripts.flatMap { it.listDependencies(KotlinScriptLibraryRootTypeId.COMPILED) }.distinct()
+            val dependencies = scripts.flatMap { it.listDependencies(project, KotlinScriptLibraryRootTypeId.COMPILED) }.distinct()
 
             var searchScope = GlobalSearchScope.union(
                 arrayOf(
@@ -71,11 +71,11 @@ class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
 }
 
 private fun VirtualFile?.findUsedInScripts(project: Project): List<KotlinScriptEntity>? {
-    val index = WorkspaceModel.getInstance(project).entityStorage.current.getVirtualFileUrlIndex()
+    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    val index = storage.getVirtualFileUrlIndex()
     val fileUrlManager = VirtualFileUrlManager.getInstance(project)
 
     var currentFile = this
-    @Suppress("SENSELESS_COMPARISON")
     while (currentFile != null) {
         val entities = index.findEntitiesByUrl(fileUrlManager.fromUrl(currentFile.url))
         if (entities.none()) {
@@ -85,7 +85,8 @@ private fun VirtualFile?.findUsedInScripts(project: Project): List<KotlinScriptE
 
         return entities
             .mapNotNull { it.first.safeAs<KotlinScriptLibraryEntity>() }
-            .map { it.kotlinScript }
+            .flatMap { it.usedInScripts }
+            .map { storage.resolve(it) ?: error("Unresolvable script: ${it.path}") }
             .toList()
     }
     return null

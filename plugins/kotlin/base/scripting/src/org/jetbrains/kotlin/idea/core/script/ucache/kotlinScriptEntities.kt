@@ -14,73 +14,215 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
+import org.jetbrains.kotlin.utils.addToStdlib.measureTimeMillisWithResult
 import java.nio.file.Path
 import kotlin.io.path.pathString
 import kotlin.io.path.relativeTo
+import kotlin.system.measureTimeMillis
 
 /**
  * This file contains functions to work with [WorkspaceModel] in the context of [KotlinScriptEntity].
  * For technical details, see [this article](https://jetbrains.team/p/wm/documents/Development/a/Workspace-model-custom-entities-creation).
  */
 
-fun KotlinScriptEntity.listDependencies(rootTypeId: KotlinScriptLibraryRootTypeId? = null): List<VirtualFile> = dependencies.asSequence()
-    .flatMap { it.roots }
-    .applyIf(rootTypeId != null) { filter { it.type == rootTypeId } }
-    .mapNotNull { it.url.virtualFile }
-    .filter { it.isValid }
-    .toList()
+fun KotlinScriptEntity.listDependencies(project: Project, rootTypeId: KotlinScriptLibraryRootTypeId? = null): List<VirtualFile> {
+    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    return dependencies.asSequence()
+        .mapNotNull { storage.resolve(it) }
+        .flatMap { it.roots }
+        .applyIf(rootTypeId != null) { filter { it.type == rootTypeId } }
+        .mapNotNull { it.url.virtualFile }
+        .filter { it.isValid }
+        .toList()
+}
 
 
 @RequiresWriteLock
 internal fun Project.syncScriptEntities(actualScriptFiles: Sequence<VirtualFile>) {
-    WorkspaceModel.getInstance(this).updateProjectModel("") { builder ->
+    WorkspaceModel.getInstance(this).updateProjectModel("Syncing scripts...") { builder ->
         builder.syncScriptEntities(actualScriptFiles, this)
     }
+/*
+    // Use these ancillary functions for troubleshooting, they allow seeing resulting scripts-to-libraries (and vice versa) relations.
+    val scriptsDebugInfo = scriptsDebugInfo();
+    val scriptLibrariesDebugInfo = scriptLibrariesDebugInfo();
+    Unit // <= toggle breakpoint here and enjoy
+*/
 }
+
+@Suppress("unused")
+// Use this method troubleshooting to see scripts-to-libraries relations
+private fun Project.scriptsDebugInfo(): String {
+    val storage = WorkspaceModel.getInstance(this).entityStorage.current
+    val scriptEntities = storage.entities(KotlinScriptEntity::class.java).toList()
+
+    return buildString {
+        append("Total number of scripts: ${scriptEntities.size}\n\n")
+        append(
+            scriptEntities.asSequence()
+                .map { it.debugInfo(storage) }
+                .joinToString("\n\n")
+        )
+    }
+}
+
+@Suppress("unused")
+// Use this method troubleshooting to see libraries-to-scripts relations
+private fun Project.scriptLibrariesDebugInfo(): String {
+    val storage = WorkspaceModel.getInstance(this).entityStorage.current
+    val scriptLibraries = storage.entities(KotlinScriptLibraryEntity::class.java).toList()
+
+    return buildString {
+        append("Total number of libraries: ${scriptLibraries.size}\n\n")
+        append(
+            scriptLibraries.asSequence()
+                .map { it.debugInfo(storage) }
+                .joinToString("\n\n")
+        )
+    }
+}
+
+private fun KotlinScriptLibraryEntity.debugInfo(storage: EntityStorage): String {
+    return buildString {
+        append("[$name, rootsNum=${roots.size}, usedInScriptsNum=${usedInScripts.size}]")
+        append("\n")
+        append(usedInScripts.joinToString("\n") {
+            val scriptEntity = storage.resolve(it)
+            "   - ${it.path}, libsNum=${scriptEntity?.dependencies?.size}"
+        })
+    }
+}
+
+
+private fun KotlinScriptEntity.debugInfo(storage: EntityStorage): String {
+    return buildString {
+        append("[$path]")
+        append("\n")
+        append(dependencies.joinToString("\n") {
+            val libraryEntity = storage.resolve(it)
+            "   - ${it.name}, rootsNum=${libraryEntity?.roots?.size}, reusedNum=${libraryEntity?.usedInScripts?.size}"
+        })
+    }
+}
+
 
 private fun MutableEntityStorage.syncScriptEntities(filesToAddOrUpdate: Sequence<VirtualFile>, project: Project) {
     val fileUrlManager = VirtualFileUrlManager.getInstance(project)
     val actualPaths = filesToAddOrUpdate.map { it.path }.toSet()
 
-    entities(KotlinScriptEntity::class.java)
-        .filter { it.path !in actualPaths }
-        .forEach { removeEntity(it) /* dependencies are removed automatically */ }
+    removeOutdatedScriptEntities(actualPaths)
 
     filesToAddOrUpdate.forEach { scriptFile ->
-        // WorkspaceModel API trait: LibraryEntity needs to be created first and only then it can be referred to (from ScriptEntity).
-        // ScriptEntity cannot be fully created in a single step.
+        val existingScriptEntity = resolve(KotlinScriptId(scriptFile.path))
+        val (actualLibraries, includeNew) = getActualScriptLibraries(scriptFile, existingScriptEntity, project)
 
-        val (scriptDependencies, containUpdates) = getActualScriptDependencies(scriptFile, project)
-        val scriptEntity = resolve(ScriptId(scriptFile.path))
-        if (scriptEntity == null) {
-            val scriptSource = KotlinScriptEntitySource(scriptFile.toVirtualFileUrl(fileUrlManager))
-            addEntity(KotlinScriptEntity(scriptFile.path, scriptSource) {
-                this.dependencies = scriptDependencies
-            })
+        if (existingScriptEntity == null) {
+            addNewScriptEntity(scriptFile, fileUrlManager, actualLibraries)
         } else {
-            val outdatedDependencies =
-                entitiesBySource { it == scriptEntity.entitySource }[scriptEntity.entitySource]
-                    ?.get(LibraryEntity::class.java)
-                    ?.let { it.toSet() - scriptDependencies.toSet() }
+            syncExistingScriptEntity(existingScriptEntity, actualLibraries, includeNew)
+        }
+    }
+}
 
-            outdatedDependencies?.forEach { removeEntity(it) }
+private fun MutableEntityStorage.syncExistingScriptEntity(
+    existingScriptEntity: KotlinScriptEntity,
+    actualLibraries: List<KotlinScriptLibraryEntity>,
+    actualLibrariesChanged: Boolean
+) {
+    removeOutdatedLibraries(existingScriptEntity, actualLibraries)
 
-            if (containUpdates) {
-                modifyEntity(scriptEntity) {
-                    this.dependencies = scriptDependencies
-                }
+    if (actualLibrariesChanged) {
+        modifyEntity(existingScriptEntity) {
+            this.dependencies = actualLibraries.map { it.symbolicId }.toMutableSet()
+        }
+    }
+}
+
+private fun MutableEntityStorage.removeOutdatedLibraries(
+    existingScriptEntity: KotlinScriptEntity,
+    actualLibraries: List<KotlinScriptLibraryEntity>
+) {
+    val currentLibraries = entities(KotlinScriptLibraryEntity::class.java)
+        .filter { it.usedInScripts.contains(existingScriptEntity.symbolicId) }
+        .toSet()
+
+    val outdatedLibraries = currentLibraries - actualLibraries.toSet()
+
+    modifyEntity(existingScriptEntity) {
+        dependencies.removeAll(outdatedLibraries.map { it.symbolicId }.toSet())
+    }
+
+    outdatedLibraries.forEach {
+        if (it.usedInScripts.size == 1) {
+            removeEntity(it)
+        } else {
+            modifyEntity(it) {
+                usedInScripts.remove(existingScriptEntity.symbolicId)
             }
         }
     }
 }
 
-private fun MutableEntityStorage.getActualScriptDependencies(
+private fun MutableEntityStorage.addNewScriptEntity(
     scriptFile: VirtualFile,
+    fileUrlManager: VirtualFileUrlManager,
+    actualScriptLibraries: List<KotlinScriptLibraryEntity>
+) {
+    val scriptSource = KotlinScriptEntitySource(scriptFile.toVirtualFileUrl(fileUrlManager))
+    val dependencyIds = actualScriptLibraries.map { it.symbolicId }.toSet()
+    val scriptEntity = KotlinScriptEntity(scriptFile.path, dependencyIds, scriptSource)
+
+    actualScriptLibraries.forEach {
+        modifyEntity(it) {
+            usedInScripts.add(scriptEntity.symbolicId)
+        }
+    }
+
+    addEntity(scriptEntity)
+}
+
+private fun MutableEntityStorage.removeOutdatedScriptEntities(actualPaths: Set<@NonNls String>) {
+    entities(KotlinScriptEntity::class.java)
+        .filter { it.path !in actualPaths }
+        .forEach { outdatedScript ->
+            entities(KotlinScriptLibraryEntity::class.java)
+                .filter { it.usedInScripts.contains(outdatedScript.symbolicId) }
+                .forEach {
+                    if (it.usedInScripts.size == 1) {
+                        removeEntity(it)
+                    } else {
+                        modifyEntity(it) {
+                            usedInScripts.remove(outdatedScript.symbolicId)
+                        }
+                    }
+                }
+            removeEntity(outdatedScript)
+        }
+}
+
+private fun MutableList<KotlinScriptLibraryEntity>.fillWithFiles(
+    project: Project,
+    scriptEntity: KotlinScriptEntity?,
+    classFiles: Collection<VirtualFile>,
+    sourceFiles: Collection<VirtualFile>
+) {
+    classFiles.forEach {
+        add(project.createLibraryEntity(it.path, it, KotlinScriptLibraryRootTypeId.COMPILED, scriptEntity?.symbolicId))
+    }
+    sourceFiles.forEach {
+        add(project.createLibraryEntity(it.path, it, KotlinScriptLibraryRootTypeId.SOURCES, scriptEntity?.symbolicId))
+    }
+}
+
+private fun MutableEntityStorage.getActualScriptLibraries(
+    scriptFile: VirtualFile,
+    scriptEntity: KotlinScriptEntity?,
     project: Project
 ): Pair<List<KotlinScriptLibraryEntity>, Boolean> {
 
@@ -92,22 +234,72 @@ private fun MutableEntityStorage.getActualScriptDependencies(
     val dependenciesSourceFiles = configurationManager.getScriptDependenciesSourceFiles(scriptFile)
         .filterRedundantDependencies()
 
-    addIdeSpecificDependencies(project, scriptFile, dependenciesClassFiles, dependenciesSourceFiles)
+    // List builders are not supported by WorkspaceModel yet
+    val libraries = mutableListOf<KotlinScriptLibraryEntity>()
 
-    val fileUrlManager = VirtualFileUrlManager.getInstance(project)
-    val entitySource = KotlinScriptEntitySource(scriptFile.toVirtualFileUrl(fileUrlManager))
-    val scriptDependencies = mutableListOf<KotlinScriptLibraryEntity>() // list builders are not supported by WorkspaceModel yet
+    libraries.fillWithFiles(project, scriptEntity, dependenciesClassFiles, dependenciesSourceFiles)
+    libraries.fillWithIdeSpecificDependencies(project, scriptEntity, scriptFile)
+    libraries.fillWithSdkDependencies(project, scriptEntity, scriptFile)
 
-    if (dependenciesClassFiles.isNotEmpty() || dependenciesSourceFiles.isNotEmpty()) {
-        scriptDependencies.add(
-            project.createLibrary(
-                "Script: ${scriptFile.relativeName(project)}",
-                dependenciesClassFiles,
-                dependenciesSourceFiles,
-                entitySource
-            )
+    val mergedLibraries = libraries.mergeClassAndSourceRoots()
+
+    var includeNew = false
+    val actualLibraries = mergedLibraries
+        .map { library ->
+            val existingLibrary = entities(KotlinScriptLibraryEntity::class.java).find { it.name == library.name }
+            if (existingLibrary != null) {
+                if (existingLibrary.hasSameRootsAs(library)) {
+                    existingLibrary
+                } else {
+                    modifyEntity(existingLibrary) {
+                        roots = library.roots.toMutableList()
+                    }
+                }
+            } else {
+                includeNew = true
+                addEntity(library)
+            }
+        }
+
+    return Pair(actualLibraries, includeNew)
+}
+
+private fun MutableList<KotlinScriptLibraryEntity>.mergeClassAndSourceRoots() =
+    groupBy { it.name }.values
+        .map { libsWithSameName ->
+            if (libsWithSameName.size == 1) libsWithSameName.single()
+            else { // 2
+                KotlinScriptLibraryEntity(
+                    libsWithSameName.first().name,
+                    libsWithSameName.flatMap { it.roots },
+                    libsWithSameName.first().usedInScripts,
+                    libsWithSameName.first().entitySource
+                )
+            }
+        }
+
+private fun MutableList<KotlinScriptLibraryEntity>.fillWithIdeSpecificDependencies(
+    project: Project,
+    scriptEntity: KotlinScriptEntity?,
+    scriptFile: VirtualFile
+) {
+    ScriptAdditionalIdeaDependenciesProvider.getRelatedLibraries(scriptFile, project).forEach { lib ->
+        val provider = lib.rootProvider
+        fillWithFiles(
+            project,
+            scriptEntity,
+            provider.getFiles(OrderRootType.CLASSES).asList(),
+            provider.getFiles(OrderRootType.SOURCES).asList(),
         )
     }
+}
+
+private fun MutableList<KotlinScriptLibraryEntity>.fillWithSdkDependencies(
+    project: Project,
+    scriptEntity: KotlinScriptEntity?,
+    scriptFile: VirtualFile
+) {
+    val configurationManager = ScriptConfigurationManager.getInstance(project)
 
     val scriptSdk = configurationManager.getScriptSdk(scriptFile)
     val projectSdk = ProjectRootManager.getInstance(project).projectSdk
@@ -115,42 +307,11 @@ private fun MutableEntityStorage.getActualScriptDependencies(
     if (scriptSdk?.homePath != projectSdk?.homePath) {
         val sdkClassFiles = configurationManager.getScriptSdkDependenciesClassFiles(scriptFile)
         val sdkSourceFiles = configurationManager.getScriptSdkDependenciesSourceFiles(scriptFile)
-
-        if (sdkClassFiles.isNotEmpty() || sdkSourceFiles.isNotEmpty()) {
-            scriptDependencies.add(
-                project.createLibrary(
-                    "Script: ${scriptFile.relativeName(project)}: sdk<${scriptSdk?.name}>",
-                    sdkClassFiles,
-                    sdkSourceFiles,
-                    entitySource
-                )
-            )
-        }
+        fillWithFiles(project, scriptEntity, sdkClassFiles, sdkSourceFiles)
     }
-
-    var includeUpdates = false
-    val dependencies = scriptDependencies.map { dependency ->
-        val existingEntity = entities(KotlinScriptLibraryEntity::class.java).find { it.name == dependency.name }
-        if (existingEntity != null) {
-            if (existingEntity.sameAs(dependency)) {
-                existingEntity
-            } else {
-                removeEntity(existingEntity)
-                addEntity(dependency)
-                includeUpdates = true
-                dependency
-            }
-        } else {
-            addEntity(dependency)
-            includeUpdates = true
-            dependency
-        }
-    }
-
-    return Pair(dependencies, includeUpdates)
 }
 
-private fun KotlinScriptLibraryEntity.sameAs(dependency: KotlinScriptLibraryEntity): Boolean =
+private fun KotlinScriptLibraryEntity.hasSameRootsAs(dependency: KotlinScriptLibraryEntity): Boolean =
     this.roots.containsAll(dependency.roots) && dependency.roots.containsAll(this.roots)
 
 internal fun Collection<VirtualFile>.filterRedundantDependencies() =
@@ -178,38 +339,17 @@ fun VirtualFile.relativeName(project: Project): String =
     if (ScratchUtil.isScratch(this) || this is LightVirtualFile) presentableName
     else toNioPath().relativeTo(Path.of(project.basePath!!)).pathString
 
-private fun addIdeSpecificDependencies(
-    project: Project,
-    scriptFile: VirtualFile,
-    classDependencies: MutableSet<VirtualFile>,
-    sourceDependencies: MutableSet<VirtualFile>
-) {
-    ScriptAdditionalIdeaDependenciesProvider.getRelatedLibraries(scriptFile, project).forEach { lib ->
-        val provider = lib.rootProvider
-        provider.getFiles(OrderRootType.CLASSES).forEach { classDependencies.add(it) }
-        provider.getFiles(OrderRootType.SOURCES).forEach { sourceDependencies.add(it) }
-    }
-}
-
-private fun Project.createLibrary(
+private fun Project.createLibraryEntity(
     name: String,
-    classFiles: Collection<VirtualFile>,
-    sources: Collection<VirtualFile> = emptyList(),
-    entitySource: KotlinScriptEntitySource
+    dependency: VirtualFile,
+    rootTypeId: KotlinScriptLibraryRootTypeId,
+    usedInScriptId: KotlinScriptId?
 ): KotlinScriptLibraryEntity {
 
     val fileUrlManager = VirtualFileUrlManager.getInstance(this)
+    val fileUrl = dependency.toVirtualFileUrl(fileUrlManager)
+    val libraryEntitySource = KotlinScriptLibraryEntitySource(fileUrl)
+    val libraryRoots = mutableListOf(KotlinScriptLibraryRoot(fileUrl, rootTypeId))
 
-    val libraryRoots = mutableListOf<KotlinScriptLibraryRoot>()
-    classFiles.forEach {
-        val fileUrl = it.toVirtualFileUrl(fileUrlManager)
-        libraryRoots.add(KotlinScriptLibraryRoot(fileUrl, KotlinScriptLibraryRootTypeId.COMPILED))
-    }
-
-    sources.forEach {
-        val fileUrl = it.toVirtualFileUrl(fileUrlManager)
-        libraryRoots.add(KotlinScriptLibraryRoot(fileUrl, KotlinScriptLibraryRootTypeId.SOURCES))
-    }
-
-    return KotlinScriptLibraryEntity(name, libraryRoots, entitySource)
+    return KotlinScriptLibraryEntity(name, libraryRoots, usedInScriptId?.let { setOf(it) } ?: emptySet(), libraryEntitySource)
 }
