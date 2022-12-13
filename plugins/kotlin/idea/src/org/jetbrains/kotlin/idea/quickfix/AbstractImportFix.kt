@@ -170,12 +170,12 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
                 }
             }
             ImportName(kind, name, prioritizer.priority(descriptor, languageVersionSettings))
-        }.toSortedSet(compareBy({ it.kind }, { it.name })).groupBy(keySelector = { it.kind }) { it }
+        }.groupBy(keySelector = { it.kind }) { it }
 
         return if (kindNameGroupedByKind.size == 1) {
             val (kind, names) = kindNameGroupedByKind.entries.first()
             val sortedNames = TreeSet<ImportName>(compareBy({ it.priority }, { it.kind }, { it.name }))
-            sortedNames.addAll(names)
+            sortedNames.addAll(names.toSortedSet(compareBy({ it.kind }, { it.name })))
             val firstName = sortedNames.first().name
             val singlePackage = suggestions.groupBy { it.parentOrNull() ?: FqName.ROOT }.size == 1
 
