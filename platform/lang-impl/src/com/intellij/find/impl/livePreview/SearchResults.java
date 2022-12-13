@@ -106,7 +106,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     mySelectionManager = new SelectionManager(this); // important to initialize last for accessing other fields
   }
 
-  public void setNotFoundState(boolean isForward) {
+  private void setNotFoundState(boolean isForward) {
     myNotFoundState = true;
     FindModel findModel = new FindModel();
     findModel.copyFrom(myFindModel);
@@ -209,8 +209,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     searchCompleted(new ArrayList<>(), getEditor(), null, false, null, getStamp());
   }
 
-  ActionCallback updateThreadSafe(@NotNull FindModel findModel, final boolean toChangeSelection,
-                                  @Nullable final TextRange next, final int stamp) {
+  ActionCallback updateThreadSafe(@NotNull FindModel findModel, boolean toChangeSelection, @Nullable TextRange next, int stamp) {
     if (myDisposed) return ActionCallback.DONE;
 
     ActionCallback result = new ActionCallback();
@@ -269,7 +268,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     }
   }
 
-  private static void getSelection(final Editor editor, final FutureResult<int[]> starts, final FutureResult<int[]> ends) {
+  private static void getSelection(Editor editor, FutureResult<int[]> starts, FutureResult<int[]> ends) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       SelectionModel selection = editor.getSelectionModel();
       starts.set(selection.getBlockSelectionStarts());
@@ -665,7 +664,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     }
   }
 
-  public void moveCursorTo(FindResult next, boolean retainOldSelection, boolean adjustScrollPosition) {
+  private void moveCursorTo(FindResult next, boolean retainOldSelection, boolean adjustScrollPosition) {
     if (next != null && !mySelectionManager.isSelected(next)) {
       retainOldSelection &= myCursor != null && mySelectionManager.isSelected(myCursor);
       myCursor = next;
