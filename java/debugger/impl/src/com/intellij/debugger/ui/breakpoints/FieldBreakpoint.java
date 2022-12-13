@@ -241,7 +241,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
 
   @Override
   public String getDisplayName() {
-    if(!isValid()) {
+    if (!isValid()) {
       return JavaDebuggerBundle.message("status.breakpoint.invalid");
     }
     final String className = getClassName();
@@ -305,17 +305,17 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
 
   public static PsiField findField(Project project, Document document, int offset) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if(file == null) return null;
+    if (file == null) return null;
     offset = CharArrayUtil.shiftForward(document.getCharsSequence(), offset, " \t");
     PsiElement element = file.findElementAt(offset);
-    if(element == null) return null;
+    if (element == null) return null;
     PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false);
     int line = document.getLineNumber(offset);
-    if(field == null) {
+    if (field == null) {
       final PsiField[] fld = {null};
       XDebuggerUtil.getInstance().iterateLine(project, document, line, element1 -> {
         PsiField field1 = PsiTreeUtil.getParentOfType(element1, PsiField.class, false);
-        if(field1 != null) {
+        if (field1 != null) {
           fld[0] = field1;
           return false;
         }
@@ -331,7 +331,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
   public void readExternal(@NotNull Element breakpointNode) throws InvalidDataException {
     super.readExternal(breakpointNode);
     setFieldName(breakpointNode.getAttributeValue("field_name"));
-    if(getFieldName() == null) {
+    if (getFieldName() == null) {
       throw new InvalidDataException("No field name for field breakpoint");
     }
     try {

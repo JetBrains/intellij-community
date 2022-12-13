@@ -75,9 +75,9 @@ public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements Thr
   }
 
   private boolean isDescendantGroup(ThreadGroupReferenceProxyImpl group) {
-    if(group == null) return false;
+    if (group == null) return false;
 
-    if(getThreadGroupReference() == group) return true;
+    if (getThreadGroupReference() == group) return true;
 
     return isDescendantGroup(group.parent());
   }

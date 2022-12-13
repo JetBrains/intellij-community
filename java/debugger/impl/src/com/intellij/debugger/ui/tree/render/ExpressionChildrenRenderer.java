@@ -103,12 +103,12 @@ public final class ExpressionChildrenRenderer extends ReferenceRenderer implemen
     DefaultJDOMExternalizer.readExternal(this, element);
 
     TextWithImports childrenExpression = DebuggerUtils.getInstance().readTextWithImports(element, "CHILDREN_EXPRESSION");
-    if(childrenExpression != null) {
+    if (childrenExpression != null) {
       setChildrenExpression(childrenExpression);
     }
 
     TextWithImports childrenExpandable = DebuggerUtils.getInstance().readTextWithImports(element, "CHILDREN_EXPANDABLE");
-    if(childrenExpandable != null) {
+    if (childrenExpandable != null) {
       myChildrenExpandable.setReferenceExpression(childrenExpandable);
     }
   }

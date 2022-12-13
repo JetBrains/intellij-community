@@ -49,7 +49,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
 
   @Override
   public <T> void putUserData(@NotNull Key<T> key, T value) {
-    if(myUserData == null) {
+    if (myUserData == null) {
       myUserData = new HashMap<>();
     }
     myUserData.put(key, value);

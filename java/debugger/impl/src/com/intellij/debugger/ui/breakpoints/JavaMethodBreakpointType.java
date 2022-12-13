@@ -90,7 +90,7 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
     if (classNameExists) {
       buffer.append(className);
     }
-    if(breakpoint.getProperties().myMethodName != null) {
+    if (breakpoint.getProperties().myMethodName != null) {
       if (classNameExists) {
         buffer.append(".");
       }

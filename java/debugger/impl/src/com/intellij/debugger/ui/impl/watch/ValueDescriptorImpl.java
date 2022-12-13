@@ -211,7 +211,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     try {
       value = calcValue(evaluationContext);
 
-      if(!myIsNew) {
+      if (!myIsNew) {
         try {
           if (myValue instanceof DoubleValue && Double.isNaN(((DoubleValue)myValue).doubleValue())) {
             myIsDirty = !(value instanceof DoubleValue);
@@ -693,7 +693,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
       if (classRenderer.SHOW_OBJECT_ID) {
         buf.append('@');
-        if(ApplicationManager.getApplication().isUnitTestMode()) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
           buf.append("uniqueID");
         }
         else {
@@ -705,7 +705,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
     if (objRef instanceof ArrayReference) {
       int idx = buf.indexOf("[");
-      if(idx >= 0) {
+      if (idx >= 0) {
         if (labelListener == null || descriptor == null) {
           buf.insert(idx + 1, ((ArrayReference)objRef).length());
         }

@@ -44,7 +44,7 @@ public final class TipManager implements Disposable, PopupMenuListener {
 
   private boolean isOverTip(MouseEvent e) {
     if (myCurrentTooltip != null) {
-      if(!myCurrentTooltip.isShowing()) {
+      if (!myCurrentTooltip.isShowing()) {
         hideTooltip(true);
         return false;
       }
@@ -192,7 +192,7 @@ public final class TipManager implements Disposable, PopupMenuListener {
       return;
     }
 
-    if(newTip == myCurrentTooltip) {
+    if (newTip == myCurrentTooltip) {
       if (!auto) {
         hideTooltip(true);
         return;
@@ -202,7 +202,7 @@ public final class TipManager implements Disposable, PopupMenuListener {
 
     hideTooltip(true);
 
-    if(myComponent.isShowing()) {
+    if (myComponent.isShowing()) {
       PopupFactory popupFactory = PopupFactory.getSharedInstance();
       final Point location = convertedEvent.getPoint();
       final Component sourceComponent = convertedEvent.getComponent();

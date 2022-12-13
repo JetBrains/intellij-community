@@ -36,7 +36,7 @@ public abstract class TreeBuilderNode extends DefaultMutableTreeNode{
       myChildrenBuilt = true;
     }
     final TreeBuilder treeBuilder = getTreeBuilder();
-    if(treeBuilder.isExpandable(this)) {
+    if (treeBuilder.isExpandable(this)) {
       treeBuilder.buildChildren(this);
     }
   }

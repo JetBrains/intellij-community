@@ -223,7 +223,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     } catch (Exception ignored) {
     }
 
-    if(className == null || methodName == null) {
+    if (className == null || methodName == null) {
       throw new InvalidDataException();
     }
   }

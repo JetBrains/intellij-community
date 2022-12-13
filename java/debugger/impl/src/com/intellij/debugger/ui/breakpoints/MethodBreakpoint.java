@@ -290,7 +290,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         }
       }
 
-      if(!hasMethod) {
+      if (!hasMethod) {
         debugProcess.getRequestsManager().setInvalid(
           this, JavaDebuggerBundle.message("error.invalid.breakpoint.method.not.found", classType.name())
         );
@@ -389,13 +389,13 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   @Override
   public String getDisplayName() {
     final @Nls StringBuilder buffer = new StringBuilder();
-    if(isValid()) {
+    if (isValid()) {
       final String className = getClassName();
       final boolean classNameExists = className != null && className.length() > 0;
       if (classNameExists) {
         buffer.append(className);
       }
-      if(getMethodName() != null) {
+      if (getMethodName() != null) {
         if (classNameExists) {
           buffer.append(".");
         }

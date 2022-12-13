@@ -259,9 +259,9 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
     ThreadReferenceProxyImpl thread = context.getThread();
-    if(thread != null) {
+    if (thread != null) {
       StackFrameProxyImpl stackFrameProxy = context.getFrameProxy();
-      if(stackFrameProxy != null) {
+      if (stackFrameProxy != null) {
         return stackFrameProxy.thisObject();
       }
     }

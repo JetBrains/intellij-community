@@ -90,7 +90,7 @@ public class HexRenderer extends NodeRendererImpl {
   //returns whether this renderer is apllicable to this type or it's supertypes
   @Override
   public boolean isApplicable(Type t) {
-    if(t == null) {
+    if (t == null) {
       return false;
     }
     return t instanceof CharType ||

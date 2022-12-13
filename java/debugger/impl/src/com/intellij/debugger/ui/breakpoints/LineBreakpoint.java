@@ -308,7 +308,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   }
 
   private @NlsContexts.Label String getDisplayInfoInternal(boolean showPackageInfo, int totalTextLength) {
-    if(isValid()) {
+    if (isValid()) {
       final int lineNumber = getLineIndex() + 1;
       String className = getClassName();
       final boolean hasClassInfo = className != null && className.length() > 0;
@@ -338,7 +338,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
 
           info.append(className);
         }
-        if(hasMethodInfo) {
+        if (hasMethodInfo) {
           if (isFile) {
             info.append(":");
           }
@@ -433,9 +433,9 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
         element = element.getParent();
       }
 
-      if(child instanceof PsiMethod && child.getTextRange().getEndOffset() >= document.getLineEndOffset(lineIndex)) {
+      if (child instanceof PsiMethod && child.getTextRange().getEndOffset() >= document.getLineEndOffset(lineIndex)) {
         PsiCodeBlock body = ((PsiMethod)child).getBody();
-        if(body == null) {
+        if (body == null) {
           canAdd[0] = false;
         }
         else {

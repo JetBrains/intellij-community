@@ -61,12 +61,12 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
 
     final T oldDescriptor = findDescriptor(parent, descriptor, key);
 
-    if(oldDescriptor != null && oldDescriptor.getClass() == descriptor.getClass()) {
+    if (oldDescriptor != null && oldDescriptor.getClass() == descriptor.getClass()) {
       descriptor.setAncestor(oldDescriptor);
     }
     else {
       T displayDescriptor = findDisplayDescriptor(parent, descriptor, key.getDisplayKey());
-      if(displayDescriptor != null) {
+      if (displayDescriptor != null) {
         descriptor.displayAs(displayDescriptor);
       }
     }
@@ -212,14 +212,14 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     @Nullable
     public <T extends NodeDescriptor> T search(NodeDescriptor parent, T descriptor, DescriptorKey<T> key) {
       final T result;
-      if(parent == null) {
+      if (parent == null) {
         result = myDescriptorTree.getChild(null, key);
       }
       else {
         final NodeDescriptor parentDescriptor = getSearched(parent);
         result = parentDescriptor != null ? myDescriptorTree.getChild(parentDescriptor, key) : null;
       }
-      if(result != null) {
+      if (result != null) {
         mySearchedDescriptors.put(descriptor, result);
       }
       return result;
@@ -243,7 +243,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     @Override
     protected NodeDescriptor getSearched(NodeDescriptor parent) {
       NodeDescriptor searched = super.getSearched(parent);
-      if(searched == null) {
+      if (searched == null) {
         return myDescriptorSearcher.getSearched(parent);
       }
       return searched;

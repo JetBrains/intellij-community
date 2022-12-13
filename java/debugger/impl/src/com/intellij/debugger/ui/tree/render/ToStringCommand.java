@@ -35,7 +35,7 @@ public abstract class ToStringCommand implements SuspendContextCommand {
 
   @Override
   public void action() {
-    if(myIsEvaluated) return;
+    if (myIsEvaluated) return;
     try {
       final String valueAsString = DebuggerUtils.getValueAsString(myEvaluationContext, myValue);
       evaluationResult(valueAsString);

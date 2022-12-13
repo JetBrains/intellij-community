@@ -83,7 +83,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
   @Override
   public void displayAs(NodeDescriptor descriptor) {
     super.displayAs(descriptor);
-    if(descriptor instanceof LocalVariableDescriptorImpl) {
+    if (descriptor instanceof LocalVariableDescriptorImpl) {
       myIsNewLocal = ((LocalVariableDescriptorImpl)descriptor).myIsNewLocal;
     }
   }

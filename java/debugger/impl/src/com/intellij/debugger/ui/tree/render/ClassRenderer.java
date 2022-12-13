@@ -286,11 +286,11 @@ public class ClassRenderer extends NodeRendererImpl{
       catch (EvaluateException ignored) {
       }
     }
-    if(!SHOW_STATIC && field.isStatic()) {
+    if (!SHOW_STATIC && field.isStatic()) {
       return false;
     }
 
-    if(!SHOW_STATIC_FINAL && field.isStatic() && field.isFinal()) {
+    if (!SHOW_STATIC_FINAL && field.isStatic() && field.isFinal()) {
       return false;
     }
 

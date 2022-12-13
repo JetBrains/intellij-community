@@ -50,7 +50,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
   @Override
   protected boolean isExpandable(DebuggerTreeNodeImpl node) {
     NodeDescriptorImpl descriptor = node.getDescriptor();
-    if(descriptor instanceof StackFrameDescriptorImpl) {
+    if (descriptor instanceof StackFrameDescriptorImpl) {
       return false;
     }
     return descriptor.isExpandable();
@@ -109,7 +109,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
               }
             }
 
-            if(topCurrentGroup != null){
+            if (topCurrentGroup != null){
               root.add(nodeManager.createNode(nodeManager.getThreadGroupDescriptor(null, topCurrentGroup), evaluationContext));
             }
             else {
@@ -178,8 +178,8 @@ public class ThreadsDebuggerTree extends DebuggerTree {
         }
 
         private void nodeChanged(DebuggerTreeNodeImpl debuggerTreeNode) {
-          if(pathToThread.size() == 0) {
-            if(debuggerTreeNode.getDescriptor() instanceof ThreadDescriptorImpl && ((ThreadDescriptorImpl) debuggerTreeNode.getDescriptor()).getThreadReference() == thread) {
+          if (pathToThread.size() == 0) {
+            if (debuggerTreeNode.getDescriptor() instanceof ThreadDescriptorImpl && ((ThreadDescriptorImpl) debuggerTreeNode.getDescriptor()).getThreadReference() == thread) {
               removeListener();
               final TreePath treePath = new TreePath(debuggerTreeNode.getPath());
               setSelectionPath(treePath);
@@ -189,7 +189,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
             }
           }
           else {
-            if(debuggerTreeNode.getDescriptor() instanceof ThreadGroupDescriptorImpl && ((ThreadGroupDescriptorImpl) debuggerTreeNode.getDescriptor()).getThreadGroupReference() == pathToThread.get(0)) {
+            if (debuggerTreeNode.getDescriptor() instanceof ThreadGroupDescriptorImpl && ((ThreadGroupDescriptorImpl) debuggerTreeNode.getDescriptor()).getThreadGroupReference() == pathToThread.get(0)) {
               pathToThread.remove(0);
               expandPath(new TreePath(debuggerTreeNode.getPath()));
             }
@@ -203,7 +203,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
 
         @Override
         public void treeStructureChanged(TreeModelEvent event) {
-          if(event.getPath().length <= 1) {
+          if (event.getPath().length <= 1) {
             removeListener();
             return;
           }

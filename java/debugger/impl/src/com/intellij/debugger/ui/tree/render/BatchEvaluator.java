@@ -63,7 +63,7 @@ public final class BatchEvaluator {
       }
 
       ThreadReference threadReference = thread.getThreadReference();
-      if(threadReference == null) {
+      if (threadReference == null) {
         return false;
       }
 
@@ -106,7 +106,7 @@ public final class BatchEvaluator {
   public static BatchEvaluator getBatchEvaluator(DebugProcess debugProcess) {
     BatchEvaluator batchEvaluator = debugProcess.getUserData(BATCH_EVALUATOR_KEY);
 
-    if(batchEvaluator == null) {
+    if (batchEvaluator == null) {
       batchEvaluator = new BatchEvaluator(debugProcess);
       debugProcess.putUserData(BATCH_EVALUATOR_KEY, batchEvaluator);
     }

@@ -56,7 +56,7 @@ public class DescriptorTree {
   }
 
   public List<NodeDescriptor> getChildren(NodeDescriptor parent) {
-    if(parent == null) {
+    if (parent == null) {
       return myRootChildren;
     }
 

@@ -75,7 +75,7 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
 
   @Override
   public final void rebuildIfVisible(final DebuggerSession.Event event) {
-    if(isUpdateEnabled()) {
+    if (isUpdateEnabled()) {
       myRefreshNeeded = false;
       rebuild(event);
     }

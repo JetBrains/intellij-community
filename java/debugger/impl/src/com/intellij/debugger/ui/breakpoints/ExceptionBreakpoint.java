@@ -113,7 +113,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
       return psiClass != null ? SourcePosition.createFromElement(psiClass) : null;
     });
 
-    if(classPosition == null) {
+    if (classPosition == null) {
       createOrWaitPrepare(debugProcess, getQualifiedName());
     }
     else {
@@ -147,7 +147,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
   @Override
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
-    if(event instanceof ExceptionEvent) {
+    if (event instanceof ExceptionEvent) {
       return ((ExceptionEvent) event).exception();
     }
     return super.getThisObject(context, event);
@@ -241,7 +241,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
     String className = parentNode.getAttributeValue("class_name");
     setQualifiedName(className);
-    if(className == null) {
+    if (className == null) {
       throw new InvalidDataException(getReadNoClassName());
     }
   }

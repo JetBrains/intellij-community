@@ -85,11 +85,11 @@ public abstract class CachedEvaluator {
 
   protected ExpressionEvaluator getEvaluator(final Project project) throws EvaluateException {
     Cache cache = myCache.get();
-    if(cache == null) {
+    if (cache == null) {
       cache = PsiDocumentManager.getInstance(project).commitAndRunReadAction(() -> initEvaluatorAndChildrenExpression(project));
     }
 
-    if(cache.myException != null) {
+    if (cache.myException != null) {
       throw cache.myException;
     }
 

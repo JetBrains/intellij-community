@@ -187,7 +187,7 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       nodeName = descriptor.getName();
     }
 
-    if(text.equals(XDebuggerUIConstants.getCollectingDataMessage())) {
+    if (text.equals(XDebuggerUIConstants.getCollectingDataMessage())) {
       descriptorText.append(XDebuggerUIConstants.getCollectingDataMessage(), XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
       return descriptorText;
     }
@@ -207,9 +207,9 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     }
     if (strings[2] != null) {
       if (descriptor instanceof ValueDescriptorImpl valueDescriptor) {
-        if(multiline && strings[2].indexOf('\n') >=0) {
+        if (multiline && strings[2].indexOf('\n') >=0) {
           strings = breakString(strings[2], "=");
-          if(strings[2] != null) {
+          if (strings[2] != null) {
             strings[2] = strings[0] + strings[1] + "\n" + strings[2];
           }
         }
@@ -222,7 +222,7 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
           descriptorText.append(strings[0], DEFAULT_ATTRIBUTES);
         }
         if (appendValue && strings[1] != null) {
-          if(valueLabel != null && StringUtil.startsWithChar(valueLabel, '{') && valueLabel.indexOf('}') > 0 && !StringUtil.endsWithChar(valueLabel, '}')) {
+          if (valueLabel != null && StringUtil.startsWithChar(valueLabel, '{') && valueLabel.indexOf('}') > 0 && !StringUtil.endsWithChar(valueLabel, '}')) {
             int idx = valueLabel.indexOf('}');
             String objectId = valueLabel.substring(0, idx + 1);
             valueLabel = valueLabel.substring(idx + 1);
@@ -247,7 +247,7 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
           }
 
           final EvaluateException exception = descriptor.getEvaluateException();
-          if(exception != null) {
+          if (exception != null) {
             final String errorMessage = exception.getMessage();
             final String valueText;
             if (valueLabel.endsWith(errorMessage)) {
@@ -260,7 +260,7 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
             descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
           }
           else {
-            if(valueLabel.equals(XDebuggerUIConstants.getCollectingDataMessage())) {
+            if (valueLabel.equals(XDebuggerUIConstants.getCollectingDataMessage())) {
               descriptorText.append(XDebuggerUIConstants.getCollectingDataMessage(), XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
             }
             else {

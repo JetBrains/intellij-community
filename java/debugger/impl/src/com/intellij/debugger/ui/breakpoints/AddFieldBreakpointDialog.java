@@ -130,7 +130,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    if(validateData()) {
+    if (validateData()) {
       super.doOKAction();
     }
   }

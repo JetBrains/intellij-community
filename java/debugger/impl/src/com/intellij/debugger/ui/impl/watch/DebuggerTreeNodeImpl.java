@@ -98,11 +98,11 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
   }
 
   private void update(final DebuggerContextImpl context, final Runnable runnable, boolean labelOnly) {
-    if(!labelOnly) {
+    if (!labelOnly) {
       clear();
     }
 
-    if(context != null && context.getDebugProcess() != null) {
+    if (context != null && context.getDebugProcess() != null) {
       getTree().saveState(this);
 
       myIcon = DebuggerTreeRenderer.getDescriptorIcon(MessageDescriptor.EVALUATING);
@@ -132,7 +132,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
     }
 
     labelChanged();
-    if(!labelOnly) {
+    if (!labelOnly) {
       childrenChanged(true);
     }
   }
@@ -178,7 +178,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
   }
 
   private static void invoke(Runnable r) {
-    if(ApplicationManager.getApplication().isDispatchThread()) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
       r.run();
     }
     else {
