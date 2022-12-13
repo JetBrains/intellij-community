@@ -105,26 +105,26 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   @Override
   public boolean isArray() {
     assertValueReady();
-    return myValue instanceof ArrayReference; 
+    return myValue instanceof ArrayReference;
   }
 
 
-  
+
   public boolean isDirty() {
     assertValueReady();
-    return myIsDirty; 
+    return myIsDirty;
   }
-  
+
   @Override
   public boolean isLvalue() {
     assertValueReady();
-    return myIsLvalue; 
+    return myIsLvalue;
   }
-  
+
   @Override
   public boolean isNull() {
     assertValueReady();
-    return myValue == null; 
+    return myValue == null;
   }
 
   @Override
@@ -136,14 +136,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   @Override
   public boolean isPrimitive() {
     assertValueReady();
-    return myValue instanceof PrimitiveValue; 
+    return myValue instanceof PrimitiveValue;
   }
 
   public boolean isEnumConstant() {
     assertValueReady();
     return myValue instanceof ObjectReference && isEnumConstant(((ObjectReference)myValue));
   }
-  
+
   public boolean isValueValid() {
     return myValueException == null;
   }
@@ -193,9 +193,9 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     }
 
     assertValueReady();
-    return myValue; 
+    return myValue;
   }
-  
+
   @Override
   public boolean isExpandable() {
     return myIsExpandable;

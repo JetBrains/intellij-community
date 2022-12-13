@@ -119,7 +119,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
           myUpdateLabelsAlarm.addRequest(this, LABELS_UPDATE_DELAY_MS, ModalityState.NON_MODAL);
         }
       }
-      
+
     }, LABELS_UPDATE_DELAY_MS, ModalityState.NON_MODAL);
   }
 
@@ -145,7 +145,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
     catch (NoSuchElementException ignored) { // children have changed - just skip
     }
   }
-  
+
   @Override
   protected DebuggerTree createTreeView() {
     return new ThreadsDebuggerTree(getProject());

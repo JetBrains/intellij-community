@@ -24,7 +24,7 @@ public abstract class CachedEvaluator {
     protected EvaluateException   myException;
     protected PsiExpression       myPsiChildrenExpression;
   }
-  
+
   SoftReference<Cache> myCache = new SoftReference<>(null);
   private TextWithImports myReferenceExpression;
 

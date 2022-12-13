@@ -199,7 +199,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
   public WatchItemDescriptor getWatchItemDescriptor(NodeDescriptor parent, TextWithImports text, @Nullable Value value){
     return getDescriptor(parent, new WatchItemData(text, value));
   }
-  
+
   private static class DescriptorTreeSearcher {
     private final MarkedDescriptorTree myDescriptorTree;
 

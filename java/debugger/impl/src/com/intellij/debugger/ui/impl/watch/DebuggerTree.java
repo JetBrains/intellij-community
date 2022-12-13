@@ -49,7 +49,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
   private static final Logger LOG = Logger.getInstance(DebuggerTree.class);
   protected static final Key<Rectangle> VISIBLE_RECT = Key.create("VISIBLE_RECT");
 
-  public static final DataKey<DebuggerTree> DATA_KEY = DataKey.create("DebuggerTree"); 
+  public static final DataKey<DebuggerTree> DATA_KEY = DataKey.create("DebuggerTree");
 
   protected final NodeManagerImpl myNodeManager;
 

@@ -27,7 +27,7 @@ public interface ChildrenBuilder extends XCompositeNode {
   NodeDescriptorFactory  getDescriptorManager();
 
   NodeManager getNodeManager();
-    
+
   ValueDescriptor getParentDescriptor();
 
   void setChildren(List<? extends DebuggerTreeNode> children);
