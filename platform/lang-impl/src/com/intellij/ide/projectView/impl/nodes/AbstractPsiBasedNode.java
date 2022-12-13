@@ -11,8 +11,11 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator;
+import com.intellij.ide.projectView.impl.ProjectViewInplaceCommentProducerImpl;
 import com.intellij.ide.tags.TagManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.InplaceCommentProducer;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
@@ -55,6 +58,8 @@ import static com.intellij.ide.util.treeView.NodeRenderer.getSimpleTextAttribute
  */
 public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value> implements ValidateableNode, StatePreservingNavigatable {
   private static final Logger LOG = Logger.getInstance(AbstractPsiBasedNode.class.getName());
+
+  private @Nullable InplaceCommentProducer myInplaceCommentProducer;
 
   protected AbstractPsiBasedNode(final Project project,
                                  @NotNull Value value,
@@ -135,6 +140,17 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     }
     PsiElement psiElement = extractPsiFromValue();
     return PsiUtilCore.getVirtualFile(psiElement);
+  }
+
+  @Override
+  protected @Nullable InplaceCommentProducer getInplaceCommentProducer() {
+    if (!UISettings.getInstance().getShowInplaceComments()) {
+      return null;
+    }
+    if (myInplaceCommentProducer == null) {
+      myInplaceCommentProducer = new ProjectViewInplaceCommentProducerImpl(this);
+    }
+    return myInplaceCommentProducer;
   }
 
   // Should be called in atomic action
