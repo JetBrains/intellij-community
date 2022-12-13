@@ -123,9 +123,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.atomic.LongAdder
 import java.util.function.Consumer
-import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JTabbedPane
 import javax.swing.KeyStroke
@@ -186,8 +184,6 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       }
     }
   }
-
-  private val busyObject = SimpleBusyObject()
 
   /**
    * Removes invalid myEditor and updates "modified" status.
@@ -1167,9 +1163,10 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       messageBus.syncPublisher(FileOpenedSyncListener.TOPIC).fileOpenedSync(this, file, editorsWithProviders)
       @Suppress("DEPRECATION")
       messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpenedSync(this, file, editorsWithProviders)
-      notifyPublisher {
-        if (isFileOpen(file)) {
-          project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpened(this, file)
+      if (isFileOpen(file)) {
+        @Suppress("DEPRECATION")
+        project.coroutineScope.launch {
+          project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpened(this@FileEditorManagerImpl, file)
         }
       }
     }
@@ -1254,14 +1251,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   override fun notifyPublisher(runnable: Runnable) {
-    val done = CompletableFuture<Any>()
-    busyObject.execute {
-      IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(ExpirableRunnable.forProject(project) {
-        runnable.run()
-        done.complete(null)
-      }, ModalityState.current())
-      done
-    }
+    runnable.run()
   }
 
   override fun setSelectedEditor(file: VirtualFile, fileEditorProviderId: String) {
@@ -1686,7 +1676,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     return null
   }
 
-  internal fun fireSelectionChanged(newSelectedComposite: EditorComposite?) {
+  private fun fireSelectionChanged(newSelectedComposite: EditorComposite?) {
     val composite = lastSelectedComposite?.get()
     val oldEditorWithProvider = composite?.selectedWithProvider
     val newEditorWithProvider = newSelectedComposite?.selectedWithProvider
@@ -2054,8 +2044,6 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     updateFileName(file)
   }
 
-  override fun getReady(requestor: Any): ActionCallback = busyObject.getReady(requestor)
-
   override fun refreshIcons() {
     val openedFiles = openedFiles
     for (each in getAllSplitters()) {
@@ -2123,19 +2111,4 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
   @ApiStatus.Internal
   open fun forceUseUiInHeadlessMode() = false
-}
-
-private class SimpleBusyObject : BusyObject.Impl() {
-  private val busyCount = LongAdder()
-  override fun isReady(): Boolean = busyCount.sum() == 0L
-
-  fun execute(runnable: Supplier<CompletableFuture<*>>) {
-    busyCount.increment()
-    runnable.get().whenComplete { _, _ ->
-      busyCount.decrement()
-      if (isReady) {
-        onReady()
-      }
-    }
-  }
 }

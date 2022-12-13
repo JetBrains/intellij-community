@@ -24,9 +24,6 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -484,8 +481,6 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   override fun hasSplitOrUndockedWindows() = false
 
   override fun getSplitters(): EditorsSplitters = throw IncorrectOperationException()
-
-  override fun getReady(requestor: Any) = ActionCallback.DONE
 
   override fun setSelectedEditor(file: VirtualFile, fileEditorProviderId: String) {
     if (!isCurrentlyUnderLocalId) {

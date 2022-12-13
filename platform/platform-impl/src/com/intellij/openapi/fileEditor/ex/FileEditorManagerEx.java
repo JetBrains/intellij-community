@@ -12,7 +12,6 @@ import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,7 +27,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public abstract class FileEditorManagerEx extends FileEditorManager implements BusyObject {
+public abstract class FileEditorManagerEx extends FileEditorManager {
   private final List<EditorDataProvider> myDataProviders = new ArrayList<>();
 
   public static FileEditorManagerEx getInstanceEx(@NotNull Project project) {

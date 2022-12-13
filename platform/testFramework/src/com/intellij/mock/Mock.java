@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -101,11 +100,6 @@ public final class Mock {
     @Override
     public void notifyPublisher(@NotNull Runnable runnable) {
       runnable.run();
-    }
-
-    @Override
-    public @NotNull ActionCallback getReady(@NotNull Object requestor) {
-      return ActionCallback.DONE;
     }
 
     @Override
