@@ -122,7 +122,7 @@ complexLinkText ::= LINK_TEXT+
 
 subgraphStatement ::= subgraphHeader separator subgraphDocument? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
 subgraphHeader ::= SUBGRAPH subgraphName
-subgraphName ::= complexIdentifier
+subgraphName ::= complexIdentifier [OPEN_SQUARE nodeText CLOSE_SQUARE]
 subgraphDocument ::= subgraphLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private subgraphLines ::= (subgraphLine | IGNORED) [subgraphLines]
 private subgraphLine ::= subgraphInnerStatement [separator] | separator
