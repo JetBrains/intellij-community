@@ -18,12 +18,11 @@ public class OverflowingLoopIndexInspection extends AbstractBaseJavaLocalInspect
     return new JavaElementVisitor() {
       @Override
       public void visitForStatement(@NotNull PsiForStatement statement) {
-        PsiStatement initialization = statement.getInitialization();
-        PsiDeclarationStatement declaration = tryCast(initialization, PsiDeclarationStatement.class);
-        if (declaration == null) return;
-        PsiElement[] declaredElements = declaration.getDeclaredElements();
-        if (declaredElements.length != 1) return;
-        PsiLocalVariable indexVariable = tryCast(declaredElements[0], PsiLocalVariable.class);
+        PsiExpressionStatement updateStatement = tryCast(statement.getUpdate(), PsiExpressionStatement.class);
+        if (updateStatement == null) return;
+        PsiExpression updateExpression = updateStatement.getExpression();
+
+        PsiLocalVariable indexVariable = findIndexVariable(updateExpression);
         if (indexVariable == null) return;
         PsiType type = indexVariable.getType();
         if (!type.equals(PsiType.INT) && !type.equals(PsiType.LONG)) return;
@@ -31,12 +30,33 @@ public class OverflowingLoopIndexInspection extends AbstractBaseJavaLocalInspect
         ConditionType conditionType = getConditionType(statement.getCondition(), indexVariable);
         if (conditionType == ConditionType.Unknown) return;
 
-
-        if(!isMonotonousUpdate(statement.getUpdate(), conditionType, indexVariable)) return;
+        if (!notChangesMonotony(conditionType, updateExpression)) return;
         if (indexUpdatedInBody(statement, indexVariable, conditionType)) return;
         holder.registerProblem(statement.getFirstChild(), JavaBundle.message("inspection.overflowing.loop.index.inspection.description"));
       }
     };
+  }
+
+  @Nullable
+  private static PsiLocalVariable findIndexVariable(PsiExpression updateExpression) {
+    PsiUnaryExpression unaryExpression = tryCast(updateExpression, PsiUnaryExpression.class);
+    if (unaryExpression != null) {
+      return findLocalVariable(unaryExpression.getOperand());
+    }
+    PsiAssignmentExpression assignmentExpression = tryCast(updateExpression, PsiAssignmentExpression.class);
+    if (assignmentExpression != null) {
+      return findLocalVariable(assignmentExpression.getLExpression());
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiLocalVariable findLocalVariable(PsiExpression expression) {
+    if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
+      return null;
+    }
+    PsiElement resolvedReference = referenceExpression.resolve();
+    return resolvedReference instanceof PsiLocalVariable localVariable ? localVariable : null;
   }
 
   private enum ConditionType {
@@ -84,40 +104,21 @@ public class OverflowingLoopIndexInspection extends AbstractBaseJavaLocalInspect
       .filter(expression -> expression.isReferenceTo(indexVariable))
       .allMatch(expression -> {
         PsiElement parent = expression.getParent();
-        if (parent instanceof PsiUnaryExpression ||
-            (parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getRExpression() != expression)) {
-          return notChangesMonotony(conditionType, indexVariable, tryCast(parent, PsiExpression.class));
+        if ((parent instanceof PsiUnaryExpression psiUnaryExpression &&
+             ExpressionUtils.isReferenceTo(psiUnaryExpression.getOperand(), indexVariable)) ||
+            (parent instanceof PsiAssignmentExpression assignmentExpression &&
+             ExpressionUtils.isReferenceTo(assignmentExpression.getLExpression(), indexVariable))) {
+          return notChangesMonotony(conditionType, tryCast(parent, PsiExpression.class));
         }
         return true;
       });
-    //ControlFlow flow;
-    //try {
-    //  ControlFlowFactory factory = ControlFlowFactory.getInstance(statement.getProject());
-    //  flow = factory.getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
-    //}
-    //catch (AnalysisCanceledException e) {
-    //  return true;
-    //}
-    //Collection<PsiVariable> writtenVariables =
-    //  ControlFlowUtil.getWrittenVariables(flow, flow.getStartOffset(body), flow.getEndOffset(body), true);
-    //if (writtenVariables.contains(indexVariable)) return true;
-    //return false;
-  }
-
-  private static boolean isMonotonousUpdate(@Nullable PsiStatement statement, ConditionType conditionType, PsiVariable variable) {
-    PsiExpressionStatement expressionStatement = tryCast(statement, PsiExpressionStatement.class);
-    if (expressionStatement == null) return false;
-    PsiExpression expression = expressionStatement.getExpression();
-    return notChangesMonotony(conditionType, variable, expression);
   }
 
   private static boolean notChangesMonotony(ConditionType conditionType,
-                                            PsiVariable variable,
                                             @Nullable PsiExpression expression) {
     PsiUnaryExpression updateUnary = tryCast(expression, PsiUnaryExpression.class);
     if (updateUnary != null) {
       IElementType tokenType = updateUnary.getOperationTokenType();
-      if (!ExpressionUtils.isReferenceTo(updateUnary.getOperand(), variable)) return false;
       if (conditionType == ConditionType.VarGreater) {
         return tokenType == JavaTokenType.PLUSPLUS;
       } else {
@@ -126,7 +127,6 @@ public class OverflowingLoopIndexInspection extends AbstractBaseJavaLocalInspect
     }
     PsiAssignmentExpression assignment = tryCast(expression, PsiAssignmentExpression.class);
     if (assignment != null) {
-      if (!ExpressionUtils.isReferenceTo(assignment.getLExpression(), variable)) return false;
       Object rightPart = ExpressionUtils.computeConstantExpression(assignment.getRExpression());
       Number number = tryCast(rightPart, Number.class);
       if (number == null) return false;
