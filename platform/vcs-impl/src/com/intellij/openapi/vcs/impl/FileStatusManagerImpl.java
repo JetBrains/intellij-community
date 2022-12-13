@@ -272,7 +272,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     }
 
     if (file == null || !file.isValid()) return;
-    FileStatus cachedStatus = getCachedStatus(file);
+    FileStatus cachedStatus = myCachedStatuses.get(file);
     if (cachedStatus == FileStatusNull.INSTANCE) {
       return;
     }
@@ -295,7 +295,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
       return FileStatus.SUPPRESSED;  // do not leak light files via cache
     }
 
-    FileStatus status = getCachedStatus(file);
+    FileStatus status = myCachedStatuses.get(file);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Cached status for file [" + file + "] is " + status);
     }
@@ -305,10 +305,6 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     }
 
     return status;
-  }
-
-  FileStatus getCachedStatus(final VirtualFile file) {
-    return myCachedStatuses.get(file);
   }
 
   @RequiresEdt
@@ -321,7 +317,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
     if (vcs == null) return;
 
-    FileStatus cachedStatus = getCachedStatus(virtualFile);
+    FileStatus cachedStatus = myCachedStatuses.get(virtualFile);
     boolean isDocumentModified = isDocumentModified(virtualFile);
 
     if (cachedStatus == FileStatus.MODIFIED && !isDocumentModified) {
@@ -353,18 +349,13 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     myListeners.remove(listener);
   }
 
-  @Override
-  public Color getNotChangedDirectoryColor(@NotNull VirtualFile file) {
-    return getRecursiveStatus(file).getColor();
-  }
-
   @NotNull
   @Override
   public FileStatus getRecursiveStatus(@NotNull VirtualFile file) {
-    FileStatus status = super.getRecursiveStatus(file);
+    FileStatus status = getStatus(file);
     if (status != FileStatus.NOT_CHANGED || !file.isValid() || !file.isDirectory()) return status;
     Boolean immediate = myWhetherExactlyParentToChanged.get(file);
-    if (immediate == null) return status;
+    if (immediate == null) return FileStatus.NOT_CHANGED;
     return immediate ? FileStatus.NOT_CHANGED_IMMEDIATE : FileStatus.NOT_CHANGED_RECURSIVE;
   }
 }

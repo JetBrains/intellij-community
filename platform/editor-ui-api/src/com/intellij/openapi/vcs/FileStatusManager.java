@@ -61,7 +61,9 @@ public abstract class FileStatusManager {
   }
 
   @Nullable
-  public abstract Color getNotChangedDirectoryColor(@NotNull VirtualFile file);
+  public Color getNotChangedDirectoryColor(@NotNull VirtualFile file) {
+    return getRecursiveStatus(file).getColor();
+  }
 
   /**
    * @see VcsConfiguration#SHOW_DIRTY_RECURSIVELY
@@ -69,7 +71,5 @@ public abstract class FileStatusManager {
    * @see FileStatus#NOT_CHANGED_RECURSIVE
    */
   @NotNull
-  public FileStatus getRecursiveStatus(@NotNull VirtualFile file) {
-    return getStatus(file);
-  }
+  public abstract FileStatus getRecursiveStatus(@NotNull VirtualFile file);
 }

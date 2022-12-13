@@ -2,11 +2,10 @@
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.vfs.VirtualFile
-import java.awt.Color
 
 private class DefaultFileStatusManager : FileStatusManager() {
   override fun getStatus(file: VirtualFile): FileStatus = FileStatus.NOT_CHANGED
-  override fun getNotChangedDirectoryColor(file: VirtualFile): Color = Color.BLACK
+  override fun getRecursiveStatus(file: VirtualFile): FileStatus = FileStatus.NOT_CHANGED
 
   override fun fileStatusesChanged() = Unit
   override fun fileStatusChanged(file: VirtualFile?) = Unit
