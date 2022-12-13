@@ -14,6 +14,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.BitUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -325,6 +326,37 @@ public class StatementParser {
     return parseExprInParenthWithBlock(builder, JavaElementType.WHILE_STATEMENT, false);
   }
 
+
+  @Contract(pure = true)
+  private  boolean isRecordPatternInForEach(final PsiBuilder builder) {
+    PsiBuilder.Marker patternStart = myParser.getPatternParser().preParsePattern(builder, false);
+    if (patternStart == null) {
+      return false;
+    }
+    if (builder.getTokenType() != JavaTokenType.LPARENTH) {
+      patternStart.rollbackTo();
+      return false;
+    }
+    builder.advanceLexer();
+
+    // we must distinguish record pattern from method call in for (foo();;)
+    while (true) {
+      IElementType current = builder.getTokenType();
+      if (current == null) {
+        patternStart.rollbackTo();
+        return false;
+      }
+      if (current == JavaTokenType.RPARENTH) {
+        break;
+      }
+      builder.advanceLexer();
+    }
+    builder.advanceLexer();
+    boolean isRecordPattern = builder.getTokenType() != JavaTokenType.SEMICOLON && builder.getTokenType() != JavaTokenType.DOT;
+    patternStart.rollbackTo();
+    return isRecordPattern;
+  }
+
   @NotNull
   private PsiBuilder.Marker parseForStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
@@ -334,6 +366,26 @@ public class StatementParser {
       error(builder, JavaPsiBundle.message("expected.lparen"));
       done(statement, JavaElementType.FOR_STATEMENT);
       return statement;
+    }
+
+    if (isRecordPatternInForEach(builder)) {
+      myParser.getPatternParser().parsePattern(builder);
+      if (builder.getTokenType() == JavaTokenType.COLON) {
+        return parseForEachFromColon(builder, statement);
+      }
+      error(builder, JavaPsiBundle.message("expected.colon"));
+      // recovery: just skip everything until ')'
+      while (true) {
+        IElementType tokenType = builder.getTokenType();
+        if (tokenType == null) {
+          done(statement, JavaElementType.FOREACH_STATEMENT);
+          return statement;
+        }
+        if (tokenType == JavaTokenType.RPARENTH) {
+          return parserForEachFromRparenth(builder, statement);
+        }
+        builder.advanceLexer();
+      }
     }
 
     PsiBuilder.Marker afterParenth = builder.mark();
@@ -438,6 +490,10 @@ public class StatementParser {
       error(builder, JavaPsiBundle.message("expected.expression"));
     }
 
+    return parserForEachFromRparenth(builder, statement);
+  }
+
+  private PsiBuilder.Marker parserForEachFromRparenth(PsiBuilder builder, PsiBuilder.Marker statement) {
     if (expectOrError(builder, JavaTokenType.RPARENTH, "expected.rparen") && parseStatement(builder) == null) {
       error(builder, JavaPsiBundle.message("expected.statement"));
     }

@@ -19,12 +19,16 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.light.LightParameter;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * @author dsl
@@ -38,7 +42,23 @@ public class PsiForeachStatementImpl extends PsiLoopStatementImpl implements Psi
   @Override
   @NotNull
   public PsiParameter getIterationParameter() {
-    return (PsiParameter) findChildByRoleAsPsiElement(ChildRole.FOR_ITERATION_PARAMETER);
+    PsiParameter parameter = (PsiParameter)findChildByRoleAsPsiElement(ChildRole.FOR_ITERATION_PARAMETER);
+    if (parameter == null) {
+      LOG.error("getIterationParameter is used when forEach element contains pattern. Migrate to getIterationDeclaration()");
+      return new LightParameter("__pattern_replacement__", PsiType.BOOLEAN, this);
+    }
+    return parameter;
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getIterationDeclaration() {
+    PsiParameter parameter = (PsiParameter)findChildByRoleAsPsiElement(ChildRole.FOR_ITERATION_PARAMETER);
+    if (parameter != null) {
+      return parameter;
+    } else {
+      return Objects.requireNonNull(PsiTreeUtil.getChildOfType(this, PsiPattern.class));
+    }
   }
 
   @Override
