@@ -22,8 +22,6 @@ class MarkdownCodeInsightSettings: PersistentStateComponent<MarkdownCodeInsightS
     @Property
     val adjustListIndentation: Boolean = true,
     @Property
-    val indentListsOnTab: Boolean = true,
-    @Property
     val smartEnterAndBackspace: Boolean = true,
     @Property
     val renumberListsOnType: Boolean = false,

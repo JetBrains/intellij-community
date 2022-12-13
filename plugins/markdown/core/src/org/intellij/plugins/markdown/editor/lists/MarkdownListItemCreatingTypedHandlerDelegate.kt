@@ -15,7 +15,6 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
-import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 /**
  * This handler renumbers the current list when you hit Enter after the number of some list item.
@@ -23,8 +22,10 @@ import org.intellij.plugins.markdown.settings.MarkdownSettings
 internal class MarkdownListItemCreatingTypedHandlerDelegate : TypedHandlerDelegate() {
 
   override fun charTyped(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
-    if (file !is MarkdownFile || c != ' '
-        || !MarkdownSettings.getInstance(project).isEnhancedEditingEnabled) {
+    if (file !is MarkdownFile || c != ' ') {
+      return Result.CONTINUE
+    }
+    if (!MarkdownCodeInsightSettings.getInstance().state.renumberListsOnType) {
       return Result.CONTINUE
     }
 
@@ -48,9 +49,7 @@ internal class MarkdownListItemCreatingTypedHandlerDelegate : TypedHandlerDelega
       // so that entering a space after a marker won't turn children-items into siblings
       return Result.CONTINUE
     }
-    if (MarkdownCodeInsightSettings.getInstance().state.renumberListsOnType) {
-      element.parentOfType<MarkdownList>()!!.renumberInBulk(document, recursive = false, restart = false)
-    }
+    element.parentOfType<MarkdownList>()!!.renumberInBulk(document, recursive = false, restart = false)
     PsiDocumentManager.getInstance(project).commitDocument(document)
     caret.moveToOffset(file.findElementAt(caret.offset - 1)?.endOffset ?: caret.offset)
     return Result.STOP
