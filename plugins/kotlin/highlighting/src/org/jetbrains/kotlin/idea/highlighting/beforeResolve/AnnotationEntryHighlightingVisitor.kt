@@ -8,14 +8,14 @@ import org.jetbrains.kotlin.idea.base.highlighting.isNameHighlightingEnabled
 import org.jetbrains.kotlin.idea.base.highlighting.visitor.AbstractHighlightingVisitor
 import org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExtension
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors
-import org.jetbrains.kotlin.idea.highlighting.beforeResolve.AbstractBeforeResolveHiglightingVisitory
+import org.jetbrains.kotlin.idea.highlighting.beforeResolve.AbstractBeforeResolveHighlightingVisitor
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class AnnotationEntryHighlightingVisitor(
     holder: AnnotationHolder
-) : AbstractBeforeResolveHiglightingVisitory(holder) {
+) : AbstractBeforeResolveHighlightingVisitor(holder) {
     override fun visitAnnotationEntry(annotationEntry: KtAnnotationEntry) {
         if (!annotationEntry.project.isNameHighlightingEnabled) return
         val range = annotationEntry.getTextRangeToHiglight() ?: return

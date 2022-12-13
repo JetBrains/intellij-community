@@ -7,7 +7,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.base.highlighting.visitor.AbstractHighlightingVisitor
 import org.jetbrains.kotlin.idea.highlighting.HighlightingFactory
 
-abstract class AbstractBeforeResolveHiglightingVisitory(protected val holder: AnnotationHolder): AbstractHighlightingVisitor() {
+abstract class AbstractBeforeResolveHighlightingVisitor(protected val holder: AnnotationHolder): AbstractHighlightingVisitor() {
     override fun createInfoAnnotation(textRange: TextRange, message: String?, textAttributes: TextAttributesKey?) {
         HighlightingFactory.createInfoAnnotation(holder, textRange, message, textAttributes)
     }
