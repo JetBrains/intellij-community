@@ -309,10 +309,17 @@ internal fun <K> MutableMap<K, StoredFileSetCollection>.removeValueIf(key: K, va
   }
 }
 
-internal inline fun <K, V> MultiMap<K, V>.removeValueIf(key: K, crossinline valuePredicate: (V) -> Boolean) {
-  val collection = get(key)
-  collection.removeIf { valuePredicate(it) }
-  if (collection.isEmpty()) {
-    remove(key)
+internal typealias PackagePrefixStorage = HashMap<String, MultiMap<EntityReference<WorkspaceEntity>, WorkspaceFileSetImpl>>
+
+internal fun PackagePrefixStorage.addFileSet(packagePrefix: String, fileSet: WorkspaceFileSetImpl) {
+  val entityRef2FileSet = getOrPut(packagePrefix) { MultiMap(LinkedHashMap()) }
+  entityRef2FileSet.putValue(fileSet.entityReference, fileSet)
+}
+
+internal fun PackagePrefixStorage.removeByPrefixAndReference(packagePrefix: String, entityReference: EntityReference<WorkspaceEntity>) {
+  val entityRef2FileSet = get(packagePrefix) ?: return
+  entityRef2FileSet.remove(entityReference)
+  if (entityRef2FileSet.isEmpty) {
+    remove(packagePrefix)
   }
 }
