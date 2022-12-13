@@ -89,8 +89,11 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     }
     HighlightingSession session = map.get(file);
     if (session == null) {
-      String mapStr = map.entrySet().stream().map(e -> e.getKey() + " (" + e.getKey().getClass() + ") -> " + e.getValue()).collect(Collectors.joining("; "));
-      throw new IllegalStateException("No HighlightingSession found for " + file + " (" + file.getClass() + ") in " + indicator + " in map: " + mapStr);
+      String mapStr = map.entrySet().stream().map(e -> {
+        PsiFile storedFile = e.getKey();
+        return storedFile + ": " + System.identityHashCode(storedFile) + " (" + storedFile.getClass() + ") -> " + e.getValue();
+      }).collect(Collectors.joining("; "));
+      throw new IllegalStateException("No HighlightingSession found for " + file +  ": " + System.identityHashCode(file) + " (" + file.getClass() + ") in " + indicator + " in map: " + mapStr);
     }
     return session;
   }
