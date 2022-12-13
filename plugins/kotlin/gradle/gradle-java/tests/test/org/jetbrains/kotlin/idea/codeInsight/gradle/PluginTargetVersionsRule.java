@@ -6,6 +6,7 @@ import org.gradle.util.GradleVersion;
 import org.hamcrest.CustomMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.gradle.newTests.TestWithKotlinPluginAndGradleVersions;
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher;
@@ -56,12 +57,12 @@ public class PluginTargetVersionsRule implements MethodRule {
             );
         }
 
-        MultiplePluginVersionGradleImportingTestCase testCase = (MultiplePluginVersionGradleImportingTestCase) target;
+        TestWithKotlinPluginAndGradleVersions testCase = (TestWithKotlinPluginAndGradleVersions) target;
         if (targetVersions != null && !shouldRun(targetVersions, testCase)) {
             String mark = IS_UNDER_TEAMCITY ? "passed" : "ignored";
             String message = "Test is marked " + mark + " due to unmet requirements\n" +
                              "Gradle version: " +
-                             testCase.gradleVersion +
+                             testCase.getGradleVersion() +
                              " | Requirement: " +
                              targetVersions.gradleVersion() +
                              "\n" +
@@ -90,8 +91,8 @@ public class PluginTargetVersionsRule implements MethodRule {
         return base;
     }
 
-    private static boolean shouldRun(PluginTargetVersions targetVersions, MultiplePluginVersionGradleImportingTestCase testCase) {
-        var gradleVersion = testCase.gradleVersion;
+    private static boolean shouldRun(PluginTargetVersions targetVersions, TestWithKotlinPluginAndGradleVersions testCase) {
+        var gradleVersion = testCase.getGradleVersion();
         var pluginVersion = testCase.getKotlinPluginVersion();
 
         var gradleVersionMatcher = createMatcher("Gradle", targetVersions.gradleVersion());
