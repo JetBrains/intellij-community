@@ -579,7 +579,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   @Override
   public String toString() {
-    return super.toString() + " updateAll="+myUpdateAll+" range= "+myRestrictRange;
+    return super.toString() + " updateAll="+myUpdateAll+" range="+myRestrictRange;
   }
 
   private static @Nls String getPresentableNameText() {

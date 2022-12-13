@@ -229,7 +229,7 @@ public class IdentifierHighlighterPass {
     int id = IdentifierHighlighterPass.id;
     if (id == 0) {
       IdentifierHighlighterPass.id = id = ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(
-        myFile.getProject())).getNextAvailableId().incrementAndGet();
+        myFile.getProject())).getNextAvailableId();
     }
     return id;
   }

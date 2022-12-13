@@ -508,7 +508,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         }
       } while (runWhile.compute() && System.currentTimeMillis() < deadline);
     }
-    catch (InterruptedException ex) {
+    catch (InterruptedException ignored) {
     }
     finally {
       Disposer.dispose(disposable);
@@ -979,7 +979,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       }
     }
 
-    private static VirtualFile getVirtualFile(FileEditor fileEditor) {
+    private static VirtualFile getVirtualFile(@NotNull FileEditor fileEditor) {
       VirtualFile virtualFile = fileEditor.getFile();
       for (BackedVirtualFileProvider provider : BackedVirtualFileProvider.EP_NAME.getExtensionList()) {
         VirtualFile replacedVirtualFile = provider.getReplacedVirtualFile(virtualFile);
