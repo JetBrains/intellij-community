@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.lightClasses
 
@@ -19,7 +19,7 @@ class IdeLightClassInheritanceHelper : LightClassInheritanceHelper {
     override fun isInheritor(
         lightClass: KtLightClass,
         baseClass: PsiClass,
-        checkDeep: Boolean
+        checkDeep: Boolean,
     ): ImpreciseResolveResult {
         if (baseClass.project.isInDumbMode) return NO_MATCH
         if (lightClass.manager.areElementsEquivalent(baseClass, lightClass)) return NO_MATCH
@@ -31,10 +31,10 @@ class IdeLightClassInheritanceHelper : LightClassInheritanceHelper {
         }
 
         val entries = classOrObject.superTypeListEntries
-        val hasSuperClass = entries.any { it is KtSuperTypeCallEntry }
-        if (baseClass.qualifiedName == classOrObject.defaultJavaAncestorQualifiedName() && (!hasSuperClass || checkDeep)) {
+        if (baseClass.qualifiedName == classOrObject.defaultJavaAncestorQualifiedName() && (checkDeep || entries.none { it is KtSuperTypeCallEntry })) {
             return MATCH
         }
+
         val amongEntries = isAmongEntries(baseClass, entries)
         return when {
             !checkDeep -> amongEntries
@@ -45,14 +45,15 @@ class IdeLightClassInheritanceHelper : LightClassInheritanceHelper {
 
     private fun isAmongEntries(baseClass: PsiClass, entries: List<KtSuperTypeListEntry>): ImpreciseResolveResult {
         val psiBasedResolver = PsiBasedClassResolver.getInstance(baseClass)
-        entries@ for (entry in entries) {
-            val reference: KtSimpleNameExpression = entry.typeAsUserType?.referenceExpression ?: continue@entries
+        for (entry in entries) {
+            val reference: KtSimpleNameExpression = entry.typeAsUserType?.referenceExpression ?: continue
             when (psiBasedResolver.canBeTargetReference(reference)) {
                 MATCH -> return MATCH
-                NO_MATCH -> continue@entries
+                NO_MATCH -> continue
                 UNSURE -> return UNSURE
             }
         }
+
         return NO_MATCH
     }
 }
