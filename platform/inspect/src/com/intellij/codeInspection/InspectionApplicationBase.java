@@ -713,16 +713,17 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   private @NotNull InspectionProfileImpl loadInspectionProfile(@NotNull Project project) throws IOException, JDOMException {
-    InspectionProfileImpl profile = loadInspectionProfile(project, myProfileName, myProfilePath, "command line");
+    InspectionProfileLoader profileLoader = getInspectionProfileLoader(project);
+    InspectionProfileImpl profile = profileLoader.tryLoadProfileByNameOrPath(myProfileName, myProfilePath, "command line",
+                                                                             (msg) -> onFailure(msg));
     if (profile != null) return profile;
 
     if (myStubProfile != null) {
       if (!myRunWithEditorSettings) {
-        InspectionProfileLoader inspectionProfileLoader = getInspectionProfileLoader(project);
-        profile = inspectionProfileLoader.loadProfileByName(myStubProfile);
+        profile = profileLoader.loadProfileByName(myStubProfile);
         if (profile != null) return profile;
 
-        profile = inspectionProfileLoader.loadProfileByPath(myStubProfile);
+        profile = profileLoader.loadProfileByPath(myStubProfile);
         if (profile != null) return profile;
       }
     }
@@ -731,30 +732,6 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     reportError("Using default project profile");
 
     return profile;
-  }
-
-  public @Nullable InspectionProfileImpl loadInspectionProfile(@NotNull Project project,
-                                                               @Nullable String profileName,
-                                                               @Nullable String profilePath,
-                                                               @NotNull String configSource) throws IOException, JDOMException {
-    InspectionProfileLoader inspectionProfileLoader = getInspectionProfileLoader(project);
-    //fetch profile by name from project file (project profiles can be disabled)
-    if (profileName != null && !profileName.isEmpty()) {
-      InspectionProfileImpl inspectionProfile = inspectionProfileLoader.loadProfileByName(profileName);
-      if (inspectionProfile == null) {
-        onFailure(InspectionsBundle.message("inspection.application.profile.was.not.found.by.name.0.1", profileName, configSource));
-      }
-      return inspectionProfile;
-    }
-
-    if (profilePath != null && !profilePath.isEmpty()) {
-      InspectionProfileImpl inspectionProfile = inspectionProfileLoader.loadProfileByPath(profilePath);
-      if (inspectionProfile == null) {
-        onFailure(InspectionsBundle.message("inspection.application.profile.failed.configure.by.path.0.1", profilePath, configSource));
-      }
-      return inspectionProfile;
-    }
-    return null;
   }
 
   public @NotNull InspectionProfileLoader getInspectionProfileLoader(@NotNull Project project) {
