@@ -13,6 +13,7 @@ import com.intellij.settingsSync.*
 import com.intellij.settingsSync.config.BUNDLED_PLUGINS_ID
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.PluginData
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.time.Instant
 
 internal class SettingsSyncPluginManager : Disposable {
@@ -21,8 +22,8 @@ internal class SettingsSyncPluginManager : Disposable {
   private val pluginEnabledStateListener = PluginEnabledStateListener()
   private val LOCK = Object()
 
-  internal var state = SettingsSyncPluginsState(emptyMap())
-    private set
+  private var stateOfThisIde = mapOf<PluginId, PluginData>()
+  private var stateOfOtherIdes = mapOf<String, Map<PluginId, PluginData>>()
 
   private val sessionUninstalledPlugins = HashSet<String>()
 
@@ -33,7 +34,7 @@ internal class SettingsSyncPluginManager : Disposable {
 
   internal fun updateStateFromIdeOnStart(lastSavedPluginsState: SettingsSyncPluginsState?): SettingsSyncPluginsState {
     synchronized(LOCK) {
-      val oldPlugins = lastSavedPluginsState?.plugins ?: emptyMap()
+      val oldPlugins = lastSavedPluginsState?.plugins?.get(thisIde()) ?: emptyMap()
       val newPlugins = oldPlugins.toMutableMap()
 
       for (plugin in PluginManagerProxy.getInstance().getPlugins()) {
@@ -47,8 +48,9 @@ internal class SettingsSyncPluginManager : Disposable {
       }
 
       logChangedState("Updated component state by the state of IDE.", oldPlugins, newPlugins)
-      state = SettingsSyncPluginsState(newPlugins)
-      return state
+      stateOfThisIde = newPlugins
+      stateOfOtherIdes = lastSavedPluginsState?.plugins?.filterKeys { it != thisIde() } ?: emptyMap()
+      return getCurrentState()
     }
   }
 
@@ -110,11 +112,23 @@ internal class SettingsSyncPluginManager : Disposable {
     val pluginsToInstall = mutableListOf<PluginId>()
 
     synchronized(LOCK) {
-      val oldPlugins = state.plugins
-      val newPlugins = newState.plugins
+      val oldPlugins = stateOfThisIde
+      stateOfThisIde = newState.plugins.getOrDefault(thisIde(), emptyMap())
+      stateOfOtherIdes = newState.plugins - thisIde()
 
-      logChangedState("Pushed new changes to the IDE", oldPlugins, newPlugins)
-      state = SettingsSyncPluginsState(newPlugins)
+      val newPlugins = if (SettingsSyncSettings.getInstance().syncPluginsAcrossIdes) {
+        val mergedPlugins = mutableMapOf<PluginId, PluginData>()
+        for ((ide, pluginsForIde) in stateOfOtherIdes) {
+          mergedPlugins += pluginsForIde
+        }
+        mergedPlugins += stateOfThisIde
+        mergedPlugins
+      }
+      else {
+        stateOfThisIde
+      }
+
+      logChangedState("Pushing new plugin information to the IDE, cross-ide plugin sync is ${enabledOrDisabled(SettingsSyncSettings.getInstance().syncPluginsAcrossIdes)}", oldPlugins, newPlugins)
 
       val removedPluginData = oldPlugins.keys - newPlugins.keys
       for (id in removedPluginData) {
@@ -210,6 +224,9 @@ internal class SettingsSyncPluginManager : Disposable {
   @TestOnly
   internal fun getPluginStateListener(): PluginStateListener = pluginInstallationStateListener
 
+  @VisibleForTesting
+  internal fun getCurrentState() = SettingsSyncPluginsState(stateOfOtherIdes + (thisIde() to stateOfThisIde))
+
   private inner class PluginInstallationStateListener : PluginStateListener {
     override fun install(descriptor: IdeaPluginDescriptor) {
       val pluginId = descriptor.pluginId
@@ -217,10 +234,9 @@ internal class SettingsSyncPluginManager : Disposable {
       synchronized(LOCK) {
         sessionUninstalledPlugins.remove(pluginId.idString)
         if (shouldSaveState(descriptor)) {
-          val oldPlugins = state.plugins
-          val newPlugins = oldPlugins + (pluginId to getPluginData(descriptor))
-          state = SettingsSyncPluginsState(newPlugins)
-          firePluginsStateChangeEvent(state)
+          val oldPlugins = stateOfThisIde.toMutableMap()
+          stateOfThisIde = oldPlugins + (pluginId to getPluginData(descriptor))
+          firePluginsStateChangeEvent(getCurrentState())
         }
       }
     }
@@ -231,10 +247,9 @@ internal class SettingsSyncPluginManager : Disposable {
       synchronized(LOCK) {
         sessionUninstalledPlugins.add(pluginId.idString)
         if (shouldSaveState(descriptor)) {
-          val oldPlugins = state.plugins
-          val newPlugins = oldPlugins + (pluginId to getPluginData(descriptor))
-          state = SettingsSyncPluginsState(newPlugins)
-          firePluginsStateChangeEvent(state)
+          val oldPlugins = stateOfThisIde.toMutableMap()
+          stateOfThisIde = oldPlugins + (pluginId to getPluginData(descriptor))
+          firePluginsStateChangeEvent(getCurrentState())
         }
       }
     }
@@ -243,7 +258,7 @@ internal class SettingsSyncPluginManager : Disposable {
   private inner class PluginEnabledStateListener : Runnable {
     // this listener is called when some plugin or plugins change their enabled state
     override fun run() {
-      val oldPlugins = state.plugins
+      val oldPlugins = stateOfThisIde
       val newPlugins = oldPlugins.toMutableMap()
       val disabledIds = PluginManagerProxy.getInstance().getDisabledPluginIds()
       synchronized(LOCK) {
@@ -280,9 +295,9 @@ internal class SettingsSyncPluginManager : Disposable {
           }
         }
 
-        state = SettingsSyncPluginsState(newPlugins.toMap())
+        stateOfThisIde = newPlugins.toMap()
         if (oldPlugins != newPlugins) {
-          firePluginsStateChangeEvent(state)
+          firePluginsStateChangeEvent(getCurrentState())
         }
       }
     }

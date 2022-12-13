@@ -3,17 +3,8 @@ package com.intellij.settingsSync
 import com.intellij.ide.plugins.IdeaPluginDependency
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.settingsSync.plugins.SettingsSyncPluginInstaller
 import java.nio.file.Path
 import java.util.*
-
-class TestPluginInstaller : SettingsSyncPluginInstaller {
-  val installedPluginIds = HashSet<String>()
-
-  override fun installPlugins(pluginsToInstall: List<PluginId>) {
-    installedPluginIds += pluginsToInstall.map { it.idString }
-  }
-}
 
 class TestPluginDependency(private val idString: String, override val isOptional: Boolean) : IdeaPluginDependency {
   override val pluginId

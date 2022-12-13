@@ -36,6 +36,12 @@ class SettingsSyncSettings :
       fireSettingsStateChanged(value)
     }
 
+  var syncPluginsAcrossIdes
+    get() = state.syncPluginsAcrossIdes
+    set(value) {
+      state.syncPluginsAcrossIdes = value
+    }
+
   private fun fireSettingsStateChanged(syncEnabled: Boolean) {
     SettingsSyncEvents.getInstance().fireEnabledStateChanged(syncEnabled)
   }
@@ -91,6 +97,7 @@ class SettingsSyncSettings :
     var disabledSubcategories by map<SettingsCategory, ArrayList<String>>()
 
     var migrationFromOldStorageChecked by property(false)
+    var syncPluginsAcrossIdes by property(false)
 
     @TestOnly
     internal fun reset() {
@@ -98,6 +105,7 @@ class SettingsSyncSettings :
       disabledCategories = mutableListOf()
       disabledSubcategories = mutableMapOf()
       migrationFromOldStorageChecked = false
+      syncPluginsAcrossIdes = false
     }
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.PluginData
+import com.intellij.settingsSync.plugins.thisIde
 import com.intellij.util.toBufferExposingByteArray
 import com.intellij.util.xmlb.Constants
 import org.jdom.Element
@@ -61,7 +62,7 @@ internal fun settingsSnapshot(metaInfo: MetaInfo = MetaInfo(Instant.now(), getLo
                               build: SettingsSnapshotBuilder.() -> Unit) : SettingsSnapshot {
   val builder = SettingsSnapshotBuilder()
   builder.build()
-  return SettingsSnapshot(metaInfo, builder.fileStates.toSet(), SettingsSyncPluginsState(builder.plugins))
+  return SettingsSnapshot(metaInfo, builder.fileStates.toSet(), SettingsSyncPluginsState(mapOf(thisIde() to builder.plugins)))
 }
 
 @ApiStatus.Internal

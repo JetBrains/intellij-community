@@ -1,5 +1,6 @@
 package com.intellij.settingsSync.plugins
 
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.extensions.PluginId
 import kotlinx.serialization.KSerializer
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Serializable
-data class SettingsSyncPluginsState(val plugins: Map<@Serializable(with=PluginIdSerializer::class) PluginId, PluginData>) {
+data class SettingsSyncPluginsState(val plugins: Map<String, Map<@Serializable(with=PluginIdSerializer::class) PluginId, PluginData>>) {
   @Serializable
   data class PluginData(
     val enabled: Boolean = true,
@@ -27,3 +28,5 @@ internal object PluginIdSerializer : KSerializer<PluginId> {
   override fun serialize(encoder: Encoder, value: PluginId) = encoder.encodeString(value.idString)
   override fun deserialize(decoder: Decoder): PluginId = PluginId.getId(decoder.decodeString())
 }
+
+internal fun thisIde(): String = ApplicationNamesInfo.getInstance().lowercaseProductName.lowercase()

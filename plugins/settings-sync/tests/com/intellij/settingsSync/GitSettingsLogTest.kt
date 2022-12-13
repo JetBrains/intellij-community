@@ -3,6 +3,7 @@ package com.intellij.settingsSync
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
+import com.intellij.settingsSync.plugins.thisIde
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
@@ -246,7 +247,7 @@ internal class GitSettingsLogTest {
 
     val snapshot = settingsLog.collectCurrentSnapshot()
     assertNotNull(snapshot.plugins)
-    val pluginData = snapshot.plugins!!.plugins[PluginId.getId(id)]
+    val pluginData = snapshot.plugins!!.plugins[thisIde()]!![PluginId.getId(id)]
     assertNotNull(pluginData)
     assertTrue(pluginData!!.enabled)
     assertEquals(SettingsCategory.UI, pluginData.category)
