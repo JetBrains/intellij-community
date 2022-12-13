@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.KtNodeTypes
@@ -103,7 +104,7 @@ class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val ski
                 keyword: PsiElement,
                 isSerious: Boolean,
                 fix: LocalQuickFix,
-                message: String,
+                @InspectionMessage message: String,
                 highlightElement: PsiElement = keyword,
                 highlightType: ProblemHighlightType = if (isSerious) GENERIC_ERROR_OR_WARNING else INFORMATION,
             ) {

@@ -340,7 +340,7 @@ class SeparateFileWrapper(manager: PsiManager) : LightElement(manager, KotlinLan
 fun <T> chooseContainerElement(
     containers: List<T>,
     editor: Editor,
-    title: String,
+    @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
     toPsi: (T) -> PsiElement,
     onSelect: (T) -> Unit
@@ -359,7 +359,7 @@ fun <T> chooseContainerElement(
 fun <T : PsiElement> chooseContainerElement(
     elements: List<T>,
     editor: Editor,
-    title: String,
+    @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
     onSelect: (T) -> Unit
 ): Unit = choosePsiContainerElement(
@@ -429,7 +429,7 @@ private fun psiElementRenderer() = object : PsiElementListCellRenderer<PsiElemen
 private fun <T, E : PsiElement> choosePsiContainerElement(
     elements: List<E>,
     editor: Editor,
-    title: String,
+    @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
     psi2Container: (E) -> T,
     onSelect: (T) -> Unit,
@@ -454,7 +454,7 @@ private fun <T, E : PsiElement> choosePsiContainerElement(
 fun <T> chooseContainerElementIfNecessary(
     containers: List<T>,
     editor: Editor,
-    title: String,
+    @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
     toPsi: (T) -> PsiElement,
     onSelect: (T) -> Unit
@@ -463,7 +463,7 @@ fun <T> chooseContainerElementIfNecessary(
 fun <T : PsiElement> chooseContainerElementIfNecessary(
     containers: List<T>,
     editor: Editor,
-    title: String,
+    @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
     onSelect: (T) -> Unit
 ): Unit = chooseContainerElementIfNecessaryImpl(containers, editor, title, highlightSelection, null, onSelect)
@@ -471,7 +471,7 @@ fun <T : PsiElement> chooseContainerElementIfNecessary(
 private fun <T> chooseContainerElementIfNecessaryImpl(
     containers: List<T>,
     editor: Editor,
-    title: String,
+    @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
     toPsi: ((T) -> PsiElement)?,
     onSelect: (T) -> Unit
