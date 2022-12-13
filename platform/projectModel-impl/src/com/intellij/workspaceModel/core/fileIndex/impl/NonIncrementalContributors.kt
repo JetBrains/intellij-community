@@ -125,7 +125,7 @@ internal class NonIncrementalContributors(private val project: Project,
           }
         }
         //todo use comparisonId for incremental updates?
-        registerRoots(library.sourceRoots, WorkspaceFileKind.EXTERNAL_SOURCE, if (library is JavaSyntheticLibrary) LibrarySourceRootFileSetData(null, "") else DummyWorkspaceFileSetData)
+        registerRoots(library.sourceRoots, WorkspaceFileKind.EXTERNAL_SOURCE, if (library is JavaSyntheticLibrary) LibrarySourceRootFileSetData(null, "") else SyntheticLibrarySourceRootData)
         registerRoots(library.binaryRoots, WorkspaceFileKind.EXTERNAL, if (library is JavaSyntheticLibrary) LibraryRootFileSetData(null, "") else DummyWorkspaceFileSetData)
         library.excludedRoots.forEach {
           result.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, NonIncrementalMarker))
@@ -146,6 +146,8 @@ internal class NonIncrementalContributors(private val project: Project,
     upToDate = false
   }
 }
+
+private object SyntheticLibrarySourceRootData : ModuleOrLibrarySourceRootData
 
 private object NonIncrementalMarker : EntityReference<WorkspaceEntity>() {
   override fun resolve(storage: EntityStorage): WorkspaceEntity? = null
