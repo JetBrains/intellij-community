@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.debugger.engine.*;
@@ -41,6 +41,13 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Runs the IDE with the debugger.
+ * <p>
+ * To set a breakpoint in the source code,
+ * place a 'Breakpoint!' comment in the line directly above,
+ * see {@link #createBreakpoints} for details.
+ */
 public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCase {
   private @Nullable BreakpointProvider myBreakpointProvider;
   protected static final int RATHER_LATER_INVOKES_N = 10;
@@ -329,6 +336,34 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     return Pair.create(include.toArray(ClassFilter.EMPTY_ARRAY), exclude.toArray(ClassFilter.EMPTY_ARRAY));
   }
 
+  /**
+   * A breakpoint comment has the form &#x201C;[<i>kind</i>] Breakpoint! [<i>property</i>...]&#x201D;.
+   * <p>
+   * Breakpoint kinds (none defaults to a line breakpoint):
+   * <ul>
+   * <li>Method
+   * <li>Field(fieldName)
+   * <li>Exception(java.lang.RuntimeException)
+   * </ul>
+   * Properties for all breakpoints:
+   * <ul>
+   * <li>Class filters(-MethodClassFilter$A)
+   * <li>Condition(i >= 10 || (i % 5 == 0))
+   * <li>LogExpression("i = " + i)
+   * <li>Pass count(13)
+   * <li>suspendPolicy(SuspendAll | SuspendThread | SuspendNone)
+   * </ul>
+   * Properties for method breakpoints:
+   * <ul>
+   * <li>Emulated(true)
+   * <li>OnEntry(true)
+   * <li>OnExit(true)
+   * </ul>
+   * Properties for exception breakpoints:
+   * <ul>
+   * <li>Catch class filters(-ExceptionTest,-com.intellij.rt.*)
+   * </ul>
+   */
   public void createBreakpoints(final PsiFile file) {
     Runnable runnable = () -> {
       BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
