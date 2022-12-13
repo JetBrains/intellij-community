@@ -8,10 +8,14 @@ MODULES
         producerBuild.producerA.commonMain (TEST)
     consumerBuild.consumerA.jvmMain
         consumerBuild.consumerA.commonMain (COMPILE)
+        producerBuild.producerA.commonMain (COMPILE)
+        producerBuild.producerA.jvmMain (COMPILE)
     consumerBuild.consumerA.jvmTest
         consumerBuild.consumerA.commonTest (TEST)
         consumerBuild.consumerA.jvmMain (TEST)
         consumerBuild.consumerA.commonMain (TEST)
+        producerBuild.producerA.commonMain (TEST)
+        producerBuild.producerA.jvmMain (TEST)
     consumerBuild.consumerA.linuxArm64Main
         consumerBuild.consumerA.commonMain (COMPILE)
         consumerBuild.consumerA.linuxMain (COMPILE)
