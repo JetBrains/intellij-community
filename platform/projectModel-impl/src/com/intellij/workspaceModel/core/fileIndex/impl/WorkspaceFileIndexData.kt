@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.util.CollectionQuery
 import com.intellij.util.Query
 import com.intellij.util.containers.ConcurrentBitSet
-import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.*
@@ -30,7 +29,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
   
   /** these maps are accessed under 'Read Action' and updated under 'Write Action' or under 'Read Action' with a special lock in [NonIncrementalContributors.updateIfNeeded] */
   private val fileSets = HashMap<VirtualFile, StoredFileSetCollection>()
-  private val fileSetsByPackagePrefix = MultiMap.create<String, WorkspaceFileSetImpl>()
+  private val fileSetsByPackagePrefix = PackagePrefixStorage()
   
   private val packageDirectoryCache: PackageDirectoryCacheImpl
   private val nonIncrementalContributors = NonIncrementalContributors(project, rootFileSupplier)
@@ -232,7 +231,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
 
   private fun fillPackageDirectories(packageName: String, result: MutableList<in VirtualFile>) {
     val addedRoots = HashSet<VirtualFile>()
-    for (fileSet in fileSetsByPackagePrefix[packageName]) {
+    fileSetsByPackagePrefix[packageName]?.values()?.forEach { fileSet ->
       val root = fileSet.root
       if (root.isDirectory && root.isValid && addedRoots.add(root)) {
         result.add(root)
@@ -317,7 +316,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
       val fileSet = WorkspaceFileSetImpl(root, kind, entity.createReference(), customData ?: DummyWorkspaceFileSetData)
       fileSets.putValue(root, fileSet)
       if (customData is JvmPackageRootData) {
-        fileSetsByPackagePrefix.putValue(customData.packagePrefix, fileSet)
+        fileSetsByPackagePrefix.addFileSet(customData.packagePrefix, fileSet)
       }
     }
 
@@ -368,9 +367,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
                                  customData: WorkspaceFileSetData?) {
       fileSets.removeValueIf(root) { it is WorkspaceFileSetImpl && isResolvesTo(it.entityReference, entity) }
       if (customData is JvmPackageRootData) {
-        fileSetsByPackagePrefix.removeValueIf(customData.packagePrefix) { 
-          it is WorkspaceFileSetImpl && isResolvesTo(it.entityReference, entity) 
-        }
+        fileSetsByPackagePrefix.removeByPrefixAndReference(customData.packagePrefix, entity.createReference())
       }
     }
 
