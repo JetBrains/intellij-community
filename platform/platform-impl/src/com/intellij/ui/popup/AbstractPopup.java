@@ -1325,9 +1325,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
     };
     mySpeedSearchPatternField.getTextEditor().setFocusable(mySpeedSearchAlwaysShown);
-    if (mySpeedSearchAlwaysShown) {
-      setHeaderComponent(mySpeedSearchPatternField);
-    }
 
     JBTextField textField = mySpeedSearchPatternField.getTextEditor();
     if (ExperimentalUI.isNewUI()) {
@@ -1349,6 +1346,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
     if (SystemInfo.isMac) {
       RelativeFont.TINY.install(mySpeedSearchPatternField);
+    }
+
+    if (mySpeedSearchAlwaysShown) {
+      setHeaderComponent(mySpeedSearchPatternField);
     }
   }
 

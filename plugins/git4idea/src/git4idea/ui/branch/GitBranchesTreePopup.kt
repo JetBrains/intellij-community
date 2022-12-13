@@ -35,6 +35,7 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
 import git4idea.actions.branch.GitBranchActionsUtil
@@ -62,6 +63,7 @@ import java.awt.event.*
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.*
+import javax.swing.border.EmptyBorder
 import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
@@ -108,6 +110,28 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         else -> null
       }
     })
+  }
+
+  override fun setHeaderComponent(c: JComponent?) {
+    if (!isNewUI) {
+      super.setHeaderComponent(c)
+      return
+    }
+
+    mySpeedSearchPatternField.border = null
+
+    val panel = BorderLayoutPanel()
+      .addToCenter(mySpeedSearchPatternField)
+      .addToRight(createToolbar().component).apply {
+        // todo: adjust gaps to align search icon with tree item icons
+        val outsideBorder = EmptyBorder(JBUI.CurrentTheme.Popup.searchFieldBorderInsets())
+        val lineBorder = JBUI.Borders.customLineBottom(JBUI.CurrentTheme.Popup.separatorColor())
+
+        border = JBUI.Borders.compound(outsideBorder, lineBorder)
+        background = JBUI.CurrentTheme.Popup.BACKGROUND
+      }
+
+    super.setHeaderComponent(panel)
   }
 
   private fun warnThatBranchesDivergedIfNeeded() {
