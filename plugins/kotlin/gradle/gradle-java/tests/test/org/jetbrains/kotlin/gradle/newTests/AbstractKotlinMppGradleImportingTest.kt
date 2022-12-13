@@ -146,4 +146,9 @@ abstract class AbstractKotlinMppGradleImportingTest :
     override fun printOutput(stream: PrintStream, text: String) {
         stream.println(text)
     }
+
+    companion object {
+        // TODO: enable on TC when monitoring comes
+        var healthchecksEnabled: Boolean = false
+    }
 }
