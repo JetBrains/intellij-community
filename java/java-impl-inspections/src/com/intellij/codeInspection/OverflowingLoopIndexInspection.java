@@ -39,24 +39,13 @@ public class OverflowingLoopIndexInspection extends AbstractBaseJavaLocalInspect
 
   @Nullable
   private static PsiLocalVariable findIndexVariable(PsiExpression updateExpression) {
-    PsiUnaryExpression unaryExpression = tryCast(updateExpression, PsiUnaryExpression.class);
-    if (unaryExpression != null) {
-      return findLocalVariable(unaryExpression.getOperand());
+    if (updateExpression instanceof PsiUnaryExpression unaryExpression) {
+      return ExpressionUtils.resolveLocalVariable(unaryExpression.getOperand());
     }
-    PsiAssignmentExpression assignmentExpression = tryCast(updateExpression, PsiAssignmentExpression.class);
-    if (assignmentExpression != null) {
-      return findLocalVariable(assignmentExpression.getLExpression());
+    if (updateExpression instanceof PsiAssignmentExpression assignmentExpression) {
+      return ExpressionUtils.resolveLocalVariable(assignmentExpression.getLExpression());
     }
     return null;
-  }
-
-  @Nullable
-  private static PsiLocalVariable findLocalVariable(PsiExpression expression) {
-    if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
-      return null;
-    }
-    PsiElement resolvedReference = referenceExpression.resolve();
-    return resolvedReference instanceof PsiLocalVariable localVariable ? localVariable : null;
   }
 
   private enum ConditionType {
