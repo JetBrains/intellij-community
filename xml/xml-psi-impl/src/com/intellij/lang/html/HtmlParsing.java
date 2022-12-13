@@ -13,6 +13,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.Stack;
 import com.intellij.xml.psi.XmlPsiBundle;
 import com.intellij.xml.util.HtmlUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -236,6 +237,7 @@ public class HtmlParsing {
       }
       else if (tt instanceof ICustomParsingType || tt instanceof ILazyParseableElementType) {
         xmlText = terminateText(xmlText);
+        maybeRemapCurrentToken(tt);
         advance();
       }
       else if (token() == XmlTokenType.XML_END_TAG_START) {
@@ -533,6 +535,7 @@ public class HtmlParsing {
           parseReference();
         }
         else {
+          maybeRemapCurrentToken(tt);
           advance();
         }
       }
@@ -545,7 +548,9 @@ public class HtmlParsing {
       }
     }
     else {
-      if (token() != XmlTokenType.XML_TAG_END && token() != XmlTokenType.XML_EMPTY_ELEMENT_END) {
+      IElementType tt = token();
+      if (tt != XmlTokenType.XML_TAG_END && tt != XmlTokenType.XML_EMPTY_ELEMENT_END) {
+        if (tt != null) maybeRemapCurrentToken(tt);
         advance(); // Single token att value
       }
     }
@@ -632,5 +637,14 @@ public class HtmlParsing {
 
   protected void error(@NotNull @ParsingError String message) {
     myBuilder.error(message);
+  }
+
+  /**
+   * Allows overriding tokens returned by the lexer in certain places.
+   * <p>
+   * Implementations should conditionally call {@code builder.remapCurrentToken()}.
+   */
+  @ApiStatus.Experimental
+  protected void maybeRemapCurrentToken(@NotNull IElementType tokenType) {
   }
 }
