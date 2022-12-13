@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.util.ProcessingContext
@@ -24,7 +25,7 @@ import com.jetbrains.python.console.PythonConsoleView
 import com.jetbrains.python.debugger.PyFrameAccessor
 import com.jetbrains.python.debugger.PyFrameListener
 import com.jetbrains.python.debugger.values.DataFrameDebugValue
-import com.jetbrains.python.psi.PyPlainStringElement
+import com.jetbrains.python.psi.PyStringElement
 import java.lang.invoke.MethodHandles
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
@@ -62,9 +63,11 @@ class PythonPandasColumnNameCompletionContributor : CompletionContributor(), Dum
   }
 
   private fun createCustomMatcher(parameters: CompletionParameters, result: CompletionResultSet): CompletionResultSet {
-    if (parameters.position is PyPlainStringElement) {
-      val newPrefix = parameters.position.text.substring(1, parameters.offset - parameters.position.textRange.startOffset)
-      return result.withPrefixMatcher(PlainPrefixMatcher(newPrefix))
+    val currentElement = parameters.position
+    if (currentElement is PyStringElement) {
+      val newPrefix = TextRange.create(currentElement.contentRange.startOffset,
+                                       parameters.offset - currentElement.textRange.startOffset).substring(currentElement.text)
+      return result.withPrefixMatcher(newPrefix)
     }
     return result
   }

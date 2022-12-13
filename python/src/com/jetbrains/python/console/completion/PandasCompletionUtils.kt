@@ -16,8 +16,8 @@ import com.intellij.xdebugger.frame.XValueChildrenList
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PythonLanguage
-import com.jetbrains.python.debugger.values.DataFrameDebugValue
 import com.jetbrains.python.debugger.PyDebugValue
+import com.jetbrains.python.debugger.values.DataFrameDebugValue
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl
@@ -98,7 +98,7 @@ private fun createPandasDataFrameCandidate(psiElement: PsiElement, needValidator
           is PyStringLiteralExpression -> {
             columns.add((child as PyStringLiteralExpressionImpl).stringValue)
           }
-          is PyPlainStringElement -> {
+          is PyStringElement -> {
             columns.add(child.content)
           }
           else -> {
@@ -224,10 +224,10 @@ fun processDataFrameColumns(dfName: String,
   val validator = LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance())
   return columns.mapNotNull { column ->
     when {
-      !needValidatorCheck &&  elementOnPosition !is PyPlainStringElement -> {
-        "'${StringUtil.escapeStringCharacters(column.length,  column, "'", StringBuilder())}'"
+      !needValidatorCheck && elementOnPosition !is PyStringElement -> {
+        "'${StringUtil.escapeStringCharacters(column.length, column, "'", StringBuilder())}'"
       }
-      !needValidatorCheck -> StringUtil.escapeStringCharacters(column.length,  column, "'", StringBuilder())
+      !needValidatorCheck -> StringUtil.escapeStringCharacters(column.length, column, "'\"", StringBuilder())
       validator.isIdentifier(column, project) -> column
       else -> null
     }?.let {
