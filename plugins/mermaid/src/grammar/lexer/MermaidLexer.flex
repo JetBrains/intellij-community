@@ -78,6 +78,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "pie" { yybegin(pie); return Pie.PIE; }
   "journey" { yybegin(journey); return Journey.JOURNEY; }
   "flowchart" { yybegin(flowchart); return Flowchart.FLOWCHART; }
+  "graph" { yybegin(flowchart); return Flowchart.FLOWCHART; }
   "sequenceDiagram" { yybegin(sequence); return Sequence.SEQUENCE; }
   "classDiagram" { yybegin(class_diagram); return ClassDiagram.CLASS_DIAGRAM; }
   "stateDiagram-v2" |
