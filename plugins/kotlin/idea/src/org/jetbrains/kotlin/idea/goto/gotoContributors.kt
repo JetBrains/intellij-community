@@ -6,6 +6,7 @@ import com.intellij.ide.util.gotoByName.AbstractPrimeSymbolNavigationContributor
 import com.intellij.navigation.ChooseByNameContributorEx
 import com.intellij.navigation.GotoClassContributor
 import com.intellij.navigation.NavigationItem
+import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
@@ -57,12 +58,12 @@ class KotlinGotoClassContributor : ChooseByNameContributorEx, GotoClassContribut
 * For Kotlin classes it works using light class generation.
 * We have to process Kotlin builtIn classes separately since no light classes are built for them.
 * */
-abstract class AbstractKotlinGotoSymbolContributor<T : PsiElement>(
+abstract class AbstractKotlinGotoSymbolContributor<T : NavigatablePsiElement>(
     private val index: KotlinStringStubIndexExtension<T>,
     private val useOriginalScope: Boolean = false
 ) : ChooseByNameContributorEx, GotoClassContributor {
     override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
-        StubIndex.getInstance().processAllKeys(index.key, processor, scope, filter)
+        index.processAllKeys(scope, filter, processor)
     }
 
     override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
@@ -78,7 +79,7 @@ abstract class AbstractKotlinGotoSymbolContributor<T : PsiElement>(
     }
 
     open fun wrapProcessor(processor: Processor<in NavigationItem>): Processor<T> = Processor {
-        processor.process(it as? NavigationItem ?: return@Processor true)
+        processor.process(it)
     }
 
     override fun getQualifiedName(item: NavigationItem): String? =
