@@ -7,17 +7,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeProvider;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
 @Service
-public final class VcsFileStatusProvider implements FileStatusProvider {
+public final class VcsFileStatusProvider {
   private final Project myProject;
 
   private static final Logger LOG = Logger.getInstance(VcsFileStatusProvider.class);
@@ -28,30 +32,8 @@ public final class VcsFileStatusProvider implements FileStatusProvider {
 
   VcsFileStatusProvider(@NotNull Project project) {
     myProject = project;
-
-    project.getMessageBus().connect().subscribe(ChangeListListener.TOPIC, new ChangeListAdapter() {
-      @Override
-      public void changeListAdded(ChangeList list) {
-        fileStatusesChanged();
-      }
-
-      @Override
-      public void changeListRemoved(ChangeList list) {
-        fileStatusesChanged();
-      }
-
-      @Override
-      public void changeListUpdateDone() {
-        fileStatusesChanged();
-      }
-    });
   }
 
-  private void fileStatusesChanged() {
-    FileStatusManager.getInstance(myProject).fileStatusesChanged();
-  }
-
-  @Override
   @NotNull
   public FileStatus getFileStatus(@NotNull final VirtualFile virtualFile) {
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
@@ -111,16 +93,6 @@ public final class VcsFileStatusProvider implements FileStatusProvider {
       if (isClmStatusChanged != isDocumentModified) {
         VcsDirtyScopeManager.getInstance(myProject).fileDirty(virtualFile);
       }
-    }
-  }
-
-  @NotNull
-  public ThreeState getNotChangedDirectoryParentingStatus(@NotNull VirtualFile virtualFile) {
-    if (VcsConfiguration.getInstance(myProject).SHOW_DIRTY_RECURSIVELY) {
-      return ChangeListManager.getInstance(myProject).haveChangesUnder(virtualFile);
-    }
-    else {
-      return ThreeState.NO;
     }
   }
 }

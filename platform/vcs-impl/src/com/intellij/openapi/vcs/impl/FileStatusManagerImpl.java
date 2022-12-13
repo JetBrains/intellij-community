@@ -18,10 +18,10 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusListener;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListListener;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -77,6 +77,22 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     MessageBusConnection projectBus = project.getMessageBus().connect();
     projectBus.subscribe(EditorColorsManager.TOPIC, __ -> fileStatusesChanged());
     projectBus.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this::fileStatusesChanged);
+    projectBus.subscribe(ChangeListListener.TOPIC, new ChangeListListener() {
+      @Override
+      public void changeListAdded(ChangeList list) {
+        fileStatusesChanged();
+      }
+
+      @Override
+      public void changeListRemoved(ChangeList list) {
+        fileStatusesChanged();
+      }
+
+      @Override
+      public void changeListUpdateDone() {
+        fileStatusesChanged();
+      }
+    });
 
     if (!project.isDefault()) {
       StartupManager.getInstance(project).runAfterOpened(this::fileStatusesChanged);
@@ -197,7 +213,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
   private void cacheChangedFileStatus(final VirtualFile virtualFile, final FileStatus fs) {
     myCachedStatuses.put(virtualFile, fs);
     if (FileStatus.NOT_CHANGED.equals(fs)) {
-      final ThreeState parentingStatus = myFileStatusProvider.getNotChangedDirectoryParentingStatus(virtualFile);
+      final ThreeState parentingStatus = getNotChangedDirectoryParentingStatus(virtualFile);
       if (ThreeState.YES.equals(parentingStatus)) {
         myWhetherExactlyParentToChanged.put(virtualFile, true);
       }
@@ -207,6 +223,16 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     }
     else {
       myWhetherExactlyParentToChanged.remove(virtualFile);
+    }
+  }
+
+  @NotNull
+  private ThreeState getNotChangedDirectoryParentingStatus(@NotNull VirtualFile virtualFile) {
+    if (VcsConfiguration.getInstance(myProject).SHOW_DIRTY_RECURSIVELY) {
+      return ChangeListManager.getInstance(myProject).haveChangesUnder(virtualFile);
+    }
+    else {
+      return ThreeState.NO;
     }
   }
 
