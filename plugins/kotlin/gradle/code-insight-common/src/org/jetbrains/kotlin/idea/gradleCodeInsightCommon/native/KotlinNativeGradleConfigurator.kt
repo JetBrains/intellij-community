@@ -2,16 +2,10 @@
 
 package org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native
 
-import com.intellij.openapi.module.Module
-import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
-import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
-import org.jetbrains.kotlin.idea.configuration.LibraryKindSearchScope
+import org.jetbrains.kotlin.idea.configuration.hasKotlinNativeRuntimeInScope
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
-import org.jetbrains.kotlin.idea.vfilefinder.KlibMetaFileIndex
-import org.jetbrains.kotlin.idea.vfilefinder.hasSomethingInPackage
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 
 open class KotlinNativeGradleConfigurator : KotlinWithGradleConfigurator() {
@@ -38,14 +32,5 @@ open class KotlinNativeGradleConfigurator : KotlinWithGradleConfigurator() {
     companion object {
         const val NAME = "KotlinNative"
         val PRESENTABLE_TEXT get() = KotlinGradleCodeInsightCommonBundle.message("native.gradle.name.short")
-    }
-}
-
-private val KOTLIN_NATIVE_FQ_NAME = FqName("kotlin.native")
-
-private fun hasKotlinNativeRuntimeInScope(module: Module): Boolean {
-    return module.project.runReadActionInSmartMode {
-        val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
-        KlibMetaFileIndex.hasSomethingInPackage(KOTLIN_NATIVE_FQ_NAME, LibraryKindSearchScope(module, scope, KotlinNativeLibraryKind))
     }
 }
