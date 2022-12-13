@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.roots.impl.RootFileSupplier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.storage.EntityReference
@@ -34,7 +33,7 @@ internal class NonIncrementalContributors(private val project: Project,
   private var upToDate = false
   private val lock = Any()
 
-  fun updateIfNeeded(fileSets: MutableMap<VirtualFile, StoredFileSetCollection>, fileSetsByPackagePrefix: MultiMap<String, WorkspaceFileSetImpl>) {
+  fun updateIfNeeded(fileSets: MutableMap<VirtualFile, StoredFileSetCollection>, fileSetsByPackagePrefix: PackagePrefixStorage) {
     if (!upToDate) {
       ApplicationManager.getApplication().assertReadAccessAllowed()
       val newExcludedRoots = computeCustomExcludedRoots()
@@ -50,9 +49,8 @@ internal class NonIncrementalContributors(private val project: Project,
       synchronized(lock) {
         if (!upToDate) {
           allRoots.forEach { file ->
-            val filter = { fileSet: StoredFileSet -> fileSet.entityReference === NonIncrementalMarker }
-            fileSets.removeValueIf(file, filter)
-            fileSetsByPackagePrefix.removeValueIf("", filter)
+            fileSets.removeValueIf(file) { fileSet: StoredFileSet -> fileSet.entityReference === NonIncrementalMarker }
+            fileSetsByPackagePrefix.removeByPrefixAndReference("", NonIncrementalMarker)
           }
           val newRoots = HashSet<VirtualFile>()
           Object2IntMaps.fastForEach(newExcludedRoots) { 
@@ -64,7 +62,7 @@ internal class NonIncrementalContributors(private val project: Project,
               fileSets.putValue(root, set)
               val fileSet = set as? WorkspaceFileSetImpl
               if (fileSet != null && fileSet.data is JvmPackageRootData) {
-                fileSetsByPackagePrefix.putValue("", fileSet)
+                fileSetsByPackagePrefix.addFileSet("", fileSet)
               }
             }
             newRoots.add(root)
