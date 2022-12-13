@@ -37,5 +37,4 @@ internal object MavenProjectModuleType : ProjectModuleType {
 
     override fun userDefinedScopes(project: Project): List<PackageScope> =
         PackageSearchMavenConfiguration.getInstance(project).getMavenScopes()
-            .map { PackageScope.from(it) }
 }

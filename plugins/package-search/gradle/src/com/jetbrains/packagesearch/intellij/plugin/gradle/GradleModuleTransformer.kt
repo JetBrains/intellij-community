@@ -29,6 +29,7 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransform
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationIndexes
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.dependencyDeclarationCallback
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache
@@ -121,8 +122,12 @@ internal class GradleModuleTransformer : ModuleTransformer {
             isKotlinDsl(project, buildVirtualFile) -> BuildSystemType.GRADLE_KOTLIN
             else -> BuildSystemType.GRADLE_GROOVY
         }
-        val scopes: List<String> = GradleExtensionsSettings.getInstance(project)
-            .getExtensionsFor(nativeModule)?.configurations?.keys?.toList() ?: emptyList()
+        val scopes= GradleExtensionsSettings.getInstance(project)
+            .getExtensionsFor(nativeModule)
+            ?.configurations
+            ?.keys
+            ?.map { PackageScope.from(it) }
+            ?: emptyList()
 
         val packageSearchModule = PackageSearchModule(
             name = name,
