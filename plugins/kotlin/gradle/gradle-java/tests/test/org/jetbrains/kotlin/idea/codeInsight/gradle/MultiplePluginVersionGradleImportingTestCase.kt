@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Disposer
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
 import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
+import org.jetbrains.kotlin.gradle.newTests.TestWithKotlinPluginAndGradleVersions
 import org.jetbrains.kotlin.gradle.newTests.testFeatures.OrderEntriesFilteringTestFeature
 import org.jetbrains.kotlin.gradle.workspace.WorkspacePrintingMode
 import org.jetbrains.kotlin.gradle.workspace.checkWorkspaceModel
@@ -23,7 +24,7 @@ import org.junit.Rule
 import org.junit.runners.Parameterized
 
 @Suppress("ACCIDENTAL_OVERRIDE")
-abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImportingTestCase() {
+abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImportingTestCase(), TestWithKotlinPluginAndGradleVersions {
 
     annotation class AndroidImportingTest
 
@@ -53,10 +54,13 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     @Parameterized.Parameter(1)
     var kotlinPluginVersionParam: KotlinPluginVersionParam? = null
 
-    val kotlinPluginVersion: KotlinToolingVersion
+    override val kotlinPluginVersion: KotlinToolingVersion
         get() = checkNotNull(kotlinPluginVersionParam) {
             "Missing 'kotlinPluginVersionParam'"
         }.version
+
+    override val gradleVersion: String
+        get() = super.gradleVersion
 
     override fun setUp() {
         super.setUp()
