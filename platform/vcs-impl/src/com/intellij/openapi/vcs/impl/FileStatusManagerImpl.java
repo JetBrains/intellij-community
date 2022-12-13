@@ -31,6 +31,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collections;
@@ -147,9 +148,9 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     }
   }
 
-  private @NotNull FileStatus calcStatus(@NotNull final VirtualFile virtualFile) {
+  private @NotNull FileStatus calcStatus(@NotNull VirtualFile virtualFile) {
     for (FileStatusProvider extension : FileStatusProvider.EP_NAME.getExtensions(myProject)) {
-      final FileStatus status = extension.getFileStatus(virtualFile);
+      FileStatus status = extension.getFileStatus(virtualFile);
       if (status != null) {
         if (LOG.isDebugEnabled()) {
           LOG.debug(String.format("File status for file [%s] from provider %s: %s", virtualFile, extension.getClass().getName(), status));
@@ -160,37 +161,44 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
 
     if (virtualFile.isInLocalFileSystem()) {
       FileStatus status = getVcsFileStatus(virtualFile);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(String.format("File status for file [%s] from default provider: %s", virtualFile, status));
+      if (status != null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(String.format("File status for file [%s] from vcs provider: %s", virtualFile, status));
+        }
+        return status;
       }
-      return status;
     }
 
-    FileStatus defaultStatus = getDefaultStatus(virtualFile);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(String.format("Default status for file [%s]: %s", virtualFile, defaultStatus));
+    if (virtualFile.isValid() && virtualFile.is(VFileProperty.SPECIAL)) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(String.format("Default ignored status for special file [%s]", virtualFile));
+      }
+      return FileStatus.IGNORED;
     }
-    return defaultStatus;
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("Default not_changed status for file [%s]", virtualFile));
+    }
+    return FileStatus.NOT_CHANGED;
   }
 
-  @NotNull
-  private FileStatus getVcsFileStatus(@NotNull VirtualFile virtualFile) {
+  private @Nullable FileStatus getVcsFileStatus(@NotNull VirtualFile virtualFile) {
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
     if (vcs == null) {
       if (ScratchUtil.isScratch(virtualFile)) {
-        return FileStatus.SUPPRESSED;
+        return FileStatus.SUPPRESSED; // do not use for vcs-tracked scratched files
       }
-      return getDefaultStatus(virtualFile);
+      return null;
     }
 
-    final FileStatus status = ChangeListManager.getInstance(myProject).getStatus(virtualFile);
-    if (status == FileStatus.NOT_CHANGED && isDocumentModified(virtualFile)) {
+    FileStatus status = ChangeListManager.getInstance(myProject).getStatus(virtualFile);
+    if (status != FileStatus.NOT_CHANGED) return status;
+
+    if (isDocumentModified(virtualFile)) {
       return FileStatus.MODIFIED;
     }
-    if (status == FileStatus.NOT_CHANGED) {
-      return getDefaultStatus(virtualFile);
-    }
-    return status;
+
+    return null;
   }
 
   @NotNull
@@ -206,11 +214,6 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
   private static boolean isDocumentModified(VirtualFile virtualFile) {
     if (virtualFile.isDirectory()) return false;
     return FileDocumentManager.getInstance().isFileModified(virtualFile);
-  }
-
-  @NotNull
-  private static FileStatus getDefaultStatus(@NotNull final VirtualFile file) {
-    return file.isValid() && file.is(VFileProperty.SPECIAL) ? FileStatus.IGNORED : FileStatus.NOT_CHANGED;
   }
 
   @Override
