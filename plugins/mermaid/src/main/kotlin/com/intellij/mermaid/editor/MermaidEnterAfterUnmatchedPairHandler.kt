@@ -6,22 +6,17 @@ import com.intellij.codeInsight.highlighting.BraceMatcher
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil
 import com.intellij.lang.Language
 import com.intellij.mermaid.lang.formatter.MermaidSemanticEditorPosition
-import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.EXPAND_INDENT_AFTER
 import com.intellij.mermaid.lang.lexer.MermaidTokens
 import com.intellij.mermaid.lang.psi.MermaidFile
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle.CodeStyleManager
 import java.lang.Integer.max
 
-internal class MermaidEnterHandler : EnterHandlerDelegateAdapter() {
+internal class MermaidEnterAfterUnmatchedPairHandler : EnterHandlerDelegateAdapter() {
   override fun preprocessEnter(
     file: PsiFile,
     editor: Editor,
@@ -36,17 +31,10 @@ internal class MermaidEnterHandler : EnterHandlerDelegateAdapter() {
 
     val offset = caretOffset.get()
     val document = editor.document
-    val project = file.project
-    val line = document.getLineNumber(offset)
 
     val position = getPosition(editor, offset - 1)
-    position.moveBeforeOptionalMix(
-      MermaidTokens.DIR,
-      MermaidTokens.TITLE_VALUE,
-      MermaidTokens.TITLE,
-      MermaidTokens.WHITE_SPACE
-    )
-    val atOpenCurly = position.isAt(MermaidTokens.OPEN_CURLY)
+    position.moveBeforeOptionalMix(MermaidTokens.WHITE_SPACE)
+    if (position.isAt(MermaidTokens.OPEN_CURLY)) return Result.Continue
 
     position.moveBeforeOptionalMix(
       MermaidTokens.ID,
@@ -57,71 +45,15 @@ internal class MermaidEnterHandler : EnterHandlerDelegateAdapter() {
     val atComplexNote = position.isAt(MermaidTokens.NOTE)
 
     val maxRBraceCount = getMaxRBraceCount(file, editor, offset)
-    if (maxRBraceCount > 0 || atOpenCurly || atComplexNote) {
-      if (atOpenCurly) {
-        document.insertString(offset, "\n")
-      } else if (atComplexNote) {
+    if (maxRBraceCount > 0 || atComplexNote) {
+      if (atComplexNote) {
         document.insertString(offset, "\nend note")
       } else {
-        document.insertString(offset, generateStringToInsert(maxRBraceCount))
-      }
-
-      val stamp = document.modificationStamp
-      formatCodeFragmentBetweenBraces(file, document, offset)
-      if (stamp != document.modificationStamp) {
-        caretOffset.set(document.getLineEndOffset(line))
-      }
-      return Result.DefaultForceIndent
-    }
-
-    // if expand after
-    if (position.isAtAnyOf(*EXPAND_INDENT_AFTER.types)) {
-      val stamp = document.modificationStamp
-      formatCodeFragmentBetweenBraces(file, document, offset)
-      if (stamp != document.modificationStamp) {
-        caretOffset.set(document.getLineEndOffset(line))
-      }
-      return Result.DefaultForceIndent
-    }
-
-    // adjust previous line indent
-    if (line > 0) {
-      val startOffset = document.getLineStartOffset(line - 1)
-      val endOffset =
-        if (line + 1 < document.lineCount) document.getLineEndOffset(line + 1) else document.getLineEndOffset(line)
-
-      val stamp = document.modificationStamp
-      PsiDocumentManager.getInstance(project).commitDocument(document)
-      CodeStyleManager.getInstance(project).adjustLineIndent(file, TextRange(startOffset, endOffset))
-      if (stamp != document.modificationStamp) {
-        caretOffset.set(document.getLineEndOffset(line))
+        document.insertString(offset, "\nend")
       }
     }
-
-    return Result.DefaultSkipIndent
-  }
-
-  override fun postProcessEnter(file: PsiFile, editor: Editor, dataContext: DataContext): Result {
-    if (file !is MermaidFile) {
-      return Result.Continue
-    }
-
-    val document = editor.document
-    val project = file.project
-
-    val offset = editor.caretModel.offset
-    val line = document.getLineNumber(offset)
-    val startOffset = document.getLineStartOffset(line - 1)
-    val endOffset = document.getLineEndOffset(line)
-
-    PsiDocumentManager.getInstance(project).commitDocument(document)
-    CodeStyleManager.getInstance(project).adjustLineIndent(file, TextRange(startOffset, endOffset))
 
     return Result.Continue
-  }
-
-  private fun generateStringToInsert(maxRBraceCount: Int): String {
-    return "\nend".repeat(maxRBraceCount)
   }
 
   private fun getMaxRBraceCount(file: PsiFile, editor: Editor, caretOffset: Int): Int {
@@ -155,7 +87,7 @@ internal class MermaidEnterHandler : EnterHandlerDelegateAdapter() {
       return -1
     }
 
-    val language: Language = iterator.getTokenType().getLanguage()
+    val language: Language = iterator.tokenType.language
 
     position = getPosition(editor, 0)
     iterator = position.iterator
@@ -194,20 +126,6 @@ internal class MermaidEnterHandler : EnterHandlerDelegateAdapter() {
       iterator.advance()
     }
     return lBracesBeforeOffset - rBracesAfterOffset
-  }
-
-  private fun formatCodeFragmentBetweenBraces(
-    file: PsiFile,
-    document: Document,
-    offset: Int
-  ) {
-    val project = file.project
-    val line = document.getLineNumber(offset)
-    val startOffset = document.getLineStartOffset(line)
-    val endOffset =
-      if (line + 1 < document.lineCount) document.getLineEndOffset(line + 1) else document.getLineEndOffset(line)
-    PsiDocumentManager.getInstance(project).commitDocument(document)
-    CodeStyleManager.getInstance(project).adjustLineIndent(file, TextRange(startOffset, endOffset))
   }
 
   private fun getPosition(editor: Editor, offset: Int): MermaidSemanticEditorPosition {

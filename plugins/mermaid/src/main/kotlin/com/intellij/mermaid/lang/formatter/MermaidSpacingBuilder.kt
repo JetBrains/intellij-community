@@ -96,6 +96,7 @@ internal object MermaidSpacingBuilder {
 
   fun get(settings: CodeStyleSettings): SpacingBuilder {
     val mermaid = settings.getCustomSettings(MermaidCustomCodeStyleSettings::class.java)
+    val indentOptions = settings.getLanguageIndentOptions(MermaidLanguage)
 
     return SpacingBuilder(settings, MermaidLanguage)
       // Direction / common
@@ -188,5 +189,9 @@ internal object MermaidSpacingBuilder {
       // C4
       .after(C4_KEYWORDS_SPACE_AFTER).spaceIf(false)
       .around(MermaidTokens.C4.EQUALITY).spacing(0, 1, 0, false, 0)
+      // indent
+      .between(MermaidElements.SEQUENCE_DOCUMENT, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
+      .between(MermaidElements.SUBGRAPH_DOCUMENT, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
+      .between(MermaidElements.COMPLEX_NOTE_CONTENT, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
   }
 }

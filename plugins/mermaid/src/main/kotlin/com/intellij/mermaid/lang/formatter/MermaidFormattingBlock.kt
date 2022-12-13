@@ -1,18 +1,16 @@
 package com.intellij.mermaid.lang.formatter
 
-import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets
-import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.DIAGRAM_DOCUMENTS
-import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.STATEMENTS
-import com.intellij.mermaid.lang.parser.MermaidElements
 import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
+import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets
+import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.DIAGRAM_DOCUMENTS
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.common.AbstractBlock
 import com.intellij.psi.formatter.common.SettingsAwareBlock
 
 internal open class MermaidFormattingBlock(
   node: ASTNode,
-  private val settings: CodeStyleSettings, protected val spacing: SpacingBuilder,
+  private val settings: CodeStyleSettings, private val spacing: SpacingBuilder,
   alignment: Alignment? = null, wrap: Wrap? = null
 ) : AbstractBlock(node, wrap, alignment), SettingsAwareBlock {
 
@@ -25,10 +23,7 @@ internal open class MermaidFormattingBlock(
   }
 
   override fun getIndent(): Indent? {
-    if (node.elementType in STATEMENTS) {
-      return Indent.getNormalIndent()
-    }
-    if (node.elementType == MermaidElements.DIRECTION_STATEMENT && node.treeParent.elementType == MermaidElements.SUBGRAPH_DOCUMENT) {
+    if (node.elementType in DIAGRAM_DOCUMENTS) {
       return Indent.getNormalIndent()
     }
     return Indent.getNoneIndent()
@@ -40,12 +35,6 @@ internal open class MermaidFormattingBlock(
 
   private fun filterFromWhitespaces(sequence: Sequence<ASTNode>) = sequence.filter {
     it.elementType !in MermaidTokenTypeSets.WHITE_SPACES
-      || (it.elementType in MermaidTokenTypeSets.WHITE_SPACES && it.text.isNotBlank())
-      || (it.elementType in MermaidTokenTypeSets.WHITE_SPACES
-      && it.treeParent?.elementType in DIAGRAM_DOCUMENTS
-      && it.treePrev == null
-      && it.treeParent?.children()?.filter { child -> child.elementType !in MermaidTokenTypeSets.WHITE_SPACES }?.toList()?.size == 0
-      )
   }
 }
 

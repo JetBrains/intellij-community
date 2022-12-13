@@ -51,10 +51,12 @@ object MermaidTokenTypeSets {
     MermaidElements.REQUIREMENT_BODY,
     MermaidElements.ELEMENT_BODY,
     MermaidElements.GIT_GRAPH_DOCUMENT,
-    MermaidElements.C_4_DOCUMENT
+    MermaidElements.C_4_DOCUMENT,
+    MermaidElements.BOUNDARY_BODY
   )
 
   val EXPAND_INDENT_AFTER = TokenSet.create(
+    MermaidTokens.OPEN_CURLY,
     MermaidTokens.Pie.PIE,
     MermaidTokens.Pie.SHOW_DATA,
     MermaidTokens.Journey.JOURNEY,
@@ -73,6 +75,7 @@ object MermaidTokenTypeSets {
     MermaidTokens.Sequence.OPTION,
     MermaidTokens.ClassDiagram.CLASS_DIAGRAM,
     MermaidTokens.StateDiagram.STATE_DIAGRAM,
+    MermaidTokens.NOTE,
     MermaidTokens.EntityRelationship.ENTITY_RELATIONSHIP,
     MermaidTokens.Gantt.GANTT,
     MermaidTokens.Requirement.REQUIREMENT_DIAGRAM,
