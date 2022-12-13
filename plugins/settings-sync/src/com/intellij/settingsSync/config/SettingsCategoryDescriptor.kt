@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nls
 import java.util.*
 
 internal class SettingsCategoryDescriptor(
-  private val category : SettingsCategory,
+  val category : SettingsCategory,
   val secondaryGroup: SettingsSyncSubcategoryGroup? = null
 ) {
 
@@ -17,9 +17,9 @@ internal class SettingsCategoryDescriptor(
       SettingsCategoryDescriptor(UI, SettingsSyncUiGroup()),
       SettingsCategoryDescriptor(KEYMAP),
       SettingsCategoryDescriptor(CODE),
-      SettingsCategoryDescriptor(PLUGINS, SettingsSyncPluginsGroup()),
       SettingsCategoryDescriptor(TOOLS),
       SettingsCategoryDescriptor(SYSTEM),
+      SettingsCategoryDescriptor(PLUGINS, SettingsSyncPluginsGroup()),
     )
 
     fun listAll() : List<SettingsCategoryDescriptor> {
