@@ -19,6 +19,7 @@ import com.intellij.psi.codeStyle.*
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings
 import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.messages.MessageBusConnection
 import javax.swing.JPanel
 
 class CodeStyleStatusBarWidget(project: Project) : EditorBasedStatusBarPopup(project = project,
@@ -67,16 +68,8 @@ class CodeStyleStatusBarWidget(project: Project) : EditorBasedStatusBarPopup(pro
     return null
   }
 
-  override fun registerCustomListeners() {
-    val project = project
-    ReadAction
-      .nonBlocking<CodeStyleSettingsManager> { CodeStyleSettingsManager.getInstance(project) }
-      .expireWith(this)
-      .finishOnUiThread(ModalityState.any()
-      ) { manager: CodeStyleSettingsManager ->
-        manager.addListener(this)
-        Disposer.register(this) { CodeStyleSettingsManager.removeListener(project, this) }
-      }.submit(NonUrgentExecutor.getInstance())
+  override fun registerCustomListeners(connection: MessageBusConnection) {
+    connection.subscribe(CodeStyleSettingsListener.TOPIC, this)
   }
 
   override fun codeStyleSettingsChanged(event: CodeStyleSettingsChangeEvent) {

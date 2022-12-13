@@ -534,7 +534,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.addPropertyChangeListener(propertyChangeListener);
     Disposer.register(myDisposable, () -> myDocument.removePropertyChangeListener(propertyChangeListener));
 
-    CodeStyleSettingsManager.getInstance(myProject).addListener(this);
+    CodeStyleSettingsManager.getInstance(myProject).subscribe(this, myDisposable);
 
     myFocusModeModel = new FocusModeModel(this);
     Disposer.register(myDisposable, myFocusModeModel);
@@ -1044,8 +1044,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myGutterComponent.removeMouseListener(myMouseListener);
       myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
       myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
-
-      CodeStyleSettingsManager.removeListener(myProject, this);
 
       Disposer.dispose(myDisposable);
       myVerticalScrollBar.setPersistentUI(JBScrollBar.createUI(null)); // clear error panel's cached image

@@ -40,7 +40,7 @@ public final class EditorConfigStatusListener implements CodeStyleSettingsListen
     myEnabledStatus = Utils.INSTANCE.isEnabled(project);
     myVirtualFile = virtualFile;
     myEncodings = extractEncodings();
-    CodeStyleSettingsManager.getInstance(project).addListener(this);
+    CodeStyleSettingsManager.getInstance(project).subscribe(this, this);
   }
 
   @Override
@@ -81,7 +81,6 @@ public final class EditorConfigStatusListener implements CodeStyleSettingsListen
 
   @Override
   public void dispose() {
-    CodeStyleSettingsManager.removeListener(myProject, this);
   }
 
   private static void onEncodingChanged() {
