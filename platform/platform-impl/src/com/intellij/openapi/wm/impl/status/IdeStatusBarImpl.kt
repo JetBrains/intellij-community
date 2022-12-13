@@ -20,8 +20,10 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.LoadingOrder.Orderable
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.BalloonHandler
@@ -30,6 +32,7 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.StatusBarWidget.*
+import com.intellij.openapi.wm.WidgetPresentation
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
@@ -45,14 +48,12 @@ import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.NotificationPopup
 import com.intellij.ui.popup.PopupState
 import com.intellij.util.EventDispatcher
-import com.intellij.util.cancelOnDispose
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -99,11 +100,9 @@ open class IdeStatusBarImpl internal constructor(
   private val listeners = EventDispatcher.create(StatusBarListener::class.java)
 
   companion object {
-    @JvmField
     val HOVERED_WIDGET_ID = DataKey.create<String>("HOVERED_WIDGET_ID")
-
-    @JvmField
     val WIDGET_EFFECT_KEY = Key.create<WidgetEffect>("TextPanel.widgetEffect")
+
     const val NAVBAR_WIDGET_KEY = "NavBar"
   }
 
@@ -251,8 +250,9 @@ open class IdeStatusBarImpl internal constructor(
   }
 
   /**
-   * Adds widget to the left side of the status bar. Please note there is no hover effect when mouse is over the widget.
-   * Use [.addWidget] to add widget to the right side of the status bar, in this case hover effect is on.
+   * Adds widget to the left side of the status bar.
+   * Please note there is no hover effect when the mouse is over the widget.
+   * Use [.addWidget] to add widget to the right side of the status bar, in this case the hover effect is on.
    * @param widget widget to add
    */
   internal suspend fun addWidgetToLeft(widget: StatusBarWidget) {
@@ -273,15 +273,15 @@ open class IdeStatusBarImpl internal constructor(
       service.init()
     }
     runActivity("status bar init") {
-      doInit(project = project, widgets = items + extraItems, parentDisposable = service)
+      doInit(widgets = items + extraItems, parentDisposable = service)
     }
   }
 
-  private suspend fun doInit(project: Project, widgets: List<kotlin.Pair<StatusBarWidget, LoadingOrder>>, parentDisposable: Disposable) {
-    val items = runActivity("status bar widget creating") {
+  private suspend fun doInit(widgets: List<kotlin.Pair<StatusBarWidget, LoadingOrder>>, parentDisposable: Disposable) {
+    val items: List<WidgetBean> = runActivity("status bar widget creating") {
       widgets.map { (widget, anchor) ->
         val component = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          val component = wrap(widget, project)
+          val component = wrap(widget)
           if (component is StatusBarWidgetWrapper) {
             component.beforeUpdate()
           }
@@ -339,7 +339,7 @@ open class IdeStatusBarImpl internal constructor(
 
   @RequiresEdt
   private fun addWidget(widget: StatusBarWidget, position: Position, anchor: LoadingOrder) {
-    val component = wrap(widget, project!!)
+    val component = wrap(widget)
 
     widgetMap.put(widget.ID(), WidgetBean(widget = widget, position = position, component = component, order = anchor))
     Disposer.register(frameHelper, widget)
@@ -670,16 +670,11 @@ private class WidgetBean(
 }
 
 @RequiresEdt
-private fun createComponentByWidgetPresentation(widget: StatusBarWidget, project: Project): JComponent {
-  val presentation = widget.getPresentation() ?: throw IllegalStateException("Widget $widget getPresentation() method must not return null")
-  // todo somehow avoid using widget as a disposable, create scope per widget and cancel it explicitly
-  @Suppress("DEPRECATION")
-  val scope = project.coroutineScope
+internal fun createComponentByWidgetPresentation(presentation: WidgetPresentation, project: Project, scope: CoroutineScope): JComponent {
+  val toolTipTextSupplier = Supplier { runBlockingModal(project, title = "") { presentation.getTooltipText() } }
   return when (presentation) {
-    is IconPresentation -> IconPresentationComponent(presentation)
-    is TextPresentation -> TextPresentationComponent(presentation)
     is TextWidgetPresentation -> {
-      val panel = TextPanel(Supplier(presentation::getTooltipText))
+      val panel = TextPanel(toolTipTextSupplier)
       panel.setTextAlignment(presentation.alignment)
       panel.border = JBUI.CurrentTheme.StatusBar.Widget.border()
       configurePresentationComponent(presentation, panel)
@@ -688,14 +683,16 @@ private fun createComponentByWidgetPresentation(widget: StatusBarWidget, project
         presentation.text()
           .distinctUntilChanged()
           .collectLatest { text ->
-            panel.text = text
-            panel.isVisible = !text.isEmpty()
+            withContext(Dispatchers.EDT) {
+              panel.text = text
+              panel.isVisible = !text.isEmpty()
+            }
           }
-      }.cancelOnDispose(widget)
+      }
       panel
     }
     is IconWidgetPresentation -> {
-      val panel = WithIconAndArrows(Supplier(presentation::getTooltipText))
+      val panel = WithIconAndArrows(toolTipTextSupplier)
       panel.border = JBUI.CurrentTheme.StatusBar.Widget.iconBorder()
       configurePresentationComponent(presentation, panel)
 
@@ -703,12 +700,24 @@ private fun createComponentByWidgetPresentation(widget: StatusBarWidget, project
         presentation.icon()
           .distinctUntilChanged()
           .collectLatest { icon ->
-            panel.icon = icon
-            panel.isVisible = icon != null
+            withContext(Dispatchers.EDT) {
+              panel.icon = icon
+              panel.isVisible = icon != null
+            }
           }
-      }.cancelOnDispose(widget)
+      }
       panel
     }
+    else -> throw IllegalArgumentException("Unable to find a wrapper for presentation: ${presentation.javaClass.simpleName}")
+  }
+}
+
+@RequiresEdt
+private fun createComponentByWidgetPresentation(widget: StatusBarWidget): JComponent {
+  val presentation = widget.getPresentation() ?: throw IllegalStateException("Widget $widget getPresentation() method must not return null")
+  return when (presentation) {
+    is IconPresentation -> IconPresentationComponent(presentation)
+    is TextPresentation -> TextPresentationComponent(presentation)
     is MultipleTextValuesPresentation -> MultipleTextValues(presentation)
     else -> throw IllegalArgumentException("Unable to find a wrapper for presentation: ${presentation.javaClass.simpleName}")
   }
@@ -716,20 +725,22 @@ private fun createComponentByWidgetPresentation(widget: StatusBarWidget, project
 
 private fun configurePresentationComponent(presentation: WidgetPresentation, panel: JComponent) {
   presentation.getClickConsumer()?.let {
-    StatusBarWidgetClickListener(it::consume).installOn(panel, true)
+    StatusBarWidgetClickListener(it).installOn(panel, true)
   }
-  ClientProperty.put(panel, HelpTooltipManager.SHORTCUT_PROPERTY, Supplier(presentation::getShortcutText))
+  ClientProperty.put(panel, HelpTooltipManager.SHORTCUT_PROPERTY,
+                     Supplier { runBlockingModal(ModalTaskOwner.component(panel), title = "") { presentation.getShortcutText() } })
 }
 
-private fun wrap(widget: StatusBarWidget, project: Project): JComponent {
-  if (widget is CustomStatusBarWidget) {
+private fun wrap(widget: StatusBarWidget): JComponent {
+  val result = if (widget is CustomStatusBarWidget) {
     return wrapCustomStatusBarWidget(widget)
   }
-
-  val wrapper = createComponentByWidgetPresentation(widget, project)
-  ClientProperty.put(wrapper, WIDGET_ID, widget.ID())
-  wrapper.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, java.lang.Boolean.TRUE)
-  return wrapper
+  else {
+    createComponentByWidgetPresentation(widget)
+  }
+  ClientProperty.put(result, WIDGET_ID, widget.ID())
+  result.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, java.lang.Boolean.TRUE)
+  return result
 }
 
 private fun wrapCustomStatusBarWidget(widget: CustomStatusBarWidget): JComponent {
@@ -753,7 +764,6 @@ private fun wrapCustomStatusBarWidget(widget: CustomStatusBarWidget): JComponent
   else {
     component
   }
-  ClientProperty.put(result, WIDGET_ID, widget.ID())
   return result
 }
 
@@ -847,4 +857,23 @@ private class StatusBarWidgetClickListener(private val clickConsumer: (MouseEven
 
 private interface StatusBarWidgetWrapper {
   fun beforeUpdate()
+}
+
+internal fun adaptV2Widget(id: String,
+                           dataContext: WidgetPresentationDataContext,
+                           presentationFactory: (CoroutineScope) -> WidgetPresentation): StatusBarWidget {
+  return object : StatusBarWidget, CustomStatusBarWidget {
+    @Suppress("DEPRECATION")
+    private val scope = dataContext.project.coroutineScope.childScope()
+
+    override fun ID(): String = id
+
+    override fun getComponent(): JComponent {
+      return createComponentByWidgetPresentation(presentation = presentationFactory(scope), project = dataContext.project, scope = scope)
+    }
+
+    override fun dispose() {
+      scope.cancel()
+    }
+  }
 }

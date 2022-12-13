@@ -2,40 +2,38 @@
 package com.intellij.openapi.wm.impl.status
 
 import com.intellij.ide.util.EditorGotoLineNumberDialog
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.*
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent
-import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.StatusBar
-import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget.*
 import com.intellij.openapi.wm.TextWidgetPresentation
+import com.intellij.openapi.wm.WidgetPresentationDataContext
 import com.intellij.ui.UIBundle
-import com.intellij.util.Consumer
-import com.intellij.util.cancelOnDispose
-import com.intellij.util.messages.MessageBusConnection
-import com.intellij.util.ui.FocusUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.event.MouseEvent
+import kotlin.streams.asSequence
 import kotlin.time.Duration.Companion.milliseconds
 
+@Internal
 @OptIn(FlowPreview::class)
-open class PositionPanel(project: Project) : EditorBasedWidget(project), Multiframe {
+open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
+                         scope: CoroutineScope,
+                         protected val helper: EditorBasedWidgetHelper = EditorBasedWidgetHelper(dataContext.project)) : TextWidgetPresentation {
   private val updateTextRequests = MutableSharedFlow<Editor?>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val charCountRequests = MutableSharedFlow<CodePointCountTask>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -49,84 +47,17 @@ open class PositionPanel(project: Project) : EditorBasedWidget(project), Multifr
     private const val CHAR_COUNT_UNKNOWN = "..."
   }
 
-  override fun ID(): String = StatusBar.StandardWidgets.POSITION_PANEL
-
-  override fun copy(): StatusBarWidget = PositionPanel(project)
-
-  @OptIn(ExperimentalCoroutinesApi::class)
-  override fun getPresentation(): WidgetPresentation {
-    return object : TextWidgetPresentation {
-      override fun text(): Flow<@NlsContexts.Label String> {
-        // combine uses the latest emitted values, so, we must emit something
-        charCountRequests.tryEmit(CodePointCountTask(text = "", startOffset = 0, endOffset = 0))
-        return updateTextRequests
-          .debounce(100.milliseconds)
-          .mapLatest { editor ->
-            val empty = editor == null || DISABLE_FOR_EDITOR.isIn(editor)
-            if (!empty && withContext(Dispatchers.EDT) { !isOurEditor(editor) }) {
-              null
-            }
-            else {
-              if (empty) "" else readAction { getPositionText(editor!!) }
-            }
-          }
-          .filterNotNull()
-          .combine(charCountRequests.mapLatest { task ->
-            Character.codePointCount(task.text, task.startOffset, task.endOffset).toString()
-          }) { text, charCount ->
-            text.replaceFirst(CHAR_COUNT_UNKNOWN, charCount)
-          }
-      }
-
-      //override fun getText(): String = this@PositionPanel.text ?: ""
-
-      override val alignment: Float
-        get() =  Component.CENTER_ALIGNMENT
-
-      private val gotoShortcutText: String
-        get() = KeymapUtil.getFirstKeyboardShortcutText("GotoLine")
-
-      override fun getTooltipText(): String {
-        val toolTip = UIBundle.message("go.to.line.command.name")
-        val shortcut = gotoShortcutText
-        @Suppress("SpellCheckingInspection")
-        return if (shortcut.isNotEmpty() && !Registry.`is`("ide.helptooltip.enabled")) "$toolTip ($shortcut)" else toolTip
-      }
-
-      override fun getShortcutText() = gotoShortcutText
-
-      override fun getClickConsumer(): Consumer<MouseEvent> {
-        return Consumer {
-          val project = project
-          val editor = getFocusedEditor() ?: return@Consumer
-          CommandProcessor.getInstance().executeCommand(
-            project,
-            {
-              val dialog = EditorGotoLineNumberDialog(project, editor)
-              dialog.show()
-              IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation()
-            },
-            UIBundle.message("go.to.line.command.name"),
-            null
-          )
-        }
-      }
-    }
-  }
-
-  override fun registerCustomListeners(connection: MessageBusConnection) {
-    super.registerCustomListeners(connection)
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-      override fun selectionChanged(event: FileEditorManagerEvent) {
-        updatePosition(getEditor())
-      }
-    })
+  init {
+    val disposable = Disposer.newDisposable()
+    scope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
     val multicaster = EditorFactory.getInstance().eventMulticaster
     multicaster.addCaretListener(object : CaretListener {
       override fun caretPositionChanged(e: CaretEvent) {
         val editor = e.editor
-        // When multiple carets exist in editor, we don't show information about caret positions
-        if (editor.caretModel.caretCount == 1 && isFocusedEditor(editor)) updatePosition(editor)
+        // when multiple carets exist in editor, we don't show information about caret positions
+        if (editor.caretModel.caretCount == 1 && isFocusedEditor(editor)) {
+          updatePosition(editor)
+        }
       }
 
       override fun caretAdded(e: CaretEvent) {
@@ -136,32 +67,76 @@ open class PositionPanel(project: Project) : EditorBasedWidget(project), Multifr
       override fun caretRemoved(e: CaretEvent) {
         updatePosition(e.editor)
       }
-    }, this)
+    }, disposable)
     multicaster.addSelectionListener(object : SelectionListener {
       override fun selectionChanged(e: SelectionEvent) {
+        // react to "select all" action
         val editor = e.editor
-        if (isFocusedEditor(editor)) updatePosition(editor)
+        if (e.editor === dataContext.currentFileEditor.value?.let { (it as? TextEditor)?.editor }) {
+          updatePosition(editor)
+        }
       }
-    }, this)
+    }, disposable)
     multicaster.addDocumentListener(object : BulkAwareDocumentListener.Simple {
       override fun afterDocumentChange(document: Document) {
-        EditorFactory.getInstance().editors(document)
-          .filter { editor: Editor -> isFocusedEditor(editor) }
-          .findFirst()
-          .ifPresent { editor: Editor? -> updatePosition(editor) }
+        EditorFactory.getInstance().editors(document).asSequence()
+          .firstOrNull(::isFocusedEditor)
+          .let(::updatePosition)
       }
-    }, this)
+    }, disposable)
 
-    @Suppress("DEPRECATION")
-    project.coroutineScope.launch(Dispatchers.EDT) {
-      FocusUtil.addFocusOwnerListener(this@PositionPanel) {
-        updatePosition(getFocusedEditor())
+    // combine uses the latest emitted values, so, we must emit something
+    check(charCountRequests.tryEmit(CodePointCountTask(text = "", startOffset = 0, endOffset = 0)))
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override fun text(): Flow<@NlsContexts.Label String> {
+    return merge(updateTextRequests, dataContext.currentFileEditor.map { (it as? TextEditor)?.editor })
+      .debounce(100.milliseconds)
+      .mapLatest { editor ->
+        if (editor == null || DISABLE_FOR_EDITOR.isIn(editor)) "" else readAction { getPositionText(editor) }
       }
-    }.cancelOnDispose(this)
+      .combine(charCountRequests.mapLatest { task ->
+        Character.codePointCount(task.text, task.startOffset, task.endOffset).toString()
+      }) { text, charCount ->
+        text.replaceFirst(CHAR_COUNT_UNKNOWN, charCount)
+      }
+  }
+
+  override val alignment: Float
+    get() = Component.CENTER_ALIGNMENT
+
+  private val gotoShortcutText: String
+    get() = KeymapUtil.getFirstKeyboardShortcutText("GotoLine")
+
+  override suspend fun getTooltipText(): String {
+    val toolTip = UIBundle.message("go.to.line.command.name")
+    val shortcut = gotoShortcutText
+    @Suppress("SpellCheckingInspection")
+    return if (shortcut.isNotEmpty() && !Registry.`is`("ide.helptooltip.enabled")) "$toolTip ($shortcut)" else toolTip
+  }
+
+  override suspend fun getShortcutText() = gotoShortcutText
+
+  override fun getClickConsumer(): (MouseEvent) -> Unit {
+    return h@{
+      val project = helper.project
+      val editor = (dataContext.currentFileEditor.value as? TextEditor)?.editor ?: return@h
+      CommandProcessor.getInstance().executeCommand(
+        project,
+        {
+          val dialog = EditorGotoLineNumberDialog(project, editor)
+          dialog.show()
+          IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation()
+        },
+        UIBundle.message("go.to.line.command.name"),
+        null
+      )
+    }
   }
 
   private fun isFocusedEditor(editor: Editor): Boolean {
-    return getFocusedComponent() === editor.contentComponent
+    return helper.getFocusedComponent() === editor.contentComponent
   }
 
   private fun updatePosition(editor: Editor?) {

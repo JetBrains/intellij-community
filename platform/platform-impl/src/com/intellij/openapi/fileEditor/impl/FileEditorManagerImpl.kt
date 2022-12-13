@@ -98,6 +98,7 @@ import com.intellij.util.messages.impl.MessageListenerList
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collectLatest
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
@@ -227,6 +228,15 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     if (!isInitialized.compareAndSet(false, true)) {
       LOG.error("already initialized")
     }
+
+    @Suppress("DEPRECATION")
+    project.coroutineScope.launch {
+      component.currentWindowFlow.collectLatest { window ->
+        val composite = window?.selectedComposite
+        updateFileName(composite?.file)
+        fireSelectionChanged(composite)
+      }
+    }.cancelOnDispose(this)
 
     // connect after we set mainSplitters
     if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
@@ -625,9 +635,9 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   /**
-   * Updates tab title and tab tool tip for the specified `file`
+   * Updates tab title and tab tool tip for the specified `file`.
    */
-  internal fun updateFileName(file: VirtualFile?) {
+  private fun updateFileName(file: VirtualFile?) {
     // Queue here is to prevent title flickering when tab is being closed and two events arriving: with component==null and component==next focused tab
     // only the last event makes sense to handle
     fileTitleUpdateChannel.queue(file)

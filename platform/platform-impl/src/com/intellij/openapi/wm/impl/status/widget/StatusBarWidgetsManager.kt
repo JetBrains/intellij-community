@@ -13,12 +13,17 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.intellij.openapi.wm.impl.status.createComponentByWidgetPresentation
+import com.intellij.util.childScope
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import javax.swing.JComponent
 
 @Service(Service.Level.PROJECT)
 class StatusBarWidgetsManager(private val project: Project) : SimpleModificationTracker(), Disposable {
@@ -43,6 +48,9 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
 
   private val widgetFactories = LinkedHashMap<StatusBarWidgetFactory, StatusBarWidget>()
   private val widgetIdMap = HashMap<String, StatusBarWidgetFactory>()
+
+  @Suppress("DEPRECATION")
+  private val parentScope = project.coroutineScope.childScope()
 
   fun updateAllWidgets() {
     synchronized(widgetFactories) {
@@ -80,13 +88,10 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
         return
       }
 
-      @Suppress("DEPRECATION")
-      val scope = project.coroutineScope
-
-      val widget = factory.createWidget(project, scope)
+      val widget = factory.createWidget(project, parentScope)
       widgetFactories.put(factory, widget)
       widgetIdMap.put(widget.ID(), factory)
-      scope.launch(Dispatchers.EDT) {
+      parentScope.launch(Dispatchers.EDT) {
         when (val statusBar = WindowManager.getInstance().getStatusBar(project)) {
           null -> LOG.error("Cannot add a widget for project without root status bar: ${factory.id}")
           is IdeStatusBarImpl -> statusBar.addWidget(widget, order)
@@ -108,6 +113,7 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
   }
 
   override fun dispose() {
+    parentScope.cancel()
   }
 
   fun findWidgetFactory(widgetId: String): StatusBarWidgetFactory? = widgetIdMap.get(widgetId)
@@ -158,6 +164,17 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
       .filter { !isLightEditProject || it.first is LightEditCompatible }
       .toList()
 
+    val dataContext = object : WidgetPresentationDataContext {
+      override val project: Project
+        get() = this@StatusBarWidgetsManager.project
+      override val currentFileEditor: StateFlow<FileEditor?> by lazy {
+        // todo use splitters from dock if nota main frame
+        FileEditorManagerEx.getInstanceEx(project).splitters.currentWindowFlow
+          .map { it?.selectedComposite?.selectedEditor }
+          .stateIn(scope = parentScope, started = SharingStarted.WhileSubscribed(), initialValue = null)
+      }
+    }
+
     val widgets: List<Pair<StatusBarWidget, LoadingOrder>> = synchronized(widgetFactories) {
       val pendingFactories = availableFactories.toMutableList()
       @Suppress("removal", "DEPRECATION")
@@ -176,8 +193,7 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
           continue
         }
 
-        @Suppress("DEPRECATION")
-        val widget = factory.createWidget(project, project.coroutineScope)
+        val widget = createWidget(factory = factory, dataContext = dataContext, parentScope = parentScope)
         widgetFactories.put(factory, widget)
         widgetIdMap.put(widget.ID(), factory)
         result.add(widget to anchor)
@@ -218,3 +234,32 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
     return widgets
   }
 }
+
+private fun createWidget(factory: StatusBarWidgetFactory,
+                         dataContext: WidgetPresentationDataContext,
+                         parentScope: CoroutineScope): StatusBarWidget {
+  if (factory !is WidgetPresentationFactory) {
+    return factory.createWidget(dataContext.project, parentScope)
+  }
+
+  return object : StatusBarWidget, CustomStatusBarWidget {
+    private val scope = lazy { parentScope.childScope() }
+
+    override fun ID(): String = factory.id
+
+    override fun getComponent(): JComponent {
+      val scope = scope.value
+      return createComponentByWidgetPresentation(presentation = factory.createPresentation(context = dataContext, scope = scope),
+                                                 project = dataContext.project,
+                                                 scope = scope)
+    }
+
+
+    override fun dispose() {
+      if (scope.isInitialized()) {
+        scope.value.cancel()
+      }
+    }
+  }
+}
+

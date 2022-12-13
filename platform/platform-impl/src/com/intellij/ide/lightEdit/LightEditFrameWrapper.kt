@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
@@ -18,9 +19,12 @@ import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
 import com.intellij.openapi.wm.impl.ProjectFrameBounds.Companion.getInstance
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
+import com.intellij.openapi.wm.impl.status.adaptV2Widget
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Component
@@ -119,12 +123,33 @@ internal class LightEditFrameWrapper(
     @Suppress("DEPRECATION")
     val coroutineScope = project.coroutineScope
     statusBar.addWidgetToLeft(LightEditModeNotificationWidget())
-    statusBar.init(project, extraItems = listOf(
-      LightEditPositionWidget(project, editorManager) to LoadingOrder.before(IdeMessagePanel.FATAL_ERROR),
-      LightEditAutosaveWidget(editorManager) to LoadingOrder.before(IdeMessagePanel.FATAL_ERROR),
-      LightEditEncodingWidgetWrapper(project, coroutineScope) to LoadingOrder.after(StatusBar.StandardWidgets.POSITION_PANEL),
-      LightEditLineSeparatorWidgetWrapper(project, coroutineScope) to LoadingOrder.before(LightEditEncodingWidgetWrapper.WIDGET_ID),
-    ))
+
+    val dataContext = object : WidgetPresentationDataContext {
+      override val project: Project
+        get() = project
+
+      override val currentFileEditor: StateFlow<FileEditor?> by lazy {
+        val flow = MutableStateFlow<FileEditor?>(null)
+        editorManager.addListener(object : LightEditorListener {
+          override fun afterSelect(editorInfo: LightEditorInfo?) {
+            flow.value = editorInfo?.fileEditor
+          }
+        })
+        flow
+      }
+    }
+
+    statusBar.init(
+      project,
+      extraItems = listOf(
+        LightEditAutosaveWidget(editorManager) to LoadingOrder.before(IdeMessagePanel.FATAL_ERROR),
+        LightEditEncodingWidgetWrapper(project, coroutineScope) to LoadingOrder.after(StatusBar.StandardWidgets.POSITION_PANEL),
+        LightEditLineSeparatorWidgetWrapper(project, coroutineScope) to LoadingOrder.before(LightEditEncodingWidgetWrapper.WIDGET_ID),
+        adaptV2Widget(StatusBar.StandardWidgets.POSITION_PANEL, dataContext) { scope ->
+          LightEditPositionWidget(dataContext = dataContext, scope = scope, editorManager = editorManager)
+        } to LoadingOrder.before(IdeMessagePanel.FATAL_ERROR),
+      ),
+    )
   }
 
   override fun getTitleInfoProviders(): List<TitleInfoProvider> = emptyList()

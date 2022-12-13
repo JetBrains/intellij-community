@@ -16,6 +16,39 @@ import com.intellij.util.messages.MessageBusConnection
 import java.awt.Component
 import java.awt.KeyboardFocusManager
 
+open class EditorBasedWidgetHelper(val project: Project) {
+  fun getFocusedEditor(statusBar: StatusBar?): Editor? {
+    val component = getFocusedComponent()
+    val editor = if (component is EditorComponentImpl) component.editor else getEditor(statusBar)
+    return if (editor != null && !editor.isDisposed) editor else null
+  }
+
+  fun getFocusedComponent(): Component? {
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner?.let {
+      return it
+    }
+
+    val focusManager = IdeFocusManager.getInstance(project)
+    return focusManager.getLastFocusedFor(focusManager.lastFocusedIdeWindow ?: return null)
+  }
+
+  fun getEditor(statusBar: StatusBar?): Editor? {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return FileEditorManager.getInstance(project).selectedTextEditor
+    }
+
+    val fileEditor = StatusBarUtil.getCurrentFileEditor(statusBar)
+    return if (fileEditor is TextEditor) fileEditor.editor else null
+  }
+
+  open fun isOurEditor(editor: Editor?, statusBar: StatusBar?): Boolean {
+    return editor != null &&
+           editor.component.isShowing &&
+           editor.getUserData(EditorTextField.SUPPLEMENTARY_KEY) != java.lang.Boolean.TRUE &&
+           StatusBarUtil.getStatusBar(editor.component) === statusBar
+  }
+}
+
 abstract class EditorBasedWidget protected constructor(
   @Deprecated("Use project", ReplaceWith("project"))
   @JvmField protected val myProject: Project
@@ -35,6 +68,8 @@ abstract class EditorBasedWidget protected constructor(
 
   protected val statusBar: StatusBar?
     get() = myStatusBar
+
+  private val helper = EditorBasedWidgetHelper(project)
 
   init {
     @Suppress("LeakingThis")
@@ -56,27 +91,11 @@ abstract class EditorBasedWidget protected constructor(
     return if (fileEditor is TextEditor) fileEditor.editor else null
   }
 
-  open fun isOurEditor(editor: Editor?): Boolean {
-    return editor != null &&
-           editor.component.isShowing &&
-           editor.getUserData(EditorTextField.SUPPLEMENTARY_KEY) != java.lang.Boolean.TRUE &&
-           StatusBarUtil.getStatusBar(editor.component) === myStatusBar
-  }
+  open fun isOurEditor(editor: Editor?): Boolean = helper.isOurEditor(editor, myStatusBar)
 
-  fun getFocusedComponent(): Component? {
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner?.let {
-      return it
-    }
+  fun getFocusedComponent(): Component? = helper.getFocusedComponent()
 
-    val focusManager = IdeFocusManager.getInstance(project)
-    return focusManager.getLastFocusedFor(focusManager.lastFocusedIdeWindow ?: return null)
-  }
-
-  fun getFocusedEditor(): Editor? {
-    val component = getFocusedComponent()
-    val editor = if (component is EditorComponentImpl) component.editor else getEditor()
-    return if (editor != null && !editor.isDisposed) editor else null
-  }
+  fun getFocusedEditor(): Editor? = helper.getFocusedEditor(myStatusBar)
 
   protected open fun getSelectedFile(): VirtualFile? {
     if (ApplicationManager.getApplication().isUnitTestMode) {

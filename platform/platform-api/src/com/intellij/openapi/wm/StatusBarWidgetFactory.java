@@ -21,6 +21,8 @@ public interface StatusBarWidgetFactory {
 
   /**
    * @return Widget identifier. Used to store visibility settings.
+   *
+   * Must match extension id.
    */
   @NotNull @NonNls String getId();
 

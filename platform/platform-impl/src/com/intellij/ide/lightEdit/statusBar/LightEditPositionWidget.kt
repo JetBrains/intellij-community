@@ -8,23 +8,29 @@ import com.intellij.ide.lightEdit.LightEditorManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.WidgetPresentationDataContext
+import com.intellij.openapi.wm.impl.status.EditorBasedWidgetHelper
 import com.intellij.openapi.wm.impl.status.PositionPanel
+import kotlinx.coroutines.CoroutineScope
 
-class LightEditPositionWidget(project: Project, private val myEditorManager: LightEditorManager) : PositionPanel(
-  project), LightEditorListener {
-  protected var editor: Editor? = null
-    private set
-
-  fun install(statusBar: StatusBar) {
-    super.install(statusBar)
-    myEditorManager.addListener(this)
+internal class LightEditPositionWidget(
+  scope: CoroutineScope,
+  dataContext: WidgetPresentationDataContext,
+  editorManager: LightEditorManager,
+) : PositionPanel(dataContext = dataContext, scope = scope, helper = MyEditorBasedWidgetHelper(dataContext.project)) {
+  init {
+    editorManager.addListener(object : LightEditorListener {
+      override fun afterSelect(editorInfo: LightEditorInfo?) {
+        (helper as MyEditorBasedWidgetHelper).editor = LightEditorInfoImpl.getEditor(editorInfo)
+      }
+    })
   }
+}
 
-  fun isOurEditor(editor: Editor?): Boolean {
+private class MyEditorBasedWidgetHelper(project: Project) : EditorBasedWidgetHelper(project) {
+  var editor: Editor? = null
+
+  override fun isOurEditor(editor: Editor?, statusBar: StatusBar?): Boolean {
     return editor != null && this.editor === editor && editor.component.isShowing
-  }
-
-  override fun afterSelect(editorInfo: LightEditorInfo?) {
-    editor = LightEditorInfoImpl.getEditor(editorInfo)
   }
 }

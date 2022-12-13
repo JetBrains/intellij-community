@@ -49,6 +49,7 @@ import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -124,7 +125,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   }
 
   val currentFile: VirtualFile?
-    get() = if (currentWindow != null) currentWindow!!.selectedFile else null
+    get() = currentWindow?.selectedFile
 
   private fun showEmptyText(): Boolean = (currentWindow?.fileSequence ?: emptySequence()).none()
 
@@ -194,7 +195,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
 
     removeAll()
     windows.clear()
-    currentWindow = null
+    currentWindowFlow.value = null
     // revalidate doesn't repaint correctly after "Close All"
     repaint()
   }
@@ -346,7 +347,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       window.dispose()
     }
     removeAll()
-    currentWindow = null
+    currentWindowFlow.value = null
     // revalidate doesn't repaint correctly after "Close All"
     if (repaint) {
       repaint()
@@ -379,7 +380,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     return if (editors.isEmpty()) FileEditor.EMPTY_ARRAY else editors.toTypedArray()
   }
 
-  fun updateFileIcon(file: VirtualFile) {
+  internal fun updateFileIcon(file: VirtualFile) {
     iconUpdateChannel.queue(file)
   }
 
@@ -441,7 +442,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
 
   fun trimToSize() {
     for (window in windows) {
-      window.trimToSize(window.selectedFile, true)
+      window.trimToSize(fileToIgnore = window.selectedFile, transferFocus = true)
     }
   }
 
@@ -611,20 +612,19 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   val topPanel: JPanel?
     get() = if (componentCount > 0) getComponent(0) as JPanel else null
 
-  var currentWindow: EditorWindow? = null
-    private set(currentWindow) {
-      require(currentWindow == null || windows.contains(currentWindow)) { "$currentWindow is not a member of this container" }
-      field = currentWindow
-    }
+  internal val currentWindowFlow: MutableStateFlow<EditorWindow?> = MutableStateFlow(null)
+
+  val currentWindow: EditorWindow?
+    get() = currentWindowFlow.value
 
   fun getOrCreateCurrentWindow(file: VirtualFile): EditorWindow {
-    val windows = findWindows(file)
+    val windowsPerFile = findWindows(file)
     if (currentWindow == null) {
-      if (!windows.isEmpty()) {
-        setCurrentWindow(windows[0], false)
+      if (!windowsPerFile.isEmpty()) {
+        setCurrentWindow(window = windowsPerFile[0], requestFocus = false)
       }
       else {
-        val anyWindow = this.windows.firstOrNull()
+        val anyWindow = windows.firstOrNull()
         if (anyWindow == null) {
           createCurrentWindow()
         }
@@ -633,9 +633,9 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
         }
       }
     }
-    else if (!windows.isEmpty()) {
-      if (!windows.contains(currentWindow)) {
-        setCurrentWindow(window = windows[0], requestFocus = false)
+    else if (!windowsPerFile.isEmpty()) {
+      if (!windowsPerFile.contains(currentWindow)) {
+        setCurrentWindow(window = windowsPerFile[0], requestFocus = false)
       }
     }
     return currentWindow!!
@@ -643,11 +643,12 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
 
   internal fun createCurrentWindow() {
     LOG.assertTrue(currentWindow == null)
-    currentWindow = createEditorWindow()
-    add(currentWindow!!.panel, BorderLayout.CENTER)
+    val window = createEditorWindow()
+    currentWindowFlow.value = window
+    add(window.panel, BorderLayout.CENTER)
   }
 
-  internal fun createEditorWindow() = EditorWindow(owner = this, parentDisposable = this)
+  internal fun createEditorWindow(): EditorWindow = EditorWindow(owner = this, parentDisposable = this)
 
   /**
    * sets the window passed as a current ('focused') window among all splitters. All file openings will be done inside this
@@ -656,39 +657,21 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
    * @param requestFocus whether to request focus to the editor currently selected in this window
    */
   fun setCurrentWindow(window: EditorWindow?, requestFocus: Boolean) {
-    val newComposite = window?.selectedComposite
-    val fireRunnable = { manager.fireSelectionChanged(newComposite) }
-    currentWindow = window
-    manager.updateFileName(window?.selectedFile)
-    if (window == null) {
-      fireRunnable()
-    }
-    else {
-      val selectedComposite = window.selectedComposite
-      if (selectedComposite != null) {
-        fireRunnable()
-      }
-      if (requestFocus) {
-        window.requestFocus(true)
-      }
+    require(window == null || windows.contains(window)) { "$window is not a member of this container" }
+    currentWindowFlow.value = window
+    if (window != null && requestFocus) {
+      window.requestFocus(true)
     }
   }
 
   internal fun addWindow(window: EditorWindow) {
     windows.add(window)
-    if (currentWindow == null) {
-      currentWindow = window
-      val selectedComposite = window.selectedComposite ?: return
-      manager.updateFileName(selectedComposite.file)
-      manager.fireSelectionChanged(window.selectedComposite)
-    }
+    currentWindowFlow.compareAndSet(null, window)
   }
 
   internal fun removeWindow(window: EditorWindow) {
     windows.remove(window)
-    if (currentWindow == window) {
-      currentWindow = null
-    }
+    currentWindowFlow.compareAndSet(window, null)
   }
 
   fun containsWindow(window: EditorWindow): Boolean = windows.contains(window)
@@ -774,6 +757,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
           lastFocusGainedTime = System.currentTimeMillis()
         }
       }
+
       var newWindow: EditorWindow? = null
       if (component != null) {
         newWindow = findWindowWith(component)
@@ -783,8 +767,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
         // otherwise Escape in a toolwindow will not focus editor with JTable content
         return
       }
-      currentWindow = newWindow
-      setCurrentWindow(newWindow, false)
+      setCurrentWindow(window = newWindow, requestFocus = false)
     }
   }
 

@@ -10,8 +10,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.Consumer
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.flow.Flow
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.event.MouseEvent
@@ -40,14 +38,8 @@ interface StatusBarWidget : Disposable {
   }
 
   interface WidgetPresentation {
-    /**
-     * Reactive API is not required, because it is called only when tooltip is requested to be shown.
-     */
     fun getTooltipText(): @NlsContexts.Tooltip String?
 
-    /**
-     * Reactive API is not required, because it is called only when tooltip is requested to be shown.
-     */
     fun getShortcutText(): @Nls String? = null
 
     fun getClickConsumer(): Consumer<MouseEvent>? = null
@@ -107,25 +99,4 @@ interface StatusBarWidget : Disposable {
       val WIDE: Border = JBUI.CurrentTheme.StatusBar.Widget.border()
     }
   }
-}
-
-@ApiStatus.Experimental
-interface TextWidgetPresentation : StatusBarWidget.WidgetPresentation {
-  /**
-   * Taken on account only on a first init — dynamic change is not supported.
-   */
-  val alignment: Float
-
-  /**
-   * Using `distinctUntilChanged` is not required - handled by a platform.
-   */
-  fun text(): Flow<@NlsContexts.Label String>
-}
-
-@ApiStatus.Experimental
-interface IconWidgetPresentation : StatusBarWidget.WidgetPresentation {
-  /**
-   * Using `distinctUntilChanged` is not required - handled by a platform.
-   */
-  fun icon(): Flow<Icon?>
 }
