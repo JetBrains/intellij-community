@@ -20,7 +20,7 @@ public interface InjectedLanguageHighlightingRangeReducer {
    * like in Kotlin Notebooks.
    * NB: if several reduced ranges are passed, then restricted analysis area will be {topLeft; topRight} across ranges offsets.
    *
-   * @return collection of ranges to highlight or null
+   * @return collection of ranges to highlight or null if this extension doesn't supply any reduced ranges
    * @see InjectedGeneralHighlightingPassFactory
    */
   Collection<@NotNull TextRange> reduceRange(@NotNull PsiFile file, @NotNull Editor editor);

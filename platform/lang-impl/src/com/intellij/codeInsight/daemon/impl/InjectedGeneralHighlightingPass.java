@@ -146,7 +146,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
           && context.isValid()
           && !file.getProject().isDisposed()
           && (myUpdateAll || myRestrictRange.contains(context.getTextRange()))) { // consider strict if partial update
-        if (myReducedRanges != null && !ContainerUtil.exists(myReducedRanges, (it) -> it.contains(context.getTextRange()))) { // skip if not in reduced
+        if (myReducedRanges != null && !ContainerUtil.exists(myReducedRanges, reducedRange -> reducedRange.contains(context.getTextRange()))) { // skip if not in reduced
           continue;
         }
         hosts.add(context);
