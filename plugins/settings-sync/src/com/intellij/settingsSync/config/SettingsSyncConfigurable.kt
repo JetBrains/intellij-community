@@ -325,6 +325,8 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     super.disposeUIResources()
     SettingsSyncStatusTracker.getInstance().removeListener(this)
   }
+
+  override fun getHelpTopic(): String = "cloud-config.plugin-dialog"
 }
 
 class SettingsSyncConfigurableProvider : ConfigurableProvider() {
