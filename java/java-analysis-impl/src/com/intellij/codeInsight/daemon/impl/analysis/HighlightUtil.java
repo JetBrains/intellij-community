@@ -57,7 +57,10 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
@@ -1044,7 +1047,9 @@ public final class HighlightUtil {
         else {
           if (PsiModifier.STATIC.equals(modifier) || privateOrProtected || PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
             isAllowed = modifierOwnerParent instanceof PsiClass &&
-                        (PsiModifier.STATIC.equals(modifier) || ((PsiClass)modifierOwnerParent).getQualifiedName() != null) ||
+                        (PsiModifier.STATIC.equals(modifier) || 
+                         PsiUtil.isLanguageLevel16OrHigher(modifierOwnerParent) || 
+                         ((PsiClass)modifierOwnerParent).getQualifiedName() != null) ||
                         FileTypeUtils.isInServerPageFile(modifierOwnerParent) ||
                         // non-physical dummy holder might not have FQN
                         !modifierOwnerParent.isPhysical();
@@ -1063,8 +1068,9 @@ public final class HighlightUtil {
           isAllowed &= !PsiModifier.ABSTRACT.equals(modifier);
         }
 
-        if (aClass.getContainingClass() instanceof PsiAnonymousClass) {
-          isAllowed &= !privateOrProtected;
+        if (aClass.getContainingClass() instanceof PsiAnonymousClass && 
+            privateOrProtected && !PsiUtil.isLanguageLevel16OrHigher(modifierOwnerParent)) {
+          isAllowed = false;
         }
       }
       if (PsiModifier.NON_SEALED.equals(modifier) && !aClass.hasModifierProperty(PsiModifier.SEALED)) {
