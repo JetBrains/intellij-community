@@ -100,7 +100,7 @@ public abstract class Executor {
    * @return text of the action specialized for given configuration name
    * in {@linkplain TextWithMnemonic#parse(String) text-with-mnemonic} format.
    */
-  public @NotNull @NlsSafe String getStartActionText(@NlsSafe @NotNull String configurationName) {
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getStartActionText(@NlsSafe @NotNull String configurationName) {
     String configName = StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeeded(configurationName) + "'";
     return TextWithMnemonic.parse(getStartActionText()).append(configName).toString();
   }
