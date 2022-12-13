@@ -128,7 +128,7 @@ public final class EnumerationChildrenRenderer extends ReferenceRenderer impleme
 
   @Override
   public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
-    return ((ValueDescriptor) node.getDescriptor()).getDescriptorEvaluation(context);
+    return ((ValueDescriptor)node.getDescriptor()).getDescriptorEvaluation(context);
   }
 
   @Override

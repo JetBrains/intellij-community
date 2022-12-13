@@ -29,7 +29,6 @@ import java.util.Map;
  ** stores maximum  CACHED_STEPS steps
  ** call saveState function to start new step
  */
-
 public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeManager {
   private static final Comparator<DebuggerTreeNode> ourNodeComparator = new NodeComparator();
 
@@ -80,7 +79,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     final DescriptorTree descriptorTree;
     if (historyKey != null) {
       final DescriptorTree historyTree = myHistories.get(historyKey);
-      descriptorTree = (historyTree != null)? historyTree : new DescriptorTree(true);
+      descriptorTree = (historyTree != null) ? historyTree : new DescriptorTree(true);
     }
     else {
       descriptorTree = new DescriptorTree(true);

@@ -207,7 +207,7 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     }
     if (strings[2] != null) {
       if (descriptor instanceof ValueDescriptorImpl valueDescriptor) {
-        if (multiline && strings[2].indexOf('\n') >=0) {
+        if (multiline && strings[2].indexOf('\n') >= 0) {
           strings = breakString(strings[2], "=");
           if (strings[2] != null) {
             strings[2] = strings[0] + strings[1] + "\n" + strings[2];
@@ -229,7 +229,7 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
             descriptorText.append(objectId, OBJECT_ID_HIGHLIGHT_ATTRIBUTES);
           }
 
-          valueLabel =  DebuggerUtilsEx.truncateString(valueLabel);
+          valueLabel = DebuggerUtilsEx.truncateString(valueLabel);
 
           final SimpleTextAttributes valueLabelAttribs;
           if (valueDescriptor.isDirty()) {
@@ -243,7 +243,7 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
             else if (valueDescriptor.isString()) {
               attributes = colorScheme.getAttributes(JavaHighlightingColors.STRING);
             }
-            valueLabelAttribs = attributes != null? SimpleTextAttributes.fromTextAttributes(attributes) : DEFAULT_ATTRIBUTES;
+            valueLabelAttribs = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes) : DEFAULT_ATTRIBUTES;
           }
 
           final EvaluateException exception = descriptor.getEvaluateException();
@@ -284,11 +284,11 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     SimpleTextAttributes escapeAttribs = null;
     final @NlsSafe StringBuilder buf = new StringBuilder();
     boolean slashFound = false;
-    for (int idx= 0; idx < valueText.length(); idx++) {
+    for (int idx = 0; idx < valueText.length(); idx++) {
       final char ch = valueText.charAt(idx);
       if (slashFound) {
         slashFound = false;
-        if (ch == '\\' || ch == '\"' || ch == 'b'|| ch == 't'|| ch == 'n'|| ch == 'f'|| ch == 'r' ) {
+        if (ch == '\\' || ch == '\"' || ch == 'b' || ch == 't' || ch == 'n' || ch == 'f' || ch == 'r') {
           if (buf.length() > 0) {
             descriptorText.append(buf.toString(), attribs);
             buf.setLength(0);

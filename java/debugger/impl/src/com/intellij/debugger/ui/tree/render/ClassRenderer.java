@@ -81,7 +81,7 @@ public class ClassRenderer extends NodeRendererImpl {
 
   @Override
   public ClassRenderer clone() {
-    return (ClassRenderer) super.clone();
+    return (ClassRenderer)super.clone();
   }
 
   @Override
@@ -91,8 +91,8 @@ public class ClassRenderer extends NodeRendererImpl {
   }
 
   private static String calcLabelAsync(ValueDescriptor descriptor,
-                                         EvaluationContext evaluationContext,
-                                         DescriptorLabelListener labelListener)
+                                       EvaluationContext evaluationContext,
+                                       DescriptorLabelListener labelListener)
     throws EvaluateException {
     Value value = descriptor.getValue();
     CompletableFuture<String> future;
@@ -107,8 +107,8 @@ public class ClassRenderer extends NodeRendererImpl {
   }
 
   private static String calcLabelFromFuture(CompletableFuture<String> future,
-                                           ValueDescriptor descriptor,
-                                           DescriptorLabelListener labelListener) {
+                                            ValueDescriptor descriptor,
+                                            DescriptorLabelListener labelListener) {
     if (!future.isDone()) {
       future.whenComplete((s, throwable) -> {
         if (throwable != null) {

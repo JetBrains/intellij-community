@@ -65,7 +65,7 @@ public class ArrayRenderer extends NodeRendererImpl {
   public static final @NonNls String UNIQUE_ID = "ArrayRenderer";
 
   public int START_INDEX = 0;
-  public int END_INDEX   = Integer.MAX_VALUE;
+  public int END_INDEX = Integer.MAX_VALUE;
   public int ENTRIES_LIMIT = XCompositeNode.MAX_CHILDREN_TO_SHOW;
 
   private boolean myForced = false;
@@ -183,11 +183,11 @@ public class ArrayRenderer extends NodeRendererImpl {
           }
 
           AtomicInteger added = new AtomicInteger();
-        AtomicBoolean hiddenNulls = new AtomicBoolean();
+          AtomicBoolean hiddenNulls = new AtomicBoolean();
 
-        addChunk(array, START_INDEX, Math.min(arrayLength - 1, END_INDEX), arrayLength, builder, evaluationContext, added, hiddenNulls);
-      }
-    });
+          addChunk(array, START_INDEX, Math.min(arrayLength - 1, END_INDEX), arrayLength, builder, evaluationContext, added, hiddenNulls);
+        }
+      });
   }
 
   private CompletableFuture<Void> addChunk(ArrayReference array,

@@ -20,7 +20,7 @@ import javax.swing.tree.TreeNode;
 import java.util.Enumeration;
 
 public abstract class TreeBuilderNode extends DefaultMutableTreeNode {
-  private boolean  myChildrenBuilt = false;
+  private boolean myChildrenBuilt = false;
 
   public TreeBuilderNode(Object userObject) {
     super(userObject);

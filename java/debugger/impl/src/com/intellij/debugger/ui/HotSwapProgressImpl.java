@@ -175,17 +175,16 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
   public void setTitle(final @NlsContexts.ProgressTitle @NotNull String text) {
     DebuggerInvocationUtil.invokeLater(getProject(), () -> {
       if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
-      myProgressWindow.setTitle(text);
+        myProgressWindow.setTitle(text);
       }
     }, myProgressWindow.getModalityState());
-
   }
 
   @Override
   public void setFraction(final double v) {
     DebuggerInvocationUtil.invokeLater(getProject(), () -> {
       if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
-      myProgressWindow.setFraction(v);
+        myProgressWindow.setFraction(v);
       }
     }, myProgressWindow.getModalityState());
   }
@@ -196,7 +195,7 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
   }
 
   public ProgressIndicator getProgressIndicator() {
-     return myProgressWindow;
+    return myProgressWindow;
   }
 
   @Override

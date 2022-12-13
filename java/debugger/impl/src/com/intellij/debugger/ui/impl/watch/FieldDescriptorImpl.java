@@ -182,7 +182,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
       fieldName = typeName + "." + getName();
     }
     else {
-      fieldName = isOuterLocalVariableValue()? StringUtil.trimStart(getName(), OUTER_LOCAL_VAR_FIELD_PREFIX) : "this." + getName();
+      fieldName = isOuterLocalVariableValue() ? StringUtil.trimStart(getName(), OUTER_LOCAL_VAR_FIELD_PREFIX) : "this." + getName();
     }
     try {
       return elementFactory.createExpressionFromText(fieldName, null);

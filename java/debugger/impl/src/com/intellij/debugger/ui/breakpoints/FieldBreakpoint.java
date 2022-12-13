@@ -168,7 +168,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
       if (isWatchAccess() && vm.canWatchFieldAccess()) {
         manager.enableRequest(manager.createAccessWatchpointRequest(this, field));
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Access request added field = "+field.name() + "; refType = "+refType.name());
+          LOG.debug("Access request added field = " + field.name() + "; refType = " + refType.name());
         }
       }
     }

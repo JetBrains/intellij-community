@@ -102,8 +102,10 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   @Nullable
   public abstract PsiClass getPsiClass();
+
   /**
    * Request for creating all needed JPDA requests in the specified VM
+   *
    * @param debugProcess the requesting process
    */
   public abstract void createRequest(DebugProcessImpl debugProcess);
@@ -128,6 +130,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   /**
    * Request for creating all needed JPDA requests in the specified VM
+   *
    * @param debuggerProcess the requesting process
    */
   @Override
@@ -235,7 +238,8 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   /**
    * Associates breakpoint with class.
-   *    Create requests for loaded class and registers callback for loading classes
+   * Create requests for loaded class and registers callback for loading classes
+   *
    * @param debugProcess the requesting process
    */
   protected void createOrWaitPrepare(DebugProcessImpl debugProcess, String classToBeLoaded) {
@@ -643,6 +647,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   public boolean isCountFilterEnabled() {
     return getProperties().isCOUNT_FILTER_ENABLED() && getCountFilter() > 0;
   }
+
   public void setCountFilterEnabled(boolean enabled) {
     if (getProperties().setCOUNT_FILTER_ENABLED(enabled)) {
       fireBreakpointChanged();

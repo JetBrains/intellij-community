@@ -32,6 +32,7 @@ import java.util.List;
 
 /**
  * Base class for java line-connected exceptions (line, method, field)
+ *
  * @author egor
  */
 public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointProperties> extends XLineBreakpointType<P>

@@ -21,8 +21,8 @@ import org.jetbrains.annotations.Nullable;
 public abstract class CachedEvaluator {
   private static class Cache {
     protected ExpressionEvaluator myEvaluator;
-    protected EvaluateException   myException;
-    protected PsiExpression       myPsiChildrenExpression;
+    protected EvaluateException myException;
+    protected PsiExpression myPsiChildrenExpression;
   }
 
   SoftReference<Cache> myCache = new SoftReference<>(null);

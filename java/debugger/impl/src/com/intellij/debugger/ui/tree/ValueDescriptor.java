@@ -30,8 +30,12 @@ public interface ValueDescriptor extends NodeDescriptor {
   Icon setValueIcon(Icon icon);
 
   boolean isArray();
+
   boolean isLvalue();
+
   boolean isNull();
+
   boolean isPrimitive();
+
   boolean isString();
 }

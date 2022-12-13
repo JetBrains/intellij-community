@@ -50,7 +50,6 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
         myStateManager.removeListener(contextListener);
       }
     });
-
   }
 
   protected void changeEvent(final DebuggerContextImpl newContext, final DebuggerSession.Event event) {

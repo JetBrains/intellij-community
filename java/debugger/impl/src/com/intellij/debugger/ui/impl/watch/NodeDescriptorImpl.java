@@ -26,7 +26,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   public static final String UNKNOWN_VALUE_MESSAGE = "";
   public boolean myIsExpanded = false;
   public boolean myIsSelected = false;
-  public boolean myIsVisible  = false;
+  public boolean myIsVisible = false;
 
   private EvaluateException myEvaluateException;
   private @NlsContexts.Label String myLabel = UNKNOWN_VALUE_MESSAGE;
@@ -104,7 +104,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
       final NodeDescriptorImpl that = (NodeDescriptorImpl)descriptor;
       myIsExpanded = that.myIsExpanded;
       myIsSelected = that.myIsSelected;
-      myIsVisible  = that.myIsVisible;
+      myIsVisible = that.myIsVisible;
       myUserData = that.myUserData != null ? new HashMap<>(that.myUserData) : null;
 
       // TODO introduce unified way to handle this

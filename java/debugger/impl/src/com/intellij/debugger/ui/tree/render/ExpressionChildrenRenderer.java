@@ -128,7 +128,7 @@ public final class ExpressionChildrenRenderer extends ReferenceRenderer implemen
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("error.unable.to.evaluate.children.expression"));
     }
 
-    NodeRenderer childrenRenderer = getChildrenRenderer(expressionValue.type(), (ValueDescriptor) node.getParent().getDescriptor());
+    NodeRenderer childrenRenderer = getChildrenRenderer(expressionValue.type(), (ValueDescriptor)node.getParent().getDescriptor());
 
     PsiExpression childrenPsiExpression = myChildrenExpression.getPsiExpression(node.getProject());
     if (childrenPsiExpression == null) {

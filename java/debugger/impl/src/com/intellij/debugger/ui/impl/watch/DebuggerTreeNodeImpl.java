@@ -42,7 +42,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
 
   @Override
   public DebuggerTreeNodeImpl getParent() {
-    return (DebuggerTreeNodeImpl) super.getParent();
+    return (DebuggerTreeNodeImpl)super.getParent();
   }
 
   @Override
@@ -55,7 +55,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
   }
 
   public String toString() {
-    return myText != null? myText.toString() : "";
+    return myText != null ? myText.toString() : "";
   }
 
   @Override
@@ -70,7 +70,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
 
   @Override
   public void setRenderer(NodeRenderer renderer) {
-    ((ValueDescriptorImpl) getDescriptor()).setRenderer(renderer);
+    ((ValueDescriptorImpl)getDescriptor()).setRenderer(renderer);
     calcRepresentation();
   }
 
@@ -123,11 +123,11 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
           labelChanged();
           childrenChanged(true);
         }
+
         @Override
         public Priority getPriority() {
           return Priority.NORMAL;
         }
-
       });
     }
 

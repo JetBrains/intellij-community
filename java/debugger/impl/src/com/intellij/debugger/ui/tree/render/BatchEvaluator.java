@@ -75,7 +75,7 @@ public final class BatchEvaluator {
       }
 
       if (myBatchEvaluatorClass != null) {
-          myBatchEvaluatorMethod = DebuggerUtils.findMethod(myBatchEvaluatorClass, "evaluate", "([Ljava/lang/Object;)Ljava/lang/String;");
+        myBatchEvaluatorMethod = DebuggerUtils.findMethod(myBatchEvaluatorClass, "evaluate", "([Ljava/lang/Object;)Ljava/lang/String;");
       }
     }
     return myBatchEvaluatorMethod != null;

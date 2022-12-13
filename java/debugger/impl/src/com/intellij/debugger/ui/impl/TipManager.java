@@ -37,8 +37,10 @@ public final class TipManager implements Disposable, PopupMenuListener {
   private MouseEvent myLastMouseEvent;
 
   public interface TipFactory {
-    JComponent createToolTip (MouseEvent e);
+    JComponent createToolTip(MouseEvent e);
+
     MouseEvent createTooltipEvent(MouseEvent candidateEvent);
+
     boolean isFocusOwner();
   }
 

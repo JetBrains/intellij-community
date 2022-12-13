@@ -16,7 +16,7 @@ public class EditInstanceFiltersDialog extends DialogWrapper {
   private InstanceFilterEditor myInstanceFilterEditor;
   private final Project myProject;
 
-  public EditInstanceFiltersDialog (Project project) {
+  public EditInstanceFiltersDialog(Project project) {
     super(project, true);
     myProject = project;
     setTitle(JavaDebuggerBundle.message("instance.filters.dialog.title"));

@@ -79,5 +79,4 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
                                             HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_TEXT_CHANGE,
                                             1500);
   }
-
 }

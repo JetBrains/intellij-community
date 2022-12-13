@@ -38,6 +38,7 @@ import java.util.List;
 
 /**
  * Base class for java line-connected exceptions (line, method, field)
+ *
  * @author egor
  */
 public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineBreakpointProperties> {

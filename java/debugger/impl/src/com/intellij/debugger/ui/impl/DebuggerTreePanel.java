@@ -39,7 +39,6 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
     }
     catch (VMDisconnectedException ignored) {
     }
-
   }, 100);
 
   protected DebuggerTree myTree;

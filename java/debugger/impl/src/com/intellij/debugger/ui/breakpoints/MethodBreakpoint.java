@@ -233,6 +233,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         if (breakpoint.isWatchExit()) {
           MethodBytecodeUtil.visit(method, new MethodVisitor(Opcodes.API_VERSION) {
             int myLastLine = 0;
+
             @Override
             public void visitLineNumber(int line, Label start) {
               myLastLine = line;
@@ -354,7 +355,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     String locationFileName = DebuggerUtilsEx.getSourceName(location, e -> defaultFileName);
     int locationLine = location.lineNumber();
     return JavaDebuggerBundle.message(entry ? "status.method.entry.breakpoint.reached" : "status.method.exit.breakpoint.reached",
-                                  method.declaringType().name() + "." + method.name() + "()",
+                                      method.declaringType().name() + "." + method.name() + "()",
                                       locationQName,
                                       locationFileName,
                                       locationLine
@@ -462,7 +463,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       }
 
       final PsiIdentifier identifier = method.getNameIdentifier();
-      int methodNameOffset = identifier != null? identifier.getTextOffset() : methodOffset;
+      int methodNameOffset = identifier != null ? identifier.getTextOffset() : methodOffset;
       final MethodDescriptor res =
         new MethodDescriptor();
       res.methodName = JVMNameUtil.getJVMMethodName(method);

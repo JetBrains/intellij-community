@@ -164,7 +164,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
       }
     }
 
-    for (Enumeration e = node.rawChildren(); e.hasMoreElements();) {
+    for (Enumeration e = node.rawChildren(); e.hasMoreElements(); ) {
       DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)e.nextElement();
       saveState(child);
     }
@@ -213,7 +213,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
   private void restoreStateImpl(DebuggerTreeNodeImpl node) {
     restoreNodeState(node);
     if (node.getDescriptor().myIsExpanded) {
-      for (Enumeration e = node.rawChildren(); e.hasMoreElements();) {
+      for (Enumeration e = node.rawChildren(); e.hasMoreElements(); ) {
         DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)e.nextElement();
         restoreStateImpl(child);
       }

@@ -109,7 +109,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
 
-
   public boolean isDirty() {
     assertValueReady();
     return myIsDirty;
@@ -167,7 +166,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     if (Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
       final EvaluationContextImpl evalContext = myStoredEvaluationContext;
       if (evalContext != null && !evalContext.getSuspendContext().isResumed() &&
-        myValue instanceof ObjectReference && VirtualMachineProxyImpl.isCollected((ObjectReference)myValue)) {
+          myValue instanceof ObjectReference && VirtualMachineProxyImpl.isCollected((ObjectReference)myValue)) {
 
         final Semaphore semaphore = new Semaphore();
         semaphore.down();
@@ -502,7 +501,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public Renderer getLastRenderer() {
-    return myRenderer != null ? myRenderer: myAutoRenderer;
+    return myRenderer != null ? myRenderer : myAutoRenderer;
   }
 
   public Renderer getLastLabelRenderer() {

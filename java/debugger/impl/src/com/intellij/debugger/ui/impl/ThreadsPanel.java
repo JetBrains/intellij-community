@@ -96,6 +96,7 @@ public class ThreadsPanel extends DebuggerTreePanel {
                       reschedule();
                     }
                   }
+
                   @Override
                   protected void commandCancelled() {
                     reschedule();
@@ -119,7 +120,6 @@ public class ThreadsPanel extends DebuggerTreePanel {
           myUpdateLabelsAlarm.addRequest(this, LABELS_UPDATE_DELAY_MS, ModalityState.NON_MODAL);
         }
       }
-
     }, LABELS_UPDATE_DELAY_MS, ModalityState.NON_MODAL);
   }
 
@@ -164,7 +164,8 @@ public class ThreadsPanel extends DebuggerTreePanel {
     }
     return super.getData(dataId);
   }
+
   public ThreadsDebuggerTree getThreadsTree() {
-    return (ThreadsDebuggerTree) getTree();
+    return (ThreadsDebuggerTree)getTree();
   }
 }

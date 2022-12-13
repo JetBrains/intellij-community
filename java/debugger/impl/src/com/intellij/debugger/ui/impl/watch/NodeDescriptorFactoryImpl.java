@@ -41,7 +41,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
   private DescriptorTreeSearcher myDescriptorSearcher;
   private DescriptorTreeSearcher myDisplayDescriptorSearcher;
 
-  protected final Project      myProject;
+  protected final Project myProject;
 
   public NodeDescriptorFactoryImpl(Project project) {
     myProject = project;
@@ -77,7 +77,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
   }
 
   @Nullable
-  protected <T extends NodeDescriptor>T findDisplayDescriptor(NodeDescriptor parent, T descriptor, DisplayKey<T> key) {
+  protected <T extends NodeDescriptor> T findDisplayDescriptor(NodeDescriptor parent, T descriptor, DisplayKey<T> key) {
     return myDisplayDescriptorSearcher.search(parent, descriptor, key);
   }
 
@@ -122,10 +122,10 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
         final ThreadReferenceProxy threadReferenceProxy = frameProxy.threadProxy();
         frameCount = threadReferenceProxy.frameCount();
         frameIndex = frameProxy.getFrameIndex();
-       }
-       catch (EvaluateException e) {
-         // ignored
-       }
+      }
+      catch (EvaluateException e) {
+        // ignored
+      }
     }
     final boolean isInitial = !fromTree.frameIdEquals(frameCount, frameIndex);
     DescriptorTree descriptorTree = new DescriptorTree(isInitial);
@@ -142,7 +142,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
   @Override
   public FieldDescriptorImpl getFieldDescriptor(NodeDescriptor parent, ObjectReference objRef, Field field) {
     final DescriptorData<FieldDescriptorImpl> descriptorData;
-    if (objRef == null ) {
+    if (objRef == null) {
       if (!field.isStatic()) {
         LOG.error("Object reference is null for non-static field: " + field);
       }

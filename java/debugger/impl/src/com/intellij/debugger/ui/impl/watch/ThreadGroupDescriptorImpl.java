@@ -69,7 +69,7 @@ public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements Thr
 
   @Override
   public void setContext(EvaluationContextImpl context) {
-    ThreadReferenceProxyImpl threadProxy = context != null? context.getSuspendContext().getThread() : null;
+    ThreadReferenceProxyImpl threadProxy = context != null ? context.getSuspendContext().getThread() : null;
     myIsCurrent = threadProxy != null && isDescendantGroup(threadProxy.threadGroupProxy());
     myIsExpandable = calcExpandable();
   }

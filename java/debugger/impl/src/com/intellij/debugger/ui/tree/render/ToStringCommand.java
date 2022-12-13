@@ -40,7 +40,7 @@ public abstract class ToStringCommand implements SuspendContextCommand {
       final String valueAsString = DebuggerUtils.getValueAsString(myEvaluationContext, myValue);
       evaluationResult(valueAsString);
     }
-    catch(final EvaluateException ex) {
+    catch (final EvaluateException ex) {
       evaluationError(ex.getMessage());
     }
   }
@@ -59,7 +59,8 @@ public abstract class ToStringCommand implements SuspendContextCommand {
   }
 
   public abstract void evaluationResult(String message);
-  public abstract void evaluationError (String message);
+
+  public abstract void evaluationError(String message);
 
   public Value getValue() {
     return myValue;

@@ -69,7 +69,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
       return null;
     }
     int dotIndex = qualifiedName.lastIndexOf('.');
-    return dotIndex >= 0? qualifiedName.substring(0, dotIndex) : "";
+    return dotIndex >= 0 ? qualifiedName.substring(0, dotIndex) : "";
   }
 
   @Override
@@ -148,7 +148,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
   @Override
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
     if (event instanceof ExceptionEvent) {
-      return ((ExceptionEvent) event).exception();
+      return ((ExceptionEvent)event).exception();
     }
     return super.getThisObject(context, event);
   }
@@ -228,7 +228,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     super.readExternal(parentNode);
 
     String packageName = parentNode.getAttributeValue("package_name");
-    setPackageName(packageName != null? packageName : calcPackageName(packageName));
+    setPackageName(packageName != null ? packageName : calcPackageName(packageName));
 
     try {
       getProperties().NOTIFY_CAUGHT = Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "NOTIFY_CAUGHT"));

@@ -74,5 +74,4 @@ public class AnyExceptionBreakpoint extends ExceptionBreakpoint {
       if (!getReadNoClassName().equals(e.getMessage())) throw e;
     }
   }
-
 }

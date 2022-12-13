@@ -34,7 +34,7 @@ public class HexRenderer extends NodeRendererImpl {
 
   @Override
   public HexRenderer clone() {
-    return (HexRenderer) super.clone();
+    return (HexRenderer)super.clone();
   }
 
   @Override
