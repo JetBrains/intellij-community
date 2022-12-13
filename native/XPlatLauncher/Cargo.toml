@@ -25,7 +25,7 @@ serde = { version="1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
 is_executable = "1.0.1"
 simplelog = "0.12.0"
-jni = { version="0.19.0" }
+jni = { version= "0.20.0" }
 libloading = "0.7.3"
 jni-sys = "0.3.0"
 path-absolutize = "3.0.13"
@@ -39,7 +39,7 @@ windows = { version = "0.43.0", features = ["Win32_Foundation", "Win32_UI_Shell"
 core-foundation = "0.9.3"
 
 [build-dependencies]
-cargo-deny = "0.12.2" # checks licenses / vulns
+cargo-deny = "0.13.5" # checks licenses / vulns
 cargo-about = "0.5.1" # generates license report
 
 [dev-dependencies]
