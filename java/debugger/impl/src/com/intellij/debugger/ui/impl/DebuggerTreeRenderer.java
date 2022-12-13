@@ -237,7 +237,7 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
           }
           else {
             TextAttributes attributes = null;
-            if (valueDescriptor.isNull()){
+            if (valueDescriptor.isNull()) {
               attributes = colorScheme.getAttributes(JavaHighlightingColors.KEYWORD);
             }
             else if (valueDescriptor.isString()) {

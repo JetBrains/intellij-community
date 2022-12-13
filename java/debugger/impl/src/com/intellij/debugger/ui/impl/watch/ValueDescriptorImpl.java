@@ -51,7 +51,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
-public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor{
+public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor {
   protected final Project myProject;
 
   NodeRenderer myRenderer = null;
@@ -396,7 +396,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     }
 
     // only call labelChanged when we have expandable value
-    expandableFuture.whenComplete((res, ex) ->  {
+    expandableFuture.whenComplete((res, ex) -> {
       if (ex == null) {
         myIsExpandable = res;
       }

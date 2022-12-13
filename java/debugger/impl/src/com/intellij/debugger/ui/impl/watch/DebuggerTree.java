@@ -366,7 +366,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
             LOG.debug(e);
             //LOG.assertTrue(false);
             // if we pause during evaluation of this method the exception is thrown
-            //  private static void longMethod(){
+            //  private static void longMethod() {
             //    try {
             //      Thread.sleep(100000);
             //    } catch (InterruptedException e) {

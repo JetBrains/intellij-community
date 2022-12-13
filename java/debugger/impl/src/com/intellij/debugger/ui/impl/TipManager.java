@@ -66,7 +66,7 @@ public final class TipManager implements Disposable, PopupMenuListener {
 
   boolean myInsideComponent;
 
-  private class MyMouseListener extends MouseAdapter implements Weighted{
+  private class MyMouseListener extends MouseAdapter implements Weighted {
     @Override
     public void mouseExited(final MouseEvent e) {
       myInsideComponent = false;
@@ -124,7 +124,7 @@ public final class TipManager implements Disposable, PopupMenuListener {
     }
   }
 
-  private class MyMouseMotionListener extends MouseMotionAdapter implements Weighted{
+  private class MyMouseMotionListener extends MouseMotionAdapter implements Weighted {
     @Override
     public void mouseMoved(final MouseEvent e) {
       myLastMouseEvent = e;

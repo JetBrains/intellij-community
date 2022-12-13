@@ -18,7 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.TypeComponent;
 
-public class StaticDescriptorImpl extends NodeDescriptorImpl implements StaticDescriptor{
+public class StaticDescriptorImpl extends NodeDescriptorImpl implements StaticDescriptor {
 
   private final ReferenceType myType;
   private final boolean myHasStaticFields;

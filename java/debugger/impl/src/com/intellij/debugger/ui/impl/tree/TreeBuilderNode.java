@@ -19,7 +19,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.Enumeration;
 
-public abstract class TreeBuilderNode extends DefaultMutableTreeNode{
+public abstract class TreeBuilderNode extends DefaultMutableTreeNode {
   private boolean  myChildrenBuilt = false;
 
   public TreeBuilderNode(Object userObject) {

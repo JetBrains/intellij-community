@@ -71,7 +71,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
     }
   }
 
-  private class RefreshThreadsTreeCommand extends DebuggerCommandImpl{
+  private class RefreshThreadsTreeCommand extends DebuggerCommandImpl {
     private final DebuggerSession mySession;
 
     RefreshThreadsTreeCommand(DebuggerSession session) {
@@ -109,7 +109,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
               }
             }
 
-            if (topCurrentGroup != null){
+            if (topCurrentGroup != null) {
               root.add(nodeManager.createNode(nodeManager.getThreadGroupDescriptor(null, topCurrentGroup), evaluationContext));
             }
             else {

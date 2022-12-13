@@ -32,7 +32,7 @@ import java.awt.event.KeyEvent;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
-public class ThreadsPanel extends DebuggerTreePanel{
+public class ThreadsPanel extends DebuggerTreePanel {
   @NonNls private static final String POPUP_ACTION_NAME = "Debugger.ThreadsPanelPopup";
   @NonNls private static final String HELP_ID = "debugging.debugThreads";
   private final Alarm myUpdateLabelsAlarm = new Alarm();

@@ -23,7 +23,7 @@ import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
+public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl {
   private final DecompiledLocalVariable myVariable;
 
   public ArgumentValueDescriptorImpl(Project project, DecompiledLocalVariable variable, Value value) {

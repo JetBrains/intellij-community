@@ -196,7 +196,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return getDescriptor(parent, data);
   }
 
-  public WatchItemDescriptor getWatchItemDescriptor(NodeDescriptor parent, TextWithImports text, @Nullable Value value){
+  public WatchItemDescriptor getWatchItemDescriptor(NodeDescriptor parent, TextWithImports text, @Nullable Value value) {
     return getDescriptor(parent, new WatchItemData(text, value));
   }
 

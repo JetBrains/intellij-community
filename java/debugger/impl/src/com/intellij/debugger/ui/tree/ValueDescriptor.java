@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public interface ValueDescriptor extends NodeDescriptor{
+public interface ValueDescriptor extends NodeDescriptor {
   PsiElement getDescriptorEvaluation(DebuggerContext context) throws EvaluateException;
 
   Value getValue();

@@ -106,7 +106,7 @@ public final class BasicRendererProperties implements Cloneable {
   }
 
   @Override
-  public BasicRendererProperties clone()  {
+  public BasicRendererProperties clone() {
     try {
       return (BasicRendererProperties)super.clone();
     }

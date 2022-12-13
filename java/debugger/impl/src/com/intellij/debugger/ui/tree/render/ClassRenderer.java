@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-public class ClassRenderer extends NodeRendererImpl{
+public class ClassRenderer extends NodeRendererImpl {
   private static final Logger LOG = Logger.getInstance(ClassRenderer.class);
 
   public static final @NonNls String UNIQUE_ID = "ClassRenderer";

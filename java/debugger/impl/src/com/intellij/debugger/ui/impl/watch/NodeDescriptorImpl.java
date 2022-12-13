@@ -55,7 +55,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
     myUserData.put(key, value);
   }
 
-  public void updateRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener){
+  public void updateRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) {
     updateRepresentationNoNotify(context, labelListener);
     labelListener.labelChanged();
   }

@@ -59,7 +59,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ArrayRenderer extends NodeRendererImpl{
+public class ArrayRenderer extends NodeRendererImpl {
   private static final Logger LOG = Logger.getInstance(ArrayRenderer.class);
 
   public static final @NonNls String UNIQUE_ID = "ArrayRenderer";

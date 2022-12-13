@@ -78,7 +78,7 @@ public class RunHotswapDialog extends OptionsDialog {
   }
 
   @Override
-  protected Action @NotNull [] createActions(){
+  protected Action @NotNull [] createActions() {
     setOKButtonText(JavaDebuggerBundle.message("hotswap.dialog.reload.action.text"));
     return new Action[]{getOKAction(), getCancelAction()};
   }

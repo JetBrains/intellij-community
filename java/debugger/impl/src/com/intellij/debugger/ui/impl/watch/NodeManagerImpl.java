@@ -30,7 +30,7 @@ import java.util.Map;
  ** call saveState function to start new step
  */
 
-public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeManager{
+public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeManager {
   private static final Comparator<DebuggerTreeNode> ourNodeComparator = new NodeComparator();
 
   private final DebuggerTree myDebuggerTree;

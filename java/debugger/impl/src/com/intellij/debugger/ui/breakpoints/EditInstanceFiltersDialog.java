@@ -12,7 +12,7 @@ import com.intellij.util.ui.JBUI;
 import javax.swing.*;
 import java.util.Arrays;
 
-public class EditInstanceFiltersDialog extends DialogWrapper{
+public class EditInstanceFiltersDialog extends DialogWrapper {
   private InstanceFilterEditor myInstanceFilterEditor;
   private final Project myProject;
 
@@ -31,7 +31,7 @@ public class EditInstanceFiltersDialog extends DialogWrapper{
   }
 
   @Override
-  public void dispose(){
+  public void dispose() {
     myInstanceFilterEditor.stopEditing();
     super.dispose();
   }
@@ -42,7 +42,7 @@ public class EditInstanceFiltersDialog extends DialogWrapper{
   }
 
   @Override
-  protected String getDimensionServiceKey(){
+  protected String getDimensionServiceKey() {
     return "#com.intellij.debugger.ui.breakpoints.EditInstanceFiltersDialog";
   }
 

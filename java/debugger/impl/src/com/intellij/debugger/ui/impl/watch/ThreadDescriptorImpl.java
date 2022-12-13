@@ -19,7 +19,7 @@ import com.sun.jdi.ThreadReference;
 
 import javax.swing.*;
 
-public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDescriptor{
+public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDescriptor {
   private final ThreadReferenceProxyImpl myThread;
   private String myName = null;
   private boolean myIsExpandable   = true;
@@ -115,7 +115,7 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
     catch (EvaluateException e) {
       //LOG.assertTrue(false);
       // if we pause during evaluation of this method the exception is thrown
-      //  private static void longMethod(){
+      //  private static void longMethod() {
       //    try {
       //      Thread.sleep(100000);
       //    } catch (InterruptedException e) {

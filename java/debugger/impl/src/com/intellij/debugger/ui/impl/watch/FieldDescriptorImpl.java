@@ -31,7 +31,7 @@ import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDescriptor{
+public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDescriptor {
   public static final String OUTER_LOCAL_VAR_FIELD_PREFIX = "val$";
   private final Field myField;
   private final ObjectReference myObject;
