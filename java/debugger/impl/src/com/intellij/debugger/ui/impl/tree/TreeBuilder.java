@@ -110,17 +110,21 @@ public abstract class TreeBuilder implements TreeModel {
   protected TreeNode[] getPathToRoot(TreeNode aNode, int depth) {
     TreeNode[] retNodes;
     if (aNode == null) {
-      if (depth == 0)
+      if (depth == 0) {
         return null;
-      else
+      }
+      else {
         retNodes = new TreeNode[depth];
+      }
     }
     else {
       depth++;
-      if (aNode == myRoot)
+      if (aNode == myRoot) {
         retNodes = new TreeNode[depth];
-      else
+      }
+      else {
         retNodes = getPathToRoot(aNode.getParent(), depth);
+      }
       retNodes[retNodes.length - depth] = aNode;
     }
     return retNodes;
