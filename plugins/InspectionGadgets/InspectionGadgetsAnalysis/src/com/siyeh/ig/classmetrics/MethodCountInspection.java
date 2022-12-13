@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.classmetrics;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PropertyUtil;
@@ -25,8 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class MethodCountInspection extends BaseInspection {
 
@@ -48,16 +47,12 @@ public class MethodCountInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final Component label = new JLabel(InspectionGadgetsBundle.message("method.count.limit.option"));
-    final JFormattedTextField valueField = prepareNumberEditor("m_limit");
-
-    panel.addRow(label, valueField);
-    panel.addCheckbox(InspectionGadgetsBundle.message("method.count.ignore.getters.setters.option"), "ignoreGettersAndSetters");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"), "ignoreOverridingMethods");
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("m_limit", InspectionGadgetsBundle.message("method.count.limit.option"), 1, 1000),
+      checkbox("ignoreGettersAndSetters", InspectionGadgetsBundle.message("method.count.ignore.getters.setters.option")),
+      checkbox("ignoreOverridingMethods", InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"))
+    );
   }
 
 
