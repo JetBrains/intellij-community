@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolbarComboWidget;
 import com.intellij.ui.JBColor;
@@ -15,12 +16,14 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 public class ToolbarComboWidgetUI extends ComponentUI {
 
   private static final int ELEMENTS_GAP = 5;
+  private static final Icon EXPAND_ICON = AllIcons.General.ChevronDown;
   private static final int MIN_TEXT_LENGTH = 5;
   private static final int SEPARATOR_WIDTH = 1;
 
@@ -93,6 +96,8 @@ public class ToolbarComboWidgetUI extends ComponentUI {
         g2.fillRect(paintRect.x, paintRect.y, SEPARATOR_WIDTH, paintRect.height);
         doClip(paintRect, SEPARATOR_WIDTH + ELEMENTS_GAP);
       }
+
+      paintIcons(Collections.singletonList(EXPAND_ICON), combo, g2, paintRect, 0); // no gap for single icon
     }
     finally {
       g2.dispose();
@@ -163,7 +168,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
 
     int separator = isSeparatorShown(c) ? ELEMENTS_GAP + SEPARATOR_WIDTH : 0;
 
-    int otherElementsWidth = left + right + separator + ELEMENTS_GAP;
+    int otherElementsWidth = left + right + separator + ELEMENTS_GAP + EXPAND_ICON.getIconWidth();
     return paintRect.width - otherElementsWidth;
   }
 
@@ -230,6 +235,8 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     }
 
     if (res.width > 0) res.width += ELEMENTS_GAP;
+    res.width += EXPAND_ICON.getIconWidth();
+    res.height = Math.max(res.height, EXPAND_ICON.getIconHeight());
 
     Insets insets = c.getInsets();
     res.height += insets.top + insets.bottom;
@@ -291,8 +298,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
         return;
       }
 
-      int rightPart = SEPARATOR_WIDTH + ELEMENTS_GAP + comp.getInsets().right;
-
+      int rightPart = SEPARATOR_WIDTH + ELEMENTS_GAP + EXPAND_ICON.getIconWidth() + comp.getInsets().right;
       Rectangle right = new Rectangle((int)(compBounds.getMaxX() - rightPart), compBounds.y, rightPart, compBounds.height);
       Rectangle left = new Rectangle(compBounds.x, compBounds.y, compBounds.width - rightPart + SEPARATOR_WIDTH, compBounds.height);
 
@@ -315,7 +321,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
         return;
       }
 
-      int leftPartWidth = comp.getWidth() - (ELEMENTS_GAP + comp.getInsets().right);
+      int leftPartWidth = comp.getWidth() - (ELEMENTS_GAP + EXPAND_ICON.getIconWidth() + comp.getInsets().right);
       if (e.getPoint().x <= leftPartWidth) {
         notifyPressListeners(e);
       }
