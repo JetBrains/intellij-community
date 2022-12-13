@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,10 +20,11 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListListener;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
+import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
@@ -42,7 +44,6 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
   private final Map<VirtualFile, Boolean> myWhetherExactlyParentToChanged = Collections.synchronizedMap(new HashMap<>());
   private final Project myProject;
   private final List<FileStatusListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final VcsFileStatusProvider myFileStatusProvider;
 
   private static class FileStatusNull implements FileStatus {
     private static final FileStatus INSTANCE = new FileStatusNull();
@@ -72,7 +73,6 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
 
   public FileStatusManagerImpl(@NotNull Project project) {
     myProject = project;
-    myFileStatusProvider = VcsFileStatusProvider.getInstance(project);
 
     MessageBusConnection projectBus = project.getMessageBus().connect();
     projectBus.subscribe(EditorColorsManager.TOPIC, __ -> fileStatusesChanged());
@@ -140,7 +140,8 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
       }
 
       for (Project project : projectManager.getOpenProjects()) {
-        VcsFileStatusProvider.getInstance(project).refreshFileStatusFromDocument(file, document);
+        FileStatusManagerImpl manager = (FileStatusManagerImpl)project.getServiceIfCreated(FileStatusManager.class);
+        if (manager != null) manager.refreshFileStatusFromDocument(file, document);
       }
     }
   }
@@ -157,9 +158,9 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     }
 
     if (virtualFile.isInLocalFileSystem()) {
-      FileStatus status = myFileStatusProvider.getFileStatus(virtualFile);
+      FileStatus status = getVcsFileStatus(virtualFile);
       if (LOG.isDebugEnabled()) {
-        LOG.debug(String.format("File status for file [%s] from default provider %s: %s", virtualFile, myFileStatusProvider, status));
+        LOG.debug(String.format("File status for file [%s] from default provider: %s", virtualFile, status));
       }
       return status;
     }
@@ -172,7 +173,32 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
   }
 
   @NotNull
-  static FileStatus getDefaultStatus(@NotNull final VirtualFile file) {
+  private FileStatus getVcsFileStatus(@NotNull VirtualFile virtualFile) {
+    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
+    if (vcs == null) {
+      if (ScratchUtil.isScratch(virtualFile)) {
+        return FileStatus.SUPPRESSED;
+      }
+      return getDefaultStatus(virtualFile);
+    }
+
+    final FileStatus status = ChangeListManager.getInstance(myProject).getStatus(virtualFile);
+    if (status == FileStatus.NOT_CHANGED && isDocumentModified(virtualFile)) {
+      return FileStatus.MODIFIED;
+    }
+    if (status == FileStatus.NOT_CHANGED) {
+      return getDefaultStatus(virtualFile);
+    }
+    return status;
+  }
+
+  private static boolean isDocumentModified(VirtualFile virtualFile) {
+    if (virtualFile.isDirectory()) return false;
+    return FileDocumentManager.getInstance().isFileModified(virtualFile);
+  }
+
+  @NotNull
+  private static FileStatus getDefaultStatus(@NotNull final VirtualFile file) {
     return file.isValid() && file.is(VFileProperty.SPECIAL) ? FileStatus.IGNORED : FileStatus.NOT_CHANGED;
   }
 
@@ -282,6 +308,42 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
 
   FileStatus getCachedStatus(final VirtualFile file) {
     return myCachedStatuses.get(file);
+  }
+
+  private void refreshFileStatusFromDocument(@NotNull final VirtualFile virtualFile, @NotNull final Document doc) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("refreshFileStatusFromDocument: file.getModificationStamp()=" + virtualFile.getModificationStamp() +
+                ", document.getModificationStamp()=" + doc.getModificationStamp());
+    }
+
+    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
+    if (vcs == null) return;
+
+    FileStatus cachedStatus = getCachedStatus(virtualFile);
+    boolean isDocumentModified = isDocumentModified(virtualFile);
+
+    if (cachedStatus == FileStatus.MODIFIED && !isDocumentModified) {
+      if (!((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject)).getState().SHOW_DIALOG) {
+        RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
+        if (rollbackEnvironment != null) {
+          rollbackEnvironment.rollbackIfUnchanged(virtualFile);
+        }
+      }
+    }
+
+    boolean isStatusChanged = cachedStatus != null && cachedStatus != FileStatus.NOT_CHANGED;
+    if (isStatusChanged != isDocumentModified) {
+      fileStatusChanged(virtualFile);
+    }
+
+    ChangeProvider cp = vcs.getChangeProvider();
+    if (cp != null && cp.isModifiedDocumentTrackingRequired()) {
+      FileStatus status = ChangeListManager.getInstance(myProject).getStatus(virtualFile);
+      boolean isClmStatusChanged = status != FileStatus.NOT_CHANGED;
+      if (isClmStatusChanged != isDocumentModified) {
+        VcsDirtyScopeManager.getInstance(myProject).fileDirty(virtualFile);
+      }
+    }
   }
 
   @Override
