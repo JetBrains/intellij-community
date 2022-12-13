@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.json.JsonFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -263,11 +264,12 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
           if (myFullValueEvaluator.isShowValuePopup()) {
             //FileType currentFileType = myFullValueEvaluator.mySyntaxType;
             //if (currentFileType == null || currentFileType == FileTypes.PLAIN_TEXT) {
-              DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, myTree.getProject(), null);
+            //  DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, myTree.getProject(), null);
             //} else {
-            //  EditorTextField textArea = new EditorTextField(myTree.getProject(), currentFileType);
-            //  DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, myTree.getProject(), null, textArea);
-            //}
+              EditorTextField textArea = new EditorTextField(myTree.getProject(), FileTypes.PLAIN_TEXT);
+              textArea.setNewDocumentAndFileType(JsonFileType.INSTANCE, null);
+              DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, myTree.getProject(), null, textArea);
+          //  }
           }
           else {
             new HeadlessValueEvaluationCallback(XValueNodeImpl.this).startFetchingValue(myFullValueEvaluator);
