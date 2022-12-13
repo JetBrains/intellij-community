@@ -201,13 +201,21 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     return null;
   }
 
-  @NotNull
-  private ThreeState getNotChangedDirectoryParentingStatus(@NotNull VirtualFile virtualFile) {
-    if (VcsConfiguration.getInstance(myProject).SHOW_DIRTY_RECURSIVELY) {
-      return ChangeListManager.getInstance(myProject).haveChangesUnder(virtualFile);
+  @Nullable
+  private Boolean calcDirectoryStatus(@NotNull VirtualFile virtualFile) {
+    if (!VcsConfiguration.getInstance(myProject).SHOW_DIRTY_RECURSIVELY) {
+      return null;
+    }
+
+    ThreeState state = ChangeListManager.getInstance(myProject).haveChangesUnder(virtualFile);
+    if (ThreeState.YES.equals(state)) {
+      return Boolean.TRUE; // an immediate child is modified
+    }
+    else if (ThreeState.UNSURE.equals(state)) {
+      return Boolean.FALSE; // some child is modified
     }
     else {
-      return ThreeState.NO;
+      return null; // no modified files inside
     }
   }
 
@@ -278,18 +286,11 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
 
   private void cacheChangedFileStatus(final VirtualFile virtualFile, final FileStatus fs) {
     myCachedStatuses.put(virtualFile, fs);
-    if (FileStatus.NOT_CHANGED.equals(fs)) {
-      final ThreeState parentingStatus = getNotChangedDirectoryParentingStatus(virtualFile);
-      if (ThreeState.YES.equals(parentingStatus)) {
-        myWhetherExactlyParentToChanged.put(virtualFile, true);
-      }
-      else if (ThreeState.UNSURE.equals(parentingStatus)) {
-        myWhetherExactlyParentToChanged.put(virtualFile, false);
-      }
-    }
-    else {
-      myWhetherExactlyParentToChanged.remove(virtualFile);
-    }
+
+    Boolean isParentToChanged = FileStatus.NOT_CHANGED.equals(fs)
+                                ? calcDirectoryStatus(virtualFile)
+                                : null;
+    myWhetherExactlyParentToChanged.put(virtualFile, isParentToChanged);
   }
 
   @Override
@@ -314,10 +315,18 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
   @Override
   public FileStatus getRecursiveStatus(@NotNull VirtualFile file) {
     FileStatus status = getStatus(file);
-    if (status != FileStatus.NOT_CHANGED || !file.isValid() || !file.isDirectory()) return status;
-    Boolean immediate = myWhetherExactlyParentToChanged.get(file);
-    if (immediate == null) return FileStatus.NOT_CHANGED;
-    return immediate ? FileStatus.NOT_CHANGED_IMMEDIATE : FileStatus.NOT_CHANGED_RECURSIVE;
+    if (status != FileStatus.NOT_CHANGED) {
+      return status;
+    }
+
+    if (file.isValid() && file.isDirectory()) {
+      Boolean immediate = myWhetherExactlyParentToChanged.get(file);
+      if (immediate == null) return FileStatus.NOT_CHANGED;
+      return immediate ? FileStatus.NOT_CHANGED_IMMEDIATE
+                       : FileStatus.NOT_CHANGED_RECURSIVE;
+    }
+
+    return FileStatus.NOT_CHANGED;
   }
 
   @RequiresEdt
