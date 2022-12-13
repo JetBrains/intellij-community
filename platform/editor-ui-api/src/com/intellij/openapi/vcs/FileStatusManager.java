@@ -4,7 +4,9 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -22,11 +24,23 @@ public abstract class FileStatusManager {
    * @see com.intellij.openapi.vcs.changes.ChangeListManager#getStatus
    * @see FileStatusFactory
    * @see com.intellij.openapi.vcs.impl.FileStatusProvider
+   * @see FileStatusListener
    */
-  public abstract FileStatus getStatus(@NotNull VirtualFile file);
+  @CalledInAny
+  public abstract @NotNull FileStatus getStatus(@NotNull VirtualFile file);
 
+  /**
+   * Notify VCS that file statuses might have changed and need to be updated.
+   * <p>
+   * Not to be confused with {@link FileStatusListener#fileStatusChanged}.
+   * This method can be used by {@link com.intellij.openapi.vcs.impl.FileStatusProvider} implementations to notify VCS about the change
+   * in {@link com.intellij.openapi.vcs.impl.FileStatusProvider#getFileStatus(VirtualFile)} output.
+   * {@link FileStatusListener#fileStatusChanged} is used by VCS to notify {@link FileStatusManager#getStatus(VirtualFile)} users about the change.
+   */
+  @CalledInAny
   public abstract void fileStatusesChanged();
 
+  @CalledInAny
   public abstract void fileStatusChanged(VirtualFile file);
 
   /**
@@ -46,6 +60,7 @@ public abstract class FileStatusManager {
   public void removeFileStatusListener(@NotNull FileStatusListener listener) {
   }
 
+  @Nullable
   public abstract Color getNotChangedDirectoryColor(@NotNull VirtualFile file);
 
   /**
@@ -55,7 +70,6 @@ public abstract class FileStatusManager {
    */
   @NotNull
   public FileStatus getRecursiveStatus(@NotNull VirtualFile file) {
-    FileStatus status = getStatus(file);
-    return status != null ? status : FileStatus.NOT_CHANGED;
+    return getStatus(file);
   }
 }

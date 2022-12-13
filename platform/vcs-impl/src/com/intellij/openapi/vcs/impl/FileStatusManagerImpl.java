@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -146,7 +147,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     }
   }
 
-  private FileStatus calcStatus(@NotNull final VirtualFile virtualFile) {
+  private @NotNull FileStatus calcStatus(@NotNull final VirtualFile virtualFile) {
     for (FileStatusProvider extension : FileStatusProvider.EP_NAME.getExtensions(myProject)) {
       final FileStatus status = extension.getFileStatus(virtualFile);
       if (status != null) {
@@ -289,7 +290,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
   }
 
   @Override
-  public FileStatus getStatus(@NotNull final VirtualFile file) {
+  public @NotNull FileStatus getStatus(@NotNull final VirtualFile file) {
     if (file.getFileSystem() instanceof NonPhysicalFileSystem) {
       return FileStatus.SUPPRESSED;  // do not leak light files via cache
     }
@@ -310,6 +311,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     return myCachedStatuses.get(file);
   }
 
+  @RequiresEdt
   private void refreshFileStatusFromDocument(@NotNull final VirtualFile virtualFile, @NotNull final Document doc) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("refreshFileStatusFromDocument: file.getModificationStamp()=" + virtualFile.getModificationStamp() +
