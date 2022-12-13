@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.CalledInAny;
@@ -11,7 +12,13 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public abstract class FileStatusManager {
+  protected static final Logger LOG = Logger.getInstance(FileStatusManager.class);
+
   public static FileStatusManager getInstance(@NotNull Project project) {
+    if (project.isDefault()) {
+      LOG.error("Can't create FileStatusManager for default project");
+      return new DefaultFileStatusManager();
+    }
     return project.getService(FileStatusManager.class);
   }
 

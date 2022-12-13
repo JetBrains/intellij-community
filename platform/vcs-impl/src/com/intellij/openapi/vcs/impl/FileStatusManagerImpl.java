@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -40,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 
 public final class FileStatusManagerImpl extends FileStatusManager implements Disposable {
-  private static final Logger LOG = Logger.getInstance(FileStatusManagerImpl.class);
   private final Map<VirtualFile, FileStatus> myCachedStatuses = Collections.synchronizedMap(new HashMap<>());
   private final Map<VirtualFile, Boolean> myWhetherExactlyParentToChanged = Collections.synchronizedMap(new HashMap<>());
   private final Project myProject;
@@ -95,9 +93,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
       }
     });
 
-    if (!project.isDefault()) {
-      StartupManager.getInstance(project).runAfterOpened(this::fileStatusesChanged);
-    }
+    StartupManager.getInstance(project).runAfterOpened(this::fileStatusesChanged);
 
     FileStatusProvider.EP_NAME.addChangeListener(myProject, this::fileStatusesChanged, project);
   }
