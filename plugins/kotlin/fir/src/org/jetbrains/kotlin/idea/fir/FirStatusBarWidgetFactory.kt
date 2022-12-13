@@ -3,20 +3,24 @@
 package org.jetbrains.kotlin.idea.fir
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import org.jetbrains.kotlin.idea.KotlinIcons
 import javax.swing.Icon
 
-private class FirStatusBarWidgetFactory: StatusBarWidgetFactory {
+private class FirStatusBarWidgetFactory : StatusBarWidgetFactory {
     override fun getId(): String = ID
 
-    override fun getDisplayName(): String = "FIR IDE"
+    override fun getDisplayName(): String = DISPLAY_NAME
 
     override fun createWidget(project: Project): StatusBarWidget = Widget()
 
     companion object {
         const val ID = "kotlin.fir.ide"
+
+        @NlsSafe
+        private const val DISPLAY_NAME = "FIR IDE"
     }
 }
 
