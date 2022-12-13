@@ -483,13 +483,15 @@ public final class BuildDependenciesUtil {
     }
   }
 
-  public static String directoryContentToString(Path directory) {
+  public static String directoryContentToString(Path directory, String humanReadableName) {
     List<Path> contents = listDirectory(directory);
     StringBuilder sb = new StringBuilder();
 
     sb.append("Directory contents of ");
     sb.append(directory.toAbsolutePath());
-    sb.append(", ");
+    sb.append(" (");
+    sb.append(humanReadableName);
+    sb.append("), ");
     sb.append(contents.size());
     sb.append(" entries:");
 
