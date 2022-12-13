@@ -1,25 +1,54 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.newTests.testServices
 
+import org.jetbrains.kotlin.gradle.newTests.AbstractKotlinMppGradleImportingTest
+import org.junit.rules.TestRule
 import org.junit.runner.Description
+import org.junit.runners.model.Statement
 import java.time.Instant
 
 /**
  * Tracks if some Gradle Daemons expired/died during the test or between
  * tests
  */
-object GradleDaemonWatchdogService : KotlinBeforeAfterTestRuleWithDescription {
+object GradleDaemonWatchdogService : TestRule {
     private val GRADLE_DAEMON_PROCESS_NAME = "GradleDaemon"
     private var atLeastOneTestStarted: Boolean = false
     private var atLeastOneTestFinished: Boolean = false
+    private var finishedWithException: Boolean = false
 
-    override fun before(description: Description) {
-        performDaemonsHealthcheck("Test ${description.displayName} starting")
+    override fun apply(base: Statement, description: Description): Statement =
+        object : Statement() {
+            override fun evaluate() {
+                before(description)
+                try {
+                    base.evaluate()
+                }
+                catch (e: Exception) {
+                    // Clear the state, as exception could kill daemon as well; it will
+                    // be visible in logs anyways, so no need to report it additionally
+                    finishedWithException = true
+                    atLeastOneTestStarted = false
+                    atLeastOneTestFinished = false
+                    throw e
+                }
+                finally {
+                    after(description)
+                }
+            }
+        }
+
+
+    fun before(description: Description) {
+        finishedWithException = false
+        performDaemonsHealthcheck("Test ${description.methodName} starting")
         atLeastOneTestStarted = true
     }
 
-    override fun after(description: Description) {
-        performDaemonsHealthcheck("Test ${description.displayName} finished")
+    fun after(description: Description) {
+        // Don't run checks if test has failed as it could cause unpredictable issues
+        if (finishedWithException) return
+        performDaemonsHealthcheck("Test ${description.methodName} finished")
         atLeastOneTestFinished = true
     }
 
@@ -32,7 +61,7 @@ object GradleDaemonWatchdogService : KotlinBeforeAfterTestRuleWithDescription {
 
             atLeastOneTestStarted && !atLeastOneTestFinished -> {
                 // The very first test finished, it's OK to have a new Gradle Daemon spawned
-                // (this one is expected to persist throughtout the whole test run)
+                // (this one is expected to persist throughout the whole test run)
                 val gradleDaemonsChanges = diff.onlyGradleDaemons()
 
                 if (gradleDaemonsChanges.size != 1 || gradleDaemonsChanges.entries.single().value != ProcessesSnapshotsDiff.Diff.SPAWNED) {
