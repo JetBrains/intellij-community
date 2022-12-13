@@ -181,6 +181,21 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             runTest("../testData/intentions/addBraces/ifElseWithComment.kt");
         }
 
+        @TestMetadata("ifElseWithComment2.kt")
+        public void testIfElseWithComment2() throws Exception {
+            runTest("../testData/intentions/addBraces/ifElseWithComment2.kt");
+        }
+
+        @TestMetadata("ifElseWithComment3.kt")
+        public void testIfElseWithComment3() throws Exception {
+            runTest("../testData/intentions/addBraces/ifElseWithComment3.kt");
+        }
+
+        @TestMetadata("ifElseWithComment4.kt")
+        public void testIfElseWithComment4() throws Exception {
+            runTest("../testData/intentions/addBraces/ifElseWithComment4.kt");
+        }
+
         @TestMetadata("ifWithComment.kt")
         public void testIfWithComment() throws Exception {
             runTest("../testData/intentions/addBraces/ifWithComment.kt");
@@ -298,6 +313,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             @TestMetadata("ifThen.kt")
             public void testIfThen() throws Exception {
                 runTest("../testData/intentions/addBracesToAllBranches/ifThen.kt");
+            }
+
+            @TestMetadata("ifWithComment.kt")
+            public void testIfWithComment() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/ifWithComment.kt");
             }
 
             @TestMetadata("ifWithNoElse.kt")
