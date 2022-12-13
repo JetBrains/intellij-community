@@ -110,8 +110,17 @@ internal class DirectKotlinOverridingMethodDelegatedSearcher : Searcher<SearchPa
         val baseFunction = parameters.ktCallableDeclaration
         val methods = baseFunction.toLightMethods()
 
-        val queries = methods.map { it ->
-            EVERYTHING_BUT_KOTLIN.createQuery(JavaOverridingMethodsSearcherFromKotlinParameters(it, parameters.searchScope, true))
+        val queries = methods.map { lightMethod ->
+            EVERYTHING_BUT_KOTLIN.createQuery(JavaOverridingMethodsSearcherFromKotlinParameters(lightMethod, parameters.searchScope, true))
+                .flatMapping { m ->
+                    return@flatMapping object : AbstractQuery<PsiElement>() {
+                        override fun processResults(consumer: Processor<in PsiElement>): Boolean {
+                            return runReadAction {
+                                m.hierarchicalMethodSignature.superSignatures.any { hs -> hs.method.isEquivalentTo(lightMethod) } && consumer.process(m)
+                            }
+                        }
+                    }
+                }
         }
 
         return queries
