@@ -95,13 +95,13 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
     try {
       String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
 
-      Object op = b.getClientProperty("JComponent.outline");
+      DarculaUIUtil.Outline op = DarculaUIUtil.getOutline(b);
       boolean hasFocus = op == null && b.hasFocus();
       Icon icon = LafIconLookup.getIcon(iconName, selected || isIndeterminate(b), hasFocus, b.isEnabled());
       icon.paintIcon(b, g2, iconRect.x, iconRect.y);
 
       if (op != null) {
-        DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, b.hasFocus());
+        op.setGraphicsColor(g2, b.hasFocus());
         Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         outline.append(new RoundRectangle2D.Float(iconRect.x + JBUIScale.scale(1), iconRect.y, JBUIScale.scale(18), JBUIScale.scale(18),
                                                   JBUIScale.scale(8), JBUIScale.scale(8)), false);

@@ -152,12 +152,8 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     }
 
     private static boolean checkError(Component c) {
-      Object outlineObj = ((JComponent)c).getClientProperty("JComponent.outline");
-      if (outlineObj == null) return false;
-
-      DarculaUIUtil.Outline outline = outlineObj instanceof DarculaUIUtil.Outline
-                                      ? (DarculaUIUtil.Outline) outlineObj : DarculaUIUtil.Outline.valueOf(outlineObj.toString());
-      return outline == DarculaUIUtil.Outline.error || outline == DarculaUIUtil.Outline.warning;
+      DarculaUIUtil.Outline outline = DarculaUIUtil.getOutline((JComponent)c);
+      return DarculaUIUtil.isWarningOrError(outline);
     }
   }
 }
