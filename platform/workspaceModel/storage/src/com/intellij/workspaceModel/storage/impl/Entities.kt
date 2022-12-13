@@ -339,22 +339,23 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: WorkspaceEn
 
   private fun findConnectionId(entityClass: KClass<out WorkspaceEntity>, entity: List<WorkspaceEntity?>): ConnectionId? {
     val someEntity = entity.filterNotNull().firstOrNull()
-    return if (someEntity != null) {
-      val firstClass = this.getEntityClass()
+    val firstClass = this.getEntityClass()
+    val connectionChecker = { connectionId: ConnectionId -> isCorrectConnection(connectionId, firstClass, entityClass.java)
+                                                            || isCorrectConnection(connectionId, entityClass.java, firstClass) }
+    if (someEntity != null) {
       someEntity as WorkspaceEntityBase
-      (someEntity.connectionIdList().asSequence() + this.connectionIdList()).first {
-        isCorrectConnection(it, firstClass, entityClass.java) || isCorrectConnection(it, entityClass.java, firstClass)
-      }
+      val resultingConnection = someEntity.connectionIdList().firstOrNull(connectionChecker)
+      if (resultingConnection != null) return resultingConnection
+      return this.connectionIdList().first(connectionChecker)
     }
     else {
-      val firstClass = this.getEntityClass()
+      val resultingConnection = entityLinks.keys.asSequence().map { it.connectionId }.firstOrNull(connectionChecker)
+      if (resultingConnection != null) return resultingConnection
       // Attempt to find connection by old entities still existing in storage
-      val connectionsFromOldEntities = (referrers(entityClass.java, true).firstOrNull() as? WorkspaceEntityBase)?.connectionIdList()?.asSequence()
-                                      ?: emptySequence()
-      // It's okay to have two identical connections e.g if entity linked to themselves as parent and child
-      (entityLinks.keys.asSequence().map { it.connectionId } + connectionsFromOldEntities).firstOrNull {
-        isCorrectConnection(it, firstClass, entityClass.java) || isCorrectConnection(it, entityClass.java, firstClass)
-      }
+      val connectionsFromOldEntities = (referrers(entityClass.java, true).firstOrNull() as? WorkspaceEntityBase)?.connectionIdList()
+                                       ?: emptyList()
+      // It's okay to have two identical connections e.g. if entity linked to themselves as parent and child
+      return connectionsFromOldEntities.firstOrNull(connectionChecker)
     }
   }
 
