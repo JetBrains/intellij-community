@@ -115,18 +115,7 @@ internal class SettingsSyncPluginManager : Disposable {
       val oldPlugins = stateOfThisIde
       stateOfThisIde = newState.plugins.getOrDefault(thisIde(), emptyMap())
       stateOfOtherIdes = newState.plugins - thisIde()
-
-      val newPlugins = if (SettingsSyncSettings.getInstance().syncPluginsAcrossIdes) {
-        val mergedPlugins = mutableMapOf<PluginId, PluginData>()
-        for ((ide, pluginsForIde) in stateOfOtherIdes) {
-          mergedPlugins += pluginsForIde
-        }
-        mergedPlugins += stateOfThisIde
-        mergedPlugins
-      }
-      else {
-        stateOfThisIde
-      }
+      val newPlugins = getPluginsToOperateWith()
 
       logChangedState("Pushing new plugin information to the IDE, cross-ide plugin sync is ${enabledOrDisabled(SettingsSyncSettings.getInstance().syncPluginsAcrossIdes)}", oldPlugins, newPlugins)
 
@@ -186,6 +175,20 @@ internal class SettingsSyncPluginManager : Disposable {
 
     LOG.info("Installing plugins: $pluginsToInstall")
     pluginManagerProxy.createInstaller().installPlugins(pluginsToInstall)
+  }
+
+  private fun getPluginsToOperateWith(): Map<PluginId, PluginData> {
+    val mergedPlugins = mutableMapOf<PluginId, PluginData>()
+    for ((ide, pluginsForIde) in stateOfOtherIdes) {
+      if (SettingsSyncSettings.getInstance().syncPluginsAcrossIdes) {
+        mergedPlugins += pluginsForIde
+      }
+      else {
+        mergedPlugins += pluginsForIde.filterValues { it.category != SettingsCategory.PLUGINS }
+      }
+    }
+    mergedPlugins += stateOfThisIde
+    return mergedPlugins
   }
 
   private fun findPlugin(idString: String): IdeaPluginDescriptor? {
