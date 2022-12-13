@@ -9,7 +9,7 @@ import com.intellij.codeInspection.EnhancedSwitchMigrationInspection;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
@@ -22,7 +22,6 @@ import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -35,11 +34,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.text.Document;
-import java.text.NumberFormat;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -76,35 +70,13 @@ public class IfCanBeSwitchInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JLabel label = new JLabel(InspectionGadgetsBundle.message("if.can.be.switch.minimum.branch.option"));
-    final NumberFormat formatter = NumberFormat.getIntegerInstance();
-    formatter.setParseIntegerOnly(true);
-    final JFormattedTextField valueField = new JFormattedTextField(formatter);
-    valueField.setValue(Integer.valueOf(minimumBranches));
-    valueField.setColumns(2);
-    final Document document = valueField.getDocument();
-    document.addDocumentListener(new DocumentAdapter() {
-      @Override
-      public void textChanged(@NotNull DocumentEvent e) {
-        try {
-          valueField.commitEdit();
-          minimumBranches =
-            ((Number)valueField.getValue()).intValue();
-        }
-        catch (ParseException ignore) {
-          // No luck this time
-        }
-      }
-    });
-
-    panel.addRow(label, valueField);
-    panel.addCheckbox(InspectionGadgetsBundle.message("if.can.be.switch.int.option"), "suggestIntSwitches");
-    panel.addCheckbox(InspectionGadgetsBundle.message("if.can.be.switch.enum.option"), "suggestEnumSwitches");
-    panel.addCheckbox(InspectionGadgetsBundle.message("if.can.be.switch.null.safe.option"), "onlySuggestNullSafe");
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(
+      OptPane.number("minimumBranches", InspectionGadgetsBundle.message("if.can.be.switch.minimum.branch.option"), 1, 100),
+      OptPane.checkbox("suggestIntSwitches", InspectionGadgetsBundle.message("if.can.be.switch.int.option")),
+      OptPane.checkbox("suggestEnumSwitches", InspectionGadgetsBundle.message("if.can.be.switch.enum.option")),
+      OptPane.checkbox("onlySuggestNullSafe", InspectionGadgetsBundle.message("if.can.be.switch.null.safe.option"))
+    );
   }
 
   public void setOnlySuggestNullSafe(boolean onlySuggestNullSafe) {
