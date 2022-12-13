@@ -55,7 +55,7 @@ class FullLineContributor : CompletionContributor(), DumbAware {
     }
     val head = firstTokenStorage.prefixFromPreviousSession().removeSuffix(prefix)
 
-    val fullLineResultSet = result.withPrefixMatcher(CamelHumpMatcher(head + prefix)).apply {
+    val fullLineResultSet = result.withPrefixMatcher(CamelHumpMatcher(head + prefix, false)).apply {
       addLookupAdvertisement(message("full.line.lookup.advertisement.tab"))
       restartCompletionWhenNothingMatches()
     }
