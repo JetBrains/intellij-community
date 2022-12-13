@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.treeView.InplaceCommentAppender
 import com.intellij.ide.util.treeView.NodeRenderer
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -32,17 +33,26 @@ open class ProjectViewRenderer : NodeRenderer() {
                                      row: Int,
                                      hasFocus: Boolean) {
     super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus)
-
-    val userObject = TreeUtil.getUserObject(value)
-    if (userObject is ProjectViewNode<*> && UISettings.getInstance().showInplaceComments) {
-      appendInplaceComments(userObject)
-    }
+    appendInplaceComments(value)
   }
 
-  private fun appendInplaceComments(node: ProjectViewNode<*>) {
-    if (node.hasInplaceCommentProducer()) {
-      return // the node handles inplace comments by itself (the right way)
+  // Legacy inplace comment handling follows. The right way to do it during the node update (AbstractTreeNode.postprocess).
+
+  private fun appendInplaceComments(value: Any?) {
+    if (!Registry.`is`("projectView.fall.back.to.legacy.inplace.comments", false)) {
+      return // legacy inplace comment calculation logic is disabled
     }
+    if (!UISettings.getInstance().showInplaceComments) {
+      return // inplace comments are disabled entirely
+    }
+    val node = TreeUtil.getUserObject(value)
+    if (node !is ProjectViewNode<*>) {
+      return // legacy inplace comments are only supported for ProjectViewNode
+    }
+    if (node.hasInplaceCommentProducer()) {
+      return // the node handles inplace comments by itself (the right way), no need to fall back
+    }
+    // Legacy code follows.
     val parentNode = node.parent
     val content = node.value
     if (content is PsiFileSystemItem || content !is PsiElement || parentNode != null && parentNode.value is PsiDirectory) {
