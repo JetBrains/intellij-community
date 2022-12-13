@@ -36,6 +36,7 @@ class DuplicateBranchesInEnhancedSwitchTest : LightJavaCodeInsightFixtureTestCas
   fun testTwoPatterns() = doTest()
   fun testWhenClause1() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_19_PREVIEW) { doTest() }
   fun testWhenClause2() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_19_PREVIEW) { doTest() }
+  fun testExpressionsWithComments() = doTest()
 
   private fun doTest() {
     myFixture.enableInspections(DuplicateBranchesInSwitchInspection())
