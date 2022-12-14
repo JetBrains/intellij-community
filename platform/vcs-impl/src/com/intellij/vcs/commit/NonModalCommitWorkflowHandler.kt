@@ -481,6 +481,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   override fun dispose() {
+    disposeCommitOptions()
     hideCommitChecksFailureNotification()
     coroutineScope.cancel()
     project.getServiceIfCreated(PostCommitChecksHandler::class.java)?.resetPendingCommits() // null during Project dispose

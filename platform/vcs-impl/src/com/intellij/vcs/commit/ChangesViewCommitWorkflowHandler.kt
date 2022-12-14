@@ -270,7 +270,6 @@ internal class ChangesViewCommitWorkflowHandler(
   // save state on other events - like "settings changed to use commit dialog"
   override fun dispose() {
     saveStateBeforeDispose()
-    disposeCommitOptions()
 
     super.dispose()
   }
