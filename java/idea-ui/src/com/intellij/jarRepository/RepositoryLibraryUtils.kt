@@ -18,7 +18,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JavadocOrderRootType
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsContexts
@@ -42,7 +41,6 @@ import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor.Artif
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import org.jetbrains.jps.util.JpsChecksumUtil
 import org.jetbrains.jps.util.JpsPathUtil
-import java.io.File
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
@@ -60,40 +58,6 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
     @JvmStatic
     fun getInstance(project: Project): RepositoryLibraryUtils = project.service()
 
-    @JvmStatic
-    fun buildRepositoryLibraryArtifactsVerification(descriptor: JpsMavenRepositoryLibraryDescriptor,
-                                                    roots: Collection<OrderRoot>): List<ArtifactVerification> {
-      val usefulJars = roots.asSequence()
-        .filter { it.type == OrderRootType.CLASSES }
-        .map { JpsPathUtil.urlToFile(it.file.url) }
-
-      return buildRepositoryLibraryArtifactsVerification(descriptor, usefulJars)
-    }
-
-    private fun buildRepositoryLibraryArtifactsVerification(descriptor: JpsMavenRepositoryLibraryDescriptor,
-                                                            verifiableJars: Sequence<File>): List<ArtifactVerification> {
-      /* Build verification only for libraries with stable version and if verification is enabled */
-      if (descriptor.version == RepositoryLibraryDescription.LatestVersionId ||
-          descriptor.version == RepositoryLibraryDescription.ReleaseVersionId ||
-          descriptor.version.endsWith(RepositoryLibraryDescription.SnapshotVersionSuffix)) {
-        return emptyList()
-      }
-
-      return verifiableJars.map {
-        require(it.exists()) { "Verifiable JAR not exists: $it" }
-        val artifactFileUrl = VfsUtilCore.fileToUrl(it)
-        val sha256sum = try {
-          JpsChecksumUtil.getSha256Checksum(it.toPath())
-        }
-        catch (e: IOException) {
-          logger.error(e)
-          throw RuntimeException(e)
-        }
-
-        ArtifactVerification(artifactFileUrl, sha256sum)
-      }.toList()
-    }
-
     /* Reuse notifications group from [JarRepositoryManager] */
     private val NOTIFICATIONS_GROUP = JarRepositoryManager.GROUP
 
@@ -101,11 +65,8 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
   }
 
   private val defaultCoroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
   private var testCoroutineScope: CoroutineScope? = null
-
-  private val myCoroutineScope: CoroutineScope
-    get() = testCoroutineScope ?: defaultCoroutineScope
+  private val myCoroutineScope: CoroutineScope get() = testCoroutineScope ?: defaultCoroutineScope
 
   override fun dispose() = defaultCoroutineScope.cancel()
 
@@ -128,16 +89,19 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
    *
    * See [JpsMavenRepositoryLibraryDescriptor.getJarRepositoryId], [RemoteRepositoriesConfiguration].
    */
-  fun guessAndBindRemoteRepositoriesModal() = GuessAndBindRemoteRepositoriesJob().runModal(
-    JavaUiBundle.message("repository.library.utils.progress.title.guessing.remote.repos")
-  )
+  fun guessAndBindRemoteRepositoriesModal() = BuildExtendedLibraryPropertiesJob(guessAndBindRemoteRepository = true,
+                                                                                buildMissingChecksums = false,
+                                                                                rebuildExistingChecksums = false,
+                                                                                silentIfNoChanges = false)
+    .runModal(JavaUiBundle.message("repository.library.utils.progress.title.guessing.remote.repos"))
 
   /**
    * Unbinds remote repositories from all the [RepositoryLibraryType] libraries of project. Global libraries are excluded.
    *
    * See [JpsMavenRepositoryLibraryDescriptor.getJarRepositoryId], [RemoteRepositoriesConfiguration].
    */
-  fun unbindRemoteRepositoriesModal() = UnbindRemoteRepositoriesJob()
+  fun unbindRemoteRepositoriesModal() = ClearExtendedLibraryPropertiesJob(unbindRemoteRepositories = true,
+                                                                          disableEnabledChecksums = false)
     .runModal(JavaUiBundle.message("repository.library.utils.progress.title.unbind.remote.repos"))
 
   /**
@@ -148,9 +112,10 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
    *
    * See [JpsMavenRepositoryLibraryDescriptor.ArtifactVerification], [JpsMavenRepositoryLibraryDescriptor.isVerifySha256Checksum].
    */
-  fun rebuildExistingSha256ChecksumsBackground() = BuildSha256SumJob(true, false).runBackground(
-    JavaUiBundle.message("repository.library.utils.progress.title.building.sha256sum")
-  )
+  fun rebuildExistingSha256ChecksumsBackground() = BuildExtendedLibraryPropertiesJob(guessAndBindRemoteRepository = false,
+                                                                                     buildMissingChecksums = false,
+                                                                                     rebuildExistingChecksums = true)
+    .runBackground(JavaUiBundle.message("repository.library.utils.progress.title.building.sha256sum"))
 
   /**
    * Enable and build SHA256 checksums for all [RepositoryLibraryType] libraries for which checksums were not enabled.
@@ -159,19 +124,19 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
    *
    * See [JpsMavenRepositoryLibraryDescriptor.ArtifactVerification], [JpsMavenRepositoryLibraryDescriptor.isVerifySha256Checksum].
    */
-  fun buildMissingSha256ChecksumsBackground() = BuildSha256SumJob(false, true).runBackground(
-    JavaUiBundle.message("repository.library.utils.progress.title.building.sha256sum")
-  )
-
+  fun buildMissingSha256ChecksumsBackground() = BuildExtendedLibraryPropertiesJob(guessAndBindRemoteRepository = false,
+                                                                                  buildMissingChecksums = true,
+                                                                                  rebuildExistingChecksums = false)
+    .runBackground(JavaUiBundle.message("repository.library.utils.progress.title.building.sha256sum"))
 
   /**
    * Disable SHA256 checksum for all [RepositoryLibraryType] libraries. Global libraries are excluded.
    *
    * See [JpsMavenRepositoryLibraryDescriptor.ArtifactVerification], [JpsMavenRepositoryLibraryDescriptor.isVerifySha256Checksum].
    */
-  fun removeSha256ChecksumsBackground() = RemoveSha256ChecksumsJob().runBackground(
-    JavaUiBundle.message("repository.library.utils.progress.title.removing.sha256sum")
-  )
+  fun removeSha256ChecksumsBackground() = ClearExtendedLibraryPropertiesJob(unbindRemoteRepositories = false,
+                                                                            disableEnabledChecksums = true)
+    .runBackground(JavaUiBundle.message("repository.library.utils.progress.title.removing.sha256sum"))
 
   /**
    * Check whether all libraries can be resolved in background, on finish shows notification with details.
@@ -189,50 +154,24 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
   }
 
   /**
-   * Build SHA256 checksums if [buildSha256Checksum]` == true`,
-   * guess and bind remote repository if [guessAndBindRemoteRepository]` == true`.
+   * Build SHA256 checksums if [buildSha256Checksum]` == true`. Checksums are always rebuilt, event if ones exist.
+   * Guess and bind remote repository if [guessAndBindRemoteRepository]` == true`. If bind repository already exists, it won't be changed.
    *
-   * Expected to be used when new library is added and its properties should be filled.
+   * Expected to be used when new library is added/existing library is modified (ex. version) and its properties should be filled.
    *
-   * Does nothing if [library] is not [RepositoryLibraryType], if [library] is global, if checksums or bind repository already exists.
+   * Does nothing if [library] is not [RepositoryLibraryType], if [library] is global.
    */
-  fun computePropertiesForNewLibrary(library: LibraryEntity, buildSha256Checksum: Boolean, guessAndBindRemoteRepository: Boolean): Job? {
+  fun computePropertiesForLibraries(libraries: Set<LibraryEntity>,
+                                    buildSha256Checksum: Boolean,
+                                    guessAndBindRemoteRepository: Boolean): Job? {
     if (!buildSha256Checksum && !guessAndBindRemoteRepository) return null
-    if (library.isGlobal()) return null
-
-    val propertiesEntity = library.libraryProperties ?: return null
-    val properties = propertiesEntity.getPropertiesIfRepositoryLibrary() ?: return null
-
-    val workspaceModel = WorkspaceModel.getInstance(project)
-    val snapshot = workspaceModel.entityStorage.current
-    val libraryDisplayName = library.getDisplayName(snapshot)
-
-    return myCoroutineScope.launch {
-      withBackgroundProgressIndicator(project, JavaUiBundle.message("repository.library.utils.library.update.title")) {
-        progressSinkOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.processing.library", libraryDisplayName))
-        var checksumBuiltFlag = 0
-        var repoBindFlag = 0
-        if (buildSha256Checksum && !properties.isEnableSha256Checksum) {
-          progressSinkOrError.details(JavaUiBundle.message("repository.library.utils.progress.details.building.checksums"))
-          properties.rebuildChecksum(propertiesEntity)
-          checksumBuiltFlag = 1
-        }
-
-        if (guessAndBindRemoteRepository && properties.jarRepositoryId == null) {
-          progressSinkOrError.details(JavaUiBundle.message("repository.library.utils.progress.details.guessing.remote.repo"))
-          properties.tryGuessAndBindRemoteRepository(project, RemoteRepositoriesConfiguration.getInstance(project).repositories)
-          repoBindFlag = 1
-        }
-
-        val builder = snapshot.toBuilder()
-        propertiesEntity.modifyProperties(builder, properties)
-        workspaceModel.applyDiff(builder)
-        showNotification(JavaUiBundle.message("repository.library.utils.notification.content.new.library.update.done", libraryDisplayName,
-                                              checksumBuiltFlag, repoBindFlag))
-        progressSinkOrError.details(JavaUiBundle.message("repository.library.utils.progress.checking.resolution", 1, 0))
-        checkLibrariesCanBeResolved(sequenceOf(library), workspaceModel.entityStorage.current)
-      }
-    }
+    return BuildExtendedLibraryPropertiesJob(
+      guessAndBindRemoteRepository = guessAndBindRemoteRepository,
+      buildMissingChecksums = buildSha256Checksum,
+      rebuildExistingChecksums = buildSha256Checksum,
+      silentIfNoChanges = true,
+      customFilter = { it in libraries }
+    ).runBackground(JavaUiBundle.message("repository.library.utils..progress.title.libraries.changed"))
   }
 
   private fun LibrariesModificationJob.runBackground(title: @NlsContexts.ProgressTitle String) = myCoroutineScope.launch {
@@ -292,9 +231,6 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
     }
   }
 
-  private fun LibraryEntity.isGlobal() = tableId is LibraryTableId.GlobalLibraryTableId
-  private fun LibraryEntity.getHashableRoots() = roots.asSequence().filter { it.type == LibraryRootTypeId.COMPILED }
-
   private fun LibraryPropertiesEntity.getPropertiesIfRepositoryLibrary(): RepositoryLibraryProperties? {
     val propertiesXmlTag = this.propertiesXmlTag ?: return null
     if (REPOSITORY_LIBRARY_KIND.kindId == libraryType) {
@@ -303,42 +239,14 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
     return null
   }
 
-  private fun RepositoryLibraryProperties.rebuildChecksum(propertiesEntity: LibraryPropertiesEntity): RepositoryLibraryProperties {
-    val verifiableJars = propertiesEntity.library.getHashableRoots()
-      .filter { it.type == LibraryRootTypeId.COMPILED }
-      .map { JpsPathUtil.urlToFile(it.url.url) }
-
-    this.artifactsVerification = buildRepositoryLibraryArtifactsVerification(this.repositoryLibraryDescriptor, verifiableJars)
-    return this
-  }
-
-  private suspend fun RepositoryLibraryProperties.tryGuessAndBindRemoteRepository(
-    project: Project,
-    remoteRepositories: List<RemoteRepositoryDescription>
-  ): Boolean {
-    val description = RepositoryLibraryDescription.findDescription(this)
-    val remoteRepositoryId = remoteRepositories.firstOrNull {
-      val versions = JarRepositoryManager.getAvailableVersions(project, description, Collections.singletonList(it)).await()
-      versions.isNotEmpty() && versions.contains(this.version)
-    }?.id
-    jarRepositoryId = remoteRepositoryId
-    return remoteRepositoryId != null
-  }
-
   private fun LibraryPropertiesEntity.modifyProperties(builder: MutableEntityStorage, newProperties: RepositoryLibraryProperties) {
     val propertiesElement = serialize(newProperties)!!
     propertiesElement.name = JpsLibraryTableSerializer.PROPERTIES_TAG
     val xmlTag = JDOMUtil.writeElement(propertiesElement)
 
-    builder.modifyEntity(this) {
-      propertiesXmlTag = xmlTag
-    }
-  }
-
-  suspend fun WorkspaceModel.applyDiff(builder: MutableEntityStorage) = withContext(Dispatchers.EDT) {
-    WriteAction.run<RuntimeException> {
-      updateProjectModel("RepositoryLibraryUtils update") {
-        it.addDiff(builder)
+    if (xmlTag != propertiesXmlTag) {
+      builder.modifyEntity(this) {
+        propertiesXmlTag = xmlTag
       }
     }
   }
@@ -354,18 +262,63 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
     Notifications.Bus.notify(notification, project)
   }
 
-  private inner class GuessAndBindRemoteRepositoriesJob : LibrariesModificationJob() {
+  private inner class BuildExtendedLibraryPropertiesJob(
+    val guessAndBindRemoteRepository: Boolean,
+    val buildMissingChecksums: Boolean,
+    val rebuildExistingChecksums: Boolean,
+    val silentIfNoChanges: Boolean = false,
+    val customFilter: (entity: LibraryEntity) -> Boolean = { true }
+  ) : LibrariesModificationJob() {
     private val availableRepositories = RemoteRepositoriesConfiguration.getInstance(project).repositories
-    private val progressCounter = AtomicInteger(0)
-    override fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties) = properties.jarRepositoryId == null
+    private val unresolvedLibrariesNames = mutableListOf<@NlsSafe String>()
 
-    override suspend fun transform(): Unit = coroutineScope {
+    private val progressCounter = AtomicInteger(0)
+    private val checksumsBuiltFlag = AtomicInteger(0)
+    private val repositoriesChangedFlag = AtomicInteger(0)
+
+    override fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties): Boolean {
+      if (properties.isEnableSha256Checksum && rebuildExistingChecksums || !properties.isEnableSha256Checksum && buildMissingChecksums) {
+        // Save lib with problems, will cancel coroutine in afterFilter() with readable message
+        if (!entity.library.isCompiledArtifactsResolved()) {
+          unresolvedLibrariesNames.add(entity.library.getDisplayName(stateSnapshot))
+        }
+      }
+      return customFilter(entity.library)
+    }
+
+    override suspend fun afterFilter() = coroutineScope {
+      if (filteredProperties.isEmpty()) {
+        if (!silentIfNoChanges) {
+          showNotification(JavaUiBundle.message("repository.library.utils.notification.content.nothing.to.update"))
+        }
+        cancel()
+      }
+
+      if (unresolvedLibrariesNames.isNotEmpty()) {
+        showLibraryArtifactsNotResolvedAndCancel()
+      }
+    }
+
+    override suspend fun transform() = coroutineScope {
+      progressSinkOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.updating.repository.libraries"))
       progressSinkOrError.update(details = JavaUiBundle.message("repository.library.utils.progress.details.complete.for",
                                                                 0, filteredProperties.size),
                                  fraction = 0.0)
       filteredProperties.map { (entity, properties) ->
         async(Dispatchers.IO) {
-          properties.tryGuessAndBindRemoteRepository(project, availableRepositories)
+          if (properties.isEnableSha256Checksum && rebuildExistingChecksums ||
+              !properties.isEnableSha256Checksum && buildMissingChecksums) {
+            if (properties.rebuildChecksum(entity)) {
+              checksumsBuiltFlag.set(1)
+            }
+          }
+
+          if (guessAndBindRemoteRepository && properties.jarRepositoryId == null) {
+            if (properties.tryGuessAndBindRemoteRepository()) {
+              repositoriesChangedFlag.set(1)
+            }
+          }
+
           val currentCounter = progressCounter.incrementAndGet()
           progressSinkOrError.update(details = JavaUiBundle.message("repository.library.utils.progress.details.complete.for",
                                                                     currentCounter, filteredProperties.size),
@@ -377,61 +330,22 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
       }
     }
 
-    override suspend fun onFinish(): Unit = coroutineScope {
-      val libsCount = filteredProperties.size
-      showNotification(JavaUiBundle.message("repository.library.utils.notification.content.repositories.guessed", libsCount))
-      progressSinkOrError.update(JavaUiBundle.message("repository.library.utils.progress.checking.resolution", libsCount, 1), "")
-      checkLibrariesCanBeResolved(filteredProperties.asSequence().map { it.first.library }, builder)
-    }
-  }
-
-  private inner class UnbindRemoteRepositoriesJob : LibrariesModificationJob() {
-    override fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties) = properties.jarRepositoryId != null
-
-    override suspend fun afterFilter(): Unit = coroutineScope {
-      super.afterFilter()
-      progressSinkOrError.details(details = JavaUiBundle.message("repository.library.utils.progress.updating.libraries", 0))
-    }
-
-    override suspend fun transform() = filteredProperties.forEach { (propertiesEntity, properties) ->
-      properties.unbindRemoteRepository()
-      propertiesEntity.modifyProperties(properties)
-    }
-  }
-
-  private inner class BuildSha256SumJob(private val rebuildExistingChecksums: Boolean,
-                                        private val enableIfChecksumDisabled: Boolean) : LibrariesModificationJob() {
-    private val unresolvedLibrariesNames = mutableListOf<@NlsSafe String>()
-
-    override fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties): Boolean {
-      if (properties.isEnableSha256Checksum && rebuildExistingChecksums ||
-          !properties.isEnableSha256Checksum && enableIfChecksumDisabled) {
-        if (!entity.library.isCompiledArtifactsResolved()) {
-          // Save lib with problems, will cancel coroutine in afterFilter() with readable message
-          unresolvedLibrariesNames.add(entity.library.getDisplayName(stateSnapshot))
+    override suspend fun onFinish() = coroutineScope {
+      if (!builder.hasChanges()) {
+        if (!silentIfNoChanges) {
+          showNotification(JavaUiBundle.message("repository.library.utils.notification.content.nothing.to.update"))
         }
-        return true
+        return@coroutineScope
       }
-      return false
-    }
+      showNotification(JavaUiBundle.message("repository.library.utils.notification.content.library.properties.built",
+                                            filteredProperties.size, checksumsBuiltFlag.get(), repositoriesChangedFlag.get()))
 
-    override suspend fun afterFilter(): Unit = coroutineScope {
-      super.afterFilter()
-      if (unresolvedLibrariesNames.isNotEmpty()) {
-        showLibraryArtifactsNotResolvedAndCancel()
-      }
-      progressSinkOrError.details(details = JavaUiBundle.message("repository.library.utils.progress.details.building.checksums"))
-    }
-
-    override suspend fun transform() = coroutineScope {
-      filteredProperties.map { (propertiesEntity, properties) ->
-        async(Dispatchers.IO) { propertiesEntity to properties.rebuildChecksum(propertiesEntity) }
-      }.awaitAll().forEach { (propertiesEntity, properties) ->
-        propertiesEntity.modifyProperties(properties)
+      if (repositoriesChangedFlag.get() != 0) {
+        progressSinkOrError.update(JavaUiBundle.message("repository.library.utils.progress.checking.resolution",
+                                                        filteredProperties.size, 1), "")
+        checkLibrariesCanBeResolved(filteredProperties.asSequence().map { it.first.library }, builder)
       }
     }
-
-    private fun LibraryEntity.isCompiledArtifactsResolved() = getHashableRoots().all { JpsPathUtil.urlToFile(it.url.url).exists() }
 
     private fun CoroutineScope.showLibraryArtifactsNotResolvedAndCancel() {
       val displayed = ContainerUtil.getFirstItems(unresolvedLibrariesNames, 10)
@@ -441,21 +355,85 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
                        NotificationType.ERROR)
       cancel()
     }
-  }
 
-  private inner class RemoveSha256ChecksumsJob : LibrariesModificationJob() {
-    override fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties) = properties.isEnableSha256Checksum
+    private fun LibraryEntity.getHashableRoots() = roots.asSequence().filter { it.type == LibraryRootTypeId.COMPILED }
+    private fun LibraryEntity.isCompiledArtifactsResolved() = getHashableRoots().all { JpsPathUtil.urlToFile(it.url.url).exists() }
 
-    override suspend fun afterFilter(): Unit = coroutineScope {
-      super.afterFilter()
-      progressSinkOrError.details(JavaUiBundle.message("repository.library.utils.progress.updating.libraries", 0))
+    private fun RepositoryLibraryProperties.rebuildChecksum(propertiesEntity: LibraryPropertiesEntity): Boolean {
+      var verification = emptyList<ArtifactVerification>()
+      if (version != RepositoryLibraryDescription.LatestVersionId &&
+          version != RepositoryLibraryDescription.ReleaseVersionId &&
+          !version.endsWith(RepositoryLibraryDescription.SnapshotVersionSuffix)) {
+
+        val verifiableJars = propertiesEntity.library.getHashableRoots()
+          .filter { it.type == LibraryRootTypeId.COMPILED }
+          .map { JpsPathUtil.urlToFile(it.url.url) }
+
+        verification = verifiableJars.map {
+          require(it.exists()) { "Verifiable JAR not exists: $it" }
+          val artifactFileUrl = VfsUtilCore.fileToUrl(it)
+          val sha256sum = try {
+            JpsChecksumUtil.getSha256Checksum(it.toPath())
+          }
+          catch (e: IOException) {
+            logger.error(e)
+            throw RuntimeException(e)
+          }
+          ArtifactVerification(artifactFileUrl, sha256sum)
+        }.toList()
+      }
+
+      if (verification == artifactsVerification) {
+        return false
+      }
+      artifactsVerification = verification
+      return true
     }
 
-    override suspend fun transform() {
+    private suspend fun RepositoryLibraryProperties.tryGuessAndBindRemoteRepository(): Boolean {
+      val description = RepositoryLibraryDescription.findDescription(this)
+      val remoteRepositoryId = availableRepositories.firstOrNull {
+        val versions = JarRepositoryManager.getAvailableVersions(project, description, Collections.singletonList(it)).await()
+        versions.isNotEmpty() && versions.contains(this.version)
+      }?.id
+      jarRepositoryId = remoteRepositoryId
+      return remoteRepositoryId != null
+    }
+  }
+
+  private inner class ClearExtendedLibraryPropertiesJob(
+    val unbindRemoteRepositories: Boolean,
+    val disableEnabledChecksums: Boolean,
+  ) : LibrariesModificationJob() {
+    private val checksumsRemovedFlag = AtomicInteger(0)
+    private val repositoriesUnbindFlag = AtomicInteger(0)
+
+    override fun filter(entity: LibraryPropertiesEntity, properties: RepositoryLibraryProperties) =
+      properties.isEnableSha256Checksum && disableEnabledChecksums || properties.jarRepositoryId != null && unbindRemoteRepositories
+
+    override suspend fun transform() = coroutineScope {
+      progressSinkOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.updating.repository.libraries"))
+
       filteredProperties.forEach { (entity, properties) ->
-        properties.artifactsVerification = emptyList()
+        if (disableEnabledChecksums && properties.isEnableSha256Checksum) {
+          properties.artifactsVerification = emptyList()
+          checksumsRemovedFlag.set(1)
+        }
+        if (unbindRemoteRepositories && properties.jarRepositoryId != null) {
+          properties.jarRepositoryId = null
+          repositoriesUnbindFlag.set(1)
+        }
         entity.modifyProperties(properties)
       }
+    }
+
+    override suspend fun onFinish() {
+      if (!builder.hasChanges()) {
+        showNotification(JavaUiBundle.message("repository.library.utils.notification.content.nothing.to.update"))
+        return
+      }
+      showNotification(JavaUiBundle.message("repository.library.utils.notification.content.library.properties.cleared",
+                                            filteredProperties.size, checksumsRemovedFlag.get(), repositoriesUnbindFlag.get()))
     }
   }
 
@@ -493,9 +471,7 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
      * Invoked after all the modifications from [transform] made by [modifyProperties] are committed into project [WorkspaceModel].
      * Can be used to show some messages to user.
      */
-    protected open suspend fun onFinish() {
-      showNotification(JavaUiBundle.message("repository.library.utils.notification.content.libraries.updated", filteredProperties.size))
-    }
+    protected abstract suspend fun onFinish()
 
     protected fun LibraryPropertiesEntity.modifyProperties(newProperties: RepositoryLibraryProperties) =
       modifyProperties(builder, newProperties)
@@ -512,7 +488,7 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
         for (libraryPropertiesEntity in stateSnapshot.entities(LibraryPropertiesEntity::class.java)) {
           checkCanceled()
 
-          if (includeGlobalLibs || !libraryPropertiesEntity.library.isGlobal()) {
+          if (includeGlobalLibs || libraryPropertiesEntity.library.tableId !is LibraryTableId.GlobalLibraryTableId) {
             val properties = libraryPropertiesEntity.getPropertiesIfRepositoryLibrary()
             if (properties != null && filter(libraryPropertiesEntity, properties)) {
               filteredProperties.add(libraryPropertiesEntity to properties)
@@ -527,7 +503,15 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
         transform()
 
         progressSinkOrError.text(JavaUiBundle.message("repository.library.utils.progress.saving.changes", 1))
-        workspaceModel.applyDiff(builder)
+        if (builder.hasChanges()) {
+          withContext(Dispatchers.EDT) {
+            WriteAction.run<RuntimeException> {
+              workspaceModel.updateProjectModel("RepositoryLibraryUtils update") {
+                it.addDiff(builder)
+              }
+            }
+          }
+        }
         onFinish()
       }
       job.invokeOnCompletion {

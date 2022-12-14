@@ -142,9 +142,19 @@ class RepositoryLibraryUtilsTest {
     reloadAllRepositoryLibraries(project)
     val entityStorage = WorkspaceModel.getInstance(project).entityStorage
     val snapshot = entityStorage.current
-    snapshot.entities(LibraryEntity::class.java).forEach {
-      utils.computePropertiesForNewLibrary(it, buildSha256Checksum = true, guessAndBindRemoteRepository = false)!!.join()
-    }
+    utils.computePropertiesForLibraries(snapshot.entities(LibraryEntity::class.java).toSet(),
+                                        buildSha256Checksum = true, guessAndBindRemoteRepository = false)!!.join()
+    project.assertContentMatches(projectWithCorrectSha256Checksum)
+  }
+
+  @Test
+  fun `test compute properties for new library rebuilds checksums`() = testRepositoryLibraryUtils(
+    projectWithBadSha256Checksum) { project, utils ->
+    reloadAllRepositoryLibraries(project)
+    val entityStorage = WorkspaceModel.getInstance(project).entityStorage
+    val snapshot = entityStorage.current
+    utils.computePropertiesForLibraries(snapshot.entities(LibraryEntity::class.java).toSet(),
+                                        buildSha256Checksum = true, guessAndBindRemoteRepository = false)!!.join()
     project.assertContentMatches(projectWithCorrectSha256Checksum)
   }
 
@@ -152,9 +162,8 @@ class RepositoryLibraryUtilsTest {
   fun `test compute properties for new library guesses repositories`() = testRepositoryLibraryUtils(baseProject) { project, utils ->
     reloadAllRepositoryLibraries(project)
     val snapshot = WorkspaceModel.getInstance(project).entityStorage.current
-    snapshot.entities(LibraryEntity::class.java).forEach {
-      utils.computePropertiesForNewLibrary(it, buildSha256Checksum = false, guessAndBindRemoteRepository = true)!!.join()
-    }
+    utils.computePropertiesForLibraries(snapshot.entities(LibraryEntity::class.java).toSet(),
+                                        buildSha256Checksum = false, guessAndBindRemoteRepository = true)!!.join()
     project.assertContentMatches(projectWithCorrectGuessedRemoteRepositories)
   }
 
@@ -162,9 +171,8 @@ class RepositoryLibraryUtilsTest {
   fun `test compute properties for new library fills all properties`() = testRepositoryLibraryUtils(baseProject) { project, utils ->
     reloadAllRepositoryLibraries(project)
     val snapshot = WorkspaceModel.getInstance(project).entityStorage.current
-    snapshot.entities(LibraryEntity::class.java).forEach {
-      utils.computePropertiesForNewLibrary(it, buildSha256Checksum = true, guessAndBindRemoteRepository = true)!!.join()
-    }
+    utils.computePropertiesForLibraries(snapshot.entities(LibraryEntity::class.java).toSet(),
+                                        buildSha256Checksum = true, guessAndBindRemoteRepository = true)!!.join()
     project.assertContentMatches(projectWithAllPropertiesFilled)
   }
 

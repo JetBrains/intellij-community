@@ -2408,7 +2408,7 @@
   </extensions>
 
   <projectListeners>
-    <listener class="com.intellij.jarRepository.RepositoryLibraryCreationListener"
+    <listener class="com.intellij.jarRepository.RepositoryLibraryChangeListener"
               topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
   </projectListeners>
 </idea-plugin>
