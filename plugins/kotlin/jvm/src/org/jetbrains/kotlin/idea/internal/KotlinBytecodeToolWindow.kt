@@ -220,6 +220,23 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
             this,
             Computable<LongRunningReadTask<*, *>> { UpdateBytecodeToolWindowTask() }
         ).start()
+
+        listOf(enableInline, enableOptimization, enableAssertions, ir).forEach { checkBox ->
+            checkBox.addActionListener {
+                updateToolWindowOnOptionChange()
+            }
+        }
+
+        jvmTargets.addActionListener {
+            updateToolWindowOnOptionChange()
+        }
+    }
+
+    private fun updateToolWindowOnOptionChange() {
+        val task = UpdateBytecodeToolWindowTask()
+        if (task.init()) {
+            task.run()
+        }
     }
 
     private fun setText(resultText: String) {
