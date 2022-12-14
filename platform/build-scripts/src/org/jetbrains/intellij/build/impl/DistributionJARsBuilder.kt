@@ -84,6 +84,7 @@ class DistributionJARsBuilder {
       val moduleOutputPatcher = ModuleOutputPatcher()
       val buildPlatformJob: Deferred<List<DistributionFileEntry>> = async(traceContext) {
         spanBuilder("build platform lib").useWithScope2 {
+/* Android Studio: don't patch ApplicationNamesInfo yet
           coroutineScope {
             createStatisticsRecorderBundledMetadataProviderTask(moduleOutputPatcher, context)
             launch {
@@ -95,6 +96,7 @@ class DistributionJARsBuilder {
               }
             }
           }
+Android Studio: don't patch ApplicationNamesInfo yet */
 
           val result = buildLib(moduleOutputPatcher = moduleOutputPatcher, platform = state.platform, context = context)
           if (!isUpdateFromSources && context.productProperties.scrambleMainJar) {
