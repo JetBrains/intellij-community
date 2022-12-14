@@ -80,6 +80,10 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
   private int myCachedHeight = -1;
   private final @NotNull DocRenderLinkActivationHandler myLinkActivationHandler;
 
+  public DocRenderer(@NotNull DocRenderItem item) {
+    this(item, DocRenderDefaultLinkActivationHandler.INSTANCE);
+  }
+
   public DocRenderer(@NotNull DocRenderItem item, @NotNull DocRenderLinkActivationHandler linkActivationHandler) {
     myItem = item;
     myLinkActivationHandler = linkActivationHandler;
@@ -182,7 +186,8 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
 
   @Override
   public @Nullable GutterIconRenderer calcGutterIconRenderer(@NotNull CustomFoldRegion region) {
-    return myItem.calcGutterIconRenderer();
+    assert myItem.getFoldRegion() == region || myItem.getFoldRegion() == null;
+    return myItem.calcFoldingGutterIconRenderer();
   }
 
   @Override
@@ -190,7 +195,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new CopySelection());
     group.addSeparator();
-    group.add((myItem).createToggleAction());
+    group.add(myItem.createToggleAction());
     AnAction toggleRenderAllAction = ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_RENDERED_DOC_FOR_ALL);
     if (toggleRenderAllAction != null) {
       group.add(toggleRenderAllAction);

@@ -72,13 +72,12 @@ public final class DocRenderItemImpl implements DocRenderItem {
   }
 
   @Override
-  public GutterIconRenderer calcGutterIconRenderer() {
+  public GutterIconRenderer calcFoldingGutterIconRenderer() {
     MyGutterIconRenderer highlighterIconRenderer =
       (MyGutterIconRenderer)highlighter.getGutterIconRenderer();
     return highlighterIconRenderer == null
            ? null
-           : new MyGutterIconRenderer(AllIcons.Gutter.JavadocEdit,
-                                      ((MyGutterIconRenderer)highlighter.getGutterIconRenderer()).isIconVisible());
+           : new MyGutterIconRenderer(AllIcons.Gutter.JavadocEdit, highlighterIconRenderer.isIconVisible());
   }
 
   public static CustomFoldRegionRenderer createDemoRenderer(@NotNull Editor editor) {
@@ -127,7 +126,7 @@ public final class DocRenderItemImpl implements DocRenderItem {
       }
       ItemLocation offsets = new ItemLocation(highlighter);
       Runnable foldingTask = () -> {
-        foldRegion = foldingModel.addCustomLinesFolding(offsets.foldStartLine, offsets.foldEndLine, new DocRenderer(this, DocRenderDefaultLinkActivationHandler.INSTANCE));
+        foldRegion = foldingModel.addCustomLinesFolding(offsets.foldStartLine, offsets.foldEndLine, new DocRenderer(this));
       };
       if (foldingTasks == null) {
         foldingModel.runBatchFoldingOperation(foldingTask, true, false);
@@ -336,9 +335,5 @@ public final class DocRenderItemImpl implements DocRenderItem {
         item.toggle();
       }
     }
-  }
-
-  public interface Listener {
-    void onItemsUpdate(@NotNull Editor editor, @NotNull Collection<DocRenderItemImpl> items, boolean recreateContent);
   }
 }

@@ -19,7 +19,7 @@ interface DocRenderItem {
 
   val editor: Editor
 
-  fun calcGutterIconRenderer(): GutterIconRenderer?
+  fun calcFoldingGutterIconRenderer(): GutterIconRenderer?
 
   fun setIconVisible(visible: Boolean)
 

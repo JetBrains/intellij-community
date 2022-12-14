@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Editor;
@@ -12,6 +13,8 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.codeWithMe.ClientId.withClientId;
 
 public final class DocRenderManager {
   private static final Key<Boolean> DOC_RENDER_ENABLED = Key.create("doc.render.enabled");
@@ -38,7 +41,11 @@ public final class DocRenderManager {
   public static boolean isDocRenderingEnabled(@NotNull Editor editor) {
     if (editor.getEditorKind() == EditorKind.DIFF) return false;
     Boolean value = editor.getUserData(DOC_RENDER_ENABLED);
-    return value == null ? EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled() : value;
+    boolean enabled;
+    try (AccessToken ignored = withClientId(ClientEditorManager.getClientId(editor))) {
+      enabled = EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled();
+    }
+    return value == null ? enabled : value;
   }
 
   /**

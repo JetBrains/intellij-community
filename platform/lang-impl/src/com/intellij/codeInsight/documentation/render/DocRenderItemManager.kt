@@ -4,12 +4,12 @@ package com.intellij.codeInsight.documentation.render
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
-import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -20,14 +20,13 @@ import java.awt.MouseInfo
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.geom.AffineTransform
-import java.util.function.BooleanSupplier
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 interface DocRenderItemManager {
   companion object {
     @JvmStatic
-    fun getInstance(): DocRenderItemManager = ApplicationManager.getApplication().getService(DocRenderItemManager::class.java)
+    fun getInstance(): DocRenderItemManager = service()
 
     private val LISTENERS_DISPOSABLE = Key.create<Disposable>("doc.render.listeners.disposable")
   }
@@ -46,49 +45,43 @@ interface DocRenderItemManager {
 
   fun isRenderedDocHighlighter(highlighter: RangeHighlighter): Boolean
 
-  fun keepScrollingPositionWhile(editor: Editor, task: BooleanSupplier) {
-    val keeper = EditorScrollingPositionKeeper(editor)
-    keeper.savePosition()
-    if (task.asBoolean) keeper.restorePosition(false)
-  }
-
   fun setupListeners(editor: Editor, disable: Boolean) {
     val existingDisposable = editor.getUserData(LISTENERS_DISPOSABLE)
-    if (existingDisposable != null) {
-      if (disable) {
-        Disposer.dispose(existingDisposable)
+    if (disable) {
+      existingDisposable?.let {
+        Disposer.dispose(it)
         editor.putUserData(LISTENERS_DISPOSABLE, null)
       }
-      return
     }
-    val disposable = Disposer.newDisposable((editor as EditorImpl).disposable, "renderers")
-    editor.putUserData(LISTENERS_DISPOSABLE, disposable)
-    val connection = ApplicationManager.getApplication().messageBus.connect()
-    connection.setDefaultHandler(Runnable { DocRenderItemUpdater.updateRenderers(editor, true) })
-    connection.subscribe(EditorColorsManager.TOPIC)
-    connection.subscribe(LafManagerListener.TOPIC)
-    val selectionManager = DocRenderSelectionManager(editor)
-    Disposer.register(disposable, selectionManager)
-    val mouseEventBridge = DocRenderMouseEventBridge(selectionManager)
-    editor.addEditorMouseListener(mouseEventBridge, disposable)
-    editor.addEditorMouseMotionListener(mouseEventBridge, disposable)
-    val iconVisibilityController = IconVisibilityController()
-    editor.addEditorMouseListener(iconVisibilityController, disposable)
-    editor.addEditorMouseMotionListener(iconVisibilityController, disposable)
-    editor.scrollingModel.addVisibleAreaListener(iconVisibilityController, disposable)
-    Disposer.register(disposable, iconVisibilityController)
-    editor.scrollingModel.addVisibleAreaListener(MyVisibleAreaListener(editor), disposable)
-    (editor as EditorEx).foldingModel.addListener(MyFoldingListener(), disposable)
-    Disposer.register(disposable) { DocRenderer.clearCachedLoadingPane(editor) }
-    EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
-      override fun editorReleased(event: EditorFactoryEvent) {
-        if (event.editor === editor) {
-          // this ensures renderers are not kept for the released editors
-          removeAllItems(editor)
+    else if (existingDisposable == null) {
+      val connection = ApplicationManager.getApplication().messageBus.connect()
+      editor.putUserData(LISTENERS_DISPOSABLE, connection)
+      connection.setDefaultHandler(Runnable { DocRenderItemUpdater.updateRenderers(editor, true) })
+      connection.subscribe(EditorColorsManager.TOPIC)
+      connection.subscribe(LafManagerListener.TOPIC)
+      val selectionManager = DocRenderSelectionManager(editor)
+      Disposer.register(connection, selectionManager)
+      val mouseEventBridge = DocRenderMouseEventBridge(selectionManager)
+      editor.addEditorMouseListener(mouseEventBridge, connection)
+      editor.addEditorMouseMotionListener(mouseEventBridge, connection)
+      val iconVisibilityController = IconVisibilityController()
+      editor.addEditorMouseListener(iconVisibilityController, connection)
+      editor.addEditorMouseMotionListener(iconVisibilityController, connection)
+      editor.scrollingModel.addVisibleAreaListener(iconVisibilityController, connection)
+      Disposer.register(connection, iconVisibilityController)
+      editor.scrollingModel.addVisibleAreaListener(MyVisibleAreaListener(editor), connection)
+      (editor as EditorEx).foldingModel.addListener(MyFoldingListener(), connection)
+      Disposer.register(connection) { DocRenderer.clearCachedLoadingPane(editor) }
+      EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
+        override fun editorReleased(event: EditorFactoryEvent) {
+          if (event.editor == editor) {
+            // this ensures renderers are not kept for the released editors
+            removeAllItems(editor)
+          }
         }
-      }
-    }, disposable)
-    editor.caretModel.addCaretListener(MyCaretListener(), disposable)
+      }, connection)
+      editor.caretModel.addCaretListener(MyCaretListener(), connection)
+    }
   }
 
   private class MyVisibleAreaListener(editor: Editor) : VisibleAreaListener {
@@ -196,7 +189,7 @@ interface DocRenderItemManager {
       private fun findItem(editor: Editor, y: Int, neighborOffset: Int): DocRenderItem? {
         val document = editor.document
         val lineNumber = document.getLineNumber(neighborOffset)
-        val searchStartOffset = document.getLineStartOffset(Math.max(0, lineNumber - 1))
+        val searchStartOffset = document.getLineStartOffset(0.coerceAtLeast(lineNumber - 1))
         val searchEndOffset = document.getLineEndOffset(lineNumber)
         val items = getInstance().getItems(editor) ?: return null
         for (item in items) {

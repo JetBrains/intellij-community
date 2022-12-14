@@ -4,16 +4,11 @@ package com.intellij.codeInsight.documentation.render;
 import com.intellij.lang.documentation.InlineDocumentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.CaretListener;
-import com.intellij.openapi.editor.event.EditorFactoryEvent;
-import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +18,7 @@ import java.util.function.BooleanSupplier;
 
 public class DocRenderItemManagerImpl implements DocRenderItemManager {
   @Topic.AppLevel
-  public static final Topic<DocRenderItemImpl.Listener> TOPIC = new Topic<>(DocRenderItemImpl.Listener.class, Topic.BroadcastDirection.NONE, true);
+  public static final Topic<Listener> TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.NONE, true);
 
   private static final Key<Collection<DocRenderItemImpl>> OUR_ITEMS = Key.create("doc.render.items");
   static final Key<Boolean> OWN_HIGHLIGHTER = Key.create("doc.render.highlighter");
@@ -73,22 +68,7 @@ public class DocRenderItemManagerImpl implements DocRenderItemManager {
 
   @Override
   public void removeAllItems(@NotNull Editor editor) {
-    Collection<DocRenderItemImpl> items = editor.getUserData(OUR_ITEMS);
-    if (items == null) {
-      return;
-    }
-    keepScrollingPositionWhile(editor, () -> {
-      List<Runnable> foldingTasks = new ArrayList<>();
-      boolean updated = false;
-      for (Iterator<DocRenderItemImpl> it = items.iterator(); it.hasNext(); ) {
-        DocRenderItemImpl existingItem = it.next();
-        updated |= existingItem.remove(foldingTasks);
-        it.remove();
-      }
-      editor.getFoldingModel().runBatchFoldingOperation(() -> foldingTasks.forEach(Runnable::run), true, false);
-      return updated;
-    });
-    setupListeners(editor, true);
+    setItemsToEditor(editor, new DocRenderPassFactory.Items(), false);
   }
 
   @Override
@@ -137,7 +117,7 @@ public class DocRenderItemManagerImpl implements DocRenderItemManager {
         itemsToUpdateRenderers.get(i).setTextToRender(itemsToUpdateText.get(i));
       }
       DocRenderItemUpdater.updateRenderers(itemsToUpdateRenderers, true);
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).onItemsUpdate(editor, itemsToUpdateRenderers, true);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).itemsTextChanged(editor, itemsToUpdateRenderers);
       items.addAll(newRenderItems);
       return updated;
     });
@@ -162,8 +142,21 @@ public class DocRenderItemManagerImpl implements DocRenderItemManager {
     });
   }
 
+  private static void keepScrollingPositionWhile(@NotNull Editor editor, @NotNull BooleanSupplier task) {
+    EditorScrollingPositionKeeper keeper = new EditorScrollingPositionKeeper(editor);
+    keeper.savePosition();
+    if (task.getAsBoolean()) keeper.restorePosition(false);
+  }
+
   @Override
   public boolean isRenderedDocHighlighter(@NotNull RangeHighlighter highlighter) {
     return Boolean.TRUE.equals(highlighter.getUserData(OWN_HIGHLIGHTER));
+  }
+
+  public interface Listener {
+    /**
+     * Called only for existing items whose text was changed.
+     */
+    void itemsTextChanged(@NotNull Editor editor, @NotNull Collection<? extends DocRenderItem> items);
   }
 }
