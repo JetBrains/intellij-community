@@ -23,6 +23,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.Consumer
 import com.intellij.util.IconUtil
 import com.intellij.util.PairConsumer
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.JBIterable
 import org.jetbrains.annotations.Nls
 
@@ -150,6 +151,27 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
           }
         }
       }
+    }
+
+    @JvmStatic
+    @RequiresBackgroundThread
+    fun addUnversionedFilesToVcsInSync(project: Project,
+                                       targetChangeList: LocalChangeList?,
+                                       files: List<VirtualFile>,
+                                       changesConsumer: Consumer<in List<Change>>?): Boolean {
+      val exceptions = mutableListOf<VcsException>()
+      try {
+        val allProcessedFiles = performUnversionedFilesAddition(project, files, exceptions)
+        moveAddedChangesTo(project, targetChangeList, allProcessedFiles, changesConsumer)
+      }
+      finally {
+        if (exceptions.isNotEmpty()) {
+          VcsNotifier.getInstance(project).notifyError(ADD_UNVERSIONED_ERROR,
+                                                       VcsBundle.message("error.adding.files.notification.title"),
+                                                       createErrorMessage(exceptions))
+        }
+      }
+      return exceptions.isEmpty()
     }
 
     @JvmStatic

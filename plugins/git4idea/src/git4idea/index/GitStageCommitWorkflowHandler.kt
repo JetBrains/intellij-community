@@ -43,7 +43,7 @@ class GitStageCommitWorkflowHandler(
 
   override fun isCommitEmpty(): Boolean = ui.rootsToCommit.isEmpty()
 
-  override fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
+  override suspend fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
     workflow.trackerState = state
     workflow.commitState = GitStageCommitState(ui.rootsToCommit, getCommitMessage())
     return true
@@ -52,8 +52,6 @@ class GitStageCommitWorkflowHandler(
   override fun saveCommitMessageBeforeCommit() {
     commitMessagePolicy.onBeforeCommit(getCommitMessage())
   }
-
-  override fun refreshChanges(callback: () -> Unit) = callback()
 
   override fun checkCommit(sessionInfo: CommitSessionInfo): Boolean {
     val superCheckResult = super.checkCommit(sessionInfo)

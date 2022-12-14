@@ -163,32 +163,28 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   }
 
   @RequiresEdt
-  internal fun startExecution(block: () -> Boolean) {
+  internal fun startExecution(block: suspend () -> Boolean) {
     check(!isExecuting) { "Commit session is already started" }
-
     isExecuting = true
-    continueExecution {
-      eventDispatcher.multicaster.executionStarted()
-      block()
-    }
-  }
 
-  internal fun continueExecution(block: () -> Boolean) {
-    check(isExecuting) { "Commit session has already finished" }
+    project.coroutineScope.launch(CoroutineName("commit execution") + Dispatchers.EDT) {
+      check(isExecuting) { "Commit session has already finished" }
+      try {
+        eventDispatcher.multicaster.executionStarted()
 
-    try {
-      val continueExecution = block()
-      if (!continueExecution) endExecution()
-    }
-    catch (e: ProcessCanceledException) {
-      endExecution()
-    }
-    catch (e: CancellationException) {
-      endExecution()
-    }
-    catch (e: Throwable) {
-      endExecution()
-      LOG.error(e)
+        val continueExecution = block()
+        if (!continueExecution) endExecution()
+      }
+      catch (e: ProcessCanceledException) {
+        endExecution()
+      }
+      catch (e: CancellationException) {
+        endExecution()
+      }
+      catch (e: Throwable) {
+        endExecution()
+        LOG.error(e)
+      }
     }
   }
 
@@ -210,8 +206,8 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   fun addCommitCustomListener(listener: CommitterResultHandler, parent: Disposable) =
     commitCustomEventDispatcher.addListener(listener, parent)
 
-  fun executeSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
-    return runBlockingModal0(project, message("commit.checks.on.commit.progress.text")) {
+  suspend fun executeSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
+    return withModalProgressIndicator(project, message("commit.checks.on.commit.progress.text")) {
       withContext(Dispatchers.EDT) {
         fireBeforeCommitChecksStarted(sessionInfo)
         val result = runModalBeforeCommitChecks(commitInfo)

@@ -3,7 +3,6 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.openapi.vcs.changes.LocalChangeList
-import org.jetbrains.concurrency.Promise
 
 interface ChangesViewCommitWorkflowUi : NonModalCommitWorkflowUi {
   val isActive: Boolean
@@ -11,7 +10,7 @@ interface ChangesViewCommitWorkflowUi : NonModalCommitWorkflowUi {
 
   fun endExecution()
 
-  fun refreshChangesViewBeforeCommit() : Promise<*>
+  suspend fun refreshChangesViewBeforeCommit()
 
   var inclusionModel: InclusionModel?
 

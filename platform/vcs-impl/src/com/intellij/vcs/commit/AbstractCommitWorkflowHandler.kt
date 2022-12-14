@@ -5,6 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
@@ -26,6 +28,8 @@ import com.intellij.util.containers.mapNotNullLoggingErrors
 import com.intellij.util.ui.UIUtil.replaceMnemonicAmpersand
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitHandlers
 import com.intellij.vcs.commit.AbstractCommitWorkflowHandler.Companion.getActionTextWithoutEllipsis
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -114,23 +118,22 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   override fun beforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) = ui.endBeforeCommitChecks(result)
 
   @RequiresEdt
-  private fun executeSession(sessionInfo: CommitSessionInfo): Boolean {
-    val proceed = checkCommit(sessionInfo) &&
-                  prepareForCommitExecution(sessionInfo) &&
-                  saveCommitOptionsOnCommit()
+  private suspend fun executeSession(sessionInfo: CommitSessionInfo): Boolean {
+    val proceed = coroutineToIndicator {
+      checkCommit(sessionInfo) &&
+      saveCommitOptionsOnCommit()
+    }
     if (!proceed) return false
 
     saveCommitMessageBeforeCommit()
     logCommitEvent(sessionInfo)
 
-    refreshChanges {
-      val commitInfo = DynamicCommitInfoImpl(commitContext, sessionInfo, ui, workflow)
-      workflow.continueExecution {
-        updateWorkflow(sessionInfo) &&
-        doExecuteSession(sessionInfo, commitInfo)
-      }
-    }
-    return true
+    if (!updateWorkflow(sessionInfo)) return false
+
+    FileDocumentManager.getInstance().saveAllDocuments()
+
+    val commitInfo = DynamicCommitInfoImpl(commitContext, sessionInfo, ui, workflow)
+    return doExecuteSession(sessionInfo, commitInfo)
   }
 
   private fun logCommitEvent(sessionInfo: CommitSessionInfo) {
@@ -139,7 +142,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
                                                           ui.getIncludedUnversionedFiles().size)
   }
 
-  protected abstract fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean
+  protected abstract suspend fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean
 
   /**
    * Check that commit can be performed with given parameters.
@@ -149,18 +152,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     return workflow.canExecute(sessionInfo, getIncludedChanges())
   }
 
-  /**
-   * Prepare for the commit operation. Ex: add selected unversioned files into VCS.
-   *
-   * @return false if commit operation should be cancelled.
-   */
-  @RequiresEdt
-  protected open fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean {
-    FileDocumentManager.getInstance().saveAllDocuments()
-    return true
-  }
-
-  protected open fun doExecuteSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
+  protected open suspend fun doExecuteSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
     return workflow.executeSession(sessionInfo, commitInfo)
   }
 
@@ -186,9 +178,6 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   private fun getAfterOptions(handlers: Collection<CheckinHandler>, parent: Disposable): List<RefreshableOnComponent> =
     handlers.mapNotNullLoggingErrors(LOG) { it.getAfterCheckinConfigurationPanel(parent) }
-
-  @RequiresEdt
-  protected abstract fun refreshChanges(@RequiresEdt callback: () -> Unit)
 
   override fun dispose() = Unit
 
@@ -250,16 +239,21 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
       return true
     }
 
-    fun addUnversionedFiles(project: Project,
-                            unversionedFilePaths: Iterable<FilePath>,
-                            changeList: LocalChangeList,
-                            inclusionModel: InclusionModel): Boolean {
+    suspend fun addUnversionedFiles(project: Project,
+                                    unversionedFilePaths: Iterable<FilePath>,
+                                    changeList: LocalChangeList,
+                                    inclusionModel: InclusionModel): Boolean {
       val unversionedFiles = unversionedFilePaths.mapNotNull { it.virtualFile }
       if (unversionedFiles.isEmpty()) return true
 
       FileDocumentManager.getInstance().saveAllDocuments()
-      return ScheduleForAdditionAction.addUnversionedFilesToVcs(project, changeList, unversionedFiles,
-                                                                { newChanges -> inclusionModel.addInclusion(newChanges) }, null)
+      return withContext(Dispatchers.IO) {
+        blockingContext {
+          ScheduleForAdditionAction.addUnversionedFilesToVcsInSync(project, changeList, unversionedFiles) { newChanges ->
+            inclusionModel.addInclusion(newChanges)
+          }
+        }
+      }
     }
   }
 }

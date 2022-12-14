@@ -3,6 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
@@ -13,6 +14,7 @@ import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.CollectionFactory
+import org.jetbrains.concurrency.await
 import java.util.*
 
 private fun Collection<Change>.toPartialAwareSet() =
@@ -242,27 +244,33 @@ internal class ChangesViewCommitWorkflowHandler(
     return commitMode is CommitMode.NonModalCommitMode && commitMode.isToggleMode
   }
 
-  override fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
+  override suspend fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
+    if (!addUnversionedFiles(sessionInfo)) return false
+
+    refreshLocalChanges()
+
     workflow.commitState = getCommitState()
     return configureCommitSession(project, sessionInfo,
                                   workflow.commitState.changes,
                                   workflow.commitState.commitMessage)
   }
 
-  override fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean {
+  private suspend fun addUnversionedFiles(sessionInfo: CommitSessionInfo): Boolean {
     if (sessionInfo.isVcsCommit) {
-      val changeList = workflow.getAffectedChangeList(getIncludedChanges())
-      if (!addUnversionedFiles(project, getIncludedUnversionedFiles(), changeList, inclusionModel)) return false
-    }
-    return super.prepareForCommitExecution(sessionInfo)
-  }
-
-  override fun refreshChanges(callback: () -> Unit) =
-    ChangeListManager.getInstance(project).invokeAfterUpdateWithModal(true, VcsBundle.message("commit.progress.title")) {
-      ui.refreshChangesViewBeforeCommit().then {
-        callback()
+      return withBackgroundProgressIndicator(project, VcsBundle.message("progress.title.adding.files.to.vcs")) {
+        val changeList = workflow.getAffectedChangeList(getIncludedChanges())
+        addUnversionedFiles(project, getIncludedUnversionedFiles(), changeList, inclusionModel)
       }
     }
+    return true
+  }
+
+  private suspend fun refreshLocalChanges() {
+    withBackgroundProgressIndicator(project, VcsBundle.message("commit.progress.title")) {
+      ChangeListManagerEx.getInstanceEx(project).promiseWaitForUpdate().await()
+      ui.refreshChangesViewBeforeCommit()
+    }
+  }
 
   override fun saveCommitMessageBeforeCommit() {
     commitMessagePolicy.onBeforeCommit(currentChangeList, getCommitMessage())
