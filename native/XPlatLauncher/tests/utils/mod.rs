@@ -560,6 +560,31 @@ pub fn run_launcher_with_default_args_and_env(test: &TestEnvironment, args: &[&s
     result
 }
 
+pub fn run_remote_dev_with_default_args_and_env(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>) -> LauncherRunResult {
+    let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
+    let project_dir = &test.test_root_dir.path().to_string_lossy();
+    let output_args = ["dumpLaunchParameters", &project_dir, "--output", &output_file.to_string_lossy()];
+    let full_args = &mut output_args.to_vec();
+    full_args.append(&mut args.to_vec());
+    let default_env_var: HashMap<&str, &str> = HashMap::from([
+        (xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1"),
+        ("CWM_NO_PASSWORD", "1"),
+        ("CWM_HOST_PASSWORD", "1"),
+        ("REMOTE_DEV_NON_INTERACTIVE", "1")
+    ]);
+
+    let full_env_vars = default_env_var.into_iter().chain(envs).collect();
+
+    let result = match run_launcher_impl(test, full_args, full_env_vars, &output_file) {
+        Ok(x) => x,
+        Err(e) => {
+            panic!("Failed to get launcher run result: {e:?}")
+        }
+    };
+
+    result
+}
+
 pub fn run_launcher(test: &TestEnvironment, args: &[&str], output_file: &Path) -> LauncherRunResult {
     let default_env_var = HashMap::from([(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")]);
     let result = match run_launcher_impl(test, args, default_env_var, output_file) {
@@ -639,6 +664,18 @@ pub fn run_launcher_and_get_dump_with_args(layout_kind: &LayoutSpec, args: &[&st
     result.dump.expect("Launcher exited successfully, but there is no output")
 }
 
+pub fn run_remote_dev_and_get_dump_with_args(layout_specification: &LayoutSpec, args: &[&str]) -> IntellijMainDumpedLaunchParameters {
+    let test = prepare_test_env(layout_specification);
+    let result = run_remote_dev_with_default_args_and_env(
+        &test,
+        args,
+        std::collections::HashMap::from([(" ", "")])
+    );
+    let dump = result.dump
+        .expect("Launcher exited successfully, but there is no output");
+    dump
+}
+
 pub fn run_launcher_and_get_dump_with_java_env(layout_specification: &LayoutSpec, java_env_var: &str) -> IntellijMainDumpedLaunchParameters {
     let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let launcher_jdk = get_jbrsdk_from_project_root(&project_root).expect("Can't get jbrsdk from project root");
@@ -651,6 +688,18 @@ pub fn run_launcher_and_get_dump_with_env_vars(layout_specification: &LayoutSpec
     let result = run_launcher_with_default_args_and_env(
         &test,
         &[],
+        env_vars
+    );
+    let dump = result.dump
+        .expect("Launcher exited successfully, but there is no output");
+    dump
+}
+
+pub fn run_remote_dev_and_get_dump_with_args_and_env_vars(layout_specification: &LayoutSpec, args: &[&str], env_vars: HashMap<&str, &str>) -> IntellijMainDumpedLaunchParameters {
+    let test = prepare_test_env(layout_specification);
+    let result = run_remote_dev_with_default_args_and_env(
+        &test,
+        args,
         env_vars
     );
     let dump = result.dump
