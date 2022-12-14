@@ -23,10 +23,8 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.StringWriter;
@@ -523,14 +521,10 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     };
 
     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-    boolean modal = task.isModal() ||
-                    application.isDispatchThread() &&
-                    !isSynchronousHeadless(task) &&
-                    isSynchronous(task.asBackgroundable());
     boolean result = application.runProcessWithProgressSynchronously(taskContainer,
                                                                      task.getTitle(),
                                                                      task.isCancellable(),
-                                                                     modal,
+                                                                     shouldEnterModalityState(task),
                                                                      task.getProject(),
                                                                      task.getParentComponent(),
                                                                      task.getCancelText());
@@ -539,6 +533,15 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
                                            application.getDefaultModalityState(),
                                            () -> finishTask(task, !result, exceptionRef.get()));
     return result;
+  }
+
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static boolean shouldEnterModalityState(@NotNull Task task) {
+    return task.isModal() ||
+           EDT.isCurrentThreadEdt() &&
+           !isSynchronousHeadless(task) &&
+           isSynchronous(task.asBackgroundable());
   }
 
   public void runProcessWithProgressInCurrentThread(@NotNull Task task,
