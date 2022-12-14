@@ -471,31 +471,25 @@ fn print_help() {
 
 fn init_env_vars() -> Result<()> {
     let remote_dev_launcher_name_for_usage = get_remote_dev_launcher_name_for_usage()?;
-
-    let remote_dev_original_env_vars = vec![
-        ("INTELLIJ_ORIGINAL_ENV_ORG_JETBRAINS_PROJECTOR_SERVER_ENABLE_WS_SERVER", "ORG_JETBRAINS_PROJECTOR_SERVER_ENABLE_WS_SERVER"),
-        ("INTELLIJ_ORIGINAL_ENV_ORG_JETBRAINS_PROJECTOR_SERVER_ATTACH_TO_IDE", "ORG_JETBRAINS_PROJECTOR_SERVER_ATTACH_TO_IDE"),
-    ];
-
-    let remote_dev_env_vars = vec![
+    let remote_dev_env_var_values = vec![
         ("IDEA_RESTART_VIA_EXIT_CODE", "88"),
         ("ORG_JETBRAINS_PROJECTOR_SERVER_ENABLE_WS_SERVER", "false"),
         ("ORG_JETBRAINS_PROJECTOR_SERVER_ATTACH_TO_IDE", "false"),
         ("REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE", &remote_dev_launcher_name_for_usage),
     ];
 
-    for (env_var, original_env_var) in remote_dev_original_env_vars {
-        match std::env::var(original_env_var) {
-            Ok(original_env_var_value) => std::env::set_var(env_var, &original_env_var_value),
-            Err(_) => debug!("Original env var '{original_env_var}' is empty. Skip"),
+    for (key, value) in remote_dev_env_var_values {
+        match std::env::var(key) {
+            Ok(old_value) => {
+                let backup_key = format!("INTELLIJ_ORIGINAL_ENV_{key}");
+                debug!("'{key}' has already been assigned the value {old_value}, overriding to {value}. \
+                        Old value will be preserved for child processes.");
+                std::env::set_var(backup_key, old_value)
+            }
+            Err(_) => { }
         }
-    }
 
-    for (env_var, value) in remote_dev_env_vars {
-        match std::env::var(env_var) {
-            Ok(value) => bail!("'{env_var}' has already been assigned the value {value}"),
-            Err(_) => std::env::set_var(env_var, value),
-        }
+        std::env::set_var(key, value)
     }
 
     return Ok(())
