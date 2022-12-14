@@ -9,6 +9,7 @@ import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
@@ -24,6 +25,8 @@ class GHPRMetadataModelImpl(private val valueModel: SingleValueModel<GHPullReque
     get() = valueModel.value.reviewRequests.mapNotNull { it.requestedReviewer }
   override val labels: List<GHLabel>
     get() = valueModel.value.labels
+  override val reviews: List<GHPullRequestReview>
+    get() = valueModel.value.reviews
 
   override fun getAuthor() = valueModel.value.author as? GHUser
 

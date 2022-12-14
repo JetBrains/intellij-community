@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadDetailsAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadStateAction
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
@@ -24,17 +25,17 @@ internal object GHPRDetailsComponentFactory {
   fun create(project: Project,
              scope: CoroutineScope,
              reviewDetailsVm: GHPRDetailsViewModel,
+             reviewFlowVm: GHPRReviewFlowViewModel,
              repositoryDataService: GHPRRepositoryDataService,
              securityService: GHPRSecurityService,
              avatarIconsProvider: GHAvatarIconsProvider,
              branchesModel: GHPRBranchesModel,
              detailsModel: GHPRDetailsModel,
-             metadataModel: GHPRMetadataModel,
              stateModel: GHPRStateModel): JComponent {
     val title = GHPRTitleComponent.create(scope, reviewDetailsVm)
     val description = GHPRDetailsDescriptionComponentFactory.create(scope, reviewDetailsVm)
     val branches = GHPRDetailsBranchesComponentFactory.create(project, repositoryDataService, branchesModel)
-    val statusChecks = GHPRStatusChecksComponentFactory.create(scope, reviewDetailsVm, securityService)
+    val statusChecks = GHPRStatusChecksComponentFactory.create(scope, reviewDetailsVm, reviewFlowVm, securityService, avatarIconsProvider)
     val state = GHPRStatePanel(securityService, stateModel).also {
       detailsModel.addAndInvokeDetailsChangedListener {
         it.select(detailsModel.state, true)
@@ -56,6 +57,8 @@ internal object GHPRDetailsComponentFactory {
       add(branches, CC().growY().push())
       add(statusChecks, CC().growX().gapBottom("$gapBetweenCheckAndActions"))
       add(state, CC().growX().pushX().minHeight("pref"))
+
+      PopupHandler.installPopupMenu(this, DefaultActionGroup(GHPRReloadDetailsAction()), "GHPRDetailsPopup")
     }
   }
 

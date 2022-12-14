@@ -11,10 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.Nls
-import javax.swing.Action
-import javax.swing.ComboBoxModel
-import javax.swing.JComponent
-import javax.swing.JLabel
+import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import javax.swing.text.JTextComponent
@@ -105,6 +102,14 @@ fun JLabel.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
       text = it
+    }
+  }
+}
+
+fun JLabel.bindIcon(scope: CoroutineScope, iconFlow: Flow<Icon?>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    iconFlow.collect {
+      icon = it
     }
   }
 }

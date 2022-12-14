@@ -8,6 +8,7 @@ import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRMetadataModelBase
 import java.util.concurrent.CompletableFuture
@@ -28,6 +29,8 @@ class GHPRCreateMetadataModel(repositoryDataService: GHPRRepositoryDataService,
   override var labels: List<GHLabel> by observable(emptyList()) { _, _, _ ->
     eventDispatcher.multicaster.eventOccurred()
   }
+  override val reviews: List<GHPullRequestReview>
+    get() = emptyList()
 
   override val isEditingAllowed = true
 

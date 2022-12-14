@@ -6,14 +6,18 @@ import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import java.util.concurrent.CompletableFuture
 
 interface GHPRMetadataModel {
   val assignees: List<GHUser>
   val reviewers: List<GHPullRequestRequestedReviewer>
   val labels: List<GHLabel>
+  val reviews: List<GHPullRequestReview>
 
   val isEditingAllowed: Boolean
+
+  fun getAuthor(): GHUser?
 
   fun loadPotentialReviewers(): CompletableFuture<List<GHPullRequestRequestedReviewer>>
   fun adjustReviewers(indicator: ProgressIndicator, delta: CollectionDelta<GHPullRequestRequestedReviewer>): CompletableFuture<Unit>

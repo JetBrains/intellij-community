@@ -246,14 +246,20 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
       val scope = DisposingScope(disposable)
       val reviewDetailsVm = GHPRDetailsViewModelImpl(scope, detailsModel, stateModel)
+      val reviewFlowVm = GHPRReviewFlowViewModelImpl(scope,
+                                                     metadataModel,
+                                                     dataContext.securityService,
+                                                     dataProvider.detailsData,
+                                                     disposable)
 
       GHPRDetailsComponentFactory.create(project,
                                          scope,
                                          reviewDetailsVm,
+                                         reviewFlowVm,
                                          dataContext.repositoryDataService,
                                          dataContext.securityService,
                                          dataContext.avatarIconsProvider,
-                                         branchesModel, detailsModel, metadataModel, stateModel)
+                                         branchesModel, detailsModel, stateModel)
     }.also {
       reloadDetailsAction.registerCustomShortcutSet(it, uiDisposable)
     }
