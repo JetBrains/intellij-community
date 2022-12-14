@@ -1276,6 +1276,7 @@ public final class ContainerUtil {
   }
 
   @SafeVarargs
+  @Contract(mutates = "param1")
   public static <T> boolean removeAll(@NotNull Collection<T> collection, T @NotNull ... elements) {
     boolean modified = false;
     for (T element : elements) {
@@ -1285,6 +1286,7 @@ public final class ContainerUtil {
   }
 
   // returns true if the collection was modified
+  @Contract(mutates = "param1")
   public static <T> boolean retainAll(@NotNull Collection<T> collection, @NotNull Condition<? super T> condition) {
     boolean modified = false;
 
@@ -1827,6 +1829,7 @@ public final class ContainerUtil {
     }
   }
 
+  @Contract(mutates = "param1")
   public static <T extends Comparable<? super T>> void sort(T @NotNull [] a) {
     int size = a.length;
 
@@ -2124,24 +2127,28 @@ public final class ContainerUtil {
     return new HashSet<>(Arrays.asList(items));
   }
 
+  @Contract(mutates = "param3")
   public static <K, V> void putIfNotNull(K key, @Nullable V value, @NotNull Map<? super K, ? super V> result) {
     if (value != null) {
       result.put(key, value);
     }
   }
 
+  @Contract(mutates = "param3")
   public static <K, V> void putIfNotNull(K key, @Nullable Collection<? extends V> value, @NotNull MultiMap<? super K, ? super V> result) {
     if (value != null) {
       result.putValues(key, value);
     }
   }
 
+  @Contract(mutates = "param3")
   public static <K, V> void putIfNotNull(K key, @Nullable V value, @NotNull MultiMap<? super K, ? super V> result) {
     if (value != null) {
       result.putValue(key, value);
     }
   }
 
+  @Contract(mutates = "param2")
   public static <T> void add(T element, @NotNull Collection<? super T> result, @NotNull Disposable parentDisposable) {
     if (result.add(element)) {
       Disposer.register(parentDisposable, () -> result.remove(element));
@@ -2253,6 +2260,7 @@ public final class ContainerUtil {
     quickSort(list, comparator, 0, list.size());
   }
 
+  @Contract(mutates = "param1")
   private static <T> void quickSort(@NotNull List<? extends T> x, @NotNull Comparator<? super T> comparator, int off, int len) {
     // Insertion sort on smallest arrays
     if (len < 7) {
@@ -2328,6 +2336,7 @@ public final class ContainerUtil {
   /*
    * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
    */
+  @Contract(mutates = "param1")
   private static <T> void vecswap(List<T> x, int a, int b, int n) {
     for (int i = 0; i < n; i++, a++, b++) {
       swapElements(x, a, b);
@@ -2347,6 +2356,7 @@ public final class ContainerUtil {
    * Processes the list, remove all duplicates and return the list with unique elements.
    * @param list must be sorted (according to the comparator), all elements must be not-null
    */
+  @Contract(mutates = "param1")
   public static @NotNull <T> List<T> removeDuplicatesFromSorted(@NotNull List<T> list, @NotNull Comparator<? super T> comparator) {
     T prev = null;
     List<T> result = null;
@@ -2425,6 +2435,7 @@ public final class ContainerUtil {
     return result == null ? emptyList() : Collections.unmodifiableList(result);
   }
 
+  @Contract(mutates = "param2")
   public static <K,V> V @NotNull [] convert(K @NotNull [] from, V @NotNull [] to, @NotNull Function<? super K, ? extends V> fun) {
     if (to.length < from.length) {
       to = ArrayUtil.newArray(ArrayUtil.getComponentType(to), from.length);
@@ -2509,14 +2520,14 @@ public final class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <A,B> Map<B,A> reverseMap(@NotNull Map<? extends A, ? extends B> map) {
-    Map<B,A> result = new HashMap<>();
+    Map<B,A> result = new HashMap<>(map.size());
     for (Map.Entry<? extends A, ? extends B> entry : map.entrySet()) {
       result.put(entry.getValue(), entry.getKey());
     }
     return result;
   }
 
-  @Contract("null -> null; !null -> !null")
+  @Contract(value = "null -> null; !null -> !null", mutates = "param1")
   public static <T> List<T> trimToSize(@Nullable List<T> list) {
     if (list == null) return null;
     if (list.isEmpty()) return emptyList();
