@@ -46,10 +46,7 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
-import com.jetbrains.python.console.PydevConsoleRunnerFactory;
-import com.jetbrains.python.console.PythonConsoleView;
-import com.jetbrains.python.console.PythonDebugConsoleCommunication;
-import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
+import com.jetbrains.python.console.*;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -885,6 +882,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       if (flavor != null) {
         interpreterParameters.addAll(flavor.getExtraDebugOptions());
       }
+      debuggerScript.setCharset(PydevConsoleRunnerImpl.CONSOLE_CHARSET);
 
       return debuggerScript;
     }

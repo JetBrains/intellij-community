@@ -130,7 +130,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   /**
    * Everything in console is UTF-8 only, just like regular script execution
    */
-  static final Charset CONSOLE_CHARSET = StandardCharsets.UTF_8;
+ public static final Charset CONSOLE_CHARSET = StandardCharsets.UTF_8;
   private final Project myProject;
   private final @NlsContexts.TabTitle String myTitle;
   @Nullable private final String myWorkingDir;
