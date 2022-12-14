@@ -48,6 +48,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -195,7 +196,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     if (guard.requestProcessing(context.getCancelStatus())) {
       try {
         final Collection<File> required = lib.getFiles(JpsOrderRootType.COMPILED);
-        int compiledRootsNumber = required.size();
+        List<File> compiledRoots = new ArrayList<>(required);
         for (Iterator<File> it = required.iterator(); it.hasNext(); ) {
           if (globalRepoManager.isValidArchive(it.next())) {
             it.remove(); // leaving only non-existing stuff requiring synchronization
@@ -227,7 +228,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
         }
 
         if (enableVerification) {
-          List<String> problems = verifyResolvedArtifacts(descriptor, compiledRootsNumber, verificationSha256SumRequired);
+          List<String> problems = verifyResolvedArtifacts(descriptor, compiledRoots, verificationSha256SumRequired);
           if (!problems.isEmpty()) {
             throw new RuntimeException("Verification failed for '" + lib.getName()+ "': " + String.join(", ", problems));
           }
@@ -271,7 +272,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
    * @return List of found problems (wrong or missing checksums)
    */
   private static List<String> verifyResolvedArtifacts(@NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
-                                                      int compiledRootNumber,
+                                                      List<File> compiledRootsFiles,
                                                       boolean verificationSha256SumRequired) {
     boolean verifySha256Checksum = descriptor.isVerifySha256Checksum();
     if (!verifySha256Checksum) {
@@ -280,15 +281,28 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
 
     List<String> problems = new ArrayList<>();
     List<ArtifactVerification> artifactsVerification = descriptor.getArtifactsVerification();
-    if (artifactsVerification.size() != compiledRootNumber &&
+    if (artifactsVerification.size() != compiledRootsFiles.size() &&
         !"LATEST".equals(descriptor.getVersion()) &&
         !"RELEASE".equals(descriptor.getVersion()) &&
         !descriptor.getVersion().endsWith("-SNAPSHOT")) {
       problems.add("artifacts verification entries number '" + artifactsVerification.size() +
-                   "' not equal to compiled roots number '" + compiledRootNumber + "' for " + descriptor.getMavenId());
+                   "' not equal to compiled roots number '" + compiledRootsFiles.size() + "' for " + descriptor.getMavenId());
+      return problems;
     }
 
-    for (var verification : descriptor.getArtifactsVerification()) {
+    Set<String> compiledRootsPaths = compiledRootsFiles.stream().map(File::getAbsolutePath).collect(Collectors.toSet());
+    Set<String> verifiableArtifactsPaths = artifactsVerification.stream()
+      .map(ArtifactVerification::getUrl)
+      .map(it -> JpsPathUtil.urlToFile(it).getAbsolutePath())
+      .collect(Collectors.toSet());
+
+
+    if (!verifiableArtifactsPaths.equals(compiledRootsPaths)) {
+      problems.add("artifacts verification paths does not match with compile roots paths'");
+      return problems;
+    }
+
+    for (var verification : artifactsVerification) {
       Path artifact = JpsPathUtil.urlToFile(verification.getUrl()).toPath();
       try {
         String expectedSha256Sum = verification.getSha256sum();
