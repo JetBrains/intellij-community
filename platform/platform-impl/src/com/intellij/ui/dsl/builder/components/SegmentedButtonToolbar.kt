@@ -232,7 +232,8 @@ internal class SegmentedButtonBorder : Border {
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
-      val r = Rectangle(x, y, width, height)
+      g2.translate(x, y)
+      val r = Rectangle(0, 0, width, height)
       val arc = DarculaUIUtil.BUTTON_ARC.float
       var outline = DarculaUIUtil.getOutline(c as JComponent)
       if (outline == null && c.hasFocus()) {
