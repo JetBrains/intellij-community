@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -441,6 +442,11 @@ public class HighlightableComponent extends JComponent implements Accessible {
 
   protected int getStringWidth(@Nls String text, FontMetrics fontMetrics) {
     return fontMetrics.stringWidth(text);
+  }
+
+  @ApiStatus.Internal
+  public ArrayList<HighlightedRegion> getHighlightedRegions() {
+    return myHighlightedRegions;
   }
 
   public @Nls String getRegionText(HighlightedRegion hRegion) {
