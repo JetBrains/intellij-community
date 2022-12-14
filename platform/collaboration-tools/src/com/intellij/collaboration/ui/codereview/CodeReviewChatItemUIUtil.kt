@@ -2,12 +2,21 @@
 package com.intellij.collaboration.ui.codereview
 
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JLabel
+import kotlin.math.roundToInt
 
 object CodeReviewChatItemUIUtil {
+
+  /**
+   * Maximum width for textual content for it to be readable
+   * Equals to 42em
+   */
+  val TEXT_CONTENT_WIDTH: Int
+    get() = (JBUIScale.DEF_SYSTEM_FONT_SIZE * 42).roundToInt()
 
   enum class ComponentType {
     FULL {

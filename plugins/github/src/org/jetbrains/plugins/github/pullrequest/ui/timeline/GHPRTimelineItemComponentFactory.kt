@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.async.combineAndCollect
 import com.intellij.collaboration.ui.ComponentListPanelFactory
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.onHyperlinkActivated
 import com.intellij.collaboration.ui.codereview.setHtmlBody
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
@@ -57,9 +58,8 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProv
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.H_SIDE_BORDER
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.TIMELINE_CONTENT_WIDTH
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.CONTENT_SHIFT
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.H_SIDE_BORDER
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.TIMELINE_ITEM_WIDTH
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
@@ -261,7 +261,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
 
       add(loadingLabel, CC().grow().push()
         .alignX("center")
-        .maxWidth("$TIMELINE_CONTENT_WIDTH")
+        .maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}")
         .gapLeft("$H_SIDE_BORDER")
         .gapRight("$H_SIDE_BORDER"))
       add(threadsPanel, CC().grow().push())
@@ -332,10 +332,10 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
             bodyPanel.setContent(textPane)
             add(panelHandle.panel, CC()
               .grow()
-              .maxWidth("$TIMELINE_CONTENT_WIDTH"))
+              .maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}"))
             add(diff, CC().grow())
             add(collapsedThreadActionsComponent, CC()
-              .maxWidth("$TIMELINE_CONTENT_WIDTH"))
+              .maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}"))
           }
           else {
             panelHandle.maxPaneHeight = null
@@ -345,9 +345,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
             add(diff, CC().grow())
             add(panelHandle.panel, CC()
               .grow()
-              .maxWidth("$TIMELINE_CONTENT_WIDTH"))
+              .maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}"))
             add(collapsedThreadActionsComponent, CC()
-              .maxWidth("$TIMELINE_CONTENT_WIDTH"))
+              .maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}"))
           }
           revalidate()
           repaint()
@@ -367,7 +367,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                                                      reviewDataProvider, avatarIconsProvider,
                                                                      suggestedChangeHelper,
                                                                      false,
-                                                                     TIMELINE_CONTENT_WIDTH) {
+                                                                     CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH) {
       it.border = JBUI.Borders.empty(GHPRReviewCommentComponent.GAP_TOP, leftGap, GHPRReviewCommentComponent.GAP_TOP, H_SIDE_BORDER)
       GHPRTimelineItemUIUtil.withHoverHighlight(it)
     }
@@ -480,11 +480,11 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       if (panelHandle != null) {
         val commentPanel = panelHandle.panel
         add(commentPanel, CC().grow().push()
-          .minWidth("0").maxWidth("$TIMELINE_CONTENT_WIDTH"))
+          .minWidth("0").maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}"))
       }
 
       add(StatusMessageComponentFactory.create(HtmlEditorPane(stateText), stateType), CC().grow().push()
-        .minWidth("0").maxWidth("$TIMELINE_CONTENT_WIDTH"))
+        .minWidth("0").maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}"))
     }
 
     return GHPRTimelineItemUIUtil.createItem(avatarIconsProvider, review.author ?: ghostUser, review.createdAt,

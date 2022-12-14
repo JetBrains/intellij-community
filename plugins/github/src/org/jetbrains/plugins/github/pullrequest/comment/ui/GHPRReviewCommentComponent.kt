@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentFactory
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType.COMPACT
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -24,7 +25,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -44,7 +44,7 @@ object GHPRReviewCommentComponent {
              avatarIconsProvider: GHAvatarIconsProvider,
              suggestedChangeHelper: GHPRSuggestedChangeHelper,
              showResolvedMarker: Boolean = true,
-             maxContentWidth: Int = GHUIUtil.TEXT_CONTENT_WIDTH): JComponent {
+             maxContentWidth: Int = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH): JComponent {
 
     val author = comment.author ?: ghostUser
     val titlePane = GHPRTimelineItemUIUtil.createTitleTextPane(author, comment.dateCreated).apply {
@@ -180,7 +180,7 @@ object GHPRReviewCommentComponent {
               avatarIconsProvider: GHAvatarIconsProvider,
               suggestedChangeHelper: GHPRSuggestedChangeHelper,
               showResolvedMarkerOnFirstComment: Boolean = true,
-              maxContentWidth: Int = GHUIUtil.TEXT_CONTENT_WIDTH,
+              maxContentWidth: Int = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH,
               postProcessor: (JComponent) -> JComponent = { it })
     : (GHPRReviewCommentModel) -> JComponent {
     return { comment ->

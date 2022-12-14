@@ -16,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -40,12 +39,9 @@ import java.awt.event.MouseEvent
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
-import kotlin.math.roundToInt
 
 object GHUIUtil {
   const val AVATAR_SIZE = 20
-  // 42em
-  val TEXT_CONTENT_WIDTH = (JBUIScale.DEF_SYSTEM_FONT_SIZE * 42).roundToInt()
 
   fun getPullRequestStateIcon(state: GHPullRequestState, isDraft: Boolean): Icon =
     if (isDraft) GithubIcons.PullRequestDraft

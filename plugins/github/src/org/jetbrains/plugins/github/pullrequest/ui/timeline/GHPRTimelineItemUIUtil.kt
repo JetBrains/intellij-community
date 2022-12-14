@@ -20,7 +20,6 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.awt.BorderLayout
 import java.awt.Component
@@ -34,16 +33,14 @@ internal object GHPRTimelineItemUIUtil {
   const val V_SIDE_BORDER: Int = 10
   const val H_SIDE_BORDER: Int = 16
 
-  // 42em
-  val TIMELINE_CONTENT_WIDTH = GHUIUtil.TEXT_CONTENT_WIDTH
-  val TIMELINE_ITEM_WIDTH = TIMELINE_CONTENT_WIDTH + CONTENT_SHIFT + (H_SIDE_BORDER * 2)
+  val TIMELINE_ITEM_WIDTH = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH + CONTENT_SHIFT + (H_SIDE_BORDER * 2)
 
   fun createItem(avatarIconsProvider: GHAvatarIconsProvider,
                  actor: GHActor,
                  date: Date?,
                  content: JComponent,
                  actionsPanel: JComponent? = null): JComponent {
-    return createItem(avatarIconsProvider, actor, date, content, TIMELINE_CONTENT_WIDTH, actionsPanel = actionsPanel)
+    return createItem(avatarIconsProvider, actor, date, content, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH, actionsPanel = actionsPanel)
   }
 
   fun createTitleTextPane(actor: GHActor, date: Date?): HtmlEditorPane {
@@ -65,7 +62,7 @@ internal object GHPRTimelineItemUIUtil {
                  actor: GHActor,
                  date: Date?,
                  content: JComponent,
-                 maxContentWidth: Int = TIMELINE_CONTENT_WIDTH,
+                 maxContentWidth: Int = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH,
                  actionsPanel: JComponent? = null): JComponent {
     val titleTextPane = createTitleTextPane(actor, date)
     return createItem(avatarIconsProvider, actor, titleTextPane, content, maxContentWidth,
@@ -76,7 +73,7 @@ internal object GHPRTimelineItemUIUtil {
                  actor: GHActor,
                  date: Date?,
                  content: JComponent,
-                 maxContentWidth: Int = TIMELINE_CONTENT_WIDTH,
+                 maxContentWidth: Int = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH,
                  additionalTitle: JComponent? = null,
                  actionsPanel: JComponent? = null): JComponent {
     val titleTextPane = createTitleTextPane(actor, date)
@@ -93,7 +90,7 @@ internal object GHPRTimelineItemUIUtil {
                          actor: GHActor,
                          title: JComponent,
                          content: JComponent,
-                         maxContentWidth: Int = TIMELINE_CONTENT_WIDTH,
+                         maxContentWidth: Int = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH,
                          actionsPanel: JComponent? = null): JComponent {
 
     return JPanel(null).apply {
@@ -106,7 +103,7 @@ internal object GHPRTimelineItemUIUtil {
                            .hideMode(3))
 
       add(title, CC().push().split(2)
-        .minWidth("0").maxWidth("$TIMELINE_CONTENT_WIDTH"))
+        .minWidth("0").maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}"))
 
       if (actionsPanel != null) {
         add(actionsPanel, CC().gapLeft("10:push"))
