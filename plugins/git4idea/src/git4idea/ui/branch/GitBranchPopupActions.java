@@ -252,14 +252,15 @@ public class GitBranchPopupActions {
 
     IssueNavigationConfiguration issueNavigationConfiguration = IssueNavigationConfiguration.getInstance(project);
     List<IssueNavigationConfiguration.LinkMatch> issueMatches = issueNavigationConfiguration.findIssueLinks(branchName);
+    int affectedMaxBranchNameLength = maxBranchNameLength - StringUtil.ELLIPSIS.length();
     if (issueMatches.size() != 0) {
       // never truncate the first occurrence of the issue id
       IssueNavigationConfiguration.LinkMatch firstMatch = issueMatches.get(0);
       TextRange firstMatchRange = firstMatch.getRange();
-      return truncateAndSaveIssueId(firstMatchRange, branchName, maxBranchNameLength, suffixLength, delta);
+      return truncateAndSaveIssueId(firstMatchRange, branchName, affectedMaxBranchNameLength, suffixLength, delta);
     }
 
-    return StringUtil.shortenTextWithEllipsis(branchName, maxBranchNameLength, suffixLength, true);
+    return StringUtil.shortenTextWithEllipsis(branchName, affectedMaxBranchNameLength, suffixLength, true);
   }
 
   @NlsSafe
