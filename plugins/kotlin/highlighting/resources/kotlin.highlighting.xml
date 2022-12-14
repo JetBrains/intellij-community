@@ -1,7 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.highlighting">
 
   <extensions defaultExtensionNs="com.intellij">
-    <problemFileHighlightFilter implementation="org.jetbrains.kotlin.idea.projectView.KotlinProblemFileHighlightFilter"/>
+    <problemFileHighlightFilter implementation="org.jetbrains.kotlin.idea.highlighting.KotlinProblemFileHighlightFilter"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.KotlinDiagnosticHighlightVisitor"/>
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.highlighting.KotlinSemanticHighlightingPassFactory"/>
   </extensions>
