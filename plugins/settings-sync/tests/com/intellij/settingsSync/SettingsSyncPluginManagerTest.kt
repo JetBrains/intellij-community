@@ -26,8 +26,7 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
   )
   private val ideaLight = TestPluginDescriptor(
     "color.scheme.IdeaLight",
-    listOf(TestPluginDependency("com.intellij.modules.lang", isOptional = false)),
-    pluginCategory = "Theme"
+    listOf(TestPluginDependency("com.intellij.modules.lang", isOptional = false))
   )
   private val git4idea = TestPluginDescriptor(
     "git4idea",
@@ -273,22 +272,6 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     }
     finally {
       SettingsSyncSettings.getInstance().state.reset()
-    }
-  }
-
-  fun `test when cross-ide sync is disabled then themes should still sync between ides`() {
-    testPluginManager.addPluginDescriptors(pluginManager, ideaLight)
-    val savedState = statePerIde {
-      ide(thisIde()) {
-      }
-      ide("otherIde") {
-        ideaLight(enabled = true)
-      }
-    }
-    pluginManager.pushChangesToIde(savedState)
-
-    assertIdeState {
-      ideaLight(enabled = true)
     }
   }
 

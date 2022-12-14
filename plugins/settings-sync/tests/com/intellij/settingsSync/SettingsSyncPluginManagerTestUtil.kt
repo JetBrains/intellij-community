@@ -15,8 +15,7 @@ class TestPluginDependency(private val idString: String, override val isOptional
 data class TestPluginDescriptor(
   val idString: String,
   var pluginDependencies: List<TestPluginDependency> = emptyList(),
-  val bundled: Boolean = false,
-  val pluginCategory: String? = null) : IdeaPluginDescriptor
+  val bundled: Boolean = false) : IdeaPluginDescriptor
 {
   private var _enabled = true
   private val _pluginId = PluginId.getId(idString)
@@ -33,10 +32,6 @@ data class TestPluginDescriptor(
     return bundled
   }
 
-  override fun getCategory(): String? {
-    return pluginCategory
-  }
-
   // region non-essential methods
   override fun getDescription(): String? = null
   override fun getChangeNotes(): String? = null
@@ -50,6 +45,7 @@ data class TestPluginDescriptor(
   override fun getVendor(): String? = null
   override fun getVersion(): String = "1.0"
   override fun getResourceBundleBaseName(): String? = null
+  override fun getCategory(): String? = null
   override fun getVendorEmail(): String? = null
   override fun getVendorUrl(): String? = null
   override fun getUrl(): String? = null
