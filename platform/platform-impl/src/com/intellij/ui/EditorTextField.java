@@ -148,15 +148,14 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     setFont(UIManager.getFont("TextField.font"));
     addHierarchyListener(e -> {
       if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && e.getChanged().isShowing()) {
-        if (myEditor == null) {
-          if (project != null && project.isDisposed()) {
-            Logger.getInstance(EditorTextField.class).error("Requested to create an editor for a disposed project " + project.getName());
-          } else {
-            initEditor();
-          }
-        }
+        if (myEditor == null) initEditor();
       }
     });
+  }
+
+  @Nullable
+  private Project getProjectIfValid() {
+    return myProject == null || myProject.isDisposed() ? null : myProject;
   }
 
   //prevent from editor reinitialisation on add/remove
@@ -407,11 +406,12 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
     myDisposable = Disposer.newDisposable("ETF dispose");
     Disposer.register(myDisposable, this::releaseEditorLater);
-    if (myProject != null) {
-      myProject.getMessageBus().connect(myDisposable).subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
+    Project project = getProjectIfValid();
+    if (project != null) {
+      project.getMessageBus().connect(myDisposable).subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
         @Override
-        public void projectClosing(@NotNull Project project) {
-          if (project == myProject) {
+        public void projectClosing(@NotNull Project p) {
+          if (p == project) {
             releaseEditorNow();
           }
         }
@@ -477,10 +477,11 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   private void releaseEditor(@NotNull Editor editor) {
     // todo IMHO this should be removed completely
-    if (myProject != null && !myProject.isDisposed() && myIsViewer) {
-      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+    Project project = getProjectIfValid();
+    if (project != null && myIsViewer) {
+      final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (psiFile != null) {
-        DaemonCodeAnalyzer.getInstance(myProject).setHighlightingEnabled(psiFile, true);
+        DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, true);
       }
     }
 
@@ -568,34 +569,36 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   protected Document createDocument() {
-    final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
+    Project project = getProjectIfValid();
+    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
     final long stamp = LocalTimeCounter.currentTime();
     final PsiFile psiFile = factory.createFileFromText("Dummy." + myFileType.getDefaultExtension(), myFileType, "", stamp, true, false);
-    return PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
+    return PsiDocumentManager.getInstance(project).getDocument(psiFile);
   }
 
   @NotNull
   protected EditorEx createEditor() {
+    Project project = getProjectIfValid();
     Document document = getDocument();
     final EditorFactory factory = EditorFactory.getInstance();
-    EditorEx editor = (EditorEx)(myIsViewer ? factory.createViewer(document, myProject) : factory.createEditor(document, myProject));
+    EditorEx editor = (EditorEx)(myIsViewer ? factory.createViewer(document, project) : factory.createEditor(document, project));
     editor.putUserData(MANAGED_BY_FIELD, Boolean.TRUE);
 
     setupTextFieldEditor(editor);
     editor.setCaretEnabled(!myIsViewer);
 
-    if (myProject != null) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+    if (project != null) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (psiFile != null) {
-        DaemonCodeAnalyzer.getInstance(myProject).setHighlightingEnabled(psiFile, !myIsViewer);
+        DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, !myIsViewer);
       }
     }
 
-    if (myProject != null) {
+    if (project != null) {
       EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
       VirtualFile virtualFile = myDocument == null ? null : FileDocumentManager.getInstance().getFile(myDocument);
-      EditorHighlighter highlighter = virtualFile != null ? highlighterFactory.createEditorHighlighter(myProject, virtualFile) :
-                                      myFileType != null ? highlighterFactory.createEditorHighlighter(myProject, myFileType) : null;
+      EditorHighlighter highlighter = virtualFile != null ? highlighterFactory.createEditorHighlighter(project, virtualFile) :
+                                      myFileType != null ? highlighterFactory.createEditorHighlighter(project, myFileType) : null;
       if (highlighter != null) editor.setHighlighter(highlighter);
     }
 
