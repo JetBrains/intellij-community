@@ -226,7 +226,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
             Pair("NAME", snapName),
             Pair("VERSION", version),
             Pair("SUMMARY", productName),
-            Pair("DESCRIPTION", customizer.snapDescription!!),
+            Pair("DESCRIPTION", customizer.snapDescription ?: ""),
             Pair("GRADE", if (appInfo.isEAP) "devel" else "stable"),
             Pair("SCRIPT", "bin/${context.productProperties.baseFileName}.sh")
           )
