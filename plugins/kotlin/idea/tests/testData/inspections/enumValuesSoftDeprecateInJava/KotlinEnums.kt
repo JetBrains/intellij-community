@@ -29,17 +29,3 @@ enum class KotlinEnum4 {
 
     abstract fun values(): Int
 }
-
-enum class KotlinEnum5 {
-    ;
-
-    fun values() = 1
-}
-
-enum class KotlinEnum6 {
-    ONE {
-        override fun values() = 1
-    };
-
-    open fun values() = 2
-}
