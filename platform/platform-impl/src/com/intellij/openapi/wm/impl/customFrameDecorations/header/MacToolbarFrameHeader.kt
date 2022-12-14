@@ -99,7 +99,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   }
 
   private fun updateVisibleCard() {
-    val cardToShow = if (ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()) PATH_CARD else TOOLBAR_CARD
+    val cardToShow = if (ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader()) PATH_CARD else TOOLBAR_CARD
     (getLayout() as? CardLayout)?.show(this, cardToShow)
 
     revalidate()
