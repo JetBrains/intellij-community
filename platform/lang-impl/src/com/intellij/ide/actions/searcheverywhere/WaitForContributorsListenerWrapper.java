@@ -16,117 +16,113 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class WaitForContributorsListenerWrapper extends BufferingListenerWrapper {
+public class WaitForContributorsListenerWrapper implements SearchListener{
 
   private static final Logger LOG = Logger.getInstance(WaitForContributorsListenerWrapper.class);
 
-  private static final long DEFAULT_TIMEOUT = 3000;
+  private static final long DEFAULT_WAIT_TIMEOUT = 3000;
+  private static final long DEFAULT_THROTTLING_TIMEOUT = 100;
 
   private final Map<SearchEverywhereContributor<?>, Boolean> contributorsMap = new HashMap<>();
   private final ScheduledExecutorService executorService = EdtExecutorService.getScheduledExecutorInstance();
   private final SearchListModel listModel;
   private Future<?> flushFuture;
-  private boolean useBuffer = true;
-  private final long timeout;
+  private final long waitTimeout;
+  private final long throttlingTimeout;
+  private final SearchListener delegateListener;
+  private final SearchEventsBuffer buffer = new SearchEventsBuffer();
 
-  public WaitForContributorsListenerWrapper(SearchListener delegate, SearchListModel model, long timeout) {
-    super(delegate);
+  public WaitForContributorsListenerWrapper(SearchListener delegate, SearchListModel model, long waitTimeout, long throttlingTimeout) {
+    delegateListener = delegate;
     listModel = model;
-    this.timeout = timeout;
+    this.waitTimeout = waitTimeout;
+    this.throttlingTimeout = throttlingTimeout;
   }
 
   public WaitForContributorsListenerWrapper(SearchListener delegate, SearchListModel model) {
-    this(delegate, model, DEFAULT_TIMEOUT);
-  }
-
-  @Override
-  public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
-    if (useBuffer) {
-      super.elementsAdded(list);
-    }
-    else {
-      myDelegateListener.elementsAdded(list);
-    }
-  }
-
-  @Override
-  public void elementsRemoved(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
-    if (useBuffer) {
-      super.elementsRemoved(list);
-    }
-    else {
-      myDelegateListener.elementsRemoved(list);
-    }
+    this(delegate, model, DEFAULT_WAIT_TIMEOUT, DEFAULT_THROTTLING_TIMEOUT);
   }
 
   @Override
   public void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
-    super.searchStarted(contributors);
     resetState(contributors);
-    if (useBuffer) {
-      flushFuture = scheduleFlash();
-    }
+    delegateListener.searchStarted(contributors);
+    long timeout = contributors.size() > 1 ? waitTimeout : throttlingTimeout;
+    scheduleFlush(timeout);
   }
 
   @Override
   public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
     cancelScheduledFlush();
-    super.searchFinished(hasMoreContributors);
+    buffer.flushBuffer(delegateListener);
+    delegateListener.searchFinished(hasMoreContributors);
+  }
+
+  @Override
+  public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
+    buffer.addElements(list);
+    scheduleFlush(throttlingTimeout);
+  }
+
+  @Override
+  public void elementsRemoved(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
+    buffer.removeElements(list);
+    scheduleFlush(throttlingTimeout);
   }
 
   @Override
   public void contributorFinished(@NotNull SearchEverywhereContributor<?> contributor, boolean hasMore) {
+    buffer.contributorFinished(contributor, hasMore);
     markContributorAndCheckFlush(contributor);
   }
 
   @Override
   public void contributorWaits(@NotNull SearchEverywhereContributor<?> contributor) {
+    buffer.contributorWaits(contributor);
     markContributorAndCheckFlush(contributor);
-    super.contributorWaits(contributor);
   }
 
   private void markContributorAndCheckFlush(@NotNull SearchEverywhereContributor<?> contributor) {
-    if (contributorsMap.get(contributor) != null && useBuffer) {
+    if (contributorsMap.get(contributor) != null) {
       contributorsMap.put(contributor, true);
       if (ContainerUtil.and(contributorsMap.values(), Boolean::booleanValue)) {
         cancelScheduledFlush();
-        flushBuffer();
-        useBuffer = false;
+        buffer.flushBuffer(delegateListener);
         listModel.freezeElements();
       }
     }
   }
 
   private void cancelScheduledFlush() {
-    if (flushFuture == null) return;
-    flushFuture.cancel(false);
+    if (flushFuture != null) flushFuture.cancel(false);
   }
 
-  private Future<?> scheduleFlash() {
+  private void scheduleFlush(long timeout) {
+    if (flushFuture != null && !flushFuture.isDone()) return;
+
     Runnable command = () -> {
       logNonFinished();
-      flushBuffer();
-      useBuffer = false;
+      buffer.flushBuffer(delegateListener);
       listModel.freezeElements();
     };
 
-    return executorService.schedule(command, timeout, TimeUnit.MILLISECONDS);
+    flushFuture = executorService.schedule(command, timeout, TimeUnit.MILLISECONDS);
   }
 
   private void logNonFinished() {
     contributorsMap.forEach((contributor, finished) -> {
-      if (!finished) LOG.warn(String.format("Contributor (%s) did not finish search in timeout (%d). Maybe it should implement PossibleSlowContributor interface", contributor.getSearchProviderId(), timeout));
+      if (!finished) LOG.warn(String.format("Contributor (%s) did not finish search in timeout (%d). Maybe it should implement PossibleSlowContributor interface", contributor.getSearchProviderId(),
+                                            waitTimeout));
     });
   }
 
   private void resetState(Collection<? extends SearchEverywhereContributor<?>> contributors) {
     cancelScheduledFlush();
-    clearBuffer();
+    buffer.clearBuffer();
     Map<? extends SearchEverywhereContributor<?>, Boolean> map = contributors.stream()
       .filter(c -> !PossibleSlowContributor.checkSlow(c))
       .collect(Collectors.toMap(Function.identity(), c -> false));
     contributorsMap.clear();
     contributorsMap.putAll(map);
-    useBuffer = contributors.size() > 1;
   }
 }

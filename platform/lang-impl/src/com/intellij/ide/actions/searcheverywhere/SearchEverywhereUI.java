@@ -118,7 +118,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private final SearchEverywhereHeader myHeader;
   private String myNotFoundString;
   private final SESearcher mySearcher;
-  private final BufferingListenerWrapper myBufferedListener;
+  private final SearchListener myBufferedListener;
   private ProgressIndicator mySearchProgressIndicator;
   private final SEListSelectionTracker mySelectionTracker;
   private final SearchFieldTypingListener mySearchTypingListener;
@@ -190,10 +190,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   @NotNull
-  private BufferingListenerWrapper createListener() {
+  private SearchListener createListener() {
     SearchListener wrapped = SearchListener.combine(mySearchListener, new SearchProcessLogger());
     if (AdvancedSettings.getBoolean("search.everywhere.wait.for.contributors")) {
-      return new SwitchSEListener(wrapped, myListModel);
+      return new WaitForContributorsListenerWrapper(wrapped, myListModel);
     }
 
     return new ThrottlingListenerWrapper(wrapped);
@@ -935,9 +935,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private void stopSearching() {
     if (mySearchProgressIndicator != null && !mySearchProgressIndicator.isCanceled()) {
       mySearchProgressIndicator.cancel();
-    }
-    if (myBufferedListener != null) {
-      myBufferedListener.clearBuffer();
     }
   }
 
