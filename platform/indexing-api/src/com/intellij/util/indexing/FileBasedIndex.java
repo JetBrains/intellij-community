@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @see FileBasedIndexExtension
@@ -46,12 +47,9 @@ public abstract class FileBasedIndex {
 
   public static class IndexWritingFile {
     public final int fileId;
-    @Nullable
-    public final String filePath;
 
-    public IndexWritingFile(int id, @Nullable String path) {
+    public IndexWritingFile(int id) {
       fileId = id;
-      filePath = path;
     }
   }
 

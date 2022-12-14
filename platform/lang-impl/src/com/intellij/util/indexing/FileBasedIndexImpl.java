@@ -1755,11 +1755,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return ourIndexedFile.get();
   }
 
-  static void markFileWritingIndexes(int fileId, @Nullable String filePath) {
+  static void markFileWritingIndexes(int fileId) {
     if (/*filePath != null &&*/ ourWritingIndexFile.get() != null) {
       throw new AssertionError("Reentrant writing indices");
     }
-    ourWritingIndexFile.set(new IndexWritingFile(fileId, filePath));
+    ourWritingIndexFile.set(new IndexWritingFile(fileId));
   }
 
   static void unmarkWritingIndexes() {
