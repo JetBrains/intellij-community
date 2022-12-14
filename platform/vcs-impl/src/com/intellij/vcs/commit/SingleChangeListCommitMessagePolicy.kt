@@ -43,13 +43,13 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, initialComm
     currentMessage.text = getCommitMessageFor(newChangeList) ?: lastKnownComment
   }
 
-  fun onDialogClosed(commitState: ChangeListCommitState, onCommit: Boolean) {
+  fun onDialogClosed(commitState: ChangeListCommitState, onBeforeCommit: Boolean) {
     val changeList = commitState.changeList
     val currentMessage = commitState.commitMessage
 
     messagesToSave[changeList.name] = currentMessage
 
-    if (onCommit) {
+    if (onBeforeCommit) {
       vcsConfiguration.saveCommitMessage(currentMessage)
 
       val isChangeListFullyIncluded = changeList.changes.size == commitState.changes.size

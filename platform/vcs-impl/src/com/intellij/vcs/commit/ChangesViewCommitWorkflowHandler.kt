@@ -84,7 +84,7 @@ internal class ChangesViewCommitWorkflowHandler(
       }
     })
 
-    val initialCommitMessage = commitMessagePolicy.getCommitMessage(currentChangeList)
+    val initialCommitMessage = commitMessagePolicy.init(currentChangeList)
     setCommitMessage(initialCommitMessage)
     DelayedCommitMessageProvider.init(project, ui, initialCommitMessage)
   }
@@ -186,10 +186,7 @@ internal class ChangesViewCommitWorkflowHandler(
     currentChangeList = newChangeList
 
     if (oldChangeList.id != newChangeList.id) {
-      commitMessagePolicy.save(oldChangeList, getCommitMessage(), false)
-
-      val newCommitMessage = commitMessagePolicy.getCommitMessage(newChangeList)
-      setCommitMessage(newCommitMessage)
+      commitMessagePolicy.onChangelistChanged(oldChangeList, newChangeList, ui.commitMessageUi)
 
       commitOptions.changeListChanged(newChangeList)
     }
@@ -260,7 +257,7 @@ internal class ChangesViewCommitWorkflowHandler(
   }
 
   override fun saveCommitMessageBeforeCommit() {
-    commitMessagePolicy.save(currentChangeList, getCommitMessage(), true)
+    commitMessagePolicy.onBeforeCommit(currentChangeList, getCommitMessage())
   }
 
   // save state on project close
@@ -280,7 +277,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private fun saveStateBeforeDispose() {
     commitOptions.saveState()
-    commitMessagePolicy.save(currentChangeList, getCommitMessage(), false)
+    commitMessagePolicy.onDispose(currentChangeList, getCommitMessage())
   }
 
   interface ActivityListener : EventListener {
@@ -290,8 +287,7 @@ internal class ChangesViewCommitWorkflowHandler(
   private inner class GitCommitStateCleaner : CommitStateCleaner() {
 
     override fun onSuccess() {
-      setCommitMessage(commitMessagePolicy.getCommitMessage(currentChangeList))
-
+      commitMessagePolicy.onAfterCommit(currentChangeList, ui.commitMessageUi)
       super.onSuccess()
     }
   }

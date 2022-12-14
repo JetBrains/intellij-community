@@ -36,7 +36,7 @@ class GitStageCommitWorkflowHandler(
     setupCommitChecksResultTracking()
     vcsesChanged()
 
-    val initialCommitMessage = commitMessagePolicy.getCommitMessage(false)
+    val initialCommitMessage = commitMessagePolicy.init()
     setCommitMessage(initialCommitMessage)
     DelayedCommitMessageProvider.init(project, ui, initialCommitMessage)
   }
@@ -73,7 +73,7 @@ class GitStageCommitWorkflowHandler(
   private inner class GitStageCommitStateCleaner : CommitStateCleaner() {
     override fun onSuccess() {
       ui.commitAuthor = null
-      setCommitMessage(commitMessagePolicy.getCommitMessage(true))
+      commitMessagePolicy.onAfterCommit(ui.commitMessageUi)
 
       super.onSuccess()
     }

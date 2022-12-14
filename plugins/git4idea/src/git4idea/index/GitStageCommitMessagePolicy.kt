@@ -3,22 +3,30 @@ package git4idea.index
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.ui.TextAccessor
 import com.intellij.vcs.commit.AbstractCommitMessagePolicy
 import git4idea.repo.GitCommitTemplateTracker
 
 class GitStageCommitMessagePolicy(project: Project) : AbstractCommitMessagePolicy(project) {
-  fun getCommitMessage(isAfterCommit: Boolean): String? =
-    with(vcsConfiguration) {
-      when {
-        CLEAR_INITIAL_COMMIT_MESSAGE -> null
-        isAfterCommit -> getCommitTemplateMessage() ?: LAST_COMMIT_MESSAGE
-        else -> LAST_COMMIT_MESSAGE
-      }
-    }
+  fun init(): String? {
+    if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return null
 
-  private fun getCommitTemplateMessage(): String? = project.service<GitCommitTemplateTracker>().getTemplateContent()
+    return vcsConfiguration.LAST_COMMIT_MESSAGE
+  }
 
   fun onBeforeCommit(commitMessage: String) {
     vcsConfiguration.saveCommitMessage(commitMessage)
   }
+
+  fun onAfterCommit(currentMessage: TextAccessor) {
+    if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) {
+      currentMessage.text = null
+      return
+    }
+
+    currentMessage.text = getCommitTemplateMessage()
+                          ?: vcsConfiguration.LAST_COMMIT_MESSAGE
+  }
+
+  private fun getCommitTemplateMessage(): String? = project.service<GitCommitTemplateTracker>().getTemplateContent()
 }
