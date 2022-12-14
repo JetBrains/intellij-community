@@ -2327,6 +2327,17 @@ public final class UIUtil {
     return result;
   });
 
+  @ApiStatus.Internal
+  public static void addNotInHierarchyComponents(@NotNull JComponent container, @NotNull Iterable<Component> components) {
+    Iterable<? extends Component> oldValue = ClientProperty.get(container, NOT_IN_HIERARCHY_COMPONENTS);
+    if (oldValue == null) {
+      ClientProperty.put(container, NOT_IN_HIERARCHY_COMPONENTS, components);
+      return;
+    }
+
+    ClientProperty.put(container, NOT_IN_HIERARCHY_COMPONENTS, IterablesConcat.concat(oldValue, components));
+  }
+
   public static void scrollListToVisibleIfNeeded(final @NotNull JList<?> list) {
     SwingUtilities.invokeLater(() -> {
       final int selectedIndex = list.getSelectedIndex();
