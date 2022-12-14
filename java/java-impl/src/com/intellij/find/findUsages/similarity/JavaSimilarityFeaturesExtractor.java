@@ -11,15 +11,19 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.stream.IntStream;
+
 import static com.intellij.psi.JavaTokenType.FINAL_KEYWORD;
 
 public class JavaSimilarityFeaturesExtractor extends JavaRecursiveElementVisitor {
   private final @NotNull UsageSimilarityFeaturesRecorder myUsageSimilarityFeaturesRecorder;
   private final @NotNull PsiElement myContext;
+  private final @NotNull PsiElement myUsage;
 
   public JavaSimilarityFeaturesExtractor(@NotNull PsiElement usage, @NotNull PsiElement context) {
     myUsageSimilarityFeaturesRecorder = new UsageSimilarityFeaturesRecorder(context, usage);
     myContext = context;
+    myUsage = usage;
   }
 
   public @NotNull Bag getFeatures() {
@@ -186,14 +190,32 @@ public class JavaSimilarityFeaturesExtractor extends JavaRecursiveElementVisitor
 
   @Override
   public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
+    if(Registry.is("similarity.find.usages.new.features.collector.for.lambda.and.anonymous.class")){
+      processComplexStructures(expression);
+      return;
+    }
     myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, "lambda");
     super.visitLambdaExpression(expression);
   }
 
   @Override
   public void visitAnonymousClass(@NotNull PsiAnonymousClass clazz) {
+    if(Registry.is("similarity.find.usages.new.features.collector.for.lambda.and.anonymous.class")){
+      processComplexStructures(clazz);
+      return;
+    }
     myUsageSimilarityFeaturesRecorder.addAllFeatures(clazz, "anonymousClazz");
     super.visitAnonymousClass(clazz);
+  }
+
+  private void processComplexStructures(@NotNull PsiElement element){
+    JavaSimilarityComplexExpressionFeaturesExtractor complexExpressionFeaturesExtractor =
+      new JavaSimilarityComplexExpressionFeaturesExtractor(myUsage, element);
+
+    complexExpressionFeaturesExtractor
+      .getFeatures()
+      .getBag()
+      .forEach((String token, Integer count) -> IntStream.range(0, count).forEach(i -> myUsageSimilarityFeaturesRecorder.addFeature(token)));
   }
 
   @Override

@@ -30,6 +30,7 @@
     <registryKey defaultValue="true" description="Enable auto-update for similar usages component" key="similarity.find.usages.view.auto.update"/>
     <registryKey defaultValue="true" description="Use information from sibling nodes" key="similarity.find.usages.use.sibling.features"/>
     <registryKey defaultValue="false" description="Adds 'import clustering data' action for similar usages preview" key="similarity.import.clustering.results.action.enabled"/>
+    <registryKey defaultValue="true" description="Process lambda and anonymous class separately to collect less features" key="similarity.find.usages.new.features.collector.for.lambda.and.anonymous.class"/>
   </extensions>
   <actions resource-bundle="messages.UsageViewBundle">
     <group id="UsageGroupingActionGroup">

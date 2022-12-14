@@ -78,4 +78,8 @@ public class JavaFindUsagesGroupsTest extends JavaPsiTestCase {
   }
 
   public void testArrayAccess() { doTest(getMethod("Market", "getGoods")); }
+
+  public void testForEach() {
+    doTest(getMethod("java.lang.Iterable", "forEach"));
+  }
 }
