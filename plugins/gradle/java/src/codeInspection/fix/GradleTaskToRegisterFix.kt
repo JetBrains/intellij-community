@@ -11,6 +11,7 @@ import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
@@ -30,16 +31,43 @@ class GradleTaskToRegisterFix : LocalQuickFix {
     val callParent = descriptor.psiElement.parentOfType<GrMethodCall>() ?: return
     val firstArgument = inferFirstArgument(callParent) ?: return
     val secondArgument = inferSecondArgument(callParent)
-    val representation = "tasks.register" + when (secondArgument) {
-      null -> "('$firstArgument')"
-      is GrClosableBlock -> "('$firstArgument') ${secondArgument.text}"
-      else -> "('$firstArgument', ${secondArgument.text})"
+    val typeArgument = inferClassArgument(callParent)
+    val dependsOnArgument = inferDependsOnArgument(callParent)
+    val closure = buildClosure(project, dependsOnArgument, secondArgument)
+    val representation = buildString {
+      append("tasks.register('$firstArgument'")
+      if (typeArgument != null) {
+        append(", ${typeArgument.text}")
+      }
+      append(when (closure) {
+        null -> ")" // no closure
+        is GrClosableBlock -> ")" + closure.text // a closable block can be moved out of parentheses
+        String -> ", $closure)" // a random expression can be in parentheses
+        else -> error("Unexpected object: $closure")
+      })
     }
     val newCall = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(representation)
     callParent.replace(newCall)
   }
 
-  private fun inferFirstArgument(callParent: GrMethodCall) : String? {
+  private fun buildClosure(project: Project, dependsOn: PsiElement?, closureArgument: PsiElement?) : Any? {
+    val factory = GroovyPsiElementFactory.getInstance(project)
+    return when (closureArgument) {
+      null -> if (dependsOn == null) null else enhanceClosure(dependsOn, factory.createClosureFromText(" { }"), factory)
+      is GrClosableBlock -> enhanceClosure(dependsOn, closureArgument, factory)
+      else -> if (dependsOn == null) closureArgument.text else enhanceClosure(dependsOn, factory.createClosureFromText("{}"), factory)
+    }
+  }
+
+  private fun enhanceClosure(dependsOn: PsiElement?, block: GrClosableBlock, factory: GroovyPsiElementFactory) : GrClosableBlock {
+    if (dependsOn == null) return block
+    val copy = block.copy() as GrClosableBlock
+    val lbrace = copy.lBrace
+    copy.addAfter(factory.createExpressionFromText("dependsOn ${dependsOn.text}"), lbrace)
+    return copy
+  }
+
+  private fun inferFirstArgument(callParent: GrMethodCall): String? {
     val argument = callParent.expressionArguments.firstOrNull() ?: return null
     return when (argument) {
       is GrMethodCallExpression -> argument.invokedExpression.text
@@ -49,7 +77,7 @@ class GradleTaskToRegisterFix : LocalQuickFix {
     }
   }
 
-  private fun inferSecondArgument(callParent: GrMethodCall, inspectFirstArg: Boolean = true) : PsiElement? {
+  private fun inferSecondArgument(callParent: GrMethodCall, inspectFirstArg: Boolean = true): PsiElement? {
     val closureArgument = callParent.closureArguments.firstOrNull()
     if (closureArgument != null) {
       return closureArgument
@@ -63,5 +91,21 @@ class GradleTaskToRegisterFix : LocalQuickFix {
       return inferSecondArgument(firstArgument, false)
     }
     return null
+  }
+
+  private fun inferClassArgument(callParent: GrMethodCall): PsiElement? = extractNamedArgument(callParent, "type")
+
+  private fun inferDependsOnArgument(callParent: GrMethodCall): PsiElement? = extractNamedArgument(callParent, "dependsOn")
+
+  private fun extractNamedArgument(topCall: GrMethodCall, label: String) : PsiElement? {
+    return topCall.doExtractNamedArgument(label)
+           ?: topCall.expressionArguments.firstOrNull()?.doExtractNamedArgument(label)
+  }
+
+  private fun GrExpression.doExtractNamedArgument(labelName: String) : PsiElement? {
+    if (this !is GrMethodCallExpression) {
+      return null
+    }
+    return namedArguments.find { it.labelName == labelName }?.expression
   }
 }
