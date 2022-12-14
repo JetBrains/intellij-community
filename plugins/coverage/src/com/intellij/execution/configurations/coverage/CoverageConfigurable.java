@@ -35,6 +35,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Base {@link com.intellij.openapi.options.Configurable} for configuring code coverage
@@ -50,7 +51,7 @@ public final class CoverageConfigurable extends SettingsEditor<RunConfigurationB
   private static final Logger LOG = Logger.getInstance(CoverageConfigurable.class);
 
   private final JreVersionDetector myVersionDetector = new JreVersionDetector();
-  Project myProject;
+  final Project myProject;
   private CoverageClassFilterEditor myClassFilterEditor;
   private CoverageClassFilterEditor myExcludeClassFilterEditor;
   private JLabel myCoverageNotSupportedLabel;
@@ -88,7 +89,7 @@ public final class CoverageConfigurable extends SettingsEditor<RunConfigurationB
       final String runnerId = configuration.getRunnerId();
       if (runnerId != null){
         final CoverageRunnerItem runnerItem = new CoverageRunnerItem(runnerId);
-        final DefaultComboBoxModel model = (DefaultComboBoxModel)myCoverageRunnerCb.getModel();
+        final DefaultComboBoxModel<CoverageRunnerItem> model = (DefaultComboBoxModel<CoverageRunnerItem>)myCoverageRunnerCb.getModel();
         if (model.getIndexOf(runnerItem) == -1) {
           model.addElement(runnerItem);
         }
@@ -96,7 +97,7 @@ public final class CoverageConfigurable extends SettingsEditor<RunConfigurationB
       } else {
         myCoverageRunnerCb.setSelectedIndex(0);
       }
-      runner = ((CoverageRunnerItem)myCoverageRunnerCb.getSelectedItem()).getRunner();
+      runner = ((CoverageRunnerItem)Objects.requireNonNull(myCoverageRunnerCb.getSelectedItem())).getRunner();
     }
     myRunnerPanel.setEnabled(isJre50);
 
@@ -209,10 +210,12 @@ public final class CoverageConfigurable extends SettingsEditor<RunConfigurationB
     final GridBagConstraints bagConstraints =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                              JBInsets.emptyInsets(), 0, 0);
+    //noinspection DialogTitleCapitalization
     panel.add(new TitledSeparator(JavaCoverageBundle.message("record.coverage.filters.title")), bagConstraints);
     myClassFilterEditor = new CoverageClassFilterEditor(myProject);
     panel.add(myClassFilterEditor, bagConstraints);
 
+    //noinspection DialogTitleCapitalization
     panel.add(new TitledSeparator(JavaCoverageBundle.message("exclude.coverage.filters.title")), bagConstraints);
     myExcludeClassFilterEditor = new CoverageClassFilterEditor(myProject) {
       @NotNull
@@ -257,7 +260,7 @@ public final class CoverageConfigurable extends SettingsEditor<RunConfigurationB
       myRunnerId = runner.getId();
     }
 
-    private CoverageRunnerItem(String runnerId) {
+    private CoverageRunnerItem(@NotNull String runnerId) {
       myRunnerId = runnerId;
     }
 
@@ -265,7 +268,7 @@ public final class CoverageConfigurable extends SettingsEditor<RunConfigurationB
       return myRunner;
     }
 
-    public String getRunnerId() {
+    public @NotNull String getRunnerId() {
       return myRunnerId;
     }
 

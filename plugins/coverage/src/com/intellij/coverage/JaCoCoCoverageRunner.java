@@ -170,7 +170,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
           Path rootPath = Paths.get(new File(FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(root.getUrl()))).toURI());
           Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
             @Override
-            public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+            public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
               String vmClassName = rootPath.relativize(path).toString().replaceAll(StringUtil.escapeToRegexp(File.separator), ".");
               vmClassName = StringUtil.trimEnd(vmClassName, ".class");
               if (suite.isClassFiltered(vmClassName, suite.getExcludedClassNames()) ||

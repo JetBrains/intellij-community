@@ -137,7 +137,7 @@ public final class PackageAnnotator {
   }
 
   public static class DirCoverageInfo extends PackageCoverageInfo {
-    public VirtualFile sourceRoot;
+    final public VirtualFile sourceRoot;
 
     public DirCoverageInfo(VirtualFile sourceRoot) {
       this.sourceRoot = sourceRoot;
