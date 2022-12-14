@@ -125,10 +125,10 @@ class ResizableMappedFileTest {
 
       val statsAfterOp = StorageLockContext.getStatistics()
 
-      val pageLoadDiff = statsAfterOp.pageLoad - stats.pageLoad
-      val pageMissDiff = statsAfterOp.pageMiss - stats.pageMiss
-      val pageHitDiff = statsAfterOp.pageHit - stats.pageHit
-      val pageFastCacheHit = statsAfterOp.pageFastCacheHit - stats.pageFastCacheHit
+      val pageLoadDiff = statsAfterOp.regularPageLoads - stats.regularPageLoads
+      val pageMissDiff = statsAfterOp.pageLoadsAboveSizeThreshold - stats.pageLoadsAboveSizeThreshold
+      val pageHitDiff = statsAfterOp.pageHits - stats.pageHits
+      val pageFastCacheHit = statsAfterOp.pageFastCacheHits - stats.pageFastCacheHits
 
       Assert.assertEquals(0, pageLoadDiff)
       Assert.assertEquals(1, pageMissDiff)

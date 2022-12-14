@@ -491,7 +491,7 @@ public class PagedFileStorage implements Forceable {
 
     if (IOStatistics.DEBUG) {
       long finished = System.currentTimeMillis();
-      if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
+      if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT_MS) {
         IOStatistics.dump("Flushed " + myFile + " for " + (finished - started));
       }
     }

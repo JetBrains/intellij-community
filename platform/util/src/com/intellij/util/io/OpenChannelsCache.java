@@ -85,6 +85,7 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
       descriptor.lock();
     }
 
+    //channel access is NOT guarded by the myCacheLock
     try {
       return processor.process(descriptor.getChannel());
     }
