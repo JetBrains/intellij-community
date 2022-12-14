@@ -16,7 +16,6 @@ import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
-import com.intellij.util.SmartList
 import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
@@ -192,8 +191,7 @@ internal class CellImpl<T : JComponent>(
 
   override fun validationRequestor(validationRequestor: DialogValidationRequestor): CellImpl<T> {
     val origin = component.interactiveComponent
-    dialogPanelConfig.validationRequestors.getOrPut(origin) { SmartList() }
-      .add(validationRequestor)
+    dialogPanelConfig.validationRequestors.list(origin).add(validationRequestor)
     return this
   }
 
@@ -226,7 +224,7 @@ internal class CellImpl<T : JComponent>(
 
   override fun validationOnInput(vararg validations: DialogValidation): CellImpl<T> {
     val origin = component.interactiveComponent
-    dialogPanelConfig.validationsOnInput.getOrPut(origin) { SmartList() }
+    dialogPanelConfig.validationsOnInput.list(origin)
       .addAll(validations.map { it.forComponentIfNeeded(origin) })
 
     // Fallback in case if no validation requestors is defined
@@ -246,7 +244,7 @@ internal class CellImpl<T : JComponent>(
 
   override fun validationOnApply(vararg validations: DialogValidation): CellImpl<T> {
     val origin = component.interactiveComponent
-    dialogPanelConfig.validationsOnApply.getOrPut(origin) { SmartList() }
+    dialogPanelConfig.validationsOnApply.list(origin)
       .addAll(validations.map { it.forComponentIfNeeded(origin) })
     return this
   }
@@ -264,7 +262,7 @@ internal class CellImpl<T : JComponent>(
   private fun guessAndInstallValidationRequestor() {
     val stackTrace = Throwable()
     val origin = component.interactiveComponent
-    val validationRequestors = dialogPanelConfig.validationRequestors.getOrPut(origin) { SmartList() }
+    val validationRequestors = dialogPanelConfig.validationRequestors.list(origin)
     if (validationRequestors.isNotEmpty()) return
 
     validationRequestors.add(object : DialogValidationRequestor {
@@ -290,17 +288,17 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun onApply(callback: () -> Unit): CellImpl<T> {
-    dialogPanelConfig.applyCallbacks.register(component, callback)
+    dialogPanelConfig.applyCallbacks.list(component).add(callback)
     return this
   }
 
   override fun onReset(callback: () -> Unit): CellImpl<T> {
-    dialogPanelConfig.resetCallbacks.register(component, callback)
+    dialogPanelConfig.resetCallbacks.list(component).add(callback)
     return this
   }
 
   override fun onIsModified(callback: () -> Boolean): CellImpl<T> {
-    dialogPanelConfig.isModifiedCallbacks.register(component, callback)
+    dialogPanelConfig.isModifiedCallbacks.list(component).add(callback)
     return this
   }
 

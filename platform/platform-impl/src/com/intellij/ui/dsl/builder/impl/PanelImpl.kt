@@ -278,17 +278,17 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun onApply(callback: () -> Unit): PanelImpl {
-    dialogPanelConfig.applyCallbacks.register(null, callback)
+    dialogPanelConfig.applyCallbacks.list(null).add(callback)
     return this
   }
 
   override fun onReset(callback: () -> Unit): PanelImpl {
-    dialogPanelConfig.resetCallbacks.register(null, callback)
+    dialogPanelConfig.resetCallbacks.list(null).add(callback)
     return this
   }
 
   override fun onIsModified(callback: () -> Boolean): PanelImpl {
-    dialogPanelConfig.isModifiedCallbacks.register(null, callback)
+    dialogPanelConfig.isModifiedCallbacks.list(null).add(callback)
     return this
   }
 
