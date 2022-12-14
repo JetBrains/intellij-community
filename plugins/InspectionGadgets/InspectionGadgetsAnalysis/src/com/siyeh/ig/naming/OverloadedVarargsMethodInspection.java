@@ -15,9 +15,8 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,7 +24,20 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
 public class OverloadedVarargsMethodInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreInconvertibleTypes = true;
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreInconvertibleTypes", InspectionGadgetsBundle.message(
+        "overloaded.vararg.method.problem.option")));
+  }
 
   @Override
   @NotNull
@@ -46,7 +58,7 @@ public class OverloadedVarargsMethodInspection extends BaseInspection {
     return new OverloadedVarargMethodVisitor();
   }
 
-  private static class OverloadedVarargMethodVisitor extends BaseInspectionVisitor {
+  private class OverloadedVarargMethodVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -65,10 +77,48 @@ public class OverloadedVarargsMethodInspection extends BaseInspection {
                                                         : PsiSubstitutor.EMPTY;
         if (!MethodSignatureUtil.areSignaturesEqual(sameNameMethod.getSignature(substitutor),
                                                     method.getSignature(PsiSubstitutor.EMPTY))) {
+          if (ignoreInconvertibleTypes && !areConvertibleTypesWithVarArgs(method.getParameterList(),
+                                                                          sameNameMethod.getParameterList())) {
+            continue;
+          }
           registerMethodError(method, method);
           return;
         }
       }
     }
+
+    private static boolean areConvertibleTypesWithVarArgs(@NotNull PsiParameterList parameterListWithVarArgs,
+                                                          @NotNull PsiParameterList otherParameterList) {
+      PsiParameter[] parametersWithVarArgs = parameterListWithVarArgs.getParameters();
+      PsiParameter[] otherParameters = otherParameterList.getParameters();
+
+      int lengthForVarArgs = parametersWithVarArgs.length;
+      int otherLength = otherParameters.length;
+
+      //example:
+      //parameterListWithVarArgs: (Integer i1, Integer i2, String... strings)
+      //otherParameterList: (Integer i1)
+      if (lengthForVarArgs > otherLength + 1) {
+        return false;
+      }
+
+      for (int i = 0; i < otherLength; i++) {
+        PsiType type = i < lengthForVarArgs ? getTypeForComparison(parametersWithVarArgs[i]) :
+                       getTypeForComparison(parametersWithVarArgs[lengthForVarArgs - 1]);
+
+        PsiType otherType = getTypeForComparison(otherParameters[i]);
+
+        if (!type.isConvertibleFrom(otherType) && !otherType.isConvertibleFrom(type)) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+  }
+
+  private static PsiType getTypeForComparison(PsiParameter parameter) {
+    PsiType type = parameter.getType();
+    return type instanceof PsiEllipsisType ellipsisType ? ellipsisType.getComponentType() : type;
   }
 }
