@@ -1216,10 +1216,10 @@ private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
   var mode = GeneralSettings.getInstance().confirmOpenNewProject
   if (mode == GeneralSettings.OPEN_PROJECT_ASK) {
     val message = if (options.projectName == null) {
-      IdeBundle.message("prompt.open.project.in.new.frame")
+      IdeUICustomization.getInstance().projectMessage("prompt.open.project.in.new.frame")
     }
     else {
-      IdeBundle.message("prompt.open.project.with.name.in.new.frame", options.projectName)
+      IdeUICustomization.getInstance().projectMessage("prompt.open.project.with.name.in.new.frame", options.projectName)
     }
 
     val openInExistingFrame = withContext(Dispatchers.EDT) {
