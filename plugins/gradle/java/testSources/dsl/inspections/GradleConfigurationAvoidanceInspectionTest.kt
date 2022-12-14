@@ -158,4 +158,13 @@ class GradleConfigurationAvoidanceInspectionTest : GradleCodeInsightTestCase() {
                     "tasks.register('abc')", "Replace")
     }
   }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNoUnnecessaryExpansion(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testIntention("1.with { tasks.with<caret>Type(Jar) {}; 1 }",
+                    "1.with { tasks.withType(Jar).configureEach {}; 1 }", "Add 'configureEach'")
+    }
+  }
 }
