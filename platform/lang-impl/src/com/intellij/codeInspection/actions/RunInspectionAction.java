@@ -159,7 +159,7 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
       private InspectionToolWrapper<?, ?> myUpdatedSettingsToolWrapper;
 
       @Override
-      protected @NotNull JComponent getAdditionalActionSettings(Project project) {
+      protected @NotNull JComponent getAdditionalActionSettings(@NotNull Project project) {
         final JPanel panel = new JPanel(new GridBagLayout());
         final boolean hasOptionsPanel = toolWrapper.getTool().createOptionsPanel() != null;
         var constraints = new GridBagConstraints(0, 0, 1, 1, 1, hasOptionsPanel ? 0 : 1,
