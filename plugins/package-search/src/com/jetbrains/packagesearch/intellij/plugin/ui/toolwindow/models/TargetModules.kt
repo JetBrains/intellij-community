@@ -24,8 +24,6 @@ sealed class TargetModules {
     abstract val modules: List<PackageSearchModule>
     abstract val isMixedBuildSystems: Boolean
 
-    val id by lazy { modules.map { it.projectDir.absolutePath }.hashCode() }
-
     fun declaredScopes(project: Project): List<PackageScope> =
         modules.flatMap { it.moduleType.userDefinedScopes(project) }
             .distinct()

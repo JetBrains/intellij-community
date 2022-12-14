@@ -88,12 +88,24 @@ internal class ModulesTree(private val project: Project) : Tree(DefaultMutableTr
         if (treeModel == model) return
         setPaintBusy(true)
         val wasEmpty = model.root == null || model.getChildCount(model.root) == 0
-        val lastSelected = selectionPath?.lastPathComponent?.asSafely<DefaultMutableTreeNode>()
-            ?.userObject?.asSafely<TargetModules>()
+        val lastSelected = selectionPath
+            ?.path
+            ?.filterIsInstance<DefaultMutableTreeNode>()
+            ?.mapNotNull { it.userObject as? TargetModules }
+            ?.map {
+                when(it) {
+                    is TargetModules.All -> "root"
+                    is TargetModules.One -> it.module.name
+                    TargetModules.None -> ""
+                }
+            }
+            ?: emptyList()
+
+
         // Swapping model resets the selection — but, we set the right selection just afterwards
         model = treeModel
-        if (wasEmpty) TreeUtil.expandAll(this)
-        selectionPath = lastSelected?.let { model.root.asSafely<DefaultMutableTreeNode>()?.findPathWithData(it) } ?: TreePath(model.root)
+        expandAll()
+        selectionPath = model.root.asSafely<DefaultMutableTreeNode>()!!.findPathWithData(lastSelected)
         updateUI()
         setPaintBusy(false)
     }
@@ -131,4 +143,8 @@ internal class ModulesTree(private val project: Project) : Tree(DefaultMutableTr
     override fun isCopyEnabled(dataContext: DataContext) = true
 
     override fun isCopyVisible(dataContext: DataContext) = true
+
+    private fun expandAll() = TreeUtil.expandAll(this)
 }
+
+
