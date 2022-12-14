@@ -69,7 +69,7 @@ class UnindexedFilesIndexer extends DumbModeTask {
 
     projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Indexing);
     try {
-      doIndexFiles(providerToFiles, projectIndexingHistory, poweredIndicator);
+      doIndexFiles(projectIndexingHistory, poweredIndicator);
     }
     finally {
       projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing);
@@ -81,8 +81,7 @@ class UnindexedFilesIndexer extends DumbModeTask {
     projectIndexingHistory.addSnapshotInputMappingStatistics(snapshotInputMappingsStatistics);
   }
 
-  private void doIndexFiles(@NotNull Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles,
-                            @NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
+  private void doIndexFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
                             @NotNull ProgressIndicator progressIndicator) {
     int totalFiles = providerToFiles.values().stream().mapToInt(List::size).sum();
     ConcurrentTasksProgressManager concurrentTasksProgressManager = new ConcurrentTasksProgressManager(progressIndicator, totalFiles);
