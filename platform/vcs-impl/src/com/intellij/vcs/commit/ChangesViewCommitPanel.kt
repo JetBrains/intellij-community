@@ -110,7 +110,7 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
   }
 
   override var editedCommit by observable<EditedCommitDetails?>(null) { _, _, newValue ->
-    refreshData().then {
+    ChangesViewManager.getInstanceEx(project).promiseRefresh().then {
       invokeLater(ModalityState.NON_MODAL) {
         newValue?.let { expand(it) }
       }
@@ -188,7 +188,10 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
     commitMessage.setChangesSupplier(ChangeListChangesSupplier(changeLists))
   }
 
-  override fun refreshData(): Promise<*> = ChangesViewManager.getInstanceEx(project).promiseRefresh()
+  override fun refreshData(): Promise<*> {
+    return ChangesViewManager.getInstanceEx(project).promiseRefresh(ModalityState.defaultModalityState())
+  }
+
 
   override fun getDisplayedChanges(): List<Change> = all(changesView).userObjects(Change::class.java)
   override fun getIncludedChanges(): List<Change> = included(changesView).userObjects(Change::class.java)
@@ -213,7 +216,7 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
     val changesViewManager = ChangesViewManager.getInstance(project) as? ChangesViewManager ?: return
     if (!ChangesViewManager.isEditorPreview(project)) return
 
-    refreshData().then {
+    ChangesViewManager.getInstanceEx(project).promiseRefresh().then {
       invokeLater(ModalityState.NON_MODAL) {
         changesViewManager.closeEditorPreview(true)
       }
