@@ -16,11 +16,11 @@ import org.jetbrains.annotations.NotNull;
 
 import static org.jetbrains.kotlin.idea.migration.KotlinMigrationProfileKt.createMigrationProfile;
 
-public class CodeInspectionAction extends BaseAnalysisAction {
+public class CodeInspectionMigrationAction extends BaseAnalysisAction {
     private GlobalInspectionContextImpl myGlobalInspectionContext;
     private InspectionProfileImpl myExternalProfile;
 
-    public CodeInspectionAction(@Nls String title, @Nls String analysisNoon) {
+    public CodeInspectionMigrationAction(@Nls String title, @Nls String analysisNoon) {
         super(title, analysisNoon);
     }
 
