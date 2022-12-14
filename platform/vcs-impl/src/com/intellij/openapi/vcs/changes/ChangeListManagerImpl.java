@@ -64,6 +64,8 @@ import com.intellij.xml.util.XmlStringUtil;
 import kotlin.text.StringsKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.io.File;
@@ -396,6 +398,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     CountDownLatch waiter = new CountDownLatch(1);
     invokeAfterUpdate(false, waiter::countDown);
     awaitWithCheckCanceled(waiter);
+  }
+
+  @Override
+  public @NotNull Promise<?> promiseWaitForUpdate() {
+    AsyncPromise<Boolean> promise = new AsyncPromise<>();
+    invokeAfterUpdate(false, () -> promise.setResult(true));
+    return promise;
   }
 
   @Override

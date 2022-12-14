@@ -11,6 +11,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import java.io.File;
 import java.util.*;
@@ -300,6 +301,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @Override
   public void waitForUpdate() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public @NotNull Promise<?> promiseWaitForUpdate() {
     throw new UnsupportedOperationException();
   }
 
