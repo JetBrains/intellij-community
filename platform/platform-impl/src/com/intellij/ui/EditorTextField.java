@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -397,11 +397,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   }
 
-  private @Nullable EditorEx initEditor() {
-    //if (myProject != null && myProject.isDisposed()) {
-    //  Logger.getInstance(EditorTextField.class).error("Trying to create an editor for a disposed project");
-    //}
-
+  private EditorEx initEditor() {
     Disposable uiDisposable = PlatformDataKeys.UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(this));
     if (uiDisposable != null) {
       // If this component is added to a dialog (for example, the settings dialog),
