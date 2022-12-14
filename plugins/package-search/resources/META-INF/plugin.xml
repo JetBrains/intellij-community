@@ -76,8 +76,7 @@ Supports Maven and Gradle projects.
         <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.services.DependencyNavigationService"
                         client="all"/>
 
-        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration"
-                        client="all"/>
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration"/>
 
         <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectCachesService"
                         client="all"/>
@@ -102,10 +101,6 @@ Supports Maven and Gradle projects.
 
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.RepositoryManagementPanelProvider$PanelContainer"
-                client="all"/>
-
-        <projectService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.modules.ModulesTree$StateHolderService"
                 client="all"/>
 
         <applicationService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchCachesService"

@@ -20,6 +20,7 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.OptionTag
 
@@ -35,14 +36,12 @@ class PackageSearchGeneralConfiguration : BaseState(), PersistentStateComponent<
         const val DefaultPackageDetailsSplitterProportion = 0.8f
 
         fun getInstance(project: Project): PackageSearchGeneralConfiguration =
-            project.getService(PackageSearchGeneralConfiguration::class.java)
+            project.service()
     }
 
     override fun getState(): PackageSearchGeneralConfiguration = this
 
-    override fun loadState(state: PackageSearchGeneralConfiguration) {
-        this.copyFrom(state)
-    }
+    override fun loadState(state: PackageSearchGeneralConfiguration) = copyFrom(state)
 
     @get:OptionTag("AUTO_SCROLL_TO_SOURCE")
     var autoScrollToSource by property(true)
