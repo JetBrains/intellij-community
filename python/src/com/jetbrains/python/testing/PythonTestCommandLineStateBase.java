@@ -24,6 +24,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.console.PydevConsoleRunnerImpl;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.run.*;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
@@ -111,6 +112,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
   protected @NotNull PythonExecution buildPythonExecution(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareRequest) {
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareRequest.getTargetEnvironmentRequest();
     PythonScriptExecution testScriptExecution = PythonScripts.prepareHelperScriptExecution(getRunner(), helpersAwareRequest);
+    testScriptExecution.setCharset(PydevConsoleRunnerImpl.CONSOLE_CHARSET);
     addBeforeParameters(testScriptExecution);
     addTestSpecsAsParameters(testScriptExecution, getTestSpecs(targetEnvironmentRequest));
     addAfterParameters(targetEnvironmentRequest, testScriptExecution);
