@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.remoteServer.agent.util.log.TerminalListener.TtyResizeHandler;
-import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.ui.TerminalWidget;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -38,8 +38,11 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
     this(project, pipeName, process, null, false);
   }
 
-  public @NotNull JBTerminalWidget createTerminalWidget(@NotNull Disposable parent, @Nullable String currentWorkingDirectory) {
-    return super.createTerminalWidget(parent, currentWorkingDirectory, myDeferSessionUntilFirstShown);
+  @Override
+  public @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent,
+                                                           @Nullable String currentWorkingDirectory,
+                                                           boolean deferSessionStartUntilUiShown) {
+    return super.createShellTerminalWidget(parent, currentWorkingDirectory, myDeferSessionUntilFirstShown);
   }
 
   @Override

@@ -10,14 +10,14 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.jediterm.terminal.ProcessTtyConnector;
-import com.jediterm.terminal.ui.TerminalWidgetListener;
+import com.jediterm.terminal.TtyConnector;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,33 +36,34 @@ import java.util.List;
 public class TerminalContainer {
 
   private static final Logger LOG = Logger.getInstance(TerminalContainer.class);
+  private static final String TERMINAL_WIDGET_KEY = TerminalWidget.class.getName();
 
   private final Content myContent;
-  private final JBTerminalWidget myTerminalWidget;
+  private final TerminalWidget myTerminalWidget;
   private final Project myProject;
   private final TerminalView myTerminalView;
   private JPanel myPanel;
   private boolean myForceHideUiWhenSessionEnds = false;
-  private final TerminalWidgetListener myListener;
+  private final Runnable myTerminationListener;
 
   public TerminalContainer(@NotNull Project project,
                            @NotNull Content content,
-                           @NotNull JBTerminalWidget terminalWidget,
+                           @NotNull TerminalWidget terminalWidget,
                            @NotNull TerminalView terminalView) {
     myProject = project;
     myContent = content;
     myTerminalWidget = terminalWidget;
     myTerminalView = terminalView;
     myPanel = createPanel(terminalWidget);
-    myListener = widget -> {
+    myTerminationListener = () -> {
       ApplicationManager.getApplication().invokeLater(() -> processSessionCompleted(), myProject.getDisposed());
     };
-    terminalWidget.addListener(myListener);
+    terminalWidget.addTerminationCallback(myTerminationListener);
     terminalView.register(this);
     Disposer.register(content, () -> cleanup());
   }
 
-  public @NotNull JBTerminalWidget getTerminalWidget() {
+  public @NotNull TerminalWidget getTerminalWidget() {
     return myTerminalWidget;
   }
 
@@ -72,8 +73,9 @@ public class TerminalContainer {
 
   public void closeAndHide() {
     myForceHideUiWhenSessionEnds = true;
-    if (myTerminalWidget.getTtyConnector().isConnected()) {
-      myTerminalWidget.close();
+    TtyConnector connector = myTerminalWidget.getTtyConnectorAccessor().getTtyConnector();
+    if (connector != null && connector.isConnected()) {
+      connector.close();
     }
     else {
       // When "Close session when it ends" is off, terminal session is shown even with terminated shell process.
@@ -81,11 +83,13 @@ public class TerminalContainer {
     }
   }
 
-  private static @NotNull JPanel createPanel(@NotNull JBTerminalWidget terminalWidget ) {
+  private static @NotNull JPanel createPanel(@NotNull TerminalWidget terminalWidget) {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(null);
     panel.setFocusable(false);
-    panel.add(terminalWidget.getComponent(), BorderLayout.CENTER);
+    JComponent component = terminalWidget.getComponent();
+    component.putClientProperty(TERMINAL_WIDGET_KEY, terminalWidget);
+    panel.add(component, BorderLayout.CENTER);
     return panel;
   }
 
@@ -93,8 +97,8 @@ public class TerminalContainer {
     return myPanel;
   }
 
-  public void split(boolean vertically, @NotNull JBTerminalWidget newTerminalWidget) {
-    boolean hasFocus = myTerminalWidget.getTerminalPanel().hasFocus();
+  public void split(boolean vertically, @NotNull TerminalWidget newTerminalWidget) {
+    boolean hasFocus = myTerminalWidget.hasFocus();
     JPanel parent = myPanel;
     parent.remove(myTerminalWidget.getComponent());
 
@@ -126,8 +130,8 @@ public class TerminalContainer {
   private void processSessionCompleted() {
     Container parent = myPanel.getParent();
     if (parent instanceof Splitter) {
-      JBTerminalWidget nextToFocus = null;
-      if (myTerminalWidget.getTerminalPanel().hasFocus()) {
+      TerminalWidget nextToFocus = null;
+      if (myTerminalWidget.hasFocus()) {
         nextToFocus = getNextSplitTerminal(true);
       }
       Splitter splitter = (Splitter)parent;
@@ -155,7 +159,7 @@ public class TerminalContainer {
   }
 
   private void cleanup() {
-    myTerminalWidget.removeListener(myListener);
+    myTerminalWidget.removeTerminationCallback(myTerminationListener);
     myTerminalView.unregister(this);
   }
 
@@ -166,11 +170,11 @@ public class TerminalContainer {
     else {
       String text = getSessionCompletedMessage(myTerminalWidget);
       myTerminalWidget.writePlainMessage("\n" + text + "\n");
-      myTerminalWidget.getTerminalPanel().setCursorVisible(false);
+      myTerminalWidget.setCursorVisible(false);
     }
   }
 
-  private static @NotNull @Nls String getSessionCompletedMessage(@NotNull JBTerminalWidget widget) {
+  private static @NotNull @Nls String getSessionCompletedMessage(@NotNull TerminalWidget widget) {
     String text = "[" + TerminalBundle.message("session.terminated.text") + "]";
     ProcessTtyConnector connector = ShellTerminalWidget.getProcessTtyConnector(widget.getTtyConnector());
     if (connector != null) {
@@ -189,8 +193,8 @@ public class TerminalContainer {
     return findRootSplitter() != null;
   }
 
-  public @Nullable JBTerminalWidget getNextSplitTerminal(boolean forward) {
-    List<JBTerminalWidget> terminals = listTerminals();
+  public @Nullable TerminalWidget getNextSplitTerminal(boolean forward) {
+    List<TerminalWidget> terminals = listTerminals();
     int ind = terminals.indexOf(myTerminalWidget);
     if (ind < 0) {
       LOG.error("All split terminal list (" + terminals.size() + ") doesn't contain this terminal");
@@ -203,32 +207,40 @@ public class TerminalContainer {
     return terminals.get(newInd);
   }
 
-  private @NotNull List<JBTerminalWidget> listTerminals() {
+  private @NotNull List<TerminalWidget> listTerminals() {
     Splitter rootSplitter = findRootSplitter();
     if (rootSplitter == null) {
       return Collections.singletonList(myTerminalWidget);
     }
-    List<JBTerminalWidget> terminals = new ArrayList<>();
+    List<TerminalWidget> terminals = new ArrayList<>();
     traverseSplitters(rootSplitter, terminals);
     return terminals;
   }
 
-  private void traverseSplitters(@NotNull Splitter splitter, @NotNull List<JBTerminalWidget> terminals) {
+  private void traverseSplitters(@NotNull Splitter splitter, @NotNull List<TerminalWidget> terminals) {
     traverseParentPanel(splitter.getFirstComponent(), terminals);
     traverseParentPanel(splitter.getSecondComponent(), terminals);
   }
 
-  private void traverseParentPanel(@NotNull JComponent parentPanel, @NotNull List<JBTerminalWidget> terminals) {
+  private void traverseParentPanel(@NotNull JComponent parentPanel, @NotNull List<TerminalWidget> terminals) {
     Component[] components = parentPanel.getComponents();
     if (components.length == 1) {
       Component c = components[0];
       if (c instanceof Splitter) {
         traverseSplitters((Splitter)c, terminals);
       }
-      else if (c instanceof JBTerminalWidget) {
-        terminals.add((JBTerminalWidget)c);
+      else {
+        TerminalWidget widget = getWidgetByComponent(c);
+        if (widget != null) {
+          terminals.add(widget);
+        }
       }
     }
+  }
+
+  private static @Nullable TerminalWidget getWidgetByComponent(@NotNull Component c) {
+    Object clientProperty = c instanceof JComponent ? ((JComponent)c).getClientProperty(TERMINAL_WIDGET_KEY) : null;
+    return ObjectUtils.tryCast(clientProperty, TerminalWidget.class);
   }
 
   private @Nullable Splitter findRootSplitter() {
@@ -250,7 +262,7 @@ public class TerminalContainer {
     Component[] components = component.getComponents();
     if (components.length == 1) {
       Component c = components[0];
-      if (c instanceof JBTerminalWidget || c instanceof Splitter) {
+      if (getWidgetByComponent(c) != null || c instanceof Splitter) {
         return c;
       }
     }
@@ -258,7 +270,7 @@ public class TerminalContainer {
     return component;
   }
 
-  public void requestFocus(@NotNull JBTerminalWidget terminal) {
-    IdeFocusManager.getInstance(myProject).requestFocus(terminal.getTerminalPanel(), true);
+  public void requestFocus(@NotNull TerminalWidget terminal) {
+    terminal.requestFocus();
   }
 }
