@@ -43,11 +43,9 @@ object StoreUtil {
   @JvmOverloads
   @JvmStatic
   @CalledInAny
-  fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false) {
-    runInAutoSaveDisabledMode {
-      runUnderModalProgressIfIsEdt {
-        com.intellij.configurationStore.saveSettings(componentManager, forceSavingAllSettings)
-      }
+  fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false): Boolean = runInAutoSaveDisabledMode {
+    runUnderModalProgressIfIsEdt {
+      com.intellij.configurationStore.saveSettings(componentManager, forceSavingAllSettings)
     }
   }
 
