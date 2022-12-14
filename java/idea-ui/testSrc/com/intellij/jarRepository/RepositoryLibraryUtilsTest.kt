@@ -181,7 +181,10 @@ class RepositoryLibraryUtilsTest {
     doNotEnableExternalStorageByDefaultInTests {
       runBlocking {
         createOrLoadProject(projectDirectory, ::copyProjectFiles, loadComponentState = true, useDefaultProjectSettings = false) { project ->
-          checkProject(project, RepositoryLibraryUtils.createWithCustomContext(project, coroutineContext))
+          val utils = RepositoryLibraryUtils.getInstance(project)
+          utils.setTestCoroutineScope(this)
+          checkProject(project, utils)
+          utils.resetTestCoroutineScope()
         }
       }
     }

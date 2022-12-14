@@ -47,25 +47,18 @@ import java.io.IOException
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.CoroutineContext
 
 /**
  * [RepositoryLibraryType] libraries utils.
  */
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class RepositoryLibraryUtils private constructor(private val project: Project, context: CoroutineContext) : Disposable {
+class RepositoryLibraryUtils(private val project: Project) : Disposable {
   companion object {
     private val logger = logger<RepositoryLibraryUtils>()
 
     @JvmStatic
     fun getInstance(project: Project): RepositoryLibraryUtils = project.service()
-
-    /**
-     * Should be used only in tests. Required to promote errors to tests via [context].
-     */
-    @TestOnly
-    fun createWithCustomContext(project: Project, context: CoroutineContext) = RepositoryLibraryUtils(project, context)
 
     @JvmStatic
     fun buildRepositoryLibraryArtifactsVerification(descriptor: JpsMavenRepositoryLibraryDescriptor,
@@ -108,12 +101,27 @@ class RepositoryLibraryUtils private constructor(private val project: Project, c
     private val CoroutineScope.progressSinkOrError: ProgressSink get() = requireNotNull(progressSink)
   }
 
-  private val myCoroutineScope: CoroutineScope = CoroutineScope(context)
+  private val defaultCoroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-  @Suppress("unused") // Used by getInstance() to create Project service
-  constructor(project: Project) : this(project, SupervisorJob() + Dispatchers.Default)
+  private var testCoroutineScope: CoroutineScope? = null
 
-  override fun dispose() = myCoroutineScope.cancel()
+  private val myCoroutineScope: CoroutineScope
+    get() = testCoroutineScope ?: defaultCoroutineScope
+
+  override fun dispose() = defaultCoroutineScope.cancel()
+
+  /**
+   * Should be used only in tests. Required to promote errors to tests via [testScope].
+   */
+  @TestOnly
+  fun setTestCoroutineScope(testScope: CoroutineScope) {
+    testCoroutineScope = testScope
+  }
+
+  @TestOnly
+  fun resetTestCoroutineScope() {
+    testCoroutineScope = null
+  }
 
   /**
    * Tries to guess remote jar repository for each [RepositoryLibraryType] library and bind it to
