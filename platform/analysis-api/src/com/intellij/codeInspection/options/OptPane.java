@@ -4,6 +4,7 @@ package com.intellij.codeInspection.options;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.NlsContexts;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -179,7 +180,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @return an option for a drop-down control
    * @see #dropdown(String, String, OptDropdown.Option...)
    */
-  public static @NotNull OptDropdown.Option option(@NotNull String key, @NotNull @NlsContexts.Label String label) {
+  public static @NotNull OptDropdown.Option option(@NotNull String key, @NotNull @Nls String label) {
     return new OptDropdown.Option(key, new PlainMessage(label));
   }
 
@@ -189,7 +190,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @return an option for a drop-down control
    * @see #dropdown(String, String, OptDropdown.Option...)
    */
-  public static @NotNull OptDropdown.Option option(@NotNull Enum<?> key, @NotNull @NlsContexts.Label String label) {
+  public static @NotNull OptDropdown.Option option(@NotNull Enum<?> key, @NotNull @Nls String label) {
     return new OptDropdown.Option(key.name(), new PlainMessage(label));
   }
 

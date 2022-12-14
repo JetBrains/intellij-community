@@ -92,8 +92,11 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
           comboBox(getComboBoxModel(component.options), getComboBoxRenderer())
             .applyToComponent {
-              model.selectedItem = tool.getOption(component.bindId)
-              addItemListener { tool.setOption(component.bindId, (selectedItem as OptDropdown.Option).key) }
+              val option = tool.getOption(component.bindId)
+              val type = option.javaClass
+              @Suppress("HardCodedStringLiteral")
+              model.selectedItem = option.toString()
+              addItemListener { tool.setOption(component.bindId, convertItem((selectedItem as OptDropdown.Option).key, type)) }
             }
 
           val suffix = component.splitLabel.splitLabel().suffix
@@ -120,6 +123,17 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       is OptSet -> TODO()
       is OptHorizontalStack -> TODO()
       is OptTabSet -> TODO()
+    }
+  }
+
+  private fun convertItem(key: String, type: Class<*>): Any {
+    @Suppress("UNCHECKED_CAST")
+    return when {
+      type == Boolean::class.javaObjectType -> key.toBoolean()
+      type == Int::class.javaObjectType -> key.toInt()
+      type.isEnum -> java.lang.Enum.valueOf(type as Class<out Enum<*>>, key)
+      type.superclass.isEnum -> java.lang.Enum.valueOf(type.superclass as Class<out Enum<*>>, key)
+      else -> key 
     }
   }
 
