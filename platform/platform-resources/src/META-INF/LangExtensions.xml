@@ -29,7 +29,7 @@
                         serviceImplementation="com.intellij.codeInsight.navigation.impl.SymbolNavigationServiceImpl"/>
     <applicationService
       serviceInterface="com.intellij.codeInspection.ui.InspectionOptionPaneRenderer"
-      serviceImplementation="com.intellij.codeInspection.ui.SwingOptPaneRenderer"/>
+      serviceImplementation="com.intellij.codeInspection.ui.UiDslOptPaneRenderer"/>
 
     <psi.declarationProvider implementation="com.intellij.model.psi.impl.DefaultPsiSymbolDeclarationProvider" order="last"/>
 

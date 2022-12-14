@@ -3,14 +3,15 @@ package com.intellij.codeInspection.options;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ui.InspectionOptionPaneRenderer;
-import com.intellij.codeInspection.ui.SwingOptPaneRenderer;
+import com.intellij.codeInspection.ui.UiDslOptPaneRenderer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import javax.swing.*;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.custom;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class OptCustomTest {
@@ -39,7 +40,7 @@ public class OptCustomTest {
   @Test
   public void customControls() {
     MyInspection inspection = new MyInspection();
-    JComponent component = new SwingOptPaneRenderer().render(inspection);
+    JComponent component = new UiDslOptPaneRenderer().render(inspection);
     JButton button = UIUtil.findComponentOfType(component, JButton.class);
     assertEquals("3", button.getText());
     JLabel label = UIUtil.findComponentOfType(component, JLabel.class);
