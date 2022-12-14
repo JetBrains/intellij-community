@@ -16,7 +16,10 @@ import org.eclipse.aether.transfer.TransferCancelledException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.aether.*;
+import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
+import org.jetbrains.idea.maven.aether.ProgressConsumer;
+import org.jetbrains.idea.maven.aether.Retry;
+import org.jetbrains.idea.maven.aether.RetryProvider;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
@@ -440,12 +443,12 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
       }
 
       if (namedManagers == null) {
-        Map<String, ArtifactRepositoryManager> managers = new ConcurrentHashMap<>();
+        Map<String, ArtifactRepositoryManager> managers = new HashMap<>();
         for (var repository : repositories) {
-          managers.put(repository.getId(),
-                       new ArtifactRepositoryManager(localRepositoryRoot, singletonList(repository), progressConsumer, retry));
+          managers.put(repository.getId(), new ArtifactRepositoryManager(localRepositoryRoot, singletonList(repository), progressConsumer, retry));
         }
         namedManagers = Collections.unmodifiableMap(managers);
+        NAMED_MANAGERS_KEY.set(context, namedManagers);
       }
     }
 
