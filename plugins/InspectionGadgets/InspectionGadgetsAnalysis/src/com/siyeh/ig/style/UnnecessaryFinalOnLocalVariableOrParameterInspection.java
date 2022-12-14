@@ -16,7 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -27,9 +27,9 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -56,20 +56,11 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JCheckBox box1 = panel.addCheckboxEx(InspectionGadgetsBundle.message("unnecessary.final.report.local.variables.option"), "reportLocalVariables");
-    final JCheckBox box2 = panel.addCheckboxEx(InspectionGadgetsBundle.message("unnecessary.final.report.parameters.option"), "reportParameters");
-    panel.addDependentCheckBox(InspectionGadgetsBundle.message("unnecessary.final.on.parameter.only.interface.option"), "onlyWarnOnAbstractMethods", box2);
-
-    box1.addChangeListener(e -> {
-      if (!box1.isSelected()) box2.setSelected(true);
-    });
-    box2.addChangeListener(e -> {
-      if (!box2.isSelected()) box1.setSelected(true);
-    });
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("reportLocalVariables", InspectionGadgetsBundle.message("unnecessary.final.report.local.variables.option")),
+      checkbox("reportParameters", InspectionGadgetsBundle.message("unnecessary.final.report.parameters.option"),
+               checkbox("onlyWarnOnAbstractMethods", InspectionGadgetsBundle.message("unnecessary.final.on.parameter.only.interface.option"))));
   }
 
 
