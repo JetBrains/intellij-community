@@ -6,11 +6,15 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 
-internal class ChangesViewCommitMessagePolicy(project: Project) : AbstractCommitMessagePolicy(project) {
-  fun getCommitMessage(changeList: LocalChangeList, changesSupplier: () -> List<Change>): String? =
+internal class ChangesViewCommitMessagePolicy(
+  project: Project,
+  private val includedChanges: () -> List<Change>
+) : AbstractCommitMessagePolicy(project) {
+
+  fun getCommitMessage(changeList: LocalChangeList): String? =
     if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) null
     else getCommitMessageFor(changeList)?.takeIf { it.isNotBlank() }
-         ?: getCommitMessageFromVcs(changesSupplier())
+         ?: getCommitMessageFromVcs(includedChanges())
          ?: vcsConfiguration.LAST_COMMIT_MESSAGE
 
   fun save(changeList: LocalChangeList?, commitMessage: String, saveToHistory: Boolean) {

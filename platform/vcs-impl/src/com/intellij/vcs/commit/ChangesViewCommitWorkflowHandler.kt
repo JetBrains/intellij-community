@@ -42,7 +42,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private val inclusionModel = PartialCommitInclusionModel(project)
 
-  private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project)
+  private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project) { getIncludedChanges() }
   private var currentChangeList: LocalChangeList
 
   init {
@@ -84,7 +84,7 @@ internal class ChangesViewCommitWorkflowHandler(
       }
     })
 
-    val initialCommitMessage = getCommitMessageFromPolicy(currentChangeList)
+    val initialCommitMessage = commitMessagePolicy.getCommitMessage(currentChangeList)
     setCommitMessage(initialCommitMessage)
     DelayedCommitMessageProvider.init(project, ui, initialCommitMessage)
   }
@@ -188,7 +188,7 @@ internal class ChangesViewCommitWorkflowHandler(
     if (oldChangeList.id != newChangeList.id) {
       commitMessagePolicy.save(oldChangeList, getCommitMessage(), false)
 
-      val newCommitMessage = getCommitMessageFromPolicy(newChangeList)
+      val newCommitMessage = commitMessagePolicy.getCommitMessage(newChangeList)
       setCommitMessage(newCommitMessage)
 
       commitOptions.changeListChanged(newChangeList)
@@ -196,10 +196,6 @@ internal class ChangesViewCommitWorkflowHandler(
     if (oldChangeList.data != newChangeList.data) {
       changeListDataChanged()
     }
-  }
-
-  private fun getCommitMessageFromPolicy(changeList: LocalChangeList): String? {
-    return commitMessagePolicy.getCommitMessage(changeList) { getIncludedChanges() }
   }
 
   private fun changeListDataChanged() {
@@ -294,7 +290,7 @@ internal class ChangesViewCommitWorkflowHandler(
   private inner class GitCommitStateCleaner : CommitStateCleaner() {
 
     override fun onSuccess() {
-      setCommitMessage(getCommitMessageFromPolicy(currentChangeList))
+      setCommitMessage(commitMessagePolicy.getCommitMessage(currentChangeList))
 
       super.onSuccess()
     }
