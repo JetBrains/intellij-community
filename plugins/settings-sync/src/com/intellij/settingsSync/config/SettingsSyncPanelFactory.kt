@@ -1,20 +1,15 @@
 package com.intellij.settingsSync.config
 
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.settingsSync.SettingsSyncBundle.message
-import com.intellij.settingsSync.SettingsSyncSettings
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.CheckBoxListListener
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.ThreeStateCheckBox.State
@@ -26,7 +21,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal object SettingsSyncPanelFactory {
-  fun createPanel(syncLabel: @Nls String, loggedInAndEnabled: ComponentPredicate): DialogPanel {
+  fun createPanel(syncLabel: @Nls String): DialogPanel {
     return panel {
       row {
         label(syncLabel)
@@ -34,8 +29,8 @@ internal object SettingsSyncPanelFactory {
 
       SettingsCategoryDescriptor.listAll().forEach { descriptor ->
         indent {
-          if (descriptor.secondaryGroup == null) {
-            row {
+          row {
+            if (descriptor.secondaryGroup == null) {
               checkBox(
                 descriptor.name
               )
@@ -46,11 +41,8 @@ internal object SettingsSyncPanelFactory {
                 .onIsModified { descriptor.isModified() }
               comment(descriptor.description)
             }
-          }
-          else {
-            lateinit var topCheckBox: ThreeStateCheckBox
-            row {
-              topCheckBox = ThreeStateCheckBox(descriptor.name)
+            else {
+              val topCheckBox = ThreeStateCheckBox(descriptor.name)
               topCheckBox.isThirdStateEnabled = false
               cell(topCheckBox)
                 .onReset {
@@ -77,27 +69,7 @@ internal object SettingsSyncPanelFactory {
                 subcategoryLink.isEnabled = descriptor.secondaryGroup.isComplete() || descriptor.isSynchronized
               }
             }
-            if (descriptor.category == SettingsCategory.PLUGINS) {
-              indent {
-                row {
-                  checkBox(message("settings.cross.ide.sync.plugins.checkbox"))
-                    .visibleIf(loggedInAndEnabled)
-                    .enabledIf(object : ComponentPredicate() {
-                      private fun isSelected() = topCheckBox.state != State.NOT_SELECTED
 
-                      override fun invoke(): Boolean = isSelected()
-
-                      override fun addListener(listener: (Boolean) -> Unit) {
-                        topCheckBox.addPropertyChangeListener { listener(isSelected()) }
-                      }
-                    })
-                    .bindSelected(SettingsSyncSettings.getInstance()::syncPluginsAcrossIdes)
-                    .gap(RightGap.SMALL)
-                  contextHelp(
-                    message("settings.cross.ide.sync.plugins.checkbox.description", ApplicationNamesInfo.getInstance().fullProductName))
-                }
-              }
-            }
           }
         }
       }
@@ -154,7 +126,7 @@ internal object SettingsSyncPanelFactory {
 
   private class PluginsCheckboxList(
     val descriptors: List<SettingsSyncSubcategoryDescriptor>,
-    listener: CheckBoxListListener) : CheckBoxList<SettingsSyncSubcategoryDescriptor>(listener) {
+    listener : CheckBoxListListener) : CheckBoxList<SettingsSyncSubcategoryDescriptor>(listener) {
 
     override fun adjustRendering(rootComponent: JComponent,
                                  checkBox: JCheckBox?,

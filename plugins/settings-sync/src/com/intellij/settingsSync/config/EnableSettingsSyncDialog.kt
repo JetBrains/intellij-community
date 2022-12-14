@@ -3,7 +3,6 @@ package com.intellij.settingsSync.config
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.settingsSync.SettingsSyncBundle.message
-import com.intellij.ui.layout.ComponentPredicate
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -35,7 +34,7 @@ internal class EnableSettingsSyncDialog
   }
 
   override fun createCenterPanel(): JComponent {
-    configPanel = SettingsSyncPanelFactory.createPanel(getHeader(), ComponentPredicate.TRUE)
+    configPanel = SettingsSyncPanelFactory.createPanel(getHeader())
     configPanel.reset()
     return configPanel
   }
