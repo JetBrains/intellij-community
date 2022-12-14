@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.plugins.PluginManagerProxy
 import com.intellij.settingsSync.plugins.SettingsSyncPluginInstaller
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
-import java.util.HashSet
 import java.util.concurrent.CopyOnWriteArrayList
 
 internal class TestPluginManager : PluginManagerProxy {
@@ -77,16 +76,5 @@ internal class TestPluginManager : PluginManagerProxy {
 
   fun enablePlugin(pluginId: PluginId) {
     enablePlugins(setOf(pluginId))
-  }
-
-  inner class TestPluginInstaller : SettingsSyncPluginInstaller {
-    val installedPluginIds = HashSet<String>()
-
-    override fun installPlugins(pluginsToInstall: List<PluginId>) {
-      installedPluginIds += pluginsToInstall.map { it.idString }
-      for (id in pluginsToInstall) {
-        ownPluginDescriptors.put(id, TestPluginDescriptor(id.idString))
-      }
-    }
   }
 }

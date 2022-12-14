@@ -8,7 +8,6 @@ import com.intellij.settingsSync.plugins.PluginManagerProxy
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.PluginData
-import com.intellij.settingsSync.plugins.thisIde
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.replaceService
 
@@ -111,8 +110,6 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     assertFalse(quickJump.isEnabled)
     assertIdeState {
       quickJump(enabled = false)
-      typengo(enabled = true)
-      ideaLight(enabled = true, category = SettingsCategory.UI)
     }
   }
 
@@ -201,83 +198,9 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     }
   }
 
-  fun `test when cross-ide sync is disabled then state of the ides is not applied ot updated`() {
-    testPluginManager.addPluginDescriptors(pluginManager, typengo, git4idea)
-    val savedState = statePerIde {
-      ide(thisIde()) {
-        typengo(enabled = true)
-      }
-      ide("otherIde") {
-        quickJump(enabled = true)
-        git4idea(enabled = false)
-      }
-    }
-    pluginManager.pushChangesToIde(savedState)
-
-    assertIdeState {
-      typengo(enabled = true)
-      git4idea(enabled = true)
-    }
-  }
-
-  fun `test when cross-ide sync is enabled then the ide is updated by merged state`() {
-    testPluginManager.addPluginDescriptors(pluginManager, typengo, git4idea)
-    val savedState = statePerIde {
-      ide(thisIde()) {
-        typengo(enabled = true)
-      }
-      ide("otherIde") {
-        quickJump(enabled = true)
-        git4idea(enabled = false)
-      }
-    }
-
-    SettingsSyncSettings.getInstance().syncPluginsAcrossIdes = true
-    try {
-      pluginManager.pushChangesToIde(savedState)
-
-      assertIdeState {
-        typengo(enabled = true)
-        quickJump(enabled = true)
-        git4idea(enabled = false)
-      }
-    }
-    finally {
-      SettingsSyncSettings.getInstance().state.reset()
-    }
-  }
-
-  fun `test when cross-ide sync is enabled then in case of conflicts prefer data for this ide`() {
-    testPluginManager.addPluginDescriptors(pluginManager, typengo, git4idea, quickJump)
-    val savedState = statePerIde {
-      ide(thisIde()) {
-        typengo(enabled = true)
-        quickJump(enabled = false)
-      }
-      ide("otherIde") {
-        quickJump(enabled = true)
-        git4idea(enabled = false)
-      }
-    }
-
-    SettingsSyncSettings.getInstance().syncPluginsAcrossIdes = true
-    try {
-      pluginManager.pushChangesToIde(savedState)
-
-      assertIdeState {
-        typengo(enabled = true)
-        quickJump(enabled = false)
-        git4idea(enabled = false)
-      }
-    }
-    finally {
-      SettingsSyncSettings.getInstance().state.reset()
-    }
-  }
-
   private fun assertPluginManagerState(build: StateBuilder.() -> Unit) {
     val expectedState = state(build)
-    assertState(expectedState.plugins, pluginManager.getCurrentState().plugins)
+    assertState(expectedState.plugins, pluginManager.state.plugins)
   }
 
   private fun assertIdeState(build: StateBuilder.() -> Unit) {
@@ -286,34 +209,23 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     val actualState = PluginManagerProxy.getInstance().getPlugins().associate { plugin ->
       plugin.pluginId to PluginData(plugin.isEnabled)
     }
-    assertState(expectedState.plugins, mapOf(thisIde() to actualState))
+    assertState(expectedState.plugins, actualState)
   }
 
-  private fun assertState(expectedStates: Map<String, Map<PluginId, PluginData>>,
-                          actualStates: Map<String, Map<PluginId, PluginData>>) {
-    assertEquals(expectedStates.keys, actualStates.keys)
-    val showIdeNameInAssertion = actualStates.keys.size > 1 || actualStates.keys.single() != thisIde()
-    for (ide in actualStates.keys) {
-      assertStateForIde(expectedStates[ide]!!, actualStates[ide]!!, if (showIdeNameInAssertion) ide else null)
-    }
-  }
-
-  private fun assertStateForIde(expectedStates: Map<PluginId, PluginData>, actualStates: Map<PluginId, PluginData>,
-                                ideName: String? = null) {
+  private fun assertState(expectedStates: Map<PluginId, PluginData>, actualStates: Map<PluginId, PluginData>) {
     fun stringifyStates(states: Map<PluginId, PluginData>) =
       states.entries
         .sortedBy { it.key }
         .joinToString { (id, data) -> "$id: ${enabledOrDisabled(data.enabled)}" }
 
-    val forIde = ideName?.let { "for '$it' " } ?: ""
     if (expectedStates.size != actualStates.size) {
-      assertEquals("Expected and actual states ${forIde}have different number of elements",
+      assertEquals("Expected and actual states have different number of elements",
                    stringifyStates(expectedStates), stringifyStates(actualStates))
     }
     for ((expectedId, expectedData) in expectedStates) {
       val actualData = actualStates[expectedId]
-      assertNotNull("Record for plugin $expectedId not found $forIde", actualData)
-      assertEquals("Plugin $expectedId has incorrect state $forIde", expectedData.enabled, actualData!!.enabled)
+      assertNotNull("Record for plugin $expectedId not found", actualData)
+      assertEquals("Plugin $expectedId has incorrect state", expectedData.enabled, actualData!!.enabled)
     }
   }
 
@@ -322,13 +234,7 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
   private fun state(build: StateBuilder.() -> Unit): SettingsSyncPluginsState {
     val builder = StateBuilder()
     builder.build()
-    return SettingsSyncPluginsState(builder.getPluginsState())
-  }
-
-  private fun statePerIde(build: PerIdeStateBuilder.() -> Unit) : SettingsSyncPluginsState {
-    val builder = PerIdeStateBuilder()
-    builder.build()
-    return SettingsSyncPluginsState(builder.getPluginsState())
+    return SettingsSyncPluginsState(builder.states)
   }
 
   private class StateBuilder {
@@ -336,29 +242,11 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
 
     operator fun TestPluginDescriptor.invoke(
       enabled: Boolean,
-      category: SettingsCategory = SettingsCategory.PLUGINS): Pair<PluginId, PluginData>
-    {
+      category: SettingsCategory = SettingsCategory.PLUGINS): Pair<PluginId, PluginData> {
+
       val pluginData = PluginData(enabled, category)
-      states[pluginId]= pluginData
+      states[pluginId] = pluginData
       return this.pluginId to pluginData
-    }
-
-    fun getPluginsState(): Map<String, Map<PluginId, PluginData>> {
-      return mapOf(thisIde() to states)
-    }
-  }
-
-  private class PerIdeStateBuilder() {
-    val statesForIdes = mutableMapOf<String, MutableMap<PluginId, PluginData>>()
-
-    fun ide(ideName: String, build: StateBuilder.() -> Unit) {
-      val builder = StateBuilder()
-      builder.build()
-      statesForIdes[ideName] = builder.states
-    }
-
-    fun getPluginsState(): Map<String, Map<PluginId, PluginData>> {
-      return statesForIdes
     }
   }
 }

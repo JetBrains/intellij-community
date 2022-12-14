@@ -1,7 +1,6 @@
 package com.intellij.settingsSync.config
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
@@ -17,7 +16,6 @@ import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import com.intellij.util.text.DateFormatUtil
@@ -123,12 +121,6 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
           disableSync()
         }.visibleIf(isSyncEnabled)
         bottomGap(BottomGap.MEDIUM)
-      }
-      row {
-        checkBox(message("settings.cross.ide.sync.checkbox"))
-          .comment(message("settings.cross.ide.sync.checkbox.description", ApplicationNamesInfo.getInstance().fullProductName))
-          .visibleIf(LoggedInPredicate().and(EnabledPredicate()))
-          .bindSelected(SettingsSyncSettings.getInstance()::syncPluginsAcrossIdes)
       }
       row {
         cell(categoriesPanel)
