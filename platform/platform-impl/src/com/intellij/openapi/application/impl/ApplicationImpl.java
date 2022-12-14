@@ -297,7 +297,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean isDispatchThread() {
-    return isWriteThread();
+    return EDT.isEdt(Thread.currentThread());
   }
 
   @Override
