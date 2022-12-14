@@ -15,13 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.threading;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
@@ -35,7 +34,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
 
@@ -49,10 +49,9 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createGroovyOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(GroovyBundle.message("checkbox.only.warn.if.loop.empty"),
-                                          this, "ignoreNonEmtpyLoops");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreNonEmtpyLoops", GroovyBundle.message("checkbox.only.warn.if.loop.empty")));
   }
 
   @NotNull

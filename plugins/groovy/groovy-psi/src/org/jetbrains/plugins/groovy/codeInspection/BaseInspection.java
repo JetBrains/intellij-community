@@ -51,13 +51,9 @@ public abstract class BaseInspection extends LocalInspectionTool {
   }
 
   @Override
-  public final @Nullable JComponent createOptionsPanel() {
-    JComponent actualPanel = createGroovyOptionsPanel();
+  public @Nullable JComponent createOptionsPanel() {
+    JComponent actualPanel = super.createOptionsPanel();
     return GrInspectionUIUtil.enhanceInspectionToolPanel(this, explicitlyEnabledFileTypes, actualPanel);
-  }
-
-  protected @Nullable JComponent createGroovyOptionsPanel() {
-    return null;
   }
 
   @Nullable
