@@ -11,10 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
-import com.intellij.openapi.vfs.newvfs.persistent.util.AttributesInterceptor;
-import com.intellij.openapi.vfs.newvfs.persistent.util.ConnectionInterceptor;
-import com.intellij.openapi.vfs.newvfs.persistent.util.ContentsInterceptor;
-import com.intellij.openapi.vfs.newvfs.persistent.util.InterceptorInjection;
+import com.intellij.openapi.vfs.newvfs.persistent.util.*;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.hash.ContentHashEnumerator;
@@ -89,7 +86,7 @@ final public class PersistentFSConnection {
       //    different names impls -- after we'll decide which impl is the best, explicit type could be specified here
       throw new IllegalArgumentException("names(" + names + ") must implement Forceable & Closeable");
     }
-    myRecords = records;
+    myRecords = wrapRecords(records, interceptors);
     myNames = names;
     myAttributesStorage = wrapAttributes(attributes, interceptors);
     myContents = wrapContents(contents, interceptors);
@@ -138,6 +135,15 @@ final public class PersistentFSConnection {
       .toList();
     if (attributesInterceptors.isEmpty()) return attributes;
     return InterceptorInjection.INSTANCE.injectInAttributes(attributes, attributesInterceptors);
+  }
+
+  private static PersistentFSRecordsStorage wrapRecords(PersistentFSRecordsStorage records, List<ConnectionInterceptor> interceptors) {
+    var recordsInterceptors = interceptors.stream()
+      .filter(RecordsInterceptor.class::isInstance)
+      .map(RecordsInterceptor.class::cast)
+      .toList();
+    if (recordsInterceptors.isEmpty()) return records;
+    return InterceptorInjection.INSTANCE.injectInRecords(records, recordsInterceptors);
   }
 
   @NotNull("Vfs must be initialized")

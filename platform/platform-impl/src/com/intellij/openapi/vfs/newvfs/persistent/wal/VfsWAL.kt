@@ -20,7 +20,8 @@ class VfsWAL(
 
   val interceptors = listOf<ConnectionInterceptor>(
     ContentsWALInterceptor(storagePath / "contents"),
-    AttributesWALInterceptor(storagePath / "attributes")
+    AttributesWALInterceptor(storagePath / "attributes"),
+    RecordsWALInterceptor(storagePath / "records")
   )
 
   fun dispose() {
