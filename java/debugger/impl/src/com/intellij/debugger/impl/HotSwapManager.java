@@ -14,7 +14,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,10 +44,10 @@ public final class HotSwapManager {
     final Map<String, HotSwapFile> modifiedClasses = new HashMap<>();
 
     List<String> paths = outputPaths != null ? outputPaths.getValue() :
-                         ReadAction.compute(() -> JBIterable.of(OrderEnumerator.orderEntries(session.getProject()).classes().getRoots())
-                           .filterMap(o -> o.isDirectory() && !o.getFileSystem().isReadOnly() ? o.getPath() : null)
-                           .toList()
-                         );
+                         ReadAction.compute(() -> ContainerUtil.mapNotNull(
+                           OrderEnumerator.orderEntries(session.getProject()).classes().getRoots(),
+                           o -> o.isDirectory() && !o.getFileSystem().isReadOnly() ? o.getPath() : null
+                         ));
     for (String path : paths) {
       String rootPath = FileUtil.toCanonicalPath(path);
       collectModifiedClasses(new File(path), rootPath, rootPath + "/", modifiedClasses, progress, timeStamp);
