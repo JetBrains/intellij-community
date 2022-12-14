@@ -3,7 +3,6 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -125,12 +124,10 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     logCommitEvent(sessionInfo)
 
     refreshChanges {
-      invokeLater(ui.modalityState) {
-        val commitInfo = DynamicCommitInfoImpl(commitContext, sessionInfo, ui, workflow)
-        workflow.continueExecution {
-          updateWorkflow(sessionInfo) &&
-          doExecuteSession(sessionInfo, commitInfo)
-        }
+      val commitInfo = DynamicCommitInfoImpl(commitContext, sessionInfo, ui, workflow)
+      workflow.continueExecution {
+        updateWorkflow(sessionInfo) &&
+        doExecuteSession(sessionInfo, commitInfo)
       }
     }
     return true

@@ -188,10 +188,9 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
     commitMessage.setChangesSupplier(ChangeListChangesSupplier(changeLists))
   }
 
-  override fun refreshData(): Promise<*> {
+  override fun refreshChangesViewBeforeCommit(): Promise<*> {
     return ChangesViewManager.getInstanceEx(project).promiseRefresh(ModalityState.defaultModalityState())
   }
-
 
   override fun getDisplayedChanges(): List<Change> = all(changesView).userObjects(Change::class.java)
   override fun getIncludedChanges(): List<Change> = included(changesView).userObjects(Change::class.java)

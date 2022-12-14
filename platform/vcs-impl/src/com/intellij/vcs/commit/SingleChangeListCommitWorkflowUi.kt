@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.*
 
 interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi {
@@ -13,6 +14,9 @@ interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi {
   fun confirmCommitWithEmptyMessage(): Boolean
 
   fun deactivate()
+
+  @RequiresEdt
+  fun refreshDataBeforeCommit()
 
   fun addStateListener(listener: CommitWorkflowUiStateListener, parent: Disposable)
 

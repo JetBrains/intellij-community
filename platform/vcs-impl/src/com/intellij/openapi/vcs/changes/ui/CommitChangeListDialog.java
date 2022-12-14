@@ -35,7 +35,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Futures;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -49,8 +48,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -59,7 +56,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.VcsBundle.message;
@@ -347,12 +343,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   @NotNull
   public abstract CommitDialogChangesBrowser getBrowser();
-
-  @NotNull
-  @Override
-  public ModalityState getModalityState() {
-    return ModalityState.stateForComponent(getRootPane());
-  }
 
   @Override
   public boolean activate() {
@@ -740,11 +730,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   @Override
-  public @NotNull Promise<?> refreshData() {
-    CompletableFuture<Void> future = Futures.runInEdtAsync(() -> {
-      getBrowser().updateDisplayedChangeLists();
-    });
-    return Promises.asPromise(future);
+  public void refreshDataBeforeCommit() {
+    getBrowser().updateDisplayedChangeLists();
   }
 
   @NotNull

@@ -257,13 +257,12 @@ internal class ChangesViewCommitWorkflowHandler(
     return super.prepareForCommitExecution(sessionInfo)
   }
 
-  override fun refreshChanges(callback: () -> Unit) {
+  override fun refreshChanges(callback: () -> Unit) =
     ChangeListManager.getInstance(project).invokeAfterUpdateWithModal(true, VcsBundle.message("commit.progress.title")) {
-      ui.refreshData().then {
+      ui.refreshChangesViewBeforeCommit().then {
         callback()
       }
     }
-  }
 
   override fun saveCommitMessageBeforeCommit() {
     commitMessagePolicy.onBeforeCommit(currentChangeList, getCommitMessage())

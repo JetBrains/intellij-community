@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFilePaths
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+import com.intellij.util.Futures.runInEdtAsync
 
 class SingleChangeListCommitWorkflowHandler(
   override val workflow: CommitChangeListDialogWorkflow,
@@ -112,9 +113,7 @@ class SingleChangeListCommitWorkflowHandler(
 
   override fun refreshChanges(callback: () -> Unit) {
     ChangeListManager.getInstance(project).invokeAfterUpdateWithModal(true, VcsBundle.message("commit.progress.title")) {
-      ui.refreshData().then {
-        callback()
-      }
+      runInEdtAsync { ui.refreshDataBeforeCommit() }.whenComplete { _, _ -> callback() }
     }
   }
 
