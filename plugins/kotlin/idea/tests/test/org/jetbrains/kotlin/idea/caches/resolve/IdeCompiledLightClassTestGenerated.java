@@ -258,6 +258,11 @@ public abstract class IdeCompiledLightClassTestGenerated extends AbstractIdeComp
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/AnnotationClass.kt"));
         }
 
+        @TestMetadata("AnnotationJavaRepeatable.kt")
+        public void testAnnotationJavaRepeatable() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/AnnotationJavaRepeatable.kt"));
+        }
+
         @TestMetadata("AnnotationJvmRepeatable.kt")
         public void testAnnotationJvmRepeatable() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/AnnotationJvmRepeatable.kt"));
