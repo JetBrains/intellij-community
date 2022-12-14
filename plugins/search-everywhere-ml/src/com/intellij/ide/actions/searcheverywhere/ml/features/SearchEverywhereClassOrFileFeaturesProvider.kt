@@ -1,5 +1,6 @@
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
+import com.intellij.filePrediction.features.history.FileHistoryManagerWrapper
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
@@ -9,19 +10,25 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.FileTypeUsageSummary
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiInvalidElementAccessException
 import com.intellij.util.Time
+import org.jetbrains.annotations.ApiStatus
 
-internal class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeaturesProvider(
+@ApiStatus.Internal
+@IntellijInternalApi
+class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeaturesProvider(
   ClassSearchEverywhereContributor::class.java,
   FileSearchEverywhereContributor::class.java,
   RecentFilesSEContributor::class.java
@@ -47,6 +54,17 @@ internal class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereEle
     internal val FILETYPE_USED_IN_LAST_HOUR_DATA_KEY = EventFields.Boolean("fileTypeUsedInLastHour")
     internal val FILETYPE_USED_IN_LAST_DAY_DATA_KEY = EventFields.Boolean("fileTypeUsedInLastDay")
     internal val FILETYPE_USED_IN_LAST_MONTH_DATA_KEY = EventFields.Boolean("fileTypeUsedInLastMonth")
+
+    internal val RECENT_INDEX_DATA_KEY = EventFields.Int("recentFilesIndex")
+    internal val PREDICTION_SCORE_DATA_KEY = EventFields.Double("predictionScore")
+
+    val IS_OPENED_DATA_KEY = EventFields.Boolean("isOpened")
+
+    internal val TIME_SINCE_LAST_MODIFICATION_DATA_KEY = EventFields.Long("timeSinceLastModification")
+    internal val WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY = EventFields.Boolean("wasModifiedInLastMinute")
+    internal val WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY = EventFields.Boolean("wasModifiedInLastHour")
+    internal val WAS_MODIFIED_IN_LAST_DAY_DATA_KEY = EventFields.Boolean("wasModifiedInLastDay")
+    internal val WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY = EventFields.Boolean("wasModifiedInLastMonth")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
@@ -59,7 +77,11 @@ internal class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereEle
       FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY, FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY,
       TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY,
       FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY, FILETYPE_USED_IN_LAST_HOUR_DATA_KEY,
-      FILETYPE_USED_IN_LAST_DAY_DATA_KEY, FILETYPE_USED_IN_LAST_MONTH_DATA_KEY
+      FILETYPE_USED_IN_LAST_DAY_DATA_KEY, FILETYPE_USED_IN_LAST_MONTH_DATA_KEY,
+      RECENT_INDEX_DATA_KEY, PREDICTION_SCORE_DATA_KEY,
+      TIME_SINCE_LAST_MODIFICATION_DATA_KEY, WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY,
+      WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY, WAS_MODIFIED_IN_LAST_DAY_DATA_KEY,
+      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY, IS_OPENED_DATA_KEY
     )
   }
 
@@ -68,8 +90,9 @@ internal class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereEle
                                   searchQuery: String,
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?): List<EventPair<*>> {
-    val item = SearchEverywherePsiElementFeaturesProvider.getPsiElement(element) ?: return emptyList()
+    val item = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element) ?: return emptyList()
     val file = getContainingFile(item)
+
     val project = ReadAction.compute<Project?, Nothing> {
       item.takeIf { it.isValid }?.project
     } ?: return listOf(IS_INVALID_DATA_KEY.with(true))
@@ -128,6 +151,12 @@ internal class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereEle
     data.putIfValueNotNull(IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY, isSameFileTypeAsOpenedFile(file, cache.currentlyOpenedFile))
     data.putIfValueNotNull(IS_SAME_MODULE_DATA_KEY, isSameModuleAsOpenedFile(file, project, cache.currentlyOpenedFile))
     data.addAll(getFileTypeStats(file, currentTime, cache.fileTypeUsageStatistics))
+
+    data.add(RECENT_INDEX_DATA_KEY.with(getRecentFilesIndex(file, project)))
+    data.add(PREDICTION_SCORE_DATA_KEY.with(getPredictionScore(file, project)))
+
+    data.addAll(getModificationTimeStats(file, currentTime))
+    data.add(IS_OPENED_DATA_KEY.with(isOpened(file, project)))
 
     calculatePackageDistance(file, project, cache.currentlyOpenedFile)?.let { (packageDistance, packageDistanceNorm) ->
       data.add(PACKAGE_DISTANCE_DATA_KEY.with(packageDistance))
@@ -256,5 +285,41 @@ internal class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereEle
         IS_EXCLUDED_DATA_KEY.with(fileIndex.isExcluded(file)),
       )
     }
+  }
+
+  private fun getRecentFilesIndex(virtualFile: VirtualFile, project: Project): Int {
+    val historyManager = EditorHistoryManager.getInstance(project)
+    val recentFilesList = historyManager.fileList
+
+    val fileIndex = recentFilesList.indexOf(virtualFile)
+    if (fileIndex == -1) {
+      return fileIndex
+    }
+
+    // Give the most recent files the lowest index value
+    return recentFilesList.size - fileIndex
+  }
+
+  private fun getModificationTimeStats(virtualFile: VirtualFile, currentTime: Long): List<EventPair<*>> {
+    val timeSinceLastMod = currentTime - virtualFile.timeStamp
+
+    return arrayListOf<EventPair<*>>(
+      TIME_SINCE_LAST_MODIFICATION_DATA_KEY.with(timeSinceLastMod),
+      WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY.with((timeSinceLastMod <= Time.MINUTE)),
+      WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY.with((timeSinceLastMod <= Time.HOUR)),
+      WAS_MODIFIED_IN_LAST_DAY_DATA_KEY.with((timeSinceLastMod <= Time.DAY)),
+      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY.with((timeSinceLastMod <= (4 * Time.WEEK.toLong())))
+    )
+  }
+
+  private fun getPredictionScore(virtualFile: VirtualFile, project: Project): Double {
+    val historyManagerWrapper = FileHistoryManagerWrapper.getInstance(project)
+    val probability = historyManagerWrapper.calcNextFileProbability(virtualFile)
+    return roundDouble(probability)
+  }
+
+  private fun isOpened(virtualFile: VirtualFile, project: Project): Boolean {
+    val openedFiles = FileEditorManager.getInstance(project).openFiles
+    return virtualFile in openedFiles
   }
 }
