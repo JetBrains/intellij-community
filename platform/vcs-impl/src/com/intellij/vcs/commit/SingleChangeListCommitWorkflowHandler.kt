@@ -4,6 +4,7 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFilePaths
@@ -107,6 +108,14 @@ class SingleChangeListCommitWorkflowHandler(
       if (!addUnversionedFiles(project, getIncludedUnversionedFiles(), getChangeList(), ui.getInclusionModel())) return false
     }
     return super.prepareForCommitExecution(sessionInfo)
+  }
+
+  override fun refreshChanges(callback: () -> Unit) {
+    ChangeListManager.getInstance(project).invokeAfterUpdateWithModal(true, VcsBundle.message("commit.progress.title")) {
+      ui.refreshData().then {
+        callback()
+      }
+    }
   }
 
   override fun saveCommitMessageBeforeCommit() {

@@ -190,12 +190,8 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   private fun getAfterOptions(handlers: Collection<CheckinHandler>, parent: Disposable): List<RefreshableOnComponent> =
     handlers.mapNotNullLoggingErrors(LOG) { it.getAfterCheckinConfigurationPanel(parent) }
 
-  protected open fun refreshChanges(callback: () -> Unit) =
-    ChangeListManager.getInstance(project).invokeAfterUpdateWithModal(true, VcsBundle.message("commit.progress.title")) {
-      ui.refreshData().then {
-        callback()
-      }
-    }
+  @RequiresEdt
+  protected abstract fun refreshChanges(@RequiresEdt callback: () -> Unit)
 
   override fun dispose() = Unit
 

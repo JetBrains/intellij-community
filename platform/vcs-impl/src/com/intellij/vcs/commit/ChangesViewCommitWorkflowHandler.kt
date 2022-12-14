@@ -8,6 +8,7 @@ import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.util.EventDispatcher
@@ -254,6 +255,14 @@ internal class ChangesViewCommitWorkflowHandler(
       if (!addUnversionedFiles(project, getIncludedUnversionedFiles(), changeList, inclusionModel)) return false
     }
     return super.prepareForCommitExecution(sessionInfo)
+  }
+
+  override fun refreshChanges(callback: () -> Unit) {
+    ChangeListManager.getInstance(project).invokeAfterUpdateWithModal(true, VcsBundle.message("commit.progress.title")) {
+      ui.refreshData().then {
+        callback()
+      }
+    }
   }
 
   override fun saveCommitMessageBeforeCommit() {
