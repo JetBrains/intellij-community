@@ -4,7 +4,6 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBInsets;
@@ -19,14 +18,11 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ItemEvent;
-import java.util.HashMap;
-import java.util.Map;
 
-public class InspectionOptionsPanel extends JPanel implements InspectionOptionContainer {
+public class InspectionOptionsPanel extends JPanel {
 
   @Nullable
   private final OptionAccessor myOptionAccessor;
-  private final @NotNull Map<@NonNls String, @NlsContexts.Checkbox String> myCheckBoxLabels = new HashMap<>();
   private final GridBag myConstraints = new GridBag();
   private boolean myHasGrowing = false;
 
@@ -116,17 +112,7 @@ public class InspectionOptionsPanel extends JPanel implements InspectionOptionCo
     final JCheckBox checkBox = new JCheckBox(label, selected);
     checkBox.addItemListener(e -> myOptionAccessor.setOption(property, e.getStateChange() == ItemEvent.SELECTED));
     addComponent(checkBox);
-    myCheckBoxLabels.put(property, label);
     return checkBox;
-  }
-
-  @Override
-  public @NotNull HtmlChunk getLabelForCheckbox(@Language("jvm-field-name") @NotNull @NonNls String property) {
-    String label = myCheckBoxLabels.get(property);
-    if (label == null) {
-      throw new IllegalArgumentException("Invalid property name: " + property);
-    }
-    return HtmlChunk.text(label);
   }
 
   public JCheckBox addDependentCheckBox(@NotNull @NlsContexts.Checkbox String label, @Language("jvm-field-name") @NotNull @NonNls String property,
