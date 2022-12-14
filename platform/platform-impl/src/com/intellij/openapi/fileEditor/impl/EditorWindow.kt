@@ -158,20 +158,20 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     get() = owner.containsWindow(this)
 
   @Suppress("DEPRECATION")
-  @get:Deprecated("Use {@link #getSelectedComposite}", ReplaceWith("getSelectedComposite(false)"))
+  @get:Deprecated("Use [getSelectedComposite]", ReplaceWith("getSelectedComposite(false)"), level = DeprecationLevel.ERROR)
   val selectedEditor: EditorWithProviderComposite?
     get() = getSelectedComposite(false) as EditorWithProviderComposite?
   val selectedComposite: EditorComposite?
     get() = getSelectedComposite(false)
 
   @Suppress("DEPRECATION")
-  @Deprecated("Use {@link #getSelectedComposite}", ReplaceWith("getSelectedComposite(ignorePopup)"))
+  @Deprecated("Use getSelectedComposite", ReplaceWith("getSelectedComposite(ignorePopup)"), level = DeprecationLevel.ERROR)
   fun getSelectedEditor(ignorePopup: Boolean): EditorWithProviderComposite? {
     return getSelectedComposite(ignorePopup) as EditorWithProviderComposite?
   }
 
   /**
-   * @param ignorePopup if `false` and context menu is shown currently for some tab,
+   * @param ignorePopup if `false` and context a menu is shown currently for some tab,
    * composite for which menu is invoked will be returned
    */
   fun getSelectedComposite(ignorePopup: Boolean): EditorComposite? {
@@ -204,7 +204,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     panel = JPanel(BorderLayout())
     panel.isOpaque = false
     panel.isFocusable = false
-    tabbedPane = EditorTabbedContainer(this, manager.project, parentDisposable)
+    tabbedPane = EditorTabbedContainer(this, parentDisposable)
     panel.add(tabbedPane.component, BorderLayout.CENTER)
 
     // tab layout policy
@@ -218,7 +218,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     updateTabsVisibility()
   }
 
-  enum class RelativePosition(val mySwingConstant: Int) {
+  internal enum class RelativePosition(val mySwingConstant: Int) {
     CENTER(SwingConstants.CENTER),
     UP(SwingConstants.TOP),
     LEFT(SwingConstants.LEFT),
@@ -260,9 +260,9 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     }
 
     // Even if above/below adjacent editor is shifted a bit to the right from left edge of current editor,
-    // still try to choose editor that is visually above/below - shifted nor more than quarter of editor width.
+    // still try to choose an editor that is visually above/below - shifted nor more than quarter of editor width.
     val x = point.x + panel.width / 4
-    // Splitter has width of one pixel - we need to step at least 2 pixels to be over adjacent editor
+    // Splitter has width of one pixel - we need to step at least 2 pixels to be over an adjacent editor
     val searchStep = 2
     biConsumer(findAdjacentEditor(nearestComponent(x, point.y - searchStep)), RelativePosition.UP)
     biConsumer(findAdjacentEditor(nearestComponent(x, point.y + panel.height + searchStep)), RelativePosition.DOWN)
@@ -664,7 +664,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       return fileIndex + 1
     }
 
-    // by default select previous neighbour
+    // by default, select previous neighbour
     return if (fileIndex > 0) fileIndex - 1 else -1
   }
 
@@ -730,14 +730,14 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
         else "")
       val switchShortcuts = IdeBundle.message("split.with.chooser.switch.tab", getShortcut("SplitChooser.NextWindow"))
 
-      // Adjust default width to info text
+      // Adjust default width to an info text
       val font = StartupUiUtil.getLabelFont()
       val fontMetrics = g.getFontMetrics(font)
       val openShortcutsWidth = fontMetrics.stringWidth(openShortcuts)
       val switchShortcutsWidth = fontMetrics.stringWidth(switchShortcuts)
       width = width.coerceAtLeast((openShortcutsWidth.coerceAtLeast(switchShortcutsWidth) * 1.2f).roundToInt())
 
-      // Check if info panel will actually fit into editor with some free space around edges
+      // Check if an info panel will actually fit into an editor with some free space around edges
       if (rectangle.bounds.height < height * 1.2f || rectangle.bounds.width < width * 1.2f) {
         return
       }
@@ -746,10 +746,10 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
                                           arc.toDouble(), arc.toDouble())
       g.color = UIUtil.getLabelBackground()
       g.fill(shape)
-      val arrowsCenterVShift = Registry.intValue("ide.splitter.chooser.info.panel.arrows.shift.center")
+      val arrowCenterVShift = Registry.intValue("ide.splitter.chooser.info.panel.arrows.shift.center")
       val arrowsVShift = Registry.intValue("ide.splitter.chooser.info.panel.arrows.shift.vertical")
       val arrowsHShift = Registry.intValue("ide.splitter.chooser.info.panel.arrows.shift.horizontal")
-      val function = Function { icon: Icon -> Point(centerX - icon.iconWidth / 2, centerY - icon.iconHeight / 2 + arrowsCenterVShift) }
+      val function = Function { icon: Icon -> Point(centerX - icon.iconWidth / 2, centerY - icon.iconHeight / 2 + arrowCenterVShift) }
       val forUpDownIcons = function.apply(AllIcons.Chooser.Top)
       AllIcons.Chooser.Top.paintIcon(component, g, forUpDownIcons.x, forUpDownIcons.y - arrowsVShift)
       AllIcons.Chooser.Bottom.paintIcon(component, g, forUpDownIcons.x, forUpDownIcons.y + arrowsVShift)
@@ -859,7 +859,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       val position = activeWindow?.painter?.position
       stopSplitChooser(false)
 
-      // if a position is default and focus is still in the same editor window => nothing need to be done
+      // if a position is default and focus is still in the same editor window => nothing needs to be done
       if (position == RelativePosition.CENTER && initialWindow == activeWindow) {
         return
       }
@@ -886,7 +886,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       }
     }
 
-    fun setSplitSide(side: RelativePosition) {
+    internal fun setSplitSide(side: RelativePosition) {
       if (side != activeWindow!!.painter!!.position) {
         activeWindow!!.painter!!.positionChanged(side)
       }
@@ -1138,7 +1138,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       for (file in histFiles) {
         val composite = getComposite(file)
         if (composite != null && !owner.manager.isChanged(composite)) {
-          // we found non modified file
+          // we found non-modified file
           closingOrder.add(file)
         }
       }
@@ -1147,7 +1147,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       for (i in 0 until tabbedPane.tabCount) {
         val file = getFileAt(i)
         if (!owner.manager.isChanged(getCompositeAt(i))) {
-          // we found non modified file
+          // we found non-modified file
           closingOrder.add(file)
         }
       }
@@ -1236,8 +1236,10 @@ private fun hasClientPropertyInHierarchy(owner: Component, @Suppress("SameParame
   return false
 }
 
-internal class EditorWindowTopComponent(@JvmField val window: EditorWindow,
-                                        @JvmField val composite: EditorComposite) : JPanel(BorderLayout()), DataProvider, EditorWindowHolder {
+internal class EditorWindowTopComponent(
+  @JvmField val window: EditorWindow,
+  @JvmField val composite: EditorComposite,
+) : JPanel(BorderLayout()), DataProvider, EditorWindowHolder {
   init {
     add(composite.component, BorderLayout.CENTER)
     addFocusListener(object : FocusAdapter() {
@@ -1272,7 +1274,8 @@ internal class EditorWindowTopComponent(@JvmField val window: EditorWindow,
   override fun getData(dataId: String): Any? {
     return when {
       CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> composite.file.takeIf { it.isValid }
-      else -> if (CommonDataKeys.PROJECT.`is`(dataId)) composite.project else null
+      CommonDataKeys.PROJECT.`is`(dataId) -> composite.project
+      else -> null
     }
   }
 }

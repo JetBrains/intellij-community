@@ -54,7 +54,7 @@ public class TabbedPaneWrapper  {
     init(tabPlacement, installKeyboardNavigation, factory);
   }
 
-  void init(int tabPlacement, @NotNull PrevNextActionsDescriptor installKeyboardNavigation, @NotNull TabFactory tabbedPaneFactory) {
+  final void init(int tabPlacement, @NotNull PrevNextActionsDescriptor installKeyboardNavigation, @NotNull TabFactory tabbedPaneFactory) {
     myFactory = tabbedPaneFactory;
 
     myTabbedPane = createTabbedPane(tabPlacement);
@@ -70,7 +70,7 @@ public class TabbedPaneWrapper  {
   }
 
   private void assertIsDispatchThread() {
-    final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     if (application != null){
       application.assertIsDispatchThread(myTabbedPane.getComponent());
     }
@@ -481,7 +481,6 @@ public class TabbedPaneWrapper  {
   }
 
   private static final class JBTabsFactory implements TabFactory {
-
     private final Project myProject;
     private final Disposable myParent;
     private final TabbedPaneWrapper myWrapper;
@@ -505,13 +504,12 @@ public class TabbedPaneWrapper  {
           getTabs().requestFocus();
           return true;
         }
-
       };
     }
 
     @Override
     public @NotNull TabWrapper createTabWrapper(@NotNull JComponent component) {
-      final TabWrapper tabWrapper = new TabWrapper(component);
+      TabWrapper tabWrapper = new TabWrapper(component);
       tabWrapper.myCustomFocus = false;
       return tabWrapper;
     }
@@ -519,11 +517,21 @@ public class TabbedPaneWrapper  {
     public JBTabs getTabs() {
       return ((JBTabsPaneImpl)myWrapper.myTabbedPane).getTabs();
     }
-
-    public void dispose() {
-    }
   }
 
+  public static @NotNull TabbedPaneWrapper createJbTabs(@Nullable Project project,
+                                                        int tabPlacement,
+                                                        PrevNextActionsDescriptor installKeyboardNavigation,
+                                                        @NotNull Disposable parentDisposable) {
+    TabbedPaneWrapper result = new TabbedPaneWrapper(false);
+    result.init(tabPlacement, installKeyboardNavigation, new JBTabsFactory(result, project, parentDisposable));
+    return result;
+  }
+
+  /**
+   * @deprecated Use {@link #createJbTabs}
+   */
+  @Deprecated
   public static final class AsJBTabs extends TabbedPaneWrapper {
     public AsJBTabs(@Nullable Project project,
                     int tabPlacement,

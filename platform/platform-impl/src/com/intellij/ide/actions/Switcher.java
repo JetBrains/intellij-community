@@ -393,12 +393,11 @@ public final class Switcher extends BaseSwitcherAction {
     }
 
     private static @NotNull List<SwitcherVirtualFile> getFilesToShow(@NotNull Project project, boolean onlyEdited, int toolWindowsCount, boolean pinned) {
-      FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
       List<SwitcherVirtualFile> filesData = new ArrayList<>();
       ArrayList<SwitcherVirtualFile> editors = new ArrayList<>();
       Set<VirtualFile> addedFiles = new LinkedHashSet<>();
       if (!pinned) {
-        for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
+        for (Pair<VirtualFile, EditorWindow> pair : ((FileEditorManagerImpl)FileEditorManager.getInstance(project)).getSelectionHistory()) {
           editors.add(new SwitcherVirtualFile(project, pair.first, pair.second));
         }
       }

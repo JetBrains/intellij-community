@@ -403,7 +403,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
       window.setupNorthPanel()
     }
     container.add(
-      EditorTabbedContainer.createDockableEditor(project, null, file, Presentation(file.name), editorWindow, isNorthPanelAvailable),
+      EditorTabbedContainer.createDockableEditor(null, file, Presentation(file.name), editorWindow, isNorthPanelAvailable),
       null
     )
     SwingUtilities.invokeLater { window.uiContainer.preferredSize = null }

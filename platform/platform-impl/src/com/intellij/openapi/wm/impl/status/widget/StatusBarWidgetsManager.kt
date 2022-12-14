@@ -169,8 +169,8 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
         get() = this@StatusBarWidgetsManager.project
       override val currentFileEditor: StateFlow<FileEditor?> by lazy {
         // todo use splitters from dock if nota main frame
-        FileEditorManagerEx.getInstanceEx(project).splitters.currentWindowFlow
-          .map { it?.selectedComposite?.selectedEditor }
+        FileEditorManagerEx.getInstanceEx(project).splitters.currentCompositeFlow
+          .map { it?.selectedEditor }
           .stateIn(scope = parentScope, started = SharingStarted.WhileSubscribed(), initialValue = null)
       }
     }

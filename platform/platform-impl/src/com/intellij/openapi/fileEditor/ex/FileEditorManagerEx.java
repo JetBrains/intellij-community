@@ -201,4 +201,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
   public @Nullable DockContainer getDockContainer() {
     return null;
   }
+
+  public void addSelectionRecord(@NotNull VirtualFile file, @NotNull EditorWindow window) {
+  }
 }
