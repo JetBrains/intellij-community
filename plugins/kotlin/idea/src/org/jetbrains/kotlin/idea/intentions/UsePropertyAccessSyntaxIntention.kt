@@ -95,12 +95,11 @@ class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtCallExpress
     }
 
     override fun inspectionProblemText(element: KtCallExpression): String {
-        val accessor = when (element.valueArguments.size) {
-            0 -> "getter"
-            1 -> "setter"
-            else -> null
+        return when (element.valueArguments.size) {
+            0 -> KotlinBundle.message("use.of.getter.method.instead.of.property.access.syntax")
+            1 -> KotlinBundle.message("use.of.setter.method.instead.of.property.access.syntax")
+            else -> error("getter or setter arg length can't be !in 0..1")
         }
-        return KotlinBundle.message("use.of.0.method.instead.of.property.access.syntax", accessor.toString())
     }
 }
 
