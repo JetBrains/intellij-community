@@ -19,34 +19,6 @@ import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
-
-abstract class AbstractKotlinGotoClassContributor<T : NavigatablePsiElement>(private val index: KotlinStringStubIndexExtension<T>) : ChooseByNameContributorEx, GotoClassContributor {
-    override fun getQualifiedName(item: NavigationItem): String? {
-        val declaration = item as? KtNamedDeclaration ?: return null
-        return declaration.fqName?.asString()
-    }
-
-    override fun getQualifiedNameSeparator() = "."
-
-    override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
-        index.processAllKeys(scope, filter, processor)
-    }
-
-    override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
-        val project = parameters.project
-        val scope = KotlinSourceFilterScope.projectFiles(parameters.searchScope, project)
-        index.processElements(name, project, scope, parameters.idFilter) {
-            if (it !is KtEnumEntry) {
-                processor.process(it)
-            } else {
-                true
-            }
-        }
-    }
-}
-class KotlinGotoClassContributor : AbstractKotlinGotoClassContributor<KtClassOrObject>(KotlinClassShortNameIndex)
-class KotlinGotoTypeAliasContributor: AbstractKotlinGotoClassContributor<KtTypeAlias>(KotlinTypeAliasShortNameIndex)
-
 /*
 * Logic in IDEA that adds classes to "go to symbol" popup result goes around GotoClassContributor.
 * For Kotlin classes it works using light class generation.
@@ -80,6 +52,24 @@ abstract class AbstractKotlinGotoSymbolContributor<T : NavigatablePsiElement>(
         }
 
     override fun getQualifiedNameSeparator(): String = "."
+}
+
+class KotlinGotoClassContributor : AbstractKotlinGotoSymbolContributor<KtClassOrObject>(KotlinClassShortNameIndex) {
+    override fun getQualifiedName(item: NavigationItem): String? =
+        (item as? KtNamedDeclaration)?.fqName?.asString()
+
+    override fun wrapProcessor(processor: Processor<in KtClassOrObject>): Processor<in KtClassOrObject> = Processor {
+        if (it !is KtEnumEntry) {
+            processor.process(it)
+        } else {
+            true
+        }
+    }
+}
+class KotlinGotoTypeAliasContributor: AbstractKotlinGotoSymbolContributor<KtTypeAlias>(KotlinTypeAliasShortNameIndex) {
+    override fun getQualifiedName(item: NavigationItem): String? =
+        (item as? KtNamedDeclaration)?.fqName?.asString()
+
 }
 
 class KotlinGotoFunctionSymbolContributor: AbstractKotlinGotoSymbolContributor<KtNamedFunction>(KotlinFunctionShortNameIndex) {
