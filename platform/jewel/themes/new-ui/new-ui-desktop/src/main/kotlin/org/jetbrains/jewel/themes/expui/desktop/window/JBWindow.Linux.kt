@@ -38,7 +38,7 @@ internal fun JBWindowOnLinux(
     onPreviewKeyEvent: (KeyEvent) -> Boolean = { false },
     onKeyEvent: (KeyEvent) -> Boolean = { false },
     mainToolBar: (@Composable MainToolBarScope.() -> Unit)?,
-    content: @Composable FrameWindowScope.() -> Unit,
+    content: @Composable FrameWindowScope.() -> Unit
 ) {
     Window(
         onCloseRequest,

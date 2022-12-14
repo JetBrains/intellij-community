@@ -85,14 +85,18 @@ fun main() {
                             {
                                 Desktop.getDesktop()
                                     .browse(URI.create("https://github.com/ButterCam/compose-jetbrains-theme"))
-                            }, Modifier.size(40.dp), shape = RectangleShape
+                            },
+                            Modifier.size(40.dp),
+                            shape = RectangleShape
                         ) {
                             Icon("icons/github.svg")
                         }
                     }
                     Tooltip("Switch between dark and light mode,\ncurrently is ${if (isDark) "dark" else "light"} mode") {
                         ActionButton(
-                            { isDark = !isDark }, Modifier.size(40.dp), shape = RectangleShape
+                            { isDark = !isDark },
+                            Modifier.size(40.dp),
+                            shape = RectangleShape
                         ) {
                             if (isDark) {
                                 Icon("icons/darkTheme.svg")
@@ -102,7 +106,8 @@ fun main() {
                         }
                     }
                 }
-            }) {
+            }
+        ) {
             Row(
                 Modifier.fillMaxSize()
             ) {
@@ -113,12 +118,16 @@ fun main() {
                 ) {
                     var selected by remember { mutableStateOf(0) }
                     ToolBarActionButton(
-                        selected == 0, { selected = 0 }, modifier = Modifier.size(30.dp)
+                        selected == 0,
+                        { selected = 0 },
+                        modifier = Modifier.size(30.dp)
                     ) {
                         Icon("icons/generic.svg", markerColor = LocalErrorAreaColors.current.text)
                     }
                     ToolBarActionButton(
-                        selected == 1, { selected = 1 }, modifier = Modifier.size(30.dp)
+                        selected == 1,
+                        { selected = 1 },
+                        modifier = Modifier.size(30.dp)
                     ) {
                         Icon("icons/text.svg")
                     }
@@ -273,8 +282,8 @@ fun main() {
                             Label("Third")
                         }
                         val fourthRadioButtonId = 3
-                        RadioButton(selectedIndex == thirdRadioButtonId, {
-                            selectedIndex = thirdRadioButtonId
+                        RadioButton(selectedIndex == fourthRadioButtonId, {
+                            selectedIndex = fourthRadioButtonId
                         }) {
                             Label("Fourth")
                         }
@@ -350,9 +359,15 @@ fun main() {
 @Composable
 fun InfiniteProgressBar() {
     val transition = rememberInfiniteTransition()
-    val currentOffset by transition.animateFloat(0f, 1f, infiniteRepeatable(animation = keyframes {
-        durationMillis = 1000
-    }))
+    val currentOffset by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 1000
+            }
+        )
+    )
 
     ProgressBar(currentOffset)
 }

@@ -34,7 +34,7 @@ internal fun FrameWindowScope.MainToolBarOnWindows(
     showTitle: Boolean,
     resizeable: Boolean,
     colors: MainToolBarColors = LocalMainToolBarColors.current,
-    content: (@Composable MainToolBarScope.() -> Unit)?,
+    content: (@Composable MainToolBarScope.() -> Unit)?
 ) {
     BasicMainToolBar(colors, JbrCustomWindowDecorationAccessing) {
         if (icon != null) {
@@ -57,7 +57,7 @@ internal fun FrameWindowScope.MainToolBarOnWindows(
 private fun MainToolBarScope.WindowsSystemButtons(
     windowState: WindowState,
     resizeable: Boolean,
-    onCloseRequest: () -> Unit,
+    onCloseRequest: () -> Unit
 ) {
     val active = LocalContentActivated.current
     CompositionLocalProvider(

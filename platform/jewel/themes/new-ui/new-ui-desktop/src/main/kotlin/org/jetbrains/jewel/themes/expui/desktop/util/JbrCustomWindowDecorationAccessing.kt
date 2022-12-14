@@ -1,4 +1,5 @@
 @file:Suppress("SwallowedException", "TooGenericExceptionCaught")
+
 package org.jetbrains.jewel.themes.expui.desktop.util
 
 import org.jetbrains.jewel.themes.expui.standalone.control.CustomWindowDecorationSupport
@@ -38,7 +39,8 @@ internal object JbrCustomWindowDecorationAccessing : CustomWindowDecorationSuppo
         return try {
             val clazz = Class.forName("java.awt.Window\$CustomWindowDecoration")
             val method = clazz.getDeclaredMethod(
-                name, *params
+                name,
+                *params
             )
             method.isAccessible = true
             method

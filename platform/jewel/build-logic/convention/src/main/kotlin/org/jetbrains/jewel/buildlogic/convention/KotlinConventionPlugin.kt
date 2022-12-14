@@ -5,7 +5,8 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.getByType
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
-class KotlinConventionPlugin: Plugin<Project> {
+@Suppress("unused") // Plugin entry point, see build.gradle.kts
+class KotlinConventionPlugin : Plugin<Project> {
 
     override fun apply(target: Project) {
         with(target) {
@@ -15,14 +16,21 @@ class KotlinConventionPlugin: Plugin<Project> {
         }
     }
 
-    private fun Project.configureExtension(extension: KotlinJvmProjectExtension) {
-        with (extension) {
+    private fun configureExtension(extension: KotlinJvmProjectExtension) {
+        extension.apply {
             target {
                 compilations.all {
                     kotlinOptions {
                         jvmTarget = "17"
-                        freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn")
                     }
+                }
+            }
+
+            sourceSets.all {
+                languageSettings {
+                    optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
+                    optIn("kotlin.experimental.ExperimentalTypeInference")
+                    optIn("androidx.compose.ui.ExperimentalComposeUiApi")
                 }
             }
         }

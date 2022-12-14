@@ -5,11 +5,10 @@ import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.getByType
-import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.archivesName
-import java.io.File
 
+@Suppress("unused") // Plugin entry point, see build.gradle.kts
 class DetektConventionPlugin : Plugin<Project> {
 
     override fun apply(target: Project) {
@@ -22,8 +21,8 @@ class DetektConventionPlugin : Plugin<Project> {
     }
 
     private fun Project.configureExtension(extension: DetektExtension) {
-        with(extension) {
-            config = files(File(rootDir, "detekt.yml"))
+        extension.apply {
+            config = files(rootProject.file("detekt.yml"))
             buildUponDefaultConfig = true
         }
     }

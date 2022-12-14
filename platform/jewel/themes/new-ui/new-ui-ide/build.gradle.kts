@@ -3,10 +3,10 @@ import org.jetbrains.compose.jetbrainsCompose
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.archivesName
 
 plugins {
-    alias(libs.plugins.kotlinJvm)
+    id("org.jetbrains.jewel.kotlin")
     alias(libs.plugins.composeDesktop)
-    alias(libs.plugins.detekt)
-    alias(libs.plugins.kotlinter)
+    id("org.jetbrains.jewel.detekt")
+    id("org.jetbrains.jewel.ktlint")
 }
 
 detekt {

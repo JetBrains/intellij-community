@@ -1,10 +1,10 @@
 plugins {
-    alias(libs.plugins.kotlinJvm) apply false
+    id("org.jetbrains.jewel.kotlin") apply false
     alias(libs.plugins.composeDesktop) apply false
     alias(libs.plugins.ideaGradlePlugin) apply false
     alias(libs.plugins.kotlinSerialization) apply false
-    alias(libs.plugins.detekt)
-    alias(libs.plugins.kotlinter)
+    id("org.jetbrains.jewel.detekt")
+    id("org.jetbrains.jewel.ktlint")
 }
 
 

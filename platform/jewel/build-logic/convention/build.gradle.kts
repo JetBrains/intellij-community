@@ -23,15 +23,15 @@ gradlePlugin {
     plugins {
         register("jewelKotlin") {
             id = "org.jetbrains.jewel.kotlin"
-            implementationClass = "KotlinConventionPlugin"
+            implementationClass = "org.jetbrains.jewel.buildlogic.convention.KotlinConventionPlugin"
         }
         register("jewelDetekt") {
             id = "org.jetbrains.jewel.detekt"
-            implementationClass = "DetektConventionPlugin"
+            implementationClass = "org.jetbrains.jewel.buildlogic.convention.DetektConventionPlugin"
         }
         register("jewelKtlint") {
             id = "org.jetbrains.jewel.ktlint"
-            implementationClass = "KtlintConventionPlugin"
+            implementationClass = "org.jetbrains.jewel.buildlogic.convention.KtlintConventionPlugin"
         }
     }
 }

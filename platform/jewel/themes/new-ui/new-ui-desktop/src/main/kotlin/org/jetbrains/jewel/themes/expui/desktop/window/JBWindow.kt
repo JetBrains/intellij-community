@@ -36,7 +36,7 @@ fun JBWindow(
     onPreviewKeyEvent: (KeyEvent) -> Boolean = { false },
     onKeyEvent: (KeyEvent) -> Boolean = { false },
     mainToolBar: (@Composable MainToolBarScope.() -> Unit)? = null,
-    content: @Composable FrameWindowScope.() -> Unit,
+    content: @Composable FrameWindowScope.() -> Unit
 ) {
     when {
         isLinux() -> JBWindowOnLinux(

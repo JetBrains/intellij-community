@@ -1,4 +1,5 @@
 @file:Suppress("SwallowedException", "TooGenericExceptionCaught")
+
 package org.jetbrains.jewel.themes.expui.desktop.util
 
 import sun.misc.Unsafe
@@ -35,7 +36,9 @@ internal object UnsafeAccessing {
     private val implAddOpens by lazy {
         try {
             Module::class.java.getDeclaredMethod(
-                "implAddOpens", String::class.java, Module::class.java
+                "implAddOpens",
+                String::class.java,
+                Module::class.java
             ).accessible()
         } catch (e: Throwable) {
             null

@@ -20,7 +20,7 @@ internal fun FrameWindowScope.MainToolBarOnMacOS(
     showTitle: Boolean,
     isFullScreen: Boolean,
     colors: MainToolBarColors = LocalMainToolBarColors.current,
-    content: (@Composable MainToolBarScope.() -> Unit)?,
+    content: (@Composable MainToolBarScope.() -> Unit)?
 ) {
     BasicMainToolBar(colors, JbrCustomWindowDecorationAccessing) {
         if (isFullScreen) {

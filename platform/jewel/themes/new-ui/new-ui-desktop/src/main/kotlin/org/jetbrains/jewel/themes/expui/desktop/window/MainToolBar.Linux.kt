@@ -11,7 +11,7 @@ import org.jetbrains.jewel.themes.expui.standalone.style.LocalMainToolBarColors
 @Composable
 internal fun FrameWindowScope.MainToolBarOnLinux(
     colors: MainToolBarColors = LocalMainToolBarColors.current,
-    content: (@Composable MainToolBarScope.() -> Unit)?,
+    content: (@Composable MainToolBarScope.() -> Unit)?
 ) {
     BasicMainToolBar(colors, JbrCustomWindowDecorationAccessing, content)
 }
