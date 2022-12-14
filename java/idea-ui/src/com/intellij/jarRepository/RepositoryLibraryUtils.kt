@@ -75,8 +75,7 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
       /* Build verification only for libraries with stable version and if verification is enabled */
       if (descriptor.version == RepositoryLibraryDescription.LatestVersionId ||
           descriptor.version == RepositoryLibraryDescription.ReleaseVersionId ||
-          descriptor.version.endsWith(RepositoryLibraryDescription.SnapshotVersionSuffix) ||
-          !descriptor.isVerifySha256Checksum) {
+          descriptor.version.endsWith(RepositoryLibraryDescription.SnapshotVersionSuffix)) {
         return emptyList()
       }
 
@@ -147,7 +146,7 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
    * Libraries with disabled checksums are excluded.
    * Global libraries are excluded.
    *
-   * See [JpsMavenRepositoryLibraryDescriptor.ArtifactVerification], [JpsMavenRepositoryLibraryDescriptor.myVerifySha256Checksum].
+   * See [JpsMavenRepositoryLibraryDescriptor.ArtifactVerification], [JpsMavenRepositoryLibraryDescriptor.isVerifySha256Checksum].
    */
   fun rebuildExistingSha256ChecksumsBackground() = BuildSha256SumJob(true, false).runBackground(
     JavaUiBundle.message("repository.library.utils.progress.title.building.sha256sum")
@@ -158,7 +157,7 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
    *
    * Global libraries are excluded.
    *
-   * See [JpsMavenRepositoryLibraryDescriptor.ArtifactVerification], [JpsMavenRepositoryLibraryDescriptor.myVerifySha256Checksum].
+   * See [JpsMavenRepositoryLibraryDescriptor.ArtifactVerification], [JpsMavenRepositoryLibraryDescriptor.isVerifySha256Checksum].
    */
   fun buildMissingSha256ChecksumsBackground() = BuildSha256SumJob(false, true).runBackground(
     JavaUiBundle.message("repository.library.utils.progress.title.building.sha256sum")
@@ -168,7 +167,7 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
   /**
    * Disable SHA256 checksum for all [RepositoryLibraryType] libraries. Global libraries are excluded.
    *
-   * See [JpsMavenRepositoryLibraryDescriptor.ArtifactVerification], [JpsMavenRepositoryLibraryDescriptor.myVerifySha256Checksum].
+   * See [JpsMavenRepositoryLibraryDescriptor.ArtifactVerification], [JpsMavenRepositoryLibraryDescriptor.isVerifySha256Checksum].
    */
   fun removeSha256ChecksumsBackground() = RemoveSha256ChecksumsJob().runBackground(
     JavaUiBundle.message("repository.library.utils.progress.title.removing.sha256sum")
@@ -309,7 +308,6 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
       .filter { it.type == LibraryRootTypeId.COMPILED }
       .map { JpsPathUtil.urlToFile(it.url.url) }
 
-    this.isEnableSha256Checksum = true
     this.artifactsVerification = buildRepositoryLibraryArtifactsVerification(this.repositoryLibraryDescriptor, verifiableJars)
     return this
   }
@@ -455,7 +453,6 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
 
     override suspend fun transform() {
       filteredProperties.forEach { (entity, properties) ->
-        properties.isEnableSha256Checksum = false
         properties.artifactsVerification = emptyList()
         entity.modifyProperties(properties)
       }

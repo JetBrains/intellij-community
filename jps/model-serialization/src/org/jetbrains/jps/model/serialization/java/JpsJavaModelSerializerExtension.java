@@ -312,8 +312,6 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     private static final String EXCLUDE_TAG = "exclude";
     private static final String DEPENDENCY_TAG = "dependency";
 
-    private static final String VERIFY_SHA25_CHECKSUM_ATTRIBUTE = "verify-sha256-checksum";
-
     private static final String JAR_REPOSITORY_ID_ATTRIBUTE = "jar-repository-id";
 
     private static final String VERIFICATION_TAG = "verification";
@@ -339,7 +337,6 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
       String mavenId = elem.getAttributeValue(MAVEN_ID_ATTRIBUTE, (String)null);
 
       boolean includeTransitiveDependencies = Boolean.parseBoolean(elem.getAttributeValue(INCLUDE_TRANSITIVE_DEPS_ATTRIBUTE, "true"));
-      boolean verifySha256Checksum = Boolean.parseBoolean(elem.getAttributeValue(VERIFY_SHA25_CHECKSUM_ATTRIBUTE, "false"));
       String jarRepositoryId = elem.getAttributeValue(JAR_REPOSITORY_ID_ATTRIBUTE);
 
 
@@ -349,7 +346,6 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
       var verificationProperties = loadArtifactsVerificationProperties(mavenId, elem.getChild(VERIFICATION_TAG));
       return new JpsMavenRepositoryLibraryDescriptor(mavenId,
                                                      includeTransitiveDependencies, excludedDependencies,
-                                                     verifySha256Checksum,
                                                      verificationProperties,
                                                      jarRepositoryId);
     }
@@ -367,8 +363,11 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
         if (artifactUrl != null) {
           Element sha256sumElement = child.getChild(SHA256SUM_TAG);
           String sha256sum = sha256sumElement != null ? sha256sumElement.getText() : null;
-
-          result.add(new ArtifactVerification(artifactUrl, sha256sum));
+          if (sha256sum == null) {
+            LOG.warn("Missing sha256sum attribute for verification artifact tag for descriptor maven-id=" + mavenId);
+          } else {
+            result.add(new ArtifactVerification(artifactUrl, sha256sum));
+          }
         } else {
           LOG.warn("Missing url attribute for verification artifact tag for descriptor maven-id=" + mavenId);
         }
