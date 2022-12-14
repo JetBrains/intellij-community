@@ -378,9 +378,9 @@ final class FilePageCache {
   }
 
   void assertNoBuffersLocked() {
-    pagesAccessLock.lock();
+    pagesAllocationLock.lock();
     try {
-      pagesAllocationLock.lock();
+      pagesAccessLock.lock();
       try {
         for (DirectBufferWrapper value : pagesByPageId.values()) {
           if (value.isLocked()) {
@@ -394,11 +394,11 @@ final class FilePageCache {
         }
       }
       finally {
-        pagesAllocationLock.unlock();
+        pagesAccessLock.unlock();
       }
     }
     finally {
-      pagesAccessLock.unlock();
+      pagesAllocationLock.unlock();
     }
   }
 
