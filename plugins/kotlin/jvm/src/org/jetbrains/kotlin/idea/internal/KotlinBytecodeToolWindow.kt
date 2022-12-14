@@ -161,33 +161,7 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
         )
         add(myEditor.component)
 
-        val optionPanel = JPanel(FlowLayout())
-        add(optionPanel, BorderLayout.NORTH)
-
-        val decompilerFacade = KotlinJvmDecompilerFacade.getInstance()
-
         decompile = JButton(KotlinJvmBundle.message("button.text.decompile"))
-        if (decompilerFacade != null) {
-            optionPanel.add(decompile)
-            decompile.addActionListener {
-                val location = Location.fromEditor(FileEditorManager.getInstance(myProject).selectedTextEditor, myProject)
-                val file = location.kFile
-                if (file != null) {
-                    try {
-                        decompilerFacade.showDecompiledCode(file)
-                    } catch (ex: DecompileFailedException) {
-                        LOG.info(ex)
-                        Messages.showErrorDialog(
-                            myProject,
-                            KotlinJvmBundle.message("failed.to.decompile.0.1", file.name, ex),
-                            KotlinJvmBundle.message("kotlin.bytecode.decompiler")
-                        )
-                    }
-
-                }
-            }
-        }
-
         /*TODO: try to extract default parameter from compiler options*/
         enableInline = JCheckBox(KotlinJvmBundle.message("checkbox.text.inline"), true)
         enableOptimization = JCheckBox(KotlinJvmBundle.message("checkbox.text.optimization"), true)
@@ -197,21 +171,55 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
         val description = JvmTarget.DEFAULT.description
         jvmTargets.selectedItem = description
         ir = JCheckBox(KotlinJvmBundle.message("checkbox.text.ir"), true)
+
+        setText(DEFAULT_TEXT)
+        initOptionsPanel()
+        registerTasksToUpdateToolWindow()
+    }
+
+    private fun initOptionsPanel() {
+        val optionPanel = JPanel(FlowLayout())
+        add(optionPanel, BorderLayout.NORTH)
+
+        val decompilerFacade = KotlinJvmDecompilerFacade.getInstance()
+        if (decompilerFacade != null) {
+            optionPanel.add(decompile)
+            decompile.addActionListener {
+                decompileBytecode(decompilerFacade)
+            }
+        }
+
         optionPanel.add(enableInline)
         optionPanel.add(enableOptimization)
         optionPanel.add(enableAssertions)
         optionPanel.add(ir)
-
-        optionPanel.add(JLabel(KotlinJvmBundle.message("bytecode.toolwindow.label.target")))
+        optionPanel.add(JLabel(KotlinJvmBundle.message("bytecode.toolwindow.label.jvm.target")))
         optionPanel.add(jvmTargets)
+    }
 
+    private fun decompileBytecode(decompilerFacade: KotlinJvmDecompilerFacade) {
+        val location = Location.fromEditor(FileEditorManager.getInstance(myProject).selectedTextEditor, myProject)
+        val file = location.kFile
+        if (file == null) return
+        try {
+            decompilerFacade.showDecompiledCode(file)
+        } catch (ex: DecompileFailedException) {
+            LOG.info(ex)
+            Messages.showErrorDialog(
+                myProject,
+                KotlinJvmBundle.message("failed.to.decompile.0.1", file.name, ex),
+                KotlinJvmBundle.message("kotlin.bytecode.decompiler")
+            )
+        }
+    }
+
+    private fun registerTasksToUpdateToolWindow() {
         InfinitePeriodicalTask(
             UPDATE_DELAY.toLong(),
             Alarm.ThreadToUse.SWING_THREAD,
             this,
-            Computable<LongRunningReadTask<*, *>> { UpdateBytecodeToolWindowTask() }).start()
-
-        setText(DEFAULT_TEXT)
+            Computable<LongRunningReadTask<*, *>> { UpdateBytecodeToolWindowTask() }
+        ).start()
     }
 
     private fun setText(resultText: String) {
