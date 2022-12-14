@@ -100,6 +100,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
 
 
     override fun isExtensionOfDeclarationClassUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
+        if (declaration !is KtCallableDeclaration) return false
         analyze(declaration) {
             fun KtClassOrObjectSymbol.isContainerReceiverFor(
                 candidateSymbol: KtDeclarationSymbol
@@ -110,7 +111,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
             }
 
             val symbol = declaration.getSymbol()
-            val containerSymbol = (symbol.getContainingSymbol() as? KtClassOrObjectSymbol) ?: return false
+            val containerSymbol = symbol.getContainingSymbol() as? KtClassOrObjectSymbol ?: return false
             return reference.unwrappedTargets.filterIsInstance(KtDeclaration::class.java).any { candidateDeclaration ->
                 val candidateSymbol = candidateDeclaration.getSymbol()
                 candidateSymbol != symbol && containerSymbol.isContainerReceiverFor(candidateSymbol)
