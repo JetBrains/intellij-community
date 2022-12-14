@@ -20,7 +20,5 @@ class Test {
 
     public static void doesntCompileSoItDoesntMatterWhetherToReportOrNot() {
         KotlinEnum2.values();
-        KotlinEnum5.values();
-        KotlinEnum6.values();
     }
 }
