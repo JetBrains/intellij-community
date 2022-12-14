@@ -24,7 +24,6 @@ import com.intellij.util.ObjectUtils.tryCast
 import com.intellij.vcs.commit.CommitModeManager
 import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
-import kotlin.properties.Delegates.observable
 
 private const val COMMIT_TOOL_WINDOW = "vcs.commit.tool.window"
 
@@ -33,7 +32,9 @@ internal val Project.isCommitToolWindowShown: Boolean
 
 internal fun ContentManager.selectFirstContent() {
   val firstContent = getContent(0)
-  if (firstContent != null) setSelectedContent(firstContent)
+  if (firstContent != null && selectedContent != firstContent) {
+    setSelectedContent(firstContent)
+  }
 }
 
 private val LOG = logger<ChangesViewContentManager>()
@@ -56,30 +57,31 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     return toolWindow?.contentManager
   }
 
-  private var isCommitToolWindowShown: Boolean by observable(shouldUseCommitToolWindow()) { _, oldValue, newValue ->
-    if (oldValue == newValue) return@observable
-
-    remapContents()
-    project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-  }
+  private var isCommitToolWindowShown: Boolean = shouldUseCommitToolWindow()
 
   init {
     ApplicationManager.getApplication().messageBus.connect(project)
       .subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
         override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
           if (id == COMMIT_TOOL_WINDOW) {
-            updateToolWindowMapping()
+            updateToolWindowMappings()
           }
         }
       })
     val projectBusConnection = project.messageBus.connect()
     CommitModeManager.subscribeOnCommitModeChange(projectBusConnection, object : CommitModeManager.CommitModeListener {
-      override fun commitModeChanged() = updateToolWindowMapping()
+      override fun commitModeChanged() {
+        updateToolWindowMappings()
+      }
     })
   }
 
-  private fun updateToolWindowMapping() {
+  private fun updateToolWindowMappings() {
     isCommitToolWindowShown = shouldUseCommitToolWindow()
+    remapContents()
+
+    project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+    contentManagers.forEach { it.selectFirstContent() }
   }
 
   private fun shouldUseCommitToolWindow(): Boolean {
