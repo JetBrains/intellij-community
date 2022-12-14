@@ -1985,10 +1985,9 @@ public class JBTabsImpl extends JComponent
 
   private void updateTabsOffsetFromScrollBar() {
     if (myScrollBar == null || !myScrollBar.getValueIsAdjusting()) return;
-    if (mySingleRowLayout == null) return;
-    int currentUnitsOffset = mySingleRowLayout.getScrollOffset();
+    int currentUnitsOffset = myLayout.getScrollOffset();
     int updatedOffset = myScrollBarModel.getValue();
-    mySingleRowLayout.scroll(updatedOffset - currentUnitsOffset);
+    myLayout.scroll(updatedOffset - currentUnitsOffset);
     relayout(false, false);
   }
 
