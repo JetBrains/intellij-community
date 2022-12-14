@@ -73,16 +73,6 @@ internal class ChangesViewCommitWorkflowHandler(
 
     val busConnection = project.messageBus.connect(this)
     busConnection.subscribe(ProjectCloseListener.TOPIC, this)
-    CommitModeManager.subscribeOnCommitModeChange(busConnection, object : CommitModeManager.CommitModeListener {
-      override fun commitModeChanged() {
-        if (isToggleMode()) {
-          deactivate(false)
-        }
-        else {
-          activate()
-        }
-      }
-    })
 
     val initialCommitMessage = commitMessagePolicy.init(currentChangeList)
     setCommitMessage(initialCommitMessage)
@@ -171,6 +161,16 @@ internal class ChangesViewCommitWorkflowHandler(
     if (isToggleMode()) {
       resetCommitChecksResult()
       ui.commitProgressUi.clearCommitCheckFailures()
+    }
+  }
+
+  fun resetActivation() {
+    val isToggleMode: Boolean = isToggleMode()
+    if (isToggleMode && isActive) {
+      deactivate(false) // disabled by default
+    }
+    if (!isToggleMode && !isActive) {
+      activate() // should be always active
     }
   }
 
