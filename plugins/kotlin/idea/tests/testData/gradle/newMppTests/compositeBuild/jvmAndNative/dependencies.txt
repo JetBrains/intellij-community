@@ -4,139 +4,52 @@ MODULES
     consumerBuild.consumerA.commonMain
         producerBuild.producerA.commonMain (COMPILE)
     consumerBuild.consumerA.commonTest
-        consumerBuild.consumerA.commonMain (TEST)
         producerBuild.producerA.commonMain (TEST)
     consumerBuild.consumerA.jvmMain
-        consumerBuild.consumerA.commonMain (COMPILE)
         producerBuild.producerA.commonMain (COMPILE)
         producerBuild.producerA.jvmMain (COMPILE)
     consumerBuild.consumerA.jvmTest
-        consumerBuild.consumerA.commonTest (TEST)
-        consumerBuild.consumerA.jvmMain (TEST)
-        consumerBuild.consumerA.commonMain (TEST)
         producerBuild.producerA.commonMain (TEST)
         producerBuild.producerA.jvmMain (TEST)
     consumerBuild.consumerA.linuxArm64Main
-        consumerBuild.consumerA.commonMain (COMPILE)
-        consumerBuild.consumerA.linuxMain (COMPILE)
-        consumerBuild.consumerA.nativeMain (COMPILE)
         producerBuild.producerA.commonMain (COMPILE)
         producerBuild.producerA.linuxMain (COMPILE)
         producerBuild.producerA.nativeMain (COMPILE)
         producerBuild.producerA.linuxArm64Main (COMPILE)
     consumerBuild.consumerA.linuxArm64Test
-        consumerBuild.consumerA.commonTest (TEST)
-        consumerBuild.consumerA.linuxTest (TEST)
-        consumerBuild.consumerA.nativeTest (TEST)
-        consumerBuild.consumerA.linuxArm64Main (TEST)
-        consumerBuild.consumerA.commonMain (TEST)
-        consumerBuild.consumerA.linuxMain (TEST)
-        consumerBuild.consumerA.nativeMain (TEST)
         producerBuild.producerA.commonMain (TEST)
         producerBuild.producerA.linuxMain (TEST)
         producerBuild.producerA.nativeMain (TEST)
         producerBuild.producerA.linuxArm64Main (TEST)
     consumerBuild.consumerA.linuxMain
-        consumerBuild.consumerA.nativeMain (COMPILE)
-        consumerBuild.consumerA.commonMain (COMPILE)
         producerBuild.producerA.commonMain (COMPILE)
         producerBuild.producerA.linuxMain (COMPILE)
         producerBuild.producerA.nativeMain (COMPILE)
     consumerBuild.consumerA.linuxTest
-        consumerBuild.consumerA.nativeTest (TEST)
-        consumerBuild.consumerA.commonTest (TEST)
-        consumerBuild.consumerA.commonMain (TEST)
-        consumerBuild.consumerA.linuxMain (TEST)
-        consumerBuild.consumerA.nativeMain (TEST)
         producerBuild.producerA.commonMain (TEST)
         producerBuild.producerA.linuxMain (TEST)
         producerBuild.producerA.nativeMain (TEST)
     consumerBuild.consumerA.linuxX64Main
-        consumerBuild.consumerA.commonMain (COMPILE)
-        consumerBuild.consumerA.linuxMain (COMPILE)
-        consumerBuild.consumerA.nativeMain (COMPILE)
         producerBuild.producerA.commonMain (COMPILE)
         producerBuild.producerA.linuxMain (COMPILE)
         producerBuild.producerA.nativeMain (COMPILE)
         producerBuild.producerA.linuxX64Main (COMPILE)
     consumerBuild.consumerA.linuxX64Test
-        consumerBuild.consumerA.commonTest (TEST)
-        consumerBuild.consumerA.linuxTest (TEST)
-        consumerBuild.consumerA.nativeTest (TEST)
-        consumerBuild.consumerA.linuxX64Main (TEST)
-        consumerBuild.consumerA.commonMain (TEST)
-        consumerBuild.consumerA.linuxMain (TEST)
-        consumerBuild.consumerA.nativeMain (TEST)
         producerBuild.producerA.commonMain (TEST)
         producerBuild.producerA.linuxMain (TEST)
         producerBuild.producerA.nativeMain (TEST)
         producerBuild.producerA.linuxX64Main (TEST)
     consumerBuild.consumerA.nativeMain
-        consumerBuild.consumerA.commonMain (COMPILE)
         producerBuild.producerA.commonMain (COMPILE)
         producerBuild.producerA.linuxMain (COMPILE)
         producerBuild.producerA.nativeMain (COMPILE)
     consumerBuild.consumerA.nativeTest
-        consumerBuild.consumerA.commonTest (TEST)
-        consumerBuild.consumerA.commonMain (TEST)
-        consumerBuild.consumerA.linuxMain (TEST)
-        consumerBuild.consumerA.nativeMain (TEST)
         producerBuild.producerA.commonMain (TEST)
         producerBuild.producerA.linuxMain (TEST)
         producerBuild.producerA.nativeMain (TEST)
-    producerBuild
-    producerBuild.producerA
-    producerBuild.producerA.commonMain
-    producerBuild.producerA.commonTest
-        producerBuild.producerA.commonMain (TEST)
-    producerBuild.producerA.jvmMain
-        producerBuild.producerA.commonMain (COMPILE)
-    producerBuild.producerA.jvmTest
-        producerBuild.producerA.commonTest (TEST)
-        producerBuild.producerA.jvmMain (TEST)
-        producerBuild.producerA.commonMain (TEST)
-    producerBuild.producerA.linuxArm64Main
-        producerBuild.producerA.commonMain (COMPILE)
-        producerBuild.producerA.linuxMain (COMPILE)
-        producerBuild.producerA.nativeMain (COMPILE)
-    producerBuild.producerA.linuxArm64Test
-        producerBuild.producerA.commonTest (TEST)
-        producerBuild.producerA.linuxTest (TEST)
-        producerBuild.producerA.nativeTest (TEST)
-        producerBuild.producerA.linuxArm64Main (TEST)
-        producerBuild.producerA.commonMain (TEST)
-        producerBuild.producerA.linuxMain (TEST)
-        producerBuild.producerA.nativeMain (TEST)
-    producerBuild.producerA.linuxMain
-        producerBuild.producerA.nativeMain (COMPILE)
-        producerBuild.producerA.commonMain (COMPILE)
-    producerBuild.producerA.linuxTest
-        producerBuild.producerA.nativeTest (TEST)
-        producerBuild.producerA.commonTest (TEST)
-        producerBuild.producerA.commonMain (TEST)
-        producerBuild.producerA.linuxMain (TEST)
-        producerBuild.producerA.nativeMain (TEST)
-    producerBuild.producerA.linuxX64Main
-        producerBuild.producerA.commonMain (COMPILE)
-        producerBuild.producerA.linuxMain (COMPILE)
-        producerBuild.producerA.nativeMain (COMPILE)
-    producerBuild.producerA.linuxX64Test
-        producerBuild.producerA.commonTest (TEST)
-        producerBuild.producerA.linuxTest (TEST)
-        producerBuild.producerA.nativeTest (TEST)
-        producerBuild.producerA.linuxX64Main (TEST)
-        producerBuild.producerA.commonMain (TEST)
-        producerBuild.producerA.linuxMain (TEST)
-        producerBuild.producerA.nativeMain (TEST)
-    producerBuild.producerA.nativeMain
-        producerBuild.producerA.commonMain (COMPILE)
-    producerBuild.producerA.nativeTest
-        producerBuild.producerA.commonTest (TEST)
-        producerBuild.producerA.commonMain (TEST)
-        producerBuild.producerA.linuxMain (TEST)
-        producerBuild.producerA.nativeMain (TEST)
-    project
 
 Test configuration:
 - hiding following roots: resources, android-specific roots, generated
+- showing only source modules matching .*consumerBuild.*
 - hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
+- hiding dependencies matching .*consumerBuild.*
