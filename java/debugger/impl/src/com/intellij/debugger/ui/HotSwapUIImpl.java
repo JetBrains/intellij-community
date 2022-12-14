@@ -25,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.task.*;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
@@ -275,7 +274,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
         hotSwapSessions(Collections.singletonList(session), null, null, callback);
       }
       else if (callback != null) {
-        callback.onFailure(new SmartList<>(session));
+        callback.onFailure(List.of(session));
       }
     }
   }
@@ -327,7 +326,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
       Map<String, Collection<String>> generatedPaths = collectGeneratedPaths(context);
       HotSwapStatusListener callback = context.getUserData(HOT_SWAP_CALLBACK_KEY);
       NotNullLazyValue<List<String>> outputRoots = context.getDirtyOutputPaths()
-        .map(stream -> NotNullLazyValue.createValue(() -> (List<String>)stream.collect(Collectors.toCollection(SmartList::new))))
+        .map(stream -> NotNullLazyValue.createValue(() -> stream.collect(Collectors.toList())))
         .orElse(null);
       instance.hotSwapSessions(sessions, generatedPaths, outputRoots, callback);
     }
@@ -341,9 +340,10 @@ public final class HotSwapUIImpl extends HotSwapUI {
       for (String outputRoot : generatedFilesRoots) {
         // collect only classes under IDE output roots
         if (!JpsPathUtil.isUnder(myOutputRoots, new File(outputRoot))) continue;
-        Collection<String> relativePaths = context.getGeneratedFilesRelativePaths(outputRoot).stream()
-          .filter(relativePath -> StringUtil.endsWith(relativePath, ".class"))
-          .collect(Collectors.toCollection(SmartList::new));
+        Collection<String> relativePaths = ContainerUtil.filter(
+          context.getGeneratedFilesRelativePaths(outputRoot),
+          relativePath -> StringUtil.endsWith(relativePath, ".class")
+        );
         if (!relativePaths.isEmpty()) {
           generatedPaths.put(outputRoot, relativePaths);
         }
@@ -364,9 +364,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
 
   @NotNull
   private static List<DebuggerSession> getHotSwappableDebugSessions(Project project) {
-    return DebuggerManagerEx.getInstanceEx(project).getSessions().stream()
-      .filter(HotSwapUIImpl::canHotSwap)
-      .collect(Collectors.toCollection(SmartList::new));
+    return ContainerUtil.filter(DebuggerManagerEx.getInstanceEx(project).getSessions(), HotSwapUIImpl::canHotSwap);
   }
 
   private static HotSwapStatusListener makeNullSafe(HotSwapStatusListener listener) {
