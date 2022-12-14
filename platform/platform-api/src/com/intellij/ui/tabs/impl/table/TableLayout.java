@@ -377,10 +377,12 @@ public class TableLayout extends TabLayout {
     return TabsUtil.getDropSideFor(point, myTabs);
   }
 
-  int getScrollOffset() {
+  @Override
+  public int getScrollOffset() {
     return myScrollOffset;
   }
 
+  @Override
   public void scroll(int units) {
     if (!myTabs.isSingleRow()) {
       myScrollOffset = 0;
