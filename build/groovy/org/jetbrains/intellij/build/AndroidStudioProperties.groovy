@@ -18,6 +18,7 @@ package org.jetbrains.intellij.build
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import kotlin.Pair
+import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.io.FileKt
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 
@@ -97,7 +98,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     productLayout.productImplementationModules = JAVA_IDE_IMPLEMENTATION_MODULES +
                                                   ["intellij.platform.duplicates.analysis", "intellij.platform.structuralSearch", "intellij.platform.main"] -
                                                   ["intellij.platform.jps.model.impl", "intellij.platform.jps.model.serialization"]
-    productLayout.withAdditionalPlatformJar("resources.jar", "intellij.idea.community.resources", "intellij.android.adt.branding")
+    productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.idea.community.resources")
+    productLayout.withAdditionalPlatformJar("resources.jar", "intellij.android.adt.branding")
 
     def unknownExcludedPlugins = EXCLUDED_PLUGINS - INHERITED_PLUGINS
     assert unknownExcludedPlugins.empty : "AndroidStudioProperties.EXCLUDED_PLUGINS contains nonexistent plugins: $unknownExcludedPlugins"
