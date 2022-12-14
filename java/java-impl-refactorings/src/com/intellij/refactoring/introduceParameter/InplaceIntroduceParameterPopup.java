@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -29,6 +30,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
@@ -56,6 +58,10 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
   private int myParameterIndex = -1;
   private final InplaceIntroduceParameterUI myPanel;
 
+  private final PsiMethod myOriginalMethod;
+  private PsiMethod myCreatedDelegate;
+
+  private EditorCodePreview myEditorPreview;
 
   InplaceIntroduceParameterPopup(final Project project,
                                  final Editor editor,
@@ -71,6 +77,7 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
     super(project, editor, expr, localVar, occurrences, typeSelectorManager, IntroduceParameterHandler.getRefactoringName()
     );
     myMethod = method;
+    myOriginalMethod = (PsiMethod) method.copy();
     myMethodToSearchFor = methodToSearchFor;
     myMustBeFinal = mustBeFinal;
     myReplaceChoice = replaceChoice;
@@ -187,21 +194,39 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
     IntroduceParameterUsagesCollector.started.log(IntroduceParameterUsagesCollector.replaceAll.with(myReplaceChoice.isAll()));
 
     InlayPresentation presentation = IntroduceParameterHelperKt.
-      createDelegatePresentation(templateState,
-                                 JavaBundle.message("introduce.parameter.inlay.title.delegate"),
-                                 isSelected -> myPanel.myCbGenerateDelegate.setSelected(isSelected)
-      );
+      createDelegatePresentation(templateState, JavaBundle.message("introduce.parameter.inlay.title.delegate"), isSelected -> {
+        myPanel.myCbGenerateDelegate.setSelected(isSelected);
+        if (isSelected) createDelegate(); else removeDelegate();
+        updatePreview(templateState);
+      });
     TemplateInlayUtil.createNavigatableButton(templateState, currentVariableRange.getEndOffset(), presentation);
 
-    
-    PsiParameter parameter = getParameter();
-    if (parameter == null) return;
-    
-    showPreview(parameter, templateState);
+    updatePreview(templateState);
   }
 
+  private void createDelegate(){
+    PsiMethod createdDelegate = IntroduceParameterProcessor.createDelegate(myOriginalMethod, myExprText, myPanel.getParametersToRemove());
+    myCreatedDelegate = WriteCommandAction.writeCommandAction(myProject)
+      .compute(() -> (PsiMethod) myMethod.getParent().addBefore(createdDelegate, myMethod));
+  }
+
+  private void removeDelegate(){
+    final PsiMethod delegate = myCreatedDelegate;
+    if (delegate != null) {
+      myCreatedDelegate = null;
+      WriteCommandAction.writeCommandAction(myProject).run(() -> delegate.delete());
+    }
+  }
   
-  private void showPreview(PsiParameter psiParameter, Disposable parentDisposable) {
+  private void updatePreview(Disposable parentDisposable) {
+    EditorCodePreview previousPreview = myEditorPreview;
+    if (previousPreview != null) Disposer.dispose(previousPreview);
+    EditorCodePreview preview = EditorCodePreview.Companion.create(myEditor);
+    Disposer.register(parentDisposable, preview);
+    myEditorPreview = preview;
+
+    PsiParameter psiParameter = getParameter();
+    if (psiParameter == null) return;
     MarkupModel markupModel = myEditor.getMarkupModel();
     TextRange newParameterRange = psiParameter.getTextRange();
     List<RangeHighlighter> highlighters = new ArrayList<>();
@@ -213,17 +238,24 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
         highlighters.add(markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), 0, getTestAttributesForRemoval(), HighlighterTargetArea.EXACT_RANGE));
       }
     }
-    EditorCodePreview preview = EditorCodePreview.Companion.create(myEditor);
     Document document = myEditor.getDocument();
-    
-    preview.addPreview(new IntRange(document.getLineNumber(myMethod.getTextOffset()), document.getLineNumber(list.getTextRange().getEndOffset())), 
-                       IntroduceParameterHelperKt.onClickCallback(psiParameter));
-    Disposer.register(parentDisposable, () -> {
-      Disposer.dispose(preview);
+    int previewLineStart = document.getLineNumber(myMethod.getTextOffset());
+    int previewLineEnd = document.getLineNumber(list.getTextRange().getEndOffset());
+    preview.addPreview(new IntRange(previewLineStart, previewLineEnd), IntroduceParameterHelperKt.onClickCallback(psiParameter));
+    Disposer.register(preview, () -> {
       for (RangeHighlighter highlighter : highlighters) {
         highlighter.dispose();
       }
     });
+
+    PsiMethod delegate = myCreatedDelegate;
+    if (delegate != null) {
+      InplaceExtractUtils utils = InplaceExtractUtils.INSTANCE;
+      Disposable highlighting = utils.createInsertedHighlighting(myEditor, delegate.getTextRange());
+      Disposer.register(preview, highlighting);
+      IntRange linesForPreview = utils.getLinesFromTextRange(myEditor.getDocument(), delegate.getTextRange());
+      utils.addPreview(preview, myEditor, linesForPreview, delegate.getTextRange().getStartOffset());
+    }
   }
   
   @Override
@@ -245,6 +277,12 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
   @Override
   protected void saveSettings(@NotNull PsiVariable psiVariable) {
     myPanel.saveSettings(JavaRefactoringSettings.getInstance());
+  }
+
+  @Override
+  protected void restoreState(@NotNull PsiVariable psiField) {
+    super.restoreState(psiField);
+    removeDelegate();
   }
 
   @Override
