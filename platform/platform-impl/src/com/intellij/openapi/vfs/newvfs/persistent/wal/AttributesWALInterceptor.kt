@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream
 import com.intellij.openapi.vfs.newvfs.FileAttribute
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection
 import com.intellij.openapi.vfs.newvfs.persistent.util.AttributesInterceptor
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
@@ -20,9 +21,10 @@ class AttributesWALInterceptor(
     FileUtil.createIfNotExists(attributesStoragePath.toFile())
   }
 
-  override fun onWriteAttribute(underlying: AttributeOutputStream, fileId: Int, attribute: FileAttribute): AttributeOutputStream =
-    object : AttributeOutputStream(underlying) {
-      override fun writeEnumeratedString(str: String?) = underlying.writeEnumeratedString(str)
+  override fun onWriteAttribute(underlying: (connection: PersistentFSConnection, fileId: Int, attribute: FileAttribute) -> AttributeOutputStream): (connection: PersistentFSConnection, fileId: Int, attribute: FileAttribute) -> AttributeOutputStream = { connection, fileId, attribute ->
+    val aos = underlying(connection, fileId, attribute)
+    object : AttributeOutputStream(aos) {
+      override fun writeEnumeratedString(str: String?) = aos.writeEnumeratedString(str)
 
       override fun close() {
         interceptClose()
@@ -31,14 +33,16 @@ class AttributesWALInterceptor(
 
       private fun interceptClose() {
         attributesStoragePath.appendLines(listOf(
-          "$fileId ${attribute.id.hashCode()} ${underlying.getResultingBuffer().length}"
+          "$fileId ${attribute.id.hashCode()} ${aos.getResultingBuffer().length}"
         ))
       }
     }
+  }
 
-  override fun onDeleteAttributes(fileId: Int) {
+  override fun onDeleteAttributes(underlying: (connection: PersistentFSConnection, fileId: Int) -> Unit): (connection: PersistentFSConnection, fileId: Int) -> Unit = {connection, fileId ->
     attributesStoragePath.appendLines(listOf(
       "-$fileId"
     ))
+    underlying(connection, fileId)
   }
 }

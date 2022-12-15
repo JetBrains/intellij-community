@@ -20,10 +20,11 @@ class ContentsWALInterceptor(
     FileUtil.createIfNotExists(contentsStoragePath.toFile())
   }
 
-  override fun onWriteBytes(record: Int, bytes: ByteArraySequence, fixedSize: Boolean) {
+  override fun onWriteBytes(underlying: (record: Int, bytes: ByteArraySequence, fixedSize: Boolean) -> Unit): (record: Int, bytes: ByteArraySequence, fixedSize: Boolean) -> Unit = {record, bytes, fixedSize ->
     LOG.info("${++count}")
     contentsStoragePath.appendLines(listOf(
       "$record: ${if (fixedSize) "(fixed size)" else ""} len ${bytes.length}"
     ))
+    underlying(record, bytes, fixedSize)
   }
 }
