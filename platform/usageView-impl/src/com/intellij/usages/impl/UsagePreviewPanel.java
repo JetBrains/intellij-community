@@ -66,7 +66,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private int myLineHeight;
   private List<? extends UsageInfo> myCachedSelectedUsageInfos;
   private Pattern myCachedSearchPattern;
-  private Pattern myCachedReplacePattern;
+  private String myCachedReplaceString;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private @NotNull Set<GroupNode> myPreviousSelectedGroupNodes = new HashSet<>();
   private @Nullable UsagePreviewToolbarWithSimilarUsagesLink myToolbarWithSimilarUsagesLink;
@@ -154,13 +154,13 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       validate();
     }
 
-    if (!Comparing.equal(infos, myCachedSelectedUsageInfos) // avoid moving viewport
+    if (!Objects.equals(infos, myCachedSelectedUsageInfos) // avoid moving viewport
         || !UsageViewPresentation.arePatternsEqual(myCachedSearchPattern, myPresentation.getSearchPattern())
-        || !UsageViewPresentation.arePatternsEqual(myCachedReplacePattern, myPresentation.getReplacePattern())) {
+        || !Objects.equals(myCachedReplaceString, myPresentation.getReplaceString())) {
       highlight(infos, myEditor, myProject, true, HighlighterLayer.ADDITIONAL_SYNTAX);
       myCachedSelectedUsageInfos = infos;
       myCachedSearchPattern = myPresentation.getSearchPattern();
-      myCachedReplacePattern = myPresentation.getReplacePattern();
+      myCachedReplaceString = myPresentation.getReplaceString();
     }
   }
 
@@ -314,13 +314,13 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private static FindModel getReplacementModel(@NotNull Editor editor) {
     UsagePreviewPanel panel = editor.getUserData(PREVIEW_EDITOR_FLAG);
     Pattern searchPattern = null;
-    Pattern replacePattern = null;
+    String replaceString = null;
     if (panel != null) {
       searchPattern = panel.myPresentation.getSearchPattern();
-      replacePattern = panel.myPresentation.getReplacePattern();
+      replaceString = panel.myPresentation.getReplaceString();
     }
 
-    if (searchPattern == null || replacePattern == null) {
+    if (searchPattern == null || replaceString == null) {
       return null;
     }
     FindModel stub = new FindModel();
@@ -328,7 +328,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     stub.setRegularExpressions(true);
     stub.setReplaceAll(true);
     stub.setStringToFind(searchPattern.pattern());
-    stub.setStringToReplace(replacePattern.pattern());
+    stub.setStringToReplace(replaceString);
     return stub;
   }
 
@@ -387,7 +387,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       myEditor = null;
       myCachedSelectedUsageInfos = null;
       myCachedSearchPattern = null;
-      myCachedReplacePattern = null;
+      myCachedReplaceString = null;
     }
   }
 
