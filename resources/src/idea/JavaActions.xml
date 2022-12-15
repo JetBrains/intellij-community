@@ -273,8 +273,8 @@
       <action id="GenerateTestMethod" class="com.intellij.testIntegration.GenerateTestMethodAction"/>
       <action id="GenerateSetUpMethod" class="com.intellij.testIntegration.GenerateSetUpMethodAction"/>
       <action id="GenerateTearDownMethod" class="com.intellij.testIntegration.GenerateTearDownMethodAction"/>
-      <action id="GenerateBeforeClassMethod" class="com.intellij.testIntegration.GenerateBeforeClassMethodAction"/>       
-      <action id="GenerateAfterClassMethod" class="com.intellij.testIntegration.GenerateAfterClassMethodAction"/> 
+      <action id="GenerateBeforeClassMethod" class="com.intellij.testIntegration.GenerateBeforeClassMethodAction"/>
+      <action id="GenerateAfterClassMethod" class="com.intellij.testIntegration.GenerateAfterClassMethodAction"/>
       <action id="GenerateDataMethod" class="com.intellij.testIntegration.GenerateDataMethodAction"/>
       <action id="GenerateTestDataPathMethods" class="com.intellij.testIntegration.GenerateTestDataPathMethodAction"/>
       <action id="GenerateTestDataPathFiles" class="com.intellij.testIntegration.GenerateTestDataPathFileAction"/>
