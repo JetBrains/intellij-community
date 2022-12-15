@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -64,7 +65,7 @@ public interface MavenRootModelAdapterInterface {
 
   LibraryOrderEntry addLibraryDependency(MavenArtifact artifact,
                                          DependencyScope scope,
-                                         ModifiableModelsProviderProxy provider,
+                                         IdeModifiableModelsProvider provider,
                                          MavenProject project);
 
   Library findLibrary(@NotNull MavenArtifact artifact);

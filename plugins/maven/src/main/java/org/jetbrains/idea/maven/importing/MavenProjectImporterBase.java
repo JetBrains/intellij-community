@@ -32,7 +32,7 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
   protected final MavenImportingSettings myImportingSettings;
 
   protected final IdeModifiableModelsProvider myIdeModifiableModelsProvider;
-  protected final ModifiableModelsProviderProxy myModelsProvider;
+  protected final IdeModifiableModelsProvider myModelsProvider;
 
   public MavenProjectImporterBase(Project project,
                                   MavenProjectsTree projectsTree,
@@ -44,7 +44,7 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     myImportingSettings = importingSettings;
 
     myIdeModifiableModelsProvider = modelsProvider;
-    myModelsProvider = new ModifiableModelsProviderProxyWrapper(myIdeModifiableModelsProvider);
+    myModelsProvider = myIdeModifiableModelsProvider;
   }
 
   protected Set<MavenProject> selectProjectsToImport(Collection<MavenProject> originalProjects) {

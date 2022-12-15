@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.project.importing;
 import com.intellij.ProjectTopics;
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
@@ -157,7 +158,7 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
       MavenRootModelAdapter adapter = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(
         getProjectsTree().findProject(myProjectPom),
         getModule("project"),
-        new ModifiableModelsProviderProxyWrapper(myProject)));
+        ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)));
       adapter.addSourceFolder(sourceDir.getPath(), JavaSourceRootType.SOURCE);
       adapter.getRootModel().commit();
     });
@@ -198,7 +199,7 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
       MavenRootModelAdapter adapter = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(
         getProjectsTree().findProject(myProjectPom),
         getModule("project"),
-        new ModifiableModelsProviderProxyWrapper(myProject)));
+        ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)));
       adapter.useModuleOutput(new File(myProjectRoot.getPath(), "target/my-classes").getPath(),
                               new File(myProjectRoot.getPath(), "target/my-test-classes").getPath());
       adapter.getRootModel().commit();

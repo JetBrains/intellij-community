@@ -57,7 +57,7 @@ public final class MavenLegacyModuleImporter {
 
   private final Map<MavenProject, String> myMavenProjectToModuleName;
   private final MavenImportingSettings mySettings;
-  private final ModifiableModelsProviderProxy myModifiableModelsProvider;
+  private final IdeModifiableModelsProvider myModifiableModelsProvider;
   @Nullable
   private MavenRootModelAdapter myRootModelAdapter;
 
@@ -66,7 +66,7 @@ public final class MavenLegacyModuleImporter {
                                    MavenProject mavenProject,
                                    Map<MavenProject, String> mavenProjectToModuleName,
                                    MavenImportingSettings settings,
-                                   ModifiableModelsProviderProxy modifiableModelsProvider) {
+                                   IdeModifiableModelsProvider modifiableModelsProvider) {
     myModule = module;
     myMavenTree = mavenTree;
     myMavenProject = mavenProject;
@@ -187,7 +187,7 @@ public final class MavenLegacyModuleImporter {
       myModifiableModelsProvider = ideModelsProvider;
       myRootModelAdapter = new MavenRootModelAdapter(
         new MavenRootModelAdapterLegacyImpl(myMavenProject, myModule,
-                                            new ModifiableModelsProviderProxyWrapper(myModifiableModelsProvider)));
+                                            myModifiableModelsProvider));
     }
 
     private void doConfigurationStep(Runnable step) {
