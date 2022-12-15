@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.structuralsearch.filters.OneStateFilter
 object KotlinPredefinedConfigurations {
     private val CLASS_TYPE get() = KotlinBundle.message("category.class")
     private val EXPRESSION_TYPE get() = KotlinBundle.message("category.expressions")
-    private val FUNCTION_TYPE get() = KotlinBundle.message("category.functions")
+    private val DECLARATION_TYPE get() = KotlinBundle.message("category.declaration")
     private val OPERATOR_TYPE get() = KotlinBundle.message("category.operators")
     private val COMMENT_TYPE get() = KotlinBundle.message("category.comments")
     private val INTERESTING_TYPE get() = KotlinBundle.message("category.interesting")
@@ -152,12 +152,6 @@ object KotlinPredefinedConfigurations {
             EXPRESSION_TYPE
         ),
         searchTemplate(
-            KotlinBundle.message("predefined.configuration.also.match.vals"),
-            "var also match vals",
-            """var '_Variable:[_${AlsoMatchValModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})]""",
-            EXPRESSION_TYPE
-        ),
-        searchTemplate(
             KotlinBundle.message("predefined.configuration.vars.of.given.type"),
             "vars of a given type",
             """var '_Variable:[exprtype(Int)] = '_Init""",
@@ -169,19 +163,25 @@ object KotlinPredefinedConfigurations {
             KotlinBundle.message("predefined.configuration.function.signature"),
             "function signature",
             "fun '_Name('_Param*) : '_Type",
-            FUNCTION_TYPE
+            DECLARATION_TYPE
         ),
         searchTemplate(
             KotlinBundle.message("predefined.configuration.function.annotation"),
             "annotated functions",
             "@'_Annotation fun 'Name('_Param*)",
-            FUNCTION_TYPE
+            DECLARATION_TYPE
         ),
         searchTemplate(
             KotlinBundle.message("predefined.configuration.function.explicit.inferred.type"),
             "explicit/inferred type",
             "fun 'Name('_Param*): '_Type{0,1}",
-            FUNCTION_TYPE
+            DECLARATION_TYPE
+        ),
+        searchTemplate(
+            KotlinBundle.message("predefined.configuration.also.match.vals"),
+            "var also match vals",
+            """var '_Variable:[_${AlsoMatchValModifier.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})]""",
+            DECLARATION_TYPE
         ),
 
         // Comments, KDoc and Metadata
