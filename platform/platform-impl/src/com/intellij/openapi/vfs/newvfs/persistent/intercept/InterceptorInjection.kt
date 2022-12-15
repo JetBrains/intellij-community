@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.util
+package com.intellij.openapi.vfs.newvfs.persistent.intercept
 
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream
@@ -72,8 +72,8 @@ object InterceptorInjection {
     val setParent = intercept(storage::setParent, RecordsInterceptor::onSetParent)
     val setNameId = intercept(storage::setNameId, RecordsInterceptor::onSetNameId)
     val setFlags = intercept(storage::setFlags, RecordsInterceptor::onSetFlags)
-    val putLength = intercept(storage::putLength, RecordsInterceptor::onPutLength)
-    val putTimestamp = intercept(storage::putTimestamp, RecordsInterceptor::onPutTimestamp)
+    val setLength = intercept(storage::setLength, RecordsInterceptor::onSetLength)
+    val setTimestamp = intercept(storage::setTimestamp, RecordsInterceptor::onSetTimestamp)
     val markRecordAsModified = intercept(storage::markRecordAsModified, RecordsInterceptor::onMarkRecordAsModified)
     val setContentRecordId = intercept(storage::setContentRecordId, RecordsInterceptor::onSetContentRecordId)
     val fillRecord = intercept(storage::fillRecord, RecordsInterceptor::onFillRecord)
@@ -91,9 +91,9 @@ object InterceptorInjection {
 
       override fun setFlags(fileId: Int, flags: Int): Boolean = setFlags(fileId, flags)
 
-      override fun putLength(fileId: Int, length: Long): Boolean = putLength(fileId, length)
+      override fun setLength(fileId: Int, length: Long): Boolean = setLength(fileId, length)
 
-      override fun putTimestamp(fileId: Int, timestamp: Long): Boolean = putTimestamp(fileId, timestamp)
+      override fun setTimestamp(fileId: Int, timestamp: Long): Boolean = setTimestamp(fileId, timestamp)
 
       override fun markRecordAsModified(fileId: Int) = markRecordAsModified(fileId)
 

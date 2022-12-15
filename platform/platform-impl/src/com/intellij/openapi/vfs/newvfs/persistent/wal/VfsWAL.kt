@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent.wal
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.newvfs.persistent.util.ConnectionInterceptor
+import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor
 import kotlinx.coroutines.*
 import java.nio.file.Path
 import kotlin.io.path.div

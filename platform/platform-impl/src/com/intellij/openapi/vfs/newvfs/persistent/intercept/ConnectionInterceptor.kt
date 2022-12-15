@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.util
+package com.intellij.openapi.vfs.newvfs.persistent.intercept
 
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream
@@ -28,8 +28,8 @@ interface RecordsInterceptor : ConnectionInterceptor {
   fun onSetParent(underlying: (fileId: Int, parentId: Int) -> Unit) = underlying
   fun onSetNameId(underlying: (fileId: Int, nameId: Int) -> Unit) = underlying
   fun onSetFlags(underlying: (fileId: Int, flags: Int) -> Boolean) = underlying
-  fun onPutLength(underlying: (fileId: Int, length: Long) -> Boolean) = underlying
-  fun onPutTimestamp(underlying: (fileId: Int, timestamp: Long) -> Boolean) = underlying
+  fun onSetLength(underlying: (fileId: Int, length: Long) -> Boolean) = underlying
+  fun onSetTimestamp(underlying: (fileId: Int, timestamp: Long) -> Boolean) = underlying
   fun onMarkRecordAsModified(underlying: (fileId: Int) -> Unit) = underlying
   fun onSetContentRecordId(underlying: (fileId: Int, recordId: Int) -> Boolean) = underlying
   fun onFillRecord(underlying: (fileId: Int, timestamp: Long, length: Long, flags: Int,

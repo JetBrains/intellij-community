@@ -6,7 +6,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection
-import com.intellij.openapi.vfs.newvfs.persistent.util.AttributesInterceptor
+import com.intellij.openapi.vfs.newvfs.persistent.intercept.AttributesInterceptor
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.appendLines

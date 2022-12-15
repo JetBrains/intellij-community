@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.wal
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.newvfs.persistent.util.ContentsInterceptor
+import com.intellij.openapi.vfs.newvfs.persistent.intercept.ContentsInterceptor
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.appendLines
