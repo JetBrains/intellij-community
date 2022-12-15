@@ -88,7 +88,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
   public static @NotNull OptCheckbox checkbox(@Language("jvm-field-name") @NotNull String bindId,
                                               @NotNull @NlsContexts.Label String label,
                                               @NotNull OptComponent @NotNull ... children) {
-    return new OptCheckbox(bindId, new PlainMessage(label), List.of(children));
+    return new OptCheckbox(bindId, new PlainMessage(label), List.of(children), null);
   }
 
   /**
