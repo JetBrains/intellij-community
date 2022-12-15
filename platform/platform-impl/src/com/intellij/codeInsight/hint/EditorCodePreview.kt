@@ -58,9 +58,6 @@ private class EditorCodePreviewImpl(val editor: Editor): EditorCodePreview, Disp
     }
   }
 
-  var editorVisibleArea: Rectangle = editor.scrollingModel.visibleArea
-  private set
-
   init {
     addPositionListener(this, editor.component) { updatePopupPositions() }
     editor.scrollingModel.addVisibleAreaListener(VisibleAreaListener { updatePopupPositions() }, this)
@@ -79,20 +76,27 @@ private class EditorCodePreviewImpl(val editor: Editor): EditorCodePreview, Disp
   private fun updatePopupPositions() {
     if (editor.isDisposed) return
     var visibleArea = editor.scrollingModel.visibleArea
-    var positions = popups.reversed()
-      .map { popup ->
-        val linesArea = findLinesArea(editor, popup.lines)
-        val position = visibleArea.relativePositionOf(linesArea)
-        visibleArea = visibleArea.subtracted(linesArea, position)
-        position
-      }
-      .reversed()
-    if (visibleArea.height < 0) {
-      positions = popups.map { RelativePosition.Inside }
-      editorVisibleArea = editor.scrollingModel.visibleArea
-    } else {
-      editorVisibleArea = visibleArea
+    val positions: Array<RelativePosition> = Array(popups.size) { RelativePosition.Inside }
+    for (i in popups.indices) {
+      val linesArea = findLinesArea(editor, popups[i].lines)
+      val position = visibleArea.relativePositionOf(linesArea)
+      if (position != RelativePosition.Top) break
+      visibleArea = visibleArea.subtracted(linesArea, position)
+      positions[i] = position
     }
+    for (i in popups.indices.reversed()) {
+      val linesArea = findLinesArea(editor, popups[i].lines)
+      val position = visibleArea.relativePositionOf(linesArea)
+      if (position != RelativePosition.Bottom) break
+      visibleArea = visibleArea.subtracted(linesArea, position)
+      positions[i] = position
+    }
+
+    if (visibleArea.height < 0) {
+      popups.forEach { popup -> popup.hide() }
+      return
+    }
+
     val popupsAndPositions = popups.zip(positions)
 
     popupsAndPositions
