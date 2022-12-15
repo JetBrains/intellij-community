@@ -100,6 +100,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
@@ -174,12 +175,10 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   private val fileTitleUpdateChannel: MergingUpdateChannel<VirtualFile?> = MergingUpdateChannel(delay = 50.milliseconds) { toUpdate ->
-    withContext(Dispatchers.EDT) {
-      val splitters = getAllSplitters()
-      for (file in toUpdate) {
-        for (each in splitters) {
-          each.updateFileName(file)
-        }
+    val splitters = withContext(Dispatchers.EDT) { getAllSplitters() }
+    for (file in toUpdate) {
+      for (each in splitters) {
+        each.updateFileName(file)
       }
     }
   }
@@ -496,7 +495,6 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     DockManager.getInstance(project).register(DockableEditorContainerFactory.TYPE, contentFactory!!, this)
   }
 
-  //-------------------------------------------------------------------------------
   override fun getComponent(): JComponent = mainSplitters
 
   fun getAllSplitters(): Set<EditorsSplitters> {
@@ -510,26 +508,20 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     return Collections.unmodifiableSet(all)
   }
 
-  private fun getActiveSplittersAsync(): CompletableFuture<EditorsSplitters?> {
-    val result = CompletableFuture<EditorsSplitters?>()
-    val fm = IdeFocusManager.getInstance(project)
-    TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState())
-    fm.doWhenFocusSettlesDown({
-                                if (project.isDisposed) {
-                                  result.complete(null)
-                                  return@doWhenFocusSettlesDown
-                                }
-                                val focusOwner = fm.focusOwner
-                                val container = DockManager.getInstance(project).getContainerFor(focusOwner) { obj ->
-                                  DockableEditorTabbedContainer::class.java.isInstance(obj)
-                                }
-                                if (container is DockableEditorTabbedContainer) {
-                                  result.complete(container.splitters)
-                                }
-                                else {
-                                  result.complete(mainSplitters)
-                                }
-                              }, ModalityState.defaultModalityState())
+  private fun getActiveSplittersAsync(): Deferred<EditorsSplitters?> {
+    val result = CompletableDeferred<EditorsSplitters?>()
+    val focusManager = IdeFocusManager.getGlobalInstance()
+    focusManager.doWhenFocusSettlesDown {
+      if (project.isDisposed) {
+        result.complete(null)
+        return@doWhenFocusSettlesDown
+      }
+
+      val container = DockManager.getInstance(project).getContainerFor(focusManager.focusOwner) {
+        it is DockableEditorTabbedContainer
+      }
+      result.complete(if (container is DockableEditorTabbedContainer) container.splitters else mainSplitters)
+    }
     return result
   }
 
@@ -729,7 +721,9 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     return activeSplittersSync.currentFile
   }
 
-  override fun getActiveWindow(): CompletableFuture<EditorWindow?> = getActiveSplittersAsync().thenApply { it?.currentWindow }
+  override fun getActiveWindow(): CompletableFuture<EditorWindow?> {
+    return getActiveSplittersAsync().asCompletableFuture().thenApply { it?.currentWindow }
+  }
 
   override fun getCurrentWindow(): EditorWindow? {
     if (!ClientId.isCurrentlyUnderLocalId || !isInitialized.get()) {
@@ -2002,7 +1996,9 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       }
 
       // "Show full paths in window header"
-      getActiveSplittersAsync().thenAccept { it?.updateFileName(null) }
+      coroutineScope.launch {
+        withContext(Dispatchers.EDT) { getActiveSplittersAsync() }.await()?.updateFileName(null)
+      }
     }
   }
 

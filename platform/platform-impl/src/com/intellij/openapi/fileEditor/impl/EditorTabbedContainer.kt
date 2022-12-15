@@ -7,15 +7,15 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.CloseAction.CloseTarget
-import com.intellij.ide.actions.MaximizeEditorInSplitAction.Companion.CURRENT_STATE_IS_MAXIMIZED_KEY
+import com.intellij.ide.actions.MaximizeEditorInSplitAction
 import com.intellij.ide.actions.ShowFilePathAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -28,7 +28,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_LO
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_PINNED_KEY
 import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
-import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
@@ -51,13 +51,11 @@ import com.intellij.ui.tabs.TabInfo.DragOutDelegate
 import com.intellij.ui.tabs.UiDecorator.UiDecoration
 import com.intellij.ui.tabs.impl.*
 import com.intellij.util.concurrency.EdtScheduledExecutorService
-import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TimedDeadzone
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.job
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.datatransfer.DataFlavor
@@ -65,10 +63,12 @@ import java.awt.datatransfer.Transferable
 import java.awt.event.AWTEventListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.lang.Runnable
 import java.util.concurrent.TimeUnit
 import javax.swing.*
 
-class EditorTabbedContainer internal constructor(private val window: EditorWindow, coroutineScope: CoroutineScope) : CloseTarget {
+class EditorTabbedContainer internal constructor(private val window: EditorWindow,
+                                                 private val coroutineScope: CoroutineScope) : CloseTarget {
   private val editorTabs: EditorTabs
   private val myDragOutDelegate: DragOutDelegate = MyDragOutDelegate()
 
@@ -213,22 +213,6 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
     tab.setDefaultAttributes(attributes)
   }
 
-  fun setIconAt(index: Int, icon: Icon?) {
-    editorTabs.getTabAt(index).setIcon(icon)
-  }
-
-  fun setTitleAt(index: Int, text: @NlsContexts.TabTitle String) {
-    editorTabs.getTabAt(index).setText(text)
-  }
-
-  fun setToolTipTextAt(index: Int, text: @NlsContexts.Tooltip String?) {
-    editorTabs.getTabAt(index).setTooltipText(text)
-  }
-
-  fun setBackgroundColorAt(index: Int, color: Color?) {
-    editorTabs.getTabAt(index).setTabColor(color)
-  }
-
   fun setTabLayoutPolicy(policy: Int) {
     when (policy) {
       JTabbedPane.SCROLL_TAB_LAYOUT -> editorTabs.presentation.setSingleRow(true)
@@ -276,14 +260,17 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
       .setObject(file)
       .setDragOutDelegate(myDragOutDelegate)
     tab.setTestableUi { it.put("editorTab", tab.text) }
-    ReadAction.nonBlocking<String> { EditorTabPresentationUtil.getEditorTabTitle(project, file) }
-      .expireWith(parentDisposable)
-      .finishOnUiThread(ModalityState.any(), tab::setText)
-      .submit(NonUrgentExecutor.getInstance())
-    val closeTab = CloseTab(component, file, project, window, parentDisposable)
+
+    coroutineScope.launch {
+      val title = readAction { EditorTabPresentationUtil.getEditorTabTitle(project, file) }
+      withContext(Dispatchers.EDT) {
+        tab.text = title
+      }
+    }
+
+    val closeTab = CloseTab(c = component, file = file, project = project, editorWindow = window, parentDisposable = parentDisposable)
     val dataContext = DataManager.getInstance().getDataContext(component)
-    val editorActionGroup = ActionManager.getInstance().getAction(
-      "EditorTabActionGroup") as DefaultActionGroup
+    val editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup") as DefaultActionGroup
     val group = DefaultActionGroup()
     val event = AnActionEvent.createFromDataContext("EditorTabActionGroup", null, dataContext)
     for (action in editorActionGroup.getChildren(event)) {
@@ -394,8 +381,8 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
       }
     }
 
-    if (!getBoolean("editor.maximize.on.double.click") &&
-        !getBoolean("editor.maximize.in.splits.on.double.click")) {
+    if (!AdvancedSettings.getBoolean("editor.maximize.on.double.click") &&
+        !AdvancedSettings.getBoolean("editor.maximize.in.splits.on.double.click")) {
       return
     }
 
@@ -404,21 +391,21 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
     val context = DataManager.getInstance().dataContext
     var isEditorMaximized: Boolean? = null
     var areAllToolWindowsHidden: Boolean? = null
-    if (getBoolean("editor.maximize.in.splits.on.double.click")) {
+    if (AdvancedSettings.getBoolean("editor.maximize.in.splits.on.double.click")) {
       val maximizeEditorInSplit = actionManager.getAction("MaximizeEditorInSplit")
       if (maximizeEditorInSplit != null) {
         val event = AnActionEvent(e, context, ActionPlaces.EDITOR_TAB, Presentation(), actionManager, e.modifiersEx)
         maximizeEditorInSplit.update(event)
-        isEditorMaximized = event.presentation.getClientProperty(CURRENT_STATE_IS_MAXIMIZED_KEY)
+        isEditorMaximized = event.presentation.getClientProperty(MaximizeEditorInSplitAction.CURRENT_STATE_IS_MAXIMIZED_KEY)
       }
     }
 
-    if (getBoolean("editor.maximize.on.double.click")) {
+    if (AdvancedSettings.getBoolean("editor.maximize.on.double.click")) {
       val hideAllToolWindows = actionManager.getAction("HideAllWindows")
       if (hideAllToolWindows != null) {
         val event = AnActionEvent(e, context, ActionPlaces.EDITOR_TAB, Presentation(), actionManager, e.modifiersEx)
         hideAllToolWindows.update(event)
-        areAllToolWindowsHidden = event.presentation.getClientProperty(CURRENT_STATE_IS_MAXIMIZED_KEY)
+        areAllToolWindowsHidden = event.presentation.getClientProperty(MaximizeEditorInSplitAction.CURRENT_STATE_IS_MAXIMIZED_KEY)
       }
     }
 

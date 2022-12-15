@@ -2,7 +2,6 @@
 package com.intellij.java.openapi.editor.impl;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -68,8 +67,8 @@ public class JavaFileEditorManagerTest extends FileEditorManagerTestCase {
     VirtualFile moduleInfoFile = getFile("/src/module-info.java");
     assertNotNull(moduleInfoFile);
 
-    manager.openFile(moduleInfoFile, false);
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    manager.openFile(moduleInfoFile);
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     EditorTabbedContainer openedTabPane = manager.getCurrentWindow().getTabbedPane();
     assertEquals(1, openedTabPane.getTabCount());

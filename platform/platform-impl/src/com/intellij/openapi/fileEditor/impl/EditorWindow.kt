@@ -33,15 +33,10 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.ui.ComponentUtil
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.LayeredIcon
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.scale.JBUIScale.scaleIcon
 import com.intellij.ui.tabs.TabsUtil
 import com.intellij.ui.tabs.impl.JBTabsImpl
-import com.intellij.util.IconUtil
 import com.intellij.util.childScope
-import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.*
@@ -121,18 +116,6 @@ class EditorWindow internal constructor(val owner: EditorsSplitters) {
     tabbedPane.setTextAttributes(index, attributes)
   }
 
-  private fun setTitleAt(index: Int, text: @NlsContexts.TabTitle String) {
-    tabbedPane.setTitleAt(index, text)
-  }
-
-  private fun setBackgroundColorAt(index: Int, color: Color?) {
-    tabbedPane.setBackgroundColorAt(index, color)
-  }
-
-  private fun setToolTipTextAt(index: Int, text: @NlsContexts.Tooltip String?) {
-    tabbedPane.setToolTipTextAt(index, text)
-  }
-
   fun setTabLayoutPolicy(policy: Int) {
     tabbedPane.setTabLayoutPolicy(policy)
   }
@@ -195,6 +178,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters) {
   val fileList: List<VirtualFile>
     get() = fileSequence.toList()
 
+  @get:RequiresEdt
   val fileSequence: Sequence<VirtualFile>
     get() = composites.map { it.file }
 
@@ -313,7 +297,13 @@ class EditorWindow internal constructor(val owner: EditorsSplitters) {
       val file = composite.file
       val template = AllIcons.FileTypes.Text
       val emptyIcon = EmptyIcon.create(template.iconWidth, template.iconHeight)
-      tabbedPane.insertTab(file, emptyIcon, EditorWindowTopComponent(this, composite), null, indexToInsert, composite, composite)
+      tabbedPane.insertTab(file = file,
+                           icon = emptyIcon,
+                           component = EditorWindowTopComponent(this, composite),
+                           tooltip = null,
+                           indexToInsert = indexToInsert,
+                           composite = composite,
+                           parentDisposable = composite)
       var dragStartIndex: Int? = null
       val hash = file.getUserData(DRAG_START_LOCATION_HASH_KEY)
       if (hash != null && System.identityHashCode(tabbedPane.tabs) == hash) {
@@ -493,15 +483,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters) {
   fun getSiblings(): List<EditorWindow> {
     checkConsistency()
     val splitter = (panel.parent as? Splitter) ?: return emptyList()
-    return owner.getWindows().filter { win -> win != this@EditorWindow && SwingUtilities.isDescendingFrom(win.panel, splitter) }
-  }
-
-  @RequiresEdt
-  fun updateFileBackgroundColor(file: VirtualFile, backgroundColor: Color?) {
-    val index = findFileEditorIndex(file)
-    if (index != -1) {
-      setBackgroundColorAt(index, backgroundColor)
-    }
+    return owner.getWindowSequence().filter { it != this@EditorWindow && SwingUtilities.isDescendingFrom(it.panel, splitter) }.toList()
   }
 
   fun requestFocus(forced: Boolean) {
@@ -912,37 +894,6 @@ class EditorWindow internal constructor(val owner: EditorsSplitters) {
     }
   }
 
-  private fun findFileEditorIndex(file: VirtualFile): Int {
-    return getComposite(file)?.let { findCompositeIndex(it) } ?: -1
-  }
-
-  fun updateFileIcon(file: VirtualFile, icon: Icon) {
-    val composite = getComposite(file) ?: return
-    val index = findCompositeIndex(composite)
-    if (index < 0) {
-      return
-    }
-    tabbedPane.setIconAt(index, decorateFileIcon(composite, icon))
-  }
-
-  fun updateFileName(file: VirtualFile, window: EditorWindow) {
-    val index = findFileEditorIndex(file)
-    if (index == -1) {
-      return
-    }
-
-    ReadAction.nonBlocking<String> { EditorTabPresentationUtil.getEditorTabTitle(manager.project, file) }
-      .expireWhen { isDisposed }
-      .finishOnUiThread(ModalityState.any()) { title: @NlsContexts.TabTitle String ->
-        val index1 = findFileEditorIndex(file)
-        if (index1 != -1) {
-          setTitleAt(index1, title)
-        }
-      }
-      .submit(NonUrgentExecutor.getInstance())
-    setToolTipTextAt(index, if (UISettings.getInstance().showTabsTooltips) manager.getFileTooltipText(file, window) else null)
-  }
-
   fun unsplit(setCurrent: Boolean) {
     checkConsistency()
     val splitter = panel.parent as? Splitter ?: return
@@ -1015,15 +966,14 @@ class EditorWindow internal constructor(val owner: EditorsSplitters) {
     return getComposite(file) as EditorWithProviderComposite?
   }
 
-  fun getComposite(inputFile: VirtualFile): EditorComposite? {
-    var file = inputFile
-    if (file is BackedVirtualFile) {
-      file = file.originFile
-    }
+  fun getComposite(inputFile: VirtualFile): EditorComposite? = findCompositeAndIndex(inputFile)?.first
+
+  internal fun findCompositeAndIndex(inputFile: VirtualFile): kotlin.Pair<EditorComposite, Int>? {
+    val file = (inputFile as? BackedVirtualFile)?.originFile ?: inputFile
     for (i in 0 until tabCount) {
       val composite = getCompositeAt(i)
       if (composite.file == file) {
-        return composite
+        return composite to i
       }
     }
     return null
@@ -1049,7 +999,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters) {
     return -1
   }
 
-  fun findCompositeIndex(composite: EditorComposite): Int {
+  internal fun findCompositeIndex(composite: EditorComposite): Int {
     for (i in 0 until tabCount) {
       val compositeAt = getCompositeAt(i)
       if (compositeAt == composite) {
@@ -1059,14 +1009,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters) {
     return -1
   }
 
-  fun findFileIndex(fileToFind: VirtualFile): Int {
-    for (i in 0 until tabCount) {
-      val file = getFileAt(i)
-      if (file == fileToFind) {
-        return i
-      }
-    }
-    return -1
+  internal fun findFileIndex(fileToFind: VirtualFile): Int {
+    return IntRange(0, tabCount - 1).firstOrNull { getCompositeAt(it).file == fileToFind } ?: -1
   }
 
   private fun getCompositeAt(i: Int): EditorComposite = (tabbedPane.getComponentAt(i) as EditorWindowTopComponent).composite
@@ -1283,24 +1227,4 @@ internal class EditorWindowTopComponent(
 
 private fun shouldHideTabs(composite: EditorComposite?): Boolean {
   return composite != null && composite.allEditors.any { EditorWindow.HIDE_TABS.get(it, false) }
-}
-
-private fun decorateFileIcon(composite: EditorComposite, baseIcon: Icon): Icon? {
-  val settings = UISettings.getInstance()
-  val showAsterisk = settings.markModifiedTabsWithAsterisk && composite.isModified
-  val showFileIconInTabs = settings.showFileIconInTabs
-  if (ExperimentalUI.isNewUI() || !showAsterisk) {
-    return if (showFileIconInTabs) baseIcon else null
-  }
-  val modifiedIcon = IconUtil.cropIcon(AllIcons.General.Modified, JBRectangle(3, 3, 7, 7))
-  val result = LayeredIcon(2)
-  if (showFileIconInTabs) {
-    result.setIcon(baseIcon, 0)
-    result.setIcon(modifiedIcon, 1, -modifiedIcon.iconWidth / 2, 0)
-  }
-  else {
-    result.setIcon(EmptyIcon.create(modifiedIcon.iconWidth, baseIcon.iconHeight), 0)
-    result.setIcon(modifiedIcon, 1, 0, 0)
-  }
-  return scaleIcon(result)
 }
