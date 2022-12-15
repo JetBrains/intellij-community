@@ -42,5 +42,5 @@ public enum MyBooleanEnum {
     @null FALSE
     private fun MyBooleanEnum() = UastEmptyExpression
     public static fun values() : MyBooleanEnum[] = UastEmptyExpression
-    public static fun valueOf(@org.jetbrains.annotations.NotNull name: java.lang.String) : MyBooleanEnum = UastEmptyExpression
+    public static fun valueOf(name: java.lang.String) : MyBooleanEnum = UastEmptyExpression
 }
