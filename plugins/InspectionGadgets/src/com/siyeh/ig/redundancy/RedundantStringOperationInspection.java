@@ -204,7 +204,37 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly, fixes);
         }
       }
+      else if (isNewStringCreatedFromEntireArray(params)) {
+        LocalQuickFix fix = new RemoveRedundantOffsetAndLengthArgumentsFix(params[1], params[2]);
+        return myManager.createProblemDescriptor(params[1], params[2],
+                                                 InspectionGadgetsBundle.message("inspection.redundant.arguments.message"),
+                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly, fix);
+      }
       return null;
+    }
+
+    /**
+     * Checks that a new string is created from an entire array
+     *
+     * @param args arguments passed to the string constructor
+     *
+     * @return {@code true} if a new string is created from an entire array and the constructor
+     * call can be simplified by removing redundant arguments, otherwise - {@code false}
+     *
+     * @see String#String(byte[], int, int)
+     * @see String#String(char[], int, int)
+     * @see String#String(byte[], int, int, java.nio.charset.Charset)
+     * @see String#String(byte[], int, int, String)
+     */
+    private static boolean isNewStringCreatedFromEntireArray(PsiExpression[] args) {
+      if (args.length < 3 || !ExpressionUtils.isZero(args[1])) return false;
+      PsiExpression arrayExpression = ExpressionUtils.getArrayFromLengthExpression(args[2]);
+      EquivalenceChecker equivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
+      if (!equivalence.expressionsAreEquivalent(args[0], arrayExpression)) return false;
+      return args.length == 3 && (TypeUtils.typeEquals("byte[]", args[0].getType()) || TypeUtils.typeEquals("char[]", args[0].getType())) ||
+             args.length == 4 &&
+             TypeUtils.typeEquals("byte[]", args[0].getType()) &&
+             (TypeUtils.isJavaLangString(args[3].getType()) || TypeUtils.typeEquals(JAVA_NIO_CHARSET_CHARSET, args[3].getType()));
     }
 
     private static boolean isNewStringFromByteArrayParams(PsiExpression[] params) {
@@ -1082,8 +1112,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     @NotNull PsiExpression initializer;
 
     private CharArrayCreationArgument(@NotNull PsiNewExpression newExpression,
-                              @NotNull PsiArrayInitializerExpression arrayInitializer,
-                              @NotNull PsiExpression initializer) {
+                                      @NotNull PsiArrayInitializerExpression arrayInitializer,
+                                      @NotNull PsiExpression initializer) {
       this.newExpression = newExpression;
       this.arrayInitializer = arrayInitializer;
       this.initializer = initializer;
@@ -1103,6 +1133,28 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       final PsiType type = initializer.getType();
       if (!PsiType.CHAR.equals(type) && !TypeUtils.typeEquals(JAVA_LANG_CHARACTER, type)) return null;
       return new CharArrayCreationArgument(newExpression, arrayInitializer, initializer);
+    }
+  }
+
+  private static final class RemoveRedundantOffsetAndLengthArgumentsFix extends LocalQuickFixOnPsiElement {
+
+    RemoveRedundantOffsetAndLengthArgumentsFix(PsiElement argument1, PsiElement argument2) {
+      super(argument1, argument2);
+    }
+
+    @Override
+    public @NotNull String getText() {
+      return getFamilyName();
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return QuickFixBundle.message("remove.redundant.arguments.family");
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+      new CommentTracker().delete(startElement, endElement);
     }
   }
 }
