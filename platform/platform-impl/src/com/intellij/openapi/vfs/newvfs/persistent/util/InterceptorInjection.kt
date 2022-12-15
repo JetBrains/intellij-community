@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.util
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream
 import com.intellij.openapi.vfs.newvfs.FileAttribute
@@ -13,108 +12,92 @@ import com.intellij.util.io.storage.IStorageDataOutput
 import com.intellij.util.io.storage.RefCountingContentStorage
 
 object InterceptorInjection {
-  fun injectInContents(storage: RefCountingContentStorage, interceptors: List<ContentsInterceptor>): RefCountingContentStorage =
+  // leftmost interceptor in the list is the outer interceptor
+  private fun <F, T> List<T>.intercept(lambda: F, transformer: (T, F) -> F): F = foldRight(lambda, transformer)
+
+  fun injectInContents(storage: RefCountingContentStorage,
+                       interceptors: List<ContentsInterceptor>): RefCountingContentStorage = interceptors.run {
+    val writeBytes = intercept(storage::writeBytes, ContentsInterceptor::onWriteBytes)
+    val writeStream1: (record: Int) -> IStorageDataOutput = intercept(storage::writeStream, ContentsInterceptor::onWriteStream)
+    val writeStream2: (record: Int, fixedSize: Boolean) -> IStorageDataOutput = intercept(storage::writeStream,
+                                                                                          ContentsInterceptor::onWriteStream)
+    val appendStream = intercept(storage::appendStream, ContentsInterceptor::onAppendStream)
+    val replaceBytes = intercept(storage::replaceBytes, ContentsInterceptor::onReplaceBytes)
+    val acquireNewRecord = intercept(storage::acquireNewRecord, ContentsInterceptor::onAcquireNewRecord)
+    val acquireRecord = intercept(storage::acquireRecord, ContentsInterceptor::onAcquireRecord)
+    val releaseRecord = intercept(storage::releaseRecord, ContentsInterceptor::onReleaseRecord)
+    val setVersion = intercept(storage::setVersion, ContentsInterceptor::onSetVersion)
+
     object : RefCountingContentStorage by storage {
-      private val LOG = Logger.getInstance(RefCountingContentStorage::class.java)
+      override fun writeBytes(record: Int, bytes: ByteArraySequence, fixedSize: Boolean) = writeBytes(record, bytes, fixedSize)
 
-      override fun writeBytes(record: Int, bytes: ByteArraySequence, fixedSize: Boolean) {
-        interceptors.forEach { it.onWriteBytes(record, bytes, fixedSize) }
-        storage.writeBytes(record, bytes, fixedSize)
-      }
+      override fun writeStream(record: Int): IStorageDataOutput = writeStream1(record)
 
-      override fun writeStream(record: Int): IStorageDataOutput = storage.writeStream(record).also {
-        LOG.warn("writeStream $record")
-      }
+      override fun writeStream(record: Int, fixedSize: Boolean): IStorageDataOutput = writeStream2(record, fixedSize)
 
-      override fun writeStream(record: Int, fixedSize: Boolean): IStorageDataOutput = storage.writeStream(record, fixedSize).also {
-        LOG.warn("writeStream $record $fixedSize")
-      }
+      override fun appendStream(record: Int): IAppenderStream = appendStream(record)
 
-      override fun appendStream(record: Int): IAppenderStream = storage.appendStream(record).also {
-        LOG.warn("appendStream $record")
-      }
+      override fun replaceBytes(record: Int, offset: Int, bytes: ByteArraySequence) = replaceBytes(record, offset, bytes)
 
-      override fun replaceBytes(record: Int, offset: Int, bytes: ByteArraySequence) =
-        storage.replaceBytes(record, offset, bytes).also {
-          LOG.warn("replaceBytes $record $offset len ${bytes.length}")
-        }
+      override fun acquireNewRecord(): Int = acquireNewRecord()
 
-      override fun acquireNewRecord(): Int = storage.acquireNewRecord().also {
-        LOG.warn("acquireNewRecord -> $it")
-      }
+      override fun acquireRecord(record: Int) = acquireRecord(record)
 
-      override fun setVersion(expectedVersion: Int) = storage.setVersion(expectedVersion).also {
-        LOG.warn("setVersion $expectedVersion")
-      }
+      override fun releaseRecord(record: Int) = releaseRecord(record)
 
-      override fun acquireRecord(record: Int) = storage.acquireRecord(record).also {
-        LOG.warn("acquireRecord $record")
-      }
-
-      override fun releaseRecord(record: Int) = storage.releaseRecord(record).also {
-        LOG.warn("releaseRecord $record")
-      }
+      override fun setVersion(expectedVersion: Int) = setVersion(expectedVersion)
     }
+  }
 
-  fun injectInAttributes(storage: AbstractAttributesStorage, interceptors: List<AttributesInterceptor>): AbstractAttributesStorage =
+  fun injectInAttributes(storage: AbstractAttributesStorage,
+                         interceptors: List<AttributesInterceptor>): AbstractAttributesStorage = interceptors.run {
+    val writeAttribute = intercept(storage::writeAttribute, AttributesInterceptor::onWriteAttribute)
+    val deleteAttributes = intercept(storage::deleteAttributes, AttributesInterceptor::onDeleteAttributes)
+    val setVersion = intercept(storage::setVersion, AttributesInterceptor::onSetVersion)
+
     object : AbstractAttributesStorage by storage {
-      private val LOG = Logger.getInstance(AbstractAttributesStorage::class.java)
+      override fun deleteAttributes(connection: PersistentFSConnection, fileId: Int) = deleteAttributes(connection, fileId)
 
-      override fun deleteAttributes(connection: PersistentFSConnection?, fileId: Int) {
-        interceptors.forEach { it.onDeleteAttributes(fileId) }
-        storage.deleteAttributes(connection, fileId)
-      }
+      override fun writeAttribute(connection: PersistentFSConnection, fileId: Int, attribute: FileAttribute): AttributeOutputStream =
+        writeAttribute(connection, fileId, attribute)
 
-      override fun setVersion(version: Int) = storage.setVersion(version).also {
-        LOG.warn("setVersion $version")
-      }
-
-      // leftmost interceptor in the list is the outer interceptor
-      override fun writeAttribute(connection: PersistentFSConnection?, fileId: Int, attribute: FileAttribute): AttributeOutputStream =
-        interceptors.foldRight(storage.writeAttribute(connection, fileId, attribute)) { interceptor, aos ->
-          interceptor.onWriteAttribute(aos, fileId, attribute)
-        }
+      override fun setVersion(version: Int) = setVersion(version)
     }
+  }
 
-  fun injectInRecords(storage: PersistentFSRecordsStorage, interceptors: List<RecordsInterceptor>): PersistentFSRecordsStorage =
+  fun injectInRecords(storage: PersistentFSRecordsStorage,
+                      interceptors: List<RecordsInterceptor>): PersistentFSRecordsStorage = interceptors.run {
+    val allocateRecord = intercept(storage::allocateRecord, RecordsInterceptor::onAllocateRecord)
+    val setAttributeRecordId = intercept(storage::setAttributeRecordId, RecordsInterceptor::onSetAttributeRecordId)
+    val setParent = intercept(storage::setParent, RecordsInterceptor::onSetParent)
+    val setNameId = intercept(storage::setNameId, RecordsInterceptor::onSetNameId)
+    val setFlags = intercept(storage::setFlags, RecordsInterceptor::onSetFlags)
+    val putLength = intercept(storage::putLength, RecordsInterceptor::onPutLength)
+    val putTimestamp = intercept(storage::putTimestamp, RecordsInterceptor::onPutTimestamp)
+    val markRecordAsModified = intercept(storage::markRecordAsModified, RecordsInterceptor::onMarkRecordAsModified)
+    val setContentRecordId = intercept(storage::setContentRecordId, RecordsInterceptor::onSetContentRecordId)
+    val fillRecord = intercept(storage::fillRecord, RecordsInterceptor::onFillRecord)
+    val cleanRecord = intercept(storage::cleanRecord, RecordsInterceptor::onCleanRecord)
+    val setVersion = intercept(storage::setVersion, RecordsInterceptor::onSetVersion)
+
     object : PersistentFSRecordsStorage by storage {
-      private val LOG = Logger.getInstance(PersistentFSRecordsStorage::class.java)
+      override fun allocateRecord(): Int = allocateRecord()
 
-      override fun allocateRecord(): Int = storage.allocateRecord().also {
-        LOG.warn("allocateRecord -> $it")
-      }
+      override fun setAttributeRecordId(fileId: Int, recordId: Int) = setAttributeRecordId(fileId, recordId)
 
-      override fun setAttributeRecordId(fileId: Int, recordId: Int) = storage.setAttributeRecordId(fileId, recordId).also {
-        LOG.warn("setAttributeRecordId $fileId $recordId")
-      }
+      override fun setParent(fileId: Int, parentId: Int) = setParent(fileId, parentId)
 
-      override fun setParent(fileId: Int, parentId: Int) = storage.setParent(fileId, parentId).also {
-        LOG.warn("setParent $fileId $parentId")
-      }
+      override fun setNameId(fileId: Int, nameId: Int) = setNameId(fileId, nameId)
 
-      override fun setNameId(fileId: Int, nameId: Int) = storage.setNameId(fileId, nameId).also {
-        LOG.warn("setNameId $fileId $nameId")
-      }
+      override fun setFlags(fileId: Int, flags: Int): Boolean = setFlags(fileId, flags)
 
-      override fun setFlags(fileId: Int, flags: Int): Boolean = storage.setFlags(fileId, flags).also {
-        LOG.warn("setFlags $fileId $flags -> $it")
-      }
+      override fun putLength(fileId: Int, length: Long): Boolean = putLength(fileId, length)
 
-      override fun putLength(fileId: Int, length: Long): Boolean = storage.putLength(fileId, length).also {
-        LOG.warn("putLength $fileId $length -> $it")
-      }
+      override fun putTimestamp(fileId: Int, timestamp: Long): Boolean = putTimestamp(fileId, timestamp)
 
-      override fun putTimestamp(fileId: Int, timestamp: Long): Boolean = storage.putTimestamp(fileId, timestamp).also {
-        LOG.warn("putTimestamp $fileId $timestamp -> $it")
-      }
+      override fun markRecordAsModified(fileId: Int) = markRecordAsModified(fileId)
 
-      override fun markRecordAsModified(fileId: Int) = storage.markRecordAsModified(fileId).also {
-        LOG.warn("markRecordAsModified $fileId")
-      }
-
-      override fun setContentRecordId(fileId: Int, recordId: Int): Boolean = storage.setContentRecordId(fileId, recordId).also {
-        LOG.warn("setContentRecordId $fileId $recordId")
-      }
+      override fun setContentRecordId(fileId: Int, recordId: Int): Boolean = setContentRecordId(fileId, recordId)
 
       override fun fillRecord(fileId: Int,
                               timestamp: Long,
@@ -122,21 +105,11 @@ object InterceptorInjection {
                               flags: Int,
                               nameId: Int,
                               parentId: Int,
-                              overwriteAttrRef: Boolean)
-        = storage.fillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteAttrRef).also {
-          LOG.warn("fillRecord $fileId $timestamp $length $flags $nameId $parentId $overwriteAttrRef")
-        }
+                              overwriteAttrRef: Boolean) = fillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteAttrRef)
 
-      override fun cleanRecord(fileId: Int) = storage.cleanRecord(fileId).also {
-        LOG.warn("cleanRecord $fileId")
-      }
+      override fun cleanRecord(fileId: Int) = cleanRecord(fileId)
 
-      override fun setConnectionStatus(code: Int) = storage.setConnectionStatus(code).also {
-        LOG.warn("setConnectionStatus $code")
-      }
-
-      override fun setVersion(version: Int) = storage.setVersion(version).also {
-        LOG.warn("setVersion $version")
-      }
+      override fun setVersion(version: Int) = setVersion(version)
     }
+  }
 }
