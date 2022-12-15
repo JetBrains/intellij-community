@@ -14,6 +14,8 @@ import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
 import com.intellij.ide.impl.*
+import com.intellij.ide.impl.trustedProjects.LocatedProject
+import com.intellij.ide.impl.trustedProjects.TrustedProjects
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.lightEdit.LightEditService
@@ -1135,7 +1137,8 @@ private fun removeProjectConfigurationAndCaches(projectFile: Path) {
  */
 private fun checkOldTrustedStateAndMigrate(project: Project, projectStoreBaseDir: Path): Boolean {
   // The trusted state will be migrated inside getProjectTrustedState
-  val trustedState = getProjectTrustedState(listOf(projectStoreBaseDir), project)
+  val locatedProject = LocatedProject.locateProject(projectStoreBaseDir, project)
+  val trustedState = TrustedProjects.getProjectTrustedState(locatedProject)
   if (trustedState != ThreeState.UNSURE) {
     // the trusted state of this project path is already known => proceed with opening
     return true
@@ -1361,7 +1364,8 @@ private fun clearPerProjectDirsForProject(
  * @return true if we should proceed with project opening, false if the process of project opening should be canceled.
  */
 private fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
-  val trustedState = getProjectTrustedState(listOf(projectStoreBaseDir), project = null)
+  val locatedProject = LocatedProject.locateProject(projectStoreBaseDir, project = null)
+  val trustedState = TrustedProjects.getProjectTrustedState(locatedProject)
   if (trustedState != ThreeState.UNSURE) {
     // the trusted state of this project path is already known => proceed with opening
     return true

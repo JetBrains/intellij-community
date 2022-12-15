@@ -1,18 +1,24 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
+import com.intellij.ide.impl.trustedProjects.LocatedProject
+import com.intellij.ide.impl.trustedProjects.ProjectLocator
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.file.VirtualFileUtil
 import com.intellij.openapi.file.VirtualFileUtil.getAbsoluteNioPath
+import com.intellij.openapi.file.converter.NioPathPrefixTreeFactory
 import com.intellij.openapi.file.system.LocalFileSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.modules
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.withProjectAsync
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
@@ -22,11 +28,15 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.jupiter.api.*
+import java.nio.file.Path
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
 abstract class TrustedProjectsHeavyTestCase {
+
+  @TestDisposable
+  lateinit var testDisposable: Disposable
 
   private lateinit var fileFixture: TempDirTestFixture
   private lateinit var testRoot: VirtualFile
@@ -84,16 +94,14 @@ abstract class TrustedProjectsHeavyTestCase {
     numContentRoots: Int
   ): Project {
     val projectName = project.name
-    project.withProjectAsync {
-      writeAction {
-        val entityStorage = MutableEntityStorage.create()
-        generateModulesAsync(project, entityStorage, "project", numModules, numContentRoots)
-        repeat(numProjects - 1) { index ->
-          generateModulesAsync(project, entityStorage, "project-$index", numModules, numContentRoots)
-        }
-        WorkspaceModel.getInstance(project).updateProjectModel("Generate project $projectName") {
-          it.addDiff(entityStorage)
-        }
+    writeAction {
+      val entityStorage = MutableEntityStorage.create()
+      generateModulesAsync(project, entityStorage, "project", numModules, numContentRoots)
+      repeat(numProjects - 1) { index ->
+        generateModulesAsync(project, entityStorage, "project-$index", numModules, numContentRoots)
+      }
+      WorkspaceModel.getInstance(project).updateProjectModel("Generate project $projectName") {
+        it.addDiff(entityStorage)
       }
     }
     return project
@@ -147,9 +155,10 @@ abstract class TrustedProjectsHeavyTestCase {
     project: Project,
     vararg relativeRoots: String
   ) {
+    val locatedProject = LocatedProject.locateProject(project)
     Assertions.assertEquals(
       relativeRoots.map { testRoot.getAbsoluteNioPath(it) }.toSet(),
-      project.getProjectRoots().toSet()
+      locatedProject.projectRoots.toSet()
     )
   }
 
@@ -164,5 +173,22 @@ abstract class TrustedProjectsHeavyTestCase {
     }
     println("$name duration is $duration")
     return result
+  }
+
+  class TestProjectLocator : ProjectLocator {
+
+    override fun getProjectRoots(project: Project): List<Path> {
+      val index = NioPathPrefixTreeFactory.createSet()
+      for (module in project.modules) {
+        for (contentRoot in module.rootManager.contentRoots) {
+          index.add(contentRoot.toNioPath())
+        }
+      }
+      return index.getRoots().toList()
+    }
+
+    override fun getProjectRoots(projectRoot: Path, project: Project?): List<Path> {
+      return emptyList()
+    }
   }
 }

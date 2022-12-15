@@ -2,6 +2,7 @@
 package com.intellij.ide.impl
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.impl.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.fileEditor.FileEditor
@@ -27,7 +28,9 @@ class UntrustedProjectNotificationProvider : EditorNotifications.Provider<Editor
           IdeBundle.message("untrusted.project.dialog.trust.button"),
           IdeBundle.message("untrusted.project.dialog.distrust.button"))
       ) {
-        ApplicationManager.getApplication().messageBus.syncPublisher(TrustStateListener.TOPIC).onProjectTrustedFromNotification(project)
+        ApplicationManager.getApplication().messageBus
+          .syncPublisher(TrustedProjectsListener.TOPIC)
+          .onProjectTrustedFromNotification(project)
       }
     }
   }
@@ -36,9 +39,10 @@ class UntrustedProjectNotificationProvider : EditorNotifications.Provider<Editor
     private val KEY = Key.create<EditorNotificationPanel?>("UntrustedProjectNotification")
   }
 
-  internal class TrustedListener : TrustStateListener {
+  internal class TrustedListener : TrustedProjectsListener {
     override fun onProjectTrusted(project: Project) {
-      EditorNotifications.getInstance(project).updateAllNotifications()
+      EditorNotifications.getInstance(project)
+        .updateAllNotifications()
     }
   }
 }

@@ -286,6 +286,7 @@
                              key="configurable.trusted.hosts.display.name"
                              instance="com.intellij.ide.impl.TrustedHostsConfigurable"
                              groupId="build" />
+    <projectLocator implementation="com.intellij.ide.impl.trustedProjects.DefaultProjectLocator"/>
 
     <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
@@ -1457,7 +1458,10 @@
     <listener class="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener$CurrentActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
     <listener class="com.intellij.ide.impl.UntrustedProjectNotificationProvider$TrustedListener"
-              topic="com.intellij.ide.impl.TrustStateListener"
+              topic="com.intellij.ide.impl.trustedProjects.TrustedProjectsListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+    <listener class="com.intellij.ide.impl.TrustStateListener$Bridge"
+              topic="com.intellij.ide.impl.trustedProjects.TrustedProjectsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
 
     <listener class="com.intellij.openapi.util.registry.EarlyAccessRegistryManager$MyListener"
