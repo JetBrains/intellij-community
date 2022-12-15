@@ -189,11 +189,11 @@ public class ForCanBeForeachInspection extends BaseInspection {
     }
     if (context == null) return false;
     if (arrayVariable instanceof PsiLocalVariable || arrayVariable instanceof PsiParameter) {
-      return processFromAssignmentToCycle(fromStatement, to, getIsAssignedPredicateWithSkipOptions(arrayVariable));
+      return processFromAssignmentToLoop(fromStatement, to, getIsAssignedPredicateWithSkipOptions(arrayVariable));
     }
     else {
-      return processFromAssignmentToCycle(fromStatement, to, getIsAssignedPredicateWithSkipOptions(arrayVariable),
-                                          getNonLocalSideEffectPredicateWithSkipOptions());
+      return processFromAssignmentToLoop(fromStatement, to, getIsAssignedPredicateWithSkipOptions(arrayVariable),
+                                         getNonLocalSideEffectPredicateWithSkipOptions());
     }
   }
 
@@ -216,9 +216,9 @@ public class ForCanBeForeachInspection extends BaseInspection {
     return predicate -> (Predicate<PsiElement>)element -> SideEffectChecker.mayHaveSideEffects(element, predicate);
   }
 
-  private static boolean processFromAssignmentToCycle(@NotNull PsiStatement fromAssignment,
-                                                      @NotNull PsiStatement untilCycle,
-                                                      Function<Predicate<PsiElement>, Predicate<PsiElement>>... predicatesWithSkipOptions) {
+  private static boolean processFromAssignmentToLoop(@NotNull PsiStatement fromAssignment,
+                                                     @NotNull PsiStatement untilCycle,
+                                                     Function<Predicate<PsiElement>, Predicate<PsiElement>>... predicatesWithSkipOptions) {
     int fromOffset = fromAssignment.getTextOffset();
     int toOffset = untilCycle.getTextOffset();
     if (fromOffset >= toOffset) return false;
@@ -541,12 +541,12 @@ public class ForCanBeForeachInspection extends BaseInspection {
     int fromOffset = sizeStatement.getTextOffset();
     if (toOffset <= fromOffset) return false;
     if (holder.isDummyVariable()) {
-      return processFromAssignmentToCycle(sizeStatement, forStatement, getSideEffectPredicateWithSkipOptions());
+      return processFromAssignmentToLoop(sizeStatement, forStatement, getSideEffectPredicateWithSkipOptions());
     }
     else {
-      return processFromAssignmentToCycle(sizeStatement, forStatement,
-                                          getIsAssignedPredicateWithSkipOptions(holder.getVariable()),
-                                          getNonLocalSideEffectPredicateWithSkipOptions());
+      return processFromAssignmentToLoop(sizeStatement, forStatement,
+                                         getIsAssignedPredicateWithSkipOptions(holder.getVariable()),
+                                         getNonLocalSideEffectPredicateWithSkipOptions());
     }
   }
 
