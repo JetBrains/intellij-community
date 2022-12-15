@@ -114,9 +114,9 @@ public class ForCanBeForeachInspection extends BaseInspection {
         return false;
       }
       return !VariableAccessUtils.variableIsAssigned(collection, body) &&
-             !collectionMayBeChangedBeforeCycle(forStatement, collectionHolder);
+             !collectionMayBeChangedBeforeLoop(forStatement, collectionHolder);
     }
-    return !collectionMayBeChangedBeforeCycle(forStatement, collectionHolder);
+    return !collectionMayBeChangedBeforeLoop(forStatement, collectionHolder);
   }
 
   static boolean isArrayLoopStatement(PsiForStatement forStatement) {
@@ -172,12 +172,12 @@ public class ForCanBeForeachInspection extends BaseInspection {
            isIndexVariableOnlyUsedAsIndex(arrayVariable, indexVariable, body) &&
            !VariableAccessUtils.variableIsAssigned(arrayVariable, body) &&
            !VariableAccessUtils.arrayContentsAreAssigned(arrayVariable, body) &&
-           !arrayMayBeChangedBeforeCycle(arrayVariable, arrayReference, forStatement);
+           !arrayMayBeChangedBeforeLoop(arrayVariable, arrayReference, forStatement);
   }
 
-  private static boolean arrayMayBeChangedBeforeCycle(@NotNull PsiVariable arrayVariable,
-                                                      @NotNull PsiReferenceExpression from,
-                                                      @Nullable PsiStatement to) {
+  private static boolean arrayMayBeChangedBeforeLoop(@NotNull PsiVariable arrayVariable,
+                                                     @NotNull PsiReferenceExpression from,
+                                                     @Nullable PsiStatement to) {
     if (to == null) return false;
     int fromOffset = from.getTextOffset();
     int toOffset = to.getTextOffset();
@@ -217,22 +217,22 @@ public class ForCanBeForeachInspection extends BaseInspection {
   }
 
   private static boolean processFromAssignmentToLoop(@NotNull PsiStatement fromAssignment,
-                                                     @NotNull PsiStatement untilCycle,
+                                                     @NotNull PsiStatement untilLoop,
                                                      Function<Predicate<PsiElement>, Predicate<PsiElement>>... predicatesWithSkipOptions) {
     int fromOffset = fromAssignment.getTextOffset();
-    int toOffset = untilCycle.getTextOffset();
+    int toOffset = untilLoop.getTextOffset();
     if (fromOffset >= toOffset) return false;
-    PsiElement context = PsiTreeUtil.findCommonParent(fromAssignment, untilCycle);
+    PsiElement context = PsiTreeUtil.findCommonParent(fromAssignment, untilLoop);
     if (context == null) return false;
     if (fromAssignment.getParent() != context) return false;
     //small optimization
-    if (untilCycle.getParent() == context) {
+    if (untilLoop.getParent() == context) {
       PsiStatement nextSibling = PsiTreeUtil.getNextSiblingOfType(fromAssignment, PsiStatement.class);
-      if (nextSibling == untilCycle) {
+      if (nextSibling == untilLoop) {
         return false;
       }
       PsiStatement nextNextSibling = PsiTreeUtil.getNextSiblingOfType(nextSibling, PsiStatement.class);
-      if (nextNextSibling == untilCycle) {
+      if (nextNextSibling == untilLoop) {
         context = nextSibling;
       }
     }
@@ -530,8 +530,8 @@ public class ForCanBeForeachInspection extends BaseInspection {
     return new Holder(variable, methodExpression);
   }
 
-  private static boolean collectionMayBeChangedBeforeCycle(PsiForStatement forStatement,
-                                                           Holder holder) {
+  private static boolean collectionMayBeChangedBeforeLoop(PsiForStatement forStatement,
+                                                          Holder holder) {
     PsiStatement sizeStatement = PsiTreeUtil.getParentOfType(holder.getMethodExpression(), PsiStatement.class);
     if (forStatement == null || sizeStatement == null) return false;
     PsiElement context = PsiTreeUtil.findCommonParent(sizeStatement, forStatement);
