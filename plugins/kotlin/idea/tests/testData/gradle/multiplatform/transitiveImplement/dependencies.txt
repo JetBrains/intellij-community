@@ -7,13 +7,13 @@ MODULES
         project.project1.main (COMPILE)
     project.project2
     project.project2.custom
-        project.project1.custom (COMPILE)
+        project.project1.custom (refines, COMPILE)
     project.project2.main
-        project.project1.main (COMPILE)
-        project.project1.main (COMPILE)
+        project.project1.main (refines, COMPILE)
+        project.project1.main (refines, COMPILE)
     project.project2.test
         project.project1.main (COMPILE)
-        project.project1.test (COMPILE)
+        project.project1.test (refines, COMPILE)
         project.project2.main (COMPILE)
         project.project1.main (COMPILE)
     project.project3
