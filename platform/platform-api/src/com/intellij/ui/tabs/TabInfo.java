@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.intellij.openapi.actionSystem.ex.ActionUtil.ALLOW_ACTION_PERFORM_WHEN_HIDDEN;
 import static com.intellij.ui.tabs.impl.JBTabsImpl.PINNED;
 
 public final class TabInfo implements Queryable, PlaceProvider {
@@ -91,10 +90,6 @@ public final class TabInfo implements Queryable, PlaceProvider {
   public TabInfo(final JComponent component) {
     myComponent = component;
     myPreferredFocusableComponent = component;
-    if (component != null) {
-      // it is required to perform actions provided by setTabLabelActions (close/pin) when tab is inactive
-      ClientProperty.put(component, ALLOW_ACTION_PERFORM_WHEN_HIDDEN, true);
-    }
   }
 
   @NotNull
@@ -164,10 +159,6 @@ public final class TabInfo implements Queryable, PlaceProvider {
     if (myComponent != c) {
       JComponent old = myComponent;
       myComponent = (JComponent)c;
-      if (myComponent != null) {
-        // it is required to perform actions provided by setTabLabelActions (close/pin) when tab is inactive
-        ClientProperty.put(myComponent, ALLOW_ACTION_PERFORM_WHEN_HIDDEN, true);
-      }
       myChangeSupport.firePropertyChange(COMPONENT, old, myComponent);
     }
     return this;
