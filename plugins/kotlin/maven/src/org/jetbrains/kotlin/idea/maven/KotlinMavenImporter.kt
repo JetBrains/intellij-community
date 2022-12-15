@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.maven
 
+import com.intellij.externalSystem.ImportedLibraryType
 import com.intellij.notification.BrowseNotificationAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
@@ -134,7 +135,8 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
             val targetLibraryKind = detectPlatformByExecutions(mavenProject)?.tooling?.libraryKind
             if (targetLibraryKind != null) {
                 modifiableModelsProvider.getModifiableRootModel(module).orderEntries().forEachLibrary { library ->
-                    if ((library as LibraryEx).kind == null) {
+                    val libraryKind = (library as LibraryEx).kind
+                    if (libraryKind == null || libraryKind == ImportedLibraryType.IMPORTED_LIBRARY_KIND) {
                         val model = modifiableModelsProvider.getModifiableLibraryModel(library) as LibraryEx.ModifiableModelEx
                         detectLibraryKind(library, project)?.let { model.kind = it }
                     }
