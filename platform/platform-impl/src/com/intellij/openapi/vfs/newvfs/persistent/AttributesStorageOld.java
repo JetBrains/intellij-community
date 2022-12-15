@@ -72,7 +72,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
   }
 
   @Override
-  public @Nullable AttributeInputStream readAttribute(final PersistentFSConnection connection,
+  public @Nullable AttributeInputStream readAttribute(final @NotNull PersistentFSConnection connection,
                                                       final int fileId,
                                                       final @NotNull FileAttribute attribute) throws IOException {
     lock.readLock().lock();
@@ -127,7 +127,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
   }
 
   @Override
-  public boolean hasAttributePage(final PersistentFSConnection connection,
+  public boolean hasAttributePage(final @NotNull PersistentFSConnection connection,
                                   final int fileId,
                                   final @NotNull FileAttribute attribute) throws IOException {
     lock.readLock().lock();
@@ -144,7 +144,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
    */
   @Override
   @NotNull
-  public AttributeOutputStream writeAttribute(final PersistentFSConnection connection,
+  public AttributeOutputStream writeAttribute(final @NotNull PersistentFSConnection connection,
                                               final int fileId,
                                               final @NotNull FileAttribute attribute) {
     return new AttributeOutputStreamBase(
@@ -154,7 +154,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
   }
 
   @Override
-  public void deleteAttributes(final PersistentFSConnection connection,
+  public void deleteAttributes(final @NotNull PersistentFSConnection connection,
                                final int fileId) throws IOException {
     lock.writeLock().lock();
     try {
@@ -192,7 +192,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
 
 
   @Override
-  public void checkAttributesStorageSanity(final PersistentFSConnection connection,
+  public void checkAttributesStorageSanity(final @NotNull PersistentFSConnection connection,
                                            final int fileId,
                                            final @NotNull IntList usedAttributeRecordIds,
                                            final @NotNull IntList validAttributeIds) throws IOException {

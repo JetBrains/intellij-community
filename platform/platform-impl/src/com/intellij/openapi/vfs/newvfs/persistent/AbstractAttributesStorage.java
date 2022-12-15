@@ -29,29 +29,29 @@ public interface AbstractAttributesStorage extends Forceable, Closeable {
 
   void setVersion(final int version) throws IOException;
 
-  @Nullable AttributeInputStream readAttribute(final PersistentFSConnection connection,
+  @Nullable AttributeInputStream readAttribute(final @NotNull PersistentFSConnection connection,
                                                final int fileId,
                                                final @NotNull FileAttribute attribute) throws IOException;
 
 
-  boolean hasAttributePage(final PersistentFSConnection connection,
-                                           final int fileId,
-                                           final @NotNull FileAttribute attribute) throws IOException;
+  boolean hasAttributePage(final @NotNull PersistentFSConnection connection,
+                           final int fileId,
+                           final @NotNull FileAttribute attribute) throws IOException;
 
   /**
    * Opens given attribute of given file for writing
    */
-  @NotNull AttributeOutputStream writeAttribute(final PersistentFSConnection connection,
+  @NotNull AttributeOutputStream writeAttribute(final @NotNull PersistentFSConnection connection,
                                                 final int fileId,
                                                 final @NotNull FileAttribute attribute);
 
-  void deleteAttributes(final PersistentFSConnection connection,
-                                        final int fileId) throws IOException;
+  void deleteAttributes(final @NotNull PersistentFSConnection connection,
+                        final int fileId) throws IOException;
 
   int getLocalModificationCount();
 
-  void checkAttributesStorageSanity(final PersistentFSConnection connection,
-                                                    final int fileId,
-                                                    final @NotNull IntList usedAttributeRecordIds,
-                                                    final @NotNull IntList validAttributeIds) throws IOException;
+  void checkAttributesStorageSanity(final @NotNull PersistentFSConnection connection,
+                                    final int fileId,
+                                    final @NotNull IntList usedAttributeRecordIds,
+                                    final @NotNull IntList validAttributeIds) throws IOException;
 }

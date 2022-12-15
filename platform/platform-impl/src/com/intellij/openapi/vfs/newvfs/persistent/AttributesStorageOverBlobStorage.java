@@ -69,7 +69,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   }
 
   @Override
-  public @Nullable AttributeInputStream readAttribute(final PersistentFSConnection connection,
+  public @Nullable AttributeInputStream readAttribute(final @NotNull PersistentFSConnection connection,
                                                       final int fileId,
                                                       final @NotNull FileAttribute attribute) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
@@ -100,7 +100,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   }
 
   @Override
-  public boolean hasAttributePage(final PersistentFSConnection connection,
+  public boolean hasAttributePage(final @NotNull PersistentFSConnection connection,
                                   final int fileId,
                                   final @NotNull FileAttribute attribute) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
@@ -120,7 +120,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   }
 
   @Override
-  public @NotNull AttributeOutputStream writeAttribute(final PersistentFSConnection connection,
+  public @NotNull AttributeOutputStream writeAttribute(final @NotNull PersistentFSConnection connection,
                                                        final int fileId,
                                                        final @NotNull FileAttribute attribute) {
     return new AttributeOutputStreamBase(
@@ -130,7 +130,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   }
 
   @Override
-  public void deleteAttributes(final PersistentFSConnection connection,
+  public void deleteAttributes(final @NotNull PersistentFSConnection connection,
                                final int fileId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
     lock.writeLock().lock();
@@ -144,7 +144,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   }
 
   @Override
-  public void checkAttributesStorageSanity(final PersistentFSConnection connection,
+  public void checkAttributesStorageSanity(final @NotNull PersistentFSConnection connection,
                                            final int fileId,
                                            final @NotNull IntList usedAttributeRecordIds,
                                            final @NotNull IntList validAttributeIds) throws IOException {
