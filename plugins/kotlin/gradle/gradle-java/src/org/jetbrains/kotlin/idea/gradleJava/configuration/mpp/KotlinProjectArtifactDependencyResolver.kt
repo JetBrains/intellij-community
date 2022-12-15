@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectArtifactDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinSourceDependency
+import org.jetbrains.kotlin.gradle.idea.tcs.extras.artifactsClasspath
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 
@@ -33,13 +34,14 @@ private class KotlinProjectArtifactDependencyResolverImpl(
         val artifactsMap = project.getUserData(GradleProjectResolver.CONFIGURATION_ARTIFACTS).orEmpty()
         val modulesOutputsMap = project.getUserData(GradleProjectResolver.MODULES_OUTPUTS).orEmpty()
 
-        val canonicalPath = dependency.coordinates.artifactFile.normalize().canonicalPath
-        val id = artifactsMap[canonicalPath] ?: modulesOutputsMap[canonicalPath]?.first ?: return emptySet()
-        val sourceSetDataNode = sourceSetMap[id]?.first ?: return emptySet()
-        val sourceSet = sourceSetMap[id]?.second ?: return emptySet()
-        val sourceSetNames = sourceSetDataNode.kotlinSourceSetData?.sourceSetInfo?.dependsOn.orEmpty()
-            .mapNotNull { dependsOnId -> sourceSetMap[dependsOnId]?.second?.name } + sourceSet.name
+        return dependency.artifactsClasspath.flatMap { artifactFile ->
+            val id = artifactsMap[artifactFile.path] ?: modulesOutputsMap[artifactFile.path]?.first ?: return emptySet()
+            val sourceSetDataNode = sourceSetMap[id]?.first ?: return emptySet()
+            val sourceSet = sourceSetMap[id]?.second ?: return emptySet()
+            val sourceSetNames = sourceSetDataNode.kotlinSourceSetData?.sourceSetInfo?.dependsOn.orEmpty()
+                .mapNotNull { dependsOnId -> sourceSetMap[dependsOnId]?.second?.name } + sourceSet.name
 
-        return dependency.resolved(sourceSetNames.toSet())
+            dependency.resolved(sourceSetNames.toSet())
+        }.toSet()
     }
 }

@@ -5,28 +5,21 @@ import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData
 import com.intellij.openapi.externalSystem.model.project.LibraryLevel
+import com.intellij.openapi.externalSystem.model.project.LibraryPathType
 import com.intellij.openapi.externalSystem.model.project.ProjectData
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinBinaryCoordinates
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinBinaryDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinResolvedBinaryDependency
-import org.jetbrains.kotlin.gradle.idea.tcs.extras.isIdeaProjectLevel
-import org.jetbrains.kotlin.gradle.idea.tcs.extras.isNativeDistribution
-import org.jetbrains.kotlin.gradle.idea.tcs.extras.isNativeStdlib
-import org.jetbrains.kotlin.gradle.idea.tcs.extras.klibExtra
+import org.jetbrains.kotlin.gradle.idea.tcs.extras.*
+import org.jetbrains.kotlin.gradle.idea.tcs.isKotlinCompileBinaryType
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.ifNull
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 
-fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDependency): List<DataNode<out LibraryDependencyData>> {
-    /* Special casing for sources and javadoc jars, since they are not published per source set */
-    if (dependency is IdeaKotlinResolvedBinaryDependency && (dependency.isSourcesType || dependency.isDocumentationType)) {
-        return addSourcesOrDocumentationDependency(dependency)
-    }
+fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDependency): DataNode<out LibraryDependencyData>? {
 
     val dependencyNode = findLibraryDependencyNode(dependency) ?: run create@{
-        val coordinates = dependency.coordinates ?: return emptyList()
+        val coordinates = dependency.coordinates ?: return null
         val libraryData = LibraryData(KotlinLibraryName(coordinates))
         val libraryLevel = if (dependency.isIdeaProjectLevel) LibraryLevel.PROJECT else LibraryLevel.MODULE
         libraryData.setGroup(coordinates.group)
@@ -56,42 +49,24 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDepe
     }
 
     if (dependency is IdeaKotlinResolvedBinaryDependency) {
-        val pathType = dependency.libraryPathType
-        if (pathType != null) {
-            dependencyNode.data.target.addPath(pathType, dependency.binaryFile.absolutePath)
+        if (dependency.isKotlinCompileBinaryType) {
+            dependency.classpath.forEach { file ->
+                dependencyNode.data.target.addPath(LibraryPathType.BINARY, file.absolutePath)
+            }
+        }
+
+        dependency.sourcesClasspath.forEach { file ->
+            dependencyNode.data.target.addPath(LibraryPathType.SOURCE, file.absolutePath)
+        }
+
+        dependency.documentationClasspath.forEach { file ->
+            dependencyNode.data.target.addPath(LibraryPathType.DOC, file.absolutePath)
         }
     }
 
-    return listOf(dependencyNode)
+    return dependencyNode
 }
 
-/**
- * Special Case: While we *do have* dependencies for multiplatform, that are scoped by source set (transformed metdata)
- * We do not have -sources.jar artifacts per SourceSet.
- * We therefore can match sources dependencies by ignoring sourceSet names
- * (e.g. "io.ktor:ktor-client-core:xxx:commonMain" can use attach the -sources from "io.ktor:ktor-client-core:xxx"
- */
-private fun DataNode<GradleSourceSetData>.addSourcesOrDocumentationDependency(
-    dependency: IdeaKotlinResolvedBinaryDependency
-): List<DataNode<out LibraryDependencyData>> {
-    val coordinates = dependency.coordinates ?: return emptyList()
-    val libraryPathType = dependency.libraryPathType ?: return emptyList()
-
-    val nodes = ExternalSystemApiUtil.findAllRecursively(this, ProjectKeys.LIBRARY_DEPENDENCY).filter { node ->
-        node.kotlinDependencies.any { dependency ->
-            val otherCoordinates = dependency.coordinates as? IdeaKotlinBinaryCoordinates ?: return@any false
-            coordinates.group == otherCoordinates.group &&
-                    coordinates.module == otherCoordinates.module &&
-                    coordinates.version == otherCoordinates.version
-        }
-    }
-
-    nodes.forEach { node ->
-        node.data.target.addPath(libraryPathType, dependency.binaryFile.absolutePath)
-    }
-
-    return nodes
-}
 
 private fun buildNativeDistributionInternalLibraryName(dependency: IdeaKotlinBinaryDependency): String {
     return buildString {
