@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.ui.ConventionOptionsPanel;
+import com.intellij.codeInspection.options.CommonOptionPanes;
+import com.intellij.codeInspection.options.OptComponent;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.InvalidDataException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -26,13 +28,12 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public abstract class ConventionInspection extends BaseInspection {
 
-  public static final JComponent[] EMPTY_JCOMPONENT_ARRAY = {};
   /**
    * @noinspection PublicField
    */
@@ -106,13 +107,27 @@ public abstract class ConventionInspection extends BaseInspection {
     m_regexPattern = Pattern.compile(m_regex);
   }
 
-  public JComponent @NotNull [] createExtraOptions() {
-    return EMPTY_JCOMPONENT_ARRAY;
+  public OptComponent @NotNull [] createExtraOptions() {
+    return new OptComponent[0];
   }
 
   @Override
-  public final JComponent createOptionsPanel() {
-    return new ConventionOptionsPanel(this, "m_minLength", "m_maxLength", "m_regex", "m_regexPattern", createExtraOptions());
+  public @NotNull OptPane getOptionsPane() {
+    return CommonOptionPanes.conventions(
+      "m_minLength", "m_maxLength", "m_regex", createExtraOptions()
+    );
+  }
+
+  @Override
+  public void setOption(@NotNull String bindId, Object value) {
+    super.setOption(bindId, value);
+    try {
+      m_regexPattern = Pattern.compile(m_regex);
+    }
+    catch (PatternSyntaxException ignore) {
+      m_regex = getDefaultRegex();
+      m_regexPattern = Pattern.compile(m_regex);
+    }
   }
 
   @Override

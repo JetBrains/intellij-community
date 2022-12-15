@@ -3,7 +3,6 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
@@ -24,7 +23,6 @@ import java.util.regex.Pattern;
  */
 public class ConventionOptionsPanel extends InspectionOptionsPanel {
 
-  private static final Logger LOG = Logger.getInstance(ConventionOptionsPanel.class);
   public ConventionOptionsPanel(@NotNull final InspectionProfileEntry owner,
                                 @Language("jvm-field-name") @NonNls final String minLengthProperty,
                                 @Language("jvm-field-name") @NonNls final String maxLengthProperty,
