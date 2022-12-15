@@ -115,11 +115,16 @@ public class RepositoryLibraryWithDescriptionEditor
     final Collection<OrderRoot> roots = JarRepositoryManager.loadDependenciesModal(
       project, properties.getRepositoryLibraryDescriptor(), model.getArtifactKinds(), null, copyTo
     );
+
+    if (roots == null || RepositoryLibraryUtils.isVerifiableRootsChanged(libraryEditor, roots)) {
+      /* Reset verification if verifiable roots changed */
+      /* If auto-rebuild enabled, RepositoryLibraryChangeListener will handle the change and build verification for new roots */
+      myEditorComponent.getProperties().setArtifactsVerification(Collections.emptyList());
+    }
+
     libraryEditor.removeAllRoots();
     if (roots != null) {
       libraryEditor.addRoots(roots);
-    } else {
-      properties.setArtifactsVerification(Collections.emptyList());
     }
     myEditorComponent.updateRootsTree();
     updateDescription();

@@ -18,7 +18,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JavadocOrderRootType
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.NotificationContent
@@ -57,6 +59,13 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
 
     @JvmStatic
     fun getInstance(project: Project): RepositoryLibraryUtils = project.service()
+
+    @JvmStatic
+    fun isVerifiableRootsChanged(editor: LibraryEditor, newRoots: Collection<OrderRoot>): Boolean {
+      val oldPaths = editor.getUrls(OrderRootType.CLASSES).asSequence().map { JpsPathUtil.urlToOsPath(it) }.toSet()
+      val newPaths = newRoots.asSequence().filter { it.type == OrderRootType.CLASSES }.map { JpsPathUtil.urlToOsPath(it.file.url) }.toSet()
+      return oldPaths != newPaths
+    }
 
     /* Reuse notifications group from [JarRepositoryManager] */
     private val NOTIFICATIONS_GROUP = JarRepositoryManager.GROUP
