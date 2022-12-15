@@ -345,7 +345,7 @@ internal class SingleContentLayout(
       updateTabs()
 
       jbTabs.addListener(object : TabsListener {
-        override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo) {
+        override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
           checkAndUpdate()
         }
         override fun tabRemoved(tabToRemove: TabInfo) = checkAndUpdate()

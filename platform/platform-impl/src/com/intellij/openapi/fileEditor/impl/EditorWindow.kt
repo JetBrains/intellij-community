@@ -40,7 +40,6 @@ import com.intellij.ui.scale.JBUIScale.scaleIcon
 import com.intellij.ui.tabs.TabsUtil
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.IconUtil
-import com.intellij.util.ObjectUtils
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -1088,7 +1087,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters) {
       owner.updateFileColorAsync(file)
     }
     if (wasPinned != pinned && ApplicationManager.getApplication().isDispatchThread) {
-      ObjectUtils.consumeIfCast(tabbedPane.tabs, JBTabsImpl::class.java) { obj: JBTabsImpl -> obj.doLayout() }
+      (tabbedPane.tabs as? JBTabsImpl)?.doLayout()
     }
   }
 

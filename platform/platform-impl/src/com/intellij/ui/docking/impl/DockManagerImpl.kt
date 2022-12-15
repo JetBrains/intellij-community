@@ -41,7 +41,6 @@ import com.intellij.ui.components.panels.VerticalBox
 import com.intellij.ui.docking.*
 import com.intellij.ui.docking.DockContainer.ContentResponse
 import com.intellij.util.IconUtil
-import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.ImageUtil
@@ -289,21 +288,21 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
         setLocationFrom(e)
       }
       else if (e.id == MouseEvent.MOUSE_RELEASED) {
+        val currentOverContainer = currentOverContainer
         if (currentOverContainer == null) {
           // This relative point might be relative to a component that's on a different screen, with a different DPI scaling factor than
           // the target location. Ideally, we should pass the DevicePoint to createNewDockContainerFor, but that will change the API. We'll
           // fix it up inside createNewDockContainerFor
           val point = RelativePoint(e)
           createNewDockContainerFor(content, point)
-          e.consume() //Marker for DragHelper: drag into separate window is not tabs reordering
+          e.consume() //Marker for DragHelper: drag into a separate window is not tabs reordering
         }
         else {
-          val point = devicePoint.toRelativePoint(currentOverContainer!!.containerComponent)
-          currentOverContainer!!.add(content, point)
-          ObjectUtils.consumeIfCast(currentOverContainer,
-                                    DockableEditorTabbedContainer::class.java) { container: DockableEditorTabbedContainer ->
-            //Marker for DragHelper, not 'refined' drop in tab-set shouldn't affect ABC-order setting
-            if (container.currentDropSide == SwingConstants.CENTER) e.consume()
+          val point = devicePoint.toRelativePoint(currentOverContainer.containerComponent)
+          currentOverContainer.add(content, point)
+          // marker for DragHelper, not 'refined' drop in tab-set shouldn't affect ABC-order setting
+          if (currentOverContainer is DockableEditorTabbedContainer && currentOverContainer.currentDropSide == SwingConstants.CENTER) {
+            e.consume()
           }
         }
         stopCurrentDragSession()
@@ -402,7 +401,11 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
       window.setupNorthPanel()
     }
     container.add(
-      EditorTabbedContainer.createDockableEditor(null, file, Presentation(file.name), editorWindow, isNorthPanelAvailable),
+      EditorTabbedContainer.createDockableEditor(image = null,
+                                                 file = file,
+                                                 presentation = Presentation(file.name),
+                                                 window = editorWindow,
+                                                 isNorthPanelAvailable = isNorthPanelAvailable),
       null
     )
     SwingUtilities.invokeLater { window.uiContainer.preferredSize = null }

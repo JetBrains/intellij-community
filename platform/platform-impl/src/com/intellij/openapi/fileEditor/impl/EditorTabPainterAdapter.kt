@@ -1,20 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.tabs.impl
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.JBTabsPosition
+import com.intellij.ui.tabs.impl.*
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
 
-class EditorTabPainterAdapter : TabPainterAdapter {
+internal class EditorTabPainterAdapter : TabPainterAdapter {
   private val magicOffset = 1
-  private val painter = JBEditorTabPainter()
-
-  override val tabPainter: JBTabPainter
-    get() = painter
+  override val tabPainter = JBEditorTabPainter()
 
   override fun paintBackground(label: TabLabel, g: Graphics, tabs: JBTabsImpl) {
     val info = label.info
@@ -25,7 +22,7 @@ class EditorTabPainterAdapter : TabPainterAdapter {
 
     val g2d = g as Graphics2D
     if (isSelected) {
-      painter.paintSelectedTab(tabs.position, g2d, rect,
+      tabPainter.paintSelectedTab(tabs.position, g2d, rect,
                                tabs.borderThickness, info.tabColor,
                                tabs.isActiveTabs(info), isHovered)
       paintBorders(g2d, label, tabs)
@@ -36,7 +33,7 @@ class EditorTabPainterAdapter : TabPainterAdapter {
           && (tabs as JBEditorTabs).shouldPaintBottomBorder()) {
         rect.height -= 1
       }
-      painter.paintTab(tabs.position, g2d, rect, tabs.borderThickness, info.tabColor, tabs.isActiveTabs(info), isHovered)
+      tabPainter.paintTab(tabs.position, g2d, rect, tabs.borderThickness, info.tabColor, tabs.isActiveTabs(info), isHovered)
       paintBorders(g2d, label, tabs)
     }
   }
@@ -50,25 +47,25 @@ class EditorTabPainterAdapter : TabPainterAdapter {
     if (paintStandardBorder || lastPinned || nextToLastPinned) {
       val bounds = label.bounds
       if (bounds.x > magicOffset && (paintStandardBorder || nextToLastPinned)) {
-        painter.paintLeftGap(tabs.position, g, rect, tabs.borderThickness)
+        tabPainter.paintLeftGap(tabs.position, g, rect, tabs.borderThickness)
       }
 
       val paintBorderAfterPinnedTab = !ExperimentalUI.isNewUI() || !TabLayout.showPinnedTabsSeparately() // do not paint border between last tab and toolbars
       if (bounds.x + bounds.width < tabs.width - magicOffset && (paintStandardBorder || (lastPinned && paintBorderAfterPinnedTab))) {
-        painter.paintRightGap(tabs.position, g, rect, tabs.borderThickness)
+        tabPainter.paintRightGap(tabs.position, g, rect, tabs.borderThickness)
       }
     }
 
     if (tabs.position.isSide && lastPinned) {
       val bounds = label.bounds
       if (bounds.y + bounds.height < tabs.height - magicOffset) {
-        painter.paintBottomGap(tabs.position, g, rect, tabs.borderThickness)
+        tabPainter.paintBottomGap(tabs.position, g, rect, tabs.borderThickness)
       }
     }
     if (tabs.position.isSide && nextToLastPinned) {
       val bounds = label.bounds
       if (bounds.y + bounds.height < tabs.height - magicOffset) {
-        painter.paintTopGap(tabs.position, g, rect, tabs.borderThickness)
+        tabPainter.paintTopGap(tabs.position, g, rect, tabs.borderThickness)
       }
     }
   }
