@@ -57,6 +57,7 @@ public class ChangeSignatureAction extends BasePlatformRefactoringAction {
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull final PsiElement element, @NotNull final Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     PsiElement targetMember = findTargetMember(element);
     if (targetMember == null) {
+      if (getProvider(element) == null) return false;
       final ChangeSignatureHandler targetHandler = getChangeSignatureHandler(file);
       if (targetHandler != null) {
         return true;
@@ -137,7 +138,12 @@ public class ChangeSignatureAction extends BasePlatformRefactoringAction {
 
   @Nullable
   private static ChangeSignatureHandler getChangeSignatureHandler(@NotNull PsiElement language) {
-    RefactoringSupportProvider provider = LanguageRefactoringSupport.INSTANCE.forContext(language);
+    RefactoringSupportProvider provider = getProvider(language);
     return provider != null ? provider.getChangeSignatureHandler() : null;
+  }
+
+  @Nullable
+  private static RefactoringSupportProvider getProvider(@NotNull PsiElement context) {
+    return LanguageRefactoringSupport.INSTANCE.forContext(context);
   }
 }
