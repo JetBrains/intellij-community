@@ -15,7 +15,7 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
 fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinDependency): List<DataNode<out AbstractDependencyData<*>>> {
     return when (dependency) {
-        is IdeaKotlinBinaryDependency -> addDependency(dependency)
+        is IdeaKotlinBinaryDependency -> listOfNotNull(addDependency(dependency))
         is IdeaKotlinSourceDependency -> listOfNotNull(addDependency(dependency))
         is IdeaKotlinProjectArtifactDependency -> addDependency(dependency)
     }
