@@ -8,7 +8,6 @@ import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.diagnostic.*
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.client.ClientSessionsManager
@@ -44,7 +43,6 @@ import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.IconUtil
 import com.intellij.util.PathUtilRt
-import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
@@ -55,7 +53,6 @@ import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
-import java.awt.event.ContainerEvent
 import java.awt.event.FocusEvent
 import java.beans.PropertyChangeListener
 import java.lang.ref.Reference
@@ -75,8 +72,10 @@ private val OPENED_IN_BULK = Key.create<Boolean>("EditorSplitters.opened.in.bulk
 
 @Suppress("LeakingThis", "IdentifierGrammar")
 @DirtyUI
-open class EditorsSplitters internal constructor(val manager: FileEditorManagerImpl) : JPanel(BorderLayout()),
-                                                                                       UISettingsListener, Disposable {
+open class EditorsSplitters internal constructor(
+  val manager: FileEditorManagerImpl,
+  internal val coroutineScope: CoroutineScope,
+) : JPanel(BorderLayout()), UISettingsListener {
   companion object {
     const val SPLITTER_KEY: @NonNls String = "EditorsSplitters"
 
@@ -160,31 +159,24 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       }
     }
     UIManager.getDefaults().addPropertyChangeListener(l)
-    Disposer.register(this) { UIManager.getDefaults().removePropertyChangeListener(l) }
-
-    val focusWatcher = MyFocusWatcher()
-    focusWatcher.install(this)
-    Disposer.register(this) { focusWatcher.deinstall(this) }
+    coroutineScope.coroutineContext.job.invokeOnCompletion { UIManager.getDefaults().removePropertyChangeListener(l) }
+    MyFocusWatcher().install(this)
 
     focusTraversalPolicy = MyFocusTraversalPolicy(this)
     isFocusTraversalPolicyProvider = true
     transferHandler = MyTransferHandler(this)
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
-      override fun activeKeymapChanged(keymap: Keymap?) {
-        invalidate()
-        repaint()
-      }
-    })
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(KeymapManagerListener.TOPIC,
+                                                                                     object : KeymapManagerListener {
+                                                                                       override fun activeKeymapChanged(keymap: Keymap?) {
+                                                                                         invalidate()
+                                                                                         repaint()
+                                                                                       }
+                                                                                     })
     enableEditorActivationOnEscape()
 
-    @Suppress("DEPRECATION")
-    manager.project.coroutineScope.launch(CoroutineName("EditorSplitters file icon update")) {
+    coroutineScope.launch(CoroutineName("EditorSplitters file icon update")) {
       iconUpdateChannel.start()
-    }.cancelOnDispose(this)
-  }
-
-  override fun dispose() {
-    dropTarget = null
+    }
   }
 
   fun clear() {
@@ -644,7 +636,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
 
   internal fun createCurrentWindow() {
     LOG.assertTrue(currentWindow == null)
-    val window = EditorWindow(owner = this, parentDisposable = this)
+    val window = EditorWindow(owner = this)
     add(window.panel, BorderLayout.CENTER)
     setCurrentWindowAndComposite(window)
   }
@@ -670,6 +662,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   }
 
   internal fun removeWindow(window: EditorWindow) {
+    window.coroutineScope.cancel()
     windows.remove(window)
     val selectedComposite = window.selectedComposite
     currentWindowFlow.compareAndSet(window, null)
@@ -744,31 +737,27 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
 
   private inner class MyFocusWatcher : FocusWatcher() {
     override fun focusedComponentChanged(component: Component?, cause: AWTEvent?) {
-      if (cause is FocusEvent && cause.getID() == FocusEvent.FOCUS_GAINED) {
-        if (cause.cause == FocusEvent.Cause.ACTIVATION) {
-          // Window activation mistakenly puts focus to editor as 'last focused component in this window'
-          // even if you activate the window by clicking some other place (e.g. Project View)
-          SwingUtilities.invokeLater {
-            if (component!!.isFocusOwner) {
-              lastFocusGainedTime = System.currentTimeMillis()
-            }
-          }
-        }
-        else {
-          lastFocusGainedTime = System.currentTimeMillis()
-        }
-      }
-
-      var newWindow: EditorWindow? = null
-      if (component != null) {
-        newWindow = findWindowWith(component)
-      }
-      else if (cause is ContainerEvent && cause.getID() == ContainerEvent.COMPONENT_REMOVED) {
-        // do not change a current window in case of child removal as in JTable.removeEditor
-        // otherwise Escape in a toolwindow will not focus editor with JTable content
+      if (cause !is FocusEvent || cause.getID() != FocusEvent.FOCUS_GAINED) {
         return
       }
-      setCurrentWindow(window = newWindow, requestFocus = false)
+
+      if (cause.cause == FocusEvent.Cause.ACTIVATION) {
+        // Window activation mistakenly puts focus to editor as 'last focused component in this window'
+        // even if you activate the window by clicking some other place (e.g. Project View)
+        SwingUtilities.invokeLater {
+          if (component!!.isFocusOwner) {
+            lastFocusGainedTime = System.currentTimeMillis()
+          }
+        }
+      }
+      else {
+        lastFocusGainedTime = System.currentTimeMillis()
+      }
+
+      // we must update the current selected editor composite because if an editor is split, no events like "tab changed"
+      if (component != null) {
+        setCurrentWindow(window = findWindowWith(component), requestFocus = false)
+      }
     }
   }
 
@@ -786,13 +775,13 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
         }
       }
     }
-    return window.split(SwingConstants.VERTICAL, true, file, requestFocus)
+    return window.split(orientation = SwingConstants.VERTICAL, forceSplit = true, virtualFile = file, focusNew = requestFocus)
   }
 }
 
 private class MyFocusTraversalPolicy(private val splitters: EditorsSplitters) : IdeFocusTraversalPolicy() {
   override fun getDefaultComponent(focusCycleRoot: Container): Component? {
-    return splitters.currentWindow?.selectedComposite?.focusComponent?.let {
+    return splitters.currentCompositeFlow.value?.focusComponent?.let {
       getPreferredFocusedComponent(it, this)
     } ?: getPreferredFocusedComponent(splitters, this)
   }
@@ -901,7 +890,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val fir
       val windowDeferred = async(Dispatchers.EDT) {
         var editorWindow = context?.let(splitters::findWindowWith)
         if (editorWindow == null) {
-          editorWindow = EditorWindow(owner = splitters, parentDisposable = splitters)
+          editorWindow = EditorWindow(owner = splitters)
         }
         else if (splitters.currentWindow == null) {
           splitters.setCurrentWindow(window = editorWindow, requestFocus = false)
@@ -960,7 +949,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val fir
           }
 
           // This is just to make sure document reference is kept on stack till this point
-          // so that a document is available for folding state deserialization in HistoryEntry constructor
+          // so that a document is available for folding state deserialization in HistoryEntry constructor,
           // and that document will be created only once during file opening
           Reference.reachabilityFence(document)
           if (fileEntry.currentInTab) {

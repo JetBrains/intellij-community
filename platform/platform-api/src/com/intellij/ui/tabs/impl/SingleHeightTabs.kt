@@ -13,11 +13,7 @@ open class SingleHeightTabs(project: Project?, focusManager: IdeFocusManager?, p
     const val UNSCALED_PREF_HEIGHT = 28
   }
 
-  constructor(project: Project?, parent: Disposable) : this(project = project,
-                                                            focusManager = if (project == null) null else IdeFocusManager.getInstance(project),
-                                                            parent = parent)
-
-  constructor(parent: Disposable) : this(project = null, focusManager = null, parent = parent)
+  constructor(project: Project?, parent: Disposable) : this(project = project, focusManager = null, parent = parent)
 
   override fun createTabLabel(info: TabInfo): TabLabel = SingleHeightLabel(this, info)
 

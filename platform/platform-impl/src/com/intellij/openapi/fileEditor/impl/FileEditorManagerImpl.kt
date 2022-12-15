@@ -143,7 +143,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
   private val isInitialized = AtomicBoolean()
 
-  private val dockable = lazy { DockableEditorTabbedContainer(mainSplitters, false) }
+  private val dockable = lazy { DockableEditorTabbedContainer(mainSplitters, false, coroutineScope) }
   private val selectionHistory = SelectionHistory()
   private var lastSelectedComposite: Reference<EditorComposite?>? = null
   private val fileUpdateChannel: MergingUpdateChannel<VirtualFile> = MergingUpdateChannel(delay = 50.milliseconds) { toUpdate ->
@@ -206,7 +206,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
     if (ApplicationManager.getApplication().isUnitTestMode || forceUseUiInHeadlessMode()) {
       isInitialized.set(true)
-      mainSplitters = EditorsSplitters(this)
+      mainSplitters = EditorsSplitters(manager = this, coroutineScope = coroutineScope)
     }
   }
 
@@ -216,7 +216,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       LOG.error("already initialized")
     }
 
-    val component = EditorsSplitters(this)
+    val component = EditorsSplitters(manager = this, coroutineScope = coroutineScope)
     component.isFocusable = false
     // prepare for toolwindow manager
     mainSplitters = component
@@ -290,7 +290,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
     /**
      * Works on VirtualFile objects and allows disabling the Preview Tab functionality for certain files.
-     * If a virtual file has this key set to TRUE, the corresponding editor will always be opened in a regular tab.
+     * If a virtual file has this key is set to TRUE, the corresponding editor will always be opened in a regular tab.
      */
     @JvmField
     val FORBID_PREVIEW_TAB = Key.create<Boolean>("FORBID_PREVIEW_TAB")
@@ -300,7 +300,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
     /**
      * Works on FileEditor objects, allows forcing opening other editor tabs in the main window.
-     * If the currently selected file editor has this key set to TRUE, new editors will be opened in the main splitters.
+     * If the currently selected file editor has this key is set to TRUE, new editors will be opened in the main splitters.
      */
     val SINGLETON_EDITOR_IN_WINDOW = Key.create<Boolean>("OPEN_OTHER_TABS_IN_MAIN_WINDOW")
     const val FILE_EDITOR_MANAGER = "FileEditorManager"
@@ -462,9 +462,6 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     finally {
       if (dockable.isInitialized()) {
         Disposer.dispose(dockable.value)
-      }
-      else if (isInitialized.get()) {
-        Disposer.dispose(mainSplitters)
       }
       fileUpdateChannel.stop()
     }
@@ -639,7 +636,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
    * Updates tab title and tab tool tip for the specified `file`.
    */
   private fun updateFileName(file: VirtualFile?) {
-    // Queue here is to prevent title flickering when the tab is being closed and two events arriving:
+    // Queue here is to prevent title flickering when the tab is being closed and two events are arriving:
     // with component==null and component==next focused tab
     // only the last event makes sense to handle
     fileTitleUpdateChannel.queue(file)
@@ -954,7 +951,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
   /**
    * Unlike the openFile method, file can be invalid.
-   * For example, all files where invalidate, and they are being removed one by one.
+   * For example, all files where invalidated, and they are being removed one by one.
    * If we have removed one invalid file, then another invalid file becomes selected.
    * That's why we do not require that passed file is valid.
    */
@@ -1153,7 +1150,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
     if (!isReopeningOnStartup) {
       //[jeka] this is a hack to support back-forward navigation
-      // previously here was an incorrect call to fireSelectionChanged() with a side-effect
+      // previously there was an incorrect call to fireSelectionChanged() with a side-effect
       val ideDocumentHistory = IdeDocumentHistory.getInstance(project) as IdeDocumentHistoryImpl
       ideDocumentHistory.onSelectionChanged()
       // make back/forward work
@@ -1223,7 +1220,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     if (!ClientId.isCurrentlyUnderLocalId) {
       return clientFileEditorManager?.createComposite(file, editorsWithProviders)
     }
-    // the only place this class in created, won't be needed when we get rid of EditorWithProviderComposite usages
+    // the only place this class is created, won't be needed when we get rid of EditorWithProviderComposite usages
     @Suppress("DEPRECATION")
     return EditorWithProviderComposite(file = file, editorsWithProviders = editorsWithProviders, fileEditorManager = this)
   }
@@ -1664,8 +1661,8 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
   open fun getComposite(editor: FileEditor): EditorComposite? {
     for (splitters in getAllSplitters()) {
-      val editorsComposites = splitters.getAllComposites()
-      for (composite in editorsComposites.asReversed()) {
+      val editorComposites = splitters.getAllComposites()
+      for (composite in editorComposites.asReversed()) {
         if (composite.allEditors.contains(editor)) {
           return composite
         }
@@ -1743,7 +1740,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     for (editorWithProvider in editorsWithProviders.asReversed()) {
       val editor = editorWithProvider.fileEditor
       val provider = editorWithProvider.provider
-      // we already notified the myEditor (when fire event)
+      // we already notified editor (when fire event)
       if (selectedEditor == editor) {
         editor.deselectNotify()
       }
@@ -2070,7 +2067,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       return
     }
 
-    // file is not opened yet - in this case we have to create editors and select the created EditorComposite
+    // the file is not opened yet - in this case we have to create editors and select the created EditorComposite
     val builders = ArrayList<AsyncFileEditorProvider.Builder?>(newProviders.size)
     for (provider in newProviders) {
       val builder = try {

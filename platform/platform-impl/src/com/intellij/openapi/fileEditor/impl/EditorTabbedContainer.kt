@@ -28,6 +28,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -46,7 +47,11 @@ import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.NonUrgentExecutor;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TimedDeadzone;
+import com.intellij.util.ui.UIUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +60,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.AWTEventListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
@@ -70,12 +76,12 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
   private final TabInfo.DragOutDelegate myDragOutDelegate = new MyDragOutDelegate();
 
-  EditorTabbedContainer(@NotNull EditorWindow window, @NotNull Disposable parentDisposable) {
+  EditorTabbedContainer(@NotNull EditorWindow window, @NotNull CoroutineScope coroutineScope) {
     this.window = window;
 
-    myTabs = new EditorTabs(parentDisposable, window);
+    myTabs = new EditorTabs(coroutineScope, window);
     Project project = window.getManager().getProject();
-    project.getMessageBus().connect(parentDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+    project.getMessageBus().connect(coroutineScope).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         myTabs.updateActive();
@@ -675,11 +681,14 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     private final @NotNull EditorWindow myWindow;
     private final DefaultActionGroup myEntryPointActionGroup;
 
-    private EditorTabs(@NotNull Disposable parentDisposable, @NotNull EditorWindow window) {
-      super(parentDisposable);
+    private EditorTabs(@NotNull CoroutineScope coroutineScope, @NotNull EditorWindow window) {
+      super(window.getManager().getProject(), parentDisposable);
 
       myWindow = window;
-      StartupUiUtil.addAwtListener(e -> updateActive(), AWTEvent.FOCUS_EVENT_MASK, parentDisposable);
+
+      AWTEventListener listener = e -> updateActive();
+      Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.FOCUS_EVENT_MASK);
+      Disposer.register(parentDisposable, () -> Toolkit.getDefaultToolkit().removeAWTEventListener(listener));
       setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBUI.CurrentTheme.EditorTabs.tabInsets()));
 
       AnAction source = ActionManager.getInstance().getAction("EditorTabsEntryPoint");

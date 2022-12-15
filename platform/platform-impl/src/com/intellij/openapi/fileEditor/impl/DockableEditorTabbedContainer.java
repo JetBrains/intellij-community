@@ -23,6 +23,8 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
 import kotlin.Unit;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.DisposableHandle;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -47,20 +49,21 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
   private Image currentOverImg;
   private TabInfo currentOverInfo;
   private AbstractPainter currentPainter;
-  private Disposable glassPaneListenersDisposable = Disposer.newDisposable();
+  private @Nullable DisposableHandle glassPaneListenerDisposable;
 
   private final boolean disposeWhenEmpty;
+  private final CoroutineScope coroutineScope;
 
   private boolean wasEverShown;
 
-  DockableEditorTabbedContainer(@NotNull EditorsSplitters splitters, boolean disposeWhenEmpty) {
+  DockableEditorTabbedContainer(@NotNull EditorsSplitters splitters, boolean disposeWhenEmpty, @NotNull CoroutineScope coroutineScope) {
     this.splitters = splitters;
     this.disposeWhenEmpty = disposeWhenEmpty;
+    this.coroutineScope = coroutineScope;
   }
 
   @Override
   public void dispose() {
-    Disposer.dispose(splitters);
   }
 
   @Override
@@ -113,11 +116,9 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
         return window.getTabbedPane().getTabs();
       }
       else {
-        EditorWindow[] windows = splitters.getWindows();
-        for (EditorWindow each : windows) {
-          if (each.getTabbedPane().getTabs() != null) {
-            return each.getTabbedPane().getTabs();
-          }
+        for (EditorWindow each : splitters.getWindows()) {
+          each.getTabbedPane().getTabs();
+          return each.getTabbedPane().getTabs();
         }
       }
     }
@@ -244,10 +245,18 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     }
     if (currentPainter == null) {
       currentPainter = new MyDropAreaPainter();
-      glassPaneListenersDisposable = Disposer.newDisposable("GlassPaneListeners");
-      Disposer.register(splitters, glassPaneListenersDisposable);
+      var disposable = Disposer.newDisposable("GlassPaneListeners");
+      var handle = DockableEditorContainerFactory.Companion.disposeOnCancel(coroutineScope, disposable);
+      glassPaneListenerDisposable = () -> {
+        try {
+          Disposer.dispose(disposable);
+        }
+        finally {
+          handle.dispose();
+        }
+      };
       IdeGlassPaneUtil.find(currentOver.getComponent())
-        .addPainter(currentOver.getComponent(), currentPainter, glassPaneListenersDisposable);
+        .addPainter(currentOver.getComponent(), currentPainter, disposable);
     }
     if (currentPainter instanceof MyDropAreaPainter) {
       ((MyDropAreaPainter)currentPainter).processDropOver();
@@ -264,8 +273,9 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       currentOverInfo = null;
       currentOverImg = null;
 
-      Disposer.dispose(glassPaneListenersDisposable);
-      glassPaneListenersDisposable = Disposer.newDisposable();
+      if (glassPaneListenerDisposable != null) {
+        glassPaneListenerDisposable.dispose();
+      }
       currentPainter = null;
     }
   }

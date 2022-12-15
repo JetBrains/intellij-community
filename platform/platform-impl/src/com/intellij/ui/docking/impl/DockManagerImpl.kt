@@ -383,8 +383,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
     SwingUtilities.invokeLater { window.uiContainer.preferredSize = null }
   }
 
-  fun createNewDockContainerFor(file: VirtualFile,
-                                fileEditorManager: FileEditorManagerImpl): FileEditorComposite {
+  fun createNewDockContainerFor(file: VirtualFile, fileEditorManager: FileEditorManagerImpl): FileEditorComposite {
     val container = getFactory(DockableEditorContainerFactory.TYPE)!!.createContainer(null)
 
     // Order is important here. Create the dock window, then create the editor window. That way, any listeners can check to see if the
