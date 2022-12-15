@@ -191,4 +191,39 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         })
     }
 
+    fun checkFlexibleFunctionalInterfaceType(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+                package test.pkg;
+                public interface ThrowingRunnable {
+                    void run() throws Throwable;
+                }
+            """.trimIndent()
+        )
+        myFixture.addClass(
+            """
+                package test.pkg;
+                public class Assert {
+                    public static <T extends Throwable> T assertThrows(Class<T> expectedThrowable, ThrowingRunnable runnable) {}
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                import test.pkg.Assert
+
+                fun dummy() = Any()
+                
+                fun test() {
+                    Assert.assertThrows(Throwable::class.java) { dummy() }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val uLambdaExpression = uFile.findElementByTextFromPsi<ULambdaExpression>("{ dummy() }")
+            .orFail("cant convert to ULambdaExpression")
+        TestCase.assertEquals("PsiType:ThrowingRunnable", uLambdaExpression.functionalInterfaceType?.toString())
+    }
+
 }
