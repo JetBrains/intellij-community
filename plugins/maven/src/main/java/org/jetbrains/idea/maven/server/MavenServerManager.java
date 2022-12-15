@@ -2,8 +2,8 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.impl.TrustStateListener;
 import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.impl.trustedProjects.TrustedProjectsListener;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
@@ -115,7 +115,7 @@ public final class MavenServerManager implements Disposable {
       }
     });
 
-    connection.subscribe(TrustStateListener.TOPIC, new TrustStateListener() {
+    connection.subscribe(TrustedProjectsListener.TOPIC, new TrustedProjectsListener() {
       @Override
       public void onProjectTrusted(@NotNull Project project) {
         MavenProjectsManager manager = MavenProjectsManager.getInstance(project);

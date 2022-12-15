@@ -4,8 +4,8 @@ package com.jetbrains.packagesearch.intellij.plugin.util
 import com.intellij.ProjectTopics
 import com.intellij.externalSystem.DependencyModifierService
 import com.intellij.facet.FacetManager
-import com.intellij.ide.impl.TrustStateListener
 import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.impl.trustedProjects.TrustedProjectsListener
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.ApplicationManager
@@ -83,8 +83,8 @@ fun <L : Any, K> Project.messageBusFlow(
 
 internal val Project.trustedProjectFlow: Flow<Boolean>
     get() {
-        return ApplicationManager.getApplication().messageBusFlow(TrustStateListener.TOPIC, { isTrusted() }) {
-            object : TrustStateListener {
+        return ApplicationManager.getApplication().messageBusFlow(TrustedProjectsListener.TOPIC, { isTrusted() }) {
+            object : TrustedProjectsListener {
                 override fun onProjectTrusted(project: Project) {
                     if (project == this@trustedProjectFlow) trySend(isTrusted())
                 }
