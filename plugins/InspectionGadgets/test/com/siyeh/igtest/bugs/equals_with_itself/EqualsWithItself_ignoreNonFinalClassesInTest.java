@@ -1,17 +1,17 @@
 import java.util.*;
 
-class EqualsWithItself_ignoreNonFinalClasses {
+class EqualsWithItself_ignoreNonFinalClassesInTest {
 
   void objectTest(Object o) {
     org.junit.jupiter.api.Assertions.assertEquals(o, o);
   }
 
   void stringTest(String s) {
-    <error descr="Cannot return a value from a method with void result type">return org.junit.jupiter.api.Assertions.<warning descr="'assertEquals()' called on itself">assertEquals</warning>(s, s);</error>
+    org.junit.jupiter.api.Assertions.<warning descr="'assertEquals()' called on itself">assertEquals</warning>(s, s);
   }
 
   boolean stringEquals(String s) {
-    return s.equalsIgnoreCase(s);
+    return s.<warning descr="'equalsIgnoreCase()' called on itself">equalsIgnoreCase</warning>(s);
   }
 
   void primitiveTest(int i) {

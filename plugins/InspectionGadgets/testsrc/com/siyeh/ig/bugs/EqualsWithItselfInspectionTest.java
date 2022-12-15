@@ -18,7 +18,7 @@ public class EqualsWithItselfInspectionTest extends LightJavaInspectionTestCase 
     doTest();
   }
 
-  public void testEqualsWithItself_ignoreNonFinalClasses() {
+  public void testEqualsWithItself_ignoreNonFinalClassesInTest() {
     doTest();
   }
 

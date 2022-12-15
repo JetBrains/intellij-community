@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.SetInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -8,6 +9,8 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.DelegatingFix;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -70,12 +73,12 @@ public class EqualsWithItselfInspection extends BaseInspection {
                                                                        ASSERTJ_COMPARISON, ASSERTJ_THE_SAME, ASSERTJ_ASSERT_THAT);
 
   @SuppressWarnings("PublicField")
-  public boolean ignoreNonFinalClasses = false;
+  public boolean ignoreNonFinalClassesInTest = false;
 
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox("ignoreNonFinalClasses", InspectionGadgetsBundle.message(
+      checkbox("ignoreNonFinalClassesInTest", InspectionGadgetsBundle.message(
         "equals.with.itself.option")));
   }
 
@@ -90,19 +93,28 @@ public class EqualsWithItselfInspection extends BaseInspection {
     return new EqualsWithItselfVisitor();
   }
 
+  @Override
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final Boolean canEnableOption = (Boolean)infos[0];
+    return canEnableOption?
+           new DelegatingFix(new SetInspectionOptionFix(this, "ignoreNonFinalClassesInTest",
+                                                 InspectionGadgetsBundle.message("equals.with.itself.option"), true)) : null;
+  }
+
   private class EqualsWithItselfVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (checkArgumentFinalLibraryClassOrPrimitivesForTest(expression) && isEqualsWithItself(expression)) {
-        registerMethodCallError(expression);
+      boolean isArgumentFinalLibraryClass = isFinalLibraryClassOrPrimitives(expression);
+      boolean isTestAssertion = TEST_ASSERTIONS.test(expression);
+      if ((!ignoreNonFinalClassesInTest || !isTestAssertion || isArgumentFinalLibraryClass) && isEqualsWithItself(expression)) {
+        registerMethodCallError(expression, !ignoreNonFinalClassesInTest && isTestAssertion && !isArgumentFinalLibraryClass);
       }
     }
 
-    private boolean checkArgumentFinalLibraryClassOrPrimitivesForTest(PsiMethodCallExpression expression) {
-      if (!ignoreNonFinalClasses) return true;
-      if (!TEST_ASSERTIONS.test(expression)) return false;
+    private static boolean isFinalLibraryClassOrPrimitives(PsiMethodCallExpression expression) {
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList.getExpressionCount() < 1) return false;
       PsiType type = argumentList.getExpressions()[0].getType();
