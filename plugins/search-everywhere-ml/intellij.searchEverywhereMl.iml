@@ -85,5 +85,6 @@
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.vcs" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.yaml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.kotlin" scope="RUNTIME" />
   </component>
 </module>
