@@ -9,7 +9,6 @@ import com.intellij.psi.impl.CompositeShortNamesCache
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.util.Processor
-import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
@@ -103,16 +102,9 @@ class KotlinIndicesHelper(
     }
 
     fun getTopLevelExtensionOperatorsByName(name: String): Collection<FunctionDescriptor> {
-        val values = SmartList<KtNamedFunction>()
-        KotlinFunctionShortNameIndex.processElements(name, project, scope) {
-            ProgressManager.checkCanceled()
-            if (it.parent is KtFile && it.receiverTypeReference != null && it.hasModifier(KtTokens.OPERATOR_KEYWORD)) {
-                values += it
-            }
-            true
+        return KotlinFunctionShortNameIndex.getAllElements(name, project, scope) {
+            it.parent is KtFile && it.receiverTypeReference != null && it.hasModifier(KtTokens.OPERATOR_KEYWORD)
         }
-
-        return values
             .flatMap {
                 ProgressManager.checkCanceled()
                 it.resolveToDescriptors<FunctionDescriptor>()
@@ -122,16 +114,9 @@ class KotlinIndicesHelper(
     }
 
     fun getMemberOperatorsByName(name: String): Collection<FunctionDescriptor> {
-        val values = SmartList<KtNamedFunction>()
-        KotlinFunctionShortNameIndex.processElements(name, project, scope) {
-            ProgressManager.checkCanceled()
-            if (it.parent is KtClassBody && it.receiverTypeReference == null && it.hasModifier(KtTokens.OPERATOR_KEYWORD)) {
-                values += it
-            }
-            true
+        return KotlinFunctionShortNameIndex.getAllElements(name, project, scope) {
+            it.parent is KtClassBody && it.receiverTypeReference == null && it.hasModifier(KtTokens.OPERATOR_KEYWORD)
         }
-
-        return values
             .flatMap {
                 ProgressManager.checkCanceled()
                 it.resolveToDescriptors<FunctionDescriptor>()
@@ -324,13 +309,8 @@ class KotlinIndicesHelper(
     }
 
     fun getKotlinEnumsByName(name: String): Collection<DeclarationDescriptor> {
-        val enumEntries = SmartList<KtEnumEntry>()
-        KotlinClassShortNameIndex.processElements(name, project, scope) {
-            ProgressManager.checkCanceled()
-            if (it is KtEnumEntry) {
-                enumEntries += it
-            }
-            true
+        val enumEntries = KotlinClassShortNameIndex.getAllElements(name, project, scope) {
+            it is KtEnumEntry
         }
         val result = HashSet<DeclarationDescriptor>(enumEntries.size)
         for (enumEntry in enumEntries) {
@@ -503,11 +483,7 @@ class KotlinIndicesHelper(
         processor: (CallableDescriptor) -> Unit
     ) {
         val values = mutableSetOf<KtNamedDeclaration>()
-        val callableDeclarationProcessor: (t: KtNamedDeclaration) -> Boolean = {
-            ProgressManager.checkCanceled()
-            values += it
-            true
-        }
+        val callableDeclarationProcessor = CancelableCollectFilterProcessor(values, CancelableCollectFilterProcessor.ALWAYS_TRUE)
         KotlinFunctionShortNameIndex.processElements(name, project, scope, callableDeclarationProcessor)
         KotlinPropertyShortNameIndex.processElements(name, project, scope, callableDeclarationProcessor)
         val processed = HashSet<CallableDescriptor>(values.size)

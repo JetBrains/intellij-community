@@ -10,9 +10,15 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.Processors
+import com.intellij.util.SmartList
 import com.intellij.util.indexing.IdFilter
 
 abstract class KotlinStringStubIndexExtension<PsiNav : NavigatablePsiElement>(private val valueClass: Class<PsiNav>) : StringStubIndexExtension<PsiNav>() {
+    fun getAllElements(s: String, project: Project, scope: GlobalSearchScope, filter: (PsiNav) -> Boolean): List<PsiNav> {
+        val values = SmartList<PsiNav>()
+        processElements(s, project, scope, null, CancelableCollectFilterProcessor(values, filter))
+        return values
+    }
     /**
      * Note: [processor] should not invoke any indices as it could lead to deadlock. Nested index access is forbidden.
      */
@@ -25,6 +31,17 @@ abstract class KotlinStringStubIndexExtension<PsiNav : NavigatablePsiElement>(pr
      */
     fun processElements(s: String, project: Project, scope: GlobalSearchScope, idFilter: IdFilter? = null, processor: Processor<in PsiNav>): Boolean {
         return StubIndex.getInstance().processElements(key, s, project, scope, idFilter, valueClass, processor)
+    }
+
+    fun getAllElements(
+        project: Project,
+        scope: GlobalSearchScope,
+        keyFilter: (String) -> Boolean = { true },
+        valueFilter: (PsiNav) -> Boolean
+    ): List<PsiNav> {
+        val values = SmartList<PsiNav>()
+        processAllElements(project, scope, keyFilter, CancelableCollectFilterProcessor(values, valueFilter))
+        return values
     }
 
     fun processAllElements(
@@ -66,4 +83,8 @@ class CancelableCollectFilterProcessor<T>(
     }
 
     override fun accept(t: T): Boolean = filter(t)
+
+    companion object {
+        val ALWAYS_TRUE: (Any) -> Boolean = { true }
+    }
 }
