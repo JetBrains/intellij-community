@@ -17,7 +17,7 @@ MODULES
         Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
         project.commonMain (refines, COMPILE)
         project.iosMain (refines, COMPILE)
-        Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB | ios_arm64 (PROVIDED)
+        Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
     project.iosArm64Test
         Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
         project.commonMain (friend, TEST)
@@ -25,24 +25,24 @@ MODULES
         project.iosArm64Main (friend, TEST)
         project.iosMain (friend, TEST)
         project.iosTest (refines, TEST)
-        Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB | ios_arm64 (PROVIDED)
+        Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
     project.iosMain
         Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
         project.commonMain (refines, COMPILE)
         Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
-        Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB | [(ios_arm64, ios_x64)] (PROVIDED)
+        Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
     project.iosTest
         Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
         project.commonMain (friend, TEST)
         project.commonTest (refines, TEST)
         project.iosMain (friend, TEST)
         Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
-        Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB | [(ios_arm64, ios_x64)] (PROVIDED)
+        Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
     project.iosX64Main
         Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
         project.commonMain (refines, COMPILE)
         project.iosMain (refines, COMPILE)
-        Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB | ios_x64 (PROVIDED)
+        Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
     project.iosX64Test
         Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
         project.commonMain (friend, TEST)
@@ -50,7 +50,7 @@ MODULES
         project.iosMain (friend, TEST)
         project.iosTest (refines, TEST)
         project.iosX64Main (friend, TEST)
-        Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB | ios_x64 (PROVIDED)
+        Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
     project.main
         Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
         project.commonMain (refines, COMPILE)
