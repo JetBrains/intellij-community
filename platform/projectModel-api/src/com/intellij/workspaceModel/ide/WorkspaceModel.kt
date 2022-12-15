@@ -28,20 +28,6 @@ interface WorkspaceModel {
    */
   fun updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
 
-  @Deprecated("Zhenja please use the update method with the debug message")
-  fun updateProjectModel(updater: (MutableEntityStorage) -> Unit) {
-    updateProjectModel("Project model update (default description)", updater)
-  }
-
-  /**
-   * Update project model without the notification to message bus and without resetting accumulated changes.
-   *
-   * This method doesn't require write action.
-   */
-  @Deprecated("Method will be removed from interface. Use WorkspaceModelImpl#updateProjectModelSilent only " +
-              "if you are absolutely sure you need it")
-  fun updateProjectModelSilent(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
-
   /**
    * Get builder that can be updated in background and applied later and a project model.
    *

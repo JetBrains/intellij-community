@@ -152,7 +152,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
    * This method doesn't require write action.
    */
   @Synchronized
-  final override fun updateProjectModelSilent(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
+  fun updateProjectModelSilent(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
     if (projectModelVersionUpdate.get() == entityStorage.pointer.version) {
       log.error("Trying to update project model twice from the same version. Maybe recursive call of 'updateProjectModel'?")
     }

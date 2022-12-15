@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
@@ -48,7 +49,7 @@ class ModuleTestPropertiesTest {
     UsefulTestCase.assertEmpty(workspaceModel.entityStorage.current.entities (TestModulePropertiesEntity::class.java).toList())
 
     runWriteActionAndWait {
-      workspaceModel.updateProjectModel{ builder ->
+      workspaceModel.updateProjectModel { builder ->
         val moduleEntity = builder.resolve(testModule.moduleEntityId)
         builder.modifyEntity(moduleEntity!!) {
           this.testProperties = TestModulePropertiesEntity(ModuleId(mainModule.name), Source)
