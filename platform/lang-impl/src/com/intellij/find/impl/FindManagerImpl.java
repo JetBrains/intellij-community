@@ -203,7 +203,6 @@ public final class FindManagerImpl extends FindManager {
     myFindInProjectModel.setFromCursor(false);
     myFindInProjectModel.setForward(true);
     myFindInProjectModel.setGlobal(true);
-    myFindInProjectModel.setMultiline(true);
     myFindInProjectModel.setSearchInProjectFiles(false);
     return myFindInProjectModel;
   }
@@ -451,7 +450,7 @@ public final class FindManagerImpl extends FindManager {
 
       if (findmodel.isRegularExpressions()) {
         newStringToFind = StringUtil.replace(s, "\\n", "\n"); // temporary convert back escaped symbols
-        newStringToFind = newStringToFind.replaceAll( "\n", "\\\\n");
+        newStringToFind = StringUtil.replace(newStringToFind, "\n", "\\n");
       } else {
         newStringToFind = StringUtil.escapeToRegexp(s);
         model.setRegularExpressions(true);
@@ -935,8 +934,7 @@ public final class FindManagerImpl extends FindManager {
 
   @Override
   public void findUsagesInEditor(@NotNull PsiElement element, @NotNull FileEditor fileEditor) {
-    if (fileEditor instanceof TextEditor) {
-      TextEditor textEditor = (TextEditor)fileEditor;
+    if (fileEditor instanceof TextEditor textEditor) {
       Editor editor = textEditor.getEditor();
       Document document = editor.getDocument();
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
