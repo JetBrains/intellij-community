@@ -365,26 +365,24 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
                                  kind: WorkspaceFileKind,
                                  entity: WorkspaceEntity,
                                  customData: WorkspaceFileSetData?) {
-      fileSets.removeValueIf(root) { it is WorkspaceFileSetImpl && isResolvesTo(it.entityReference, entity) }
+      fileSets.removeValueIf(root) { it is WorkspaceFileSetImpl && it.entityReference.isReferenceTo(entity) }
       if (customData is JvmPackageRootData) {
         fileSetsByPackagePrefix.removeByPrefixAndReference(customData.packagePrefix, entity.createReference())
       }
     }
 
-    private fun isResolvesTo(reference: EntityReference<*>, entity: WorkspaceEntity) = reference.isReferenceTo(entity) 
-
     override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, entity: WorkspaceEntity) {
       val excludedRootFile = rootFileSupplier.findFile(excludedRoot)
       if (excludedRootFile != null) {
         //todo compare origins, not just their entities?
-        fileSets.removeValueIf(excludedRootFile) { it is ExcludedFileSet && isResolvesTo(it.entityReference, entity) }
+        fileSets.removeValueIf(excludedRootFile) { it is ExcludedFileSet && it.entityReference.isReferenceTo(entity) }
       }
     }
 
     override fun registerExcludedRoot(excludedRoot: VirtualFile,
                                       excludedFrom: WorkspaceFileKind,
                                       entity: WorkspaceEntity) {
-      fileSets.removeValueIf(excludedRoot) { it is ExcludedFileSet && isResolvesTo(it.entityReference, entity) }
+      fileSets.removeValueIf(excludedRoot) { it is ExcludedFileSet && it.entityReference.isReferenceTo(entity) }
     }
 
     override fun registerExclusionPatterns(root: VirtualFileUrl,
@@ -392,14 +390,14 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
                                            entity: WorkspaceEntity) {
       val rootFile = rootFileSupplier.findFile(root)
       if (rootFile != null) {
-        fileSets.removeValueIf(rootFile) { it is ExcludedFileSet.ByPattern && isResolvesTo(it.entityReference, entity) }
+        fileSets.removeValueIf(rootFile) { it is ExcludedFileSet.ByPattern && it.entityReference.isReferenceTo(entity) }
       }
     }
 
     override fun registerExclusionCondition(root: VirtualFile,
                                             condition: (VirtualFile) -> Boolean,
                                             entity: WorkspaceEntity) {
-      fileSets.removeValueIf(root) { it is ExcludedFileSet.ByCondition && isResolvesTo(it.entityReference, entity) }
+      fileSets.removeValueIf(root) { it is ExcludedFileSet.ByCondition && it.entityReference.isReferenceTo(entity) }
     }
   }
 }
