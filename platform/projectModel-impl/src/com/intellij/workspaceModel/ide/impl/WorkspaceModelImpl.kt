@@ -92,14 +92,13 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     loadedFromCache = false
   }
 
-  final override fun <R> updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> R): R {
+  final override fun updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (projectModelVersionUpdate.get() == entityStorage.pointer.version) {
       log.error("Trying to update project model twice from the same version. Maybe recursive call of 'updateProjectModel'?")
     }
     projectModelVersionUpdate.set(entityStorage.pointer.version)
 
-    val result: R
     val updateTimeMillis: Long
     val preHandlersTimeMillis: Long
     val collectChangesTimeMillis: Long
@@ -109,7 +108,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
       val before = entityStorage.current
       val builder = MutableEntityStorage.from(before)
       updateTimeMillis = measureTimeMillis {
-        result = updater(builder)
+        updater(builder)
       }
       preHandlersTimeMillis = measureTimeMillis {
         startPreUpdateHandlers(before, builder)
@@ -145,7 +144,6 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
       }
       log.debug { "Bridge initialization: $initializingTimeMillis ms, To snapshot: $toSnapshotTimeMillis ms" }
     }
-    return result
   }
 
   /**
@@ -154,13 +152,12 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
    * This method doesn't require write action.
    */
   @Synchronized
-  final override fun <R> updateProjectModelSilent(description: @NonNls String, updater: (MutableEntityStorage) -> R): R {
+  final override fun updateProjectModelSilent(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
     if (projectModelVersionUpdate.get() == entityStorage.pointer.version) {
       log.error("Trying to update project model twice from the same version. Maybe recursive call of 'updateProjectModel'?")
     }
     projectModelVersionUpdate.set(entityStorage.pointer.version)
 
-    val result: R
     val newStorage: EntityStorageSnapshot
     val updateTimeMillis: Long
     val toSnapshotTimeMillis: Long
@@ -168,7 +165,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
       val before = entityStorage.current
       val builder = MutableEntityStorage.from(entityStorage.current)
       updateTimeMillis = measureTimeMillis {
-        result = updater(builder)
+        updater(builder)
       }
       toSnapshotTimeMillis = measureTimeMillis {
         newStorage = builder.toSnapshot()
@@ -186,7 +183,6 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     else {
       log.debug { "Project model update details: Updater code: $updateTimeMillis ms, To snapshot: $toSnapshotTimeMillis m" }
     }
-    return result
   }
 
   final override fun getBuilderSnapshot(): BuilderSnapshot {

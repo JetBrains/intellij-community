@@ -26,11 +26,11 @@ interface WorkspaceModel {
    * Use [description] to briefly describe what do you update. This message will be logged and can be used for debugging purposes.
    *   For testing there is an extension method that doesn't require a description [com.intellij.testFramework.workspaceModel.updateProjectModel].
    */
-  fun <R> updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> R): R
+  fun updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
 
   @Deprecated("Zhenja please use the update method with the debug message")
-  fun <R> updateProjectModel(updater: (MutableEntityStorage) -> R): R {
-    return updateProjectModel("Project model update (default description)", updater)
+  fun updateProjectModel(updater: (MutableEntityStorage) -> Unit) {
+    updateProjectModel("Project model update (default description)", updater)
   }
 
   /**
@@ -40,7 +40,7 @@ interface WorkspaceModel {
    */
   @Deprecated("Method will be removed from interface. Use WorkspaceModelImpl#updateProjectModelSilent only " +
               "if you are absolutely sure you need it")
-  fun <R> updateProjectModelSilent(description: @NonNls String, updater: (MutableEntityStorage) -> R): R
+  fun updateProjectModelSilent(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
 
   /**
    * Get builder that can be updated in background and applied later and a project model.

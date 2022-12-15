@@ -527,14 +527,15 @@ class ArtifactTest : ArtifactsTestCase() {
 
   fun `test async artifact initializing`() {
     repeat(1_000) {
-      val rootEntity = runWriteAction {
+      var rootEntity: ArtifactRootElementEntity? = null
+      runWriteAction {
         WorkspaceModel.getInstance(project).updateProjectModel {
-          it.addArtifactRootElementEntity(emptyList(), MySource)
+          rootEntity = it.addArtifactRootElementEntity(emptyList(), MySource)
         }
       }
       val threads = List(10) {
         Callable {
-          rootEntity.toElement(project, WorkspaceModel.getInstance(project).entityStorage)
+          rootEntity!!.toElement(project, WorkspaceModel.getInstance(project).entityStorage)
         }
       }
 
@@ -547,14 +548,15 @@ class ArtifactTest : ArtifactsTestCase() {
   fun `test artifacts with exceptions during initialization`() {
     var exceptionsThrown: List<Int> = emptyList()
     repeat(4) {
-      val rootEntity = runWriteAction {
+      var rootEntity: ArtifactRootElementEntity? = null
+      runWriteAction {
         WorkspaceModel.getInstance(project).updateProjectModel {
-          it.addArtifactRootElementEntity(emptyList(), MySource)
+          rootEntity = it.addArtifactRootElementEntity(emptyList(), MySource)
         }
       }
       ArtifactsTestingState.testLevel = it + 1
       try {
-        rootEntity.toElement(project, WorkspaceModel.getInstance(project).entityStorage)
+        rootEntity!!.toElement(project, WorkspaceModel.getInstance(project).entityStorage)
       } catch (e: IllegalStateException) {
         if (e.message?.contains("Exception on level") != true) {
           error("Unexpected exception")
@@ -693,11 +695,11 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test work with removed artifact via bridge`() = runWriteAction {
-    val artifactEntity = WorkspaceModel.getInstance(project).updateProjectModel {
+    WorkspaceModel.getInstance(project).updateProjectModel {
       val element = it.addArtifactRootElementEntity(emptyList(), MySource)
       it.addArtifactEntity("MyArtifact", PlainArtifactType.getInstance().id, true, null, element, MySource)
     }
-
+    val artifactEntity = WorkspaceModel.getInstance(project).currentSnapshot.entities(ArtifactEntity::class.java).single()
     val artifactBridge = ArtifactManager.getInstance(project).artifacts[0]
 
     WorkspaceModel.getInstance(project).updateProjectModel {
