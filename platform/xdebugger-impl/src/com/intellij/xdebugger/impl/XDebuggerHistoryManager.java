@@ -3,13 +3,13 @@ package com.intellij.xdebugger.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.XExpression;
@@ -17,6 +17,7 @@ import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Element;
+import org.jdom.Parent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +106,7 @@ public final class XDebuggerHistoryManager implements PersistentStateComponent<E
     }
 
     ExpressionState(@NotNull XExpression expression) {
-      myExpression = StringUtil.escapeChar(XmlStringUtil.escapeIllegalXmlChars(expression.getExpression()), '$');
+      myExpression = XmlStringUtil.escapeIllegalXmlChars(expression.getExpression());
       Language language = expression.getLanguage();
       myLanguageId = language == null ? null : language.getID();
       myCustomInfo = expression.getCustomInfo();
@@ -117,10 +118,21 @@ public final class XDebuggerHistoryManager implements PersistentStateComponent<E
       if (myEvaluationMode == null) {
         myEvaluationMode = EvaluationMode.EXPRESSION;
       }
-      return new XExpressionImpl(XmlStringUtil.unescapeIllegalXmlChars(StringUtil.unescapeChar(myExpression, '$')),
+      return new XExpressionImpl(XmlStringUtil.unescapeIllegalXmlChars(myExpression),
                                  Language.findLanguageByID(myLanguageId),
                                  myCustomInfo,
                                  myEvaluationMode);
+    }
+  }
+
+  public static class XDebuggerHistoryPathMacroFilter extends PathMacroFilter {
+    @Override
+    public boolean skipPathMacros(@NotNull Element element) {
+      Parent parent;
+      Parent grandParent;
+      return "expression-string".equals(element.getName()) &&
+             ((parent = element.getParent()) instanceof Element) && EXPRESSION_TAG.equals(((Element)parent).getName()) &&
+             ((grandParent = parent.getParent()) instanceof Element) && EXPRESSIONS_TAG.equals(((Element)grandParent).getName());
     }
   }
 }
