@@ -155,7 +155,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   public @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent,
                                                            @Nullable String currentWorkingDirectory,
                                                            boolean deferSessionStartUntilUiShown) {
-    TerminalWidget terminalWidget = new MyTerminalWidget();
+    TerminalWidget terminalWidget = new ShellTerminalWidget(myProject, mySettingsProvider, parent).asNewWidget();
     scheduleOpenSessionInDirectory(terminalWidget, currentWorkingDirectory, deferSessionStartUntilUiShown);
     return terminalWidget;
   }
