@@ -47,7 +47,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
     }
     else {
       topicClassToListenerDescriptor.putAll(map)
-      // adding project level listener for app level topic is not recommended, but supported
+      // adding project level listener to an app level topic is not recommended, but supported
       if (rootBus !== this) {
         rootBus.subscriberCache.clear()
       }
@@ -109,7 +109,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
     }
 
     ProgressManager.getInstance().executeNonCancelableSection {
-      // use linked hash map for repeatable results
+      // use a linked hash map for repeatable results
       val listenerDescriptors = topicClassToListenerDescriptor.remove(topic.listenerClass.name) ?: return@executeNonCancelableSection
       val listenerMap = LinkedHashMap<PluginDescriptor, MutableList<Any>>()
       for (listenerDescriptor in listenerDescriptors) {
@@ -119,7 +119,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
         catch (ignore: ExtensionNotApplicableException) {
         }
         catch (e: ProcessCanceledException) {
-          // ProgressManager have an assert for this case
+          // ProgressManager have an asserting for this case
           throw e
         }
         catch (e: Throwable) {
@@ -147,7 +147,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
 
     childBuses.forEach { it.clearSubscriberCache(topicAndHandlerPairs) }
 
-    // disposed handlers are not removed for TO_CHILDREN topics in the same way as for others directions
+    // disposed handlers are not removed for TO_CHILDREN topics in the same way as for other directions
     // because it is not wise to check each child bus - waitingBuses list can be used instead of checking each child bus message queue
     rootBus.queue.queue.removeIf { nullizeHandlersFromMessage(it, topicAndHandlerPairs) }
     return false
@@ -169,7 +169,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
    * Clear publisher cache, including child buses.
    */
   override fun clearPublisherCache() {
-    // keep it simple - we can infer plugin id from topic.getListenerClass(), but granular clearing not worth the code complication
+    // keep it simple - we can infer plugin id from topic.getListenerClass(), but granular clearing is not worth the code complication
     publisherCache.clear()
     childBuses.forEach { childBus ->
       if (childBus is CompositeMessageBus) {
@@ -224,8 +224,8 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
       subscribers.addAll(newSubscribers)
     }
     if (isChanged) {
-      // we can check it more precisely, but for simplicity, just clear all
-      // adding project level listener for app level topic is not recommended, but supported
+      // we can check it more precisely, but for simplicity, just clearing all
+      // adding project level listener for an app level topic is not recommended, but supported
       if (rootBus !== this) {
         rootBus.subscriberCache.clear()
       }
@@ -256,11 +256,17 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
 private class ToDirectChildrenMessagePublisher<L>(topic: Topic<L>, bus: CompositeMessageBus, private val childBuses: List<MessageBusImpl>)
   : MessagePublisher<L>(topic, bus), InvocationHandler {
   override fun publish(method: Method, args: Array<Any?>?, queue: MessageQueue?): Boolean {
-    var exceptions: MutableList<Throwable>? = null
+    var error: Throwable? = null
     var hasHandlers = false
     var handlers = bus.subscriberCache.computeIfAbsent(topic, bus::computeSubscribers)
     if (handlers.isNotEmpty()) {
-      exceptions = executeOrAddToQueue(topic, method, args, handlers, queue, null, bus)
+      error = executeOrAddToQueue(topic = topic,
+                                  method = method,
+                                  args = args,
+                                  handlers = handlers,
+                                  jobQueue = queue,
+                                  prevError = null,
+                                  bus = bus)
       hasHandlers = true
     }
 
@@ -285,9 +291,9 @@ private class ToDirectChildrenMessagePublisher<L>(topic: Topic<L>, bus: Composit
       }
 
       hasHandlers = true
-      exceptions = executeOrAddToQueue(topic, method, args, handlers, queue, exceptions, childBus)
+      error = executeOrAddToQueue(topic, method, args, handlers, queue, error, childBus)
     }
-    exceptions?.let(::throwExceptions)
+    error?.let(::throwError)
     return hasHandlers
   }
 }

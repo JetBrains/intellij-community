@@ -12,13 +12,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.messages.*
 import com.intellij.util.messages.Topic.BroadcastDirection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
-import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.lang.invoke.MethodHandle
@@ -61,8 +59,7 @@ open class MessageBusImpl : MessageBus {
   @JvmField
   internal val owner: MessageBusOwner
 
-  @MagicConstant(intValues = [ALIVE.toLong(), DISPOSED_STATE.toLong(), DISPOSE_IN_PROGRESS.toLong()])
-  private var disposeState: Int = ALIVE
+  private var disposeState = BusState.ALIVE
 
   // separate disposable must be used, because container will dispose bus connections in a separate step
   private var connectionDisposable: Disposable? = Disposer.newDisposable()
@@ -101,7 +98,7 @@ open class MessageBusImpl : MessageBus {
   }
 
   override fun simpleConnect(): SimpleMessageBusConnection {
-    // avoid registering in Dispose tree, default handler and deliverImmediately are not supported
+    // to avoid registering in Dispose tree, default handler and deliverImmediately are not supported
     checkNotDisposed()
     val connection = SimpleMessageBusConnectionImpl(this)
     subscribers.add(connection)
@@ -151,7 +148,7 @@ open class MessageBusImpl : MessageBus {
 
   fun disposeConnectionChildren() {
     // avoid any work on notifyConnectionTerminated
-    disposeState = DISPOSE_IN_PROGRESS
+    disposeState = BusState.DISPOSE_IN_PROGRESS
     Disposer.disposeChildren(connectionDisposable!!) { true }
   }
 
@@ -161,11 +158,11 @@ open class MessageBusImpl : MessageBus {
   }
 
   override fun dispose() {
-    if (disposeState == DISPOSED_STATE) {
+    if (disposeState == BusState.DISPOSED_STATE) {
       LOG.error("Already disposed: $this")
     }
 
-    disposeState = DISPOSED_STATE
+    disposeState = BusState.DISPOSED_STATE
     disposeChildren()
     connectionDisposable?.let {
       Disposer.dispose(it)
@@ -178,7 +175,7 @@ open class MessageBusImpl : MessageBus {
   }
 
   override val isDisposed: Boolean
-    get() = disposeState == DISPOSED_STATE || owner.isDisposed
+    get() = disposeState == BusState.DISPOSED_STATE || owner.isDisposed
 
   override fun hasUndeliveredEvents(topic: Topic<*>): Boolean {
     if (isDisposed) {
@@ -243,7 +240,7 @@ open class MessageBusImpl : MessageBus {
   }
 
   internal open fun notifyConnectionTerminated(topicAndHandlerPairs: Array<Any>): Boolean {
-    if (disposeState != ALIVE) {
+    if (disposeState != BusState.ALIVE) {
       return false
     }
 
@@ -261,7 +258,7 @@ open class MessageBusImpl : MessageBus {
   }
 
   internal fun deliverImmediately(connection: MessageBusConnectionImpl) {
-    if (disposeState == DISPOSED_STATE) {
+    if (disposeState == BusState.DISPOSED_STATE) {
       LOG.error("Already disposed: $this")
     }
 
@@ -283,13 +280,13 @@ open class MessageBusImpl : MessageBus {
       jobs.addFirst(newJobs[i])
     }
 
-    var exceptions: MutableList<Throwable>? = null
+    var error: Throwable? = null
     for (job in newJobs) {
       // remove here will be not linear as a job should be head (first element) in normal conditions
       jobs.removeFirstOccurrence(job)
-      exceptions = deliverMessage(job, queue, exceptions)
+      error = deliverMessage(job, queue, error)
     }
-    exceptions?.let(::throwExceptions)
+    error?.let(::throwError)
   }
 
   fun setMessageDeliveryListener(listener: MessageDeliveryListener?) {
@@ -371,19 +368,20 @@ internal class MessageQueue {
 }
 
 private val NA: Any = Any()
-private const val ALIVE: Int = 0
-private const val DISPOSE_IN_PROGRESS: Int = 1
-private const val DISPOSED_STATE: Int = 2
+
+private enum class BusState {
+  ALIVE, DISPOSE_IN_PROGRESS, DISPOSED_STATE
+}
 
 private fun pumpWaiting(jobQueue: MessageQueue) {
-  var exceptions: MutableList<Throwable>? = null
+  var error: Throwable? = null
   var job = jobQueue.current
   if (job != null) {
     if (job.bus.isDisposed) {
       MessageBusImpl.LOG.error("Accessing disposed message bus ${job.bus}")
     }
     else {
-      exceptions = deliverMessage(job, jobQueue, null)
+      error = deliverMessage(job = job, jobQueue = jobQueue, prevError = null)
     }
   }
 
@@ -393,17 +391,17 @@ private fun pumpWaiting(jobQueue: MessageQueue) {
       MessageBusImpl.LOG.error("Accessing disposed message bus ${job.bus}")
     }
     else {
-      exceptions = deliverMessage(job, jobQueue, exceptions)
+      error = deliverMessage(job = job, jobQueue = jobQueue, prevError = error)
     }
   }
-  exceptions?.let(::throwExceptions)
+  error?.let(::throwError)
 }
 
-private fun deliverMessage(job: Message, jobQueue: MessageQueue, prevExceptions: MutableList<Throwable>?): MutableList<Throwable>? {
+private fun deliverMessage(job: Message, jobQueue: MessageQueue, prevError: Throwable?): Throwable? {
   withClientId(job.clientId).use {
     jobQueue.current = job
     val handlers = job.handlers
-    var exceptions = prevExceptions
+    var error = prevError
     var index = job.currentHandlerIndex
     val size = handlers.size
     val lastIndex = size - 1
@@ -414,20 +412,20 @@ private fun deliverMessage(job: Message, jobQueue: MessageQueue, prevExceptions:
       job.currentHandlerIndex++
       val handler = handlers[index]
       if (handler != null) {
-        exceptions = invokeListener(methodHandle = job.method,
-                                    methodName = job.methodName,
-                                    args = job.args,
-                                    topic = job.topic,
-                                    handler = handler,
-                                    messageDeliveryListener = job.bus.messageDeliveryListener,
-                                    prevExceptions = exceptions)
+        error = invokeListener(methodHandle = job.method,
+                               methodName = job.methodName,
+                               args = job.args,
+                               topic = job.topic,
+                               handler = handler,
+                               messageDeliveryListener = job.bus.messageDeliveryListener,
+                               prevError = error)
       }
       if (++index != job.currentHandlerIndex) {
-        // handler published some events and message queue including a current job was processed as a result, so, stop processing
-        return exceptions
+        // handler published some events, and message queue including a current job was processed as a result, so, stop processing
+        return error
       }
     }
-    return exceptions
+    return error
   }
 }
 
@@ -464,7 +462,7 @@ internal open class MessagePublisher<L>(@JvmField protected val topic: Topic<L>,
       return false
     }
 
-    executeOrAddToQueue(topic, method, args, handlers, queue, null, bus)?.let(::throwExceptions)
+    executeOrAddToQueue(topic, method, args, handlers, queue, null, bus)?.let(::throwError)
     return true
   }
 }
@@ -475,21 +473,21 @@ internal fun executeOrAddToQueue(topic: Topic<*>,
                                  args: Array<Any?>?,
                                  handlers: Array<Any?>,
                                  jobQueue: MessageQueue?,
-                                 prevExceptions: MutableList<Throwable>?,
-                                 bus: MessageBusImpl): MutableList<Throwable>? {
+                                 prevError: Throwable?,
+                                 bus: MessageBusImpl): Throwable? {
   val methodHandle = MethodHandleCache.compute(method, args)
   if (jobQueue == null) {
-    var exceptions = prevExceptions
+    var error = prevError
     for (handler in handlers) {
-      exceptions = invokeListener(methodHandle = methodHandle,
-                                  methodName = method.name,
-                                  args = args,
-                                  topic = topic,
-                                  handler = handler ?: continue,
-                                  messageDeliveryListener = bus.messageDeliveryListener,
-                                  prevExceptions = exceptions)
+      error = invokeListener(methodHandle = methodHandle,
+                             methodName = method.name,
+                             args = args,
+                             topic = topic,
+                             handler = handler ?: continue,
+                             messageDeliveryListener = bus.messageDeliveryListener,
+                             prevError = error)
     }
-    return exceptions
+    return error
   }
   else {
     jobQueue.queue.offerLast(Message(topic = topic,
@@ -498,7 +496,7 @@ internal fun executeOrAddToQueue(topic: Topic<*>,
                                      args = args,
                                      handlers = handlers,
                                      bus = bus))
-    return prevExceptions
+    return prevError
   }
 }
 
@@ -506,7 +504,7 @@ internal fun executeOrAddToQueue(topic: Topic<*>,
 internal class ToParentMessagePublisher<L>(topic: Topic<L>, bus: MessageBusImpl) : MessagePublisher<L>(topic, bus), InvocationHandler {
   // args not-null
   override fun publish(method: Method, args: Array<Any?>?, queue: MessageQueue?): Boolean {
-    var exceptions: MutableList<Throwable>? = null
+    var error: Throwable? = null
     var parentBus = bus
     var hasHandlers = false
     while (true) {
@@ -522,12 +520,18 @@ internal class ToParentMessagePublisher<L>(topic: Topic<L>, bus: MessageBusImpl)
 
       if (handlers.isNotEmpty()) {
         hasHandlers = true
-        exceptions = executeOrAddToQueue(topic, method, args, handlers, queue, exceptions, bus)
+        error = executeOrAddToQueue(topic = topic,
+                                    method = method,
+                                    args = args,
+                                    handlers = handlers,
+                                    jobQueue = queue,
+                                    prevError = error,
+                                    bus = bus)
       }
       parentBus = parentBus.parentBus ?: break
     }
 
-    exceptions?.let(::throwExceptions)
+    error?.let(::throwError)
     return hasHandlers
   }
 }
@@ -568,7 +572,7 @@ private fun removeDisposedHandlers(topicAndHandlerPairs: Array<Any>, index: Int,
   val cachedHandlers = bus.subscriberCache.remove(topic) ?: return
   val handler = topicAndHandlerPairs[index + 1]
   // during immediate delivery, execution of one handler can lead to dispose of some connection
-  // and as a result other handlers may become obsolete
+  // and as a result, other handlers may become obsolete
   if (topic.isImmediateDelivery) {
     var i = 0
     val length = cachedHandlers.size
@@ -626,7 +630,7 @@ private fun invokeListener(methodHandle: MethodHandle,
                            topic: Topic<*>,
                            handler: Any,
                            messageDeliveryListener: MessageDeliveryListener?,
-                           prevExceptions: MutableList<Throwable>?): MutableList<Throwable>? {
+                           prevError: Throwable?): Throwable? {
   try {
     //println("${topic.displayName} ${topic.isImmediateDelivery}: $methodName(${args.contentToString()})")
     if (handler is MessageHandler) {
@@ -645,21 +649,27 @@ private fun invokeListener(methodHandle: MethodHandle,
     // do nothing for AbstractMethodError - this listener just does not implement something newly added yet
   }
   catch (e: Throwable) {
-    val exceptions = prevExceptions ?: mutableListOf()
     // ProcessCanceledException is rethrown only after executing all handlers
-    if (e is ProcessCanceledException || e is AssertionError || e is CancellationException) {
-      exceptions.add(e)
+    val error = if (e is ProcessCanceledException || e is AssertionError || e is CancellationException) {
+      e
     }
     else {
-      exceptions.add(RuntimeException("Cannot invoke (" +
-                                      "class=${handler::class.java.simpleName}, " +
-                                      "method=${methodName}, " +
-                                      "topic=${topic.displayName}" +
-                                      ")", e))
+      RuntimeException("Cannot invoke (" +
+                       "class=${handler::class.java.simpleName}, " +
+                       "method=${methodName}, " +
+                       "topic=${topic.displayName}" +
+                       ")", e)
     }
-    return exceptions
+
+    if (prevError == null) {
+      return error
+    }
+    else {
+      prevError.addSuppressed(error)
+      return prevError
+    }
   }
-  return prevExceptions
+  return prevError
 }
 
 private fun invokeMethod(handler: Any, args: Array<Any?>?, methodHandle: MethodHandle) {
@@ -671,14 +681,12 @@ private fun invokeMethod(handler: Any, args: Array<Any?>?, methodHandle: MethodH
   }
 }
 
-internal fun throwExceptions(exceptions: List<Throwable>) {
-  if (exceptions.size == 1) {
-    throw exceptions[0]
+internal fun throwError(error: Throwable) {
+  val suppressed = error.suppressed
+  if (suppressed.size > 1) {
+    suppressed.firstOrNull { it is ProcessCanceledException || it is CancellationException }?.let { throw it }
   }
-
-  exceptions.firstOrNull { it is ProcessCanceledException || it is CancellationException }?.let { throw it }
-
-  throw CompoundRuntimeException(exceptions)
+  throw error
 }
 
 private class SimpleMessageBusConnectionImpl(bus: MessageBusImpl) : BaseBusConnection(bus), SimpleMessageBusConnection {
