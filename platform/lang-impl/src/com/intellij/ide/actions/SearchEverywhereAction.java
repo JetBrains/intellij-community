@@ -48,7 +48,7 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    return new ActionButton(this, presentation, place, getMinimumSize(place)) {
+    return new ActionButton(this, presentation, place, () -> getMinimumSize(place)) {
       @Override protected void updateToolTipText() {
         String shortcutText = getShortcut();
 

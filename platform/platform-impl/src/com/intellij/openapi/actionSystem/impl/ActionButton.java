@@ -60,6 +60,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   public static final Key<Boolean> HIDE_DROPDOWN_ICON = Key.create("HIDE_DROPDOWN_ICON");
 
   private JBDimension myMinimumButtonSize;
+  private Supplier<? extends @NotNull Dimension> myMinimumButtonSizeFunction;
   private PropertyChangeListener myPresentationListener;
   private Icon myDisabledIcon;
   protected Icon myIcon;
@@ -80,11 +81,19 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
                       @Nullable Presentation presentation,
                       @NotNull String place,
                       @NotNull Dimension minimumSize) {
+    this(action, presentation, place, () -> minimumSize);
+  }
+
+  public ActionButton(@NotNull AnAction action,
+                      @Nullable Presentation presentation,
+                      @NotNull String place,
+                      @NotNull Supplier<? extends @NotNull Dimension> minimumSize) {
     boolean isTemplatePresentation = presentation == action.getTemplatePresentation();
     if (isTemplatePresentation) {
       LOG.warn(new Throwable("Template presentations must not be used directly"));
     }
-    setMinimumButtonSize(minimumSize);
+    this.myMinimumButtonSizeFunction = minimumSize;
+    updateMinimumSize();
     setIconInsets(null);
     myRollover = false;
     myMouseDown = false;
@@ -119,13 +128,23 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
   }
 
+  private void updateMinimumSize() {
+    myMinimumButtonSize = JBDimension.create(myMinimumButtonSizeFunction.get());
+  }
+
   public void setNoIconsInPopup(boolean noIconsInPopup) {
     myNoIconsInPopup = noIconsInPopup;
   }
 
+  public void setMinimumButtonSize(Supplier<? extends @NotNull Dimension> size) {
+    myMinimumButtonSizeFunction = size;
+    updateMinimumSize();
+  }
+
   // used in Rider, please don't change visibility
   public void setMinimumButtonSize(@NotNull Dimension size) {
-    myMinimumButtonSize = JBDimension.create(size);
+    myMinimumButtonSizeFunction = () -> size;
+    updateMinimumSize();
   }
 
   @Override
@@ -309,6 +328,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       myLook.updateUI();
     }
     updateToolTipText();
+    updateMinimumSize();
   }
 
   @Override

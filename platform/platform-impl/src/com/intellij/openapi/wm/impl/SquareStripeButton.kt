@@ -26,7 +26,7 @@ import java.awt.Rectangle
 import java.awt.event.MouseEvent
 
 internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
-  ActionButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, ActionToolbar.experimentalToolbarMinimumButtonSize()) {
+  ActionButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, { ActionToolbar.experimentalToolbarMinimumButtonSize() }) {
   companion object {
     fun createMoveGroup(toolWindow: ToolWindow) = ToolWindowMoveAction.GroupWithOutTop()
   }

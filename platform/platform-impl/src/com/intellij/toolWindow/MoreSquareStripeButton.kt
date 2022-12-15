@@ -20,7 +20,7 @@ import java.awt.event.MouseEvent
 
 internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowLeftToolbar) :
   ActionButton(createAction(toolWindowToolbar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR,
-               ActionToolbar.experimentalToolbarMinimumButtonSize()) {
+               { ActionToolbar.experimentalToolbarMinimumButtonSize() }) {
 
   init {
     setLook(SquareStripeButtonLook(this))
