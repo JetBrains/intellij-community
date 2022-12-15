@@ -14,12 +14,11 @@ public interface InspectionProfileLoader {
   InspectionProfileImpl loadProfileByName(@NotNull String profileName);
 
   @Nullable
-  InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) throws IOException, JDOMException;
+  InspectionProfileImpl loadProfileByPath(@NotNull String profilePath);
 
   @Nullable
   default InspectionProfileImpl tryLoadProfileByNameOrPath(@Nullable String profileName, @Nullable String profilePath,
-                                                           @NotNull String configSource, @NotNull Consumer<@NotNull String> onFailure)
-    throws IOException, JDOMException {
+                                                           @NotNull String configSource, @NotNull Consumer<@NotNull String> onFailure) {
     //fetch profile by name from project file (project profiles can be disabled)
     if (profileName != null && !profileName.isEmpty()) {
       InspectionProfileImpl inspectionProfile = loadProfileByName(profileName);

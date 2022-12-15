@@ -4,7 +4,6 @@ package com.intellij.codeInspection;
 import com.intellij.ProjectTopics;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.codeInspection.inspectionProfile.YamlInspectionProfileImpl;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.conversion.ConversionListener;
@@ -66,7 +65,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.AsyncPromise;
-import org.yaml.snakeyaml.parser.ParserException;
 
 import javax.xml.stream.XMLStreamException;
 import java.io.File;
@@ -201,7 +199,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   protected void run(@NotNull Path projectPath, @NotNull Disposable parentDisposable)
-    throws IOException, JDOMException, InterruptedException, ExecutionException {
+    throws IOException, InterruptedException, ExecutionException {
     Project project = openProject(projectPath, parentDisposable);
     if (project == null) return;
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.initializing.project"));
@@ -712,7 +710,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     });
   }
 
-  private @NotNull InspectionProfileImpl loadInspectionProfile(@NotNull Project project) throws IOException, JDOMException {
+  private @NotNull InspectionProfileImpl loadInspectionProfile(@NotNull Project project) {
     InspectionProfileLoader profileLoader = getInspectionProfileLoader(project);
     InspectionProfileImpl profile = profileLoader.tryLoadProfileByNameOrPath(myProfileName, myProfilePath, "command line",
                                                                              (msg) -> onFailure(msg));
@@ -754,15 +752,23 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       }
 
       @Override
-      public @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) throws IOException, JDOMException {
+      public @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) {
         InspectionProfileImpl inspectionProfileFromYaml = tryLoadProfileFromYaml(profilePath);
         if (inspectionProfileFromYaml != null) return inspectionProfileFromYaml;
 
-        InspectionProfileImpl inspectionProfile = ApplicationInspectionProfileManagerBase.getInstanceBase().loadProfile(profilePath);
-        if (inspectionProfile != null) {
-          reportMessage(1, "Loaded the '" + inspectionProfile.getName() + "' profile from the file '" + profilePath + "'");
+        try {
+          InspectionProfileImpl inspectionProfile = ApplicationInspectionProfileManagerBase.getInstanceBase().loadProfile(profilePath);
+          if (inspectionProfile != null) {
+            reportMessage(1, "Loaded the '" + inspectionProfile.getName() + "' profile from the file '" + profilePath + "'");
+          }
+          return inspectionProfile;
         }
-        return inspectionProfile;
+        catch (IOException e) {
+          throw new InspectionApplicationException("Failed to read inspection profile file '" + profilePath + "': " + e);
+        }
+        catch (JDOMException e) {
+          throw new InspectionApplicationException("Invalid xml structure of inspection profile file '" + profilePath + "': " + e);
+        }
       }
     };
   }
