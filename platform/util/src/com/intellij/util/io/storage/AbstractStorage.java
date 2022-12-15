@@ -409,6 +409,12 @@ public abstract class AbstractStorage implements IStorage {
     public int getRecordId() {
       return myRecordId;
     }
+
+    @NotNull
+    @Override
+    public ByteArraySequence getResultingBuffer() {
+      return getByteStream().getResultingBuffer();
+    }
   }
 
   public final class AppenderStream extends DataOutputStream implements IAppenderStream {
