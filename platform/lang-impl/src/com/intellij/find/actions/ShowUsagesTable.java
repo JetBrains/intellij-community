@@ -12,6 +12,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
@@ -167,6 +168,13 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
             if (element != null) {
               UsageViewStatisticsCollector.logItemChosen(element.getProject(), myUsageView, CodeNavigateSource.ShowUsagesPopup,
                                                          element.getLanguage(), false);
+
+              SpeedSearchSupply supply = SpeedSearchSupply.getSupply(this);
+              String enteredPrefix = supply != null ? supply.getEnteredPrefix() : null;
+              ShowUsagesMetricsCollector.logItemChosen(element.getProject(), myUsageView, getSelectedRow(),
+                                                       getRowCount(),
+                                                       enteredPrefix != null ? enteredPrefix.length() : 0,
+                                                       element.getLanguage());
             }
           }
           else if (usage instanceof Navigatable) {
