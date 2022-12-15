@@ -39,6 +39,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.runBlockingModal0
 import com.intellij.openapi.project.*
@@ -537,7 +538,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     val activity = StartUpMeasurer.startActivity("project opening preparation")
 
-    if (!checkTrustedState(projectStoreBaseDir)) {
+    val trusted = blockingContext {
+      checkTrustedState(projectStoreBaseDir)
+    }
+    if (!trusted) {
       LOG.info("Project is not trusted, aborting")
       activity.end()
       throw ProcessCanceledException()
