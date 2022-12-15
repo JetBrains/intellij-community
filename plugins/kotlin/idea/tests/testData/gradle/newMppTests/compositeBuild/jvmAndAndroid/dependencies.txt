@@ -8,11 +8,9 @@ MODULES
         consumerBuild.consumerA.commonMain (TEST)
     consumerBuild.consumerA.commonMain
         producerBuild.producerA.commonMain (COMPILE)
-        producerBuild.producerA.jvmMain (COMPILE)
     consumerBuild.consumerA.commonTest
         consumerBuild.consumerA.commonMain (TEST)
         producerBuild.producerA.commonMain (TEST)
-        producerBuild.producerA.jvmMain (TEST)
     consumerBuild.consumerA.jvmMain
         consumerBuild.consumerA.commonMain (COMPILE)
         producerBuild.producerA.commonMain (COMPILE)
