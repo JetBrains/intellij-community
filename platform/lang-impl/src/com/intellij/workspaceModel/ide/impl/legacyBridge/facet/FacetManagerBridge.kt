@@ -256,10 +256,6 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     return moduleBridge.diff?.facetMapping() ?: moduleBridge.entityStorage.current.facetMapping()
   }
 
-  private inline fun <reified R> updateBuilder(builder: MutableEntityStorage, crossinline updater: MutableExternalEntityMapping<Facet<*>>.() -> R): R {
-    return builder.mutableFacetMapping().updater()
-  }
-
   private inline fun updateDiffOrStorage(crossinline updater: MutableExternalEntityMapping<Facet<*>>.() -> Unit) {
     val diff = moduleBridge.diff
 
