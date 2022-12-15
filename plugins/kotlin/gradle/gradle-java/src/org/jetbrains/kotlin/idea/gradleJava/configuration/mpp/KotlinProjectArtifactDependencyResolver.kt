@@ -16,13 +16,18 @@ interface KotlinProjectArtifactDependencyResolver {
     fun resolve(dependency: IdeaKotlinProjectArtifactDependency): Set<IdeaKotlinSourceDependency>
 
     companion object {
-        val key = Key.create<KotlinProjectArtifactDependencyResolver>(KotlinProjectArtifactDependencyResolver::class.java.name)
+        internal val key = Key.create<MutableList<KotlinProjectArtifactDependencyResolver>>(
+            KotlinProjectArtifactDependencyResolver::class.java.name
+        )
+
+        fun register(project: DataNode<out ProjectData>, resolver: KotlinProjectArtifactDependencyResolver) {
+            project.putUserDataIfAbsent(key, mutableListOf()).add(resolver)
+        }
     }
 }
 
 fun KotlinProjectArtifactDependencyResolver(project: DataNode<ProjectData>): KotlinProjectArtifactDependencyResolver {
-    project.getUserData(KotlinProjectArtifactDependencyResolver.key)?.let { return it }
-    return project.putUserDataIfAbsent(KotlinProjectArtifactDependencyResolver.key, KotlinProjectArtifactDependencyResolverImpl(project))
+    return KotlinProjectArtifactDependencyResolverImpl(project)
 }
 
 private class KotlinProjectArtifactDependencyResolverImpl(
@@ -30,6 +35,10 @@ private class KotlinProjectArtifactDependencyResolverImpl(
 ) : KotlinProjectArtifactDependencyResolver {
 
     override fun resolve(dependency: IdeaKotlinProjectArtifactDependency): Set<IdeaKotlinSourceDependency> {
+        val resolvedByExtensions = project.getUserData(KotlinProjectArtifactDependencyResolver.key).orEmpty()
+            .flatMap { resolver -> resolver.resolve(dependency) }
+            .toSet()
+
         val sourceSetMap = project.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS).orEmpty()
         val artifactsMap = project.getUserData(GradleProjectResolver.CONFIGURATION_ARTIFACTS).orEmpty()
         val modulesOutputsMap = project.getUserData(GradleProjectResolver.MODULES_OUTPUTS).orEmpty()
@@ -42,6 +51,6 @@ private class KotlinProjectArtifactDependencyResolverImpl(
                 .mapNotNull { dependsOnId -> sourceSetMap[dependsOnId]?.second?.name } + sourceSet.name
 
             dependency.resolved(sourceSetNames.toSet())
-        }.toSet()
+        }.toSet() + resolvedByExtensions
     }
 }
