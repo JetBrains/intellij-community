@@ -168,15 +168,6 @@ class PluginLayout private constructor(
     fun withPatch(patcher: BiConsumer<ModuleOutputPatcher, BuildContext>) {
       layout.patchers = layout.patchers.add(patcher::accept)
     }
-
-    // Used by MPS
-    @Suppress("unused")
-    fun withModuleTests(moduleName: String) {
-      withPatch { patcher, context ->
-        val moduleTests = Path.of(context.getModuleTestsOutputPath(context.findRequiredModule(moduleName)))
-        patcher.patchModuleOutput(layout.mainModule, moduleTests)
-      }
-    }
   }
 
   @ApiStatus.Experimental
