@@ -3,12 +3,15 @@ package com.siyeh.ig.logging;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,6 +24,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
 
   @NonNls
   static final Set<String> loggingMethodNames = ContainerUtil.newHashSet("log", "trace", "debug", "info", "warn", "error", "fatal");
+  private static final int MAX_PROCESSED_VARIABLES = 5;
 
   @NotNull
   @Override
@@ -134,46 +138,58 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       return value instanceof String ? countPlaceholders((String)value) : 0;
     }
 
-    private static boolean buildString(PsiExpression expression, StringBuilder builder) {
-      if (expression == null) {
-        return false;
-      }
-      final PsiType type = expression.getType();
-      if (expression instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
-        return buildString(parenthesizedExpression.getExpression(), builder);
-      }
-      else if (expression instanceof PsiPolyadicExpression) {
-        if (!TypeUtils.isJavaLangString(type) && !PsiType.CHAR.equals(type)) {
-          return true;
+    private static boolean buildString(PsiExpression source, StringBuilder builder) {
+      Stack<PsiExpression> psiExpressionStack = new Stack<>();
+      psiExpressionStack.add(source);
+      int processedVariablesNumber = 0;
+      while (!psiExpressionStack.isEmpty()) {
+        PsiExpression expression = psiExpressionStack.pop();
+        if (expression == null) {
+          return false;
         }
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
-        for (PsiExpression operand : polyadicExpression.getOperands()) {
-          if (!buildString(operand, builder)) {
-            return false;
+        final PsiType type = expression.getType();
+        if (expression instanceof final PsiParenthesizedExpression parenthesizedExpression) {
+          psiExpressionStack.add(parenthesizedExpression.getExpression());
+          continue;
+        }
+        if (expression instanceof final PsiPolyadicExpression polyadicExpression) {
+          if (!TypeUtils.isJavaLangString(type) && !PsiType.CHAR.equals(type)) {
+            continue;
           }
+          PsiExpression[] operands = polyadicExpression.getOperands();
+          for (int i = operands.length - 1; i >= 0; i--) {
+            psiExpressionStack.add(operands[i]);
+          }
+          continue;
         }
-        return true;
-      }
-      else if (expression instanceof PsiLiteralExpression) {
-        if (TypeUtils.isJavaLangString(type) || PsiType.CHAR.equals(type)) {
-          final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expression;
-          builder.append(literalExpression.getValue());
+        if (expression instanceof PsiLiteralExpression) {
+          if (TypeUtils.isJavaLangString(type) || PsiType.CHAR.equals(type)) {
+            final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expression;
+            builder.append(literalExpression.getValue());
+          }
+          continue;
         }
-        return true;
-      }
-      else {
+        //allow to resolve local variables only several times, not to process too much
+        if (MAX_PROCESSED_VARIABLES > processedVariablesNumber && expression instanceof PsiReferenceExpression psiReferenceExpression &&
+            psiReferenceExpression.resolve() instanceof PsiLocalVariable psiLocalVariable) {
+          PsiCodeBlock block = PsiTreeUtil.getParentOfType(psiLocalVariable, PsiCodeBlock.class);
+          if (block == null) return false;
+          if (VariableAccessUtils.variableIsAssigned(psiLocalVariable, block)) return false;
+          processedVariablesNumber++;
+          psiExpressionStack.add(psiLocalVariable.getInitializer());
+          continue;
+        }
         if (!TypeUtils.isJavaLangString(type) /*&& !PsiType.CHAR.equals(type)*/) {
           // no one is crazy enough to add placeholders via char variables right?
-          return true;
+          continue;
         }
         final Object value = ExpressionUtils.computeConstantExpression(expression);
         if (value == null) {
           return false;
         }
         builder.append(value);
-        return true;
       }
+      return true;
     }
 
     private static int countPlaceholders(String string) {
