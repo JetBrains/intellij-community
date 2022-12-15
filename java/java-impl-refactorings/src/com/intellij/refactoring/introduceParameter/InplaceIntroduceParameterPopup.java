@@ -30,6 +30,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState;
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil;
@@ -60,6 +61,7 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
 
   private final PsiMethod myOriginalMethod;
   private PsiMethod myCreatedDelegate;
+  private final EditorState myEditorState;
 
   private EditorCodePreview myEditorPreview;
 
@@ -81,6 +83,8 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
     myMethodToSearchFor = methodToSearchFor;
     myMustBeFinal = mustBeFinal;
     myReplaceChoice = replaceChoice;
+
+    myEditorState = new EditorState(editor);
 
     myPanel = new InplaceIntroduceParameterUI(project, localVar, expr, method, parametersToRemove, typeSelectorManager,
                                               myOccurrences) {
@@ -294,9 +298,8 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
   }
 
   @Override
-  protected void restoreState(@NotNull PsiVariable psiField) {
-    super.restoreState(psiField);
-    removeDelegate();
+  protected void performCleanup() {
+    myEditorState.revert();
   }
 
   @Override
