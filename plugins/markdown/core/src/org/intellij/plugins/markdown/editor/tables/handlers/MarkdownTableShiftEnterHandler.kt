@@ -14,9 +14,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.siblings
-import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.buildEmptyRow
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
+import org.intellij.plugins.markdown.editor.tables.buildEmptyRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
