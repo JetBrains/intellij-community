@@ -4,43 +4,28 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
-import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
+import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
-import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
-import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.collaboration.ui.util.swingAction
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.CommonShortcuts
-import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.ui.ClickListener
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.util.PathUtil
 import com.intellij.util.containers.nullize
 import com.intellij.util.text.JBDateFormat
-import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -52,10 +37,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUt
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtensionComponentBase.Companion.items
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
-import java.awt.Cursor
 import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
-import java.awt.event.MouseEvent
 import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -98,91 +80,14 @@ object GHPRReviewThreadComponent {
                        diffComponentFactory: GHPRReviewThreadDiffComponentFactory,
                        selectInToolWindowHelper: GHPRSelectInToolWindowHelper): JComponent {
 
-    val scopeProvider = ActivatableCoroutineScopeProvider()
-
-    val expandCollapseButton = InlineIconButton(AllIcons.General.CollapseComponent, AllIcons.General.CollapseComponentHover,
-                                                tooltip = GithubBundle.message("pull.request.timeline.review.thread.collapse")).apply {
-      actionListener = ActionListener {
-        thread.collapsedState.update { !it }
-      }
-    }
-
-    val diffComponent = diffComponentFactory.createComponent(thread.diffHunk, thread.startLine).apply {
-      border = IdeBorderFactory.createBorder(SideBorder.TOP)
-    }
-    scopeProvider.launchInScope {
-      diffComponent.bindVisibility(this, thread.collapsedState.map { !it })
-    }
-
-    scopeProvider.launchInScope {
-      thread.collapsedState.collect {
-        expandCollapseButton.icon = if (it) {
-          AllIcons.General.ExpandComponent
-        }
-        else {
-          AllIcons.General.CollapseComponent
-        }
-        expandCollapseButton.hoveredIcon = if (it) {
-          AllIcons.General.ExpandComponentHover
-        }
-        else {
-          AllIcons.General.CollapseComponentHover
-        }
-        expandCollapseButton.tooltip = if (it) {
-          GithubBundle.message("pull.request.timeline.review.thread.expand")
-        }
-        else {
-          GithubBundle.message("pull.request.timeline.review.thread.collapse")
-        }
-      }
-    }
-
+    val collapsibleState = MutableStateFlow(false)
     thread.addAndInvokeStateChangeListener {
-      expandCollapseButton.isVisible = thread.isResolved || thread.isOutdated
+      collapsibleState.value = thread.isResolved || thread.isOutdated
     }
 
-    scopeProvider.launchInScope {
-      diffComponent.bindVisibility(this, thread.collapsedState.map { !it })
-    }
-
-    return RoundedPanel(VerticalLayout(0), 8).apply {
-      isOpaque = false
-      add(createFileName(thread, selectInToolWindowHelper, expandCollapseButton))
-      add(diffComponent)
-    }.also {
-      scopeProvider.activateWith(it)
-    }
-  }
-
-  private fun createFileName(thread: GHPRReviewThreadModel,
-                             selectInToolWindowHelper: GHPRSelectInToolWindowHelper,
-                             expandCollapseButton: InlineIconButton): JComponent {
-    val name = PathUtil.getFileName(thread.filePath)
-    val path = PathUtil.getParentPath(thread.filePath)
-    val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(name)
-
-    val nameLabel = JLabel(name, fileType.icon, SwingConstants.LEFT).apply {
-      cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-      object : ClickListener() {
-        override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
-          selectInToolWindowHelper.selectChange(thread.commit?.oid, thread.filePath)
-          return true
-        }
-      }.installOn(this)
-    }
-    return JPanel(MigLayout(LC().insets("0").gridGap("5", "0").fill().noGrid())).apply {
-      border = JBUI.Borders.empty(10)
-      CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
-        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
-      }
-
-      add(nameLabel)
-
-      if (!path.isBlank()) add(JLabel(path).apply {
-        foreground = UIUtil.getContextHelpForeground()
-      })
-
-      add(expandCollapseButton, CC().hideMode(3).gapLeft("10:push"))
+    val diffComponent = diffComponentFactory.createComponent(thread.diffHunk, thread.startLine)
+    return TimelineDiffComponentFactory.wrapWithHeader(diffComponent, thread.filePath, collapsibleState, thread.collapsedState) {
+      selectInToolWindowHelper.selectChange(thread.commit?.oid, thread.filePath)
     }
   }
 
