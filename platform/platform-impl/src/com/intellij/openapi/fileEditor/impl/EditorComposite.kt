@@ -42,7 +42,7 @@ import javax.swing.SwingConstants
 
 /**
  * An abstraction over one or several file editors opened in the same tab (e.g. designer and code-behind).
- * It's a composite what can be pinned in the tabs list or opened as a preview, not concrete file editors.
+ * It's a composite that can be pinned in the tab list or opened as a preview, not concrete file editors.
  * It also manages the internal UI structure: bottom and top components, panels, labels, actions for navigating between editors it owns.
  */
 @Suppress("LeakingThis")
@@ -232,7 +232,7 @@ open class EditorComposite internal constructor(
     }
 
   /**
-   * Whether the composite is opened as preview tab or not
+   * Whether the composite is opened as a preview tab or not
    */
   override var isPreview: Boolean = false
     set(preview) {
@@ -263,11 +263,10 @@ open class EditorComposite internal constructor(
     dispatcher.addListener(listener, disposable!!)
   }
 
+  /**
+   * @return preferred focused component inside myEditor composite. Composite uses FocusWatcher to track focus movement inside the editor.
+   */
   open val preferredFocusedComponent: JComponent?
-    /**
-     * @return preferred focused component inside myEditor composite. Composite uses FocusWatcher to
-     * track focus movement inside the myEditor.
-     */
     get() {
       if (selectedEditorWithProvider == null) {
         return null
@@ -375,8 +374,7 @@ open class EditorComposite internal constructor(
         return editorsWithProviders.get(0)
       }
       else {
-        // we have to get myEditor from tabbed pane
-        LOG.assertTrue(tabbedPaneWrapper != null)
+        // we have to get editor from tabbed pane
         var index = tabbedPaneWrapper!!.selectedIndex
         if (index == -1) {
           index = 0
@@ -413,7 +411,7 @@ open class EditorComposite internal constructor(
 
   open val component: JComponent
     /**
-     * @return component which represents set of file editors in the UI
+     * @return component which represents a set of file editors in the UI
      */
     get() = compositePanel
 

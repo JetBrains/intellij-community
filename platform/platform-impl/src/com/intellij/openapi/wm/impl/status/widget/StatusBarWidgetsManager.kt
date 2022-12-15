@@ -1,5 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:OptIn(FlowPreview::class)
 
 package com.intellij.openapi.wm.impl.status.widget
 
@@ -9,11 +10,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
@@ -145,6 +148,7 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
     return factory.isAvailable(project) && factory.isConfigurable && factory.canBeEnabledOn(statusBar)
   }
 
+  @OptIn(FlowPreview::class)
   internal fun init(): List<Pair<StatusBarWidget, LoadingOrder>> {
     val isLightEditProject = LightEdit.owns(project)
     val statusBarWidgetSettings = StatusBarWidgetSettings.getInstance()
@@ -167,9 +171,13 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
     val dataContext = object : WidgetPresentationDataContext {
       override val project: Project
         get() = this@StatusBarWidgetsManager.project
+
       override val currentFileEditor: StateFlow<FileEditor?> by lazy {
-        // todo use splitters from dock if nota main frame
-        FileEditorManagerEx.getInstanceEx(project).splitters.currentCompositeFlow
+        flow {
+          // todo use splitters from dock if not a main frame
+          emit(project.serviceAsync<FileEditorManager>().await() as FileEditorManagerEx)
+        }
+          .flatMapConcat { it.currentCompositeFlow }
           .map { it?.selectedEditor }
           .stateIn(scope = parentScope, started = SharingStarted.WhileSubscribed(), initialValue = null)
       }

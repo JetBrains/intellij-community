@@ -194,7 +194,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);//2.txt only, selected and focused
     assertNotNull(secondaryWindow);
     UISettings.getInstance().setEditorTabPlacement(UISettings.TABS_NONE);
-    manager.openFileWithProviders(file1, true, true);//Here we have to ignore 'searchForSplitter'
+    // here we have to ignore 'searchForSplitter'
+    manager.openFile(file1, null, new FileEditorOpenOptions().withReuseOpen().withRequestFocus());
     assertEquals(2, primaryWindow.getTabCount());
     assertEquals(2, secondaryWindow.getTabCount());
     assertOrderedEquals(primaryWindow.getFiles(), file1, file2);

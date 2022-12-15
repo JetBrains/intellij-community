@@ -7,13 +7,16 @@ import com.intellij.openapi.editor.CustomFileDropHandler;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorDropHandler;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,7 +28,6 @@ import java.awt.datatransfer.Transferable;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
-
 
 public class FileDropHandler implements EditorDropHandler {
   private final Editor myEditor;
@@ -65,8 +67,8 @@ public class FileDropHandler implements EditorDropHandler {
         NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(vFile));
 
         if (editorWindow != null) {
-          Pair<FileEditor[], FileEditorProvider[]> pair = fileEditorManager.openFileWithProviders(vFile, true, editorWindow);
-          if (pair.first.length > 0) {
+          var pair = fileEditorManager.openFile(vFile, editorWindow, new FileEditorOpenOptions().withRequestFocus());
+          if (pair.getAllEditors().size() > 0) {
             continue;
           }
         }

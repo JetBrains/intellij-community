@@ -35,6 +35,8 @@ public abstract class FileEditorManager {
    */
   public abstract FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor);
 
+  public abstract @NotNull List<@NotNull FileEditor> openFile(@NotNull VirtualFile file);
+
   /**
    * Opens a file.
    * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
@@ -57,7 +59,7 @@ public abstract class FileEditorManager {
 
   /**
    * Works as {@link #openFile(VirtualFile, boolean)} but forces opening of text editor (see {@link TextEditor}).
-   * If several text editors are opened, including the default one, default text editor is focused (if requested) and returned.
+   * If several text editors are opened, including the default one, the default text editor is focused (if requested) and returned.
    * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    *
    * @return opened text editor. The method returns {@code null} in case if text editor wasn't opened.
@@ -105,7 +107,7 @@ public abstract class FileEditorManager {
   }
 
   /**
-   * @return all opened files. Order of files in the array corresponds to the order of editor tabs.
+   * @return all opened files. The order of files in the array corresponds to the order of editor tabs.
    */
   public abstract VirtualFile @NotNull [] getOpenFiles();
 
@@ -243,7 +245,7 @@ public abstract class FileEditorManager {
    */
   public abstract @NotNull Project getProject();
 
-  public abstract void registerExtraEditorDataProvider(@NotNull EditorDataProvider provider, Disposable parentDisposable);
+  public abstract void registerExtraEditorDataProvider(@NotNull EditorDataProvider provider, @Nullable Disposable parentDisposable);
 
   /**
    * Returns data associated with given editor/caret context. Data providers are registered via
@@ -267,7 +269,7 @@ public abstract class FileEditorManager {
   public abstract void runWhenLoaded(@NotNull Editor editor, @NotNull Runnable runnable);
 
   /**
-   * Refreshes the text, colors and icon of the editor tabs representing the specified file.
+   * Refreshes the text, colors, and icon of the editor tabs representing the specified file.
    *
    * @param file refreshed file
    */

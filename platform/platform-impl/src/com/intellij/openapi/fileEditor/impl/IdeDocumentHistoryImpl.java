@@ -177,7 +177,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   protected FileEditorManagerEx getFileEditorManager() {
-    return FileEditorManagerEx.getInstanceExIfCreated(myProject);
+    return FileEditorManagerEx.Companion.getInstanceExIfCreated(myProject);
   }
 
   private @NotNull static PersistentHashMap<String, Long> initRecentFilesTimestampMap(@NotNull Project project) {
@@ -572,7 +572,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
       .withUsePreviewTab(info.isPreviewTab())
       .withRequestFocus(wasActive);
-    var editorsWithProviders = editorManager.openFileWithProviders(info.getFile(), info.getWindow(), openOptions);
+    var editorsWithProviders = editorManager.openFile(info.getFile(), info.getWindow(), openOptions);
 
     editorManager.setSelectedEditor(info.getFile(), info.getEditorTypeId());
 
@@ -754,7 +754,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     Topic<RecentPlacesListener> TOPIC = new Topic<>(RecentPlacesListener.class, Topic.BroadcastDirection.NONE);
 
     /**
-     * Fires on a new place info adding into {@link #myChangePlaces} or {@link #myBackPlaces} infos list
+     * Fires on new place info adding into {@link #myChangePlaces} or {@link #myBackPlaces} infos a list
      *
      * @param changePlace new place info
      * @param isChanged   true if place info was added into the changed infos list {@link #myChangePlaces};

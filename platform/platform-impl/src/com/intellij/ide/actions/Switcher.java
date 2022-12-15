@@ -713,7 +713,7 @@ public final class Switcher extends BaseSwitcherAction {
                   splitWindow = OpenInRightSplitAction.Companion.openInRightSplit(project, file, null, true);
                 }
                 else {
-                  manager.openFileWithProviders(file, true, splitWindow);
+                  manager.openFile(file, splitWindow, new FileEditorOpenOptions().withRequestFocus());
                 }
               }
               if (mode == NEW_WINDOW) {

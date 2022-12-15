@@ -87,16 +87,13 @@ import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.messages.impl.MessageListenerList
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -191,7 +188,22 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   @Suppress("DEPRECATION")
   private val coroutineScope: CoroutineScope = project.coroutineScope.childScope()
 
+  private val splitterFlow = MutableSharedFlow<EditorsSplitters>(replay = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
+
+  override val currentCompositeFlow: StateFlow<EditorComposite?>
+
+  override val dockContainer: DockContainer?
+    get() = dockable.value
+
   init {
+    val currentCompositeFlow = MutableStateFlow<EditorComposite?>(null)
+    this.currentCompositeFlow = currentCompositeFlow
+    coroutineScope.launch {
+      splitterFlow.flatMapConcat { it.currentCompositeFlow }.collect {
+        currentCompositeFlow.value = it
+      }
+    }
+
     project.messageBus.connect(coroutineScope).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
       override fun exitDumbMode() {
         // can happen under write action, so postpone to avoid deadlock on FileEditorProviderManager.getProviders()
@@ -216,6 +228,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     component.isFocusable = false
     // prepare for toolwindow manager
     mainSplitters = component
+    check(splitterFlow.tryEmit(component))
 
     // set after we set mainSplitters
     if (!isInitialized.compareAndSet(false, true)) {
@@ -263,15 +276,6 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     return component to state.getAndSet(null)
   }
 
-  private fun processFileUpdateRequests() {
-    coroutineScope.launch(CoroutineName("FileEditorManagerImpl file update")) {
-      fileUpdateChannel.start(receiveFilter = ::isFileOpen)
-    }
-    coroutineScope.launch(CoroutineName("FileEditorManagerImpl file title update")) {
-      fileTitleUpdateChannel.start(receiveFilter = { file -> file == null || isFileOpen(file) })
-    }
-  }
-
   companion object {
     private val LOG = logger<FileEditorManagerImpl>()
 
@@ -305,46 +309,6 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
     @JvmField
     val OPEN_FILE_SET_MODIFICATION_COUNT = ModificationTracker { openFileSetModificationCount.sum() }
-
-    private fun registerEditor(editor: EditorEx, project: Project) {
-      editor.addFocusListener(object : FocusChangeListener {
-        private var managerRef: WeakReference<FileEditorManagerImpl?>? = null
-
-        override fun focusGained(editor1: Editor) {
-          if (!Registry.`is`("editor.maximize.on.focus.gained.if.collapsed.in.split", false)) {
-            return
-          }
-          var manager = if (managerRef == null) null else managerRef!!.get()
-          if (manager == null) {
-            val fileEditorManager = getInstance(project)
-            if (fileEditorManager is FileEditorManagerImpl) {
-              manager = fileEditorManager
-              managerRef = WeakReference(manager)
-            }
-            else {
-              return
-            }
-          }
-          var component: Component? = editor1.component
-          while (component != null && component !== manager.mainSplitters) {
-            val parent: Component = component.parent
-            if (parent is Splitter) {
-              if (parent.firstComponent === component &&
-                  (parent.proportion == parent.getMinProportion(true) ||
-                   parent.proportion == parent.minimumProportion) || parent.proportion == parent.getMinProportion(false) ||
-                  parent.proportion == parent.maximumProportion) {
-                val pairs = getSplittersToMaximize(project, editor1.component)
-                for ((s, second) in pairs) {
-                  s.proportion = if (second) s.maximumProportion else s.minimumProportion
-                }
-                break
-              }
-            }
-            component = parent
-          }
-        }
-      }, project)
-    }
 
     fun isDumbAware(editor: FileEditor): Boolean {
       return java.lang.Boolean.TRUE == editor.getUserData(DUMB_AWARE) &&
@@ -416,23 +380,14 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     }
   }
 
+  protected open fun canOpenFile(file: VirtualFile, providers: List<FileEditorProvider>): Boolean = !providers.isEmpty()
 
-  override fun getDockContainer(): DockContainer? = dockable.value
-
-  internal class MyEditorFactoryListener : EditorFactoryListener {
-    init {
-      if (ApplicationManager.getApplication().isHeadlessEnvironment) {
-        throw ExtensionNotApplicableException.create()
-      }
+  private fun processFileUpdateRequests() {
+    coroutineScope.launch(CoroutineName("FileEditorManagerImpl file update")) {
+      fileUpdateChannel.start(receiveFilter = ::isFileOpen)
     }
-
-    override fun editorCreated(event: EditorFactoryEvent) {
-      val editor = event.editor as? EditorEx ?: return
-      val project = editor.project
-      if (project == null || project.isDisposed) {
-        return
-      }
-      registerEditor(editor, project)
+    coroutineScope.launch(CoroutineName("FileEditorManagerImpl file title update")) {
+      fileTitleUpdateChannel.start(receiveFilter = { file -> file == null || isFileOpen(file) })
     }
   }
 
@@ -492,7 +447,8 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     DockManager.getInstance(project).register(DockableEditorContainerFactory.TYPE, contentFactory!!, this)
   }
 
-  override fun getComponent(): JComponent = mainSplitters
+  override val component: JComponent?
+    get() = mainSplitters
 
   fun getAllSplitters(): Set<EditorsSplitters> {
     val all = LinkedHashSet<EditorsSplitters>()
@@ -522,29 +478,26 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     return result
   }
 
-  private val activeSplittersSync: EditorsSplitters
-    get() {
-      assertDispatchThread()
-      if (Registry.`is`("ide.navigate.to.recently.focused.editor", false)) {
-        getLastFocusedSplitters()?.let { return it }
-      }
-
-      val focusManager = IdeFocusManager.getInstance(project)
-      var focusOwner = focusManager.focusOwner
-                       ?: KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
-                       ?: focusManager.getLastFocusedFor(focusManager.lastFocusedIdeWindow)
-      var container = DockManager.getInstance(project).getContainerFor(focusOwner) { it is DockableEditorTabbedContainer }
-      if (container == null) {
-        focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
-        container = DockManager.getInstance(project).getContainerFor(focusOwner) { it is DockableEditorTabbedContainer }
-      }
-      return if (container is DockableEditorTabbedContainer) container.splitters else mainSplitters
+  @RequiresEdt
+  private fun getActiveSplitterSync(): EditorsSplitters {
+    if (Registry.`is`("ide.navigate.to.recently.focused.editor", false)) {
+      getLastFocusedSplitters()?.let { return it }
     }
 
-  @RequiresReadLock
-  override fun getPreferredFocusedComponent(): JComponent? {
-    return splitters.currentWindow?.selectedComposite?.preferredFocusedComponent
+    val focusManager = IdeFocusManager.getGlobalInstance()
+    var focusOwner = focusManager.focusOwner
+                     ?: KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
+                     ?: focusManager.getLastFocusedFor(focusManager.lastFocusedIdeWindow)
+    var container = DockManager.getInstance(project).getContainerFor(focusOwner) { it is DockableEditorTabbedContainer }
+    if (container == null) {
+      focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
+      container = DockManager.getInstance(project).getContainerFor(focusOwner) { it is DockableEditorTabbedContainer }
+    }
+    return if (container is DockableEditorTabbedContainer) container.splitters else mainSplitters
   }
+
+  override val preferredFocusedComponent: JComponent?
+    get() = currentCompositeFlow.value?.preferredFocusedComponent
 
   /**
    * @return color of the `file` which corresponds to the file's status
@@ -626,39 +579,21 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     fileTitleUpdateChannel.queue(file)
   }
 
-  @Suppress("removal")
-  override fun getFile(editor: FileEditor): VirtualFile? {
-    val editorComposite = getComposite(editor)
-    val tabFile = editorComposite?.file
-    val editorFile = editor.file
-    if (editorFile != tabFile) {
-      if (editorFile == null) {
-        LOG.warn("${editor.javaClass.name}.getFile() shall not return null")
-      }
-      else if (tabFile == null) {
-        //todo DaemonCodeAnalyzerImpl#getSelectedEditors calls it for any Editor
-        //LOG.warn(editor.getClass().getName() + ".getFile() shall be used, fileEditor is not opened in a tab.");
-      }
-      else {
-        LOG.warn("fileEditor.getFile=$editorFile != fileEditorManager.getFile=$tabFile, fileEditor.class=${editor.javaClass.name}")
-      }
-    }
-    return tabFile
-  }
-
   override fun unsplitWindow() {
-    activeSplittersSync.currentWindow?.unsplit(true)
+    getActiveSplitterSync().currentWindow?.unsplit(true)
   }
 
   override fun unsplitAllWindow() {
-    activeSplittersSync.currentWindow?.unsplitAll()
+    getActiveSplitterSync().currentWindow?.unsplitAll()
   }
 
-  override fun getWindowSplitCount(): Int = activeSplittersSync.splitCount
+  override val windowSplitCount: Int
+    get() = getActiveSplitterSync().splitCount
 
   override fun hasSplitOrUndockedWindows(): Boolean = getAllSplitters().size > 1 || windowSplitCount > 1
 
-  override fun getWindows(): Array<EditorWindow> = getAllSplitters().flatMap(EditorsSplitters::getWindowSequence).toTypedArray()
+  override val windows: Array<EditorWindow>
+    get() = getAllSplitters().flatMap(EditorsSplitters::getWindowSequence).toTypedArray()
 
   override fun getNextWindow(window: EditorWindow): EditorWindow? {
     val windows = splitters.getOrderedWindows()
@@ -667,7 +602,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
         return windows.get((i + 1) % windows.size)
       }
     }
-    LOG.error("Not window found")
+    LOG.error("No window found")
     return null
   }
 
@@ -678,7 +613,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
         return windows.get((i + windows.size - 1) % windows.size)
       }
     }
-    LOG.error("Not window found")
+    LOG.error("No window found")
     return null
   }
 
@@ -696,43 +631,44 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     splitters.currentWindow?.changeOrientation()
   }
 
-  override fun isInSplitter(): Boolean {
-    val currentWindow = splitters.currentWindow
-    return currentWindow != null && currentWindow.inSplitter()
-  }
+  override val isInSplitter: Boolean
+    get() {
+      val currentWindow = splitters.currentWindow
+      return currentWindow != null && currentWindow.inSplitter()
+    }
 
   override fun hasOpenedFile(): Boolean = splitters.currentWindow?.selectedComposite != null
 
-  override fun getCurrentFile(): VirtualFile? {
-    if (!ClientId.isCurrentlyUnderLocalId) {
-      return clientFileEditorManager?.getSelectedFile()
+  override val currentFile: VirtualFile?
+    get() {
+      if (!ClientId.isCurrentlyUnderLocalId) {
+        return clientFileEditorManager?.getSelectedFile()
+      }
+      if (!isInitialized.get()) {
+        return null
+      }
+      return getActiveSplitterSync().currentFile
     }
-    if (!isInitialized.get()) {
-      return null
-    }
-    return activeSplittersSync.currentFile
-  }
 
-  override fun getActiveWindow(): CompletableFuture<EditorWindow?> {
-    return getActiveSplittersAsync().asCompletableFuture().thenApply { it?.currentWindow }
-  }
+  override val activeWindow: CompletableFuture<EditorWindow?>
+    get() = getActiveSplittersAsync().asCompletableFuture().thenApply { it?.currentWindow }
 
-  override fun getCurrentWindow(): EditorWindow? {
-    if (!ClientId.isCurrentlyUnderLocalId || !isInitialized.get()) {
-      return null
+  override var currentWindow: EditorWindow?
+    get() {
+      if (!ClientId.isCurrentlyUnderLocalId || !isInitialized.get()) {
+        return null
+      }
+      if (!ApplicationManager.getApplication().isDispatchThread) {
+        LOG.warn("Requesting getCurrentWindow() on BGT, returning null", Throwable())
+        return null
+      }
+      return getActiveSplitterSync().currentWindow
     }
-    if (!ApplicationManager.getApplication().isDispatchThread) {
-      LOG.warn("Requesting getCurrentWindow() on BGT, returning null", Throwable())
-      return null
+    set(window) {
+      if (ClientId.isCurrentlyUnderLocalId) {
+        getActiveSplitterSync().setCurrentWindow(window = window, requestFocus = true)
+      }
     }
-    return activeSplittersSync.currentWindow
-  }
-
-  override fun setCurrentWindow(window: EditorWindow?) {
-    if (ClientId.isCurrentlyUnderLocalId) {
-      activeSplittersSync.setCurrentWindow(window = window, requestFocus = true)
-    }
-  }
 
   @RequiresEdt
   fun closeFile(file: VirtualFile, window: EditorWindow, transferFocus: Boolean) {
@@ -746,10 +682,9 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   override fun closeFile(file: VirtualFile, window: EditorWindow) {
-    closeFile(file, window, true)
+    closeFile(file = file, window = window, transferFocus = true)
   }
 
-  //============================= EditorManager methods ================================
   override fun closeFile(file: VirtualFile) {
     closeFile(file = file, moveFocus = true, closeAllCopies = false)
   }
@@ -760,7 +695,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       if (ClientId.isCurrentlyUnderLocalId) {
         CommandProcessor.getInstance().executeCommand(project, {
           openFileSetModificationCount.increment()
-          val activeSplitters = activeSplittersSync
+          val activeSplitters = getActiveSplitterSync()
           runBulkTabChange(activeSplitters) { activeSplitters.closeFile(file, moveFocus) }
         }, "", null)
       }
@@ -805,23 +740,9 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     return isFileOpen(file) || allClientFileEditorManagers.any { it.isFileOpen(file) }
   }
 
-  //-------------------------------------- Open File ----------------------------------------
-  override fun openFileWithProviders(file: VirtualFile,
-                                     focusEditor: Boolean,
-                                     searchForSplitter: Boolean): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
-    val openOptions = FileEditorOpenOptions(requestFocus = focusEditor, reuseOpen = searchForSplitter)
-    return openFileWithProviders(file = file, suggestedWindow = null, options = openOptions).retrofit()
-  }
-
-  override fun openFileWithProviders(file: VirtualFile,
-                                     focusEditor: Boolean,
-                                     window: EditorWindow): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
-    return openFileWithProviders(file, window, FileEditorOpenOptions(requestFocus = focusEditor)).retrofit()
-  }
-
-  override fun openFileWithProviders(file: VirtualFile,
-                                     suggestedWindow: EditorWindow?,
-                                     options: FileEditorOpenOptions): FileEditorComposite {
+  override fun openFile(file: VirtualFile,
+                        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") suggestedWindow: EditorWindow?,
+                        options: FileEditorOpenOptions): FileEditorComposite {
     var window = suggestedWindow
     require(file.isValid) { "file is not valid: $file" }
     assertDispatchThread()
@@ -850,11 +771,11 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     if (windowToOpenIn == null) {
       windowToOpenIn = getOrCreateCurrentWindow(file)
     }
-    return openFileImpl2(windowToOpenIn, file, options)
+    return openFileImpl2(window = windowToOpenIn, file = file, options = options)
   }
 
   private fun findWindowInAllSplitters(file: VirtualFile): EditorWindow? {
-    val activeCurrentWindow = activeSplittersSync.currentWindow
+    val activeCurrentWindow = getActiveSplitterSync().currentWindow
     if (activeCurrentWindow != null && isFileOpenInWindow(file, activeCurrentWindow)) {
       return activeCurrentWindow
     }
@@ -1304,7 +1225,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
         .withReuseOpen(!realDescriptor.isUseCurrentWindow)
         .withUsePreviewTab(realDescriptor.isUsePreviewTab)
         .withRequestFocus(focusEditor)
-      val editors = openFileWithProviders(file = file, suggestedWindow = null, options = openOptions).allEditors
+      val editors = openFile(file = file, suggestedWindow = null, options = openOptions).allEditors
       result.addAll(editors)
       var navigated = false
       for (editor in editors) {
@@ -1489,14 +1410,12 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     return selectedEditors.toTypedArray()
   }
 
-  override fun getSplitters(): EditorsSplitters {
-    return if (ApplicationManager.getApplication().isDispatchThread) activeSplittersSync else mainSplitters
-  }
+  override val splitters: EditorsSplitters
+    get() = if (ApplicationManager.getApplication().isDispatchThread) getActiveSplitterSync() else mainSplitters
 
-  @RequiresEdt
-  override fun getActiveSplittersComposites(): List<EditorComposite> {
-    return if (isInitialized.get()) activeSplittersSync.getAllComposites() else emptyList()
-  }
+  @get:RequiresEdt
+  override val activeSplittersComposites: List<EditorComposite>
+    get() = if (isInitialized.get()) getActiveSplitterSync().getAllComposites() else emptyList()
 
   fun getLastFocusedSplitters(): EditorsSplitters? {
     if (ApplicationManager.getApplication().isDispatchThread) {
@@ -1713,8 +1632,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
     openedComposites.remove(composite)
     if (allEditors.isEmpty()) {
-      @Suppress("UsePropertyAccessSyntax")
-      setCurrentWindow(null)
+      currentWindow = null
     }
     if (composite == lastSelected) {
       composite.selectedEditor.deselectNotify()
@@ -1737,7 +1655,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   private val lastSelected: EditorComposite?
-    get() = activeSplittersSync.currentWindow?.selectedComposite
+    get() = getActiveSplitterSync().currentWindow?.selectedComposite
 
   /**
    * Closes deleted files. Closes file which is in the deleted directories.
@@ -1806,7 +1724,8 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     }
   }
 
-  override fun isInsideChange(): Boolean = splitters.isInsideChange
+  override val isInsideChange: Boolean
+    get() = splitters.isInsideChange
 
   private inner class MyEditorPropertyChangeListener : PropertyChangeListener {
     @RequiresEdt
@@ -2151,4 +2070,61 @@ private class SelectionHistory {
     history.addAll(copy)
     return copy
   }
+}
+
+private class MyEditorFactoryListener : EditorFactoryListener {
+  init {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
+  override fun editorCreated(event: EditorFactoryEvent) {
+    val editor = event.editor as? EditorEx ?: return
+    val project = editor.project
+    if (project == null || project.isDisposed) {
+      return
+    }
+    registerEditor(editor, project)
+  }
+}
+
+private fun registerEditor(editor: EditorEx, project: Project) {
+  editor.addFocusListener(object : FocusChangeListener {
+    private var managerRef: WeakReference<FileEditorManagerImpl?>? = null
+
+    override fun focusGained(editor1: Editor) {
+      if (!Registry.`is`("editor.maximize.on.focus.gained.if.collapsed.in.split", false)) {
+        return
+      }
+      var manager = if (managerRef == null) null else managerRef!!.get()
+      if (manager == null) {
+        val fileEditorManager = FileEditorManager.getInstance(project)
+        if (fileEditorManager is FileEditorManagerImpl) {
+          manager = fileEditorManager
+          managerRef = WeakReference(manager)
+        }
+        else {
+          return
+        }
+      }
+      var component: Component? = editor1.component
+      while (component != null && component !== manager.mainSplitters) {
+        val parent: Component = component.parent
+        if (parent is Splitter) {
+          if (parent.firstComponent === component &&
+              (parent.proportion == parent.getMinProportion(true) ||
+               parent.proportion == parent.minimumProportion) || parent.proportion == parent.getMinProportion(false) ||
+              parent.proportion == parent.maximumProportion) {
+            val pairs = getSplittersToMaximize(project, editor1.component)
+            for ((s, second) in pairs) {
+              s.proportion = if (second) s.maximumProportion else s.minimumProportion
+            }
+            break
+          }
+        }
+        component = parent
+      }
+    }
+  }, project)
 }

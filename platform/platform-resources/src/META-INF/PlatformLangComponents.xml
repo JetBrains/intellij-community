@@ -22,7 +22,7 @@
       serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer"
       serviceImplementation="com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl"
     />
-    <editorFactoryListener implementation="com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl$MyEditorFactoryListener"/>
+    <editorFactoryListener implementation="com.intellij.openapi.fileEditor.impl.MyEditorFactoryListener"/>
 
     <vfs.asyncListener implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.RootsChangeWatcher$RootsChangeWatcherDelegator"/>
     <projectService

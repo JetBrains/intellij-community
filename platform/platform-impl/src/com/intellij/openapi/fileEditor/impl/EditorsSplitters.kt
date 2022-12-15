@@ -783,7 +783,7 @@ open class EditorsSplitters internal constructor(
       if (component !== window.panel) {
         // reuse
         findWindowWith(component)?.let { rightSplitWindow ->
-          manager.openFileWithProviders(file, requestFocus, rightSplitWindow)
+          manager.openFile(file = file, suggestedWindow = rightSplitWindow, options = FileEditorOpenOptions(requestFocus = requestFocus))
           return rightSplitWindow
         }
       }
@@ -1092,11 +1092,8 @@ private fun getSplittersToFocus(suggestedProject: Project?): EditorsSplitters? {
   }
 
   // getSplitters is not implemented in unit test mode
-  if (project != null && !project.isDisposed && !ApplicationManager.getApplication().isUnitTestMode) {
-    // null for default project
-    FileEditorManagerEx.getInstanceEx(project)?.let {
-      return it.splitters
-    }
+  if (project != null && !project.isDefault && !project.isDisposed && !ApplicationManager.getApplication().isUnitTestMode) {
+    return FileEditorManagerEx.getInstanceEx(project).splitters
   }
   return null
 }

@@ -10,12 +10,15 @@ import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtilRt;
+import kotlinx.coroutines.flow.StateFlow;
+import kotlinx.coroutines.flow.StateFlowKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +34,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 //[kirillk] - this class looks to be an overkill but IdeDocumentHistory is highly coupled
-// with all of that stuff below, so it's not possible to test it's back/forward capabilities
+// with all of that stuff below, so it's not possible to test its back/forward capabilities
 // w/o making mocks for all of them. perhaps later we will decouple those things
 public final class Mock {
   public static class MyFileEditor extends UserDataHolderBase implements DocumentsEditor {
@@ -103,24 +106,12 @@ public final class Mock {
     }
 
     @Override
-    public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                                   boolean focusEditor,
-                                                                                   @NotNull EditorWindow window) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isInsideChange() {
-      return false;
-    }
-
-    @Override
     public boolean hasSplitOrUndockedWindows() {
       return false;
     }
 
     @Override
-    public EditorsSplitters getSplittersFor(Component c) {
+    public EditorsSplitters getSplittersFor(@NotNull Component component) {
       return null;
     }
 
@@ -176,11 +167,6 @@ public final class Mock {
 
     @Override
     public void setCurrentWindow(EditorWindow window) {
-    }
-
-    @Override
-    public VirtualFile getFile(@NotNull FileEditor editor) {
-      return null;
     }
 
     @Override
@@ -249,10 +235,8 @@ public final class Mock {
     }
 
     @Override
-    public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                                   boolean focusEditor,
-                                                                                   boolean searchForSplitter) {
-      return Pair.create(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
+    public @NotNull StateFlow<FileEditor> getCurrentFileEditorFlow() {
+      return StateFlowKt.MutableStateFlow(null);
     }
 
     @Override
@@ -280,11 +264,6 @@ public final class Mock {
 
     @Override
     public boolean canOpenFile(@NotNull VirtualFile file) {
-      return false;
-    }
-
-    @Override
-    protected boolean canOpenFile(@NotNull VirtualFile file, @NotNull List<FileEditorProvider> providers) {
       return false;
     }
 
@@ -349,6 +328,11 @@ public final class Mock {
 
     @Override
     public void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId) {
+    }
+
+    @Override
+    public @NotNull FileEditorComposite openFile(@NotNull VirtualFile file, @Nullable EditorWindow window, @NotNull FileEditorOpenOptions options) {
+      return FileEditorComposite.Companion.fromPair(new Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY));
     }
   }
 

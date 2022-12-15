@@ -104,7 +104,7 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
     val currentWindow = editorManager.currentWindow!!
     editorManager.createSplitter(SwingConstants.HORIZONTAL, currentWindow)
     val nextWindow = editorManager.getNextWindow(currentWindow)!!
-    val childEditor = editorManager.openFileWithProviders(childClass.containingFile.virtualFile, false, nextWindow).first[0]
+    val childEditor = editorManager.openFile(file = childClass.containingFile.virtualFile, nextWindow).allEditors.first()
 
     // rename parent, check for errors
     WriteCommandAction.runWriteCommandAction(project) {
@@ -114,7 +114,7 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
     rehighlight(parentEditor)
     assertSize(2, getProblems(parentEditor))
 
-    // select child editor, remove parent from child extends list, check that number of problems changed
+    // select child editor, remove parent from a child extends list, check that the number of problems changed
     IdeFocusManager.getInstance(project).requestFocus(childEditor.component, true)
     WriteCommandAction.runWriteCommandAction(project) {
       val factory = JavaPsiFacade.getInstance(project).elementFactory
