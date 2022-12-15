@@ -36,8 +36,8 @@ public class EvaluateException extends Exception {
     if (th instanceof EvaluateException) {
       myTargetException = ((EvaluateException)th).getExceptionFromTargetVM();
     }
-    else if(th instanceof InvocationException){
-      InvocationException invocationException = (InvocationException) th;
+    else if (th instanceof InvocationException) {
+      InvocationException invocationException = (InvocationException)th;
       myTargetException = invocationException.exception();
     }
     if (LOG.isDebugEnabled()) {
@@ -61,7 +61,7 @@ public class EvaluateException extends Exception {
       return errorMessage;
     }
     final Throwable cause = getCause();
-    final String causeMessage = cause != null? cause.getMessage() : null;
+    final String causeMessage = cause != null ? cause.getMessage() : null;
     if (causeMessage != null) {
       return causeMessage;
     }
