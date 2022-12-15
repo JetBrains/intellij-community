@@ -21,7 +21,7 @@ internal class ToolWindowLeftToolbar(paneId: String, private val isPrimary: Bool
     return when (anchor) {
       ToolWindowAnchor.LEFT -> topStripe
       ToolWindowAnchor.BOTTOM -> bottomStripe
-      else -> throw IllegalArgumentException("Wrong anchor $anchor")
+      else -> topStripe
     }
   }
 
