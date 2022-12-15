@@ -53,7 +53,7 @@ interface HtmlEmbeddedContentSupport {
       return if (LanguageUtil.isInjectableLanguage(language))
         LanguageHtmlScriptContentProvider.getScriptContentProvider(language)
           ?.let { provider ->
-            object: HtmlEmbedmentInfo { // weird debug name
+            object: HtmlEmbedmentInfo {
               override fun getElementType(): IElementType?  = provider.scriptElementType
               override fun createHighlightingLexer(): Lexer?  = provider.highlightingLexer
             }
