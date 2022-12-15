@@ -972,8 +972,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     CompletableFuture<List<Object>> future = new CompletableFuture<>();
     SearchAdapter listener = new SearchAdapter() {
       @Override
-      public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
-        future.complete(myListModel.getItems());
+      public void searchFinished(@NotNull List<Object> items) {
+        future.complete(items);
         SwingUtilities.invokeLater(() -> removeSearchListener(this));
       }
     };
@@ -1285,7 +1285,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       mySelectionTracker.resetSelectionIfNeeded();
       myHintHelper.setSearchInProgress(false);
 
-      myExternalSearchListeners.forEach(listener -> listener.searchFinished(hasMoreContributors));
+      myExternalSearchListeners.forEach(listener -> {
+        listener.searchFinished(hasMoreContributors);
+        if (listener instanceof SearchListenerEx listenerEx) listenerEx.searchFinished(myListModel.getItems());
+      });
     }
 
     @Override
