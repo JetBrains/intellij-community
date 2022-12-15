@@ -1455,6 +1455,7 @@ private fun openProjectInstanceArgs(projectStoreBaseDir: Path): Array<String> {
     PathManager.PROPERTY_CONFIG_PATH to instancePaths.getConfigDir(),
     PathManager.PROPERTY_LOG_PATH to instancePaths.getLogDir(),
     PathManager.PROPERTY_PLUGINS_PATH to instancePaths.getPluginsDir(),
+    ProjectManagerEx.PER_PROJECT_OPTION_NAME to ProjectManagerEx.PerProjectState.ENABLED
   ).map { (key, value) ->
     "-D$key=$value"
   }.toTypedArray()
