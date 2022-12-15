@@ -95,7 +95,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
               val option = tool.getOption(component.bindId)
               val type = option.javaClass
               @Suppress("HardCodedStringLiteral")
-              model.selectedItem = option.toString()
+              model.selectedItem = if (option is Enum<*>) option.name else option.toString()
               addItemListener { tool.setOption(component.bindId, convertItem((selectedItem as OptDropdown.Option).key, type)) }
             }
 
