@@ -16,6 +16,7 @@ import com.intellij.ide.*
 import com.intellij.ide.impl.*
 import com.intellij.ide.impl.trustedProjects.LocatedProject
 import com.intellij.ide.impl.trustedProjects.TrustedProjects
+import com.intellij.ide.impl.trustedProjects.TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProjectAsync
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.lightEdit.LightEditService
@@ -41,7 +42,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.runBlockingModal0
 import com.intellij.openapi.project.*
@@ -69,7 +69,6 @@ import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.Restarter
-import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
@@ -540,10 +539,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     val activity = StartUpMeasurer.startActivity("project opening preparation")
 
-    val trusted = blockingContext {
-      checkTrustedState(projectStoreBaseDir)
-    }
-    if (!trusted) {
+    if (!checkTrustedState(projectStoreBaseDir)) {
       LOG.info("Project is not trusted, aborting")
       activity.end()
       throw ProcessCanceledException()
@@ -1135,16 +1131,9 @@ private fun removeProjectConfigurationAndCaches(projectFile: Path) {
  *
  * @return true if we should proceed with project opening, false if the process of project opening should be canceled.
  */
-private fun checkOldTrustedStateAndMigrate(project: Project, projectStoreBaseDir: Path): Boolean {
-  // The trusted state will be migrated inside getProjectTrustedState
-  val locatedProject = LocatedProject.locateProject(projectStoreBaseDir, project)
-  val trustedState = TrustedProjects.getProjectTrustedState(locatedProject)
-  if (trustedState != ThreeState.UNSURE) {
-    // the trusted state of this project path is already known => proceed with opening
-    return true
-  }
-
-  return confirmOpeningOrLinkingUntrustedProject(
+private suspend fun checkOldTrustedStateAndMigrate(project: Project, projectStoreBaseDir: Path): Boolean {
+  // The trusted state will be migrated inside TrustedProjects.isTrustedProject, because now we have project instance.
+  return confirmOpeningOrLinkingUntrustedProjectAsync(
     projectStoreBaseDir,
     project,
     IdeBundle.message("untrusted.project.open.dialog.title", project.name),
@@ -1363,10 +1352,9 @@ private fun clearPerProjectDirsForProject(
  *
  * @return true if we should proceed with project opening, false if the process of project opening should be canceled.
  */
-private fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
+private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
   val locatedProject = LocatedProject.locateProject(projectStoreBaseDir, project = null)
-  val trustedState = TrustedProjects.getProjectTrustedState(locatedProject)
-  if (trustedState != ThreeState.UNSURE) {
+  if (TrustedProjects.isProjectTrusted(locatedProject)) {
     // the trusted state of this project path is already known => proceed with opening
     return true
   }
@@ -1383,7 +1371,7 @@ private fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
     return true
   }
 
-  return confirmOpeningOrLinkingUntrustedProject(
+  return confirmOpeningOrLinkingUntrustedProjectAsync(
     projectStoreBaseDir,
     null,
     IdeBundle.message("untrusted.project.open.dialog.title", projectStoreBaseDir.fileName),
