@@ -58,7 +58,7 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
     ReassignVariableUtil.registerDeclaration(getEditor(), decl, getTestRootDisposable());
     ReassignVariableUtil.reassign(getEditor());
   }
-  public void testPrivateRecordInsideAnonymous() {
+  public void testModifiersInsideAnonymousLocal() {
     doTest();
   }
 
