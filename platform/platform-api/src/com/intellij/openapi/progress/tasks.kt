@@ -84,12 +84,12 @@ suspend fun <T> withModalProgressIndicator(
 }
 
 @RequiresEdt
-fun <T> runBlockingModal(
+fun <T> runBlockingModal0(
   project: Project,
   title: @ProgressTitle String,
   action: suspend CoroutineScope.() -> T,
 ): T {
-  return runBlockingModal(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
+  return runBlockingModal0(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
 }
 
 /**
@@ -125,7 +125,7 @@ fun <T> runBlockingModal(
  * }
  * ```
  *
- * [runBlockingModal] is designed for cases when the caller requires the modality,
+ * [runBlockingModal0] is designed for cases when the caller requires the modality,
  * and the caller cannot afford to let go of the current EDT event:
  * ```
  * // on EDT
@@ -146,7 +146,7 @@ fun <T> runBlockingModal(
  * or if the indicator was cancelled by the user in the UI
  */
 @RequiresEdt
-fun <T> runBlockingModal(
+fun <T> runBlockingModal0(
   owner: ModalTaskOwner,
   title: @ProgressTitle String,
   cancellation: TaskCancellation = TaskCancellation.cancellable(),

@@ -40,7 +40,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.impl.CoreProgressManager
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runBlockingModal0
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.LowLevelProjectOpenProcessor
 import com.intellij.openapi.project.ex.PerProjectInstancePaths
@@ -495,7 +495,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       runConfigurators = false
       projectName = name
     }
-    val project = runBlockingModal(
+    val project = runBlockingModal0(
       owner = ModalTaskOwner.guess(),
       title = IdeUICustomization.getInstance().projectMessage("progress.title.project.creating.name", name ?: PathUtilRt.getFileName(path)),
     ) {

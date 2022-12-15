@@ -197,7 +197,7 @@ class RunBlockingModalTest : ModalCoroutineTest() {
 
   private suspend fun runBlockingModalTest(action: suspend () -> Unit) {
     withContext(Dispatchers.EDT) {
-      runBlockingModal(ModalTaskOwner.guess(), "") {
+      runBlockingModal0(ModalTaskOwner.guess(), "") {
         val modality = requireNotNull(currentCoroutineContext().contextModality())
         assertNotEquals(modality, ModalityState.NON_MODAL)
         assertSame(ModalityState.NON_MODAL, ModalityState.defaultModalityState())
@@ -238,5 +238,5 @@ private suspend fun <T> runBlockingModalContext(action: suspend CoroutineScope.(
 }
 
 private fun <T> runBlockingModal(action: suspend CoroutineScope.() -> T): T {
-  return runBlockingModal(ModalTaskOwner.guess(), "", action = action)
+  return runBlockingModal0(ModalTaskOwner.guess(), "", action = action)
 }

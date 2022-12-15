@@ -212,7 +212,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     commitCustomEventDispatcher.addListener(listener, parent)
 
   fun executeSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
-    return runBlockingModal(project, message("commit.checks.on.commit.progress.text")) {
+    return runBlockingModal0(project, message("commit.checks.on.commit.progress.text")) {
       withContext(Dispatchers.EDT) {
         fireBeforeCommitChecksStarted(sessionInfo)
         val result = runModalBeforeCommitChecks(commitInfo)

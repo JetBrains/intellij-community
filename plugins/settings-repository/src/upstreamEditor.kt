@@ -4,7 +4,7 @@ package org.jetbrains.settingsRepository
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runBlockingModal0
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
@@ -72,7 +72,7 @@ fun doSync(icsManager: IcsManager, project: Project?, syncType: SyncType, url: S
     }
 
     @Suppress("DialogTitleCapitalization")
-    runBlockingModal(owner, icsMessage("task.sync.title")) {
+    runBlockingModal0(owner, icsMessage("task.sync.title")) {
       if (isRepositoryWillBeCreated && syncType != SyncType.OVERWRITE_LOCAL) {
         com.intellij.configurationStore.saveSettings(componentManager = ApplicationManager.getApplication(), forceSavingAllSettings = false)
         icsManager.sync(syncType = syncType, project = project) { copyLocalConfig() }

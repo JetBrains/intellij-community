@@ -16,7 +16,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runBlockingModal0
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Disposer
@@ -255,7 +255,7 @@ abstract class EditorBasedStatusBarPopup(
   @TestOnly
   fun updateInTests(immediately: Boolean) {
     if (immediately) {
-      runBlockingModal(ModalTaskOwner.guess(), "") {
+      runBlockingModal0(ModalTaskOwner.guess(), "") {
         doUpdate(null)
       }
     }
@@ -271,7 +271,7 @@ abstract class EditorBasedStatusBarPopup(
 
   @TestOnly
   private fun drainRequestsInTest() {
-    runBlockingModal(ModalTaskOwner.guess(), "") {
+    runBlockingModal0(ModalTaskOwner.guess(), "") {
       val replayCache = update.replayCache
       @Suppress("OPT_IN_USAGE")
       update.resetReplayCache()
