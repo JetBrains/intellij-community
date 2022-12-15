@@ -78,6 +78,5 @@ UFile (package = ) [public final class CommentOwnersKt {...]
             USimpleNameReferenceExpression (identifier = MyBooleanEnum) [MyBooleanEnum] = external MyBooleanEnum()
         UMethod (name = MyBooleanEnum) [private fun MyBooleanEnum() = UastEmptyExpression]
         UMethod (name = values) [public static fun values() : MyBooleanEnum[] = UastEmptyExpression]
-        UMethod (name = valueOf) [public static fun valueOf(@org.jetbrains.annotations.NotNull name: java.lang.String) : MyBooleanEnum = UastEmptyExpression]
-            UParameter (name = name) [@org.jetbrains.annotations.NotNull var name: java.lang.String]
-                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+        UMethod (name = valueOf) [public static fun valueOf(name: java.lang.String) : MyBooleanEnum = UastEmptyExpression]
+            UParameter (name = name) [var name: java.lang.String]

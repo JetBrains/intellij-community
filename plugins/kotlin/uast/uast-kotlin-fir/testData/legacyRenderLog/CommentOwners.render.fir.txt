@@ -40,7 +40,8 @@ public final class TopLevelClass {
 public final enum MyBooleanEnum {
     @null TRUE
     @null FALSE
+    public static final fun values() : MyBooleanEnum[] = UastEmptyExpression
+    public static final fun valueOf(value: java.lang.String) : MyBooleanEnum = UastEmptyExpression
+    public static final fun getEntries() : kotlin.enums.EnumEntries<MyBooleanEnum> = UastEmptyExpression
     private fun MyBooleanEnum() = UastEmptyExpression
-    public static fun values() : MyBooleanEnum[] = UastEmptyExpression
-    public static fun valueOf(@org.jetbrains.annotations.NotNull name: java.lang.String) : MyBooleanEnum = UastEmptyExpression
 }
