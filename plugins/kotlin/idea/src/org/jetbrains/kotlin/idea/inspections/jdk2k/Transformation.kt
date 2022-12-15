@@ -57,24 +57,23 @@ object ToExtensionFunctionWithNonNullableReceiver : Transformation {
         }
     }
 
-    override fun isApplicable(callExpression: KtCallExpression): Boolean = callExpression.valueArguments.isNotEmpty()
+    override fun isApplicable(callExpression: KtCallExpression): Boolean =
+        callExpression.valueArguments.isNotEmpty()
 
-    override fun isApplicableInContext(callExpression: KtCallExpression, context: BindingContext): Boolean = callExpression
-        .valueArguments.firstOrNull()
-        ?.getArgumentExpression()
-        ?.getType(context)
-        ?.isNullable() == false
+    override fun isApplicableInContext(callExpression: KtCallExpression, context: BindingContext): Boolean =
+        callExpression
+            .valueArguments.firstOrNull()
+            ?.getArgumentExpression()
+            ?.getType(context)
+            ?.isNullable() == false
 }
 
 object ToExtensionFunctionWithNonNullableArguments : Transformation {
-    override fun invoke(callExpression: KtCallExpression, replacement: Replacement) = ToExtensionFunctionWithNonNullableReceiver(
-        callExpression,
-        replacement
-    )
+    override fun invoke(callExpression: KtCallExpression, replacement: Replacement) =
+        ToExtensionFunctionWithNonNullableReceiver(callExpression, replacement)
 
-    override fun isApplicable(callExpression: KtCallExpression): Boolean = ToExtensionFunctionWithNonNullableReceiver.isApplicable(
-        callExpression
-    )
+    override fun isApplicable(callExpression: KtCallExpression): Boolean =
+        ToExtensionFunctionWithNonNullableReceiver.isApplicable(callExpression)
 
     override fun isApplicableInContext(callExpression: KtCallExpression, context: BindingContext): Boolean =
         callExpression.valueArguments.all {
@@ -83,12 +82,9 @@ object ToExtensionFunctionWithNonNullableArguments : Transformation {
 }
 
 object ToExtensionFunctionWithNullableReceiver : Transformation {
-    override fun invoke(callExpression: KtCallExpression, replacement: Replacement) = ToExtensionFunctionWithNonNullableReceiver(
-        callExpression,
-        replacement
-    )
+    override fun invoke(callExpression: KtCallExpression, replacement: Replacement) =
+        ToExtensionFunctionWithNonNullableReceiver(callExpression, replacement)
 
-    override fun isApplicable(callExpression: KtCallExpression): Boolean = ToExtensionFunctionWithNonNullableReceiver.isApplicable(
-        callExpression
-    )
+    override fun isApplicable(callExpression: KtCallExpression): Boolean =
+        ToExtensionFunctionWithNonNullableReceiver.isApplicable(callExpression)
 }
