@@ -110,12 +110,12 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
     @JvmStatic
     @get:VisibleForTesting
     val READ_PERSISTENT_VALUE: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
-      Registry.`is`("retrieve.pushed.properties.from.vfs", false) or Registry.`is`("scanning.in.smart.mode", false)
+      Registry.`is`("retrieve.pushed.properties.from.vfs", true) or Registry.`is`("scanning.in.smart.mode", true)
     }
 
     @JvmStatic
     private val NULL_MARKER by lazy(LazyThreadSafetyMode.PUBLICATION) {
-      if (Registry.`is`("cache.nulls.for.pushed.properties", false)) {
+      if (Registry.`is`("cache.nulls.for.pushed.properties", true)) {
         Object()
       }
       else {

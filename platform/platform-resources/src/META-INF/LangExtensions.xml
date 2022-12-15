@@ -110,11 +110,11 @@
     <!--suppress PluginXmlCapitalization -->
     <registryKey defaultValue="true" key="use.dependencies.cache.service" restartRequired="true"
                  description="Rescan delta of AdditionalLibraryProvider, IndexableSetContributor, DirectoryIndexExcludePolicy values instead of full project."/>
-    <registryKey defaultValue="false" key="scanning.in.smart.mode" restartRequired="false"
+    <registryKey defaultValue="true" key="scanning.in.smart.mode" restartRequired="false"
                  description="Scan project in smart mode under regular progress indicator."/>
-    <registryKey defaultValue="false" key="retrieve.pushed.properties.from.vfs" restartRequired="true"
+    <registryKey defaultValue="true" key="retrieve.pushed.properties.from.vfs" restartRequired="true"
                  description="Retrieve previously pushed properties from VFS (via PersistentKey) if the value is urgently needed before pushers complete their work."/>
-    <registryKey defaultValue="false" key="cache.nulls.for.pushed.properties" restartRequired="true"
+    <registryKey defaultValue="true" key="cache.nulls.for.pushed.properties" restartRequired="true"
                  description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
     <projectService serviceInterface="com.intellij.util.indexing.IndexableFilesIndex"
                     serviceImplementation="com.intellij.util.indexing.roots.IndexableFilesIndexImpl"/>

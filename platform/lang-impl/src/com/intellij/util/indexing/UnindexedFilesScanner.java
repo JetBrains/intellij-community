@@ -267,7 +267,7 @@ public class UnindexedFilesScanner implements MergeableQueueTask<UnindexedFilesS
   }
 
   static boolean shouldScanInSmartMode() {
-    return !DumbServiceImpl.isSynchronousTaskExecution() && Registry.is("scanning.in.smart.mode", false);
+    return !DumbServiceImpl.isSynchronousTaskExecution() && Registry.is("scanning.in.smart.mode", true);
   }
 
   private static @NotNull String getLogScanningCompletedStageMessage(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory) {
