@@ -15,6 +15,7 @@ import io.ktor.client.plugins.auth.providers.basic
 import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.request.get
+import io.ktor.client.request.prepareGet
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
@@ -160,9 +161,11 @@ suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDepende
       val tempFile = target.parent
         .resolve("${target.fileName}-${(now.epochSecond - 1634886185).toString(36)}-${now.nano.toString(36)}".take(255))
       try {
-        val response = httpSpaceClient.value.get(url)
-        coroutineScope {
-          response.bodyAsChannel().copyAndClose(writeChannel(tempFile))
+        val response = httpSpaceClient.value.prepareGet(url).execute {
+          coroutineScope {
+            it.bodyAsChannel().copyAndClose(writeChannel(tempFile))
+          }
+          it
         }
         val statusCode = response.status.value
         if (statusCode != 200) {
