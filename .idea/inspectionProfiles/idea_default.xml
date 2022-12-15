@@ -1098,6 +1098,24 @@
         <constraint name="key" within="" contains="" />
         <constraint name="value" regexp="[^{]*''[^{]*" target="true" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="Eager service initialization during classloading" description="This code is executed when JVM is loading the class, which may cause deadlocks, slowdowns and circular loading issues.&#10;&#10;An example of good API for service getters is&#10;fun instance(): Type = service()" suppressId="service_in_classloading" text="class $doesNotMatter$ {&#10;  companion object {&#10;    val $instance$ = service&lt;$cls$&gt;()&#10;  }&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="fun $instance$() = service&lt;$cls$&gt;()&#10;  &#10;@Deprecated(&quot;inline me&quot;)&#10;val $instance$ = $instance$()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="instance" target="true" within="" contains="" />
+        <constraint name="doesNotMatter" within="" contains="" />
+        <constraint name="cls" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Eager service initialization during classloading" text="class $doesNotMatter$ {&#10;  companion object {&#10;    val $instance$ = ApplicationManager.getApplication().getService($cls$)&#10;  }&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="fun $instance$() = ApplicationManager.getApplication().getService($cls$)&#10;&#10;@Deprecated(&quot;inline me&quot;)&#10;val $instance$ get() = $instance$">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="instance" target="true" within="" contains="" />
+        <constraint name="doesNotMatter" within="" contains="" />
+        <constraint name="cls" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Eager service initialization during classloading" text="class $doesNotMatter$ {&#10;  companion object {&#10;    val $instance$: $cls$ = service()&#10;  }&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="fun $instance$(): $cls$ = service()&#10;@Deprecated(&quot;inline me&quot;) val $instance$: $cls$ get() = instance&#10;">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="instance" target="true" within="" contains="" />
+        <constraint name="doesNotMatter" within="" contains="" />
+        <constraint name="cls" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="EventLogGroup version should be &gt; 0" text="EventLogGroup($Parameter1$, $Parameter2$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Parameter2" regexp="0" within="" contains="" />
