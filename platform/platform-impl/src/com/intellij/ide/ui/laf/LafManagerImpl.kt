@@ -651,6 +651,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
   private fun applyDensity(defaults: UIDefaults) {
     if (density == UIDensity.COMPACT) {
+      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(32, 32))
       defaults.put("Tree.rowHeight", 20)
       defaults.put("EditorTabs.tabInsets", JBInsets.create(0, 2).asUIResource())
       defaults.put("ToolWindow.Header.height", 35)
@@ -696,7 +697,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
    * as it's configured in `UISettings`.
    */
   override fun updateUI() {
-    (ApplicationManager.getApplication().getService(GeometryService::class.java) as GeometryServiceImpl).ensureInitialized()
     val uiDefaults = UIManager.getLookAndFeelDefaults()
     uiDefaults.put("LinkButtonUI", DefaultLinkButtonUI::class.java.name)
     fixPopupWeight()

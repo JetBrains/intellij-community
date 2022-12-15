@@ -98,6 +98,11 @@ public final class JBUI {
     return JBDimension.size(size);
   }
 
+  public static @NotNull JBDimension size(@NonNls @NotNull String propName, @NotNull JBDimension defaultValue) {
+    Dimension d = UIManager.getDimension(propName);
+    return d != null ? JBDimension.size(d) : defaultValue;
+  }
+
   public static @NotNull JBInsets insets(int top, int left, int bottom, int right) {
     return new JBInsets(top, left, bottom, right);
   }
@@ -845,6 +850,14 @@ public final class JBUI {
 
       public static Insets mainToolbarButtonInsets() {
         return insets("MainToolbar.Button.buttonInsets", JBInsets.create(1, 2));
+      }
+
+      public static @NotNull Dimension experimentalToolbarButtonSize() {
+        return size(experimentalToolbarButtonSizeKey(), size(40, 40));
+      }
+
+      public @NotNull static String experimentalToolbarButtonSizeKey() {
+        return "ActionToolbar.large.buttonSize";
       }
     }
 

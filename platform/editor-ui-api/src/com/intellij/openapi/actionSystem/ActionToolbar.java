@@ -2,9 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.ui.GeometryService;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.JBUI;
@@ -73,10 +71,8 @@ public interface ActionToolbar {
 
   Dimension NAVBAR_MINIMUM_BUTTON_SIZE = JBUI.size(20, 20);
 
-  Key<Dimension> EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE_KEY = Key.create("ActionToolbar.large.buttonSize");
-
   static Dimension experimentalToolbarMinimumButtonSize() {
-    return GeometryService.getInstance().getSize(EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE_KEY);
+    return JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSize();
   }
 
   /**
