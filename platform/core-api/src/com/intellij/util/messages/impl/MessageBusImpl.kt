@@ -155,7 +155,7 @@ open class MessageBusImpl : MessageBus {
     parentBus?.onChildBusDisposed(this)
   }
 
-  protected open fun disposeChildren() {
+  internal open fun disposeChildren() {
   }
 
   override fun isDisposed(): Boolean = disposeState == DISPOSED_STATE || owner.isDisposed
@@ -179,7 +179,7 @@ open class MessageBusImpl : MessageBus {
     }
   }
 
-  open fun doComputeSubscribers(topic: Topic<*>, result: MutableList<in Any>, subscribeLazyListeners: Boolean) {
+  internal open fun doComputeSubscribers(topic: Topic<*>, result: MutableList<in Any>, subscribeLazyListeners: Boolean) {
     // todo check that handler implements method (not a default implementation)
     for (subscriber in subscribers) {
       if (!subscriber.isDisposed) {
@@ -188,15 +188,15 @@ open class MessageBusImpl : MessageBus {
     }
   }
 
-  open fun computeSubscribers(topic: Topic<*>): Array<Any?> {
+  internal open fun computeSubscribers(topic: Topic<*>): Array<Any?> {
     val result = mutableListOf<Any>()
     doComputeSubscribers(topic, result, true)
     return if (result.isEmpty()) ArrayUtilRt.EMPTY_OBJECT_ARRAY else result.toTypedArray()
   }
 
-  open fun hasChildren(): Boolean = false
+  internal open fun hasChildren(): Boolean = false
 
-  fun notifyOnSubscription(topic: Topic<*>) {
+  internal fun notifyOnSubscription(topic: Topic<*>) {
     subscriberCache.remove(topic)
     if (topic.broadcastDirection != BroadcastDirection.TO_CHILDREN) {
       return
@@ -215,14 +215,14 @@ open class MessageBusImpl : MessageBus {
     }
   }
 
-  open fun notifyOnSubscriptionToTopicToChildren(topic: Topic<*>) {
+  internal open fun notifyOnSubscriptionToTopicToChildren(topic: Topic<*>) {
   }
 
   open fun removeEmptyConnectionsRecursively() {
     subscribers.removeIf { it.isDisposed }
   }
 
-  open fun notifyConnectionTerminated(topicAndHandlerPairs: Array<Any>): Boolean {
+  internal open fun notifyConnectionTerminated(topicAndHandlerPairs: Array<Any>): Boolean {
     if (disposeState != ALIVE) {
       return false
     }
@@ -232,7 +232,7 @@ open class MessageBusImpl : MessageBus {
   }
 
   // this method is used only in CompositeMessageBus.notifyConnectionTerminated to clear subscriber cache in children
-  open fun clearSubscriberCache(topicAndHandlerPairs: Array<Any>) {
+  internal open fun clearSubscriberCache(topicAndHandlerPairs: Array<Any>) {
     var i = 0
     while (i < topicAndHandlerPairs.size) {
       subscriberCache.remove(topicAndHandlerPairs[i])
@@ -411,6 +411,7 @@ private fun deliverMessage(job: Message, jobQueue: MessageQueue, prevExceptions:
   }
 }
 
+@Internal
 internal open class MessagePublisher<L>(@JvmField protected val topic: Topic<L>,
                                         @JvmField protected val bus: MessageBusImpl) : InvocationHandler {
   final override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
@@ -448,6 +449,7 @@ internal open class MessagePublisher<L>(@JvmField protected val topic: Topic<L>,
   }
 }
 
+@Internal
 internal fun executeOrAddToQueue(topic: Topic<*>,
                                  method: Method,
                                  args: Array<Any?>?,
@@ -480,6 +482,7 @@ internal fun executeOrAddToQueue(topic: Topic<*>,
   }
 }
 
+@Internal
 internal class ToParentMessagePublisher<L>(topic: Topic<L>, bus: MessageBusImpl) : MessagePublisher<L>(topic, bus), InvocationHandler {
   // args not-null
   override fun publish(method: Method, args: Array<Any?>?, queue: MessageQueue?): Boolean {
