@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.createWeighingContext
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.utils.addIfNotNull
 
 internal open class FirCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
@@ -249,18 +248,11 @@ internal open class FirCallableCompletionContributor(
     ) {
         val possibleReceiverScope = typeOfPossibleReceiver.getTypeScope()?.getDeclarationScope() ?: return
 
-        val nonExtensionMembers = collectNonExtensions(possibleReceiverScope, visibilityChecker, scopeNameFilter) { filter(it) }.toList()
+        val nonExtensionMembers = collectNonExtensions(possibleReceiverScope, visibilityChecker, scopeNameFilter) { filter(it) }
         val extensionNonMembers = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)
 
-        val realJavaGettersAndSetters = nonExtensionMembers.asSequence().filterIsInstance<KtSyntheticJavaPropertySymbol>()
-            .flatMap { listOfNotNull(it.javaGetterSymbol, it.javaSetterSymbol) }
-            .toSet()
-        for (nonExtensionMember in nonExtensionMembers) {
-            // Skip Java getters/setters that are mapped to Kotlin's synthetic properties, because we show the properties in the completion
-            // (K1 has the same behavior)
-            if (nonExtensionMember !in realJavaGettersAndSetters) {
-                addCallableSymbolToCompletion(context, nonExtensionMember, getOptions(nonExtensionMember), explicitReceiverTypeHint = explicitReceiverTypeHint)
-            }
+        nonExtensionMembers.forEach {
+            addCallableSymbolToCompletion(context, it, getOptions(it), explicitReceiverTypeHint = explicitReceiverTypeHint)
         }
 
         // Here we can't rely on deduplication in LookupElementSink because extension members can have types substituted, which won't be

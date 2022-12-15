@@ -3246,6 +3246,11 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("AfterSuper.kt")
+            public void testAfterSuper() throws Exception {
+                runTest("../completion/testData/basic/java/syntheticExtensions/AfterSuper.kt");
+            }
+
             @TestMetadata("DoNotHideGetterWhenExtensionCannotBeUsed.kt")
             public void testDoNotHideGetterWhenExtensionCannotBeUsed() throws Exception {
                 runTest("../completion/testData/basic/java/syntheticExtensions/DoNotHideGetterWhenExtensionCannotBeUsed.kt");
