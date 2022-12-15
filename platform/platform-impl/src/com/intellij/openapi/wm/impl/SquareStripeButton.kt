@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
+import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
@@ -27,7 +28,7 @@ import java.awt.event.MouseEvent
 internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
   ActionButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, ActionToolbar.experimentalToolbarMinimumButtonSize()) {
   companion object {
-    fun createMoveGroup(toolWindow: ToolWindow) = ToolWindowMoveToAction.Group(toolWindow)
+    fun createMoveGroup(toolWindow: ToolWindow) = ToolWindowMoveAction.GroupWithOutTop()
   }
 
   init {

@@ -528,7 +528,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     val anchor = getToolWindowAnchor(factory, bean)
 
     @Suppress("DEPRECATION")
-    val sideTool = (bean.secondary || bean.side) && !isNewUi
+    val sideTool = bean.secondary || bean.side
     val entry = registerToolWindow(RegisterToolWindowTask(
       id = bean.id,
       icon = findIconFromBean(bean, factory, plugin),
