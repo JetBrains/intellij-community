@@ -323,6 +323,16 @@ public abstract class IdeCompiledLightClassTestGenerated extends AbstractIdeComp
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/DollarsInNameNoPackage.kt"));
         }
 
+        @TestMetadata("EnumClass.kt")
+        public void testEnumClass() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/EnumClass.kt"));
+        }
+
+        @TestMetadata("EnumClassWithEnumEntries.kt")
+        public void testEnumClassWithEnumEntries() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/EnumClassWithEnumEntries.kt"));
+        }
+
         @TestMetadata("EnumEntry.kt")
         public void testEnumEntry() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/EnumEntry.kt"));
