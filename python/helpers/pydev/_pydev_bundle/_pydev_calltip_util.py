@@ -116,6 +116,9 @@ def get_description(obj):
             else:
                 spec_info = getargspec_py2(fob)
             argspec = inspect.formatargspec(*spec_info)
+        except ValueError:
+            # function/method defined in C for example str.count
+            argspec = None
 
         fn_name = getattr(fob, '__name__', None)
         if isinstance(obj, type) or type(obj).__name__ == 'classobj':
