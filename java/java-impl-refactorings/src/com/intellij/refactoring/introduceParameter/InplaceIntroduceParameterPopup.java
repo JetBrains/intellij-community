@@ -280,6 +280,20 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
   }
 
   @Override
+  public void finish(boolean success) {
+    super.finish(success);
+    if (!success) {
+      performCleanup();
+    }
+  }
+
+  @Override
+  protected void moveOffsetAfter(boolean success) {
+    if (!success) return;
+    super.moveOffsetAfter(success);
+  }
+
+  @Override
   protected void restoreState(@NotNull PsiVariable psiField) {
     super.restoreState(psiField);
     removeDelegate();
