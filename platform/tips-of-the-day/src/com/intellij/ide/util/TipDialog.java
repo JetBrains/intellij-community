@@ -32,6 +32,8 @@ public final class TipDialog extends DialogWrapper {
   private final boolean myShowingOnStartup;
   private final boolean myShowActions;
 
+  private boolean showRequestScheduled = false;
+
   TipDialog(@Nullable final Project project, @NotNull final TipsSortingResult sortingResult) {
     super(project, true);
     setModal(false);
@@ -39,7 +41,13 @@ public final class TipDialog extends DialogWrapper {
     setCancelButtonText(CommonBundle.getCloseButtonText());
     myTipPanel = new TipPanel(project, sortingResult, getDisposable());
     myTipPanel.addPropertyChangeListener(TipPanel.CURRENT_TIP_KEY.toString(), event -> {
-      SwingUtilities.invokeLater(() -> adjustSizeToContent());
+      if (showRequestScheduled) {
+        showRequestScheduled = false;
+        show();
+      }
+      else {
+        adjustSizeToContent();
+      }
     });
     myShowActions = sortingResult.getTips().size() > 1;
     if (myShowActions) {
@@ -49,12 +57,11 @@ public final class TipDialog extends DialogWrapper {
     init();
   }
 
-  @Override
-  public void show() {
-    super.show();
-    // For some reason OS reduces the height of the dialog after showing (XDecoratedPeer#handleCorrectInsets)
-    // So we need to return preferred height back
-    SwingUtilities.invokeLater(() -> adjustSizeToContent());
+  /**
+   * Shows the dialog when the tip is loaded and filled into text pane
+   */
+  public void showWhenTipInstalled() {
+    showRequestScheduled = true;
   }
 
   private void adjustSizeToContent() {
@@ -63,10 +70,6 @@ public final class TipDialog extends DialogWrapper {
     Dimension minSize = getRootPane().getMinimumSize();
     int height = Math.max(prefSize.height, minSize.height);
     setSize(prefSize.width, height);
-    // Hack to free space occupied by JBScrollBar
-    // For some reason insets are recalculated inside JBViewport.ViewBorder#getBorderInsets()
-    // but do not update during validation after dialog size change
-    SwingUtilities.invokeLater(() -> myTipPanel.getContentPanel().getInsets());
   }
 
   @NotNull
