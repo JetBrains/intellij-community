@@ -58,10 +58,7 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.PossiblyDumbAware
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
@@ -560,13 +557,8 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
   open fun getFileTooltipText(file: VirtualFile, window: EditorWindow): @NlsContexts.Tooltip String {
     val composite = window.getComposite(file)
-    val prefix = if (composite != null && composite.isPreview) {
-      LangBundle.message("preview.editor.tab.tooltip.text") + " "
-    }
-    else {
-      ""
-    }
-    for (provider in DumbService.getDumbAwareExtensions(project, EditorTabTitleProvider.EP_NAME)) {
+    val prefix = if (composite != null && composite.isPreview) "${LangBundle.message("preview.editor.tab.tooltip.text")} " else ""
+    for (provider in EditorTabTitleProvider.EP_NAME.lazyDumbAwareExtensions(project)) {
       val text = provider.getEditorTabTooltipText(project, file)
       if (text != null) {
         return prefix + text
