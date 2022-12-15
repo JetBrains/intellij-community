@@ -45,6 +45,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
+import java.util.zip.ZipException;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_NAME_ID;
 
@@ -792,6 +793,15 @@ public final class FSRecords {
     }
     catch (OutOfMemoryError outOfMemoryError) {
       throw outOfMemoryError;
+    }
+    catch (ZipException e) {
+      // we use zip to compress content
+      String fileName = getName(fileId);
+      long length = getLength(fileId);
+      IOException diagnosticException =
+        new IOException("Failed to decompress file's content for file. File name = " + fileName + ", length = " + length);
+      e.addSuppressed(e);
+      handleError(diagnosticException);
     }
     catch (Throwable e) {
       handleError(e);
