@@ -50,22 +50,14 @@ interface CompletionGolfEvaluationVisitor : CompletionEvaluationVisitor {
 
       val text = range.substring(element.containingFile.text)
 
-      // Take only valuable lines
-      if (text.contains("\n")) {
-        var start = range.startOffset
-        text.lines().map {
-          val t = TextRange(start, start + it.length).substring(element.containingFile.text)
-          CodeToken(t, start, t.length, prop).also {
-            start += t.length + 1
-          }
-        }.filter { it.text.isValuableString() }
-          .forEach { safeCodeFragment.addChild(it) }
-      }
-      else {
-        if (text.isValuableString()) {
-          safeCodeFragment.addChild(CodeToken(text, range.startOffset, text.length, prop))
+      var start = range.startOffset
+      text.lines().map {
+        val t = TextRange(start, start + it.length).substring(element.containingFile.text)
+        CodeToken(t, start, t.length, prop).also {
+          start += t.length + 1
         }
-      }
+      }.filter { it.text.isValuableString() }
+        .forEach { safeCodeFragment.addChild(it) }
     }
 
     fun handleLastElement(element: PsiElement) {
