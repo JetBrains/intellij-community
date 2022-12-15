@@ -3,6 +3,8 @@ package com.intellij.maven.testFramework;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.compiler.CompilerTestUtil;
+import com.intellij.java.library.LibraryWithMavenCoordinatesProperties;
+import com.intellij.java.library.MavenCoordinates;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
@@ -13,7 +15,9 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
@@ -433,6 +437,21 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       actualNames.add(name == null ? "<unnamed>" : name);
     }
     assertUnorderedElementsAreEqual(actualNames, expectedNames);
+  }
+
+  public void assertProjectLibraryCoordinates(@NotNull String libraryName,
+                                              @Nullable String groupId,
+                                              @Nullable String artifactId,
+                                              @Nullable String version) {
+    Library lib = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libraryName);
+    assertNotNull("Library [" + libraryName + "] not found", lib);
+    LibraryProperties libraryProperties = ((LibraryEx)lib).getProperties();
+    assertInstanceOf(libraryProperties, LibraryWithMavenCoordinatesProperties.class);
+    MavenCoordinates coords = ((LibraryWithMavenCoordinatesProperties)libraryProperties).getMavenCoordinates();
+    assertNotNull("Expected non-empty maven coordinates", coords);
+    assertEquals("Unexpected groupId", groupId, coords.getGroupId());
+    assertEquals("Unexpected artifactId", artifactId, coords.getArtifactId());
+    assertEquals("Unexpected version", version, coords.getVersion());
   }
 
   protected void assertModuleGroupPath(String moduleName, String... expected) {

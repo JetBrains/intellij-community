@@ -1,11 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
+import com.intellij.configurationStore.serialize
+import com.intellij.externalSystem.ImportedLibraryProperties
+import com.intellij.externalSystem.ImportedLibraryType
+import com.intellij.java.library.MavenCoordinates
 import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -27,6 +32,7 @@ import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class WorkspaceModuleImporter(
   private val project: Project,
@@ -99,6 +105,7 @@ internal class WorkspaceModuleImporter(
         is AttachedJarDependency ->
           createLibraryDependency(dependency.artifact,
                                   toScope(dependency.scope),
+                                  null,
                                   {
                                     dependency.rootPaths.map { (url, type) ->
                                       LibraryRoot(virtualFileUrlManager.fromUrl(pathToUrl(url)), type)
@@ -137,6 +144,7 @@ internal class WorkspaceModuleImporter(
 
     val libraryId = LibraryId(artifact.libraryName, LibraryTableId.ModuleLibraryTableId(moduleId = ModuleId(moduleName)))
     addLibraryEntity(libraryId,
+                     artifact,
                      {
                        val classes = MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)
                        listOf(LibraryRoot(virtualFileUrlManager.fromUrl(classes), LibraryRootTypeId.COMPILED))
@@ -160,6 +168,7 @@ internal class WorkspaceModuleImporter(
     }
     return createLibraryDependency(artifact.libraryName,
                                    artifact.dependencyScope,
+                                   artifact,
                                    libraryRootsProvider,
                                    sourceProvider)
   }
@@ -167,27 +176,48 @@ internal class WorkspaceModuleImporter(
   private fun createLibraryDependency(
     libraryName: String,
     scope: ModuleDependencyItem.DependencyScope,
+    artifact: MavenArtifact?,
     libraryRootsProvider: () -> List<LibraryRoot>,
     sourceProvider: () -> EntitySource
   ): ModuleDependencyItem.Exportable.LibraryDependency {
     val libraryId = LibraryId(libraryName, LibraryTableId.ProjectLibraryTableId)
 
-    addLibraryEntity(libraryId, libraryRootsProvider, sourceProvider)
+    addLibraryEntity(libraryId, artifact, libraryRootsProvider, sourceProvider)
 
     return ModuleDependencyItem.Exportable.LibraryDependency(libraryId, false, scope)
   }
 
   private fun addLibraryEntity(
     libraryId: LibraryId,
+    mavenArtifact: MavenArtifact?,
     libraryRootsProvider: () -> List<LibraryRoot>, // lazy provider to avoid roots creation for already added libraries
     sourceProvider: () -> EntitySource) {
     if (libraryId in builder) return
 
-    builder.addLibraryEntity(libraryId.name,
-                             libraryId.tableId,
-                             libraryRootsProvider(),
-                             emptyList(),
-                             sourceProvider())
+    val libraryEntity = builder.addLibraryEntity(libraryId.name,
+                                                 libraryId.tableId,
+                                                 libraryRootsProvider(),
+                                                 emptyList(),
+                                                 sourceProvider())
+
+    if (mavenArtifact == null) return
+    addMavenCoordinatesProperties(mavenArtifact, libraryEntity)
+  }
+
+  private fun addMavenCoordinatesProperties(mavenArtifact: MavenArtifact,
+                                            libraryEntity: LibraryEntity) {
+    val libraryKind = ImportedLibraryType.IMPORTED_LIBRARY_KIND
+    val libPropertiesElement = serialize(ImportedLibraryProperties(MavenCoordinates(mavenArtifact.groupId,
+                                                                                    mavenArtifact.artifactId,
+                                                                                    mavenArtifact.version,
+                                                                                    mavenArtifact.extension,
+                                                                                    mavenArtifact.classifier)).state) ?: return
+    libPropertiesElement.name = JpsLibraryTableSerializer.PROPERTIES_TAG;
+    val xmlTag = JDOMUtil.writeElement(libPropertiesElement)
+    builder.addEntity(LibraryPropertiesEntity(libraryKind.kindId, libraryEntity.entitySource) {
+      library = libraryEntity
+      propertiesXmlTag = xmlTag
+    })
   }
 
   private val MavenArtifact.dependencyScope: ModuleDependencyItem.DependencyScope

@@ -1,11 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.externalSystem.ImportedLibraryProperties;
+import com.intellij.externalSystem.ImportedLibraryType;
+import com.intellij.java.library.MavenCoordinates;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -367,6 +372,18 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
     updateUrl(libraryModel, OrderRootType.CLASSES, artifact, null, null, true);
     updateUrl(libraryModel, OrderRootType.SOURCES, artifact, MavenExtraArtifactType.SOURCES, project, false);
     updateUrl(libraryModel, JavadocOrderRootType.getInstance(), artifact, MavenExtraArtifactType.DOCS, project, false);
+
+    if (libraryModel != null) {
+      LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)libraryModel;
+      PersistentLibraryKind<ImportedLibraryProperties> importedLibraryKind = ImportedLibraryType.Companion.getIMPORTED_LIBRARY_KIND();
+      if (model.getKind() != importedLibraryKind) {
+        model.setKind(importedLibraryKind);
+        model.setProperties(new ImportedLibraryProperties(new MavenCoordinates(artifact.getGroupId(),
+                                                                               artifact.getArtifactId(),
+                                                                               artifact.getVersion())));
+      }
+    }
+
 
     LibraryOrderEntry e = myRootModel.addLibraryEntry(library);
     e.setScope(scope);
