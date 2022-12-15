@@ -115,7 +115,7 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
 
     @JvmStatic
     private val NULL_MARKER by lazy(LazyThreadSafetyMode.PUBLICATION) {
-      if (Registry.`is`("cache.nulls.for.pushed.properties", false) or Registry.`is`("scanning.in.smart.mode", false)) {
+      if (Registry.`is`("cache.nulls.for.pushed.properties", false)) {
         Object()
       }
       else {
