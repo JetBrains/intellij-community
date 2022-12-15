@@ -177,6 +177,7 @@ impl RemoteDevLaunchConfiguration {
             ("warm-up", ("warmup", true)),
             ("invalidate-caches", ("invalidateCaches", true)),
             ("installPlugins", ("installPlugins", false)),
+            ("stop", ("exit", true)),
         ]);
 
         let ij_starter_command = match is_project_required_by_known_commands.get(remote_dev_starter_command) {
