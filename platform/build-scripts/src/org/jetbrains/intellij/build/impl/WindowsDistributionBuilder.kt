@@ -49,14 +49,11 @@ internal class WindowsDistributionBuilder(
         .includeAll()
         .copyToDir(distBinDir)
 
-      if (context.includeBreakGenLibraries()) {
-        // There's near zero chance that on x64 hardware arm64 library will be needed, but it's only 70 KiB.
-        // Contrary on arm64 hardware all three library versions could be used, so we copy them all.
-        @Suppress("SpellCheckingInspection")
-        FileSet(sourceBinDir)
-          .include("breakgen*.dll")
-          .copyToDir(distBinDir)
-      }
+      @Suppress("SpellCheckingInspection")
+      FileSet(sourceBinDir)
+        .include("*.*")
+        .also { if (!context.includeBreakGenLibraries()) it.exclude("breakgen*.dll") }
+        .copyToDir(distBinDir)
 
       generateBuildTxt(context, targetPath)
       copyDistFiles(context = context, newDir = targetPath, os = OsFamily.WINDOWS, arch = arch)
