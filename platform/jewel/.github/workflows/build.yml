@@ -40,12 +40,21 @@ jobs:
       - name: Merge SARIF files into one
         uses: microsoft/sarif-actions@v0.1
         with:
-          command: merge --recurse --merge-runs ${{ github.workspace }}/build/*.sarif --output-directory=${{ github.workspace }}/build/ --output-file=static-analysis.sarif
+          command: merge --merge-runs /github/workspace/build/reports/*.sarif --output-directory=/github/workspace/build/reports --output-file=static-analysis.sarif
 
       - uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: ${{ github.workspace }}/build/static-analysis.sarif
+          sarif_file: ${{ github.workspace }}/build/reports/static-analysis.sarif
           checkout_path: ${{ github.workspace }}
+
+      - name: "Upload reports for manual analysis"
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: Static analysis SARIF reports
+          path: ${{ github.workspace }}/build/reports/*.sarif
+          retention-days: 7
+          if-no-files-found: error
 
   qodana:
     runs-on: ubuntu-latest
