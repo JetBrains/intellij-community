@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("BlockingMethodInNonBlockingContext")
 
 package org.jetbrains.intellij.build.impl
@@ -18,7 +18,7 @@ import org.jetbrains.intellij.build.io.*
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.util.function.BiPredicate
+import kotlin.io.path.extension
 
 internal class WindowsDistributionBuilder(
   override val context: BuildContext,
@@ -73,26 +73,18 @@ internal class WindowsDistributionBuilder(
     }
 
     context.executeStep(spanBuilder = spanBuilder("sign windows"), stepId = BuildOptions.WIN_SIGN_STEP) {
-      val nativeFiles = ArrayList<Path>()
-      withContext(Dispatchers.IO) {
-        Files.find(distBinDir, Integer.MAX_VALUE, BiPredicate { file, attributes ->
-          if (attributes.isRegularFile) {
-            val path = file.toString()
-            path.endsWith(".exe") || path.endsWith(".dll")
-          }
-          else {
-            false
-          }
-        }).use { stream ->
-          stream.forEach(nativeFiles::add)
+      val binFiles = withContext(Dispatchers.IO) {
+        Files.walk(distBinDir, Int.MAX_VALUE).use { stream ->
+          stream.filter { it.extension in setOf("exe", "dll", "ps1") && Files.isRegularFile(it) }.toList()
         }
       }
+      Span.current().setAttribute(AttributeKey.stringArrayKey("files"), binFiles.map(Path::toString))
 
-      Span.current().setAttribute(AttributeKey.stringArrayKey("files"), nativeFiles.map(Path::toString))
-      customizer.getBinariesToSign(context).mapTo(nativeFiles) { targetPath.resolve(it) }
-      if (nativeFiles.isNotEmpty()) {
+      val additionalFiles = customizer.getBinariesToSign(context).map { targetPath.resolve(it) }
+
+      if (binFiles.isNotEmpty() || additionalFiles.isNotEmpty()) {
         withContext(Dispatchers.IO) {
-          context.signFiles(nativeFiles, BuildOptions.WIN_SIGN_OPTIONS)
+          context.signFiles(binFiles + additionalFiles, BuildOptions.WIN_SIGN_OPTIONS)
         }
       }
     }
