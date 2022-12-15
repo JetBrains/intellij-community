@@ -3,7 +3,6 @@ package org.editorconfig.configmanagement
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider
@@ -14,10 +13,8 @@ import org.editorconfig.Utils.configValueForKey
 import org.editorconfig.plugincomponents.SettingsProviderComponent
 
 class EditorConfigIndentOptionsProvider : FileIndentOptionsProvider() {
-  override fun getIndentOptions(settings: CodeStyleSettings, psiFile: PsiFile): CommonCodeStyleSettings.IndentOptions? {
+  override fun getIndentOptions(project: Project, settings: CodeStyleSettings, file: VirtualFile): CommonCodeStyleSettings.IndentOptions? {
     if (Utils.isFullIntellijSettingsSupport()) return null
-    val file = psiFile.virtualFile ?: return null
-    val project = psiFile.project
     if (project.isDisposed || !Utils.isEnabled(settings)) return null
     // Get editorconfig settings
     val properties = SettingsProviderComponent.getInstance(project).getProperties(file)
