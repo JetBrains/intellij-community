@@ -47,8 +47,8 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowLeftToolbar) 
     private fun createAction(toolWindowToolbar: ToolWindowLeftToolbar): DumbAwareAction {
       return object : DumbAwareAction() {
         override fun actionPerformed(e: AnActionEvent) {
-          val group = ActionManager.getInstance().getAction("ToolWindowsGroup") as? ToolWindowsGroup ?: return
-          var popup = JBPopupFactory.getInstance().createActionGroupPopup(null, group, e.dataContext, null, true)
+          val actions = ToolWindowsGroup.getToolWindowActions(e.project ?: return, true)
+          var popup = JBPopupFactory.getInstance().createActionGroupPopup(null, DefaultActionGroup(actions), e.dataContext, null, true)
           popup.setMinimumSize(Dimension(300, -1))
 
           val moreSquareStripeButton = toolWindowToolbar.moreButton
@@ -57,7 +57,7 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowLeftToolbar) 
         }
 
         override fun update(e: AnActionEvent) {
-          e.presentation.isEnabledAndVisible = ToolWindowsGroup.getToolWindowActions(e.project ?: return, false).isNotEmpty()
+          e.presentation.isEnabledAndVisible = ToolWindowsGroup.getToolWindowActions(e.project ?: return, true).isNotEmpty()
         }
 
         override fun getActionUpdateThread() = ActionUpdateThread.EDT
