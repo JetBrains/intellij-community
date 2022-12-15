@@ -1424,7 +1424,9 @@ private suspend fun openInChildProcess(projectStoreBaseDir: Path) {
   try {
     val instancePaths = PerProjectInstancePaths(projectStoreBaseDir)
     LowLevelProjectOpenProcessor.EP_NAME.extensions.forEach {
-      it.preparePathsForNewProcess(projectStoreBaseDir, instancePaths)
+      if (it.preparePathsForNewProcess(projectStoreBaseDir, instancePaths) == LowLevelProjectOpenProcessor.PreparePathsResult.CANCEL) {
+        return
+      }
     }
 
     withContext(Dispatchers.IO) {
