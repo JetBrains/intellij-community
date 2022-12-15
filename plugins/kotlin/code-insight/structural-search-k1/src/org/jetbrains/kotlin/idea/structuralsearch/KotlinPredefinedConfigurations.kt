@@ -6,8 +6,8 @@ import com.intellij.structuralsearch.PredefinedConfigurationUtil.createConfigura
 import com.intellij.structuralsearch.plugin.ui.Configuration
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.structuralsearch.filters.AlsoMatchCompanionObjectModifier
 import org.jetbrains.kotlin.idea.structuralsearch.filters.AlsoMatchValModifier
 import org.jetbrains.kotlin.idea.structuralsearch.filters.OneStateFilter
@@ -92,7 +92,13 @@ object KotlinPredefinedConfigurations {
         searchTemplate(
             KotlinBundle.message("predefined.configuration.method.calls"),
             "method calls",
-            "'_Before?.'MethodCall('_Parameter*)",
+            "'_Before?:[exprtype(pkg.MyClass)].'MethodCall('_Parameter*)",
+            EXPRESSION_TYPE
+        ),
+        searchTemplate(
+            KotlinBundle.message("predefined.configuration.companion.object.method.calls"),
+            "method calls from companion object",
+            "'_Before?:[exprtype(pkg.MyClass.Companion)].'MethodCall('_Parameter*)",
             EXPRESSION_TYPE
         ),
         searchTemplate(
