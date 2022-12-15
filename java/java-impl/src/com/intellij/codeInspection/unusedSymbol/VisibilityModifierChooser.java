@@ -16,7 +16,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.VisibilityUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
@@ -35,7 +34,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import static com.intellij.codeInspection.options.OptPane.dropdown;
-import static com.intellij.codeInspection.options.OptPane.option;
 
 public class VisibilityModifierChooser extends JLabel implements UserActivityProviderComponent {
 
@@ -134,8 +132,6 @@ public class VisibilityModifierChooser extends JLabel implements UserActivityPro
 
   public static @NotNull OptDropdown visibilityChooser(@Language("jvm-field-name") @NotNull String stringProperty,
                                                        @NlsContexts.Label String splitLabel) {
-    return dropdown(stringProperty, splitLabel,
-                    ContainerUtil.map2Array(AccessModifier.values(), OptDropdown.Option.class,
-                                            mod -> option(mod.toPsiModifier(), mod.toString())));
+    return dropdown(stringProperty, splitLabel, AccessModifier.class, AccessModifier::toString);
   }
 }

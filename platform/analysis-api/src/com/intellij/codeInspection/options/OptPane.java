@@ -3,6 +3,7 @@ package com.intellij.codeInspection.options;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -167,11 +169,28 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @param options    drop-down options
    * @return a drop-down control to select a single option from
    * @see #option(String, String)
+   * @see #dropdown(String, String, Class, Function) 
    */
   public static @NotNull OptDropdown dropdown(@Language("jvm-field-name") @NotNull String bindId,
                                               @NotNull @NlsContexts.Label String splitLabel,
                                               @NotNull OptDropdown.Option @NotNull ... options) {
     return new OptDropdown(bindId, new PlainMessage(splitLabel), List.of(options));
+  }
+
+  /**
+   * @param bindId     identifier of binding variable used by inspection; the corresponding variable is expected to be a string or enum
+   * @param splitLabel label to display around the control
+   * @param enumClass  enum class to populate drop-down from (take all values in declaration order)
+   * @param presentableTextExtractor a function to extract presentable name from enum constant
+   * @return a drop-down control to select a single option from
+   * @see #option(Enum, String) 
+   */
+  public static @NotNull <T extends Enum<T>> OptDropdown dropdown(@Language("jvm-field-name") @NotNull String bindId,
+                                                                  @NotNull @NlsContexts.Label String splitLabel,
+                                                                  @NotNull Class<T> enumClass,
+                                                                  @NotNull Function<@NotNull T, @NotNull @Nls String> presentableTextExtractor) {
+    return new OptDropdown(bindId, new PlainMessage(splitLabel),
+                           ContainerUtil.map(enumClass.getEnumConstants(), c -> option(c, presentableTextExtractor.apply(c))));
   }
 
   /**

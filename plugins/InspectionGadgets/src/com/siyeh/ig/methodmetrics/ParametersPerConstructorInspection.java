@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.methodmetrics;
 
-import com.intellij.codeInspection.options.OptDropdown;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiMethod;
@@ -23,7 +22,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameterList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,8 +35,7 @@ public class ParametersPerConstructorInspection extends MethodMetricInspection {
   public @NotNull OptPane getOptionsPane() {
     return pane(
       number("m_limit", getConfigurationLabel(), 1, 255),
-      dropdown("ignoreScope", InspectionGadgetsBundle.message("constructor.visibility.option"),
-               StreamEx.of(Scope.values()).map(scope -> option(scope, scope.getText())).toArray(OptDropdown.Option.class))
+      dropdown("ignoreScope", InspectionGadgetsBundle.message("constructor.visibility.option"), Scope.class, Scope::getText)
     );
   }
 
