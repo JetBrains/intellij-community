@@ -12,6 +12,7 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.fields.IntegerField
 import com.intellij.ui.dsl.builder.*
 import javax.swing.*
@@ -135,6 +136,23 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
       is OptSeparator -> separator()
 
+      is OptTabSet -> {
+        row {
+          val tabbedPane = JBTabbedPane(SwingConstants.TOP)
+          component.tabs.forEach { tab ->
+            tabbedPane.add(tab.label.label(), com.intellij.ui.dsl.builder.panel {
+              tab.content.forEach { tabComponent ->
+                render(tabComponent, tool)
+              }
+            })
+          }
+          cell(tabbedPane)
+            .align(Align.FILL)
+            .resizableColumn()
+        }
+          .resizableRow()
+      }
+
       is OptSettingLink -> {
         val label = HyperlinkLabel(component.displayName)
         label.addHyperlinkListener {
@@ -161,7 +179,6 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       is OptMap -> TODO()
       is OptSet -> TODO()
       is OptHorizontalStack -> TODO()
-      is OptTabSet -> TODO()
     }
   }
 

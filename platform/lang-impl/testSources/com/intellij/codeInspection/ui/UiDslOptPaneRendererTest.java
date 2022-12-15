@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.IntegerField;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -143,5 +144,40 @@ public class UiDslOptPaneRendererTest {
     // Group nested controls
     var integerFields = UIUtil.findComponentsOfType(component, IntegerField.class);
     assertEquals(4, integerFields.size());
+  }
+
+  private static class MyTabsInspection extends LocalInspectionTool {
+    public boolean myBoolean = false;
+    public int myInt = 0;
+
+    @Override
+    public @NotNull OptPane getOptionsPane() {
+      return pane(
+        tabs(
+          tab("Tab 1",
+              checkbox("myBoolean", "")
+          ), tab("Tab 2",
+                 number("myInt", "", 0, 10)
+          )
+        )
+      );
+    }
+  }
+
+  @Test
+  public void testTabs() {
+    MyTabsInspection inspection = new MyTabsInspection();
+    JComponent component = new UiDslOptPaneRenderer().render(inspection);
+
+    // Tabs
+    var labels = UIUtil.findComponentsOfType(component, JLabel.class);
+    assertTrue(ContainerUtil.exists(labels, label -> "Tab 1".equals(label.getText())));
+    assertTrue(ContainerUtil.exists(labels, label -> "Tab 2".equals(label.getText())));
+
+    // Controls inside tab panels
+    var checkBoxes = UIUtil.findComponentsOfType(component, JCheckBox.class);
+    assertEquals(1, checkBoxes.size());
+    var integerFields = UIUtil.findComponentsOfType(component, IntegerField.class);
+    assertEquals(1, integerFields.size());
   }
 }
