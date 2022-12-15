@@ -56,7 +56,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       CommunityRepositoryModules.groovyPlugin()
     ))
 
-    productLayout.addPlatformCustomizer { layout, _ ->
+    productLayout.addPlatformSpec { layout, _ ->
       layout.withModule("intellij.platform.duplicates.analysis")
       layout.withModule("intellij.platform.structuralSearch")
     }

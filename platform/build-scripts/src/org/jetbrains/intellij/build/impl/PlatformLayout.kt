@@ -11,12 +11,12 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 
 /**
  * Describes layout of the platform (*.jar files in IDE_HOME/lib directory).
- * <p>
- * By default it includes all modules specified in {@link org.jetbrains.intellij.build.ProductModulesLayout},
+ *
+ * By default, it includes all modules specified in [org.jetbrains.intellij.build.ProductModulesLayout],
  * all libraries these modules depend on with scope 'Compile' or 'Runtime', and all project libraries from dependencies (with scope 'Compile'
- * or 'Runtime') of plugin modules for plugins which are {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules bundled}
- * (or prepared to be {@link org.jetbrains.intellij.build.ProductModulesLayout#setPluginModulesToPublish published}) with the product (except
- * project libraries which are explicitly included into layouts of all plugins depending on them by {@link BaseLayoutSpec#withProjectLibrary}).
+ * or 'Runtime') of plugin modules for plugins which are [org.jetbrains.intellij.build.ProductModulesLayout.bundledPluginModules] bundled
+ * (or prepared to be [org.jetbrains.intellij.build.ProductModulesLayout.pluginModulesToPublish] published) with the product (except
+ * project libraries which are explicitly included into layouts of all plugins depending on them by [BaseLayoutSpec.withProjectLibrary]).
  */
 class PlatformLayout: BaseLayout() {
   @Internal
@@ -28,7 +28,7 @@ class PlatformLayout: BaseLayout() {
   }
 
   /**
-   * Exclude project library {@code libraryName} even if it's added to dependencies of some module or plugin included into the product
+   * See [Spec.withoutProjectLibrary]
    */
   fun withoutProjectLibrary(libraryName: String) {
     excludedProjectLibraries.add(libraryName)
@@ -47,6 +47,15 @@ class PlatformLayout: BaseLayout() {
 
         consumer(library, module)
       }
+    }
+  }
+
+  class Spec(@Internal val layout: PlatformLayout) : BaseLayoutSpec(layout) {
+    /**
+     * Exclude project library [libraryName] even if it's added to dependencies of some module or plugin included into the product
+     */
+    fun withoutProjectLibrary(libraryName: String) {
+      layout.withoutProjectLibrary(libraryName)
     }
   }
 }

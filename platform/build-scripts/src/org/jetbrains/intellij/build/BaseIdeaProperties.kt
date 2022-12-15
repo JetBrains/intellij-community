@@ -137,7 +137,7 @@ abstract class BaseIdeaProperties : ProductProperties() {
 
     productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.java.ide.resources")
 
-    productLayout.addPlatformCustomizer { layout, _ ->
+    productLayout.addPlatformSpec { layout, _ ->
       for (name in JAVA_IDE_API_MODULES) {
         if (!productLayout.productApiModules.contains(name)) {
           layout.withModule(name)

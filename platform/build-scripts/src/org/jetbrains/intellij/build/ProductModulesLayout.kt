@@ -93,12 +93,19 @@ class ProductModulesLayout {
   internal val moduleExcludes: MutableMap<String, MutableList<String>> = LinkedHashMap()
 
   /**
-   * Additional customizations of platform JARs. <strong>This is a temporary property added to keep layout of some products.</strong>
+   * Additional customizations of platform JARs. **This is a temporary property added to keep layout of some products.**
    */
-  internal var platformLayoutCustomizers = persistentListOf<BiConsumer<PlatformLayout, BuildContext>>()
+  internal var platformLayoutSpec = persistentListOf<BiConsumer<PlatformLayout.Spec, BuildContext>>()
 
+  @Deprecated("PlatformLayout should be immutable", replaceWith = ReplaceWith("addPlatformSpec"))
   fun addPlatformCustomizer(customizer: BiConsumer<PlatformLayout, BuildContext>) {
-    platformLayoutCustomizers = platformLayoutCustomizers.add(customizer)
+    platformLayoutSpec = platformLayoutSpec.add { spec, context ->
+      customizer.accept(spec.layout, context)
+    }
+  }
+
+  fun addPlatformSpec(customizer: BiConsumer<PlatformLayout.Spec, BuildContext>) {
+    platformLayoutSpec = platformLayoutSpec.add(customizer)
   }
 
   fun excludeModuleOutput(module: String, path: String) {

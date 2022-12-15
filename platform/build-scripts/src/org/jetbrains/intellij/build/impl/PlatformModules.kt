@@ -188,8 +188,9 @@ object PlatformModules {
     // used only in modules that packed into Java
     layout.withoutProjectLibrary("jps-javac-extension")
     layout.withoutProjectLibrary("Eclipse")
-    for (platformLayoutCustomizer in productLayout.platformLayoutCustomizers) {
-      platformLayoutCustomizer.accept(layout, context)
+    val layoutSpec = PlatformLayout.Spec(layout)
+    for (platformLayoutSpec in productLayout.platformLayoutSpec) {
+      platformLayoutSpec.accept(layoutSpec, context)
     }
 
     val alreadyPackedModules = HashSet<String>()
