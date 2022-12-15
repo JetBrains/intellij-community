@@ -134,7 +134,7 @@ class ActionButton implements ActionListener {
 
   private @NotNull AnActionEvent createAnEvent(InputEvent inputEvent, int modifiers) {
     Presentation presentation = myAction.getTemplatePresentation().clone();
-    DataContext context = DataManager.getInstance().getDataContext(myTabInfo.getComponent());
+    DataContext context = DataManager.getInstance().getDataContext(myInplaceButton);
     DataContext compound = dataId -> {
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
         Object object = myTabInfo.getObject();
