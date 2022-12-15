@@ -17,7 +17,7 @@ import com.intellij.ui.components.fields.IntegerField
 import com.intellij.ui.dsl.builder.*
 import javax.swing.*
 import javax.swing.event.DocumentEvent
-import kotlin.math.log10
+import kotlin.math.max
 
 class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
   override fun render(tool: InspectionProfileEntry): JComponent? {
@@ -83,7 +83,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           cell(IntegerField().apply {
             minValue = component.minValue
             maxValue = component.maxValue
-            columns = log10(component.maxValue.toDouble()).toInt() + 1
+            columns = max(component.maxValue.toString().length, component.minValue.toString().length)
             value = tool.getOption(component.bindId) as Int
           })
             .applyToComponent {

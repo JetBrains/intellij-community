@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class UiDslOptPaneRendererTest {
   private static class MyInspection extends LocalInspectionTool {
     public int myInt = 7;
+    public int myNegativeInt = -1;
     public String myString = "default 1";
     public boolean myBoolean = false;
     public String myOption = "o1";
@@ -36,7 +37,8 @@ public class UiDslOptPaneRendererTest {
                  new OptDropdown.Option("o2", new PlainMessage("option 2"))
         ),
         separator(),
-        checkbox("myBoolean", "")
+        checkbox("myBoolean", ""),
+        number("myNegativeInt", "", -1000, -1)
       );
     }
   }
@@ -52,6 +54,7 @@ public class UiDslOptPaneRendererTest {
 
     assertEquals("7", textFields.get(0).getText());
     assertEquals("default 1", textFields.get(1).getText());
+    assertEquals("-1", textFields.get(2).getText());
     assertFalse(checkBox.isSelected());
     assertEquals("o1", ((OptDropdown.Option)dropDown.getSelectedItem()).key());
   }
@@ -122,7 +125,7 @@ public class UiDslOptPaneRendererTest {
       return pane(
         checkbox("myBoolean", "", checkbox("myNestedBoolean", "")),
         group("Group Header",
-              number("myInt1", "", 0, 10),
+              number("myInt1", "", 0, 0),
               number("myInt2", "", 0, 10),
               number("myInt3", "", 0, 10),
               number("myInt4", "", 0, 10)
