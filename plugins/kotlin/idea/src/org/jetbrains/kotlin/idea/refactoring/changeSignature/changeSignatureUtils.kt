@@ -8,6 +8,7 @@ import com.intellij.refactoring.changeSignature.CallerUsageInfo
 import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.refactoring.changeSignature.OverriderUsageInfo
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -141,7 +142,10 @@ internal val ChangeInfo.asKotlinChangeInfo: KotlinChangeInfo?
     }
 
 fun KotlinTypeInfo.getReceiverTypeText(): String {
-    // For a DNN type `KotlinTypeInfo.render()` can return it both parenthesized and not,
-    // depending on the case: from text or from type. We make sure not to parenthesize it twice.
-    return if (type is DefinitelyNotNullType) "(${render().removeSurrounding("(", ")")})" else render()
+    val text = render()
+    return when {
+        text.startsWith("(") && text.endsWith(")") -> text
+        type is DefinitelyNotNullType || type?.isFunctionType == true -> "($text)"
+        else -> text
+    }
 }
