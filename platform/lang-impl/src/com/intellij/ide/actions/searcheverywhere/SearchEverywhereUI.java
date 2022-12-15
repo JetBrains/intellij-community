@@ -118,7 +118,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private final SearchEverywhereHeader myHeader;
   private String myNotFoundString;
   private final SESearcher mySearcher;
-  private final SearchListener myBufferedListener;
+  private final MySearchListener mySearchListener = new MySearchListener();
+  private final List<SearchListener> myExternalSearchListeners = new ArrayList<>();
   private ProgressIndicator mySearchProgressIndicator;
   private final SEListSelectionTracker mySelectionTracker;
   private final SearchFieldTypingListener mySearchTypingListener;
@@ -148,15 +149,14 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     init();
     List<SEResultsEqualityProvider> equalityProviders = SEResultsEqualityProvider.getProviders();
-    myBufferedListener = createListener();
-    SearchListener listener = Registry.is("search.everywhere.detect.slow.contributors")
-                              ? SearchListener.combine(myBufferedListener, new SlowContributorDetector())
-                              : myBufferedListener;
+
+    SearchListener wrapperListener = createListenerWrapper();
     mySearcher = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
-                 ? new MixedResultsSearcher(listener, run -> ApplicationManager.getApplication().invokeLater(run),
+                 ? new MixedResultsSearcher(wrapperListener, run -> ApplicationManager.getApplication().invokeLater(run),
                                             equalityProviders)
-                 : new GroupedResultsSearcher(listener, run -> ApplicationManager.getApplication().invokeLater(run),
+                 : new GroupedResultsSearcher(wrapperListener, run -> ApplicationManager.getApplication().invokeLater(run),
                                               equalityProviders);
+    addSearchListener(new SearchProcessLogger());
 
     initSearchActions();
 
@@ -189,14 +189,25 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     Disposer.register(this, SearchFieldStatisticsCollector.createAndStart(mySearchField, myProject));
   }
 
+  public void addSearchListener(SearchListener listener) {
+    myExternalSearchListeners.add(listener);
+  }
+
+  public void removeSearchListener(SearchListener listener) {
+    myExternalSearchListeners.remove(listener);
+  }
+
   @NotNull
-  private SearchListener createListener() {
-    SearchListener wrapped = SearchListener.combine(mySearchListener, new SearchProcessLogger());
-    if (AdvancedSettings.getBoolean("search.everywhere.wait.for.contributors")) {
-      return new WaitForContributorsListenerWrapper(wrapped, myListModel);
+  private SearchListener createListenerWrapper() {
+    SearchListener wrapper = AdvancedSettings.getBoolean("search.everywhere.wait.for.contributors")
+                             ? new WaitForContributorsListenerWrapper(mySearchListener, myListModel)
+                             : new ThrottlingListenerWrapper(mySearchListener);
+
+    if (Registry.is("search.everywhere.detect.slow.contributors")) {
+      wrapper = SearchListener.combine(wrapper, new SlowContributorDetector());
     }
 
-    return new ThrottlingListenerWrapper(wrapped);
+    return wrapper;
   }
 
   @Override
@@ -959,10 +970,14 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   public Future<List<Object>> findElementsForPattern(String pattern) {
     clearResults();
     CompletableFuture<List<Object>> future = new CompletableFuture<>();
-    mySearchListener.setTestCallback(list -> {
-      future.complete(list);
-      mySearchListener.setTestCallback(null);
-    });
+    SearchAdapter listener = new SearchAdapter() {
+      @Override
+      public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
+        future.complete(myListModel.getItems());
+        SwingUtilities.invokeLater(() -> removeSearchListener(this));
+      }
+    };
+    addSearchListener(listener);
     mySearchField.setText(pattern);
     return future;
   }
@@ -1205,10 +1220,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     return IdeBundle.message("searcheverywhere.nothing.found.for.contributor.anywhere", groupName.toLowerCase(Locale.ROOT));
   }
 
-  private final MySearchListener mySearchListener = new MySearchListener();
-
   private class MySearchListener implements SearchListener {
-    private @Nullable Consumer<? super List<Object>> testCallback;
 
     @Override
     public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
@@ -1236,15 +1248,20 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
           }
         }
       }
+
+      myExternalSearchListeners.forEach(listener -> listener.elementsAdded(list));
     }
 
     @Override
     public void elementsRemoved(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
       list.forEach(info -> myListModel.removeElement(info.getElement(), info.getContributor()));
+      myExternalSearchListeners.forEach(listener -> listener.elementsRemoved(list));
     }
 
     @Override
-    public void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) { }
+    public void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
+      myExternalSearchListeners.forEach(listener -> listener.searchStarted(contributors));
+    }
 
     @Override
     public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
@@ -1268,14 +1285,18 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       mySelectionTracker.resetSelectionIfNeeded();
       myHintHelper.setSearchInProgress(false);
 
-      if (testCallback != null) testCallback.consume(myListModel.getItems());
+      myExternalSearchListeners.forEach(listener -> listener.searchFinished(hasMoreContributors));
     }
 
     @Override
-    public void contributorWaits(@NotNull SearchEverywhereContributor<?> contributor) {}
+    public void contributorWaits(@NotNull SearchEverywhereContributor<?> contributor) {
+      myExternalSearchListeners.forEach(listener -> listener.contributorWaits(contributor));
+    }
 
     @Override
-    public void contributorFinished(@NotNull SearchEverywhereContributor<?> contributor, boolean hasMore) { }
+    public void contributorFinished(@NotNull SearchEverywhereContributor<?> contributor, boolean hasMore) {
+      myExternalSearchListeners.forEach(listener -> listener.contributorFinished(contributor, hasMore));
+    }
 
     private void updateEmptyText(String pattern) {
       StatusText emptyStatus = myResultsList.getEmptyText();
@@ -1348,11 +1369,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       if (anyActionAllowed) {
         emptyStatus.appendText(".");
       }
-    }
-
-    @TestOnly
-    void setTestCallback(@Nullable Consumer<? super List<Object>> callback) {
-      testCallback = callback;
     }
   }
 

@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,10 @@ public interface SearchListener {
   void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors);
 
   static SearchListener combine(SearchListener... listeners) {
+    return combine(Arrays.asList(listeners));
+  }
+
+  static SearchListener combine(Collection<SearchListener> listeners) {
     return new SearchListener() {
       @Override
       public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
