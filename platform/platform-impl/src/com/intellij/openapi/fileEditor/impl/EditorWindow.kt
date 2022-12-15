@@ -1013,7 +1013,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters) {
     return IntRange(0, tabCount - 1).firstOrNull { getCompositeAt(it).file == fileToFind } ?: -1
   }
 
-  private fun getCompositeAt(i: Int): EditorComposite = (tabbedPane.getComponentAt(i) as EditorWindowTopComponent).composite
+  private fun getCompositeAt(i: Int): EditorComposite = (tabbedPane.tabs.getTabAt(i).component as EditorWindowTopComponent).composite
 
   fun isFileOpen(file: VirtualFile): Boolean = getComposite(file) != null
 

@@ -296,8 +296,6 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
     IdeFocusManager.getInstance(window.manager.project).requestFocus(editorTabs.component, forced)
   }
 
-  fun getComponentAt(i: Int): Component = editorTabs.getTabAt(i).component
-
   private inner class MyDataProvider : DataProvider {
     override fun getData(dataId: @NonNls String): Any? {
       return when {
