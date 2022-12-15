@@ -66,7 +66,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
   public abstract EditorWindow getCurrentWindow();
 
   /**
-   * Asynchronous version of {@link #getCurrentWindow()}. Execution happens after focus settle down. Can be invoked on any thread.
+   * Asynchronous version of {@link #getCurrentWindow()}. Execution happens after focus settles down. Can be invoked on any thread.
    */
   public abstract @NotNull CompletableFuture<@Nullable EditorWindow> getActiveWindow();
 

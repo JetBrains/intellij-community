@@ -913,8 +913,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters) {
   }
 
   private fun findFileEditorIndex(file: VirtualFile): Int {
-    val composite = getComposite(file)
-    return composite?.let { findCompositeIndex(it) } ?: -1
+    return getComposite(file)?.let { findCompositeIndex(it) } ?: -1
   }
 
   fun updateFileIcon(file: VirtualFile, icon: Icon) {

@@ -37,8 +37,8 @@ class ActionsCollectorImpl : ActionsCollector() {
   }
 
   override fun record(project: Project?, action: AnAction?, event: AnActionEvent?, lang: Language?) {
-    recordActionInvoked(project, action, event) {
-      add(EventFields.CurrentFile.with(lang))
+    recordActionInvoked(project, action, event) { eventPairs ->
+      eventPairs.add(EventFields.CurrentFile.with(lang))
     }
   }
 
@@ -114,7 +114,7 @@ class ActionsCollectorImpl : ActionsCollector() {
     fun recordActionInvoked(project: Project?,
                             action: AnAction?,
                             event: AnActionEvent?,
-                            customDataProvider: MutableList<EventPair<*>>.() -> Unit) {
+                            customDataProvider: (MutableList<EventPair<*>>) -> Unit) {
       record(ActionsEventLogGroup.ACTION_FINISHED, project, action, event, customDataProvider)
     }
 
@@ -146,7 +146,7 @@ class ActionsCollectorImpl : ActionsCollector() {
                project: Project?,
                action: AnAction?,
                event: AnActionEvent?,
-               customDataProvider: MutableList<EventPair<*>>.() -> Unit) {
+               customDataProvider: (MutableList<EventPair<*>>) -> Unit) {
       if (action == null) return
       eventId.log(project) {
         val info = getPluginInfo(action.javaClass)
@@ -160,7 +160,7 @@ class ActionsCollectorImpl : ActionsCollector() {
         if (project != null && !project.isDisposed) {
           add(ActionsEventLogGroup.DUMB.with(DumbService.isDumb(project)))
         }
-        customDataProvider()
+        customDataProvider(this)
         addActionClass(this, action, info)
       }
       if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
@@ -254,24 +254,24 @@ class ActionsCollectorImpl : ActionsCollector() {
     fun onAfterActionInvoked(action: AnAction, event: AnActionEvent, result: AnActionResult) {
       val stats = ourStats.remove(event)
       val project = stats?.projectRef?.get()
-      recordActionInvoked(project, action, event) {
+      recordActionInvoked(project, action, event) { eventPairs ->
         val durationMillis = if (stats != null) TimeoutUtil.getDurationMillis(stats.start) else -1
         if (stats != null) {
-          add(EventFields.StartTime.with(stats.startMs))
+          eventPairs.add(EventFields.StartTime.with(stats.startMs))
           if (stats.isDumb != null) {
-            add(ActionsEventLogGroup.DUMB_START.with(stats.isDumb))
+            eventPairs.add(ActionsEventLogGroup.DUMB_START.with(stats.isDumb))
           }
         }
         val reportedResult = toReportedResult(result)
-        add(ActionsEventLogGroup.RESULT.with(reportedResult))
+        eventPairs.add(ActionsEventLogGroup.RESULT.with(reportedResult))
         val contextBefore = stats?.fileLanguage
         val injectedContextBefore = stats?.injectedFileLanguage
-        addLanguageContextFields(project, event, contextBefore, injectedContextBefore, this)
+        addLanguageContextFields(project, event, contextBefore, injectedContextBefore, eventPairs)
         if (action is FusAwareAction) {
           val additionalUsageData = (action as FusAwareAction).getAdditionalUsageData(event)
-          add(ActionsEventLogGroup.ADDITIONAL.with(ObjectEventData(additionalUsageData)))
+          eventPairs.add(ActionsEventLogGroup.ADDITIONAL.with(ObjectEventData(additionalUsageData)))
         }
-        add(EventFields.DurationMs.with(roundDuration(durationMillis)))
+        eventPairs.add(EventFields.DurationMs.with(roundDuration(durationMillis)))
       }
     }
 

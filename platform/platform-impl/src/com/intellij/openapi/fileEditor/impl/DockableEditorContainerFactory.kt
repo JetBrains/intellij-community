@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -13,21 +11,12 @@ import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockContainerFactory
 import com.intellij.ui.docking.DockableContent
 import com.intellij.util.childScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DisposableHandle
-import kotlinx.coroutines.job
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 
 internal class DockableEditorContainerFactory(private val fileEditorManager: FileEditorManagerImpl) : DockContainerFactory.Persistent {
   companion object {
     const val TYPE: @NonNls String = "file-editors"
-
-    fun disposeOnCancel(coroutineScope: CoroutineScope, childDisposable: Disposable): DisposableHandle {
-      return coroutineScope.coroutineContext.job.invokeOnCompletion {
-        Disposer.dispose(childDisposable)
-      }
-    }
   }
 
   override fun createContainer(content: DockableContent<*>?): DockContainer {
