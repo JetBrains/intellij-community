@@ -13,10 +13,7 @@ import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.fields.IntegerField
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.dsl.builder.*
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import kotlin.math.log10
@@ -58,6 +55,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       is OptString -> {
         row {
           label(component.splitLabel.splitLabel().prefix)
+            .gap(RightGap.SMALL)
 
           textField()
             .applyToComponent {
@@ -69,6 +67,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
                 }
               })
             }
+            .gap(RightGap.SMALL)
 
           val suffix = component.splitLabel.splitLabel().suffix
           if (suffix.isNotBlank()) label(suffix)
@@ -78,6 +77,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       is OptNumber -> {
         row {
           label(component.splitLabel.splitLabel().prefix)
+            .gap(RightGap.SMALL)
 
           cell(IntegerField().apply {
             minValue = component.minValue
@@ -88,6 +88,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
             .applyToComponent {
               valueEditor.addListener { value -> tool.setOption(component.bindId, value) }
             }
+            .gap(RightGap.SMALL)
 
           val suffix = component.splitLabel.splitLabel().suffix
           if (suffix.isNotBlank()) label(suffix)
@@ -97,6 +98,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       is OptDropdown -> {
         row {
           label(component.splitLabel.splitLabel().prefix)
+            .gap(RightGap.SMALL)
 
           comboBox(getComboBoxModel(component.options), getComboBoxRenderer())
             .applyToComponent {
@@ -106,6 +108,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
               model.selectedItem = if (option is Enum<*>) option.name else option.toString()
               addItemListener { tool.setOption(component.bindId, convertItem((selectedItem as OptDropdown.Option).key, type)) }
             }
+            .gap(RightGap.SMALL)
 
           val suffix = component.splitLabel.splitLabel().suffix
           if (suffix.isNotBlank()) label(suffix)
@@ -136,7 +139,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         val label = HyperlinkLabel(component.displayName)
         label.addHyperlinkListener {
           val dataContext = DataManager.getInstance().getDataContext(label)
-          
+
           val settings = Settings.KEY.getData(dataContext)
           if (settings == null) {
             val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return@addHyperlinkListener
