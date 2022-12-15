@@ -9,7 +9,6 @@ pluginManagement {
         gradlePluginPortal()
         maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/")
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-        maven("https://oss.sonatype.org/content/repositories/snapshots/")
         mavenCentral()
     }
 }
@@ -19,6 +18,8 @@ dependencyResolutionManagement {
         google()
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
         maven("https://androidx.dev/storage/compose-compiler/repository/")
+        maven("https://www.jetbrains.com/intellij-repository/releases")
+        maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
         mavenCentral()
     }
 }

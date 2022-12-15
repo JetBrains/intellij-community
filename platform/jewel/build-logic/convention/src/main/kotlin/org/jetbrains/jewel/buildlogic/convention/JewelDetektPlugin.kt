@@ -6,10 +6,9 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.withType
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.archivesName
 
 @Suppress("unused") // Plugin entry point, see build.gradle.kts
-class DetektConventionPlugin : Plugin<Project> {
+class JewelDetektPlugin : Plugin<Project> {
 
     override fun apply(target: Project) {
         with(target) {
@@ -31,7 +30,7 @@ class DetektConventionPlugin : Plugin<Project> {
         tasks.withType<Detekt>().configureEach {
             reports {
                 sarif.required.set(true)
-                sarif.outputLocation.set(file(rootDir.resolve("build/reports/detekt-${archivesName}.sarif")))
+                sarif.outputLocation.set(file(rootDir.resolve("build/reports/detekt-${project.name}.sarif")))
             }
         }
     }

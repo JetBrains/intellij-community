@@ -38,10 +38,9 @@ jobs:
       - name: Run :check task
         run: ./gradlew check
       - name: Merge SARIF files into one
-        uses: jduimovich/collect-sarif-files@main
+        uses: microsoft/sarif-actions@v0.1
         with:
-          input-file-name: ${{ github.workspace }}/build/*.sarif
-          output-file-name: ${{ github.workspace }}/build/static-analysis.sarif
+          command: merge --recurse --merge-runs ${{ github.workspace }}/build/*.sarif --output-directory=${{ github.workspace }}/build/ --output-file=static-analysis.sarif
 
       - uses: github/codeql-action/upload-sarif@v2
         with:

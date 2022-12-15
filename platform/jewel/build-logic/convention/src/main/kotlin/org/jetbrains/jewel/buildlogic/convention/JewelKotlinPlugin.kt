@@ -6,13 +6,17 @@ import org.gradle.kotlin.dsl.getByType
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
 @Suppress("unused") // Plugin entry point, see build.gradle.kts
-class KotlinConventionPlugin : Plugin<Project> {
+class JewelKotlinPlugin : Plugin<Project> {
 
     override fun apply(target: Project) {
         with(target) {
             pluginManager.apply("org.jetbrains.kotlin.jvm")
             val extension = extensions.getByType<KotlinJvmProjectExtension>()
             configureExtension(extension)
+
+            // TODO move to a better place
+            group = "org.jetbrains.jewel"
+            version = "0.0.1-SNAPSHOT"
         }
     }
 

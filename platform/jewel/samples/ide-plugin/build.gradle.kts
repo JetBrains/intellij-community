@@ -1,6 +1,3 @@
-import io.gitlab.arturbosch.detekt.Detekt
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.archivesName
-
 plugins {
     id("org.jetbrains.jewel.kotlin")
     alias(libs.plugins.composeDesktop)
@@ -9,36 +6,15 @@ plugins {
     id("org.jetbrains.jewel.ktlint")
 }
 
-detekt {
-    config = files(File(rootDir, "detekt.yml"))
-    buildUponDefaultConfig = true
-}
-
-kotlin {
-    target {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = "17"
-                freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn", "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi")
-            }
-        }
-    }
-    sourceSets {
-        all {
-            languageSettings.optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
-            languageSettings.optIn("kotlin.experimental.ExperimentalTypeInference")
-            languageSettings.optIn("androidx.compose.ui.ExperimentalComposeUiApi")
-        }
-    }
-}
-
 intellij {
     pluginName.set("Jewel")
     version.set("LATEST-EAP-SNAPSHOT")
     plugins.set(listOf("org.jetbrains.kotlin"))
-    version.set("2022.3") // IJ 22.3 RC2
+    version.set("2022.3")
 }
 
+// TODO remove this once the IJ Gradle plugin fixes their repositories bug
+// See https://github.com/JetBrains/gradle-intellij-plugin/issues/776
 repositories {
     maven("https://androidx.dev/storage/compose-compiler/repository/")
     maven("https://www.jetbrains.com/intellij-repository/releases")
@@ -48,11 +24,4 @@ repositories {
 
 dependencies {
     implementation(projects.themes.darcula.darculaIde)
-}
-
-tasks.named<Detekt>("detekt").configure {
-    reports {
-        sarif.required.set(true)
-        sarif.outputLocation.set(file(rootDir.resolve("build/reports/detekt-${project.archivesName}.sarif")))
-    }
 }
