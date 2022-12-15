@@ -426,6 +426,8 @@ suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, include
       val debugMapping = mutableListOf<String>()
       for (moduleName in modules) {
         val module = context.findRequiredModule(moduleName)
+        // We pack source of libraries which are included into compilation classpath for platform API modules,
+        // this way we'll get sources of all libraries useful for plugin developers and size of the archive will be reasonable
         if (moduleName.startsWith("intellij.platform.") && context.findModule("$moduleName.impl") != null) {
           val libraries = JpsJavaExtensionService.dependencies(module).productionOnly().compileOnly().recursivelyExportedOnly().libraries
           includedLibraries.addAll(libraries)
