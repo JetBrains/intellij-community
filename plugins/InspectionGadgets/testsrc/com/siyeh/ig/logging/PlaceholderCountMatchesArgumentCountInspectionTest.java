@@ -303,14 +303,12 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
                  final String text2 = "test ";
                  LOG.fatal(/*More arguments provided (1) than placeholders specified (0)*/text2/**/, i);
                  LOG.fatal(/*Fewer arguments provided (1) than placeholders specified (6)*/text + text/**/, i);
-                 LOG.fatal(text + text + text + text + text + text, i);
+                 LOG.fatal(/*Fewer arguments provided (1) than placeholders specified (18)*/text + text + text + text + text + text/**/, i);
                  LOG.info(/*More arguments provided (1) than placeholders specified (0)*/FINAL_TEXT/**/, i);
                  String text3;
                  text3 = "another";
-                 LOG.info(text3, i);
-                 String textFirst = "first {}";
-                 String textSecond = "second {}";
-                 String sum = textFirst + textSecond + 1;
+                 LOG.info(/*More arguments provided (1) than placeholders specified (0)*/text3/**/, i);
+                 String sum = "first {}" + "second {}" + 1;
                  LOG.info(/*Fewer arguments provided (1) than placeholders specified (2)*/sum/**/, i);
                }
              }""");
