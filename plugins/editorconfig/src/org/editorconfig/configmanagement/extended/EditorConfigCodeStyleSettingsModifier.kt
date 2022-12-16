@@ -246,7 +246,8 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
                                 settings: CodeStyleSettings,
                                 fileType: FileType,
                                 optionKey: String,
-                                optionValue: String): String {
+                                rawValue: String): String {
+      val optionValue = rawValue.trim()
       if ("indent_size" == optionKey) {
         val explicitTabSize = getExplicitTabSize(properties)
         if ("tab" == optionValue) {
