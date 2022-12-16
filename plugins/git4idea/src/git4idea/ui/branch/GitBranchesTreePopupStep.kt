@@ -287,7 +287,7 @@ class GitBranchesTreePopupStep(private val project: Project,
         if (_treeModel.isPrefixGrouping) value.name.split('/').last() else value.name
       }
       is PopupFactoryImpl.ActionItem -> value.text
-      else -> value.toString()
+      else -> null
     }
   }
 
