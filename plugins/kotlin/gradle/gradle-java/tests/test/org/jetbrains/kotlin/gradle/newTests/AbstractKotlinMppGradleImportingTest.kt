@@ -94,6 +94,8 @@ abstract class AbstractKotlinMppGradleImportingTest :
 
         importProject()
 
+
+        noErrorEventsDuringImportService.checkImportErrors(testDataDirectoryService)
         workspaceModelTestingService.checkWorkspaceModel(configuration, this)
         highlightingCheckService.runHighlightingCheckOnAllModules(configuration, this)
     }
