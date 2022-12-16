@@ -80,32 +80,4 @@ public abstract class MavenConfigureProjectByChangingFileTestGenerated extends A
             runTest("testData/configurator/jvm/withJava9ModuleInfo/");
         }
     }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/configurator/js")
-    public static class Js extends AbstractMavenConfigureProjectByChangingFileTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestWithJSMaven, this, testDataFilePath);
-        }
-
-        @TestMetadata("libraryMissing")
-        public void testLibraryMissing() throws Exception {
-            runTest("testData/configurator/js/libraryMissing/");
-        }
-
-        @TestMetadata("pluginMissing")
-        public void testPluginMissing() throws Exception {
-            runTest("testData/configurator/js/pluginMissing/");
-        }
-
-        @TestMetadata("simpleProject")
-        public void testSimpleProject() throws Exception {
-            runTest("testData/configurator/js/simpleProject/");
-        }
-
-        @TestMetadata("simpleProjectSnapshot")
-        public void testSimpleProjectSnapshot() throws Exception {
-            runTest("testData/configurator/js/simpleProjectSnapshot/");
-        }
-    }
 }
