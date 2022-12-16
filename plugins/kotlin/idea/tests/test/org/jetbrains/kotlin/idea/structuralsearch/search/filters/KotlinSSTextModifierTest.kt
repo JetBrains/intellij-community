@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.structuralsearch.search.filters
 
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSTextFilterTest : KotlinStructuralSearchTest() {
+class KotlinSSTextModifierTest : KotlinStructuralSearchTest() {
     fun testHierarchyClassName() { doTest("class '_:*[regex(Foo2)]", """
         class X {
             open class Foo

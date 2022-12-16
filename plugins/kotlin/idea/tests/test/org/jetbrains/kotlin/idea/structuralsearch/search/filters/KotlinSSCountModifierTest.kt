@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.structuralsearch.search.filters
 
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSCountFilterTest : KotlinStructuralSearchTest() {
+class KotlinSSCountModifierTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "countFilter"
 
     // isApplicableMinCount
