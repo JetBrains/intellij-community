@@ -80,101 +80,104 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       return;
     }
 
-    // try not to decompile files
-    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-    if (document == null) {
-      // currently LazyRangeMarkerFactory creates document for non binary files
-      if (file.getFileType().isBinary()) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (myHighlighter == null) {
-            myHighlighter = LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(file, getLine(), 0, true);
-            callOnUpdate.run();
-          }
-        });
-        return;
-      }
-      document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(file));
+    ReadAction.nonBlocking(() -> {
+      // try not to decompile files
+      Document document = FileDocumentManager.getInstance().getCachedDocument(file);
       if (document == null) {
-        return;
-      }
-    }
-
-    if (myType instanceof XBreakpointTypeWithDocumentDelegation) {
-      document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);
-    }
-
-    Document finalDocument = document;
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (myHighlighter != null && !(myHighlighter instanceof RangeHighlighter)) {
-        removeHighlighter();
-        myHighlighter = null;
-      }
-
-      TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
-
-      if (!isEnabled()) {
-        attributes = attributes.clone();
-        attributes.setBackgroundColor(null);
-      }
-
-      RangeHighlighter highlighter = (RangeHighlighter)myHighlighter;
-      if (highlighter != null &&
-          (!highlighter.isValid()
-           || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), finalDocument)
-           || !Comparing.equal(highlighter.getTextAttributes(null), attributes)
-           // it seems that this check is not needed - we always update line number from the highlighter
-           // and highlighter is removed on line and file change anyway
-            /*|| document.getLineNumber(highlighter.getStartOffset()) != getLine()*/)) {
-        removeHighlighter();
-        highlighter = null;
-      }
-
-      MarkupModelEx markupModel;
-      if (highlighter == null) {
-        int line = getLine();
-        if (line >= finalDocument.getLineCount()) {
-          callOnUpdate.run();
+        // currently LazyRangeMarkerFactory creates document for non binary files
+        if (file.getFileType().isBinary()) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (myHighlighter == null) {
+              myHighlighter = LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(file, getLine(), 0, true);
+              callOnUpdate.run();
+            }
+          });
           return;
         }
-        markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(finalDocument, getProject(), true);
-        TextRange range = myType.getHighlightRange(this);
-        if (range != null && !range.isEmpty()) {
-          TextRange lineRange = DocumentUtil.getLineTextRange(finalDocument, line);
-          if (range.intersects(lineRange)) {
-            highlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
-                                                          DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
-                                                          HighlighterTargetArea.EXACT_RANGE);
+        document = FileDocumentManager.getInstance().getDocument(file);
+        if (document == null) {
+          return;
+        }
+      }
+
+      if (myType instanceof XBreakpointTypeWithDocumentDelegation) {
+        document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);
+      }
+
+      TextRange range = myType.getHighlightRange(this);
+
+      Document finalDocument = document;
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (myHighlighter != null && !(myHighlighter instanceof RangeHighlighter)) {
+          removeHighlighter();
+          myHighlighter = null;
+        }
+
+        TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
+
+        if (!isEnabled()) {
+          attributes = attributes.clone();
+          attributes.setBackgroundColor(null);
+        }
+
+        RangeHighlighter highlighter = (RangeHighlighter)myHighlighter;
+        if (highlighter != null &&
+            (!highlighter.isValid()
+             || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), finalDocument)
+             || !Comparing.equal(highlighter.getTextAttributes(null), attributes)
+             // it seems that this check is not needed - we always update line number from the highlighter
+             // and highlighter is removed on line and file change anyway
+              /*|| document.getLineNumber(highlighter.getStartOffset()) != getLine()*/)) {
+          removeHighlighter();
+          highlighter = null;
+        }
+
+        MarkupModelEx markupModel;
+        if (highlighter == null) {
+          int line = getLine();
+          if (line >= finalDocument.getLineCount()) {
+            callOnUpdate.run();
+            return;
+          }
+          markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(finalDocument, getProject(), true);
+          if (range != null && !range.isEmpty()) {
+            TextRange lineRange = DocumentUtil.getLineTextRange(finalDocument, line);
+            if (range.intersects(lineRange)) {
+              highlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
+                                                            DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
+                                                            HighlighterTargetArea.EXACT_RANGE);
+            }
+          }
+          if (highlighter == null) {
+            highlighter = markupModel.addPersistentLineHighlighter(line, DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes);
+          }
+          if (highlighter == null) {
+            callOnUpdate.run();
+            return;
+          }
+
+          highlighter.setGutterIconRenderer(createGutterIconRenderer());
+          highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
+          highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
+          myHighlighter = highlighter;
+        }
+        else {
+          markupModel = null;
+        }
+
+        updateIcon();
+
+        if (markupModel == null) {
+          markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(finalDocument, getProject(), false);
+          if (markupModel != null) {
+            // renderersChanged false - we don't change gutter size
+            markupModel.fireAttributesChanged((RangeHighlighterEx)highlighter, false, false);
           }
         }
-        if (highlighter == null) {
-          highlighter = markupModel.addPersistentLineHighlighter(line, DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes);
-        }
-        if (highlighter == null) {
-          callOnUpdate.run();
-          return;
-        }
 
-        highlighter.setGutterIconRenderer(createGutterIconRenderer());
-        highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
-        highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
-        myHighlighter = highlighter;
-      }
-      else {
-        markupModel = null;
-      }
-
-      updateIcon();
-
-      if (markupModel == null) {
-        markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(finalDocument, getProject(), false);
-        if (markupModel != null) {
-          // renderersChanged false - we don't change gutter size
-          markupModel.fireAttributesChanged((RangeHighlighterEx)highlighter, false, false);
-        }
-      }
-
-      callOnUpdate.run();
-    });
+        callOnUpdate.run();
+      });
+    }).executeSynchronously();
   }
 
   @Nullable
