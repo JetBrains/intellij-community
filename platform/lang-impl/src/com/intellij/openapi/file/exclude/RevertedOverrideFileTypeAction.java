@@ -10,15 +10,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /** removes destruction caused by {@link OverrideFileTypeAction} and restores the original file type */
-class ReverteOverrideFileTypeAction extends DumbAwareAction {
+class RevertedOverrideFileTypeAction extends DumbAwareAction {
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     VirtualFile[] files = OverrideFileTypeAction.getContextFiles(e, file -> OverrideFileTypeManager.getInstance().getFileValue(file) != null);
     Presentation presentation = e.getPresentation();
     boolean enabled = files.length != 0;
-    presentation.setDescription(enabled
-                                ? ActionsBundle.message("action.ReverteOverrideFileTypeAction.verbose.description", files[0].getName(), files.length - 1)
-                                : ActionsBundle.message("action.ReverteOverrideFileTypeAction.description"));
+    presentation.setDescription(enabled ?
+                                ActionsBundle.message("action.RevertedOverrideFileTypeAction.verbose.description", files[0].getName(), files.length - 1) :
+                                ActionsBundle.message("action.RevertedOverrideFileTypeAction.description"));
     presentation.setEnabledAndVisible(enabled);
   }
 

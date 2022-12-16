@@ -779,7 +779,7 @@
       <reference ref="Scratch.ChangeLanguage"/>
       <group id="MarkFileAs">
         <action id="OverrideFileTypeAction" class="com.intellij.openapi.file.exclude.OverrideFileTypeAction"/>
-        <action id="ReverteOverrideFileTypeAction" class="com.intellij.openapi.file.exclude.ReverteOverrideFileTypeAction"/>
+        <action id="RevertedOverrideFileTypeAction" class="com.intellij.openapi.file.exclude.RevertedOverrideFileTypeAction"/>
       </group>
     </group>
 
