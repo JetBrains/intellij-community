@@ -273,6 +273,23 @@ class KotlinSSTypeModifierTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
+    fun testTypeCallExpressionFromJava() {
+        myFixture.addFileToProject("pkg/A.java", """
+            package pkg;
+            
+            public class A {
+                public static void foo() { }
+            }
+        """.trimIndent())
+        doTest("'_:[exprtype(pkg.A)].'_", """
+            import pkg.A
+            
+            fun main() {
+                <warning descr="SSR">A.foo()</warning>
+            }
+        """.trimIndent())
+    }
+
     fun testTypeCallableReferenceExpression() { doTest("'_:[exprtype(A)]::'_", """
         class A {
             val x = 1

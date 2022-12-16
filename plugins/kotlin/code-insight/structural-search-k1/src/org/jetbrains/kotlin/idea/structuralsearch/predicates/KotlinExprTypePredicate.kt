@@ -19,7 +19,8 @@ import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
-import org.jetbrains.kotlin.idea.structuralsearch.resolveKotlinType
+import org.jetbrains.kotlin.idea.structuralsearch.resolveDeclType
+import org.jetbrains.kotlin.idea.structuralsearch.resolveExprType
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -46,9 +47,10 @@ class KotlinExprTypePredicate(
         if (matchedNode is KtExpression && matchedNode.isNull() && searchedTypeNames.contains("null")) return true
         val node = StructuralSearchUtil.getParentIfIdentifier(matchedNode)
         val type = when {
-            node is KtDeclaration -> node.resolveKotlinType()
+            node is KtDeclaration -> node.resolveDeclType()
             node is KtExpression -> try {
-                node.resolveType() ?: node.parent?.asSafely<KtDotQualifiedExpression>()?.resolveType()
+                String.Companion
+                node.resolveExprType() ?: node.parent?.asSafely<KtDotQualifiedExpression>()?.resolveExprType()
             } catch (e: Exception) {
                 if (e is ControlFlowException) throw e
                 null

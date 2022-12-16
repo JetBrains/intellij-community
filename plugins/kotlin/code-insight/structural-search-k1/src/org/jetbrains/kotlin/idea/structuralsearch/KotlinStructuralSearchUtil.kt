@@ -9,13 +9,17 @@ import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.core.resolveType
+import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.resolve.descriptorUtil.classValueType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.KotlinTypeFactory
 import org.jetbrains.kotlin.types.TypeAttributes
@@ -53,8 +57,14 @@ fun String.removeTypeParameters(): String {
 val MatchingHandler.withinHierarchyTextFilterSet: Boolean
     get() = this is SubstitutionHandler && (this.isSubtype || this.isStrictSubtype)
 
-fun KtDeclaration.resolveKotlinType(): KotlinType? =
-    (resolveToDescriptorIfAny() as? CallableDescriptor)?.returnType
+fun KtDeclaration.resolveDeclType(): KotlinType? = (resolveToDescriptorIfAny() as? CallableDescriptor)?.returnType
+
+fun KtExpression.resolveExprType(): KotlinType? {
+    val descriptor = resolveMainReferenceToDescriptors().firstOrNull()
+    if (descriptor is ClassDescriptor) return descriptor.classValueType ?: descriptor.defaultType
+    if (descriptor is PropertyDescriptor) return descriptor.returnType
+    return resolveType()
+}
 
 fun ClassDescriptor.toSimpleType(nullable: Boolean = false) =
     KotlinTypeFactory.simpleType(TypeAttributes.Empty, this.typeConstructor, emptyList(), nullable)
