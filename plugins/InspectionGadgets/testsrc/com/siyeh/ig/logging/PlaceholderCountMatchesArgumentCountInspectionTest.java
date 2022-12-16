@@ -24,50 +24,62 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[]{
-      "package org.slf4j.spi; " +
-      "public interface LoggingEventBuilder { " +
-      "   void log(String format, Object... arguments); " +
-      "}",
-      "package org.slf4j; " +
-      "import org.slf4j.spi.LoggingEventBuilder; " +
-      "public class LoggerFactory { public static Logger getLogger(Class clazz) { return null; }}" +
-      "public interface Logger { " +
-      "   void info(String format, Object... arguments); " +
-      "   LoggingEventBuilder atError(); " +
-      "}",
-      "package org.apache.logging.log4j;" +
-      "import org.apache.logging.log4j.util.Supplier;" +
-      "public interface Logger {" +
-      "  void info(String message, Object... params);" +
-      "  void fatal(String message, Object... params);" +
-      "  void error(Supplier<?> var1, Throwable var2);" +
-      "  LogBuilder atInfo();" +
-      "  LogBuilder atFatal();" +
-      "  LogBuilder atError();" +
-      "}",
+      """
+      package org.slf4j.spi;
+      public interface LoggingEventBuilder {
+         void log(String format, Object... arguments);
+      }
+      """,
+      """
+      package org.slf4j;\s
+      import org.slf4j.spi.LoggingEventBuilder;\s
+      public class LoggerFactory { public static Logger getLogger(Class clazz) { return null; }}
+      public interface Logger {\s
+         void info(String format, Object... arguments);\s
+         LoggingEventBuilder atError();\s
+      }
+      """,
+      """
+      package org.apache.logging.log4j;
+      import org.apache.logging.log4j.util.Supplier;
+      public interface Logger {
+        void info(String message, Object... params);
+        void fatal(String message, Object... params);
+        void error(Supplier<?> var1, Throwable var2);
+        LogBuilder atInfo();
+        LogBuilder atFatal();
+        LogBuilder atError();
+      }
+      """,
 
-      "package org.apache.logging.log4j;" +
-      "public class LogManager {" +
-      "  public static Logger getLogger() {" +
-      "    return null;" +
-      "  }" +
-      "  public static Logger getFormatterLogger() {" +
-      "    return null;" +
-      "  }" +
-      "}",
+      """
+      package org.apache.logging.log4j;
+      public class LogManager {
+        public static Logger getLogger() {
+          return null;
+        }
+        public static Logger getFormatterLogger() {
+          return null;
+        }
+      }
+      """,
 
-      "package org.apache.logging.log4j.util;" +
-      "public interface Supplier<T> {" +
-      "    T get();" +
-      "}",
+      """
+      package org.apache.logging.log4j.util;
+      public interface Supplier<T> {
+          T get();
+      }
+      """,
 
-      "package org.apache.logging.log4j;" +
-      "import org.apache.logging.log4j.util.Supplier;" +
-      "public interface LogBuilder {" +
-      "  void log(String format, Object p0);" +
-      "  void log(String format, Object... params);" +
-      "  void log(String format, Supplier<?>... params);" +
-      "}"
+      """
+      package org.apache.logging.log4j;
+      import org.apache.logging.log4j.util.Supplier;
+      public interface LogBuilder {
+        void log(String format, Object p0);
+        void log(String format, Object... params);
+        void log(String format, Supplier<?>... params);
+      }
+      """
     };
   }
 
