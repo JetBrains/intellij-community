@@ -8,19 +8,21 @@ abstract class CompletionGolfMetric<T : Number> : Metric {
 
   private fun T.alsoAddToSample(): T = also { sample.add(it.toDouble()) }
 
-  protected fun computeMoves(session: Session): Int = session.lookups.sumOf { if (it.selectedPosition >= 0) it.selectedPosition else 0 }
-
-  protected fun computeCompletionCalls(sessions: List<Session>): Int = sessions.sumOf { it.lookups.count { lookup -> lookup.isNew } }
-
   override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): T = compute(sessions, comparator).alsoAddToSample()
 
   abstract fun compute(sessions: List<Session>, comparator: SuggestionsComparator): T
 }
 
-class CompletionGolfMovesSumMetric : CompletionGolfMetric<Int>() {
-  override val name: String = "Code Golf Moves Count"
+class CGMovesCount : CompletionGolfMetric<Int>() {
+  override val name: String = "Total Moves"
 
   override val valueType = MetricValueType.INT
+
+  private val metrics = listOf(
+    CGTypingsCount(),
+    CGNavigationsCount(),
+    CGCompletionInvocationsCount()
+  )
 
   override val value: Double
     get() = sample.sum()
@@ -31,14 +33,51 @@ class CompletionGolfMovesSumMetric : CompletionGolfMetric<Int>() {
     // call code completion (1 point)
     // choice suggestion from completion or symbol (if there is no offer in completion) (1 point)
     // navigation to the suggestion (if it fits) (N points, based on suggestion index, assuming first index is 0)
-    return sessions.map { computeMoves(it) + it.lookups.count() }
-      .sum()
-      .plus(computeCompletionCalls(sessions))
+    return metrics.sumOf { it.compute(sessions, comparator) }
   }
 }
 
-class CompletionGolfMovesCountNormalised : CompletionGolfMetric<Double>() {
-  override val name: String = "Code Golf Moves Count Normalised"
+class CGTypingsCount : CompletionGolfMetric<Int>() {
+  override val name: String = "Typings"
+
+  override val valueType = MetricValueType.INT
+
+  override val value: Double
+    get() = sample.sum()
+
+  override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
+    sessions.sumOf { it.lookups.count() }
+}
+
+class CGNavigationsCount : CompletionGolfMetric<Int>() {
+  override val name: String = "Navigations"
+
+  override val valueType = MetricValueType.INT
+
+  override val value: Double
+    get() = sample.sum()
+
+  override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
+    sessions.sumOf { computeMoves(it) }
+
+  private fun computeMoves(session: Session): Int = session.lookups.sumOf { if (it.selectedPosition >= 0) it.selectedPosition else 0 }
+}
+
+
+class CGCompletionInvocationsCount : CompletionGolfMetric<Int>() {
+  override val name: String = "Completion Invocations"
+
+  override val valueType = MetricValueType.INT
+
+  override val value: Double
+    get() = sample.sum()
+
+  override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
+    sessions.sumOf { it.lookups.count { lookup -> lookup.isNew } }
+}
+
+class CGMovesCountNormalised : CompletionGolfMetric<Double>() {
+  override val name: String = "Moves Count Normalised"
 
   override val valueType = MetricValueType.DOUBLE
 
@@ -47,7 +86,7 @@ class CompletionGolfMovesCountNormalised : CompletionGolfMetric<Double>() {
 
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Double {
     val linesLength = sessions.sumOf { it.expectedText.length } * 2.0
-    val amountOfMoves = sessions.sumOf { computeMoves(it) + it.lookups.count() } + computeCompletionCalls(sessions)
+    val movesCount = CGMovesCount().compute(sessions, comparator)
 
     val subtrahend = sessions.count() * 2.0
 
@@ -56,12 +95,12 @@ class CompletionGolfMovesCountNormalised : CompletionGolfMetric<Double>() {
     // To reach 0%, you also need to subtract the minimum number of lookups (eq. number of sessions plus minimum amount of completion calls)
     // 0% - best scenario, every line was completed from start to end with first suggestion in list
     // >100% is possible, when navigation in completion takes too many moves
-    return ((amountOfMoves - subtrahend) / (linesLength - subtrahend))
+    return ((movesCount - subtrahend) / (linesLength - subtrahend))
   }
 }
 
-class CompletionGolfPerfectLine : CompletionGolfMetric<Int>() {
-  override val name: String = "Code Golf Perfect Line"
+class CGPerfectLine : CompletionGolfMetric<Int>() {
+  override val name: String = "Perfect Line"
 
   override val valueType = MetricValueType.INT
 

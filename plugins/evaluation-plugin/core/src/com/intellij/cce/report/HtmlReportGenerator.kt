@@ -127,7 +127,7 @@ class HtmlReportGenerator(
   }
 
   private fun getMetricsTable(globalMetrics: List<MetricInfo>): String {
-    val metricNames = globalMetrics.map { it.name }.toSet().sorted()
+    val metricNames = globalMetrics.map { it.name }
     val evaluationTypes = globalMetrics.map { it.evaluationType }.toSet().sorted().toMutableList()
     val manyTypes = (evaluationTypes.size > 1)
     val withDiff = (evaluationTypes.size == 2)
