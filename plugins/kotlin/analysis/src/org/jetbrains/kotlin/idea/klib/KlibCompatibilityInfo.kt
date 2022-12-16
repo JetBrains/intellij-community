@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.backend.common.serialization.metadataVersion
 import org.jetbrains.kotlin.idea.klib.KlibCompatibilityInfo.*
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.metadata.KlibMetadataVersion
+import kotlin.reflect.KClass
 
 /**
  * Whether a certain KLIB is compatible for the purposes of IDE: indexation, resolve, etc.
