@@ -421,6 +421,10 @@
       <add-to-group group-id="EditorToggleActions" anchor="after" relative-to-action="EditorToggleShowIndentLines"/>
     </action>
 
+    <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction">
+      <add-to-group group-id="UIToggleActions" anchor="after" relative-to-action="ViewStatusBarWidgetsGroup"/>
+    </action>
+
 
 
     <!-- Go To -->
