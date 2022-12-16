@@ -71,11 +71,12 @@ The options are:
 
 #### Metrics
 Code golf has individual metrics:
-- **Moves Count**: Count total amount of moves for writing current file
+- **Moves Count**: Count total amount of moves for writing current file. This includes typing chars, completion invocations and navigations to suggestions. 
 - **Moves Count Normalised** (in percent): Amount, based on non-completion number, in the worst case code completion never helped us
   and file was created only by typing characters
 - **Perfect Line**: We count a session as perfect line, if we used completion's suggestion for typing more than half of line (>50%)
-- Std metrics: Max Latency, Mean Latency and Sessions (each session is one line in the file)
+- **Recall@k** - Ratio of completions when the selected suggestion was among the first k
+- **Std metrics**: Max Latency, Mean Latency and Sessions (each session is one line in the file)
 
 #### Code golf moves
 We summarize 3 types of actions:
