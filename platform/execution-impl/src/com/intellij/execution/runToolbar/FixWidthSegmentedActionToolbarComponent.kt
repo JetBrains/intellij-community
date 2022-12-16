@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.containers.ComparatorUtil
 import com.intellij.util.ui.JBValue
+import com.intellij.util.ui.TimerUtil
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Rectangle
@@ -26,23 +27,34 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
     }
   }
 
+  private var timer = TimerUtil.createNamedTimer("project checker", 50).apply {
+    isRepeats = false
+    addActionListener {
+      checkProject()
+    }
+  }
 
   override fun addNotify() {
     super.addNotify()
+    checkProject()
+  }
 
-    CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this))?.let {
-      updateProject(it)
-
-      runWidgetWidthHelper = RunWidgetWidthHelper.getInstance(it).apply {
-        addListener(listener)
+  private fun checkProject() {
+      CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this))?.let {
+        updateProject(it)
+        runWidgetWidthHelper = RunWidgetWidthHelper.getInstance(it).apply {
+          addListener(listener)
+        }
+      } ?: kotlin.run {
+        timer.start()
       }
-    }
   }
 
 
   override fun removeNotify() {
     runWidgetWidthHelper?.removeListener(listener)
     removeProject()
+    timer.stop()
     super.removeNotify()
   }
 
@@ -54,6 +66,8 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
   }
 
   protected open fun updateProject(value: Project) {
+    if(project == value) return
+
     project = value
     Disposer.register(value) {
       removeProject()
