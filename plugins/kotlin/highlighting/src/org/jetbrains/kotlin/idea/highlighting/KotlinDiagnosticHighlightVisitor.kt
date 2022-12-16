@@ -58,7 +58,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
         val fixes = KotlinQuickFixService.getInstance().getQuickFixesFor(diagnostic as KtFirDiagnostic)
         diagnostic.textRanges.forEach { range ->
             val infoBuilder = HighlightInfo.newHighlightInfo(diagnostic.getHighlightInfoType())
-                .description(diagnostic.getMessageToRender())
+                .descriptionAndTooltip(diagnostic.getMessageToRender())
                 .range(range)
             for (quickFixInfo in fixes) {
                 infoBuilder.registerFix(quickFixInfo, null, null, null, null)
