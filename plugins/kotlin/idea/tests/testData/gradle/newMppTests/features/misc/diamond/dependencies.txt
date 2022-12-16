@@ -1,0 +1,54 @@
+MODULES
+    my-app
+    my-app.commonMain
+    my-app.commonTest
+        my-app.commonMain (friend, TEST)
+    my-app.jsMain
+        my-app.commonMain (refines, COMPILE)
+        my-app.jvmAndJsMain (refines, COMPILE)
+        my-app.linuxAndJsMain (refines, COMPILE)
+    my-app.jsTest
+        my-app.commonMain (friend, TEST)
+        my-app.commonTest (refines, TEST)
+        my-app.jsMain (friend, TEST)
+        my-app.jsMain (friend, RUNTIME)
+        my-app.jvmAndJsMain (friend, TEST)
+        my-app.jvmAndJsTest (refines, TEST)
+        my-app.linuxAndJsMain (friend, TEST)
+        my-app.linuxAndJsTest (refines, TEST)
+    my-app.jvmAndJsMain
+        my-app.commonMain (refines, COMPILE)
+    my-app.jvmAndJsTest
+        my-app.commonMain (friend, TEST)
+        my-app.commonTest (refines, TEST)
+        my-app.jvmAndJsMain (friend, TEST)
+    my-app.jvmMain
+        my-app.commonMain (refines, COMPILE)
+        my-app.jvmAndJsMain (refines, COMPILE)
+    my-app.jvmTest
+        my-app.commonMain (friend, TEST)
+        my-app.commonTest (refines, TEST)
+        my-app.jvmAndJsMain (friend, TEST)
+        my-app.jvmAndJsTest (refines, TEST)
+        my-app.jvmMain (friend, TEST)
+        my-app.jvmMain (friend, RUNTIME)
+    my-app.linuxAndJsMain
+        my-app.commonMain (refines, COMPILE)
+    my-app.linuxAndJsTest
+        my-app.commonMain (friend, TEST)
+        my-app.commonTest (refines, TEST)
+        my-app.linuxAndJsMain (friend, TEST)
+    my-app.linuxX64Main
+        my-app.commonMain (refines, COMPILE)
+        my-app.linuxAndJsMain (refines, COMPILE)
+    my-app.linuxX64Test
+        my-app.commonMain (friend, TEST)
+        my-app.commonTest (refines, TEST)
+        my-app.linuxAndJsMain (friend, TEST)
+        my-app.linuxAndJsTest (refines, TEST)
+        my-app.linuxX64Main (friend, TEST)
+
+Test configuration:
+- hiding following roots: resources, android-specific roots, generated
+- showing only following facet fields: targetPlatform
+- hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
