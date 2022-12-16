@@ -105,11 +105,18 @@ enum class WorkspacePrintingMode(
     ),
     SOURCE_ROOTS(
         filePrefix = "source-roots",
-        description = "LIst of all all modules in a project with their source roots",
+        description = "List of all modules in a project with their source roots",
         printer = WorkspaceModelPrinterFactory {
             addContributor(ContentRootsContributor())
         }
     ),
+    TEST_TASKS(
+        filePrefix = "test-tasks",
+        description = "List of all modules in a project with imported ExternalSystem test tasks",
+        printer = WorkspaceModelPrinterFactory {
+            addContributor(TestTasksContributor())
+        }
+    )
 }
 
 private fun fileWithClassifyingParts(testDataDir: File, mode: WorkspacePrintingMode, classifyingParts: List<String>): File {

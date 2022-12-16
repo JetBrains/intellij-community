@@ -5,6 +5,8 @@ MODULES
     project.commonTest
         project.commonMain (friend, TEST)
         Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}} (TEST)
     project.iosArm64Main
         Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
         project.commonMain (refines, COMPILE)
@@ -29,6 +31,8 @@ MODULES
         project.commonTest (refines, TEST)
         project.iosMain (friend, TEST)
         Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}} (TEST)
         Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
     project.iosX64Main
         Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
@@ -54,10 +58,14 @@ MODULES
         project.commonTest (refines, TEST)
         project.jvmMain (friend, TEST)
         project.jvmMain (friend, RUNTIME)
+        Gradle: org.jetbrains.kotlin:kotlin-test:{{KGP_VERSION}} (TEST)
         Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
         Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-test-junit:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
         Gradle: org.jetbrains:annotations:13.0 (TEST)
+        Gradle: junit:junit:4.13.2 (TEST)
+        Gradle: org.hamcrest:hamcrest-core:1.3 (TEST)
 
 Test configuration:
 - hiding following roots: android-specific roots, generated
