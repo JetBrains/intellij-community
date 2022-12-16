@@ -56,7 +56,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
 
   private val toolWindowManager: DocumentationToolWindowManager get() = DocumentationToolWindowManager.instance(project)
 
-  fun actionPerformed(dataContext: DataContext, popupClosedCallback: (() -> Unit)? = null) {
+  fun actionPerformed(dataContext: DataContext, popupDependencies: Disposable? = null) {
     EDT.assertIsEdt()
 
     val editor = dataContext.getData(CommonDataKeys.EDITOR)
@@ -64,7 +64,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     if (currentPopup != null) {
       // focused popup would eat the shortcut itself
       // => at this point there is an unfocused documentation popup near lookup or search component
-      currentPopup.focusPreferredComponent()
+      DocumentationPopupFocusService.instance(project).focusExistingPopup(currentPopup)
       return
     }
 
@@ -93,7 +93,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     // so we create pointer and presentation right in the UI thread.
     val request = target.documentationRequest()
     val popupContext = secondaryPopupContext ?: DefaultPopupContext(project, editor)
-    showDocumentation(request, popupContext, popupClosedCallback)
+    showDocumentation(request, popupContext, popupDependencies)
   }
 
   private var popup: WeakReference<AbstractPopup>? = null
@@ -120,17 +120,17 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     return popup
   }
 
-  private fun setPopup(popup: AbstractPopup, popupClosedCallback: (() -> Unit)?) {
+  private fun setPopup(popup: AbstractPopup, popupDependencies: Disposable?) {
     EDT.assertIsEdt()
     this.popup = WeakReference(popup)
     Disposer.register(popup) {
       EDT.assertIsEdt()
       this.popup = null
-      popupClosedCallback?.let { it() }
     }
+    popupDependencies?.let { Disposer.register(popup, it) }
   }
 
-  private fun showDocumentation(request: DocumentationRequest, popupContext: PopupContext, popupClosedCallback: (() -> Unit)? = null) {
+  private fun showDocumentation(request: DocumentationRequest, popupContext: PopupContext, popupDependencies: Disposable? = null) {
     if (skipPopup) {
       toolWindowManager.showInToolWindow(request)
       return
@@ -145,7 +145,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     popupScope.coroutineContext.job.cancelChildren()
     popupScope.launch(context = Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
       val popup = showDocumentationPopup(project, request, popupContext)
-      setPopup(popup, popupClosedCallback)
+      setPopup(popup, popupDependencies)
     }
   }
 
