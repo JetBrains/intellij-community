@@ -6,9 +6,11 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -164,12 +166,12 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
   }
 
   /**
-   * @param bindId     identifier of binding variable used by inspection; the corresponding variable is expected to be a string or enum
+   * @param bindId     identifier of binding variable used by inspection; the corresponding variable is expected to be a string, int or enum
    * @param splitLabel label to display around the control
    * @param options    drop-down options
    * @return a drop-down control to select a single option from
    * @see #option(String, String)
-   * @see #dropdown(String, String, Class, Function) 
+   * @see #dropdown(String, String, Class, Function)
    */
   public static @NotNull OptDropdown dropdown(@Language("jvm-field-name") @NotNull String bindId,
                                               @NotNull @NlsContexts.Label String splitLabel,
@@ -178,12 +180,30 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
   }
 
   /**
-   * @param bindId     identifier of binding variable used by inspection; the corresponding variable is expected to be a string or enum
+   * @param bindId     identifier of binding variable used by inspection; the corresponding variable is expected to be a string, int or enum
    * @param splitLabel label to display around the control
-   * @param enumClass  enum class to populate drop-down from (take all values in declaration order)
+   * @param values     drop-down options
+   * @param keyExtractor a function to extract a key string from the option (which will be written to the binding variable)
+   * @param presentableTextExtractor a function to extract a presentable text from the option
+   * @return a drop-down control to select a single option from
+   * @see #dropdown(String, String, Class, Function)
+   */
+  public static @NotNull <T> OptDropdown dropdown(@Language("jvm-field-name") @NotNull String bindId,
+                                                  @NotNull @NlsContexts.Label String splitLabel,
+                                                  @NotNull Collection<T> values,
+                                                  @NotNull Function<? super T, @NotNull @NonNls String> keyExtractor,
+                                                  @NotNull Function<? super T, @NotNull @Nls String> presentableTextExtractor) {
+    return new OptDropdown(bindId, new PlainMessage(splitLabel),
+                           ContainerUtil.map(values, c -> option(keyExtractor.apply(c), presentableTextExtractor.apply(c))));
+  }
+
+  /**
+   * @param bindId                   identifier of binding variable used by inspection; the corresponding variable is expected to be a string or enum
+   * @param splitLabel               label to display around the control
+   * @param enumClass                enum class to populate drop-down from (take all values in declaration order)
    * @param presentableTextExtractor a function to extract presentable name from enum constant
    * @return a drop-down control to select a single option from
-   * @see #option(Enum, String) 
+   * @see #option(Enum, String)
    */
   public static @NotNull <T extends Enum<T>> OptDropdown dropdown(@Language("jvm-field-name") @NotNull String bindId,
                                                                   @NotNull @NlsContexts.Label String splitLabel,
