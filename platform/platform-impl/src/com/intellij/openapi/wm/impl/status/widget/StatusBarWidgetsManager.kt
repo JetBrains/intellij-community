@@ -55,6 +55,20 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
   @Suppress("DEPRECATION")
   private val parentScope = project.coroutineScope.childScope()
 
+  internal val dataContext: WidgetPresentationDataContext = object : WidgetPresentationDataContext {
+    override val project: Project
+      get() = this@StatusBarWidgetsManager.project
+
+    override val currentFileEditor: StateFlow<FileEditor?> by lazy {
+      flow {
+        emit(project.serviceAsync<FileEditorManager>().await() as FileEditorManagerEx)
+      }
+        .take(1)
+        .flatMapConcat { it.currentFileEditorFlow }
+        .stateIn(scope = parentScope, started = SharingStarted.WhileSubscribed(), initialValue = null)
+    }
+  }
+
   fun updateAllWidgets() {
     synchronized(widgetFactories) {
       for (factory in widgetFactories.keys.toList()) {
@@ -81,7 +95,7 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
 
     synchronized(widgetFactories) {
       if (widgetFactories.containsKey(factory)) {
-        // widget is already enabled
+        // this widget is already enabled
         return
       }
 
@@ -148,7 +162,6 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
     return factory.isAvailable(project) && factory.isConfigurable && factory.canBeEnabledOn(statusBar)
   }
 
-  @OptIn(FlowPreview::class)
   internal fun init(): List<Pair<StatusBarWidget, LoadingOrder>> {
     val isLightEditProject = LightEdit.owns(project)
     val statusBarWidgetSettings = StatusBarWidgetSettings.getInstance()
@@ -167,21 +180,6 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
       .mapNotNull { (it.instance ?: return@mapNotNull null) to it.order }
       .filter { !isLightEditProject || it.first is LightEditCompatible }
       .toList()
-
-    val dataContext = object : WidgetPresentationDataContext {
-      override val project: Project
-        get() = this@StatusBarWidgetsManager.project
-
-      override val currentFileEditor: StateFlow<FileEditor?> by lazy {
-        flow {
-          // todo use splitters from dock if not a main frame
-          emit(project.serviceAsync<FileEditorManager>().await() as FileEditorManagerEx)
-        }
-          .flatMapConcat { it.currentCompositeFlow }
-          .map { it?.selectedEditor }
-          .stateIn(scope = parentScope, started = SharingStarted.WhileSubscribed(), initialValue = null)
-      }
-    }
 
     val widgets: List<Pair<StatusBarWidget, LoadingOrder>> = synchronized(widgetFactories) {
       val pendingFactories = availableFactories.toMutableList()

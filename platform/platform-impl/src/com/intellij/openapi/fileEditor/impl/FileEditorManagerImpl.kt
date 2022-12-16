@@ -190,18 +190,22 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
   private val splitterFlow = MutableSharedFlow<EditorsSplitters>(replay = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
 
-  override val currentCompositeFlow: StateFlow<EditorComposite?>
+  override val currentFileEditorFlow: StateFlow<FileEditor?>
 
   override val dockContainer: DockContainer?
     get() = dockable.value
 
   init {
-    val currentCompositeFlow = MutableStateFlow<EditorComposite?>(null)
-    this.currentCompositeFlow = currentCompositeFlow
+    val currentFileEditorFlow = MutableStateFlow<FileEditor?>(null)
+    this.currentFileEditorFlow = currentFileEditorFlow.asStateFlow()
     coroutineScope.launch {
-      splitterFlow.flatMapConcat { it.currentCompositeFlow }.collect {
-        currentCompositeFlow.value = it
-      }
+      splitterFlow
+        .take(1)
+        .flatMapConcat { it.currentCompositeFlow }
+        .flatMapConcat { it?.selectedEditorWithProvider ?: flowOf(null) }
+        .collect {
+          currentFileEditorFlow.value = it?.fileEditor
+        }
     }
 
     project.messageBus.connect(coroutineScope).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
@@ -497,7 +501,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   override val preferredFocusedComponent: JComponent?
-    get() = currentCompositeFlow.value?.preferredFocusedComponent
+    get() = currentFileEditorFlow.value?.preferredFocusedComponent
 
   /**
    * @return color of the `file` which corresponds to the file's status

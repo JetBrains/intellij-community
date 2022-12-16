@@ -97,7 +97,7 @@ public class TextPanel extends JPanel implements Accessible {
       y += fm.getLeading(); // See SimpleColoredComponent.getTextBaseline
     }
 
-    var effect = ClientProperty.get(this, IdeStatusBarImpl.Companion.getWIDGET_EFFECT_KEY());
+    var effect = ClientProperty.get(this, IdeStatusBarImpl.Companion.getWIDGET_EFFECT_KEY$intellij_platform_ide_impl());
     Color foreground;
     foreground = isEnabled() ? effect == IdeStatusBarImpl.WidgetEffect.PRESSED ? JBUI.CurrentTheme.StatusBar.Widget.PRESSED_FOREGROUND :
                                effect == IdeStatusBarImpl.WidgetEffect.HOVER ? JBUI.CurrentTheme.StatusBar.Widget.HOVER_FOREGROUND :

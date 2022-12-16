@@ -246,7 +246,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     }
   }
 
-  override val currentCompositeFlow: StateFlow<EditorComposite?>
+  override val currentFileEditorFlow: StateFlow<FileEditor?>
     get() = MutableStateFlow(null)
 
   override var currentWindow: EditorWindow?

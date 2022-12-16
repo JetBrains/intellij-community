@@ -110,7 +110,7 @@ abstract class FileEditorManagerEx : FileEditorManager() {
    */
   abstract fun closeAllFiles()
 
-  abstract val currentCompositeFlow: StateFlow<EditorComposite?>
+  abstract val currentFileEditorFlow: StateFlow<FileEditor?>
 
   abstract val splitters: EditorsSplitters
 

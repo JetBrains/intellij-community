@@ -19,7 +19,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.LoadingOrder.Orderable
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.TaskInfo
@@ -79,7 +78,7 @@ open class IdeStatusBarImpl internal constructor(
 ) : JComponent(), Accessible, StatusBarEx, DataProvider {
   private val infoAndProgressPanel: InfoAndProgressPanel
 
-  enum class WidgetEffect {
+  internal enum class WidgetEffect {
     HOVER,
     PRESSED
   }
@@ -100,8 +99,8 @@ open class IdeStatusBarImpl internal constructor(
   private val listeners = EventDispatcher.create(StatusBarListener::class.java)
 
   companion object {
-    val HOVERED_WIDGET_ID = DataKey.create<String>("HOVERED_WIDGET_ID")
-    val WIDGET_EFFECT_KEY = Key.create<WidgetEffect>("TextPanel.widgetEffect")
+    internal val HOVERED_WIDGET_ID = DataKey.create<String>("HOVERED_WIDGET_ID")
+    internal val WIDGET_EFFECT_KEY = Key.create<WidgetEffect>("TextPanel.widgetEffect")
 
     const val NAVBAR_WIDGET_KEY = "NavBar"
   }
@@ -768,8 +767,8 @@ private fun wrapCustomStatusBarWidget(widget: CustomStatusBarWidget): JComponent
 }
 
 private fun createDefaultEditorProvider(frameHelper: ProjectFrameHelper): () -> FileEditor? {
-  return {
-    frameHelper.project?.getServiceIfCreated(FileEditorManager::class.java)?.selectedEditor
+  return p@ {
+    (frameHelper.project ?: return@p null).service<StatusBarWidgetsManager>().dataContext.currentFileEditor.value
   }
 }
 
