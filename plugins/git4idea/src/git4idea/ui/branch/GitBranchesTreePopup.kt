@@ -19,7 +19,6 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.*
 import com.intellij.ui.popup.NextStepHandler
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -655,8 +654,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     private val treeRowHeight = if (isNewUI) JBUI.CurrentTheme.List.rowHeight() else JBUIScale.scale(22)
 
     @JvmStatic
-    fun isEnabled() = !isNewUI && Registry.`is`("git.branches.popup.tree", false)
-                      || isNewUI && Registry.`is`("git.branches.popup.tree.experimental.ui", false)
+    fun isEnabled() = true
 
     @JvmStatic
     fun show(project: Project) {
