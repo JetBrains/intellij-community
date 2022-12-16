@@ -38,7 +38,7 @@ public interface PsiForeachStatement extends PsiLoopStatement {
    * @return either the iteration parameter (PsiParameter) of the statement OR pattern (PsiPattern).
    */
   @NotNull
-  PsiElement getIterationDeclaration();
+  PsiForeachDeclarationElement getIterationDeclaration();
 
   /**
    * Returns the expression representing the sequence over which the iteration is performed.

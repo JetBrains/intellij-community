@@ -52,7 +52,7 @@ public class PsiForeachStatementImpl extends PsiLoopStatementImpl implements Psi
 
   @Override
   @NotNull
-  public PsiElement getIterationDeclaration() {
+  public PsiForeachDeclarationElement getIterationDeclaration() {
     PsiParameter parameter = (PsiParameter)findChildByRoleAsPsiElement(ChildRole.FOR_ITERATION_PARAMETER);
     if (parameter != null) {
       return parameter;

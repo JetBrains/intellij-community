@@ -4,6 +4,6 @@ package com.intellij.psi;
 /**
  * Represents pattern which is used in {@code instanceof} expressions or switch case labels.
  */
-public interface PsiPattern extends PsiCaseLabelElement {
+public interface PsiPattern extends PsiCaseLabelElement, PsiForeachDeclarationElement {
   PsiPattern[] EMPTY = new PsiPattern[]{};
 }
