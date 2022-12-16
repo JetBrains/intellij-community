@@ -309,10 +309,12 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
             null,
             permittedTemplateIds = emptySet(),
             sourceSets = createDefaultSourceSets(),
-            subModules = emptyList()
+            subModules = emptyList(),
+            canBeRemoved = false
         )
         val shared = MultiplatformModule(
             "shared",
+            canBeRemoved = false,
             template = MobileMppTemplate(),
             targets = listOf(
                 ModuleType.common.createDefaultTarget(),
@@ -321,7 +323,8 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
                     AndroidTargetConfigurator,
                     null,
                     sourceSets = createDefaultSourceSets(),
-                    subModules = emptyList()
+                    subModules = emptyList(),
+                    canBeRemoved = false
                 ).withConfiguratorSettings<AndroidTargetConfigurator> {
                     configurator.androidPlugin withValue AndroidGradlePlugin.LIBRARY
                 },
@@ -339,7 +342,8 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
                             dependsOnModules = listOf(iosModule),
                         )
                     },
-                    subModules = emptyList()
+                    subModules = emptyList(),
+                    canBeRemoved = false
                 ),
             )
         )
