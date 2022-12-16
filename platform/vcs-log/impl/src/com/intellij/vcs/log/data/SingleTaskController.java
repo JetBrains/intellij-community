@@ -4,6 +4,7 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
@@ -219,7 +220,9 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
         task.waitFor(timeout, TimeUnit.MILLISECONDS);
       }
       catch (InterruptedException | ExecutionException e) {
-        LOG.debug(e);
+        if (!(e.getCause() instanceof ProcessCanceledException)) {
+          LOG.debug(e);
+        }
       }
       catch (TimeoutException e) {
         if (longTimeOut) LOG.warn(formMessage("Wait time out "), e);
