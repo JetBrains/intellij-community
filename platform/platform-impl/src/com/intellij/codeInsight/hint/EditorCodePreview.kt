@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.PositionTracker
 import java.awt.Component
-import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JComponent
@@ -108,23 +107,21 @@ private class EditorCodePreviewImpl(val editor: Editor): EditorCodePreview, Disp
     var position = Point(-3, -3)
     popupsAndPositions.filter { (_, position) -> position == RelativePosition.Top }
       .forEach { (popup, _) ->
-        popup.window.location = RelativePoint(editor.component, position).screenPoint
-        position.translate(0, popup.window.height)
+        popup.setLocation(RelativePoint(editor.component, position).screenPoint)
+        position.translate(0, popup.size.height)
       }
     position = Point(-3, editor.scrollingModel.visibleArea.height)
     popupsAndPositions
       .filter { (_, position) -> position == RelativePosition.Bottom }
       .reversed()
       .forEach { (popup, _) ->
-        position.translate(0, -popup.window.height)
-        popup.window.location = RelativePoint(editor.component, position).screenPoint
+        position.translate(0, -popup.size.height)
+        popup.setLocation(RelativePoint(editor.component, position).screenPoint)
       }
     popupsAndPositions
       .filterNot { (_, position) -> position == RelativePosition.Inside }
       .forEach { (popup, _) ->
         popup.show()
-        popup.window.size = Dimension(editor.component.width, popup.window.preferredSize.height)
-        popup.window.validate()
       }
   }
 
