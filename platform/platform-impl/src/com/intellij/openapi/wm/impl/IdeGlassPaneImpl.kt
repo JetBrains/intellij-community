@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.ui.Divider
@@ -223,7 +224,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
     }
 
     loadingIndicator?.let {
-      if (it.handleInputEvent(e)) {
+      if (!LaterInvocator.isInModalContext() && it.handleInputEvent(e)) {
         return true
       }
     }
