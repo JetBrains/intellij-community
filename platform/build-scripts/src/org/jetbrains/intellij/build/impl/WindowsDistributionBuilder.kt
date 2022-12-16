@@ -106,12 +106,7 @@ internal class WindowsDistributionBuilder(
     copyFileToDir(vcRtDll, osAndArchSpecificDistPath.resolve("bin"))
     var exePath: Path? = null
     val zipWithJbrPath = coroutineScope {
-      Files.walk(osAndArchSpecificDistPath).use { tree ->
-        val fileTime = FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS)
-        tree.forEach {
-          it.setLastModifiedTime(fileTime)
-        }
-      }
+      setLastModifiedTime(osAndArchSpecificDistPath, context)
       val zipWithJbrPathTask = if (customizer.buildZipArchiveWithBundledJre) {
         createBuildWinZipTask(runtimeDir = runtimeDir,
                               zipNameSuffix = suffix + customizer.zipArchiveWithBundledJreSuffix,

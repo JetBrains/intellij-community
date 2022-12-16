@@ -69,6 +69,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
 
   override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
+    setLastModifiedTime(osAndArchSpecificDistPath, context)
     val suffix = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
     context.executeStep(spanBuilder("build linux .tar.gz").setAttribute("arch", arch.name), BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildTarGzWithoutBundledRuntime) {

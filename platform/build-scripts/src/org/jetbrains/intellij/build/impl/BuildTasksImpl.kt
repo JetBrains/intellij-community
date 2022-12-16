@@ -341,14 +341,7 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
   val propertiesFile = patchIdeaPropertiesFile(context)
 
   return supervisorScope {
-    withContext(Dispatchers.IO) {
-      Files.walk(context.paths.distAllDir).use { tree ->
-        val fileTime = FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS)
-        tree.forEach {
-          it.setLastModifiedTime(fileTime)
-        }
-      }
-    }
+    setLastModifiedTime(context.paths.distAllDir, context)
     SUPPORTED_DISTRIBUTIONS.mapNotNull { (os, arch) ->
       if (!context.shouldBuildDistributionForOS(os, arch)) {
         return@mapNotNull null
@@ -1189,4 +1182,15 @@ private suspend fun buildInspectopediaArtifacts(builder: DistributionJARsBuilder
   val targetFile = context.paths.artifactDir.resolve("inspections-${context.applicationInfo.productCode.lowercase()}.zip")
 
   zipWithCompression(targetFile = targetFile, dirs = mapOf(inspectionsPath to ""))
+}
+
+internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext) {
+  withContext(Dispatchers.IO) {
+    Files.walk(directory).use { tree ->
+      val fileTime = FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS)
+      tree.forEach {
+        it.setLastModifiedTime(fileTime)
+      }
+    }
+  }
 }
