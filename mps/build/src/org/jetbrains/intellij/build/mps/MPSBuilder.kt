@@ -35,6 +35,7 @@ class MPSBuilder {
             buildTasks.compileProjectAndTests(
                 listOf(
                     "intellij.platform.jps.build",
+                    "intellij.platform.jps.build.tests",
                     "intellij.platform.jps.model.tests",
                     "intellij.platform.jps.model.serialization.tests"
                 )

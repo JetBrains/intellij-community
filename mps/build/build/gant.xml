@@ -6,7 +6,7 @@
 
     <property name="jps.project.root" location="${basedir}/.."/>
     <property name="community.folder" location="${basedir}/../community"/>
-    <property name="community.out" value="${basedir}/../out/intellij idea"/>
+    <property name="community.out" value="${basedir}/../out/jetbrains mps"/>
     <property name="mps.folder" value="${basedir}/../.."/>
     <property name="version.properties.file" value="${mps.folder}/build/version.properties"/>
 
@@ -281,6 +281,9 @@
             <arg value="org.jetbrains.intellij.build.mps.MPSBuilder"/>
             <arg value="${jps.project.root}"/>
         </exec>
+        <jar destfile="${community.out}/dist.all/lib/jps/jps-build-test.jar" duplicate="preserve">
+            <fileset dir="${community.out}/classes/test/intellij.platform.jps.build.tests" />
+        </jar>
     </target>
 
     <target name="build" depends="pull,prepare,compile"
