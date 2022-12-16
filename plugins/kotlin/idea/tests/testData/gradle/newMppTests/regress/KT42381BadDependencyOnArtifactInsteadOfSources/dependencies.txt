@@ -1,0 +1,18 @@
+MODULES
+    project.p1.jvmMain
+        project.p1.commonMain (refines, COMPILE)
+        project.p2.jvmMain (COMPILE)
+        project.p2.commonMain (COMPILE)
+        project.p2.commonMain (COMPILE)
+    project.p1.jvmTest
+        project.p1.commonMain (friend, TEST)
+        project.p1.commonTest (refines, TEST)
+        project.p1.jvmMain (friend, TEST)
+        project.p1.jvmMain (friend, RUNTIME)
+        project.p2.commonMain (TEST)
+        project.p2.jvmMain (TEST)
+        project.p2.commonMain (TEST)
+
+Test configuration:
+- showing only source modules matching .*p1\.jvm.*
+- hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
