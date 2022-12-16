@@ -1446,15 +1446,8 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     return selected?.selectedEditor ?: super.getSelectedEditor()
   }
 
-  override fun getSelectedEditor(file: VirtualFile): FileEditor? {
-    return getSelectedEditorWithProvider(file)?.fileEditor
-  }
-
   @RequiresEdt
-  override fun getSelectedEditorWithProvider(file: VirtualFile): FileEditorWithProvider? {
-    val composite = getComposite(file)
-    return composite?.selectedWithProvider
-  }
+  override fun getSelectedEditorWithProvider(file: VirtualFile): FileEditorWithProvider? = getComposite(file)?.selectedWithProvider
 
   @RequiresEdt
   override fun getEditorsWithProviders(file: VirtualFile): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
@@ -1926,7 +1919,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   private fun closeAllFiles(repaint: Boolean) {
     CommandProcessor.getInstance().executeCommand(project, {
       openFileSetModificationCount.increment()
-      val splitters = splitters
+      val splitters = getActiveSplitterSync()
       if (repaint) {
         runBulkTabChange(splitters, splitters::closeAllFiles)
       }

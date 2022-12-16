@@ -288,11 +288,6 @@ public final class Mock {
     }
 
     @Override
-    public FileEditor getSelectedEditor(@NotNull VirtualFile file) {
-      return null;
-    }
-
-    @Override
     public FileEditor @NotNull [] getEditors(@NotNull VirtualFile file) {
       return FileEditor.EMPTY_ARRAY;
     }
