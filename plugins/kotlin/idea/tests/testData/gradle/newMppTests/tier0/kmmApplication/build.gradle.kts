@@ -10,4 +10,12 @@ repositories {
 kotlin {
     android()
     ios()
+
+    sourceSets {
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
+    }
 }
