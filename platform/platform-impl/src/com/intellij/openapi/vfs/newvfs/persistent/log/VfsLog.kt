@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.wal
+package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor
@@ -7,7 +7,7 @@ import kotlinx.coroutines.*
 import java.nio.file.Path
 import kotlin.io.path.div
 
-class VfsWAL(
+class VfsLog(
   private val storagePath: Path
 ) {
   @OptIn(DelicateCoroutinesApi::class)
@@ -19,9 +19,9 @@ class VfsWAL(
   }
 
   val interceptors = listOf<ConnectionInterceptor>(
-    ContentsWALInterceptor(storagePath / "contents"),
-    AttributesWALInterceptor(storagePath / "attributes"),
-    RecordsWALInterceptor(storagePath / "records")
+    ContentsLogInterceptor(storagePath / "contents"),
+    AttributesLogInterceptor(storagePath / "attributes"),
+    RecordsLogInterceptor(storagePath / "records")
   )
 
   fun dispose() {

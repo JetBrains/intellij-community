@@ -29,7 +29,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.*;
-import com.intellij.openapi.vfs.newvfs.persistent.wal.VfsWAL;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
@@ -69,7 +69,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private final AtomicInteger myStructureModificationCount = new AtomicInteger();
   private BulkFileListener myPublisher;
   private volatile VfsData myVfsData = new VfsData();
-  private @NotNull VfsWAL myWAL;
+  private @NotNull VfsLog myVfsLog;
 
   public PersistentFSImpl() {
     myRoots = SystemInfoRt.isFileSystemCaseSensitive
@@ -102,8 +102,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     connect();
   }
 
-  private void initWAL() {
-    myWAL = new VfsWAL(Paths.get(FSRecords.getCachesDir() + "/wal"));
+  private void initVfsLog() {
+    myVfsLog = new VfsLog(Paths.get(FSRecords.getCachesDir() + "/vfslog"));
   }
 
   @ApiStatus.Internal
@@ -111,7 +111,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     myIdToDirCache.clear();
     myVfsData = new VfsData();
     LOG.assertTrue(!myConnected.get());
-    initWAL();
+    initVfsLog();
     doConnect();
     PersistentFsConnectionListener.EP_NAME.getExtensionList().forEach(PersistentFsConnectionListener::connectionOpen);
   }
@@ -128,14 +128,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       LOG.info("VFS dispose started");
       FSRecords.dispose();
       LOG.info("VFS dispose completed in " + (System.currentTimeMillis() - ms) + "ms.");
-      myWAL.dispose();
+      myVfsLog.dispose();
     }
   }
 
   private void doConnect() {
     if (myConnected.compareAndSet(false, true)) {
       Activity activity = StartUpMeasurer.startActivity("connect FSRecords", ActivityCategory.DEFAULT);
-      FSRecords.connect(myWAL);
+      FSRecords.connect(myVfsLog);
       activity.end();
     }
   }
@@ -1799,7 +1799,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public @NotNull VfsWAL getWAL() {
+  public @NotNull VfsLog getVfsLog() {
     return null;
   }
 
