@@ -128,8 +128,8 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     long allStartTime = System.currentTimeMillis();
     long activityId = trace.getId();
 
-    ExternalSystemSyncDiagnostic.getOrStartSpan(Phase.DATA_SERVICES.name(),
-                                                (builder) -> builder.setParent(ExternalSystemSyncDiagnostic.getSyncSpanContext()));
+    ExternalSystemSyncDiagnostic.getOrStartSpan(Phase.DATA_SERVICES.name(), (builder) ->
+      builder.setParent(ExternalSystemSyncDiagnostic.getSpanContext(ExternalSystemSyncDiagnostic.gradleSyncSpanName)));
     ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.DATA_SERVICES);
 
     boolean importSucceeded = false;
@@ -201,7 +201,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       ExternalSystemSyncDiagnostic.endSpan(Phase.DATA_SERVICES.name());
       ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.DATA_SERVICES, timeMs, errorsCount);
       ExternalSystemSyncActionsCollector.logSyncFinished(project, activityId, importSucceeded);
-      ExternalSystemSyncDiagnostic.endSpan(ExternalSystemSyncDiagnostic.syncSpanName,
+      ExternalSystemSyncDiagnostic.endSpan(ExternalSystemSyncDiagnostic.gradleSyncSpanName,
                                            (span) -> span.setAttribute("project", project.getName()));
 
       Application app = ApplicationManager.getApplication();
@@ -435,8 +435,8 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
       public void execute() {
-        ExternalSystemSyncDiagnostic.getOrStartSpan(Phase.WORKSPACE_MODEL_APPLY.name(),
-                                                    (builder) -> builder.setParent(ExternalSystemSyncDiagnostic.getSyncSpanContext()));
+        ExternalSystemSyncDiagnostic.getOrStartSpan(Phase.WORKSPACE_MODEL_APPLY.name(), (builder) ->
+          builder.setParent(ExternalSystemSyncDiagnostic.getSpanContext(ExternalSystemSyncDiagnostic.gradleSyncSpanName)));
 
         if (activityId != null) {
           ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.WORKSPACE_MODEL_APPLY);

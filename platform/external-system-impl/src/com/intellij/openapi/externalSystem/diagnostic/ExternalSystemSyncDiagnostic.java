@@ -17,10 +17,10 @@ public class ExternalSystemSyncDiagnostic {
 
   private static final ConcurrentHashMap<String, Span> spans = new ConcurrentHashMap<>();
 
-  public static final String syncSpanName = "gradle.sync.duration";
+  public static final String gradleSyncSpanName = "gradle.sync.duration"; // Named that way for legacy metric name compatibility
 
-  public static Context getSyncSpanContext() {
-    return Context.current().with(getOrStartSpan(syncSpanName));
+  public static Context getSpanContext(String spanName) {
+    return Context.current().with(getOrStartSpan(spanName));
   }
 
   public static Span getOrStartSpan(@NotNull String spanName) {
