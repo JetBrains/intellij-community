@@ -5,13 +5,13 @@ import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.kotlin.analysis.decompiler.psi.DeserializerForDecompilerBase
 import org.jetbrains.kotlin.analysis.decompiler.psi.LoggingErrorReporter
 import org.jetbrains.kotlin.analysis.decompiler.psi.ResolveEverythingToKotlinAnyLocalClassifierResolver
-import org.jetbrains.kotlin.backend.common.serialization.metadata.KlibMetadataVersion
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.NotFoundClasses
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.library.metadata.KlibMetadataClassDataFinder
+import org.jetbrains.kotlin.library.metadata.KlibMetadataVersion
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.deserialization.NameResolver
 import org.jetbrains.kotlin.name.FqName
