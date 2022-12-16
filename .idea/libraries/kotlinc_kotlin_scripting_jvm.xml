@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-scripting-jvm" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:1.8.20-dev-2522" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:1.8.20-dev-4234" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.8.20-dev-2522/kotlin-scripting-jvm-1.8.20-dev-2522.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.8.20-dev-4234/kotlin-scripting-jvm-1.8.20-dev-4234.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.8.20-dev-2522/kotlin-scripting-jvm-1.8.20-dev-2522-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.8.20-dev-4234/kotlin-scripting-jvm-1.8.20-dev-4234-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
