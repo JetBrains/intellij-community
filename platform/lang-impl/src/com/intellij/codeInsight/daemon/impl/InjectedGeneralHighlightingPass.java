@@ -80,45 +80,40 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     }
 
     Set<HighlightInfo> result = injectedResult.isEmpty() ? Collections.emptySet(): new HashSet<>(injectedResult);
-    Set<HighlightInfo> gotHighlights = new HashSet<>(100);
-    List<HighlightInfo> injectionsOutside = new ArrayList<>(100);
+    List<HighlightInfo> resultInside = new ArrayList<>(100);
+    List<HighlightInfo> resultOutside = new ArrayList<>(100);
     for (HighlightInfo info : result) {
       if (myRestrictRange.contains(info)) {
-        gotHighlights.add(info);
+        resultInside.add(info);
       }
       else {
         // non-conditionally apply injected results regardless whether they are in myStartOffset,myEndOffset
-        injectionsOutside.add(info);
+        resultOutside.add(info);
       }
     }
 
-    if (injectionsOutside.isEmpty()) {
+    if (resultOutside.isEmpty()) {
       // apply only result (by default apply command) and only within inside
-      myHighlights.addAll(gotHighlights);
+      myHighlights.addAll(resultInside);
       myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), myHighlights, myRestrictRange, myRestrictRange, getId());
     }
     else {
       boolean priorityIntersectionHasElements = myPriorityRange.intersectsStrict(myRestrictRange);
 
-      if ((!allInsideElements.isEmpty() || !gotHighlights.isEmpty()) && priorityIntersectionHasElements) { // do not apply when there were no elements to highlight
+      if ((!allInsideElements.isEmpty() || !resultInside.isEmpty()) && priorityIntersectionHasElements) { // do not apply when there were no elements to highlight
         // clear infos found in visible area to avoid applying them twice
-        List<HighlightInfo> toApplyInside = new ArrayList<>(gotHighlights);
-        myHighlights.addAll(toApplyInside);
-        gotHighlights.clear();
-
-        myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), toApplyInside, myPriorityRange, myRestrictRange, getId());
+        myHighlights.addAll(resultInside);
+        myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), resultInside, myPriorityRange, myRestrictRange, getId());
       }
-
-      List<HighlightInfo> toApply = new ArrayList<>();
-      for (HighlightInfo info : gotHighlights) {
-        if (!myRestrictRange.contains(info)) continue;
-        if (!myPriorityRange.contains(info)) {
-          toApply.add(info);
+      else {
+        for (HighlightInfo info : resultInside) {
+          if (myRestrictRange.contains(info) && !myPriorityRange.contains(info)) {
+            resultOutside.add(info);
+          }
         }
       }
-      toApply.addAll(injectionsOutside);
 
-      myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, getEditor(), toApply, myRestrictRange, new ProperTextRange(0, myDocument.getTextLength()), getId());
+      myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, getEditor(), resultOutside, myRestrictRange, new ProperTextRange(0, myDocument.getTextLength()), getId());
     }
   }
 
