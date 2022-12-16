@@ -73,7 +73,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
 
     // all infos for the "injected fragment for the host which is inside" are indeed inside
     // but some infos for the "injected fragment for the host which is outside" can be still inside
-    Set<PsiFile> injected = getInjectedPsiFiles(allInsideElements, allOutsideElements, progress);
+    Set<PsiFile> injected = processInjectedPsiFiles(allInsideElements, allOutsideElements, progress);
     Set<HighlightInfo> injectedResult = Collections.synchronizedSet(new HashSet<>());
     if (!addInjectedPsiHighlights(injected, progress, injectedResult)) {
       throw new ProcessCanceledException();
@@ -117,20 +117,19 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     }
   }
 
-  @NotNull
-  private Set<PsiFile> getInjectedPsiFiles(@NotNull List<? extends PsiElement> elements1,
-                                           @NotNull List<? extends PsiElement> elements2,
-                                           @NotNull ProgressIndicator progress) {
+  private Set<PsiFile> processInjectedPsiFiles(@NotNull List<? extends PsiElement> elements1,
+                                               @NotNull List<? extends PsiElement> elements2,
+                                               @NotNull ProgressIndicator progress) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     InjectedLanguageManagerImpl injectedLanguageManager = InjectedLanguageManagerImpl.getInstanceImpl(myProject);
-    List<DocumentWindow> injected = injectedLanguageManager.getCachedInjectedDocumentsInRange(myFile, myFile.getTextRange());
-    Collection<PsiElement> hosts = new HashSet<>(elements1.size() + elements2.size() + injected.size());
+    List<DocumentWindow> cachedInjected = injectedLanguageManager.getCachedInjectedDocumentsInRange(myFile, myFile.getTextRange());
+    Collection<PsiElement> hosts = new HashSet<>(elements1.size() + elements2.size() + cachedInjected.size());
 
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myProject);
     //rehighlight all injected PSI regardless the range,
     //since change in one place can lead to invalidation of injected PSI in (completely) other place.
-    for (DocumentWindow documentRange : injected) {
+    for (DocumentWindow documentRange : cachedInjected) {
       ProgressManager.checkCanceled();
       if (!documentRange.isValid()) continue;
       PsiFile file = psiDocumentManager.getPsiFile(documentRange);
@@ -161,7 +160,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     injectedLanguageManager.processInjectableElements(elements2, collectInjectableProcessor);
 
     Set<PsiFile> outInjected = new HashSet<>();
-    PsiLanguageInjectionHost.InjectedPsiVisitor visitor = (injectedPsi, places) -> {
+    PsiLanguageInjectionHost.InjectedPsiVisitor visitor = (injectedPsi, __) -> {
       synchronized (outInjected) {
         ProgressManager.checkCanceled();
         outInjected.add(injectedPsi);
