@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.core.ec4jwrappers
 
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.SimpleModificationTracker
 import org.ec4j.core.Cache
 import org.ec4j.core.EditorConfigLoader
@@ -16,6 +15,7 @@ class EditorConfigPermanentCache : Cache, SimpleModificationTracker() {
   private var accessRecord: MutableList<Resource>? = null
 
   // TODO what should happen if an editorconfig file is missing? the file might even get deleted meanwhile ..
+  @Synchronized
   override fun get(editorConfigFile: Resource, loader: EditorConfigLoader): EditorConfig {
     accessRecord?.add(editorConfigFile)
     return entries.getOrPut(editorConfigFile) {
@@ -28,10 +28,16 @@ class EditorConfigPermanentCache : Cache, SimpleModificationTracker() {
     }
   }
 
+  @Synchronized
   fun doWhileRecordingAccess(block: EditorConfigPermanentCache.() -> Unit): List<Resource> {
     startRecordingAccess()
-    this.block()
-    return endRecordingAccess()
+    lateinit var recorded: List<Resource>
+    try {
+      this.block()
+    } finally {
+      recorded = endRecordingAccess()
+    }
+    return recorded
   }
 
   private fun startRecordingAccess() {
