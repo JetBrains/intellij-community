@@ -35,8 +35,6 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
-
 
 public class CompletionCommand extends PerformanceCommand {
 
@@ -138,9 +136,7 @@ public class CompletionCommand extends PerformanceCommand {
 
   private void dumpCompletionVariants(List<LookupElement> item, @NotNull Path reportPath) {
     File dir = reportPath.toFile();
-    if (!dir.mkdirs()) {
-      LOG.error("Fail to create dirs for completion items data at " + reportPath);
-    }
+    dir.mkdirs();
     File file = new File(dir, createTestReportFilename());
     CompletionItemsReport report = new CompletionItemsReport(ContainerUtil.map(item, CompletionVariant::fromLookUp));
     DataDumper.dump(report, file.toPath());
@@ -148,7 +144,7 @@ public class CompletionCommand extends PerformanceCommand {
 
   @NotNull
   private String createTestReportFilename() {
-    return "completion-" + getCompletionType() + "-" + ThreadLocalRandom.current().nextInt() + (isWarmupMode() ? "warmup" : "") + ".txt";
+    return "completion-" + getCompletionType() + "-" + System.currentTimeMillis() + (isWarmupMode() ? "_warmup" : "") + ".txt";
   }
 
   public static final class CompletionItemsReport {
