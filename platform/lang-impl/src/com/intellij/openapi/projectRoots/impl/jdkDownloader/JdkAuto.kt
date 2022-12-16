@@ -160,7 +160,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         if (!File(path).isDirectory) return null
 
         val version = runCatching {
-          sdkType.getVersionString(hint.path)
+          sdkType.getVersionString(path)
         }.getOrNull() ?: return null
 
         return object : UnknownSdkLocalSdkFix, UnknownSdkFixConfigurator by JarSdkConfigurator(hint.includeJars) {
