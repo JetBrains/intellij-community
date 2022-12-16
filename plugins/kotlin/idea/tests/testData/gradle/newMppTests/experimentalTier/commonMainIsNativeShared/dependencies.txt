@@ -1,0 +1,35 @@
+MODULES
+    project
+    project.commonMain
+        Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
+        Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
+    project.commonTest
+        Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+        project.commonMain (friend, TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
+        Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
+    project.linuxX64Main
+        Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+        project.commonMain (refines, COMPILE)
+        Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
+    project.linuxX64Test
+        Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+        project.commonMain (friend, TEST)
+        project.commonTest (refines, TEST)
+        project.linuxX64Main (friend, TEST)
+        Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
+    project.macosX64Main
+        Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+        project.commonMain (refines, COMPILE)
+        Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
+    project.macosX64Test
+        Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+        project.commonMain (friend, TEST)
+        project.commonTest (refines, TEST)
+        project.macosX64Main (friend, TEST)
+        Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
+
+Test configuration:
+- hiding following roots: resources, android-specific roots, generated
+- hiding following standard dependencies: sdk, self
