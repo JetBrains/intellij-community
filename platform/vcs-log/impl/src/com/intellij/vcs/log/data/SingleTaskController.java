@@ -189,6 +189,12 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
     }
   }
 
+  public boolean isClosed() {
+    synchronized (LOCK) {
+      return myIsClosed;
+    }
+  }
+
   @Override
   public void dispose() {
     SingleTask task = null;

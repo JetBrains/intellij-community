@@ -643,10 +643,13 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     }
 
     private void scheduleReindex() {
-      LOG.debug("Schedule reindexing of " +
-                (myCommits.size() - myNewIndexedCommits.get() - myOldCommits.get()) +
-                " commits in " +
-                myRoot.getName());
+      int unindexedCommits = myCommits.size() - myNewIndexedCommits.get() - myOldCommits.get();
+      if (mySingleTaskController.isClosed()) {
+        LOG.debug("Reindexing of " + myRoot.getName() +  " is not scheduled since dispose has already started. " +
+                  unindexedCommits + " unindexed commits left.");
+        return;
+      }
+      LOG.debug("Schedule reindexing of " + unindexedCommits + " commits in " + myRoot.getName());
       markCommits();
       scheduleIndex(false);
     }
