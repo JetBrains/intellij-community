@@ -36,6 +36,7 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
@@ -63,6 +64,7 @@ import java.awt.datatransfer.DataFlavor
 import java.awt.event.*
 import java.util.function.Function
 import java.util.function.Supplier
+import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.border.EmptyBorder
 import javax.swing.tree.TreeCellRenderer
@@ -746,11 +748,29 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         })
         .andTransparent()
 
-      private val mainPanel = JBUI.Panels.simplePanel()
-        .addToCenter(textPanel)
-        .addToRight(arrowLabel)
-        .andTransparent()
-        .withBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.cellPadding().right))
+      private inner class MyMainPanel : BorderLayoutPanel() {
+        init {
+          addToCenter(textPanel)
+          addToRight(arrowLabel)
+          andTransparent()
+          withBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.cellPadding().right))
+        }
+
+        override fun getAccessibleContext(): AccessibleContext {
+          if (accessibleContext == null) {
+            accessibleContext = object : AccessibleContextDelegateWithContextMenu(mainTextComponent.accessibleContext) {
+              override fun getDelegateParent(): Container = parent
+
+              override fun doShowContextMenu() {
+                ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true)
+              }
+            }
+          }
+          return accessibleContext
+        }
+      }
+
+      private val mainPanel = MyMainPanel()
 
       override fun getTreeCellRendererComponent(tree: JTree?,
                                                 value: Any?,
