@@ -778,8 +778,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
                                                 expanded: Boolean,
                                                 leaf: Boolean,
                                                 row: Int,
-                                                hasFocus: Boolean): Component {
+                                                hasFocus: Boolean): Component? {
         val userObject = TreeUtil.getUserObject(value)
+        // render separator text in accessible mode
+        if (userObject is SeparatorWithText) return if (userObject.caption != null) userObject else null
 
         mainIconComponent.apply {
           icon = step.getIcon(userObject, selected)
