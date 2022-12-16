@@ -465,6 +465,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       final List<PsiType> filteredTypes = PsiDisjunctionType.flattenAndRemoveDuplicates(parameterTypes);
       final PsiType disjunction = PsiDisjunctionType.createDisjunction(filteredTypes, tryStatement.getManager());
       List<PsiClassType> targetTypes = CatchSectionWrapper.getClassTypes(disjunction);
+      //try to choose catch block, which has target exception types. It helps to preserve names of variables and comments
       if (targetTypes != null && targetTypes.equals(duplicateSection.myTypes)) {
         CatchSectionWrapper temp = collapseIntoSection;
         collapseIntoSection = duplicateSection;
