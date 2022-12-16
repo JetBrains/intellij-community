@@ -3,7 +3,6 @@ package com.intellij.ide.projectView.impl
 
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.util.treeView.InplaceCommentAppender
-import com.intellij.ide.util.treeView.InplaceCommentProducer
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -17,16 +16,12 @@ import com.intellij.util.text.JBDateFormat
 import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
 
-class ProjectViewInplaceCommentProducerImpl(private val node: ProjectViewNode<*>) : InplaceCommentProducer {
-
-  override fun produceInplaceComments(appender: InplaceCommentAppender) {
-    val parentNode = node.parent
-    val content = node.value
-    if (content is PsiFileSystemItem || content !is PsiElement || parentNode != null && parentNode.value is PsiDirectory) {
-      appendInplaceComments(appender, node.project, node.virtualFile)
-    }
+internal fun appendInplaceComments(node: ProjectViewNode<*>, appender: InplaceCommentAppender) {
+  val parentNode = node.parent
+  val content = node.value
+  if (content is PsiFileSystemItem || content !is PsiElement || parentNode != null && parentNode.value is PsiDirectory) {
+    appendInplaceComments(appender, node.project, node.virtualFile)
   }
-
 }
 
 // To be used in Rider once it migrates from legacy logic, don't change the signature and/or visibility.

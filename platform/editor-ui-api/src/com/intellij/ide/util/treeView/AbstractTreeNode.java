@@ -79,46 +79,17 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   }
 
   private void appendInplaceComments(@NotNull PresentationData presentation) {
-    final var inplaceCommentProducer = getInplaceCommentProducer();
-    if (inplaceCommentProducer == null) {
-      return;
-    }
-    inplaceCommentProducer.produceInplaceComments(new PresentationDataInplaceCommentAppender(presentation));
+    appendInplaceComments(new PresentationDataInplaceCommentAppender(presentation));
   }
 
   /**
-   * Checks if the node has an inplace comment producer.
+   * Generates inplace comments and appends it to the given appender.
    * <p>
-   *   This function exists solely because there may be some nodes that handle inplace comments in a legacy way:
-   *   instead of appending them to the {@link PresentationData presentation} in one of the update methods,
-   *   they append it during painting (on EDT). To avoid appending them twice, legacy code invoker first checks
-   *   if the node has its own inplace comment producer by invoking this function.
+   *   The default implementation does nothing. Subclasses may override this method to append their inplace comments.
    * </p>
-   * <p>
-   *   If inplace comments are disabled, this function is allowed to return any value. It's up to the caller to check
-   *   that setting first.
-   * </p>
-   * @return true iff the node has an inplace comment producer
+   * @param appender the appender to append comments to
    */
-  public boolean hasInplaceCommentProducer() {
-    return getInplaceCommentProducer() != null;
-  }
-
-  /**
-   *  Returns (creating, if necessary) the inplace comment producer, if any is needed.
-   *  <p>
-   *    If some node type needs to show inplace comments (like timestamps and sizes in the Project View), it may chose to override
-   *    this method and return the object that will be used to generate inplace comments during the node update.
-   *  </p>
-   *  <p>
-   *    Implementation node: it's allowed to return {@code null} if inplace comments are disabled. It's also recommended to cache
-   *    the producer instance so it can be reused on every update.
-   *  </p>
-   * @return the inplace comment producer to use during the update
-   */
-  @Nullable
-  protected InplaceCommentProducer getInplaceCommentProducer() {
-    return null;
+  protected void appendInplaceComments(@NotNull InplaceCommentAppender appender) {
   }
 
   private void setForcedForeground(@NotNull PresentationData presentation) {
