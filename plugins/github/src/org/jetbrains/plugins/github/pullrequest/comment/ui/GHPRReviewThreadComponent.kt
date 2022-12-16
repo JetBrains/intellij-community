@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
@@ -33,7 +34,6 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProv
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRReviewThreadDiffComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRSelectInToolWindowHelper
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtensionComponentBase.Companion.items
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
@@ -44,33 +44,29 @@ import javax.swing.event.ListDataListener
 
 object GHPRReviewThreadComponent {
 
-  const val SIDE_GAP = 10
+  val INLAY_COMPONENT_TYPE = CodeReviewChatItemUIUtil.ComponentType.COMPACT
 
-  fun create(project: Project,
-             thread: GHPRReviewThreadModel,
-             reviewDataProvider: GHPRReviewDataProvider,
-             avatarIconsProvider: GHAvatarIconsProvider,
-             suggestedChangeHelper: GHPRSuggestedChangeHelper,
-             ghostUser: GHUser,
-             currentUser: GHUser): JComponent {
+  fun createForInlay(project: Project,
+                     thread: GHPRReviewThreadModel,
+                     reviewDataProvider: GHPRReviewDataProvider,
+                     avatarIconsProvider: GHAvatarIconsProvider,
+                     suggestedChangeHelper: GHPRSuggestedChangeHelper,
+                     ghostUser: GHUser,
+                     currentUser: GHUser): JComponent {
     val panel = JPanel(VerticalLayout(0)).apply {
       isOpaque = false
-      border = JBUI.Borders.empty(SIDE_GAP - GHPRReviewCommentComponent.GAP_TOP, 0, SIDE_GAP, 0)
     }
     val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
                                                                      reviewDataProvider,
                                                                      avatarIconsProvider,
-                                                                     suggestedChangeHelper) {
-      it.border = JBUI.Borders.empty(GHPRReviewCommentComponent.GAP_TOP, SIDE_GAP, GHPRReviewCommentComponent.GAP_BOTTOM, SIDE_GAP)
-      GHPRTimelineItemUIUtil.withHoverHighlight(it)
-    }
-    val commentsPanel = TimelineThreadCommentsPanel(thread, commentComponentFactory, 0,
-                                                    GHPRReviewCommentComponent.CONTENT_SHIFT + SIDE_GAP)
+                                                                     suggestedChangeHelper,
+                                                                     INLAY_COMPONENT_TYPE)
+    val commentsPanel = TimelineThreadCommentsPanel(thread, commentComponentFactory, 0, INLAY_COMPONENT_TYPE.fullLeftShift)
     panel.add(commentsPanel)
 
     if (reviewDataProvider.canComment()) {
       panel.add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser).apply {
-        border = JBUI.Borders.empty(0, SIDE_GAP)
+        border = JBUI.Borders.empty(INLAY_COMPONENT_TYPE.inputPaddingInsets)
       })
     }
     return panel
@@ -129,7 +125,7 @@ object GHPRReviewThreadComponent {
 
     return JPanel(HorizontalLayout(8)).apply {
       isOpaque = false
-      border = JBUI.Borders.empty(6, GHPRReviewCommentComponent.CONTENT_SHIFT, 6, 0)
+      border = JBUI.Borders.empty(INLAY_COMPONENT_TYPE.contentLeftShift)
 
       add(toggleReplyLink)
       add(unResolveLink)

@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
-import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType.COMPACT
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBLabel
@@ -27,11 +26,6 @@ import javax.swing.JPanel
 
 object GHPRReviewCommentComponent {
 
-  val CONTENT_SHIFT = COMPACT.iconSize + COMPACT.iconGap
-
-  const val GAP_TOP = 4
-  const val GAP_BOTTOM = 10
-
   fun create(project: Project,
              thread: GHPRReviewThreadModel,
              comment: GHPRReviewCommentModel,
@@ -39,6 +33,7 @@ object GHPRReviewCommentComponent {
              reviewDataProvider: GHPRReviewDataProvider,
              avatarIconsProvider: GHAvatarIconsProvider,
              suggestedChangeHelper: GHPRSuggestedChangeHelper,
+             type: CodeReviewChatItemUIUtil.ComponentType,
              showResolvedMarker: Boolean = true,
              maxContentWidth: Int = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH): JComponent {
 
@@ -95,12 +90,12 @@ object GHPRReviewCommentComponent {
       add(resolvedLabel)
     }
 
-    return CodeReviewChatItemUIUtil.build(COMPACT,
+    return CodeReviewChatItemUIUtil.build(type,
                                           { avatarIconsProvider.getIcon(author.avatarUrl, it) },
                                           editablePaneHandle.panel) {
       iconTooltip = author.getPresentableName()
       header = title to actionsPanel
-      this.maxContentWidth = maxContentWidth - CONTENT_SHIFT
+      this.maxContentWidth = maxContentWidth - type.fullLeftShift
     }
   }
 
@@ -161,9 +156,9 @@ object GHPRReviewCommentComponent {
               reviewDataProvider: GHPRReviewDataProvider,
               avatarIconsProvider: GHAvatarIconsProvider,
               suggestedChangeHelper: GHPRSuggestedChangeHelper,
+              type: CodeReviewChatItemUIUtil.ComponentType,
               showResolvedMarkerOnFirstComment: Boolean = true,
-              maxContentWidth: Int = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH,
-              postProcessor: (JComponent) -> JComponent = { it })
+              maxContentWidth: Int = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
     : (GHPRReviewCommentModel) -> JComponent {
     return { comment ->
       create(
@@ -171,8 +166,9 @@ object GHPRReviewCommentComponent {
         thread, comment, ghostUser,
         reviewDataProvider, avatarIconsProvider,
         suggestedChangeHelper,
+        type,
         showResolvedMarkerOnFirstComment,
-        maxContentWidth).let(postProcessor)
+        maxContentWidth)
     }
   }
 }

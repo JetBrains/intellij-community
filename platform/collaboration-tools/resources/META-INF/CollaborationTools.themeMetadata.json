@@ -21,6 +21,11 @@
       "key": "Review.MetaInfo.StatusLine.Orange",
       "description": "Warning status line color",
       "since": "[2022.3]"
+    },
+    {
+      "key": "Review.ChatItem.Hover",
+      "description": "Hover background of the review item (timeline items, thread comments, etc.)",
+      "since": "[2023.1]"
     }
   ]
 }

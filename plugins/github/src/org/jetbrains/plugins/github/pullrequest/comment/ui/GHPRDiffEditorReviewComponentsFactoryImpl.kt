@@ -37,10 +37,14 @@ internal constructor(private val project: Project,
   : GHPRDiffEditorReviewComponentsFactory {
 
   override fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent =
-    GHPRReviewThreadComponent.create(project, thread, reviewDataProvider,
-                                     avatarIconsProvider, suggestedChangeHelper,
-                                     ghostUser, currentUser)
-      .let { ReviewUIUtil.createEditorInlayPanel(it) }
+    GHPRReviewThreadComponent.createForInlay(project, thread, reviewDataProvider,
+                                             avatarIconsProvider, suggestedChangeHelper,
+                                             ghostUser, currentUser).apply {
+      border = JBUI.Borders.empty(ReviewUIUtil.INLAY_PADDING - GHPRReviewThreadComponent.INLAY_COMPONENT_TYPE.paddingInsets.top,
+                                  0,
+                                  ReviewUIUtil.INLAY_PADDING - GHPRReviewThreadComponent.INLAY_COMPONENT_TYPE.paddingInsets.bottom,
+                                  0)
+    }.let { ReviewUIUtil.createEditorInlayPanel(it) }
 
   override fun createSingleCommentComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
     val textFieldModel = GHCommentTextFieldModel(project) {

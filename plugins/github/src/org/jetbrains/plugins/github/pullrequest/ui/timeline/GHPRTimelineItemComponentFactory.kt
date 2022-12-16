@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.async.combineAndCollect
 import com.intellij.collaboration.ui.ComponentListPanelFactory
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
+import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.onHyperlinkActivated
 import com.intellij.collaboration.ui.codereview.setHtmlBody
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
@@ -58,8 +59,6 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProv
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.CONTENT_SHIFT
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.H_SIDE_BORDER
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.TIMELINE_ITEM_WIDTH
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.buildTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTimelineItem
@@ -265,8 +264,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       add(loadingLabel, CC().grow().push()
         .alignX("center")
         .maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}")
-        .gapLeft("$H_SIDE_BORDER")
-        .gapRight("$H_SIDE_BORDER"))
+        .gapLeft("${CodeReviewTimelineUIUtil.ITEM_HOR_PADDING}")
+        .gapRight("${CodeReviewTimelineUIUtil.ITEM_HOR_PADDING}"))
       add(threadsPanel, CC().minWidth("0").grow().push())
       add(reviewItem, CC().minWidth("0").grow().push())
     }
@@ -367,15 +366,12 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       maxContentWidth = null
     }
 
-    val leftGap = H_SIDE_BORDER + CONTENT_SHIFT + 2
     val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
                                                                      reviewDataProvider, avatarIconsProvider,
                                                                      suggestedChangeHelper,
+                                                                     CodeReviewChatItemUIUtil.ComponentType.FULL_SECONDARY,
                                                                      false,
-                                                                     CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH) {
-      it.border = JBUI.Borders.empty(GHPRReviewCommentComponent.GAP_TOP, leftGap, GHPRReviewCommentComponent.GAP_TOP, H_SIDE_BORDER)
-      GHPRTimelineItemUIUtil.withHoverHighlight(it)
-    }
+                                                                     CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
 
 
     val commentsListPanel = ComponentListPanelFactory.createVertical(thread.repliesModel, commentComponentFactory, 0)
@@ -389,7 +385,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
 
       val actionsComponent = GHPRReviewThreadComponent
         .createUncollapsedThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser) {}.apply {
-          border = JBUI.Borders.empty(6, leftGap, 6, H_SIDE_BORDER)
+          border = JBUI.Borders.empty(CodeReviewChatItemUIUtil.ComponentType.FULL_SECONDARY.inputPaddingInsets)
         }
 
       JPanel(layout).apply {

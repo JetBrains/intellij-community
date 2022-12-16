@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
+import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.TimelineComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory
@@ -46,9 +47,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataPro
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.H_SIDE_BORDER
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.TIMELINE_ITEM_WIDTH
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.V_SIDE_BORDER
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
@@ -115,7 +114,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     })
 
     val header = GHPRTitleComponent.create(detailsModel).apply {
-      border = JBUI.Borders.empty(20, H_SIDE_BORDER)
+      border = JBUI.Borders.empty(CodeReviewTimelineUIUtil.HEADER_VERT_PADDING, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)
     }
 
     val suggestedChangesHelper = GHPRSuggestedChangeHelper(project,
@@ -142,12 +141,12 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     val timeline = TimelineComponentFactory.create(timelineModel, itemComponentFactory, 0)
 
     val errorPanel = GHHtmlErrorPanel.create(errorModel).apply {
-      border = JBUI.Borders.empty(8, H_SIDE_BORDER)
+      border = JBUI.Borders.empty(8, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)
     }
 
     val timelineLoader = editor.timelineLoader
     val loadingIcon = JLabel(AnimatedIcon.Default()).apply {
-      border = JBUI.Borders.empty(8, H_SIDE_BORDER)
+      border = JBUI.Borders.empty(8, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)
       isVisible = timelineLoader.loading
     }
     timelineLoader.addLoadingStateChangeListener(uiDisposable) {
@@ -156,7 +155,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
     val timelinePanel = ScrollablePanel().apply {
       isOpaque = false
-      border = JBUI.Borders.empty(6, 0)
+      border = JBUI.Borders.empty(CodeReviewTimelineUIUtil.VERT_PADDING, 0)
 
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
@@ -175,7 +174,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
         val commentField = createCommentField(editor.commentsData,
                                               editor.avatarIconsProvider,
                                               editor.securityService.currentUser).apply {
-          border = JBUI.Borders.empty(V_SIDE_BORDER, H_SIDE_BORDER)
+          border = JBUI.Borders.empty(CodeReviewChatItemUIUtil.ComponentType.FULL.inputPaddingInsets)
         }
         add(commentField, CC().growX().pushX())
       }
