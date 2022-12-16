@@ -48,6 +48,8 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
 
+import static org.jetbrains.idea.maven.server.DummyMavenServerConnector.isDummy;
+
 public final class MavenServerManager implements Disposable {
   public static final String BUNDLED_MAVEN_2 = "Bundled (Maven 2)";
   public static final String BUNDLED_MAVEN_3 = "Bundled (Maven 3)";
@@ -120,7 +122,15 @@ public final class MavenServerManager implements Disposable {
       public void onProjectTrusted(@NotNull Project project) {
         MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
         if (manager.isMavenizedProject()) {
-          MavenUtil.restartMavenConnectors(project, true);
+          MavenUtil.restartMavenConnectors(project, true, it -> isDummy(it));
+        }
+      }
+
+      @Override
+      public void onProjectUntrusted(@NotNull Project project) {
+        MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+        if (manager.isMavenizedProject()) {
+          MavenUtil.restartMavenConnectors(project, true, it -> !isDummy(it));
         }
       }
 
