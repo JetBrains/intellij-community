@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -50,31 +50,31 @@ public final class HotSwapManager {
                          ));
     for (String path : paths) {
       String rootPath = FileUtil.toCanonicalPath(path);
-      collectModifiedClasses(new File(path), rootPath, rootPath + "/", modifiedClasses, progress, timeStamp);
+      collectModifiedClasses(new File(path), rootPath, rootPath.length() + 1, modifiedClasses, progress, timeStamp);
     }
 
     return modifiedClasses;
   }
 
-  private static boolean collectModifiedClasses(File file, String filePath, String rootPath, Map<String, HotSwapFile> container, HotSwapProgress progress, long timeStamp) {
+  private static boolean collectModifiedClasses(
+    File file, String filePath, int rootPathLength, Map<String, HotSwapFile> container, HotSwapProgress progress, long timeStamp
+  ) {
     if (progress.isCancelled()) {
       return false;
     }
     final File[] files = file.listFiles();
     if (files != null) {
       for (File child : files) {
-        if (!collectModifiedClasses(child, filePath + "/" + child.getName(), rootPath, container, progress, timeStamp)) {
+        if (!collectModifiedClasses(child, filePath + "/" + child.getName(), rootPathLength, container, progress, timeStamp)) {
           return false;
         }
       }
     }
     else { // not a dir
-      if (SystemInfo.isFileSystemCaseSensitive? StringUtil.endsWith(filePath, CLASS_EXTENSION) : StringUtil.endsWithIgnoreCase(filePath, CLASS_EXTENSION)) {
-        if (file.lastModified() > timeStamp) {
-          progress.setText(JavaDebuggerBundle.message("progress.hotswap.scanning.path", filePath));
-          final String qualifiedName = filePath.substring(rootPath.length(), filePath.length() - CLASS_EXTENSION.length()).replace('/', '.');
-          container.put(qualifiedName, new HotSwapFile(file));
-        }
+      String qualifiedName = getQualifiedName(filePath, rootPathLength);
+      if (qualifiedName != null && file.lastModified() > timeStamp) {
+        progress.setText(JavaDebuggerBundle.message("progress.hotswap.scanning.path", filePath));
+        container.put(qualifiedName, new HotSwapFile(file));
       }
     }
     return true;
@@ -95,7 +95,9 @@ public final class HotSwapManager {
     }
   }
 
-  public static Map<DebuggerSession, Map<String, HotSwapFile>> findModifiedClasses(List<DebuggerSession> sessions, Map<String, Collection<String>> generatedPaths) {
+  public static Map<DebuggerSession, Map<String, HotSwapFile>> findModifiedClasses(
+    List<DebuggerSession> sessions, Map<String, Collection<String>> generatedPaths
+  ) {
     final Map<DebuggerSession, Map<String, HotSwapFile>> result = new HashMap<>();
     List<Pair<DebuggerSession, Long>> sessionWithStamps = new ArrayList<>();
     for (DebuggerSession session : sessions) {
@@ -104,8 +106,8 @@ public final class HotSwapManager {
     for (Map.Entry<String, Collection<String>> entry : generatedPaths.entrySet()) {
       final File root = new File(entry.getKey());
       for (String relativePath : entry.getValue()) {
-        if (SystemInfo.isFileSystemCaseSensitive? StringUtil.endsWith(relativePath, CLASS_EXTENSION) : StringUtil.endsWithIgnoreCase(relativePath, CLASS_EXTENSION)) {
-          final String qualifiedName = relativePath.substring(0, relativePath.length() - CLASS_EXTENSION.length()).replace('/', '.');
+        String qualifiedName = getQualifiedName(relativePath, 0);
+        if (qualifiedName != null) {
           final HotSwapFile hotswapFile = new HotSwapFile(new File(root, relativePath));
           final long fileStamp = hotswapFile.file.lastModified();
 
@@ -119,6 +121,15 @@ public final class HotSwapManager {
       }
     }
     return result;
+  }
+
+  private static String getQualifiedName(String filePath, int rootPathLength) {
+    boolean isClassFile = SystemInfo.isFileSystemCaseSensitive
+                          ? StringUtil.endsWith(filePath, CLASS_EXTENSION)
+                          : StringUtil.endsWithIgnoreCase(filePath, CLASS_EXTENSION);
+    if (!isClassFile) return null;
+    String withoutExtension = filePath.substring(rootPathLength, filePath.length() - CLASS_EXTENSION.length());
+    return withoutExtension.replace('/', '.');
   }
 
   @NotNull
