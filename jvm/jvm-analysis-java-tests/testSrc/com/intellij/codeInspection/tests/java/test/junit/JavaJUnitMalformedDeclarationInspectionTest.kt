@@ -1132,7 +1132,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
     myFixture.testHighlighting(ULanguage.JAVA, """
       import org.junit.Test;
 
-      class <warning descr="Test class 'UnconstructableJUnit4TestCase3' is not constructable because it is not 'public'">UnconstructableJUnit4TestCase3</warning> {
+      class <warning descr="Test class 'UnconstructableJUnit4TestCase3' is not constructable because it is not 'public'"><warning descr="Test class 'UnconstructableJUnit4TestCase3' is not constructable because it should have exactly one 'public' no-arg constructor">UnconstructableJUnit4TestCase3</warning></warning> {
         UnconstructableJUnit4TestCase3() {}
 
         @Test

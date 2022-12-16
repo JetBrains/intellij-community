@@ -2258,6 +2258,9 @@ public final class UIUtil {
     editor.reshape(x, y, width, height);
   }
 
+  /**
+   * @see JBUI.CurrentTheme.List#rowHeight()
+   */
   public static final int LIST_FIXED_CELL_HEIGHT = 20;
 
   /**

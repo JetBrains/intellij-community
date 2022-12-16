@@ -406,10 +406,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   public static @Nullable JBTerminalWidget asJediTermWidget(@NotNull TerminalWidget widget) {
-    if (widget instanceof TerminalWidgetBridge) {
-      return ((TerminalWidgetBridge)widget).widget();
-    }
-    return null;
+    return widget instanceof TerminalWidgetBridge bridge ? bridge.widget() : null;
   }
 
   private class TerminalWidgetBridge implements TerminalWidget {

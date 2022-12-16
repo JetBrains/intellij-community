@@ -6,6 +6,8 @@ import com.intellij.externalSystem.ImportedLibraryType;
 import com.intellij.java.library.MavenCoordinates;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
@@ -41,7 +43,7 @@ import java.util.*;
 public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInterface {
 
   private final MavenProject myMavenProject;
-  private final ModuleModelProxy myModuleModel;
+  private final ModifiableModuleModel myModuleModel;
   private final ModifiableRootModel myRootModel;
 
   private final MavenSourceFoldersModuleExtension myRootModelModuleExtension;
@@ -49,9 +51,9 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   private final Set<String> myOrderEntriesBeforeJdk = new HashSet<>();
   private volatile Map<String, Library> myLibrariesTable;
 
-  public MavenRootModelAdapterLegacyImpl(@NotNull MavenProject p, @NotNull Module module, final ModifiableModelsProviderProxy rootModelsProvider) {
+  public MavenRootModelAdapterLegacyImpl(@NotNull MavenProject p, @NotNull Module module, final IdeModifiableModelsProvider rootModelsProvider) {
     myMavenProject = p;
-    myModuleModel = rootModelsProvider.getModuleModelProxy();
+    myModuleModel = rootModelsProvider.getModifiableModuleModel();
     myRootModel = rootModelsProvider.getModifiableRootModel(module);
 
     myRootModelModuleExtension = myRootModel.getModuleExtension(MavenSourceFoldersModuleExtension.class);
@@ -357,7 +359,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   @Override
   public LibraryOrderEntry addLibraryDependency(MavenArtifact artifact,
                                                 DependencyScope scope,
-                                                ModifiableModelsProviderProxy provider,
+                                                IdeModifiableModelsProvider provider,
                                                 MavenProject project) {
     assert !MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope()); // System dependencies must be added ad module library, not as project wide library.
 

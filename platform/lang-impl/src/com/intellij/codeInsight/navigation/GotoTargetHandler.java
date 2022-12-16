@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.util.RoundedCellRenderer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
@@ -139,7 +140,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     if (useEditorFont()) {
       builder.setFont(EditorUtil.getEditorFont());
     }
-    builder.setRenderer(new GotoTargetRenderer(gotoData::getPresentation)).
+    builder.setRenderer(new RoundedCellRenderer<>(new GotoTargetRenderer(gotoData::getPresentation))).
       setItemsChosenCallback(selectedElements -> {
         for (Object element : selectedElements) {
           if (element instanceof AdditionalAction) {

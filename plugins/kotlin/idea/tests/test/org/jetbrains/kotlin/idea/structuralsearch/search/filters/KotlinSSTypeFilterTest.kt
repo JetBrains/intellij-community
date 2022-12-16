@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search.filters
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchProfile
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
 class KotlinSSTypeFilterTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "typeFilter"
@@ -261,11 +261,24 @@ class KotlinSSTypeFilterTest : KotlinStructuralSearchTest() {
         val bar = y.x
     """.trimIndent()) }
 
+    fun testTypeCallExpression() { doTest("'_:[exprtype(A.Companion)].'_", """
+        class A {
+            companion object {
+                fun foo() { }
+            }
+        }
+
+        fun main() {
+            <warning descr="SSR">A.foo()</warning>
+        }
+    """.trimIndent()) }
+
     fun testTypeCallableReferenceExpression() { doTest("'_:[exprtype(A)]::'_", """
         class A {
             val x = 1
             fun foo() { print(<warning descr="SSR">this::x</warning>) }
         }
+
 
         class B {
             val x = 1

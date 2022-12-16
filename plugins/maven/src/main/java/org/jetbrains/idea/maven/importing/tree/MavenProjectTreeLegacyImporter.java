@@ -136,11 +136,11 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
   public static class TreeModuleConfigurer {
     private final MavenProjectsTree myProjectsTree;
     private final MavenImportingSettings myImportingSettings;
-    private final ModifiableModelsProviderProxy myModelsProvider;
+    private final IdeModifiableModelsProvider myModelsProvider;
 
     public TreeModuleConfigurer(MavenProjectsTree projectsTree,
                                 MavenImportingSettings importingSettings,
-                                ModifiableModelsProviderProxy modelsProvider) {
+                                IdeModifiableModelsProvider modelsProvider) {
       myProjectsTree = projectsTree;
       myImportingSettings = importingSettings;
       myModelsProvider = modelsProvider;

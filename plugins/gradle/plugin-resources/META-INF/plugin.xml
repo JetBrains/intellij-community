@@ -150,7 +150,7 @@
 
     <search.optionContributor implementation="org.jetbrains.plugins.gradle.config.GradleSearchableOptionContributor"/>
 
-    <registryKey defaultValue="https://resources.jetbrains.com/gradle/compatibility.json"
+    <registryKey defaultValue="https://download.jetbrains.com/resources/intellij/plugins/gradle/v1/compatibility.json"
                  description="URL to get updates for gradle/jvm compatibility matrix" key="gradle.compatibility.config.url"/>
 
     <registryKey defaultValue="14"

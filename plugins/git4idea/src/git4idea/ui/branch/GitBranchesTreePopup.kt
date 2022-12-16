@@ -2,6 +2,7 @@
 package git4idea.ui.branch
 
 import com.intellij.dvcs.branch.DvcsBranchManager
+import com.intellij.dvcs.branch.DvcsBranchesDivergedBanner
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
@@ -633,6 +634,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     if (tree.selectionPath != path) {
       tree.selectionPath = path
     }
+  }
+
+  override fun createWarning(text: String): JComponent {
+    return DvcsBranchesDivergedBanner.create("reference.VersionControl.Git.SynchronousBranchControl", text)
   }
 
   private val am
