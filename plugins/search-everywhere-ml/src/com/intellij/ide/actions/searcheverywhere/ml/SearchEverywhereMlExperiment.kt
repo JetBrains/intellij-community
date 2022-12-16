@@ -38,6 +38,10 @@ internal class SearchEverywhereMlExperiment {
 
     SearchEverywhereTabWithMl.CLASSES to Experiment(
       2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
+    ),
+
+    SearchEverywhereTabWithMl.ALL to Experiment(
+      2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
     )
   )
 
