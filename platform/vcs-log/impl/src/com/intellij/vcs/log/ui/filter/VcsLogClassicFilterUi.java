@@ -126,7 +126,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
                                                           ActionButtonLook look,
                                                           @NotNull String place,
                                                           @NotNull Presentation presentation,
-                                                          @NotNull Dimension minimumSize) {
+                                                          Supplier<? extends @NotNull Dimension> minimumSize) {
         MyActionButton button = new MyActionButton(action);
         button.setFocusable(true);
         applyToolbarLook(look, presentation, button);

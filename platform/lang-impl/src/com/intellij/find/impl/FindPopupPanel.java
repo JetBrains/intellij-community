@@ -102,6 +102,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -1663,7 +1664,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
                                                           ActionButtonLook look,
                                                           @NotNull String place,
                                                           @NotNull Presentation presentation,
-                                                          @NotNull Dimension minimumSize) {
+                                                          Supplier<? extends @NotNull Dimension> minimumSize) {
         if (!ExperimentalUI.isNewUI()) {
           return super.createToolbarButton(action, look, place, presentation, minimumSize);
         }

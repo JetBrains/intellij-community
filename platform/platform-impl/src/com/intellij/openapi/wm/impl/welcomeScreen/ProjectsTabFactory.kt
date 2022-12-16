@@ -41,6 +41,7 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.Insets
 import java.io.File
+import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
@@ -204,7 +205,7 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
                                        look: ActionButtonLook,
                                        place: String,
                                        presentation: Presentation,
-                                       minimumSize: Dimension): ActionButton {
+                                       minimumSize: Supplier<out Dimension>): ActionButton {
         val toolbarButton = super.createToolbarButton(action, look, place, presentation, minimumSize)
         toolbarButton.isFocusable = true
         return toolbarButton

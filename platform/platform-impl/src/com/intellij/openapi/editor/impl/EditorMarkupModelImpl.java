@@ -73,6 +73,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Queue;
 import java.util.*;
+import java.util.function.Supplier;
 
 public final class EditorMarkupModelImpl extends MarkupModelImpl
       implements EditorMarkupModel, CaretListener, BulkAwareDocumentListener.Simple, VisibleAreaListener {
@@ -205,7 +206,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       @Override
       protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action, ActionButtonLook look,
                                                           @NotNull String place, @NotNull Presentation presentation,
-                                                          @NotNull Dimension minimumSize) {
+                                                          Supplier<? extends @NotNull Dimension> minimumSize) {
 
         ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {
           @Override

@@ -29,6 +29,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.function.Supplier;
 
 public class ActionButtonWithText extends ActionButton {
   private static final int ICON_TEXT_SPACE = 2;
@@ -44,6 +45,13 @@ public class ActionButtonWithText extends ActionButton {
                               @Nullable Presentation presentation,
                               @NotNull String place,
                               @NotNull Dimension minimumSize) {
+    this(action, presentation, place, () -> minimumSize);
+  }
+
+  public ActionButtonWithText(@NotNull AnAction action,
+                              @Nullable Presentation presentation,
+                              @NotNull String place,
+                              Supplier<? extends @NotNull Dimension> minimumSize) {
     super(action, presentation, place, minimumSize);
     setFont(action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : StartupUiUtil.getLabelFont());
     setForeground(UIUtil.getLabelForeground());

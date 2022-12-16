@@ -25,6 +25,7 @@ import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import java.awt.geom.Path2D
 import java.awt.geom.RoundRectangle2D
+import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.border.Border
 import kotlin.math.max
@@ -94,7 +95,7 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
                                    look: ActionButtonLook?,
                                    place: String,
                                    presentation: Presentation,
-                                   minimumSize: Dimension): ActionButton {
+                                   minimumSize: Supplier<out Dimension>): ActionButton {
     val result = DeprecatedSegmentedButton(action, presentation, place, minimumSize, spacingConfiguration)
     result.isEnabled = isEnabled
     return result
@@ -166,7 +167,7 @@ private class DeprecatedSegmentedButton(
   action: AnAction,
   presentation: Presentation,
   place: String,
-  minimumSize: Dimension,
+  minimumSize: Supplier<out Dimension>,
   private val spacingConfiguration: SpacingConfiguration
 ) : ActionButtonWithText(action, presentation, place, minimumSize) {
 

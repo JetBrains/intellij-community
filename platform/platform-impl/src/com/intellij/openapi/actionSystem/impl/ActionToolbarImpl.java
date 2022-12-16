@@ -56,6 +56,7 @@ import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickActionProvider, AlphaAnimated {
   private static final Logger LOG = Logger.getInstance(ActionToolbarImpl.class);
@@ -126,6 +127,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   /** @see #calculateBounds(Dimension, List) */
   private final List<Rectangle> myComponentBounds = new ArrayList<>();
+  private Supplier<? extends Dimension> myMinimumButtonSizeFunction = Dimension::new;
   private JBDimension myMinimumButtonSize = JBUI.emptySize();
 
   /** @see ActionToolbar#getLayoutPolicy() */
@@ -258,6 +260,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     for (Component component : getComponents()) {
       tweakActionComponentUI(component);
     }
+    updateMinimumButtonSize();
   }
 
   @Override
@@ -543,6 +546,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                                                       @NotNull String place,
                                                       @NotNull Presentation presentation,
                                                       @NotNull Dimension minimumSize) {
+    return createToolbarButton(action, look, place, presentation, () -> minimumSize);
+  }
+
+  protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action,
+                                                      final ActionButtonLook look,
+                                                      @NotNull String place,
+                                                      @NotNull Presentation presentation,
+                                                      Supplier<? extends @NotNull Dimension> minimumSize) {
     if (action.displayTextInToolbar()) {
       int mnemonic = action.getTemplatePresentation().getMnemonic();
 
@@ -590,7 +601,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       action,
       getActionButtonLook(),
       myPlace, myPresentationFactory.getPresentation(action),
-      myMinimumButtonSize.size());
+      myMinimumButtonSizeFunction);
   }
 
   @Nullable
@@ -1235,12 +1246,25 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   public void setMinimumButtonSize(final @NotNull Dimension size) {
-    myMinimumButtonSize = JBDimension.create(size, true);
+    setMinimumButtonSize(() -> size);
+  }
+
+  public void setMinimumButtonSize(final Supplier<? extends @NotNull Dimension> size) {
+    myMinimumButtonSizeFunction = size;
+    updateMinimumButtonSize();
+    revalidate();
+  }
+
+  private void updateMinimumButtonSize() {
+    if (myMinimumButtonSizeFunction == null) {
+      return; // called from the superclass constructor through updateUI()
+    }
+    myMinimumButtonSize = JBDimension.create(myMinimumButtonSizeFunction.get(), true);
     for (int i = getComponentCount() - 1; i >= 0; i--) {
       final Component component = getComponent(i);
       if (component instanceof ActionButton) {
         final ActionButton button = (ActionButton)component;
-        button.setMinimumButtonSize(size);
+        button.setMinimumButtonSize(myMinimumButtonSizeFunction);
       }
       else if (component instanceof JLabel && LOADING_LABEL.equals(component.getName())) {
         Dimension dimension = new Dimension();
@@ -1250,7 +1274,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         component.setPreferredSize(dimension);
       }
     }
-    revalidate();
   }
 
   @Override
