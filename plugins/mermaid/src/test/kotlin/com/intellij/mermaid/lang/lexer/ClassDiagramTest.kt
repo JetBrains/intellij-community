@@ -166,4 +166,35 @@ class ClassDiagramTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test class attributes with square parenthesis`() {
+    val content = """
+    classDiagram
+      class Class1
+      class Class2
+      Class1 : Object[] elementData
+      Class2 : Obj ect[] element Data
+      class Class3 {
+        Object[] elementData
+      }
+      class Class4 {
+        Obj ect[] element Data
+      }
+    """.trimIndent()
+    doTest(content)
+  }
+
+
+  fun `test complex attribute`() {
+    val content = """
+    classDiagram
+      class C1
+      C1: met  <>.h[]   id+{},((f) ()()
+      
+      class C2 {
+        met  <;>.h[]   id:+,((f) ()()
+      }
+    """.trimIndent()
+    doTest(content)
+  }
 }

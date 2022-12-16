@@ -429,8 +429,14 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 <struct> {
   "}" { yybegin(class_diagram); return CLOSE_CURLY; }
 }
-<struct, class_name, class_member> {
-  [\w]+ { return ATTRIBUTE_WORD; }
+<struct, class_member> {
+  [^\"\.<>{}()\[\]~\+\-#*$,:;\s]+ { return ATTRIBUTE_WORD; }
+  "<" { return OPEN_ANGLE; }
+  ">" { return CLOSE_ANGLE; }
+}
+<class_member> {
+  "{" { return OPEN_CURLY; }
+  "}" { return CLOSE_CURLY; }
 }
 <class_diagram, struct, class_name, class_member> {
   [~] { yypushstate(generic); return TILDA; }
@@ -445,6 +451,9 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "$" { return DOLLAR; }
   "(" { return OPEN_ROUND; }
   ")" { return CLOSE_ROUND; }
+  "[" { return OPEN_SQUARE; }
+  "]" { return CLOSE_SQUARE; }
+  "." { return DOT; }
   "," { return COMMA; }
 }
 <class_member> {

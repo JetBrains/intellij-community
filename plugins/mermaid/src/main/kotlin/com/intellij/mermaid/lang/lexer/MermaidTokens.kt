@@ -47,6 +47,9 @@ object MermaidTokens {
   val COMMA = MermaidToken("COMMA")
 
   @JvmField
+  val DOT = MermaidToken("DOT")
+
+  @JvmField
   val OPEN_CURLY = MermaidToken("OPEN_CURLY")
 
   @JvmField
@@ -63,6 +66,12 @@ object MermaidTokens {
 
   @JvmField
   val CLOSE_SQUARE = MermaidToken("CLOSE_SQUARE")
+
+  @JvmField
+  val OPEN_ANGLE = MermaidToken("OPEN_ANGLE")
+
+  @JvmField
+  val CLOSE_ANGLE = MermaidToken("CLOSE_ANGLE")
 
   @JvmField
   val SEMICOLON = MermaidToken("SEMICOLON")

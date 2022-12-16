@@ -5,9 +5,9 @@ classDiagram
   Animal <|-- Fish
   Animal <|-- Zebra
   Animal: +int age
-  Animal: +isMammal()
+  Animal: + isMammal(Arg arg1, Arg arg2)
   class Duck {
-    +String beakColor
+    + String beakColor
     +swim()
     +quack()
   }
@@ -16,10 +16,10 @@ classDiagram
     +run()
   }
 
-  class Square~Shape~ {
+  class Square ~Shape~ {
     int id
-    List~int~ position
-    setPoints(List~int~ points)
+    List ~int~ position
+    setPoints(List ~int~ points)
     getPoints() List~int~
   }
 

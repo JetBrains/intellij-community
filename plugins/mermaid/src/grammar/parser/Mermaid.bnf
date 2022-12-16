@@ -220,7 +220,7 @@ classStatement ::= CLASS classDiagramIdentifier [generic] [STYLE_SEPARATOR ID] [
   implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierDeclarationHolder"
 }
 
-memberStatement ::= classDiagramIdentifier [generic] COLON attrOrMethod { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierHolder" }
+memberStatement ::= classDiagramIdentifier [generic] COLON memberAttribute { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierHolder" }
 
 relationStatement ::= leftId relation rightId [COLON complexLabel]
 leftId ::= classDiagramIdentifier [generic] { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierDeclarationHolder" }
@@ -233,18 +233,25 @@ annotation ::= ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
 classMembersDocument ::= memberLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramInBracesDocument" }
 private memberLines ::= memberLine [memberLines]
 private memberLine ::= classMemberStatement [EOL] | EOL
-classMemberStatement ::= attrOrMethod | annotation | directive
-attrOrMethod ::= [visibilityAtStart] (method | attribute)
-private visibilityAtStart ::= PLUS | MINUS | POUND | TILDA
-private visibilityAtEnd ::= STAR | DOLLAR
+classMemberStatement ::= attribute | annotation | directive
 
-attribute ::= (attrTypeWithGeneric | attrType) attrName [visibilityAtEnd] | attrName [COLON (attrTypeWithGeneric | attrType)]
-private attributes ::= attribute [COMMA attributes]
-arguments ::= attributes
-method ::= attrName OPEN_ROUND [arguments] CLOSE_ROUND [visibilityAtEnd] [attrTypeWithGeneric | attrType]
-attrType ::= ATTRIBUTE_WORD
-attrTypeWithGeneric ::= attrType generic
-attrName ::= ATTRIBUTE_WORD
+attribute ::= attrWord+
+private attrWord ::= ATTRIBUTE_WORD
+  | generic
+  | OPEN_SQUARE | CLOSE_SQUARE
+  | OPEN_ROUND | CLOSE_ROUND
+  | OPEN_ANGLE | CLOSE_ANGLE
+  | PLUS | MINUS | POUND | TILDA | STAR | DOLLAR | COMMA | DOT
+  | COLON | SEMICOLON
+
+memberAttribute ::= memberAttrWord+
+private memberAttrWord ::= ATTRIBUTE_WORD
+  | generic
+  | OPEN_SQUARE | CLOSE_SQUARE
+  | OPEN_CURLY | CLOSE_CURLY
+  | OPEN_ROUND | CLOSE_ROUND
+  | OPEN_ANGLE | CLOSE_ANGLE
+  | PLUS | MINUS | POUND | TILDA | STAR | DOLLAR | COMMA | DOT
 
 generic ::= TILDA genericTypeId TILDA
 genericTypeId ::= GENERIC_TYPE {
@@ -330,7 +337,9 @@ erAttributesDocument ::= erAttributesLines { implements="com.intellij.mermaid.la
 private erAttributesLines ::= erAttributeLine [erAttributesLines]
 private erAttributeLine ::= erAttribute [EOL] | EOL
 erAttribute ::= (attrTypeWithGeneric | attrType) attrName [ATTR_KEY] [string]
-
+attrType ::= ATTRIBUTE_WORD
+attrTypeWithGeneric ::= attrType generic
+attrName ::= ATTRIBUTE_WORD
 
 ganttDocument ::= ganttLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private ganttLines ::= ganttLine [ganttLines]

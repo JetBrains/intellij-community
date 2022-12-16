@@ -138,18 +138,19 @@ internal object MermaidSpacingBuilder {
       .around(MermaidElements.SIGNAL).spaces(1)
       .around(MermaidTokens.AS).spaces(1)
       // Class diagram
-      .around(MermaidTokens.TILDA).spaceIf(false)
-      .around(MermaidElements.GENERIC).spaceIf(false)
+      .around(MermaidElements.GENERIC_TYPE_ID).spaceIf(false)
+      .around(MermaidElements.GENERIC).spacing(0, 1, 0, false, 0)
       .around(MermaidTokens.STYLE_SEPARATOR).spaceIf(false)
       .around(MermaidTokens.ANNOTATION_VALUE).spaceIf(false)
-      .between(MermaidElements.ATTR_NAME, MermaidTokens.OPEN_ROUND).spaceIf(false)
+      .between(MermaidTokens.ATTRIBUTE_WORD, MermaidTokens.OPEN_ROUND).spaceIf(false)
+      .between(MermaidTokens.OPEN_ROUND, MermaidTokens.ATTRIBUTE_WORD).spaceIf(false)
       .after(MermaidElements.RELATION_TYPE_LEFT).spaceIf(false)
       .before(MermaidElements.RELATION_TYPE_RIGHT).spaceIf(false)
       .around(MermaidElements.CARDINALITY).spaces(1)
       .around(MermaidElements.RELATION).spaces(1)
-      .before(MermaidElements.METHOD).spaceIf(false)
       .before(MermaidElements.ATTRIBUTE).spaceIf(false)
-      .before(MermaidElements.ATTR_NAME).spaces(1)
+      .before(MermaidElements.MEMBER_ATTRIBUTE).spaceIf(false)
+      .between(MermaidTokens.ATTRIBUTE_WORD, MermaidTokens.ATTRIBUTE_WORD).spaces(1)
       // State diagram
       .after(MermaidTokens.StateDiagram.STATE).spaces(1)
       .after(MermaidElements.SPECIAL_STATE).spaces(1)
@@ -159,6 +160,7 @@ internal object MermaidSpacingBuilder {
       // Entity Relationship
       .around(MermaidElements.RELATIONSHIP).spaces(1)
       .after(MermaidTokens.EntityRelationship.ATTR_KEY).spaces(1)
+      .before(MermaidElements.ATTR_NAME).spaces(1)
       .between(MermaidElements.ATTR_NAME, MermaidTokens.EntityRelationship.ATTR_KEY).spaces(1)
       .between(MermaidElements.ATTR_NAME, MermaidElements.STRING).spaces(1)
       // User Journey
