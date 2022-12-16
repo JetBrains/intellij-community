@@ -21,7 +21,6 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.util.containers.FileCollectionFactory
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
@@ -72,7 +71,82 @@ internal class WorkspaceProjectImporter(
 
     val storageBeforeImport = WorkspaceModel.getInstance(myProject).entityStorage.current
 
-    var (hasChanges, projectToImport, ignoredFilePaths) = collectProjectsAndChanges(storageBeforeImport, projectsToImportWithChanges)
+    val projectChangesInfo = collectProjectChanges(storageBeforeImport, projectsToImportWithChanges)
+
+    if (!projectChangesInfo.hasChanges) return emptyList()
+
+    val postTasks = ArrayList<MavenProjectsProcessorTask>()
+    val stats = WorkspaceImportStats.start(myProject)
+
+    val allProjectsToChanges = projectChangesInfo.allProjectsToChanges
+    val mavenProjectToModuleName = buildModuleNameMap(allProjectsToChanges)
+
+    val builder = MutableEntityStorage.create()
+    builder.addEntity(MavenProjectsTreeSettingsEntity(projectChangesInfo.projectFilePaths, MavenProjectsTreeEntitySource))
+
+    val contextData = UserDataHolderBase()
+
+    val projectsWithModuleEntities = stats.recordPhase(MavenImportCollector.WORKSPACE_POPULATE_PHASE) {
+      importModules(storageBeforeImport, builder, allProjectsToChanges, mavenProjectToModuleName, contextData, stats).also {
+        beforeModelApplied(it, builder, contextData, stats)
+      }
+    }
+    val appliedProjectsWithModules = stats.recordPhase(MavenImportCollector.WORKSPACE_COMMIT_PHASE) {
+      commitModulesToWorkspaceModel(projectsWithModuleEntities, builder, contextData, stats)
+    }
+
+    stats.recordPhase(MavenImportCollector.WORKSPACE_LEGACY_IMPORTERS_PHASE) { activity ->
+      configLegacyFacets(appliedProjectsWithModules, mavenProjectToModuleName, postTasks, activity)
+    }
+
+    MavenProjectImporterBase.scheduleRefreshResolvedArtifacts(postTasks, projectChangesInfo.changedProjectsOnly)
+
+    createdModulesList.addAll(appliedProjectsWithModules.flatMap { it.modules.asSequence().map { it.module } })
+
+    stats.finish(numberOfModules = projectsWithModuleEntities.sumOf { it.modules.size })
+
+    if (!ExternalSystemUtil.isNewProject(myProject) && hasLegacyImportedModules(storageBeforeImport)) {
+      postTasks.add(NotifyUserAboutWorkspaceImportTask())
+    }
+
+    postTasks.add(AfterImportConfiguratorsTask(contextData, appliedProjectsWithModules))
+
+    return postTasks
+
+  }
+
+  private data class ProjectChangesInfo(val hasChanges: Boolean, val allProjectsToChanges: Map<MavenProject, MavenProjectChanges>) {
+    val projectFilePaths : List<String> get() = allProjectsToChanges.keys.map { it.path }
+    val changedProjectsOnly : Iterable<MavenProject> get() = allProjectsToChanges
+      .asSequence()
+      .filter { (_, changes) -> changes.hasChanges() }
+      .map { (mavenProject, _) -> mavenProject }
+      .asIterable()
+  }
+
+  private fun collectProjectChanges(storageBeforeImport: EntityStorage,
+                                    originalProjectsChanges: Map<MavenProject, MavenProjectChanges>): ProjectChangesInfo {
+    val mavenProjectsTreeSettingsEntity = storageBeforeImport.entities(MavenProjectsTreeSettingsEntity::class.java).firstOrNull()
+    val projectFilesFromPreviousImport = mavenProjectsTreeSettingsEntity?.importedFilePaths ?: listOf()
+
+    val allProjects = myProjectsTree.projects
+      .filter { !myProjectsTree.isIgnored(it) }
+
+    // if a pom was ignored or unignored, we must update all the modules, because they might have a module dependency on it
+    // if it was ignored, module dependencies should be replaced with library dependencies and vice versa
+    val projectsChanged = projectFilesFromPreviousImport != allProjects.map { it.path }
+
+    val allProjectsToChanges: Map<MavenProject, MavenProjectChanges> = allProjects.associateWith {
+      if (projectsChanged) {
+        MavenProjectChanges.ALL
+      }
+      else {
+        val newProjectToImport = it.path !in projectFilesFromPreviousImport
+        if (newProjectToImport) MavenProjectChanges.ALL else originalProjectsChanges.getOrDefault(it, MavenProjectChanges.NONE)
+      }
+    }
+
+    var hasChanges = allProjectsToChanges.values.any { it.hasChanges() }
 
     val externalStorageManager = myProject.getService(ExternalStorageConfigurationManager::class.java)
     if (!externalStorageManager.isEnabled) {
@@ -91,75 +165,7 @@ internal class WorkspaceProjectImporter(
       }
     }
 
-    if (!hasChanges) return emptyList()
-
-    val postTasks = ArrayList<MavenProjectsProcessorTask>()
-    val stats = WorkspaceImportStats.start(myProject)
-
-    val mavenProjectToModuleName = buildModuleNameMap(projectToImport)
-
-    val builder = MutableEntityStorage.create()
-    builder.addEntity(MavenProjectsTreeSettingsEntity(ignoredFilePaths, MavenProjectsTreeEntitySource))
-
-    val contextData = UserDataHolderBase()
-
-    val projectsWithModuleEntities = stats.recordPhase(MavenImportCollector.WORKSPACE_POPULATE_PHASE) {
-      importModules(storageBeforeImport, builder, projectToImport, mavenProjectToModuleName, contextData, stats).also {
-        beforeModelApplied(it, builder, contextData, stats)
-      }
-    }
-    val appliedProjectsWithModules = stats.recordPhase(MavenImportCollector.WORKSPACE_COMMIT_PHASE) {
-      commitModulesToWorkspaceModel(projectsWithModuleEntities, builder, contextData, stats)
-    }
-
-    stats.recordPhase(MavenImportCollector.WORKSPACE_LEGACY_IMPORTERS_PHASE) { activity ->
-      configLegacyFacets(appliedProjectsWithModules, mavenProjectToModuleName, postTasks, activity)
-    }
-
-    val changedProjectsOnly = projectToImport
-      .asSequence()
-      .filter { (_, changes) -> changes.hasChanges() }
-      .map { (mavenProject, _) -> mavenProject }
-    MavenProjectImporterBase.scheduleRefreshResolvedArtifacts(postTasks, changedProjectsOnly.asIterable())
-
-    createdModulesList.addAll(appliedProjectsWithModules.flatMap { it.modules.asSequence().map { it.module } })
-
-    stats.finish(numberOfModules = projectsWithModuleEntities.sumOf { it.modules.size })
-
-    if (!ExternalSystemUtil.isNewProject(myProject) && hasLegacyImportedModules(storageBeforeImport)) {
-      postTasks.add(NotifyUserAboutWorkspaceImportTask())
-    }
-
-    postTasks.add(AfterImportConfiguratorsTask(contextData, appliedProjectsWithModules))
-
-    return postTasks
-
-  }
-
-  private fun collectProjectsAndChanges(storageBeforeImport: EntityStorage,
-                                        originalProjectsChanges: Map<MavenProject, MavenProjectChanges>):
-    Triple<Boolean, Map<MavenProject, MavenProjectChanges>, List<String>> {
-    val projectFilesFromPreviousImport = readMavenExternalSystemData(storageBeforeImport)
-      .mapTo(FileCollectionFactory.createCanonicalFilePathSet()) { it.mavenProjectFilePath }
-
-    val allProjectToImport = myProjectsTree.projects
-      .filter { !myProjectsTree.isIgnored(it) }
-      .associateWith {
-        val newProjectToImport = it.file.path !in projectFilesFromPreviousImport
-        if (newProjectToImport) MavenProjectChanges.ALL else originalProjectsChanges.getOrDefault(it, MavenProjectChanges.NONE)
-      }
-
-    val ignoredFilePaths = myProjectsTree.ignoredFilesPaths
-
-    var hasChanges = allProjectToImport.values.any { it.hasChanges() }
-    if (!hasChanges) {
-      // check for a situation, when we have a newly ignored project, but no other changes
-      val mavenProjectsTreeSettingsEntity = storageBeforeImport.entities(MavenProjectsTreeSettingsEntity::class.java).firstOrNull()
-      val storedIgnoredFilePaths = mavenProjectsTreeSettingsEntity?.ignoredFilePaths ?: listOf()
-      val ignoredProjectsChanged = storedIgnoredFilePaths != ignoredFilePaths
-      hasChanges = ignoredProjectsChanged
-    }
-    return Triple(hasChanges, allProjectToImport, ignoredFilePaths)
+    return ProjectChangesInfo(hasChanges, allProjectsToChanges)
   }
 
   private fun buildModuleNameMap(projectToImport: Map<MavenProject, MavenProjectChanges>): HashMap<MavenProject, String> {

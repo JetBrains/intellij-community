@@ -15,24 +15,24 @@ import org.jetbrains.deft.Type
 object MavenProjectsTreeEntitySource : EntitySource
 
 interface MavenProjectsTreeSettingsEntity: WorkspaceEntity {
-  val ignoredFilePaths: List<String>
+  val importedFilePaths: List<String>
 
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : MavenProjectsTreeSettingsEntity, WorkspaceEntity.Builder<MavenProjectsTreeSettingsEntity>, ObjBuilder<MavenProjectsTreeSettingsEntity> {
     override var entitySource: EntitySource
-    override var ignoredFilePaths: MutableList<String>
+    override var importedFilePaths: MutableList<String>
   }
 
   companion object : Type<MavenProjectsTreeSettingsEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(ignoredFilePaths: List<String>,
+    operator fun invoke(importedFilePaths: List<String>,
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): MavenProjectsTreeSettingsEntity {
       val builder = builder()
-      builder.ignoredFilePaths = ignoredFilePaths.toMutableWorkspaceList()
+      builder.importedFilePaths = importedFilePaths.toMutableWorkspaceList()
       builder.entitySource = entitySource
       init?.invoke(builder)
       return builder

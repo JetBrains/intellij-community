@@ -15,6 +15,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -30,8 +33,8 @@ open class MavenProjectsTreeSettingsEntityImpl(val dataSource: MavenProjectsTree
 
   }
 
-  override val ignoredFilePaths: List<String>
-    get() = dataSource.ignoredFilePaths
+  override val importedFilePaths: List<String>
+    get() = dataSource.importedFilePaths
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -73,8 +76,8 @@ open class MavenProjectsTreeSettingsEntityImpl(val dataSource: MavenProjectsTree
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-      if (!getEntityData().isIgnoredFilePathsInitialized()) {
-        error("Field MavenProjectsTreeSettingsEntity#ignoredFilePaths should be initialized")
+      if (!getEntityData().isImportedFilePathsInitialized()) {
+        error("Field MavenProjectsTreeSettingsEntity#importedFilePaths should be initialized")
       }
     }
 
@@ -83,9 +86,9 @@ open class MavenProjectsTreeSettingsEntityImpl(val dataSource: MavenProjectsTree
     }
 
     override fun afterModification() {
-      val collection_ignoredFilePaths = getEntityData().ignoredFilePaths
-      if (collection_ignoredFilePaths is MutableWorkspaceList<*>) {
-        collection_ignoredFilePaths.cleanModificationUpdateAction()
+      val collection_importedFilePaths = getEntityData().importedFilePaths
+      if (collection_importedFilePaths is MutableWorkspaceList<*>) {
+        collection_importedFilePaths.cleanModificationUpdateAction()
       }
     }
 
@@ -93,8 +96,9 @@ open class MavenProjectsTreeSettingsEntityImpl(val dataSource: MavenProjectsTree
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as MavenProjectsTreeSettingsEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.ignoredFilePaths != dataSource.ignoredFilePaths) this.ignoredFilePaths = dataSource.ignoredFilePaths.toMutableList()
-      updateChildToParentReferences(parents)
+      if (this.importedFilePaths != dataSource.importedFilePaths) this.importedFilePaths = dataSource.importedFilePaths.toMutableList()
+      if (parents != null) {
+      }
     }
 
 
@@ -107,26 +111,26 @@ open class MavenProjectsTreeSettingsEntityImpl(val dataSource: MavenProjectsTree
 
       }
 
-    private val ignoredFilePathsUpdater: (value: List<String>) -> Unit = { value ->
+    private val importedFilePathsUpdater: (value: List<String>) -> Unit = { value ->
 
-      changedProperty.add("ignoredFilePaths")
+      changedProperty.add("importedFilePaths")
     }
-    override var ignoredFilePaths: MutableList<String>
+    override var importedFilePaths: MutableList<String>
       get() {
-        val collection_ignoredFilePaths = getEntityData().ignoredFilePaths
-        if (collection_ignoredFilePaths !is MutableWorkspaceList) return collection_ignoredFilePaths
+        val collection_importedFilePaths = getEntityData().importedFilePaths
+        if (collection_importedFilePaths !is MutableWorkspaceList) return collection_importedFilePaths
         if (diff == null || modifiable.get()) {
-          collection_ignoredFilePaths.setModificationUpdateAction(ignoredFilePathsUpdater)
+          collection_importedFilePaths.setModificationUpdateAction(importedFilePathsUpdater)
         }
         else {
-          collection_ignoredFilePaths.cleanModificationUpdateAction()
+          collection_importedFilePaths.cleanModificationUpdateAction()
         }
-        return collection_ignoredFilePaths
+        return collection_importedFilePaths
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).ignoredFilePaths = value
-        ignoredFilePathsUpdater.invoke(value)
+        getEntityData(true).importedFilePaths = value
+        importedFilePathsUpdater.invoke(value)
       }
 
     override fun getEntityClass(): Class<MavenProjectsTreeSettingsEntity> = MavenProjectsTreeSettingsEntity::class.java
@@ -134,9 +138,9 @@ open class MavenProjectsTreeSettingsEntityImpl(val dataSource: MavenProjectsTree
 }
 
 class MavenProjectsTreeSettingsEntityData : WorkspaceEntityData<MavenProjectsTreeSettingsEntity>() {
-  lateinit var ignoredFilePaths: MutableList<String>
+  lateinit var importedFilePaths: MutableList<String>
 
-  fun isIgnoredFilePathsInitialized(): Boolean = ::ignoredFilePaths.isInitialized
+  fun isImportedFilePathsInitialized(): Boolean = ::importedFilePaths.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<MavenProjectsTreeSettingsEntity> {
     val modifiable = MavenProjectsTreeSettingsEntityImpl.Builder(null)
@@ -158,7 +162,7 @@ class MavenProjectsTreeSettingsEntityData : WorkspaceEntityData<MavenProjectsTre
   override fun clone(): MavenProjectsTreeSettingsEntityData {
     val clonedEntity = super.clone()
     clonedEntity as MavenProjectsTreeSettingsEntityData
-    clonedEntity.ignoredFilePaths = clonedEntity.ignoredFilePaths.toMutableWorkspaceList()
+    clonedEntity.importedFilePaths = clonedEntity.importedFilePaths.toMutableWorkspaceList()
     return clonedEntity
   }
 
@@ -173,7 +177,7 @@ class MavenProjectsTreeSettingsEntityData : WorkspaceEntityData<MavenProjectsTre
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return MavenProjectsTreeSettingsEntity(ignoredFilePaths, entitySource) {
+    return MavenProjectsTreeSettingsEntity(importedFilePaths, entitySource) {
     }
   }
 
@@ -189,7 +193,7 @@ class MavenProjectsTreeSettingsEntityData : WorkspaceEntityData<MavenProjectsTre
     other as MavenProjectsTreeSettingsEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.ignoredFilePaths != other.ignoredFilePaths) return false
+    if (this.importedFilePaths != other.importedFilePaths) return false
     return true
   }
 
@@ -199,24 +203,24 @@ class MavenProjectsTreeSettingsEntityData : WorkspaceEntityData<MavenProjectsTre
 
     other as MavenProjectsTreeSettingsEntityData
 
-    if (this.ignoredFilePaths != other.ignoredFilePaths) return false
+    if (this.importedFilePaths != other.importedFilePaths) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + ignoredFilePaths.hashCode()
+    result = 31 * result + importedFilePaths.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + ignoredFilePaths.hashCode()
+    result = 31 * result + importedFilePaths.hashCode()
     return result
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.ignoredFilePaths?.let { collector.add(it::class.java) }
+    this.importedFilePaths?.let { collector.add(it::class.java) }
     collector.sameForAllEntities = false
   }
 }
