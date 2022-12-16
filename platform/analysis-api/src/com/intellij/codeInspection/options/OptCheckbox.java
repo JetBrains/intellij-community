@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.options;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlChunk;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +22,20 @@ public record OptCheckbox(@Language("jvm-field-name") @NotNull String bindId,
                           @NotNull LocMessage label,
                           @NotNull List<@NotNull OptComponent> children,
                           @Nullable HtmlChunk description) implements OptControl {
+  /**
+   * @param description textual description
+   * @return an equivalent checkbox but with description
+   * @throws IllegalStateException if description was already set
+   */
+  public OptCheckbox description(@NotNull @NlsContexts.Tooltip String description) {
+    return description(HtmlChunk.text(description));
+  }
+
+  /**
+   * @param description HTML description
+   * @return an equivalent checkbox but with description
+   * @throws IllegalStateException if description was already set
+   */
   public OptCheckbox description(@NotNull HtmlChunk description) {
     if (this.description != null) {
       throw new IllegalStateException("Description is already set");
