@@ -176,25 +176,31 @@ public final class HotSwapUIImpl extends HotSwapUI {
         if (modifiedClasses.keySet().size() == 1) {
           progress.setSessionForActions(ContainerUtil.getFirstItem(modifiedClasses.keySet()));
         }
-        progress.addProgressListener(new HotSwapProgressImpl.HotSwapProgressListener() {
-          @Override
-          public void onCancel() {
-            statusListener.onCancel(sessions);
-          }
-
-          @Override
-          public void onFinish() {
-            if (progress.getMessages(MessageCategory.ERROR).isEmpty()) {
-              statusListener.onSuccess(sessions);
-            }
-            else {
-              statusListener.onFailure(sessions);
-            }
-          }
-        });
+        progress.addProgressListener(delegatingTo(statusListener, sessions, progress));
         ApplicationManager.getApplication().executeOnPooledThread(() -> reloadModifiedClasses(modifiedClasses, progress));
       }, ModalityState.NON_MODAL);
     });
+  }
+
+  private static HotSwapProgressImpl.HotSwapProgressListener delegatingTo(
+    HotSwapStatusListener statusListener, @NotNull List<DebuggerSession> sessions, HotSwapProgressImpl progress
+  ) {
+    return new HotSwapProgressImpl.HotSwapProgressListener() {
+      @Override
+      public void onCancel() {
+        statusListener.onCancel(sessions);
+      }
+
+      @Override
+      public void onFinish() {
+        if (progress.getMessages(MessageCategory.ERROR).isEmpty()) {
+          statusListener.onSuccess(sessions);
+        }
+        else {
+          statusListener.onFailure(sessions);
+        }
+      }
+    };
   }
 
   private static boolean confirmPossibleHang(@NotNull DebuggerSettings settings) {
