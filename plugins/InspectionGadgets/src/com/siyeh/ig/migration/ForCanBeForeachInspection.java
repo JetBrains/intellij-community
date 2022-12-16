@@ -183,10 +183,8 @@ public class ForCanBeForeachInspection extends BaseInspection {
     int toOffset = to.getTextOffset();
     if (fromOffset >= toOffset) return false;
     PsiElement context = PsiTreeUtil.findCommonParent(from, to);
-    PsiElement fromParent = PsiTreeUtil.findFirstParent(from, el -> el instanceof PsiStatement);
-    if (!(fromParent instanceof PsiStatement fromStatement)) {
-      return false;
-    }
+    PsiStatement fromStatement = PsiTreeUtil.getParentOfType(from, PsiStatement.class);
+    if(fromStatement == null) return false;
     if (context == null) return false;
     if (arrayVariable instanceof PsiLocalVariable || arrayVariable instanceof PsiParameter) {
       return processFromAssignmentToLoop(fromStatement, to, getIsAssignedPredicateWithSkipOptions(arrayVariable));
