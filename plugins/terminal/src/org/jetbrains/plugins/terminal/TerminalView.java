@@ -296,7 +296,7 @@ public final class TerminalView implements Disposable {
     content.putUserData(TERMINAL_WIDGET_KEY, widget);
 
     TerminalContainer container = new TerminalContainer(myProject, content, widget, this);
-    panel.setContent(container.getComponent());
+    panel.setContent(container.getWrapperPanel());
     panel.addFocusListener(createFocusListener(toolWindow));
 
     myTerminalSetupHandlers.forEach(consumer -> consumer.accept(terminalWidget));
@@ -447,7 +447,7 @@ public final class TerminalView implements Disposable {
     TerminalContainer container = getContainer(widget);
     TerminalWidget next = container.getNextSplitTerminal(forward);
     if (next != null) {
-      container.requestFocus(next);
+      next.requestFocus();
     }
   }
 
