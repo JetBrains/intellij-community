@@ -34,11 +34,11 @@ abstract class AbstractKotlinMppGradleImportingTest :
 {
     val kotlinTestPropertiesService: KotlinTestPropertiesService = KotlinTestPropertiesServiceImpl()
 
-    override val gradleVersion: String
+    final override val gradleVersion: String
         // equal to this.gradleVersion, going through the Service for the sake of consistency
         get() = kotlinTestPropertiesService.gradleVersion
 
-    override val kotlinPluginVersion: KotlinToolingVersion
+    final override val kotlinPluginVersion: KotlinToolingVersion
         get() = kotlinTestPropertiesService.kotlinGradlePluginVersion
 
     val importedProject: Project
@@ -108,10 +108,9 @@ abstract class AbstractKotlinMppGradleImportingTest :
         }
     }
 
-    override fun setUp() {
+    final override fun setUp() {
         // see KT-55554
         assumeTrue("Test is ignored because it requires Mac-host", HostManager.hostIsMac)
-
         // Hack: usually this is set-up by JUnit's Parametrized magic, but
         // our tests source versions from `kotlintestPropertiesService`, not from
         // @Parametrized
@@ -165,7 +164,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
 
     // super does plain `print` instead of `println`, so we need to
     // override it to preserve line breaks in output of Gradle-process
-    override fun printOutput(stream: PrintStream, text: String) {
+    final override fun printOutput(stream: PrintStream, text: String) {
         stream.println(text)
     }
 
