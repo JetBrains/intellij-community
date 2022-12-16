@@ -102,12 +102,4 @@
     <offset>15</offset>
     <length>5</length>
   </problem>
-  <problem>
-    <file>unresolvedBundleReference.kt</file>
-    <line>5</line>
-    <module>testInvalidBundleOrProperty_InvalidBundleOrProperty</module>
-    <entry_point TYPE="method" FQNAME="UnresolvedBundleReferenceKt java.lang.String message(java.lang.String key, java.lang.Object... args)"/>
-    <problem_class severity="ERROR" attribute_key="WRONG_REFERENCES_ATTRIBUTES">Invalid property key</problem_class>
-    <description>Invalid resource bundle reference 'TestBundle2'</description>
-  </problem>
 </problems>

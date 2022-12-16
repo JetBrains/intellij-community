@@ -182,6 +182,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
 
     override fun forceResolveReferences(file: KtFile, elements: List<KtElement>) {
 
+        val i = 0;
     }
 
     override fun scriptDefinitionExists(file: PsiFile): Boolean {
