@@ -37,6 +37,8 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
     registerMetric(CGCompletionInvocationsCount())
     registerMetric(CGMovesCountNormalised())
     registerMetric(CGPerfectLine())
+    registerMetric(CGRecallAt(1))
+    registerMetric(CGRecallAt(5))
     registerMetric(MeanLatencyMetric(true))
     registerMetric(MaxLatencyMetric())
     registerMetric(SessionsCountMetric())

@@ -111,3 +111,29 @@ class CGPerfectLine : CompletionGolfMetric<Int>() {
     return sessions.count { it.success }
   }
 }
+
+class CGRecallAt(private val n: Int) : Metric {
+  private val sample = Sample()
+
+  override val name: String = "Recall@$n"
+
+  override val valueType = MetricValueType.DOUBLE
+
+  override val value: Double
+    get() = sample.mean()
+
+  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
+    val fileSample = Sample()
+
+    for (lookup in sessions.flatMap { it.lookups }) {
+      if (lookup.selectedPosition in 0 until n) {
+        fileSample.add(1.0)
+        sample.add(1.0)
+      } else {
+        fileSample.add(0.0)
+        sample.add(0.0)
+      }
+    }
+    return fileSample.mean()
+  }
+}
