@@ -39,7 +39,7 @@ class ImportedLibraryType : LibraryType<ImportedLibraryProperties>(IMPORTED_LIBR
 
   companion object {
     val IMPORTED_LIBRARY_KIND: PersistentLibraryKind<ImportedLibraryProperties> =
-      object : PersistentLibraryKind<ImportedLibraryProperties>("imported") {
+      object : PersistentLibraryKind<ImportedLibraryProperties>("java-imported") {
       override fun createDefaultProperties(): ImportedLibraryProperties {
         return ImportedLibraryProperties(null)
       }
