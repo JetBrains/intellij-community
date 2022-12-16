@@ -1,0 +1,50 @@
+MODULES
+    project.p2.iosArm64Test
+        project.p1.iosArm64Main (TEST)
+        project.p2.commonMain (friend, TEST)
+        project.p2.commonTest (refines, TEST)
+        project.p2.iosArm64Main (friend, TEST)
+        project.p2.iosMain (friend, TEST)
+        project.p2.iosTest (refines, TEST)
+        project.p1.commonMain (TEST)
+        project.p1.iosMain (TEST)
+        project.p1.nativeMain (TEST)
+    project.p2.iosTest
+        project.p2.commonMain (friend, TEST)
+        project.p2.commonTest (refines, TEST)
+        project.p2.iosMain (friend, TEST)
+        project.p1.commonMain (TEST)
+        project.p1.iosMain (TEST)
+        project.p1.nativeMain (TEST)
+    project.p2.iosX64Test
+        project.p1.iosX64Main (TEST)
+        project.p2.commonMain (friend, TEST)
+        project.p2.commonTest (refines, TEST)
+        project.p2.iosMain (friend, TEST)
+        project.p2.iosTest (refines, TEST)
+        project.p2.iosX64Main (friend, TEST)
+        project.p1.commonMain (TEST)
+        project.p1.iosMain (TEST)
+        project.p1.nativeMain (TEST)
+    project.p2.linuxArm64Test
+        project.p1.linuxArm64Main (TEST)
+        project.p2.commonMain (friend, TEST)
+        project.p2.commonTest (refines, TEST)
+        project.p2.linuxArm64Main (friend, TEST)
+        project.p2.linuxMain (friend, TEST)
+        project.p1.commonMain (TEST)
+        project.p1.linuxMain (TEST)
+        project.p1.nativeMain (TEST)
+    project.p2.linuxX64Test
+        project.p1.linuxX64Main (TEST)
+        project.p2.commonMain (friend, TEST)
+        project.p2.commonTest (refines, TEST)
+        project.p2.linuxMain (friend, TEST)
+        project.p2.linuxX64Main (friend, TEST)
+        project.p1.commonMain (TEST)
+        project.p1.linuxMain (TEST)
+        project.p1.nativeMain (TEST)
+
+Test configuration:
+- showing only source modules matching .*p2\.(iosTest|iosX64Test|iosArm64Test|linuxX64Test|linuxArm64Test).*
+- hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
