@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import javax.swing.*;
 
-import static com.intellij.codeInspection.options.OptPane.custom;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -22,17 +21,17 @@ public class OptCustomTest {
     @Override
     public @NotNull OptPane getOptionsPane() {
       return pane(
-        custom("x"),
-        custom("y")
+        new OptCustom("x"),
+        new OptCustom("y")
       );
     }
 
     @Override
     public @NotNull JComponent getCustomOptionComponent(@NotNull OptCustom control, @NotNull JComponent parent) {
-      return switch (control.bindId()) {
-        case "x" -> new JLabel(control.getValue(this).toString());
-        case "y" -> new JButton(control.getValue(this).toString());
-        default -> throw new IllegalStateException("Unexpected value: " + control.bindId());
+      return switch (control.componentId()) {
+        case "x" -> new JLabel(getOption("x").toString());
+        case "y" -> new JButton(getOption("y").toString());
+        default -> throw new IllegalStateException("Unexpected value: " + control.componentId());
       };
     }
   }

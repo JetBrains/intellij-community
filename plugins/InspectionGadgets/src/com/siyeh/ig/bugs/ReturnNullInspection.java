@@ -30,7 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Arrays;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ReturnNullInspection extends BaseInspection implements InspectionOptionPaneRenderer.CustomComponentProvider {
 
@@ -53,7 +54,7 @@ public class ReturnNullInspection extends BaseInspection implements InspectionOp
       checkbox("m_reportArrayMethods", InspectionGadgetsBundle.message("return.of.null.arrays.option")),
       checkbox("m_reportCollectionMethods", InspectionGadgetsBundle.message("return.of.null.collections.option")),
       checkbox("m_reportObjectMethods", InspectionGadgetsBundle.message("return.of.null.objects.option")),
-      custom("CONFIGURE_ANNOTATIONS"));
+      new OptCustom("CONFIGURE_ANNOTATIONS"));
   }
   
   @Override

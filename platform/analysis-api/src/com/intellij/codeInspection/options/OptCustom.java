@@ -6,7 +6,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents a custom control that can be rendered by some UI provides in non-specified way.
  * 
- * @param bindId ID to bind the custom control to.
+ * @param componentId ID of component, to instantiate the corresponding renderer
+ * @param data component-specific data string, to assist the rendering
  */
-public record OptCustom(@NotNull String bindId) implements OptControl {
+public record OptCustom(@NotNull String componentId, @NotNull String data) implements OptComponent {
+  public OptCustom(@NotNull String componentId) {
+    this(componentId, "");
+  }
 }

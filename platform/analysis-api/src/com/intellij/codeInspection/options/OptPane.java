@@ -94,14 +94,6 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
   }
 
   /**
-   * @param bindId ID to bind the custom control to.
-   * @return a custom control
-   */
-  public static @NotNull OptCustom custom(@NotNull String bindId) {
-    return new OptCustom(bindId);
-  }
-
-  /**
    * @param bindId     identifier of binding variable used by inspection; the corresponding variable is expected to be int
    * @param splitLabel label to display around the control
    * @param minValue   minimal allowed value of the variable

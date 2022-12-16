@@ -37,7 +37,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.java.JavaBundle.message;
 
 public class DataFlowInspection extends DataFlowInspectionBase implements InspectionOptionPaneRenderer.CustomComponentProvider {
@@ -222,7 +223,7 @@ public class DataFlowInspection extends DataFlowInspectionBase implements Inspec
                message("inspection.data.flow.ignore.assert.statements")),
       checkbox("REPORT_UNSOUND_WARNINGS",
                message("inspection.data.flow.report.problems.that.happen.only.on.some.code.paths")),
-      custom("CONFIGURE_ANNOTATIONS")
+      new OptCustom("CONFIGURE_ANNOTATIONS")
     );
   }
 }
