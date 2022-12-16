@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.colors.FontPreferences.DEFAULT_FONT_NAME
 import com.intellij.openapi.editor.colors.FontPreferences.DEFAULT_FONT_SIZE
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
-import com.intellij.openapi.vcs.changes.ui.ChangesTreeCellRenderer
 import com.intellij.ui.*
 import com.intellij.ui.paint.PaintUtil.RoundingMode
 import com.intellij.util.ui.JBUI.Borders.emptyRight
@@ -51,7 +50,8 @@ internal class CodeReviewProgressRenderer(
   ): Component {
     value as ChangesBrowserNode<*>
 
-    ChangesTreeCellRenderer.customize(this, selected)
+    background = null
+    isSelected = selected
 
     renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
     iconLabel.icon = getIcon(value)
