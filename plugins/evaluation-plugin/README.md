@@ -88,6 +88,7 @@ Moves > 100% is possible, when navigation in completion takes too many moves
 > first indentation will be skipped up to any meaningful char
 
 #### Settings
+- **Invoke on each char** - Close popup after unsuccessful completion and invoke again. It allows to check completion results on different prefixes.
 - **Top N** (default: -1): We can select only from N top filtered by the source (if there is) suggestions.
   Sometimes it's easier to type one more character and then navigate to suggestion in completion.
   *Pass -1 to disable*
@@ -95,7 +96,7 @@ Moves > 100% is possible, when navigation in completion takes too many moves
 - **Check Token** (default: true): Enable/Disable completion with first token. Such completion has lower priority then full (line) completion.
 - **Source** (default: null): Pick only suggestion from a certain source, for ex. pick only `Full line` suggestions.
   *Pass null to disable*
-- Std filters: It's possible to filter sessions by applying strategy's filters, such as: `METHOD_CALL`, `FIELD`, `VARIABLE`
+- **Std filters**: It's possible to filter sessions by applying strategy's filters, such as: `METHOD_CALL`, `FIELD`, `VARIABLE`
 
 ## Headless Mode
 

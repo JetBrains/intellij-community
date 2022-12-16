@@ -75,6 +75,7 @@ class CompletionGolfEmulation(private val settings: Settings = Settings(), priva
 
   /**
    * @param checkLine Check if expected line starts with suggestion from completion
+   * @param invokeOnEachChar Close popup after unsuccessful completion and invoke again
    * @param checkToken In case first token in suggestion equals to first token in expected string, we can pick only first token from suggestion.
 
   If completion suggest only one token - this option is useless (see checkLine ↑). Suitable for full line or multiple token completions
@@ -87,6 +88,7 @@ class CompletionGolfEmulation(private val settings: Settings = Settings(), priva
    */
   data class Settings(
     val checkLine: Boolean = true,
+    val invokeOnEachChar: Boolean = false,
 
     val checkToken: Boolean = true,
     val source: SuggestionSource? = null,

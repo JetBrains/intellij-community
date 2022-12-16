@@ -188,6 +188,7 @@ class CompletionInvokerImpl(private val project: Project,
   override fun emulateCompletionGolfSession(expectedLine: String, offset: Int, nodeProperties: TokenProperties): Session {
     val document = editor!!.document
     val emulator = CompletionGolfEmulation.createFromSettings(completionGolfSettings, expectedLine)
+    val invokeOnEachChar = completionGolfSettings?.invokeOnEachChar ?: false
     val session = Session(offset, expectedLine, null, nodeProperties)
     val line = document.getLineNumber(offset)
     val tail = document.getLineEndOffset(line) - offset
@@ -204,10 +205,13 @@ class CompletionInvokerImpl(private val project: Project,
       }
 
       emulator.pickBestSuggestion(currentString, lookup, session).also {
+        if (invokeOnEachChar) {
+          LookupManager.hideActiveLookup(project)
+        }
         printText(it.selectedWithoutPrefix() ?: nextChar)
         currentString = document.getText(TextRange(offset, document.getLineEndOffset(line) - tail))
 
-        if (currentString.isNotEmpty()) {
+        if (currentString.isNotEmpty() && !invokeOnEachChar) {
           if (it.suggestions.isEmpty() || currentString.last().let { ch -> !(ch == '_' || ch.isLetter() || ch.isDigit()) }) {
             LookupManager.hideActiveLookup(project)
           }
