@@ -4,7 +4,7 @@ Reports SLF4J or Log4j 2 logging calls, such as <code>logger.info("{}: {}", key)
 in the logger message doesn't match the number of other arguments to the logging call.
 <!-- tooltip end -->
 <p>
-Use the inspection option, if you use SLFJ4 with logging frameworks, which allow to have a placeholder for the last parameter with an exception type.
+Use the inspection option to allow last parameter with exception type.
 For example:
 <pre><code>
 log.error("For id {}: {}", id, new RuntimeException()); // will not be reported
