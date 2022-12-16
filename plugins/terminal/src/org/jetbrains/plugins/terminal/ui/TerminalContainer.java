@@ -10,8 +10,10 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.ui.TerminalWidget;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ObjectUtils;
@@ -36,7 +38,7 @@ import java.util.List;
 public class TerminalContainer {
 
   private static final Logger LOG = Logger.getInstance(TerminalContainer.class);
-  private static final String TERMINAL_WIDGET_KEY = TerminalWidget.class.getName();
+  private static final Key<TerminalWidget> TERMINAL_WIDGET_KEY = Key.create(TerminalWidget.class.getSimpleName());
 
   private final Content myContent;
   private final TerminalWidget myTerminalWidget;
@@ -88,7 +90,7 @@ public class TerminalContainer {
     panel.setBorder(null);
     panel.setFocusable(false);
     JComponent component = terminalWidget.getComponent();
-    component.putClientProperty(TERMINAL_WIDGET_KEY, terminalWidget);
+    ClientProperty.put(component, TERMINAL_WIDGET_KEY, terminalWidget);
     panel.add(component, BorderLayout.CENTER);
     return panel;
   }
@@ -239,8 +241,7 @@ public class TerminalContainer {
   }
 
   private static @Nullable TerminalWidget getWidgetByComponent(@NotNull Component c) {
-    Object clientProperty = c instanceof JComponent ? ((JComponent)c).getClientProperty(TERMINAL_WIDGET_KEY) : null;
-    return ObjectUtils.tryCast(clientProperty, TerminalWidget.class);
+    return ClientProperty.get(c, TERMINAL_WIDGET_KEY);
   }
 
   private @Nullable Splitter findRootSplitter() {
