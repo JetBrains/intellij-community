@@ -71,6 +71,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private List<? extends UsageInfo> myCachedSelectedUsageInfos;
   private Pattern myCachedSearchPattern;
   private String myCachedReplaceString;
+  private boolean myCachedCaseSensitive;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private @NotNull Set<GroupNode> myPreviousSelectedGroupNodes = new HashSet<>();
   private @Nullable UsagePreviewToolbarWithSimilarUsagesLink myToolbarWithSimilarUsagesLink;
@@ -160,10 +161,12 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
 
     if (!Objects.equals(infos, myCachedSelectedUsageInfos) // avoid moving viewport
         || !UsageViewPresentation.arePatternsEqual(myCachedSearchPattern, myPresentation.getSearchPattern())
-        || !Objects.equals(myCachedReplaceString, myPresentation.getReplaceString())) {
+        || !Objects.equals(myCachedReplaceString, myPresentation.getReplaceString())
+        || myCachedCaseSensitive != myPresentation.isCaseSensitive()) {
       highlight(infos, myEditor, myProject, true, HighlighterLayer.ADDITIONAL_SYNTAX);
       myCachedSelectedUsageInfos = infos;
       myCachedSearchPattern = myPresentation.getSearchPattern();
+      myCachedCaseSensitive = myPresentation.isCaseSensitive();
       myCachedReplaceString = myPresentation.getReplaceString();
     }
   }
@@ -322,6 +325,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       return null;
     }
     FindModel stub = new FindModel();
+    stub.setCaseSensitive(panel.myPresentation.isCaseSensitive());
     stub.setMultiline(true);
     stub.setRegularExpressions(true);
     stub.setReplaceAll(true);

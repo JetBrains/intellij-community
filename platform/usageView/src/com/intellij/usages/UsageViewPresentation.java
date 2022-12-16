@@ -42,6 +42,7 @@ public class UsageViewPresentation {
   private boolean myMergeDupLinesAvailable = true;
   private boolean myExcludeAvailable = true;
   private Pattern mySearchPattern;
+  private boolean myCaseSensitive;
   private String myReplaceString;
   private boolean myReplaceMode;
 
@@ -218,6 +219,14 @@ public class UsageViewPresentation {
 
   public Pattern getSearchPattern() {
     return mySearchPattern;
+  }
+
+  public void setCaseSensitive(boolean caseSensitive) {
+    myCaseSensitive = caseSensitive;
+  }
+
+  public boolean isCaseSensitive() {
+    return myCaseSensitive;
   }
 
   /**
