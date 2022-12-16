@@ -45,6 +45,8 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.dependencies" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
   </component>
   <component name="copyright">
     <Base>
