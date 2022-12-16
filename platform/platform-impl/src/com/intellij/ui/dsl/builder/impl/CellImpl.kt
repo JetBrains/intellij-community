@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.validation.*
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.Label
+import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.components.DslLabel
@@ -51,6 +52,8 @@ internal class CellImpl<T : JComponent>(
 
   private var visible = viewComponent.isVisible
   private var enabled = viewComponent.isEnabled
+
+  val onChangeManager = OnChangeManager(component)
 
   @Deprecated("Use align method instead")
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellImpl<T> {
@@ -172,11 +175,21 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, prop: MutableProperty<V>): CellImpl<T> {
-    componentSet(component, prop.get())
+    onChangeManager.applyBinding {
+      componentSet(component, prop.get())
+    }
 
-    onApply { if (shouldSaveOnApply()) prop.set(componentGet(component)) }
-    onReset { componentSet(component, prop.get()) }
-    onIsModified { shouldSaveOnApply() && componentGet(component) != prop.get() }
+    onApply {
+      if (shouldSaveOnApply()) prop.set(componentGet(component))
+    }
+    onReset {
+      onChangeManager.applyBinding {
+        componentSet(component, prop.get())
+      }
+    }
+    onIsModified {
+      shouldSaveOnApply() && componentGet(component) != prop.get()
+    }
     return this
   }
 
@@ -299,6 +312,12 @@ internal class CellImpl<T : JComponent>(
 
   override fun onIsModified(callback: () -> Boolean): CellImpl<T> {
     dialogPanelConfig.isModifiedCallbacks.list(component).add(callback)
+    return this
+  }
+
+  @Throws(UiDslException::class)
+  override fun onChanged(listener: (component: T, binding: Boolean) -> Unit): CellImpl<T> {
+    onChangeManager.register(listener)
     return this
   }
 

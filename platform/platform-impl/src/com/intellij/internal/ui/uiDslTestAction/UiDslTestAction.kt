@@ -44,7 +44,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
   override fun createCenterPanel(): JComponent {
     val tabbedPane = JBTabbedPane()
     tabbedPane.minimumSize = Dimension(300, 200)
-    tabbedPane.preferredSize = Dimension(800, 600)
+    tabbedPane.preferredSize = Dimension(1000, 800)
     tabbedPane.addTab("Labels", JScrollPane(LabelsPanel().panel))
     tabbedPane.addTab("Text Fields", createTextFields())
     tabbedPane.addTab("Comments", JScrollPane(createCommentsPanel()))
@@ -58,6 +58,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     tabbedPane.addTab("Others", OthersPanel().panel)
     tabbedPane.addTab("Deprecated Api", JScrollPane(DeprecatedApiPanel().panel))
     tabbedPane.addTab("CheckBox/RadioButton", CheckBoxRadioButtonPanel().panel)
+    tabbedPane.addTab("OnChange", OnChangePanel().panel)
 
     return panel {
       row {

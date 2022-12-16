@@ -291,13 +291,16 @@ interface Row {
    */
   fun browserLink(@NlsContexts.LinkLabel text: String, url: String): Cell<BrowserLink>
 
+  @Deprecated("Use overloaded method and Cell.onChange")
+  fun <T> dropDownLink(item: T, items: List<T>, onSelected: ((T) -> Unit)? = null, updateText: Boolean = true): Cell<DropDownLink<T>>
+
   /**
+   * Use [Cell.onChanged] to listen selection changes
+   *
    * @param item current item
    * @param items list of all available items in popup
-   * @param onSelected invoked when item is selected
-   * @param updateText true if after selection link text is updated, false otherwise
    */
-  fun <T> dropDownLink(item: T, items: List<T>, onSelected: ((T) -> Unit)? = null, updateText: Boolean = true): Cell<DropDownLink<T>>
+  fun <T> dropDownLink(item: T, items: List<T>): Cell<DropDownLink<T>>
 
   fun icon(icon: Icon): Cell<JLabel>
 
