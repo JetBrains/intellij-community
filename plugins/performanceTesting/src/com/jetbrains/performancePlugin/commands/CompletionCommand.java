@@ -90,7 +90,7 @@ public class CompletionCommand extends PerformanceCommand {
       .subscribe(CompletionPhaseListener.TOPIC, new CompletionPhaseListener() {
         @Override
         public void completionPhaseChanged(boolean isCompletionRunning) {
-          if (!isCompletionRunning && !CompletionServiceImpl.isPhase(CompletionPhase.CommittingDocuments.class)) {
+          if (!isCompletionRunning && !CompletionServiceImpl.isPhase(CompletionPhase.CommittingDocuments.class) && !span.isNull()) {
             if (CompletionServiceImpl.getCurrentCompletionProgressIndicator() == null) {
               String description =
                 "CompletionServiceImpl.getCurrentCompletionProgressIndicator() is null on " + CompletionServiceImpl.getCompletionPhase();
