@@ -1783,7 +1783,7 @@ public final class UIUtil {
   /**
    * Provides all input event modifiers including deprecated, since they are still used in IntelliJ platform
    */
-  @MagicConstant(flagsFromClass = InputEvent.class)
+  @MagicConstant(flags = {Event.SHIFT_MASK, Event.CTRL_MASK, Event.META_MASK, Event.ALT_MASK, InputEvent.SHIFT_DOWN_MASK, InputEvent.CTRL_DOWN_MASK, InputEvent.META_DOWN_MASK, InputEvent.ALT_DOWN_MASK, InputEvent.BUTTON1_DOWN_MASK, InputEvent.BUTTON2_DOWN_MASK, InputEvent.BUTTON3_DOWN_MASK, InputEvent.ALT_GRAPH_DOWN_MASK})
   public static int getAllModifiers(@NotNull InputEvent event) {
     return event.getModifiers() | event.getModifiersEx();
   }
