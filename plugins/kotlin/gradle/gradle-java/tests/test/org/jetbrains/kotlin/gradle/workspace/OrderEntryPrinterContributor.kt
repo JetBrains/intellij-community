@@ -70,7 +70,8 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
                 config.hideStdlib && isStdlibModule(entry) ||
                 config.hideKotlinTest && isKotlinTestModule(entry) ||
                 config.hideKonanDist && isKonanDistModule(entry) ||
-                config.excludeDependenciesRegex != null && config.excludeDependenciesRegex!!.matches(entry.presentableName)
+                config.excludeDependencies != null && config.excludeDependencies!!.matches(entry.presentableName) ||
+                config.onlyDependencies != null && !config.onlyDependencies!!.matches(entry.presentableName)
     }
 
     // In IJ workspace model, each source module should have a dependency on itself
