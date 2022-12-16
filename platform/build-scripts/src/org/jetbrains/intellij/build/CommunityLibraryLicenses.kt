@@ -179,8 +179,7 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/apache/incubator-tuweni/tree/main/toml")
       .apache("https://github.com/apache/incubator-tuweni/blob/main/LICENSE"),
     LibraryLicense(name = "ASM (JetBrains's fork)", libraryName = "ASM",
-                   url = "https://github.com/JetBrains/intellij-deps-asm",
-                   additionalLibraryNames = listOf("asm-capture"))
+                   url = "https://github.com/JetBrains/intellij-deps-asm")
       .newBsd("https://github.com/JetBrains/intellij-deps-asm/blob/master/LICENSE.txt"),
     LibraryLicense(name = "ASM Tools", libraryName = "asm-tools", url = "https://asm.ow2.io", )
       .newBsd("https://asm.ow2.io/license.html"),
