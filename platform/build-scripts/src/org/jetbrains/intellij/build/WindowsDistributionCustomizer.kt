@@ -56,12 +56,6 @@ abstract class WindowsDistributionCustomizer {
   var customNsiConfigurationFiles: PersistentList<String> = persistentListOf()
 
   /**
-   * Path to a file which contains set of properties to manage UI options when installing the product in silent mode. If {@code null}
-   * the default platform/build-scripts/resources/win/nsis/silent.config will be used.
-   */
-  var silentInstallationConfig: Path? = null
-
-  /**
    * Name of the root directory in Windows .zip archive
    */
   // method is used by AndroidStudioProperties.groovy (https://bit.ly/3heXKlQ)
