@@ -21,8 +21,9 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
             it.receiverTypeReference == null
         }
 
-        KotlinTopLevelFunctionFqnNameIndex.processAllElements(project, scope, { nameFilter(getShortName(it)) }, processor)
-        KotlinTopLevelPropertyFqnNameIndex.processAllElements(project, scope, { nameFilter(getShortName(it)) }, processor)
+        val keyFilter: (String) -> Boolean = { nameFilter(getShortName(it)) }
+        KotlinTopLevelFunctionFqnNameIndex.processAllElements(project, scope, keyFilter, processor)
+        KotlinTopLevelPropertyFqnNameIndex.processAllElements(project, scope, keyFilter, processor)
 
         return values
     }
