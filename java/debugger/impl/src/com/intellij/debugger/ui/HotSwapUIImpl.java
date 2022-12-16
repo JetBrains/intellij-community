@@ -168,29 +168,31 @@ public final class HotSwapUIImpl extends HotSwapUI {
           return;
         }
 
-        if (!modifiedClasses.isEmpty()) {
-          HotSwapProgressImpl progress = new HotSwapProgressImpl(myProject);
-          if (modifiedClasses.keySet().size() == 1) {
-            progress.setSessionForActions(ContainerUtil.getFirstItem(modifiedClasses.keySet()));
-          }
-          progress.addProgressListener(new HotSwapProgressImpl.HotSwapProgressListener() {
-            @Override
-            public void onCancel() {
-              statusListener.onCancel(sessions);
-            }
-
-            @Override
-            public void onFinish() {
-              if (progress.getMessages(MessageCategory.ERROR).isEmpty()) {
-                statusListener.onSuccess(sessions);
-              }
-              else {
-                statusListener.onFailure(sessions);
-              }
-            }
-          });
-          ApplicationManager.getApplication().executeOnPooledThread(() -> reloadModifiedClasses(modifiedClasses, progress));
+        if (modifiedClasses.isEmpty()) {
+          return; // Without calling onCancel.
         }
+
+        HotSwapProgressImpl progress = new HotSwapProgressImpl(myProject);
+        if (modifiedClasses.keySet().size() == 1) {
+          progress.setSessionForActions(ContainerUtil.getFirstItem(modifiedClasses.keySet()));
+        }
+        progress.addProgressListener(new HotSwapProgressImpl.HotSwapProgressListener() {
+          @Override
+          public void onCancel() {
+            statusListener.onCancel(sessions);
+          }
+
+          @Override
+          public void onFinish() {
+            if (progress.getMessages(MessageCategory.ERROR).isEmpty()) {
+              statusListener.onSuccess(sessions);
+            }
+            else {
+              statusListener.onFailure(sessions);
+            }
+          }
+        });
+        ApplicationManager.getApplication().executeOnPooledThread(() -> reloadModifiedClasses(modifiedClasses, progress));
       }, ModalityState.NON_MODAL);
     });
   }
