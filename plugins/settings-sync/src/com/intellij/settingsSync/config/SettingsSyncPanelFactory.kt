@@ -24,6 +24,7 @@ internal object SettingsSyncPanelFactory {
       }
 
       SettingsCategoryDescriptor.listAll().forEach { descriptor ->
+        descriptor.reset()
         indent {
           row {
             if (descriptor.secondaryGroup == null) {
