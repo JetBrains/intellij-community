@@ -177,7 +177,10 @@ public final class HotSwapUIImpl extends HotSwapUI {
           progress.setSessionForActions(ContainerUtil.getFirstItem(modifiedClasses.keySet()));
         }
         progress.addProgressListener(delegatingTo(statusListener, sessions, progress));
-        ApplicationManager.getApplication().executeOnPooledThread(() -> reloadModifiedClasses(modifiedClasses, progress));
+
+        ApplicationManager.getApplication().executeOnPooledThread(
+          () -> reloadModifiedClasses(modifiedClasses, progress)
+        );
       }, ModalityState.NON_MODAL);
     });
   }
