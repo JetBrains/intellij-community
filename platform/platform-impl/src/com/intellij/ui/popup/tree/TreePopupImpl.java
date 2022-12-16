@@ -55,7 +55,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
     myWizardTree = new MyTree();
     myWizardTree.getAccessibleContext().setAccessibleName("WizardTree");
     myModel = FilteringTreeModel.createModel(getTreeStep().getStructure(), this, Invoker.forEventDispatchThread(this), this);
-    myWizardTree.setModel(new AsyncTreeModel(myModel, this));
+    myWizardTree.setModel(myModel);
     myModel.updateTree(myWizardTree, false, null);
     myWizardTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
