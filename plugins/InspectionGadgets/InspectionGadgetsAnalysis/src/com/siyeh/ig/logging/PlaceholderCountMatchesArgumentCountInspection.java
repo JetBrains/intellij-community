@@ -16,6 +16,8 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -160,6 +162,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
       int argumentCount = arguments.length - index;
       boolean lastArgumentIsException = hasThrowableType(arguments[arguments.length - 1]);
+      boolean lastArgumentIsSupplier = couldBeThrowableSupplier(loggerType, parameters[parameters.length - 1], arguments[arguments.length - 1]);
       if (argumentCount == 1) {
         final PsiExpression argument = arguments[index];
         final PsiType argumentType = argument.getType();
@@ -170,6 +173,8 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
               final PsiExpression[] initializers = arrayInitializerExpression.getInitializers();
               argumentCount = initializers.length;
               lastArgumentIsException = initializers.length > 0 && hasThrowableType(initializers[initializers.length - 1]);
+              lastArgumentIsSupplier = initializers.length > 0 &&
+                                       couldBeThrowableSupplier(loggerType, parameters[parameters.length - 1], initializers[initializers.length - 1]);
             }
             else {
               return;
@@ -202,7 +207,9 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
           // the exception, then the stack trace won't be logged.
           ResultType type =
             ((placeholderCount == argumentCount && (!lastArgumentIsException || argumentCount > 1)) ||
-             (lastArgumentIsException && placeholderCount == argumentCount - 1)) ?
+             (lastArgumentIsException && placeholderCount == argumentCount - 1) ||
+            //consider the most general case
+             (lastArgumentIsSupplier && (placeholderCount == argumentCount || placeholderCount == argumentCount - 1))) ?
             ResultType.SUCCESS : ResultType.PLACE_HOLDER_MISMATCH;
           argumentCount = lastArgumentIsException ? argumentCount - 1 : argumentCount;
           yield type;
@@ -246,6 +253,51 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
         return true;
       }
       return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE);
+    }
+
+    private static boolean couldBeThrowableSupplier(LoggerType loggerType, PsiParameter lastParameter, PsiExpression lastArgument) {
+      if (loggerType != LoggerType.LOG4J_OLD_STYLE && loggerType != LoggerType.LOG4J_FORMATTED_STYLE) {
+        return false;
+      }
+      PsiType lastParameterType = lastParameter.getType();
+      if (lastParameterType instanceof PsiEllipsisType psiEllipsisType) {
+        lastParameterType = psiEllipsisType.getComponentType();
+      }
+      if (!(InheritanceUtil.isInheritor(lastParameterType, CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER) ||
+            InheritanceUtil.isInheritor(lastParameterType, "org.apache.logging.log4j.util.Supplier"))) {
+        return false;
+      }
+      PsiClassType throwable = PsiType.getJavaLangThrowable(lastArgument.getManager(), lastArgument.getResolveScope());
+
+      if (lastArgument instanceof PsiLambdaExpression lambdaExpression) {
+        Map<PsiElement, String> errors = LambdaUtil.checkReturnTypeCompatible(lambdaExpression, throwable);
+        return errors == null;
+      }
+      if (lastArgument instanceof PsiMethodReferenceExpression referenceExpression) {
+        PsiType psiType = PsiMethodReferenceUtil.getMethodReferenceReturnType(referenceExpression);
+        return throwable.isAssignableFrom(psiType) || psiType.isAssignableFrom(throwable);
+      }
+
+      PsiType type = lastArgument.getType();
+      if (!(type instanceof PsiClassType psiClassType)) {
+        return false;
+      }
+      PsiClassType.ClassResolveResult resolveGenerics = psiClassType.resolveGenerics();
+      Iterator<PsiType> iterator = resolveGenerics.getSubstitutor().getSubstitutionMap().values().iterator();
+      if (!iterator.hasNext()) {
+        return true;
+      }
+      PsiType psiType = iterator.next();
+      if (psiType == null) {
+        return true;
+      }
+      if (psiType instanceof PsiCapturedWildcardType capturedWildcardType) {
+        PsiType lowerBound = capturedWildcardType.getLowerBound();
+        PsiType upperBond = capturedWildcardType.getUpperBound();
+        return (lowerBound == null || throwable.isAssignableFrom(lowerBound) || lowerBound.isAssignableFrom(throwable)) &&
+               (throwable.isAssignableFrom(upperBond) || upperBond.isAssignableFrom(throwable));
+      }
+      return throwable.isAssignableFrom(psiType) || psiType.isAssignableFrom(throwable);
     }
 
     @Nullable

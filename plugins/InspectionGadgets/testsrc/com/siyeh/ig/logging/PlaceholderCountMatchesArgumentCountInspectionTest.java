@@ -46,6 +46,7 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
         void info(String message, Object... params);
         void fatal(String message, Object... params);
         void error(Supplier<?> var1, Throwable var2);
+        void info(String message, Supplier<?>... params);
         LogBuilder atInfo();
         LogBuilder atFatal();
         LogBuilder atError();
@@ -391,5 +392,32 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
                }
              }"""
     );
+  }
+
+  public void testLog4j2WithExceptionInSuppliers() {
+    doTest("""
+             import org.apache.logging.log4j.*;
+             import org.apache.logging.log4j.util.Supplier;
+             class Logging {
+               private static final Logger LOG = LogManager.getLogger();
+               void m(int i) {
+                try {
+                  throw new RuntimeException();
+                } catch (IllegalArgumentException | IllegalStateException t) {
+                    LOG.info(/*More arguments provided (3) than placeholders specified (1)*/"test {}"/**/, () -> "test", () -> "test", () -> t);
+                } catch (Throwable t) {
+                    LOG.info("test {}", () -> "test", () -> t);
+                    LOG.info(/*More arguments provided (3) than placeholders specified (1)*/"test {}"/**/, () -> "test", () -> "test", () -> t);
+                    Supplier<Throwable> s = () -> t;
+                    LOG.info("test {}", () -> "test", s);
+                    Supplier<?> s2 = () -> t;
+                    LOG.info("test {}", () -> "test", s2);
+                    Supplier s3 = () -> t;
+                    LOG.info("test {}", () -> "test", s3);
+                    LOG.info("test {}", () -> "test", RuntimeException::new);
+                    LOG.info("test {}", () -> "test");
+                }
+               }
+             }""");
   }
 }
