@@ -267,16 +267,16 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         }
         final PsiElement qualifier1 = aReference.getQualifier();
         if (qualifier1 != null) {
-          Map<String, Set<String>> allReferencesByName = getReferencesFromCache(containingFile);
-          Collection<String> classesWithReferenceName = allReferencesByName.get(aReference.getReferenceName());
-          if (classesWithReferenceName.size() > 1) {
+          Set<String> nonUniqueReferences = getNonUniqueReferencesFromCache(containingFile);
+          if (nonUniqueReferences.contains(aReference.getReferenceName())) {
             continue;
           }
 
           PsiElement elementToHighlight = qualifier1;
           final ProblemHighlightType highlightType;
           if (reportAsInformationInsideJavadoc ||
-              ignoreInModuleStatements && PsiTreeUtil.getParentOfType(reference, PsiUsesStatement.class, PsiProvidesStatement.class) != null ||
+              ignoreInModuleStatements &&
+              PsiTreeUtil.getParentOfType(reference, PsiUsesStatement.class, PsiProvidesStatement.class) != null ||
               InspectionProjectProfileManager.isInformationLevel(getShortName(), aReference) && isOnTheFly()) {
             if (!isOnTheFly()) return;
             highlightType = ProblemHighlightType.INFORMATION;
@@ -294,7 +294,8 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       }
     }
 
-    private static void collectInnerClassNames(PsiJavaCodeReferenceElement reference, List<? super PsiJavaCodeReferenceElement> references) {
+    private static void collectInnerClassNames(PsiJavaCodeReferenceElement reference,
+                                               List<? super PsiJavaCodeReferenceElement> references) {
       PsiElement rParent = reference.getParent();
       while (rParent instanceof PsiJavaCodeReferenceElement) {
         final PsiJavaCodeReferenceElement parentReference = (PsiJavaCodeReferenceElement)rParent;
@@ -314,16 +315,17 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
     }
   }
 
-  private static Map<String, Set<String>> getReferencesFromCache(PsiJavaFile file) {
+  private static Set<String> getNonUniqueReferencesFromCache(PsiJavaFile file) {
     return CachedValuesManager.getCachedValue(file, () -> {
       ReferenceCollector referenceCollector = new ReferenceCollector();
       file.accept(referenceCollector);
-      return CachedValueProvider.Result.create(referenceCollector.getReferences(), PsiModificationTracker.MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(referenceCollector.getNonUniqueReferences(), PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
   private static class ReferenceCollector extends JavaRecursiveElementWalkingVisitor {
-    private final Map<String, Set<String>> referencesByName = new HashMap<>();
+    private final Map<String, String> referenceByFirstVisitName = new HashMap<>();
+    private final Set<String> nonUniqueReferences = new HashSet<>();
 
     @Override
     public void visitImportList(@NotNull PsiImportList list) { }
@@ -339,12 +341,19 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (!(target instanceof final PsiClass aClass)) {
         return;
       }
-      referencesByName.compute(reference.getReferenceName(), (k, elements) -> {
-        if (elements == null) {
-          elements = new HashSet<>();
+      String qualifiedName = aClass.getQualifiedName();
+      String referenceName = reference.getReferenceName();
+      if (qualifiedName == null || referenceName == null) {
+        return;
+      }
+      referenceByFirstVisitName.compute(referenceName, (k, element) -> {
+        if (element == null) {
+          return qualifiedName;
         }
-        elements.add(aClass.getQualifiedName());
-        return elements;
+        if (!qualifiedName.equals(element)) {
+          nonUniqueReferences.add(referenceName);
+        }
+        return element;
       });
     }
 
@@ -353,8 +362,8 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       visitReferenceElement(expression);
     }
 
-    public Map<String, Set<String>> getReferences() {
-      return referencesByName;
+    public Set<String> getNonUniqueReferences() {
+      return nonUniqueReferences;
     }
   }
 }
