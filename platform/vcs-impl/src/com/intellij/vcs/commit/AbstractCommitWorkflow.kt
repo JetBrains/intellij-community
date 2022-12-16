@@ -422,6 +422,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         throw e
       }
       catch (e: Throwable) {
+        LOG.warn(e)
         return CommitProblem.createError(e)
       }
       finally {
