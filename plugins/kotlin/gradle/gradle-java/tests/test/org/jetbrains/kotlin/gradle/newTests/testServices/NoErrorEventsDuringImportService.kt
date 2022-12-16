@@ -2,9 +2,10 @@
 package org.jetbrains.kotlin.gradle.newTests.testServices
 
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
-import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.codeInsight.gradle.ImportStatusCollector
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.rules.ExternalResource
+import java.io.File
 
 class NoErrorEventsDuringImportService : ExternalResource() {
     private val importStatusCollector = ImportStatusCollector()
@@ -16,15 +17,32 @@ class NoErrorEventsDuringImportService : ExternalResource() {
     }
 
     override fun after() {
-        assertNoBuildErrorEventsReported()
-
         ExternalSystemProgressNotificationManager
             .getInstance()
             .removeNotificationListener(importStatusCollector)
     }
 
-    private fun assertNoBuildErrorEventsReported() {
-        UsefulTestCase.assertEmpty("No error events was expected to be reported", importStatusCollector.buildErrors)
+    fun checkImportErrors(testDataDirectoryService: TestDataDirectoryService) {
+        val expectedFailure = File(testDataDirectoryService.testDataDirectory(), "importErrors.txt")
+        val buildErrors = importStatusCollector.buildErrors
+        when {
+            !expectedFailure.exists() && buildErrors.isEmpty() -> return
+
+            expectedFailure.exists() && buildErrors.isEmpty() ->
+                error(
+                    "Expected to have some import errors, but none were actually issues\n" +
+                            "If that's the expected behaviour, remove the following file: \n" +
+                            expectedFailure.canonicalPath
+                )
+
+            else -> {
+                // assertFileEquals will handle both remaining cases:
+                // - expectedFailure exists and some errors reported (will check that the failure is the same)
+                // - expectedFailure doesn't exist, but some errors reported (will create the expected file + fail the test once)
+                val buildErrorsString = buildErrors.joinToString(separator = "\n") { it.message }
+                KotlinTestUtils.assertEqualsToFile(expectedFailure, buildErrorsString)
+            }
+        }
     }
 
 }
