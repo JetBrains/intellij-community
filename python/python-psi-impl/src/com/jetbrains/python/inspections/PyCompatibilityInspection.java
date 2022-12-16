@@ -20,10 +20,13 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptComponent;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -47,8 +50,9 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * User: catherine
@@ -78,7 +82,7 @@ public class PyCompatibilityInspection extends PyInspection {
     .toImmutableList();
 
   @NotNull
-  private static final List<String> SUPPORTED_IN_SETTINGS = ContainerUtil.map(SUPPORTED_LEVELS, LanguageLevel::toString);
+  private static final List<@NlsSafe String> SUPPORTED_IN_SETTINGS = ContainerUtil.map(SUPPORTED_LEVELS, LanguageLevel::toString);
 
   // Legacy DefaultJDOMExternalizer requires public fields for proper serialization
   public JDOMExternalizableStringList ourVersions = new JDOMExternalizableStringList();
@@ -112,8 +116,26 @@ public class PyCompatibilityInspection extends PyInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return PythonUiService.getInstance().createCompatibilityInspectionOptionsPanel(SUPPORTED_IN_SETTINGS, ourVersions);
+  public @NotNull OptPane getOptionsPane() {
+    @SuppressWarnings("LanguageMismatch") OptComponent[] versionCheckboxes = 
+      ContainerUtil.map2Array(SUPPORTED_IN_SETTINGS, OptComponent.class, ver -> checkbox(ver, ver));
+    return pane(group(PyPsiBundle.message("INSP.compatibility.check.for.compatibility.with.python.versions"), versionCheckboxes));
+  }
+
+  @Override
+  public Object getOption(@NotNull String bindId) {
+    return ourVersions.contains(bindId);
+  }
+
+  @Override
+  public void setOption(@NotNull String bindId, Object value) {
+    boolean checked = (boolean) value;
+    if (!checked) {
+      ourVersions.remove(bindId);
+    }
+    else if (!ourVersions.contains(bindId)) {
+      ourVersions.add(bindId);
+    }
   }
 
   @NotNull
