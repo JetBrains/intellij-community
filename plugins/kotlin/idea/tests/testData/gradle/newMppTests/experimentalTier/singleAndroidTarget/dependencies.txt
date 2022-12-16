@@ -1,0 +1,23 @@
+MODULES
+    project
+    project.androidTest
+        project.main (friend, TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains:annotations:13.0 (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
+    project.main
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
+        Gradle: org.jetbrains:annotations:13.0 (COMPILE)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
+    project.unitTest
+        project.main (friend, TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
+        Gradle: org.jetbrains:annotations:13.0 (TEST)
+        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
+
+Test configuration:
+- hiding following roots: resources, android-specific roots, generated
+- hiding following standard dependencies: sdk, self
