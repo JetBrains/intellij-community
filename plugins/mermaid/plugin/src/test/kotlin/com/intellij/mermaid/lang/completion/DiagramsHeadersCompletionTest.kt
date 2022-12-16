@@ -19,7 +19,8 @@ class DiagramsHeadersCompletionTest : MermaidBaseTestCase("completion/diagrams")
     "C4Container",
     "C4Component",
     "C4Dynamic",
-    "C4Deployment"
+    "C4Deployment",
+    "mindmap"
   )
 
   private fun doTest(vararg variants: String) {
