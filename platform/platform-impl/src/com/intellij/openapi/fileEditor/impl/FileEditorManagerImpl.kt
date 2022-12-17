@@ -141,24 +141,22 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   private val dockable = lazy { DockableEditorTabbedContainer(mainSplitters, false, coroutineScope) }
   private val selectionHistory = SelectionHistory()
   private var lastSelectedComposite: Reference<EditorComposite?>? = null
+
   private val fileUpdateChannel: MergingUpdateChannel<VirtualFile> = MergingUpdateChannel(delay = 50.milliseconds) { toUpdate ->
-    val splitters = getAllSplitters()
     val isNewUI = ExperimentalUI.isNewUI()
     val fileDocumentManager = FileDocumentManager.getInstance()
     for (file in toUpdate) {
       if (fileDocumentManager.isFileModified(file)) {
-        for (splitter in splitters) {
+        for (composite in openedComposites.filter { it.file == file }) {
           withContext(Dispatchers.EDT) {
-            for (c in splitter.getAllComposites(file)) {
-              if (c.isPreview) {
-                c.isPreview = false
-              }
+            if (composite.isPreview) {
+              composite.isPreview = false
             }
           }
         }
       }
 
-      for (each in splitters) {
+      for (each in getAllSplitters()) {
         each.doUpdateFileIcon(file)
         each.updateFileColor(file)
         if (!isNewUI) {
@@ -178,7 +176,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   /**
-   * Removes invalid myEditor and updates "modified" status.
+   * Removes invalid editor and updates "modified" status.
    */
   private val editorPropertyChangeListener = MyEditorPropertyChangeListener()
   private var contentFactory: DockableEditorContainerFactory? = null
@@ -199,13 +197,29 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     val currentFileEditorFlow = MutableStateFlow<FileEditor?>(null)
     this.currentFileEditorFlow = currentFileEditorFlow.asStateFlow()
     coroutineScope.launch {
-      splitterFlow
+      val compositeFlow = splitterFlow
         .take(1)
         .flatMapConcat { it.currentCompositeFlow }
-        .flatMapConcat { it?.selectedEditorWithProvider ?: flowOf(null) }
-        .collect {
-          currentFileEditorFlow.value = it?.fileEditor
-        }
+        .shareIn(coroutineScope, started = SharingStarted.Eagerly, replay = 1)
+
+      launch {
+        compositeFlow
+          .flatMapConcat { it?.selectedEditorWithProvider ?: flowOf(null) }
+          .collect {
+            currentFileEditorFlow.value = it?.fileEditor
+          }
+      }
+
+      launch {
+        compositeFlow
+          .collectLatest { composite ->
+            updateFileName(composite?.file)
+            // expected in EDT
+            withContext(Dispatchers.EDT) {
+              fireSelectionChanged(composite)
+            }
+          }
+      }
     }
 
     project.messageBus.connect(coroutineScope).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
@@ -219,6 +233,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     if (ApplicationManager.getApplication().isUnitTestMode || forceUseUiInHeadlessMode()) {
       isInitialized.set(true)
       mainSplitters = EditorsSplitters(manager = this, coroutineScope = coroutineScope)
+      check(splitterFlow.tryEmit (mainSplitters))
     }
   }
 
@@ -237,16 +252,6 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     // set after we set mainSplitters
     if (!isInitialized.compareAndSet(false, true)) {
       LOG.error("already initialized")
-    }
-
-    coroutineScope.launch {
-      component.currentCompositeFlow.collectLatest { composite ->
-        updateFileName(composite?.file)
-        // expected in EDT
-        withContext(Dispatchers.EDT) {
-          fireSelectionChanged(composite)
-        }
-      }
     }
 
     // connect after we set mainSplitters
@@ -352,10 +357,6 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     @JvmStatic
     fun forbidSplitFor(file: VirtualFile): Boolean {
       return java.lang.Boolean.TRUE == file.getUserData(SplitAction.FORBID_TAB_SPLIT)
-    }
-
-    private fun assertDispatchThread() {
-      ApplicationManager.getApplication().assertIsDispatchThread()
     }
 
     internal fun getOriginalFile(file: VirtualFile): VirtualFile {
@@ -749,7 +750,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
                         options: FileEditorOpenOptions): FileEditorComposite {
     var window = suggestedWindow
     require(file.isValid) { "file is not valid: $file" }
-    assertDispatchThread()
+    EDT.isCurrentThreadEdt()
     if (window != null && window.isDisposed) {
       window = null
     }
@@ -1021,7 +1022,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     }
 
     // restore selected editor
-    val provider = if (entry == null) getInstanceImpl().getSelectedFileEditorProvider(composite) else entry.selectedProvider
+    val provider = if (entry == null) getInstanceImpl().getSelectedFileEditorProvider(composite, project) else entry.selectedProvider
     if (provider != null) {
       composite.setSelectedEditor(provider.editorTypeId)
     }
@@ -1032,7 +1033,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     splitters.afterFileOpen(file)
     addSelectionRecord(file, window)
     val selectedEditor = composite.selectedEditor
-    selectedEditor.selectNotify()
+    selectedEditor?.selectNotify()
 
     // transfer focus into editor
     if (options.requestFocus && !ApplicationManager.getApplication().isUnitTestMode) {
@@ -1133,7 +1134,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     }
     // the only place this class is created, won't be needed when we get rid of EditorWithProviderComposite usages
     @Suppress("DEPRECATION")
-    return EditorWithProviderComposite(file = file, editorsWithProviders = editorsWithProviders, fileEditorManager = this)
+    return EditorWithProviderComposite(file = file, editorsWithProviders = editorsWithProviders, project = project)
   }
 
   private fun restoreEditorState(file: VirtualFile,
@@ -1175,7 +1176,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     val composite = getComposite(file) ?: return
     composite.setSelectedEditor(fileEditorProviderId)
     // todo move to setSelectedEditor()?
-    composite.selectedEditor.selectNotify()
+    composite.selectedWithProvider?.fileEditor?.selectNotify()
   }
 
   fun newEditorComposite(file: VirtualFile): EditorComposite? {
@@ -1332,17 +1333,12 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     IntentionPreviewUtils.getPreviewEditor()?.let { return it }
 
     if (!isLockFree) {
-      assertDispatchThread()
+      EDT.isCurrentThreadEdt()
     }
 
-    val currentWindow = if (isLockFree) mainSplitters.currentWindow else splitters.currentWindow
-    if (currentWindow != null) {
-      val selectedEditor = currentWindow.selectedComposite
-      if (selectedEditor != null && selectedEditor.selectedEditor is TextEditor) {
-        return (selectedEditor.selectedEditor as TextEditor).editor
-      }
-    }
-    return null
+    val selectedEditor = ((if (isLockFree || !EDT.isCurrentThreadEdt()) mainSplitters else getActiveSplitterSync())
+      .currentCompositeFlow.value)?.selectedEditor
+    return (selectedEditor as? TextEditor)?.editor
   }
 
   override fun isFileOpen(file: VirtualFile): Boolean {
@@ -1473,27 +1469,17 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
   @RequiresEdt
   override fun getComposite(file: VirtualFile): EditorComposite? {
-    if (!isInitialized.get()) {
-      return null
-    }
-
     if (!ClientId.isCurrentlyUnderLocalId) {
       return clientFileEditorManager?.getComposite(file)
     }
 
-    val editorWindow = splitters.currentWindow
-    if (editorWindow != null) {
-      val composite = editorWindow.getComposite(file)
-      if (composite != null) {
-        return composite
-      }
+    if (openedComposites.isEmpty()) {
+      return null
     }
 
     val originalFile = getOriginalFile(file)
-    return getAllSplitters()
-      .asSequence()
-      .map { each -> each.getAllComposites(originalFile).firstOrNull { it.file == originalFile } }
-      .firstOrNull { it != null }
+    return splitters.currentWindow?.getComposite(originalFile)
+           ?: openedComposites.firstOrNull { it.file == originalFile }
   }
 
   fun getAllComposites(file: VirtualFile): List<EditorComposite> {
@@ -1616,8 +1602,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   override fun isChanged(editor: EditorComposite): Boolean {
-    val fileStatusManager = FileStatusManager.getInstance(project) ?: return false
-    val status = fileStatusManager.getStatus(editor.file)
+    val status = (FileStatusManager.getInstance(project) ?: return false).getStatus(editor.file)
     return status !== FileStatus.UNKNOWN && status !== FileStatus.NOT_CHANGED
   }
 
@@ -1628,31 +1613,16 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     }
 
     openedComposites.remove(composite)
-    if (allEditors.isEmpty()) {
-      currentWindow = null
-    }
-    if (composite == lastSelected) {
-      composite.selectedEditor.deselectNotify()
-      splitters.setCurrentWindow(null, false)
-    }
+    composite.deselectNotify()
+    splitters.onDisposeComposite(composite)
 
-    val editorsWithProviders = composite.allEditorsWithProviders
-    val selectedEditor = composite.selectedEditor
-    for (editorWithProvider in editorsWithProviders.asReversed()) {
+    for (editorWithProvider in composite.allEditorsWithProviders.asReversed()) {
       val editor = editorWithProvider.fileEditor
-      val provider = editorWithProvider.provider
-      // we already notified editor (when fire event)
-      if (selectedEditor == editor) {
-        editor.deselectNotify()
-      }
       editor.removePropertyChangeListener(editorPropertyChangeListener)
-      provider.disposeEditor(editor)
+      editorWithProvider.provider.disposeEditor(editor)
     }
     Disposer.dispose(composite)
   }
-
-  private val lastSelected: EditorComposite?
-    get() = getActiveSplitterSync().currentWindow?.selectedComposite
 
   /**
    * Closes deleted files. Closes file which is in the deleted directories.
@@ -1689,7 +1659,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
     private fun propertyChanged(event: VFilePropertyChangeEvent) {
       if (VirtualFile.PROP_NAME == event.propertyName) {
-        assertDispatchThread()
+        EDT.isCurrentThreadEdt()
         val file = event.file
         if (isFileOpen(file)) {
           updateFileName(file)
@@ -1764,7 +1734,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
     // update color of the file (if necessary)
     override fun fileStatusChanged(file: VirtualFile) {
-      assertDispatchThread()
+      EDT.isCurrentThreadEdt()
       if (isFileOpen(file)) {
         updateFileStatus(file)
       }
@@ -1793,7 +1763,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 
     @OptIn(FlowPreview::class)
     private val rootChangedRequests by lazy {
-      val flow = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+      val flow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
       coroutineScope.launch {
         flow
           .debounce(100.milliseconds)
@@ -2031,8 +2001,8 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
 open class EditorWithProviderComposite @ApiStatus.Internal constructor(
   file: VirtualFile,
   editorsWithProviders: List<FileEditorWithProvider>,
-  fileEditorManager: FileEditorManagerEx
-) : EditorComposite(file = file, editorsWithProviders = editorsWithProviders, fileEditorManagerImpl = fileEditorManager)
+  project: Project,
+) : EditorComposite(file = file, editorsWithProviders = editorsWithProviders, project = project)
 
 private class SelectionHistory {
   private val history = ArrayList<kotlin.Pair<VirtualFile, EditorWindow>>()

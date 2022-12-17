@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,8 +78,8 @@ public abstract class FileEditorManager {
   /**
    * @return currently selected text editor. The method returns {@code null} in case
    * there is no selected editor at all or selected editor is not a text one.
-   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    */
+  @RequiresEdt
   public abstract @Nullable Editor getSelectedTextEditor();
 
   /**

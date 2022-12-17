@@ -70,7 +70,7 @@ import javax.swing.*
 class EditorTabbedContainer internal constructor(private val window: EditorWindow,
                                                  private val coroutineScope: CoroutineScope) : CloseTarget {
   private val editorTabs: EditorTabs
-  private val myDragOutDelegate: DragOutDelegate = MyDragOutDelegate()
+  private val dragOutDelegate = MyDragOutDelegate()
 
   init {
     val disposable = Disposer.newDisposable()
@@ -258,7 +258,7 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
       .setIcon(if (UISettings.getInstance().showFileIconInTabs) icon else null)
       .setTooltipText(tooltip)
       .setObject(file)
-      .setDragOutDelegate(myDragOutDelegate)
+      .setDragOutDelegate(dragOutDelegate)
     tab.setTestableUi { it.put("editorTab", tab.text) }
 
     coroutineScope.launch {
@@ -283,7 +283,7 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
     }
     group.addAction(closeTab, Constraints.LAST)
     tab.setTabLabelActions(group, ActionPlaces.EDITOR_TAB)
-    tab.setTabPaneActions(composite.selectedEditor.tabActions)
+    tab.setTabPaneActions(composite.selectedEditor!!.tabActions)
     editorTabs.addTabSilently(tab, indexToInsert)
   }
 

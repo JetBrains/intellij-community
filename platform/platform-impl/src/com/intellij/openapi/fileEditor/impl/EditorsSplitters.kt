@@ -45,6 +45,7 @@ import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.IconUtil
 import com.intellij.util.PathUtilRt
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBRectangle
@@ -109,7 +110,7 @@ open class EditorsSplitters internal constructor(
     }
   }
 
-  private val currentWindowFlow: MutableStateFlow<EditorWindow?> = MutableStateFlow(null)
+  private val currentWindowFlow = MutableStateFlow<EditorWindow?>(null)
   internal val currentCompositeFlow: MutableStateFlow<EditorComposite?> = MutableStateFlow(null)
 
   val currentWindow: EditorWindow?
@@ -190,12 +191,13 @@ open class EditorsSplitters internal constructor(
   }
 
   fun clear() {
+    val windows = windows.toList()
+    this.windows.clear()
     for (window in windows) {
       window.dispose()
     }
 
     removeAll()
-    windows.clear()
     setCurrentWindowAndComposite(null)
     // revalidate doesn't repaint correctly after "Close All"
     repaint()
@@ -341,13 +343,15 @@ open class EditorsSplitters internal constructor(
   }
 
   fun closeAllFiles(repaint: Boolean = true) {
+    val oldWindow = currentWindowFlow.value
+    val oldComposite = currentCompositeFlow.value
+
     val windows = windows.toList()
     this.windows.clear()
     for (window in windows) {
       window.dispose()
     }
     removeAll()
-    setCurrentWindowAndComposite(null)
     // revalidate doesn't repaint correctly after "Close All"
     if (repaint) {
       repaint()
@@ -357,6 +361,13 @@ open class EditorsSplitters internal constructor(
       for (file in window.fileList) {
         window.closeFile(file = file, disposeIfNeeded = false, transferFocus = false)
       }
+    }
+    // should be not required - later we should add here assert
+    if (oldWindow != null) {
+      currentWindowFlow.compareAndSet(oldWindow, null)
+    }
+    if (oldComposite != null) {
+      currentCompositeFlow.compareAndSet(oldComposite, null)
     }
   }
 
@@ -411,9 +422,6 @@ open class EditorsSplitters internal constructor(
   }
 
   internal suspend fun updateFileColor(file: VirtualFile) {
-    val windows = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      findWindows(file)
-    }
     if (windows.isEmpty()) {
       return
     }
@@ -422,23 +430,27 @@ open class EditorsSplitters internal constructor(
       manager.getFileColor(file) to getForegroundColorForFile(manager.project, file)
     }
 
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      val colorScheme = EditorColorsManager.getInstance().schemeForCurrentUITheme
-      for (window in windows) {
-        val (composite, index) = window.findCompositeAndIndex(file)!!
-        val manager = manager
-        var resultAttributes = TextAttributes()
-        var attributes = if (manager.isProblem(file)) colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) else null
-        if (composite.isPreview) {
-          val italic = TextAttributes(null, null, null, null, Font.ITALIC)
-          attributes = if (attributes == null) italic else TextAttributes.merge(italic, attributes)
+    val colorScheme = EditorColorsManager.getInstance().schemeForCurrentUITheme
+    withContext(Dispatchers.EDT) {
+      windows.asSequence()
+        .mapNotNull { window ->
+          window.findCompositeAndIndex(file)?.let { window to it }
         }
-        resultAttributes = TextAttributes.merge(resultAttributes, attributes)
-        window.setForegroundAt(index, fileColor)
-        window.setTextAttributes(index, resultAttributes.apply {
-          this.foregroundColor = colorScheme.getColor(foregroundFileColor)
-        })
-      }
+        .forEach { (window, compositeAndIndex) ->
+          val manager = manager
+          var resultAttributes = TextAttributes()
+          var attributes = if (manager.isProblem(file)) colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) else null
+          if (compositeAndIndex.first.isPreview) {
+            val italic = TextAttributes(null, null, null, null, Font.ITALIC)
+            attributes = if (attributes == null) italic else TextAttributes.merge(italic, attributes)
+          }
+          resultAttributes = TextAttributes.merge(resultAttributes, attributes)
+          val index = compositeAndIndex.second
+          window.setForegroundAt(index, fileColor)
+          window.setTextAttributes(index, resultAttributes.apply {
+            this.foregroundColor = colorScheme.getColor(foregroundFileColor)
+          })
+        }
     }
   }
 
@@ -576,7 +588,7 @@ open class EditorsSplitters internal constructor(
   internal fun closeFileEditor(file: VirtualFile, editor: FileEditor, moveFocus: Boolean) {
     // we can't close individual tab in EditorComposite
     val windows = windows.filter { window -> window.composites.any { it.allEditors.contains(editor) } }
-    closeFileInWindows(file, windows, moveFocus)
+    closeFileInWindows(file = file, windows = windows, moveFocus = moveFocus)
   }
 
   private fun closeFileInWindows(file: VirtualFile, windows: List<EditorWindow>, moveFocus: Boolean) {
@@ -589,21 +601,24 @@ open class EditorsSplitters internal constructor(
     val nextFile = findNextFile(file)
     for (window in windows) {
       LOG.assertTrue(window.selectedComposite != null)
-      window.closeFile(file, false, moveFocus)
+      window.closeFile(file = file, disposeIfNeeded = false, transferFocus = moveFocus)
       if (window.tabCount == 0 && nextFile != null && isProjectOpen && !FileEditorManagerImpl.forbidSplitFor(nextFile)) {
         manager.newEditorComposite(nextFile)?.let {
           window.setComposite(it, moveFocus)
         }
       }
     }
+
     // cleanup windows with no tabs
-    for (window in windows) {
-      if (!isProjectOpen || window.isDisposed) {
-        // call to window.unsplit() which might make its sibling disposed
-        continue
-      }
-      if (window.tabCount == 0) {
-        window.unsplit(false)
+    if (isProjectOpen) {
+      for (window in windows) {
+        if (window.isDisposed) {
+          // call to window.unsplit() which might make its sibling disposed
+          continue
+        }
+        if (window.tabCount == 0) {
+          window.unsplit(false)
+        }
       }
     }
   }
@@ -649,7 +664,7 @@ open class EditorsSplitters internal constructor(
 
   internal fun createCurrentWindow() {
     LOG.assertTrue(currentWindow == null)
-    val window = EditorWindow(owner = this)
+    val window = EditorWindow(owner = this, coroutineScope.childScope(CoroutineName("EditorWindow")))
     add(window.panel, BorderLayout.CENTER)
     setCurrentWindowAndComposite(window)
   }
@@ -660,11 +675,17 @@ open class EditorsSplitters internal constructor(
    * @param window a window to be set as current
    * @param requestFocus whether to request focus to the editor, currently selected in this window
    */
-  fun setCurrentWindow(window: EditorWindow?, requestFocus: Boolean) {
+  internal fun setCurrentWindow(window: EditorWindow?, requestFocus: Boolean) {
     require(window == null || windows.contains(window)) { "$window is not a member of this container" }
     setCurrentWindowAndComposite(window)
     if (window != null && requestFocus) {
       window.requestFocus(true)
+    }
+  }
+
+  internal fun onDisposeComposite(composite: EditorComposite) {
+    if (currentCompositeFlow.value == composite) {
+      setCurrentWindowAndComposite(null)
     }
   }
 
@@ -675,9 +696,8 @@ open class EditorsSplitters internal constructor(
   }
 
   internal fun removeWindow(window: EditorWindow) {
-    window.coroutineScope.cancel()
-    windows.remove(window)
     val selectedComposite = window.selectedComposite
+    windows.remove(window)
     currentWindowFlow.compareAndSet(window, null)
     currentCompositeFlow.compareAndSet(selectedComposite, null)
   }
@@ -903,7 +923,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val fir
       val windowDeferred = async(Dispatchers.EDT) {
         var editorWindow = context?.let(splitters::findWindowWith)
         if (editorWindow == null) {
-          editorWindow = EditorWindow(owner = splitters)
+          editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope(CoroutineName("EditorWindow")))
         }
         else if (splitters.currentWindow == null) {
           splitters.setCurrentWindow(window = editorWindow, requestFocus = false)

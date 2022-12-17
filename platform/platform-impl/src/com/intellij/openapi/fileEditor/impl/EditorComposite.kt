@@ -52,10 +52,9 @@ import javax.swing.SwingConstants
 open class EditorComposite internal constructor(
   val file: VirtualFile,
   editorsWithProviders: List<FileEditorWithProvider>,
-  private val fileEditorManagerImpl: FileEditorManagerEx,
-) : UserDataHolderBase(), FileEditorComposite, Disposable {
+  private val project: Project,
+) : FileEditorComposite, Disposable {
   private val clientId: ClientId
-  val project: Project
 
   private var tabbedPaneWrapper: TabbedPaneWrapper? = null
   private var compositePanel: EditorCompositePanel
@@ -89,19 +88,18 @@ open class EditorComposite internal constructor(
       }
     }
 
-    project = fileEditorManagerImpl.project
-
     when {
       editorsWithProviders.size > 1 -> {
         tabbedPaneWrapper = createTabbedPaneWrapper(component = null)
         val component = tabbedPaneWrapper!!.component
-        compositePanel = EditorCompositePanel(realComponent = component, composite = this, focusComponent = { component })
+        compositePanel = EditorCompositePanel(realComponent = component, composite = this, project = project, focusComponent = { component })
       }
       editorsWithProviders.size == 1 -> {
         tabbedPaneWrapper = null
         val editor = editorsWithProviders[0].fileEditor
         compositePanel = EditorCompositePanel(realComponent = createEditorComponent(editor),
                                               composite = this,
+                                              project = project,
                                               focusComponent = { editor.preferredFocusedComponent })
       }
       else -> throw IllegalArgumentException("editors array cannot be empty")
@@ -260,15 +258,18 @@ open class EditorComposite internal constructor(
 
       val component = focusWatcher!!.focusedComponent
       if (component !is JComponent || !component.isShowing() || !component.isEnabled() || !component.isFocusable()) {
-        return selectedEditor.preferredFocusedComponent
+        return selectedEditor?.preferredFocusedComponent
       }
       else {
         return component
       }
     }
 
+  @Deprecated(message = "Use FileEditorManager.getInstance()",
+              replaceWith = ReplaceWith("FileEditorManager.getInstance()"),
+              level = DeprecationLevel.ERROR)
   val fileEditorManager: FileEditorManager
-    get() = fileEditorManagerImpl
+    get() = FileEditorManager.getInstance(project)
 
   @get:Deprecated("use {@link #getAllEditors()}", ReplaceWith("allEditors"), level = DeprecationLevel.ERROR)
   val editors: Array<FileEditor>
@@ -350,27 +351,17 @@ open class EditorComposite internal constructor(
   @Suppress("HardCodedStringLiteral")
   protected fun getDisplayName(editor: FileEditor): @NlsContexts.TabTitle String = displayNames.get(editor) ?: editor.name
 
-  val selectedEditor: FileEditor
-    get() = selectedWithProvider.fileEditor
+  internal fun deselectNotify() {
+    val selected = selectedEditorWithProvider.value ?: return
+    selectedEditorWithProviderMutable.value = null
+    selected.fileEditor.deselectNotify()
+  }
 
-  open val selectedWithProvider: FileEditorWithProvider
-    get() {
-      if (editorsWithProviders.size == 1) {
-        LOG.assertTrue(tabbedPaneWrapper == null)
-        return editorsWithProviders.get(0)
-      }
-      else {
-        // we have to get editor from tabbed pane
-        var index = tabbedPaneWrapper!!.selectedIndex
-        if (index == -1) {
-          index = 0
-        }
+  val selectedEditor: FileEditor?
+    get() = selectedWithProvider?.fileEditor
 
-        LOG.assertTrue(index >= 0, index)
-        LOG.assertTrue(index < editorsWithProviders.size, index)
-        return editorsWithProviders.get(index)
-      }
-    }
+  val selectedWithProvider: FileEditorWithProvider?
+    get() = selectedEditorWithProvider.value
 
   fun setSelectedEditor(providerId: String) {
     editorsWithProviders.firstOrNull { it.provider.editorTypeId == providerId }?.let { setSelectedEditor(it) }
@@ -414,6 +405,7 @@ open class EditorComposite internal constructor(
     get() = allEditors.any { it.isModified }
 
   override fun dispose() {
+    selectedEditorWithProviderMutable.value = null
     for (editor in editorsWithProviders) {
       @Suppress("DEPRECATION")
       if (!Disposer.isDisposed(editor.fileEditor)) {
@@ -447,7 +439,7 @@ open class EditorComposite internal constructor(
   fun currentStateAsHistoryEntry(): HistoryEntry {
     val editors = allEditors
     val states = editors.map { it.getState(FileEditorStateLevel.FULL) }
-    val selectedProviderIndex = editors.indexOf(selectedEditor)
+    val selectedProviderIndex = editors.indexOf(selectedEditorWithProvider.value?.fileEditor)
     LOG.assertTrue(selectedProviderIndex != -1)
     val providers = allProviders
     return HistoryEntry.createLight(file, providers, states, providers.get(selectedProviderIndex), isPreview)
@@ -456,6 +448,7 @@ open class EditorComposite internal constructor(
 
 private class EditorCompositePanel(realComponent: JComponent,
                                    private val composite: EditorComposite,
+                                   private val project: Project,
                                    var focusComponent: () -> JComponent?) : JPanel(BorderLayout()), DataProvider {
   init {
     isFocusable = false
@@ -482,12 +475,12 @@ private class EditorCompositePanel(realComponent: JComponent,
 
   override fun getData(dataId: String): Any? {
     return when {
-      CommonDataKeys.PROJECT.`is`(dataId) -> composite.project
+      CommonDataKeys.PROJECT.`is`(dataId) -> project
       PlatformCoreDataKeys.FILE_EDITOR.`is`(dataId) -> composite.selectedEditor
       CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> composite.file
       CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> arrayOf(composite.file)
       PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.`is`(dataId) -> {
-        FileEditorManagerEx.getInstanceEx(composite.project).currentWindow?.getSelectedComposite(true)?.selectedEditor
+        FileEditorManagerEx.getInstanceEx(project).currentWindow?.getSelectedComposite(true)?.selectedEditor
       }
       else -> {
         val component = composite.preferredFocusedComponent

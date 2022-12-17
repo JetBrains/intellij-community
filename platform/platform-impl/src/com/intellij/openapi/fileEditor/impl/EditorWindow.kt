@@ -41,6 +41,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.*
 import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
 import java.awt.*
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -52,7 +55,7 @@ import kotlin.math.roundToInt
 
 private val LOG = logger<EditorWindow>()
 
-class EditorWindow internal constructor(val owner: EditorsSplitters) {
+class EditorWindow internal constructor(val owner: EditorsSplitters, private val coroutineScope: CoroutineScope) {
   companion object {
     @JvmField
     val DATA_KEY = DataKey.create<EditorWindow>("editorWindow")
@@ -87,8 +90,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters) {
 
   val tabbedPane: EditorTabbedContainer
 
-  var isDisposed = false
-    private set
+  val isDisposed: Boolean
+    get() = !coroutineScope.isActive
 
   private val removedTabs = object : Stack<Pair<String, FileEditorOpenOptions>>() {
     override fun push(pair: Pair<String, FileEditorOpenOptions>) {
@@ -183,8 +186,6 @@ class EditorWindow internal constructor(val owner: EditorsSplitters) {
     get() = composites.map { it.file }
 
   private var painter: MySplitPainter? = null
-
-  internal val coroutineScope = owner.coroutineScope.childScope(CoroutineName("EditorWindow"))
 
   init {
     panel = JPanel(BorderLayout())
@@ -370,7 +371,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters) {
     this.panel.isOpaque = false
     val splitter = createSplitter(orientation = orientation == JSplitPane.VERTICAL_SPLIT, proportion = 0.5f, minProp = 0.1f, maxProp = 0.9f)
     splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, java.lang.Boolean.TRUE)
-    val result = EditorWindow(owner = owner)
+    val result = EditorWindow(owner = owner, owner.coroutineScope.childScope(CoroutineName("EditorWindow")))
     val selectedComposite = selectedComposite
     panel.remove(tabbedPane.component)
     panel.add(splitter, BorderLayout.CENTER)
@@ -514,7 +515,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters) {
       owner.removeWindow(this)
     }
     finally {
-      isDisposed = true
+      coroutineScope.cancel()
     }
   }
 
@@ -771,9 +772,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters) {
   }
 
   @Service(Service.Level.APP)
-  class SplitterService {
+  internal class SplitterService {
     companion object {
-      @JvmStatic
       fun getInstance(): SplitterService = service()
     }
 
@@ -917,7 +917,6 @@ class EditorWindow internal constructor(val owner: EditorsSplitters) {
         }
         processSiblingComposite(siblingEditor, openOptions)
       }
-      LOG.assertTrue(sibling != this)
       sibling.dispose()
     }
     parent.remove(splitter)
@@ -1129,7 +1128,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters) {
     // don't check focus in unit test mode
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       val owner = IdeFocusManager.getInstance(owner.manager.project).focusOwner
-      if (owner == null || !SwingUtilities.isDescendingFrom(owner, composite.selectedEditor.component)) {
+      if (owner == null || !SwingUtilities.isDescendingFrom(owner, composite.selectedEditor!!.component)) {
         return false
       }
     }
@@ -1193,7 +1192,7 @@ internal class EditorWindowTopComponent(
           if (!hasFocus()) {
             return@invokeLater
           }
-          val focus = composite.selectedWithProvider.fileEditor.preferredFocusedComponent
+          val focus = composite.selectedWithProvider?.fileEditor?.preferredFocusedComponent
           if (focus != null && !focus.hasFocus()) {
             IdeFocusManager.getGlobalInstance().requestFocus(focus, true)
           }
@@ -1219,7 +1218,7 @@ internal class EditorWindowTopComponent(
   override fun getData(dataId: String): Any? {
     return when {
       CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> composite.file.takeIf { it.isValid }
-      CommonDataKeys.PROJECT.`is`(dataId) -> composite.project
+      CommonDataKeys.PROJECT.`is`(dataId) -> window.owner.manager.project
       else -> null
     }
   }
