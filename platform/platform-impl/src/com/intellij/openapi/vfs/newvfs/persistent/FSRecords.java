@@ -800,7 +800,7 @@ public final class FSRecords {
       long length = getLength(fileId);
       IOException diagnosticException =
         new IOException("Failed to decompress file's content for file. File name = " + fileName + ", length = " + length);
-      e.addSuppressed(e);
+      diagnosticException.addSuppressed(e);
       handleError(diagnosticException);
     }
     catch (Throwable e) {
