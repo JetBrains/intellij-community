@@ -7,11 +7,11 @@ interface SimpleMessageBusConnection {
    *
    * @param topic   target endpoint
    * @param handler target handler to use for incoming messages
-   * @param <L>     interface for working with the target topic
-   * @throws IllegalStateException if there is already registered handler for the target endpoint within the current connection.
-   * Note that previously registered handler is not replaced by the given one then
+   * @param <L> interface for working with the target topic
+   * @throws IllegalStateException if there is already a registered handler for the target endpoint within the current connection.
+   * Note that the given one does not replace previously registered handler then
    * @see MessageBus.syncPublisher
-  </L> */
+   */
   fun <L : Any> subscribe(topic: Topic<L>, handler: L)
 
   /**
