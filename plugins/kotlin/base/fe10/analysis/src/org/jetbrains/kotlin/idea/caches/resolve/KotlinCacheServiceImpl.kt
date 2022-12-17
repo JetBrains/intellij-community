@@ -2,18 +2,11 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.ProjectTopics
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ProjectRootModificationTracker
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.LowMemoryWatcher
-import com.intellij.openapi.util.LowMemoryWatcher.LowMemoryWatcherType
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiCodeFragment
 import com.intellij.psi.PsiElement
@@ -85,14 +78,7 @@ fun createPlatformAnalysisSettings(
     }
 }
 
-class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService, ModuleRootListener, Disposable {
-
-    init {
-        val connection = project.messageBus.connect(this)
-        connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
-        LowMemoryWatcher.register({ globalFacadesPerPlatformAndSdk.clear() }, LowMemoryWatcherType.ONLY_AFTER_GC, this)
-    }
-
+class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     override fun getResolutionFacade(element: KtElement): ResolutionFacade {
         val file = element.fileForElement()
         if (file.isScript()) {
@@ -223,10 +209,6 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService, ModuleR
             override fun createValue(settings: PlatformAnalysisSettings): GlobalFacade {
                 return GlobalFacade(settings)
             }
-
-            override fun onDropFromCache(key: PlatformAnalysisSettings?, value: GlobalFacade) {
-                Disposer.dispose(value)
-            }
         }
 
     private val facadeForScriptDependenciesForProject = createFacadeForScriptDependencies(ScriptDependenciesInfo.ForProject(project))
@@ -266,7 +248,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService, ModuleR
         )
     }
 
-    private inner class GlobalFacade(settings: PlatformAnalysisSettings): Disposable {
+    private inner class GlobalFacade(settings: PlatformAnalysisSettings) {
         private val sdkContext = GlobalContext(resolverForSdkName)
         private val moduleFilters = GlobalFacadeModuleFilters(project)
         val facadeForSdk = ProjectResolutionFacade(
@@ -278,8 +260,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService, ModuleR
                 ProjectRootModificationTracker.getInstance(project)
             ),
             invalidateOnOOCB = false,
-            reuseDataFrom = null,
-            parentDisposable = this
+            reuseDataFrom = null
         )
 
         private val librariesContext = sdkContext.contextWithCompositeExceptionTracker(project, resolverForLibrariesName)
@@ -292,8 +273,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService, ModuleR
             dependencies = listOf(
                 LibraryModificationTracker.getInstance(project),
                 ProjectRootModificationTracker.getInstance(project)
-            ),
-            parentDisposable = this
+            )
         )
 
         private val modulesContext = librariesContext.contextWithCompositeExceptionTracker(project, resolverForModulesName)
@@ -303,11 +283,8 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService, ModuleR
             reuseDataFrom = facadeForLibraries,
             moduleFilter = moduleFilters::moduleFacadeFilter,
             dependencies = listOf(ProjectRootModificationTracker.getInstance(project)),
-            invalidateOnOOCB = true,
-            parentDisposable = this
+            invalidateOnOOCB = true
         )
-
-        override fun dispose() = Unit
     }
 
     private fun IdeaModuleInfo.platformSettings(targetPlatform: TargetPlatform) = createPlatformAnalysisSettings(
@@ -646,13 +623,5 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService, ModuleR
         val contextFile = (contextElement as? KtElement)?.containingKtFile
             ?: throw AssertionError("Analyzing kotlin code fragment of type ${this::class.java} with java context of type ${contextElement::class.java}")
         return if (contextFile is KtCodeFragment) contextFile.getContextFile() else contextFile
-    }
-
-    override fun beforeRootsChange(event: ModuleRootEvent) {
-        globalFacadesPerPlatformAndSdk.clear()
-    }
-
-    override fun dispose() {
-        globalFacadesPerPlatformAndSdk.clear()
     }
 }
