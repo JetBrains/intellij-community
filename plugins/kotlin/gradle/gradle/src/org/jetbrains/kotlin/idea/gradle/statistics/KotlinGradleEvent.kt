@@ -61,7 +61,7 @@ class KotlinGradleEvent(group: EventLogGroup, val eventName: GradleStatisticsEve
                     numericalMetricConsumers[it.name] = { current, _ -> current.getMetric(it)?.getValue() }
                 }
                 is StringMetrics -> {
-                    stringEventFields[it.name] = EventFields.StringValidatedByInlineRegexp(it.name.lowercase(), stringMetricRegexp(it))
+                    stringEventFields[it.name] = EventFields.StringValidatedByInlineRegexp(it.name.lowercase(), it.anonymization.validationRegexp())
                     stringMetricConsumers[it.name] = { current, _ ->
                         current.getMetric(it)?.getValue()?.anonymizeIdeString(it)
                     }
@@ -136,37 +136,3 @@ class KotlinGradleEvent(group: EventLogGroup, val eventName: GradleStatisticsEve
 
     }
 }
-
-// this function is needed for migration period. String metrics should contain own validation rules
-private fun stringMetricRegexp(metric: StringMetrics): String =
-
-    when (metric) {
-        StringMetrics.LIBRARY_SPRING_VERSION,
-        StringMetrics.LIBRARY_VAADIN_VERSION,
-        StringMetrics.LIBRARY_GWT_VERSION,
-        StringMetrics.LIBRARY_HIBERNATE_VERSION,
-        StringMetrics.KOTLIN_COMPILER_VERSION,
-        StringMetrics.KOTLIN_STDLIB_VERSION,
-        StringMetrics.KOTLIN_REFLECT_VERSION,
-        StringMetrics.KOTLIN_COROUTINES_VERSION,
-        StringMetrics.KOTLIN_SERIALIZATION_VERSION,
-        StringMetrics.ANDROID_GRADLE_PLUGIN_VERSION,
-        StringMetrics.KOTLIN_LANGUAGE_VERSION,
-        StringMetrics.KOTLIN_API_VERSION,
-        StringMetrics.GRADLE_VERSION -> "(\\d+).(\\d+).(\\d+)-?(dev|snapshot|m\\d?|rc\\d?|beta\\d?)?"
-
-        StringMetrics.JS_PROPERTY_LAZY_INITIALIZATION,
-        StringMetrics.JS_GENERATE_EXECUTABLE_DEFAULT,
-        StringMetrics.USE_OLD_BACKEND,
-        StringMetrics.USE_FIR ->  "^((true|false)_?)+$"
-
-        StringMetrics.JS_OUTPUT_GRANULARITY -> "(whole_program|per_module|per_file)"
-        StringMetrics.JS_TARGET_MODE -> "^((both|browser|nodejs|none)_?)+$"
-        StringMetrics.JVM_DEFAULTS -> "^((disable|enable|compatibility|all|all-compatibility)_?)+$"
-        StringMetrics.PROJECT_PATH -> "([0-9A-Fa-f]{40,64})|undefined"
-        StringMetrics.OS_TYPE -> "(Windows|Windows |Mac|Linux|FreeBSD|Solaris|Other|Mac OS X)\\d*"
-        StringMetrics.IDES_INSTALLED -> "^((AS|OC|CL|IU|IC|WC)_?)+$"
-        StringMetrics.MPP_PLATFORMS -> "^((common|metadata|jvm|js|arm32|arm64|mips32|mipsel32|x64|android|androidApp|androidNativeArm|androidNativeArm32|android_arm32|androidNativeArm64|android_arm64|androidNative|androidNativeX86|androidNativeX64|iosArm|iosArm32|ios_arm32|iosArm64|ios_arm64|ios|ios_x64|iosSim|iosX64|watchos|watchosArm32|watchosArm64|watchosX86|tvos|tvosArm64|tvosX64|linux|linuxArm32Hfp|linux_arm32_hfp|linuxMips32|linux_mips32|linuxMipsel32|linux_mipsel32|linuxX64|linux_x64|macos|osx|macosX64|macos_x64|mingw|mingwX64|mingw_x64|mingwX86|mingw_X86|wasm32|wasm)_?)+$"
-        StringMetrics.JS_COMPILER_MODE -> "^((ir|legacy|both|UNKNOWN)_?)+$"
-
-    }
