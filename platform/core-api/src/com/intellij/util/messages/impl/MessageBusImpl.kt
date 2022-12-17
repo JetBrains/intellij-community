@@ -15,6 +15,9 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.messages.*
 import com.intellij.util.messages.Topic.BroadcastDirection
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -105,12 +108,27 @@ open class MessageBusImpl : MessageBus {
     return connection
   }
 
+  override fun connect(coroutineScope: CoroutineScope): SimpleMessageBusConnection {
+    val scopeJob = coroutineScope.coroutineContext.job
+    scopeJob.ensureActive()
+    checkNotDisposed()
+    val connection = SimpleMessageBusConnectionImpl(this)
+    try {
+      subscribers.add(connection)
+    }
+    finally {
+      scopeJob.invokeOnCompletion { connection.disconnect() }
+    }
+    return connection
+  }
+
   override fun <L  : Any> syncPublisher(topic: Topic<L>): L {
     if (isDisposed) {
       PluginException.logPluginError(LOG, "Already disposed: $this", null, topic.javaClass)
     }
+
     @Suppress("UNCHECKED_CAST")
-    return publisherCache.computeIfAbsent(topic) { topic1: Topic<*> ->
+    return publisherCache.computeIfAbsent(topic) { topic1 ->
       val aClass = topic1.listenerClass
       Proxy.newProxyInstance(aClass.classLoader, arrayOf(aClass), createPublisher(topic1, topic1.broadcastDirection))
     } as L

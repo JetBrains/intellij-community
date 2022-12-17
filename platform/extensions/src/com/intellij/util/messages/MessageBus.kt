@@ -2,6 +2,7 @@
 package com.intellij.util.messages
 
 import com.intellij.openapi.Disposable
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -40,6 +41,8 @@ interface MessageBus : Disposable {
    * @param parentDisposable target parent disposable to which life cycle newly created connection shall be bound
    */
   fun connect(parentDisposable: Disposable): MessageBusConnection
+
+  fun connect(coroutineScope: CoroutineScope): SimpleMessageBusConnection
 
   /**
    * Allows retrieving an interface for publishing messages to the target topic.
