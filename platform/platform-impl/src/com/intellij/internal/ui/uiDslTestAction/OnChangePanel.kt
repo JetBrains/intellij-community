@@ -24,41 +24,41 @@ internal class OnChangePanel {
   val panel = panel {
     row {
       checkBox("checkBox")
-        .onChanged(::log)
+        .onChangedContext(::log)
         .bindSelected(::checkBoxValue)
     }
     buttonsGroup {
       row {
         radioButton("true", true)
-          .onChanged { component, binding -> log(component, binding, "true") }
+          .onChangedContext { component, context -> log(component, context, "true") }
         radioButton("false", false)
-          .onChanged { component, binding -> log(component, binding, "false") }
+          .onChangedContext { component, context -> log(component, context, "false") }
       }
     }.bind(::radioButtonValue)
     row {
       textField()
-        .onChanged(::log)
+        .onChangedContext(::log)
         .bindText(::textFieldValue)
     }
     row {
       textArea()
         .applyToComponent { rows = 2 }
         .align(AlignX.FILL)
-        .onChanged(::log)
+        .onChangedContext(::log)
         .bindText(::textAreaValue)
     }
     row {
       comboBox(listOf("Item 1", "Item 2", "Last"))
-        .onChanged { component, binding -> log(component, binding, "notEditable") }
+        .onChangedContext { component, context -> log(component, context, "notEditable") }
         .bindItem(::comboBoxNotEditableValue.toNullableProperty())
       comboBox(listOf("Item 1", "Item 2", "Last"))
         .applyToComponent { isEditable = true }
-        .onChanged { component, binding -> log(component, binding, "editable") }
+        .onChangedContext { component, context -> log(component, context, "editable") }
         .bindItemNullable(::comboBoxEditableValue)
     }
     row {
       dropDownLink("Item 1", listOf("Item 1", "Item 2", "Last"))
-        .onChanged(::log)
+        .onChangedContext(::log)
     }
 
     row {
@@ -67,8 +67,8 @@ internal class OnChangePanel {
     }.resizableRow()
   }
 
-  private fun log(component: JComponent, binding: Boolean, text: String? = null) {
+  private fun log(component: JComponent, context: ChangeContext, text: String? = null) {
     val textLog = if (text == null) "" else "($text)"
-    log.text = log.text + "component = ${component::class.java.name}$textLog, binding = $binding\n"
+    log.text = log.text + "component = ${component::class.java.name}$textLog, binding = ${context.binding}, event: ${context.event}\n"
   }
 }

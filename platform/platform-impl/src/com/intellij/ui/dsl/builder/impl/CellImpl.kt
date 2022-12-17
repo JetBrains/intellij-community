@@ -316,8 +316,14 @@ internal class CellImpl<T : JComponent>(
   }
 
   @Throws(UiDslException::class)
-  override fun onChanged(listener: (component: T, binding: Boolean) -> Unit): CellImpl<T> {
+  override fun onChangedContext(listener: (component: T, context: ChangeContext) -> Unit): CellImpl<T> {
     onChangeManager.register(listener)
+    return this
+  }
+
+  @Throws(UiDslException::class)
+  override fun onChanged(listener: (component: T) -> Unit): Cell<T> {
+    onChangeManager.register { component, _ -> listener(component) }
     return this
   }
 

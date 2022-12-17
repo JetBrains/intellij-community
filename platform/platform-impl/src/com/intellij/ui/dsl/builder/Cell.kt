@@ -250,5 +250,11 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * * Editable [JComboBox] sets selected item after focus is lost, so there are no onChange events while typing
    */
   @Throws(UiDslException::class)
-  fun onChanged(listener: (component: T, binding: Boolean) -> Unit): Cell<T>
+  fun onChangedContext(listener: (component: T, context: ChangeContext) -> Unit): Cell<T>
+
+  /**
+   * Simplified version of [onChangedContext] method, which doesn't provide context of notification
+   */
+  @Throws(UiDslException::class)
+  fun onChanged(listener: (component: T) -> Unit): Cell<T>
 }

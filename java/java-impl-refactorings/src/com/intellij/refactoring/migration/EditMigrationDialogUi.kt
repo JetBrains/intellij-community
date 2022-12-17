@@ -21,8 +21,8 @@ class EditMigrationDialogUi(migrationMapSet: MigrationMapSet,
         .columns(35)
         .validationOnApply { dialog.validateName(StringUtil.trim(nameField.text)) }
         .component
-      dropDownLink(JavaRefactoringBundle.message("migration.edit.copy.existing"), migrationMapSet.maps.mapSmart { it.name },
-                   onSelected = { dialog.copyMap(it) })
+      dropDownLink(JavaRefactoringBundle.message("migration.edit.copy.existing"), migrationMapSet.maps.mapSmart { it.name })
+        .onChanged { dialog.copyMap(it.selectedItem) }
     }
 
     row(JavaRefactoringBundle.message("migration.map.description.label")) {

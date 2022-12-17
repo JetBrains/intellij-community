@@ -160,23 +160,21 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
               checkBox("visible")
                 .applyToComponent {
                   isSelected = true
-                  addItemListener {
-                    when (entity) {
-                      is Cell<*> -> entity.visible(this.isSelected)
-                      is Row -> entity.visible(this.isSelected)
-                      is Panel -> entity.visible(this.isSelected)
-                    }
+                }.onChanged {
+                  when (entity) {
+                    is Cell<*> -> entity.visible(it.isSelected)
+                    is Row -> entity.visible(it.isSelected)
+                    is Panel -> entity.visible(it.isSelected)
                   }
                 }
               checkBox("enabled")
                 .applyToComponent {
                   isSelected = true
-                  addItemListener {
-                    when (entity) {
-                      is Cell<*> -> entity.enabled(this.isSelected)
-                      is Row -> entity.enabled(this.isSelected)
-                      is Panel -> entity.enabled(this.isSelected)
-                    }
+                }.onChanged {
+                  when (entity) {
+                    is Cell<*> -> entity.enabled(it.isSelected)
+                    is Row -> entity.enabled(it.isSelected)
+                    is Panel -> entity.enabled(it.isSelected)
                   }
                 }
             }
@@ -264,14 +262,10 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     val result = panel {
       row("Component type") {
         comboBox(CollectionComboBoxModel(CommentComponentType.values().asList()))
-          .applyToComponent {
-            addItemListener {
-              if (it.stateChange == ItemEvent.SELECTED) {
-                type = it?.item as? CommentComponentType ?: CommentComponentType.CHECKBOX
-                applyType()
-                placeholder.revalidate()
-              }
-            }
+          .onChanged {
+            type = it.item ?: CommentComponentType.CHECKBOX
+            applyType()
+            placeholder.revalidate()
           }
       }
       row {
