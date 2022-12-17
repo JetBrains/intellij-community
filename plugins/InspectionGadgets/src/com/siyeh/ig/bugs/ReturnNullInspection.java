@@ -6,9 +6,7 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
-import com.intellij.codeInspection.options.OptCustom;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.InspectionOptionPaneRenderer;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -27,13 +25,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Arrays;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ReturnNullInspection extends BaseInspection implements InspectionOptionPaneRenderer.CustomComponentProvider {
+public class ReturnNullInspection extends BaseInspection {
 
   private static final CallMatcher.Simple MAP_COMPUTE =
     CallMatcher.instanceCall("java.util.Map", "compute", "computeIfPresent", "computeIfAbsent");
@@ -54,12 +51,7 @@ public class ReturnNullInspection extends BaseInspection implements InspectionOp
       checkbox("m_reportArrayMethods", InspectionGadgetsBundle.message("return.of.null.arrays.option")),
       checkbox("m_reportCollectionMethods", InspectionGadgetsBundle.message("return.of.null.collections.option")),
       checkbox("m_reportObjectMethods", InspectionGadgetsBundle.message("return.of.null.objects.option")),
-      new OptCustom("CONFIGURE_ANNOTATIONS"));
-  }
-  
-  @Override
-  public @NotNull JComponent getCustomOptionComponent(@NotNull OptCustom control, @NotNull JComponent parent) {
-    return NullableNotNullDialog.createConfigureAnnotationsButton(parent);
+      NullableNotNullDialog.configureAnnotationsButton());
   }
 
   @Override

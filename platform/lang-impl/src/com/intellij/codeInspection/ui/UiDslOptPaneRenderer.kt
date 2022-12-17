@@ -16,17 +16,19 @@ import javax.swing.event.DocumentEvent
 import kotlin.math.log10
 
 class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
-  override fun render(tool: InspectionProfileEntry,
-                      pane: OptPane,
-                      customControls: InspectionOptionPaneRenderer.CustomComponentProvider): JComponent {
+  override fun render(tool: InspectionProfileEntry): JComponent? {
+    val pane = tool.optionsPane
+    if (pane.components.isEmpty()) return null
+    return render(tool, pane)
+  }
+
+  internal fun render(tool: InspectionProfileEntry, pane: OptPane): JComponent {
     return panel {
-      pane.components.forEach { render(it, tool, customControls) }
+      pane.components.forEach { render(it, tool) }
     }
   }
 
-  private fun Panel.render(component: OptComponent,
-                           tool: InspectionProfileEntry,
-                           customControls: InspectionOptionPaneRenderer.CustomComponentProvider) {
+  private fun Panel.render(component: OptComponent, tool: InspectionProfileEntry) {
     when (component) {
       is OptCheckbox -> {
         lateinit var checkbox: Cell<JBCheckBox>
@@ -41,7 +43,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         // Add checkbox nested components
         if (component.children.any()) {
           indent {
-            component.children.forEach { render(it, tool, customControls) }
+            component.children.forEach { render(it, tool) }
           }
             .enabledIf(checkbox.selected)
         }
@@ -106,14 +108,19 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
       is OptCustom -> {
         row {
+          val extension = CustomComponentExtension.find(component.componentId) ?: throw IllegalStateException(
+            "Unregistered component: " + component.componentId)
+          if (extension !is CustomComponentExtensionWithSwingRenderer<*>) {
+            throw IllegalStateException("Component does not implement ")
+          }
           // TODO: Get a parent somehow or update API
-          cell(customControls.getCustomOptionComponent(component, JPanel()))
+          cell(extension.render(component, JPanel()))
         }
       }
 
       is OptGroup -> {
         group(component.label.label()) {
-          component.children.forEach { render(it, tool, customControls) }
+          component.children.forEach { render(it, tool) }
         }
       }
 
