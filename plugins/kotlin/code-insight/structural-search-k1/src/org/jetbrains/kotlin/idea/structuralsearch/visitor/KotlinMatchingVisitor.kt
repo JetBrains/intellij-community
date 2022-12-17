@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -43,6 +42,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.psi2ir.deparenthesize
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
@@ -52,7 +52,7 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.util.match
 
 class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor) : SSRKtVisitor() {
     /** Gets the next element in the query tree and removes unnecessary parentheses. */
@@ -317,14 +317,13 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
     override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
         val other = getTreeElementDepar<KtExpression>() ?: return
         val receiverHandler = getHandler(expression.receiverExpression)
-        if (receiverHandler is SubstitutionHandler && receiverHandler.minOccurs == 0) { // can match without receiver
-            myMatchingVisitor.result = other !is KtDotQualifiedExpression
-                    && other.parent !is KtDotQualifiedExpression
+        if (receiverHandler is SubstitutionHandler && receiverHandler.minOccurs == 0 && other !is KtDotQualifiedExpression) { // can match without receiver
+            myMatchingVisitor.result = other.parent !is KtDotQualifiedExpression
                     && other.parent !is KtCallExpression
                     && myMatchingVisitor.match(expression.selectorExpression, other)
         } else {
             myMatchingVisitor.result = other is KtDotQualifiedExpression
-                    && myMatchingVisitor.match(expression.receiverExpression, other.receiverExpression)
+                    && myMatchingVisitor.matchOptionally(expression.receiverExpression, other.receiverExpression)
                     && myMatchingVisitor.match(expression.selectorExpression, other.selectorExpression)
         }
     }

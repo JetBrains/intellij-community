@@ -17,20 +17,6 @@ class KotlinSSCountModifierTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testMinDotQualifierExpression() { doTest("'_{0,0}.'_", """
-        class A {
-            companion object {
-                const val FOO = 3.14
-            }
-        }
-
-        fun main() {
-            val a = A.FOO
-            <warning descr="SSR">print(Int.hashCode())</warning>
-            <warning descr="SSR">print(<warning descr="SSR">a</warning>)</warning>
-        }
-    """.trimIndent()) }
-
     fun testMinFunctionTypeReference() { doTest("fun '_{0,0}.'_()", """
         class One
 
@@ -314,4 +300,59 @@ class KotlinSSCountModifierTest : KotlinStructuralSearchTest() {
         val p3: (Int, Int, Int) -> Int = { x, y, z -> x + y + z }
     """.trimIndent()) }
 
+    fun testQualifiedExpressionNoReceiver() { doTest("'_{0,0}.'_", """
+        class A {
+            companion object {
+                const val FOO = 3.14
+            }
+        }
+
+        fun main() {
+            val a = A.FOO
+            <warning descr="SSR">print(Int.hashCode())</warning>
+            <warning descr="SSR">print(<warning descr="SSR">a</warning>)</warning>
+        }
+    """.trimIndent()) }
+
+    fun testCallExpressionOptionalReceiver() {
+        myFixture.addFileToProject("pkg/A.kt", """
+            package pkg;
+            
+            class A {
+                companion object {
+                    fun foo() { }
+                }
+            }
+        """.trimIndent())
+        doTest("'_{0,1}.'_()", """
+            import pkg.A
+            import pkg.A.Companion.foo
+            
+            fun main() {
+                <warning descr="SSR">foo()</warning>
+                <warning descr="SSR">A.foo()</warning>
+            }
+        """.trimIndent())
+    }
+
+    fun testCallExpressionWithReceiver() {
+        myFixture.addFileToProject("pkg/A.kt", """
+            package pkg;
+            
+            class A {
+                companion object {
+                    fun foo() { }
+                }
+            }
+        """.trimIndent())
+        doTest("'_{1,1}.'_()", """
+            import pkg.A
+            import pkg.A.Companion.foo
+            
+            fun main() {
+                foo()
+                <warning descr="SSR">A.foo()</warning>
+            }
+        """.trimIndent())
+    }
 }
