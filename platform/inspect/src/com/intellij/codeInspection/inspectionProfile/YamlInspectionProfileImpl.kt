@@ -147,6 +147,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
         val enabled = configuration.enabled
         if (enabled != null) {
           inspectionTools.isEnabled = enabled
+          inspectionTools.defaultState.isEnabled = enabled
         }
         val severity = HighlightDisplayLevel.find(configuration.severity)
         if (severity != null) {
