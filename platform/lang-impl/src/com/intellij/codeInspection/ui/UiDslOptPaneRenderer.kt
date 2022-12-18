@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.Settings
-import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
@@ -16,7 +15,6 @@ import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.fields.IntegerField
 import com.intellij.ui.dsl.builder.*
 import javax.swing.*
-import javax.swing.event.DocumentEvent
 import kotlin.math.max
 
 class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
@@ -40,8 +38,8 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           checkbox = checkBox(component.label.label())
             .applyToComponent {
               isSelected = tool.getOption(component.bindId) as Boolean
-              addChangeListener { tool.setOption(component.bindId, isSelected) }
             }
+            .onChanged { tool.setOption(component.bindId, it.isSelected) }
         }
 
         // Add checkbox nested components
@@ -62,12 +60,8 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
             .applyToComponent {
               if (component.width > 0) columns = component.width
               text = tool.getOption(component.bindId) as String
-              document.addDocumentListener(object : DocumentAdapter() {
-                override fun textChanged(e: DocumentEvent) {
-                  tool.setOption(component.bindId, text)
-                }
-              })
             }
+            .onChanged { tool.setOption(component.bindId, it.text) }
             .gap(RightGap.SMALL)
 
           val suffix = component.splitLabel.splitLabel().suffix
@@ -86,9 +80,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
             columns = max(component.maxValue.toString().length, component.minValue.toString().length)
             value = tool.getOption(component.bindId) as Int
           })
-            .applyToComponent {
-              valueEditor.addListener { value -> tool.setOption(component.bindId, value) }
-            }
+            .onChanged { tool.setOption(component.bindId, it.value) }
             .gap(RightGap.SMALL)
 
           val suffix = component.splitLabel.splitLabel().suffix
@@ -104,11 +96,10 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           comboBox(getComboBoxModel(component.options), getComboBoxRenderer())
             .applyToComponent {
               val option = tool.getOption(component.bindId)
-              val type = option.javaClass
               @Suppress("HardCodedStringLiteral")
               model.selectedItem = if (option is Enum<*>) option.name else option.toString()
-              addItemListener { tool.setOption(component.bindId, convertItem((selectedItem as OptDropdown.Option).key, type)) }
             }
+            .onChanged { tool.setOption(component.bindId, convertItem((it.selectedItem as OptDropdown.Option).key, tool.getOption(component.bindId).javaClass)) }
             .gap(RightGap.SMALL)
 
           val suffix = component.splitLabel.splitLabel().suffix
