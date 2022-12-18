@@ -273,11 +273,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   @NotNull
-  public static JBIterable<Object> getSelectedValues(JTree tree) {
-    return getSelectedValues(JBIterable.of(tree.getSelectionPaths()).map(TreePath::getLastPathComponent));
-  }
-
-  @NotNull
   public static JBIterable<Object> getSelectedValues(@NotNull JBIterable<Object> selection) {
     return traverser()
       .withRoots(selection.filterMap(StructureViewComponent::unwrapValue))
