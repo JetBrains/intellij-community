@@ -336,7 +336,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         myMatchingVisitor.result =
             (!lambdaExpression.functionLiteral.hasParameterSpecification()
                     || myMatchingVisitor.matchSequentially(lambdaVP, otherVP)
-                    || lambdaVP.map { p -> getHandler(p).let { if (it is SubstitutionHandler) it.minOccurs else 1 } }.sum() == 1
+                    || lambdaVP.sumOf { p -> getHandler(p).let { if (it is SubstitutionHandler) it.minOccurs else 1 } } == 1
                     && !other.functionLiteral.hasParameterSpecification()
                     && (other.functionLiteral.descriptor as AnonymousFunctionDescriptor).valueParameters.size == 1)
                     && myMatchingVisitor.match(lambdaExpression.bodyExpression, other.bodyExpression)
@@ -477,8 +477,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
             queryIndex++
             codeIndex++
         }
-        if (codeIndex != codeArgs.size) return false
-        return true
+        return codeIndex == codeArgs.size
     }
 
     override fun visitCallExpression(expression: KtCallExpression) {
