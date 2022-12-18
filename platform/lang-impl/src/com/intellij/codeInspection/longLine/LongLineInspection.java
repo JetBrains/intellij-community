@@ -19,55 +19,28 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.CodeStyleSchemesConfigurable;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.ide.DataManager;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.HyperlinkLabel;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.settingLink;
 
 public class LongLineInspection extends LocalInspectionTool {
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final HyperlinkLabel codeStyleHyperlink = new HyperlinkLabel(LangBundle.message("link.label.edit.code.style.settings"));
-    codeStyleHyperlink.addHyperlinkListener(new HyperlinkListener() {
-      @Override
-      public void hyperlinkUpdate(HyperlinkEvent e) {
-        DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)context -> {
-          if (context != null) {
-            final Settings settings = Settings.KEY.getData(context);
-            if (settings != null) {
-              settings.select(settings.find(CodeStyleSchemesConfigurable.class));
-            }
-            else {
-              ShowSettingsUtil.getInstance()
-                .showSettingsDialog(CommonDataKeys.PROJECT.getData(context), CodeStyleSchemesConfigurable.class);
-            }
-          }
-        });
-      }
-    });
-    final JPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.add(codeStyleHyperlink);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      settingLink(LangBundle.message("link.label.edit.code.style.settings"),
+                                       CodeStyleSchemesConfigurable.CONFIGURABLE_ID));
   }
 
   @NotNull

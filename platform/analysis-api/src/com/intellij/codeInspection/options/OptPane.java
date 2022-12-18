@@ -323,4 +323,26 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
   public static @NotNull OptTabSet.TabInfo tab(@NotNull @NlsContexts.Label String label, @NotNull OptComponent @NotNull ... children) {
     return new OptTabSet.TabInfo(new PlainMessage(label), List.of(children));
   }
+
+  /**
+   * @param displayName link label
+   * @param configurableID ID of configurable to display
+   * @return a component, which represents a link to a settings page
+   */
+  public static @NotNull OptSettingLink settingLink(@NotNull @NlsContexts.Label String displayName,
+                                                    @NotNull @NonNls String configurableID) {
+    return new OptSettingLink(displayName, configurableID, null);
+  }
+
+  /**
+   * @param displayName link label
+   * @param configurableID ID of configurable to display
+   * @param controlLabel label of the control to focus on
+   * @return a component, which represents a link to a settings page
+   */
+  public static @NotNull OptSettingLink settingLink(@NotNull @NlsContexts.Label String displayName,
+                                                    @NotNull @NonNls String configurableID,
+                                                    @NotNull @Nls String controlLabel) {
+    return new OptSettingLink(displayName, configurableID, controlLabel);
+  }
 }

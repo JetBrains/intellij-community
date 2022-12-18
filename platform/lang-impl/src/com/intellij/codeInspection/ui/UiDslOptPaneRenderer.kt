@@ -3,7 +3,14 @@ package com.intellij.codeInspection.ui
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.options.*
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ConfigurableEP
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.fields.IntegerField
@@ -11,6 +18,7 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
+import com.intellij.util.containers.ContainerUtil
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import kotlin.math.log10
@@ -125,6 +133,34 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       }
 
       is OptSeparator -> separator()
+
+      is OptSettingLink -> {
+        val label = HyperlinkLabel(component.displayName)
+        label.addHyperlinkListener {
+          val dataContext = DataManager.getInstance().getDataContext(label)
+          
+          val settings = Settings.KEY.getData(dataContext)
+          if (settings == null) {
+            val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return@addHyperlinkListener
+            val ep = ContainerUtil.find<ConfigurableEP<Configurable?>>(
+              Configurable.PROJECT_CONFIGURABLE.getPoint(project).extensionList
+            ) { conf: ConfigurableEP<Configurable?> -> component.configurableID == conf.id }
+                     ?: return@addHyperlinkListener
+            val configurable = (ep.createConfigurable() ?: return@addHyperlinkListener)
+            // Settings dialog was opened without configurable hierarchy tree in the left area
+            // (e.g. by invoking "Edit inspection profile setting" fix)
+            ShowSettingsUtil.getInstance().showSettingsDialog(
+              project, configurable.javaClass
+            ) { conf -> component.controlLabel?.let { label -> conf.focusOn(label) } }
+          }
+          else {
+            val configurable = settings.find(component.configurableID) ?: return@addHyperlinkListener
+            settings.select(configurable)
+            component.controlLabel?.let { configurable.focusOn(it) }
+          }
+        }
+        row { cell(label) }
+      }
 
       is OptMap -> TODO()
       is OptSet -> TODO()
