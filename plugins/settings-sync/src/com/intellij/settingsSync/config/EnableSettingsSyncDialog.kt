@@ -14,7 +14,6 @@ import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
-import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
@@ -63,7 +62,7 @@ internal class EnableSettingsSyncDialog
   }
 
   override fun createCenterPanel(): JComponent {
-    configPanel = SettingsSyncPanelFactory.createPanel(getHeader())
+    configPanel = SettingsSyncPanelFactory.createPanel(message("enable.dialog.select.what.to.sync"))
     configPanel.reset()
 
     val centerPanel = JBUI.Panels.simplePanel(configPanel)
@@ -77,10 +76,6 @@ internal class EnableSettingsSyncDialog
     val defaultInsets = UIUtil.getRegularPanelInsets()
     centerPanel.border = JBEmptyBorder(0, defaultInsets.left, defaultInsets.bottom, defaultInsets.right)
     return centerPanel
-  }
-
-  private fun getHeader(): @Nls String {
-    return (if (remoteSettingsFound) message("enable.dialog.settings.found") + " " else "") + message("enable.dialog.select.what.to.sync")
   }
 
   override fun createActions(): Array<Action> =
