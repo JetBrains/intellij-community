@@ -1,82 +1,78 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.fileEditor;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.fileEditor
 
-import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiManager;
-import org.junit.Assert;
+import com.intellij.codeInsight.navigation.NavigationUtil
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx.Companion.getInstanceEx
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiManager
+import org.junit.Assert
 
-/**
- * @author Dmitry Avdeev
- */
-public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
-  private IdeDocumentHistoryImpl myHistory;
+class NewDocumentHistoryTest : HeavyFileEditorManagerTestCase() {
+  private var history: IdeDocumentHistoryImpl? = null
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myHistory = new IdeDocumentHistoryImpl(getProject());
+  public override fun setUp() {
+    super.setUp()
+    history = IdeDocumentHistoryImpl(project)
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  override fun tearDown() {
     try {
-      Disposer.dispose(myHistory);
+      Disposer.dispose(history!!)
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
+    catch (e: Throwable) {
+      addSuppressedException(e)
     }
     finally {
-      myHistory = null;
-      super.tearDown();
+      history = null
+      super.tearDown()
     }
   }
 
-  public void testBackNavigationBetweenEditors() {
-    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new FileEditorManagerTest.MyFileEditorProvider(), myFixture.getTestRootDisposable());
-    VirtualFile file = getFile("/src/1.txt");
-    assertNotNull(file);
-    FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(getProject());
-    FileEditor[] editors = manager.openFile(file, true);
-    assertEquals(2, editors.length);
-    assertEquals("Text", manager.getSelectedEditor(file).getName());
-    manager.setSelectedEditor(file, "mock");
-    assertEquals(FileEditorManagerTest.MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, manager.getSelectedEditor(file).getName());
-    manager.closeAllFiles();
-
-    myHistory.back();
-    assertEquals(FileEditorManagerTest.MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, manager.getSelectedEditor(file).getName());
+  fun testBackNavigationBetweenEditors() {
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.point.registerExtension(FileEditorManagerTest.MyFileEditorProvider(),
+                                                                       myFixture.testRootDisposable)
+    val file = getFile("/src/1.txt")
+    assertNotNull(file)
+    val manager = getInstanceEx(project)
+    val editors = manager.openFile(file!!, true)
+    assertEquals(2, editors.size)
+    assertEquals("Text", manager.getSelectedEditor(file)!!.name)
+    manager.setSelectedEditor(file, "mock")
+    assertEquals(FileEditorManagerTest.MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, manager.getSelectedEditor(file)!!.name)
+    manager.closeAllFiles()
+    history!!.back()
+    assertEquals(FileEditorManagerTest.MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, manager.getSelectedEditor(file)!!.name)
   }
 
-  public void testSelectFileOnNavigation() {
-    VirtualFile file1 = getFile("/src/1.txt");
-    FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(getProject());
-    manager.openFile(file1, true);
-    VirtualFile file2 = getFile("/src/2.txt");
-    manager.openFile(file2, true);
-    NavigationUtil.activateFileWithPsiElement(PsiManager.getInstance(getProject()).findFile(file1));
-    VirtualFile[] files = manager.getSelectedFiles();
-    assertEquals(1, files.length);
-    assertEquals("1.txt", files[0].getName());
+  fun testSelectFileOnNavigation() {
+    val file1 = getFile("/src/1.txt")
+    val manager = getInstanceEx(project)
+    manager.openFile(file1!!, true)
+    val file2 = getFile("/src/2.txt")
+    manager.openFile(file2!!, true)
+    NavigationUtil.activateFileWithPsiElement(PsiManager.getInstance(project).findFile(file1)!!)
+    val files = manager.selectedFiles
+    assertEquals(1, files.size)
+    assertEquals("1.txt", files[0].name)
   }
 
-  public void testMergingCommands() {
-    VirtualFile file1 = getFile("/src/1.txt");
-    VirtualFile file2 = getFile("/src/2.txt");
-    VirtualFile file3 = getFile("/src/3.txt");
-
-    FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(getProject());
-    manager.openFile(file1, true);
-    manager.openFile(file2, true);
-    Object group = new Object();
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> {}, null, group);
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> manager.openFile(file3, true), null, group);
-    myHistory.back();
-    VirtualFile[] selectedFiles = manager.getSelectedFiles();
-    Assert.assertArrayEquals(new VirtualFile[] {file2}, selectedFiles);
+  fun testMergingCommands() {
+    val file1 = getFile("/src/1.txt")
+    val file2 = getFile("/src/2.txt")
+    val file3 = getFile("/src/3.txt")
+    val manager = getInstanceEx(project)
+    manager.openFile(file1!!, true)
+    manager.openFile(file2!!, true)
+    val group = Any()
+    CommandProcessor.getInstance().executeCommand(project, {}, null, group)
+    CommandProcessor.getInstance().executeCommand(project, {
+      manager.openFile(file = file3!!, focusEditor = true)
+    }, null, group)
+    history!!.back()
+    val selectedFiles = manager.selectedFiles
+    Assert.assertArrayEquals(arrayOf<VirtualFile?>(file2), selectedFiles)
   }
 }

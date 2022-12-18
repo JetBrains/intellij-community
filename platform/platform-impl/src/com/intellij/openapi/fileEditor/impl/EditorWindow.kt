@@ -524,10 +524,11 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   fun restoreClosedTab() {
     assert(hasClosedTabs()) { "Nothing to restore" }
     val info = removedTabs.pop()
-    val file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst())
-    if (file != null) {
-      manager.openFileImpl4(this, file, null, info.getSecond().copy(selectAsCurrent = true, requestFocus = true))
-    }
+    val file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst()) ?: return
+    manager.openFileImpl4(window = this,
+                          _file = file,
+                          entry = null,
+                          options = info.getSecond().copy(selectAsCurrent = true, requestFocus = true))
   }
 
   @JvmOverloads

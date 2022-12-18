@@ -364,7 +364,8 @@ open class EditorComposite internal constructor(
     get() = selectedEditorWithProvider.value
 
   fun setSelectedEditor(providerId: String) {
-    editorsWithProviders.firstOrNull { it.provider.editorTypeId == providerId }?.let { setSelectedEditor(it) }
+    val fileEditorWithProvider = editorsWithProviders.firstOrNull { it.provider.editorTypeId == providerId } ?: return
+    setSelectedEditor(fileEditorWithProvider)
   }
 
   fun setSelectedEditor(editor: FileEditor) {

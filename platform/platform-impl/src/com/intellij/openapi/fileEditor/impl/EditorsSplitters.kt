@@ -479,7 +479,7 @@ open class EditorsSplitters internal constructor(
       }
       for (composite in composites) {
         val title = readAction {
-          EditorTabPresentationUtil.getEditorTabTitle(window.manager.project, composite.file)
+          EditorTabPresentationUtil.getEditorTabTitle(manager.project, composite.file)
         }
         withContext(Dispatchers.EDT) {
           val index = window.findCompositeIndex(composite)

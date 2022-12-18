@@ -19,25 +19,27 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
     val project = getEventProject(e) ?: return
     val file = getVirtualFile(e) ?: return
 
-
     val element = e.getData(CommonDataKeys.PSI_ELEMENT) as? Navigatable
-    val editorWindow = openInRightSplit(project, file, element)
-    if (element == null && editorWindow != null) {
-      val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return
-      if (files.size > 1) {
-        files.forEach {
-          if (file == it) {
-            return@forEach
-          }
-          val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
-          fileEditorManager.openFile(file = it, window = editorWindow, options = FileEditorOpenOptions(requestFocus = true))
+    val editorWindow = openInRightSplit(project, file, element) ?: return
+    if (element != null) {
+      return
+    }
+
+    val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return
+    if (files.size > 1) {
+      files.forEach {
+        if (file == it) {
+          return@forEach
         }
+        FileEditorManagerEx.getInstanceEx(project).openFile(file = it,
+                                                            window = editorWindow,
+                                                            options = FileEditorOpenOptions(requestFocus = true))
       }
     }
   }
 
   override fun update(e: AnActionEvent) {
-    val project = getEventProject(e)
+    val project = e.getData(CommonDataKeys.PROJECT)
     val editor = e.getData(CommonDataKeys.EDITOR)
     val fileEditor = e.getData(PlatformCoreDataKeys.FILE_EDITOR)
 
@@ -50,7 +52,6 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
       e.presentation.isEnabledAndVisible = false
       return
     }
-
 
     val contextFile = getVirtualFile(e)
     e.presentation.isEnabledAndVisible = contextFile != null && !contextFile.isDirectory &&
@@ -67,14 +68,12 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
     @JvmOverloads
     fun openInRightSplit(project: Project, file: VirtualFile, element: Navigatable? = null, requestFocus: Boolean = true): EditorWindow? {
       val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
-      val splitters = fileEditorManager.splitters
-
       if (!fileEditorManager.canOpenFile(file)) {
         element?.navigate(requestFocus)
         return null
       }
 
-      val editorWindow = splitters.openInRightSplit(file, requestFocus)
+      val editorWindow = fileEditorManager.splitters.openInRightSplit(file, requestFocus)
       if (editorWindow == null) {
         element?.navigate(requestFocus)
         return null
@@ -88,7 +87,6 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
 
     fun overrideDoubleClickWithOneClick(component: JComponent) {
       val action = ActionManager.getInstance().getAction(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT) ?: return
-
       val set = action.shortcutSet
       for (shortcut in set.shortcuts) {
         if (shortcut is MouseShortcut) {

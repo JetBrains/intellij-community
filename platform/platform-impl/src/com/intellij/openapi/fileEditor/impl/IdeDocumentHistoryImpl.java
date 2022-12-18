@@ -419,12 +419,17 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   @Override
   public final void back() {
     removeInvalidFilesFromStacks();
-    if (myBackPlaces.isEmpty()) return;
-    final PlaceInfo info = myBackPlaces.removeLast();
+    if (myBackPlaces.isEmpty()) {
+      return;
+    }
+
+    PlaceInfo info = myBackPlaces.removeLast();
     myProject.getMessageBus().syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(info, false);
 
     PlaceInfo current = getCurrentPlaceInfo();
-    if (current != null) myForwardPlaces.add(current);
+    if (current != null) {
+      myForwardPlaces.add(current);
+    }
 
     myBackInProgress = true;
     try {
@@ -591,7 +596,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
    */
   protected @Nullable FileEditorWithProvider getSelectedEditor() {
     FileEditorManagerEx editorManager = getFileEditorManager();
-    VirtualFile file = editorManager != null ? editorManager.getCurrentFile() : null;
+    VirtualFile file = editorManager == null ? null : editorManager.getCurrentFile();
     return file == null ? null : editorManager.getSelectedEditorWithProvider(file);
   }
 

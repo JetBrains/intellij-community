@@ -31,11 +31,11 @@ import java.awt.geom.Ellipse2D
 import javax.swing.Icon
 import javax.swing.JComponent
 
-class CloseTab(c: JComponent,
-               val file: VirtualFile,
-               val project: Project,
-               val editorWindow: EditorWindow,
-               parentDisposable: Disposable): AnAction(), DumbAware {
+internal class CloseTab(c: JComponent,
+                        private val file: VirtualFile,
+                        private val project: Project,
+                        private val editorWindow: EditorWindow,
+                        parentDisposable: Disposable) : AnAction(), DumbAware {
 
   init {
     ShadowAction(this, IdeActions.ACTION_CLOSE, c, parentDisposable)
@@ -98,8 +98,9 @@ class CloseTab(c: JComponent,
   private fun isModified() = UISettings.getInstance().markModifiedTabsWithAsterisk && editorWindow.getComposite(file)?.isModified == true
 
   /**
-   * Whether to restrict user to close the tab or not.
-   * Restrict it only in new UI when close button is not shown and file is not pinned and modified (blue dot shown in place of close icon)
+   * Whether to restrict the user to close the tab or not.
+   * Restrict it only in new UI when a close button is not shown and
+   * the file is not pinned and modified (blue dot shown in place of a close icon)
    */
   private fun isCloseActionRestricted() = ExperimentalUI.isNewUI() && !UISettings.getInstance().showCloseButton && !isPinned() && isModified()
 
@@ -141,37 +142,49 @@ class CloseTab(c: JComponent,
       popup?.cancel()
     }
   }
+}
 
-  private class DotIcon(private val color: Color) : Icon {
-    override fun getIconWidth() = JBUI.scale(13)
+private class DotIcon(private val color: Color) : Icon {
+   override fun getIconWidth() = JBUI.scale(13)
 
-    override fun getIconHeight() = JBUI.scale(13)
+   override fun getIconHeight() = JBUI.scale(13)
 
-    private val inset: Float
-      get() = JBUIScale.scale(3.5f)
+   private val inset: Float
+     get() = JBUIScale.scale(3.5f)
 
-    private val diameter: Float
-      get() = JBUIScale.scale(6.0f)
+   private val diameter: Float
+     get() = JBUIScale.scale(6.0f)
 
-    override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-      val g2d = g.create() as Graphics2D
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+     val g2d = g.create() as Graphics2D
+     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
-      val curInset = inset
-      val curDiameter = diameter
-      val circle = Ellipse2D.Float(x + curInset, y + curInset, curDiameter, curDiameter)
+     val curInset = inset
+     val curDiameter = diameter
+     val circle = Ellipse2D.Float(x + curInset, y + curInset, curDiameter, curDiameter)
 
-      g2d.color = color
-      g2d.fill(circle)
-      g2d.dispose()
+     g2d.color = color
+     g2d.fill(circle)
+     g2d.dispose()
+   }
+ }
+
+private val CLOSE_ICON: Icon
+  get() {
+    return if (ExperimentalUI.isNewUI()) {
+      IconManager.getInstance().getIcon("expui/general/closeSmall.svg", AllIcons::class.java)
+    }
+    else {
+      AllIcons.Actions.Close
     }
   }
 
-  companion object {
-    private val CLOSE_ICON = if (ExperimentalUI.isNewUI())
-      IconManager.getInstance().getIcon("expui/general/closeSmall.svg", AllIcons::class.java) else AllIcons.Actions.Close
-
-    private val CLOSE_HOVERED_ICON = if (ExperimentalUI.isNewUI())
-      IconManager.getInstance().getIcon("expui/general/closeSmallHovered.svg", AllIcons::class.java) else AllIcons.Actions.CloseHovered
+private val CLOSE_HOVERED_ICON: Icon
+  get() {
+    return if (ExperimentalUI.isNewUI()) {
+      IconManager.getInstance().getIcon("expui/general/closeSmallHovered.svg", AllIcons::class.java)
+    }
+    else {
+      AllIcons.Actions.CloseHovered
+    }
   }
-}
