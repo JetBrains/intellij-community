@@ -732,6 +732,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     return profile;
   }
 
+  public InspectionProfileManager getProfileManager(@NotNull Project project) {
+    return InspectionProjectProfileManager.getInstance(project);
+  }
+
   public @NotNull InspectionProfileLoader getInspectionProfileLoader(@NotNull Project project) {
     return new InspectionProfileLoaderBase(project) {
       @Override

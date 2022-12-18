@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 import com.intellij.openapi.project.Project
+import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.PROFILE_DIR
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElement
@@ -72,9 +73,12 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
 
   companion object {
     @JvmStatic
-    fun loadFrom(project: Project, filepath: String = "${getDefaultProfileDirectory(project)}/profile.yaml"): YamlInspectionProfileImpl {
+    fun loadFrom(project: Project,
+                 filepath: String = "${getDefaultProfileDirectory(project)}/profile.yaml",
+                 profileManager: InspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
+    ): YamlInspectionProfileImpl {
       val profile = readConfig(project, filepath)
-      val baseProfile = findBaseProfile(project, profile.baseProfile)
+      val baseProfile = findBaseProfile(profileManager, profile.baseProfile)
       val configurations = profile.inspections.map(::createInspectionConfig)
       val groupProvider = CompositeGroupProvider()
       groupProvider.addProvider(InspectionGroupProvider.createDynamicGroupProvider())
@@ -89,9 +93,9 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       return YamlInspectionProfileImpl(profile.name, baseProfile, configurations, groups, groupProvider)
     }
 
-    private fun findBaseProfile(project: Project, profileName: String?): InspectionProfileImpl {
+    private fun findBaseProfile(profileManager: InspectionProfileManager, profileName: String?): InspectionProfileImpl {
       return profileName
-        ?.let { ProjectInspectionProfileManager.getInstance(project).getProfile(profileName, false) }
+        ?.let { profileManager.getProfile(profileName, false) }
         ?: InspectionProfileImpl("Default")
     }
 

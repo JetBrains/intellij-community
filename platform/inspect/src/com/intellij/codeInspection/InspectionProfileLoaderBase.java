@@ -4,6 +4,8 @@ package com.intellij.codeInspection;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.inspectionProfile.YamlInspectionProfileImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.parser.ParserException;
@@ -17,6 +19,10 @@ public abstract class InspectionProfileLoaderBase implements InspectionProfileLo
     this.project = project;
   }
 
+  public InspectionProfileManager getProfileManager(Project project )  {
+    return InspectionProjectProfileManager.getInstance(project);
+  }
+
   @Nullable
   protected InspectionProfileImpl tryLoadProfileFromYaml(@NotNull String profilePath) {
     if (!YamlInspectionProfileImpl.isYamlFile(profilePath)) {
@@ -26,7 +32,7 @@ public abstract class InspectionProfileLoaderBase implements InspectionProfileLo
       throw new InspectionApplicationException("Inspection profile '" + profilePath + "' does not exist");
     }
     try {
-      return YamlInspectionProfileImpl.loadFrom(project, profilePath).buildEffectiveProfile();
+      return YamlInspectionProfileImpl.loadFrom(project, profilePath, getProfileManager(project)).buildEffectiveProfile();
     }
     catch (ParserException e) {
       // snakeyaml doesn't provide any information about where the YAML stream comes from,
