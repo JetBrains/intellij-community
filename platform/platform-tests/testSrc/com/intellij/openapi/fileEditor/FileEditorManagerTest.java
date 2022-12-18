@@ -198,8 +198,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     manager.openFile(file1, null, new FileEditorOpenOptions().withReuseOpen().withRequestFocus());
     assertEquals(2, primaryWindow.getTabCount());
     assertEquals(2, secondaryWindow.getTabCount());
-    assertOrderedEquals(primaryWindow.getFiles(), file1, file2);
-    assertOrderedEquals(secondaryWindow.getFiles(), file2, file1);
+    assertOrderedEquals(primaryWindow.getFileList(), file1, file2);
+    assertOrderedEquals(secondaryWindow.getFileList(), file2, file1);
   }
 
   public void testStoringCaretStateForFileWithFoldingsWithNoTabs() {

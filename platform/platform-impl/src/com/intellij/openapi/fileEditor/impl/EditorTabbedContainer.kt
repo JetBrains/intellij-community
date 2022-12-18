@@ -94,7 +94,17 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
     editorTabs.component.isFocusable = false
     editorTabs.component.transferHandler = MyTransferHandler()
     editorTabs
-      .setDataProvider(MyDataProvider())
+      .setDataProvider { dataId ->
+        when {
+          CommonDataKeys.PROJECT.`is`(dataId) -> window.manager.project
+          CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> window.getContextComposite()?.file?.takeIf { it.isValid }
+          EditorWindow.DATA_KEY.`is`(dataId) -> window
+          PlatformCoreDataKeys.FILE_EDITOR.`is`(dataId) -> window.getContextComposite()?.selectedEditor
+          PlatformCoreDataKeys.HELP_ID.`is`(dataId) -> HELP_ID
+          CloseTarget.KEY.`is`(dataId) -> if (editorTabs.selectedInfo == null) null else this@EditorTabbedContainer
+          else -> null
+        }
+      }
       .setPopupGroup(
         /* popupGroup = */ { CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP) as ActionGroup? },
         /* place = */ ActionPlaces.EDITOR_TAB_POPUP,
@@ -189,16 +199,14 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
   val component: JComponent
     get() = editorTabs.component
 
-  @JvmOverloads
-  fun removeTabAt(componentIndex: Int, indexToSelect: Int, transferFocus: Boolean = true): ActionCallback {
+  fun removeTabAt(componentIndex: Int, indexToSelect: Int) {
     var toSelect = if (indexToSelect >= 0 && indexToSelect < editorTabs.tabCount) editorTabs.getTabAt(indexToSelect) else null
     val info = editorTabs.getTabAt(componentIndex)
-    // removing hidden tab happens at on end of drag-out, we've already selected the correct tab for this case in dragOutStarted
+    // removing the hidden tab happens at on end of the drag-out, we've already selected the correct tab for this case in dragOutStarted
     if (info.isHidden || !window.manager.project.isOpen || window.isDisposed) {
       toSelect = null
     }
-    val callback = editorTabs.removeTab(info, toSelect, transferFocus)
-    return if (window.manager.project.isOpen && !window.isDisposed) callback else ActionCallback.DONE
+    editorTabs.removeTab(info, toSelect)
   }
 
   val selectedIndex: Int
@@ -233,7 +241,7 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
   }
 
   /**
-   * @param ignorePopup if `false` and context menu is shown currently for some tab, component for which a menu is invoked will be returned
+   * @param ignorePopup if `false` and a context menu is shown currently for some tab, component for which a menu is invoked will be returned
    */
   fun getSelectedComponent(ignorePopup: Boolean): Any? {
     return (if (ignorePopup) editorTabs.selectedInfo else editorTabs.targetInfo)?.component
@@ -268,7 +276,7 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
       }
     }
 
-    val closeTab = CloseTab(c = component, file = file, project = project, editorWindow = window, parentDisposable = parentDisposable)
+    val closeTab = CloseTab(component = component, file = file, editorWindow = window, parentDisposable = parentDisposable)
     val dataContext = DataManager.getInstance().getDataContext(component)
     val editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup") as DefaultActionGroup
     val group = DefaultActionGroup()
@@ -294,20 +302,6 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
 
   fun requestFocus(forced: Boolean) {
     IdeFocusManager.getInstance(window.manager.project).requestFocus(editorTabs.component, forced)
-  }
-
-  private inner class MyDataProvider : DataProvider {
-    override fun getData(dataId: @NonNls String): Any? {
-      return when {
-        CommonDataKeys.PROJECT.`is`(dataId) -> window.manager.project
-        CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> window.selectedFile?.takeIf { it.isValid }
-        EditorWindow.DATA_KEY.`is`(dataId) -> window
-        PlatformCoreDataKeys.FILE_EDITOR.`is`(dataId) -> window.selectedComposite?.selectedEditor
-        PlatformCoreDataKeys.HELP_ID.`is`(dataId) -> HELP_ID
-        CloseTarget.KEY.`is`(dataId) -> if (editorTabs.selectedInfo == null) null else this
-        else -> null
-      }
-    }
   }
 
   override fun close() {
@@ -637,7 +631,7 @@ private class EditorTabs(
     val index = getIndexOf(info)
     if (index != -1) {
       val file = window.getFileAt(index)
-      val indexToSelect = window.calcIndexToSelect(file, index)
+      val indexToSelect = window.computeIndexToSelect(file, index)
       if (indexToSelect >= 0 && indexToSelect < tabs.size) {
         return getTabAt(indexToSelect)
       }

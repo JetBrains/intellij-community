@@ -127,7 +127,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
     }
   }
 
-  override fun getContainers(): Set<DockContainer> = allContainers.toSet()
+  override fun getContainers(): Set<DockContainer> = getAllContainers().toSet()
 
   override fun getIdeFrame(container: DockContainer): IdeFrame? {
     return ComponentUtil.findUltimateParent(container.containerComponent) as? IdeFrame
@@ -150,13 +150,13 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
       return null
     }
 
-    for (eachContainer in allContainers) {
+    for (eachContainer in getAllContainers()) {
       if (SwingUtilities.isDescendingFrom(c, eachContainer.containerComponent) && filter.test(eachContainer)) {
         return eachContainer
       }
     }
     val parent = ComponentUtil.findUltimateParent(c)
-    for (eachContainer in allContainers) {
+    for (eachContainer in getAllContainers()) {
       if (parent === ComponentUtil.findUltimateParent(eachContainer.containerComponent) && filter.test(eachContainer)) {
         return eachContainer
       }
@@ -166,7 +166,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
 
   override fun createDragSession(mouseEvent: MouseEvent, content: DockableContent<*>): DragSession {
     stopCurrentDragSession()
-    for (each in allContainers) {
+    for (each in getAllContainers()) {
       if (each.isEmpty && each.isDisposeWhenEmpty) {
         val window = containerToWindow.get(each)
         window?.setTransparent(true)
@@ -181,7 +181,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
       currentDragSession!!.cancelSession()
       currentDragSession = null
       busyObject.onReady()
-      for (each in allContainers) {
+      for (each in getAllContainers()) {
         if (!each.isEmpty) {
           val window = containerToWindow.get(each)
           window?.setTransparent(false)
@@ -244,7 +244,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
 
     override fun getResponse(e: MouseEvent): ContentResponse {
       val point = DevicePoint(e)
-      for (each in allContainers) {
+      for (each in getAllContainers()) {
         val rec = each.acceptArea
         if (rec.contains(point)) {
           val component = each.containerComponent
@@ -324,7 +324,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
 
   private fun findContainerFor(devicePoint: DevicePoint, content: DockableContent<*>): DockContainer? {
     val containers = containers.toMutableList()
-    FileEditorManagerEx.getInstanceEx(project)?.dockContainer?.let(containers::add)
+    FileEditorManagerEx.getInstanceEx(project).dockContainer?.let(containers::add)
 
     val startDragContainer = currentDragSession?.startDragContainer
     if (startDragContainer != null) {
@@ -528,7 +528,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
         override fun stateChanged(toolWindowManager: ToolWindowManager, eventType: ToolWindowManagerEventType) {
           // Various events can mean a tool window has been removed from the frame's stripes. The comments are not exhaustive
           if (eventType == ToolWindowManagerEventType.HideToolWindow
-            || eventType == ToolWindowManagerEventType.SetSideToolAndAnchor   // Last tool window dragged to another stripe on another frame
+            || eventType == ToolWindowManagerEventType.SetSideToolAndAnchor   // The last tool window dragged to another stripe on another frame
             || eventType == ToolWindowManagerEventType.SetToolWindowType      // Last tool window made floating
             || eventType == ToolWindowManagerEventType.ToolWindowUnavailable  // Last tool window programmatically set unavailable
             || eventType == ToolWindowManagerEventType.UnregisterToolWindow) {
@@ -652,7 +652,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
 
   override fun getState(): Element {
     val root = Element("state")
-    for (each in allContainers) {
+    for (each in getAllContainers()) {
       val eachWindow = containerToWindow.get(each)
       if (eachWindow != null && eachWindow.supportReopen && each is DockContainer.Persistent) {
         val eachWindowElement = Element("window")
@@ -669,12 +669,11 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
     return root
   }
 
-  private val allContainers: Sequence<DockContainer>
-    get() {
-      return sequenceOfNotNull(FileEditorManagerEx.getInstanceEx (project)?.dockContainer) +
-             containers.asSequence () +
-             containerToWindow.keys
-    }
+  private fun getAllContainers(): Sequence<DockContainer> {
+    return sequenceOfNotNull(FileEditorManagerEx.getInstanceEx(project).dockContainer) +
+           containers.asSequence() +
+           containerToWindow.keys
+  }
 
   override fun loadState(state: Element) {
     loadedState = state

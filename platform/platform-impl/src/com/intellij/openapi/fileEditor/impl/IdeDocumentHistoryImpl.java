@@ -97,12 +97,6 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     myProject = project;
 
     MessageBusConnection busConnection = project.getMessageBus().connect(this);
-    busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-      @Override
-      public void selectionChanged(@NotNull FileEditorManagerEvent e) {
-        onSelectionChanged();
-      }
-    });
     busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
@@ -270,6 +264,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     }
   }
 
+  @Override
   public final void onSelectionChanged() {
     myCurrentCommandIsNavigation = true;
     myCurrentCommandHasMoves = true;

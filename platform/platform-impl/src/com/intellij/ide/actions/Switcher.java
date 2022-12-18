@@ -554,7 +554,7 @@ public final class Switcher extends BaseSwitcherAction {
     }
 
     private static String getIndexShortcut(int index) {
-      return StringUtil.toUpperCase(Integer.toString(index, index + 1));
+      return Strings.toUpperCase(Integer.toString(index, index + 1));
     }
 
     private void closeTabOrToolWindow(@Nullable InputEvent event) {
@@ -562,8 +562,9 @@ public final class Switcher extends BaseSwitcherAction {
         mySpeedSearch.updateEnteredPrefix();
         return;
       }
+
       JList<? extends SwitcherListItem> selectedList = getSelectedList();
-      final int[] selected = selectedList.getSelectedIndices();
+      int[] selected = selectedList.getSelectedIndices();
       Arrays.sort(selected);
       int selectedIndex = 0;
       for (int i = selected.length - 1; i >= 0; i--) {
@@ -572,13 +573,13 @@ public final class Switcher extends BaseSwitcherAction {
         if (item instanceof SwitcherVirtualFile) {
           SwitcherVirtualFile svf = (SwitcherVirtualFile)item;
           VirtualFile virtualFile = svf.getFile();
-          final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
-          EditorWindow wnd = findAppropriateWindow(svf.getWindow());
-          if (wnd == null) {
-            editorManager.closeFile(virtualFile, false, false);
+          FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
+          EditorWindow window = findAppropriateWindow(svf.getWindow());
+          if (window == null) {
+            fileEditorManager.closeFile(virtualFile, false, false);
           }
           else {
-            editorManager.closeFile(virtualFile, wnd, false);
+            fileEditorManager.closeFile(virtualFile, window);
           }
           ListUtil.removeItem(files.getModel(), selectedIndex);
           if (svf.getWindow() == null) {

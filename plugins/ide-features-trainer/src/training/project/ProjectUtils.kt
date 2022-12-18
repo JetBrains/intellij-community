@@ -12,7 +12,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.NOTIFICATIONS_SILENT_MODE
@@ -268,12 +267,6 @@ object ProjectUtils {
     contentEntry.addSourceFolder(sourcesRoot, false)
     runWriteAction(rootsModel::commit)
     project.save()
-  }
-
-  fun closeAllEditorsInProject(project: Project) {
-    FileEditorManagerEx.getInstanceEx(project).windows.forEach {
-      it.files.forEach { file -> it.closeFile(file) }
-    }
   }
 
   fun restoreProject(languageSupport: LangSupport, project: Project) {

@@ -2487,11 +2487,9 @@ public class JBTabsImpl extends JComponent
     return doRemoveTab(info, null, false);
   }
 
-  // TODO cleanup API by removing 'transferFocus' parameter where needed, after current approach (with the need to transfer focus being
-  //  determined automatically) proves to be working
   @Override
-  public @NotNull ActionCallback removeTab(final TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus) {
-    return doRemoveTab(info, forcedSelectionTransfer, false);
+  public void removeTab(final TabInfo info, @Nullable TabInfo forcedSelectionTransfer) {
+    doRemoveTab(info, forcedSelectionTransfer, false);
   }
 
   private @NotNull ActionCallback doRemoveTab(TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean isDropTarget) {

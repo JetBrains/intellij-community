@@ -18,6 +18,8 @@ import com.intellij.ui.tabs.TabInfo;
 
 import java.io.File;
 
+import static com.intellij.testFramework.CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents;
+
 public class JavaFileEditorManagerTest extends FileEditorManagerTestCase {
   public void testAsyncOpening() {
     openFiles("""
@@ -68,7 +70,7 @@ public class JavaFileEditorManagerTest extends FileEditorManagerTestCase {
     assertNotNull(moduleInfoFile);
 
     manager.openFile(moduleInfoFile);
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    executeSomeCoroutineTasksAndDispatchAllInvocationEvents(getProject());
 
     EditorTabbedContainer openedTabPane = manager.getCurrentWindow().getTabbedPane();
     assertEquals(1, openedTabPane.getTabCount());

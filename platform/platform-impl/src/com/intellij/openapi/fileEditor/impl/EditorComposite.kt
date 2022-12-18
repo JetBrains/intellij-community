@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignClientId
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -92,17 +91,16 @@ open class EditorComposite internal constructor(
       editorsWithProviders.size > 1 -> {
         tabbedPaneWrapper = createTabbedPaneWrapper(component = null)
         val component = tabbedPaneWrapper!!.component
-        compositePanel = EditorCompositePanel(realComponent = component, composite = this, project = project, focusComponent = { component })
+        compositePanel = EditorCompositePanel(realComponent = component, composite = this, focusComponent = { component })
       }
       editorsWithProviders.size == 1 -> {
         tabbedPaneWrapper = null
         val editor = editorsWithProviders[0].fileEditor
         compositePanel = EditorCompositePanel(realComponent = createEditorComponent(editor),
                                               composite = this,
-                                              project = project,
                                               focusComponent = { editor.preferredFocusedComponent })
       }
-      else -> throw IllegalArgumentException("editors array cannot be empty")
+      else -> throw IllegalArgumentException("editor array cannot be empty")
     }
 
     selectedEditorWithProviderMutable.value = editorsWithProviders[0]
@@ -149,8 +147,7 @@ open class EditorComposite internal constructor(
             return scheme.defaultBackground
           }
           else {
-            val result = scheme.getColor(EditorColors.TEARLINE_COLOR)
-            return result ?: JBColor.BLACK
+            return scheme.getColor(EditorColors.TEARLINE_COLOR) ?: JBColor.BLACK
           }
         }
       }
@@ -208,7 +205,7 @@ open class EditorComposite internal constructor(
     val topPanel = TopBottomPanel()
     topComponents.put(editor, topPanel)
     component.add(topPanel, BorderLayout.NORTH)
-    val bottomPanel: JPanel = TopBottomPanel()
+    val bottomPanel = TopBottomPanel()
     bottomComponents.put(editor, bottomPanel)
     component.add(bottomPanel, BorderLayout.SOUTH)
     return component
@@ -283,6 +280,10 @@ open class EditorComposite internal constructor(
 
   fun getTopComponents(editor: FileEditor): List<JComponent> {
     return topComponents.get(editor)!!.components.mapNotNull { (it as? NonOpaquePanel)?.targetComponent }
+  }
+
+  internal fun containsFileEditor(editor: FileEditor): Boolean {
+    return editorsWithProviders.any { it.fileEditor === editor }
   }
 
   open val tabs: JBTabs?
@@ -449,7 +450,6 @@ open class EditorComposite internal constructor(
 
 private class EditorCompositePanel(realComponent: JComponent,
                                    private val composite: EditorComposite,
-                                   private val project: Project,
                                    var focusComponent: () -> JComponent?) : JPanel(BorderLayout()), DataProvider {
   init {
     isFocusable = false
@@ -476,13 +476,9 @@ private class EditorCompositePanel(realComponent: JComponent,
 
   override fun getData(dataId: String): Any? {
     return when {
-      CommonDataKeys.PROJECT.`is`(dataId) -> project
       PlatformCoreDataKeys.FILE_EDITOR.`is`(dataId) -> composite.selectedEditor
       CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> composite.file
       CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> arrayOf(composite.file)
-      PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.`is`(dataId) -> {
-        FileEditorManagerEx.getInstanceEx(project).currentWindow?.getSelectedComposite(true)?.selectedEditor
-      }
       else -> {
         val component = composite.preferredFocusedComponent
         if (component is DataProvider && component !== this) {

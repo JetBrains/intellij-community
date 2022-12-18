@@ -6,11 +6,9 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ShadowAction
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.registry.Registry
@@ -31,14 +29,13 @@ import java.awt.geom.Ellipse2D
 import javax.swing.Icon
 import javax.swing.JComponent
 
-internal class CloseTab(c: JComponent,
+internal class CloseTab(component: JComponent,
                         private val file: VirtualFile,
-                        private val project: Project,
                         private val editorWindow: EditorWindow,
                         parentDisposable: Disposable) : AnAction(), DumbAware {
 
   init {
-    ShadowAction(this, IdeActions.ACTION_CLOSE, c, parentDisposable)
+    ShadowAction(this, IdeActions.ACTION_CLOSE, component, parentDisposable)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -49,23 +46,25 @@ internal class CloseTab(c: JComponent,
     if (ExperimentalUI.isNewUI()) {
       val showModifiedIcon = isModified()
       e.presentation.putClientProperty(JBEditorTabs.MARK_MODIFIED_KEY, showModifiedIcon)
-      val icon = if (showModifiedIcon) {
-        if (pinned) {
-          val pinIcon = AllIcons.Actions.PinTab
-          BadgeIcon(pinIcon, JBUI.CurrentTheme.IconBadge.INFORMATION, object : BadgeDotProvider() {
-            override fun getX(): Double = 0.7
+      val icon = when {
+        showModifiedIcon -> {
+          if (pinned) {
+            val pinIcon = AllIcons.Actions.PinTab
+            BadgeIcon(pinIcon, JBUI.CurrentTheme.IconBadge.INFORMATION, object : BadgeDotProvider() {
+              override fun getX(): Double = 0.7
 
-            override fun getY(): Double = 0.2
+              override fun getY(): Double = 0.2
 
-            override fun getRadius(): Double = 3.0 / pinIcon.iconWidth
-          })
+              override fun getRadius(): Double = 3.0 / pinIcon.iconWidth
+            })
+          }
+          else {
+            DotIcon(JBUI.CurrentTheme.IconBadge.INFORMATION)
+          }
         }
-        else DotIcon(JBUI.CurrentTheme.IconBadge.INFORMATION)
+        pinned -> AllIcons.Actions.PinTab
+        else -> CLOSE_ICON
       }
-      else if (pinned) {
-        AllIcons.Actions.PinTab
-      }
-      else CLOSE_ICON
 
       e.presentation.isVisible = UISettings.getInstance().showCloseButton || pinned || showModifiedIcon
       e.presentation.icon = icon
@@ -108,38 +107,34 @@ internal class CloseTab(c: JComponent,
     if (isCloseActionRestricted()) {
       return
     }
+
     if (isPinned() && e.place == ActionPlaces.EDITOR_TAB) {
-      if (Registry.get("ide.editor.tabs.interactive.pin.button").asBoolean()) {
-        editorWindow.setFilePinned(file, false)
+      if (Registry.`is`("ide.editor.tabs.interactive.pin.button")) {
+        editorWindow.setFilePinned(file = file, pinned = false)
         ComponentUtil.getParentOfType(TabLabel::class.java, e.inputEvent?.component)?.updateTabActions()
       }
       return
     }
 
-    val mgr = FileEditorManagerEx.getInstanceEx(project)
-    val window: EditorWindow?
-    if (ActionPlaces.EDITOR_TAB == e.place) {
-      window = editorWindow
-    }
-    else {
-      window = mgr.currentWindow
-    }
+    val fileEditorManager = editorWindow.manager
+    val window = if (ActionPlaces.EDITOR_TAB == e.place) editorWindow else fileEditorManager.currentWindow
     if (window != null) {
       if (e.inputEvent is MouseEvent && BitUtil.isSet(e.inputEvent.modifiersEx, InputEvent.ALT_DOWN_MASK)) {
         window.closeAllExcept(file)
       }
       else {
-        if (window.getComposite(file) != null) {
-          mgr.closeFile(file, window)
-        }
+        fileEditorManager.closeFile(file = file, window = window)
       }
     }
+
     (editorWindow.tabbedPane.tabs as MorePopupAware).let {
       val popup = PopupUtil.getPopupContainerFor(e.inputEvent?.component)
-      if (popup != null && it.canShowMorePopup()) {
-        it.showMorePopup()
+      if (popup != null) {
+        popup.cancel()
+        if (it.canShowMorePopup()) {
+          it.showMorePopup()
+        }
       }
-      popup?.cancel()
     }
   }
 }

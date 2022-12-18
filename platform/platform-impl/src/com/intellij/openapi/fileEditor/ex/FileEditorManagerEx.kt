@@ -66,7 +66,7 @@ abstract class FileEditorManagerEx : FileEditorManager() {
   abstract val activeWindow: CompletableFuture<EditorWindow?>
 
   /**
-   * Closes editors for the file opened in a particular window.
+   * Close editors for the file opened in a particular window.
    * @param file file to be closed. Cannot be null.
    */
   abstract fun closeFile(file: VirtualFile, window: EditorWindow)
@@ -111,6 +111,13 @@ abstract class FileEditorManagerEx : FileEditorManager() {
    * @see com.intellij.ui.docking.DockContainer.closeAll
    */
   abstract fun closeAllFiles()
+
+  /**
+   * Closes all editors in all windows.
+   */
+  open fun closeOpenedEditors() {
+    closeAllFiles()
+  }
 
   abstract val currentFileEditorFlow: StateFlow<FileEditor?>
 

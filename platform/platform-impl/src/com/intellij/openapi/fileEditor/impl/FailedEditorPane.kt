@@ -109,7 +109,7 @@ class FailedEditorBuilder internal constructor(@DialogMessage val message: Strin
   private fun tryOpenTab(fileEditor: FileEditor, project: Project, editorProviderId: String): Boolean {
     val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
     for (window in fileEditorManager.windows) {
-      for (composite in window.composites.toList()) {
+      for (composite in window.getComposites().toList()) {
         for (tab in composite.allEditors) {
           if (tab == fileEditor) {
             // move focus to the current window

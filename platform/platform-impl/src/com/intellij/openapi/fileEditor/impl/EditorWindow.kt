@@ -8,10 +8,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.notebook.editor.BackedVirtualFile
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -85,8 +82,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       }
   }
 
-  @JvmField
   internal var panel: JPanel
+    private set
 
   val tabbedPane: EditorTabbedContainer
 
@@ -144,46 +141,54 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     get() = owner.containsWindow(this)
 
   @Suppress("DEPRECATION")
-  @get:Deprecated("Use [getSelectedComposite]", ReplaceWith("getSelectedComposite(false)"), level = DeprecationLevel.ERROR)
+  @get:Deprecated("Use selectedComposite", ReplaceWith("selectedComposite"), level = DeprecationLevel.ERROR)
   val selectedEditor: EditorWithProviderComposite?
-    get() = getSelectedComposite(false) as EditorWithProviderComposite?
+    get() = getContextComposite() as EditorWithProviderComposite?
   val selectedComposite: EditorComposite?
-    get() = getSelectedComposite(false)
+    get() = getContextComposite()
 
   @Suppress("DEPRECATION")
   @Deprecated("Use getSelectedComposite", ReplaceWith("getSelectedComposite(ignorePopup)"), level = DeprecationLevel.ERROR)
-  fun getSelectedEditor(ignorePopup: Boolean): EditorWithProviderComposite? {
-    return getSelectedComposite(ignorePopup) as EditorWithProviderComposite?
+  fun getSelectedEditor(@Suppress("UNUSED_PARAMETER") ignorePopup: Boolean): EditorWithProviderComposite? {
+    return getContextComposite() as EditorWithProviderComposite?
   }
 
+  // used externally
   /**
    * @param ignorePopup if `false` and context a menu is shown currently for some tab,
    * composite for which a menu is invoked will be returned
    */
+  @Suppress("MemberVisibilityCanBePrivate", "unused")
   fun getSelectedComposite(ignorePopup: Boolean): EditorComposite? {
     return (tabbedPane.getSelectedComponent(ignorePopup) as? EditorWindowTopComponent)?.composite
   }
 
-  val allComposites: List<EditorComposite>
-    get() = composites.toList()
+  /**
+   * A composite in a context.
+   * For example, if a context menu is shown currently for some tab, composite for which a menu is invoked will be returned
+   */
+  fun getContextComposite(): EditorComposite? {
+    return (tabbedPane.tabs.targetInfo?.component as? EditorWindowTopComponent)?.composite
+  }
 
-  val composites: Sequence<EditorComposite>
-    get() = IntRange(0, tabCount - 1).asSequence().map(::getCompositeAt)
+  val allComposites: List<EditorComposite>
+    get() = getComposites().toList()
+
+  fun getComposites(): Sequence<EditorComposite> = IntRange(0, tabCount - 1).asSequence().map(::getCompositeAt)
 
   @Suppress("DEPRECATION")
   @get:Deprecated("{@link #getAllComposites()}", ReplaceWith("allComposites)"))
   val editors: Array<EditorWithProviderComposite>
-    get() = composites.filterIsInstance<EditorWithProviderComposite>().toList().toTypedArray()
+    get() = getComposites().filterIsInstance<EditorWithProviderComposite>().toList().toTypedArray()
 
   val files: Array<VirtualFile>
-    get() = fileList.toTypedArray()
+    get() = getFileSequence().toList().toTypedArray()
 
   val fileList: List<VirtualFile>
-    get() = fileSequence.toList()
+    get() = getFileSequence().toList()
 
-  @get:RequiresEdt
-  val fileSequence: Sequence<VirtualFile>
-    get() = composites.map { it.file }
+  @RequiresEdt
+  fun getFileSequence(): Sequence<VirtualFile> = getComposites().map { it.file }
 
   private var painter: MySplitPainter? = null
 
@@ -246,7 +251,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       }
     }
 
-    // Even if above/below adjacent editor is shifted a bit to the right from left edge of the current editor,
+    // Even if above/below adjacent editor is shifted a bit to the right from the left edge of the current editor,
     // still try to choose an editor that is visually above/below - shifted nor more than a quarter of editor width.
     val x = point.x + panel.width / 4
     // Splitter has width of one pixel - we need to step at least 2 pixels to be over an adjacent editor
@@ -300,7 +305,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       val emptyIcon = EmptyIcon.create(template.iconWidth, template.iconHeight)
       tabbedPane.insertTab(file = file,
                            icon = emptyIcon,
-                           component = EditorWindowTopComponent(this, composite),
+                           component = EditorWindowTopComponent(window = this, composite = composite),
                            tooltip = null,
                            indexToInsert = indexToInsert,
                            composite = composite,
@@ -502,7 +507,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
 
   fun closeAllExcept(selectedFile: VirtualFile?) {
     FileEditorManagerImpl.runBulkTabChange(owner) {
-      for (file in files) {
+      for (file in getFileSequence().toList()) {
         if (file != selectedFile && !isFilePinned(file)) {
           closeFile(file)
         }
@@ -531,39 +536,36 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
                           options = info.getSecond().copy(selectAsCurrent = true, requestFocus = true))
   }
 
-  @JvmOverloads
-  fun closeFile(file: VirtualFile, disposeIfNeeded: Boolean = true, transferFocus: Boolean = true) {
-    val editorManager = manager
-    FileEditorManagerImpl.runBulkTabChange(owner) {
-      val composites = owner.getAllComposites(file)
-      if (!isDisposed && composites.isEmpty()) {
-        return@runBulkTabChange
-      }
+  fun closeFile(file: VirtualFile, disposeIfNeeded: Boolean = true, @Suppress("UNUSED_PARAMETER") transferFocus: Boolean = true) {
+    closeFile(file = file, disposeIfNeeded = disposeIfNeeded)
+  }
 
+  @JvmOverloads
+  fun closeFile(file: VirtualFile, disposeIfNeeded: Boolean = true) {
+    closeFile(file = file, composite = getComposite(file), disposeIfNeeded = disposeIfNeeded)
+  }
+
+  internal fun closeFile(file: VirtualFile, composite: EditorComposite?, disposeIfNeeded: Boolean = true) {
+    FileEditorManagerImpl.runBulkTabChange(owner) {
+      val fileEditorManager = manager
       try {
-        val composite = getComposite(file)
-        val beforePublisher = editorManager.project.messageBus.syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
-        beforePublisher.beforeFileClosed(editorManager, file)
-        if (composite != null) {
+        fileEditorManager.project.messageBus.syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
+          .beforeFileClosed(fileEditorManager, file)
+        if (composite == null) {
+          (panel.parent as? Splitter)?.getOtherComponent(panel)?.let { otherComponent ->
+            IdeFocusManager.findInstance().requestFocus(otherComponent, true)
+          }
+          panel.removeAll()
+        }
+        else {
           val componentIndex = findComponentIndex(composite.component)
           // composite could close itself on decomposition
           if (componentIndex >= 0) {
-            val indexToSelect = calcIndexToSelect(file, componentIndex)
-            val options = FileEditorOpenOptions().withIndex(componentIndex).withPin(composite.isPinned)
-            val pair = Pair(file.url, options)
-            removedTabs.push(pair)
-            tabbedPane.removeTabAt(componentIndex, indexToSelect, transferFocus)
-            editorManager.disposeComposite(composite)
+            val indexToSelect = computeIndexToSelect(fileBeingClosed = file, fileIndex = componentIndex)
+            removedTabs.push(Pair(file.url, FileEditorOpenOptions(index = componentIndex, pin = composite.isPinned)))
+            tabbedPane.removeTabAt(componentIndex, indexToSelect)
+            fileEditorManager.disposeComposite(composite)
           }
-        }
-        else {
-          if (inSplitter()) {
-            val splitter = panel.parent as Splitter
-            splitter.getOtherComponent(panel)?.let { otherComponent ->
-              IdeFocusManager.findInstance().requestFocus(otherComponent, true)
-            }
-          }
-          panel.removeAll()
         }
         if (disposeIfNeeded && tabCount == 0) {
           removeFromSplitter()
@@ -573,12 +575,12 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
         }
       }
       finally {
-        editorManager.removeSelectionRecord(file, this)
+        fileEditorManager.removeSelectionRecord(file, this)
         (TransactionGuard.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
-        editorManager.notifyPublisher {
-          val project = editorManager.project
+        fileEditorManager.notifyPublisher {
+          val project = fileEditorManager.project
           if (!project.isDisposed) {
-            project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileClosed(editorManager, file)
+            project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileClosed(fileEditorManager, file)
           }
         }
         owner.afterFileClosed(file)
@@ -622,7 +624,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   }
 
   @Suppress("MemberVisibilityCanBePrivate")
-  internal fun calcIndexToSelect(fileBeingClosed: VirtualFile, fileIndex: Int): Int {
+  internal fun computeIndexToSelect(fileBeingClosed: VirtualFile, fileIndex: Int): Int {
     val currentlySelectedIndex = tabbedPane.selectedIndex
     if (currentlySelectedIndex != fileIndex) {
       // if the file being closed is not currently selected, keep the currently selected file open
@@ -912,7 +914,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     // we'll select and focus on a single editor in the end
     val openOptions = FileEditorOpenOptions(selectAsCurrent = false, requestFocus = false)
     for (sibling in siblings) {
-      for (siblingEditor in sibling.composites.toList()) {
+      for (siblingEditor in sibling.getComposites().toList()) {
         if (compositeToSelect == null) {
           compositeToSelect = siblingEditor
         }
@@ -1052,7 +1054,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     }
 
     // close all preview tabs
-    for (file in composites.filter { it.isPreview }.map { it.file }.filter { it != fileToIgnore }.distinct().toList()) {
+    for (file in getComposites().filter { it.isPreview }.map { it.file }.filter { it != fileToIgnore }.distinct().toList()) {
       defaultCloseFile(file = file, transferFocus = transferFocus)
     }
 
@@ -1068,7 +1070,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   }
 
   private fun getTabClosingOrder(closeNonModifiedFilesFirst: Boolean): MutableSet<VirtualFile> {
-    val allFiles = files
+    val allFiles = getFileSequence().toList()
     val histFiles = EditorHistoryManager.getInstance(manager.project).fileList
     val closingOrder = LinkedHashSet<VirtualFile>()
 
@@ -1153,7 +1155,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
 
   internal fun getFileAt(i: Int): VirtualFile = getCompositeAt(i).file
 
-  override fun toString() = "EditorWindow(files=${composites.joinToString { it.file.path }})"
+  override fun toString() = "EditorWindow(files=${getComposites().joinToString { it.file.path }})"
 }
 
 private fun shouldReservePreview(file: VirtualFile, options: FileEditorOpenOptions, project: Project): Boolean {
@@ -1220,6 +1222,7 @@ internal class EditorWindowTopComponent(
     return when {
       CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> composite.file.takeIf { it.isValid }
       CommonDataKeys.PROJECT.`is`(dataId) -> window.owner.manager.project
+      PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.`is`(dataId) -> window.owner.currentCompositeFlow.value?.selectedEditor
       else -> null
     }
   }

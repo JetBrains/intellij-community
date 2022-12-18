@@ -136,12 +136,12 @@ open class EditorsSplitters internal constructor(
   val currentFile: VirtualFile?
     get() = currentCompositeFlow.value?.file
 
-  private fun showEmptyText(): Boolean = (currentWindow?.fileSequence ?: emptySequence()).none()
+  private fun showEmptyText(): Boolean = (currentWindow?.getFileSequence() ?: emptySequence()).none()
 
   val openFileList: List<VirtualFile>
     get() {
       return windows.asSequence()
-        .flatMap { window -> window.composites.map { it.file } }
+        .flatMap { window -> window.getComposites().map { it.file } }
         .distinct()
         .toList()
     }
@@ -259,7 +259,7 @@ open class EditorsSplitters internal constructor(
   }
 
   private fun writeWindow(result: Element, window: EditorWindow) {
-    val composites = window.composites.toList()
+    val composites = window.getComposites().toList()
     for (i in composites.indices) {
       val file = window.getFileAt(i)
       result.addContent(writeComposite(composites.get(i), window.isFilePinned(file), window.selectedComposite))
@@ -475,7 +475,7 @@ open class EditorsSplitters internal constructor(
   internal suspend fun updateFileName(updatedFile: VirtualFile?) {
     for (window in windows) {
       val composites = withContext(Dispatchers.EDT) {
-        window.composites.filter { updatedFile == null || it.file.nameSequence.contentEquals(updatedFile.nameSequence) }.toList()
+        window.getComposites().filter { updatedFile == null || it.file.nameSequence.contentEquals(updatedFile.nameSequence) }.toList()
       }
       for (composite in composites) {
         val title = readAction {
@@ -572,7 +572,7 @@ open class EditorsSplitters internal constructor(
 
   private fun findNextFile(file: VirtualFile): VirtualFile? {
     for (window in windows) {
-      for (fileAt in window.fileSequence) {
+      for (fileAt in window.getFileSequence()) {
         if (fileAt != file) {
           return fileAt
         }
@@ -587,7 +587,7 @@ open class EditorsSplitters internal constructor(
 
   internal fun closeFileEditor(file: VirtualFile, editor: FileEditor, moveFocus: Boolean) {
     // we can't close individual tab in EditorComposite
-    val windows = windows.filter { window -> window.composites.any { it.allEditors.contains(editor) } }
+    val windows = windows.filter { window -> window.getComposites().any { it.allEditors.contains(editor) } }
     closeFileInWindows(file = file, windows = windows, moveFocus = moveFocus)
   }
 
@@ -600,7 +600,6 @@ open class EditorsSplitters internal constructor(
 
     val nextFile = findNextFile(file)
     for (window in windows) {
-      LOG.assertTrue(window.selectedComposite != null)
       window.closeFile(file = file, disposeIfNeeded = false, transferFocus = moveFocus)
       if (window.tabCount == 0 && nextFile != null && isProjectOpen && !FileEditorManagerImpl.forbidSplitFor(nextFile)) {
         manager.newEditorComposite(nextFile)?.let {
@@ -707,10 +706,10 @@ open class EditorsSplitters internal constructor(
   @Suppress("DEPRECATION")
   @Deprecated("Use {@link #getAllComposites()}")
   fun getEditorComposites(): List<EditorWithProviderComposite> {
-    return windows.asSequence().flatMap { it.composites }.filterIsInstance<EditorWithProviderComposite>().toList()
+    return windows.asSequence().flatMap { it.getComposites() }.filterIsInstance<EditorWithProviderComposite>().toList()
   }
 
-  fun getAllComposites(): List<EditorComposite> = windows.flatMap { it.composites }
+  fun getAllComposites(): List<EditorComposite> = windows.flatMap { it.getComposites() }
 
   @Suppress("DEPRECATION")
   @Deprecated("Use {@link #getAllComposites(VirtualFile)}", level = DeprecationLevel.ERROR)
