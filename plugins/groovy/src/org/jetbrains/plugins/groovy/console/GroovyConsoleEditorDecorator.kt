@@ -5,21 +5,18 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.EditorNotifications.Provider
+import com.intellij.ui.EditorNotificationProvider
 import org.jetbrains.plugins.groovy.console.GroovyConsoleRootType.EXECUTE_ACTION
+import java.util.function.Function
 import javax.swing.JComponent
 
-class GroovyConsoleEditorDecorator : Provider<JComponent>() {
-
-  companion object {
-    private val myKey = Key.create<JComponent>("groovy.console.toolbar")
+class GroovyConsoleEditorDecorator : EditorNotificationProvider {
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
+    return Function { createNotificationPanel(file, project) }
   }
 
-  override fun getKey(): Key<JComponent> = myKey
-
-  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): JComponent? {
+  private fun createNotificationPanel(file: VirtualFile, project: Project): JComponent? {
     val consoleService = GroovyConsoleStateService.getInstance(project)
     if (!consoleService.isProjectConsole(file)) return null
     val actionGroup = DefaultActionGroup(EXECUTE_ACTION, GrSelectModuleAction(project, file))

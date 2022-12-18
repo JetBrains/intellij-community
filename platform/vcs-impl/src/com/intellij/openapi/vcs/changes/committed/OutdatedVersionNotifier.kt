@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.committed
 
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.openapi.vcs.VcsBundle.message
@@ -12,16 +11,19 @@ import com.intellij.openapi.vcs.changes.committed.IncomingChangesViewProvider.Co
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.text.DateFormatUtil.formatPrettyDateTime
 import org.jetbrains.annotations.Nls
+import java.util.function.Function
+import javax.swing.JComponent
 
-private val KEY = Key<EditorNotificationPanel>("OutdatedVersionNotifier")
+class OutdatedVersionNotifier : EditorNotificationProvider {
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
+    return Function { createNotificationPanel(file, it, project) }
+  }
 
-class OutdatedVersionNotifier : EditorNotifications.Provider<EditorNotificationPanel>() {
-  override fun getKey(): Key<EditorNotificationPanel> = KEY
-
-  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
+  private fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
     val cache = CommittedChangesCache.getInstanceIfCreated(project) ?: return null
     val (incomingChangeList, incomingChange) = cache.getIncomingChangeList(file) ?: return null
     if (!isIncomingChangesAvailable(incomingChangeList.vcs)) return null

@@ -11,12 +11,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
+import java.util.function.Function
+import javax.swing.JComponent
 
-class UntrustedProjectNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel?>(), DumbAware {
-  override fun getKey() = KEY
+class UntrustedProjectNotificationProvider : EditorNotificationProvider, DumbAware {
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
+    return Function { createNotificationPanel(it, project) }
+  }
 
-  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
+  private fun createNotificationPanel(fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
     if (project.isTrusted()) {
       return null
     }
