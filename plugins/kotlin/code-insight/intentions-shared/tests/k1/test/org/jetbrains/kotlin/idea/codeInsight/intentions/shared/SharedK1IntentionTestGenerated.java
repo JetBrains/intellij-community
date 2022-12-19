@@ -446,6 +446,114 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/putExpressionsOnSeparateLines")
+    public static class PutExpressionsOnSeparateLines extends AbstractSharedK1IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("andAndAssignee.kt")
+        public void testAndAndAssignee() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/andAndAssignee.kt");
+        }
+
+        @TestMetadata("assignee.kt")
+        public void testAssignee() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/assignee.kt");
+        }
+
+        @TestMetadata("longExpression1.kt")
+        public void testLongExpression1() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpression1.kt");
+        }
+
+        @TestMetadata("longExpression2.kt")
+        public void testLongExpression2() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpression2.kt");
+        }
+
+        @TestMetadata("longExpression3.kt")
+        public void testLongExpression3() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpression3.kt");
+        }
+
+        @TestMetadata("longExpression4.kt")
+        public void testLongExpression4() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpression4.kt");
+        }
+
+        @TestMetadata("longExpressionWithLineBreaks.kt")
+        public void testLongExpressionWithLineBreaks() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithLineBreaks.kt");
+        }
+
+        @TestMetadata("longExpressionWithOneLineBreak.kt")
+        public void testLongExpressionWithOneLineBreak() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithOneLineBreak.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis1.kt")
+        public void testLongExpressionWithParenthesis1() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis1.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis10.kt")
+        public void testLongExpressionWithParenthesis10() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis10.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis11.kt")
+        public void testLongExpressionWithParenthesis11() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis11.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis12.kt")
+        public void testLongExpressionWithParenthesis12() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis12.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis2.kt")
+        public void testLongExpressionWithParenthesis2() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis2.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis3.kt")
+        public void testLongExpressionWithParenthesis3() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis3.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis4.kt")
+        public void testLongExpressionWithParenthesis4() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis4.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis5.kt")
+        public void testLongExpressionWithParenthesis5() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis5.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis6.kt")
+        public void testLongExpressionWithParenthesis6() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis6.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis7.kt")
+        public void testLongExpressionWithParenthesis7() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis7.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis8.kt")
+        public void testLongExpressionWithParenthesis8() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis8.kt");
+        }
+
+        @TestMetadata("longExpressionWithParenthesis9.kt")
+        public void testLongExpressionWithParenthesis9() throws Exception {
+            runTest("../testData/intentions/putExpressionsOnSeparateLines/longExpressionWithParenthesis9.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/removeBraces")
     public static class RemoveBraces extends AbstractSharedK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
