@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ui.branch
+package git4idea.ui.branch.popup
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.diverged
@@ -37,7 +37,10 @@ import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchType
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import git4idea.ui.branch.GitBranchManager
+import git4idea.ui.branch.GitBranchPopupActions
 import git4idea.ui.branch.GitBranchPopupActions.EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP
+import git4idea.ui.branch.tree.*
 import icons.DvcsImplIcons
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon

@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ui.branch
+package git4idea.ui.branch.popup
 
 import com.intellij.dvcs.branch.DvcsBranchManager
 import com.intellij.dvcs.branch.DvcsBranchesDivergedBanner
@@ -47,14 +47,17 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
-import git4idea.ui.branch.GitBranchesTreeModel.BranchTypeUnderRepository
-import git4idea.ui.branch.GitBranchesTreeModel.BranchUnderRepository
-import git4idea.ui.branch.GitBranchesTreePopupStep.Companion.SPEED_SEARCH_DEFAULT_ACTIONS_GROUP
-import git4idea.ui.branch.GitBranchesTreeUtil.overrideBuiltInAction
-import git4idea.ui.branch.GitBranchesTreeUtil.selectFirstLeaf
-import git4idea.ui.branch.GitBranchesTreeUtil.selectLastLeaf
-import git4idea.ui.branch.GitBranchesTreeUtil.selectNextLeaf
-import git4idea.ui.branch.GitBranchesTreeUtil.selectPrevLeaf
+import git4idea.ui.branch.GitBranchManager
+import git4idea.ui.branch.GitBranchPopup
+import git4idea.ui.branch.GitBranchPopupFetchAction
+import git4idea.ui.branch.tree.GitBranchesTreeUtil.overrideBuiltInAction
+import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectFirstLeaf
+import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectLastLeaf
+import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectNextLeaf
+import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectPrevLeaf
+import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SPEED_SEARCH_DEFAULT_ACTIONS_GROUP
+import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchTypeUnderRepository
+import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchUnderRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest

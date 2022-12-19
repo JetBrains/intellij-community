@@ -1,8 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ui.branch
+package git4idea.ui.branch.tree
 
 import com.intellij.ide.ui.UISettings
-import com.intellij.util.ui.tree.TreeUtil
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JTree

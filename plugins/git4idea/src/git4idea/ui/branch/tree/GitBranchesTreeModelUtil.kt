@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ui.branch
+package git4idea.ui.branch.tree
 
 import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.openapi.components.service
@@ -12,10 +12,11 @@ import git4idea.GitBranch
 import git4idea.branch.GitBranchType
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
+import git4idea.ui.branch.GitBranchManager
 import javax.swing.tree.TreePath
 
-internal typealias PathAndBranch = Pair<List<String>, GitBranch>
-internal typealias MatchResult = Pair<Collection<GitBranch>, Pair<GitBranch, Int>?>
+private typealias PathAndBranch = Pair<List<String>, GitBranch>
+private typealias MatchResult = Pair<Collection<GitBranch>, Pair<GitBranch, Int>?>
 
 private fun getBranchComparator(repositories: List<GitRepository>, isPrefixGrouping: () -> Boolean) = compareBy<GitBranch> {
   it.isNotCurrentBranch(repositories)

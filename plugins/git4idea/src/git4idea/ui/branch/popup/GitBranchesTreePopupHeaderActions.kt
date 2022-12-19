@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ui.branch
+package git4idea.ui.branch.popup
 
 import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.dvcs.branch.GroupingKey
@@ -16,6 +16,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.popup.KeepingPopupOpenAction
 import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.config.GitVcsSettings
+import git4idea.ui.branch.BranchGroupingAction
 
 internal class GitBranchesTreePopupSettings :
   DefaultActionGroup(DvcsBundle.messagePointer("action.BranchActionGroupPopup.settings.text"), true), DumbAware {

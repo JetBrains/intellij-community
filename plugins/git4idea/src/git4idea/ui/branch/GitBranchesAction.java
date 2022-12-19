@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.ui.branch.popup.GitBranchesTreePopup;
 import org.jetbrains.annotations.NotNull;
 
 /**

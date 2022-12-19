@@ -24,7 +24,7 @@ import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopup
-import git4idea.ui.branch.GitBranchesTreePopup
+import git4idea.ui.branch.popup.GitBranchesTreePopup
 import icons.DvcsImplIcons
 import java.awt.event.InputEvent
 import javax.swing.Icon

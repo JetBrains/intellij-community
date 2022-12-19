@@ -29,8 +29,8 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.BranchIconUtil.Companion.getBranchIcon
-import git4idea.ui.branch.GitBranchesTreePopup.Companion.create
-import git4idea.ui.branch.GitBranchesTreePopup.Companion.isEnabled
+import git4idea.ui.branch.popup.GitBranchesTreePopup.Companion.create
+import git4idea.ui.branch.popup.GitBranchesTreePopup.Companion.isEnabled
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 

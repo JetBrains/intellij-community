@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.ui.branch
+package git4idea.ui.branch.tree
 
 import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
 import com.intellij.openapi.components.service
@@ -11,7 +11,9 @@ import git4idea.GitBranch
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitBranchUtil
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.GitBranchesTreeModel.*
+import git4idea.ui.branch.GitBranchManager
+import git4idea.ui.branch.popup.GitBranchesTreePopup
+import git4idea.ui.branch.tree.GitBranchesTreeModel.*
 import javax.swing.tree.TreePath
 import kotlin.properties.Delegates.observable
 
