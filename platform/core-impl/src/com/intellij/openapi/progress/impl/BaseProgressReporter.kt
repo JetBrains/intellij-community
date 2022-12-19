@@ -57,7 +57,7 @@ abstract class BaseProgressReporter(parentScope: CoroutineScope) : ProgressRepor
     return endFraction - previousFraction.coerceAtLeast(.0)
   }
 
-  final override fun step(text: ProgressText?, endFraction: Double?): ProgressReporter {
+  final override fun step(endFraction: Double?, text: ProgressText?): ProgressReporter {
     return createStep(duration(endFraction), text)
   }
 

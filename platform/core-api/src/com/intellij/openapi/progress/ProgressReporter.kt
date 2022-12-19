@@ -161,7 +161,7 @@ interface ProgressReporter : AutoCloseable {
    *
    * @see close
    */
-  fun step(text: @ProgressText String?, endFraction: Double?): ProgressReporter
+  fun step(endFraction: Double?, text: @ProgressText String?): ProgressReporter
 
   /**
    * Starts a child step.
@@ -214,14 +214,14 @@ interface ProgressReporter : AutoCloseable {
     fun <T> ProgressReporter.indeterminateStep(
       text: @ProgressText String?,
       action: ProgressReporter.() -> T,
-    ): T = step(text, endFraction = null).use(action)
+    ): T = step(endFraction = null, text).use(action)
 
     @JvmStatic
     fun <T> ProgressReporter.progressStep(
-      text: @ProgressText String?,
       endFraction: Double,
+      text: @ProgressText String?,
       action: ProgressReporter.() -> T,
-    ): T = step(text, endFraction).use(action)
+    ): T = step(endFraction, text).use(action)
 
     @JvmStatic
     fun <T, R> ProgressReporter.mapWithProgress(
@@ -244,26 +244,26 @@ suspend fun <T> indeterminateStep(
 ): T {
   val reporter = coroutineContext.progressReporter
                  ?: return coroutineScope(action)
-  return progressStep(reporter, text, endFraction = null, action)
+  return progressStep(reporter, endFraction = null, text, action)
 }
 
 suspend fun <T> progressStep(
-  text: @ProgressText String? = null,
   endFraction: Double,
+  text: @ProgressText String? = null,
   action: suspend CoroutineScope.() -> T,
 ): T {
   val reporter = coroutineContext.progressReporter
                  ?: return coroutineScope(action)
-  return progressStep(reporter, text, endFraction, action)
+  return progressStep(reporter, endFraction, text, action)
 }
 
 private suspend fun <T> progressStep(
   parent: ProgressReporter,
-  text: @ProgressText String?,
   endFraction: Double?,
+  text: @ProgressText String?,
   action: suspend CoroutineScope.() -> T,
 ): T {
-  return parent.step(text, endFraction).use { step: ProgressReporter ->
+  return parent.step(endFraction, text).use { step: ProgressReporter ->
     withContext(step.asContextElement(), action)
   }
 }

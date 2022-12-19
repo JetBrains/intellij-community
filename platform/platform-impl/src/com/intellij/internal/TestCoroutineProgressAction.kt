@@ -122,10 +122,10 @@ internal class TestCoroutineProgressAction : AnAction() {
     progressStep(endFraction = 0.25) {
       sequentialStage()
     }
-    progressStep("Sequential stage", endFraction = 0.5) {
+    progressStep(endFraction = 0.5, "Sequential stage") {
       sequentialStage()
     }
-    progressStep("Parallel stage", endFraction = 0.75) {
+    progressStep(endFraction = 0.75, "Parallel stage") {
       parallelStage()
     }
     progressStep(endFraction = 1.0) {
@@ -144,7 +144,7 @@ internal class TestCoroutineProgressAction : AnAction() {
         delay(300)
       }
       val endFraction = itemDuration * (index + 1)
-      progressStep("Processing $index", endFraction = endFraction) {
+      progressStep(endFraction = endFraction, "Processing $index") {
         delay((1000.toDouble() * (times - index) / times).toLong())
       }
     }
@@ -158,7 +158,7 @@ internal class TestCoroutineProgressAction : AnAction() {
       indeterminateStep("Prepare $item") {
         delay(500)
       }
-      progressStep("Processing $item", endFraction = 1.0) {
+      progressStep(endFraction = 1.0, "Processing $item") {
         delay(300 + (Math.random() * 1000).toLong())
       }
     }
