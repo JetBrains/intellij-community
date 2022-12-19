@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.starters.local.generator
 
+import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.starters.local.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -44,41 +45,34 @@ abstract class AbstractAssetsProcessor : AssetsProcessor {
   }
 
   private fun generateSources(outputDirectory: Path, asset: GeneratorTemplateFile, properties: Map<String, Any>): Path {
-    val content = asset.getTextContent(properties)
-    val file = findOrCreateFile(outputDirectory, asset.targetFileName)
-    setTextContent(file, content)
-    return file
-  }
-
-  private fun generateSources(outputDirectory: Path, asset: GeneratorResourceFile): Path {
-    val content = asset.getBinaryContent()
-    val file = findOrCreateFile(outputDirectory, asset.targetFileName)
-    setBinaryContent(file, content)
-    return file
-  }
-
-  private fun generateSources(outputDirectory: Path, asset: GeneratorEmptyDirectory): Path {
-    return findOrCreateDirectory(outputDirectory, asset.targetFileName)
-  }
-
-  private fun GeneratorTemplateFile.getTextContent(properties: Map<String, Any>): String {
-    return try {
-      template.getText(properties)
+    try {
+      val templateManager = FileTemplateManager.getDefaultInstance()
+      val defaultProperties = templateManager.defaultProperties
+      val content = asset.template.getText(defaultProperties + properties)
+      val file = findOrCreateFile(outputDirectory, asset.targetFileName)
+      setTextContent(file, content)
+      return file
     }
     catch (e: Throwable) {
       throw TemplateProcessingException(e)
     }
   }
 
-  private fun GeneratorResourceFile.getBinaryContent(): ByteArray {
-    return try {
-      resource.openStream().use {
-        it.readBytes()
-      }
+  private fun generateSources(outputDirectory: Path, asset: GeneratorResourceFile): Path {
+    try {
+      val resourceStream = asset.resource.openStream()
+      val content = resourceStream.use { it.readBytes() }
+      val file = findOrCreateFile(outputDirectory, asset.targetFileName)
+      setBinaryContent(file, content)
+      return file
     }
     catch (e: Throwable) {
       throw ResourceProcessingException(e)
     }
+  }
+
+  private fun generateSources(outputDirectory: Path, asset: GeneratorEmptyDirectory): Path {
+    return findOrCreateDirectory(outputDirectory, asset.targetFileName)
   }
 
   protected abstract fun setTextContent(file: Path, content: String)
