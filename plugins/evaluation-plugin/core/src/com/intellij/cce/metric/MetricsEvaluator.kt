@@ -31,14 +31,7 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
   }
 
   fun registerCompletionGolfMetrics() {
-    registerMetric(CGMovesCount())
-    registerMetric(CGTypingsCount())
-    registerMetric(CGNavigationsCount())
-    registerMetric(CGCompletionInvocationsCount())
-    registerMetric(CGMovesCountNormalised())
-    registerMetric(CGPerfectLine())
-    registerMetric(CGRecallAt(1))
-    registerMetric(CGRecallAt(5))
+    createCompletionGolfMetrics().forEach { registerMetric(it) }
     registerMetric(MeanLatencyMetric(true))
     registerMetric(MaxLatencyMetric())
     registerMetric(SessionsCountMetric())

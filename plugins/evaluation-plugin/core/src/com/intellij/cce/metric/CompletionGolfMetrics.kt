@@ -3,7 +3,19 @@ package com.intellij.cce.metric
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
 
-abstract class CompletionGolfMetric<T : Number> : Metric {
+internal fun createCompletionGolfMetrics(): List<Metric> =
+  listOf(
+    MovesCount(),
+    TypingsCount(),
+    NavigationsCount(),
+    CompletionInvocationsCount(),
+    MovesCountNormalised(),
+    PerfectLine(),
+    RecallAt(1),
+    RecallAt(5)
+  )
+
+private abstract class CompletionGolfMetric<T : Number> : Metric {
   protected var sample = Sample()
 
   private fun T.alsoAddToSample(): T = also { sample.add(it.toDouble()) }
@@ -13,15 +25,15 @@ abstract class CompletionGolfMetric<T : Number> : Metric {
   abstract fun compute(sessions: List<Session>, comparator: SuggestionsComparator): T
 }
 
-class CGMovesCount : CompletionGolfMetric<Int>() {
+private class MovesCount : CompletionGolfMetric<Int>() {
   override val name: String = "Total Moves"
 
   override val valueType = MetricValueType.INT
 
   private val metrics = listOf(
-    CGTypingsCount(),
-    CGNavigationsCount(),
-    CGCompletionInvocationsCount()
+    TypingsCount(),
+    NavigationsCount(),
+    CompletionInvocationsCount()
   )
 
   override val value: Double
@@ -37,7 +49,7 @@ class CGMovesCount : CompletionGolfMetric<Int>() {
   }
 }
 
-class CGTypingsCount : CompletionGolfMetric<Int>() {
+private class TypingsCount : CompletionGolfMetric<Int>() {
   override val name: String = "Typings"
 
   override val valueType = MetricValueType.INT
@@ -49,7 +61,7 @@ class CGTypingsCount : CompletionGolfMetric<Int>() {
     sessions.sumOf { it.lookups.count() }
 }
 
-class CGNavigationsCount : CompletionGolfMetric<Int>() {
+private class NavigationsCount : CompletionGolfMetric<Int>() {
   override val name: String = "Navigations"
 
   override val valueType = MetricValueType.INT
@@ -64,7 +76,7 @@ class CGNavigationsCount : CompletionGolfMetric<Int>() {
 }
 
 
-class CGCompletionInvocationsCount : CompletionGolfMetric<Int>() {
+private class CompletionInvocationsCount : CompletionGolfMetric<Int>() {
   override val name: String = "Completion Invocations"
 
   override val valueType = MetricValueType.INT
@@ -76,7 +88,7 @@ class CGCompletionInvocationsCount : CompletionGolfMetric<Int>() {
     sessions.sumOf { it.lookups.count { lookup -> lookup.isNew } }
 }
 
-class CGMovesCountNormalised : CompletionGolfMetric<Double>() {
+private class MovesCountNormalised : CompletionGolfMetric<Double>() {
   override val name: String = "Moves Count Normalised"
 
   override val valueType = MetricValueType.DOUBLE
@@ -86,7 +98,7 @@ class CGMovesCountNormalised : CompletionGolfMetric<Double>() {
 
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Double {
     val linesLength = sessions.sumOf { it.expectedText.length } * 2.0
-    val movesCount = CGMovesCount().compute(sessions, comparator)
+    val movesCount = MovesCount().compute(sessions, comparator)
 
     val subtrahend = sessions.count() * 2.0
 
@@ -99,7 +111,7 @@ class CGMovesCountNormalised : CompletionGolfMetric<Double>() {
   }
 }
 
-class CGPerfectLine : CompletionGolfMetric<Int>() {
+private class PerfectLine : CompletionGolfMetric<Int>() {
   override val name: String = "Perfect Line"
 
   override val valueType = MetricValueType.INT
@@ -112,7 +124,7 @@ class CGPerfectLine : CompletionGolfMetric<Int>() {
   }
 }
 
-class CGRecallAt(private val n: Int) : Metric {
+private class RecallAt(private val n: Int) : Metric {
   private val sample = Sample()
 
   override val name: String = "Recall@$n"
