@@ -7,10 +7,6 @@
                             implementation="org.jetbrains.plugins.gradle.toml.navigation.VersionCatalogReferenceContributor"/>
   <renameInputValidator implementation="org.jetbrains.plugins.gradle.toml.navigation.VersionCatalogRenameInputValidator"/>
 
-  <!--<typedHandler implementation="org.jetbrains.plugins.gradle.toml.completion.VersionCatalogTypedHandler" id="tomlVersionCatalogAuto"/>-->
-  <!--<completion.contributor language="TOML"-->
-  <!--                        implementationClass="org.jetbrains.plugins.gradle.toml.completion.VersionCatalogCompletionContributor"/>-->
-
   <completion.contributor language="TOML"
                           implementationClass="org.jetbrains.plugins.gradle.toml.completion.TomlVersionCatalogCompletionContributor" />
   <completion.confidence language="TOML"
