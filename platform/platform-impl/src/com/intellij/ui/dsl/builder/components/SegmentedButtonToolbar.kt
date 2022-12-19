@@ -239,12 +239,14 @@ internal class SegmentedButtonBorder : Border {
       if (outline == null && c.hasFocus()) {
         outline = DarculaUIUtil.Outline.focus
       }
-      if (outline != null) {
+      if (outline == null) {
+        g2.paint = getSegmentedButtonBorderPaint(c, false)
+        JBInsets.removeFrom(r, JBUI.insets(DarculaUIUtil.BW.unscaled.toInt()))
+        paintBorder(g2, r)
+      }
+      else {
         DarculaUIUtil.paintOutlineBorder(g2, r.width, r.height, arc, true, c.hasFocus(), outline)
       }
-      g2.paint = getSegmentedButtonBorderPaint(c, false)
-      JBInsets.removeFrom(r, JBUI.insets(DarculaUIUtil.BW.unscaled.toInt()))
-      paintBorder(g2, r)
     }
     finally {
       g2.dispose()
