@@ -228,11 +228,14 @@ object GHPRReviewThreadComponent {
           isVisible = icon != null
         }
 
-        repliesLink.text = if (repliesCount == 0) {
-          GithubBundle.message("pull.request.review.thread.reply")
-        }
-        else {
-          GithubBundle.message("pull.request.review.thread.replies", repliesCount)
+        repliesLink.apply {
+          text = if (repliesCount == 0) {
+            GithubBundle.message("pull.request.review.thread.reply")
+          }
+          else {
+            GithubBundle.message("pull.request.review.thread.replies", repliesCount)
+          }
+          isVisible = reviewDataProvider.canComment() || repliesCount > 0
         }
 
         lastReplyDateLabel.apply {
@@ -262,11 +265,14 @@ object GHPRReviewThreadComponent {
     return JPanel(HorizontalLayout(14)).apply {
       isOpaque = false
       add(repliesPanel)
-      add(unResolveLink)
+      unResolveLink?.also {
+        add(it)
+      }
     }
   }
 
-  private fun createUnResolveLink(reviewDataProvider: GHPRReviewDataProvider, thread: GHPRReviewThreadModel): LinkLabel<Any> {
+  private fun createUnResolveLink(reviewDataProvider: GHPRReviewDataProvider, thread: GHPRReviewThreadModel): LinkLabel<Any>? {
+    if (!reviewDataProvider.canComment()) return null
     val unResolveLink = LinkLabel<Any>("", null) { comp, _ ->
       comp.isEnabled = false
       if (thread.isResolved) {
