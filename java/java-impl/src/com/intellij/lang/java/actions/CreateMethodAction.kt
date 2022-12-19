@@ -54,10 +54,9 @@ internal class CreateMethodAction(
 
   override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
     val copyClass = PsiTreeUtil.findSameElementInCopy(target, file)
-    val previewRequest = if (request is CreateMethodFromJavaUsageRequest) {
-      val physicalRequest = request as? CreateMethodFromJavaUsageRequest ?: return IntentionPreviewInfo.EMPTY
-      val copyCall = PsiTreeUtil.findSameElementInCopy(physicalRequest.call, file)
-      CreateMethodFromJavaUsageRequest(copyCall, physicalRequest.modifiers)
+    val previewRequest = if (request is CreateMethodFromJavaUsageRequest && request.call.containingFile == file.originalFile) {
+      val copyCall = PsiTreeUtil.findSameElementInCopy(request.call, file) // copy call when possible to get proper anchor
+      CreateMethodFromJavaUsageRequest(copyCall, request.modifiers)
     } else request
     JavaMethodRenderer(project, abstract, copyClass, previewRequest).doMagic()
     return IntentionPreviewInfo.DIFF
