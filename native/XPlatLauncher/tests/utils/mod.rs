@@ -202,8 +202,8 @@ pub fn get_child_dir(parent: &Path, prefix: &str) -> io::Result<PathBuf> {
 }
 
 pub struct LayoutSpec {
-    pub(crate) launcher_location: LauncherLocation,
-    pub(crate) java_type: JavaType,
+    pub launcher_location: LauncherLocation,
+    pub java_type: JavaType,
 }
 
 pub enum LauncherLocation {

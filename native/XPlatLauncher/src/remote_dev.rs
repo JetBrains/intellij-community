@@ -8,7 +8,7 @@ use log::{debug, info};
 use path_absolutize::Absolutize;
 use anyhow::{bail, Context, Result};
 use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, PathExt, read_file_to_end};
-use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_logs_home, LaunchConfiguration};
+use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_logs_home, is_running_in_docker, LaunchConfiguration};
 
 pub struct RemoteDevLaunchConfiguration {
     default: DefaultLaunchConfiguration,
@@ -264,7 +264,7 @@ impl RemoteDevLaunchConfiguration {
     pub fn new(project_path: &Path, default: DefaultLaunchConfiguration) -> Result<Self> {
         // prevent opening of 2 backends for the same directory via symlinks
         let canonical_project_path = canonical_non_unc(project_path)?;
-        
+
         if project_path != project_path.canonicalize()? {
             info!("Will use canonical form '{canonical_project_path:?}' of '{project_path:?}' to avoid concurrent IDE instances on the same project");
         }
@@ -351,6 +351,13 @@ impl RemoteDevLaunchConfiguration {
                 info!("Enable JDK auto-detection and project SDK setup by default. Set REMOTE_DEV_JDK_DETECTION=false to disable.");
                 remote_dev_properties.push(("jdk.configure.existing", "true"));
             }
+        }
+
+        let is_docker = is_running_in_docker()?;
+        info!("Run host in docker: {is_docker}");
+        if is_docker {
+            remote_dev_properties.push(("remotedev.run.in.docker", "true"));
+            remote_dev_properties.push(("unknown.sdk.show.editor.actions", "false"));
         }
 
         let result = remote_dev_properties

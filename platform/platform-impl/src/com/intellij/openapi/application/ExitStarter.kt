@@ -6,8 +6,6 @@ package com.intellij.openapi.application
 import com.intellij.ide.CliResult
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.impl.LaterInvocator
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 private const val ourRestartParameter = "--restart"
