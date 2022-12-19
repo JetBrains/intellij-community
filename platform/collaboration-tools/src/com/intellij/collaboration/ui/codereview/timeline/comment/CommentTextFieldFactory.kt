@@ -31,6 +31,8 @@ object CommentTextFieldFactory {
       it.putUserData(IncrementalFindAction.SEARCH_DISABLED, true)
       it.colorsScheme.lineSpacing = 1f
       it.settings.isUseSoftWraps = true
+      it.isEmbeddedIntoDialogWrapper = true
+      it.contentComponent.isOpaque = false
     }
     selectAll()
     if (withValidation) {

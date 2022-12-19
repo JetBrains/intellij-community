@@ -51,6 +51,8 @@ object TimelineDiffComponentFactory {
       setHorizontalScrollbarVisible(true)
       setVerticalScrollbarVisible(false)
       setCaretEnabled(false)
+      isEmbeddedIntoDialogWrapper = true
+      contentComponent.isOpaque = false
 
       setBorder(JBUI.Borders.empty())
 
