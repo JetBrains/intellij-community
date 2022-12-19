@@ -158,7 +158,7 @@ public final class Disposer {
    * then it's unregistered from {@code oldParent} before registering with {@code parent}.
    *
    * @throws IncorrectOperationException If {@code child} has been registered with {@code parent} before;
-   *                                     if {@code parent} is being disposed or already disposed ({@link #isDisposed(Disposable)}.
+   *                                     if {@code parent} is being disposed or already disposed, see {@link #isDisposed(Disposable)}.
    */
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) throws IncorrectOperationException {
     ourTree.register(parent, child);
