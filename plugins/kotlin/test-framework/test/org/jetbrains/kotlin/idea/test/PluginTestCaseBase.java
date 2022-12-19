@@ -55,7 +55,7 @@ public class PluginTestCaseBase {
         return switch (kind) {
             case MOCK_JDK -> IdeaTestUtil.getMockJdk18();
             case FULL_JDK_11 -> {
-                String jre9 = KotlinTestUtils.getAtLeastJdk9Home().getPath();
+                String jre9 = KotlinTestUtils.getCurrentProcessJdkHome().getPath();
                 yield getSdk(jre9, "Full JDK 9");
             }
             case FULL_JDK_17 -> IdeaTestUtil.getMockJdk(LanguageLevel.JDK_17.toJavaVersion());
