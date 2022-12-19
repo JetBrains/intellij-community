@@ -4,6 +4,12 @@ package com.intellij.feedback.common
 import com.intellij.feedback.common.IdleFeedbackTypeResolver.isFeedbackNotificationDisabled
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.notification.RequestFeedbackNotification
+import com.intellij.feedback.common.statistics.FeedbackDialogCountCollector.Companion.logDialogCancelAction
+import com.intellij.feedback.common.statistics.FeedbackDialogCountCollector.Companion.logDialogOkAction
+import com.intellij.feedback.common.statistics.FeedbackDialogCountCollector.Companion.logDialogShown
+import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.Companion.logDisableNotificationActionInvoked
+import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.Companion.logRequestNotificationShown
+import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.Companion.logRespondNotificationActionInvoked
 import com.intellij.feedback.new_ui.CancelFeedbackNotification
 import com.intellij.feedback.new_ui.bundle.NewUIFeedbackBundle
 import com.intellij.feedback.new_ui.dialog.NewUIFeedbackDialog
@@ -14,6 +20,8 @@ import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DialogWrapper.CANCEL_EXIT_CODE
+import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.*
@@ -22,6 +30,7 @@ import java.time.LocalDateTime
 
 enum class IdleFeedbackTypes {
   NEW_UI_FEEDBACK {
+    override val fusFeedbackId: String = "new_ui_feedback"
     override val suitableIdeVersion: String = "2022.3"
     private val lastDayCollectFeedback = LocalDate(2022, 12, 6)
     private val maxNumberNotificationShowed = 1
@@ -91,6 +100,8 @@ enum class IdleFeedbackTypes {
     }
   };
 
+  protected abstract val fusFeedbackId: String
+
   protected abstract val suitableIdeVersion: String
 
   abstract fun isSuitable(): Boolean
@@ -127,20 +138,33 @@ enum class IdleFeedbackTypes {
     val notification = createNotification(forTest)
     notification.addAction(
       NotificationAction.createSimpleExpiring(getGiveFeedbackNotificationLabel()) {
+        if (!forTest) {
+          logRespondNotificationActionInvoked(fusFeedbackId)
+        }
         val dialog = createFeedbackDialog(project, forTest)
         dialog.show()
+        if (!forTest) {
+          logDialogShown(fusFeedbackId)
+          when (dialog.exitCode) {
+            OK_EXIT_CODE -> logDialogOkAction(fusFeedbackId)
+            CANCEL_EXIT_CODE -> logDialogCancelAction(fusFeedbackId)
+            else -> {}
+          }
+        }
       }
     )
     notification.addAction(
       NotificationAction.createSimpleExpiring(getCancelFeedbackNotificationLabel()) {
         if (!forTest) {
           isFeedbackNotificationDisabled = true
+          logDisableNotificationActionInvoked(fusFeedbackId)
         }
         getNotificationOnCancelAction(project)()
       }
     )
     notification.notify(project)
     if (!forTest) {
+      logRequestNotificationShown(fusFeedbackId)
       updateStateAfterNotificationShowed()
     }
   }

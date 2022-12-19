@@ -4,17 +4,16 @@ package com.intellij.feedback.productivityMetric.dialog
 import com.intellij.feedback.FeedbackRequestData
 import com.intellij.feedback.common.FEEDBACK_REPORT_ID_KEY
 import com.intellij.feedback.common.FeedbackRequestType
+import com.intellij.feedback.common.dialog.BaseFeedbackDialog
 import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
 import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.common.feedbackAgreement
-import com.intellij.feedback.new_ui.CancelFeedbackNotification
 import com.intellij.feedback.productivityMetric.bundle.ProductivityFeedbackBundle
 import com.intellij.feedback.submitFeedback
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
@@ -29,13 +28,13 @@ import javax.swing.SwingConstants
 class ProductivityFeedbackDialog(
   private val project: Project?,
   private val forTest: Boolean
-) : DialogWrapper(project) {
+) : BaseFeedbackDialog(project) {
 
   /** Increase the additional number when feedback format is changed */
-  private val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION
+  override val feedbackJsonVersion = COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 
-  private val FEEDBACK_REPORT_ID_VALUE = "productivity_metric_feedback"
-  private val FEEDBACK_PRIVACY_CONSENT_TYPE_VALUE = "productivity_metric_feedback_consent"
+  override val feedbackReportId = "productivity_metric_feedback"
+  override val feedbackPrivacyConsentType = "productivity_metric_feedback_consent"
 
   private val systemInfoData: Lazy<CommonFeedbackSystemInfoData> = lazy { CommonFeedbackSystemInfoData.getCurrentData() }
 
@@ -61,26 +60,20 @@ class ProductivityFeedbackDialog(
   init {
     init()
     title = ProductivityFeedbackBundle.message("dialog.top.title")
-    isResizable = false
   }
 
   override fun doOKAction() {
     super.doOKAction()
-    val feedbackData = FeedbackRequestData(FEEDBACK_REPORT_ID_VALUE, createCollectedDataJsonString(), FEEDBACK_PRIVACY_CONSENT_TYPE_VALUE)
+    val feedbackData = FeedbackRequestData(feedbackReportId, createCollectedDataJsonString(), feedbackPrivacyConsentType)
     submitFeedback(project, feedbackData,
                    { }, { },
                    if (forTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST)
   }
 
-  override fun doCancelAction() {
-    super.doCancelAction()
-    CancelFeedbackNotification().notify(project)
-  }
-
   private fun createCollectedDataJsonString(): JsonObject {
     val collectedData = buildJsonObject {
-      put(FEEDBACK_REPORT_ID_KEY, FEEDBACK_REPORT_ID_VALUE)
-      put("format_version", FEEDBACK_JSON_VERSION)
+      put(FEEDBACK_REPORT_ID_KEY, feedbackReportId)
+      put("format_version", feedbackJsonVersion)
       put("productivity_influence", productivityProperty.get())
       put("proficiency_level", proficiencyProperty.get())
       put("using_experience", usingExperience.get())
