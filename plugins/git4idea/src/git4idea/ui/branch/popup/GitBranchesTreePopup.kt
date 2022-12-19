@@ -6,7 +6,6 @@ import com.intellij.dvcs.branch.DvcsBranchesDivergedBanner
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.execution.ui.FragmentedSettingsUtil
-import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
@@ -28,16 +27,13 @@ import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.ui.tree.ui.Control
-import com.intellij.ui.tree.ui.DefaultControl
 import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
@@ -58,6 +54,7 @@ import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectPrevLeaf
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SPEED_SEARCH_DEFAULT_ACTIONS_GROUP
 import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchTypeUnderRepository
 import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchUnderRepository
+import git4idea.ui.branch.tree.GitBranchesTreeRenderer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -68,9 +65,7 @@ import java.awt.datatransfer.DataFlavor
 import java.awt.event.*
 import java.util.function.Function
 import java.util.function.Supplier
-import javax.accessibility.AccessibleContext
 import javax.swing.*
-import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
@@ -377,7 +372,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     ClientProperty.put(this, RenderingUtil.CUSTOM_SELECTION_BACKGROUND, Supplier { JBUI.CurrentTheme.Tree.background(true, true) })
     ClientProperty.put(this, RenderingUtil.CUSTOM_SELECTION_FOREGROUND, Supplier { JBUI.CurrentTheme.Tree.foreground(true, true) })
 
-    val renderer = Renderer(treeStep)
+    val renderer = GitBranchesTreeRenderer(treeStep)
 
     ClientProperty.put(this, Control.CUSTOM_CONTROL, Function { renderer.getLeftTreeIconRenderer(it) })
 
@@ -602,7 +597,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
                          .getTreeCellRendererComponent(tree, selected, true, false, true, row, false) as? JComponent
                        ?: return false
     val iconComponent = UIUtil.uiTraverser(rowComponent)
-                          .filter { ClientProperty.get(it, Renderer.MAIN_ICON) == true }
+                          .filter { ClientProperty.get(it, GitBranchesTreeRenderer.MAIN_ICON) == true }
                           .firstOrNull() ?: return false
 
     // todo: implement more precise check
@@ -700,145 +695,6 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       public override fun processEvent(e: AWTEvent?) {
         e?.source = this
         super.processEvent(e)
-      }
-    }
-
-    private class Renderer(private val step: GitBranchesTreePopupStep) : TreeCellRenderer {
-
-      fun getLeftTreeIconRenderer(path: TreePath): Control? {
-        val lastComponent = path.lastPathComponent
-        val defaultIcon = step.getNodeIcon(lastComponent, false) ?: return null
-        val selectedIcon = step.getNodeIcon(lastComponent, true) ?: return null
-
-        return DefaultControl(defaultIcon, defaultIcon, selectedIcon, selectedIcon)
-      }
-
-      private val mainIconComponent = JLabel().apply {
-        ClientProperty.put(this, MAIN_ICON, true)
-        border = JBUI.Borders.emptyRight(4)  // 6 px in spec, but label width is differed
-      }
-      private val mainTextComponent = SimpleColoredComponent().apply {
-        isOpaque = false
-        border = JBUI.Borders.empty()
-      }
-      private val secondaryLabel = JLabel().apply {
-        border = JBUI.Borders.emptyLeft(10)
-        horizontalAlignment = SwingConstants.RIGHT
-      }
-      private val arrowLabel = JLabel().apply {
-        border = JBUI.Borders.emptyLeft(4) // 6 px in spec, but label width is differed
-      }
-      private val incomingOutgoingLabel = JLabel().apply {
-        border = JBUI.Borders.emptyLeft(10)
-      }
-
-      private val branchInfoPanel = JBUI.Panels.simplePanel(mainTextComponent)
-        .addToLeft(mainIconComponent)
-        .addToRight(incomingOutgoingLabel)
-        .andTransparent()
-
-      private val textPanel = JBUI.Panels.simplePanel()
-        .addToCenter(JPanel(GridBagLayout()).apply {
-          isOpaque = false
-
-          add(branchInfoPanel,
-              GridBagConstraints().apply {
-                anchor = GridBagConstraints.LINE_START
-                weightx = 1.0
-              })
-
-          add(secondaryLabel,
-              GridBagConstraints().apply {
-                anchor = GridBagConstraints.LINE_END
-                weightx = 2.0
-              })
-        })
-        .andTransparent()
-
-      private inner class MyMainPanel : BorderLayoutPanel() {
-        init {
-          addToCenter(textPanel)
-          addToRight(arrowLabel)
-          andTransparent()
-          withBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.cellPadding().right))
-        }
-
-        override fun getAccessibleContext(): AccessibleContext {
-          if (accessibleContext == null) {
-            accessibleContext = object : AccessibleContextDelegateWithContextMenu(mainTextComponent.accessibleContext) {
-              override fun getDelegateParent(): Container = parent
-
-              override fun doShowContextMenu() {
-                ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true)
-              }
-            }
-          }
-          return accessibleContext
-        }
-      }
-
-      private val mainPanel = MyMainPanel()
-
-      override fun getTreeCellRendererComponent(tree: JTree?,
-                                                value: Any?,
-                                                selected: Boolean,
-                                                expanded: Boolean,
-                                                leaf: Boolean,
-                                                row: Int,
-                                                hasFocus: Boolean): Component? {
-        val userObject = TreeUtil.getUserObject(value)
-        // render separator text in accessible mode
-        if (userObject is SeparatorWithText) return if (userObject.caption != null) userObject else null
-
-        mainIconComponent.apply {
-          icon = step.getIcon(userObject, selected)
-          isVisible = icon != null
-        }
-
-        mainTextComponent.apply {
-          background = JBUI.CurrentTheme.Tree.background(selected, true)
-          foreground = JBUI.CurrentTheme.Tree.foreground(selected, true)
-
-          clear()
-          append(step.getText(userObject).orEmpty())
-        }
-
-        val (inOutIcon, inOutTooltip) = step.getIncomingOutgoingIconWithTooltip(userObject)
-        tree?.toolTipText = inOutTooltip
-
-        incomingOutgoingLabel.apply {
-          icon = inOutIcon
-          isVisible = icon != null
-        }
-
-        arrowLabel.apply {
-          isVisible = step.hasSubstep(userObject)
-          icon = if (selected) AllIcons.Icons.Ide.MenuArrowSelected else AllIcons.Icons.Ide.MenuArrow
-        }
-
-        secondaryLabel.apply {
-          text = step.getSecondaryText(userObject)
-          //todo: LAF color
-          foreground = if (selected) JBUI.CurrentTheme.Tree.foreground(true, true) else JBColor.GRAY
-
-          border = if (!arrowLabel.isVisible && isNewUI) {
-            JBUI.Borders.empty(0, 10, 0, JBUI.CurrentTheme.Popup.Selection.innerInsets().right)
-          }
-          else {
-            JBUI.Borders.emptyLeft(10)
-          }
-        }
-
-        if (tree != null && value != null) {
-          SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, mainTextComponent, true, selected)
-        }
-
-        return mainPanel
-      }
-
-      companion object {
-        @JvmField
-        internal val MAIN_ICON = Key.create<Boolean>("MAIN_ICON")
       }
     }
   }
