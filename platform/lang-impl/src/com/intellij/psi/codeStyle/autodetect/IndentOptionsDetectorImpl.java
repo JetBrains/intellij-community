@@ -68,12 +68,11 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
 
   @Nullable
   private List<LineIndentInfo> calcLineIndentInfo(@Nullable ProgressIndicator indicator) {
-    if (myDocument.getLineCount() < 3 || isFileBigToDetect() ||
-        !PsiDocumentManager.getInstance(myProject).isCommitted(myDocument)) {
+    if (myDocument.getLineCount() < 3 || isFileBigToDetect()) {
       return null;
     }
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-    if (psiFile == null) {
+    if (psiFile == null || !isUpToDate(psiFile, myDocument)) {
       return null;
     }
 
@@ -84,6 +83,11 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
     FormattingModel model = modelBuilder.createModel(FormattingContext.create(psiFile, settings));
     Block rootBlock = model.getRootBlock();
     return new FormatterBasedLineIndentInfoBuilder(myDocument, rootBlock, indicator).build();
+  }
+
+  private boolean isUpToDate(@NotNull PsiFile file, @NotNull Document document) {
+    return PsiDocumentManager.getInstance(myProject).isCommitted(myDocument) &&
+           file.isValid() && file.getTextLength() == document.getTextLength();
   }
 
   private boolean isFileBigToDetect() {
