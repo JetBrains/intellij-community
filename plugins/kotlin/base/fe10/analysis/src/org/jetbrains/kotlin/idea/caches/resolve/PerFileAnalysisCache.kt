@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAna
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.caches.trackers.clearInBlockModifications
-import org.jetbrains.kotlin.idea.caches.trackers.hasBlockModifications
 import org.jetbrains.kotlin.idea.caches.trackers.inBlockModifications
 import org.jetbrains.kotlin.idea.caches.trackers.removeInBlockModifications
 import org.jetbrains.kotlin.idea.compiler.IdeMainFunctionDetectorFactory
@@ -151,9 +150,9 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
     private fun getIncrementalAnalysisResult(callback: DiagnosticSink.DiagnosticsCallback?): AnalysisResult? {
         updateFileResultFromCache()
 
-        if (file.hasBlockModifications) {
+        val inBlockModifications = file.inBlockModifications
+        if (inBlockModifications.isNotEmpty()) {
             try {
-                val inBlockModifications = file.inBlockModifications
                 // IF there is a cached result for ktFile and there are inBlockModifications
                 fileResult = fileResult?.let { result ->
                     var analysisResult = result
