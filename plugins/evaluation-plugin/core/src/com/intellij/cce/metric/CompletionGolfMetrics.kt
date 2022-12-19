@@ -25,6 +25,13 @@ private abstract class CompletionGolfMetric<T : Number> : Metric {
   abstract fun compute(sessions: List<Session>, comparator: SuggestionsComparator): T
 }
 
+private fun Session.totalSkippableChars() = expectedText.count { it.isWhitespace() }
+
+private fun Session.completedSkippableChars() = lookups.sumOf {
+  if (it.selectedPosition < 0) 0
+  else it.suggestions[it.selectedPosition].text.count { it.isWhitespace() }
+}
+
 private class MovesCount : CompletionGolfMetric<Int>() {
   override val name: String = "Total Moves"
 
@@ -58,7 +65,7 @@ private class TypingsCount : CompletionGolfMetric<Int>() {
     get() = sample.sum()
 
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
-    sessions.sumOf { it.lookups.count() }
+    sessions.sumOf { it.lookups.count() + it.totalSkippableChars() - it.completedSkippableChars() }
 }
 
 private class NavigationsCount : CompletionGolfMetric<Int>() {
@@ -103,7 +110,7 @@ private class MovesCountNormalised : Metric {
   override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
     val movesCount = MovesCount().compute(sessions, comparator)
     val minPossibleMoves = sessions.count() * 2
-    val maxPossibleMoves = sessions.sumOf { it.expectedText.length } * 2
+    val maxPossibleMoves = sessions.sumOf { it.expectedText.length } * 2 - sessions.sumOf { it.totalSkippableChars() }
     movesCountTotal += movesCount
     minPossibleMovesTotal += minPossibleMoves
     maxPossibleMovesTotal += maxPossibleMoves
