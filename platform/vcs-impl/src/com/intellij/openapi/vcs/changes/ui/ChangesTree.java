@@ -248,10 +248,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
                                             defaultGroupingKeys)));
     groupingSupport.addPropertyChangeListener(e -> {
       PropertiesComponent.getInstance(tree.getProject()).setList(propertyName, groupingSupport.getGroupingKeys());
-
-      List<Object> oldSelection = selected(tree).userObjects();
-      tree.rebuildTree();
-      tree.setSelectedChanges(oldSelection);
+      tree.onGroupingChanged();
     });
   }
 
@@ -382,6 +379,12 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     }
 
     return isFlat;
+  }
+
+  public void onGroupingChanged() {
+    List<Object> oldSelection = selected(this).userObjects();
+    rebuildTree();
+    setSelectedChanges(oldSelection);
   }
 
   public abstract void rebuildTree();
