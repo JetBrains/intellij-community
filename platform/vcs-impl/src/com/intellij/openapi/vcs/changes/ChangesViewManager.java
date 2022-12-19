@@ -845,6 +845,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
     public void setGrouping(@NotNull String groupingKey) {
       myView.getGroupingSupport().setGroupingKeysOrSkip(Set.of(groupingKey));
+      scheduleRefreshNow();
     }
 
     public void selectFile(@Nullable VirtualFile vFile) {
