@@ -2,6 +2,7 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
+import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.testFramework.ApplicationRule
@@ -470,6 +471,7 @@ class JpsSplitModuleAndContentRoot {
     }
   }
 
+  @TestFor(classes = [JavaModuleSettingsEntity::class, ModuleImlFileEntitiesSerializer::class, JavaSettingsSerializer::class])
   @Test
   fun `load module without java custom settings`() {
     checkSaveProjectAfterChange("after/imlWithoutJavaSettings", "after/imlWithoutJavaSettings") { builder, _ ->
@@ -478,6 +480,7 @@ class JpsSplitModuleAndContentRoot {
     }
   }
 
+  @TestFor(classes = [JavaModuleSettingsEntity::class, ModuleImlFileEntitiesSerializer::class, JavaSettingsSerializer::class])
   @Test
   fun `load module without java custom settings but with exclude`() {
     checkSaveProjectAfterChange("after/imlWithoutJavaSettingsButWithExclude", "after/imlWithoutJavaSettingsButWithExclude") { builder, _ ->
@@ -490,6 +493,7 @@ class JpsSplitModuleAndContentRoot {
     }
   }
 
+  @TestFor(classes = [JavaModuleSettingsEntity::class, ModuleImlFileEntitiesSerializer::class, JavaSettingsSerializer::class])
   @Test
   fun `load module without java custom settings but with languageLevel`() {
     checkSaveProjectAfterChange("after/imlWithoutJavaSettingsButWithLanguageLevel", "after/imlWithoutJavaSettingsButWithLanguageLevel") { builder, _ ->
