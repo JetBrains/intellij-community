@@ -73,6 +73,10 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
     }
   }
 
+  class Disabled(project: Project, source: Any) : ChangesGroupingSupport(project, source, false) {
+    override fun isAvailable(groupingKey: String): Boolean = false
+  }
+
   companion object {
     @JvmField
     val KEY = DataKey.create<ChangesGroupingSupport>("ChangesTree.GroupingSupport")
