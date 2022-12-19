@@ -1485,6 +1485,11 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 runTest("../completion/testData/basic/common/parameterNameAndType/ByAbbreviation.kt");
             }
 
+            @TestMetadata("InSecondaryConstructor.kt")
+            public void testInSecondaryConstructor() throws Exception {
+                runTest("../completion/testData/basic/common/parameterNameAndType/InSecondaryConstructor.kt");
+            }
+
             @TestMetadata("NoAutoInsertion.kt")
             public void testNoAutoInsertion() throws Exception {
                 runTest("../completion/testData/basic/common/parameterNameAndType/NoAutoInsertion.kt");

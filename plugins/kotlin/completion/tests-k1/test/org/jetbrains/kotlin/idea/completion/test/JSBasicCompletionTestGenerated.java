@@ -1485,6 +1485,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/parameterNameAndType/ByAbbreviation.kt");
             }
 
+            @TestMetadata("InSecondaryConstructor.kt")
+            public void testInSecondaryConstructor() throws Exception {
+                runTest("../testData/basic/common/parameterNameAndType/InSecondaryConstructor.kt");
+            }
+
             @TestMetadata("NoAutoInsertion.kt")
             public void testNoAutoInsertion() throws Exception {
                 runTest("../testData/basic/common/parameterNameAndType/NoAutoInsertion.kt");
