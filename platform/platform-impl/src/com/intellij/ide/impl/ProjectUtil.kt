@@ -721,7 +721,7 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
 fun <T> runBlockingUnderModalProgress(@NlsContexts.ProgressTitle title: String = "", project: Project? = null, task: suspend CoroutineScope.() -> T): T {
   if (delegateToCoroutineOnlyRunBlocking) {
     val owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project)
-    return runBlockingModal0(owner, title, TaskCancellation.cancellable(), task)
+    return runBlockingModalWithRawProgressReporter(owner, title, TaskCancellation.cancellable(), task)
   }
   return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()

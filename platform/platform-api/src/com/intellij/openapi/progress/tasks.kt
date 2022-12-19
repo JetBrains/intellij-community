@@ -239,12 +239,12 @@ suspend fun <T> withModalProgressIndicator(
   replaceWith = ReplaceWith("runBlockingModal(project, title) { withRawProgressReporter(action) }"),
 )
 @RequiresEdt
-fun <T> runBlockingModal0(
+fun <T> runBlockingModalWithRawProgressReporter(
   project: Project,
   title: @ProgressTitle String,
   action: suspend CoroutineScope.() -> T,
 ): T {
-  return runBlockingModal0(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
+  return runBlockingModalWithRawProgressReporter(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
 }
 
 @Deprecated(
@@ -254,7 +254,7 @@ fun <T> runBlockingModal0(
   replaceWith = ReplaceWith("runBlockingModal(owner, title, cancellation) { withRawProgressReporter(action) }"),
 )
 @RequiresEdt
-fun <T> runBlockingModal0(
+fun <T> runBlockingModalWithRawProgressReporter(
   owner: ModalTaskOwner,
   title: @ProgressTitle String,
   cancellation: TaskCancellation = TaskCancellation.cancellable(),

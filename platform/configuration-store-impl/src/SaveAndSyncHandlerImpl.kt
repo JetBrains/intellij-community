@@ -262,9 +262,9 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
       }
 
       val project = (componentManager as? Project)?.takeIf { !it.isDefault }
-      runBlockingModal0(owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
-                        title = getProgressTitle(componentManager),
-                        cancellation = TaskCancellation.nonCancellable()
+      runBlockingModalWithRawProgressReporter(owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
+                                              title = getProgressTitle(componentManager),
+                                              cancellation = TaskCancellation.nonCancellable()
       ) {
         // ensure that is fully cancelled
         currentJob?.join()

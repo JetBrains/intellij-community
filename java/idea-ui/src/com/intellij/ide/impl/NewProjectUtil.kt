@@ -19,7 +19,7 @@ import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingModal0
+import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -189,7 +189,7 @@ object NewProjectUtil {
           options = options.withProjectName(fileName.toString())
         }
         TrustedPaths.getInstance().setProjectPathTrusted(projectDir, true)
-        runBlockingModal0(
+        runBlockingModalWithRawProgressReporter(
           owner = ModalTaskOwner.guess(),
           title = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", fileName.toString()),
         ) {

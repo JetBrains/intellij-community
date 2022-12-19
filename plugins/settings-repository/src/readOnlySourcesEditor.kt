@@ -8,7 +8,7 @@ import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.progressSink
-import com.intellij.openapi.progress.runBlockingModal0
+import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.dialog
@@ -103,7 +103,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
         return
       }
 
-      runBlockingModal0(ModalTaskOwner.guess(), icsMessage ("task.sync.title")) {
+      runBlockingModalWithRawProgressReporter(ModalTaskOwner.guess(), icsMessage ("task.sync.title")) {
         val root = icsManager.readOnlySourcesManager.rootDir
 
         if (toDelete.isNotEmpty()) {

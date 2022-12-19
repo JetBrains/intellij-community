@@ -8,7 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.LoadingOrder
-import com.intellij.openapi.progress.runBlockingModal0
+import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.project.impl.createNewProjectFrame
@@ -39,7 +39,7 @@ internal class LightEditFrameWrapper(
   companion object {
     @RequiresEdt
     fun allocate(project: Project, frameInfo: FrameInfo?, closeHandler: BooleanSupplier): LightEditFrameWrapper {
-      return runBlockingModal0(project, "") {
+      return runBlockingModalWithRawProgressReporter(project, "") {
         withContext(Dispatchers.EDT) {
           allocateLightEditFrame(project) { frame ->
             LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrame(frameInfo).create(), closeHandler = closeHandler)
