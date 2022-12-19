@@ -330,6 +330,21 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
             performTest();
         }
 
+        @TestMetadata("par2.kt")
+        public void testPar2() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("parAfterUserType.kt")
+        public void testParAfterUserType() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("parAssignment.kt")
+        public void testParAssignment() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             performTest();
