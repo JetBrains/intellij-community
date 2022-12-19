@@ -801,7 +801,7 @@ internal fun progressReporterTest(
   action: suspend CoroutineScope.() -> Unit,
 ) = timeoutRunBlocking {
   val actualUpdates = ContainerUtil.createConcurrentList<ProgressState>()
-  val progressReporter = TextDetailsProgressReporter(CoroutineScope(Dispatchers.Unconfined))
+  val progressReporter = TextDetailsProgressReporter(this)
   val collector = launch(Dispatchers.Unconfined + CoroutineName("state collector")) {
     progressReporter.progressState.collect { state ->
       actualUpdates.add(state)

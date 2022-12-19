@@ -28,7 +28,7 @@ internal class ChildrenHandler<T>(
   )
 
   init {
-    cs.launch {
+    cs.launch(Dispatchers.Unconfined) {
       children.drop(1).collect { (completed, active) ->
         progressState.value = handleChildren(completed, active.values)
       }
@@ -57,7 +57,7 @@ internal class ChildrenHandler<T>(
     duration: Double,
     childUpdates: Flow<FractionState<T>>,
   ) {
-    cs.launch {
+    cs.launch(Dispatchers.Unconfined) {
       val childUpdateCollector = launch {
         childUpdates.collect { childUpdate: FractionState<T> ->
           val scaledUpdate = childUpdate.copy(
