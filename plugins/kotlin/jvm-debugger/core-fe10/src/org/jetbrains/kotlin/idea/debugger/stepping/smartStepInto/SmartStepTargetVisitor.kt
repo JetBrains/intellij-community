@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.resolve.isInlineClassType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
+import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.SimpleType
 import org.jetbrains.kotlin.types.checker.isSingleClassifierType
@@ -96,6 +97,18 @@ class SmartStepTargetVisitor(
     }
 
     private fun recordProperty(expression: KtExpression, descriptor: PropertyDescriptor, bindingContext: BindingContext) {
+        if (descriptor is SyntheticJavaPropertyDescriptor) {
+            val functionDescriptor =
+                when ((expression as? KtNameReferenceExpression)?.computeTargetType()) {
+                    KtNameReferenceExpressionUsage.PROPERTY_GETTER, KtNameReferenceExpressionUsage.UNKNOWN, null -> descriptor.getMethod
+                    KtNameReferenceExpressionUsage.PROPERTY_SETTER -> descriptor.setMethod
+                }
+            val declaration = functionDescriptor?.let { DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, it) }
+            if (declaration is PsiMethod) {
+                append(MethodSmartStepTarget(declaration, null, expression, true, lines))
+            }
+            return
+        }
         val propertyDescriptor =
             when ((expression as? KtNameReferenceExpression)?.computeTargetType()) {
                 KtNameReferenceExpressionUsage.PROPERTY_GETTER, KtNameReferenceExpressionUsage.UNKNOWN, null -> descriptor.getter
