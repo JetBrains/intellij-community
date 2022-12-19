@@ -116,6 +116,11 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  override fun enabledIf(property: ObservableProperty<Boolean>): Cell<T> {
+    super.enabledIf(property)
+    return this
+  }
+
   override fun visibleFromParent(parentVisible: Boolean) {
     doVisible(parentVisible && visible)
   }
@@ -130,6 +135,11 @@ internal class CellImpl<T : JComponent>(
 
   override fun visibleIf(predicate: ComponentPredicate): CellImpl<T> {
     super.visibleIf(predicate)
+    return this
+  }
+
+  override fun visibleIf(property: ObservableProperty<Boolean>): Cell<T> {
+    super.visibleIf(property)
     return this
   }
 

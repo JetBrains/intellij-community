@@ -33,7 +33,6 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.ui.UIBundle
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
 
@@ -95,9 +94,8 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
           .whenItemSelectedFromUi { logSdkChanged(sdk) }
       }
       customOptions()
-      lateinit var addSampleCode: Cell<JBCheckBox>
       row {
-        addSampleCode = checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
+        checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
           .bindSelected(addSampleCodeProperty)
           .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
       }.topGap(TopGap.SMALL)
@@ -107,7 +105,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
             .bindSelected(generateOnboardingTipsProperty)
             .whenStateChangedFromUi { logAddSampleOnboardingTipsChangedEvent(it) }
         }
-      }.enabledIf(addSampleCode.selected)
+      }.enabledIf(addSampleCodeProperty)
       collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
         row(UIBundle.message("label.project.wizard.new.project.module.name")) {
           textField()

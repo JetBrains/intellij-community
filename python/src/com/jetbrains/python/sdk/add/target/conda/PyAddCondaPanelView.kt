@@ -58,7 +58,7 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
         }.onFailure {
           showError(it.localizedMessage)
         }
-      }.enableIf(model.showCondaPathSetOkButtonRoProp)
+      }.enabledIf(model.showCondaPathSetOkButtonRoProp)
 
     }
 

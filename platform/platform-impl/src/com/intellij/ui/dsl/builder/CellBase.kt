@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
@@ -36,6 +37,11 @@ interface CellBase<out T : CellBase<T>> {
   fun visibleIf(predicate: ComponentPredicate): CellBase<T>
 
   /**
+   * Binds cell visibility to provided [property] predicate
+   */
+  fun visibleIf(property: ObservableProperty<Boolean>): CellBase<T>
+
+  /**
    * Sets enabled state of the cell and all children recursively.
    * The cell is disabled if there is a disabled parent
    */
@@ -45,6 +51,11 @@ interface CellBase<out T : CellBase<T>> {
    * Binds cell enabled state to provided [predicate]
    */
   fun enabledIf(predicate: ComponentPredicate): CellBase<T>
+
+  /**
+   * Binds cell enabled state to provided [property] predicate
+   */
+  fun enabledIf(property: ObservableProperty<Boolean>): CellBase<T>
 
   @Deprecated("Use align method instead")
   fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T>

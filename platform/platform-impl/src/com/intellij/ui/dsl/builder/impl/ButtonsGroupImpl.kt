@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.ButtonsGroup
 import com.intellij.ui.dsl.builder.MutableProperty
@@ -25,6 +26,11 @@ internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeIm
     return this
   }
 
+  override fun visibleIf(property: ObservableProperty<Boolean>): ButtonsGroup {
+    super.visibleIf(property)
+    return this
+  }
+
   override fun enabled(isEnabled: Boolean): ButtonsGroup {
     super.enabled(isEnabled)
     return this
@@ -32,6 +38,11 @@ internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeIm
 
   override fun enabledIf(predicate: ComponentPredicate): ButtonsGroup {
     super.enabledIf(predicate)
+    return this
+  }
+
+  override fun enabledIf(property: ObservableProperty<Boolean>): ButtonsGroup {
+    super.enabledIf(property)
     return this
   }
 

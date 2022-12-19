@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.observable.properties.whenPropertyChanged
 import com.intellij.ui.dsl.builder.RowsRange
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
@@ -22,6 +24,14 @@ internal open class RowsRangeImpl(val panel: PanelImpl, val startIndex: Int) : R
     return this
   }
 
+  override fun visibleIf(property: ObservableProperty<Boolean>): RowsRange {
+    visible(property.get())
+    property.whenPropertyChanged {
+      visible(it)
+    }
+    return this
+  }
+
   override fun enabled(isEnabled: Boolean): RowsRange {
     panel.enabledFromParent(isEnabled, startIndex..endIndex)
     return this
@@ -30,6 +40,14 @@ internal open class RowsRangeImpl(val panel: PanelImpl, val startIndex: Int) : R
   override fun enabledIf(predicate: ComponentPredicate): RowsRange {
     enabled(predicate())
     predicate.addListener { enabled(it) }
+    return this
+  }
+
+  override fun enabledIf(property: ObservableProperty<Boolean>): RowsRange {
+    enabled(property.get())
+    property.whenPropertyChanged {
+      enabled(it)
+    }
     return this
   }
 }

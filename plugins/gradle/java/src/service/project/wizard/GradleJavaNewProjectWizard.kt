@@ -20,7 +20,6 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.addSampleCode
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.gradleData
@@ -50,19 +49,20 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
     override fun setupSettingsUI(builder: Panel) {
       super.setupSettingsUI(builder)
-      lateinit var addSampleCode: Cell<JBCheckBox>
-      builder.row {
-        addSampleCode = checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
-          .bindSelected(addSampleCodeProperty)
-          .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
-      }.topGap(TopGap.SMALL)
-      builder.indent {
+      with(builder) {
         row {
-          checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
-            .bindSelected(generateOnboardingTipsProperty)
-            .whenStateChangedFromUi { logAddSampleOnboardingTipsChangedEvent(it) }
-        }
-      }.enabledIf(addSampleCode.selected)
+          checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
+            .bindSelected(addSampleCodeProperty)
+            .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
+        }.topGap(TopGap.SMALL)
+        indent {
+          row {
+            checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
+              .bindSelected(generateOnboardingTipsProperty)
+              .whenStateChangedFromUi { logAddSampleOnboardingTipsChangedEvent(it) }
+          }
+        }.enabledIf(addSampleCodeProperty)
+      }
     }
 
     override fun setupProject(project: Project) {

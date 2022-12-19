@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -161,6 +162,11 @@ interface Row {
   fun visibleIf(predicate: ComponentPredicate): Row
 
   /**
+   * Binds row visibility to provided [property] predicate.
+   */
+  fun visibleIf(property: ObservableProperty<Boolean>): Row
+
+  /**
    * Sets enabled state of the row including comment [Row.rowComment] and all children recursively.
    * The row is disabled if there is a disabled parent
    */
@@ -170,6 +176,11 @@ interface Row {
    * Binds row enabled state to provided [predicate]
    */
   fun enabledIf(predicate: ComponentPredicate): Row
+
+  /**
+   * Binds row enabled state to provided [property] predicate.
+   */
+  fun enabledIf(property: ObservableProperty<Boolean>): Row
 
   /**
    * Adds additional gap above current row. It is visible together with the row.

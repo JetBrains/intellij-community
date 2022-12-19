@@ -7,6 +7,8 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.observable.properties.whenPropertyChanged
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -148,6 +150,14 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
+  override fun enabledIf(property: ObservableProperty<Boolean>): RowImpl {
+    enabled(property.get())
+    property.whenPropertyChanged {
+      enabled(it)
+    }
+    return this
+  }
+
   override fun visible(isVisible: Boolean): RowImpl {
     visible = isVisible
     if (parent.isVisible()) {
@@ -159,6 +169,14 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun visibleIf(predicate: ComponentPredicate): Row {
     visible(predicate())
     predicate.addListener { visible(it) }
+    return this
+  }
+
+  override fun visibleIf(property: ObservableProperty<Boolean>): RowImpl {
+    visible(property.get())
+    property.whenPropertyChanged {
+      visible(it)
+    }
     return this
   }
 

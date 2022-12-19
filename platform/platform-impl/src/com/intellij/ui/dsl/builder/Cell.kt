@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidation
@@ -62,9 +63,13 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   override fun enabledIf(predicate: ComponentPredicate): Cell<T>
 
+  override fun enabledIf(property: ObservableProperty<Boolean>): Cell<T>
+
   override fun visible(isVisible: Boolean): Cell<T>
 
   override fun visibleIf(predicate: ComponentPredicate): Cell<T>
+
+  override fun visibleIf(property: ObservableProperty<Boolean>): Cell<T>
 
   /**
    * Changes [component] font to bold
