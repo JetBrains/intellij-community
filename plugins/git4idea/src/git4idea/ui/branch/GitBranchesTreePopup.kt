@@ -65,7 +65,6 @@ import java.util.function.Function
 import java.util.function.Supplier
 import javax.accessibility.AccessibleContext
 import javax.swing.*
-import javax.swing.border.EmptyBorder
 import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
@@ -120,16 +119,16 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       return
     }
 
+    val searchBorder =  mySpeedSearchPatternField.border
     mySpeedSearchPatternField.border = null
 
+    val toolbar = createToolbar().component.apply {
+      border = JBUI.Borders.emptyLeft(6)
+    }
     val panel = BorderLayoutPanel()
       .addToCenter(mySpeedSearchPatternField)
-      .addToRight(createToolbar().component).apply {
-        // todo: adjust gaps to align search icon with tree item icons
-        val outsideBorder = EmptyBorder(JBUI.CurrentTheme.Popup.searchFieldBorderInsets())
-        val lineBorder = JBUI.Borders.customLineBottom(JBUI.CurrentTheme.Popup.separatorColor())
-
-        border = JBUI.Borders.compound(outsideBorder, lineBorder)
+      .addToRight(toolbar).apply {
+        border = searchBorder
         background = JBUI.CurrentTheme.Popup.BACKGROUND
       }
 
@@ -151,7 +150,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         it.model = null
       }
       val topBorder = if (step.title.isNullOrEmpty()) JBUIScale.scale(5) else 0
-      it.border = JBUI.Borders.empty(topBorder, JBUIScale.scale(10), 0, 0)
+      it.border = JBUI.Borders.empty(topBorder, JBUIScale.scale(22), 0, 0)
     }
     searchPatternStateFlow = MutableStateFlow(null)
     speedSearch.installSupplyTo(tree, false)
