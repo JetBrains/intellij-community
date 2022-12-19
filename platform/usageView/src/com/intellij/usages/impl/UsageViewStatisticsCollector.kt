@@ -35,7 +35,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("usage.view", 14)
+    val GROUP = EventLogGroup("usage.view", 15)
     val USAGE_VIEW = object : PrimitiveEventField<UsageView?>() {
       override val name: String = "usage_view"
 
@@ -50,6 +50,10 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     private val UI_LOCATION = EventFields.Enum("ui_location", CodeNavigateSource::class.java)
     private val USAGE_SHOWN = GROUP.registerVarargEvent("usage.shown", USAGE_VIEW, REFERENCE_CLASS, EventFields.Language, UI_LOCATION)
     private val USAGE_NAVIGATE = GROUP.registerEvent("usage.navigate", REFERENCE_CLASS, EventFields.Language)
+    // fields specific for items in popup
+    private val SELECTED_ROW = EventFields.Int("selected_usage")
+    private val NUMBER_OF_ROWS = EventFields.Int("number_of_usages")
+    private val NUMBER_OF_LETTERS_TYPED = EventFields.Int("number_of_letters_typed")
 
     const val SCOPE_RULE_ID = "scopeRule"
 
@@ -80,10 +84,15 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
                                                            FIRST_RESULT_TS,
                                                            EventFields.DurationMs,
                                                            TOO_MANY_RESULTS,
-                                                           UI_LOCATION,
-                                                           USAGE_VIEW)
-
-    private val itemChosen = GROUP.registerVarargEvent("item.chosen", USAGE_VIEW, UI_LOCATION, IS_SIMILAR_USAGE, EventFields.Language)
+                                                           UI_LOCATION, USAGE_VIEW)
+    private val itemChosen = GROUP.registerVarargEvent("item.chosen",
+                                                       USAGE_VIEW,
+                                                       UI_LOCATION,
+                                                       IS_SIMILAR_USAGE,
+                                                       SELECTED_ROW,
+                                                       NUMBER_OF_ROWS,
+                                                       NUMBER_OF_LETTERS_TYPED,
+                                                       EventFields.Language)
     private val tabSwitched = GROUP.registerEvent("switch.tab", USAGE_VIEW)
 
     private val PREVIOUS_SCOPE = EventFields.StringValidatedByCustomRule("previous", ScopeRuleValidator::class.java)
@@ -139,10 +148,25 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
                       usageView: UsageView,
                       source: CodeNavigateSource,
                       language: Language,
+                      isSimilarUsage: Boolean) {
+      logItemChosen(project, usageView, source, language, isSimilarUsage)
+    }
+
+    @JvmStatic
+    fun logItemChosen(project: Project?,
+                      usageView: UsageView,
+                      source: CodeNavigateSource,
+                      selectedRow:Int = -1,
+                      numberOfRows:Int = -1,
+                      numberOfLettersTyped: Int = -1,
+                      language: Language,
                       isSimilarUsage: Boolean) = itemChosen.log(project,
                                                                 USAGE_VIEW.with(usageView),
                                                                 UI_LOCATION.with(source),
                                                                 IS_SIMILAR_USAGE.with(isSimilarUsage),
+                                                                SELECTED_ROW.with(selectedRow),
+                                                                NUMBER_OF_ROWS.with(numberOfRows),
+                                                                NUMBER_OF_LETTERS_TYPED.with(numberOfLettersTyped),
                                                                 EventFields.Language.with(language))
 
     @JvmStatic
