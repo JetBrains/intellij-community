@@ -25,7 +25,11 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.ImportPath
 
 class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
-    override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> =
+  override fun isInvokeOfCompanionObject(psiReference: PsiReference, declaration: KtNamedDeclaration): Boolean {
+    return false
+  }
+
+  override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> =
         declaration.actualsForExpected(module)
 
     override fun dataClassComponentMethodName(element: KtParameter): String? =

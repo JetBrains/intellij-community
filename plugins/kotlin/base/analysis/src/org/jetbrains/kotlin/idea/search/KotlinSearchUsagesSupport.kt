@@ -54,6 +54,9 @@ interface KotlinSearchUsagesSupport {
         fun PsiReference.isCallableOverrideUsage(declaration: KtNamedDeclaration): Boolean =
             getInstance(declaration.project).isCallableOverrideUsage(this, declaration)
 
+        fun PsiReference.isInvokeOfCompanionObject(declaration: KtNamedDeclaration): Boolean =
+            getInstance(declaration.project).isInvokeOfCompanionObject(this, declaration)
+
         fun PsiReference.isUsageInContainingDeclaration(declaration: KtNamedDeclaration): Boolean =
             getInstance(declaration.project).isUsageInContainingDeclaration(this, declaration)
 
@@ -121,6 +124,8 @@ interface KotlinSearchUsagesSupport {
         fun createConstructorHandle(psiMethod: PsiMethod): ConstructorCallHandle =
             getInstance(psiMethod.project).createConstructorHandle(psiMethod)
     }
+
+    fun isInvokeOfCompanionObject(psiReference: PsiReference, declaration: KtNamedDeclaration): Boolean
 
     fun actualsForExpected(declaration: KtDeclaration, module: Module? = null): Set<KtDeclaration>
 
