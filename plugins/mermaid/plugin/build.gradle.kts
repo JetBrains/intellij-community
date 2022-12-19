@@ -85,6 +85,13 @@ val commonJvmArgs = listOf("-Xmx750m")
 
 val mermaidVersion = properties("mermaidVersion")
 
+val shouldBundleSourceMaps: Boolean
+    get() = (project.findProperty("shouldBundleSourceMaps") as? String)?.toBoolean() ?: false
+
+val ensureSourceMapsAreNotBundledInProductionBuild by tasks.registering {
+    check(!shouldBundleSourceMaps) { "Source maps should not be bundled with a production build!" }
+}
+
 tasks {
     withType<JavaCompile> {
         sourceCompatibility = "17"
@@ -112,6 +119,10 @@ tasks {
 
     buildSearchableOptions {
         jvmArgs = commonJvmArgs
+    }
+
+    buildPlugin {
+        dependsOn(ensureSourceMapsAreNotBundledInProductionBuild)
     }
 
     withType<Test> {

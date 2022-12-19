@@ -9,6 +9,13 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
 }
 
+fun properties(key: String): String? {
+    return project.findProperty(key)?.toString()
+}
+
+val shouldBundleSourceMaps: Boolean
+    get() = (project.findProperty("shouldBundleSourceMaps") as? String).toBoolean()
+
 kotlin {
     js(IR) {
         useCommonJs()
@@ -16,7 +23,7 @@ kotlin {
             commonWebpackConfig {
                 showProgress = true
                 outputFileName = "mermaid.js"
-                sourceMaps = false
+                sourceMaps = shouldBundleSourceMaps
             }
         }
         binaries.executable()
@@ -37,9 +44,11 @@ val browserDistribution: Task
     get() = tasks.findByName("browserDistribution")!!
 
 artifacts {
-    // val targetFile = File(browserDistribution.outputs.files, "extension.js")
     val files = browserDistribution.outputs.files
     for (file in files) {
+        if (file.extension == "map" && !shouldBundleSourceMaps) {
+            continue
+        }
         add(mermaidExtensionBundle.name, file) {
             builtBy(browserDistribution)
         }
