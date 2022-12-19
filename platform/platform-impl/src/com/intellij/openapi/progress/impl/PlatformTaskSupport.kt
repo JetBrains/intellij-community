@@ -151,7 +151,7 @@ private fun CoroutineScope.showIndicator(
   taskInfo: TaskInfo,
   stateFlow: Flow<ProgressState>,
 ): Job {
-  return launch(Dispatchers.IO) {
+  return launch(Dispatchers.Default) {
     delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
     val indicator = coroutineCancellingIndicator(this@showIndicator.coroutineContext.job) // cancel the parent job from UI
     indicator.start()
@@ -226,7 +226,7 @@ private fun CoroutineScope.showModalIndicator(
   descriptor: ModalIndicatorDescriptor,
   stateFlow: Flow<ProgressState>,
   deferredDialog: CompletableDeferred<DialogWrapper>?,
-): Job = launch(Dispatchers.IO) {
+): Job = launch(Dispatchers.Default) {
   if (isHeadlessEnv()) {
     return@launch
   }
@@ -296,7 +296,7 @@ private fun CoroutineScope.showModalIndicator(
 private suspend fun ProgressDialogUI.updateFromFlow(updates: Flow<ProgressState>): Nothing {
   updates
     .throttle(50)
-    .flowOn(Dispatchers.IO)
+    .flowOn(Dispatchers.Default)
     .collect {
       updateProgress(it)
     }
