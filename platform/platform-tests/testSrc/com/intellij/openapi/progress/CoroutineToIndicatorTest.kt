@@ -81,18 +81,19 @@ class CoroutineToIndicatorTest : CancellationTest() {
   @Test
   fun `delegates reporting to context reporter`() {
     progressReporterTest(
-      ProgressState(text = null, details = null, fraction = 0.0),
-      ProgressState(text = "Hello", details = null, fraction = 0.0 * 0.8),
-      ProgressState(text = "Hello", details = "World", fraction = 0.0 * 0.8),
-      ProgressState(text = "Hello", details = "World", fraction = 0.42 * 0.8),
-      ProgressState(text = null, details = null, fraction = 0.8),
+      ProgressState(text = "Hello", details = null, fraction = -1.0),
+      ProgressState(text = "Hello", details = "World", fraction = -1.0),
+      ProgressState(text = "Hello", details = "World", fraction = 0.42),
+      ProgressState(text = null, details = "World", fraction = 0.42),
+      ProgressState(text = null, details = "World", fraction = -1.0),
     ) {
-      progressStep(endFraction = 0.8) {
-        withRawProgressReporter {
-          coroutineToIndicator {
-            ProgressManager.progress("Hello", "World")
-            ProgressManager.getInstance().progressIndicator.fraction = 0.42
-          }
+      withRawProgressReporter {
+        coroutineToIndicator {
+          ProgressManager.progress("Hello", "World")
+          val indicator = ProgressManager.getInstance().progressIndicator
+          indicator.fraction = 0.42
+          indicator.text = null
+          indicator.isIndeterminate = true
         }
       }
     }
