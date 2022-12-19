@@ -388,13 +388,13 @@ public class ChangesViewManager implements ChangesViewEx,
       MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
       myVcsConfiguration = VcsConfiguration.getInstance(myProject);
 
+      // ChangesViewPanel is used for a singular ChangesViewToolWindowPanel instance. Cleanup is not needed.
       myView = myChangesPanel.getChangesView();
       myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
-      myView.getGroupingSupport().setGroupingKeysOrSkip(myChangesViewManager.getGrouping());
-      myView.addGroupingChangeListener(e -> {
-        myChangesViewManager.setGrouping(myView.getGroupingSupport().getGroupingKeys());
-        scheduleRefresh();
-      });
+      ChangesTree.installGroupingSupport(myView.getGroupingSupport(),
+                                         () -> myChangesViewManager.getGrouping(),
+                                         (newValue) -> myChangesViewManager.setGrouping(newValue),
+                                         () -> scheduleRefresh());
       ChangesViewDnDSupport.install(myProject, myView, this);
 
       myChangesPanel.getToolbarActionGroup().addAll(createChangesToolbarActions(myView.getTreeExpander()));
@@ -967,6 +967,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
     @Override
     protected @NotNull ChangesGroupingSupport installGroupingSupport() {
+      // can't install support here - 'rebuildTree' is not defined
       return new ChangesGroupingSupport(myProject, this, true);
     }
 
