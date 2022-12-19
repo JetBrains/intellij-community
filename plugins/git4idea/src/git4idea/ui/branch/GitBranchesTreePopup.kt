@@ -5,6 +5,7 @@ import com.intellij.dvcs.branch.DvcsBranchManager
 import com.intellij.dvcs.branch.DvcsBranchesDivergedBanner
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.ui.DvcsBundle
+import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.TreeState
@@ -12,6 +13,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
@@ -114,6 +116,11 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   }
 
   override fun setHeaderComponent(c: JComponent?) {
+    mySpeedSearchPatternField.textEditor.apply {
+      emptyText.text = ApplicationBundle.message("editorsearch.search.hint")
+      FragmentedSettingsUtil.setupPlaceholderVisibility(mySpeedSearchPatternField.textEditor)
+    }
+
     if (!isNewUI) {
       super.setHeaderComponent(c)
       return
