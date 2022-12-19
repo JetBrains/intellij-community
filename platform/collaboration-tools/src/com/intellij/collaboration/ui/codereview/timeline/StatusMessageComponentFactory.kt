@@ -14,7 +14,7 @@ object StatusMessageComponentFactory {
         StatusMessageType.SECONDARY_INFO -> JBColor.namedColor("Review.MetaInfo.StatusLine.Gray", ColorUtil.fromHex("#9AA7B0B3"))
         StatusMessageType.SUCCESS -> JBColor.namedColor("Review.MetaInfo.StatusLine.Green", ColorUtil.fromHex("#62B543B3"))
         StatusMessageType.WARNING -> JBColor.namedColor("Review.MetaInfo.StatusLine.Orange", ColorUtil.fromHex("#F26522B3"))
-        StatusMessageType.ERROR -> JBColor.namedColor("Review.MetaInfo.StatusLine.Orange", ColorUtil.fromHex("#62B543B3"))
+        StatusMessageType.ERROR -> JBColor.namedColor("Review.MetaInfo.StatusLine.Orange", ColorUtil.fromHex("#F26522B3"))
       }
     }
     return JBUI.Panels.simplePanel(8, 0)

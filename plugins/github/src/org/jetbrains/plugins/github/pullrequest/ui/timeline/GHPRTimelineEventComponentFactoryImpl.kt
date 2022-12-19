@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
+import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -50,6 +51,11 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
   private abstract inner class EventComponentFactory<T : GHPRTimelineEvent> : GHPRTimelineEventComponentFactory<T> {
     protected fun eventItem(event: GHPRTimelineEvent, detailsText: @Nls String): JComponent {
       val content = createDescriptionComponent(detailsText)
+      return createTimelineItem(avatarIconsProvider, event.actor ?: ghostUser, event.createdAt, content)
+    }
+
+    protected fun eventItem(event: GHPRTimelineEvent, type: StatusMessageType, detailsText: @Nls String): JComponent {
+      val content = createDescriptionComponent(detailsText, type)
       return createTimelineItem(avatarIconsProvider, event.actor ?: ghostUser, event.createdAt, content)
     }
 
@@ -154,21 +160,24 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
 
   private inner class StateEventComponentFactory : EventComponentFactory<GHPRTimelineEvent.State>() {
     override fun createComponent(event: GHPRTimelineEvent.State): JComponent {
-      val text = when (event.newState) {
-        GHPullRequestState.CLOSED -> message("pull.request.timeline.closed")
+      return when (event.newState) {
+        GHPullRequestState.CLOSED -> {
+          eventItem(event, StatusMessageType.SECONDARY_INFO, message("pull.request.timeline.closed"))
+        }
         GHPullRequestState.MERGED -> {
           val mergeEvent = (if (event is GHPRTimelineMergedStateEvents) event.lastStateEvent else event) as GHPRMergedEvent
-          if (mergeEvent.commit != null) {
+          val text = if (mergeEvent.commit != null) {
             val commitText = HtmlChunk.link(mergeEvent.commit.url, mergeEvent.commit.abbreviatedOid).toString()
             val ref = branchHTML(mergeEvent.mergeRefName)
             message("pull.request.timeline.merged.commit", commitText, ref)
           }
           else message("pull.request.timeline.merged")
+          eventItem(event, StatusMessageType.SUCCESS, text)
         }
-        GHPullRequestState.OPEN -> message("pull.request.timeline.reopened")
+        GHPullRequestState.OPEN -> {
+          eventItem(event, message("pull.request.timeline.reopened"))
+        }
       }
-
-      return eventItem(event, text)
     }
   }
 
