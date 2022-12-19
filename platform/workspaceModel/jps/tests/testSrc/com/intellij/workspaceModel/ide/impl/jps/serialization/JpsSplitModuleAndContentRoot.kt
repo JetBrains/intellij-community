@@ -20,6 +20,8 @@ import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class JpsSplitModuleAndContentRoot {
@@ -473,6 +475,30 @@ class JpsSplitModuleAndContentRoot {
     checkSaveProjectAfterChange("after/imlWithoutJavaSettings", "after/imlWithoutJavaSettings") { builder, _ ->
       val javaSettings = builder.entities(ModuleEntity::class.java).single().javaSettings
       assertNull(javaSettings)
+    }
+  }
+
+  @Test
+  fun `load module without java custom settings but with exclude`() {
+    checkSaveProjectAfterChange("after/imlWithoutJavaSettingsButWithExclude", "after/imlWithoutJavaSettingsButWithExclude") { builder, _ ->
+      val javaSettings = builder.entities(ModuleEntity::class.java).single().javaSettings
+      assertNotNull(javaSettings)
+      assertTrue(javaSettings.excludeOutput)
+      assertFalse(javaSettings.inheritedCompilerOutput)
+      assertNull(javaSettings.languageLevelId)
+      assertNull(javaSettings.compilerOutputForTests)
+    }
+  }
+
+  @Test
+  fun `load module without java custom settings but with languageLevel`() {
+    checkSaveProjectAfterChange("after/imlWithoutJavaSettingsButWithLanguageLevel", "after/imlWithoutJavaSettingsButWithLanguageLevel") { builder, _ ->
+      val javaSettings = builder.entities(ModuleEntity::class.java).single().javaSettings
+      assertNotNull(javaSettings)
+      assertFalse(javaSettings.excludeOutput)
+      assertFalse(javaSettings.inheritedCompilerOutput)
+      assertEquals("JDK_1_8", javaSettings.languageLevelId)
+      assertNull(javaSettings.compilerOutputForTests)
     }
   }
 
