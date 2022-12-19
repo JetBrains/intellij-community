@@ -33,6 +33,7 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFil
 import org.jetbrains.intellij.build.impl.projectStructureMapping.includedModules
 import org.jetbrains.intellij.build.impl.projectStructureMapping.writeProjectStructureReport
 import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.logFreeDiskSpace
 import org.jetbrains.intellij.build.io.writeNewFile
 import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.tasks.*
@@ -883,14 +884,6 @@ private fun logFreeDiskSpace(phase: String, context: CompilationContext) {
   if (context.options.printFreeSpace) {
     logFreeDiskSpace(context.paths.buildOutputDir, phase)
   }
-}
-
-internal fun logFreeDiskSpace(dir: Path, phase: String) {
-  Span.current().addEvent("free disk space", Attributes.of(
-    AttributeKey.stringKey("phase"), phase,
-    AttributeKey.stringKey("usableSpace"), Formats.formatFileSize(Files.getFileStore(dir).usableSpace),
-    AttributeKey.stringKey("dir"), dir.toString(),
-  ))
 }
 
 fun buildUpdaterJar(context: BuildContext, artifactName: String = "updater.jar") {

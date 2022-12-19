@@ -25,6 +25,7 @@ import org.jetbrains.intellij.build.impl.JdkUtils.readModulesFromReleaseFile
 import org.jetbrains.intellij.build.impl.compilation.CompiledClasses
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesHandler
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
+import org.jetbrains.intellij.build.io.logFreeDiskSpace
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.jps.model.*
 import org.jetbrains.jps.model.artifact.JpsArtifactService
