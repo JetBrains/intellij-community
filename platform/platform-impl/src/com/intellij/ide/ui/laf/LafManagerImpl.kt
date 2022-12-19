@@ -650,6 +650,11 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   }
 
   private fun applyDensity(defaults: UIDefaults) {
+    defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.CurrentTheme.Toolbar.defaultExperimentalToolbarButtonSize())
+    defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), JBUI.CurrentTheme.RunWidget.defaultToolbarHeight())
+    defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), JBUI.CurrentTheme.RunWidget.defaultToolbarBorderHeight())
+    defaults.put(JBUI.CurrentTheme.RunWidget.actionButtonWidthKey(), JBUI.CurrentTheme.RunWidget.defaultActionButtonWidth())
+    defaults.put(JBUI.CurrentTheme.RunWidget.configurationSelectorWidthKey(), JBUI.CurrentTheme.RunWidget.defaultConfigurationSelectorWidth())
     if (density == UIDensity.COMPACT) {
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(32, 32))
       defaults.put("Tree.rowHeight", 20)

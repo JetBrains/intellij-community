@@ -853,11 +853,16 @@ public final class JBUI {
       }
 
       public static @NotNull Dimension experimentalToolbarButtonSize() {
-        return size(experimentalToolbarButtonSizeKey(), size(40, 40));
+        return size(experimentalToolbarButtonSizeKey(), defaultExperimentalToolbarButtonSize());
       }
 
       public @NotNull static String experimentalToolbarButtonSizeKey() {
         return "ActionToolbar.large.buttonSize";
+      }
+
+      @NotNull
+      public static JBDimension defaultExperimentalToolbarButtonSize() {
+        return size(40, 40);
       }
     }
 
@@ -1581,19 +1586,55 @@ public final class JBUI {
       public static final Color PRESSED_BACKGROUND = JBColor.namedColor("RunWidget.pressedBackground", new Color(0, 0, 0, 40));
 
       public static int toolbarHeight() {
-        return getInt("RunWidget.toolbarHeight", 30);
+        return getInt(toolbarHeightKey(), defaultToolbarHeight());
+      }
+
+      @NotNull
+      public static String toolbarHeightKey() {
+        return "RunWidget.toolbarHeight";
+      }
+
+      public static int defaultToolbarHeight() {
+        return 30;
       }
 
       public static int toolbarBorderHeight() {
-        return getInt("RunWidget.toolbarBorderHeight", 5);
+        return getInt(toolbarBorderHeightKey(), defaultToolbarBorderHeight());
+      }
+
+      @NotNull
+      public static String toolbarBorderHeightKey() {
+        return "RunWidget.toolbarBorderHeight";
+      }
+
+      public static int defaultToolbarBorderHeight() {
+        return 5;
       }
 
       public static int actionButtonWidth() {
-        return getInt("RunWidget.actionButtonWidth", 36);
+        return getInt(actionButtonWidthKey(), defaultActionButtonWidth());
+      }
+
+      @NotNull
+      public static String actionButtonWidthKey() {
+        return "RunWidget.actionButtonWidth";
+      }
+
+      public static int defaultActionButtonWidth() {
+        return 36;
       }
 
       public static int configurationSelectorWidth() {
-        return getInt("RunWidget.configurationSelectorWidth", 90);
+        return getInt(configurationSelectorWidthKey(), defaultConfigurationSelectorWidth());
+      }
+
+      @NotNull
+      public static String configurationSelectorWidthKey() {
+        return "RunWidget.configurationSelectorWidth";
+      }
+
+      public static int defaultConfigurationSelectorWidth() {
+        return 90;
       }
     }
   }
