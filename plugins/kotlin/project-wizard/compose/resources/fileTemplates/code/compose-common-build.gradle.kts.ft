@@ -12,9 +12,7 @@ version = "${context.version}"
 kotlin {
     android()
     jvm("desktop") {
-        compilations.all {
-            kotlinOptions.jvmTarget = "11"
-        }
+        jvmToolchain(11)
     }
     sourceSets {
         val commonMain by getting {
