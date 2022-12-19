@@ -33,7 +33,7 @@ internal abstract class KtModuleByModuleInfoBase(
     open val directRegularDependencies: List<KtModule>
         get() = ideaModuleInfo.dependenciesWithoutSelf().map(provider::getKtModuleByModuleInfo).toList()
 
-    open val directRefinementDependencies: List<KtModule>
+    open val directDependsOnDependencies: List<KtModule>
         get() = ideaModuleInfo.expectedBy.map(provider::getKtModuleByModuleInfo)
 
     open val directFriendDependencies: List<KtModule>
@@ -164,8 +164,8 @@ internal class KtLibrarySourceModuleByModuleInfo(
     override val directFriendDependencies: List<KtModule>
         get() = binaryLibrary.directFriendDependencies.mapNotNull { (it as? KtLibraryModule)?.librarySources }
 
-    override val directRefinementDependencies: List<KtModule>
-        get() = binaryLibrary.directRefinementDependencies.mapNotNull { (it as? KtLibraryModule)?.librarySources }
+    override val directDependsOnDependencies: List<KtModule>
+        get() = binaryLibrary.directDependsOnDependencies.mapNotNull { (it as? KtLibraryModule)?.librarySources }
 
     override val contentScope: GlobalSearchScope
         get() = LibrarySourcesScope(moduleInfo.project, moduleInfo.library)
