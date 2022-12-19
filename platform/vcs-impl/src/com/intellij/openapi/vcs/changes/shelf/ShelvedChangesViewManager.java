@@ -386,7 +386,11 @@ public class ShelvedChangesViewManager implements Disposable {
     @NotNull
     @Override
     protected ChangesGroupingSupport installGroupingSupport() {
-      return new ChangesGroupingSupport(myProject, this, false);
+      ChangesGroupingSupport groupingSupport = new ChangesGroupingSupport(myProject, this, false);
+      ChangesTree.installGroupingSupport(this, groupingSupport,
+                                         () -> ShelveChangesManager.getInstance(myProject).getGrouping(),
+                                         (newGrouping) -> ShelveChangesManager.getInstance(myProject).setGrouping(newGrouping));
+      return groupingSupport;
     }
 
     @Override
@@ -715,11 +719,6 @@ public class ShelvedChangesViewManager implements Disposable {
       myTree = new ShelfTree(myProject);
       myTree.setEditable(true);
       myTree.setDragEnabled(!ApplicationManager.getApplication().isHeadlessEnvironment());
-      myTree.getGroupingSupport().setGroupingKeysOrSkip(myShelveChangesManager.getGrouping());
-      myTree.addGroupingChangeListener(e -> {
-        myShelveChangesManager.setGrouping(myTree.getGroupingSupport().getGroupingKeys());
-        myTree.rebuildTree();
-      });
       DefaultTreeCellEditor treeCellEditor = new DefaultTreeCellEditor(myTree, null) {
         @Override
         public boolean isCellEditable(EventObject event) {
