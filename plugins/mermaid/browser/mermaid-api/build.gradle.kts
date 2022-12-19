@@ -2,10 +2,16 @@ plugins {
     kotlin("js")
 }
 
+fun properties(key: String): String {
+    return project.findProperty(key).toString()
+}
+
+val mermaidVersion = properties("mermaidVersion")
+
 dependencies {
     implementation(kotlin("stdlib-js"))
-    implementation(npm("mermaid", version = "9.3.0"))
-    implementation(npm("@mermaid-js/mermaid-mindmap", version = "9.3.0"))
+    implementation(npm("mermaid", version = mermaidVersion))
+    implementation(npm("@mermaid-js/mermaid-mindmap", version = mermaidVersion))
 }
 
 kotlin {
