@@ -46,7 +46,7 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
         if (error != null) {
           if (!CompletableFutureUtil.isCancellation(error)) this.error = error
         }
-        else if (list != null) {
+        else if (!list.isNullOrEmpty()) {
           val startIdx = loadedData.size
           loadedData.addAll(list)
           dataEventDispatcher.multicaster.onDataAdded(startIdx)
