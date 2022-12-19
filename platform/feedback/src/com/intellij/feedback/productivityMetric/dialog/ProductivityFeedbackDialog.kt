@@ -4,6 +4,7 @@ package com.intellij.feedback.productivityMetric.dialog
 import com.intellij.feedback.common.*
 import com.intellij.feedback.common.dialog.*
 import com.intellij.feedback.productivityMetric.bundle.ProductivityFeedbackBundle
+import com.intellij.feedback.productivityMetric.statistics.ProductivityMetricCountCollector
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
@@ -56,6 +57,9 @@ class ProductivityFeedbackDialog(
 
   override fun doOKAction() {
     super.doOKAction()
+    ProductivityMetricCountCollector.logProductivityMetricFeedback(productivityProperty.get(),
+                                                                   proficiencyProperty.get(),
+                                                                   usingExperience.get() ?: "No data")
     val feedbackData = FeedbackRequestData(feedbackReportId, createCollectedDataJsonString())
     submitFeedback(project, feedbackData,
                    { }, { },

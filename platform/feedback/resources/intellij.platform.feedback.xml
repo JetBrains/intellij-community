@@ -18,6 +18,8 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.feedback.common.statistics.DontShowAgainValueCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.feedback.common.statistics.FeedbackDialogCountCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.feedback.productivityMetric.statistics.ProductivityMetricCountCollector"/>
   </extensions>
 
   <applicationListeners>
