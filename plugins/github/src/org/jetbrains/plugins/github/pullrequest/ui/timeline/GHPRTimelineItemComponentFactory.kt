@@ -266,8 +266,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
         .maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}")
         .gapLeft("${CodeReviewTimelineUIUtil.ITEM_HOR_PADDING}")
         .gapRight("${CodeReviewTimelineUIUtil.ITEM_HOR_PADDING}"))
-      add(threadsPanel, CC().minWidth("0").grow().push())
-      add(reviewItem, CC().minWidth("0").grow().push())
+      add(threadsPanel, CC().minWidth("0").grow().push().minWidth("0"))
+      add(reviewItem, CC().minWidth("0").grow().push().minWidth("0"))
     }
   }
 
@@ -335,7 +335,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
             add(panelHandle.panel, CC()
               .grow()
               .maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}"))
-            add(diff, CC().grow())
+            add(diff, CC().grow().minWidth("0"))
             add(collapsedThreadActionsComponent, CC()
               .maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}"))
           }
@@ -344,7 +344,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
             val commentComponent = GHPRReviewCommentComponent
               .createCommentBodyComponent(project, suggestedChangeHelper, thread, text)
             bodyPanel.setContent(commentComponent)
-            add(diff, CC().grow())
+            add(diff, CC().grow().minWidth("0"))
             add(panelHandle.panel, CC()
               .grow()
               .maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}"))
