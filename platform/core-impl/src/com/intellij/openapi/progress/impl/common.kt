@@ -7,11 +7,11 @@ internal data class FractionState<out T>(
 )
 
 internal fun totalFraction(completed: Double, updates: Iterable<FractionState<*>>): Double {
-  return if (updates.all { it.fraction < .0 }) {
+  return if (updates.all { it.fraction < 0.0 }) {
     completed
   }
   else {
-    completed.coerceAtLeast(.0) + updates.sumOf { it.fraction.coerceAtLeast(.0) }
+    completed.coerceAtLeast(0.0) + updates.sumOf { it.fraction.coerceAtLeast(0.0) }
   }
 }
 

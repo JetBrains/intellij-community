@@ -29,20 +29,20 @@ abstract class BaseProgressReporter(parentScope: CoroutineScope) : ProgressRepor
    * (0.0; 1.0] -> this reporter has determinate children
    * (1.0; +♾️) -> this reporter is raw
    */
-  private val lastFraction = AtomicDouble(.0)
+  private val lastFraction = AtomicDouble(0.0)
 
   private fun duration(endFraction: Double?): Double? {
     if (endFraction == null) {
       lastFraction.getAndUpdate {
         when {
-          it <= .0 -> it - 1.0 // indicate that this reporter has an indeterminate child, so rawReporter() would fail
+          it <= 0.0 -> it - 1.0 // indicate that this reporter has an indeterminate child, so rawReporter() would fail
           it > 1.0 -> error("Cannot start an indeterminate child because this reporter is raw.")
           else -> it // don't change
         }
       }
       return null
     }
-    require(.0 < endFraction && endFraction <= 1.0) {
+    require(0.0 < endFraction && endFraction <= 1.0) {
       "End fraction must be in (0.0; 1.0], got: $endFraction"
     }
     val previousFraction = lastFraction.getAndUpdate {
@@ -54,7 +54,7 @@ abstract class BaseProgressReporter(parentScope: CoroutineScope) : ProgressRepor
         else -> endFraction
       }
     }
-    return endFraction - previousFraction.coerceAtLeast(.0)
+    return endFraction - previousFraction.coerceAtLeast(0.0)
   }
 
   final override fun step(endFraction: Double?, text: ProgressText?): ProgressReporter {
@@ -62,16 +62,16 @@ abstract class BaseProgressReporter(parentScope: CoroutineScope) : ProgressRepor
   }
 
   final override fun durationStep(duration: Double, text: ProgressText?): ProgressReporter {
-    require(.0 < duration && duration <= 1.0) {
+    require(0.0 < duration && duration <= 1.0) {
       "Duration must be in (0.0; 1.0], got: $duration"
     }
     lastFraction.getAndUpdate {
       when {
         it > 1.0 -> error("Cannot start a child because this reporter is raw.")
-        it <= .0 -> duration
+        it <= 0.0 -> duration
         else -> {
           val newValue = it + duration
-          check(.0 < newValue && newValue <= 1.0)
+          check(0.0 < newValue && newValue <= 1.0)
           newValue
         }
       }
@@ -83,7 +83,7 @@ abstract class BaseProgressReporter(parentScope: CoroutineScope) : ProgressRepor
 
   final override fun rawReporter(): RawProgressReporter {
     lastFraction.getAndUpdate {
-      check(it == .0) {
+      check(it == 0.0) {
         "This reporter already has child steps." +
         "Wrap the call into step(endFraction=...) and call rawReporter() inside the newly started child step."
       }

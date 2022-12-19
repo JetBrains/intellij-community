@@ -50,7 +50,7 @@ internal class ChildrenHandler<T>(
       val childUpdateCollector = launch {
         childUpdates.collect { childUpdate: FractionState<T> ->
           val scaledUpdate = childUpdate.copy(
-            fraction = if (duration < .0) -1.0 else duration * childUpdate.fraction.coerceAtLeast(.0),
+            fraction = if (duration < 0.0) -1.0 else duration * childUpdate.fraction.coerceAtLeast(.0),
           )
           children.update { children ->
             // put the latest update to the end of [active] map
@@ -62,7 +62,7 @@ internal class ChildrenHandler<T>(
       childUpdateCollector.cancelAndJoin()
       children.update { (completed, active) ->
         Children(
-          completed = if (duration < .0) completed else completed.coerceAtLeast(.0) + duration,
+          completed = if (duration < 0.0) completed else completed.coerceAtLeast(.0) + duration,
           active = active.remove(step),
         )
       }
