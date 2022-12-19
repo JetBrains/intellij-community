@@ -84,7 +84,8 @@ class KtTestMetadataNavigationTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.checkHighlighting()
     val gutters = myFixture.findAllGutters()
     val lineMarkerInfo = gutters.asSequence()
-      .mapNotNull { (it as? LineMarkerInfo.LineMarkerGutterIconRenderer<*>)?.lineMarkerInfo }
+      .filterIsInstance<LineMarkerInfo.LineMarkerGutterIconRenderer<*>>()
+      .map { it.lineMarkerInfo }
       .filter { it.element?.text == "testFizzbuzz" }
       .filter { it.createGutterRenderer()?.clickAction?.templateText == "Navigate to Test Data" }
       .single()
@@ -97,7 +98,6 @@ class KtTestMetadataNavigationTest : LightJavaCodeInsightFixtureTestCase() {
 
     UsefulTestCase.assertSize(1, findTestDataFilesForTests)
     TestCase.assertTrue(findTestDataFilesForTests.single().endsWith("/testData/foo/b"))
-
   }
 
 }

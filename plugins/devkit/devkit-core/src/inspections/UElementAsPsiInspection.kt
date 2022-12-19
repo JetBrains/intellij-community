@@ -35,8 +35,8 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
   }
 
   override fun isAllowed(holder: ProblemsHolder): Boolean =
-    super.isAllowed(holder) &&
-    UElement::class.qualifiedName?.let { JavaPsiFacade.getInstance(holder.project).findClass(it, holder.file.resolveScope) } != null
+    super.isAllowed(holder)
+    && UElement::class.qualifiedName?.let { JavaPsiFacade.getInstance(holder.project).findClass(it, holder.file.resolveScope) } != null
 
   private class CodeVisitor(private val uElementType: PsiClassType, private val psiElementType: PsiClassType) : AbstractUastVisitor() {
 
@@ -94,10 +94,10 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
 
     override fun visitReturnExpression(node: UReturnExpression): Boolean {
       val expected = when (val jt = node.jumpTarget) {
-                       is UMethod -> jt.returnType
-                       is ULambdaExpression -> jt.getExpressionType()
-                       else -> null
-                     } ?: return super.visitReturnExpression(node)
+        is UMethod -> jt.returnType
+        is ULambdaExpression -> jt.getExpressionType()
+        else -> null
+      }
       if (getDimIfUElementType(node.returnExpression?.getExpressionType()) == getDimIfPsiElementType(expected)) {
         node.returnExpression.sourcePsiElement?.let { reportedElements.add(it) }
       }

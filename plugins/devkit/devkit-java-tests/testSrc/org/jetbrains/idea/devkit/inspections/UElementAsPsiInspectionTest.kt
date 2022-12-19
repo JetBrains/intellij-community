@@ -168,7 +168,7 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
     """.trimIndent())
     myFixture.testHighlighting("UastUsage.java")
   }
-  
+
   fun testReturn() {
     //language=JAVA
     myFixture.addClass("""
@@ -185,6 +185,5 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
     """.trimIndent())
     myFixture.testHighlighting("UastUsage.java")
   }
-
 
 }
