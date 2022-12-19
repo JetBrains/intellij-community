@@ -100,7 +100,7 @@ class ProgressReporterTest {
     progressReporterTest(
       ProgressState(text = null, fraction = 0.0),
     ) {
-      progressStep {}
+      progressStep(endFraction = 1.0) {}
     }
   }
 
@@ -129,7 +129,7 @@ class ProgressReporterTest {
     progressReporterTest(
       ProgressState(text = "p0", fraction = 0.0),
     ) {
-      progressStep(text = "p0") {}
+      progressStep(text = "p0", endFraction = 1.0) {}
     }
   }
 
@@ -159,7 +159,7 @@ class ProgressReporterTest {
       indeterminateStep(text = "initial") {}
       progressStep(text = "s0", endFraction = 0.3) {}
       indeterminateStep(text = "between steps") {}
-      progressStep(text = "s1") {}
+      progressStep(text = "s1", endFraction = 1.0) {}
       indeterminateStep(text = "after last step") {}
     }
   }
@@ -174,7 +174,7 @@ class ProgressReporterTest {
     ) {
       progressStep(text = "s0", endFraction = 0.3) {}
       progressStep(endFraction = 0.8) {}
-      progressStep(text = "s2") {}
+      progressStep(text = "s2", endFraction = 1.0) {}
     }
     progressReporterTest(
       ProgressState(text = null, details = null, fraction = 0.0),
@@ -184,7 +184,7 @@ class ProgressReporterTest {
     ) {
       progressStep(endFraction = 0.3) {}
       progressStep(text = "s1", endFraction = 0.8) {}
-      progressStep {}
+      progressStep(endFraction = 1.0) {}
     }
   }
 
@@ -227,7 +227,7 @@ class ProgressReporterTest {
       ProgressState(text = null, fraction = 0.8),
       ProgressState(text = "s2", fraction = 0.8),
     ) {
-      progressStep {
+      progressStep(endFraction = 1.0) {
         sequentialTest()
       }
     }
@@ -279,7 +279,7 @@ class ProgressReporterTest {
       ProgressState(text = "outer", details = "s2", fraction = 0.8),
       ProgressState(text = "outer", details = null, fraction = 1.0),
     ) {
-      progressStep(text = "outer") {
+      progressStep(text = "outer", endFraction = 1.0) {
         sequentialTest()
       }
     }
@@ -306,7 +306,7 @@ class ProgressReporterTest {
   private suspend fun sequentialTest() {
     progressStep(text = "s0", endFraction = 0.3) {}
     progressStep(text = "s1", endFraction = 0.8) {}
-    progressStep(text = "s2") {}
+    progressStep(text = "s2", endFraction = 1.0) {}
   }
 
   @Test
@@ -327,7 +327,7 @@ class ProgressReporterTest {
           progressStep("s0s0", endFraction = 0.4) {
             yield()
           }
-          progressStep("s0s1") {
+          progressStep("s0s1", endFraction = 1.0) {
             awaitCancellation()
           }
         }
@@ -337,7 +337,7 @@ class ProgressReporterTest {
           progressStep(text = "s1s0", endFraction = 0.5) {
             yield()
           }
-          progressStep(text = "s1s1") {
+          progressStep(text = "s1s1", endFraction = 1.0) {
             step1.cancelAndJoin()
           }
         }
@@ -366,7 +366,7 @@ class ProgressReporterTest {
           progressStep("s0s0", endFraction = 0.4) {
             yield()
           }
-          progressStep("s0s1") {
+          progressStep("s0s1", endFraction = 1.0) {
             awaitCancellation()
           }
         }
@@ -376,7 +376,7 @@ class ProgressReporterTest {
           progressStep(text = "s1s0", endFraction = 0.5) {
             yield()
           }
-          progressStep(text = "s1s1") {
+          progressStep(text = "s1s1", endFraction = 1.0) {
             step1.cancelAndJoin()
           }
         }
@@ -399,7 +399,7 @@ class ProgressReporterTest {
       indeterminateStep(text = i0) {
         inner()
       }
-      progressStep(text = s0) {
+      progressStep(text = s0, endFraction = 1.0) {
         inner()
       }
     }
@@ -586,7 +586,7 @@ class ProgressReporterTest {
     assertThrows<IllegalStateException> {
       progressReporterTest {
         indeterminateStep {}
-        progressStep {}
+        progressStep(endFraction = 1.0) {}
         checkNotNull(progressReporter).rawReporter()
       }
     }
@@ -599,7 +599,7 @@ class ProgressReporterTest {
     }
     assertThrows<IllegalStateException> {
       progressReporterTest {
-        progressStep {}
+        progressStep(endFraction = 1.0) {}
         indeterminateStep {}
         checkNotNull(progressReporter).rawReporter()
       }
@@ -620,7 +620,7 @@ class ProgressReporterTest {
     assertThrows<IllegalStateException> {
       progressReporterTest {
         checkNotNull(progressReporter).rawReporter()
-        progressStep {}
+        progressStep(endFraction = 1.0) {}
       }
     }
     assertThrows<IllegalStateException> {
@@ -676,7 +676,7 @@ class ProgressReporterTest {
       ProgressState(text = null, details = "ud", fraction = 0.5),
       ProgressState(text = null, details = "ud", fraction = 0.0),
     ) {
-      progressStep {
+      progressStep(endFraction = 1.0) {
         rawTest()
       }
     }
@@ -724,7 +724,7 @@ class ProgressReporterTest {
       ProgressState(text = "outer", details = null, fraction = 0.5),
       ProgressState(text = "outer", details = null, fraction = 0.0),
     ) {
-      progressStep(text = "outer") {
+      progressStep(text = "outer", endFraction = 1.0) {
         rawTest()
       }
     }

@@ -219,7 +219,7 @@ interface ProgressReporter : AutoCloseable {
     @JvmStatic
     fun <T> ProgressReporter.progressStep(
       text: @ProgressText String?,
-      endFraction: Double = 1.0,
+      endFraction: Double,
       action: ProgressReporter.() -> T,
     ): T = step(text, endFraction).use(action)
 
@@ -249,7 +249,7 @@ suspend fun <T> indeterminateStep(
 
 suspend fun <T> progressStep(
   text: @ProgressText String? = null,
-  endFraction: Double = 1.0,
+  endFraction: Double,
   action: suspend CoroutineScope.() -> T,
 ): T {
   val reporter = coroutineContext.progressReporter

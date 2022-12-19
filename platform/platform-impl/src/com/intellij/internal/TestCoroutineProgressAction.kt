@@ -128,7 +128,7 @@ internal class TestCoroutineProgressAction : AnAction() {
     progressStep("Parallel stage", endFraction = 0.75) {
       parallelStage()
     }
-    progressStep {
+    progressStep(endFraction = 1.0) {
       parallelStage()
     }
   }
@@ -158,7 +158,7 @@ internal class TestCoroutineProgressAction : AnAction() {
       indeterminateStep("Prepare $item") {
         delay(500)
       }
-      progressStep("Processing $item") {
+      progressStep("Processing $item", endFraction = 1.0) {
         delay(300 + (Math.random() * 1000).toLong())
       }
     }
