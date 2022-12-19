@@ -650,13 +650,20 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   }
 
   private fun applyDensity(defaults: UIDefaults) {
+    // main toolbar and stripes action buttons
     defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.CurrentTheme.Toolbar.defaultExperimentalToolbarButtonSize())
+    // Run Widget
     defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), JBUI.CurrentTheme.RunWidget.defaultToolbarHeight())
     defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), JBUI.CurrentTheme.RunWidget.defaultToolbarBorderHeight())
     defaults.put(JBUI.CurrentTheme.RunWidget.actionButtonWidthKey(), JBUI.CurrentTheme.RunWidget.defaultActionButtonWidth())
     defaults.put(JBUI.CurrentTheme.RunWidget.configurationSelectorWidthKey(), JBUI.CurrentTheme.RunWidget.defaultConfigurationSelectorWidth())
     if (density == UIDensity.COMPACT) {
+      // main toolbar and stripes action buttons
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(32, 32))
+      // Run Widget
+      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(30, 30))
+      defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 1)
+      // misc stuff
       defaults.put("Tree.rowHeight", 20)
       defaults.put("EditorTabs.tabInsets", JBInsets.create(0, 2).asUIResource())
       defaults.put("ToolWindow.Header.height", 35)
