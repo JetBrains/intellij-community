@@ -10,6 +10,7 @@ import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentF
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.text.JBDateFormat
 import com.intellij.util.ui.UIUtil
@@ -26,8 +27,11 @@ internal object GHPRTimelineItemUIUtil {
   val TIMELINE_ITEM_WIDTH = TEXT_CONTENT_WIDTH + FULL.contentLeftShift + (CodeReviewTimelineUIUtil.ITEM_HOR_PADDING * 2)
 
   fun createTitleTextPane(actor: GHActor, date: Date?): HtmlEditorPane {
+    val userNameLink = HtmlChunk.link(actor.url, actor.getPresentableName())
+      .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(UIUtil.getLabelForeground())))
+      .bold()
     val titleText = HtmlBuilder()
-      .appendLink(actor.url, actor.getPresentableName())
+      .append(userNameLink)
       .append(HtmlChunk.nbsp())
       .apply {
         if (date != null) {
