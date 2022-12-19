@@ -68,7 +68,8 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(PressEnterKeyCommand.PREFIX, PressEnterKeyCommand::new),
       Map.entry(WaitForDumbCommand.PREFIX, WaitForDumbCommand::new),
       Map.entry(GoToNextPsiElement.PREFIX, GoToNextPsiElement::new),
-      Map.entry(GoToNamedElementCommand.PREFIX, GoToNamedElementCommand::new)
+      Map.entry(GoToNamedElementCommand.PREFIX, GoToNamedElementCommand::new),
+      Map.entry(MeasureVFSUpdateCommand.PREFIX, MeasureVFSUpdateCommand::new)
     );
   }
 }
