@@ -164,12 +164,8 @@ class FacetEntityChangeListener(private val project: Project): Disposable {
               .filterIsInstance<EntityChange.Removed<*>>().map { it.oldEntity }
             val rootEntity = workspaceFacetContributor.getRootEntityByChild(change.oldEntity)
             if (!removedFacets.contains(rootEntity)) {
-              //val moduleEntity = facetBridgeContributor.getRelatedModuleEntity(rootEntity, event.storageAfter)
-              val storageAfter = event.storageAfter
-              val facet = storageAfter.facetMapping().getDataByEntity(rootEntity) ?: error("Facet should be available")
-              val actualModuleEntity = storageAfter.resolve(workspaceFacetContributor.getParentModuleEntity(rootEntity).symbolicId)
-                                       ?: error("Module should be available in actual storage")
-              val actualRootElement = workspaceFacetContributor.getRootEntityByModuleEntity(actualModuleEntity)!!
+              val facet = event.storageBefore.facetMapping().getDataByEntity(rootEntity) ?: error("Facet should be available")
+              val actualRootElement = event.storageAfter.facetMapping().getEntities(facet).single()
               changedFacets[facet] = actualRootElement
             }
           }

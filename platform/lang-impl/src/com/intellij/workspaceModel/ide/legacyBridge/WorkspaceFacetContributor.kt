@@ -45,9 +45,9 @@ interface WorkspaceFacetContributor<T: WorkspaceEntity> {
   fun getParentModuleEntity(entity: T): ModuleEntity
 
   /**
-   * Method return the entity of type declared in [rootEntityType], associated with this module if any
+   * Method return the list of entities of type declared in [rootEntityType], associated with this module if any
    */
-  fun getRootEntityByModuleEntity(moduleEntity: ModuleEntity): T?
+  fun getRootEntitiesByModuleEntity(moduleEntity: ModuleEntity): List<T>
 
   /**
    * Method for creating [com.intellij.facet.Facet] from the given entity of root type

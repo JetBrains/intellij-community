@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.addIfNotNull
 import com.intellij.workspaceModel.ide.CustomModuleEntitySource
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
@@ -155,7 +154,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
     facetEntities.addAll(moduleEntity.facets)
     WorkspaceFacetContributor.EP_NAME.extensions.forEach {
       if (it.rootEntityType != FacetEntity::class.java) {
-        facetEntities.addIfNotNull(it.getRootEntityByModuleEntity(moduleEntity))
+        facetEntities.addAll(it.getRootEntitiesByModuleEntity(moduleEntity))
       }
     }
     return facetEntities.mapNotNull { facetMapping.getDataByEntity(it) }.toList().toTypedArray()
