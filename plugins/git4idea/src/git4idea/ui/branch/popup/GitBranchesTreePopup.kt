@@ -750,7 +750,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
           add(secondaryLabel,
               GridBagConstraints().apply {
                 anchor = GridBagConstraints.LINE_END
-                weightx = 1.0
+                weightx = 2.0
               })
         })
         .andTransparent()
