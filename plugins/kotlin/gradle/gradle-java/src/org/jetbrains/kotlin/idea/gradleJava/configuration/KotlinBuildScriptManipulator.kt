@@ -94,13 +94,21 @@ class KotlinBuildScriptManipulator(
                 addMavenCentralIfMissing()
             }
             jvmTarget?.let {
-                changeKotlinTaskParameter("jvmTarget", it, forTests = false)
-                changeKotlinTaskParameter("jvmTarget", it, forTests = true)
+                val useNewJvmSyntax = useNewJvmToolchainSyntax(gradleVersion)
+                if (useNewJvmSyntax) {
+                    val jvmTargetVersionNumber = getJvmTargetVersionNumber(it)
+                    addTopLevelBlock("kotlin")?.addExpressionIfMissing("jvmToolchain($jvmTargetVersionNumber)")
+                } else {
+                    changeKotlinTaskParameter("jvmTarget", it, forTests = false)
+                    changeKotlinTaskParameter("jvmTarget", it, forTests = true)
+                }
             }
         }
 
         return originalText != scriptFile.text
     }
+
+    private fun getJvmTargetVersionNumber(it: String) = it.removePrefix("1.")
 
     override fun changeLanguageFeatureConfiguration(
         feature: LanguageFeature,
