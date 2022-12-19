@@ -89,6 +89,16 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
             performTest();
         }
 
+        @TestMetadata("forOnMap.kt")
+        public void testForOnMap() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("forOnString.kt")
+        public void testForOnString() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("list.kt")
         public void testList() throws Exception {
             performTest();
@@ -126,6 +136,44 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
         @TestMetadata("string.kt")
         public void testString() throws Exception {
+            performTest();
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/expansion/fori")
+    public static class Fori extends AbstractKotlinPostfixTemplateTest {
+        @TestMetadata("forIndexed.kt")
+        public void testForIndexed() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("forIndexed2.kt")
+        public void testForIndexed2() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("forNumber.kt")
+        public void testForNumber() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("forNumber2.kt")
+        public void testForNumber2() throws Exception {
+            performTest();
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/expansion/forr")
+    public static class Forr extends AbstractKotlinPostfixTemplateTest {
+        @TestMetadata("forNumberReverse.kt")
+        public void testForNumberReverse() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("forReversed.kt")
+        public void testForReversed() throws Exception {
             performTest();
         }
     }

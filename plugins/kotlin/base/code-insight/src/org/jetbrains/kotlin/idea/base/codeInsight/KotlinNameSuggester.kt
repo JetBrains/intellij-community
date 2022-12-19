@@ -84,7 +84,7 @@ class KotlinNameSuggester(
     }
 
     enum class Case(val case: CaseTransformation, val separator: String?, val capitalizeFirst: Boolean, val capitalizeNext: Boolean) {
-        PASCAL(CaseTransformation.DEFAULT, separator = null, capitalizeFirst = true, capitalizeNext = true, ), // FooBar
+        PASCAL(CaseTransformation.DEFAULT, separator = null, capitalizeFirst = true, capitalizeNext = true), // FooBar
         CAMEL(CaseTransformation.DEFAULT, separator = null, capitalizeFirst = false, capitalizeNext = true), // fooBar
         SNAKE(CaseTransformation.LOWERCASE, separator = "_", capitalizeFirst = false, capitalizeNext = false), // foo_bar
         SCREAMING_SNAKE(CaseTransformation.UPPERCASE, separator = "_", capitalizeFirst = false, capitalizeNext = false), // FOO_BAR
@@ -129,9 +129,13 @@ class KotlinNameSuggester(
      *  - `intArrayOf(5)` -> {ints}
      *  - listOf(User("Mary"), User("John")) -> {users}
      */
-    fun KtAnalysisSession.suggestExpressionNames(expression: KtExpression): Sequence<String> {
+    fun KtAnalysisSession.suggestExpressionNames(
+        expression: KtExpression,
+        validator: (String) -> Boolean = { true },
+        defaultName: String? = null
+    ): Sequence<String> {
         val type = expression.getKtType() ?: return emptySequence()
-        return suggestTypeNames(type)
+        return suggestTypeNames(type, validator, defaultName)
     }
 
     /**
@@ -141,15 +145,21 @@ class KotlinNameSuggester(
      *  - `IntArray` -> {ints}
      *  - `List<User>` -> {users}
      */
-    fun KtAnalysisSession.suggestTypeNames(type: KtType): Sequence<String> {
+    fun KtAnalysisSession.suggestTypeNames(
+        type: KtType,
+        validator: (String) -> Boolean = { true },
+        defaultName: String? = null
+    ): Sequence<String> {
         return sequence {
             val primitiveType = getPrimitiveType(type)
             if (primitiveType != null) {
+                defaultName?.let { registerCompoundName(it) }
                 PRIMITIVE_TYPE_NAMES.getValue(primitiveType).forEach { registerCompoundName(it) }
                 return@sequence
             }
 
             if (type.isCharSequence || type.isString) {
+                defaultName?.let { registerCompoundName(it) }
                 registerCompoundName("string")
                 registerCompoundName("str")
                 registerCompoundName("s")
@@ -158,6 +168,7 @@ class KotlinNameSuggester(
             }
 
             if (type.isFunctionType) {
+                defaultName?.let { registerCompoundName(it) }
                 registerCompoundName("function")
                 registerCompoundName("fn")
                 registerCompoundName("f")
@@ -210,9 +221,10 @@ class KotlinNameSuggester(
                     }
                 }
 
+                defaultName?.let { registerCompoundName(it) }
                 registerClassNames(type)
             }
-        }
+        }.filter(validator)
     }
 
     /**
