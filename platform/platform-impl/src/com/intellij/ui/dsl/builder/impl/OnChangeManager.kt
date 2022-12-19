@@ -10,6 +10,7 @@ import java.awt.event.ItemEvent
 import javax.swing.AbstractButton
 import javax.swing.JComboBox
 import javax.swing.JComponent
+import javax.swing.JSpinner
 import javax.swing.event.DocumentEvent
 import javax.swing.text.JTextComponent
 
@@ -20,26 +21,28 @@ internal class OnChangeManager<T : JComponent>(private val component: T) {
 
   @Throws(UiDslException::class)
   fun register(listener: (component: T, context: ChangeContext) -> Unit) {
-    when (component) {
+    val interactiveComponent = component.interactiveComponent
+    when (interactiveComponent) {
       is DropDownLink<*> ->
-        component.addItemListener {
+        interactiveComponent.addItemListener {
           if (it.stateChange == ItemEvent.SELECTED) {
             listener(component, ChangeContext(it, binding))
           }
         }
-      is AbstractButton -> component.addItemListener { listener(component, ChangeContext(it, binding)) }
-      is JTextComponent -> component.document.addDocumentListener(object : DocumentAdapter() {
+      is AbstractButton -> interactiveComponent.addItemListener { listener(component, ChangeContext(it, binding)) }
+      is JTextComponent -> interactiveComponent.document.addDocumentListener(object : DocumentAdapter() {
         override fun textChanged(e: DocumentEvent) {
           listener(component, ChangeContext(e, binding))
         }
       })
       is JComboBox<*> ->
-        component.addItemListener {
+        interactiveComponent.addItemListener {
           if (it.stateChange == ItemEvent.SELECTED) {
             listener(component, ChangeContext(it, binding))
           }
         }
-      else -> throw UiDslException("Unsupported component type ${component::class.java.name}")
+      is JSpinner -> throw UiDslException("Hard to support ${component::class.java.name}")
+      else -> throw UiDslException("Not yet supported component type ${component::class.java.name}")
     }
   }
 

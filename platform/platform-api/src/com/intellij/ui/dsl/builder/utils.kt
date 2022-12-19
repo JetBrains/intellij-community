@@ -47,8 +47,11 @@ enum class DslComponentProperty {
   LABEL_FOR,
 
   /**
-   * Some compound components can contain several components inside itself. [INTERACTIVE_COMPONENT] points to main interactive one,
-   * which is assigned to [JLabel.labelFor] and which is used as a component for data validation
+   * Some compound components can contain several components inside itself. [INTERACTIVE_COMPONENT] points to main interactive one
+   *
+   * * Assigned to [JLabel.labelFor]
+   * * Used as the component for data validation
+   * * Used as destination for [Cell.onChanged]
    *
    * Value: [JComponent]
    */

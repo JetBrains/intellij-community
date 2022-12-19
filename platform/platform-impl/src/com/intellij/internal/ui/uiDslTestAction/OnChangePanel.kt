@@ -20,6 +20,8 @@ internal class OnChangePanel {
   private var textAreaValue = "textArea"
   private var comboBoxNotEditableValue = "Item 2"
   private var comboBoxEditableValue: String? = "Item"
+  private var expandableTextFieldValue = "Item"
+  private var textFieldWithBrowseButtonValue = "textFieldWithBrowseButton"
 
   val panel = panel {
     row {
@@ -59,6 +61,18 @@ internal class OnChangePanel {
     row {
       dropDownLink("Item 1", listOf("Item 1", "Item 2", "Last"))
         .onChangedContext(::log)
+    }
+    row {
+      expandableTextField()
+        .align(AlignX.FILL)
+        .onChangedContext(::log)
+        .bindText(::expandableTextFieldValue)
+    }
+    row {
+      textFieldWithBrowseButton()
+        .align(AlignX.FILL)
+        .onChangedContext(::log)
+        .bindText(::textFieldWithBrowseButtonValue)
     }
 
     row {
