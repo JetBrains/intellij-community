@@ -3,11 +3,10 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -26,55 +25,41 @@ import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Alarm;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.update.DisposableUpdate;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
+import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.awt.*;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public final class FileStatusManagerImpl extends FileStatusManager implements Disposable {
   private final Project myProject;
+  private final MergingUpdateQueue myQueue;
 
   private final List<FileStatusListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+
+  private final Object myDirtyLock = new Object();
+  private final Set<VirtualFile> myDirtyStatuses = new HashSet<>();
+  private final Object2BooleanMap<VirtualFile> myDirtyDocuments = new Object2BooleanOpenHashMap<>();
 
   private final Map<VirtualFile, FileStatus> myCachedStatuses = Collections.synchronizedMap(new HashMap<>());
   private final Map<VirtualFile, Boolean> myWhetherExactlyParentToChanged = Collections.synchronizedMap(new HashMap<>());
 
-  private static class FileStatusNull implements FileStatus {
-    private static final FileStatus INSTANCE = new FileStatusNull();
-
-    @Override
-    public String getText() {
-      throw new AssertionError("Should not be called");
-    }
-
-    @Override
-    public Color getColor() {
-      throw new AssertionError("Should not be called");
-    }
-
-    @NotNull
-    @Override
-    public ColorKey getColorKey() {
-      throw new AssertionError("Should not be called");
-    }
-
-    @NotNull
-    @Override
-    public String getId() {
-      throw new AssertionError("Should not be called");
-    }
-  }
-
   public FileStatusManagerImpl(@NotNull Project project) {
     myProject = project;
+    myQueue = new MergingUpdateQueue("FileStatusManagerImpl", 100, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
 
     MessageBusConnection projectBus = project.getMessageBus().connect();
     projectBus.subscribe(EditorColorsManager.TOPIC, __ -> fileStatusesChanged());
@@ -132,7 +117,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
 
     private static void refreshFileStatus(@NotNull Document document) {
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-      if (file == null) {
+      if (file == null || !file.isInLocalFileSystem()) {
         return;
       }
 
@@ -202,7 +187,8 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
   }
 
   @Nullable
-  private Boolean calcDirectoryStatus(@NotNull VirtualFile virtualFile) {
+  private Boolean calcDirectoryStatus(@NotNull VirtualFile virtualFile, @NotNull FileStatus status) {
+    if (!FileStatus.NOT_CHANGED.equals(status)) return null;
     if (!VcsConfiguration.getInstance(myProject).SHOW_DIRTY_RECURSIVELY) {
       return null;
     }
@@ -242,59 +228,87 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
 
   @Override
   public void fileStatusesChanged() {
-    if (myProject.isDisposed()) {
-      return;
-    }
-    if (!ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().invokeLater(() -> fileStatusesChanged(), ModalityState.any());
-      return;
+    synchronized (myDirtyLock) {
+      myCachedStatuses.clear();
+      myWhetherExactlyParentToChanged.clear();
+      myDirtyStatuses.clear();
     }
 
-    myCachedStatuses.clear();
-    myWhetherExactlyParentToChanged.clear();
-
-    for (FileStatusListener listener : myListeners) {
-      listener.fileStatusesChanged();
-    }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      for (FileStatusListener listener : myListeners) {
+        listener.fileStatusesChanged();
+      }
+    }, ModalityState.any());
   }
 
   @Override
   public void fileStatusChanged(final VirtualFile file) {
-    final Application application = ApplicationManager.getApplication();
-    if (!application.isDispatchThread() && !application.isUnitTestMode()) {
-      ApplicationManager.getApplication().invokeLater(() -> fileStatusChanged(file));
+    if (file == null) return;
+
+    if (!file.isValid()) {
+      synchronized (myDirtyLock) {
+        myCachedStatuses.remove(file);
+        myWhetherExactlyParentToChanged.remove(file);
+      }
       return;
     }
 
-    if (file == null || !file.isValid()) return;
     FileStatus cachedStatus = myCachedStatuses.get(file);
-    if (cachedStatus == FileStatusNull.INSTANCE) {
-      return;
-    }
     if (cachedStatus == null) {
-      cacheChangedFileStatus(file, FileStatusNull.INSTANCE);
       return;
     }
-    FileStatus newStatus = calcStatus(file);
-    if (cachedStatus == newStatus) return;
-    cacheChangedFileStatus(file, newStatus);
 
-    for (FileStatusListener listener : myListeners) {
-      listener.fileStatusChanged(file);
+    synchronized (myDirtyLock) {
+      myDirtyStatuses.add(file);
     }
+
+    myQueue.queue(DisposableUpdate.createDisposable(this, "file status update", () -> {
+      updateCachedFileStatuses();
+    }));
   }
 
-  private void cacheChangedFileStatus(final VirtualFile virtualFile, final FileStatus fs) {
-    myCachedStatuses.put(virtualFile, fs);
+  @RequiresBackgroundThread
+  private void updateCachedFileStatuses() {
+    List<VirtualFile> toRefresh;
+    synchronized (myDirtyLock) {
+      toRefresh = new ArrayList<>(myDirtyStatuses);
+      myDirtyStatuses.clear();
+    }
 
-    Boolean isParentToChanged = FileStatus.NOT_CHANGED.equals(fs)
-                                ? calcDirectoryStatus(virtualFile)
-                                : null;
-    myWhetherExactlyParentToChanged.put(virtualFile, isParentToChanged);
+    List<VirtualFile> updatedFiles = new ArrayList<>();
+    for (VirtualFile file : toRefresh) {
+      boolean wasUpdated = updateFileStatusFor(file);
+      if (wasUpdated) updatedFiles.add(file);
+    }
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      for (VirtualFile file : updatedFiles) {
+        for (FileStatusListener listener : myListeners) {
+          listener.fileStatusChanged(file);
+        }
+      }
+    }, ModalityState.any(), myProject.getDisposed());
+  }
+
+  private boolean updateFileStatusFor(@NotNull VirtualFile file) {
+    FileStatus newStatus = calcStatus(file);
+    FileStatus oldStatus = myCachedStatuses.put(file, newStatus);
+    if (oldStatus == newStatus) return false;
+
+    myWhetherExactlyParentToChanged.put(file, calcDirectoryStatus(file, newStatus));
+    return true;
+  }
+
+  private @NotNull FileStatus initFileStatusFor(@NotNull VirtualFile file) {
+    FileStatus newStatus = calcStatus(file);
+    myCachedStatuses.put(file, newStatus);
+
+    myWhetherExactlyParentToChanged.put(file, calcDirectoryStatus(file, newStatus));
+    return newStatus;
   }
 
   @Override
-  public @NotNull FileStatus getStatus(@NotNull final VirtualFile file) {
+  public @NotNull FileStatus getStatus(@NotNull VirtualFile file) {
     if (file.getFileSystem() instanceof NonPhysicalFileSystem) {
       return FileStatus.SUPPRESSED;  // do not leak light files via cache
     }
@@ -303,12 +317,11 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     if (LOG.isDebugEnabled()) {
       LOG.debug("Cached status for file [" + file + "] is " + status);
     }
-    if (status == null || status == FileStatusNull.INSTANCE) {
-      status = calcStatus(file);
-      cacheChangedFileStatus(file, status);
+    if (status != null) {
+      return status;
     }
 
-    return status;
+    return initFileStatusFor(file);
   }
 
   @NotNull
@@ -333,18 +346,51 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
   private void refreshFileStatusFromDocument(@NotNull VirtualFile file) {
     if (LOG.isDebugEnabled()) {
       Document document = FileDocumentManager.getInstance().getDocument(file);
-      LOG.debug("refreshFileStatusFromDocument: file.getModificationStamp()=" + file.getModificationStamp() +
-                ", document.getModificationStamp()=" + (document != null ? document.getModificationStamp() : null));
+      LOG.debug(String.format("[refreshFileStatusFromDocument] file modificationStamp: %s, document modificationStamp: %s",
+                              file.getModificationStamp(),
+                              (document != null ? document.getModificationStamp() : null)));
+    }
+
+    boolean isDocumentModified = isDocumentModified(file);
+    synchronized (myDirtyLock) {
+      myDirtyDocuments.put(file, isDocumentModified);
+    }
+
+    myQueue.queue(DisposableUpdate.createDisposable(this, "refresh from document", () -> {
+      processModifiedDocuments();
+    }));
+  }
+
+  @RequiresBackgroundThread
+  private void processModifiedDocuments() {
+    Object2BooleanMap<VirtualFile> toRefresh;
+    synchronized (myDirtyLock) {
+      toRefresh = new Object2BooleanOpenHashMap<>(myDirtyDocuments);
+      myDirtyDocuments.clear();
+    }
+
+    toRefresh.forEach((file, isDocumentModified) -> {
+      processModifiedDocument(file, isDocumentModified);
+    });
+  }
+
+  @RequiresBackgroundThread
+  private void processModifiedDocument(@NotNull VirtualFile file, boolean isDocumentModified) {
+    if (LOG.isDebugEnabled()) {
+      Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(file));
+      LOG.debug(String.format("[processModifiedDocument] isModified: %s, file modificationStamp: %s, document modificationStamp: %s",
+                              isDocumentModified, file.getModificationStamp(),
+                              (document != null ? document.getModificationStamp() : null)));
     }
 
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
     if (vcs == null) return;
 
     FileStatus cachedStatus = myCachedStatuses.get(file);
-    boolean isDocumentModified = isDocumentModified(file);
 
     if (cachedStatus == FileStatus.MODIFIED && !isDocumentModified) {
-      if (!((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject)).getState().SHOW_DIALOG) {
+      boolean unlockWithPrompt = ((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject)).getState().SHOW_DIALOG;
+      if (!unlockWithPrompt) {
         RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
         if (rollbackEnvironment != null) {
           rollbackEnvironment.rollbackIfUnchanged(file);
@@ -352,9 +398,11 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
       }
     }
 
-    boolean isStatusChanged = cachedStatus != null && cachedStatus != FileStatus.NOT_CHANGED;
-    if (isStatusChanged != isDocumentModified) {
-      fileStatusChanged(file);
+    if (cachedStatus != null) {
+      boolean isStatusChanged = cachedStatus != FileStatus.NOT_CHANGED;
+      if (isStatusChanged != isDocumentModified) {
+        fileStatusChanged(file);
+      }
     }
 
     ChangeProvider cp = vcs.getChangeProvider();
@@ -370,5 +418,22 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
   @Override
   public void removeFileStatusListener(@NotNull FileStatusListener listener) {
     myListeners.remove(listener);
+  }
+
+  @TestOnly
+  public void waitFor() {
+    try {
+      myQueue.waitForAllExecuted(10, TimeUnit.SECONDS);
+
+      if (myQueue.isFlushing()) {
+        // MUQ.queue() inside Update.run cancels underlying future, and 'waitForAllExecuted' exits prematurely.
+        // Workaround this issue by waiting twice
+        // This fixes 'processModifiedDocument -> fileStatusChanged' interraction.
+        myQueue.waitForAllExecuted(10, TimeUnit.SECONDS);
+      }
+    }
+    catch (ExecutionException | InterruptedException | TimeoutException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
