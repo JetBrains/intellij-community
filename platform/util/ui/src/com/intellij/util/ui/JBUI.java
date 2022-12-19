@@ -1637,6 +1637,23 @@ public final class JBUI {
         return 90;
       }
     }
+
+    public final static class TitlePane {
+
+      public static @NotNull Dimension buttonPreferredSize() {
+        return size(buttonPreferredSizeKey(), defaultButtonPreferredSize());
+      }
+
+      @NotNull
+      public static String buttonPreferredSizeKey() {
+        return "TitlePane.Button.preferredSize";
+      }
+
+      @NotNull
+      private static JBDimension defaultButtonPreferredSize() {
+        return size(47, 28);
+      }
+    }
   }
 
   public static int getInt(@NonNls @NotNull String propertyName, int defaultValue) {

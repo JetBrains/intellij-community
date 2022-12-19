@@ -663,9 +663,13 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       // Run Widget
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), JBUI.size(30, 30))
       defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 1)
-      // misc stuff
+      // minimize/maximize/close buttons
+      defaults.put(JBUI.CurrentTheme.TitlePane.buttonPreferredSizeKey(), JBUI.size(32, 32))
+      // trees
       defaults.put("Tree.rowHeight", 20)
+      // editor tabs
       defaults.put("EditorTabs.tabInsets", JBInsets.create(0, 2).asUIResource())
+      // toolwindows
       defaults.put("ToolWindow.Header.height", 35)
     }
   }
