@@ -43,7 +43,7 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
   override suspend fun start(args: List<String>) {
     val commandArgs = try {
       val parser = ArgsParser(args)
-      val commandArgs = OpenProjectArgsImpl(parser)
+      val commandArgs = WarmupProjectArgsImpl(parser)
       parser.tryReadAll()
       if (commandArgs.build && commandArgs.rebuild) {
         throw InvalidWarmupArgumentsException("Only one of --build and --rebuild can be specified")
@@ -117,7 +117,7 @@ private enum class BuildMode {
   REBUILD
 }
 
-private fun getBuildMode(args: OpenProjectArgs) : BuildMode? {
+private fun getBuildMode(args: WarmupProjectArgs) : BuildMode? {
   return if (args.build) {
     BuildMode.BUILD
   } else if (args.rebuild) {

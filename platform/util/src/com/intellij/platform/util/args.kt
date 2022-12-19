@@ -164,8 +164,11 @@ class ArgsParser(args: List<String>) {
     fun booleanOrNull() = optional().parse { argOrNull(toBoolean) }
 
     /**
-     * '--foo' is '--foo=true'
-     * '' is '--foo=false'
+     * Allows to parse boolean flags.
+     *
+     * If the command line arguments contain strings '--foo' or '--foo=true', then it sets the argument 'foo' to `true`.
+     * If the command line arguments contain a string '--foo=false' or do not contain an argument which key is '--foo', then it
+     * sets the argument 'foo' to `false`.
      */
     fun flag() = optional().parse { argWithoutValue(toBoolean, { true }, { false }) }
 

@@ -195,8 +195,8 @@ class ArgsTest {
   @Test
   fun test_flag_1() {
     val parser = ArgsParser(listOf("--test=true"))
-    parser.arg("test", "").flag()
-    parser.tryReadAll()
+    val value by parser.arg("test", "").flag()
+    assertEquals(true, value)
   }
 
   @Test
