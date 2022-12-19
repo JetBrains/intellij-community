@@ -323,19 +323,27 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     if (!loadingAdditionalRoots) {
       val inheritedCompilerOutput = rootManagerElement.getAttributeAndDetach(INHERIT_COMPILER_OUTPUT_ATTRIBUTE)
       val languageLevel = rootManagerElement.getAttributeAndDetach(MODULE_LANGUAGE_LEVEL_ATTRIBUTE)
-      val excludeOutput = rootManagerElement.getChildAndDetach(EXCLUDE_OUTPUT_TAG) != null
+      val excludeOutput = rootManagerElement.getChildAndDetach(EXCLUDE_OUTPUT_TAG)
       val compilerOutput = rootManagerElement.getChildAndDetach(OUTPUT_TAG)?.getAttributeValue(URL_ATTRIBUTE)
       val compilerOutputForTests = rootManagerElement.getChildAndDetach(TEST_OUTPUT_TAG)?.getAttributeValue(URL_ATTRIBUTE)
 
-      builder.addJavaModuleSettingsEntity(
-        inheritedCompilerOutput = inheritedCompilerOutput?.toBoolean() ?: false,
-        excludeOutput = excludeOutput,
-        compilerOutput = compilerOutput?.let { virtualFileManager.fromUrl(it) },
-        compilerOutputForTests = compilerOutputForTests?.let { virtualFileManager.fromUrl(it) },
-        languageLevelId = languageLevel,
-        module = moduleEntity,
-        source = contentRotEntitySource
-      )
+      // According to our logic, java settings entity should produce one of the following attributes.
+      //   So, if we don't meet one, we don't create a java settings entity
+      if (inheritedCompilerOutput != null || compilerOutput != null || languageLevel != null || excludeOutput != null || compilerOutputForTests != null) {
+        builder.addJavaModuleSettingsEntity(
+          inheritedCompilerOutput = inheritedCompilerOutput?.toBoolean() ?: false,
+          excludeOutput = excludeOutput != null,
+          compilerOutput = compilerOutput?.let { virtualFileManager.fromUrl(it) },
+          compilerOutputForTests = compilerOutputForTests?.let { virtualFileManager.fromUrl(it) },
+          languageLevelId = languageLevel,
+          module = moduleEntity,
+          source = contentRotEntitySource
+        )
+      } else if (javaPluginPresent()) {
+        builder addEntity JavaModuleSettingsEntity(true, true, contentRotEntitySource) {
+          this.module = moduleEntity
+        }
+      }
     }
     if (!JDOMUtil.isEmpty(rootManagerElement)) {
       val customImlData = moduleEntity.customImlData
