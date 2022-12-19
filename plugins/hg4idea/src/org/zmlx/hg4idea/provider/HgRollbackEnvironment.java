@@ -118,10 +118,6 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
     return null;
   }
 
-  @Override
-  public void rollbackIfUnchanged(VirtualFile file) {
-  }
-
   private void revert(@NotNull List<? extends FilePath> filePaths) {
     for (Map.Entry<VirtualFile, Collection<FilePath>> entry : HgUtil.groupFilePathsByHgRoots(project, filePaths).entrySet()) {
       final VirtualFile repo = entry.getKey();
