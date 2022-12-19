@@ -1,20 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback.productivityMetric.dialog
 
-import com.intellij.feedback.FeedbackRequestData
-import com.intellij.feedback.common.FEEDBACK_REPORT_ID_KEY
-import com.intellij.feedback.common.FeedbackRequestType
-import com.intellij.feedback.common.dialog.BaseFeedbackDialog
-import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
-import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
-import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
-import com.intellij.feedback.common.feedbackAgreement
+import com.intellij.feedback.common.*
+import com.intellij.feedback.common.dialog.*
 import com.intellij.feedback.productivityMetric.bundle.ProductivityFeedbackBundle
-import com.intellij.feedback.submitFeedback
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.util.ui.JBEmptyBorder
@@ -23,7 +16,6 @@ import com.intellij.util.ui.JBUI
 import kotlinx.serialization.json.*
 import javax.swing.Action
 import javax.swing.JComponent
-import javax.swing.SwingConstants
 
 class ProductivityFeedbackDialog(
   private val project: Project?,
@@ -53,7 +45,7 @@ class ProductivityFeedbackDialog(
   private val propertyGraph = PropertyGraph()
   private val productivityProperty = propertyGraph.property(0)
   private val proficiencyProperty = propertyGraph.property(0)
-  private val usingExperience = propertyGraph.property("")
+  private val usingExperience: GraphProperty<String?> = propertyGraph.property(null)
 
   private val jsonConverter = Json { prettyPrint = true }
 
@@ -64,7 +56,7 @@ class ProductivityFeedbackDialog(
 
   override fun doOKAction() {
     super.doOKAction()
-    val feedbackData = FeedbackRequestData(feedbackReportId, createCollectedDataJsonString(), feedbackPrivacyConsentType)
+    val feedbackData = FeedbackRequestData(feedbackReportId, createCollectedDataJsonString())
     submitFeedback(project, feedbackData,
                    { }, { },
                    if (forTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST)
@@ -83,64 +75,6 @@ class ProductivityFeedbackDialog(
   }
 
   override fun createCenterPanel(): JComponent {
-    val productivitySegmentedButtonPanel = panel {
-      row {
-        label(ProductivityFeedbackBundle.message("dialog.segmentedButton.1.label", applicationName))
-          .customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
-          .bold()
-      }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
-      row {
-        segmentedButton(List(9) { it + 1 }) { it.toString() }
-          .apply {
-            maxButtonsCount(9)
-          }.customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
-          .whenItemSelected { productivityProperty.set(it) }
-          .align(Align.FILL)
-      }
-      row {
-        label(ProductivityFeedbackBundle.message("dialog.segmentedButton.1.left.label"))
-          .applyToComponent { font = ComponentPanelBuilder.getCommentFont(font) }
-          .widthGroup("Group1")
-        label(ProductivityFeedbackBundle.message("dialog.segmentedButton.1.middle.label"))
-          .applyToComponent { font = ComponentPanelBuilder.getCommentFont(font) }
-          .align(AlignX.CENTER)
-          .resizableColumn()
-        label(ProductivityFeedbackBundle.message("dialog.segmentedButton.1.right.label"))
-          .applyToComponent {
-            font = ComponentPanelBuilder.getCommentFont(font)
-            horizontalAlignment = SwingConstants.RIGHT
-          }
-          .widthGroup("Group1")
-      }
-    }
-    val proficiencySegmentedButtonPanel = panel {
-      row {
-        label(ProductivityFeedbackBundle.message("dialog.segmentedButton.2.label", applicationName))
-          .customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
-          .bold()
-      }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
-      row {
-        segmentedButton(List(9) { it + 1 }) { it.toString() }
-          .apply {
-            maxButtonsCount(9)
-          }.customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
-          .whenItemSelected { proficiencyProperty.set(it) }
-          .align(Align.FILL)
-      }
-      row {
-        label(ProductivityFeedbackBundle.message("dialog.segmentedButton.2.left.label"))
-          .applyToComponent { font = ComponentPanelBuilder.getCommentFont(font) }
-          .widthGroup("Group2")
-          .resizableColumn()
-        label(ProductivityFeedbackBundle.message("dialog.segmentedButton.2.right.label"))
-          .applyToComponent {
-            font = ComponentPanelBuilder.getCommentFont(font)
-            horizontalAlignment = SwingConstants.RIGHT
-          }
-          .widthGroup("Group2")
-      }
-    }
-
     val mainPanel = panel {
       row {
         label(ProductivityFeedbackBundle.message("dialog.title"))
@@ -149,15 +83,23 @@ class ProductivityFeedbackDialog(
           }
       }
 
-      row {
-        cell(productivitySegmentedButtonPanel)
-          .align(Align.FILL)
-      }
+      createSegmentedButtonWithBottomLabels(
+        ProductivityFeedbackBundle.message("dialog.segmentedButton.1.label", applicationName),
+        List(9) { it + 1 }, { it.toString() },
+        9, productivityProperty,
+        ProductivityFeedbackBundle.message("dialog.segmentedButton.1.left.label"),
+        ProductivityFeedbackBundle.message("dialog.segmentedButton.1.middle.label"),
+        ProductivityFeedbackBundle.message("dialog.segmentedButton.1.right.label")
+      )
 
-      row {
-        cell(proficiencySegmentedButtonPanel)
-          .align(Align.FILL)
-      }
+      createSegmentedButtonWithBottomLabels(
+        ProductivityFeedbackBundle.message("dialog.segmentedButton.2.label", applicationName),
+        List(9) { it + 1 }, { it.toString() },
+        9, proficiencyProperty,
+        ProductivityFeedbackBundle.message("dialog.segmentedButton.2.left.label"),
+        null,
+        ProductivityFeedbackBundle.message("dialog.segmentedButton.2.right.label")
+      )
 
       row {
         label(ProductivityFeedbackBundle.message("dialog.combobox.label", applicationName))
@@ -167,9 +109,15 @@ class ProductivityFeedbackDialog(
       row {
         comboBox(List(8) { ProductivityFeedbackBundle.message("dialog.combobox.item.${it + 1}") })
           .applyToComponent {
-            usingExperience.set(selectedItem?.toString() ?: "null")
+            selectedItem = null
             columns(COLUMNS_MEDIUM)
           }.whenItemSelectedFromUi { usingExperience.set(it) }
+          .validation {
+            if (usingExperience.get() == null) {
+              return@validation error(ProductivityFeedbackBundle.message("dialog.combobox.error"))
+            }
+            return@validation null
+          }
 
       }.bottomGap(BottomGap.MEDIUM)
 
@@ -181,6 +129,7 @@ class ProductivityFeedbackDialog(
     }.also { dialog ->
       dialog.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))
     }
+    mainPanel.registerValidators(myDisposable)
     return mainPanel
   }
 
