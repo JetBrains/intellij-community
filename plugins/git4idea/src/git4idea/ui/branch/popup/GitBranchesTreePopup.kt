@@ -372,7 +372,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     ClientProperty.put(this, RenderingUtil.CUSTOM_SELECTION_BACKGROUND, Supplier { JBUI.CurrentTheme.Tree.background(true, true) })
     ClientProperty.put(this, RenderingUtil.CUSTOM_SELECTION_FOREGROUND, Supplier { JBUI.CurrentTheme.Tree.foreground(true, true) })
 
-    val renderer = GitBranchesTreeRenderer(treeStep)
+    val renderer = GitBranchesTreePopupRenderer(treeStep)
 
     ClientProperty.put(this, Control.CUSTOM_CONTROL, Function { renderer.getLeftTreeIconRenderer(it) })
 

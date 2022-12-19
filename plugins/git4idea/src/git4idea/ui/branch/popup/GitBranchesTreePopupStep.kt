@@ -4,50 +4,33 @@ package git4idea.ui.branch.popup
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.diverged
 import com.intellij.dvcs.ui.DvcsBundle
-import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.components.service
-import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.PopupStep.FINAL_CHOICE
 import com.intellij.openapi.ui.popup.SpeedSearchFilter
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.RowIcon
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.PlatformIcons
 import com.intellij.util.containers.FList
 import git4idea.GitBranch
-import git4idea.GitLocalBranch
-import git4idea.GitRemoteBranch
 import git4idea.GitVcs
 import git4idea.actions.branch.GitBranchActionsUtil
-import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchType
-import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.GitBranchManager
-import git4idea.ui.branch.GitBranchPopupActions
 import git4idea.ui.branch.GitBranchPopupActions.EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP
 import git4idea.ui.branch.tree.*
-import icons.DvcsImplIcons
-import org.jetbrains.annotations.Nls
-import javax.swing.Icon
-import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 
-class GitBranchesTreePopupStep(private val project: Project,
+class GitBranchesTreePopupStep(internal val project: Project,
                                internal val repositories: List<GitRepository>,
                                private val isFirstStep: Boolean) : PopupStep<Any> {
 
@@ -55,9 +38,8 @@ class GitBranchesTreePopupStep(private val project: Project,
 
   override fun getFinalRunnable() = finalRunnable
 
-  private var _treeModel: GitBranchesTreeModel
-  val treeModel: TreeModel
-    get() = _treeModel
+  internal var treeModel: GitBranchesTreeModel
+    private set
 
   private val topLevelItems = mutableListOf<Any>()
 
@@ -76,7 +58,7 @@ class GitBranchesTreePopupStep(private val project: Project,
       topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
     }
 
-    _treeModel = createTreeModel(false)
+    treeModel = createTreeModel(false)
   }
   private fun createTreeModel(filterActive: Boolean): GitBranchesTreeModel {
     return when {
@@ -104,15 +86,15 @@ class GitBranchesTreePopupStep(private val project: Project,
   }
 
   fun getPreferredSelection(): TreePath? {
-    return _treeModel.getPreferredSelection()
+    return treeModel.getPreferredSelection()
   }
 
   fun createTreePathFor(value: Any): TreePath? {
-    return createTreePathFor(_treeModel, value)
+    return createTreePathFor(treeModel, value)
   }
 
   internal fun setPrefixGrouping(state: Boolean) {
-    _treeModel.isPrefixGrouping = state
+    treeModel.isPrefixGrouping = state
   }
 
   private val LOCAL_SEARCH_PREFIX = "/l"
@@ -120,7 +102,7 @@ class GitBranchesTreePopupStep(private val project: Project,
 
   fun setSearchPattern(pattern: String?) {
     if (pattern == null || pattern == "/") {
-      _treeModel.filterBranches()
+      treeModel.filterBranches()
       return
     }
 
@@ -138,20 +120,20 @@ class GitBranchesTreePopupStep(private val project: Project,
     }
 
     val matcher = PreferStartMatchMatcherWrapper(NameUtil.buildMatcher("*$processedPattern").build())
-    _treeModel.filterBranches(branchType, matcher)
+    treeModel.filterBranches(branchType, matcher)
   }
 
   fun updateTreeModelIfNeeded(tree: Tree, pattern: String?) {
     if (!isFirstStep || repositories.size == 1) return
 
     val filterActive = !(pattern.isNullOrBlank() || pattern == "/")
-    _treeModel = createTreeModel(filterActive)
-    tree.model = _treeModel
+    treeModel = createTreeModel(filterActive)
+    tree.model = treeModel
   }
 
   override fun hasSubstep(selectedValue: Any?): Boolean {
     val userValue = selectedValue ?: return false
-    return (userValue is GitRepository && _treeModel !is GitBranchesTreeMultiRepoFilteringModel) ||
+    return (userValue is GitRepository && treeModel !is GitBranchesTreeMultiRepoFilteringModel) ||
            userValue is GitBranch ||
            userValue is GitBranchesTreeModel.BranchUnderRepository ||
            (userValue is PopupFactoryImpl.ActionItem && userValue.isEnabled && userValue.action is ActionGroup)
@@ -159,7 +141,7 @@ class GitBranchesTreePopupStep(private val project: Project,
 
   fun isSelectable(node: Any?): Boolean {
     val userValue = node ?: return false
-    return (userValue is GitRepository && _treeModel !is GitBranchesTreeMultiRepoFilteringModel) ||
+    return (userValue is GitRepository && treeModel !is GitBranchesTreeMultiRepoFilteringModel) ||
            userValue is GitBranch ||
            userValue is GitBranchesTreeModel.BranchUnderRepository ||
            (userValue is PopupFactoryImpl.ActionItem && userValue.isEnabled)
@@ -204,123 +186,6 @@ class GitBranchesTreePopupStep(private val project: Project,
       }
     }
 
-  fun getIncomingOutgoingIconWithTooltip(treeNode: Any?): Pair<Icon?, @Nls(capitalization = Nls.Capitalization.Sentence) String?> {
-    val empty = null to null
-    val value = treeNode ?: return empty
-    return when (value) {
-      is GitBranch -> getIncomingOutgoingIconWithTooltip(value)
-      else -> empty
-    }
-  }
-
-  private fun getIncomingOutgoingIconWithTooltip(branch: GitBranch): Pair<Icon?, String?> {
-    val branchName = branch.name
-    val incomingOutgoingManager = project.service<GitBranchIncomingOutgoingManager>()
-    val hasIncoming =
-      repositories.any { incomingOutgoingManager.hasIncomingFor(it, branchName) }
-
-    val hasOutgoing =
-      repositories.any { incomingOutgoingManager.hasOutgoingFor(it, branchName) }
-
-    val tooltip = GitBranchPopupActions.LocalBranchActions.constructIncomingOutgoingTooltip(hasIncoming, hasOutgoing).orEmpty()
-
-    return when {
-      hasIncoming && hasOutgoing -> RowIcon(DvcsImplIcons.Incoming, DvcsImplIcons.Outgoing)
-      hasIncoming -> DvcsImplIcons.Incoming
-      hasOutgoing -> DvcsImplIcons.Outgoing
-      else -> null
-    } to tooltip
-  }
-
-  private val colorManager = RepositoryChangesBrowserNode.getColorManager(project)
-
-  fun getNodeIcon(treeNode: Any?, isSelected: Boolean): Icon? {
-    val value = treeNode ?: return null
-    return when (value) {
-      is PopupFactoryImpl.ActionItem -> value.getIcon(isSelected)
-      is GitRepository -> RepositoryChangesBrowserNode.getRepositoryIcon(value, colorManager)
-      else -> null
-    }
-  }
-
-  fun getIcon(treeNode: Any?, isSelected: Boolean): Icon? {
-    val value = treeNode ?: return null
-    return when (value) {
-      is GitBranchesTreeModel.BranchesPrefixGroup -> PlatformIcons.FOLDER_ICON
-      is GitBranchesTreeModel.BranchUnderRepository -> getBranchIcon(value.branch, listOf(value.repository), isSelected)
-      is GitBranch -> getBranchIcon(value, repositories, isSelected)
-      else -> null
-    }
-  }
-
-  private fun getBranchIcon(branch: GitBranch, repositories: List<GitRepository>, isSelected: Boolean): Icon {
-    val isCurrent = repositories.all { it.currentBranch == branch }
-    val branchManager = project.service<GitBranchManager>()
-    val isFavorite = repositories.all { branchManager.isFavorite(GitBranchType.of(branch), it, branch.name) }
-
-    return when {
-      isSelected && isFavorite -> AllIcons.Nodes.Favorite
-      isSelected -> AllIcons.Nodes.NotFavoriteOnHover
-      isCurrent && isFavorite -> DvcsImplIcons.CurrentBranchFavoriteLabel
-      isCurrent -> DvcsImplIcons.CurrentBranchLabel
-      isFavorite -> AllIcons.Nodes.Favorite
-      else -> AllIcons.Vcs.BranchNode
-    }
-  }
-
-  fun getText(treeNode: Any?): @NlsSafe String? {
-    val value = treeNode ?: return null
-    return when (value) {
-      GitBranchType.LOCAL -> {
-        if (repositories.size > 1) GitBundle.message("common.local.branches") else GitBundle.message("group.Git.Local.Branch.title")
-      }
-      GitBranchType.REMOTE -> {
-        if (repositories.size > 1) GitBundle.message("common.remote.branches") else GitBundle.message("group.Git.Remote.Branch.title")
-      }
-      is GitBranchesTreeModel.BranchesPrefixGroup -> value.prefix.last()
-      is GitRepository -> DvcsUtil.getShortRepositoryName(value)
-      is GitBranchesTreeModel.BranchTypeUnderRepository -> {
-        when (value.type) {
-          GitBranchType.LOCAL -> GitBundle.message("group.Git.Local.Branch.title")
-          GitBranchType.REMOTE -> GitBundle.message("group.Git.Remote.Branch.title")
-        }
-      }
-      is GitBranchesTreeModel.BranchUnderRepository -> getText(value.branch)
-      is GitBranch -> {
-        if (_treeModel.isPrefixGrouping) value.name.split('/').last() else value.name
-      }
-      is PopupFactoryImpl.ActionItem -> value.text
-      else -> null
-    }
-  }
-
-  fun getSecondaryText(treeNode: Any?): @NlsSafe String? {
-    return when (treeNode) {
-      is PopupFactoryImpl.ActionItem -> KeymapUtil.getFirstKeyboardShortcutText(treeNode.action)
-      is GitRepository -> treeNode.currentBranch?.name.orEmpty()
-      is GitLocalBranch -> {
-        treeNode.getCommonTrackedBranch(repositories)?.name
-      }
-      else -> null
-    }
-  }
-
-  private fun GitLocalBranch.getCommonTrackedBranch(repositories: List<GitRepository>): GitRemoteBranch? {
-    var commonTrackedBranch: GitRemoteBranch? = null
-
-    for (repository in repositories) {
-      val trackedBranch = findTrackedBranch(repository) ?: return null
-
-      if (commonTrackedBranch == null) {
-        commonTrackedBranch = trackedBranch
-      }
-      else if (commonTrackedBranch.name != trackedBranch.name) {
-        return null
-      }
-    }
-    return commonTrackedBranch
-  }
-
   override fun canceled() {}
 
   override fun isMnemonicsNavigationEnabled() = false
@@ -332,7 +197,7 @@ class GitBranchesTreePopupStep(private val project: Project,
   override fun getSpeedSearchFilter() = SpeedSearchFilter<Any> { node ->
     when (node) {
       is GitBranch -> node.name
-      else -> node?.let(::getText) ?: ""
+      else -> node?.let { GitBranchesTreeRenderer.getText(node, treeModel, repositories) } ?: ""
     }
   }
 
