@@ -55,28 +55,65 @@ abstract class BaseProgressReporter(parentScope: CoroutineScope) : ProgressRepor
     require(duration in 0.0..1.0) {
       "Duration is expected to be a value in [0.0; 1.0], got $duration"
     }
-    if (duration == 0.0) { // indeterminate
-      lastFraction.getAndUpdate {
-        when {
-          it <= 0.0 -> it - 1.0 // indicate that this reporter has an indeterminate child, so rawReporter() would fail
-          it <= 1.0 -> it // don't change
-          else -> error("Cannot start an indeterminate child because this reporter is raw.")
-        }
-      }
-      return createStep(duration = 0.0, text)
+    if (duration == 0.0) {
+      return indeterminateStep(text)
     }
+    else {
+      return determinateStep(duration, text)
+    }
+  }
+
+  private fun indeterminateStep(text: ProgressText?): ProgressReporter {
     lastFraction.getAndUpdate {
       when {
-        it > 1.0 -> error("Cannot start a child because this reporter is raw.")
-        it <= 0.0 -> duration
+        it <= 0.0 -> it - 1.0 // indicate that this reporter has an indeterminate child, so rawReporter() would fail
+        it <= 1.0 -> it // don't change
+        else -> error("Cannot start an indeterminate child because this reporter is raw.")
+      }
+    }
+    return createStep(duration = 0.0, text)
+  }
+
+  private fun determinateStep(duration: Double, text: ProgressText?): ProgressReporter {
+    while (true) {
+      val lastFractionValue = lastFraction.get()
+      when {
+        lastFractionValue <= 0.0 -> {
+          // was indeterminate => set to [duration]
+          if (lastFraction.compareAndSet(lastFractionValue, duration)) {
+            return createStep(duration, text)
+          }
+        }
+        lastFractionValue < 1.0 -> {
+          val newValue = lastFractionValue + duration
+          when {
+            newValue <= 1.0 -> {
+              // happy path
+              if (lastFraction.compareAndSet(lastFractionValue, newValue)) {
+                return createStep(duration, text)
+              }
+            }
+            newValue < 1.0 + ACCEPTABLE_FRACTION_OVERFLOW -> {
+              // force set last fraction to 1.0; next call with the same duration will produce an error
+              if (lastFraction.compareAndSet(lastFractionValue, 1.0)) {
+                // use what's left between lastFractionValue and 1.0
+                val effectiveDuration = 1.0 - lastFractionValue
+                return createStep(duration = effectiveDuration, text)
+              }
+            }
+            else -> {
+              error("Total duration $newValue must not exceed 1.0, duration: $duration")
+            }
+          }
+        }
+        lastFractionValue == 1.0 -> {
+          error("Total duration must not exceed 1.0, duration: $duration")
+        }
         else -> {
-          val newValue = it + duration
-          check(0.0 < newValue && newValue <= 1.0)
-          newValue
+          error("Cannot start a child because this reporter is raw.")
         }
       }
     }
-    return createStep(duration, text)
   }
 
   protected abstract fun createStep(duration: Double, text: ProgressText?): ProgressReporter

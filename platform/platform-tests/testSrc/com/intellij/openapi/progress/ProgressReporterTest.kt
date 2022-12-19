@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
+import com.intellij.openapi.progress.impl.ACCEPTABLE_FRACTION_OVERFLOW
 import com.intellij.openapi.progress.impl.ProgressState
 import com.intellij.openapi.progress.impl.TextDetailsProgressReporter
 import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
@@ -8,8 +9,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.init
 import com.intellij.util.containers.tail
 import kotlinx.coroutines.*
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -753,6 +753,45 @@ class ProgressReporterTest {
       raw.fraction(0.5) // can go back
       raw.text(null) // clearing the text does not clear details
       raw.fraction(null) // can become indeterminate after being determinate
+    }
+  }
+
+  @Test
+  fun `rounding error`() {
+    for (total in 1..Int.MAX_VALUE) {
+      val duration: Double = 1.0 / total
+      val nextToLastDuration = (total - 1) * duration
+      assertTrue(nextToLastDuration < 1.0) {
+        "Total: $total; next to last: $nextToLastDuration"
+      }
+      val lastDuration = nextToLastDuration + duration
+      if (lastDuration <= 1.0) {
+        // we don't care for underflow, for example total=3
+        return
+      }
+      assertTrue(lastDuration < 1.0 + ACCEPTABLE_FRACTION_OVERFLOW) {
+        "Total: $total; last: $lastDuration"
+      }
+    }
+  }
+
+  @Test
+  fun `rounding error in use`() {
+    val total = 93 // a number found during testing, has big rounding error
+    progressReporterTest(
+      ProgressState(text = null, details = null, fraction = 0.0),
+      ProgressState(text = null, details = null, fraction = 0.9892473118279571),
+    ) {
+      val duration = 1.0 / 93
+      val nextToLast = (total - 1) * duration
+      progressStep(endFraction = nextToLast) {} // emulate 92 steps
+      durationStep(duration = duration) {} // this failed before changes
+      val t = assertThrows<IllegalStateException> {
+        durationStep(duration = duration) { fail() }
+      }
+      assertTrue(t.message!!.contains("Total duration must not exceed 1.0, duration:")) {
+        t.message
+      }
     }
   }
 }
