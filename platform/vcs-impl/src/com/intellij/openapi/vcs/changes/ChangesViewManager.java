@@ -8,6 +8,8 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -47,8 +49,10 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -185,7 +189,8 @@ public class ChangesViewManager implements ChangesViewEx,
   ChangesViewPanel initChangesPanel() {
     if (myChangesPanel == null) {
       Activity activity = StartUpMeasurer.startActivity("ChangesViewPanel initialization", ActivityCategory.DEFAULT);
-      myChangesPanel = new ChangesViewPanel(myProject);
+      ChangesListView tree = new LocalChangesListView(myProject);
+      myChangesPanel = new ChangesViewPanel(tree);
       activity.end();
     }
     return myChangesPanel;
@@ -938,6 +943,47 @@ public class ChangesViewManager implements ChangesViewEx,
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         myChangesViewManager.myState.myShowIgnored = state;
         scheduleRefreshNow();
+      }
+    }
+  }
+
+  private static class LocalChangesListView extends ChangesListView {
+    private LocalChangesListView(@NotNull Project project) {
+      super(project, false);
+      putClientProperty(LOG_COMMIT_SESSION_EVENTS, true);
+
+      setTreeExpander(new MyTreeExpander(this));
+
+      setDoubleClickHandler(e -> {
+        if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return false;
+        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), true);
+        return true;
+      });
+      setEnterKeyHandler(e -> {
+        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), false);
+        return true;
+      });
+    }
+
+    @Override
+    protected @NotNull ChangesGroupingSupport installGroupingSupport() {
+      return new ChangesGroupingSupport(myProject, this, true);
+    }
+
+    @Override
+    public @Nullable HoverIcon getHoverIcon(@NotNull ChangesBrowserNode<?> node) {
+      return ChangesViewNodeAction.EP_NAME.computeSafeIfAny(myProject, (it) -> it.createNodeHoverIcon(node));
+    }
+
+    private static class MyTreeExpander extends DefaultTreeExpander {
+      private MyTreeExpander(@NotNull JTree tree) {
+        super(tree);
+      }
+
+      @Override
+      protected void collapseAll(@NotNull JTree tree, int keepSelectionLevel) {
+        super.collapseAll(tree, 2);
+        TreeUtil.expand(tree, 1);
       }
     }
   }
