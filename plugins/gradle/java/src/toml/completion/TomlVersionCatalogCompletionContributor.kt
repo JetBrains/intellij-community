@@ -1,45 +1,31 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.toml.completion
 
-import com.intellij.codeInsight.completion.CompletionConfidence
-import com.intellij.codeInsight.completion.CompletionContributor
-import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionProvider
-import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.codeInsight.completion.PrioritizedLookupElement
+import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PlatformPatterns.psiFile
+import com.intellij.patterns.PsiElementPattern
+import com.intellij.patterns.PsiFilePattern
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.ProcessingContext
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
 import org.toml.lang.TomlLanguage
-import org.toml.lang.psi.TomlArray
-import org.toml.lang.psi.TomlElement
-import org.toml.lang.psi.TomlFile
-import org.toml.lang.psi.TomlInlineTable
-import org.toml.lang.psi.TomlKey
-import org.toml.lang.psi.TomlKeySegment
-import org.toml.lang.psi.TomlKeyValue
-import org.toml.lang.psi.TomlLiteral
-import org.toml.lang.psi.TomlTable
-import org.toml.lang.psi.TomlTableHeader
-import org.toml.lang.psi.TomlVisitor
+import org.toml.lang.psi.*
 import org.toml.lang.psi.ext.TomlLiteralKind
 import org.toml.lang.psi.ext.kind
 
-internal val TOML_VERSIONS_TABLE_PATTERN = psiElement(TomlTable::class.java).with(
+private val TOML_VERSIONS_TABLE_PATTERN: PsiElementPattern.Capture<TomlTable> = psiElement(TomlTable::class.java).with(
   object : PatternCondition<TomlTable>(null) {
     override fun accepts(tomlTable: TomlTable, context: ProcessingContext?): Boolean =
       tomlTable.header.key?.segments?.map { it.name }?.joinToString(".") == "versions"
   }
 )
 
-internal val INSIDE_VERSIONS_TOML_FILE = psiFile().with(
+private val INSIDE_VERSIONS_TOML_FILE: PsiFilePattern.Capture<PsiFile> = psiFile().with(
   object : PatternCondition<PsiFile>(null) {
     override fun accepts(psiFile: PsiFile, context: ProcessingContext?): Boolean {
       val vFile = psiFile.virtualFile ?: psiFile.originalFile.virtualFile ?: return false
@@ -48,21 +34,21 @@ internal val INSIDE_VERSIONS_TOML_FILE = psiFile().with(
   }
 )
 
-internal val TOML_LIBRARIES_TABLE_PATTERN = psiElement(TomlTable::class.java).with(
+private val TOML_LIBRARIES_TABLE_PATTERN: PsiElementPattern.Capture<TomlTable> = psiElement(TomlTable::class.java).with(
   object : PatternCondition<TomlTable>(null) {
     override fun accepts(tomlTable: TomlTable, context: ProcessingContext?): Boolean =
       tomlTable.header.key?.segments?.map { it.name }?.joinToString(".") == "libraries"
   }
 )
 
-internal val TOML_PLUGINS_TABLE_PATTERN = psiElement(TomlTable::class.java).with(
+private val TOML_PLUGINS_TABLE_PATTERN: PsiElementPattern.Capture<TomlTable> = psiElement(TomlTable::class.java).with(
   object : PatternCondition<TomlTable>(null) {
     override fun accepts(tomlTable: TomlTable, context: ProcessingContext?): Boolean =
       tomlTable.header.key?.segments?.map { it.name } == listOf("plugins")
   }
 )
 
-val VERSION_KEY_VALUE_PATTERN = psiElement(TomlKeyValue::class.java)
+private val VERSION_KEY_VALUE_PATTERN: PsiElementPattern.Capture<TomlKeyValue> = psiElement(TomlKeyValue::class.java)
   .with(
     object : PatternCondition<TomlKeyValue>(null) {
       override fun accepts(t: TomlKeyValue, context: ProcessingContext?) =
@@ -70,79 +56,79 @@ val VERSION_KEY_VALUE_PATTERN = psiElement(TomlKeyValue::class.java)
     }
   )
 
-val BUNDLE_KEY_VALUE_PATTERN = psiElement(TomlTable::class.java).with(
+private val BUNDLE_KEY_VALUE_PATTERN: PsiElementPattern.Capture<TomlTable> = psiElement(TomlTable::class.java).with(
   object : PatternCondition<TomlTable>(null) {
     override fun accepts(tomlTable: TomlTable, context: ProcessingContext?): Boolean =
       tomlTable.header.key?.segments?.map { it.name } == listOf("bundles")
   }
 )
 
-val TOML = psiElement()
+private val TOML: PsiElementPattern.Capture<PsiElement> = psiElement()
   .inFile(INSIDE_VERSIONS_TOML_FILE)
   .withLanguage(TomlLanguage)
 
-val IN_LIBRARIES_OR_PLUGINS = psiElement()
+private val IN_LIBRARIES_OR_PLUGINS: PsiElementPattern.Capture<PsiElement> = psiElement()
   .andOr(
     psiElement().inside(TOML_LIBRARIES_TABLE_PATTERN),
     psiElement().inside(TOML_PLUGINS_TABLE_PATTERN)
   )
 
-val TOML_VERSIONS_TABLE_SYNTAX_PATTERN = psiElement()
+private val TOML_VERSIONS_TABLE_SYNTAX_PATTERN: PsiElementPattern.Capture<PsiElement> = psiElement()
   .withParent(TomlKeySegment::class.java)
   .withSuperParent(6, TOML_VERSIONS_TABLE_PATTERN)
   .and(TOML)
   .andNot(psiElement().afterLeaf("."))
 
-val TOML_VERSIONS_SYNTAX_PATTERN = psiElement()
+private val TOML_VERSIONS_SYNTAX_PATTERN: PsiElementPattern.Capture<PsiElement> = psiElement()
   .withParent(TomlKeySegment::class.java)
   .withSuperParent(5, VERSION_KEY_VALUE_PATTERN)
   .and(TOML)
   .andNot(psiElement().afterLeaf("."))
 
-val TOML_LIBRARIES_TABLE_SYNTAX_PATTERN = psiElement()
+private val TOML_LIBRARIES_TABLE_SYNTAX_PATTERN: PsiElementPattern.Capture<PsiElement> = psiElement()
   .withParent(TomlKeySegment::class.java)
   .withSuperParent(6, TOML_LIBRARIES_TABLE_PATTERN)
   .and(TOML)
   .andNot(psiElement().afterLeaf("."))
 
-val TOML_VERSION_DOT_SYNTAX_PATTERN_BEFORE = psiElement()
+private val TOML_VERSION_DOT_SYNTAX_PATTERN_BEFORE: PsiElementPattern.Capture<PsiElement> = psiElement()
   .withText(".")
   .afterLeaf(psiElement().withText("version"))
   .and(TOML)
   .and(IN_LIBRARIES_OR_PLUGINS)
 
-val TOML_VERSION_DOT_SYNTAX_PATTERN_AFTER = psiElement()
+private val TOML_VERSION_DOT_SYNTAX_PATTERN_AFTER: PsiElementPattern.Capture<PsiElement> = psiElement()
   .afterLeaf(psiElement().withText("."))
   .afterLeaf(psiElement().afterLeaf(psiElement().withText("version")))
   .and(TOML)
   .and(IN_LIBRARIES_OR_PLUGINS)
 
-val TOML_PLUGINS_TABLE_SYNTAX_PATTERN = psiElement()
+private val TOML_PLUGINS_TABLE_SYNTAX_PATTERN: PsiElementPattern.Capture<PsiElement> = psiElement()
   .withParent(TomlKeySegment::class.java)
   .withSuperParent(6, TOML_PLUGINS_TABLE_PATTERN)
   .and(TOML)
   .andNot(psiElement().afterLeaf("."))
 
-val TOML_BUNDLE_SYNTAX_PATTERN = psiElement()
+private val TOML_BUNDLE_SYNTAX_PATTERN: PsiElementPattern.Capture<PsiElement> = psiElement()
   .withSuperParent(2, TomlArray::class.java)
   .and(TOML)
   .withSuperParent(4, BUNDLE_KEY_VALUE_PATTERN)
 
-val TOML_TABLE_SYNTAX_PATTERN = psiElement()
+private val TOML_TABLE_SYNTAX_PATTERN: PsiElementPattern.Capture<PsiElement> = psiElement()
   .withSuperParent(2, psiElement().afterLeaf(psiElement().withText("[")))
   .withSuperParent(3, TomlTableHeader::class.java)
   .and(TOML)
 
-val VERSION_TABLE_ATTRIBUTES = listOf("prefer", "reject", "rejectAll", "require", "strictly")
-val VERSION_ATTRIBUTES = VERSION_TABLE_ATTRIBUTES + "ref"
-val LIBRARY_ATTRIBUTES = listOf("group", "name", "module", "version")
-val PLUGIN_ATTRIBUTES = listOf("id", "version")
-val MUTUALLY_EXCLUSIVE_MAP = OneToManyBiMap(mapOf(
+private val VERSION_TABLE_ATTRIBUTES: List<String> = listOf("prefer", "reject", "rejectAll", "require", "strictly")
+private val VERSION_ATTRIBUTES: List<String> = VERSION_TABLE_ATTRIBUTES + "ref"
+private val LIBRARY_ATTRIBUTES: List<String> = listOf("group", "name", "module", "version")
+private val PLUGIN_ATTRIBUTES: List<String> = listOf("id", "version")
+private val MUTUALLY_EXCLUSIVE_MAP: OneToManyBiMap<String> = OneToManyBiMap(mapOf(
   "module" to setOf("group", "name"),
   "ref" to setOf("prefer", "reject", "rejectAll", "require", "strictly"),
   "require" to setOf("reject", "rejectAll")
 ))
-val TABLES = listOf("versions", "libraries", "bundles", "plugins")
+private val TABLES: List<String> = listOf("versions", "libraries", "bundles", "plugins")
 
 class OneToManyBiMap<T> constructor(input: Map<T, Set<T>>) {
   private val direct = input
@@ -173,7 +159,7 @@ class TomlVersionCatalogCompletionContributor : CompletionContributor() {
     extend(CompletionType.BASIC, TOML_BUNDLE_SYNTAX_PATTERN, createLibrariesSuggestionCompletionProvider())
   }
 
-  fun createLibrariesSuggestionCompletionProvider(): CompletionProvider<CompletionParameters> {
+  private fun createLibrariesSuggestionCompletionProvider(): CompletionProvider<CompletionParameters> {
     return object : CompletionProvider<CompletionParameters>() {
       override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         val originalFile = parameters.originalFile as? TomlFile ?: return
@@ -203,7 +189,7 @@ class TomlVersionCatalogCompletionContributor : CompletionContributor() {
 
   private fun findLibraries(tomlFile: TomlFile): List<String> {
     val result = mutableListOf<String>()
-    tomlFile.children.filter { it is TomlTable }.forEach {
+    tomlFile.children.filterIsInstance<TomlTable>().forEach {
       it.accept(object : TomlVisitor() {
         override fun visitTable(element: TomlTable) {
           if (element.header.key?.segments?.map { it.name } == listOf("libraries")) {
@@ -217,7 +203,7 @@ class TomlVersionCatalogCompletionContributor : CompletionContributor() {
     return result
   }
 
-  fun createTableSuggestionCompletionProvider(list: List<String>): CompletionProvider<CompletionParameters> {
+  private fun createTableSuggestionCompletionProvider(list: List<String>): CompletionProvider<CompletionParameters> {
     return object : CompletionProvider<CompletionParameters>() {
       override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         val originalFile = parameters.originalFile as? TomlFile ?: return
@@ -241,7 +227,7 @@ class TomlVersionCatalogCompletionContributor : CompletionContributor() {
     return result
   }
 
-  fun createKeySuggestionCompletionProvider(list: List<String>): CompletionProvider<CompletionParameters> {
+  private fun createKeySuggestionCompletionProvider(list: List<String>): CompletionProvider<CompletionParameters> {
     return object : CompletionProvider<CompletionParameters>() {
       override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         var parent: PsiElement? = parameters.position
@@ -274,7 +260,7 @@ class EnableAutoPopupInTomlVersionCatalogCompletion : CompletionConfidence() {
   }
 }
 
-class SearchForKeysVisitor(val start: TomlInlineTable, val checkDepth: Int) {
+class SearchForKeysVisitor(val start: TomlInlineTable, private val checkDepth: Int) {
   val set = mutableSetOf<String>()
   fun search(): Set<String> {
     set.clear()

@@ -7,7 +7,7 @@ import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
-import org.junit.Assert.assertArrayEquals
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 
 class TomlVersionCatalogCompletionTest : GradleCodeInsightTestCase() {
@@ -19,7 +19,7 @@ class TomlVersionCatalogCompletionTest : GradleCodeInsightTestCase() {
       runInEdtAndWait {
         codeInsightFixture.configureFromExistingVirtualFile(versionCatalog)
         val suggestions = codeInsightFixture.completeBasic().map { it.lookupString }
-        assertArrayEquals(suggestions.toTypedArray(), completionCandidates)
+        Assertions.assertArrayEquals(suggestions.toTypedArray(), completionCandidates)
       }
     }
   }
