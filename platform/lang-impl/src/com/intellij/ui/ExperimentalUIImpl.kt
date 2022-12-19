@@ -29,7 +29,6 @@ class ExperimentalUIImpl : ExperimentalUI() {
     
     setRegistryKeyIfNecessary("ide.experimental.ui", true)
     setRegistryKeyIfNecessary("debugger.new.tool.window.layout", true)
-    UISettings.getInstance().openInPreviewTabIfPossible = true
     UISettings.getInstance().hideToolStripes = false
     val name = if (JBColor.isBright()) "Light" else "Dark"
     val lafManager = LafManager.getInstance()
