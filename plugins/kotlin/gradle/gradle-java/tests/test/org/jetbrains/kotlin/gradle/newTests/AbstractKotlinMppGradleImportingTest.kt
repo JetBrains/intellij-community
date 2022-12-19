@@ -15,9 +15,11 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCas
 import org.jetbrains.kotlin.idea.codeInsight.gradle.PluginTargetVersionsRule
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.runner.RunWith
 import org.junit.runners.BlockJUnit4ClassRunner
@@ -105,6 +107,9 @@ abstract class AbstractKotlinMppGradleImportingTest :
     }
 
     override fun setUp() {
+        // see KT-55554
+        assumeTrue("Test is ignored because it requires Mac-host", HostManager.hostIsMac)
+
         // Hack: usually this is set-up by JUnit's Parametrized magic, but
         // our tests source versions from `kotlintestPropertiesService`, not from
         // @Parametrized
