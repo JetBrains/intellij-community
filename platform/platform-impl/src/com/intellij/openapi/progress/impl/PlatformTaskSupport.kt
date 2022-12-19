@@ -25,7 +25,6 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.util.awaitCancellation
-import com.intellij.util.flow.throttle
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -189,7 +188,8 @@ private fun coroutineCancellingIndicator(job: Job): ProgressIndicatorEx {
  * [text2][ProgressIndicator.setText2], and [fraction][ProgressIndicator.setFraction] from the [updates].
  */
 private suspend fun ProgressIndicatorEx.updateFromFlow(updates: Flow<ProgressState>): Nothing {
-  updates.collect { state: ProgressState ->
+  @OptIn(FlowPreview::class)
+  updates.debounce(50).flowOn(Dispatchers.Default).collect { state: ProgressState ->
     text = state.text
     text2 = state.details
     if (state.fraction >= 0.0) {
@@ -294,8 +294,9 @@ private fun CoroutineScope.showModalIndicator(
 }
 
 private suspend fun ProgressDialogUI.updateFromFlow(updates: Flow<ProgressState>): Nothing {
+  @OptIn(FlowPreview::class)
   updates
-    .throttle(50)
+    .debounce(50)
     .flowOn(Dispatchers.Default)
     .collect {
       updateProgress(it)
