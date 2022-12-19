@@ -408,7 +408,7 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
       isPaintEnable = false
       isCombined = true
     }.let { Wrapper(it).apply {
-      border = JBUI.Borders.empty(if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) RUN_TOOLBAR_BORDER_HEIGHT else 7,6)
+      border = JBUI.Borders.empty(if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) JBUI.CurrentTheme.RunWidget.toolbarBorderHeight() else 7,6)
     } }
   }
 
@@ -604,7 +604,7 @@ private class RunDropDownButtonUI : BasicButtonUI() {
     val prefSize = BasicGraphicsUtils.getPreferredButtonSize(c, c.iconTextGap)
     return prefSize?.apply {
       width = maxOf(width, if (c.isCombined) 0 else 72)
-      height = JBUIScale.scale(if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) RUN_TOOLBAR_HEIGHT else 26)
+      height = JBUIScale.scale(if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) JBUI.CurrentTheme.RunWidget.toolbarHeight() else 26)
       /**
        * If combined view is enabled the button should not draw a separate line
        * and reserve a place if dropdown is not enabled. Therefore, add only a half

@@ -1579,6 +1579,22 @@ public final class JBUI {
       // these colors will be applied over background color
       public static final Color HOVER_BACKGROUND = JBColor.namedColor("RunWidget.hoverBackground", new Color(0, 0, 0, 25));
       public static final Color PRESSED_BACKGROUND = JBColor.namedColor("RunWidget.pressedBackground", new Color(0, 0, 0, 40));
+
+      public static int toolbarHeight() {
+        return getInt("RunWidget.toolbarHeight", 30);
+      }
+
+      public static int toolbarBorderHeight() {
+        return getInt("RunWidget.toolbarBorderHeight", 5);
+      }
+
+      public static int actionButtonWidth() {
+        return getInt("RunWidget.actionButtonWidth", 36);
+      }
+
+      public static int configurationSelectorWidth() {
+        return getInt("RunWidget.configurationSelectorWidth", 90);
+      }
     }
   }
 
