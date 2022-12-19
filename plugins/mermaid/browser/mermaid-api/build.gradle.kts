@@ -18,10 +18,10 @@ kotlin {
     js(IR) {
         useCommonJs()
         browser()
-        binaries.executable()
+        binaries.library()
         compilations.all {
             kotlinOptions {
-                freeCompilerArgs = freeCompilerArgs + listOf("-opt-in=kotlin.RequiresOptIn")
+                freeCompilerArgs += listOf("-opt-in=kotlin.RequiresOptIn")
             }
         }
     }

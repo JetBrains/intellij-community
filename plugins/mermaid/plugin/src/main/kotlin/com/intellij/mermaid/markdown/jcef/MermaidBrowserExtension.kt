@@ -27,10 +27,7 @@ class MermaidBrowserExtension(panel: MarkdownHtmlPanel) : MarkdownBrowserPreview
 
   override val scripts: List<String> = listOf(
     THEME_DEFINITION_FILENAME,
-    "extension.js",
-    "extension.js.map",
-    "10.js",
-    "10.js.map"
+    "mermaid.js",
   )
 
   override val styles: List<String> = listOf("mermaid.css")

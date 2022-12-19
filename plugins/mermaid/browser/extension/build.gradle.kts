@@ -12,7 +12,13 @@ dependencies {
 kotlin {
     js(IR) {
         useCommonJs()
-        browser()
+        browser {
+            commonWebpackConfig {
+                showProgress = true
+                outputFileName = "mermaid.js"
+                sourceMaps = false
+            }
+        }
         binaries.executable()
         compilations.all {
             kotlinOptions {
