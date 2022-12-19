@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.options;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +23,7 @@ public class RegexValidator implements StringValidator {
       Pattern.compile(string);
     }
     catch (PatternSyntaxException e) {
-      return e.getMessage();
+      return StringUtil.substringBefore(e.getMessage(), "\n");
     }
     return null;
   }
