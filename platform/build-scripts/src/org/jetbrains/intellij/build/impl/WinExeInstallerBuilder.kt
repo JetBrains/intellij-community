@@ -18,49 +18,10 @@ import org.jetbrains.intellij.build.io.runProcess
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.setLastModifiedTime
 import kotlin.time.Duration.Companion.hours
-
-private fun generateInstallationConfigFileForSilentMode(customizer: WindowsDistributionCustomizer, context: BuildContext, suffix: String) {
-  val targetFilePath = context.paths.artifactDir.resolve("silent$suffix.config")
-  if (Files.exists(targetFilePath)) {
-    return
-  }
-
-  val customConfigPath = customizer.silentInstallationConfig
-  val silentConfigTemplate = if (customConfigPath != null) {
-    check(Files.exists(customConfigPath)) {
-      "WindowsDistributionCustomizer.silentInstallationConfig points to a file which doesn't exist: $customConfigPath"
-    }
-    customConfigPath
-  }
-  else {
-    context.paths.communityHomeDir.resolve("platform/build-scripts/resources/win/nsis/silent.config")
-  }
-
-  Files.createDirectories(targetFilePath.parent)
-  Files.copy(silentConfigTemplate, targetFilePath, StandardCopyOption.REPLACE_EXISTING)
-
-  val extensionsList = getFileAssociations(customizer)
-  var associations = "\n\n; List of associations. To create an association change value to 1.\n"
-  if (extensionsList.isEmpty()) {
-    associations = "\n\n; There are no associations for the product.\n"
-  }
-  else {
-    associations += extensionsList.joinToString(separator = "") { "$it=0\n" }
-  }
-  Files.writeString(targetFilePath, associations, StandardOpenOption.WRITE, StandardOpenOption.APPEND)
-}
-
-/**
- * Returns list of file extensions with leading dot added
- */
-private fun getFileAssociations(customizer: WindowsDistributionCustomizer): List<String> {
-  return customizer.fileAssociations.map { if (it.startsWith(".")) it else ".$it" }
-}
 
 private val isDockerAvailable by lazy {
     runBlocking {
@@ -96,7 +57,6 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
   withContext(Dispatchers.IO) {
     Files.createDirectories(nsiConfDir)
     copyDir(context.paths.communityHomeDir.resolve("build/conf/nsis"), nsiConfDir)
-    generateInstallationConfigFileForSilentMode(customizer, context, suffix)
 
     if (!SystemInfoRt.isWindows) {
       val ideaNsiPath = nsiConfDir.resolve("idea.nsi")
@@ -205,8 +165,8 @@ private fun prepareConfigurationFiles(nsiConfDir: Path,
 !define PRODUCT_VM_OPTIONS_FILE "${FileUtilRt.toSystemDependentName("${winDistPath}/bin/")}${'$'}{PRODUCT_VM_OPTIONS_NAME}"
 """)
 
-  val extensionsList = getFileAssociations(customizer)
-  val fileAssociations = if (extensionsList.isEmpty()) "NoAssociation" else extensionsList.joinToString(separator = ",")
+  val fileAssociations = if (customizer.fileAssociations.isEmpty()) "NoAssociation"
+                         else customizer.fileAssociations.joinToString(separator = ",") { if (it.startsWith(".")) it else ".${it}" }
   val appInfo = context.applicationInfo
   Files.writeString(nsiConfDir.resolve("strings.nsi"), """
 !define MANUFACTURER "${appInfo.shortCompanyName}"

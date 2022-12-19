@@ -2,6 +2,7 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -16,8 +17,11 @@ import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.removeMnemonic
 import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
 import javax.swing.JCheckBox
 import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.border.EmptyBorder
 
 class CommitOptionsPanel(private val project: Project,
                          private val actionNameSupplier: () -> @Nls String,
@@ -82,10 +86,24 @@ class CommitOptionsPanel(private val project: Project,
   }
 
   private fun Panel.appendOptionRow(option: RefreshableOnComponent) {
+    val component = extractMeaningfulComponent(option.component)
     row {
-      cell(option.component)
+      cell(component ?: option.component)
         .align(Align.FILL)
     }
+  }
+
+  private fun extractMeaningfulComponent(component: JComponent): JComponent? {
+    if (component is DialogPanel) return null
+    if (component is JPanel) {
+      val border = component.border
+      if (component.layout is BorderLayout &&
+          component.components.size == 1 &&
+          (border == null || border is EmptyBorder)) {
+        return component.components[0] as? JComponent
+      }
+    }
+    return null
   }
 
   override fun setVisible(vcses: Collection<AbstractVcs>?) {

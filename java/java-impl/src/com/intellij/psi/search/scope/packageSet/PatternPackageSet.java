@@ -39,20 +39,17 @@ public class PatternPackageSet extends PatternBasedPackageSet {
   @Override
   public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if (matchesScope(file, project, fileIndex)) {
-      if (myPattern == null) {
-        return true;
-      }
-      String packageName = getPackageName(file, project);
-      if (packageName != null && myPattern.matcher(packageName).matches()) {
-        return true;
-      }
+    if (!matchesScope(file, project, fileIndex)) {
+      return false;
     }
-    return false;
+    if (myPattern == null) {
+      return true;
+    }
+    String packageName = getPackageName(file, project);
+    return packageName != null && myPattern.matcher(packageName).matches();
   }
 
-  private boolean matchesScope(VirtualFile file, Project project, ProjectFileIndex fileIndex) {
-    if (file == null) return false;
+  private boolean matchesScope(@NotNull VirtualFile file, @NotNull Project project, @NotNull ProjectFileIndex fileIndex) {
     boolean isSource = fileIndex.isInSourceContent(file);
     if (myScope == SCOPE_ANY) {
       return fileIndex.isInContent(file) && matchesModule(file, fileIndex);
@@ -72,7 +69,7 @@ public class PatternPackageSet extends PatternBasedPackageSet {
     throw new RuntimeException("Unknown scope: " + myScope);
   }
 
-  private static String getPackageName(VirtualFile file, Project project) {
+  private static String getPackageName(@NotNull VirtualFile file, @NotNull Project project) {
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return null;
     return StringUtil.getQualifiedName(PackageIndex.getInstance(project).getPackageNameByDirectory(dir), file.getNameWithoutExtension());
@@ -101,7 +98,7 @@ public class PatternPackageSet extends PatternBasedPackageSet {
       buf.append("[").append(myModulePatternText).append("]");
     }
 
-    if (buf.length() > 0) {
+    if (!buf.isEmpty()) {
       buf.append(':');
     }
 

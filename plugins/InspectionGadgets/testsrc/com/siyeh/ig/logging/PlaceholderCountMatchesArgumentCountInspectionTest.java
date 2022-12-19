@@ -1,52 +1,86 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.logging;
 
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ui.OptionAccessor;
+import com.intellij.openapi.util.text.StringUtil;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 
 @SuppressWarnings("PlaceholderCountMatchesArgumentCount")
 public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJavaInspectionTestCase {
   @Override
-  protected LocalInspectionTool getInspection() {
-    return new PlaceholderCountMatchesArgumentCountInspection();
+  protected InspectionProfileEntry getInspection() {
+    PlaceholderCountMatchesArgumentCountInspection inspection = new PlaceholderCountMatchesArgumentCountInspection();
+    inspection.ignoreSlf4jThrowableHavePlaceholder = true;
+    String option = StringUtil.substringAfter(getName(), "_");
+    String disabled = "disable_";
+    if(option != null && option.startsWith(disabled)) {
+      new OptionAccessor.Default(inspection).setOption(option.substring(disabled.length()), false);
+    }
+    return inspection;
   }
+
 
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[]{
-      "package org.slf4j; public interface Logger { void info(String format, Object... arguments); }",
-      "package org.slf4j; public class LoggerFactory { public static Logger getLogger(Class clazz) { return null; }}",
+      """
+      package org.slf4j.spi;
+      public interface LoggingEventBuilder {
+         void log(String format, Object... arguments);
+      }
+      """,
+      """
+      package org.slf4j;\s
+      import org.slf4j.spi.LoggingEventBuilder;\s
+      public class LoggerFactory { public static Logger getLogger(Class clazz) { return null; }}
+      public interface Logger {\s
+         void info(String format, Object... arguments);\s
+         LoggingEventBuilder atError();\s
+      }
+      """,
+      """
+      package org.apache.logging.log4j;
+      import org.apache.logging.log4j.util.Supplier;
+      public interface Logger {
+        void info(String message, Object... params);
+        void fatal(String message, Object... params);
+        void error(Supplier<?> var1, Throwable var2);
+        void info(String message, Supplier<?>... params);
+        LogBuilder atInfo();
+        LogBuilder atFatal();
+        LogBuilder atError();
+      }
+      """,
 
-      "package org.apache.logging.log4j;" +
-      "import org.apache.logging.log4j.util.Supplier;" +
-      "public interface Logger {" +
-      "  void info(String message, Object... params);" +
-      "  void fatal(String message, Object... params);" +
-      "  void error(Supplier<?> var1, Throwable var2);" +
-      "  LogBuilder atInfo();" +
-      "  LogBuilder atFatal();" +
-      "  LogBuilder atError();" +
-      "}",
+      """
+      package org.apache.logging.log4j;
+      public class LogManager {
+        public static Logger getLogger() {
+          return null;
+        }
+        public static Logger getFormatterLogger() {
+          return null;
+        }
+      }
+      """,
 
-      "package org.apache.logging.log4j;" +
-      "public class LogManager {" +
-      "  public static Logger getLogger() {" +
-      "    return null;" +
-      "  }" +
-      "}",
+      """
+      package org.apache.logging.log4j.util;
+      public interface Supplier<T> {
+          T get();
+      }
+      """,
 
-      "package org.apache.logging.log4j.util;" +
-      "public interface Supplier<T> {" +
-      "    T get();" +
-      "}",
-
-      "package org.apache.logging.log4j;" +
-      "import org.apache.logging.log4j.util.Supplier;" +
-      "public interface LogBuilder {" +
-      "  void log(String format, Object p0);" +
-      "  void log(String format, Object... params);" +
-      "  void log(String format, Supplier<?>... params);" +
-      "}"
+      """
+      package org.apache.logging.log4j;
+      import org.apache.logging.log4j.util.Supplier;
+      public interface LogBuilder {
+        void log(String format, Object p0);
+        void log(String format, Object... params);
+        void log(String format, Supplier<?>... params);
+      }
+      """
     };
   }
 
@@ -57,7 +91,7 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
                private static final Logger LOG = LogManager.getLogger();
                void m(int i) {
                  LOG.info(/*Fewer arguments provided (1) than placeholders specified (3)*/"hello? {}{}{}"/**/, i);
-                 LOG.fatal(/*More arguments provided (1) than placeholders specified (0)*/"you got me "/**/,  i);
+                 LogManager.getLogger().fatal(/*More arguments provided (1) than placeholders specified (0)*/"you got me "/**/,  i);
                  LOG.error(() -> "", new Exception());
                }
              }""");
@@ -154,6 +188,7 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
     );
   }
 
+  @SuppressWarnings("RedundantThrows")
   public void testMultiCatch() {
     doTest("""
              import org.slf4j.*;
@@ -267,5 +302,122 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
            "    LOG.info(\"\", new Exception());" +
            "  }" +
            "}");
+  }
+
+  public void testLog4j2WithTextVariables() {
+    doTest("""
+             import org.apache.logging.log4j.*;
+             class Logging {
+               private static final String FINAL_TEXT = "const";
+               private static final Logger LOG = LogManager.getLogger();
+               void m(int i) {
+                 String text = "test {}{}{}";
+                 LOG.info(/*Fewer arguments provided (1) than placeholders specified (3)*/text/**/, i);
+                 final String text2 = "test ";
+                 LOG.fatal(/*More arguments provided (1) than placeholders specified (0)*/text2/**/, i);
+                 LOG.fatal(/*Fewer arguments provided (1) than placeholders specified (6)*/text + text/**/, i);
+                 LOG.fatal(/*Fewer arguments provided (1) than placeholders specified (18)*/text + text + text + text + text + text/**/, i);
+                 LOG.info(/*More arguments provided (1) than placeholders specified (0)*/FINAL_TEXT/**/, i);
+                 String text3;
+                 text3 = "another";
+                 LOG.info(/*More arguments provided (1) than placeholders specified (0)*/text3/**/, i);
+                 String sum = "first {}" + "second {}" + 1;
+                 LOG.info(/*Fewer arguments provided (1) than placeholders specified (2)*/sum/**/, i);
+               }
+             }""");
+  }
+
+  public void testLog4j2Builder() {
+    doTest("""
+             import org.apache.logging.log4j.*;
+             class Logging {
+               private static final Logger LOG = LogManager.getLogger();
+               void m(int i) {
+                try {
+                  throw new RuntimeException();
+                } catch (Throwable t) {
+                 LOG.atError().log(/*More arguments provided (2) than placeholders specified (1)*/"'{}'"/**/, "bar", new Exception());
+                 LOG.atError().log("'{}' '{}'", "bar", new Exception());
+                 LOG.atError().log("'{}'", "bar");
+                }
+               }
+             }""");
+  }
+
+  public void testSlf4J_disable_ignoreSlf4jThrowableHavePlaceholder() {
+    doTest("""
+             import org.slf4j.*;
+             class X {
+               void foo() {
+                 Logger logger = LoggerFactory.getLogger(X.class);
+                 logger.info(/*Fewer arguments provided (1) than placeholders specified (2)*/"string {} {}"/**/, 1, new RuntimeException());
+                 logger.atError().log(/*Fewer arguments provided (0) than placeholders specified (1)*/"{}"/**/, new RuntimeException("test"));
+                 LoggerFactory.getLogger(X.class).atError().log(/*Fewer arguments provided (1) than placeholders specified (2)*/"{} {}"/**/, 1, new RuntimeException("test"));
+                 LoggerFactory.getLogger(X.class).atError().log("{}", 1, new RuntimeException("test"));
+               }
+             }"""
+    );
+  }
+
+  public void testSlf4JBuilder() {
+    doTest("""
+             import org.slf4j.*;
+             class X {
+               void foo() {
+                 Logger logger = LoggerFactory.getLogger(X.class);
+                 LoggerFactory.getLogger(X.class).atError().log("{}", new RuntimeException("test"));
+                 LoggerFactory.getLogger(X.class).atError().log("{} {}", 1, new RuntimeException("test"));
+                 LoggerFactory.getLogger(X.class).atError().log(/*More arguments provided (2) than placeholders specified (1)*/"{}"/**/, 1, new RuntimeException("test"));
+               }
+             }"""
+    );
+  }
+
+  public void testFormattedLog4J() {
+    doTest("""
+             import org.apache.logging.log4j.*;
+             class X {
+               private static final Logger LOG = LogManager.getFormatterLogger();
+               void m() {
+                try {
+                  throw new RuntimeException();
+                } catch (Throwable t) {
+                   Logger LOG2 = LogManager.getFormatterLogger();
+                   LOG.info("My %s text", "test", t);
+                   LOG.info(/*Illegal format string specifier*/"My %i text"/**/, "test");
+                   LOG.info(/*More arguments provided (2) than placeholders specified (1)*/"My %s text"/**/, "test1", "test2");
+                   LOG2.info("My %s text, %s", "test1"); //skip because LOG2 is not final
+                   LogManager.getFormatterLogger().info(/*Fewer arguments provided (1) than placeholders specified (2)*/"My %s text, %s"/**/, "test1");
+                 }
+               }
+             }"""
+    );
+  }
+
+  public void testLog4j2WithExceptionInSuppliers() {
+    doTest("""
+             import org.apache.logging.log4j.*;
+             import org.apache.logging.log4j.util.Supplier;
+             class Logging {
+               private static final Logger LOG = LogManager.getLogger();
+               void m(int i) {
+                try {
+                  throw new RuntimeException();
+                } catch (IllegalArgumentException | IllegalStateException t) {
+                    LOG.info(/*More arguments provided (3) than placeholders specified (1)*/"test {}"/**/, () -> "test", () -> "test", () -> t);
+                } catch (Throwable t) {
+                    LOG.info("test {}", () -> "test", () -> t);
+                    LOG.info(/*More arguments provided (3) than placeholders specified (1)*/"test {}"/**/, () -> "test", () -> "test", () -> t);
+                    Supplier<Throwable> s = () -> t;
+                    LOG.info("test {}", () -> "test", s);
+                    Supplier<?> s2 = () -> t;
+                    LOG.info("test {}", () -> "test", s2);
+                    Supplier s3 = () -> t;
+                    LOG.info("test {}", () -> "test", s3);
+                    LOG.info("test {}", () -> "test", RuntimeException::new);
+                    LOG.info("test {}", () -> "test");
+                }
+               }
+             }""");
   }
 }

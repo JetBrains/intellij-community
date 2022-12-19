@@ -4,7 +4,6 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.LocalChangeList
@@ -93,18 +92,13 @@ abstract class CommitChangeListDialogWorkflow(
 
   override fun addCommonResultHandlers(sessionInfo: CommitSessionInfo, committer: Committer) {
     super.addCommonResultHandlers(sessionInfo, committer)
-    committer.addResultHandler(DefaultNameChangeListCleaner(project, commitState))
+    committer.addResultHandler(ChangeListDescriptionCleaner(commitMessagePolicy, commitState))
   }
 }
 
-private class DefaultNameChangeListCleaner(val project: Project, commitState: ChangeListCommitState) : CommitterResultHandler {
-  private val isChangeListFullyIncluded = commitState.changeList.changes.size == commitState.changes.size
-  private val isDefaultNameChangeList = commitState.changeList.hasDefaultName()
-  private val listName = commitState.changeList.name
-
+private class ChangeListDescriptionCleaner(val commitMessagePolicy: SingleChangeListCommitMessagePolicy,
+                                           val commitState: ChangeListCommitState) : CommitterResultHandler {
   override fun onSuccess() {
-    if (isDefaultNameChangeList && isChangeListFullyIncluded) {
-      ChangeListManager.getInstance(project).editComment(listName, "")
-    }
+    commitMessagePolicy.onAfterCommit(commitState)
   }
 }

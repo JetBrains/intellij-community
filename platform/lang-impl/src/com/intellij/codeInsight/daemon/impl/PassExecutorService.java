@@ -58,11 +58,13 @@ final class PassExecutorService implements Disposable {
   private final Map<ScheduledPass, Job<Void>> mySubmittedPasses = new ConcurrentHashMap<>();
   private final Project myProject;
   private volatile boolean isDisposed;
-  private final AtomicInteger nextAvailablePassId; // used to assign random id to a pass if not set
 
   PassExecutorService(@NotNull Project project) {
     myProject = project;
-    nextAvailablePassId = ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject)).getNextAvailableId();
+  }
+
+  private int getNextAvailablePassId() {
+    return ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject)).getNextAvailableId();
   }
 
   @Override
@@ -166,7 +168,7 @@ final class PassExecutorService implements Disposable {
     int oldId = pass.getId();
     int id;
     if (oldId == -1 || oldId == 0) {
-      id = nextAvailablePassId.incrementAndGet();
+      id = getNextAvailablePassId();
       pass.setId(id);
     }
     else {

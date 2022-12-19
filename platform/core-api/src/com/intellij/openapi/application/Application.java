@@ -90,6 +90,7 @@ public interface Application extends ComponentManager {
    * See also {@link ReadAction#run} for a more lambda-friendly version.
    *
    * @param action the action to run.
+   * @see CoroutinesKt#readAction
    */
   void runReadAction(@NotNull Runnable action);
 

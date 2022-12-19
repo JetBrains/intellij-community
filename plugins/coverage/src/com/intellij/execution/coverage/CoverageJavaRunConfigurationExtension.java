@@ -51,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Registers "Coverage" tab in Java run configurations
@@ -127,7 +128,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     }
 
     final JavaCoverageEnabledConfiguration coverageConfig = JavaCoverageEnabledConfiguration.getFrom(configuration);
-    //noinspection ConstantConditions
+    if (coverageConfig == null) return;
     coverageConfig.setCurrentCoverageSuite(null);
     final CoverageRunner coverageRunner = coverageConfig.getCoverageRunner();
     if (runnerSettings instanceof CoverageRunnerData && coverageRunner != null) {
@@ -174,8 +175,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
       return;
     }
 
-    //noinspection ConstantConditions
-    JavaCoverageEnabledConfiguration.getFrom(runConfiguration).readExternal(element);
+    Objects.requireNonNull(JavaCoverageEnabledConfiguration.getFrom(runConfiguration)).readExternal(element);
   }
 
   @Override
@@ -183,8 +183,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     if (!isApplicableFor(runConfiguration)) {
       return;
     }
-    //noinspection ConstantConditions
-    JavaCoverageEnabledConfiguration.getFrom(runConfiguration).writeExternal(element);
+    Objects.requireNonNull(JavaCoverageEnabledConfiguration.getFrom(runConfiguration)).writeExternal(element);
   }
 
   @Override

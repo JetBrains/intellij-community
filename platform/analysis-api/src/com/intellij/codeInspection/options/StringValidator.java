@@ -18,5 +18,5 @@ public interface StringValidator {
    * @param string string to check
    * @return an error message describing why the string is not valid; null if it's valid
    */
-  @Nullable @NlsContexts.HintText String getErrorMessage(String string);
+  @Nullable @NlsContexts.HintText String getErrorMessage(@NotNull String string);
 }

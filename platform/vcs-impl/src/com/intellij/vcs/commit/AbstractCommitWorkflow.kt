@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
@@ -164,32 +163,28 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   }
 
   @RequiresEdt
-  internal fun startExecution(block: () -> Boolean) {
+  internal fun startExecution(block: suspend () -> Boolean) {
     check(!isExecuting) { "Commit session is already started" }
-
     isExecuting = true
-    continueExecution {
-      eventDispatcher.multicaster.executionStarted()
-      block()
-    }
-  }
 
-  internal fun continueExecution(block: () -> Boolean) {
-    check(isExecuting) { "Commit session has already finished" }
+    project.coroutineScope.launch(CoroutineName("commit execution") + Dispatchers.EDT) {
+      check(isExecuting) { "Commit session has already finished" }
+      try {
+        eventDispatcher.multicaster.executionStarted()
 
-    try {
-      val continueExecution = block()
-      if (!continueExecution) endExecution()
-    }
-    catch (e: ProcessCanceledException) {
-      endExecution()
-    }
-    catch (e: CancellationException) {
-      endExecution()
-    }
-    catch (e: Throwable) {
-      endExecution()
-      LOG.error(e)
+        val continueExecution = block()
+        if (!continueExecution) endExecution()
+      }
+      catch (e: ProcessCanceledException) {
+        endExecution()
+      }
+      catch (e: CancellationException) {
+        endExecution()
+      }
+      catch (e: Throwable) {
+        endExecution()
+        LOG.error(e)
+      }
     }
   }
 
@@ -211,8 +206,8 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   fun addCommitCustomListener(listener: CommitterResultHandler, parent: Disposable) =
     commitCustomEventDispatcher.addListener(listener, parent)
 
-  fun executeSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
-    return runBlockingModal(project, message("commit.checks.on.commit.progress.text")) {
+  suspend fun executeSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
+    return withModalProgressIndicator(project, message("commit.checks.on.commit.progress.text")) {
       withContext(Dispatchers.EDT) {
         fireBeforeCommitChecksStarted(sessionInfo)
         val result = runModalBeforeCommitChecks(commitInfo)
@@ -360,10 +355,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         .filter { it != CheckinHandler.DUMMY }
 
     @JvmStatic
-    fun getCommitExecutors(project: Project, changes: Collection<Change>): List<CommitExecutor> =
-      getCommitExecutors(project, getAffectedVcses(changes, project))
-
-    internal fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs>): List<CommitExecutor> {
+    fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs>): List<CommitExecutor> {
       return vcses.flatMap { it.commitExecutors } +
              ChangeListManager.getInstance(project).registeredExecutors +
              LocalCommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)
@@ -422,6 +414,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         throw e
       }
       catch (e: Throwable) {
+        LOG.warn(e)
         return CommitProblem.createError(e)
       }
       finally {

@@ -19,6 +19,9 @@ import java.util.function.Consumer
 import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
 
+/**
+ * Prefer using [BooleanCommitOption.create] and [BooleanCommitOption.createLink].
+ */
 open class BooleanCommitOption(
   private val project: Project,
   @Nls text: String,

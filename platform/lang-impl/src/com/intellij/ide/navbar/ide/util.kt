@@ -63,13 +63,12 @@ internal fun activityFlow(project: Project): Flow<Unit> {
       override fun fileStatusChanged(virtualFile: VirtualFile) = fire()
     }, disposable)
 
-    project.messageBus.connect(disposable).apply {
-      subscribe(ProblemListener.TOPIC, object : ProblemListener {
-        override fun problemsAppeared(file: VirtualFile) = fire()
-        override fun problemsDisappeared(file: VirtualFile) = fire()
-      })
-      subscribe(VirtualFileAppearanceListener.TOPIC, VirtualFileAppearanceListener { fire() })
-    }
+    val connection = project.messageBus.connect(this)
+    connection.subscribe(ProblemListener.TOPIC, object : ProblemListener {
+      override fun problemsAppeared(file: VirtualFile) = fire()
+      override fun problemsDisappeared(file: VirtualFile) = fire()
+    })
+    connection.subscribe(VirtualFileAppearanceListener.TOPIC, VirtualFileAppearanceListener { fire() })
 
     fire()
 

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -29,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 
 public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(StreamToLoopInspection.class);
@@ -46,10 +49,10 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
   @SuppressWarnings("PublicField")
   public boolean SUPPORT_UNKNOWN_SOURCES = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaBundle.message("checkbox.iterate.unknown.stream.sources.via.stream.iterator"), this, "SUPPORT_UNKNOWN_SOURCES");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("SUPPORT_UNKNOWN_SOURCES", JavaBundle.message("checkbox.iterate.unknown.stream.sources.via.stream.iterator")));
   }
 
   @NotNull

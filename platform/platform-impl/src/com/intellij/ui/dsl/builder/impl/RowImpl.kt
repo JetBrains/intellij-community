@@ -95,7 +95,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  @Suppress("OVERRIDE_DEPRECATION")
   override fun <T : JComponent> cell(component: T, viewComponent: JComponent): CellImpl<T> {
     val result = CellImpl(dialogPanelConfig, component, this, viewComponent)
     cells.add(result)
@@ -229,7 +228,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(ActionButton(actionGroup, actionGroup.templatePresentation.clone(), actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE))
   }
 
-  @Suppress("OVERRIDE_DEPRECATION")
   override fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> @Nls String): Cell<SegmentedButtonToolbar> {
     val actionGroup = DefaultActionGroup(options.map { DeprecatedSegmentedButtonAction(it, property, renderer(it)) })
     val toolbar = SegmentedButtonToolbar(actionGroup, parent.spacingConfiguration)
@@ -238,14 +236,14 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String): SegmentedButton<T> {
-    val result = SegmentedButtonImpl(this, renderer)
+    val result = SegmentedButtonImpl(dialogPanelConfig, this, renderer)
     result.items(items)
     cells.add(result)
     return result
   }
 
   override fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String, tooltipRenderer: (T) -> @Nls String?): SegmentedButton<T> {
-    val result = SegmentedButtonImpl(this, renderer, tooltipRenderer)
+    val result = SegmentedButtonImpl(dialogPanelConfig, this, renderer, tooltipRenderer)
     result.items(items)
     cells.add(result)
     return result
@@ -306,6 +304,10 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun <T> dropDownLink(item: T, items: List<T>, onSelected: ((T) -> Unit)?, updateText: Boolean): Cell<DropDownLink<T>> {
     return cell(DropDownLink(item, items, onSelect = { t -> onSelected?.let { it(t) } }, updateText = updateText))
+  }
+
+  override fun <T> dropDownLink(item: T, items: List<T>): Cell<DropDownLink<T>> {
+    return cell(DropDownLink(item, items, onSelect = { }, updateText = true))
   }
 
   override fun icon(icon: Icon): CellImpl<JLabel> {
@@ -422,7 +424,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(component)
   }
 
-  @Suppress("OVERRIDE_DEPRECATION")
   override fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
     val component = ComboBox(items)
     component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }

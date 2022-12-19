@@ -83,5 +83,8 @@
     <extensionPoint name="externalSystemDependencyAnalyzer"
                     interface="com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerExtension"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.libraryDataServiceExtension"
+                    interface="com.intellij.openapi.externalSystem.service.project.manage.LibraryDataServiceExtension"
+                    dynamic="true" />
   </extensionPoints>
 </idea-plugin>

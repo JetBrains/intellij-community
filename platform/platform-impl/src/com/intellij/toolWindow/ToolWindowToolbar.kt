@@ -33,7 +33,9 @@ internal abstract class ToolWindowToolbar : JPanel() {
     isOpaque = true
     background = JBUI.CurrentTheme.ToolWindow.background()
 
-    val topWrapper = JPanel(BorderLayout())
+    val topWrapper = JPanel(BorderLayout()).apply {
+      border = JBUI.Borders.customLineTop(getBorderColor())
+    }
     border = createBorder()
     topStripe.background = JBUI.CurrentTheme.ToolWindow.background()
     bottomStripe.background = JBUI.CurrentTheme.ToolWindow.background()

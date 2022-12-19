@@ -16,8 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +23,7 @@ import java.util.TreeMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.intellij.util.io.IOUtil.MiB;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * Maintains 'pages' of data (in the form of {@linkplain DirectBufferWrapper}), from file storages
@@ -50,6 +49,14 @@ import static com.intellij.util.io.IOUtil.MiB;
 final class FilePageCache {
   private static final Logger LOG = Logger.getInstance(FilePageCache.class);
 
+  /**
+   * Measure times of page loading/disposing.
+   *
+   * @see #myPageLoadUs
+   * @see #myPageDisposalUs
+   */
+  private static final boolean COLLECT_PAGE_LOADING_TIMES = true;//IOStatistics.DEBUG;
+
   static final long MAX_PAGES_COUNT = 0xFFFF_FFFFL;
   private static final long FILE_INDEX_MASK = 0xFFFF_FFFF_0000_0000L;
 
@@ -72,7 +79,7 @@ final class FilePageCache {
     final int defaultPageSizeMb = SystemProperties.getIntProperty("idea.paged.storage.page.size", 10);
     DEFAULT_PAGE_SIZE = Math.max(1, defaultPageSizeMb) * MiB;
 
-    final long maxDirectMemoryToUseBytes = maxDirectMemory() - 2L * DEFAULT_PAGE_SIZE;
+    final long maxDirectMemoryToUseBytes = IOUtil.maxDirectMemory() - 2L * DEFAULT_PAGE_SIZE;
 
     CACHE_CAPACITY_BYTES = configureCacheCapacity(maxDirectMemoryToUseBytes);
 
@@ -138,26 +145,33 @@ final class FilePageCache {
 
   //stats counters:
 
-  /** how many times file channel was accessed bypassing cache (see {@link PagedFileStorage#useChannel}) */
+  /** how many times a file channel was accessed bypassing cache (see {@link PagedFileStorage#useChannel}) */
   private volatile int myUncachedFileAccess;
-  /** page found in local PagedFileStorage cache */
+  /** How many times page was found in local PagedFileStorage cache */
   private int myFastCacheHits;
-  /** page found in this cache */
+  /** How many times page was found in this cache */
   private int myHits;
-  /** page wasn't cached, and load by evicting other page (i.e. cache is full) */
-  private int myMisses;
-  /** page wasn't cached, and load anew (i.e. cache is not full yet) */
-  private int myLoad;
+  /** How many pages were loaded so totalSizeCached become above the cacheCapacityBytes  */
+  private int myPageLoadsAboveSizeThreshold;
+  /** How many pages were loaded without overthrowing cache capacity (cacheCapacityBytes) */
+  private int myRegularPageLoads;
 
-  /** max size of all pages, since application start */
+  /** max(totalSizeCached), since application start -- i.e. max size this cache ever reached. */
   private long myMaxLoadedSize;
-  /** max number of all files (PagedFileStorage), since application start */
+  /** max(number of all files (PagedFileStorage)), since application start */
   private volatile int myMaxRegisteredFiles;
+  /** How many pages were put into .pagesToRemoveByPageId (RC: not sure what it means exactly) */
   private volatile int myMappingChangeCount;
 
-  private long myCreatedCount;
-  private long myCreatedMs;
-  private long myDisposalMs;
+  /** How many pages were loaded in total. == (myLoads + myMisses) */
+  private long myLoadedPages;
+  /** Total time (us) of all page loads (including page buffer allocation time) */
+  private long myPageLoadUs;
+  /**
+   * Total time (us) of all page disposals _before reuse_.
+   * I.e. it is part of the full waiting time for a new page to be loaded.
+   */
+  private long myPageDisposalUs;
 
 
   FilePageCache() {
@@ -187,7 +201,7 @@ final class FilePageCache {
         DirectBufferWrapper wrapper = super.remove(key);
         if (wrapper != null) {
           //noinspection NonAtomicOperationOnVolatileField
-          ++myMappingChangeCount;
+          myMappingChangeCount++;
           assertUnderSegmentAllocationLock();
           pagesToRemoveByPageId.put(key, wrapper);
           totalSizeCached -= wrapper.getLength();
@@ -235,7 +249,7 @@ final class FilePageCache {
         return notYetRemoved;
       }
 
-      //Double-check: maybe somebody already load our segment after we've checked first time:
+      //Double-check: maybe somebody already loads our segment after we've checked first time:
       pagesAccessLock.lock();
       try {
         wrapper = pagesByPageId.get(pageId);
@@ -247,29 +261,29 @@ final class FilePageCache {
 
       //Slow path: allocate new buffer and load its content from fileStorage:
 
-      long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
+      final long startedAtNs = COLLECT_PAGE_LOADING_TIMES ? System.nanoTime() : 0;
 
-      PagedFileStorage fileStorage = getRegisteredPagedFileStorageByIndex(pageId);
+      final PagedFileStorage fileStorage = getRegisteredPagedFileStorageByIndex(pageId);
       disposeRemovedSegments(null);
 
-      long disposed = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
+      final long disposeFinishedAtNs = COLLECT_PAGE_LOADING_TIMES ? System.nanoTime() : 0;
 
       wrapper = allocateAndLoadPage(pageId, read, fileStorage, checkAccess);
 
-      if (IOStatistics.DEBUG) {
-        long finished = System.currentTimeMillis();
-        myCreatedCount++;
-        myCreatedMs += (finished - disposed);
-        myDisposalMs += (disposed - started);
+      if (COLLECT_PAGE_LOADING_TIMES) {
+        final long finishedAtNs = System.nanoTime();
+        myLoadedPages++;
+        myPageLoadUs += NANOSECONDS.toMicros(finishedAtNs - disposeFinishedAtNs);
+        myPageDisposalUs += NANOSECONDS.toMicros(disposeFinishedAtNs - startedAtNs);
       }
 
       pagesAccessLock.lock();
       try {
         if (totalSizeCached + fileStorage.getPageSize() < cachedSizeLimit) {
-          myLoad++;
+          myRegularPageLoads++;
         }
         else {
-          myMisses++;
+          myPageLoadsAboveSizeThreshold++;
         }
         pagesByPageId.put(pageId, wrapper);
       }
@@ -380,9 +394,9 @@ final class FilePageCache {
   }
 
   void assertNoBuffersLocked() {
-    pagesAccessLock.lock();
+    pagesAllocationLock.lock();
     try {
-      pagesAllocationLock.lock();
+      pagesAccessLock.lock();
       try {
         for (DirectBufferWrapper value : pagesByPageId.values()) {
           if (value.isLocked()) {
@@ -396,11 +410,11 @@ final class FilePageCache {
         }
       }
       finally {
-        pagesAllocationLock.unlock();
+        pagesAccessLock.unlock();
       }
     }
     finally {
-      pagesAccessLock.unlock();
+      pagesAllocationLock.unlock();
     }
   }
 
@@ -442,10 +456,14 @@ final class FilePageCache {
                                            totalSizeCached,
                                            myHits,
                                            myFastCacheHits,
-                                           myMisses,
-                                           myLoad,
+                                           myPageLoadsAboveSizeThreshold,
+                                           myRegularPageLoads,
                                            myMappingChangeCount,
-                                           cachedSizeLimit);
+                                           myPageDisposalUs,
+                                           myPageLoadUs,
+                                           myLoadedPages,
+                                           cachedSizeLimit
+        );
       }
       finally {
         pagesAccessLock.unlock();
@@ -458,49 +476,15 @@ final class FilePageCache {
 
   /* ======================= implementation ==================================================================================== */
 
-  private static long maxDirectMemory() {
-    try {
-      Class<?> aClass = Class.forName("jdk.internal.misc.VM");
-      Method maxDirectMemory = aClass.getMethod("maxDirectMemory");
-      return (Long)maxDirectMemory.invoke(null);
-    }
-    catch (Throwable ignore) {
-    }
-
-    try {
-      Class<?> aClass = Class.forName("sun.misc.VM");
-      Method maxDirectMemory = aClass.getMethod("maxDirectMemory");
-      return (Long)maxDirectMemory.invoke(null);
-    }
-    catch (Throwable ignore) {
-    }
-
-    try {
-      Class<?> aClass = Class.forName("java.nio.Bits");
-      Field maxMemory = aClass.getDeclaredField("maxMemory");
-      maxMemory.setAccessible(true);
-      return (Long)maxMemory.get(null);
-    }
-    catch (Throwable ignore) {
-    }
-
-    try {
-      Class<?> aClass = Class.forName("java.nio.Bits");
-      Field maxMemory = aClass.getDeclaredField("MAX_MEMORY");
-      maxMemory.setAccessible(true);
-      return (Long)maxMemory.get(null);
-    }
-    catch (Throwable ignore) {
-    }
-
-    return Runtime.getRuntime().maxMemory();
-  }
-
   @NotNull("Seems accessed storage has been closed")
-  private PagedFileStorage getRegisteredPagedFileStorageByIndex(long storageId) {
+  private PagedFileStorage getRegisteredPagedFileStorageByIndex(long storageId) throws ClosedStorageException {
     int storageIndex = (int)((storageId & FILE_INDEX_MASK) >> 32);
     synchronized (storageById) {
-      return storageById.get(storageIndex);
+      PagedFileStorage storage = storageById.get(storageIndex);
+      if (storage == null) {
+        throw new ClosedStorageException("storage is already closed");
+      }
+      return storage;
     }
   }
 

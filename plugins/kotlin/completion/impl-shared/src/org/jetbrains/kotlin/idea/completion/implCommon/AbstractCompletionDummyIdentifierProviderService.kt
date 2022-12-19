@@ -39,6 +39,21 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
         return false
     }
 
+    override fun correctPositionForParameter(context: CompletionInitializationContext) {
+        val offset = context.startOffset
+        val psiFile = context.file
+        val tokenAt = psiFile.findElementAt(max(0, offset)) ?: return
+
+        // IDENTIFIER when 'f<caret>oo: Foo'
+        // COLON when 'foo<caret>: Foo'
+        if (tokenAt.node.elementType == KtTokens.IDENTIFIER || tokenAt.node.elementType == KtTokens.COLON) {
+            val parameter = tokenAt.parent as? KtParameter
+            if (parameter != null) {
+                context.replacementOffset = parameter.endOffset
+            }
+        }
+    }
+
     override fun provideDummyIdentifier(context: CompletionInitializationContext): String {
         val psiFile = context.file
         if (psiFile !is KtFile) {
@@ -63,6 +78,7 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
                 ?: specialExtensionReceiverDummyIdentifier(tokenBefore)
                 ?: specialInTypeArgsDummyIdentifier(tokenBefore)
                 ?: specialInArgumentListDummyIdentifier(tokenBefore)
+                ?: specialInNameWithQuotes(tokenBefore)
                 ?: specialInBinaryExpressionDummyIdentifier(tokenBefore)
                 ?: isInValueOrTypeParametersList(tokenBefore)
                 ?: handleDefaultCase(context)
@@ -108,6 +124,17 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
     private fun specialInBinaryExpressionDummyIdentifier(tokenBefore: PsiElement?): String? {
         if (tokenBefore.elementType == KtTokens.IDENTIFIER && tokenBefore?.context?.context is KtBinaryExpression)
             return CompletionUtilCore.DUMMY_IDENTIFIER
+        return null
+    }
+
+    private fun specialInNameWithQuotes(tokenBefore: PsiElement?): String? {
+        val badCharacterBefore = when (tokenBefore?.elementType) {
+            TokenType.BAD_CHARACTER -> tokenBefore
+            KtTokens.IDENTIFIER -> tokenBefore?.prevLeaf(skipEmptyElements = true)?.takeIf { it.elementType == TokenType.BAD_CHARACTER }
+            else -> null
+        }
+        val quote = "`"
+        if (badCharacterBefore?.text == quote) return CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED + quote + "$"
         return null
     }
 

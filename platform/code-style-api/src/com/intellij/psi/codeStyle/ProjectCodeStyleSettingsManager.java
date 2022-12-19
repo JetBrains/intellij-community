@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,6 +82,11 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
     synchronized (myStateLock) {
       return mySettingsMap.get(MAIN_PROJECT_CODE_STYLE_NAME);
     }
+  }
+
+  @Override
+  protected @NotNull MessageBus getMessageBus() {
+    return myProject.getMessageBus();
   }
 
   private void initDefaults() {
@@ -192,12 +198,7 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
   }
 
   @Override
-  protected @NotNull CodeStyleSettingsChangeEvent createChangeEvent(@Nullable VirtualFile file) {
-    return new CodeStyleSettingsChangeEvent(myProject, file);
-  }
-
-  @Override
-  protected @NotNull Project getProject() {
+  protected @Nullable Project getProject() {
     return myProject;
   }
 }

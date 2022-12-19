@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * Generated when the current code style settings change either for the entire project or for a specific file.
  */
 public final class CodeStyleSettingsChangeEvent {
-  private final @NotNull Project myProject;
+  private final @NotNull  Project     myProject;
   private final @Nullable VirtualFile myFile;
 
   @ApiStatus.Internal

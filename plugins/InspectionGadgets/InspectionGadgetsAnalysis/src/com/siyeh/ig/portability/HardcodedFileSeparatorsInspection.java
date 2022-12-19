@@ -16,7 +16,7 @@
 package com.siyeh.ig.portability;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,12 +30,14 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class HardcodedFileSeparatorsInspection extends BaseInspection {
 
@@ -125,11 +127,10 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "hardcoded.file.separator.include.option"),
-      this, "m_recognizeExampleMediaType");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_recognizeExampleMediaType", InspectionGadgetsBundle.message(
+        "hardcoded.file.separator.include.option")));
   }
 
   @Override

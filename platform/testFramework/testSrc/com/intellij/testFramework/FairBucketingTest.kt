@@ -49,6 +49,6 @@ class FairBucketingTest {
 
   @Test
   fun initTestBucketsDoesNotThrow() {
-    TestCaseLoader.initFairBuckets()
+    TestCaseLoader.initFairBuckets(false)
   }
 }

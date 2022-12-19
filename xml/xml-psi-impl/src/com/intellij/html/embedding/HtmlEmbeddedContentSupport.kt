@@ -14,7 +14,6 @@ import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.TestOnly
 import java.util.stream.Stream
 
@@ -31,7 +30,7 @@ interface HtmlEmbeddedContentSupport {
     @ApiStatus.Internal
     val EP_NAME: ExtensionPointName<HtmlEmbeddedContentSupport> = ExtensionPointName("com.intellij.html.embeddedContentSupport")
 
-    fun getContentSupports(): @NotNull Stream<HtmlEmbeddedContentSupport> {
+    fun getContentSupports(): Stream<HtmlEmbeddedContentSupport> {
       return EP_NAME.extensionList.stream()
     }
 
@@ -53,7 +52,7 @@ interface HtmlEmbeddedContentSupport {
       return if (LanguageUtil.isInjectableLanguage(language))
         LanguageHtmlScriptContentProvider.getScriptContentProvider(language)
           ?.let { provider ->
-            object: HtmlEmbedmentInfo { // weird debug name
+            object: HtmlEmbedmentInfo {
               override fun getElementType(): IElementType?  = provider.scriptElementType
               override fun createHighlightingLexer(): Lexer?  = provider.highlightingLexer
             }

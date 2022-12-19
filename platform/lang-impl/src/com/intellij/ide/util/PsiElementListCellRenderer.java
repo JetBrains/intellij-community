@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
@@ -361,7 +361,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       String containerText = getContainerText(element, elementText);
       TextWithIcon moduleTextWithIcon = getModuleTextWithIcon(element);
       return (containerText == null ? elementText : elementText + " " + containerText) +
-             (moduleTextWithIcon != null ? moduleTextWithIcon.getText() : "");
+             (moduleTextWithIcon != null ? " " + moduleTextWithIcon.getText() : "");
     });
   }
 

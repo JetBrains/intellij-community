@@ -51,7 +51,7 @@ public interface PsiLanguageInjectionHost extends PsiExternalReferenceHost {
 
   @FunctionalInterface
   interface InjectedPsiVisitor {
-    void visit(@NotNull PsiFile injectedPsi, @NotNull List<Shred> places);
+    void visit(@NotNull PsiFile injectedPsi, @NotNull List<? extends Shred> places);
   }
 
   interface Shred {

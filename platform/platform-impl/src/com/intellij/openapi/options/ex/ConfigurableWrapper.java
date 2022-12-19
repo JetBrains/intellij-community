@@ -77,6 +77,14 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
            (configurable instanceof ConfigurableWrapper && ((ConfigurableWrapper)configurable).myEp.nonDefaultProject);
   }
 
+  @Override
+  public void focusOn(@Nls @NotNull String label) {
+    Configurable unwrapped = cast(Configurable.class, this);
+    if (unwrapped != null && unwrapped != this) {
+      unwrapped.focusOn(label);
+    }
+  }
+
   @Nullable
   public static <T> T cast(@NotNull Class<T> type, @Nullable UnnamedConfigurable configurable) {
     if (configurable instanceof ConfigurableWrapper) {

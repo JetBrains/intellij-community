@@ -4,8 +4,8 @@ package com.jetbrains.packagesearch.intellij.plugin.util
 import com.intellij.ProjectTopics
 import com.intellij.externalSystem.DependencyModifierService
 import com.intellij.facet.FacetManager
-import com.intellij.ide.impl.TrustStateListener
 import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.impl.trustedProjects.TrustedProjectsListener
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.ApplicationManager
@@ -34,9 +34,9 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchMo
 import com.jetbrains.packagesearch.intellij.plugin.lifecycle.PackageSearchLifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.PkgsUiCommandsService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateModifier
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateSource
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementOperationExecutor
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementPanel
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -83,8 +83,8 @@ fun <L : Any, K> Project.messageBusFlow(
 
 internal val Project.trustedProjectFlow: Flow<Boolean>
     get() {
-        return ApplicationManager.getApplication().messageBusFlow(TrustStateListener.TOPIC, { isTrusted() }) {
-            object : TrustStateListener {
+        return ApplicationManager.getApplication().messageBusFlow(TrustedProjectsListener.TOPIC, { isTrusted() }) {
+            object : TrustedProjectsListener {
                 override fun onProjectTrusted(project: Project) {
                     if (project == this@trustedProjectFlow) trySend(isTrusted())
                 }
@@ -140,9 +140,6 @@ internal val PackageSearchModule.lifecycleScope: PackageSearchLifecycleScope
     get() = nativeModule.project.lifecycleScope
 
 internal val Project.pkgsUiStateModifier: UiStateModifier
-    get() = service<PkgsUiCommandsService>()
-
-internal val Project.uiStateSource: UiStateSource
     get() = service<PkgsUiCommandsService>()
 
 val Project.dumbService: DumbService

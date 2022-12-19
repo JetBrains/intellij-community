@@ -95,6 +95,8 @@
     <!--suppress PluginXmlValidity -->
     <indexableEntityProvider implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptDependencyIndexableEntityProvider"/>
 
+    <workspaceModel.cache.version implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptWorkspaceModelCacheVersion"/>
+
     <registryKey key="kotlin.scripts.as.entities"
                  description="Enables explicit script dependencies support"
                  defaultValue="true"

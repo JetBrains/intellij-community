@@ -94,7 +94,7 @@ internal class FacetsSerializer(private val imlFileUrl: VirtualFileUrl, private 
     if (externalStorage && FileUtil.extensionEquals(fileUrl, "iml")) {
       // Trying to catch https://ea.jetbrains.com/browser/ea_problems/239676
       logger<FacetsSerializer>().error("""Incorrect file for the serializer
-        |externalStorage: $externalStorage
+        |externalStorage: true
         |file path: $fileUrl
         |componentName: $componentName
       """.trimMargin())

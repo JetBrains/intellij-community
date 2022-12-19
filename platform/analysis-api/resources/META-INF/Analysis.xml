@@ -14,6 +14,8 @@
     <extensionPoint name="lang.documentationProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.documentation.DocumentationProvider"/>
     </extensionPoint>
+    <extensionPoint name="inspectionCustomComponent" interface="com.intellij.codeInspection.options.CustomComponentExtension"
+                    dynamic="true"/>
     <extensionPoint name="highlightErrorFilter" interface="com.intellij.codeInsight.highlighting.HighlightErrorFilter" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="codeInsight.containerProvider"
                     interface="com.intellij.codeInsight.ContainerProvider"

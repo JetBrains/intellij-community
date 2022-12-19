@@ -17,6 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.project.Project;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class UnnecessarySemicolonInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   public boolean ignoreAfterEnumConstants = false;
@@ -41,11 +44,10 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
     return true;
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unnecessary.semicolon.ignore.after.enum.constants.option"),
-                                          this, "ignoreAfterEnumConstants");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreAfterEnumConstants", InspectionGadgetsBundle.message("unnecessary.semicolon.ignore.after.enum.constants.option")));
   }
 
   @Override

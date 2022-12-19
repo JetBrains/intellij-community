@@ -1117,7 +1117,8 @@ private fun crossPlatformZip(macX64DistDir: Path,
         !relPath.startsWith("bin/printenv") &&
         !(relPath.startsWith("bin/") && (relPath.endsWith(".sh") || relPath.endsWith(".vmoptions")) && relPath.count { it == '/' } == 1) &&
         relPath != "bin/idea.properties" &&
-        !relPath.startsWith("help/")
+        !relPath.startsWith("help/") &&
+        !relPath.startsWith("bin/remote-dev-server")
       }
 
       val zipFileUniqueGuard = HashMap<String, Path>()

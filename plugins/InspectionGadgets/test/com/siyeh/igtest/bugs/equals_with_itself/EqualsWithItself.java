@@ -67,6 +67,17 @@ class EqualsWithItself {
     c.<warning descr="'compare()' called on itself">compare</warning>(ss, ss);
   }
 
+  void test(String arg) {
+    org.junit.jupiter.api.Assertions.<warning descr="'assertEquals()' called on itself">assertEquals</warning>(arg, arg);
+    org.junit.jupiter.api.Assertions.<warning descr="'assertNotEquals()' called on itself">assertNotEquals</warning>(arg, arg);
+    org.junit.Assert.<warning descr="'assertSame()' called on itself">assertSame</warning>(arg, arg);
+    org.assertj.core.api.Assertions.assertThat(arg).<warning descr="'isEqualTo()' called on itself">isEqualTo</warning>(arg);
+    org.assertj.core.api.Assertions.assertThat(arg).anotherTest(arg).<warning descr="'isEqualTo()' called on itself">isEqualTo</warning>(arg);
+    Object o1 = new Object();
+    Object o2 = new Object();
+    org.junit.Assert.assertSame(o1, o2);
+  }
+
   static class Outer {
     class Inner extends Outer {
       void test() {

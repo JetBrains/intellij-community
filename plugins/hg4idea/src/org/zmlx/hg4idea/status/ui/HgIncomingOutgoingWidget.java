@@ -13,12 +13,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.util.Consumer;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
@@ -53,20 +53,20 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
   }
 
   @Override
-  public void install(@NotNull StatusBar statusBar) {
-    super.install(statusBar);
+  protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
+    super.registerCustomListeners(connection);
 
-    myConnection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, () -> updateLater());
-    myConnection.subscribe(HgVcs.STATUS_TOPIC, (project, root) -> updateLater());
-    myConnection.subscribe(HgVcs.REMOTE_TOPIC, (project, root) -> updateLater());
-    myConnection.subscribe(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC, new HgWidgetUpdater() {
+    connection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, () -> updateLater());
+    connection.subscribe(HgVcs.STATUS_TOPIC, (project, root) -> updateLater());
+    connection.subscribe(HgVcs.REMOTE_TOPIC, (project, root) -> updateLater());
+    connection.subscribe(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC, new HgWidgetUpdater() {
       @Override
       public void update() {
         updateLater();
       }
     });
 
-    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         updateLater();

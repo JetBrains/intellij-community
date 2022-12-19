@@ -31,7 +31,8 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
 import java.util.List;
 
 /**
- * Base class for java line-connected exceptions (line, method, field)
+ * Base class for java line-connected breakpoints (line, method, field)
+ *
  * @author egor
  */
 public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointProperties> extends XLineBreakpointType<P>

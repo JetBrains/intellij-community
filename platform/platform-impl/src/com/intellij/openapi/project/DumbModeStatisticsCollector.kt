@@ -15,7 +15,7 @@ class DumbModeStatisticsCollector : CounterUsagesCollector() {
       activity?.finished { listOf(EventPair(FINISH_TYPE, finishType)) }
     }
 
-    val GROUP = EventLogGroup("indexing", 6)
+    val GROUP = EventLogGroup("dumb.mode", 1)
 
     @JvmField
     val STAGE_CLASS = EventFields.Class("stage_class")

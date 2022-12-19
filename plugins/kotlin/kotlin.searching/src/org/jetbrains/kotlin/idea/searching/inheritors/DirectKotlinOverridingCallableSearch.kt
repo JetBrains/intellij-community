@@ -58,18 +58,22 @@ class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiEleme
         val klass = parameters.ktCallableDeclaration.containingClassOrObject
         if (klass !is KtClass) return null
 
+        val superFunction = runReadAction {
+            analyze(parameters.ktCallableDeclaration) {
+                val symbol = parameters.ktCallableDeclaration.getSymbol()
+                val adjustedSymbol = if (symbol is KtValueParameterSymbol) {
+                    symbol.generatedPrimaryConstructorProperty
+                } else {
+                    symbol
+                }
+                adjustedSymbol?.createPointer()
+            }
+        }
+
         return CollectionQuery(klass.findAllInheritors(parameters.searchScope).mapNotNull { it.unwrapped as? KtClassOrObject }.toList())
             .flatMapping { ktClassOrObject ->
                 object : AbstractQuery<PsiElement>() {
                     override fun processResults(consumer: Processor<in PsiElement>): Boolean {
-                        val superFunction = runReadAction {
-                            analyze(parameters.ktCallableDeclaration) {
-                                val symbol = parameters.ktCallableDeclaration.getSymbol()
-                                if (symbol is KtValueParameterSymbol) symbol.generatedPrimaryConstructorProperty
-                                else symbol
-                            }
-                        }
-
                         return runReadAction {
                             analyze(ktClassOrObject) {
                                 (ktClassOrObject.getSymbol() as KtSymbolWithMembers).getDeclaredMemberScope()
@@ -77,7 +81,7 @@ class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiEleme
                                     .forEach { overridingSymbol ->
                                         val function = overridingSymbol.psi
                                         if (function != null &&
-                                            overridingSymbol.getDirectlyOverriddenSymbols().any { it.psi == superFunction?.psi } &&
+                                            overridingSymbol.getDirectlyOverriddenSymbols().any { it.psi == superFunction?.restoreSymbol()?.psi } &&
                                             !consumer.process(function)
                                         ) {
                                             return@runReadAction false
@@ -110,8 +114,17 @@ internal class DirectKotlinOverridingMethodDelegatedSearcher : Searcher<SearchPa
         val baseFunction = parameters.ktCallableDeclaration
         val methods = baseFunction.toLightMethods()
 
-        val queries = methods.map { it ->
-            EVERYTHING_BUT_KOTLIN.createQuery(JavaOverridingMethodsSearcherFromKotlinParameters(it, parameters.searchScope, false))
+        val queries = methods.map { lightMethod ->
+            EVERYTHING_BUT_KOTLIN.createQuery(JavaOverridingMethodsSearcherFromKotlinParameters(lightMethod, parameters.searchScope, true))
+                .flatMapping { psiMethod ->
+                    object : AbstractQuery<PsiElement>() {
+                        override fun processResults(consumer: Processor<in PsiElement>): Boolean {
+                            return runReadAction {
+                                psiMethod.hierarchicalMethodSignature.superSignatures.any { hs -> hs.method.isEquivalentTo(lightMethod) } && consumer.process(psiMethod)
+                            }
+                        }
+                    }
+                }
         }
 
         return queries

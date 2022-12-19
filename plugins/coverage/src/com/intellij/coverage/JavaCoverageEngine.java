@@ -448,8 +448,9 @@ public class JavaCoverageEngine extends CoverageEngine {
       return Collections.emptySet();
     }
     final Set<File> classFiles = new HashSet<>();
-    final @Nullable File outputpath = getOutputpath(CompilerModuleExtension.getInstance(module));
-    final @Nullable File testOutputpath = getTestOutputpath(CompilerModuleExtension.getInstance(module));
+    final CompilerModuleExtension moduleExtension = Objects.requireNonNull(CompilerModuleExtension.getInstance(module));
+    final @Nullable File outputpath = getOutputpath(moduleExtension);
+    final @Nullable File testOutputpath = getTestOutputpath(moduleExtension);
 
     final @Nullable VirtualFile outputpathVirtualFile = fileToVirtualFileWithRefresh(outputpath);
     final @Nullable VirtualFile testOutputpathVirtualFile = fileToVirtualFileWithRefresh(testOutputpath);
@@ -547,9 +548,9 @@ public class JavaCoverageEngine extends CoverageEngine {
       else if (parent instanceof PsiAssertStatement) {
         condition = ((PsiAssertStatement)parent).getAssertCondition();
       }
-      if (PsiTreeUtil.isAncestor(condition, psiFile.findElementAt(offset), false)) {
+      if (PsiTreeUtil.isAncestor(condition, Objects.requireNonNull(psiFile.findElementAt(offset)), false)) {
         try {
-          final ControlFlow controlFlow = ControlFlowFactory.getInstance(project).getControlFlow(
+          final ControlFlow controlFlow = ControlFlowFactory.getInstance(Objects.requireNonNull(project)).getControlFlow(
             parent, AllVariablesControlFlowPolicy.getInstance());
           for (Instruction instruction : controlFlow.getInstructions()) {
             if (instruction instanceof ConditionalBranchingInstruction) {

@@ -1,1 +1,1 @@
-SymbolLightClassForEnumEntry: V1
+KtEnumEntry: V1

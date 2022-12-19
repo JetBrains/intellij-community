@@ -49,7 +49,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
   private static final Logger LOG = Logger.getInstance(DebuggerTree.class);
   protected static final Key<Rectangle> VISIBLE_RECT = Key.create("VISIBLE_RECT");
 
-  public static final DataKey<DebuggerTree> DATA_KEY = DataKey.create("DebuggerTree"); 
+  public static final DataKey<DebuggerTree> DATA_KEY = DataKey.create("DebuggerTree");
 
   protected final NodeManagerImpl myNodeManager;
 
@@ -164,7 +164,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
       }
     }
 
-    for (Enumeration e = node.rawChildren(); e.hasMoreElements();) {
+    for (Enumeration e = node.rawChildren(); e.hasMoreElements(); ) {
       DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)e.nextElement();
       saveState(child);
     }
@@ -213,7 +213,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
   private void restoreStateImpl(DebuggerTreeNodeImpl node) {
     restoreNodeState(node);
     if (node.getDescriptor().myIsExpanded) {
-      for (Enumeration e = node.rawChildren(); e.hasMoreElements();) {
+      for (Enumeration e = node.rawChildren(); e.hasMoreElements(); ) {
         DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)e.nextElement();
         restoreStateImpl(child);
       }
@@ -366,7 +366,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
             LOG.debug(e);
             //LOG.assertTrue(false);
             // if we pause during evaluation of this method the exception is thrown
-            //  private static void longMethod(){
+            //  private static void longMethod() {
             //    try {
             //      Thread.sleep(100000);
             //    } catch (InterruptedException e) {

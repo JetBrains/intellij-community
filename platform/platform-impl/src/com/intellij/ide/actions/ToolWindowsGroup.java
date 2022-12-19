@@ -35,12 +35,12 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
     return result.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  public static List<ActivateToolWindowAction> getToolWindowActions(@NotNull Project project, boolean shouldSkipHidden) {
+  public static List<ActivateToolWindowAction> getToolWindowActions(@NotNull Project project, boolean shouldSkipShown) {
     ActionManager actionManager = ActionManager.getInstance();
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
     List<ActivateToolWindowAction> result = new ArrayList<>();
     for (ToolWindow window : manager.getToolWindows()) {
-      if (shouldSkipHidden && !window.isShowStripeButton()) {
+      if (shouldSkipShown && window.isShowStripeButton()) {
         continue;
       }
       String actionId = ActivateToolWindowAction.getActionIdForToolWindow(window.getId());

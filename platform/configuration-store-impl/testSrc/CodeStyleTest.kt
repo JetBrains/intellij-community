@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.application.options.CodeStyle
@@ -122,9 +122,7 @@ internal class CodeStyleTest {
       }
     }
 
-    ExtensionTestUtil.maskExtensions(pointName = CodeStyleSettingsProvider.EXTENSION_POINT_NAME, newExtensions = listOf(newProvider),
-                                     parentDisposable = disposableRule.disposable,
-                                     fireEvents = false)
+    ExtensionTestUtil.maskExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME, listOf(newProvider), disposableRule.disposable)
     val settings = CodeStyle.createTestSettings()
     fun text(param: String): String {
       return """

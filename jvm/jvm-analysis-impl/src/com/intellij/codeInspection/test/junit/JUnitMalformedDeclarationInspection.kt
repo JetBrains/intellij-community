@@ -34,6 +34,7 @@ import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.asSafely
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
 import com.siyeh.ig.psiutils.TestUtils
+import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import javax.swing.JComponent
@@ -66,6 +67,7 @@ private class JUnitMalformedSignatureVisitor(
   private val ignorableAnnotations: List<String>
 ) : AbstractUastNonRecursiveVisitor() {
   override fun visitClass(node: UClass): Boolean {
+    checkUnconstructableClass(node)
     checkMalformedNestedClass(node)
     return true
   }
@@ -190,8 +192,7 @@ private class JUnitMalformedSignatureVisitor(
     validVisibility = ::notPrivate,
     validParameters = { method ->
       if (method.uastParameters.isEmpty()) emptyList()
-      else if (MetaAnnotationUtil.isMetaAnnotated(method.javaPsi, listOf(
-          ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE))) null // handled in parameterized test check
+      else if (MetaAnnotationUtil.isMetaAnnotated(method.javaPsi, listOf(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE))) null // handled in parameterized test check
       else if (method.hasParameterResolver()) method.uastParameters
       else method.uastParameters.filter { param ->
         param.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO
@@ -214,10 +215,10 @@ private class JUnitMalformedSignatureVisitor(
   private fun UMethod.hasParameterResolver(): Boolean {
     val sourcePsi = this.sourcePsi ?: return false
     val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
-    return alternatives.any { it.javaPsi.containingClass?.hasParameterResolver() == true }
+    return alternatives.any { it.javaPsi.containingClass?.hasParameterResolver() == true || it.javaPsi.hasParameterResolver() }
   }
 
-  private fun PsiClass.hasParameterResolver(): Boolean {
+  private fun PsiModifierListOwner.hasParameterResolver(): Boolean {
     val annotation = MetaAnnotationUtil.findMetaAnnotationsInHierarchy(this, listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH))
       .asSequence()
       .firstOrNull()
@@ -231,6 +232,49 @@ private class JUnitMalformedSignatureVisitor(
       }
     }
     return false
+  }
+
+  private fun checkUnconstructableClass(aClass: UClass) {
+    val javaClass = aClass.javaPsi
+    if (javaClass.isInterface || javaClass.isEnum || javaClass.isAnnotationType) return
+    if (javaClass.hasModifier(JvmModifier.ABSTRACT)) return
+    val constructors = javaClass.constructors.toList()
+    if (TestUtils.isJUnitTestClass(javaClass)) {
+      checkMalformedClass(aClass)
+      if (constructors.isNotEmpty()) {
+        val compatibleConstr = constructors.firstOrNull {
+          val parameters = it.parameterList.parameters
+          it.hasModifier(JvmModifier.PUBLIC)
+          && (it.parameterList.isEmpty || parameters.size == 1 && TypeUtils.isJavaLangString(parameters.first().type))
+        }
+        if (compatibleConstr == null) {
+          val message = JvmAnalysisBundle.message("jvm.inspections.unconstructable.test.case.junit3.descriptor")
+          holder.registerUProblem(aClass, message)
+          return
+        }
+      }
+    } else if (TestUtils.isJUnit4TestClass(javaClass, false)) {
+      checkMalformedClass(aClass)
+      if (constructors.isNotEmpty()) {
+        val publicConstructors = constructors.filter { it.hasModifier(JvmModifier.PUBLIC) }
+        if (publicConstructors.size != 1 || !publicConstructors.first().parameterList.isEmpty) {
+          val message = JvmAnalysisBundle.message("jvm.inspections.unconstructable.test.case.junit4.descriptor")
+          holder.registerUProblem(aClass, message)
+          return
+        }
+      }
+    }
+    return
+  }
+
+  private fun checkMalformedClass(aClass: UClass) {
+    val javaClass = aClass.javaPsi
+    if (!javaClass.hasModifier(JvmModifier.PUBLIC) && !aClass.isAnonymousOrLocal()) {
+      val message = JvmAnalysisBundle.message("jvm.inspections.unconstructable.test.case.not.public.descriptor")
+      val fixes = createModifierQuickfixes(aClass, modifierRequest(JvmModifier.PUBLIC, true)) ?: return
+      holder.registerUProblem(aClass, message, *fixes)
+      return
+    }
   }
 
   private fun checkMalformedNestedClass(aClass: UClass) {

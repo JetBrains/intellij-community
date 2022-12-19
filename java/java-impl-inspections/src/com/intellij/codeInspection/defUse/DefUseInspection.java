@@ -11,7 +11,7 @@ import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
@@ -26,7 +26,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.*;
 
 public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -271,34 +270,13 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     return isOnTheFly || !RemoveUnusedVariableUtil.checkSideEffects(initializer, psiVariable, new ArrayList<>());
   }
 
-
   @Override
-  public JComponent createOptionsPanel() {
-    return new OptionsPanel();
-  }
-
-  private final class OptionsPanel extends InspectionOptionsPanel {
-    private final JCheckBox myReportPrefix;
-    private final JCheckBox myReportPostfix;
-    private final JCheckBox myReportInitializer;
-
-    private OptionsPanel() {
-
-      myReportInitializer = new JCheckBox(JavaBundle.message("inspection.unused.assignment.option2"));
-      myReportInitializer.setSelected(REPORT_REDUNDANT_INITIALIZER);
-      myReportInitializer.getModel().addItemListener(e -> REPORT_REDUNDANT_INITIALIZER = myReportInitializer.isSelected());
-      add(myReportInitializer);
-
-      myReportPrefix = new JCheckBox(JavaBundle.message("inspection.unused.assignment.option"));
-      myReportPrefix.setSelected(REPORT_PREFIX_EXPRESSIONS);
-      myReportPrefix.getModel().addItemListener(e -> REPORT_PREFIX_EXPRESSIONS = myReportPrefix.isSelected());
-      add(myReportPrefix);
-
-      myReportPostfix = new JCheckBox(JavaBundle.message("inspection.unused.assignment.option1"));
-      myReportPostfix.setSelected(REPORT_POSTFIX_EXPRESSIONS);
-      myReportPostfix.getModel().addItemListener(e -> REPORT_POSTFIX_EXPRESSIONS = myReportPostfix.isSelected());
-      add(myReportPostfix);
-    }
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(
+      OptPane.checkbox("REPORT_REDUNDANT_INITIALIZER", JavaBundle.message("inspection.unused.assignment.option2")),
+      OptPane.checkbox("REPORT_PREFIX_EXPRESSIONS", JavaBundle.message("inspection.unused.assignment.option")),
+      OptPane.checkbox("REPORT_POSTFIX_EXPRESSIONS", JavaBundle.message("inspection.unused.assignment.option1"))
+    );
   }
 
   @Override

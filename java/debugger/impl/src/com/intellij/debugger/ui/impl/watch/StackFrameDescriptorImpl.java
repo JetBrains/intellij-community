@@ -34,7 +34,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Nodes of this type cannot be updated, because StackFrame objects become invalid as soon as VM has been resumed
  */
-public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements StackFrameDescriptor{
+public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements StackFrameDescriptor {
   private final StackFrameProxyImpl myFrame;
   private int myUiIndex;
   private String myName = null;
@@ -270,7 +270,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     if (myThisObject == null) {
       try {
         myThisObject = myFrame.thisObject();
-      } catch (EvaluateException e) {
+      }
+      catch (EvaluateException e) {
         LOG.info(e);
       }
       if (myThisObject != null) {

@@ -31,7 +31,7 @@ class RangeMarkerWindow implements RangeMarkerEx {
    * @param endShift        similar to the 'startShift' argument but specifies difference between the target injected host end offset
    *                        and end offset of the given host range marker at the injected text
    */
-  RangeMarkerWindow(@NotNull DocumentWindow documentWindow, RangeMarkerEx hostMarker, int startShift, int endShift) {
+  RangeMarkerWindow(@NotNull DocumentWindow documentWindow, @NotNull RangeMarkerEx hostMarker, int startShift, int endShift) {
     myDocumentWindow = documentWindow;
     myHostMarker = hostMarker;
     myStartShift = startShift;
@@ -66,27 +66,27 @@ class RangeMarkerWindow implements RangeMarkerEx {
 
   ////////////////////////////delegates
   @Override
-  public void setGreedyToLeft(final boolean greedy) {
+  public void setGreedyToLeft(boolean greedy) {
     myHostMarker.setGreedyToLeft(greedy);
   }
 
   @Override
-  public void setGreedyToRight(final boolean greedy) {
+  public void setGreedyToRight(boolean greedy) {
     myHostMarker.setGreedyToRight(greedy);
   }
 
   @Override
-  public <T> T getUserData(@NotNull final Key<T> key) {
+  public <T> T getUserData(@NotNull Key<T> key) {
     return myHostMarker.getUserData(key);
   }
 
   @Override
-  public <T> void putUserData(@NotNull final Key<T> key, final T value) {
+  public <T> void putUserData(@NotNull Key<T> key, T value) {
     myHostMarker.putUserData(key, value);
   }
 
   @Override
-  public void documentChanged(@NotNull final DocumentEvent e) {
+  public void documentChanged(@NotNull DocumentEvent e) {
     myHostMarker.documentChanged(e);
   }
   @Override
@@ -94,6 +94,7 @@ class RangeMarkerWindow implements RangeMarkerEx {
     return myHostMarker.getId();
   }
 
+  @NotNull
   public RangeMarkerEx getDelegate() {
     return myHostMarker;
   }

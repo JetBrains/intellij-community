@@ -275,7 +275,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       }
       else {
         dynamicParameters = false
-        dynamicClasspath = dynamicParameters
+        dynamicClasspath = false
       }
     }
     if (!dynamicClasspath) {

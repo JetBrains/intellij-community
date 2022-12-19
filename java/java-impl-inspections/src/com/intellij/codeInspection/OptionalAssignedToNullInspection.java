@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
@@ -24,17 +25,18 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher MAP_GET = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "get").parameterTypes(
     CommonClassNames.JAVA_LANG_OBJECT);
 
   public boolean WARN_ON_COMPARISON = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.null.value.for.optional.option.comparisons"),
-                                          this, "WARN_ON_COMPARISON");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("WARN_ON_COMPARISON", JavaBundle.message("inspection.null.value.for.optional.option.comparisons")));
   }
 
   @NotNull

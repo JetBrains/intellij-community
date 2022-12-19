@@ -52,7 +52,7 @@ abstract class JvmTestDiffUpdateTest : JavaCodeInsightFixtureTestCase() {
     request.onAssigned(true)
     val document = request.contents.firstOrNull().asSafely<DocumentContent>()?.document!!
     document.setReadOnly(false)
-    WriteCommandAction.runWriteCommandAction(myFixture.project, Runnable { document.replaceString(0, 0, actual) })
+    WriteCommandAction.runWriteCommandAction(myFixture.project, Runnable { document.replaceString(0, document.textLength, actual) })
     assertEquals(after, myFixture.file.text)
   }
 }

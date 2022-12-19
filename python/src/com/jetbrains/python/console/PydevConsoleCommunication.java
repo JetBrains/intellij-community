@@ -5,10 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -442,7 +439,8 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
       throw new PyDebuggerException("Documentation in Python Console shouldn't be called from Dispatch Thread!");
     }
 
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    ProgressManager progressManager = ProgressManager.getInstance();
+    ProgressIndicator indicator = progressManager.hasProgressIndicator() ? progressManager.getProgressIndicator() : new EmptyProgressIndicator();
     indicator.setText(createRuntimeMessage(PyBundle.message("console.getting.documentation")));
     return ApplicationUtil.runWithCheckCanceled(
       () -> {

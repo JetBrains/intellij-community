@@ -17,8 +17,7 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
         if (!PsiModificationTrackerImpl.canAffectPsi(event) ||
             event.isGenericChange ||
-            event.code == PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_ADDITION ||
-            event.code == PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_REPLACEMENT
+            event.code == PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_ADDITION
         ) {
             return
         }
@@ -28,7 +27,11 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
         }
 
         val rootElement = event.parent
-        val child = if (event.code == PsiTreeChangeEventImpl.PsiEventType.CHILD_REMOVED) rootElement else event.child
+        val child = when (event.code) {
+          PsiTreeChangeEventImpl.PsiEventType.CHILD_REMOVED -> rootElement
+          PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_REPLACEMENT -> event.oldChild
+          else -> event.child
+        }
 
         if (rootElement == null || !rootElement.isPhysical) {
             /**

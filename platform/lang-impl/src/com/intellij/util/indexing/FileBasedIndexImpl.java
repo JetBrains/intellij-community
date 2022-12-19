@@ -1265,6 +1265,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Override
   public void requestRebuild(@NotNull final ID<?, ?> indexId, final @NotNull Throwable throwable) {
+    LOG.info("Requesting index rebuild for: " + indexId.getName(), throwable);
     if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) {
       advanceIndexVersion(indexId);
     }
@@ -1754,11 +1755,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return ourIndexedFile.get();
   }
 
-  static void markFileWritingIndexes(int fileId, @Nullable String filePath) {
+  static void markFileWritingIndexes(int fileId) {
     if (/*filePath != null &&*/ ourWritingIndexFile.get() != null) {
       throw new AssertionError("Reentrant writing indices");
     }
-    ourWritingIndexFile.set(new IndexWritingFile(fileId, filePath));
+    ourWritingIndexFile.set(new IndexWritingFile(fileId));
   }
 
   static void unmarkWritingIndexes() {

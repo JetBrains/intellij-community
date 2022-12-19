@@ -96,13 +96,13 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
 
   public void setMavenId(String mavenId) {
     myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId, getPackaging(), isIncludeTransitiveDependencies(),
-                                                           getExcludedDependencies(), isEnableSha256Checksum(), getArtifactsVerification(),
+                                                           getExcludedDependencies(), getArtifactsVerification(),
                                                            getJarRepositoryId());
   }
 
   public void setPackaging(String packaging) {
     myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), packaging, isIncludeTransitiveDependencies(),
-                                                           getExcludedDependencies(), isEnableSha256Checksum(), getArtifactsVerification(),
+                                                           getExcludedDependencies(), getArtifactsVerification(),
                                                            getJarRepositoryId());
   }
 
@@ -114,7 +114,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
 
   public void setIncludeTransitiveDependencies(boolean value) {
     myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), getPackaging(), value,
-                                                           getExcludedDependencies(), isEnableSha256Checksum(), getArtifactsVerification(),
+                                                           getExcludedDependencies(), getArtifactsVerification(),
                                                            getJarRepositoryId());
   }
 
@@ -126,21 +126,14 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
 
   public void setJarRepositoryId(String jarRepositoryId) {
     myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), getPackaging(), isIncludeTransitiveDependencies(),
-                                                           getExcludedDependencies(), isEnableSha256Checksum(),
-                                                           getArtifactsVerification(), jarRepositoryId);
+                                                           getExcludedDependencies(), getArtifactsVerification(), jarRepositoryId);
   }
 
-  @Attribute("verify-sha256-checksum")
+  @Transient
   public boolean isEnableSha256Checksum() {
-    return call(JpsMavenRepositoryLibraryDescriptor::isVerifySha256Checksum, JpsMavenRepositoryLibraryDescriptor.VERIFY_SHA256_CHECKSUM_DEFAULT);
+    return call(JpsMavenRepositoryLibraryDescriptor::isVerifySha256Checksum, false);
   }
 
-  @Attribute("verify-sha256-checksum")
-  public void setEnableSha256Checksum(boolean value) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), getPackaging(), isIncludeTransitiveDependencies(),
-                                                           getExcludedDependencies(), value, getArtifactsVerification(),
-                                                           getJarRepositoryId());
-  }
 
   public String getGroupId() {
     return call(JpsMavenRepositoryLibraryDescriptor::getGroupId, null);
@@ -157,7 +150,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
   public void changeVersion(String version) {
     myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getGroupId(), getArtifactId(), version, getPackaging(),
                                                            isIncludeTransitiveDependencies(), getExcludedDependencies(),
-                                                           isEnableSha256Checksum(), getArtifactsVerification(),
+                                                           getArtifactsVerification(),
                                                            getJarRepositoryId());
   }
 
@@ -176,7 +169,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
 
   public void setExcludedDependencies(List<String> dependencyMavenIds) {
     myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), getPackaging(), isIncludeTransitiveDependencies(),
-                                                           dependencyMavenIds, isEnableSha256Checksum(), getArtifactsVerification(),
+                                                           dependencyMavenIds, getArtifactsVerification(),
                                                            getJarRepositoryId());
   }
 
@@ -189,7 +182,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
   public void setArtifactsVerification(@Nullable List<ArtifactVerification> artifactsVerification) {
     List<ArtifactVerification> effectiveValue = artifactsVerification == null ? Collections.emptyList() : artifactsVerification;
     myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), getPackaging(), isIncludeTransitiveDependencies(),
-                                                           getExcludedDependencies(), isEnableSha256Checksum(), effectiveValue,
+                                                           getExcludedDependencies(), effectiveValue,
                                                            getJarRepositoryId());
   }
 
@@ -228,7 +221,6 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
   }
 
   public void disableVerification() {
-    setEnableSha256Checksum(false);
     setArtifactsVerification(Collections.emptyList());
   }
 

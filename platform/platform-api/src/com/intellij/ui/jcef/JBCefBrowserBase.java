@@ -166,7 +166,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       if (myIsOffScreenRendering) {
         JBCefApp.checkOffScreenRenderingModeEnabled();
         cefBrowser = createOsrBrowser(ObjectUtils.notNull(builder.myOSRHandlerFactory, JBCefOSRHandlerFactory.DEFAULT),
-                                      myCefClient.getCefClient(), builder.myUrl, null, null, null);
+                                      myCefClient.getCefClient(), builder.myUrl, null, null, null, builder.myMouseWheelEventEnable);
       }
       else {
         cefBrowser = myCefClient.getCefClient().createBrowser(validateUrl(builder.myUrl), CefRendering.DEFAULT, false, null);
@@ -285,9 +285,10 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
                                                              @Nullable CefRequestContext context,
                                                              // not-null parentBrowser creates a DevTools browser for it
                                                              @Nullable CefBrowser parentBrowser,
-                                                             @Nullable Point inspectAt)
+                                                             @Nullable Point inspectAt,
+                                                             boolean isMouseWheelEventEnabled)
   {
-    JComponent comp = factory.createComponent();
+    JComponent comp = factory.createComponent(isMouseWheelEventEnabled);
     CefRenderHandler handler = factory.createCefRenderHandler(comp);
     CefBrowserOsrWithHandler browser =
       new CefBrowserOsrWithHandler(client, validateUrl(url), context, handler, comp, parentBrowser, inspectAt) {
@@ -298,7 +299,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
                                                    CefBrowser parent,
                                                    Point inspectAt)
         {
-          return createOsrBrowser(factory, client, getUrl(), getRequestContext(), this, inspectAt);
+          return createOsrBrowser(factory, client, getUrl(), getRequestContext(), this, inspectAt, isMouseWheelEventEnabled);
         }
       };
     if (comp instanceof JBCefOsrComponent) ((JBCefOsrComponent)comp).setBrowser(browser);

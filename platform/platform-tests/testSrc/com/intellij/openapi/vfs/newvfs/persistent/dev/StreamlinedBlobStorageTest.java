@@ -337,7 +337,7 @@ public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobS
     final int newRecordId = storage.writeToRecord(
       recordId,
       buffer -> {
-        final ByteBuffer buff = (buffer.capacity() >= payloadBytes.length && recordId != NULL_ID) ?
+        final ByteBuffer buff = (buffer.capacity() >= payloadBytes.length /*&& recordId != NULL_ID*/) ?
                                 buffer : ByteBuffer.allocate(payloadBytes.length);
         return buff
           .clear()

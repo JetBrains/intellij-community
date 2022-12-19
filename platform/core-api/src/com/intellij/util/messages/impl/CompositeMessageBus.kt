@@ -19,7 +19,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentMap
-import java.util.function.BiConsumer
 import java.util.function.Predicate
 
 private val EMPTY_MAP = HashMap<String, MutableList<ListenerDescriptor>>()
@@ -48,7 +47,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
     }
     else {
       topicClassToListenerDescriptor.putAll(map)
-      // adding project level listener for app level topic is not recommended, but supported
+      // adding project level listener to an app level topic is not recommended, but supported
       if (rootBus !== this) {
         rootBus.subscriberCache.clear()
       }
@@ -56,7 +55,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
     }
   }
 
-  override fun hasChildren() = !childBuses.isEmpty()
+  override fun hasChildren(): Boolean = childBuses.isNotEmpty()
 
   fun addChild(bus: MessageBusImpl) {
     childrenListChanged(this)
@@ -88,7 +87,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
     return if (owner.isDisposed) ArrayUtilRt.EMPTY_OBJECT_ARRAY else super.computeSubscribers(topic)
   }
 
-  override fun doComputeSubscribers(topic: Topic<*>, result: MutableList<Any>, subscribeLazyListeners: Boolean) {
+  override fun doComputeSubscribers(topic: Topic<*>, result: MutableList<in Any>, subscribeLazyListeners: Boolean) {
     if (subscribeLazyListeners) {
       subscribeLazyListeners(topic)
     }
@@ -110,7 +109,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
     }
 
     ProgressManager.getInstance().executeNonCancelableSection {
-      // use linked hash map for repeatable results
+      // use a linked hash map for repeatable results
       val listenerDescriptors = topicClassToListenerDescriptor.remove(topic.listenerClass.name) ?: return@executeNonCancelableSection
       val listenerMap = LinkedHashMap<PluginDescriptor, MutableList<Any>>()
       for (listenerDescriptor in listenerDescriptors) {
@@ -120,16 +119,16 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
         catch (ignore: ExtensionNotApplicableException) {
         }
         catch (e: ProcessCanceledException) {
-          // ProgressManager have an assert for this case
+          // ProgressManager have an asserting for this case
           throw e
         }
         catch (e: Throwable) {
           LOG.error("Cannot create listener", e)
         }
       }
-      listenerMap.forEach(BiConsumer { key, listeners ->
+      listenerMap.forEach { (key, listeners) ->
         subscribers.add(DescriptorBasedMessageBusConnection(key, topic, listeners))
-      })
+      }
     }
   }
 
@@ -148,7 +147,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
 
     childBuses.forEach { it.clearSubscriberCache(topicAndHandlerPairs) }
 
-    // disposed handlers are not removed for TO_CHILDREN topics in the same way as for others directions
+    // disposed handlers are not removed for TO_CHILDREN topics in the same way as for other directions
     // because it is not wise to check each child bus - waitingBuses list can be used instead of checking each child bus message queue
     rootBus.queue.queue.removeIf { nullizeHandlersFromMessage(it, topicAndHandlerPairs) }
     return false
@@ -163,14 +162,14 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
   override fun removeEmptyConnectionsRecursively() {
     super.removeEmptyConnectionsRecursively()
 
-    childBuses.forEach(MessageBusImpl::removeEmptyConnectionsRecursively)
+    childBuses.forEach { it.removeEmptyConnectionsRecursively() }
   }
 
   /**
    * Clear publisher cache, including child buses.
    */
   override fun clearPublisherCache() {
-    // keep it simple - we can infer plugin id from topic.getListenerClass(), but granular clearing not worth the code complication
+    // keep it simple - we can infer plugin id from topic.getListenerClass(), but granular clearing is not worth the code complication
     publisherCache.clear()
     childBuses.forEach { childBus ->
       if (childBus is CompositeMessageBus) {
@@ -211,7 +210,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
       val newHandlers = computeNewHandlers(connection.handlers, listenerClassNames) ?: continue
       isChanged = true
       connectionIterator.remove()
-      if (!newHandlers.isEmpty()) {
+      if (newHandlers.isNotEmpty()) {
         if (newSubscribers == null) {
           newSubscribers = mutableListOf()
         }
@@ -221,10 +220,12 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
 
     // todo it means that order of subscribers is not preserved
     // it is very minor requirement, but still, makes sense to comply it
-    newSubscribers?.let(subscribers::addAll)
+    if (newSubscribers != null) {
+      subscribers.addAll(newSubscribers)
+    }
     if (isChanged) {
-      // we can check it more precisely, but for simplicity, just clear all
-      // adding project level listener for app level topic is not recommended, but supported
+      // we can check it more precisely, but for simplicity, just clearing all
+      // adding project level listener for an app level topic is not recommended, but supported
       if (rootBus !== this) {
         rootBus.subscriberCache.clear()
       }
@@ -255,17 +256,17 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
 private class ToDirectChildrenMessagePublisher<L>(topic: Topic<L>, bus: CompositeMessageBus, private val childBuses: List<MessageBusImpl>)
   : MessagePublisher<L>(topic, bus), InvocationHandler {
   override fun publish(method: Method, args: Array<Any?>?, queue: MessageQueue?): Boolean {
-    var exceptions: MutableList<Throwable>? = null
+    var error: Throwable? = null
     var hasHandlers = false
     var handlers = bus.subscriberCache.computeIfAbsent(topic, bus::computeSubscribers)
     if (handlers.isNotEmpty()) {
-      exceptions = executeOrAddToQueue(topic = topic,
-                                       method = method,
-                                       args = args,
-                                       handlers = handlers,
-                                       jobQueue = queue,
-                                       prevExceptions = null,
-                                       bus = bus)
+      error = executeOrAddToQueue(topic = topic,
+                                  method = method,
+                                  args = args,
+                                  handlers = handlers,
+                                  jobQueue = queue,
+                                  prevError = null,
+                                  bus = bus)
       hasHandlers = true
     }
 
@@ -277,9 +278,7 @@ private class ToDirectChildrenMessagePublisher<L>(topic: Topic<L>, bus: Composit
 
       handlers = childBus.subscriberCache.computeIfAbsent(topic) { topic1 ->
         val result = mutableListOf<Any>()
-        childBus.doComputeSubscribers(topic = topic1,
-                                      result = result,
-                                      subscribeLazyListeners = !childBus.owner.isParentLazyListenersIgnored)
+        childBus.doComputeSubscribers(topic1, result, !childBus.owner.isParentLazyListenersIgnored)
         if (result.isEmpty()) {
           ArrayUtilRt.EMPTY_OBJECT_ARRAY
         }
@@ -292,15 +291,9 @@ private class ToDirectChildrenMessagePublisher<L>(topic: Topic<L>, bus: Composit
       }
 
       hasHandlers = true
-      exceptions = executeOrAddToQueue(topic = topic,
-                                       method = method,
-                                       args = args,
-                                       handlers = handlers,
-                                       jobQueue = queue,
-                                       prevExceptions = exceptions,
-                                       bus = childBus)
+      error = executeOrAddToQueue(topic, method, args, handlers, queue, error, childBus)
     }
-    exceptions?.let(::throwExceptions)
+    error?.let(::throwError)
     return hasHandlers
   }
 }

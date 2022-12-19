@@ -29,7 +29,10 @@ object GradleProjectsPublishingService {
         val subprojectDirectory = importedProjectRoot.resolve(subprojectName)
         require(subprojectDirectory.exists()) { "Can't find subproject $subprojectName, checked at ${subprojectDirectory.toAbsolutePath()}" }
 
-        runTaskAndGetErrorOutput(subprojectDirectory.toString(), importedProject, "publish")
+        val output = runTaskAndGetErrorOutput(subprojectDirectory.toString(), importedProject, "publish")
+        if (output.isNotEmpty()) {
+            error("Unexpected errors while running 'publish' task in $subprojectName\n\n$output")
+        }
     }
 
     private fun runTaskAndGetErrorOutput(projectPath: String, project: Project, taskName: String, scriptParameters: String = ""): String {
@@ -53,7 +56,7 @@ object GradleProjectsPublishingService {
             val future = CompletableFuture<String>()
             val taskCallback = object : TaskCallback {
                 override fun onSuccess() {
-                    future.complete(taskErrOutput.toString())
+                    future.complete("")
                 }
 
                 override fun onFailure() {

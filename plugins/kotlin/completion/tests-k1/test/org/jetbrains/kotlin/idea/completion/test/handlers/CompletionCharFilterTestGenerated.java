@@ -168,6 +168,11 @@ public class CompletionCharFilterTestGenerated extends AbstractCompletionCharFil
         runTest("../testData/handlers/charFilter/Space.kt");
     }
 
+    @TestMetadata("VariableAndTypeLateinit.kt")
+    public void testVariableAndTypeLateinit() throws Exception {
+        runTest("../testData/handlers/charFilter/VariableAndTypeLateinit.kt");
+    }
+
     @TestMetadata("VariableName.kt")
     public void testVariableName() throws Exception {
         runTest("../testData/handlers/charFilter/VariableName.kt");

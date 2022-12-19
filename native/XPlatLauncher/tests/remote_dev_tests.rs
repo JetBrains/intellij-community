@@ -8,22 +8,11 @@ mod tests {
 
     #[rstest]
     #[case::remote_dev_test(& LayoutSpec {launcher_location: LauncherLocation::MainBinRemoteDev, java_type: JavaType::JBR})]
-    fn remote_dev_args_test(#[case]launcher_location: &LayoutSpec) {
-        let test = &prepare_test_env(launcher_location);
-        let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
-        let output_args = [
-            "dumpLaunchParameters",
-            &test.test_root_dir.path().to_string_lossy(),
-            "--output",
-            &output_file.to_string_lossy()
-        ];
+    fn remote_dev_args_test(#[case]layout_spec: &LayoutSpec) {
+        let test = &prepare_test_env(layout_spec);
+        let args = &[ "remote_remote_dev_arg_test" ];
 
-        let full_args = &mut output_args.to_vec();
-
-        let args = [ "remote_remote_dev_arg_test" ];
-        full_args.append(&mut args.to_vec());
-
-        let result = run_launcher(test, full_args, &output_file);
+        let result = run_remote_dev_with_default_args_and_env(test, args, std::collections::HashMap::from([(" ", "")]));
 
         let dump = &result.dump.expect("Exit status was successful, but no dump was received");
 

@@ -128,6 +128,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private var preferredDarkLaf: LookAndFeelInfo? = null
   private val myStoredDefaults = HashMap<LafReference?, MutableMap<String, Any?>>()
   private val myLafComboBoxModel = SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> { LafComboBoxModel() }
+  private var myDensity = UIDensity.DEFAULT
   private val settingsToolbar: Lazy<ActionToolbar> = SynchronizedClearableLazy {
     val group = DefaultActionGroup(PreferredLafAction())
     val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, group, true)
@@ -648,6 +649,14 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     return false
   }
 
+  private fun applyDensity(defaults: UIDefaults) {
+    if (density == UIDensity.COMPACT) {
+      defaults.put("Tree.rowHeight", 20)
+      defaults.put("EditorTabs.tabInsets", JBInsets.create(0, 2).asUIResource())
+      defaults.put("ToolWindow.Header.height", 35)
+    }
+  }
+
   private fun updateEditorSchemeIfNecessary(oldLaf: LookAndFeelInfo?, processChangeSynchronously: Boolean) {
     if (oldLaf is TempUIThemeBasedLookAndFeelInfo || myCurrentLaf is TempUIThemeBasedLookAndFeelInfo) {
       return
@@ -698,6 +707,9 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     patchFileChooserStrings(uiDefaults)
     patchLafFonts(uiDefaults)
     patchTreeUI(uiDefaults)
+    applyDensity(uiDefaults)
+
+    //should be called last because this method modifies uiDefault values
     patchHiDPI(uiDefaults)
     // required for MigLayout logical pixels to work
     // super-huge DPI causes issues like IDEA-170295 if `laf.scaleFactor` property is missing
@@ -835,6 +847,16 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
   override fun setPreferredLightLaf(value: LookAndFeelInfo) {
     preferredLightLaf = value
+  }
+
+  override fun getDensity() = myDensity
+
+  override fun setDensity(density: UIDensity) {
+    if (density != myDensity) {
+      myDensity = density
+      setCurrentLookAndFeel(currentLookAndFeel!!)
+      updateUI()
+    }
   }
 
   private inner class UiThemeEpListener : ExtensionPointListener<UIThemeProvider> {

@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.treeView.InplaceCommentAppender;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
@@ -42,7 +43,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.io.*;
@@ -214,7 +214,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   public static void appendTimestamp(@NotNull Project project,
-                                     @NotNull SimpleColoredComponent component,
+                                     @NotNull InplaceCommentAppender appender,
                                      @NotNull VirtualFile file) {
     if (!UISettings.getInstance().getShowInplaceComments()) {
       return;
@@ -223,7 +223,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     try {
       Long timestamp = ((IdeDocumentHistoryImpl)getInstance(project)).recentFileTimestampMap.getValue().get(file.getPath());
       if (timestamp != null) {
-        component.append(" ").append(DateFormatUtil.formatPrettyDateTime(timestamp), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
+        appender.append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        appender.append(DateFormatUtil.formatPrettyDateTime(timestamp), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
       }
     }
     catch (IOException e) {

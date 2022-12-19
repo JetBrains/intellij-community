@@ -1,13 +1,11 @@
 package com.intellij.remoteDev.downloader
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.remoteDev.RemoteDevSystemSettings
-import com.intellij.remoteDev.util.getJetBrainsSystemCachesDir
 import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.util.io.*
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -55,20 +53,20 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     get() = RemoteDevSystemSettings.getClientDownloadUrl().value
   override val jreDownloadUrl: URI
     get() = RemoteDevSystemSettings.getJreDownloadUrl().value
+
   override val clientCachesDir: Path get () {
     val downloadDestination = IntellijClientDownloaderSystemSettings.getDownloadDestination()
     if (downloadDestination.value != null) {
       return Path(downloadDestination.value)
     }
-    return getJetBrainsSystemCachesDir() / "JetBrainsClientDist"
+
+    return Path.of(PathManager.getDefaultSystemPathFor("JetBrainsClientDist"))
   }
+
   override val clientVersionManagementEnabled: Boolean
     get() = IntellijClientDownloaderSystemSettings.isVersionManagementEnabled().value
   override val verifySignature: Boolean = true
 
-  private val ytKey = "application.info.youtrack.url"
-  private val ytUrl = "https://youtrack.jetbrains.com/newissue?project=GTW&amp;clearDraft=true&amp;description=\$DESCR"
-  private val remoteDevYouTrackFlag = "-D$ytKey=$ytUrl"
   override fun patchVmOptions(vmOptionsFile: Path, connectionUri: URI) {
 
   }

@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,17 +23,20 @@ import java.util.regex.Pattern;
  */
 public class ConventionOptionsPanel extends InspectionOptionsPanel {
 
-  private static final Logger LOG = Logger.getInstance(ConventionOptionsPanel.class);
   public ConventionOptionsPanel(@NotNull final InspectionProfileEntry owner,
-                                @NonNls final String minLengthProperty, @NonNls final String maxLengthProperty,
-                                @NonNls final String regexProperty, @NonNls final String regexPatternProperty,
+                                @Language("jvm-field-name") @NonNls final String minLengthProperty,
+                                @Language("jvm-field-name") @NonNls final String maxLengthProperty,
+                                @Language("jvm-field-name") @NonNls final String regexProperty,
+                                @Language("jvm-field-name") @NonNls final String regexPatternProperty,
                                 JComponent... extraOptions) {
     this((Object)owner, minLengthProperty, maxLengthProperty, regexProperty, regexPatternProperty, extraOptions);
   }
 
   public ConventionOptionsPanel(@NotNull final Object owner,
-                                @NonNls final String minLengthProperty, @NonNls final String maxLengthProperty,
-                                @NonNls final String regexProperty, @NonNls final String regexPatternProperty,
+                                @Language("jvm-field-name") @NonNls final String minLengthProperty,
+                                @Language("jvm-field-name") @NonNls final String maxLengthProperty,
+                                @Language("jvm-field-name") @NonNls final String regexProperty,
+                                @Language("jvm-field-name") @NonNls final String regexPatternProperty,
                                 JComponent... extraOptions) {
     final JLabel patternLabel = new JLabel(InspectionsBundle.message("label.pattern"));
     final JLabel minLengthLabel = new JLabel(InspectionsBundle.message("label.min.length"));
@@ -50,12 +53,12 @@ public class ConventionOptionsPanel extends InspectionOptionsPanel {
 
     final JFormattedTextField minLengthField = new JFormattedTextField(formatter);
     minLengthField.setValue(getPropertyIntegerValue(owner, minLengthProperty));
-    minLengthField.setColumns(2);
+    minLengthField.setColumns(4);
     UIUtil.fixFormattedField(minLengthField);
 
     final JFormattedTextField maxLengthField = new JFormattedTextField(formatter);
     maxLengthField.setValue(getPropertyIntegerValue(owner, maxLengthProperty));
-    maxLengthField.setColumns(2);
+    maxLengthField.setColumns(4);
     UIUtil.fixFormattedField(maxLengthField);
 
     final JFormattedTextField regexField = new JFormattedTextField(new RegExFormatter());
@@ -94,7 +97,11 @@ public class ConventionOptionsPanel extends InspectionOptionsPanel {
     addRow(maxLengthLabel, maxLengthField);
 
     for (JComponent extraOption : extraOptions) {
-      add(extraOption);
+      if (extraOption instanceof JPanel) {
+        addGrowing(extraOption);
+      } else {
+        addComponent(extraOption);
+      }
     }
   }
 

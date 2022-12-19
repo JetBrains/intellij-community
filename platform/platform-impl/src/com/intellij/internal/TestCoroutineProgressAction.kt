@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.coroutines.*
 import javax.swing.JComponent
-import kotlin.coroutines.coroutineContext
 
 internal class TestCoroutineProgressAction : AnAction() {
 
@@ -82,7 +81,7 @@ internal class TestCoroutineProgressAction : AnAction() {
       val taskCancellation = TaskCancellation.cancellable()
         .withButtonText("Cancel Button Text")
         .withTooltipText("Cancel tooltip text")
-      withBackgroundProgressIndicator(project, "Cancellable task title", taskCancellation) {
+      withBackgroundProgress(project, "Cancellable task title", taskCancellation) {
         doStuff()
       }
     }
@@ -90,7 +89,7 @@ internal class TestCoroutineProgressAction : AnAction() {
 
   private fun CoroutineScope.nonCancellableBGProgress(project: Project) {
     launch {
-      withBackgroundProgressIndicator(project, "Non cancellable task title", cancellable = false) {
+      withBackgroundProgress(project, "Non cancellable task title", cancellable = false) {
         doStuff()
       }
     }
@@ -98,7 +97,7 @@ internal class TestCoroutineProgressAction : AnAction() {
 
   private fun CoroutineScope.modalProgress(project: Project) {
     launch {
-      withModalProgressIndicator(project, "Modal progress") {
+      withModalProgress(project, "Modal progress") {
         doStuff()
       }
     }
@@ -106,7 +105,7 @@ internal class TestCoroutineProgressAction : AnAction() {
 
   private fun CoroutineScope.nonCancellableModalProgress(project: Project) {
     launch {
-      withModalProgressIndicator(
+      withModalProgress(
         ModalTaskOwner.project(project),
         "Modal progress",
         TaskCancellation.nonCancellable(),
@@ -117,15 +116,51 @@ internal class TestCoroutineProgressAction : AnAction() {
   }
 
   private suspend fun doStuff() {
-    val sink = coroutineContext.progressSink
-    val total = 100
-    sink?.text("Indeterminate stage")
-    delay(2000)
-    repeat(total) { iteration ->
-      delay(30)
-      sink?.fraction(iteration.toDouble() / total)
-      sink?.text("progress text $iteration")
-      sink?.details("progress details $iteration")
+    indeterminateStep("Indeterminate stage") {
+      delay(1000)
+    }
+    progressStep(endFraction = 0.25) {
+      sequentialStage()
+    }
+    progressStep("Sequential stage", endFraction = 0.5) {
+      sequentialStage()
+    }
+    progressStep("Parallel stage", endFraction = 0.75) {
+      parallelStage()
+    }
+    progressStep {
+      parallelStage()
+    }
+  }
+
+  private suspend fun sequentialStage() {
+    indeterminateStep(text = "Preparing sequential stage") {
+      delay(500)
+    }
+    val times = 10
+    val itemDuration = 1.0 / times
+    repeat(times) { index ->
+      indeterminateStep("Preparing $index") {
+        delay(300)
+      }
+      val endFraction = itemDuration * (index + 1)
+      progressStep("Processing $index", endFraction = endFraction) {
+        delay((1000.toDouble() * (times - index) / times).toLong())
+      }
+    }
+  }
+
+  private suspend fun parallelStage() {
+    indeterminateStep("Prepare counted stage") {
+      delay(1000)
+    }
+    (1..100).toList().mapParallelWithProgress { item ->
+      indeterminateStep("Prepare $item") {
+        delay(500)
+      }
+      progressStep("Processing $item") {
+        delay(300 + (Math.random() * 1000).toLong())
+      }
     }
   }
 }

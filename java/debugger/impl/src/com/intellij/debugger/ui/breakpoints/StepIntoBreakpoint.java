@@ -88,7 +88,7 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
         LOG.debug("ObjectCollectedException: " + ex.getMessage());
       }
     }
-    catch(Exception ex) {
+    catch (Exception ex) {
       LOG.info(ex);
     }
   }

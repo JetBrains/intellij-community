@@ -33,6 +33,11 @@ public class KotlinGroupUsagesBySimilarityTestGenerated extends AbstractKotlinGr
         runTest("testData/findUsages/similarity/grouping/chainCalls.kt");
     }
 
+    @TestMetadata("controlStatements.kt")
+    public void testControlStatements() throws Exception {
+        runTest("testData/findUsages/similarity/grouping/controlStatements.kt");
+    }
+
     @TestMetadata("declaration.kt")
     public void testDeclaration() throws Exception {
         runTest("testData/findUsages/similarity/grouping/declaration.kt");

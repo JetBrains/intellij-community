@@ -17,6 +17,7 @@ package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,6 +36,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class UnnecessaryJavaDocLinkInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -62,11 +65,10 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection implements 
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "unnecessary.javadoc.link.option"),
-      this, "ignoreInlineLinkToSuper");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreInlineLinkToSuper", InspectionGadgetsBundle.message(
+        "unnecessary.javadoc.link.option")));
   }
 
   @Override

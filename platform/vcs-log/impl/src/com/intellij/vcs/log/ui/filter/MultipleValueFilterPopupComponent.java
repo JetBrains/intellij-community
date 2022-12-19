@@ -32,7 +32,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   @NonNls @NotNull private final String myName;
 
   MultipleValueFilterPopupComponent(@NonNls @NotNull String filterName,
-                                    @NotNull Supplier<String> displayName,
+                                    @NotNull Supplier<@NlsContexts.Label @NotNull String> displayName,
                                     @NotNull MainVcsLogUiProperties uiProperties,
                                     @NotNull Model filterModel) {
     super(displayName, filterModel);

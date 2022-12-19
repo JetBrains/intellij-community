@@ -76,9 +76,8 @@ public final class UpdateHighlightersUtil {
     return coveredBy.startOffset <= info.startOffset && info.endOffset <= coveredBy.endOffset && info.getGutterIconRenderer() == null;
   }
 
-  static void addHighlighterToEditorIncrementally(@NotNull Project project,
+  static void addHighlighterToEditorIncrementally(@NotNull PsiFile file,
                                                   @NotNull Document document,
-                                                  @NotNull PsiFile file,
                                                   int startOffset,
                                                   int endOffset,
                                                   @NotNull HighlightInfo info,
@@ -86,7 +85,7 @@ public final class UpdateHighlightersUtil {
                                                   int group,
                                                   @NotNull Long2ObjectMap<RangeMarker> ranges2markersCache) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-
+    Project project = file.getProject();
     if (!accept(project, info)) {
       return;
     }
@@ -414,8 +413,6 @@ public final class UpdateHighlightersUtil {
     info.setGroup(group);
 
     int layer = getLayer(info, severityRegistrar);
-    RangeHighlighterEx highlighter = infosToRemove == null ? null : (RangeHighlighterEx)infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
-
     long finalInfoRange = TextRangeScalarUtil.toScalarRange(infoStartOffset, infoEndOffset);
     TextAttributes infoAttributes = info.getTextAttributes(psiFile, colorsScheme);
     Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
@@ -447,6 +444,7 @@ public final class UpdateHighlightersUtil {
       info.updateQuickFixFields(document, ranges2markersCache, finalInfoRange);
     };
 
+    RangeHighlighterEx highlighter = infosToRemove == null ? null : (RangeHighlighterEx)infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
     if (highlighter == null) {
       highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, layer,
                                                                   HighlighterTargetArea.EXACT_RANGE, false, changeAttributes);

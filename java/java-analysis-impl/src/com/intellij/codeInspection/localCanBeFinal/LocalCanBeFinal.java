@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.localCanBeFinal;
 
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
@@ -16,8 +16,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   public boolean REPORT_VARIABLES = true;
@@ -353,13 +355,12 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(JavaAnalysisBundle.message("inspection.local.can.be.final.option"), "REPORT_VARIABLES");
-    panel.addCheckbox(JavaAnalysisBundle.message("inspection.local.can.be.final.option1"), "REPORT_PARAMETERS");
-    panel.addCheckbox(JavaAnalysisBundle.message("inspection.local.can.be.final.option2"), "REPORT_CATCH_PARAMETERS");
-    panel.addCheckbox(JavaAnalysisBundle.message("inspection.local.can.be.final.option3"), "REPORT_FOREACH_PARAMETERS");
-    panel.addCheckbox(JavaAnalysisBundle.message("inspection.local.can.be.final.option4"), "REPORT_IMPLICIT_FINALS");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("REPORT_VARIABLES", JavaAnalysisBundle.message("inspection.local.can.be.final.option")),
+      checkbox("REPORT_PARAMETERS", JavaAnalysisBundle.message("inspection.local.can.be.final.option1")),
+      checkbox("REPORT_CATCH_PARAMETERS", JavaAnalysisBundle.message("inspection.local.can.be.final.option2")),
+      checkbox("REPORT_FOREACH_PARAMETERS", JavaAnalysisBundle.message("inspection.local.can.be.final.option3")),
+      checkbox("REPORT_IMPLICIT_FINALS", JavaAnalysisBundle.message("inspection.local.can.be.final.option4")));
   }
 }

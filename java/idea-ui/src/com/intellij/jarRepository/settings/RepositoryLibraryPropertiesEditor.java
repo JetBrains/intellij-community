@@ -58,10 +58,6 @@ public final class RepositoryLibraryPropertiesEditor {
   private final ThreeStateCheckBox myIncludeTransitiveDepsCheckBox;
   private JPanel myPropertiesPanel;
   private JPanel myTransitiveDependenciesPanel;
-
-  private JPanel myVerificationSettingsPanel;
-
-  private JBCheckBox myVerificationSha256ChecksumCheckBox;
   private ComboBox<RemoteRepositoryDescription> myRemoteRepositoryComboBox;
   private JPanel myRemoteRepositoryOptionsPanel;
 
@@ -129,12 +125,10 @@ public final class RepositoryLibraryPropertiesEditor {
     myTransitiveDependenciesPanel.setVisible(allowExcludingTransitiveDependencies);
 
     if (globalLibrary) {
-      myVerificationSettingsPanel.setVisible(false);
       myRemoteRepositoryOptionsPanel.setVisible(false);
     } else {
       RepositoryLibrarySettings intSettings = RepositoryLibrarySettings.getInstanceOrDefaults(project);
-      myVerificationSettingsPanel.setVisible(intSettings.isSha256ChecksumFeatureEnabled());
-      myRemoteRepositoryOptionsPanel.setVisible(intSettings.isJarRepositoryBindingFeatureEnabled());
+      myRemoteRepositoryOptionsPanel.setVisible(intSettings.isBindJarRepositoryUiSettingsDisplayed());
     }
 
     myRemoteRepositoryComboBox.setRenderer(SimpleListCellRenderer.create(
@@ -267,15 +261,6 @@ public final class RepositoryLibraryPropertiesEditor {
       }
     });
     updateManageDependenciesLink();
-
-    myVerificationSha256ChecksumCheckBox.setSelected(model.isSha256ChecksumEnabled());
-    myVerificationSha256ChecksumCheckBox.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        model.setVerificationSha256Checksum(myVerificationSha256ChecksumCheckBox.isSelected());
-        onChangeListener.onChange(RepositoryLibraryPropertiesEditor.this);
-      }
-    });
   }
 
   private void updateIncludeTransitiveDepsCheckBoxState() {

@@ -72,4 +72,25 @@ class H extends G {
   H(Object street, int <warning descr="Parameter name 'number' is different from parameter 'age' in the super constructor">number</warning>) {
     super(street.toString(), number);
   }
+
+  private void configureMethod(final Iterable<Class<? extends String>> registeredAnnotations, final Integer method) {
+    for (final Class<? extends String> registeredAnnotation : registeredAnnotations) {
+      configureMethod(registeredAnnotation, method);
+    }
+  }
+
+  private void configureMethod(final Class<? extends String> daoAnnotation, final Integer method) {
+  }
+}
+class I {
+  static J applicationContext = null;
+
+  public static <T> T getBean(final Class<T> beanType) {
+    return applicationContext.getBean(beanType);
+  }
+}
+class J { // unrelated to I
+  public <T> T getBean(Class<T> requiredType) {
+    return null;
+  }
 }

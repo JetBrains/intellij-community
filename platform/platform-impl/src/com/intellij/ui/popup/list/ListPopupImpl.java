@@ -431,6 +431,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     Object[] selectedValues = myList.getSelectedValues();
+    if (selectedValues.length == 0) return false;
     ListPopupStep<Object> listStep = getListStep();
     Object selectedValue = selectedValues[0];
     if (!listStep.isSelectable(selectedValue)) return false;

@@ -16,7 +16,7 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -32,7 +32,8 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class MagicNumberInspection extends BaseInspection {
 
@@ -67,12 +68,11 @@ public class MagicNumberInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.in.hashcode"), "ignoreInHashCode");
-    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.in.annotations"), "ignoreInAnnotations");
-    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.as.initial.capacity"), "ignoreInitialCapacity");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreInHashCode", InspectionGadgetsBundle.message("inspection.option.ignore.in.hashcode")),
+      checkbox("ignoreInAnnotations", InspectionGadgetsBundle.message("inspection.option.ignore.in.annotations")),
+      checkbox("ignoreInitialCapacity", InspectionGadgetsBundle.message("inspection.option.ignore.as.initial.capacity")));
   }
 
   @Override

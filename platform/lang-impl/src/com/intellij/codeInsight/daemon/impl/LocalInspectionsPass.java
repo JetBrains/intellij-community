@@ -20,7 +20,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -44,8 +43,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Interner;
 import com.intellij.xml.util.XmlStringUtil;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,6 +61,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   // toolId -> suppressed elements (for which tool.isSuppressedFor(element) == true)
   private final Map<String, Set<PsiElement>> mySuppressedElements = new ConcurrentHashMap<>();
   private final boolean myInspectInjectedPsi;
+  private final HighlightingSessionImpl myHighlightingSession;
 
   LocalInspectionsPass(@NotNull PsiFile file,
                        @NotNull Document document,
@@ -88,6 +86,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     // initial guess
     setProgressLimit(300 * 2);
+    myHighlightingSession = (HighlightingSessionImpl)HighlightingSessionImpl.getFromCurrentIndicator(file);
   }
 
   private @NotNull PsiFile getFile() {
@@ -107,7 +106,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     };
     Consumer<InspectionRunner.InspectionContext> afterOutsideProcessedCallback = __ -> advanceProgress(1);
     BiPredicate<ProblemDescriptor, LocalInspectionToolWrapper> applyIncrementallyCallback = (descriptor, wrapper) -> {
-      addDescriptorIncrementally(descriptor, wrapper, progress);
+      addDescriptorIncrementally(descriptor, wrapper);
       return true;
     };
     InspectionRunner runner =
@@ -172,15 +171,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return b;
   }
 
-  private final Long2ObjectMap<RangeMarker> ranges2markersCache = new Long2ObjectOpenHashMap<>(); // accessed in EDT only
   private final InjectedLanguageManager myInjectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
-  private final List<HighlightInfo> infos = new ArrayList<>(2); // accessed in EDT only
   private final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
   private final Set<Pair<TextRange, String>> emptyActionRegistered = Collections.synchronizedSet(new HashSet<>());
 
-  private void addDescriptorIncrementally(@NotNull ProblemDescriptor descriptor,
-                                          @NotNull LocalInspectionToolWrapper tool,
-                                          @NotNull ProgressIndicator indicator) {
+  private void addDescriptorIncrementally(@NotNull ProblemDescriptor descriptor, @NotNull LocalInspectionToolWrapper tool) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (myIgnoreSuppressed) {
       LocalInspectionToolWrapper toolWrapper = tool;
       PsiElement psiElement = descriptor.getPsiElement();
@@ -206,20 +202,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
     HighlightSeverity severity = myProfileWrapper.getErrorLevel(displayKey, file).getSeverity();
     
-    ArrayList<HighlightInfo> newInfos = new ArrayList<>(2);
+    List<HighlightInfo> newInfos = new ArrayList<>(2);
     createHighlightsForDescriptor(newInfos, emptyActionRegistered, file, thisDocument, tool, severity, descriptor, psiElement);
-    ApplicationManager.getApplication().invokeLater(() -> {
-      infos.clear();
-      infos.addAll(newInfos);
-      for (HighlightInfo info : infos) {
-        EditorColorsScheme colorsScheme = getColorsScheme();
-        UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, getFile(),
-                                                                   myRestrictRange.getStartOffset(),
-                                                                   myRestrictRange.getEndOffset(),
-                                                                   info, colorsScheme, getId(),
-                                                                   ranges2markersCache);
-      }
-    }, __ -> myProject.isDisposed() || indicator.isCanceled());
+    for (HighlightInfo info : newInfos) {
+      myHighlightingSession.queueHighlightInfo(info, myRestrictRange, getId());
+    }
   }
 
   @Override

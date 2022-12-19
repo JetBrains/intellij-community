@@ -190,7 +190,6 @@
     <action id="PreviousEditorTab" class="com.intellij.openapi.fileEditor.impl.SelectPreviousEditorTabAction"/>
 
     <action id="TextComponent.ClearAction" class="com.intellij.ui.ClearTextAction"/>
-    <action id="ToolwindowSwitcher" class="com.intellij.ide.actions.ToolwindowSwitcher" internal="true"/>
     <action id="QuickDocCopy" class="com.intellij.codeInsight.documentation.actions.CopyQuickDocAction"
             icon="AllIcons.Actions.Copy" use-shortcut-of="$Copy"/>
     <action id="EditSourceInNewWindow" class="com.intellij.ide.actions.EditSourceInNewWindowAction">
@@ -613,6 +612,10 @@
               <synonym key="action.ToggleZenMode.enter"/>
             </action>
             <separator/>
+            <group id="Appearance.Density" popup="true">
+              <action id="Appearance.Density.Default" class="com.intellij.ide.actions.SetDefaultDensityAction"/>
+              <action id="Appearance.Density.Compact" class="com.intellij.ide.actions.SetCompactDensityAction"/>
+            </group>
             <action id="ZoomInIdeAction" class="com.intellij.ide.actions.ZoomInIdeAction">
               <synonym key="action.ZoomInIdeAction.text"/>
             </action>
@@ -1413,7 +1416,7 @@
 
     <action id="CopySettingsPath" class="com.intellij.openapi.options.newEditor.CopySettingsPathAction"/>
 
-    <action id="ShowFilterPopup" class="com.intellij.find.editorHeaderActions.ShowFilterPopupGroup"/>
+    <group id="ShowFilterPopup" class="com.intellij.find.editorHeaderActions.ShowFilterPopupGroup"/>
     <action id="ShowSearchHistory" class="com.intellij.find.actions.ShowSearchHistoryAction"/>
     <action id="HidpiInfo" class="com.intellij.internal.HidpiInfo"/>
 

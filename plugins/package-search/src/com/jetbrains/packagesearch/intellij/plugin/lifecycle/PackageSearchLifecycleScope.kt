@@ -29,7 +29,6 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlin.math.max
 
-@Service(Level.PROJECT)
 internal class PackageSearchLifecycleScope : CoroutineScope, Disposable {
 
     private inline val threadCount

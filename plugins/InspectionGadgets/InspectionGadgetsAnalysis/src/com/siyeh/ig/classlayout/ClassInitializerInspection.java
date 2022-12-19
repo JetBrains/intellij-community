@@ -20,7 +20,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -33,10 +33,11 @@ import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.performance.ClassInitializerMayBeStaticInspection;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ClassInitializerInspection extends BaseInspection {
 
@@ -55,10 +56,10 @@ public class ClassInitializerInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("class.initializer.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("class.initializer.option"), this, "onlyWarnWhenConstructor");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyWarnWhenConstructor", InspectionGadgetsBundle.message("class.initializer.option")));
   }
 
 

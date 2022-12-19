@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -31,7 +31,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.intellij.util.SmartList;
@@ -297,9 +296,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
       stopClassesTable,
       true,
       CommonClassNames.JAVA_LANG_OBJECT);
-    optionsPanel.add(stopClassesPanel, "growx");
+    optionsPanel.addGrowing(stopClassesPanel);
 
-    return ScrollPaneFactory.createScrollPane(optionsPanel, true);
+    return optionsPanel;
   }
 
   private static class TypeMayBeWeakenedFix extends InspectionGadgetsFix {

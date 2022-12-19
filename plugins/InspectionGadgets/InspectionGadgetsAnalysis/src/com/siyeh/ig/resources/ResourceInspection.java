@@ -16,6 +16,7 @@
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
@@ -41,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public abstract class ResourceInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
@@ -60,13 +63,11 @@ public abstract class ResourceInspection extends BaseInspection {
     writeBooleanOption(node, "ignoreResourcesWithClose", true);
   }
 
-  @NotNull
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("allow.resource.to.be.opened.inside.a.try.block"), "insideTryAllowed");
-    panel.addCheckbox(InspectionGadgetsBundle.message("any.method.may.close.resource.argument"), "anyMethodMayClose");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("insideTryAllowed", InspectionGadgetsBundle.message("allow.resource.to.be.opened.inside.a.try.block")),
+      checkbox("anyMethodMayClose", InspectionGadgetsBundle.message("any.method.may.close.resource.argument")));
   }
 
   @Override

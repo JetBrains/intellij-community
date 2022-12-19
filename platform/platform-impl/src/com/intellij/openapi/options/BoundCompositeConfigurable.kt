@@ -3,7 +3,9 @@ package com.intellij.openapi.options
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.gridLayout.Gaps
 
 abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
   @NlsContexts.ConfigurableName displayName: String,
@@ -53,6 +55,7 @@ abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
     else {
       val panel = configurable.createComponent()
       if (panel != null) {
+        panel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
         row {
           cell(panel)
             .align(AlignX.FILL)

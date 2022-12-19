@@ -6,8 +6,8 @@ import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.unusedSymbol.VisibilityModifierChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -32,9 +31,6 @@ import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.fields.IntegerField;
-import com.intellij.ui.components.fields.valueEditors.ValueEditor;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -46,11 +42,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.codeInspection.reference.RefParameter.VALUE_IS_NOT_CONST;
 import static com.intellij.codeInspection.reference.RefParameter.VALUE_UNDEFINED;
 
@@ -63,36 +57,14 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
   public int minimalUsageCount = 1;
   public boolean ignoreWhenRefactoringIsComplicated = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    JPanel panel = new InspectionOptionsPanel();
-
-    final JBCheckBox checkBox = new JBCheckBox(JavaBundle.message("label.ignore.complicated.fix"), ignoreWhenRefactoringIsComplicated);
-    checkBox.addChangeListener((e) -> ignoreWhenRefactoringIsComplicated = checkBox.isSelected());
-    panel.add(checkBox);
-
-    LabeledComponent<VisibilityModifierChooser> component = LabeledComponent.create(new VisibilityModifierChooser(() -> true,
-                                                                                                                  highestModifier,
-                                                                                                                  (newModifier) -> highestModifier = newModifier),
-                                                                                    JavaBundle
-                                                                                      .message("label.maximal.reported.method.visibility"),
-                                                                                    BorderLayout.WEST);
-    panel.add(component);
-
-    IntegerField minimalUsageCountEditor = new IntegerField(null, 1, Integer.MAX_VALUE);
-    minimalUsageCountEditor.getValueEditor().addListener(new ValueEditor.Listener<>() {
-      @Override
-      public void valueChanged(@NotNull Integer newValue) {
-        minimalUsageCount = newValue;
-      }
-    });
-    minimalUsageCountEditor.setValue(minimalUsageCount);
-    minimalUsageCountEditor.setColumns(4);
-    panel.add(LabeledComponent.create(minimalUsageCountEditor, JavaBundle.message("label.minimal.reported.method.usage.count"), BorderLayout.WEST));
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreWhenRefactoringIsComplicated", JavaBundle.message("label.ignore.complicated.fix")),
+      VisibilityModifierChooser.visibilityChooser("highestModifier", JavaBundle.message("label.maximal.reported.method.visibility")),
+      number("minimalUsageCount", JavaBundle.message("label.minimal.reported.method.usage.count"), 1, 100)
+    );
   }
-
 
   protected LocalQuickFix createFix(String paramName, String value) {
     return new InlineParameterValueFix(paramName, value);

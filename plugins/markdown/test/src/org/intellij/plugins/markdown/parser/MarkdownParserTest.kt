@@ -37,4 +37,6 @@ class MarkdownParserTest: MarkdownParsingTestCase("parser") {
 
   @TestFor(issues = ["IDEA-213125"])
   fun testTableWithEscapedPipe() = doTest(true)
+
+  fun testTableWithEscapedPipeInsideCodeSpan() = doTest(true)
 }

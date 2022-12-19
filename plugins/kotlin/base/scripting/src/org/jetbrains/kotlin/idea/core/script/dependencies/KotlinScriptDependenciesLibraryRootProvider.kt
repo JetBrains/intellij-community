@@ -36,7 +36,9 @@ class KotlinScriptProjectModelInfoProvider : CustomEntityProjectModelInfoProvide
             emptySequence()
         } else {
             entities.flatMap { scriptEntity ->
-                scriptEntity.dependencies.map<@Child KotlinScriptLibraryEntity, LibraryRoots<KotlinScriptEntity>> { libEntity ->
+                scriptEntity.dependencies
+                    .map { entityStorage.resolve(it) ?: error("Unresolvable library: ${it.name}, script=${scriptEntity.path} ") }
+                    .map { libEntity ->
                     val (classes, sources) = libEntity.roots.partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
                     val classFiles = classes.mapNotNull { it.url.virtualFile }
                     val sourceFiles = sources.mapNotNull { it.url.virtualFile }

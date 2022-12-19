@@ -6,6 +6,7 @@ import com.intellij.diagnostic.LogMessage
 import com.intellij.diagnostic.MessagePool
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
 import kotlinx.coroutines.delay
@@ -24,6 +25,7 @@ class KotlinGradleBuildErrorsChecker : ProjectPostStartupActivity {
         const val BUILD_ERROR_REPORTS_FILE_PREFIX = "errors-"
         private const val ERROR_MESSAGE_PREFIX = "error message: "
         private const val KOTLIN_VERSION = "kotlin version: "
+        private val logger = Logger.getInstance(KotlinGradleBuildErrorsChecker::class.java)
         fun readErrorFileAndProcessEvent(
             file: File,
             process: (KotlinCompilerCrash, String) -> Any
@@ -82,6 +84,8 @@ class KotlinGradleBuildErrorsChecker : ProjectPostStartupActivity {
                         )
                         val ideaEvent =
                             IdeaLoggingEvent(logMessage, RuntimeException("Kotlin build exception: $it"), logEvent.data)
+                        //Add compilation exception to idea.log for AndroidStudio
+                        logger.error("Exception happen during Kotlin compilation", crashException)
                         MessagePool.getInstance().addIdeFatalMessage(ideaEvent)
                     }
                     it.delete()

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -27,6 +27,8 @@ import java.util.function.Consumer;
  * It's the only way that allows to access the computation result safely. The alternatives
  * (e.g. {@link #executeSynchronously()}, {@link org.jetbrains.concurrency.Promise} methods) mean that you might get the computation result
  * in a background thread after a read action is finished, so a write action can then occur at any time and make the result outdated.
+ * <p/>
+ * In a coroutine, use {@link CoroutinesKt#readAction} instead.
  *
  * @see ReadAction#nonBlocking
  */
@@ -37,6 +39,8 @@ public interface NonBlockingReadAction<T> {
    * The operation is canceled if the project is closed before either the background computation or {@link #finishOnUiThread} runnable
    * are completed.
    * @see com.intellij.openapi.project.DumbService
+   * @see CoroutinesKt#smartReadAction
+   * @see ReadConstraint.Companion#inSmartMode
    */
   @Contract(pure = true)
   @NotNull
@@ -47,6 +51,8 @@ public interface NonBlockingReadAction<T> {
    * The operation is canceled if the project is closed before either the background computation or {@link #finishOnUiThread} runnable
    * are completed.
    * @see com.intellij.psi.PsiDocumentManager
+   * @see CoroutinesKt#constrainedReadAction
+   * @see ReadConstraint.Companion#withDocumentsCommitted
    */
   @Contract(pure = true)
   @NotNull

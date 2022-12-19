@@ -1,37 +1,131 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.logging;
 
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.bugs.FormatDecode;
+import com.siyeh.ig.callMatcher.CallMapper;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.siyeh.ig.callMatcher.CallMatcher.*;
+import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 
 /**
  * @author Bas Leijdekkers
  */
 public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspection {
 
-  @NonNls
-  static final Set<String> loggingMethodNames = ContainerUtil.newHashSet("log", "trace", "debug", "info", "warn", "error", "fatal");
+  private static final CallMatcher FORMATTED_LOG4J =
+    staticCall("org.apache.logging.log4j.LogManager", "getFormatterLogger");
+  private static final CallMatcher SLF4J_BUILDER = instanceCall("org.slf4j.Logger", "atError", "atDebug",
+                                                              "atInfo", "atLevel", "atWarn", "atTrace");
+
+  private static final LoggerTypeSearcher SLF4J_HOLDER = new LoggerTypeSearcher() {
+
+    @Override
+    public LoggerType findType(PsiMethodCallExpression expression, LoggerContext context) {
+      if (context.ignoreSlf4jThrowableHavePlaceholder) {
+        //use old style as more common
+        return LoggerType.LOG4J_OLD_STYLE;
+      }
+      return LoggerType.SLF4J;
+    }
+  };
+
+  private static final LoggerTypeSearcher SLF4J_HOLDER_BUILDER = new LoggerTypeSearcher() {
+
+    @Override
+    public LoggerType findType(PsiMethodCallExpression expression, LoggerContext context) {
+      if (context.ignoreSlf4jThrowableHavePlaceholder) {
+        return LoggerType.EQUAL_PLACEHOLDERS;
+      }
+      PsiExpression qualifierExpression = expression.getMethodExpression().getQualifierExpression();
+      if(SLF4J_BUILDER.matches(qualifierExpression)){
+        return LoggerType.SLF4J;
+      }
+      //otherwise it is too flexible to solve
+      return null;
+    }
+  };
+
+  private static final LoggerTypeSearcher LOG4J_HOLDER = new LoggerTypeSearcher() {
+    @Override
+    public LoggerType findType(PsiMethodCallExpression expression, LoggerContext context) {
+      final PsiExpression qualifierExpression =
+        PsiUtil.skipParenthesizedExprDown(expression.getMethodExpression().getQualifierExpression());
+
+      PsiExpression initializer = null;
+      if (qualifierExpression instanceof PsiReferenceExpression referenceExpression) {
+        final PsiElement target = referenceExpression.resolve();
+        if (!(target instanceof PsiVariable variable)) {
+          return null;
+        }
+        //for lombok
+        if (!variable.isPhysical()) {
+          return LoggerType.LOG4J_OLD_STYLE;
+        }
+
+        if (!variable.hasModifierProperty(PsiModifier.FINAL)) {
+          return null;
+        }
+
+        initializer = variable.getInitializer();
+        if (initializer == null) return null;
+      }
+      else if (qualifierExpression instanceof PsiMethodCallExpression psiMethodCallExpression) {
+        initializer = psiMethodCallExpression;
+      }
+
+      return initializer instanceof PsiCallExpression callExpression && FORMATTED_LOG4J.matches(callExpression) ?
+             LoggerType.LOG4J_FORMATTED_STYLE : LoggerType.LOG4J_OLD_STYLE;
+    }
+  };
+
+  private static final CallMapper<LoggerTypeSearcher>
+    LOGGER_TYPE_SEARCHERS = new CallMapper<LoggerTypeSearcher>()
+    .register(instanceCall("org.slf4j.Logger", "trace", "debug", "info", "warn", "error"), SLF4J_HOLDER)
+    .register(instanceCall("org.slf4j.spi.LoggingEventBuilder", "log"), SLF4J_HOLDER_BUILDER)
+    .register(instanceCall("org.apache.logging.log4j.Logger", "trace", "debug", "info", "warn", "error", "fatal", "log"), LOG4J_HOLDER)
+    .register(instanceCall("org.apache.logging.log4j.LogBuilder", "log"),
+              (PsiMethodCallExpression ex, LoggerContext context) -> LoggerType.EQUAL_PLACEHOLDERS);
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    final Integer argumentCount = (Integer)infos[0];
-    final Integer placeholderCount = (Integer)infos[1];
-    return (argumentCount.intValue() > placeholderCount.intValue())
+    final Result result = (Result)infos[0];
+    if (result.result == ResultType.INCORRECT_STRING) {
+      return InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.incorrect.problem.descriptor");
+    }
+    return (result.argumentCount() > result.placeholderCount())
            ? InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.more.problem.descriptor",
-                                             argumentCount, placeholderCount)
+                                             result.argumentCount(), result.placeholderCount())
            : InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.fewer.problem.descriptor",
-                                             argumentCount, placeholderCount);
+                                             result.argumentCount(), result.placeholderCount());
+  }
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreSlf4jThrowableHavePlaceholder = false;
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreSlf4jThrowableHavePlaceholder", InspectionGadgetsBundle.message(
+        "placeholder.count.matches.argument.count.slf4j.throwable.option")));
   }
 
   @Override
@@ -39,26 +133,18 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
     return new PlaceholderCountMatchesArgumentCountVisitor();
   }
 
-  private static class PlaceholderCountMatchesArgumentCountVisitor extends BaseInspectionVisitor {
+  private class PlaceholderCountMatchesArgumentCountVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final String name = methodExpression.getReferenceName();
-      if (!loggingMethodNames.contains(name)) {
-        return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (!InheritanceUtil.isInheritor(aClass, "org.slf4j.Logger") &&
-          !InheritanceUtil.isInheritor(aClass, "org.apache.logging.log4j.Logger") &&
-          !InheritanceUtil.isInheritor(aClass, "org.apache.logging.log4j.LogBuilder")) {
-        return;
-      }
+
+      LoggerTypeSearcher holder = LOGGER_TYPE_SEARCHERS.mapFirst(expression);
+      if (holder == null) return;
+      LoggerType loggerType = holder.findType(expression, new LoggerContext(ignoreSlf4jThrowableHavePlaceholder));
+      if (loggerType == null) return;
+      PsiMethod method = expression.resolveMethod();
+      if (method == null) return;
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length == 0) {
         return;
@@ -76,17 +162,19 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
       int argumentCount = arguments.length - index;
       boolean lastArgumentIsException = hasThrowableType(arguments[arguments.length - 1]);
+      boolean lastArgumentIsSupplier = couldBeThrowableSupplier(loggerType, parameters[parameters.length - 1], arguments[arguments.length - 1]);
       if (argumentCount == 1) {
         final PsiExpression argument = arguments[index];
         final PsiType argumentType = argument.getType();
         if (argumentType instanceof PsiArrayType) {
-          if (argumentType.equalsToText("java.lang.Object[]") && argument instanceof PsiNewExpression) {
-            final PsiNewExpression newExpression = (PsiNewExpression)argument;
+          if (argumentType.equalsToText("java.lang.Object[]") && argument instanceof final PsiNewExpression newExpression) {
             final PsiArrayInitializerExpression arrayInitializerExpression = newExpression.getArrayInitializer();
             if (arrayInitializerExpression != null) {
               final PsiExpression[] initializers = arrayInitializerExpression.getInitializers();
-              argumentCount  = initializers.length;
+              argumentCount = initializers.length;
               lastArgumentIsException = initializers.length > 0 && hasThrowableType(initializers[initializers.length - 1]);
+              lastArgumentIsSupplier = initializers.length > 0 &&
+                                       couldBeThrowableSupplier(loggerType, parameters[parameters.length - 1], initializers[initializers.length - 1]);
             }
             else {
               return;
@@ -98,22 +186,65 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
         }
       }
       final PsiExpression logStringArgument = arguments[index - 1];
-      final int placeholderCount = countPlaceholders(logStringArgument);
-      if (placeholderCount < 0 ||
-          placeholderCount == argumentCount && (!lastArgumentIsException || argumentCount > 1) ||
-          placeholderCount == argumentCount - 1 && lastArgumentIsException) {
-        // if there is more than one argument and the last argument is an exception, but there is a placeholder for
-        // the exception, then the stack trace won't be logged.
+      String text = buildString(logStringArgument);
+      if (text == null) return;
+
+      Integer placeholderCount = solvePlaceholderCount(loggerType, argumentCount, text);
+      if (placeholderCount == null) {
+        registerError(logStringArgument, new Result(argumentCount, 0, ResultType.INCORRECT_STRING));
         return;
       }
-      registerError(logStringArgument, Integer.valueOf(lastArgumentIsException ? argumentCount - 1 : argumentCount),
-                    Integer.valueOf(placeholderCount));
+
+      ResultType resultType = switch (loggerType) {
+        case SLF4J -> {
+          //according to the reference an exception should not have a placeholder
+          argumentCount = lastArgumentIsException ? argumentCount - 1 : argumentCount;
+          yield (placeholderCount == argumentCount) ? ResultType.SUCCESS : ResultType.PLACE_HOLDER_MISMATCH;
+        }
+        case EQUAL_PLACEHOLDERS -> placeholderCount == argumentCount ? ResultType.SUCCESS : ResultType.PLACE_HOLDER_MISMATCH;
+        case LOG4J_OLD_STYLE, LOG4J_FORMATTED_STYLE -> {
+          // if there is more than one argument and the last argument is an exception, but there is a placeholder for
+          // the exception, then the stack trace won't be logged.
+          ResultType type =
+            ((placeholderCount == argumentCount && (!lastArgumentIsException || argumentCount > 1)) ||
+             (lastArgumentIsException && placeholderCount == argumentCount - 1) ||
+            //consider the most general case
+             (lastArgumentIsSupplier && (placeholderCount == argumentCount || placeholderCount == argumentCount - 1))) ?
+            ResultType.SUCCESS : ResultType.PLACE_HOLDER_MISMATCH;
+          argumentCount = lastArgumentIsException ? argumentCount - 1 : argumentCount;
+          yield type;
+        }
+      };
+
+      if (resultType == ResultType.SUCCESS) {
+        return;
+      }
+
+      registerError(logStringArgument, new Result(argumentCount, placeholderCount, resultType));
+    }
+
+    @Nullable
+    private static Integer solvePlaceholderCount(LoggerType loggerType, int argumentCount, String text) {
+      int placeholderCount;
+      if (loggerType == LoggerType.LOG4J_FORMATTED_STYLE) {
+        FormatDecode.Validator[] validators;
+        try {
+          validators = FormatDecode.decode(text, argumentCount);
+        }
+        catch (FormatDecode.IllegalFormatException e) {
+          return null;
+        }
+        placeholderCount = validators.length;
+      }
+      else {
+        placeholderCount = countPlaceholders(text);
+      }
+      return placeholderCount;
     }
 
     private static boolean hasThrowableType(PsiExpression lastArgument) {
       final PsiType type = lastArgument.getType();
-      if (type instanceof PsiDisjunctionType) {
-        final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)type;
+      if (type instanceof final PsiDisjunctionType disjunctionType) {
         for (PsiType disjunction : disjunctionType.getDisjunctions()) {
           if (!InheritanceUtil.isInheritor(disjunction, CommonClassNames.JAVA_LANG_THROWABLE)) {
             return false;
@@ -124,56 +255,65 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE);
     }
 
-
-    public static int countPlaceholders(PsiExpression expression) {
-      final Object value = ExpressionUtils.computeConstantExpression(expression);
-      if (value == null) {
-        final StringBuilder builder = new StringBuilder();
-        return buildString(expression, builder) ? countPlaceholders(builder.toString()) : -1;
-      }
-      return value instanceof String ? countPlaceholders((String)value) : 0;
-    }
-
-    private static boolean buildString(PsiExpression expression, StringBuilder builder) {
-      if (expression == null) {
+    private static boolean couldBeThrowableSupplier(LoggerType loggerType, PsiParameter lastParameter, PsiExpression lastArgument) {
+      if (loggerType != LoggerType.LOG4J_OLD_STYLE && loggerType != LoggerType.LOG4J_FORMATTED_STYLE) {
         return false;
       }
-      final PsiType type = expression.getType();
-      if (expression instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
-        return buildString(parenthesizedExpression.getExpression(), builder);
+      PsiType lastParameterType = lastParameter.getType();
+      if (lastParameterType instanceof PsiEllipsisType psiEllipsisType) {
+        lastParameterType = psiEllipsisType.getComponentType();
       }
-      else if (expression instanceof PsiPolyadicExpression) {
-        if (!TypeUtils.isJavaLangString(type) && !PsiType.CHAR.equals(type)) {
-          return true;
-        }
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
-        for (PsiExpression operand : polyadicExpression.getOperands()) {
-          if (!buildString(operand, builder)) {
-            return false;
-          }
-        }
+      if (!(InheritanceUtil.isInheritor(lastParameterType, CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER) ||
+            InheritanceUtil.isInheritor(lastParameterType, "org.apache.logging.log4j.util.Supplier"))) {
+        return false;
+      }
+      PsiClassType throwable = PsiType.getJavaLangThrowable(lastArgument.getManager(), lastArgument.getResolveScope());
+
+      if (lastArgument instanceof PsiLambdaExpression lambdaExpression) {
+        Map<PsiElement, String> errors = LambdaUtil.checkReturnTypeCompatible(lambdaExpression, throwable);
+        return errors == null;
+      }
+      if (lastArgument instanceof PsiMethodReferenceExpression referenceExpression) {
+        PsiType psiType = PsiMethodReferenceUtil.getMethodReferenceReturnType(referenceExpression);
+        return throwable.isAssignableFrom(psiType) || psiType.isAssignableFrom(throwable);
+      }
+
+      PsiType type = lastArgument.getType();
+      if (!(type instanceof PsiClassType psiClassType)) {
+        return false;
+      }
+      PsiClassType.ClassResolveResult resolveGenerics = psiClassType.resolveGenerics();
+      Iterator<PsiType> iterator = resolveGenerics.getSubstitutor().getSubstitutionMap().values().iterator();
+      if (!iterator.hasNext()) {
         return true;
       }
-      else if (expression instanceof PsiLiteralExpression) {
-        if (TypeUtils.isJavaLangString(type) || PsiType.CHAR.equals(type)) {
-          final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expression;
-          builder.append(literalExpression.getValue());
-        }
+      PsiType psiType = iterator.next();
+      if (psiType == null) {
         return true;
       }
-      else {
-        if (!TypeUtils.isJavaLangString(type) /*&& !PsiType.CHAR.equals(type)*/) {
-          // no one is crazy enough to add placeholders via char variables right?
-          return true;
-        }
-        final Object value = ExpressionUtils.computeConstantExpression(expression);
-        if (value == null) {
-          return false;
-        }
-        builder.append(value);
-        return true;
+      if (psiType instanceof PsiCapturedWildcardType capturedWildcardType) {
+        PsiType lowerBound = capturedWildcardType.getLowerBound();
+        PsiType upperBond = capturedWildcardType.getUpperBound();
+        return (lowerBound == null || throwable.isAssignableFrom(lowerBound) || lowerBound.isAssignableFrom(throwable)) &&
+               (throwable.isAssignableFrom(upperBond) || upperBond.isAssignableFrom(throwable));
       }
+      return throwable.isAssignableFrom(psiType) || psiType.isAssignableFrom(throwable);
+    }
+
+    @Nullable
+    public static String buildString(@Nullable PsiExpression expression) {
+      if (expression == null) {
+        return null;
+      }
+      CommonDataflow.DataflowResult dataflowResult = CommonDataflow.getDataflowResult(expression);
+      if (dataflowResult == null) return null;
+      Set<Object> values = dataflowResult.getExpressionValues(expression);
+      if (values.size() == 1) {
+        if (values.iterator().next() instanceof String str) {
+          return str;
+        }
+      }
+      return null;
     }
 
     private static int countPlaceholders(String string) {
@@ -202,5 +342,23 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       }
       return count;
     }
+  }
+
+  private enum ResultType {
+    PLACE_HOLDER_MISMATCH, INCORRECT_STRING, SUCCESS
+  }
+
+  private enum LoggerType {
+    SLF4J, EQUAL_PLACEHOLDERS, LOG4J_OLD_STYLE, LOG4J_FORMATTED_STYLE
+  }
+
+  private interface LoggerTypeSearcher {
+    LoggerType findType(PsiMethodCallExpression expression, LoggerContext context);
+  }
+
+  private record LoggerContext(boolean ignoreSlf4jThrowableHavePlaceholder) {
+  }
+
+  private record Result(int argumentCount, int placeholderCount, ResultType result) {
   }
 }

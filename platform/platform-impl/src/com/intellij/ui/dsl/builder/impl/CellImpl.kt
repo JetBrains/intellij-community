@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.validation.*
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.Label
+import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.components.DslLabel
@@ -16,7 +17,6 @@ import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
-import com.intellij.util.SmartList
 import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
@@ -52,6 +52,8 @@ internal class CellImpl<T : JComponent>(
 
   private var visible = viewComponent.isVisible
   private var enabled = viewComponent.isEnabled
+
+  val onChangeManager = OnChangeManager(component)
 
   @Deprecated("Use align method instead")
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellImpl<T> {
@@ -173,11 +175,21 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, prop: MutableProperty<V>): CellImpl<T> {
-    componentSet(component, prop.get())
+    onChangeManager.applyBinding {
+      componentSet(component, prop.get())
+    }
 
-    onApply { if (shouldSaveOnApply()) prop.set(componentGet(component)) }
-    onReset { componentSet(component, prop.get()) }
-    onIsModified { shouldSaveOnApply() && componentGet(component) != prop.get() }
+    onApply {
+      if (shouldSaveOnApply()) prop.set(componentGet(component))
+    }
+    onReset {
+      onChangeManager.applyBinding {
+        componentSet(component, prop.get())
+      }
+    }
+    onIsModified {
+      shouldSaveOnApply() && componentGet(component) != prop.get()
+    }
     return this
   }
 
@@ -192,8 +204,7 @@ internal class CellImpl<T : JComponent>(
 
   override fun validationRequestor(validationRequestor: DialogValidationRequestor): CellImpl<T> {
     val origin = component.interactiveComponent
-    dialogPanelConfig.validationRequestors.getOrPut(origin) { SmartList() }
-      .add(validationRequestor)
+    dialogPanelConfig.validationRequestors.list(origin).add(validationRequestor)
     return this
   }
 
@@ -226,7 +237,7 @@ internal class CellImpl<T : JComponent>(
 
   override fun validationOnInput(vararg validations: DialogValidation): CellImpl<T> {
     val origin = component.interactiveComponent
-    dialogPanelConfig.validationsOnInput.getOrPut(origin) { SmartList() }
+    dialogPanelConfig.validationsOnInput.list(origin)
       .addAll(validations.map { it.forComponentIfNeeded(origin) })
 
     // Fallback in case if no validation requestors is defined
@@ -246,7 +257,7 @@ internal class CellImpl<T : JComponent>(
 
   override fun validationOnApply(vararg validations: DialogValidation): CellImpl<T> {
     val origin = component.interactiveComponent
-    dialogPanelConfig.validationsOnApply.getOrPut(origin) { SmartList() }
+    dialogPanelConfig.validationsOnApply.list(origin)
       .addAll(validations.map { it.forComponentIfNeeded(origin) })
     return this
   }
@@ -264,7 +275,7 @@ internal class CellImpl<T : JComponent>(
   private fun guessAndInstallValidationRequestor() {
     val stackTrace = Throwable()
     val origin = component.interactiveComponent
-    val validationRequestors = dialogPanelConfig.validationRequestors.getOrPut(origin) { SmartList() }
+    val validationRequestors = dialogPanelConfig.validationRequestors.list(origin)
     if (validationRequestors.isNotEmpty()) return
 
     validationRequestors.add(object : DialogValidationRequestor {
@@ -290,17 +301,29 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun onApply(callback: () -> Unit): CellImpl<T> {
-    dialogPanelConfig.applyCallbacks.register(component, callback)
+    dialogPanelConfig.applyCallbacks.list(component).add(callback)
     return this
   }
 
   override fun onReset(callback: () -> Unit): CellImpl<T> {
-    dialogPanelConfig.resetCallbacks.register(component, callback)
+    dialogPanelConfig.resetCallbacks.list(component).add(callback)
     return this
   }
 
   override fun onIsModified(callback: () -> Boolean): CellImpl<T> {
-    dialogPanelConfig.isModifiedCallbacks.register(component, callback)
+    dialogPanelConfig.isModifiedCallbacks.list(component).add(callback)
+    return this
+  }
+
+  @Throws(UiDslException::class)
+  override fun onChangedContext(listener: (component: T, context: ChangeContext) -> Unit): CellImpl<T> {
+    onChangeManager.register(listener)
+    return this
+  }
+
+  @Throws(UiDslException::class)
+  override fun onChanged(listener: (component: T) -> Unit): Cell<T> {
+    onChangeManager.register { component, _ -> listener(component) }
     return this
   }
 

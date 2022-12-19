@@ -2,7 +2,7 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "unused")
 package com.intellij.openapi.file
 
-import com.intellij.openapi.file.NioFileUtil.toCanonicalPath
+import com.intellij.openapi.file.NioPathUtil.toCanonicalPath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.text.nullize

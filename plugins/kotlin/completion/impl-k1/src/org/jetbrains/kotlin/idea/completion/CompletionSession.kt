@@ -106,14 +106,11 @@ abstract class CompletionSession(
     protected val bindingContext = CompletionBindingContextProvider.getInstance(project).getBindingContext(position, resolutionFacade)
     private val inDescriptor = position.getResolutionScope(bindingContext, resolutionFacade).ownerDescriptor
 
-    private val kotlinIdentifierStartPattern = StandardPatterns.character().javaIdentifierStart().andNot(singleCharPattern('$'))
-    private val kotlinIdentifierPartPattern = StandardPatterns.character().javaIdentifierPart().andNot(singleCharPattern('$'))
-
     protected val prefix = CompletionUtil.findIdentifierPrefix(
         originalParameters.position.containingFile,
         originalParameters.offset,
-        kotlinIdentifierPartPattern or singleCharPattern('@'),
-        kotlinIdentifierStartPattern
+        kotlinIdentifierPartPattern(),
+        kotlinIdentifierStartPattern()
     )
 
     protected val prefixMatcher = CamelHumpMatcher(prefix)

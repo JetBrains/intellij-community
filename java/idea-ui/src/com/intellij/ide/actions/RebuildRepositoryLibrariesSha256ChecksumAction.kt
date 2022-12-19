@@ -12,7 +12,7 @@ class RebuildRepositoryLibrariesSha256ChecksumAction : AnAction() {
 
   override fun update(e: AnActionEvent) {
     val project = e.project ?: return
-    e.presentation.isEnabledAndVisible = RepositoryLibrarySettings.getInstanceOrDefaults(project).isSha256ChecksumFeatureEnabled()
+    e.presentation.isEnabledAndVisible = RepositoryLibrarySettings.getInstanceOrDefaults(project).isSha256ChecksumUiSettingsDisplayed()
   }
 
   override fun actionPerformed(e: AnActionEvent) {

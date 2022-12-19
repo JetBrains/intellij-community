@@ -17,6 +17,6 @@ package com.intellij.debugger.ui.tree;
 
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 
-public interface ThreadDescriptor extends NodeDescriptor{
+public interface ThreadDescriptor extends NodeDescriptor {
   ThreadReferenceProxy getThreadReference();
 }

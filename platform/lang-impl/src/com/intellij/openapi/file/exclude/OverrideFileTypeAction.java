@@ -3,7 +3,9 @@ package com.intellij.openapi.file.exclude;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.fileChooser.ex.FileChooserKeys;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
@@ -15,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -24,6 +27,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 class OverrideFileTypeAction extends DumbAwareAction {
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     VirtualFile[] files = getContextFiles(e, file -> OverrideFileTypeManager.getInstance().getFileValue(file) == null);
@@ -42,8 +46,22 @@ class OverrideFileTypeAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VirtualFile[] files = getContextFiles(e, file->OverrideFileTypeManager.getInstance().getFileValue(file) == null);
+    VirtualFile[] files = getContextFiles(e, file -> OverrideFileTypeManager.getInstance().getFileValue(file) == null);
     if (files.length == 0) return;
+
+    FileType fileType = getContextFileType(e);
+    if (fileType != null) {
+      ChangeToThisFileTypeAction action = new ChangeToThisFileTypeAction(fileType.getDisplayName(),
+                                                                         files,
+                                                                         fileType);
+      ActionUtil.invokeAction(action,
+                              e.getDataContext(),
+                              e.getPlace(),
+                              e.getInputEvent(),
+                              null);
+      return;
+    }
+
     DefaultActionGroup group = new DefaultActionGroup();
     // although well-behaved types have unique names, file types coming from plugins can be wild
     Map<String, List<String>> duplicates = Arrays.stream(FileTypeManager.getInstance().getRegisteredFileTypes())
@@ -51,7 +69,7 @@ class OverrideFileTypeAction extends DumbAwareAction {
       .collect(Collectors.groupingBy(Function.identity()));
 
     for (FileType type : ContainerUtil.sorted(Arrays.asList(FileTypeManager.getInstance().getRegisteredFileTypes()),
-                                              (f1,f2)->f1.getDisplayName().compareToIgnoreCase(f2.getDisplayName()))) {
+                                              (f1, f2) -> f1.getDisplayName().compareToIgnoreCase(f2.getDisplayName()))) {
       if (!OverrideFileTypeManager.isOverridable(type)) continue;
       boolean hasDuplicate = duplicates.get(type.getDisplayName()).size() > 1;
       String dupHint = null;
@@ -80,6 +98,13 @@ class OverrideFileTypeAction extends DumbAwareAction {
       .filter(file -> file != null && ChangeToThisFileTypeAction.isOverridableFile(file))
       .filter(additionalPredicate)
       .toArray(count -> VirtualFile.ARRAY_FACTORY.create(count));
+  }
+
+  private static @Nullable FileType getContextFileType(@NotNull AnActionEvent e) {
+    FileType fileType = e.getData(FileChooserKeys.NEW_FILE_TYPE);
+    return fileType != null && OverrideFileTypeManager.isOverridable(fileType) ?
+           fileType :
+           null;
   }
 
   private static class ChangeToThisFileTypeAction extends DumbAwareAction {

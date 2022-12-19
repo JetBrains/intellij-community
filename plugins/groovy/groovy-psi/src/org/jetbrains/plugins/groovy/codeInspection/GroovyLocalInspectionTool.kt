@@ -29,9 +29,7 @@ abstract class GroovyLocalInspectionTool : LocalInspectionTool() {
   abstract fun buildGroovyVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): GroovyElementVisitor
 
   final override fun createOptionsPanel(): JComponent? {
-    val panel = createGroovyOptionsPanel()
+    val panel = super.createOptionsPanel()
     return enhanceInspectionToolPanel(this, explicitlyEnabledFileTypes, panel)
   }
-
-  protected open fun createGroovyOptionsPanel(): JComponent? = null
 }

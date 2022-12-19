@@ -645,6 +645,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     catch (NoDataException e) {
       return null;
     }
+    catch (ClosedStorageException e) {
+      throw e;
+    }
     catch (IOException io) {
       LOG.error(io);
       markCorrupted();

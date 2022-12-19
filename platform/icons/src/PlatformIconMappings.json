@@ -296,16 +296,6 @@
       "moveDown.svg": "actions/moveDown.svg",
       "moveUp.svg": "actions/moveUp.svg",
       "open.svg": "actions/menu-open.svg",
-      "openInToolWindow.svg": [
-        "actions/moveToBottomLeft.svg",
-        "actions/moveToBottomRight.svg",
-        "actions/moveToLeftBottom.svg",
-        "actions/moveToLeftTop.svg",
-        "actions/moveToRightBottom.svg",
-        "actions/moveToRightTop.svg",
-        "actions/moveToTopLeft.svg",
-        "actions/moveToTopRight.svg"
-      ],
       "openNewTab.svg": "actions/openNewTab.svg",
       "paste.svg": "actions/menu-paste.svg",
       "pin.svg": [

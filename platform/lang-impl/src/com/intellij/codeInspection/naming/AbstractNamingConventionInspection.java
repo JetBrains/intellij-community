@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.naming;
 
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +21,6 @@ import com.intellij.serialization.SerializationException;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.CheckBoxListListener;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -237,19 +237,23 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    JPanel panel = new JPanel(new BorderLayout(JBUIScale.scale(2), JBUIScale.scale(2)));
+    JPanel panel = new JPanel(new BorderLayout());
     CardLayout layout = new CardLayout();
     JPanel descriptionPanel = new JPanel(layout);
-    descriptionPanel.setBorder(JBUI.Borders.emptyLeft(12));
+    descriptionPanel.setBorder(JBUI.Borders.emptyLeft(20));
     panel.add(descriptionPanel, BorderLayout.CENTER);
     CheckBoxList<NamingConvention<T>> list = new CheckBoxList<>();
-    list.setBorder(JBUI.Borders.empty(2));
+    list.setBorder(JBUI.Borders.empty());
     List<NamingConvention<T>> values = new ArrayList<>(myNamingConventions.values());
     Collections.reverse(values);
     for (NamingConvention<T> convention : values) {
       String shortName = convention.getShortName();
       list.addItem(convention, convention.getElementDescription(), !myDisabledShortNames.contains(shortName));
-      descriptionPanel.add(myNamingConventionBeans.get(shortName).createOptionsPanel(), shortName);
+      final JComponent optionsPanel = myNamingConventionBeans.get(shortName).createOptionsPanel();
+      if (optionsPanel instanceof InspectionOptionsPanel inspectionOptionsPanel) {
+        inspectionOptionsPanel.addGlueIfNeeded();
+      }
+      descriptionPanel.add(optionsPanel, shortName);
     }
     list.addListSelectionListener((e) -> {
       int selectedIndex = list.getSelectedIndex();

@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isInheritable
@@ -32,8 +31,9 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.resolve.ImportPath
+import org.jetbrains.kotlin.util.match
 
 internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> {
@@ -88,12 +88,35 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     }
 
     override fun isUsageInContainingDeclaration(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
-        return false
+        analyze(declaration) {
+            val symbol = declaration.getSymbol()
+            val containerSymbol = symbol.getContainingSymbol() ?: return false
+            return reference.unwrappedTargets.filterIsInstance(KtDeclaration::class.java).any { candidateDeclaration ->
+                val candidateSymbol = candidateDeclaration.getSymbol()
+                candidateSymbol != symbol && candidateSymbol.getContainingSymbol() == containerSymbol
+            }
+        }
     }
 
 
     override fun isExtensionOfDeclarationClassUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
-        return false
+        if (declaration !is KtCallableDeclaration) return false
+        analyze(declaration) {
+            fun KtClassOrObjectSymbol.isContainerReceiverFor(
+                candidateSymbol: KtDeclarationSymbol
+            ): Boolean {
+                val receiverType = (candidateSymbol as? KtCallableSymbol)?.receiverType ?: return false
+                val expandedClassSymbol = receiverType.expandedClassSymbol ?: return false
+                return expandedClassSymbol == this || this.isSubClassOf(expandedClassSymbol)
+            }
+
+            val symbol = declaration.getSymbol()
+            val containerSymbol = symbol.getContainingSymbol() as? KtClassOrObjectSymbol ?: return false
+            return reference.unwrappedTargets.filterIsInstance(KtDeclaration::class.java).any { candidateDeclaration ->
+                val candidateSymbol = candidateDeclaration.getSymbol()
+                candidateSymbol != symbol && containerSymbol.isContainerReceiverFor(candidateSymbol)
+            }
+        }
     }
 
     override fun getReceiverTypeSearcherInfo(psiElement: PsiElement, isDestructionDeclarationSearch: Boolean): ReceiverTypeSearcherInfo? {
@@ -159,6 +182,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
 
     override fun forceResolveReferences(file: KtFile, elements: List<KtElement>) {
 
+        val i = 0;
     }
 
     override fun scriptDefinitionExists(file: PsiFile): Boolean {
@@ -226,7 +250,11 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     override fun isInheritable(ktClass: KtClass): Boolean = isOverridableBySymbol(ktClass)
 
     private fun isOverridableBySymbol(declaration: KtDeclaration) = analyzeWithReadAction(declaration) {
-        val symbol = declaration.getSymbol() as? KtSymbolWithModality ?: return@analyzeWithReadAction false
+        var declarationSymbol : KtSymbol? = declaration.getSymbol()
+        if (declarationSymbol is KtValueParameterSymbol) {
+            declarationSymbol = declarationSymbol.generatedPrimaryConstructorProperty
+        }
+        val symbol = declarationSymbol as? KtSymbolWithModality ?: return@analyzeWithReadAction false
         when (symbol.modality) {
             Modality.OPEN, Modality.SEALED, Modality.ABSTRACT -> true
             Modality.FINAL -> false

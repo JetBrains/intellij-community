@@ -69,7 +69,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
       return null;
     }
     int dotIndex = qualifiedName.lastIndexOf('.');
-    return dotIndex >= 0? qualifiedName.substring(0, dotIndex) : "";
+    return dotIndex >= 0 ? qualifiedName.substring(0, dotIndex) : "";
   }
 
   @Override
@@ -113,7 +113,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
       return psiClass != null ? SourcePosition.createFromElement(psiClass) : null;
     });
 
-    if(classPosition == null) {
+    if (classPosition == null) {
       createOrWaitPrepare(debugProcess, getQualifiedName());
     }
     else {
@@ -147,8 +147,8 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
   @Override
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
-    if(event instanceof ExceptionEvent) {
-      return ((ExceptionEvent) event).exception();
+    if (event instanceof ExceptionEvent) {
+      return ((ExceptionEvent)event).exception();
     }
     return super.getThisObject(context, event);
   }
@@ -228,20 +228,22 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     super.readExternal(parentNode);
 
     String packageName = parentNode.getAttributeValue("package_name");
-    setPackageName(packageName != null? packageName : calcPackageName(packageName));
+    setPackageName(packageName != null ? packageName : calcPackageName(packageName));
 
     try {
       getProperties().NOTIFY_CAUGHT = Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "NOTIFY_CAUGHT"));
-    } catch (Exception ignore) {
+    }
+    catch (Exception ignore) {
     }
     try {
       getProperties().NOTIFY_UNCAUGHT = Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "NOTIFY_UNCAUGHT"));
-    } catch (Exception ignore) {
+    }
+    catch (Exception ignore) {
     }
 
     String className = parentNode.getAttributeValue("class_name");
     setQualifiedName(className);
-    if(className == null) {
+    if (className == null) {
       throw new InvalidDataException(getReadNoClassName());
     }
   }

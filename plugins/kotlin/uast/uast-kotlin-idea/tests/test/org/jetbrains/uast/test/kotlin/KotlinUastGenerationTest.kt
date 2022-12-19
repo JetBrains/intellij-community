@@ -120,7 +120,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val expression = psiFactory.createExpression("a + b").toUElementOfType<UExpression>()
             ?: kfail("Cannot find plugin")
 
-        val returnExpression = uastElementFactory.createReturnExpresion(expression, false, dummyContextFile())
+        val returnExpression = uastElementFactory.createReturnExpression(expression, false, dummyContextFile())
         TestCase.assertEquals("a + b", returnExpression.returnExpression?.asRenderString())
         TestCase.assertEquals("return a + b", returnExpression.sourcePsi?.text)
     }
@@ -682,7 +682,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
                     UastBinaryOperator.GREATER,
                     uLambdaExpression.sourcePsi
                 )!!,
-                createReturnExpresion(
+                createReturnExpression(
                     createStringLiteralExpression("exit", uLambdaExpression.sourcePsi), true,
                     uLambdaExpression.sourcePsi
                 ),
@@ -776,7 +776,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
                         uLambdaExpression.sourcePsi
                     )!!,
                     oldBlockExpression,
-                    createReturnExpresion(
+                    createReturnExpression(
                         createStringLiteralExpression("exit", uLambdaExpression.sourcePsi), true,
                         uLambdaExpression.sourcePsi
                     ),
@@ -893,7 +893,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val localVariable = uastElementFactory.createLocalVariable("a", null, uastElementFactory.createNullLiteral(context), true, context)
         val declarationExpression =
             uastElementFactory.createDeclarationExpression(listOf(localVariable), context)
-        val returnExpression = uastElementFactory.createReturnExpresion(
+        val returnExpression = uastElementFactory.createReturnExpression(
             uastElementFactory.createSimpleReference(localVariable, context), false, context
         )
         val block = uastElementFactory.createBlockExpression(listOf(declarationExpression, returnExpression), context)

@@ -53,6 +53,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * and {@link ProgressManager#checkCanceled()} will throw a {@link ProcessCanceledException} if the progress indicator is canceled.
    *
    * @param progress an indicator to use, {@code null} means reuse current progress
+   *
+   * @see CoroutinesKt#coroutineToIndicator
    */
   public abstract void runProcess(@NotNull Runnable process, @Nullable ProgressIndicator progress) throws ProcessCanceledException;
 
@@ -62,6 +64,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * and {@link ProgressManager#checkCanceled()} will throw a {@link ProcessCanceledException} if the progress indicator is canceled.
    *
    * @param progress an indicator to use, {@code null} means reuse current progress
+   *
+   * @see CoroutinesKt#coroutineToIndicator
    */
   public final <T> T runProcess(@NotNull Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException {
     Ref<T> ref = new Ref<>();
@@ -193,6 +197,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @param task task to run (either {@link Task.Modal} or {@link Task.Backgroundable}).
    *
    * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgressIndicator
+   * @see com.intellij.openapi.progress.TasksKt#withModalProgressIndicator
    * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
    */
   public abstract void run(@NotNull Task task);

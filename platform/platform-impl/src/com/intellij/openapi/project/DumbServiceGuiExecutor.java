@@ -44,7 +44,7 @@ final class DumbServiceGuiExecutor extends MergingQueueGuiExecutor<DumbModeTask>
       DumbModeStatisticsCollector.logProcessFinished(childActivity, suspender.isClosed()
                                                                     ? DumbModeStatisticsCollector.IndexingFinishType.TERMINATED
                                                                     : DumbModeStatisticsCollector.IndexingFinishType.FINISHED);
-      DumbModeProgressTitle.getInstance(project).removeDumpModeProgress(visibleIndicator);
+      DumbModeProgressTitle.getInstance(project).removeDumbModeProgress(visibleIndicator);
     }
   }
 

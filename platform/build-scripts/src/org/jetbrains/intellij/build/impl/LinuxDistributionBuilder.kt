@@ -57,10 +57,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           Files.copy(iconPngPath, distBinDir.resolve("${context.productProperties.baseFileName}.png"), StandardCopyOption.REPLACE_EXISTING)
         }
         generateVMOptions(distBinDir)
-        generateUnixScripts(distBinDir = distBinDir,
-                            os = OsFamily.LINUX,
-                            arch = arch,
-                            context = context)
+        generateScripts(distBinDir, arch)
         generateReadme(targetPath)
         generateVersionMarker(targetPath, context)
         RepairUtilityBuilder.bundle(context = context, os = OsFamily.LINUX, arch = arch, distributionDir = targetPath)
@@ -279,6 +276,52 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         context.notifyArtifactWasBuilt(context.paths.artifactDir.resolve(snapArtifact))
       }
   }
+
+  private fun generateScripts(distBinDir: Path, arch: JvmArchitecture) {
+    val classPathJars = context.bootClassPathJarNames
+    var classPath = "CLASS_PATH=\"\$IDE_HOME/lib/${classPathJars[0]}\""
+    for (i in 1 until classPathJars.size) {
+      classPath += "\nCLASS_PATH=\"\$CLASS_PATH:\$IDE_HOME/lib/${classPathJars[i]}\""
+    }
+
+    val additionalJvmArguments = context.getAdditionalJvmArguments(os = OsFamily.LINUX, arch = arch, isScript = true).toMutableList()
+    if (!context.xBootClassPathJarNames.isEmpty()) {
+      val bootCp = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$IDE_HOME/lib/${it}" }
+      additionalJvmArguments.add("\"-Xbootclasspath/a:$bootCp\"")
+    }
+    val additionalJvmArgs = additionalJvmArguments.joinToString(separator = " ")
+    val baseName = context.productProperties.baseFileName
+
+    val vmOptionsPath = distBinDir.resolve("${baseName}64.vmoptions")
+
+    val defaultXmxParameter = try {
+      Files.readAllLines(vmOptionsPath).firstOrNull { it.startsWith("-Xmx") }
+    }
+    catch (e: NoSuchFileException) {
+      throw IllegalStateException("File '$vmOptionsPath' should be already generated at this point", e)
+    } ?: throw IllegalStateException("-Xmx was not found in '$vmOptionsPath'")
+
+    Files.createDirectories(distBinDir)
+    val sourceScriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/scripts")
+
+    val scriptName = "$baseName.sh"
+    Files.newDirectoryStream(sourceScriptDir).use {
+      for (file in it) {
+        val fileName = file.fileName.toString()
+        val target = distBinDir.resolve(if (fileName == "executable-template.sh") scriptName else fileName)
+        copyScript(sourceFile = file,
+                   targetFile = target,
+                   vmOptionsFileName = baseName,
+                   additionalJvmArgs = additionalJvmArgs,
+                   defaultXmxParameter = defaultXmxParameter,
+                   classPath = classPath,
+                   scriptName = scriptName,
+                   context = context)
+      }
+    }
+
+    copyInspectScript(context, distBinDir)
+  }
 }
 
 private const val NO_JBR_SUFFIX = "-no-jbr"
@@ -320,83 +363,6 @@ private fun makeFileExecutable(file: Path) {
   Span.current().addEvent("set file permission to 0755", Attributes.of(AttributeKey.stringKey("file"), file.toString()))
   @Suppress("SpellCheckingInspection")
   Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rwxr-xr-x"))
-}
-
-internal const val REMOTE_DEV_SCRIPT_FILE_NAME = "remote-dev-server.sh"
-
-internal fun generateUnixScripts(distBinDir: Path,
-                                 os: OsFamily,
-                                 arch: JvmArchitecture,
-                                 context: BuildContext) {
-  val classPathJars = context.bootClassPathJarNames
-  var classPath = "CLASS_PATH=\"\$IDE_HOME/lib/${classPathJars[0]}\""
-  for (i in 1 until classPathJars.size) {
-    classPath += "\nCLASS_PATH=\"\$CLASS_PATH:\$IDE_HOME/lib/${classPathJars[i]}\""
-  }
-
-  val additionalJvmArguments = context.getAdditionalJvmArguments(os = os, arch = arch, isScript = true).toMutableList()
-  if (!context.xBootClassPathJarNames.isEmpty()) {
-    val bootCp = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$IDE_HOME/lib/${it}" }
-    additionalJvmArguments.add("\"-Xbootclasspath/a:$bootCp\"")
-  }
-  val additionalJvmArgs = additionalJvmArguments.joinToString(separator = " ")
-  val baseName = context.productProperties.baseFileName
-
-  val vmOptionsPath = when (os) {
-    OsFamily.LINUX -> distBinDir.resolve("${baseName}64.vmoptions")
-    OsFamily.MACOS -> distBinDir.resolve("${baseName}.vmoptions")
-    else -> throw IllegalStateException("Unknown OsFamily")
-  }
-
-  val defaultXmxParameter = try {
-    Files.readAllLines(vmOptionsPath).firstOrNull { it.startsWith("-Xmx") }
-  }
-  catch (e: NoSuchFileException) {
-    throw IllegalStateException("File '$vmOptionsPath' should be already generated at this point", e)
-  } ?: throw IllegalStateException("-Xmx was not found in '$vmOptionsPath'")
-
-  val isRemoteDevEnabled = context.productProperties.productLayout.bundledPluginModules.contains("intellij.remoteDevServer")
-
-  Files.createDirectories(distBinDir)
-  val sourceScriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/scripts")
-
-  when (os) {
-    OsFamily.LINUX -> {
-      val scriptName = "$baseName.sh"
-      Files.newDirectoryStream(sourceScriptDir).use {
-        for (file in it) {
-          val fileName = file.fileName.toString()
-          if (!isRemoteDevEnabled && fileName == REMOTE_DEV_SCRIPT_FILE_NAME) {
-            continue
-          }
-
-          val target = distBinDir.resolve(if (fileName == "executable-template.sh") scriptName else fileName)
-          copyScript(sourceFile = file,
-                     targetFile = target,
-                     vmOptionsFileName = baseName,
-                     additionalJvmArgs = additionalJvmArgs,
-                     defaultXmxParameter = defaultXmxParameter,
-                     classPath = classPath,
-                     scriptName = scriptName,
-                     context = context)
-        }
-      }
-      copyInspectScript(context, distBinDir)
-    }
-    OsFamily.MACOS -> {
-      copyScript(sourceFile = sourceScriptDir.resolve(REMOTE_DEV_SCRIPT_FILE_NAME),
-                 targetFile = distBinDir.resolve(REMOTE_DEV_SCRIPT_FILE_NAME),
-                 vmOptionsFileName = baseName,
-                 additionalJvmArgs = additionalJvmArgs,
-                 defaultXmxParameter = defaultXmxParameter,
-                 classPath = classPath,
-                 scriptName = baseName,
-                 context = context)
-    }
-    else -> {
-      throw IllegalStateException("Unsupported OsFamily: $os")
-    }
-  }
 }
 
 private fun copyScript(sourceFile: Path,

@@ -14,6 +14,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -713,7 +714,7 @@ public final class CompileDriver {
   }
 
   private <T> T runWithReadAccess(@NotNull final ProgressIndicator progress, Callable<? extends T> task) {
-    return ReadAction.nonBlocking(task).expireWhen(() -> myProject.isDisposed() || progress.isCanceled()).executeSynchronously();
+    return ReadAction.nonBlocking(task).expireWhen(myProject::isDisposed).wrapProgress(progress).executeSynchronously();
   }
 
   private boolean validateJdks(@NotNull List<Module> scopeModules, boolean runUnknownSdkCheck) {
@@ -845,7 +846,7 @@ public final class CompileDriver {
     String nameToSelect = notSpecifiedValueInheritedFromProject ? null : ContainerUtil.getFirstItem(modules);
     final String message = JavaCompilerBundle.message(resourceId, modules.size(), formatModulesList(modules));
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManagerEx.isInIntegrationTest()) {
       LOG.error(message);
     }
 

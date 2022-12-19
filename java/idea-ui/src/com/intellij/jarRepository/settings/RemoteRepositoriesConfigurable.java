@@ -64,18 +64,19 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
   private final Project myProject;
   private final CollectionListModel<String> myServicesModel = new CollectionListModel<>();
   private final CollectionListModel<RemoteRepositoryDescription> myReposModel = new CollectionListModel<>();
-
-  private final MutableEntityStorageWrapper myMutableEntityStorageWrapper;
+  private final WorkspaceModel myWorkspaceModel;
+  private MutableEntityStorage myMutableEntityStorage;
 
   public RemoteRepositoriesConfigurable(Project project) {
     myProject = project;
-    myMutableEntityStorageWrapper = new MutableEntityStorageWrapper(project);
+    myWorkspaceModel = WorkspaceModel.getInstance(project);
+    resetMutableEntityStorage();
     configControls();
   }
 
   @Override
   public boolean isModified() {
-    return isServiceListModified() || isRepoListModified() || myMutableEntityStorageWrapper.hasChanges();
+    return isServiceListModified() || isRepoListModified() || myMutableEntityStorage.hasChanges();
   }
 
   private boolean isServiceListModified() {
@@ -105,7 +106,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
       JavaUiBundle.message("settings.remote.repo.Maven.Repository.URL"),
       JavaUiBundle.message("settings.remote.repo.no.remote.repositories"), DataAdapter.REPOSITORY_DESCRIPTION_ADAPTER
     );
-    setupRepoRemoveButton(myProject, myMutableEntityStorageWrapper, myJarRepositoryList, myReposModel, myRemoveRepoButton);
+    setupRepoRemoveButton();
 
     ListUtil.disableWhenNoSelection(myTestServiceButton, myServiceList);
     myTestServiceButton.addActionListener(new ActionListener() {
@@ -133,7 +134,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
       @Override
       public void actionPerformed(ActionEvent e) {
         Set<String> currentIds = myReposModel.getItems().stream().map(RemoteRepositoryDescription::getId).collect(Collectors.toSet());
-        int bindLibrariesCount = countBindLibraries(myMutableEntityStorageWrapper.builder, currentIds);
+        int bindLibrariesCount = countBindLibraries(myMutableEntityStorage, currentIds);
         if (bindLibrariesCount == 0) {
           resetReposModel(RemoteRepositoryDescription.DEFAULT_REPOSITORIES);
           return;
@@ -145,7 +146,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
         ).ask(myProject);
 
         if (resetConfirmed) {
-          updateLibrariesRepositoryId(myMutableEntityStorageWrapper.builder, currentIds, null);
+          updateLibrariesRepositoryId(myMutableEntityStorage, currentIds, null);
           resetReposModel(RemoteRepositoryDescription.DEFAULT_REPOSITORIES);
         }
       }
@@ -242,33 +243,27 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
     list.getEmptyText().setText(emptyListHint);
   }
 
-  private static void setupRepoRemoveButton(final Project project,
-                                            final MutableEntityStorageWrapper mutableEntityStorageWrapper,
-                                            final JBList<RemoteRepositoryDescription> list,
-                                            final CollectionListModel<RemoteRepositoryDescription> model,
-                                            final JButton removeButton) {
-
-    removeButton.addActionListener(event -> {
-      final int index = list.getSelectedIndex();
-      if (index < 0 || index > list.getItemsCount()) {
+  private void setupRepoRemoveButton() {
+    myRemoveRepoButton.addActionListener(event -> {
+      final int index = myJarRepositoryList.getSelectedIndex();
+      if (index < 0 || index > myJarRepositoryList.getItemsCount()) {
         return;
       }
-      final RemoteRepositoryDescription remoteRepository = model.getElementAt(index);
+      final RemoteRepositoryDescription remoteRepository = myReposModel.getElementAt(index);
 
-      int bindLibrariesCount = countBindLibraries(mutableEntityStorageWrapper.builder, remoteRepository);
+      int bindLibrariesCount = countBindLibraries(myMutableEntityStorage, remoteRepository);
       if (bindLibrariesCount > 0) {
-        var dialog = new RepositoryRemoveDialog(project, remoteRepository, model.getItems(), bindLibrariesCount);
+        var dialog = new RepositoryRemoveDialog(myProject, remoteRepository, myReposModel.getItems(), bindLibrariesCount);
         if (!dialog.showAndGet()) {
           return;
         }
-        updateLibrariesRepositoryId(mutableEntityStorageWrapper.builder, remoteRepository, dialog.getSelectedRepository());
+        updateLibrariesRepositoryId(myMutableEntityStorage, remoteRepository, dialog.getSelectedRepository());
       }
 
-      removeSelectedItems(list);
-      list.requestFocusInWindow();
+      removeSelectedItems(myJarRepositoryList);
+      myJarRepositoryList.requestFocusInWindow();
     });
   }
-
 
 
   @Override
@@ -298,20 +293,20 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
     List<String> oldUrls = ContainerUtil.map(RemoteRepositoriesConfiguration.getInstance(myProject).getRepositories(), RemoteRepositoryDescription::getUrl);
     MavenRepositoryServicesManager.getInstance(myProject).setUrls(myServicesModel.getItems());
     RemoteRepositoriesConfiguration.getInstance(myProject).setRepositories(myReposModel.getItems());
-    myMutableEntityStorageWrapper.apply();
+    applyMutableEntityStorageChanges();
 
-    if (!newUrls.containsAll(oldUrls) || myMutableEntityStorageWrapper.hasChanges()) {
+    if (!newUrls.containsAll(oldUrls) || myMutableEntityStorage.hasChanges()) {
       RepositoryLibrariesReloaderKt.reloadAllRepositoryLibraries(myProject);
     }
 
-    myMutableEntityStorageWrapper.reset();
+    resetMutableEntityStorage();
   }
 
   @Override
   public void reset() {
     resetServicesModel(MavenRepositoryServicesManager.getInstance(myProject).getUrls());
     resetReposModel(RemoteRepositoriesConfiguration.getInstance(myProject).getRepositories());
-    myMutableEntityStorageWrapper.reset();
+    resetMutableEntityStorage();
   }
 
   private void resetServicesModel(final List<String> urls) {
@@ -321,6 +316,25 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
 
   private void resetReposModel(final List<RemoteRepositoryDescription> repositories) {
     myReposModel.replaceAll(repositories);
+  }
+
+  private void resetMutableEntityStorage() {
+    myMutableEntityStorage = MutableEntityStorage.from(myWorkspaceModel.getEntityStorage().getCurrent());
+  }
+
+  private void applyMutableEntityStorageChanges() {
+    try {
+      WriteAction.run(() -> {
+        myWorkspaceModel.updateProjectModel(
+          "Update libraries bindings to remote repositories on repository remove", it -> {
+            it.addDiff(myMutableEntityStorage);
+            return null;
+          });
+      });
+    }
+    catch (Throwable e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static final class URLInputValidator implements InputValidator {
@@ -338,44 +352,6 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
     @Override
     public boolean canClose(String inputString) {
       return checkInput(inputString);
-    }
-  }
-
-  /**
-   * Created to wrap non-final builder and pass final wrapper to remove button action listener lambda.
-   * <p/>
-   * See {@link RemoteRepositoriesConfigurable#setupRepoRemoveButton(Project, MutableEntityStorageWrapper, JBList, CollectionListModel, JButton)}
-   */
-  private static class MutableEntityStorageWrapper {
-    private final WorkspaceModel workspaceModel;
-    MutableEntityStorage builder;
-
-    private MutableEntityStorageWrapper(Project project) {
-      workspaceModel = WorkspaceModel.getInstance(project);
-      reset();
-    }
-
-    void reset() {
-      builder = MutableEntityStorage.from(workspaceModel.getEntityStorage().getCurrent());
-    }
-
-    boolean hasChanges() {
-      return builder.hasChanges();
-    }
-
-    void apply() {
-      try {
-        WriteAction.run(() -> {
-          workspaceModel.updateProjectModel(
-            "Update libraries bindings to remote repositories on repository remove", it -> {
-              it.addDiff(builder);
-              return null;
-            });
-        });
-      }
-      catch (Throwable e) {
-        throw new RuntimeException(e);
-      }
     }
   }
 }

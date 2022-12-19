@@ -2,18 +2,25 @@
 
 package com.intellij.execution.ui.layout.actions;
 
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.execution.ui.actions.BaseViewAction;
 import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.NotNull;
 
 public final class CloseViewAction extends BaseViewAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
 
   @Override
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {

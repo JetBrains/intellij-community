@@ -207,7 +207,7 @@ class JarRepositoryManagerTest : UsefulTestCase() {
     assertEquals(expected, actual)
   }
   
-  private fun createDescriptorWithJarRepoId(jarRepoId: String?) = JpsMavenRepositoryLibraryDescriptor("id", false, emptyList(), false,
+  private fun createDescriptorWithJarRepoId(jarRepoId: String?) = JpsMavenRepositoryLibraryDescriptor("id", false, emptyList(),
                                                                                                       emptyList(),
                                                                                                       jarRepoId)
   private fun getResultingRoots(promise: Promise<MutableList<OrderRoot>>): List<OrderRoot>? {

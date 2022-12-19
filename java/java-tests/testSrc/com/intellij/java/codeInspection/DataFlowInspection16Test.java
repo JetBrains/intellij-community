@@ -42,4 +42,9 @@ public class DataFlowInspection16Test extends DataFlowInspectionTestCase {
   public void testStaticFieldInAnonymous() { doTest(); }
 
   public void testMutabilityJdk16() { doTest(); }
+  
+  public void testAccessorNullityUnderDefaultQualifier() {
+    addCheckerAnnotations(myFixture);
+    doTest();
+  }
 }

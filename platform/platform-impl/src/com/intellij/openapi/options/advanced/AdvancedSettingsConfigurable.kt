@@ -130,6 +130,8 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
               actionButton(resetAction)
                 .applyToComponent {
                   setMinimumButtonSize(Dimension(minSize, minSize))
+                  // Revert button is a little higher than checkbox, so disable default additional vertical gaps for the button
+                  putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(false, false))
                 }
                 .visibleIf(advancedSetting.isDefault.not())
             }

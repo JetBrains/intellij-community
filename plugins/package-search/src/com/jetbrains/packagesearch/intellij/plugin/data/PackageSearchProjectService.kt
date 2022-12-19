@@ -17,10 +17,10 @@
 package com.jetbrains.packagesearch.intellij.plugin.data
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.dependencytoolwindow.DependencyToolWindowFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.*
@@ -33,6 +33,7 @@ import com.jetbrains.packagesearch.intellij.plugin.getInstalledDependencies
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstalledDependenciesUsages
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.util.BackgroundLoadingBarController
 import com.jetbrains.packagesearch.intellij.plugin.util.PowerSaveModeState
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
@@ -58,14 +59,13 @@ import com.jetbrains.packagesearch.intellij.plugin.util.showBackgroundLoadingBar
 import com.jetbrains.packagesearch.intellij.plugin.util.stateInAndCatchAndLog
 import com.jetbrains.packagesearch.intellij.plugin.util.throttle
 import com.jetbrains.packagesearch.intellij.plugin.util.timer
-import com.jetbrains.packagesearch.intellij.plugin.util.toolWindowManagerFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.trustedProjectFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
@@ -80,15 +80,12 @@ import org.jetbrains.idea.packagesearch.api.PackageSearchApiClient
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 
-@Service(Level.PROJECT)
 internal class PackageSearchProjectService(private val project: Project) : Disposable {
 
     val dataProvider = ProjectDataProvider(
         apiClient = PackageSearchApiClient(),
         packageCache = project.packageSearchProjectCachesService.installedDependencyCache
     )
-
-    private val canShowLoadingBar = MutableStateFlow(false)
 
     private val restartChannel = Channel<Unit>()
 
@@ -105,7 +102,10 @@ internal class PackageSearchProjectService(private val project: Project) : Dispo
     ) { results: Array<Boolean> -> results.all { it } }
         .flatMapLatest { isPkgsEnabled -> if (isPkgsEnabled) project.nativeModulesFlow else emptyFlow() }
         .replayOn(project.moduleChangesSignalFlow)
-        .map(project.loadingContainer) { nativeModules -> project.moduleTransformers.parallelMap { it.transformModules(project, nativeModules) }.flatten() }
+        .map(project.loadingContainer) { nativeModules ->
+            project.moduleTransformers.parallelMap { it.transformModules(project, nativeModules) }
+                .flatten()
+        }
         .catchAndLog()
 
     val packageSearchModulesStateFlow = packageSearchModulesFlow
@@ -201,15 +201,8 @@ internal class PackageSearchProjectService(private val project: Project) : Dispo
 
         var controller: BackgroundLoadingBarController? = null
 
-        project.toolWindowManagerFlow.filter { it.id == DependencyToolWindowFactory.toolWindowId }
-            .take(1)
-            .onEach { canShowLoadingBar.emit(true) }
-            .launchIn(project.lifecycleScope)
-
         if (PluginEnvironment.isNonModalLoadingEnabled) {
-            canShowLoadingBar
-                .filter { it }
-                .flatMapLatest { project.loadingContainer.loadingFlow }
+            project.loadingContainer.loadingFlow
                 .throttle(1.seconds)
                 .onEach { controller?.clear() }
                 .filter { it == LoadingContainer.LoadingState.LOADING }

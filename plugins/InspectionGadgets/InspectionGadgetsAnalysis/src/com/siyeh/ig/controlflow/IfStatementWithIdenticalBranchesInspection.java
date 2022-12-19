@@ -17,7 +17,7 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -33,10 +33,11 @@ import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 // Not really with identical branches, but also common parts
@@ -50,10 +51,11 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
   );
 
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.common.if.parts.settings.highlight.when.tail.call"), this, "myHighlightWhenLastStatementIsCall");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myHighlightWhenLastStatementIsCall",
+               JavaAnalysisBundle.message("inspection.common.if.parts.settings.highlight.when.tail.call")));
   }
 
   @NotNull

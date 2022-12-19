@@ -5,6 +5,7 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
@@ -32,6 +33,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Function;
 
+import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.HardcodedMethodConstants.EQUALS_IGNORE_CASE;
@@ -73,12 +75,11 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
 
   public boolean ignoreStringConstructor = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors"), this,
-      "ignoreStringConstructor");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreStringConstructor",
+               InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors")));
   }
 
   @NotNull

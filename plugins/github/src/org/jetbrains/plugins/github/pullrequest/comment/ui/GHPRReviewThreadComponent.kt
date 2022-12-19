@@ -1,180 +1,162 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
+import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
+import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
+import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
+import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.ClickListener
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.panels.HorizontalBox
-import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.components.labels.LinkListener
+import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.PathUtil
+import com.intellij.util.containers.nullize
+import com.intellij.util.text.JBDateFormat
 import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRReviewThreadDiffComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRSelectInToolWindowHelper
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtensionComponentBase.Companion.items
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.awt.Cursor
+import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
 import javax.swing.*
-import kotlin.properties.Delegates
+import javax.swing.event.ListDataEvent
+import javax.swing.event.ListDataListener
 
 object GHPRReviewThreadComponent {
+
+  const val SIDE_GAP = 10
 
   fun create(project: Project,
              thread: GHPRReviewThreadModel,
              reviewDataProvider: GHPRReviewDataProvider,
              avatarIconsProvider: GHAvatarIconsProvider,
              suggestedChangeHelper: GHPRSuggestedChangeHelper,
+             ghostUser: GHUser,
              currentUser: GHUser): JComponent {
-    val panel = JPanel(VerticalLayout(12)).apply {
+    val panel = JPanel(VerticalLayout(0)).apply {
       isOpaque = false
+      border = JBUI.Borders.empty(SIDE_GAP - GHPRReviewCommentComponent.GAP_TOP, 0, SIDE_GAP, 0)
     }
-    panel.add(GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(project, thread,
-                                                                                              reviewDataProvider, avatarIconsProvider,
-                                                                                              suggestedChangeHelper)))
+    val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
+                                                                     reviewDataProvider,
+                                                                     avatarIconsProvider,
+                                                                     suggestedChangeHelper) {
+      it.border = JBUI.Borders.empty(GHPRReviewCommentComponent.GAP_TOP, SIDE_GAP, GHPRReviewCommentComponent.GAP_BOTTOM, SIDE_GAP)
+      GHPRTimelineItemUIUtil.withHoverHighlight(it)
+    }
+    val commentsPanel = TimelineThreadCommentsPanel(thread, commentComponentFactory, 0,
+                                                    GHPRReviewCommentComponent.AVATAR_SIZE + GHPRReviewCommentComponent.AVATAR_GAP + SIDE_GAP)
+    panel.add(commentsPanel)
 
     if (reviewDataProvider.canComment()) {
-      panel.add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser))
+      panel.add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser).apply {
+        border = JBUI.Borders.empty(0, SIDE_GAP)
+      })
     }
     return panel
   }
 
-  fun createWithDiff(project: Project,
-                     thread: GHPRReviewThreadModel,
-                     reviewDataProvider: GHPRReviewDataProvider,
-                     avatarIconsProvider: GHAvatarIconsProvider,
-                     diffComponentFactory: GHPRReviewThreadDiffComponentFactory,
-                     selectInToolWindowHelper: GHPRSelectInToolWindowHelper,
-                     suggestedChangeHelper: GHPRSuggestedChangeHelper,
-                     currentUser: GHUser): JComponent {
+  fun createThreadDiff(thread: GHPRReviewThreadModel,
+                       diffComponentFactory: GHPRReviewThreadDiffComponentFactory,
+                       selectInToolWindowHelper: GHPRSelectInToolWindowHelper): JComponent {
 
-    val collapseButton = InlineIconButton(AllIcons.General.CollapseComponent, AllIcons.General.CollapseComponentHover,
-                                          tooltip = GithubBundle.message("pull.request.timeline.review.thread.collapse"))
-    val expandButton = InlineIconButton(AllIcons.General.ExpandComponent, AllIcons.General.ExpandComponentHover,
-                                        tooltip = GithubBundle.message("pull.request.timeline.review.thread.expand"))
+    val scopeProvider = ActivatableCoroutineScopeProvider()
 
-    val contentPanel = RoundedPanel(VerticalLayout(4), 8).apply {
-      isOpaque = false
-      add(createFileName(thread, selectInToolWindowHelper, collapseButton, expandButton))
+    val expandCollapseButton = InlineIconButton(AllIcons.General.CollapseComponent, AllIcons.General.CollapseComponentHover,
+                                                tooltip = GithubBundle.message("pull.request.timeline.review.thread.collapse")).apply {
+      actionListener = ActionListener {
+        thread.collapsedState.update { !it }
+      }
     }
 
-    val commentPanel = JPanel(VerticalLayout(4)).apply {
-      isOpaque = false
+    val diffComponent = diffComponentFactory.createComponent(thread.diffHunk, thread.startLine).apply {
+      border = IdeBorderFactory.createBorder(SideBorder.TOP)
+    }
+    scopeProvider.launchInScope {
+      diffComponent.bindVisibility(this, thread.collapsedState.map { !it })
     }
 
-    object : CollapseController(thread, contentPanel, commentPanel, collapseButton, expandButton) {
-
-      override fun createDiffAndCommentsPanels(): Pair<JComponent, JComponent> {
-        val diffComponent = diffComponentFactory.createComponent(thread.diffHunk, thread.startLine).apply {
-          border = IdeBorderFactory.createBorder(SideBorder.TOP)
+    scopeProvider.launchInScope {
+      thread.collapsedState.collect {
+        expandCollapseButton.icon = if (it) {
+          AllIcons.General.ExpandComponent
         }
-
-        val commentsComponent = JPanel(VerticalLayout(12)).apply {
-          isOpaque = false
-          val reviewCommentComponent = GHPRReviewCommentComponent.factory(project, thread,
-                                                                          reviewDataProvider, avatarIconsProvider,
-                                                                          suggestedChangeHelper,
-                                                                          false)
-          add(GHPRReviewThreadCommentsPanel.create(thread, reviewCommentComponent))
-
-          if (reviewDataProvider.canComment()) {
-            add(getThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser))
-          }
+        else {
+          AllIcons.General.CollapseComponent
         }
-        return diffComponent to commentsComponent
-      }
-    }
-
-
-    return JPanel(VerticalLayout(4)).apply {
-      isOpaque = false
-      add(contentPanel)
-      add(commentPanel)
-    }
-  }
-
-  private abstract class CollapseController(private val thread: GHPRReviewThreadModel,
-                                            private val contentPanel: JPanel,
-                                            private val commentPanel: JPanel,
-                                            private val collapseButton: InlineIconButton,
-                                            private val expandButton: InlineIconButton) {
-
-    private val collapseModel = SingleValueModel(true)
-    private var childPanels by Delegates.observable<Pair<JComponent, JComponent>?>(null) { _, oldValue, newValue ->
-      var revalidate = false
-      if (oldValue != null) {
-        contentPanel.remove(oldValue.first)
-        commentPanel.remove(oldValue.second)
-        revalidate = true
-      }
-      if (newValue != null) {
-        contentPanel.add(newValue.first)
-        commentPanel.add(newValue.second)
-      }
-      if (revalidate) {
-        contentPanel.revalidate()
-        commentPanel.revalidate()
-      }
-      else {
-        contentPanel.validate()
-        commentPanel.validate()
-      }
-      contentPanel.repaint()
-      commentPanel.repaint()
-    }
-
-    init {
-      collapseButton.actionListener = ActionListener { collapseModel.value = true }
-      expandButton.actionListener = ActionListener { collapseModel.value = false }
-      collapseModel.addListener { update() }
-      thread.addAndInvokeStateChangeListener(::update)
-    }
-
-    private fun update() {
-      val shouldBeVisible = !thread.isResolved || !collapseModel.value
-      if (shouldBeVisible) {
-        if (childPanels == null) {
-          childPanels = createDiffAndCommentsPanels()
+        expandCollapseButton.hoveredIcon = if (it) {
+          AllIcons.General.ExpandComponentHover
+        }
+        else {
+          AllIcons.General.CollapseComponentHover
+        }
+        expandCollapseButton.tooltip = if (it) {
+          GithubBundle.message("pull.request.timeline.review.thread.expand")
+        }
+        else {
+          GithubBundle.message("pull.request.timeline.review.thread.collapse")
         }
       }
-      else {
-        childPanels = null
-      }
-
-      collapseButton.isVisible = thread.isResolved && !collapseModel.value
-      expandButton.isVisible = thread.isResolved && collapseModel.value
     }
 
-    abstract fun createDiffAndCommentsPanels(): Pair<JComponent, JComponent>
+    thread.addAndInvokeStateChangeListener {
+      expandCollapseButton.isVisible = thread.isResolved || thread.isOutdated
+    }
+
+    scopeProvider.launchInScope {
+      diffComponent.bindVisibility(this, thread.collapsedState.map { !it })
+    }
+
+    return RoundedPanel(VerticalLayout(0), 8).apply {
+      isOpaque = false
+      add(createFileName(thread, selectInToolWindowHelper, expandCollapseButton))
+      add(diffComponent)
+    }.also {
+      scopeProvider.activateWith(it)
+    }
   }
 
   private fun createFileName(thread: GHPRReviewThreadModel,
                              selectInToolWindowHelper: GHPRSelectInToolWindowHelper,
-                             collapseButton: InlineIconButton,
-                             expandButton: InlineIconButton): JComponent {
+                             expandCollapseButton: InlineIconButton): JComponent {
     val name = PathUtil.getFileName(thread.filePath)
     val path = PathUtil.getParentPath(thread.filePath)
     val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(name)
@@ -188,25 +170,11 @@ object GHPRReviewThreadComponent {
         }
       }.installOn(this)
     }
-
-    val outdatedLabel = JBLabel(" ${GithubBundle.message("pull.request.review.thread.outdated")} ", UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = UIUtil.getPanelBackground()
-    }.andOpaque()
-
-    val resolvedLabel = JBLabel(" ${GithubBundle.message("pull.request.review.comment.resolved")} ", UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = UIUtil.getPanelBackground()
-    }.andOpaque()
-
-
-    thread.addAndInvokeStateChangeListener {
-      outdatedLabel.isVisible = thread.isOutdated
-      resolvedLabel.isVisible = thread.isResolved
-    }
-
-    return NonOpaquePanel(MigLayout(LC().insets("0").gridGap("5", "0").fill().noGrid())).apply {
+    return JPanel(MigLayout(LC().insets("0").gridGap("5", "0").fill().noGrid())).apply {
       border = JBUI.Borders.empty(10)
+      CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
+        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+      }
 
       add(nameLabel)
 
@@ -214,11 +182,7 @@ object GHPRReviewThreadComponent {
         foreground = UIUtil.getContextHelpForeground()
       })
 
-      add(outdatedLabel, CC().hideMode(3))
-      add(resolvedLabel, CC().hideMode(3))
-
-      add(collapseButton, CC().hideMode(3))
-      add(expandButton, CC().hideMode(3))
+      add(expandCollapseButton, CC().hideMode(3).gapLeft("10:push"))
     }
   }
 
@@ -230,76 +194,200 @@ object GHPRReviewThreadComponent {
     currentUser: GHUser
   ): JComponent {
     val toggleModel = SingleValueModel(false)
-    val textFieldModel = GHCommentTextFieldModel(project) { text ->
-      reviewDataProvider.addComment(EmptyProgressIndicator(), thread.getElementAt(0).id, text).successOnEdt {
-        thread.addComment(GHPRReviewCommentModel.convert(it))
-        toggleModel.value = false
+
+    return ToggleableContainer.create(
+      toggleModel,
+      {
+        createCollapsedThreadActionsComponent(reviewDataProvider, thread) {
+          toggleModel.value = true
+        }
+      },
+      {
+        createUncollapsedThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser) {
+          toggleModel.value = false
+        }
       }
-    }
+    )
+  }
+
+  private fun createCollapsedThreadActionsComponent(reviewDataProvider: GHPRReviewDataProvider,
+                                                    thread: GHPRReviewThreadModel,
+                                                    onReply: () -> Unit): JComponent {
 
     val toggleReplyLink = LinkLabel<Any>(GithubBundle.message("pull.request.review.thread.reply"), null) { _, _ ->
-      toggleModel.value = true
+      onReply()
     }.apply {
       isFocusable = true
     }
 
-    val resolveLink = LinkLabel<Any>(GithubBundle.message("pull.request.review.thread.resolve"), null).apply {
-      isFocusable = true
-    }.also {
-      it.setListener({ _, _ ->
-                       it.isEnabled = false
-                       reviewDataProvider.resolveThread(EmptyProgressIndicator(), thread.id).handleOnEdt { _, _ ->
-                         it.isEnabled = true
-                       }
-                     }, null)
-    }
+    val unResolveLink = createUnResolveLink(reviewDataProvider, thread)
 
-    val unresolveLink = LinkLabel<Any>(GithubBundle.message("pull.request.review.thread.unresolve"), null).apply {
-      isFocusable = true
-    }.also {
-      it.setListener({ _, _ ->
-                       it.isEnabled = false
-                       reviewDataProvider.unresolveThread(EmptyProgressIndicator(), thread.id).handleOnEdt { _, _ ->
-                         it.isEnabled = true
-                       }
-                     }, null)
-    }
-
-    val content = ToggleableContainer.create(
-      toggleModel,
-      { createThreadActionsComponent(thread, toggleReplyLink, resolveLink, unresolveLink) },
-      {
-        GHCommentTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser,
-                                                         GithubBundle.message("pull.request.review.thread.reply"),
-                                                         onCancel = { toggleModel.value = false })
-      }
-    )
-    return JPanel().apply {
+    return JPanel(HorizontalLayout(8)).apply {
       isOpaque = false
-      layout = MigLayout(LC().insets("0"))
-      add(content, CC().width("${GHUIUtil.getPRTimelineWidth() + JBUIScale.scale(GHUIUtil.AVATAR_SIZE)}px"))
+      border = JBUI.Borders.empty(6, GHPRReviewCommentComponent.AVATAR_SIZE + GHPRReviewCommentComponent.AVATAR_GAP, 6, 0)
+
+      add(toggleReplyLink)
+      add(unResolveLink)
     }
   }
 
-  private fun createThreadActionsComponent(model: GHPRReviewThreadModel,
-                                           toggleReplyLink: LinkLabel<Any>,
-                                           resolveLink: LinkLabel<Any>,
-                                           unresolveLink: LinkLabel<Any>): JComponent {
-    fun update() {
-      resolveLink.isVisible = model.state != GHPullRequestReviewCommentState.PENDING && !model.isResolved
-      unresolveLink.isVisible = model.state != GHPullRequestReviewCommentState.PENDING && model.isResolved
+  fun createUncollapsedThreadActionsComponent(project: Project, reviewDataProvider: GHPRReviewDataProvider,
+                                              thread: GHPRReviewThreadModel,
+                                              avatarIconsProvider: GHAvatarIconsProvider,
+                                              currentUser: GHUser,
+                                              onDone: () -> Unit): JComponent {
+    val textFieldModel = GHCommentTextFieldModel(project) { text ->
+      reviewDataProvider.addComment(EmptyProgressIndicator(), thread.getElementAt(0).id, text).successOnEdt {
+        thread.addComment(it)
+        onDone()
+      }
     }
 
-    model.addAndInvokeStateChangeListener(::update)
+    val submitShortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommentInputComponentFactory.defaultSubmitShortcut)
+    val newLineShortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.ENTER)
 
-    return HorizontalBox().apply {
+    val unResolveAction = object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent?) {
+        textFieldModel.isBusy = true
+        if (thread.isResolved) {
+          reviewDataProvider.unresolveThread(EmptyProgressIndicator(), thread.id)
+        }
+        else {
+          reviewDataProvider.resolveThread(EmptyProgressIndicator(), thread.id)
+        }.handleOnEdt { _, _ ->
+          textFieldModel.isBusy = false
+        }
+      }
+    }
+
+    thread.addAndInvokeStateChangeListener {
+      val name = if (thread.isResolved) {
+        GithubBundle.message("pull.request.review.thread.unresolve")
+      }
+      else {
+        GithubBundle.message("pull.request.review.thread.resolve")
+      }
+      unResolveAction.putValue(Action.NAME, name)
+    }
+
+    val unResolveEnabledListener: () -> Unit = {
+      unResolveAction.isEnabled = !textFieldModel.isBusy
+    }
+    textFieldModel.addStateListener(unResolveEnabledListener)
+    unResolveEnabledListener()
+
+    val cancelAction = swingAction(CommonBundle.getCancelButtonText()) {
+      onDone()
+    }
+    val actions = CommentInputActionsComponentFactory.Config(
+      primaryAction = MutableStateFlow(textFieldModel.submitAction(GithubBundle.message("pull.request.review.thread.reply"))),
+      additionalActions = MutableStateFlow(listOf(unResolveAction)),
+      hintInfo = MutableStateFlow(CommentInputActionsComponentFactory.HintInfo(
+        submitHint = GithubBundle.message("pull.request.review.thread.reply.hint", submitShortcutText),
+        newLineHint = GithubBundle.message("pull.request.new.line.hint", newLineShortcutText)
+      ))
+    )
+
+    return GHCommentTextFieldFactory(textFieldModel)
+      .create(GHCommentTextFieldFactory.ActionsConfig(actions, cancelAction),
+              GHCommentTextFieldFactory.AvatarConfig(avatarIconsProvider, currentUser))
+  }
+
+  fun getCollapsedThreadActionsComponent(reviewDataProvider: GHPRReviewDataProvider,
+                                         avatarIconsProvider: GHAvatarIconsProvider,
+                                         thread: GHPRReviewThreadModel,
+                                         repliesCollapsedState: MutableStateFlow<Boolean>,
+                                         ghostUser: GHUser): JComponent {
+    val authorsLabel = JLabel()
+    val repliesLink = LinkLabel<Any>("", null, LinkListener { _, _ ->
+      repliesCollapsedState.update { !it }
+    })
+    val lastReplyDateLabel = JLabel().apply {
+      foreground = UIUtil.getContextHelpForeground()
+    }
+
+    val repliesModel = thread.repliesModel
+    repliesModel.addListDataListener(object : ListDataListener {
+      init {
+        update()
+      }
+
+      private fun update() {
+        val authors = LinkedHashSet<GHActor>()
+        val repliesCount = repliesModel.size
+
+        repliesModel.items.mapTo(authors) {
+          it.author ?: ghostUser
+        }
+
+        authorsLabel.apply {
+          icon = authors.map { avatarIconsProvider.getIcon(it.avatarUrl, GHUIUtil.AVATAR_SIZE) }.nullize()?.let {
+            OverlaidOffsetIconsIcon(it)
+          }
+          isVisible = icon != null
+        }
+
+        repliesLink.text = if (repliesCount == 0) {
+          GithubBundle.message("pull.request.review.thread.reply")
+        }
+        else {
+          GithubBundle.message("pull.request.review.thread.replies", repliesCount)
+        }
+
+        lastReplyDateLabel.apply {
+          isVisible = repliesCount > 0
+          if (isVisible) {
+            text = repliesModel.getElementAt(repliesModel.size - 1).dateCreated.let {
+              JBDateFormat.getFormatter().formatPrettyDateTime(it)
+            }
+          }
+        }
+      }
+
+      override fun intervalAdded(e: ListDataEvent) = update()
+      override fun intervalRemoved(e: ListDataEvent) = update()
+      override fun contentsChanged(e: ListDataEvent) = Unit
+    })
+
+    val repliesPanel = JPanel(HorizontalLayout(8)).apply {
       isOpaque = false
-      border = JBUI.Borders.empty(6, 34, 6, 0)
-
-      add(toggleReplyLink)
-      add(Box.createHorizontalStrut(JBUIScale.scale(8)))
-      add(resolveLink)
-      add(unresolveLink)
+      add(authorsLabel)
+      add(repliesLink)
+      add(lastReplyDateLabel)
     }
+
+    val unResolveLink = createUnResolveLink(reviewDataProvider, thread)
+
+    return JPanel(HorizontalLayout(14)).apply {
+      isOpaque = false
+      add(repliesPanel)
+      add(unResolveLink)
+    }
+  }
+
+  private fun createUnResolveLink(reviewDataProvider: GHPRReviewDataProvider, thread: GHPRReviewThreadModel): LinkLabel<Any> {
+    val unResolveLink = LinkLabel<Any>("", null) { comp, _ ->
+      comp.isEnabled = false
+      if (thread.isResolved) {
+        reviewDataProvider.unresolveThread(EmptyProgressIndicator(), thread.id)
+      }
+      else {
+        reviewDataProvider.resolveThread(EmptyProgressIndicator(), thread.id)
+      }.handleOnEdt { _, _ ->
+        comp.isEnabled = true
+      }
+    }.apply {
+      isFocusable = true
+    }
+
+    thread.addAndInvokeStateChangeListener {
+      unResolveLink.text = if (thread.isResolved) {
+        GithubBundle.message("pull.request.review.thread.unresolve")
+      }
+      else {
+        GithubBundle.message("pull.request.review.thread.resolve")
+      }
+    }
+    return unResolveLink
   }
 }

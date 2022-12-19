@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.safeDelete;
 
@@ -19,6 +19,8 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.safeDelete.api.SafeDeleteTarget;
+import com.intellij.refactoring.safeDelete.api.SafeDeleteTargetProvider;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
+import static com.intellij.refactoring.safeDelete.impl.SafeDeleteKt.safeDelete;
 
 /**
  * @author dsl
@@ -75,6 +79,15 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
         return;
       }
     }
+
+    if (elements.length == 1) {
+      SafeDeleteTarget target = SafeDeleteTargetProvider.Companion.createSafeDeleteTarget(elements[0]);
+      if (target != null) {
+        safeDelete(project, target.createPointer());
+        return;
+      }
+    }
+
     PsiElement[] temptoDelete = PsiTreeUtil.filterAncestors(elements);
     Set<PsiElement> elementsSet = ContainerUtil.set(temptoDelete);
     Set<PsiElement> fullElementsSet = new LinkedHashSet<>();

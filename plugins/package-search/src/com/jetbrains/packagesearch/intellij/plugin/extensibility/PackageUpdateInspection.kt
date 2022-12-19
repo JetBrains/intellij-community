@@ -20,12 +20,16 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ui.ListEditForm
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.changePackage
 import com.jetbrains.packagesearch.intellij.plugin.util.modifyPackages
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
@@ -89,8 +93,8 @@ abstract class PackageUpdateInspection : AbstractPackageUpdateInspectionCheck() 
                     val targetVersion =
                         if (onlyStable) packageModel.highestStableVersion else packageModel.highestUnstableVersion
 
-
-                    if (targetVersion == null || usageInfo.declaredVersion >= targetVersion) continue
+                    if (usageInfo.declaredVersion is NormalizedPackageVersion.Garbage
+                        || targetVersion == null || usageInfo.declaredVersion >= targetVersion) continue
 
                     registerProblem(
                         versionElement,
@@ -130,7 +134,7 @@ abstract class PackageUpdateInspection : AbstractPackageUpdateInspectionCheck() 
                             isHighPriority = false
                         ) {
                             excludeList.add(packageModel.identifier.rawValue)
-                            ProjectInspectionProfileManager.getInstance(file.project).fireProfileChanged()
+                            ProjectInspectionProfileManager.getInstance(this).fireProfileChanged()
                         }
                     )
                 }

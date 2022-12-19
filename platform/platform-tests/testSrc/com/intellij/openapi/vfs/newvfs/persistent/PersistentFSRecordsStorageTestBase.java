@@ -283,8 +283,8 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       storage.setFlags(id, this.flags);
       storage.setAttributeRecordId(id, this.attributeRef);
       storage.setContentRecordId(id, this.contentRef);
-      storage.putTimestamp(id, this.timestamp);
-      storage.putLength(id, this.length);
+      storage.setTimestamp(id, this.timestamp);
+      storage.setLength(id, this.length);
       //storage.overwriteModCount(id, this.modCount);
     }
 

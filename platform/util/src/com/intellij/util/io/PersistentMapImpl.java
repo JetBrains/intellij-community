@@ -302,8 +302,13 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
             myStreamPool.recycle(bytes);
           }
         }
+        catch (ClosedStorageException ex) {
+          //TODO rethrow original
+          throw new RuntimeException(ex);
+        }
         catch (IOException e) {
           markCorrupted();
+          //TODO rethrow original
           throw new RuntimeException(e);
         }
         finally {
@@ -416,6 +421,9 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     try {
       doPut(key, value);
     }
+    catch (ClosedStorageException ex) {
+      throw ex;
+    }
     catch (IOException ex) {
       markCorrupted();
       throw ex;
@@ -504,6 +512,9 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     try {
       doAppendData(key, appender);
     }
+    catch (ClosedStorageException e) {
+      throw e;
+    }
     catch (IOException ex) {
       markCorrupted();
       throw ex;
@@ -544,6 +555,9 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       flushAppendCache();
       return myEnumerator.iterateData(processor);
     }
+    catch (ClosedStorageException e) {
+      throw e;
+    }
     catch (IOException e) {
       markCorrupted();
       throw e;
@@ -580,6 +594,9 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
         }
       });
     }
+    catch (ClosedStorageException ex) {
+      throw ex;
+    }
     catch (IOException e) {
       markCorrupted();
       throw e;
@@ -594,6 +611,9 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     getReadLock().lock();
     try {
       return doGet(key);
+    }
+    catch (ClosedStorageException ex) {
+      throw ex;
     }
     catch (IOException ex) {
       markCorrupted();

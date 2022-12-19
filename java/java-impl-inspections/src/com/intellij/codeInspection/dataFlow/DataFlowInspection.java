@@ -11,9 +11,7 @@ import com.intellij.codeInspection.dataFlow.fix.FindDfaProblemCauseFix;
 import com.intellij.codeInspection.dataFlow.fix.ReplaceWithBooleanEqualsFix;
 import com.intellij.codeInspection.dataFlow.fix.SurroundWithRequireNonNullFix;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
-import com.intellij.codeInspection.options.OptCustom;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.InspectionOptionPaneRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -33,14 +31,14 @@ import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.java.JavaBundle.message;
 
-public class DataFlowInspection extends DataFlowInspectionBase implements InspectionOptionPaneRenderer.CustomComponentProvider {
+public class DataFlowInspection extends DataFlowInspectionBase {
   private static final Logger LOG = Logger.getInstance(DataFlowInspection.class);
 
   @Override
@@ -203,11 +201,6 @@ public class DataFlowInspection extends DataFlowInspectionBase implements Inspec
   }
 
   @Override
-  public @NotNull JComponent getCustomOptionComponent(@NotNull OptCustom control, @NotNull JComponent parent) {
-    return NullableNotNullDialog.createConfigureAnnotationsButton(parent);
-  }
-
-  @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("SUGGEST_NULLABLE_ANNOTATIONS",
@@ -222,7 +215,7 @@ public class DataFlowInspection extends DataFlowInspectionBase implements Inspec
                message("inspection.data.flow.ignore.assert.statements")),
       checkbox("REPORT_UNSOUND_WARNINGS",
                message("inspection.data.flow.report.problems.that.happen.only.on.some.code.paths")),
-      custom("CONFIGURE_ANNOTATIONS")
+      NullableNotNullDialog.configureAnnotationsButton()
     );
   }
 }

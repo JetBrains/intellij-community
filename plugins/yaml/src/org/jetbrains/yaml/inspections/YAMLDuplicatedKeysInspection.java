@@ -61,6 +61,12 @@ public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
     }
 
     @Override
+    public boolean availableInBatchMode() {
+      //IDEA-185914: quick fix is disabled in batch mode cause of ambiguity which item should stay
+      return false;
+    }
+
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       YAMLKeyValue keyVal = (YAMLKeyValue)descriptor.getPsiElement().getParent();
       if (keyVal == null || keyVal.getParentMapping() == null) {

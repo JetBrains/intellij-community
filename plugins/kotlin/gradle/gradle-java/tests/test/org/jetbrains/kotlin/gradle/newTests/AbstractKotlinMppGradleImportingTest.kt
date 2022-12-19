@@ -6,33 +6,51 @@ import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.VfsTestUtil
-import org.jetbrains.kotlin.gradle.newTests.testFeatures.GradleProjectsPublishingDsl
-import org.jetbrains.kotlin.gradle.newTests.testFeatures.GradleProjectsPublishingTestsFeature
-import org.jetbrains.kotlin.gradle.newTests.testFeatures.WorkspaceFilteringDsl
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.*
 import org.jetbrains.kotlin.gradle.newTests.testServices.*
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
+import org.jetbrains.kotlin.idea.codeInsight.gradle.PluginTargetVersionsRule
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.runner.RunWith
 import org.junit.runners.BlockJUnit4ClassRunner
 import java.io.File
+import java.io.PrintStream
 
 @RunWith(BlockJUnit4ClassRunner::class)
-abstract class AbstractKotlinMppGradleImportingTest(
-    testDataRoot: String
-) : GradleImportingTestCase(), WorkspaceFilteringDsl, GradleProjectsPublishingDsl {
+@TestDataPath("\$PROJECT_ROOT/community/plugins/kotlin/idea/tests/testData/gradle")
+abstract class AbstractKotlinMppGradleImportingTest :
+    GradleImportingTestCase(), WorkspaceFilteringDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl,HighlightingCheckDsl,
+    TestWithKotlinPluginAndGradleVersions
+{
+    val kotlinTestPropertiesService: KotlinTestPropertiesService = KotlinTestPropertiesServiceImpl()
+
+    override val gradleVersion: String
+        // equal to this.gradleVersion, going through the Service for the sake of consistency
+        get() = kotlinTestPropertiesService.gradleVersion
+
+    override val kotlinPluginVersion: KotlinToolingVersion
+        get() = kotlinTestPropertiesService.kotlinGradlePluginVersion
+
     val importedProject: Project
         get() = myProject
     val importedProjectRoot: VirtualFile
         get() = myProjectRoot
 
-    val kotlinTestPropertiesService: KotlinTestPropertiesService = KotlinTestPropertiesServiceImpl()
     private val gradleProjectsPublishingService = GradleProjectsPublishingService
+    private val gradleProjectLinkingService = GradleProjectLinkingService
+    private val highlightingCheckService = HighlightingCheckService
 
-    open fun TestConfigurationDslScope.defaultTestConfiguration() { }
+    open fun TestConfigurationDslScope.defaultTestConfiguration() {}
 
     @get:Rule
     val workspaceModelTestingService = WorkspaceModelTestingService()
@@ -41,10 +59,13 @@ abstract class AbstractKotlinMppGradleImportingTest(
     val noErrorEventsDuringImportService = NoErrorEventsDuringImportService()
 
     @get:Rule
-    val testDataDirectoryService = TestDataDirectoryService(testDataRoot)
+    val testDataDirectoryService = TestDataDirectoryService()
 
     @get:Rule
     val gradleDaemonWatchdogService = GradleDaemonWatchdogService
+
+    @get:Rule
+    val pluginTargetVersionRule = PluginTargetVersionsRule()
 
     protected fun doTest(configuration: TestConfigurationDslScope.() -> Unit = { }) {
         val defaultConfig = TestConfiguration().apply { defaultTestConfiguration() }
@@ -53,14 +74,28 @@ abstract class AbstractKotlinMppGradleImportingTest(
     }
 
     private fun doTest(configuration: TestConfiguration) {
+        createProjectSubFile(
+            "local.properties",
+            """
+                |sdk.dir=${KotlinTestUtils.getAndroidSdkSystemIndependentPath()}
+                |org.gradle.java.home=${findJdkPath()}
+            """.trimMargin()
+        )
+
         configureByFiles(testDataDirectoryService.testDataDirectory())
+
+        configuration.getConfiguration(LinkedProjectPathsTestsFeature).linkedProjectPaths.forEach {
+            gradleProjectLinkingService.linkGradleProject(it, importedProjectRoot.toNioPath(), importedProject)
+        }
 
         configuration.getConfiguration(GradleProjectsPublishingTestsFeature).publishedSubprojectNames.forEach {
             gradleProjectsPublishingService.publishSubproject(it, importedProjectRoot.toNioPath(), importedProject)
         }
 
         importProject()
+
         workspaceModelTestingService.checkWorkspaceModel(configuration, this)
+        highlightingCheckService.runHighlightingCheckOnAllModules(configuration, this)
     }
 
     final override fun findJdkPath(): String {
@@ -72,11 +107,18 @@ abstract class AbstractKotlinMppGradleImportingTest(
     }
 
     override fun setUp() {
+        // see KT-55554
+        assumeTrue("Test is ignored because it requires Mac-host", HostManager.hostIsMac)
+
         // Hack: usually this is set-up by JUnit's Parametrized magic, but
         // our tests source versions from `kotlintestPropertiesService`, not from
         // @Parametrized
         this.gradleVersion = kotlinTestPropertiesService.gradleVersion
         super.setUp()
+
+        // Otherwise Gradle Daemon fails with Metaspace exhausted periodically
+        GradleSystemSettings.getInstance().gradleVmOptions =
+            "-XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${System.getProperty("user.dir")}"
     }
 
     private fun configureByFiles(rootDir: File, properties: Map<String, String>? = null): List<VirtualFile> {
@@ -117,5 +159,16 @@ abstract class AbstractKotlinMppGradleImportingTest(
         return ImportSpecBuilder(super.createImportSpec())
             .createDirectoriesForEmptyContentRoots()
             .build()
+    }
+
+    // super does plain `print` instead of `println`, so we need to
+    // override it to preserve line breaks in output of Gradle-process
+    override fun printOutput(stream: PrintStream, text: String) {
+        stream.println(text)
+    }
+
+    companion object {
+        // TODO: enable on TC when monitoring comes
+        var healthchecksEnabled: Boolean = false
     }
 }

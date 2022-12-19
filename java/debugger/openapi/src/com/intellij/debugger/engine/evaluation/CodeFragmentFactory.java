@@ -13,7 +13,8 @@ import org.jetbrains.annotations.NotNull;
  * Allows to provide debugger editors support for non-java languages, for example in condition/log expression fields.
  */
 public abstract class CodeFragmentFactory {
-  public static final ExtensionPointName<CodeFragmentFactory> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.debugger.codeFragmentFactory");
+  public static final ExtensionPointName<CodeFragmentFactory> EXTENSION_POINT_NAME =
+    ExtensionPointName.create("com.intellij.debugger.codeFragmentFactory");
 
   public abstract JavaCodeFragment createCodeFragment(TextWithImports item, PsiElement context, Project project);
 
@@ -27,6 +28,7 @@ public abstract class CodeFragmentFactory {
   /**
    * In case if createCodeFragment returns java code use
    * com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl#getInstance()
+   *
    * @return builder, which can evaluate expression for your code fragment
    */
   public abstract EvaluatorBuilder getEvaluatorBuilder();

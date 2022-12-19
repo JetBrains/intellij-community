@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.*
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -47,12 +49,8 @@ class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), Clean
      */
     var unwrapFakeOverrides: Boolean = false
 
-    override fun createOptionsPanel(): JComponent =
-        SingleCheckboxOptionsPanel(
-            KotlinBundle.message("redundant.qualifier.unnecessary.non.direct.parent.class.qualifier"),
-            this,
-            ::unwrapFakeOverrides.name
-        )
+  override fun getOptionsPane() = pane(
+    checkbox(::unwrapFakeOverrides.name, KotlinBundle.message("redundant.qualifier.unnecessary.non.direct.parent.class.qualifier")))
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : KtVisitorVoid() {

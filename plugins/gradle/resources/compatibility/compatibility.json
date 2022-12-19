@@ -1,22 +1,5 @@
 [
   {
-    "ideVersion": "1-2023",
-    "supportedJavaVersions": [
-      "5",
-      "6"
-    ],
-    "supportedGradleVersions": [
-      "1",
-      "2"
-    ],
-    "compatibility": [
-      {
-        "java": "5-6",
-        "gradle": "1-2"
-      }
-    ]
-  },
-  {
     "ideVersion": "2023.1 EAP-INF",
     "supportedJavaVersions": [
       "7",

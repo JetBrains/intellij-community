@@ -953,16 +953,8 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     }
   }
 
-  @Override
   public SMRootTestProxy getRoot() {
-    if (this instanceof SMRootTestProxy) {
-      return (SMRootTestProxy)this;
-    }
-    SMTestProxy parent = getParent();
-    while (parent != null && !(parent instanceof SMRootTestProxy)) {
-      parent = parent.getParent();
-    }
-    return parent != null ? (SMRootTestProxy)parent : null;
+    return (SMRootTestProxy)getTestRoot(this);
   }
 
   public static class SMRootTestProxy extends SMTestProxy implements TestProxyRoot {

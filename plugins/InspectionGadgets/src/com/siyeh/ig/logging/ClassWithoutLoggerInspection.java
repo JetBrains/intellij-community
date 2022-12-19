@@ -65,7 +65,7 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
   @Override
   public JComponent createOptionsPanel() {
     final JPanel loggerPanel = UiUtils.createTreeClassChooserList(loggerNames, InspectionGadgetsBundle.message("logger.class.name"),
-                                                                 InspectionGadgetsBundle.message("choose.logger.class"));
+                                                                  InspectionGadgetsBundle.message("choose.logger.class"));
     final JPanel annotationsListControl =
       SpecialAnnotationsUtil.createSpecialAnnotationsListControl(annotations,
                                                                  InspectionGadgetsBundle.message("ignore.classes.annotated.by"));
@@ -74,7 +74,7 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
                                          InspectionGadgetsBundle.message("choose.class.hierarchy.to.ignore.title"));
 
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.add(ignoredClassesPanel, "growx, wrap");
+    panel.addGrowing(ignoredClassesPanel);
     panel.addCheckbox(InspectionGadgetsBundle.message("super.class.logger.option"), "ignoreSuperLoggers");
 
     loggerPanel.setBorder(JBUI.Borders.emptyTop(5));
@@ -83,7 +83,8 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
     final JBTabbedPane tabs = new JBTabbedPane(SwingConstants.TOP);
     tabs.add(InspectionGadgetsBundle.message("class.without.logger.loggers.tab"), ScrollPaneFactory.createScrollPane(loggerPanel, true));
     tabs.add(InspectionGadgetsBundle.message("options.title.ignored.classes"), ScrollPaneFactory.createScrollPane(panel, true));
-    tabs.add(InspectionGadgetsBundle.message("class.without.logger.annotations.tab"), ScrollPaneFactory.createScrollPane(annotationsListControl, true));
+    tabs.add(InspectionGadgetsBundle.message("class.without.logger.annotations.tab"),
+             ScrollPaneFactory.createScrollPane(annotationsListControl, true));
     return tabs;
   }
 

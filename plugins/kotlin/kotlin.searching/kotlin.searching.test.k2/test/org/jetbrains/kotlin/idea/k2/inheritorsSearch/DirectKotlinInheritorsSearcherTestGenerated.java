@@ -91,4 +91,17 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
             runTest("../testData/inheritorsSearch/kotlinFunction/withJavaInheritorTypeParameters.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inheritorsSearch/allInheritors")
+    public static class AllInheritors extends AbstractDirectKotlinInheritorsSearcherTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestFindAllOverridings, this, testDataFilePath);
+        }
+
+        @TestMetadata("withJavaInheritorLocalScope.kt")
+        public void testWithJavaInheritorLocalScope() throws Exception {
+            runTest("../testData/inheritorsSearch/allInheritors/withJavaInheritorLocalScope.kt");
+        }
+    }
 }

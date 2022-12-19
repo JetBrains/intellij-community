@@ -38,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.plaf.basic.BasicTextUI;
+import javax.swing.text.View;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.Collections;
@@ -88,7 +90,8 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     mySubSystemLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
     myContentPanel.add(mySubSystemLabel);
 
-    myTextPane = new StyledTextPane();
+    myTextPane = new MyTextPane();
+    myTextPane.putClientProperty("caretWidth", 0);
     myTextPane.setBackground(TipUiSettings.getPanelBackground());
     myTextPane.setMargin(JBInsets.emptyInsets());
     myTextPane.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -399,6 +402,32 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   @Override
   public String getDoNotShowMessage() {
     return IdeBundle.message("checkbox.show.tips.on.startup");
+  }
+
+  private static class MyTextPane extends StyledTextPane {
+    @Override
+    public void redraw() {
+      super.redraw();
+      View root = getRootView();
+      // request layout the text with the width according to scroll bar is shown
+      // it will be extended if scroll bar is not required in a result
+      int width = TipUiSettings.getImageMaxWidth() - JBUI.scale(14);
+      root.setSize(width, root.getPreferredSpan(View.Y_AXIS));
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      // take size from the root view directly, because base implementation is resetting the root view size
+      // if current bounds is empty (component is not added to screen)
+      View root = getRootView();
+      Dimension dim = new Dimension((int)root.getPreferredSpan(View.X_AXIS), (int)root.getPreferredSpan(View.Y_AXIS));
+      JBInsets.addTo(dim, getInsets());
+      return dim;
+    }
+
+    private View getRootView() {
+      return ((BasicTextUI)ui).getRootView(this);
+    }
   }
 
   private class PreviousTipAction extends AbstractAction {

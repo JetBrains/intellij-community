@@ -65,6 +65,12 @@ suspend fun checkCanceled() {
  * To potentially block, the clients now have to migrate to [runBlockingMaybeCancellable]
  * which repeats exact semantics of v0 w.r.t to cancellation.
  *
+ * ### Progress reporting
+ *
+ * - If invoked under indicator, installs [RawProgressReporter], which methods delegate to the indicator, into the [action] context.
+ * - If the thread context contains [ProgressReporter], installs it into the [action] context as is.
+ * - If the thread context contains [RawProgressReporter], installs it into the [action] context as is.
+ *
  * @throws ProcessCanceledException if [current indicator][ProgressManager.getGlobalProgressIndicator] is cancelled
  * @throws CancellationException if [current job][Cancellation.currentJob] is cancelled
  * @see coroutineToIndicator
@@ -111,7 +117,7 @@ fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend Cor
     val context = currentThreadContext() +
                   currentJob +
                   CoroutineName("indicator run blocking") +
-                  ProgressIndicatorSink(indicator).asContextElement()
+                  IndicatorRawProgressReporter(indicator).asContextElement()
     replaceThreadContext(EmptyCoroutineContext).use {
       runBlocking(context, action)
     }
@@ -160,6 +166,13 @@ suspend fun <T> blockingContext(action: () -> T): T {
  *   }
  * }
  * ```
+ *
+ * ### Progress reporting
+ *
+ * - If [ProgressReporter] is found in the coroutine context, throws an error.
+ * Please wrap the call into [withRawProgressReporter] to switch context [ProgressReporter] to [RawProgressReporter].
+ * - If [RawProgressReporter] is found in the coroutine context, updates of the installed indicator are sent into the reporter.
+ *
  * @see runBlockingCancellable
  * @see ProgressManager.runProcess
  */
@@ -184,6 +197,33 @@ suspend fun <T> coroutineToIndicator(action: () -> T): T {
  *     }
  *   }
  * }
+ * ```
+ *
+ * ### Progress reporting
+ *
+ * - If [ProgressReporter] is found in the thread context, throws an error.
+ * Please wrap the appropriate call into [withRawProgressReporter] to switch context [ProgressReporter] to [RawProgressReporter].
+ * For example:
+ * ```
+ * launch {
+ *   // inside a coroutine
+ *   withBackgroundProgressIndicator(...) { // installs ProgressReporter into coroutine context
+ *     ...
+ *     readAction { // installs coroutine context as thread context
+ *       ...
+ *       // at this point the thread context has ProgressReporter, the following will throw
+ *       blockingContextToIndicator {
+ *         someOldCodeWhichReliesOntoExistenceOfIndicator()
+ *       }
+ *       ...
+ *     }
+ *     ...
+ *   }
+ * }
+ * ```
+ * In the example, either `readAction` call or the whole action, which was passed into `withBackgroundProgressIndicator`,
+ * should be wrapped into [withRawProgressReporter].
+ * - If [RawProgressReporter] is found in the coroutine context, updates of the installed indicator are sent into the reporter.
  */
 @Internal
 fun <T> blockingContextToIndicator(action: () -> T): T {
@@ -201,12 +241,18 @@ private fun <T> contextToIndicator(ctx: CoroutineContext, action: () -> T): T {
 private fun CoroutineContext.createIndicator(): ProgressIndicator {
   val contextModality = contextModality()
                         ?: ModalityState.NON_MODAL
-  val progressSink = progressSink
-  return if (progressSink == null) {
+  check(progressReporter == null) {
+    "Current context has `ProgressReporter`. " +
+    "Please switch to `RawProgressReporter` before switching to indicator. " +
+    "See 'Progress reporting' in `coroutineToIndicator` and/or `blockingContextToIndicator`.\n" +
+    "Current context: $this"
+  }
+  val reporter = rawProgressReporter
+  return if (reporter == null) {
     EmptyProgressIndicator(contextModality)
   }
   else {
-    ProgressSinkIndicator(progressSink, contextModality)
+    RawProgressReporterIndicator(reporter, contextModality)
   }
 }
 

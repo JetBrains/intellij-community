@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.ide.impl.TrustStateListener;
+import com.intellij.ide.impl.trustedProjects.TrustedProjectsListener;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -945,7 +945,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     }
   }
 
-  static final class TrustListener implements TrustStateListener {
+  static final class TrustListener implements TrustedProjectsListener {
     @Override
     public void onProjectTrusted(@NotNull Project project) {
       getInstanceImpl(project).updateMappedVcsesImmediately();

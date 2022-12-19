@@ -20,6 +20,8 @@ import com.intellij.ui.dsl.gridLayout.Constraints
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.validation.CellValidation
+import com.intellij.ui.dsl.validation.impl.CompoundCellValidation
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
@@ -27,7 +29,8 @@ import org.jetbrains.annotations.Nls
 import javax.swing.DefaultComboBoxModel
 
 @ApiStatus.Internal
-internal class SegmentedButtonImpl<T>(parent: RowImpl,
+internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig,
+                                      parent: RowImpl,
                                       private val renderer: (T) -> @Nls String,
                                       tooltipRenderer: (T) -> @Nls String? = NO_TOOLTIP_RENDERER
 ) : PlaceholderBaseImpl<SegmentedButton<T>>(parent), SegmentedButton<T> {
@@ -38,6 +41,10 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl,
 
   private val comboBox = ComboBox<T>()
   private val segmentedButtonComponent = SegmentedButtonComponent(items, renderer, tooltipRenderer)
+
+  private val cellValidation = CompoundCellValidation(
+    CellValidationImpl(dialogPanelConfig, this, comboBox),
+    CellValidationImpl(dialogPanelConfig, this, segmentedButtonComponent))
 
   override var selectedItem: T?
     get() {
@@ -138,6 +145,11 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl,
   override fun maxButtonsCount(value: Int): SegmentedButton<T> {
     maxButtonsCount = value
     rebuild()
+    return this
+  }
+
+  override fun validation(init: CellValidation<SegmentedButton<T>>.() -> Unit): SegmentedButton<T> {
+    cellValidation.init()
     return this
   }
 

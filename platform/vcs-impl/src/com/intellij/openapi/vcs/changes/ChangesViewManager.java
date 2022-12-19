@@ -13,6 +13,7 @@ import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -257,14 +258,15 @@ public class ChangesViewManager implements ChangesViewEx,
   }
 
   @Override
-  public Promise<?> promiseRefresh() {
+  public @NotNull Promise<?> promiseRefresh(@NotNull ModalityState modalityState) {
     if (myToolWindowPanel == null) return cancelledPromise();
-    return myToolWindowPanel.scheduleRefresh();
+    return myToolWindowPanel.scheduleRefreshWithDelay(0, modalityState);
   }
 
   @Override
   public void scheduleRefresh() {
-    promiseRefresh();
+    if (myToolWindowPanel == null) return;
+    myToolWindowPanel.scheduleRefresh();
   }
 
   @Override
@@ -353,6 +355,9 @@ public class ChangesViewManager implements ChangesViewEx,
 
     @Nullable private ChangesViewCommitPanel myCommitPanel;
     @Nullable private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
+
+    private final BackgroundRefresher<Runnable> myBackgroundRefresher =
+      new BackgroundRefresher<>(getClass().getSimpleName() + " refresh", this);
 
     private boolean myModelUpdateInProgress;
 
@@ -717,32 +722,25 @@ public class ChangesViewManager implements ChangesViewEx,
       invokeLaterIfNeeded(() -> myView.setPaintBusy(b));
     }
 
-    public Promise<?> scheduleRefresh() {
-      return scheduleRefreshWithDelay(100);
-    }
-
-    private final BackgroundRefresher<?> myBackgroundRefresher = new BackgroundRefresher<>(
-      getClass().getSimpleName() + " refresh", this);
-
-    @CalledInAny
-    private Promise<?> scheduleRefreshWithDelay(int delayMillis) {
-      setBusy(true);
-      return myBackgroundRefresher.requestRefresh(delayMillis, () -> {
-        refreshView();
-        return null;
-      }).then(result -> {
-        setBusy(false);
-        return null;
-      });
+    public void scheduleRefresh() {
+      scheduleRefreshWithDelay(100, ModalityState.NON_MODAL);
     }
 
     private void scheduleRefreshNow() {
-      scheduleRefreshWithDelay(0);
+      scheduleRefreshWithDelay(0, ModalityState.NON_MODAL);
+    }
+
+    @CalledInAny
+    private @NotNull Promise<?> scheduleRefreshWithDelay(int delayMillis, @NotNull ModalityState modalityState) {
+      setBusy(true);
+      return myBackgroundRefresher.requestRefresh(delayMillis, this::refreshView)
+        .thenAsync(callback -> AppUIExecutor.onUiThread(modalityState).submit(callback))
+        .onProcessed(__ -> setBusy(false));
     }
 
     @RequiresBackgroundThread
-    private void refreshView() {
-      if (myDisposed || !myProject.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) return;
+    private @Nullable Runnable refreshView() {
+      if (myDisposed || !myProject.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) return null;
 
       Span span = TRACER.spanBuilder("changes-view-refresh-background").startSpan();
       try {
@@ -779,9 +777,12 @@ public class ChangesViewManager implements ChangesViewEx,
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         indicator.checkCanceled();
 
-        ApplicationManager.getApplication().invokeAndWait(() -> {
+        boolean[] wasCalled = new boolean[1]; // ensure multiple merged refresh requests are applied once
+        return () -> {
+          if (wasCalled[0]) return;
+          wasCalled[0] = true;
           refreshViewOnEdt(treeModel, changeLists, unversionedFiles, indicator.isCanceled());
-        });
+        };
       }
       finally {
         span.end();

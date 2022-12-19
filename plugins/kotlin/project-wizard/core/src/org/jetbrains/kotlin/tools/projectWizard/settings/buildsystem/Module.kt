@@ -48,7 +48,8 @@ class Module(
     subModules: List<Module> = emptyList(),
     val dependencies: MutableList<ModuleReference> = mutableListOf(),
     var parent: Module? = null,
-    override val identificator: Identificator = GeneratedIdentificator(name)
+    override val identificator: Identificator = GeneratedIdentificator(name),
+    val canBeRemoved: Boolean = true
 ) : DisplayableSettingItem, Validatable<Module>, IdentificatorOwner {
 
     val kind: ModuleKind
@@ -197,9 +198,10 @@ fun MultiplatformModule(
     @NonNls name: String,
     template: Template? = null,
     targets: List<Module> = emptyList(),
-    permittedTemplateIds: Set<String>? = null
+    permittedTemplateIds: Set<String>? = null,
+    canBeRemoved: Boolean = true
 ) =
-    Module(name, MppModuleConfigurator, template = template, permittedTemplateIds = permittedTemplateIds, subModules = targets)
+    Module(name, MppModuleConfigurator, template = template, permittedTemplateIds = permittedTemplateIds, subModules = targets, canBeRemoved = canBeRemoved)
 
 @Suppress("FunctionName")
 fun SinglePlatformModule(@NonNls name: String, sourceSets: List<Sourceset>, permittedTemplateIds: Set<String>? = null) =

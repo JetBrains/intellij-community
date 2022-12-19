@@ -41,6 +41,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1358,6 +1359,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         });
       }
       return mySubPanel;
+    }
+
+    @Override
+    public void focusOn(@Nls @NotNull String label) {
+      createPanel().showOption(label);
     }
 
     @Override

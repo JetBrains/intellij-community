@@ -296,9 +296,11 @@ class PySdkPathsTest {
     val entryPath1 = createSubdir(moduleRoot1)
     val entryPath2 = createSubdir(moduleRoot2)
 
-    val sdk = PythonMockSdk.create(sdkDir.path).also {
-      module1.pythonSdk = it
-      module2.pythonSdk = it
+    val sdk = PythonMockSdk.create().let {
+      val properSdk = PythonMockSdk.create("Mock SDK without path", sdkDir.path, it.sdkType, LanguageLevel.getLatest())
+      module1.pythonSdk = properSdk
+      module2.pythonSdk = properSdk
+      return@let properSdk
     }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath1.path, entryPath2.path))
 

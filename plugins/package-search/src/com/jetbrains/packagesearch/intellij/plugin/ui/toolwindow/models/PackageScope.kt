@@ -59,7 +59,7 @@ sealed interface PackageScope : Comparable<PackageScope> {
         override fun toString() = scopeName
     }
 
-    companion object {
+    companion object Companion {
 
         fun from(rawScope: String?): PackageScope {
             if (rawScope.isNullOrBlank()) return Missing

@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtil
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.util.dependencyModifierService
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
@@ -58,7 +59,7 @@ data class PackageSearchModule(
     val projectDir: File,
     val buildSystemType: BuildSystemType,
     val moduleType: ProjectModuleType,
-    val availableScopes: List<String> = emptyList(),
+    val availableScopes: List<PackageScope> = emptyList(),
     val dependencyDeclarationCallback: DependencyDeclarationCallback = { _ -> CompletableFuture.completedFuture(null) }
 ) {
 

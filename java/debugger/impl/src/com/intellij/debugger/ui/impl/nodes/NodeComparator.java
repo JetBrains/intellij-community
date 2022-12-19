@@ -21,7 +21,7 @@ public class NodeComparator implements Comparator<DebuggerTreeNode> {
     final boolean invalid1 = (name1 == null || (name1.length() > 0 && Character.isDigit(name1.charAt(0))));
     final boolean invalid2 = (name2 == null || (name2.length() > 0 && Character.isDigit(name2.charAt(0))));
     if (invalid1) {
-      return invalid2? 0 : 1;
+      return invalid2 ? 0 : 1;
     }
     else if (invalid2) {
       return -1;

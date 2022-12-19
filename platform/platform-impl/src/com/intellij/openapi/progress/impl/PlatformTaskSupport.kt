@@ -62,24 +62,25 @@ class PlatformTaskSupport : TaskSupport {
 
   override fun modalTaskOwner(project: Project): ModalTaskOwner = ProjectModalTaskOwner(project)
 
-  override suspend fun <T> withBackgroundProgressIndicatorInternal(
+  override suspend fun <T> withBackgroundProgressInternal(
     project: Project,
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T
   ): T = coroutineScope {
-    val sink = FlowProgressSink()
-    progressStarted(title, sink.stateFlow)
-    val showIndicatorJob = showIndicator(project, taskInfo(title, cancellation), sink.stateFlow)
-    try {
-      withContext(sink.asContextElement(), action)
-    }
-    finally {
-      showIndicatorJob.cancel()
+    TextDetailsProgressReporter(parentScope = this).use { reporter ->
+      progressStarted(title, reporter.progressState)
+      val showIndicatorJob = showIndicator(project, taskInfo(title, cancellation), reporter.progressState)
+      try {
+        withContext(reporter.asContextElement(), action)
+      }
+      finally {
+        showIndicatorJob.cancel()
+      }
     }
   }
 
-  override suspend fun <T> withModalProgressIndicatorInternal(
+  override suspend fun <T> withModalProgressInternal(
     owner: ModalTaskOwner,
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
@@ -108,14 +109,15 @@ class PlatformTaskSupport : TaskSupport {
     inModalContext(JobProviderWithOwnerContext(cs.coroutineContext.job, descriptor.owner)) { newModalityState ->
       val deferredDialog = CompletableDeferred<DialogWrapper>()
       val mainJob = cs.async(Dispatchers.Default + newModalityState.asContextElement()) {
-        val sink = FlowProgressSink()
-        progressStarted(descriptor.title, sink.stateFlow)
-        val showIndicatorJob = showModalIndicator(descriptor, sink.stateFlow, deferredDialog)
-        try {
-          withContext(sink.asContextElement(), action)
-        }
-        finally {
-          showIndicatorJob.cancel()
+        TextDetailsProgressReporter(this@async).use { reporter ->
+          progressStarted(descriptor.title, reporter.progressState)
+          val showIndicatorJob = showModalIndicator(descriptor, reporter.progressState, deferredDialog)
+          try {
+            withContext(reporter.asContextElement(), action)
+          }
+          finally {
+            showIndicatorJob.cancel()
+          }
         }
       }
       mainJob.invokeOnCompletion {
@@ -158,7 +160,7 @@ private fun CoroutineScope.showIndicator(
         showIndicatorInUI(project, taskInfo, indicator)
       }
       if (indicatorAdded) {
-        indicator.updateFromSink(stateFlow)
+        indicator.updateFromFlow(stateFlow)
       }
     }
     finally {
@@ -184,10 +186,10 @@ private fun coroutineCancellingIndicator(job: Job): ProgressIndicatorEx {
 
 /**
  * Asynchronously updates the indicator [text][ProgressIndicator.setText],
- * [text2][ProgressIndicator.setText2], and [fraction][ProgressIndicator.setFraction] from the [stateFlow].
+ * [text2][ProgressIndicator.setText2], and [fraction][ProgressIndicator.setFraction] from the [updates].
  */
-private suspend fun ProgressIndicatorEx.updateFromSink(stateFlow: Flow<ProgressState>): Nothing {
-  stateFlow.collect { state: ProgressState ->
+private suspend fun ProgressIndicatorEx.updateFromFlow(updates: Flow<ProgressState>): Nothing {
+  updates.collect { state: ProgressState ->
     text = state.text
     text2 = state.details
     if (state.fraction >= 0.0) {
@@ -245,7 +247,7 @@ private fun CoroutineScope.showModalIndicator(
     ui.backgroundButton.isVisible = false
     ui.updateTitle(descriptor.title)
     launch {
-      ui.updateFromSink(stateFlow)
+      ui.updateFromFlow(stateFlow)
     }
     val dialog = createDialogWrapper(
       panel = ui.panel,
@@ -291,8 +293,8 @@ private fun CoroutineScope.showModalIndicator(
   }
 }
 
-private suspend fun ProgressDialogUI.updateFromSink(stateFlow: Flow<ProgressState>): Nothing {
-  stateFlow
+private suspend fun ProgressDialogUI.updateFromFlow(updates: Flow<ProgressState>): Nothing {
+  updates
     .throttle(50)
     .flowOn(Dispatchers.IO)
     .collect {

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * Usually this action instantiated in the background and performs very expensive computations in its constructor and invalidate their results on any PSI modification.
  */
 public abstract class ExpensivePsiIntentionAction implements IntentionAction {
-  protected final Project myProject;
+  @SuppressWarnings("ActionIsNotPreviewFriendly") protected final Project myProject;
   private final long myPsiModificationCount;
 
   protected ExpensivePsiIntentionAction(@NotNull Project project) {

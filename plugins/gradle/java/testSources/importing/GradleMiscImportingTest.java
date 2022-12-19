@@ -338,6 +338,23 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     assertTrue(ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, moduleAfter));
   }
 
+
+  @Test
+  public void testProjectLibraryCoordinatesAreSet() throws Exception {
+    importProject("""
+apply plugin: 'java'
+repositories {
+  mavenCentral()
+}
+dependencies {
+  implementation "junit:junit:4.0"
+}
+""");
+
+    assertProjectLibraryCoordinates("Gradle: junit:junit:4.0",
+                                    "junit", "junit", "4.0");
+  }
+
   private static void assertExternalProjectIds(Map<String, ExternalProject> projectMap, String projectId, String... sourceSetModulesIds) {
     ExternalProject externalProject = projectMap.get(projectId);
     assertEquals(projectId, externalProject.getId());

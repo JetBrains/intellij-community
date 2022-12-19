@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui
 
+import com.intellij.codeInspection.ui.InspectionOptionsPanel
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
@@ -15,6 +16,9 @@ fun getBordersForOptions(optionsPanel: JComponent): Border {
 }
 
 fun addScrollPaneIfNecessary(optionsPanel: JComponent): JComponent {
-  return if (optionsPanel is JScrollPane) optionsPanel
-  else ScrollPaneFactory.createScrollPane(optionsPanel, SideBorder.NONE)
+  return when (optionsPanel) {
+    is JScrollPane -> optionsPanel
+    is InspectionOptionsPanel -> ScrollPaneFactory.createScrollPane(optionsPanel.apply { addGlueIfNeeded() }, SideBorder.NONE)
+    else -> ScrollPaneFactory.createScrollPane(optionsPanel, SideBorder.NONE)
+  }
 }

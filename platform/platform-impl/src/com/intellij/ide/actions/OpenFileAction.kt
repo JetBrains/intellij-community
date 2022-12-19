@@ -23,7 +23,7 @@ import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser
 import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runBlockingModal0
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -80,8 +80,8 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible {
         }
       }
       @Suppress("DialogTitleCapitalization")
-      runBlockingModal(owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
-                       title = IdeBundle.message("title.open.project")) {
+      runBlockingModal0(owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
+                        title = IdeBundle.message("title.open.project")) {
         for (file in files) {
           doOpenFile(project, file)
         }

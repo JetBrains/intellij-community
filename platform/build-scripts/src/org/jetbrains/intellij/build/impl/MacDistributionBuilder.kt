@@ -116,13 +116,8 @@ class MacDistributionBuilder(override val context: BuildContext,
       copyDistFiles(context = context, newDir = macDistDir, os = OsFamily.MACOS, arch = arch)
     }
 
-    customizer.copyAdditionalFiles(context = context, targetDirectory = macDistDir.toString())
+    customizer.copyAdditionalFiles(context = context, targetDirectory = macDistDir)
     customizer.copyAdditionalFiles(context = context, targetDirectory = macDistDir, arch = arch)
-
-    generateUnixScripts(distBinDir = macDistDir.resolve("bin"),
-                        os = OsFamily.MACOS,
-                        arch = arch,
-                        context = context)
   }
 
   override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
@@ -350,9 +345,13 @@ class MacDistributionBuilder(override val context: BuildContext,
       "bin/fsnotifier",
       "bin/printenv",
       "bin/restarter",
-      "bin/repair",
       "MacOS/*"
     )
+
+    if (!context.isStepSkipped(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
+      executableFilePatterns = executableFilePatterns.add("bin/repair")
+    }
+
     if (includeRuntime) {
       executableFilePatterns = executableFilePatterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS))
     }

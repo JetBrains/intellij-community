@@ -73,17 +73,38 @@ Supports Maven and Gradle projects.
         <dependenciesToolWindow.tabProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.RepositoryManagementPanelProvider"/>
 
-        <projectService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.services.DependencyNavigationService"/>
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.services.DependencyNavigationService"
+                        client="all"/>
+
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration"/>
+
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectCachesService"
+                        client="all"/>
+
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectService"
+                        client="all"/>
+
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.lifecycle.PackageSearchLifecycleScope"
+                        client="all"/>
+
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackagesListPanelProvider$PanelContainer"
+                        client="all"/>
+
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementPanel$UIState"
+                        client="all"/>
+
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.PkgsUiCommandsService"
+                        client="all"/>
+
+        <projectService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.data.LoadingContainer"
+                        client="all"/>
 
         <projectService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration"/>
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.RepositoryManagementPanelProvider$PanelContainer"
+                client="all"/>
 
-        <projectService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectCachesService"/>
-
-        <applicationService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchCachesService"/>
+        <applicationService serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchCachesService"
+                            client="all"/>
 
         <recoveryAction implementation="com.jetbrains.packagesearch.intellij.plugin.extensibility.DeletePackageSearchProjectCachesAction"/>
 

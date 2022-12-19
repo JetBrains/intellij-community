@@ -14,6 +14,12 @@ import java.util.Set;
 public final class ClassUtil {
   private ClassUtil() { }
 
+  /**
+   * Returns the first abstract method found in the specified class. The class itself is looked in first,
+   * then the superclasses are checked.
+   * @param aClass  the class to find abstract methods in.
+   * @return null, if no abstract methods were found, an abstract method otherwise.
+   */
   @Nullable
   public static PsiMethod getAnyAbstractMethod(@NotNull PsiClass aClass) {
     for (PsiMethod method : aClass.getMethods()) {

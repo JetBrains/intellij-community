@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.findUsages
 
@@ -30,9 +30,6 @@ interface KotlinFindUsagesSupport {
         ): Boolean =
             getInstance(companionObject.project).processCompanionObjectInternalReferences(companionObject, referenceProcessor)
 
-        fun getTopMostOverriddenElementsToHighlight(target: PsiElement): List<PsiElement> =
-            getInstance(target.project).getTopMostOverriddenElementsToHighlight(target)
-
         fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String? =
             getInstance(declaration.project).tryRenderDeclarationCompactStyle(declaration)
 
@@ -55,8 +52,6 @@ interface KotlinFindUsagesSupport {
     fun processCompanionObjectInternalReferences(companionObject: KtObjectDeclaration, referenceProcessor: Processor<PsiReference>): Boolean
 
     fun isDataClassComponentFunction(element: KtParameter): Boolean
-
-    fun getTopMostOverriddenElementsToHighlight(target: PsiElement): List<PsiElement>
 
     fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String?
 

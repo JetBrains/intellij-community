@@ -32,9 +32,6 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.actions.*
-import org.jetbrains.kotlin.idea.actions.createGroupedImportsAction
-import org.jetbrains.kotlin.idea.actions.createSingleImportAction
-import org.jetbrains.kotlin.idea.actions.createSingleImportActionForConstructor
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -82,7 +79,7 @@ import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.util.TreeSet
+import java.util.*
 
 /**
  * Check possibility and perform fix for unresolved references.
@@ -136,7 +133,7 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 
         val ktFile = element?.containingKtFile ?: return KotlinBundle.message("fix.import")
         val languageVersionSettings = ktFile.languageVersionSettings
-        val prioritizer = Prioritizer(ktFile)
+        val prioritizer = Prioritizer(ktFile, element)
 
         val kindNameGroupedByKind = descriptors.mapNotNull { descriptor ->
             val kind = when {
@@ -174,22 +171,23 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 
         return if (kindNameGroupedByKind.size == 1) {
             val (kind, names) = kindNameGroupedByKind.entries.first()
-            val sortedNames = TreeSet<ImportName>(compareBy({ it.priority }, { it.kind }, { it.name }))
-            sortedNames.addAll(names)
-            val firstName = sortedNames.first().name
+            val sortedImportNames = TreeSet<ImportName>(compareBy({ it.priority }, { it.name }))
+            sortedImportNames.addAll(names)
+            val firstName = sortedImportNames.first().name
             val singlePackage = suggestions.groupBy { it.parentOrNull() ?: FqName.ROOT }.size == 1
 
             if (singlePackage) {
-                val size = sortedNames.size
+                val sortedByName = sortedImportNames.toSortedSet(compareBy { it.name })
+                val size = sortedByName.size
                 if (size == 2) {
-                    KotlinBundle.message("fix.import.kind.0.name.1.and.name.2", kind.toText(size), firstName, sortedNames.last().name)
+                    KotlinBundle.message("fix.import.kind.0.name.1.and.name.2", kind.toText(size), sortedByName.first().name, sortedByName.last().name)
                 } else {
                     KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(size), firstName, size - 1)
                 }
             } else if (kind.groupedByPackage) {
                 KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(1), firstName, 0)
             } else {
-                val groupBy = sortedNames.map { it.name }.toSortedSet().groupBy { it.substringBefore('.') }
+                val groupBy = sortedImportNames.map { it.name }.toSortedSet().groupBy { it.substringBefore('.') }
                 val value = groupBy.entries.first().value
                 val first = value.first()
                 val multiple = if (value.size == 1) 0 else 1

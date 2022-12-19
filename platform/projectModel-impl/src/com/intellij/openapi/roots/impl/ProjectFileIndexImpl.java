@@ -105,8 +105,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public boolean isInProject(@NotNull VirtualFile file) {
     if (myWorkspaceFileIndex != null) {
-      WorkspaceFileSet fileSet = myWorkspaceFileIndex.findFileSet(file, true, true, true, true);
-      return fileSet != null;
+      return myWorkspaceFileIndex.isInWorkspace(file);
     }
     return getInfoForFileOrDirectory(file).isInProject(file);
   }
@@ -304,8 +303,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
     if (myWorkspaceFileIndex != null) {
-      WorkspaceFileSet fileSet = myWorkspaceFileIndex.findFileSet(fileOrDir, true, true, false, false);
-      return fileSet != null;
+      return myWorkspaceFileIndex.isInContent(fileOrDir);
     }
     return isFileInContent(fileOrDir, getInfoForFileOrDirectory(fileOrDir));
   }

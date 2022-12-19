@@ -21,8 +21,12 @@ private val EVERYTHING_BUT_KOTLIN = object : QueryFactory<PsiClass, DirectClassI
 
 internal class DirectKotlinClassDelegatedSearcher : Searcher<DirectKotlinClassInheritorsSearch.SearchParameters, PsiElement> {
     @RequiresReadLock
-    override fun collectSearchRequest(parameters: DirectKotlinClassInheritorsSearch.SearchParameters): Query<out PsiElement> {
+    override fun collectSearchRequest(parameters: DirectKotlinClassInheritorsSearch.SearchParameters): Query<out PsiElement>? {
         val baseClass = parameters.ktClass
+        if (baseClass.isEnum()) {
+            //enum inheritors may be found in the same class only, kotlin class
+            return null
+        }
         val lightClass = baseClass.toLightClass() ?: baseClass.toFakeLightClass()
         val params =
             DirectClassInheritorsSearch.SearchParameters(lightClass, parameters.searchScope, parameters.includeAnonymous, true)

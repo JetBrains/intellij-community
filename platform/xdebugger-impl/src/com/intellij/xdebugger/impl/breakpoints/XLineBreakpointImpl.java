@@ -2,14 +2,13 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LazyRangeMarkerFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -71,7 +70,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   }
 
   @RequiresBackgroundThread
-  void doUpdateUI(@Nullable Runnable callOnUpdate) {
+  void doUpdateUI(@NotNull Runnable callOnUpdate) {
     if (isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -81,15 +80,18 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       return;
     }
 
-    ApplicationManager.getApplication().invokeLater(() -> {
-      // do not decompile files here
+    ReadAction.nonBlocking(() -> {
+      // try not to decompile files
       Document document = FileDocumentManager.getInstance().getCachedDocument(file);
       if (document == null) {
         // currently LazyRangeMarkerFactory creates document for non binary files
         if (file.getFileType().isBinary()) {
-          if (myHighlighter == null) {
-            myHighlighter = LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(file, getLine(), 0, true);
-          }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (myHighlighter == null) {
+              myHighlighter = LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(file, getLine(), 0, true);
+              callOnUpdate.run();
+            }
+          });
           return;
         }
         document = FileDocumentManager.getInstance().getDocument(file);
@@ -98,82 +100,84 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
         }
       }
 
-      if (myHighlighter != null && !(myHighlighter instanceof RangeHighlighter)) {
-        removeHighlighter();
-        myHighlighter = null;
-      }
-
       if (myType instanceof XBreakpointTypeWithDocumentDelegation) {
         document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);
       }
 
-      TextAttributesKey attributesKey = DebuggerColors.BREAKPOINT_ATTRIBUTES;
-      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-      TextAttributes attributes = scheme.getAttributes(attributesKey);
+      TextRange range = myType.getHighlightRange(this);
 
-      if (!isEnabled()) {
-        attributes = attributes.clone();
-        attributes.setBackgroundColor(null);
-      }
-
-      RangeHighlighter highlighter = (RangeHighlighter)myHighlighter;
-      if (highlighter != null &&
-          (!highlighter.isValid()
-           || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), document)
-           || !Comparing.equal(highlighter.getTextAttributes(null), attributes)
-           // it seems that this check is not needed - we always update line number from the highlighter
-           // and highlighter is removed on line and file change anyway
-            /*|| document.getLineNumber(highlighter.getStartOffset()) != getLine()*/)) {
-        removeHighlighter();
-        highlighter = null;
-      }
-
-      MarkupModelEx markupModel;
-      if (highlighter == null) {
-        int line = getLine();
-        if (line >= document.getLineCount()) {
-          return;
+      Document finalDocument = document;
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (myHighlighter != null && !(myHighlighter instanceof RangeHighlighter)) {
+          removeHighlighter();
+          myHighlighter = null;
         }
-        markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
-        TextRange range = myType.getHighlightRange(this);
-        if (range != null && !range.isEmpty()) {
-          TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
-          if (range.intersects(lineRange)) {
-            highlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
-                                                          DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
-                                                          HighlighterTargetArea.EXACT_RANGE);
+
+        TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
+
+        if (!isEnabled()) {
+          attributes = attributes.clone();
+          attributes.setBackgroundColor(null);
+        }
+
+        RangeHighlighter highlighter = (RangeHighlighter)myHighlighter;
+        if (highlighter != null &&
+            (!highlighter.isValid()
+             || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), finalDocument)
+             || !Comparing.equal(highlighter.getTextAttributes(null), attributes)
+             // it seems that this check is not needed - we always update line number from the highlighter
+             // and highlighter is removed on line and file change anyway
+              /*|| document.getLineNumber(highlighter.getStartOffset()) != getLine()*/)) {
+          removeHighlighter();
+          highlighter = null;
+        }
+
+        MarkupModelEx markupModel;
+        if (highlighter == null) {
+          int line = getLine();
+          if (line >= finalDocument.getLineCount()) {
+            callOnUpdate.run();
+            return;
+          }
+          markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(finalDocument, getProject(), true);
+          if (range != null && !range.isEmpty()) {
+            TextRange lineRange = DocumentUtil.getLineTextRange(finalDocument, line);
+            if (range.intersects(lineRange)) {
+              highlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
+                                                            DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
+                                                            HighlighterTargetArea.EXACT_RANGE);
+            }
+          }
+          if (highlighter == null) {
+            highlighter = markupModel.addPersistentLineHighlighter(line, DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes);
+          }
+          if (highlighter == null) {
+            callOnUpdate.run();
+            return;
+          }
+
+          highlighter.setGutterIconRenderer(createGutterIconRenderer());
+          highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
+          highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
+          myHighlighter = highlighter;
+        }
+        else {
+          markupModel = null;
+        }
+
+        updateIcon();
+
+        if (markupModel == null) {
+          markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(finalDocument, getProject(), false);
+          if (markupModel != null) {
+            // renderersChanged false - we don't change gutter size
+            markupModel.fireAttributesChanged((RangeHighlighterEx)highlighter, false, false);
           }
         }
-        if (highlighter == null) {
-          highlighter = markupModel.addPersistentLineHighlighter(line, DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes);
-        }
-        if (highlighter == null) {
-          return;
-        }
 
-        highlighter.setGutterIconRenderer(createGutterIconRenderer());
-        highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
-        highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
-        myHighlighter = highlighter;
-      }
-      else {
-        markupModel = null;
-      }
-
-      updateIcon();
-
-      if (markupModel == null) {
-        markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), false);
-        if (markupModel != null) {
-          // renderersChanged false - we don't change gutter size
-          markupModel.fireAttributesChanged((RangeHighlighterEx)highlighter, false, false);
-        }
-      }
-
-      if (callOnUpdate != null) {
         callOnUpdate.run();
-      }
-    });
+      });
+    }).executeSynchronously();
   }
 
   @Nullable

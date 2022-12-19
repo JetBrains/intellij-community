@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaValue;
@@ -31,7 +31,7 @@ import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDescriptor{
+public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDescriptor {
   public static final String OUTER_LOCAL_VAR_FIELD_PREFIX = "val$";
   private final Field myField;
   private final ObjectReference myObject;
@@ -176,13 +176,13 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     String fieldName;
-    if(isStatic()) {
+    if (isStatic()) {
       String typeName = myField.declaringType().name().replace('$', '.');
       typeName = DebuggerTreeNodeExpression.normalize(typeName, PositionUtil.getContextElement(context), myProject);
       fieldName = typeName + "." + getName();
     }
     else {
-      fieldName = isOuterLocalVariableValue()? StringUtil.trimStart(getName(), OUTER_LOCAL_VAR_FIELD_PREFIX) : "this." + getName();
+      fieldName = isOuterLocalVariableValue() ? StringUtil.trimStart(getName(), OUTER_LOCAL_VAR_FIELD_PREFIX) : "this." + getName();
     }
     try {
       return elementFactory.createExpressionFromText(fieldName, null);

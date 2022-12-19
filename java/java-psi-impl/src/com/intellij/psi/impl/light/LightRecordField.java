@@ -1,14 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
-import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
@@ -17,14 +13,13 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Objects;
 
 public final class LightRecordField extends LightField implements LightRecordMember {
   private final @NotNull PsiRecordComponent myRecordComponent;
+  private final @NotNull LightRecordComponentModifierList myModifierList;
 
   public LightRecordField(@NotNull PsiManager manager,
                           @NotNull PsiField field,
@@ -32,6 +27,7 @@ public final class LightRecordField extends LightField implements LightRecordMem
                           @NotNull PsiRecordComponent component) {
     super(manager, field, containingClass);
     myRecordComponent = component;
+    myModifierList = new LightRecordComponentModifierList(this, field, myRecordComponent);
   }
 
   @Override
@@ -65,31 +61,12 @@ public final class LightRecordField extends LightField implements LightRecordMem
 
   @Override
   public @NotNull PsiType getType() {
-    if (DumbService.isDumb(myRecordComponent.getProject())) return myRecordComponent.getType();
-    return CachedValuesManager.getCachedValue(this, () -> {
-      PsiType type = myRecordComponent.getType()
-        .annotate(() -> Arrays.stream(myRecordComponent.getAnnotations())
-          .filter(LightRecordField::hasApplicableAnnotationTarget)
-          .toArray(PsiAnnotation[]::new)
-        );
-      return CachedValueProvider.Result.create(type, this);
-    });
+    return myRecordComponent.getType();
   }
 
   @Override
-  public PsiAnnotation @NotNull [] getAnnotations() {
-    return getType().getAnnotations();
-  }
-
-  @Override
-  public boolean hasAnnotation(@NotNull String fqn) {
-    PsiType type = getType();
-    return type.hasAnnotation(fqn);
-  }
-
-  @Override
-  public @Nullable PsiAnnotation getAnnotation(@NotNull String fqn) {
-    return getType().findAnnotation(fqn);
+  public PsiModifierList getModifierList() {
+    return myModifierList;
   }
 
   @Override
@@ -117,10 +94,6 @@ public final class LightRecordField extends LightField implements LightRecordMem
       containingClass = containingClass.getContainingClass();
     }
     return new LocalSearchScope(aClass);
-  }
-
-  private static boolean hasApplicableAnnotationTarget(PsiAnnotation annotation) {
-    return AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.TYPE_USE, PsiAnnotation.TargetType.FIELD) != null;
   }
 
   @Override

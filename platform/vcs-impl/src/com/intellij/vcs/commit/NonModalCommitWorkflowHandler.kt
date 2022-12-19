@@ -285,12 +285,12 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
   }
 
-  override fun doExecuteSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
+  override suspend fun doExecuteSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
     if (!sessionInfo.isVcsCommit) {
       return workflow.executeSession(sessionInfo, commitInfo)
     }
 
-    workflow.asyncSession(coroutineScope, sessionInfo) {
+    workflow.launchAsyncSession(coroutineScope, sessionInfo) {
       pendingPostCommitChecks = null
 
       val isOnlyRunCommitChecks = commitContext.isOnlyRunCommitChecks
@@ -481,6 +481,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   override fun dispose() {
+    disposeCommitOptions()
     hideCommitChecksFailureNotification()
     coroutineScope.cancel()
     project.getServiceIfCreated(PostCommitChecksHandler::class.java)?.resetPendingCommits() // null during Project dispose

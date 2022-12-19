@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.MethodReturnTypeFix;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.util.Version;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.TestngBundle;
@@ -124,8 +123,7 @@ public class DataProviderReturnTypeInspection extends AbstractBaseJavaLocalInspe
   }
 
   private static boolean supportOneDimensional(PsiMethod method) {
-    Version version = TestNGUtil.detectVersion(method.getProject(), ModuleUtilCore.findModuleForPsiElement(method));
-    return version != null && version.isOrGreaterThan(6, 11);
+    return TestNGUtil.isVersionOrGreaterThan(method.getProject(), ModuleUtilCore.findModuleForPsiElement(method), 6, 11, 0);
   }
 
   private static boolean isAppropriateTypeArray(PsiMethod method, final @NotNull PsiType type, @NotNull PsiAnnotation annotation) {

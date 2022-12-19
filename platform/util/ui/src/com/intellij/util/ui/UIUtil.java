@@ -1783,7 +1783,7 @@ public final class UIUtil {
   /**
    * Provides all input event modifiers including deprecated, since they are still used in IntelliJ platform
    */
-  @MagicConstant(flagsFromClass = InputEvent.class)
+  @MagicConstant(flags = {Event.SHIFT_MASK, Event.CTRL_MASK, Event.META_MASK, Event.ALT_MASK, InputEvent.SHIFT_DOWN_MASK, InputEvent.CTRL_DOWN_MASK, InputEvent.META_DOWN_MASK, InputEvent.ALT_DOWN_MASK, InputEvent.BUTTON1_DOWN_MASK, InputEvent.BUTTON2_DOWN_MASK, InputEvent.BUTTON3_DOWN_MASK, InputEvent.ALT_GRAPH_DOWN_MASK})
   public static int getAllModifiers(@NotNull InputEvent event) {
     return event.getModifiers() | event.getModifiersEx();
   }
@@ -2258,6 +2258,9 @@ public final class UIUtil {
     editor.reshape(x, y, width, height);
   }
 
+  /**
+   * @see JBUI.CurrentTheme.List#rowHeight()
+   */
   public static final int LIST_FIXED_CELL_HEIGHT = 20;
 
   /**
@@ -2326,6 +2329,17 @@ public final class UIUtil {
     }
     return result;
   });
+
+  @ApiStatus.Internal
+  public static void addNotInHierarchyComponents(@NotNull JComponent container, @NotNull Iterable<Component> components) {
+    Iterable<? extends Component> oldValue = ClientProperty.get(container, NOT_IN_HIERARCHY_COMPONENTS);
+    if (oldValue == null) {
+      ClientProperty.put(container, NOT_IN_HIERARCHY_COMPONENTS, components);
+      return;
+    }
+
+    ClientProperty.put(container, NOT_IN_HIERARCHY_COMPONENTS, IterablesConcat.concat(oldValue, components));
+  }
 
   public static void scrollListToVisibleIfNeeded(final @NotNull JList<?> list) {
     SwingUtilities.invokeLater(() -> {
@@ -2874,6 +2888,11 @@ public final class UIUtil {
 
   public static int getLineHeight(@NotNull JTextComponent textComponent) {
     return textComponent.getFontMetrics(textComponent.getFont()).getHeight();
+  }
+
+  public static int getUnscaledLineHeight(@NotNull JComponent component) {
+    Font baseFont = component.getFont().deriveFont(JBUIScale.DEF_SYSTEM_FONT_SIZE);
+    return component.getFontMetrics(baseFont).getHeight();
   }
 
   /**

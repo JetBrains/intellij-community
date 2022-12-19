@@ -27,17 +27,18 @@ import javax.swing.event.ListDataListener
 class TimelineThreadCommentsPanel<T>(
   private val commentsModel: ListModel<T>,
   private val commentComponentFactory: (T) -> JComponent,
-  offset: Int = JBUI.scale(8)
+  offset: Int = JBUI.scale(8),
+  foldButtonOffset: Int = 30
 ) : BorderLayoutPanel() {
   companion object {
     private const val FOLD_THRESHOLD = 3
   }
 
-  private val foldModel = SingleValueModel(true)
+  val foldModel = SingleValueModel(true)
 
   private val unfoldButtonPanel = BorderLayoutPanel().apply {
     isOpaque = false
-    border = JBUI.Borders.emptyLeft(30)
+    border = JBUI.Borders.emptyLeft(foldButtonOffset)
 
     addToLeft(UnfoldButton(foldModel).apply {
       foreground = UIUtil.getLabelForeground()
@@ -87,7 +88,7 @@ class TimelineThreadCommentsPanel<T>(
     })
 
     foldModel.addListener { updateFolding(it) }
-    updateFolding(true)
+    updateFolding(foldModel.value)
   }
 
   private fun updateFolding(folded: Boolean) {

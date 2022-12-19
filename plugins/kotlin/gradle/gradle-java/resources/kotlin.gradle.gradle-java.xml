@@ -93,7 +93,6 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator"/>
-    <projectConfigurator implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinJsGradleModuleConfigurator"/>
 
     <gradleModelFacade implementation="org.jetbrains.kotlin.idea.gradleJava.inspections.DefaultGradleModelFacade"/>
 

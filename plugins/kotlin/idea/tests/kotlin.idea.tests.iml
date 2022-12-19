@@ -126,5 +126,6 @@
     <orderEntry type="module" module-name="kotlin.j2k.old.post-processing" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.ide.customization" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
+    <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
   </component>
 </module>

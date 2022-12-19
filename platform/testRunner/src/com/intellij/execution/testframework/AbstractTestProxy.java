@@ -167,5 +167,15 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     return null;
   }
 
-  abstract public TestProxyRoot getRoot();
+  @Nullable
+  public static TestProxyRoot getTestRoot(@NotNull AbstractTestProxy proxy) {
+    if (proxy instanceof TestProxyRoot) {
+      return (TestProxyRoot)proxy;
+    }
+    AbstractTestProxy parent = proxy.getParent();
+    while (parent != null && !(parent instanceof TestProxyRoot)) {
+      parent = parent.getParent();
+    }
+    return parent != null ? (TestProxyRoot)parent : null;
+  }
 }

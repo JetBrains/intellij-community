@@ -28,7 +28,8 @@ fun KotlinProjectModuleId(resolverContext: ProjectResolverContext, gradleIdeaMod
     KotlinProjectModuleId(GradleProjectResolverUtil.getModuleId(resolverContext, gradleIdeaModule))
 
 fun KotlinProjectModuleId(coordinates: IdeaKotlinProjectCoordinates): KotlinProjectModuleId {
-    return KotlinProjectModuleId(GradleProjectResolverUtil.getModuleId(coordinates.projectPath, coordinates.projectName))
+    val prefix = if (coordinates.buildId != ":") coordinates.buildId else ""
+    return KotlinProjectModuleId(prefix + GradleProjectResolverUtil.getModuleId(coordinates.projectPath, coordinates.projectName))
 }
 
 @OptIn(UnsafeApi::class)

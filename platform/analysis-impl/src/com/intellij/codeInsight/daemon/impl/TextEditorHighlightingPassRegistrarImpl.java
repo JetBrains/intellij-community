@@ -119,7 +119,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     assertPassIdsAreNotCrazy(afterStartingOf, "afterStartingOf");
     assertPassIdsAreNotCrazy(afterCompletionOf, "afterCompletionOf");
     PassConfig info = new PassConfig(factory, afterCompletionOf, afterStartingOf);
-    int passId = forcedPassId == -1 ? nextAvailableId.incrementAndGet() : forcedPassId;
+    int passId = forcedPassId == -1 ? getNextAvailableId() : forcedPassId;
     PassConfig registered = myRegisteredPassFactories.get(passId);
     assert registered == null: "Pass id "+passId +" has already been registered in: "+ registered.passFactory;
     myRegisteredPassFactories.put(passId, info);
@@ -151,9 +151,8 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     }
   }
 
-  @NotNull
-  AtomicInteger getNextAvailableId() {
-    return nextAvailableId;
+  int getNextAvailableId() {
+    return nextAvailableId.incrementAndGet();
   }
 
   @Override

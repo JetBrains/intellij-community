@@ -28,7 +28,6 @@ class GradleJvmSupportMatrix : PersistentStateComponent<JvmCompatibilityState?> 
     else {
       myState = state
     }
-    parseMyState()
   }
 
   private fun parseMyState() {
@@ -74,6 +73,20 @@ class GradleJvmSupportMatrix : PersistentStateComponent<JvmCompatibilityState?> 
 
   fun maxSupportedJava(): JavaVersion {
     return mySupportedJavaVersions.last()
+  }
+
+  fun setStateAsString(json: String) {
+    val parser = CompatibilityDataParser(ApplicationInfo.getInstance().fullVersion)
+    val compatibilityData = parser.parseJson(json);
+    if (compatibilityData != null) {
+      val newState = JvmCompatibilityState();
+      newState.data = compatibilityData;
+      newState.isDefault = false
+      newState.ideVersion = ApplicationInfo.getInstance().fullVersion
+      newState.lastUpdateTime = System.currentTimeMillis();
+      myState = newState
+      parseMyState()
+    }
   }
 
 

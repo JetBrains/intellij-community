@@ -3,6 +3,7 @@ package com.intellij.tool
 
 import com.intellij.TestCaseLoader
 import org.apache.http.HttpResponse
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.impl.client.LaxRedirectStrategy
@@ -14,13 +15,21 @@ import java.util.concurrent.Semaphore
 import kotlin.io.path.createDirectories
 import kotlin.io.path.outputStream
 
+
 object HttpClient {
   private val locks = ConcurrentHashMap<String, Semaphore>()
+
+  private var requestConfig = RequestConfig.custom()
+    .setConnectTimeout(30 * 1000)
+    .setConnectionRequestTimeout(30 * 1000)
+    .setSocketTimeout(30 * 1000).build()
 
   fun <Y> sendRequest(request: HttpUriRequest, processor: (HttpResponse) -> Y): Y {
     HttpClientBuilder.create()
       .setRedirectStrategy(LaxRedirectStrategy())
-      .build().use { client ->
+      .setDefaultRequestConfig(requestConfig)
+      .build()
+      .use { client ->
         client.execute(request).use { response ->
           if (response.statusLine.statusCode != 200) {
             System.err.println(

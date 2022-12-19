@@ -83,7 +83,7 @@ object Launcher {
 
     if (!TeamCityHelper.isUnderTeamCity) {
       val suspendOnStart = if (options.debugSuspendOnStart) "y" else "n"
-      val port = if (options.debugPort > 0) options.debugPort else findFreeDebugPort()
+      val port = if (options.debugPort != null) options.debugPort else findFreeDebugPort()
 
       // changed in Java 9, now we have to use *: to listen on all interfaces
       val host = if (options.runInDocker) "*:" else ""

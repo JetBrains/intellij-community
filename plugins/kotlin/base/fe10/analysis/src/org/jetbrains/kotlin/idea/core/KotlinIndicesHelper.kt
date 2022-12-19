@@ -8,7 +8,6 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.CompositeShortNamesCache
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
-import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -81,7 +80,7 @@ class KotlinIndicesHelper(
     }
 
     fun getTopLevelCallablesByName(name: String): Collection<CallableDescriptor> {
-        val declarations = LinkedHashSet<KtNamedDeclaration>()
+        val declarations = mutableSetOf<KtNamedDeclaration>()
         declarations.addTopLevelNonExtensionCallablesByName(KotlinFunctionShortNameIndex, name)
         declarations.addTopLevelNonExtensionCallablesByName(KotlinPropertyShortNameIndex, name)
         return declarations
@@ -90,19 +89,22 @@ class KotlinIndicesHelper(
     }
 
     private fun MutableSet<KtNamedDeclaration>.addTopLevelNonExtensionCallablesByName(
-        index: StringStubIndexExtension<out KtNamedDeclaration>,
+        index: KotlinStringStubIndexExtension<out KtNamedDeclaration>,
         name: String
     ) {
-        index.get(name, project, scope)
-            .filterTo(this) {
-                ProgressManager.checkCanceled()
-                it.parent is KtFile && it is KtCallableDeclaration && it.receiverTypeReference == null
+        index.processElements(name, project, scope) {
+            ProgressManager.checkCanceled()
+            if (it.parent is KtFile && it is KtCallableDeclaration && it.receiverTypeReference == null) {
+                add(it)
             }
+            true
+        }
     }
 
     fun getTopLevelExtensionOperatorsByName(name: String): Collection<FunctionDescriptor> {
-        return KotlinFunctionShortNameIndex.get(name, project, scope)
-            .filter { it.parent is KtFile && it.receiverTypeReference != null && it.hasModifier(KtTokens.OPERATOR_KEYWORD) }
+        return KotlinFunctionShortNameIndex.getAllElements(name, project, scope) {
+            it.parent is KtFile && it.receiverTypeReference != null && it.hasModifier(KtTokens.OPERATOR_KEYWORD)
+        }
             .flatMap {
                 ProgressManager.checkCanceled()
                 it.resolveToDescriptors<FunctionDescriptor>()
@@ -112,8 +114,9 @@ class KotlinIndicesHelper(
     }
 
     fun getMemberOperatorsByName(name: String): Collection<FunctionDescriptor> {
-        return KotlinFunctionShortNameIndex.get(name, project, scope)
-            .filter { it.parent is KtClassBody && it.receiverTypeReference == null && it.hasModifier(KtTokens.OPERATOR_KEYWORD) }
+        return KotlinFunctionShortNameIndex.getAllElements(name, project, scope) {
+            it.parent is KtClassBody && it.receiverTypeReference == null && it.hasModifier(KtTokens.OPERATOR_KEYWORD)
+        }
             .flatMap {
                 ProgressManager.checkCanceled()
                 it.resolveToDescriptors<FunctionDescriptor>()
@@ -219,7 +222,6 @@ class KotlinIndicesHelper(
         fun searchRecursively(typeName: String) {
             ProgressManager.checkCanceled()
             KotlinTypeAliasByExpansionShortNameIndex[typeName, project, scope].asSequence()
-                .filter { it in scope }
                 .flatMap { it.resolveToDescriptors<TypeAliasDescriptor>().asSequence() }
                 .filter { it.expandedType.constructor == typeConstructor }
                 .filter { out.putIfAbsent(it.fqNameSafe, it) == null }
@@ -271,7 +273,6 @@ class KotlinIndicesHelper(
         fun searchRecursively(typeName: String) {
             ProgressManager.checkCanceled()
             KotlinTypeAliasByExpansionShortNameIndex[typeName, project, scope].asSequence()
-                .filter { it in scope }
                 .mapNotNull(KtTypeAlias::getName)
                 .filter(out::add)
                 .forEach(::searchRecursively)
@@ -308,12 +309,13 @@ class KotlinIndicesHelper(
     }
 
     fun getKotlinEnumsByName(name: String): Collection<DeclarationDescriptor> {
-        val classOrObjects = KotlinClassShortNameIndex.get(name, project, scope)
-        val result = HashSet<DeclarationDescriptor>(classOrObjects.size)
-        for (classOrObject in classOrObjects) {
+        val enumEntries = KotlinClassShortNameIndex.getAllElements(name, project, scope) {
+            it is KtEnumEntry
+        }
+        val result = HashSet<DeclarationDescriptor>(enumEntries.size)
+        for (enumEntry in enumEntries) {
             ProgressManager.checkCanceled()
-            if (!(classOrObject is KtEnumEntry && classOrObject in scope)) continue
-            val descriptorsWithHack = classOrObject.resolveToDescriptorsWithHack { true }
+            val descriptorsWithHack = enumEntry.resolveToDescriptorsWithHack { true }
             for (descriptor in descriptorsWithHack) {
                 if (descriptorFilter(descriptor)) result += descriptor
             }
@@ -480,10 +482,12 @@ class KotlinIndicesHelper(
         filter: (KtNamedDeclaration) -> Boolean,
         processor: (CallableDescriptor) -> Unit
     ) {
-        val functions: Sequence<KtCallableDeclaration> = KotlinFunctionShortNameIndex.get(name, project, scope).asSequence()
-        val properties: Sequence<KtNamedDeclaration> = KotlinPropertyShortNameIndex.get(name, project, scope).asSequence()
-        val processed = HashSet<CallableDescriptor>()
-        for (declaration in functions + properties) {
+        val values = mutableSetOf<KtNamedDeclaration>()
+        val callableDeclarationProcessor = CancelableCollectFilterProcessor(values, CancelableCollectFilterProcessor.ALWAYS_TRUE)
+        KotlinFunctionShortNameIndex.processElements(name, project, scope, callableDeclarationProcessor)
+        KotlinPropertyShortNameIndex.processElements(name, project, scope, callableDeclarationProcessor)
+        val processed = HashSet<CallableDescriptor>(values.size)
+        for (declaration in values) {
             ProgressManager.checkCanceled()
             if (!filter(declaration)) continue
 

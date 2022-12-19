@@ -5,20 +5,30 @@ import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.branch.TrackReposSynchronouslyAction
 import com.intellij.dvcs.ui.DvcsBundle
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.popup.KeepingPopupOpenAction
 import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.config.GitVcsSettings
 
 internal class GitBranchesTreePopupSettings :
-  DefaultActionGroup(DvcsBundle.messagePointer("action.BranchActionGroupPopup.settings.text"), true) {
+  DefaultActionGroup(DvcsBundle.messagePointer("action.BranchActionGroupPopup.settings.text"), true), DumbAware {
   init {
     templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
   }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.icon = if(ExperimentalUI.isNewUI()) AllIcons.General.Settings else AllIcons.Actions.More
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 }
 
 internal class GitBranchesTreePopupResizeAction :

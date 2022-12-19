@@ -13,8 +13,8 @@ class Foo {
     }
 }
 
-open class Bar {
-    open fun bar(other: Bar) {
+open class <lineMarker descr="Is subclassed by BarImpl Press ... to navigate">Bar</lineMarker> {
+    open fun <lineMarker descr="Is overridden in BarImpl Press ... to navigate">bar</lineMarker>(other: Bar) {
         <lineMarker text="Recursive call">bar</lineMarker>(other)
         this.<lineMarker text="Recursive call">bar</lineMarker>(other)
         this@Bar.<lineMarker text="Recursive call">bar</lineMarker>(other)
@@ -44,5 +44,5 @@ object Obj {
 }
 
 class BarImpl : Bar {
-    override fun bar(other: Bar) {}
+    override fun <lineMarker descr="Overrides function in Bar Press ... to navigate">bar</lineMarker>(other: Bar) {}
 }

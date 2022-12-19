@@ -1,12 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter.markers
 
 import com.intellij.codeInsight.daemon.*
+import com.intellij.codeInsight.daemon.impl.InheritorsLineMarkerNavigator
 import com.intellij.codeInsight.daemon.impl.LineMarkerNavigator
 import com.intellij.codeInsight.daemon.impl.MarkerType
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask
+import com.intellij.java.JavaBundle
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.CodeInsightColors
@@ -142,67 +144,26 @@ interface TestableLineMarkerNavigator {
     fun getTargetsPopupDescriptor(element: PsiElement?): NavigationPopupDescriptor?
 }
 
-val SUBCLASSED_CLASS = object : MarkerType(
+val SUBCLASSED_CLASS = MarkerType(
     "SUBCLASSED_CLASS",
     { getPsiClass(it)?.let(::getModuleSpecificSubclassedClassTooltip) },
-    object : LineMarkerNavigator() {
-        override fun browse(e: MouseEvent, element: PsiElement?) {
-            buildNavigateToClassInheritorsPopup(e, element)?.showPopup(e)
-        }
-    }) {
-    override fun getNavigationHandler(): GutterIconNavigationHandler<PsiElement> {
-        val superHandler = super.getNavigationHandler()
-        return object : GutterIconNavigationHandler<PsiElement>, TestableLineMarkerNavigator {
-            override fun navigate(e: MouseEvent?, elt: PsiElement?) {
-                superHandler.navigate(e, elt)
-            }
+    object : InheritorsLineMarkerNavigator() {
+        override fun getMessageForDumbMode() = JavaBundle.message("notification.navigation.to.overriding.classes")
+    })
 
-            override fun getTargetsPopupDescriptor(element: PsiElement?) = buildNavigateToClassInheritorsPopup(null, element)
-        }
-    }
-}
-
-val OVERRIDDEN_FUNCTION = object : MarkerType(
+val OVERRIDDEN_FUNCTION = MarkerType(
     "OVERRIDDEN_FUNCTION",
     { getPsiMethod(it)?.let(::getOverriddenMethodTooltip) },
-    object : LineMarkerNavigator() {
-        override fun browse(e: MouseEvent?, element: PsiElement?) {
-            e?.let { buildNavigateToOverriddenMethodPopup(e, element)?.showPopup(e) }
-        }
-    }) {
+    object : InheritorsLineMarkerNavigator() {
+        override fun getMessageForDumbMode() = KotlinBundle.message("highlighter.notification.text.navigation.to.overriding.classes.is.not.possible.during.index.update")
+    })
 
-    override fun getNavigationHandler(): GutterIconNavigationHandler<PsiElement> {
-        val superHandler = super.getNavigationHandler()
-        return object : GutterIconNavigationHandler<PsiElement>, TestableLineMarkerNavigator {
-            override fun navigate(e: MouseEvent?, elt: PsiElement?) {
-                superHandler.navigate(e, elt)
-            }
-
-            override fun getTargetsPopupDescriptor(element: PsiElement?) = buildNavigateToOverriddenMethodPopup(null, element)
-        }
-    }
-}
-
-val OVERRIDDEN_PROPERTY = object : MarkerType(
+val OVERRIDDEN_PROPERTY = MarkerType(
     "OVERRIDDEN_PROPERTY",
     { it?.let { getOverriddenPropertyTooltip(it.parent as KtNamedDeclaration) } },
-    object : LineMarkerNavigator() {
-        override fun browse(e: MouseEvent?, element: PsiElement?) {
-            e?.let { buildNavigateToPropertyOverriddenDeclarationsPopup(e, element)?.showPopup(e) }
-        }
-    }) {
-
-    override fun getNavigationHandler(): GutterIconNavigationHandler<PsiElement> {
-        val superHandler = super.getNavigationHandler()
-        return object : GutterIconNavigationHandler<PsiElement>, TestableLineMarkerNavigator {
-            override fun navigate(e: MouseEvent?, elt: PsiElement?) {
-                superHandler.navigate(e, elt)
-            }
-
-            override fun getTargetsPopupDescriptor(element: PsiElement?) = buildNavigateToPropertyOverriddenDeclarationsPopup(null, element)
-        }
-    }
-}
+    object : InheritorsLineMarkerNavigator() {
+        override fun getMessageForDumbMode() = KotlinBundle.message("highlighter.notification.text.navigation.to.overriding.classes.is.not.possible.during.index.update")
+    })
 
 val PsiElement.markerDeclaration
     get() = (this as? KtDeclaration) ?: (parent as? KtDeclaration)

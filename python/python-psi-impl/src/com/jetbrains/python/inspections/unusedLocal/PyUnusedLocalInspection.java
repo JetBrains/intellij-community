@@ -3,16 +3,17 @@ package com.jetbrains.python.inspections.unusedLocal;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class PyUnusedLocalInspection extends PyInspection {
   private static final Key<PyUnusedLocalInspectionVisitor> KEY = Key.create("PyUnusedLocal.Visitor");
@@ -48,13 +49,12 @@ public class PyUnusedLocalInspection extends PyInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final PythonUiService uiService = PythonUiService.getInstance();
-    final JPanel panel = uiService.createMultipleCheckboxOptionsPanel(this);
-    uiService.addCheckboxToOptionsPanel(panel, PyPsiBundle.message("INSP.unused.locals.ignore.variables.used.in.tuple.unpacking"), "ignoreTupleUnpacking");
-    uiService.addCheckboxToOptionsPanel(panel, PyPsiBundle.message("INSP.unused.locals.ignore.lambda.parameters"), "ignoreLambdaParameters");
-    uiService.addCheckboxToOptionsPanel(panel, PyPsiBundle.message("INSP.unused.locals.ignore.range.iteration.variables"), "ignoreLoopIterationVariables");
-    uiService.addCheckboxToOptionsPanel(panel, PyPsiBundle.message("INSP.unused.locals.ignore.variables.starting.with"), "ignoreVariablesStartingWithUnderscore");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreTupleUnpacking", PyPsiBundle.message("INSP.unused.locals.ignore.variables.used.in.tuple.unpacking")),
+      checkbox("ignoreLambdaParameters", PyPsiBundle.message("INSP.unused.locals.ignore.lambda.parameters")),
+      checkbox("ignoreLoopIterationVariables", PyPsiBundle.message("INSP.unused.locals.ignore.range.iteration.variables")),
+      checkbox("ignoreVariablesStartingWithUnderscore", PyPsiBundle.message("INSP.unused.locals.ignore.variables.starting.with"))
+    );
   }
 }

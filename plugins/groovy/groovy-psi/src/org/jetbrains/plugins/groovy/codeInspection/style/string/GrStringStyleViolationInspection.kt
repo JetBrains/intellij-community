@@ -4,7 +4,7 @@ package org.jetbrains.plugins.groovy.codeInspection.style.string
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.panel
 import com.intellij.util.ui.CheckBox
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -115,7 +115,7 @@ class GrStringStyleViolationInspection : BaseInspection() {
                           arrayOf(UNDEFINED, *MULTILINE_STRING_OPTIONS), 3, constraints)
   }
 
-  override fun createGroovyOptionsPanel(): JComponent {
+  override fun createOptionsPanel(): JComponent {
     return panel {
       titledRow(GroovyBundle.message("separator.preferable.string.kind")) {
         row { generateComboBoxes()() }

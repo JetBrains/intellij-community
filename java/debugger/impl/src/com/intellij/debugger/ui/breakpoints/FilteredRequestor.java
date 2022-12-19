@@ -10,13 +10,17 @@ public interface FilteredRequestor extends LocatableEventRequestor {
   String getSuspendPolicy();
 
   boolean isInstanceFiltersEnabled();
+
   InstanceFilter[] getInstanceFilters();
 
   boolean isCountFilterEnabled();
+
   int getCountFilter();
 
   boolean isClassFiltersEnabled();
+
   ClassFilter[] getClassFilters();
+
   ClassFilter[] getClassExclusionFilters();
 
   default boolean isConditionEnabled() {

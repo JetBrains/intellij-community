@@ -17,6 +17,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level.PROJECT
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
@@ -119,6 +120,9 @@ private suspend fun contextModel(ctx: DataContext, project: Project): List<NavBa
   }
   catch (ce: CancellationException) {
     throw ce
+  }
+  catch (pce: ProcessCanceledException) {
+    throw pce
   }
   catch (t: Throwable) {
     LOG.error(t)

@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -739,10 +740,10 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                       """);
 
       ApplicationManager.getApplication().runWriteAction(() -> {
-        MavenRootModelAdapter a = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(getProjectsTree().findProject(myProjectPom),
-                                                                                                getModule("project"),
-                                                                                                new ModifiableModelsProviderProxyWrapper(
-                                                                                                  myProject)));
+        MavenRootModelAdapter a = new MavenRootModelAdapter(
+          new MavenRootModelAdapterLegacyImpl(getProjectsTree().findProject(myProjectPom),
+                                              getModule("project"),
+                                              ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)));
         a.unregisterAll(getProjectPath() + "/target", true, true);
         a.getRootModel().commit();
       });

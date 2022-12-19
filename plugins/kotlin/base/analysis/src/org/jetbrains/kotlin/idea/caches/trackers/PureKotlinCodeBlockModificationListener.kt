@@ -356,8 +356,18 @@ val KtFile.inBlockModificationCount: Long by NotNullableUserDataProperty(FILE_IN
 
 val KtFile.inBlockModifications: Collection<KtElement>
     get() {
-        val collection = getUserData(IN_BLOCK_MODIFICATIONS)
-        return collection ?: emptySet()
+        val collection = getUserData(IN_BLOCK_MODIFICATIONS) ?: return emptySet()
+        return synchronized(collection) {
+            ArrayList(collection)
+        }
+    }
+
+val KtFile.hasBlockModifications: Boolean
+    get() {
+        val collection = getUserData(IN_BLOCK_MODIFICATIONS) ?: return false
+        return synchronized(collection) {
+            collection.isNotEmpty()
+        }
     }
 
 private fun KtFile.addInBlockModifiedItem(element: KtElement) {
@@ -373,11 +383,18 @@ private fun KtFile.addInBlockModifiedItem(element: KtElement) {
     putUserData(FILE_IN_BLOCK_MODIFICATION_COUNT, count + 1)
 }
 
+fun KtFile.removeInBlockModifications(blockModifications: Collection<KtElement>) {
+    getUserData(IN_BLOCK_MODIFICATIONS)?.let { collection ->
+        synchronized(collection) {
+            collection.removeAll(blockModifications.toSet())
+        }
+    }
+}
+
 fun KtFile.clearInBlockModifications() {
-    val collection = getUserData(IN_BLOCK_MODIFICATIONS)
-    collection?.let {
-        synchronized(it) {
-            it.clear()
+    getUserData(IN_BLOCK_MODIFICATIONS)?.let { collection ->
+        synchronized(collection) {
+            collection.clear()
         }
     }
 }

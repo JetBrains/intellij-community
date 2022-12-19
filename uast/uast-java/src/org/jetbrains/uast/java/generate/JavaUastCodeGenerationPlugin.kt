@@ -327,9 +327,9 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     return JavaUDeclarationsExpression(null, declarations)
   }
 
-  override fun createReturnExpresion(expression: UExpression?,
-                                     inLambda: Boolean,
-                                     context: PsiElement?): UReturnExpression? {
+  override fun createReturnExpression(expression: UExpression?,
+                                      inLambda: Boolean,
+                                      context: PsiElement?): UReturnExpression? {
     val returnStatement = psiFactory.createStatementFromText("return ;", null) as? PsiReturnStatement ?: return null
 
     expression?.sourcePsi?.node?.let { (returnStatement as CompositeElement).addChild(it, returnStatement.lastChild.node) }
@@ -502,6 +502,9 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
       else -> error("Unexpected type " + result.javaClass)
     }
   }
+
+  override fun createMethodFromText(methodText: String, context: PsiElement?): UMethod? =
+    psiFactory.createMethodFromText(methodText, context).toUElementOfType()
 
   private val PsiElement.branchStatement: PsiStatement?
     get() = when (this) {

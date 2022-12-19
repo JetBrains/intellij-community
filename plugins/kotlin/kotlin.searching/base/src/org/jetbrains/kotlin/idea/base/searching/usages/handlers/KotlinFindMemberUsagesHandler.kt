@@ -39,11 +39,10 @@ import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFunctionFindUsagesO
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindFunctionUsagesDialog
 import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindPropertyUsagesDialog
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
-import org.jetbrains.kotlin.idea.findUsages.*
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.getTopMostOverriddenElementsToHighlight
+import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.isDataClassComponentFunction
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.filterDataClassComponentsIfDisabled
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isOverridable
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
@@ -56,9 +55,10 @@ import org.jetbrains.kotlin.idea.search.isOnlyKotlinSearch
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
+import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.util.match
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
-import org.jetbrains.kotlin.psi.psiUtil.parents
 
 abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected constructor(
     declaration: T,
@@ -325,7 +325,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
     override fun findReferencesToHighlight(target: PsiElement, searchScope: SearchScope): Collection<PsiReference> {
 
-        val baseDeclarations = getTopMostOverriddenElementsToHighlight(target)
+        val baseDeclarations = KotlinSearchUsagesSupport.findDeepestSuperMethodsNoWrapping(target)
 
         return if (baseDeclarations.isNotEmpty()) {
             baseDeclarations.flatMap {

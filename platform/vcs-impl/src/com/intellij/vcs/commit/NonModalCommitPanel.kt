@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.project.Project
@@ -99,7 +98,6 @@ abstract class NonModalCommitPanel(
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
 
-  override val modalityState: ModalityState = ModalityState.NON_MODAL
   override fun getComponent(): JComponent = this
   override fun getPreferredFocusableComponent(): JComponent = commitMessage.editorField
 

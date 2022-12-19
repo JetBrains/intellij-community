@@ -3,11 +3,14 @@ package org.jetbrains.kotlin.gradle.workspace
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ExportableOrderEntry
-import com.intellij.openapi.roots.JdkOrderEntry
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.OrderEntry
+import com.intellij.openapi.roots.*
+import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.gradle.newTests.testFeatures.OrderEntriesFilteringTestFeature
+import org.jetbrains.kotlin.idea.base.facet.implementedModules
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 
 internal class OrderEntryPrinterContributor : ModulePrinterContributor {
     override fun PrinterContext.process(module: Module) = with(printer) {
@@ -15,16 +18,47 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
         val filteredEntries = orderEntries.filterNot { shouldRemoveOrderEntry(it) }
         if (filteredEntries.isEmpty()) return
 
-        indented {
+        val dependsOnModules = module.implementedModules.toSet()
+        val friendModules: Collection<ModuleInfo> = module.sourceModuleInfos.singleOrNull()
+            ?.modulesWhoseInternalsAreVisible()
+            .orEmpty()
+
+        val orderEntriesRendered = buildList {
             for (entry in filteredEntries) {
-                println(entry.render())
+                val moduleInfo: IdeaModuleInfo? = getModuleInfo(entry)
+                val orderEntryModule = (entry as? ModuleOrderEntry)?.module
+                add(
+                    render(
+                        orderEntry = entry,
+                        isDependsOn = orderEntryModule in dependsOnModules,
+                        isFriend = friendModules.contains<ModuleInfo?>(moduleInfo)
+                    )
+                )
             }
+        }
+
+        val orderEntriesFoldedIfNecessary = if (testConfiguration.getConfiguration(OrderEntriesFilteringTestFeature).hideKonanDist)
+            orderEntriesRendered
+        else
+            foldKonanDist(orderEntriesRendered, module)
+
+        indented {
+            orderEntriesFoldedIfNecessary.forEach { println(it) }
         }
     }
 
-    private fun OrderEntry.render(): String {
-        val exportableOrderEntryPostfix = if (this is ExportableOrderEntry) " (${scope.name})" else ""
-        return "${presentableName}$exportableOrderEntryPostfix"
+    private fun PrinterContext.render(orderEntry: OrderEntry, isDependsOn: Boolean, isFriend: Boolean): String {
+        val modifiers = buildList<String> {
+            if (isDependsOn) add("refines")
+            if (isFriend) add("friend")
+            if (orderEntry is ExportableOrderEntry) add(orderEntry.scope.name)
+        }
+
+        val renderedModifiersIfAny = if (modifiers.isNotEmpty())
+            modifiers.joinToString(prefix = " (", postfix = ")")
+        else
+            ""
+        return "${presentableNameWithoutVersion(orderEntry)}$renderedModifiersIfAny"
     }
 
     private fun PrinterContext.shouldRemoveOrderEntry(entry: OrderEntry): Boolean {
@@ -35,7 +69,8 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
                 config.hideSdkDependency && isSdkDependency(entry) ||
                 config.hideStdlib && isStdlibModule(entry) ||
                 config.hideKotlinTest && isKotlinTestModule(entry) ||
-                config.hideKonanDist && isKonanDistModule(entry)
+                config.hideKonanDist && isKonanDistModule(entry) ||
+                config.excludeDependenciesRegex != null && config.excludeDependenciesRegex!!.matches(entry.presentableName)
     }
 
     // In IJ workspace model, each source module should have a dependency on itself
@@ -55,6 +90,44 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
 
     private fun PrinterContext.presentableNameWithoutVersion(orderEntry: OrderEntry): String =
         orderEntry.presentableName.replace(kotlinGradlePluginVersion.toString(), "{{KGP_VERSION}}")
+
+    private fun PrinterContext.getModuleInfo(orderEntry: OrderEntry): IdeaModuleInfo? {
+        when (orderEntry) {
+            is ModuleOrderEntry -> return orderEntry.module?.toModuleInfo()
+
+            is LibraryOrderEntry -> {
+                val library = orderEntry.library ?: return null
+                val libraryInfos = runReadAction { LibraryInfoCache.getInstance(project)[library] }
+
+                if (libraryInfos.size > 1)
+                    error(
+                        "Unexpectedly got several LibraryInfos for one LibraryOrderEntry\n" +
+                                "LibraryOrderEntry = ${library.presentableName}\n" +
+                                "LibraryInfos = ${libraryInfos.joinToString { it.displayedName }}"
+                    )
+
+                return libraryInfos.firstOrNull()
+            }
+
+
+            is JdkOrderEntry -> return SdkInfo(project, orderEntry.jdk ?: return null)
+
+            else -> return null
+        }
+    }
+
+    private fun Module.toModuleInfo(): IdeaModuleInfo? {
+        val sourceModuleInfos = sourceModuleInfos
+        check(sourceModuleInfos.size <= 1) {
+            "Unexpected multiple module infos for module ${this.name}\n" +
+                    "This can happen if main/test are imported as source roots of\n" +
+                    "single Module, instead of being imported as two different Modules\n" +
+                    "This configuration is not expected in MPP environment (and tests)"
+        }
+        return sourceModuleInfos.singleOrNull()
+    }
+
+
 
     companion object {
         private val STDLIB_MODULES = setOf(

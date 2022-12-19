@@ -6,7 +6,8 @@ import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ui.InspectionOptionContainer;
+import com.intellij.codeInspection.options.OptCheckbox;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
@@ -19,7 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,9 +101,10 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
     InspectionToolWrapper<?, ?> tool =
       InspectionProfileManager.getInstance(project).getCurrentProfile().getInspectionTool(myShortName, previewDescriptor.getPsiElement());
     if (tool == null) return IntentionPreviewInfo.EMPTY;
-    JComponent panel = tool.getTool().createOptionsPanel();
-    if (!(panel instanceof InspectionOptionContainer)) return IntentionPreviewInfo.EMPTY;
-    HtmlChunk label = ((InspectionOptionContainer)panel).getLabelForCheckbox(myProperty);
+    OptPane pane = tool.getTool().getOptionsPane();
+    OptCheckbox control = ObjectUtils.tryCast(pane.findControl(myProperty), OptCheckbox.class);
+    if (control == null) return IntentionPreviewInfo.EMPTY;
+    HtmlChunk label = HtmlChunk.text(control.label().label());
     HtmlChunk.Element checkbox = HtmlChunk.tag("input").attr("type", "checkbox").attr("readonly", "true");
     if (myValue) {
       checkbox = checkbox.attr("checked", "true");
@@ -128,7 +130,7 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
       if (myExtractor != null) {
         inspection = myExtractor.apply(inspection);
       }
-      ReflectionUtil.setField(inspection.getClass(), inspection, boolean.class, myProperty, value);
+      inspection.setOption(myProperty, value);
     });
   }
 

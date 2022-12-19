@@ -30,6 +30,7 @@ import java.util.List;
 public class PagedFileStorage implements Forceable {
   static final Logger LOG = Logger.getInstance(PagedFileStorage.class);
 
+  /** Not private because {@linkplain FilePageCache} accesses its statistics */
   static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(SystemProperties.getIntProperty("paged.file.storage.open.channel.cache.capacity", 400));
 
   public static final int DEFAULT_PAGE_SIZE = FilePageCache.DEFAULT_PAGE_SIZE;
@@ -451,7 +452,7 @@ public class PagedFileStorage implements Forceable {
     }
 
     if (myStorageIndex == -1) {
-      throw new IOException("storage is already closed; path " + myFile);
+      throw new ClosedStorageException("storage is already closed; path " + myFile);
     }
     DirectBufferWrapper byteBufferWrapper =
       myStorageLockContext.getBufferCache().get(myStorageIndex | page, !modify, checkAccess); // TODO: long page
@@ -490,7 +491,7 @@ public class PagedFileStorage implements Forceable {
 
     if (IOStatistics.DEBUG) {
       long finished = System.currentTimeMillis();
-      if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
+      if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT_MS) {
         IOStatistics.dump("Flushed " + myFile + " for " + (finished - started));
       }
     }

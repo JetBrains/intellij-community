@@ -176,6 +176,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Override
   public @NotNull PtyProcess createProcess(@NotNull TerminalProcessOptions options,
                                            @Nullable JBTerminalWidget widget) throws ExecutionException {
+    return super.createProcess(options, widget);
+  }
+
+  @Override
+  public @NotNull PtyProcess createProcess(@NotNull TerminalProcessOptions options) throws ExecutionException {
     String workingDir = getWorkingDirectory(options.getWorkingDirectory());
     Map<String, String> envs = getTerminalEnvironment(workingDir);
 
@@ -189,10 +194,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         LOG.error("Exception during customization of the terminal session", e);
       }
     }
-    String commandHistoryFilePath = ShellTerminalWidget.getCommandHistoryFilePath(widget);
-    if (commandHistoryFilePath != null) {
-      envs.put(IJ_COMMAND_HISTORY_FILE_ENV, commandHistoryFilePath);
-    }
+    //String commandHistoryFilePath = ShellTerminalWidget.getCommandHistoryFilePath(widget);
+    //if (commandHistoryFilePath != null) {
+    //  envs.put(IJ_COMMAND_HISTORY_FILE_ENV, commandHistoryFilePath);
+    //}
 
     TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command);
     try {

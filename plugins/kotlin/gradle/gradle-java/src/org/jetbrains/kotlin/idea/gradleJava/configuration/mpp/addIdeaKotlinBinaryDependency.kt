@@ -8,18 +8,16 @@ import com.intellij.openapi.externalSystem.model.project.LibraryLevel
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinBinaryDependency
-import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinResolvedBinaryDependency
-import org.jetbrains.kotlin.gradle.idea.tcs.extras.isIdeaProjectLevel
-import org.jetbrains.kotlin.gradle.idea.tcs.extras.isNativeDistribution
-import org.jetbrains.kotlin.gradle.idea.tcs.extras.isNativeStdlib
-import org.jetbrains.kotlin.gradle.idea.tcs.extras.klibExtra
+import org.jetbrains.kotlin.gradle.idea.tcs.extras.*
+import org.jetbrains.kotlin.gradle.idea.tcs.isKotlinCompileBinaryType
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.ifNull
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 
-fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDependency): DataNode<LibraryDependencyData>? {
+fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDependency): DataNode<out LibraryDependencyData>? {
+
     val dependencyNode = findLibraryDependencyNode(dependency) ?: run create@{
         val coordinates = dependency.coordinates ?: return null
         val libraryData = LibraryData(KotlinLibraryName(coordinates))
@@ -51,20 +49,24 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDepe
     }
 
     if (dependency is IdeaKotlinResolvedBinaryDependency) {
-        val pathType = when (dependency.binaryType) {
-            IdeaKotlinDependency.CLASSPATH_BINARY_TYPE -> LibraryPathType.BINARY
-            IdeaKotlinDependency.SOURCES_BINARY_TYPE -> LibraryPathType.SOURCE
-            IdeaKotlinDependency.DOCUMENTATION_BINARY_TYPE -> LibraryPathType.DOC
-            else -> null
+        if (dependency.isKotlinCompileBinaryType) {
+            dependency.classpath.forEach { file ->
+                dependencyNode.data.target.addPath(LibraryPathType.BINARY, file.absolutePath)
+            }
         }
 
-        if (pathType != null) {
-            dependencyNode.data.target.addPath(pathType, dependency.binaryFile.absolutePath)
+        dependency.sourcesClasspath.forEach { file ->
+            dependencyNode.data.target.addPath(LibraryPathType.SOURCE, file.absolutePath)
+        }
+
+        dependency.documentationClasspath.forEach { file ->
+            dependencyNode.data.target.addPath(LibraryPathType.DOC, file.absolutePath)
         }
     }
 
     return dependencyNode
 }
+
 
 private fun buildNativeDistributionInternalLibraryName(dependency: IdeaKotlinBinaryDependency): String {
     return buildString {

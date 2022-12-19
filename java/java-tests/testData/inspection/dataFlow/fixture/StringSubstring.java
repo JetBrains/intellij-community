@@ -48,7 +48,7 @@ class StringSubstring {
 
   public void processPrefix(String text) {
     String currentPrefix = text.isEmpty() ? "^" : text.substring(0, 1);
-    if (<warning descr="Condition '!currentPrefix.isEmpty()' is always 'true'">!<warning descr="Result of 'currentPrefix.isEmpty()' is always 'false'">currentPrefix.isEmpty()</warning></warning> && Character.isDigit(currentPrefix.charAt(0))) {
+    if (<warning descr="Condition '!currentPrefix.isEmpty()' is always 'true'">!currentPrefix.isEmpty()</warning> && Character.isDigit(currentPrefix.charAt(0))) {
       currentPrefix = "";
     }
     System.out.println(currentPrefix);

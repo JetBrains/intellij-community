@@ -497,8 +497,7 @@ public class AttributesStorageOnTheTopOfBlobStorage extends AbstractAttributesSt
       }
       catch (Throwable t) {
         FSRecords.LOG.warn("Error storing " + attribute + " of file(" + fileId + ")");
-        FSRecords.handleError(t);
-        throw new RuntimeException(t);
+        throw FSRecords.handleError(t);
       }
       finally {
         lock.writeLock().unlock();

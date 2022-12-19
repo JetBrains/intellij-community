@@ -65,7 +65,7 @@ public final class DumbModeProgressTitle {
     }
   }
 
-  public void removeDumpModeProgress(@NotNull ProgressIndicator indicator) {
+  public void removeDumbModeProgress(@NotNull ProgressIndicator indicator) {
     ProgressWindow wnd = castProgress(indicator);
     if (wnd != null) {
       myWindowSet.remove(wnd);

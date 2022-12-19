@@ -34,12 +34,12 @@ abstract class GroupedComboBoxRenderer<T>(private val combo: ComboBox<T>) : Grou
   }
 
   @NlsContexts.ListItem
-  abstract fun getText(value: T): String
+  open fun getText(value: T): String = ""
   @Nls
-  abstract fun getSecondaryText(value: T): String?
-  abstract fun getIcon(value: T): Icon?
+  open fun getSecondaryText(value: T): String? = null
+  open fun getIcon(value: T): Icon? = null
 
-  open fun customize(item: SimpleColoredComponent, value: T) {
+  open fun customize(item: SimpleColoredComponent, value: T, index: Int) {
     val text = getText(value)
     item.append(text)
 
@@ -86,7 +86,7 @@ abstract class GroupedComboBoxRenderer<T>(private val combo: ComboBox<T>) : Grou
                                             cellHasFocus: Boolean): Component {
     coloredComponent.apply {
       clear()
-      customize(this, value)
+      customize(this, value, index)
     }
 
     mySeparatorComponent.apply {

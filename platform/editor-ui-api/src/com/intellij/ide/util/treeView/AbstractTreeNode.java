@@ -9,6 +9,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -17,6 +18,7 @@ import com.intellij.presentation.FilePresentationService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tree.LeafState;
 import org.jetbrains.annotations.*;
 
@@ -65,11 +67,58 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
 
   @Override
   protected void postprocess(@NotNull PresentationData presentation) {
+    setFileStatusErrors(presentation);
+    setForcedForeground(presentation);
+    appendInplaceComments(presentation);
+  }
+
+  private void setFileStatusErrors(@NotNull PresentationData presentation) {
     if (hasProblemFileBeneath() ) {
       presentation.setAttributesKey(FILESTATUS_ERRORS);
     }
+  }
 
-    setForcedForeground(presentation);
+  private void appendInplaceComments(@NotNull PresentationData presentation) {
+    final var inplaceCommentProducer = getInplaceCommentProducer();
+    if (inplaceCommentProducer == null) {
+      return;
+    }
+    inplaceCommentProducer.produceInplaceComments(new PresentationDataInplaceCommentAppender(presentation));
+  }
+
+  /**
+   * Checks if the node has an inplace comment producer.
+   * <p>
+   *   This function exists solely because there may be some nodes that handle inplace comments in a legacy way:
+   *   instead of appending them to the {@link PresentationData presentation} in one of the update methods,
+   *   they append it during painting (on EDT). To avoid appending them twice, legacy code invoker first checks
+   *   if the node has its own inplace comment producer by invoking this function.
+   * </p>
+   * <p>
+   *   If inplace comments are disabled, this function is allowed to return any value. It's up to the caller to check
+   *   that setting first.
+   * </p>
+   * @return true iff the node has an inplace comment producer
+   */
+  public boolean hasInplaceCommentProducer() {
+    return getInplaceCommentProducer() != null;
+  }
+
+  /**
+   *  Returns (creating, if necessary) the inplace comment producer, if any is needed.
+   *  <p>
+   *    If some node type needs to show inplace comments (like timestamps and sizes in the Project View), it may chose to override
+   *    this method and return the object that will be used to generate inplace comments during the node update.
+   *  </p>
+   *  <p>
+   *    Implementation node: it's allowed to return {@code null} if inplace comments are disabled. It's also recommended to cache
+   *    the producer instance so it can be reused on every update.
+   *  </p>
+   * @return the inplace comment producer to use during the update
+   */
+  @Nullable
+  protected InplaceCommentProducer getInplaceCommentProducer() {
+    return null;
   }
 
   private void setForcedForeground(@NotNull PresentationData presentation) {
@@ -308,4 +357,21 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     }
     return true; // any custom object can be contained somewhere in a tree
   }
+
+  private static class PresentationDataInplaceCommentAppender implements InplaceCommentAppender {
+
+    private final @NotNull PresentationData myPresentation;
+
+    PresentationDataInplaceCommentAppender(@NotNull PresentationData presentation) {
+      myPresentation = presentation;
+    }
+
+    @Override
+    public void append(@NotNull @NlsSafe String text, @NotNull SimpleTextAttributes attributes) {
+      myPresentation.ensureColoredTextIsUsed();
+      myPresentation.addText(text, attributes);
+    }
+
+  }
+
 }

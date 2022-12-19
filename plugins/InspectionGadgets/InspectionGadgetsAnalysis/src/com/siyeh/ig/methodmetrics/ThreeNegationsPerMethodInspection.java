@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.methodmetrics;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
@@ -24,6 +25,8 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class ThreeNegationsPerMethodInspection extends BaseInspection {
 
@@ -42,11 +45,10 @@ public class ThreeNegationsPerMethodInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("three.negations.per.method.ignore.option"), "m_ignoreInEquals");
-    panel.addCheckbox(InspectionGadgetsBundle.message("three.negations.per.method.ignore.assert.option"), "ignoreInAssert");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreInEquals", InspectionGadgetsBundle.message("three.negations.per.method.ignore.option")),
+      checkbox("ignoreInAssert", InspectionGadgetsBundle.message("three.negations.per.method.ignore.assert.option")));
   }
 
   @Override

@@ -9,7 +9,10 @@ import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,11 +27,13 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.ui.TerminalSession;
+import com.pty4j.WinSize;
 import com.pty4j.windows.WinPtyException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -83,12 +88,19 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     }
   }
 
+  /**
+   * @deprecated use {@link #createProcess(TerminalProcessOptions)} instead
+   */
   public @NotNull T createProcess(@NotNull TerminalProcessOptions options, @Nullable JBTerminalWidget widget) throws ExecutionException {
+    return createProcess(options);
+  }
+
+  public @NotNull T createProcess(@NotNull TerminalProcessOptions options) throws ExecutionException {
     return createProcess(options.getWorkingDirectory(), null);
   }
 
   /**
-   * @deprecated use {@link #createProcess(TerminalProcessOptions, JBTerminalWidget)} instead
+   * @deprecated use {@link #createProcess(TerminalProcessOptions)} instead
    */
   @Deprecated(forRemoval = true)
   protected T createProcess(@Nullable String directory) throws ExecutionException {
@@ -111,7 +123,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   @Deprecated(forRemoval = true)
   @NotNull
   public JBTerminalWidget createTerminalWidget(@NotNull Disposable parent, @Nullable VirtualFile currentWorkingDirectory) {
-    return createTerminalWidget(parent, currentWorkingDirectory, true);
+    return createTerminalWidget(parent, getParentDirectoryPath(currentWorkingDirectory), true);
   }
 
   /**
@@ -125,19 +137,44 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     return createTerminalWidget(parent, getParentDirectoryPath(currentWorkingDirectory), deferSessionStartUntilUiShown);
   }
 
+  /**
+   * @deprecated use {@link #createShellTerminalWidget(Disposable, String, boolean)}
+   */
+  @Deprecated(forRemoval = true)
   public @NotNull JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
                                                         @Nullable String currentWorkingDirectory,
                                                         boolean deferSessionStartUntilUiShown) {
-    JBTerminalWidget terminalWidget = new ShellTerminalWidget(myProject, mySettingsProvider, parent);
+    TerminalWidget widget = createShellTerminalWidget(parent, currentWorkingDirectory, deferSessionStartUntilUiShown);
+    JBTerminalWidget jediTermWidget = JBTerminalWidget.asJediTermWidget(widget);
+    if (jediTermWidget == null) {
+      throw new IllegalStateException("Use AbstractTerminalRunner.createShellTerminalWidget instead");
+    }
+    return jediTermWidget;
+  }
+
+  public @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent,
+                                                           @Nullable String currentWorkingDirectory,
+                                                           boolean deferSessionStartUntilUiShown) {
+    TerminalWidget terminalWidget = new ShellTerminalWidget(myProject, mySettingsProvider, parent).asNewWidget();
     scheduleOpenSessionInDirectory(terminalWidget, currentWorkingDirectory, deferSessionStartUntilUiShown);
     return terminalWidget;
   }
 
+  /**
+   * @deprecated use {@link #scheduleOpenSessionInDirectory(TerminalWidget, String, boolean)}
+   */
+  @Deprecated(forRemoval = true)
   protected void scheduleOpenSessionInDirectory(@NotNull JBTerminalWidget terminalWidget,
                                                 @Nullable String currentWorkingDirectory,
                                                 boolean deferSessionStartUntilUiShown) {
+    scheduleOpenSessionInDirectory(terminalWidget.asNewWidget(), currentWorkingDirectory, deferSessionStartUntilUiShown);
+  }
+
+  private void scheduleOpenSessionInDirectory(@NotNull TerminalWidget terminalWidget,
+                                              @Nullable String currentWorkingDirectory,
+                                              boolean deferSessionStartUntilUiShown) {
     if (deferSessionStartUntilUiShown) {
-      UiNotifyConnector.doWhenFirstShown(terminalWidget, () -> openSessionInDirectory(terminalWidget, currentWorkingDirectory));
+      UiNotifyConnector.doWhenFirstShown(terminalWidget.getComponent(), () -> openSessionInDirectory(terminalWidget, currentWorkingDirectory));
     }
     else {
       openSessionInDirectory(terminalWidget, currentWorkingDirectory);
@@ -228,39 +265,22 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     return dir != null ? dir.getPath() : null;
   }
 
-  /**
-   * @deprecated use {@link #createTerminalWidget(Disposable, String, boolean)} instead
-   * It will be private in future releases.
-   */
-  @Deprecated(forRemoval = true)
-  @ApiStatus.Internal
-  public void openSessionInDirectory(@NotNull JBTerminalWidget terminalWidget,
-                                     @Nullable String directory) {
+  private void openSessionInDirectory(@NotNull TerminalWidget terminalWidget, @Nullable String directory) {
     ModalityState modalityState = ModalityState.stateForComponent(terminalWidget.getComponent());
-    Dimension size = terminalWidget.getTerminalPanel().getTerminalSizeFromComponent();
+    WinSize size = terminalWidget.getWindowSize();
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (myProject.isDisposed()) return;
       try {
-        T process = createProcess(new TerminalProcessOptions(directory,
-                                                             size != null ? size.width : null,
-                                                             size != null ? size.height : null), terminalWidget);
+        T process = createProcess(new TerminalProcessOptions(directory, size.getColumns(), size.getRows()));
         TtyConnector connector = createTtyConnector(process);
 
         ApplicationManager.getApplication().invokeLater(() -> {
           try {
-            terminalWidget.createTerminalSession(connector);
+            terminalWidget.connectToTty(connector);
           }
           catch (Exception e) {
             printError(terminalWidget, "Cannot create terminal session for " + runningTargetName(), e);
-          }
-          try {
-            terminalWidget.start();
-            terminalWidget.getComponent().revalidate();
-            terminalWidget.notifyStarted();
-          }
-          catch (RuntimeException e) {
-            printError(terminalWidget, "Cannot open " + runningTargetName(), e);
           }
         }, modalityState, myProject.getDisposed());
       }
@@ -270,12 +290,21 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     });
   }
 
-  private void printError(@NotNull JBTerminalWidget terminalWidget, @NotNull String errorMessage, @NotNull Exception e) {
+  /**
+   * @deprecated use {@link #createTerminalWidget(Disposable, String, boolean)} instead
+   * It will be private in future releases.
+   */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.Internal
+  public void openSessionInDirectory(@NotNull JBTerminalWidget terminalWidget,
+                                     @Nullable String directory) {
+    openSessionInDirectory(terminalWidget.asNewWidget(), directory);
+  }
+
+  private void printError(@NotNull TerminalWidget terminalWidget, @NotNull String errorMessage, @NotNull Exception e) {
     LOG.info(errorMessage, e);
     @Nls StringBuilder message = new StringBuilder();
-    if (terminalWidget.getTerminal().getCursorX() > 1) {
-      message.append("\n");
-    }
+    message.append("\n");
     message.append(errorMessage).append("\n").append(e.getMessage()).append("\n\n");
     WinPtyException winptyException = ExceptionUtil.findCause(e, WinPtyException.class);
     if (winptyException != null) {
@@ -284,7 +313,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     terminalWidget.writePlainMessage(message.toString());
     terminalWidget.writePlainMessage("\n" + TerminalBundle.message("see.ide.log.error.description", ShowLogAction.getActionName()) + "\n");
     ApplicationManager.getApplication().invokeLater(() -> {
-      terminalWidget.getTerminalPanel().setCursorVisible(false);
+      terminalWidget.setCursorVisible(false);
     }, myProject.getDisposed());
   }
 }

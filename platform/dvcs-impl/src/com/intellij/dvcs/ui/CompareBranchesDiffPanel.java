@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
-import java.util.Collection;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
@@ -77,9 +76,7 @@ public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
     myLabel.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
-        boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
-        myVcsSettings.setSwapSidesInCompareBranches(!swapSides);
-        refreshView();
+        swapSides();
       }
     });
     updateLabelText();
@@ -101,6 +98,15 @@ public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
   @NotNull
   public SimpleChangesBrowser getChangesBrowser() {
     return myChangesBrowser;
+  }
+
+  private void swapSides() {
+    boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
+    myVcsSettings.setSwapSidesInCompareBranches(!swapSides);
+
+    List<Change> oldSelection = myChangesBrowser.getSelectedChanges();
+    refreshView();
+    myChangesBrowser.getViewer().setSelectedChanges(DvcsBranchUtil.swapRevisions(oldSelection));
   }
 
   private void refreshView() {
@@ -162,13 +168,6 @@ public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
     MyChangesBrowser(@NotNull Project project, @NotNull List<? extends Change> changes) {
       super(project, false, true);
       setChangesToDisplay(changes);
-    }
-
-    @Override
-    public void setChangesToDisplay(@NotNull Collection<? extends Change> changes) {
-      List<Change> oldSelection = getSelectedChanges();
-      super.setChangesToDisplay(changes);
-      myViewer.setSelectedChanges(DvcsBranchUtil.swapRevisions(oldSelection));
     }
 
     @NotNull

@@ -48,8 +48,20 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
       indexData?.onLowMemory()
     }, project)
   }
-  
-  override fun findFileSet(file: VirtualFile,                                                                        
+
+  override fun isInWorkspace(file: VirtualFile): Boolean {
+    return findFileSet(file, true, true, true, true) != null
+  }
+
+  override fun isInContent(file: VirtualFile): Boolean {
+    return findFileSet(file, true, true, false, false) != null
+  }
+
+  override fun getContentFileSetRoot(file: VirtualFile, honorExclusion: Boolean): VirtualFile? {
+    return findFileSet(file, honorExclusion, true, false, false)?.root
+  }
+
+  override fun findFileSet(file: VirtualFile,
                            honorExclusion: Boolean,
                            includeContentSets: Boolean,
                            includeExternalSets: Boolean,

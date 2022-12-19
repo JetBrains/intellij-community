@@ -31,7 +31,7 @@ import java.util.List;
 public class JavaInjectedFileChangesHandlerProvider implements InjectedFileChangesHandlerProvider {
 
   @Override
-  public InjectedFileChangesHandler createFileChangesHandler(List<PsiLanguageInjectionHost.Shred> shreds,
+  public InjectedFileChangesHandler createFileChangesHandler(List<? extends PsiLanguageInjectionHost.Shred> shreds,
                                                              Editor hostEditor,
                                                              Document newDocument,
                                                              PsiFile injectedFile) {
@@ -43,14 +43,14 @@ public class JavaInjectedFileChangesHandlerProvider implements InjectedFileChang
     }
   }
 
-  private static boolean hasSnippet(List<PsiLanguageInjectionHost.Shred> shreds) {
+  private static boolean hasSnippet(List<? extends PsiLanguageInjectionHost.Shred> shreds) {
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
       if (shred.getHost() instanceof PsiSnippetDocTag) return true;
     }
     return false;
   }
 
-  private static boolean hasBlockLiterals(List<PsiLanguageInjectionHost.Shred> shreds) {
+  private static boolean hasBlockLiterals(List<? extends PsiLanguageInjectionHost.Shred> shreds) {
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
       PsiLanguageInjectionHost host = shred.getHost();
       if (!(host instanceof PsiLiteralExpression)) continue;
@@ -65,7 +65,7 @@ class OldJavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
   @NotNull
   private final RangeMarker myAltFullRange;
 
-  OldJavaInjectedFileChangesHandler(List<PsiLanguageInjectionHost.Shred> shreds, Editor editor,
+  OldJavaInjectedFileChangesHandler(List<? extends PsiLanguageInjectionHost.Shred> shreds, Editor editor,
                                     Document newDocument,
                                     PsiFile injectedFile) {
     super(editor, newDocument, injectedFile);

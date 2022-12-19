@@ -94,7 +94,7 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
       // Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
 
-      index(this, "eclipseUrls", this.eclipseUrls.toHashSet())
+      index(this, "eclipseUrls", this.eclipseUrls)
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
@@ -220,7 +220,7 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
 
     private val eclipseUrlsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
-      if (_diff != null) index(this, "eclipseUrls", value.toHashSet())
+      if (_diff != null) index(this, "eclipseUrls", value)
       changedProperty.add("eclipseUrls")
     }
     override var eclipseUrls: MutableList<VirtualFileUrl>

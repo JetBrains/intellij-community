@@ -14,6 +14,9 @@ import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
 import com.intellij.ide.impl.*
+import com.intellij.ide.impl.trustedProjects.LocatedProject
+import com.intellij.ide.impl.trustedProjects.TrustedProjects
+import com.intellij.ide.impl.trustedProjects.TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProjectAsync
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.lightEdit.LightEditService
@@ -28,7 +31,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -41,8 +43,10 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.impl.CoreProgressManager
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runBlockingModal0
 import com.intellij.openapi.project.*
+import com.intellij.openapi.project.ex.LowLevelProjectOpenProcessor
+import com.intellij.openapi.project.ex.PerProjectInstancePaths
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl.Companion.preloadServicesAndCreateComponents
@@ -65,7 +69,6 @@ import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.Restarter
-import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
@@ -166,7 +169,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     if (IS_PER_PROJECT_INSTANCE_READY) {
       connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
         override fun projectClosed(project: Project) {
-          clearPerProjectDirsForProject(PerProjectInstancePaths.getSystemDir(Path.of(project.basePath!!)))
+          clearPerProjectDirsForProject(PerProjectInstancePaths(Path.of(project.basePath!!)).getSystemDir())
         }
       })
     }
@@ -494,7 +497,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       runConfigurators = false
       projectName = name
     }
-    val project = runBlockingModal(
+    val project = runBlockingModal0(
       owner = ModalTaskOwner.guess(),
       title = IdeUICustomization.getInstance().projectMessage("progress.title.project.creating.name", name ?: PathUtilRt.getFileName(path)),
     ) {
@@ -537,20 +540,24 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     val activity = StartUpMeasurer.startActivity("project opening preparation")
 
     if (!checkTrustedState(projectStoreBaseDir)) {
-      LOG.info("Project is not trusted -> return null")
-      return null
+      LOG.info("Project is not trusted, aborting")
+      activity.end()
+      throw ProcessCanceledException()
     }
 
-    val shouldOpenInChildProcess = IS_PER_PROJECT_INSTANCE_ENABLED && openProjects.isNotEmpty()
-
-    if (shouldOpenInChildProcess) {
+    if (shouldOpenInChildProcess(projectStoreBaseDir)) {
       openInChildProcess(projectStoreBaseDir)
       return null
+    }
+    else if (IS_PER_PROJECT_INSTANCE_ENABLED) {
+      LowLevelProjectOpenProcessor.EP_NAME.extensions.forEach {
+        it.beforeProjectOpened(projectStoreBaseDir)
+      }
     }
 
     // if we are opening project in current process (not yet PER_PROJECT), lock per-project directory
     if (IS_PER_PROJECT_INSTANCE_READY) {
-      lockPerProjectDirForProject(PerProjectInstancePaths.getSystemDir(projectStoreBaseDir))
+      lockPerProjectDirForProject(PerProjectInstancePaths(projectStoreBaseDir).getSystemDir())
     }
 
     if (!options.forceOpenInNewFrame) {
@@ -1125,21 +1132,16 @@ private fun removeProjectConfigurationAndCaches(projectFile: Path) {
  * @return true if we should proceed with project opening, false if the process of project opening should be canceled.
  */
 private suspend fun checkOldTrustedStateAndMigrate(project: Project, projectStoreBaseDir: Path): Boolean {
-  val trustedPaths = TrustedPaths.getInstance()
-  val trustedState = trustedPaths.getProjectPathTrustedState(projectStoreBaseDir)
-  if (trustedState != ThreeState.UNSURE) {
-    return true
-  }
-
-  @Suppress("DEPRECATION")
-  val previousTrustedState = project.service<TrustedProjectSettings>().trustedState
-  if (previousTrustedState != ThreeState.UNSURE) {
-    // we were asking about this project in the previous IDE version => migrate
-    trustedPaths.setProjectPathTrusted(projectStoreBaseDir, previousTrustedState.toBoolean())
-    return true
-  }
-
-  return confirmOpeningAndSetProjectTrustedStateIfNeeded(projectStoreBaseDir)
+  // The trusted state will be migrated inside TrustedProjects.isTrustedProject, because now we have project instance.
+  return confirmOpeningOrLinkingUntrustedProjectAsync(
+    projectStoreBaseDir,
+    project,
+    IdeBundle.message("untrusted.project.open.dialog.title", project.name),
+    IdeBundle.message("untrusted.project.open.dialog.text", ApplicationNamesInfo.getInstance().fullProductName),
+    IdeBundle.message("untrusted.project.dialog.trust.button"),
+    IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
+    IdeBundle.message("untrusted.project.open.dialog.cancel.button")
+  )
 }
 
 private suspend fun initProject(file: Path,
@@ -1210,10 +1212,10 @@ private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
   var mode = GeneralSettings.getInstance().confirmOpenNewProject
   if (mode == GeneralSettings.OPEN_PROJECT_ASK) {
     val message = if (options.projectName == null) {
-      IdeBundle.message("prompt.open.project.in.new.frame")
+      IdeUICustomization.getInstance().projectMessage("prompt.open.project.in.new.frame")
     }
     else {
-      IdeBundle.message("prompt.open.project.with.name.in.new.frame", options.projectName)
+      IdeUICustomization.getInstance().projectMessage("prompt.open.project.with.name.in.new.frame", options.projectName)
     }
 
     val openInExistingFrame = withContext(Dispatchers.EDT) {
@@ -1351,13 +1353,9 @@ private fun clearPerProjectDirsForProject(
  * @return true if we should proceed with project opening, false if the process of project opening should be canceled.
  */
 private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
-  val trustedState = TrustedPaths.getInstance().getProjectPathTrustedState(projectStoreBaseDir)
-  if (trustedState != ThreeState.UNSURE) {
+  val locatedProject = LocatedProject.locateProject(projectStoreBaseDir, project = null)
+  if (TrustedProjects.isProjectTrusted(locatedProject)) {
     // the trusted state of this project path is already known => proceed with opening
-    return true
-  }
-
-  if (isProjectImplicitlyTrusted(projectStoreBaseDir)) {
     return true
   }
 
@@ -1373,11 +1371,56 @@ private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
     return true
   }
 
-  return confirmOpeningAndSetProjectTrustedStateIfNeeded(projectStoreBaseDir)
+  return confirmOpeningOrLinkingUntrustedProjectAsync(
+    projectStoreBaseDir,
+    null,
+    IdeBundle.message("untrusted.project.open.dialog.title", projectStoreBaseDir.fileName),
+    IdeBundle.message("untrusted.project.open.dialog.text", ApplicationNamesInfo.getInstance().fullProductName),
+    IdeBundle.message("untrusted.project.dialog.trust.button"),
+    IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
+    IdeBundle.message("untrusted.project.open.dialog.cancel.button")
+  )
+}
+
+private suspend fun shouldOpenInChildProcess(projectStoreBaseDir: Path): Boolean {
+  if (!ProjectManagerEx.IS_PER_PROJECT_INSTANCE_READY) {
+    return false
+  }
+
+  if (!ApplicationManager.getApplication().isHeadlessEnvironment &&
+      ApplicationManager.getApplication().isInternal) {
+    withContext(Dispatchers.EDT) {
+      @Suppress("HardCodedStringLiteral")
+      Messages.showMessageDialog(
+        null,
+        "Start `Remote JVM Debug` configuration now",
+        "Debugger Guard",
+        null
+      )
+    }
+  }
+
+  val sameSystemPath = withContext(Dispatchers.IO) {
+    val childSystemPath = PerProjectInstancePaths(projectStoreBaseDir).getSystemDir()
+    childSystemPath.exists() && Files.isSameFile(PathManager.getSystemDir(), childSystemPath)
+  }
+
+  if (sameSystemPath) {
+    return false
+  }
+
+  return LowLevelProjectOpenProcessor.EP_NAME.extensions.any { it.shouldOpenInNewProcess(projectStoreBaseDir) }
 }
 
 private suspend fun openInChildProcess(projectStoreBaseDir: Path) {
   try {
+    val instancePaths = PerProjectInstancePaths(projectStoreBaseDir)
+    LowLevelProjectOpenProcessor.EP_NAME.extensions.forEach {
+      if (it.preparePathsForNewProcess(projectStoreBaseDir, instancePaths) == LowLevelProjectOpenProcessor.PreparePathsResult.CANCEL) {
+        return
+      }
+    }
+
     withContext(Dispatchers.IO) {
       ProcessBuilder(openProjectInstanceCommand(projectStoreBaseDir))
         .redirectErrorStream(true)
@@ -1397,11 +1440,13 @@ private suspend fun openInChildProcess(projectStoreBaseDir: Path) {
 }
 
 private fun openProjectInstanceArgs(projectStoreBaseDir: Path): Array<String> {
+  val instancePaths = PerProjectInstancePaths(projectStoreBaseDir)
+
   return mapOf(
-    PathManager.PROPERTY_SYSTEM_PATH to PerProjectInstancePaths.getSystemDir(projectStoreBaseDir),
-    PathManager.PROPERTY_CONFIG_PATH to PerProjectInstancePaths.getConfigDir(projectStoreBaseDir),
-    PathManager.PROPERTY_LOG_PATH to PerProjectInstancePaths.getLogDir(projectStoreBaseDir),
-    PathManager.PROPERTY_PLUGINS_PATH to PerProjectInstancePaths.getPluginsDir(projectStoreBaseDir),
+    PathManager.PROPERTY_SYSTEM_PATH to instancePaths.getSystemDir(),
+    PathManager.PROPERTY_CONFIG_PATH to instancePaths.getConfigDir(),
+    PathManager.PROPERTY_LOG_PATH to instancePaths.getLogDir(),
+    ProjectManagerEx.PER_PROJECT_OPTION_NAME to ProjectManagerEx.PerProjectState.ENABLED
   ).map { (key, value) ->
     "-D$key=$value"
   }.toTypedArray()

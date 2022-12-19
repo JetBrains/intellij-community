@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -413,23 +413,18 @@ public final class ControlFlowUtils {
     return PsiTreeUtil.isAncestor(body, element, true);
   }
 
-  public static boolean isInFinallyBlock(@NotNull PsiElement element) {
-    PsiElement currentElement = element;
-    while (true) {
-      final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(currentElement, PsiTryStatement.class, true, PsiClass.class, PsiLambdaExpression.class);
-      if (tryStatement == null) {
-        return false;
-      }
-      final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-      if (finallyBlock != null) {
-        if (PsiTreeUtil.isAncestor(finallyBlock, currentElement, true)) {
-          final PsiMethod elementMethod = PsiTreeUtil.getParentOfType(currentElement, PsiMethod.class);
-          final PsiMethod finallyMethod = PsiTreeUtil.getParentOfType(finallyBlock, PsiMethod.class);
-          return elementMethod != null && elementMethod.equals(finallyMethod);
+  public static boolean isInFinallyBlock(@NotNull PsiElement element, @Nullable PsiElement stopAt) {
+    PsiElement parent = element.getParent();
+    while (parent != null && parent != stopAt && !(parent instanceof PsiMember) && !(parent instanceof PsiLambdaExpression)) {
+      if (parent instanceof PsiTryStatement tryStatement) {
+        final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
+        if (finallyBlock != null && PsiTreeUtil.isAncestor(finallyBlock, element, true)) {
+          return true;
         }
       }
-      currentElement = tryStatement;
+      parent = parent.getParent();
     }
+    return false;
   }
 
   public static boolean isInCatchBlock(@NotNull PsiElement element) {

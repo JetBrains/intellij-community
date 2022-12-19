@@ -726,10 +726,12 @@ public final class ContainerUtil {
     return list.subList(from, list.size());
   }
 
+  @Contract(mutates = "param1")
   public static <T> void addAll(@NotNull Collection<? super T> collection, @NotNull Iterable<? extends T> appendix) {
     addAll(collection, appendix.iterator());
   }
 
+  @Contract(mutates = "param1")
   public static <T> void addAll(@NotNull Collection<? super T> collection, @NotNull Iterator<? extends T> iterator) {
     while (iterator.hasNext()) {
       T o = iterator.next();
@@ -740,6 +742,7 @@ public final class ContainerUtil {
   /**
    * Adds all not-null elements from the {@code elements}, ignoring nulls
    */
+  @Contract(mutates = "param1")
   public static <T> void addAllNotNull(@NotNull Collection<? super T> collection, @NotNull Iterable<? extends T> elements) {
     addAllNotNull(collection, elements.iterator());
   }
@@ -747,6 +750,7 @@ public final class ContainerUtil {
   /**
    * Adds all not-null elements from the {@code elements}, ignoring nulls
    */
+  @Contract(mutates = "param1")
   public static <T> void addAllNotNull(@NotNull Collection<? super T> collection, @NotNull Iterator<? extends T> elements) {
     while (elements.hasNext()) {
       T o = elements.next();
@@ -784,6 +788,7 @@ public final class ContainerUtil {
     return map;
   }
 
+  @Contract(mutates = "param1")
   public static <K, V> void fillMapWithValues(@NotNull Map<? super K, ? super V> map,
                                               @NotNull Iterator<? extends V> values,
                                               @NotNull Convertor<? super V, ? extends K> keyConvertor) {
@@ -1120,6 +1125,7 @@ public final class ContainerUtil {
     return true;
   }
 
+  @Contract(mutates = "param1")
   public static void removeDuplicates(@NotNull Collection<?> collection) {
     Set<Object> collected = new HashSet<>();
     collection.removeIf(t -> !collected.add(t));
@@ -1206,6 +1212,7 @@ public final class ContainerUtil {
     };
   }
 
+  @Contract(mutates = "param1")
   public static void swapElements(@NotNull List<?> list, int index1, int index2) {
     Object e1 = list.get(index1);
     Object e2 = list.get(index2);
@@ -1224,6 +1231,7 @@ public final class ContainerUtil {
     return collect(FilteringIterator.create((Iterator<T>)iterator, instanceOf));
   }
 
+  @Contract(mutates = "param1")
   public static <T> void addAll(@NotNull Collection<? super T> collection, @NotNull Enumeration<? extends T> enumeration) {
     while (enumeration.hasMoreElements()) {
       T element = enumeration.nextElement();
@@ -1243,6 +1251,7 @@ public final class ContainerUtil {
    * @return the collection passed as first argument
    */
   @SafeVarargs
+  @Contract(mutates = "param1")
   public static @NotNull <T, C extends Collection<? super T>> C addAll(@NotNull C collection, T @NotNull ... elements) {
     //noinspection ManualArrayToCollectionCopy
     for (T element : elements) {
@@ -1256,6 +1265,7 @@ public final class ContainerUtil {
    * Adds all not-null elements from the {@code elements}, ignoring nulls
    */
   @SafeVarargs
+  @Contract(mutates = "param1")
   public static @NotNull <T, C extends Collection<T>> C addAllNotNull(@NotNull C collection, T @NotNull ... elements) {
     for (T element : elements) {
       if (element != null) {
@@ -1266,6 +1276,7 @@ public final class ContainerUtil {
   }
 
   @SafeVarargs
+  @Contract(mutates = "param1")
   public static <T> boolean removeAll(@NotNull Collection<T> collection, T @NotNull ... elements) {
     boolean modified = false;
     for (T element : elements) {
@@ -1275,6 +1286,7 @@ public final class ContainerUtil {
   }
 
   // returns true if the collection was modified
+  @Contract(mutates = "param1")
   public static <T> boolean retainAll(@NotNull Collection<T> collection, @NotNull Condition<? super T> condition) {
     boolean modified = false;
 
@@ -1753,6 +1765,7 @@ public final class ContainerUtil {
     return ArrayUtil.mergeCollections(c1, c2, factory);
   }
 
+  @Contract(mutates = "param1")
   public static <T extends Comparable<? super T>> void sort(@NotNull List<T> list) {
     int size = list.size();
 
@@ -1784,6 +1797,7 @@ public final class ContainerUtil {
     }
   }
 
+  @Contract(mutates = "param1")
   public static <T> void sort(@NotNull List<T> list, @NotNull Comparator<? super T> comparator) {
     int size = list.size();
 
@@ -1815,6 +1829,7 @@ public final class ContainerUtil {
     }
   }
 
+  @Contract(mutates = "param1")
   public static <T extends Comparable<? super T>> void sort(T @NotNull [] a) {
     int size = a.length;
 
@@ -1868,6 +1883,7 @@ public final class ContainerUtil {
   /**
    * @apiNote this sort implementation is NOT stable for {@code array.length < INSERTION_SORT_THRESHOLD}
    */
+  @Contract(mutates = "param1")
   public static <T> void sort(T @NotNull [] array, @NotNull Comparator<? super T> comparator) {
     int size = array.length;
 
@@ -2111,24 +2127,28 @@ public final class ContainerUtil {
     return new HashSet<>(Arrays.asList(items));
   }
 
+  @Contract(mutates = "param3")
   public static <K, V> void putIfNotNull(K key, @Nullable V value, @NotNull Map<? super K, ? super V> result) {
     if (value != null) {
       result.put(key, value);
     }
   }
 
+  @Contract(mutates = "param3")
   public static <K, V> void putIfNotNull(K key, @Nullable Collection<? extends V> value, @NotNull MultiMap<? super K, ? super V> result) {
     if (value != null) {
       result.putValues(key, value);
     }
   }
 
+  @Contract(mutates = "param3")
   public static <K, V> void putIfNotNull(K key, @Nullable V value, @NotNull MultiMap<? super K, ? super V> result) {
     if (value != null) {
       result.putValue(key, value);
     }
   }
 
+  @Contract(mutates = "param2")
   public static <T> void add(T element, @NotNull Collection<? super T> result, @NotNull Disposable parentDisposable) {
     if (result.add(element)) {
       Disposer.register(parentDisposable, () -> result.remove(element));
@@ -2235,10 +2255,12 @@ public final class ContainerUtil {
 
   // Generalized Quick Sort. Does neither array.clone() nor list.toArray()
 
+  @Contract(mutates = "param1")
   public static <T> void quickSort(@NotNull List<? extends T> list, @NotNull Comparator<? super T> comparator) {
     quickSort(list, comparator, 0, list.size());
   }
 
+  @Contract(mutates = "param1")
   private static <T> void quickSort(@NotNull List<? extends T> x, @NotNull Comparator<? super T> comparator, int off, int len) {
     // Insertion sort on smallest arrays
     if (len < 7) {
@@ -2314,6 +2336,7 @@ public final class ContainerUtil {
   /*
    * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
    */
+  @Contract(mutates = "param1")
   private static <T> void vecswap(List<T> x, int a, int b, int n) {
     for (int i = 0; i < n; i++, a++, b++) {
       swapElements(x, a, b);
@@ -2333,6 +2356,7 @@ public final class ContainerUtil {
    * Processes the list, remove all duplicates and return the list with unique elements.
    * @param list must be sorted (according to the comparator), all elements must be not-null
    */
+  @Contract(mutates = "param1")
   public static @NotNull <T> List<T> removeDuplicatesFromSorted(@NotNull List<T> list, @NotNull Comparator<? super T> comparator) {
     T prev = null;
     List<T> result = null;
@@ -2411,6 +2435,7 @@ public final class ContainerUtil {
     return result == null ? emptyList() : Collections.unmodifiableList(result);
   }
 
+  @Contract(mutates = "param2")
   public static <K,V> V @NotNull [] convert(K @NotNull [] from, V @NotNull [] to, @NotNull Function<? super K, ? extends V> fun) {
     if (to.length < from.length) {
       to = ArrayUtil.newArray(ArrayUtil.getComponentType(to), from.length);
@@ -2495,14 +2520,14 @@ public final class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <A,B> Map<B,A> reverseMap(@NotNull Map<? extends A, ? extends B> map) {
-    Map<B,A> result = new HashMap<>();
+    Map<B,A> result = new HashMap<>(map.size());
     for (Map.Entry<? extends A, ? extends B> entry : map.entrySet()) {
       result.put(entry.getValue(), entry.getKey());
     }
     return result;
   }
 
-  @Contract("null -> null; !null -> !null")
+  @Contract(value = "null -> null; !null -> !null", mutates = "param1")
   public static <T> List<T> trimToSize(@Nullable List<T> list) {
     if (list == null) return null;
     if (list.isEmpty()) return emptyList();
@@ -2647,6 +2672,7 @@ public final class ContainerUtil {
     return new LockFreeCopyOnWriteArrayList<>(c);
   }
 
+  @Contract(mutates = "param1")
   public static <T> void addIfNotNull(@NotNull Collection<? super T> result, @Nullable T element) {
     if (element != null) {
       result.add(element);
@@ -2770,6 +2796,7 @@ public final class ContainerUtil {
     return c.toArray(sample);
   }
 
+  @Contract(mutates = "param1")
   public static <T> T @NotNull [] copyAndClear(@NotNull Collection<? extends T> collection, @NotNull ArrayFactory<? extends T> factory, boolean clear) {
     int size = collection.size();
     T[] a = factory.create(size);

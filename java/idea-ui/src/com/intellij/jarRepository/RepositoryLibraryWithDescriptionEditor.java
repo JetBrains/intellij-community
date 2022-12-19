@@ -78,7 +78,7 @@ public class RepositoryLibraryWithDescriptionEditor
     RepositoryLibraryPropertiesModel model = new RepositoryLibraryPropertiesModel(
       properties.getVersion(),
       artifactKinds, properties.isIncludeTransitiveDependencies(),
-      properties.getExcludedDependencies(), properties.isEnableSha256Checksum(),
+      properties.getExcludedDependencies(),
       RemoteRepositoriesConfiguration.getInstance(project).getRepositories(), properties.getJarRepositoryId());
 
     boolean isGlobalLibrary = false;
@@ -104,7 +104,6 @@ public class RepositoryLibraryWithDescriptionEditor
     myEditorComponent.getProperties().changeVersion(model.getVersion());
     myEditorComponent.getProperties().setIncludeTransitiveDependencies(model.isIncludeTransitiveDependencies());
     myEditorComponent.getProperties().setExcludedDependencies(model.getExcludedDependencies());
-    myEditorComponent.getProperties().setEnableSha256Checksum(model.isSha256ChecksumEnabled());
     myEditorComponent.getProperties().setJarRepositoryId(model.getRemoteRepositoryId());
 
     if (wasGeneratedName) {
@@ -116,16 +115,16 @@ public class RepositoryLibraryWithDescriptionEditor
     final Collection<OrderRoot> roots = JarRepositoryManager.loadDependenciesModal(
       project, properties.getRepositoryLibraryDescriptor(), model.getArtifactKinds(), null, copyTo
     );
+
+    if (roots == null || RepositoryLibraryUtils.isVerifiableRootsChanged(libraryEditor, roots)) {
+      /* Reset verification if verifiable roots changed */
+      /* If auto-rebuild enabled, RepositoryLibraryChangeListener will handle the change and build verification for new roots */
+      myEditorComponent.getProperties().setArtifactsVerification(Collections.emptyList());
+    }
+
     libraryEditor.removeAllRoots();
     if (roots != null) {
-      myEditorComponent.getProperties().setArtifactsVerification(RepositoryLibraryUtils.buildRepositoryLibraryArtifactsVerification(
-        properties.getRepositoryLibraryDescriptor(),
-        roots)
-      );
-
       libraryEditor.addRoots(roots);
-    } else {
-      properties.setArtifactsVerification(Collections.emptyList());
     }
     myEditorComponent.updateRootsTree();
     updateDescription();

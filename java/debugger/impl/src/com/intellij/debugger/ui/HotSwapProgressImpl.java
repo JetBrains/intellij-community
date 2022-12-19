@@ -55,7 +55,7 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
     assert EventQueue.isDispatchThread();
     myProgressWindow = new BackgroundableProcessIndicator(getProject(), myTitle, null, null, true);
     myProgressWindow.setIndeterminate(false);
-    myProgressWindow.addStateDelegate(new AbstractProgressIndicatorExBase(){
+    myProgressWindow.addStateDelegate(new AbstractProgressIndicatorExBase() {
       @Override
       public void cancel() {
         super.cancel();
@@ -87,11 +87,11 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
     if (!errors.isEmpty()) {
       notifyUser(JavaDebuggerBundle.message("status.hot.swap.completed.with.errors"), buildMessage(errors), true, NotificationType.ERROR);
     }
-    else if (!warnings.isEmpty()){
+    else if (!warnings.isEmpty()) {
       notifyUser(JavaDebuggerBundle.message("status.hot.swap.completed.with.warnings"), buildMessage(warnings), true,
                  NotificationType.WARNING);
     }
-    else if (!myMessages.isEmpty()){
+    else if (!myMessages.isEmpty()) {
       List<String> messages = new ArrayList<>();
       for (IntIterator iterator = myMessages.keySet().iterator(); iterator.hasNext(); ) {
         messages.addAll(getMessages(iterator.nextInt()));
@@ -175,17 +175,16 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
   public void setTitle(final @NlsContexts.ProgressTitle @NotNull String text) {
     DebuggerInvocationUtil.invokeLater(getProject(), () -> {
       if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
-      myProgressWindow.setTitle(text);
+        myProgressWindow.setTitle(text);
       }
     }, myProgressWindow.getModalityState());
-
   }
 
   @Override
   public void setFraction(final double v) {
     DebuggerInvocationUtil.invokeLater(getProject(), () -> {
       if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
-      myProgressWindow.setFraction(v);
+        myProgressWindow.setFraction(v);
       }
     }, myProgressWindow.getModalityState());
   }
@@ -196,7 +195,7 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
   }
 
   public ProgressIndicator getProgressIndicator() {
-     return myProgressWindow;
+    return myProgressWindow;
   }
 
   @Override

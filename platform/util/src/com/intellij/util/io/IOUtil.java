@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.io.DataOutputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -378,5 +379,47 @@ public final class IOUtil {
     try (final DataInputStream dis = new DataInputStream(bis)) {
       return externalizer.read(dis);
     }
+  }
+
+  /**
+   * @return estimation of direct memory available in current JVM, in bytes.
+   * Controlled by -XX:MaxDirectMemorySize=<size>
+   */
+  static long maxDirectMemory() {
+    try {
+      Class<?> aClass = Class.forName("jdk.internal.misc.VM");
+      Method maxDirectMemory = aClass.getMethod("maxDirectMemory");
+      return (Long)maxDirectMemory.invoke(null);
+    }
+    catch (Throwable ignore) {
+    }
+
+    try {
+      Class<?> aClass = Class.forName("sun.misc.VM");
+      Method maxDirectMemory = aClass.getMethod("maxDirectMemory");
+      return (Long)maxDirectMemory.invoke(null);
+    }
+    catch (Throwable ignore) {
+    }
+
+    try {
+      Class<?> aClass = Class.forName("java.nio.Bits");
+      Field maxMemory = aClass.getDeclaredField("maxMemory");
+      maxMemory.setAccessible(true);
+      return (Long)maxMemory.get(null);
+    }
+    catch (Throwable ignore) {
+    }
+
+    try {
+      Class<?> aClass = Class.forName("java.nio.Bits");
+      Field maxMemory = aClass.getDeclaredField("MAX_MEMORY");
+      maxMemory.setAccessible(true);
+      return (Long)maxMemory.get(null);
+    }
+    catch (Throwable ignore) {
+    }
+
+    return Runtime.getRuntime().maxMemory();
   }
 }

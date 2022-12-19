@@ -1,12 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unusedSymbol;
 
+import com.intellij.codeInspection.options.OptDropdown;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.AccessModifier;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.awt.RelativePoint;
@@ -15,6 +18,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,8 +29,11 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
+
+import static com.intellij.codeInspection.options.OptPane.dropdown;
 
 public class VisibilityModifierChooser extends JLabel implements UserActivityProviderComponent {
 
@@ -68,7 +75,7 @@ public class VisibilityModifierChooser extends JLabel implements UserActivityPro
         JSlider slider = new JSlider(SwingConstants.VERTICAL, 1, modifiers.length, 1);
         slider.addChangeListener(val -> {
           final String modifier = modifiers[slider.getValue() - 1];
-          if (myCurrentModifier != modifier) {
+          if (!Objects.equals(myCurrentModifier, modifier)) {
             myCurrentModifier = modifier;
             modifierChangedConsumer.consume(modifier);
             setText(getPresentableText(modifier));
@@ -121,5 +128,10 @@ public class VisibilityModifierChooser extends JLabel implements UserActivityPro
   @Override
   public void removeChangeListener(@NotNull ChangeListener changeListener) {
     myListeners.remove(changeListener);
+  }
+
+  public static @NotNull OptDropdown visibilityChooser(@Language("jvm-field-name") @NotNull String stringProperty,
+                                                       @NlsContexts.Label String splitLabel) {
+    return dropdown(stringProperty, splitLabel, AccessModifier.class, AccessModifier::toString);
   }
 }

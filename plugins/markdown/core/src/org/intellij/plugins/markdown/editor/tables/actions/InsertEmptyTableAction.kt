@@ -23,8 +23,8 @@ import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.editor.tables.TableModificationUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils
+import org.intellij.plugins.markdown.editor.tables.buildEmptyTable
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
@@ -97,7 +97,7 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
         val document = editor.document
         val caretOffset = caret.offset
         val currentLine = document.getLineNumber(caret.offset)
-        val text = TableModificationUtils.buildEmptyTable(rows, columns)
+        val text = buildEmptyTable(rows, columns)
         val content = when {
           currentLine != 0 && !DocumentUtil.isLineEmpty(document, currentLine - 1) -> "\n$text"
           else -> text

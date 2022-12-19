@@ -17,11 +17,11 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public abstract class DataFlowInspectionTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected void doTest() {
@@ -41,5 +41,19 @@ public abstract class DataFlowInspectionTestCase extends LightJavaCodeInsightFix
 
   public void assertIntentionAvailable(String intentionName) {
     assertTrue(ContainerUtil.exists(myFixture.getAvailableIntentions(), action -> action.getText().equals(intentionName)));
+  }
+
+  static void addCheckerAnnotations(JavaCodeInsightTestFixture fixture) {
+    fixture.addClass("package org.checkerframework.checker.nullness.qual;import java.lang.annotation.*;" +
+                     "@Target(ElementType.TYPE_USE)public @interface NonNull {}");
+    fixture.addClass("package org.checkerframework.checker.nullness.qual;import java.lang.annotation.*;" +
+                     "@Target(ElementType.TYPE_USE)public @interface Nullable {}");
+    fixture.addClass("package org.checkerframework.framework.qual;" +
+                     "import java.lang.annotation.*;" +
+                     "enum TypeUseLocation {ALL}" +
+                     "public @interface DefaultQualifier {" +
+                     "  Class<? extends Annotation> value();" +
+                     "  TypeUseLocation[] locations() default {TypeUseLocation.ALL};" +
+                     "}");
   }
 }

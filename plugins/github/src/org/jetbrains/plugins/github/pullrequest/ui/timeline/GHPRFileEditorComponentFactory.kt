@@ -3,12 +3,16 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.TimelineComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
@@ -17,9 +21,9 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.UiNotifyConnector
+import kotlinx.coroutines.flow.MutableStateFlow
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -31,17 +35,22 @@ import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineIt
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRTimelineFileEditor
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldFactory
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldFactory.ActionsConfig
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldFactory.AvatarConfig
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldModel
+import org.jetbrains.plugins.github.pullrequest.comment.ui.submitAction
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.H_SIDE_BORDER
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.TIMELINE_ITEM_WIDTH
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.V_SIDE_BORDER
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.event.ChangeEvent
@@ -104,7 +113,9 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       if (PlatformDataKeys.UI_DISPOSABLE.`is`(it)) uiDisposable else null
     })
 
-    val header = GHPRTitleComponent.create(project, detailsModel, editor.detailsData)
+    val header = GHPRTitleComponent.create(detailsModel).apply {
+      border = JBUI.Borders.empty(20, H_SIDE_BORDER)
+    }
 
     val suggestedChangesHelper = GHPRSuggestedChangeHelper(project,
                                                            uiDisposable,
@@ -122,21 +133,20 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     )
     val descriptionWrapper = Wrapper().apply {
       isOpaque = false
-      border = JBUI.Borders.empty(16, 0, 20, 0)
     }
-    detailsModel.addListener {
+    detailsModel.addAndInvokeListener {
       descriptionWrapper.setContent(itemComponentFactory.createComponent(detailsModel.value))
     }
 
-    val timeline = TimelineComponentFactory.create(timelineModel, itemComponentFactory, JBUIScale.scale(8)).apply {
-      border = JBUI.Borders.emptyBottom(16)
-    }
+    val timeline = TimelineComponentFactory.create(timelineModel, itemComponentFactory, 0)
 
-    val errorPanel = GHHtmlErrorPanel.create(errorModel)
+    val errorPanel = GHHtmlErrorPanel.create(errorModel).apply {
+      border = JBUI.Borders.empty(8, H_SIDE_BORDER)
+    }
 
     val timelineLoader = editor.timelineLoader
     val loadingIcon = JLabel(AnimatedIcon.Default()).apply {
-      border = JBUI.Borders.empty(8, 0)
+      border = JBUI.Borders.empty(8, H_SIDE_BORDER)
       isVisible = timelineLoader.loading
     }
     timelineLoader.addLoadingStateChangeListener(uiDisposable) {
@@ -145,9 +155,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
     val timelinePanel = ScrollablePanel().apply {
       isOpaque = false
-      border = JBUI.Borders.empty(24, 20)
-
-      val maxWidth = GHUIUtil.getPRTimelineWidth()
+      border = JBUI.Borders.empty(6, 0)
 
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
@@ -155,20 +163,20 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                            .flowY(),
                          AC().grow().gap("push"))
 
-      add(header, CC().growX().maxWidth("${maxWidth}px"))
+      add(header, CC().growX().maxWidth("$TIMELINE_ITEM_WIDTH"))
       add(descriptionWrapper, CC().growX())
       add(timeline, CC().growX().minWidth(""))
 
-      val fullTimelineWidth = GHPRTimelineItemUIUtil.maxTimelineItemWidth
-
-      add(errorPanel, CC().hideMode(2).width("${fullTimelineWidth}px"))
-      add(loadingIcon, CC().hideMode(2).width("${fullTimelineWidth}px"))
+      add(errorPanel, CC().hideMode(2).width("$TIMELINE_ITEM_WIDTH"))
+      add(loadingIcon, CC().hideMode(2).width("$TIMELINE_ITEM_WIDTH"))
 
       if (editor.securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)) {
         val commentField = createCommentField(editor.commentsData,
                                               editor.avatarIconsProvider,
-                                              editor.securityService.currentUser)
-        add(commentField, CC().growX().pushX().maxWidth("${fullTimelineWidth}px"))
+                                              editor.securityService.currentUser).apply {
+          border = JBUI.Borders.empty(V_SIDE_BORDER, H_SIDE_BORDER)
+        }
+        add(commentField, CC().growX().pushX())
       }
     }
 
@@ -214,7 +222,19 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     val model = GHCommentTextFieldModel(project) {
       commentService.addComment(EmptyProgressIndicator(), it)
     }
-    return GHCommentTextFieldFactory(model).create(avatarIconsProvider, currentUser)
+
+    val submitShortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommentInputComponentFactory.defaultSubmitShortcut)
+    val newLineShortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.ENTER)
+
+    val actions = ActionsConfig(CommentInputActionsComponentFactory.Config(
+      primaryAction = MutableStateFlow(model.submitAction(GithubBundle.message("action.comment.text"))),
+      hintInfo = MutableStateFlow(CommentInputActionsComponentFactory.HintInfo(
+        submitHint = GithubBundle.message("pull.request.comment.hint", submitShortcutText),
+        newLineHint = GithubBundle.message("pull.request.new.line.hint", newLineShortcutText)
+      ))
+    ))
+    val avatarConfig = AvatarConfig(avatarIconsProvider, currentUser, GHCommentTextFieldFactory.AvatarMode.TIMELINE)
+    return GHCommentTextFieldFactory(model).create(actions, avatarConfig)
   }
 
   private fun createItemComponentFactory(project: Project,

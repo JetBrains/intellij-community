@@ -15,6 +15,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.StubFileElementType;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
@@ -91,7 +92,11 @@ public final class StubIndexImpl extends StubIndexEx {
         }
       }
       else {
-        state = ProgressIndicatorUtils.awaitWithCheckCanceled(myStateFuture);
+        CompletableFuture<AsyncState> future = myStateFuture;
+        if (future == null) {
+          throw new AlreadyDisposedException("Stub Index is already disposed");
+        }
+        state = ProgressIndicatorUtils.awaitWithCheckCanceled(future);
       }
       myState = state;
     }

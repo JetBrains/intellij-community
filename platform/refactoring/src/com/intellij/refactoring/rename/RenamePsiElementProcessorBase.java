@@ -90,6 +90,8 @@ public abstract class RenamePsiElementProcessorBase {
 
   /**
    * Builds the complete set of elements to be renamed during the refactoring.
+   * <p>
+   * Expected to be called from EDT.
    *
    * @param element the base element for the refactoring.
    * @param newName the name into which the element is being renamed.

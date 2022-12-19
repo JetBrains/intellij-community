@@ -9,7 +9,7 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorSplitterState
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runBlockingModal0
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -74,7 +74,7 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
     val map = ExpandMacroToPathMap()
     map.addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, testDataPath)
     map.substitute(rootElement, true, true)
-    runBlockingModal(project, "") {
+    runBlockingModal0(project, "") {
       manager!!.mainSplitters.restoreEditors(EditorSplitterState(rootElement), onStartup = false, anyEditorOpened = null)
     }
   }

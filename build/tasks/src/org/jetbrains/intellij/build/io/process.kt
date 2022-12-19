@@ -186,10 +186,11 @@ suspend fun runProcess(args: List<String>,
     .useWithScope2 { span ->
       withContext(Dispatchers.IO) {
         val toDelete = ArrayList<Path>(3)
+        var process: Process? = null
         try {
           val errorOutputFile = if (inheritOut) null else Files.createTempFile("error-out-", ".txt").also(toDelete::add)
           val outputFile = if (inheritOut) null else Files.createTempFile("out-", ".txt").also(toDelete::add)
-          val process = ProcessBuilder(args)
+          process = ProcessBuilder(args)
             .directory(workingDir?.toFile())
             .also { builder ->
               if (additionalEnvVariables.isNotEmpty()) {
@@ -244,6 +245,7 @@ suspend fun runProcess(args: List<String>,
           }
         }
         finally {
+          process?.waitFor()
           toDelete.forEach(FileUtilRt::deleteRecursively)
         }
       }

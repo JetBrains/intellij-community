@@ -3,12 +3,18 @@ package com.intellij.codeInspection.options;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -81,28 +87,20 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @param children optional list of children controls to display next to checkbox. They are disabled if checkbox is unchecked
    * @return a checkbox
    */
-  public static @NotNull OptCheckbox checkbox(@NotNull String bindId,
+  public static @NotNull OptCheckbox checkbox(@Language("jvm-field-name") @NotNull String bindId,
                                               @NotNull @NlsContexts.Label String label,
                                               @NotNull OptComponent @NotNull ... children) {
-    return new OptCheckbox(bindId, new PlainMessage(label), List.of(children));
+    return new OptCheckbox(bindId, new PlainMessage(label), List.of(children), null);
   }
 
   /**
-   * @param bindId ID to bind the custom control to.
-   * @return a custom control
-   */
-  public static @NotNull OptCustom custom(@NotNull String bindId) {
-    return new OptCustom(bindId);
-  }
-
-  /**
-   * @param bindId     identifier of binding variable used by inspection; the corresponding variable is expected to be int or long
+   * @param bindId     identifier of binding variable used by inspection; the corresponding variable is expected to be int
    * @param splitLabel label to display around the control
    * @param minValue   minimal allowed value of the variable
    * @param maxValue   maximal allowed value of the variable
    * @return an edit box to enter a number
    */
-  public static @NotNull OptNumber number(@NotNull String bindId,
+  public static @NotNull OptNumber number(@Language("jvm-field-name") @NotNull String bindId,
                                           @NotNull @NlsContexts.Label String splitLabel,
                                           int minValue,
                                           int maxValue) {
@@ -114,7 +112,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @param splitLabel label to display around the control
    * @return an edit box to enter a string
    */
-  public static @NotNull OptString string(@NotNull String bindId,
+  public static @NotNull OptString string(@Language("jvm-field-name") @NotNull String bindId,
                                           @NotNull @NlsContexts.Label String splitLabel) {
     return new OptString(bindId, new PlainMessage(splitLabel), null, -1);
   }
@@ -125,7 +123,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @param width      width of the control in approximate number of characters; if -1 then it will be determined automatically
    * @return an edit box to enter a string
    */
-  public static @NotNull OptString string(@NotNull String bindId,
+  public static @NotNull OptString string(@Language("jvm-field-name") @NotNull String bindId,
                                           @NotNull @NlsContexts.Label String splitLabel,
                                           int width) {
     return new OptString(bindId, new PlainMessage(splitLabel), null, width);
@@ -138,7 +136,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    *                   (e.g., validate that a string is a class-name which is a subclass of specific class)
    * @return an edit box to enter a string
    */
-  public static @NotNull OptString string(@NotNull String bindId,
+  public static @NotNull OptString string(@Language("jvm-field-name") @NotNull String bindId,
                                           @NotNull @NlsContexts.Label String splitLabel,
                                           @NotNull StringValidator validator) {
     return new OptString(bindId, new PlainMessage(splitLabel), validator, -1);
@@ -152,7 +150,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    *                   (e.g., validate that a string is a class-name which is a subclass of specific class)
    * @return an edit box to enter a string
    */
-  public static @NotNull OptString string(@NotNull String bindId,
+  public static @NotNull OptString string(@Language("jvm-field-name") @NotNull String bindId,
                                           @NotNull @NlsContexts.Label String splitLabel,
                                           int width,
                                           @NotNull StringValidator validator) {
@@ -160,16 +158,51 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
   }
 
   /**
-   * @param bindId     identifier of binding variable used by inspection; the corresponding variable is expected to be a string or enum
+   * @param bindId     identifier of binding variable used by inspection; the corresponding variable is expected to be a string, int or enum
    * @param splitLabel label to display around the control
    * @param options    drop-down options
    * @return a drop-down control to select a single option from
    * @see #option(String, String)
+   * @see #dropdown(String, String, Class, Function)
    */
-  public static @NotNull OptDropdown dropdown(@NotNull String bindId,
+  public static @NotNull OptDropdown dropdown(@Language("jvm-field-name") @NotNull String bindId,
                                               @NotNull @NlsContexts.Label String splitLabel,
                                               @NotNull OptDropdown.Option @NotNull ... options) {
     return new OptDropdown(bindId, new PlainMessage(splitLabel), List.of(options));
+  }
+
+  /**
+   * @param bindId     identifier of binding variable used by inspection; the corresponding variable is expected to be a string, int or enum
+   * @param splitLabel label to display around the control
+   * @param values     drop-down options
+   * @param keyExtractor a function to extract a key string from the option (which will be written to the binding variable)
+   * @param presentableTextExtractor a function to extract a presentable text from the option
+   * @return a drop-down control to select a single option from
+   * @see #dropdown(String, String, Class, Function)
+   */
+  public static @NotNull <T> OptDropdown dropdown(@Language("jvm-field-name") @NotNull String bindId,
+                                                  @NotNull @NlsContexts.Label String splitLabel,
+                                                  @NotNull Collection<T> values,
+                                                  @NotNull Function<? super T, @NotNull @NonNls String> keyExtractor,
+                                                  @NotNull Function<? super T, @NotNull @Nls String> presentableTextExtractor) {
+    return new OptDropdown(bindId, new PlainMessage(splitLabel),
+                           ContainerUtil.map(values, c -> option(keyExtractor.apply(c), presentableTextExtractor.apply(c))));
+  }
+
+  /**
+   * @param bindId                   identifier of binding variable used by inspection; the corresponding variable is expected to be a string or enum
+   * @param splitLabel               label to display around the control
+   * @param enumClass                enum class to populate drop-down from (take all values in declaration order)
+   * @param presentableTextExtractor a function to extract presentable name from enum constant
+   * @return a drop-down control to select a single option from
+   * @see #option(Enum, String)
+   */
+  public static @NotNull <T extends Enum<T>> OptDropdown dropdown(@Language("jvm-field-name") @NotNull String bindId,
+                                                                  @NotNull @NlsContexts.Label String splitLabel,
+                                                                  @NotNull Class<T> enumClass,
+                                                                  @NotNull Function<@NotNull T, @NotNull @Nls String> presentableTextExtractor) {
+    return new OptDropdown(bindId, new PlainMessage(splitLabel),
+                           ContainerUtil.map(enumClass.getEnumConstants(), c -> option(c, presentableTextExtractor.apply(c))));
   }
 
   /**
@@ -178,7 +211,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @return an option for a drop-down control
    * @see #dropdown(String, String, OptDropdown.Option...)
    */
-  public static @NotNull OptDropdown.Option option(@NotNull String key, @NotNull @NlsContexts.Label String label) {
+  public static @NotNull OptDropdown.Option option(@NotNull String key, @NotNull @Nls String label) {
     return new OptDropdown.Option(key, new PlainMessage(label));
   }
 
@@ -188,7 +221,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @return an option for a drop-down control
    * @see #dropdown(String, String, OptDropdown.Option...)
    */
-  public static @NotNull OptDropdown.Option option(@NotNull Enum<?> key, @NotNull @NlsContexts.Label String label) {
+  public static @NotNull OptDropdown.Option option(@NotNull Enum<?> key, @NotNull @Nls String label) {
     return new OptDropdown.Option(key.name(), new PlainMessage(label));
   }
 
@@ -198,7 +231,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @param label  label above the control
    * @return editable sorted list of unique strings
    */
-  public static @NotNull OptSet stringSet(@NotNull String bindId, @NotNull @NlsContexts.Label String label) {
+  public static @NotNull OptSet stringSet(@Language("jvm-field-name") @NotNull String bindId, @NotNull @NlsContexts.Label String label) {
     return new OptSet(bindId, new PlainMessage(label), null);
   }
 
@@ -210,7 +243,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    *                  (e.g., validate that a string is a class-name which is a subclass of specific class)
    * @return editable sorted list of unique strings
    */
-  public static @NotNull OptSet stringSet(@NotNull String bindId, @NotNull @NlsContexts.Label String label,
+  public static @NotNull OptSet stringSet(@Language("jvm-field-name") @NotNull String bindId, @NotNull @NlsContexts.Label String label,
                                           @NotNull StringValidator validator) {
     return new OptSet(bindId, new PlainMessage(label), validator);
   }
@@ -221,7 +254,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @param label          label above the control
    * @return editable two-column table of strings; strings in the left column are unique and sorted
    */
-  public static @NotNull OptMap stringMap(@NotNull String bindId, @NotNull @NlsContexts.Label String label) {
+  public static @NotNull OptMap stringMap(@Language("jvm-field-name") @NotNull String bindId, @NotNull @NlsContexts.Label String label) {
     return new OptMap(bindId, new PlainMessage(label), null, null);
   }
 
@@ -233,7 +266,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @param valueValidator optional validator for values column
    * @return editable two-column table of strings; strings in the left column are unique and sorted
    */
-  public static @NotNull OptMap stringMap(@NotNull String bindId, @NotNull @NlsContexts.Label String label,
+  public static @NotNull OptMap stringMap(@Language("jvm-field-name") @NotNull String bindId, @NotNull @NlsContexts.Label String label,
                                           @NotNull StringValidator keyValidator, @NotNull StringValidator valueValidator) {
     return new OptMap(bindId, new PlainMessage(label), keyValidator, valueValidator);
   }
@@ -283,11 +316,33 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
 
   /**
    * @param label tab label
-   * @param content tab content
+   * @param children tab content
    * @return tab description
    * @see #tabs(OptTabSet.TabInfo...) 
    */
   public static @NotNull OptTabSet.TabInfo tab(@NotNull @NlsContexts.Label String label, @NotNull OptComponent @NotNull ... children) {
     return new OptTabSet.TabInfo(new PlainMessage(label), List.of(children));
+  }
+
+  /**
+   * @param displayName link label
+   * @param configurableID ID of configurable to display
+   * @return a component, which represents a link to a settings page
+   */
+  public static @NotNull OptSettingLink settingLink(@NotNull @NlsContexts.Label String displayName,
+                                                    @NotNull @NonNls String configurableID) {
+    return new OptSettingLink(displayName, configurableID, null);
+  }
+
+  /**
+   * @param displayName link label
+   * @param configurableID ID of configurable to display
+   * @param controlLabel label of the control to focus on
+   * @return a component, which represents a link to a settings page
+   */
+  public static @NotNull OptSettingLink settingLink(@NotNull @NlsContexts.Label String displayName,
+                                                    @NotNull @NonNls String configurableID,
+                                                    @NotNull @Nls String controlLabel) {
+    return new OptSettingLink(displayName, configurableID, controlLabel);
   }
 }

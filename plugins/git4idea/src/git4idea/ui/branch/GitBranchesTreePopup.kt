@@ -2,6 +2,7 @@
 package git4idea.ui.branch
 
 import com.intellij.dvcs.branch.DvcsBranchManager
+import com.intellij.dvcs.branch.DvcsBranchesDivergedBanner
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
@@ -18,7 +19,6 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.*
 import com.intellij.ui.popup.NextStepHandler
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -35,6 +35,8 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
+import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
 import git4idea.actions.branch.GitBranchActionsUtil
@@ -61,7 +63,9 @@ import java.awt.datatransfer.DataFlavor
 import java.awt.event.*
 import java.util.function.Function
 import java.util.function.Supplier
+import javax.accessibility.AccessibleContext
 import javax.swing.*
+import javax.swing.border.EmptyBorder
 import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
@@ -108,6 +112,28 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         else -> null
       }
     })
+  }
+
+  override fun setHeaderComponent(c: JComponent?) {
+    if (!isNewUI) {
+      super.setHeaderComponent(c)
+      return
+    }
+
+    mySpeedSearchPatternField.border = null
+
+    val panel = BorderLayoutPanel()
+      .addToCenter(mySpeedSearchPatternField)
+      .addToRight(createToolbar().component).apply {
+        // todo: adjust gaps to align search icon with tree item icons
+        val outsideBorder = EmptyBorder(JBUI.CurrentTheme.Popup.searchFieldBorderInsets())
+        val lineBorder = JBUI.Borders.customLineBottom(JBUI.CurrentTheme.Popup.separatorColor())
+
+        border = JBUI.Borders.compound(outsideBorder, lineBorder)
+        background = JBUI.CurrentTheme.Popup.BACKGROUND
+      }
+
+    super.setHeaderComponent(panel)
   }
 
   private fun warnThatBranchesDivergedIfNeeded() {
@@ -276,11 +302,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     }
     val editorActionsContext = mapOf(PlatformCoreDataKeys.CONTEXT_COMPONENT to mySpeedSearchPatternField.textEditor)
 
-    (ActionManager.getInstance()
-      .getAction(SPEED_SEARCH_DEFAULT_ACTIONS_GROUP) as ActionGroup)
+    (am.getAction(SPEED_SEARCH_DEFAULT_ACTIONS_GROUP) as ActionGroup)
       .getChildren(null)
       .forEach { action ->
-        registerAction(ActionManager.getInstance().getId(action),
+        registerAction(am.getId(action),
                        KeymapUtil.getKeyStroke(action.shortcutSet),
                        createShortcutAction(action, editorActionsContext, updateSpeedSearch, false))
       }
@@ -294,25 +319,29 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       .filterIsInstance<PopupFactoryImpl.ActionItem>()
       .map(PopupFactoryImpl.ActionItem::getAction)
       .forEach { action ->
-        registerAction(ActionManager.getInstance().getId(action),
+        registerAction(am.getId(action),
                        KeymapUtil.getKeyStroke(action.shortcutSet),
                        createShortcutAction<Any>(action))
       }
   }
 
   private fun installHeaderToolbar() {
-    val settingsGroup = ActionManager.getInstance().getAction(GitBranchesTreePopupStep.HEADER_SETTINGS_ACTION_GROUP)
+    if (isNewUI) return
+    val toolbar = createToolbar()
+    title.setButtonComponent(object : ActiveComponent.Adapter() {
+      override fun getComponent(): JComponent = toolbar.component
+    }, JBUI.Borders.emptyRight(2))
+  }
+
+  private fun createToolbar(): ActionToolbar {
+    val settingsGroup = am.getAction(GitBranchesTreePopupStep.HEADER_SETTINGS_ACTION_GROUP)
     val toolbarGroup = DefaultActionGroup(GitBranchPopupFetchAction(javaClass), settingsGroup)
-    val toolbar = ActionManager.getInstance()
-      .createActionToolbar(GitBranchesTreePopupStep.ACTION_PLACE, toolbarGroup, true)
+    return am.createActionToolbar(GitBranchesTreePopupStep.ACTION_PLACE, toolbarGroup, true)
       .apply {
         targetComponent = this@GitBranchesTreePopup.component
         setReservePlaceAutoPopupIcon(false)
         component.isOpaque = false
       }
-    title.setButtonComponent(object : ActiveComponent.Adapter() {
-      override fun getComponent(): JComponent = toolbar.component
-    }, JBUI.Borders.emptyRight(2))
   }
 
   private fun <T> createShortcutAction(action: AnAction,
@@ -427,7 +456,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   override fun getInputMap(): InputMap = tree.inputMap
 
-  private val selectAllKeyStroke = KeymapUtil.getKeyStroke(ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL).shortcutSet)
+  private val selectAllKeyStroke = KeymapUtil.getKeyStroke(am.getAction(IdeActions.ACTION_SELECT_ALL).shortcutSet)
 
   override fun process(e: KeyEvent?) {
     if (e == null) return
@@ -441,7 +470,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   }
 
   override fun afterShow() {
-    if (!ExperimentalUI.isNewUI()) {
+    if (!isNewUI) {
       selectPreferred()
     }
     expandCurrentBranches()
@@ -561,7 +590,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     point.translate(-rowBounds.x, -rowBounds.y)
 
     val rowComponent = tree.cellRenderer
-                     .getTreeCellRendererComponent(tree, selected, true, false, true, row, false) as? JComponent
+                         .getTreeCellRendererComponent(tree, selected, true, false, true, row, false) as? JComponent
                        ?: return false
     val iconComponent = UIUtil.uiTraverser(rowComponent)
                           .filter { ClientProperty.get(it, Renderer.MAIN_ICON) == true }
@@ -608,15 +637,24 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     }
   }
 
+  override fun createWarning(text: String): JComponent {
+    return DvcsBranchesDivergedBanner.create("reference.VersionControl.Git.SynchronousBranchControl", text)
+  }
+
+  private val am
+    get() = ActionManager.getInstance()
+
   companion object {
+
+    private inline val isNewUI
+      get() = ExperimentalUI.isNewUI()
 
     internal val POPUP_KEY = DataKey.create<GitBranchesTreePopup>("GIT_BRANCHES_TREE_POPUP")
 
-    private val treeRowHeight = if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.List.rowHeight() else JBUIScale.scale(22)
+    private val treeRowHeight = if (isNewUI) JBUI.CurrentTheme.List.rowHeight() else JBUIScale.scale(22)
 
     @JvmStatic
-    fun isEnabled() = !ExperimentalUI.isNewUI() && Registry.`is`("git.branches.popup.tree", false)
-                      || ExperimentalUI.isNewUI() && Registry.`is`("git.branches.popup.tree.experimental.ui", false)
+    fun isEnabled() = true
 
     @JvmStatic
     fun show(project: Project) {
@@ -642,7 +680,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         Disposer.register(parent) { it.cancel() }
       }
 
-    private class BranchesTree(model: TreeModel): Tree(model) {
+    private class BranchesTree(model: TreeModel) : Tree(model) {
 
       init {
         background = JBUI.CurrentTheme.Popup.BACKGROUND
@@ -708,11 +746,29 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         })
         .andTransparent()
 
-      private val mainPanel = JBUI.Panels.simplePanel()
-        .addToCenter(textPanel)
-        .addToRight(arrowLabel)
-        .andTransparent()
-        .withBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.cellPadding().right))
+      private inner class MyMainPanel : BorderLayoutPanel() {
+        init {
+          addToCenter(textPanel)
+          addToRight(arrowLabel)
+          andTransparent()
+          withBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.cellPadding().right))
+        }
+
+        override fun getAccessibleContext(): AccessibleContext {
+          if (accessibleContext == null) {
+            accessibleContext = object : AccessibleContextDelegateWithContextMenu(mainTextComponent.accessibleContext) {
+              override fun getDelegateParent(): Container = parent
+
+              override fun doShowContextMenu() {
+                ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true)
+              }
+            }
+          }
+          return accessibleContext
+        }
+      }
+
+      private val mainPanel = MyMainPanel()
 
       override fun getTreeCellRendererComponent(tree: JTree?,
                                                 value: Any?,
@@ -720,8 +776,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
                                                 expanded: Boolean,
                                                 leaf: Boolean,
                                                 row: Int,
-                                                hasFocus: Boolean): Component {
+                                                hasFocus: Boolean): Component? {
         val userObject = TreeUtil.getUserObject(value)
+        // render separator text in accessible mode
+        if (userObject is SeparatorWithText) return if (userObject.caption != null) userObject else null
 
         mainIconComponent.apply {
           icon = step.getIcon(userObject, selected)
@@ -754,9 +812,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
           //todo: LAF color
           foreground = if (selected) JBUI.CurrentTheme.Tree.foreground(true, true) else JBColor.GRAY
 
-          border = if (!arrowLabel.isVisible && ExperimentalUI.isNewUI()) {
+          border = if (!arrowLabel.isVisible && isNewUI) {
             JBUI.Borders.empty(0, 10, 0, JBUI.CurrentTheme.Popup.Selection.innerInsets().right)
-          } else {
+          }
+          else {
             JBUI.Borders.emptyLeft(10)
           }
         }

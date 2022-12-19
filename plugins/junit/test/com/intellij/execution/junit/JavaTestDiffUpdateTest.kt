@@ -4,7 +4,6 @@ package com.intellij.execution.junit
 import org.intellij.lang.annotations.Language
 
 class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
-
   @Suppress("SameParameterValue")
   private fun checkAcceptDiff(
     @Language("Java") before: String,
@@ -103,6 +102,34 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
     """.trimIndent())
   }
 
+  fun `test string literal diff with escape`() {
+    checkAcceptDiff("""
+      import org.junit.Assert;
+      import org.junit.Test;
+      
+      public class MyJUnitTest {
+          @Test
+          public void testFoo() {
+              Assert.assertEquals("expected", "actual\"");
+          }
+      }
+    """.trimIndent(), """
+      import org.junit.Assert;
+      import org.junit.Test;
+      
+      public class MyJUnitTest {
+          @Test
+          public void testFoo() {
+              Assert.assertEquals("actual\"", "actual\"");
+          }
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual\"", """
+      	at org.junit.Assert.assertEquals(Assert.java:117)
+      	at org.junit.Assert.assertEquals(Assert.java:146)
+      	at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+    """.trimIndent())
+  }
+
   fun `test parameter reference diff`() {
     checkAcceptDiff("""
       import org.junit.Assert;
@@ -140,7 +167,7 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
     """.trimIndent())
   }
 
-  fun `test parameter reference diff multiple methods on same line`() {
+  fun `test parameter reference diff multiple calls on same line`() {
     checkAcceptDiff("""
       import org.junit.Assert;
       import org.testng.annotations.Test;

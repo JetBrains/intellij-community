@@ -36,6 +36,8 @@ object IOSSinglePlatformModuleConfigurator : IOSSinglePlatformModuleConfigurator
 
 object IOSSinglePlatformCocoaPodsModuleConfigurator : IOSSinglePlatformModuleConfiguratorBase() {
     override val moduleTemplatePath: String get() = "singleplatformCocoaPodsProject"
+    override val canContainSubModules: Boolean
+        get() = false
 
     override fun Writer.runArbitraryTask(
         configurationData: ModulesToIrConversionData,
@@ -67,7 +69,7 @@ object IOSSinglePlatformCocoaPodsModuleConfigurator : IOSSinglePlatformModuleCon
             +fileTemplate("$DEFAULT_APP_NAME.xcodeproj" / "project.pbxproj")
             +fileTemplate(DEFAULT_APP_NAME / "Info.plist")
 
-            +fileTemplate("Podfile".asPath())
+            +fileTemplate("Podfile.vm".asPath())
         }
     }
 }

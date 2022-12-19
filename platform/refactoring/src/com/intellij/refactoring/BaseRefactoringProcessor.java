@@ -622,7 +622,11 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
   @Override
   public final void run() {
-    Runnable baseRunnable = () -> SlowOperations.allowSlowOperations(this::doRun);
+    Runnable baseRunnable = () -> {
+      try (var ignored = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+        doRun();
+      }
+    };
     Runnable runnable = shouldDisableAccessChecks() ?
                         () -> NonProjectFileWritingAccessProvider.disableChecksDuring(baseRunnable) :
                         baseRunnable;

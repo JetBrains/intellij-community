@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 // this test tests that no space auto-inserted after comma if we are just typing
 
 fun foo(p1: Int, p2: Int) { }

@@ -71,7 +71,7 @@ open class SetVFUEntityImpl(val dataSource: SetVFUEntityData) : SetVFUEntity, Wo
       // Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
 
-      index(this, "fileProperty", this.fileProperty.toHashSet())
+      index(this, "fileProperty", this.fileProperty)
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
@@ -130,7 +130,7 @@ open class SetVFUEntityImpl(val dataSource: SetVFUEntityData) : SetVFUEntity, Wo
 
     private val filePropertyUpdater: (value: Set<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
-      if (_diff != null) index(this, "fileProperty", value.toHashSet())
+      if (_diff != null) index(this, "fileProperty", value)
       changedProperty.add("fileProperty")
     }
     override var fileProperty: MutableSet<VirtualFileUrl>

@@ -31,7 +31,7 @@ public class SetupProjectSdkCommand extends AbstractCommand {
   private final String mySdkType;
   private final String mySdkHome;
 
-  private static String nextArg(Iterator<String> args, @NotNull String text) {
+  private static String nextArg(@NotNull Iterator<String> args, @NotNull String text) {
     if (!args.hasNext()) throw new RuntimeException("Too few arguments in " + text);
     return args.next();
   }

@@ -202,7 +202,8 @@ public final class ActionUrl implements JDOMExternalizable {
     final int absolutePosition = url.getAbsolutePosition();
     if (node.getChildCount() > absolutePosition && absolutePosition >= 0) {
       DefaultMutableTreeNode child = (DefaultMutableTreeNode)node.getChildAt(absolutePosition);
-      if (child.getUserObject().equals(url.getComponent())) {
+      Object userObj = child.getUserObject();
+      if (url.getComponent().equals(userObj instanceof Pair<?, ?> pair ? pair.first : userObj)) {
         node.remove(child);
       }
     }
@@ -218,7 +219,8 @@ public final class ActionUrl implements JDOMExternalizable {
         if (parent.getChildCount() > absolutePosition && absolutePosition >= 0) {
           if (parent.getChildCount() > initialPosition && initialPosition >= 0) {
             final DefaultMutableTreeNode child = (DefaultMutableTreeNode)parent.getChildAt(initialPosition);
-            if (child.getUserObject().equals(url.getComponent())) {
+            Object userObj = child.getUserObject();
+            if (url.getComponent().equals(userObj instanceof Pair<?, ?> pair ? pair.first : userObj)) {
               parent.remove(child);
               parent.insert(child, absolutePosition);
             }

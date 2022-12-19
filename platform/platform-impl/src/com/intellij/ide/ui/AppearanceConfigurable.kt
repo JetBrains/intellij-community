@@ -170,14 +170,14 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         val fontFace = cell(FontComboBox())
           .label(message("label.font.name"))
           .bind({ it.fontName }, { it, value -> it.fontName = value },
-                MutableProperty({ if (settings.overrideLafFonts) settings.fontFace else JBFont.label().family },
+                MutableProperty({ if (settings.overrideLafFonts) settings.fontFace else getDefaultFont().family },
                                 { settings.fontFace = it }))
           .shouldUpdateLaF()
           .accessibleName(message("label.font.name"))
           .component
 
-        val fontSize = fontSizeComboBox({ settings.fontSize },
-                         { settings.fontSize = it },
+        val fontSize = fontSizeComboBox({ if (settings.overrideLafFonts) settings.fontSize else getDefaultFont().size },
+                                        { settings.fontSize = it },
                          settings.fontSize)
           .label(message("label.font.size"))
           .shouldUpdateLaF()

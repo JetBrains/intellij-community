@@ -27,22 +27,15 @@ enum class DslComponentProperty {
   VISUAL_PADDINGS,
 
   /**
-   * By default, almost every component have [SpacingConfiguration.verticalComponentGap] above and below it.
-   * This flag disables such gap below the component. Should be used in very rare situations (e.g. row with label **and** some additional
-   * label-kind components above related to the label component), because most standard cases are covered by Kotlin UI DSL API
+   * By default, every component except JPanel have [SpacingConfiguration.verticalComponentGap] above and below it.
+   * This behavior can be overridden by this property. Should be used in very rare situations, because most standard cases are covered
+   * by Kotlin UI DSL API. It could be needed for example in the following cases:
+   * * A component with a label and some additional label-kind components above
+   * * Some components are compound and based on [JPanel] that requires [SpacingConfiguration.verticalComponentGap] above and below
    *
-   * Value: [Boolean]
+   * Value: [VerticalComponentGap]
    */
-  NO_BOTTOM_GAP,
-
-  /**
-   * By default, almost every component have [SpacingConfiguration.verticalComponentGap] above and below it.
-   * Some components are compound (usually based on [JPanel]) and Kotlin UI DSL doesn't add vertical gaps around it by default.
-   * Setting this property forces adding vertical gaps.
-   *
-   * Value: [Boolean]
-   */
-  TOP_BOTTOM_GAP,
+  VERTICAL_COMPONENT_GAP,
 
   /**
    * By default, we're trying to assign [javax.swing.JLabel.setLabelFor] for the cell component itself.
@@ -95,5 +88,14 @@ fun interface HyperlinkEventAction {
   fun hyperlinkExited(e: HyperlinkEvent) {
   }
 }
+
+/**
+ * Values meaning:
+ *
+ * null - use default logic for vertical component gap
+ * true - force setting [SpacingConfiguration.verticalComponentGap]
+ * false - force setting 0 as a vertical gap
+ */
+data class VerticalComponentGap(val top: Boolean? = null, val bottom: Boolean? = null)
 
 fun UINumericRange.asRange(): IntRange = min..max

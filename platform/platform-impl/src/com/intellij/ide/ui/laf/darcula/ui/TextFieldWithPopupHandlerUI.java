@@ -454,7 +454,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       g.setClip(clip);
       for (IconHolder holder : icons.values()) {
         if (holder.icon != null) {
-          if (ExperimentalUI.isNewUI() && holder.hovered && holder.isClickable() && holder.icon != AllIcons.Actions.CloseHovered) {
+          if (holder.hovered && holder.isClickable() && holder.icon != AllIcons.Actions.CloseHovered && ExperimentalUI.isNewUI()) {
             GraphicsUtil.setupAAPainting(g);
             int arc = DarculaUIUtil.BUTTON_ARC.get();
             g.setColor(JBUI.CurrentTheme.ActionButton.hoverBackground());

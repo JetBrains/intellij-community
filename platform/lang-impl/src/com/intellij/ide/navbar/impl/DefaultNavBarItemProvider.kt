@@ -40,7 +40,7 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
 
     if (getVirtualFile(item.data) in allRoots) return null
 
-    val parent = fromOldExtensions { ext ->
+    val parent = fromOldExtensions({ ext ->
       try {
         ext.getParent(item.data)
       }
@@ -49,7 +49,9 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
         ProgressManager.checkCanceled()
         null
       }
-    }
+    }, { parent ->
+      parent != item.data
+    })
     if (parent == null || !parent.isValid) return null
 
     val containingFile = parent.containingFile
@@ -105,6 +107,13 @@ fun <T> fromOldExtensions(selector: (ext: NavBarModelExtension) -> T?): T? =
     .extensionList
     .firstNotNullOfOrNull(selector)
 
+fun <T> fromOldExtensions(selector: (ext: NavBarModelExtension) -> T?, filter: (T) -> Boolean): T? =
+  NavBarModelExtension.EP_NAME
+    .extensionList
+    .asSequence()
+    .map(selector)
+    .filter { it != null && filter(it) }
+    .firstOrNull()
 
 fun adjustWithAllExtensions(element: PsiElement?): PsiElement? =
   NavBarModelExtension.EP_NAME

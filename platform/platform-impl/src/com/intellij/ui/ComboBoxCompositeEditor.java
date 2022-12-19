@@ -154,7 +154,10 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
   };
 
   private final ComboBoxCompositeEditorStrategy jLabelStrategy =  new ComboBoxCompositeEditorStrategy() {
-    final BiConsumer<I, JLabel> defaultOnSetHandler = (anObject, component) ->  component.setText((anObject == null) ? "" : anObject.toString());
+    final BiConsumer<I, JLabel> defaultOnSetHandler = (anObject, component) -> {
+      //noinspection HardCodedStringLiteral
+      component.setText((anObject == null) ? "" : anObject.toString());
+    };
 
     @Override
     public void setItem(F component, I anObject) {

@@ -28,7 +28,7 @@ abstract class PersistentFSRecordsStorage {
     RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(System.getProperty("idea.records-storage-kind", RecordsStorageKind.REGULAR.name()));
 
   static int recordsLength() {
-    return switch(RECORDS_STORAGE_KIND){
+    return switch (RECORDS_STORAGE_KIND) {
       case REGULAR, IN_MEMORY -> PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
       case LOCK_FREE -> PersistentFSLockFreeRecordsStorage.RECORD_SIZE;
     };
@@ -53,7 +53,7 @@ abstract class PersistentFSRecordsStorage {
 
     boolean aligned = pageSize % recordLength == 0;
     if (!aligned) {
-      String message = "Record length(="+recordLength+") is not aligned with page size(=" + pageSize + ")";
+      String message = "Record length(=" + recordLength + ") is not aligned with page size(=" + pageSize + ")";
       Logger.getInstance(PersistentFSRecordsStorage.class).error(message);
     }
 
@@ -94,7 +94,7 @@ abstract class PersistentFSRecordsStorage {
    * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)
    */
   //RC: why 'put' not 'set'?
-  abstract boolean putLength(int fileId, long length) throws IOException;
+  abstract boolean setLength(int fileId, long length) throws IOException;
 
   abstract long getTimestamp(int fileId) throws IOException;
 
@@ -103,7 +103,7 @@ abstract class PersistentFSRecordsStorage {
    * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)
    */
   //RC: why 'put' not 'set'?
-  abstract boolean putTimestamp(int fileId, long timestamp) throws IOException;
+  abstract boolean setTimestamp(int fileId, long timestamp) throws IOException;
 
   abstract int getModCount(int fileId) throws IOException;
 

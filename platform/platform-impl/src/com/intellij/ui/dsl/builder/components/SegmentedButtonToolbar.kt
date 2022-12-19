@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.SpacingConfiguration
+import com.intellij.ui.dsl.builder.VerticalComponentGap
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -41,7 +42,7 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
     setMinimumButtonSize(Dimension(0, 0))
     layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps(size = DarculaUIUtil.BW.get()))
-    putClientProperty(DslComponentProperty.TOP_BOTTOM_GAP, true)
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(true, true))
 
     addFocusListener(object : FocusListener {
       override fun focusGained(e: FocusEvent?) {
@@ -231,10 +232,15 @@ internal class SegmentedButtonBorder : Border {
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
-      val r = Rectangle(x, y, width, height)
+      g2.translate(x, y)
+      val r = Rectangle(0, 0, width, height)
       val arc = DarculaUIUtil.BUTTON_ARC.float
-      if (c.hasFocus()) {
-        DarculaUIUtil.paintOutlineBorder(g2, r.width, r.height, arc, true, true, DarculaUIUtil.Outline.focus)
+      var outline = DarculaUIUtil.getOutline(c as JComponent)
+      if (outline == null && c.hasFocus()) {
+        outline = DarculaUIUtil.Outline.focus
+      }
+      if (outline != null) {
+        DarculaUIUtil.paintOutlineBorder(g2, r.width, r.height, arc, true, c.hasFocus(), outline)
       }
       g2.paint = getSegmentedButtonBorderPaint(c, false)
       JBInsets.removeFrom(r, JBUI.insets(DarculaUIUtil.BW.unscaled.toInt()))

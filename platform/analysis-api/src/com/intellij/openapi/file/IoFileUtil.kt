@@ -3,8 +3,8 @@
 package com.intellij.openapi.file
 
 import com.intellij.openapi.file.CanonicalPathUtil.isAncestor
-import com.intellij.openapi.file.NioFileUtil.isAncestor
-import com.intellij.openapi.file.NioFileUtil.toCanonicalPath
+import com.intellij.openapi.file.NioPathUtil.isAncestor
+import com.intellij.openapi.file.NioPathUtil.toCanonicalPath
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -50,62 +50,62 @@ object IoFileUtil {
 
   @JvmStatic
   fun findFileOrDirectory(file: File, relativePath: String): File? {
-    return NioFileUtil.findFileOrDirectory(file.toNioPath(), relativePath)?.toFile()
+    return NioPathUtil.findFileOrDirectory(file.toNioPath(), relativePath)?.toFile()
   }
 
   @JvmStatic
   fun getFileOrDirectory(file: File, relativePath: String): File {
-    return NioFileUtil.getFileOrDirectory(file.toNioPath(), relativePath).toFile()
+    return NioPathUtil.getFileOrDirectory(file.toNioPath(), relativePath).toFile()
   }
 
   @JvmStatic
   fun findFile(file: File, relativePath: String): File? {
-    return NioFileUtil.findFile(file.toNioPath(), relativePath)?.toFile()
+    return NioPathUtil.findFile(file.toNioPath(), relativePath)?.toFile()
   }
 
   @JvmStatic
   fun getFile(file: File, relativePath: String): File {
-    return NioFileUtil.getFile(file.toNioPath(), relativePath).toFile()
+    return NioPathUtil.getFile(file.toNioPath(), relativePath).toFile()
   }
 
   @JvmStatic
   fun findDirectory(file: File, relativePath: String): File? {
-    return NioFileUtil.findDirectory(file.toNioPath(), relativePath)?.toFile()
+    return NioPathUtil.findDirectory(file.toNioPath(), relativePath)?.toFile()
   }
 
   @JvmStatic
   fun getDirectory(file: File, relativePath: String): File {
-    return NioFileUtil.getDirectory(file.toNioPath(), relativePath).toFile()
+    return NioPathUtil.getDirectory(file.toNioPath(), relativePath).toFile()
   }
 
   @JvmStatic
   fun findOrCreateFile(file: File, relativePath: String): File {
-    return NioFileUtil.findOrCreateFile(file.toNioPath(), relativePath).toFile()
+    return NioPathUtil.findOrCreateFile(file.toNioPath(), relativePath).toFile()
   }
 
   @JvmStatic
   fun findOrCreateDirectory(file: File, relativePath: String): File {
-    return NioFileUtil.findOrCreateDirectory(file.toNioPath(), relativePath).toFile()
+    return NioPathUtil.findOrCreateDirectory(file.toNioPath(), relativePath).toFile()
   }
 
   @JvmStatic
   fun createFile(file: File, relativePath: String): File {
-    return NioFileUtil.createFile(file.toNioPath(), relativePath).toFile()
+    return NioPathUtil.createFile(file.toNioPath(), relativePath).toFile()
   }
 
   @JvmStatic
   fun createDirectory(file: File, relativePath: String): File {
-    return NioFileUtil.createDirectory(file.toNioPath(), relativePath).toFile()
+    return NioPathUtil.createDirectory(file.toNioPath(), relativePath).toFile()
   }
 
   @JvmStatic
   fun deleteFileOrDirectory(file: File, relativePath: String = ".") {
-    NioFileUtil.deleteFileOrDirectory(file.toNioPath(), relativePath)
+    NioPathUtil.deleteFileOrDirectory(file.toNioPath(), relativePath)
   }
 
   @JvmStatic
   fun deleteChildren(file: File, relativePath: String = ".", predicate: (File) -> Boolean = { true }) {
-    NioFileUtil.deleteChildren(file.toNioPath(), relativePath) { predicate(it.toFile()) }
+    NioPathUtil.deleteChildren(file.toNioPath(), relativePath) { predicate(it.toFile()) }
   }
 
   @JvmStatic

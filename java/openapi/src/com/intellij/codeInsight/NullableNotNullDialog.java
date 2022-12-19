@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
+import com.intellij.codeInspection.options.OptCustom;
+import com.intellij.codeInspection.ui.CustomComponentExtensionWithSwingRenderer;
 import com.intellij.ide.DataManager;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -10,6 +12,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,6 +20,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class NullableNotNullDialog extends DialogWrapper {
+  private static final String OPT_CUSTOM_BUTTON_ID = "java.nullableNotNullDialogButton";
   private final Project myProject;
   private final AnnotationsPanel myNullablePanel;
   private final AnnotationsPanel myNotNullPanel;
@@ -43,6 +47,21 @@ public class NullableNotNullDialog extends DialogWrapper {
 
     init();
     setTitle(JavaBundle.message("nullable.notnull.configuration.dialog.title"));
+  }
+  
+  public static @NotNull OptCustom configureAnnotationsButton() {
+    return new OptCustom(OPT_CUSTOM_BUTTON_ID);
+  }
+  
+  public static class ConfigureAnnotationsExtension extends CustomComponentExtensionWithSwingRenderer<Void> {
+    public ConfigureAnnotationsExtension() {
+      super(OPT_CUSTOM_BUTTON_ID);
+    }
+
+    @Override
+    public @NotNull JComponent render(Void data, @Nullable Component parent) {
+      return createConfigureAnnotationsButton(parent);
+    }
   }
 
   public static JButton createConfigureAnnotationsButton(Component context) {

@@ -21,11 +21,11 @@ internal class ToolWindowLeftToolbar(paneId: String, private val isPrimary: Bool
     return when (anchor) {
       ToolWindowAnchor.LEFT -> topStripe
       ToolWindowAnchor.BOTTOM -> bottomStripe
-      else -> throw IllegalArgumentException("Wrong anchor $anchor")
+      else -> topStripe
     }
   }
 
-  override fun createBorder(): Border = JBUI.Borders.customLine(getBorderColor(), 1, 0, 0, 1)
+  override fun createBorder(): Border = JBUI.Borders.customLineRight(getBorderColor())
 
   fun initMoreButton() {
     if (isPrimary) {

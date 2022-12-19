@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.options;
 
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,5 +14,6 @@ import org.jetbrains.annotations.Nullable;
  * @param validator optional validator for content; can validate max-length or be something more complicated
  *                  (e.g., validate that a string is a class-name which is a subclass of specific class)
  */
-public record OptSet(@NotNull String bindId, @NotNull LocMessage label, @Nullable StringValidator validator) implements OptControl {
+public record OptSet(@Language("jvm-field-name") @NotNull String bindId, 
+                     @NotNull LocMessage label, @Nullable StringValidator validator) implements OptControl {
 }

@@ -2,44 +2,58 @@
 package com.intellij.codeInspection.options;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ui.InspectionOptionPaneRenderer;
-import com.intellij.codeInspection.ui.SwingOptPaneRenderer;
+import com.intellij.codeInspection.ui.CustomComponentExtensionWithSwingRenderer;
+import com.intellij.codeInspection.ui.UiDslOptPaneRenderer;
+import com.intellij.testFramework.LightPlatform4TestCase;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Test;
+import org.jetbrains.annotations.Nullable;
+import org.junit.Test;
 
 import javax.swing.*;
+import java.awt.*;
 
-import static com.intellij.codeInspection.options.OptPane.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class OptCustomTest {
-  private static class MyInspection extends LocalInspectionTool implements InspectionOptionPaneRenderer.CustomComponentProvider {
-    public int x = 2;
-    public int y = 3;
-
+public class OptCustomTest extends LightPlatform4TestCase {
+  private static class MyInspection extends LocalInspectionTool {
     @Override
     public @NotNull OptPane getOptionsPane() {
       return pane(
-        custom("x"),
-        custom("y")
+        new OptCustom("x", "2"),
+        new OptCustom("y")
       );
-    }
-
-    @Override
-    public @NotNull JComponent getCustomOptionComponent(@NotNull OptCustom control, @NotNull JComponent parent) {
-      return switch (control.bindId()) {
-        case "x" -> new JLabel(control.getValue(this).toString());
-        case "y" -> new JButton(control.getValue(this).toString());
-        default -> throw new IllegalStateException("Unexpected value: " + control.bindId());
-      };
     }
   }
   
   @Test
   public void customControls() {
+    CustomComponentExtension.EP_NAME.getPoint().registerExtension(
+      new CustomComponentExtensionWithSwingRenderer<String>("x") {
+        @Override
+        public @NotNull String serializeData(String s) {
+          return s;
+        }
+
+        @Override
+        public String deserializeData(@NotNull String data) {
+          return data;
+        }
+
+        @Override
+        public @NotNull JComponent render(String data, @Nullable Component parent) {
+          return new JLabel(data);
+        }
+      }, getTestRootDisposable());
+    CustomComponentExtension.EP_NAME.getPoint().registerExtension(
+      new CustomComponentExtensionWithSwingRenderer<Void>("y") {
+        @Override
+        public @NotNull JComponent render(Void data, @Nullable Component parent) {
+          return new JButton("3");
+        }
+      }, getTestRootDisposable());
     MyInspection inspection = new MyInspection();
-    JComponent component = new SwingOptPaneRenderer().render(inspection);
+    JComponent component = new UiDslOptPaneRenderer().render(inspection);
     JButton button = UIUtil.findComponentOfType(component, JButton.class);
     assertEquals("3", button.getText());
     JLabel label = UIUtil.findComponentOfType(component, JLabel.class);

@@ -9,9 +9,13 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 internal interface RepositoryLibrarySettings {
-  fun isSha256ChecksumFeatureEnabled(): Boolean
+  fun isSha256ChecksumUiSettingsDisplayed(): Boolean
 
-  fun isJarRepositoryBindingFeatureEnabled(): Boolean
+  fun isSha256ChecksumAutoBuildEnabled(): Boolean
+
+  fun isBindJarRepositoryUiSettingsDisplayed(): Boolean
+
+  fun isJarRepositoryAutoBindEnabled(): Boolean
 
   companion object {
     @JvmStatic
@@ -24,20 +28,43 @@ internal interface RepositoryLibrarySettings {
   }
 
   private object Defaults : RepositoryLibrarySettings {
-    override fun isSha256ChecksumFeatureEnabled() = false
-
-    override fun isJarRepositoryBindingFeatureEnabled() = false
+    override fun isSha256ChecksumUiSettingsDisplayed() = false
+    override fun isSha256ChecksumAutoBuildEnabled() = false
+    override fun isBindJarRepositoryUiSettingsDisplayed() = false
+    override fun isJarRepositoryAutoBindEnabled() = false
   }
 
   private class Service : SimplePersistentStateComponent<Service.State>(State()), RepositoryLibrarySettings {
     class State : BaseState() {
-      var enableSha256ChecksumFeature by property(Defaults.isSha256ChecksumFeatureEnabled())
-      var enableJarRepositoryBindingFeature by property(Defaults.isJarRepositoryBindingFeatureEnabled())
+      /**
+       * Display SHA256 checksum internal actions and SHA256 checksum checkbox in library editor.
+       */
+      var displaySha256ChecksumUiSettings by property(Defaults.isSha256ChecksumUiSettingsDisplayed())
+
+      /**
+       * Build SHA256 checksum when new library is added.
+       */
+      var sha256ChecksumAutoBuild by property(Defaults.isSha256ChecksumAutoBuildEnabled())
+
+      /**
+       * Display Repository binding internal actions and library editor combo box.
+       */
+      var displayJarRepositoryBindingUi by property(Defaults.isBindJarRepositoryUiSettingsDisplayed())
+
+      /**
+       * Guess and bind JAR repository to a new library when one is added. This operation may fail (ex. if library
+       * is stored in one repository, but its dependencies in another), so a user may change library settings manually.
+       */
+      var jarRepositoryAutoBind by property(Defaults.isJarRepositoryAutoBindEnabled())
     }
 
-    override fun isSha256ChecksumFeatureEnabled() = state.enableSha256ChecksumFeature
+    override fun isSha256ChecksumUiSettingsDisplayed() = state.displaySha256ChecksumUiSettings
 
-    override fun isJarRepositoryBindingFeatureEnabled() = state.enableJarRepositoryBindingFeature
+    override fun isSha256ChecksumAutoBuildEnabled() = state.sha256ChecksumAutoBuild
+
+    override fun isBindJarRepositoryUiSettingsDisplayed() = state.displayJarRepositoryBindingUi
+
+    override fun isJarRepositoryAutoBindEnabled() = state.displayJarRepositoryBindingUi && state.jarRepositoryAutoBind
 
     companion object {
       fun getInstance(project: Project): RepositoryLibrarySettings = project.service<Service>()

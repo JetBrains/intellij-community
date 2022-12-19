@@ -286,7 +286,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
     });
 
     importProject();
-    assertEquals(Set.of("modified m1", "created Maven: junit:junit:4.0"), changeLog);
+    assertEquals(Set.of("modified m1", "created Maven: junit:junit:4.0", "created LibraryPropertiesEntityImpl"), changeLog);
   }
 
   @Test

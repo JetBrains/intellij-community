@@ -21,7 +21,7 @@ import com.intellij.openapi.externalSystem.service.notification.NotificationData
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.openapi.externalSystem.util.PathPrefixTreeMap;
+import com.intellij.openapi.file.converter.CanonicalPathPrefixTreeFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.roots.DependencyScope;
@@ -37,6 +37,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.prefix.map.MutablePrefixTreeMap;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.gradle.tooling.model.DomainObjectSet;
@@ -366,7 +367,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       sourceSetContentRoots = addExternalProjectContentRoots(gradleModule, ideModule, externalProject);
     }
 
-    PathPrefixTreeMap<ContentRootData> contentRootIndex = new PathPrefixTreeMap<>();
+    MutablePrefixTreeMap<String, ContentRootData> contentRootIndex = CanonicalPathPrefixTreeFactory.INSTANCE.createMap();
     for (DataNode<ContentRootData> contentRootDataNode : ExternalSystemApiUtil.findAll(ideModule, ProjectKeys.CONTENT_ROOT)) {
       ContentRootData contentRootData = contentRootDataNode.getData();
       contentRootIndex.set(contentRootData.getRootPath(), contentRootData);
@@ -439,7 +440,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       ContentRootData contentRootData = contentRootDataNode.getData();
       existsContentRoots.add(contentRootData.getRootPath());
     }
-    for (ContentRootData ideContentRoot : contentRootIndex.getValues()) {
+    for (ContentRootData ideContentRoot : contentRootIndex.values()) {
       if (!existsContentRoots.contains(ideContentRoot.getRootPath())) {
         ideModule.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot);
       }
@@ -911,7 +912,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
    * @param dirs             directories which paths should be stored at the given content root
    * @throws IllegalArgumentException if specified by {@link ContentRootData#storePath(ExternalSystemSourceType, String)}
    */
-  private static void populateContentRoot(@NotNull final PathPrefixTreeMap<ContentRootData> contentRootIndex,
+  private static void populateContentRoot(@NotNull final MutablePrefixTreeMap<String, ContentRootData> contentRootIndex,
                                           @NotNull final ExternalSystemSourceType type,
                                           @Nullable final Iterable<? extends IdeaSourceDirectory> dirs)
     throws IllegalArgumentException {
@@ -935,12 +936,14 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         LOG.debug(e);
       }
       String path = FileUtil.toCanonicalPath(dir.getDirectory().getPath());
-      if (contentRootIndex.getAllAncestorKeys(path).isEmpty()) {
+      List<String> contentRoots = new ArrayList<>(contentRootIndex.getAncestorKeys(path));
+      if (contentRoots.isEmpty()) {
         ContentRootData contentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, path);
         contentRootIndex.set(path, contentRootData);
+        contentRoots.add(path);
       }
-      List<String> ancestors = contentRootIndex.getAllAncestorKeys(path);
-      String contentRootPath = ancestors.get(ancestors.size() - 1);
+      String contentRootPath = ContainerUtil.getLastItem(contentRoots);
+      assert contentRootPath != null;
       ContentRootData contentRoot = contentRootIndex.get(contentRootPath);
       assert contentRoot != null;
       contentRoot.storePath(dirSourceType, path);

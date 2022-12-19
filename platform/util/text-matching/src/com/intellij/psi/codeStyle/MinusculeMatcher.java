@@ -11,12 +11,12 @@ import java.util.Iterator;
 
 /**
  * Tells whether a string matches a specific pattern. Allows for lowercase camel-hump matching.
- * Used in navigation, code completion, speed search etc.
+ * Used in navigation, code completion, speed search, etc.
+ * <p>
+ * Inheritors MUST override the {@link #matchingFragments} and {@link #matchingDegree(String, boolean, FList)} methods,
+ * they are not abstract for binary compatibility.
  *
  * @see NameUtil#buildMatcher(String)
- *
- * Inheritors MUST override `matchingFragments` and `matchingDegree` methods,
- * they are not abstract for binary compatibility.
  */
 abstract public class MinusculeMatcher implements Matcher {
 

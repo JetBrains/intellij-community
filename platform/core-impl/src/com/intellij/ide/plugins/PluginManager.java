@@ -18,10 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.AbstractList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -198,9 +195,14 @@ public final class PluginManager {
 
   @ApiStatus.Internal
   public static @NotNull Stream<IdeaPluginDescriptorImpl> getVisiblePlugins(boolean showImplementationDetails) {
+    return filterVisiblePlugins(PluginManagerCore.getPluginSet().allPlugins, showImplementationDetails);
+  }
+
+  @ApiStatus.Internal
+  public static <T extends PluginDescriptor> @NotNull Stream<@NotNull T> filterVisiblePlugins(@NotNull Collection<@NotNull T> plugins,
+                                                                                              boolean showImplementationDetails) {
     ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
-    return PluginManagerCore.getPluginSet()
-      .allPlugins
+    return plugins
       .stream()
       .filter(descriptor -> !applicationInfo.isEssentialPlugin(descriptor.getPluginId()))
       .filter(descriptor -> showImplementationDetails || !descriptor.isImplementationDetail());

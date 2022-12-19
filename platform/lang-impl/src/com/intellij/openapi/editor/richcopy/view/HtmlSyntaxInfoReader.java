@@ -68,7 +68,7 @@ public class HtmlSyntaxInfoReader extends AbstractSyntaxAwareReader implements M
   }
 
   protected void appendCloseTags() {
-    myResultBuffer.append("</pre></div></body></html>");
+    myResultBuffer.append("</div></body></html>");
   }
 
   protected void appendStartTags() {
@@ -90,8 +90,8 @@ public class HtmlSyntaxInfoReader extends AbstractSyntaxAwareReader implements M
     // on macOS font size in points declared in HTML doesn't mean the same value as when declared e.g. in TextEdit (and in Java),
     // this is the correction factor
     if (SystemInfo.isMac) fontSize *= 0.75f;
-    myResultBuffer.append(String.format("font-size:%.1fpt;\">", fontSize));
-    myResultBuffer.append("<pre>");
+    myResultBuffer.append(String.format("font-size:%.1fpt;", fontSize));
+    myResultBuffer.append("white-space:pre;\">");
   }
 
   protected void appendFontFamilyRule(@NotNull StringBuilder styleBuffer, int fontFamilyId) {

@@ -53,9 +53,6 @@ internal class DependencyToolwindowLifecycleScope : CoroutineScope, Disposable {
 internal val Project.lifecycleScope: DependencyToolwindowLifecycleScope
   get() = service()
 
-internal val Project.contentIdMap
-  get() = service<ContentIdMapService>().idMap.value
-
 fun <L : Any, K> Project.messageBusFlow(
   topic: Topic<L>,
   initialValue: (suspend () -> K)? = null,

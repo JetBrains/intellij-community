@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
@@ -33,15 +33,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-final class EditorConfigEditorProvider implements AsyncFileEditorProvider, DumbAware {
-  private static final String EDITOR_TYPE_ID = "org.editorconfig.configmanagement.editor";
+public class EditorConfigEditorProvider implements AsyncFileEditorProvider, DumbAware {
+  private final static String EDITOR_TYPE_ID = "org.editorconfig.configmanagement.editor";
 
-  static final int MAX_PREVIEW_LENGTH = 10000;
+  final static int MAX_PREVIEW_LENGTH = 10000;
 
-  private static final PsiAwareTextEditorProvider myMainEditorProvider = new PsiAwareTextEditorProvider();
+  private final static PsiAwareTextEditorProvider myMainEditorProvider = new PsiAwareTextEditorProvider();
 
+  @NotNull
   @Override
-  public @NotNull Builder createEditorAsync(@NotNull Project project, @NotNull VirtualFile file) {
+  public Builder createEditorAsync(@NotNull Project project,
+                                   @NotNull VirtualFile file) {
     return new MyEditorBuilder(project, file);
   }
 
@@ -50,18 +52,21 @@ final class EditorConfigEditorProvider implements AsyncFileEditorProvider, DumbA
     return FileTypeRegistry.getInstance().isFileOfType(file, EditorConfigFileType.INSTANCE);
   }
 
+  @NotNull
   @Override
-  public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+  public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     return new MyEditorBuilder(project, file).build();
   }
 
+  @NotNull
   @Override
-  public @NotNull String getEditorTypeId() {
+  public String getEditorTypeId() {
     return EDITOR_TYPE_ID;
   }
 
+  @NotNull
   @Override
-  public @NotNull FileEditorPolicy getPolicy() {
+  public FileEditorPolicy getPolicy() {
     return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
   }
 
@@ -79,13 +84,14 @@ final class EditorConfigEditorProvider implements AsyncFileEditorProvider, DumbA
       VirtualFile contextFile = EditorConfigPreviewManager.getInstance(myProject).getAssociatedPreviewFile(myFile);
       EditorConfigStatusListener statusListener = new EditorConfigStatusListener(myProject, myFile);
       if (contextFile != null && CodeStyle.getSettings(myProject).getCustomSettings(EditorConfigSettings.class).ENABLED) {
-        Document document = EditorFactory.getInstance().createDocument(getPreviewText(contextFile));
-        Disposable disposable = Disposer.newDisposable();
-        EditorConfigPreviewFile previewFile = new EditorConfigPreviewFile(myProject, contextFile, document, disposable);
+        Document document =EditorFactory.getInstance().createDocument(getPreviewText(contextFile));
+        Disposable previewDisposable = Disposer.newDisposable();
+        final EditorConfigPreviewFile previewFile = new EditorConfigPreviewFile(myProject, contextFile, document, previewDisposable);
         FileEditor previewEditor = createPreviewEditor(document, previewFile);
         TextEditor ecTextEditor = (TextEditor)TextEditorProvider.getInstance().createEditor(myProject, myFile);
-        EditorConfigEditorWithPreview splitEditor = new EditorConfigEditorWithPreview(myFile, myProject, ecTextEditor, previewEditor);
-        Disposer.register(splitEditor, disposable);
+        final EditorConfigEditorWithPreview splitEditor = new EditorConfigEditorWithPreview(
+          myFile, myProject, ecTextEditor, previewEditor);
+        Disposer.register(splitEditor, previewDisposable);
         Disposer.register(splitEditor, statusListener);
         return splitEditor;
       }
@@ -105,7 +111,8 @@ final class EditorConfigEditorProvider implements AsyncFileEditorProvider, DumbA
       return new EditorConfigPreviewFileEditor(previewEditor, previewFile);
     }
 
-    private static @NotNull String getPreviewText(@NotNull VirtualFile file) {
+    @NotNull
+    private static String getPreviewText(@NotNull VirtualFile file) {
       if (file.getLength() <= MAX_PREVIEW_LENGTH) {
         try {
           return StringUtil.convertLineSeparators(VfsUtilCore.loadText(file));
@@ -119,16 +126,15 @@ final class EditorConfigEditorProvider implements AsyncFileEditorProvider, DumbA
         LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
         if (provider != null) {
           String sample = provider.getCodeSample(LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS);
-          if (sample != null) {
-            return sample;
-          }
+          if (sample != null) return sample;
         }
       }
       return "No preview";
     }
   }
 
-  static @Nullable Language getLanguage(@NotNull VirtualFile virtualFile) {
+  @Nullable
+  static Language getLanguage(@NotNull VirtualFile virtualFile) {
     FileType fileType = virtualFile.getFileType();
     return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
   }

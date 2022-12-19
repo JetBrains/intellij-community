@@ -20,6 +20,7 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -41,14 +42,15 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class SimplifiableEqualsExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
   public boolean REPORT_NON_CONSTANT = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("simplifiable.equals.expression.option.non.constant"), this,
-                                          "REPORT_NON_CONSTANT");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("REPORT_NON_CONSTANT", InspectionGadgetsBundle.message("simplifiable.equals.expression.option.non.constant")));
   }
 
   @NotNull

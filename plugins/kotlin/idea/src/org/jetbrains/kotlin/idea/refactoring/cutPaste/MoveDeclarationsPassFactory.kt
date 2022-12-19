@@ -37,11 +37,18 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
         private val editor: Editor
     ) : TextEditorHighlightingPass(project, editor.document, true) {
 
-        override fun doCollectInformation(progress: ProgressIndicator) {}
+        @Volatile
+        private var myInfo: HighlightInfo? = null
+
+        override fun doCollectInformation(progress: ProgressIndicator) {
+            myInfo = buildHighlightingInfo()
+        }
 
         override fun doApplyInformationToEditor() {
-            val info = buildHighlightingInfo()
-            UpdateHighlightersUtil.setHighlightersToEditor(project, myDocument, 0, file.textLength, listOfNotNull(info), colorsScheme, id)
+            val info = myInfo
+            if (info != null) {
+                UpdateHighlightersUtil.setHighlightersToEditor(project, myDocument, 0, file.textLength, listOf(info), colorsScheme, id)
+            }
         }
 
         private fun buildHighlightingInfo(): HighlightInfo? {

@@ -268,12 +268,12 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   @Override
   public @Nullable JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(JavaBundle.message("checkbox.comments.and.javadoc.count.as.content"),  "commentsAreContent");
+    panel.addCheckbox(JavaBundle.message("checkbox.comments.and.javadoc.count.as.content"), "commentsAreContent");
 
     final JPanel listPanel = SpecialAnnotationsUtil
       .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, JavaBundle.message("special.annotations.annotations.list"));
 
-    panel.add(listPanel, "growx, wrap");
+    panel.addGrowing(listPanel);
     return panel;
   }
 

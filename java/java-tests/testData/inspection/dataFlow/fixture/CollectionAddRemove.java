@@ -132,7 +132,7 @@ public class CollectionAddRemove {
 
     someSideEffect(new ArrayList<>(strings)); 
 
-    if (<warning descr="Condition '!strings.isEmpty()' is always 'true'">!<warning descr="Result of 'strings.isEmpty()' is always 'false'">strings.isEmpty()</warning></warning>) { 
+    if (<warning descr="Condition '!strings.isEmpty()' is always 'true'">!strings.isEmpty()</warning>) { 
       System.out.println("ok");
     }
   }

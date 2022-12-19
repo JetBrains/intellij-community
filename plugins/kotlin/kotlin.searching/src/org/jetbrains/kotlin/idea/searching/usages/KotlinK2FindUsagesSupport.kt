@@ -75,11 +75,6 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         return false
     }
 
-    override fun getTopMostOverriddenElementsToHighlight(target: PsiElement): List<PsiElement> {
-        // TODO: implement this
-        return emptyList()
-    }
-
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String {
         // TODO: implement this
         return (declaration as? KtNamedDeclaration)?.name ?: "SUPPORT FOR FIR"

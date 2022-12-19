@@ -2,13 +2,21 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.progress.withModalProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFilePaths
 import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.concurrency.await
 
 class SingleChangeListCommitWorkflowHandler(
   override val workflow: CommitChangeListDialogWorkflow,
@@ -19,8 +27,7 @@ class SingleChangeListCommitWorkflowHandler(
 
   override val commitPanel: CheckinProjectPanel = object : CommitProjectPanelAdapter(this) {
     override fun setCommitMessage(currentDescription: String?) {
-      commitMessagePolicy.defaultNameChangeListMessage = currentDescription
-
+      commitMessagePolicy.onCommitMessageReset(currentDescription)
       super.setCommitMessage(currentDescription)
     }
   }
@@ -51,7 +58,7 @@ class SingleChangeListCommitWorkflowHandler(
 
     ui.addInclusionListener(this, this)
     updateDefaultCommitActionName()
-    initCommitMessage()
+    setCommitMessage(commitMessagePolicy.init(getChangeList(), getIncludedChanges()))
     initCommitOptions()
 
     amendCommitHandler.initialMessage = getCommitMessage()
@@ -61,13 +68,13 @@ class SingleChangeListCommitWorkflowHandler(
 
   override fun cancelled() {
     commitOptions.saveChangeListSpecificOptions()
-    saveCommitMessage(false)
+    commitMessagePolicy.onDialogClosed(getCommitState(), false)
 
     LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
   }
 
-  override fun changeListChanged() {
-    updateCommitMessage()
+  override fun changeListChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList) {
+    commitMessagePolicy.onChangelistChanged(oldChangeList, newChangeList, ui.commitMessageUi)
     updateCommitOptions()
   }
 
@@ -95,31 +102,40 @@ class SingleChangeListCommitWorkflowHandler(
       ui.confirmCommitWithEmptyMessage()
     )
 
-  override fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
+  override suspend fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
+    if (!addUnversionedFiles(sessionInfo)) return false
+
+    refreshLocalChanges()
+
     workflow.commitState = getCommitState()
     return configureCommitSession(project, sessionInfo,
                                   workflow.commitState.changes,
                                   workflow.commitState.commitMessage)
   }
 
-  override fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean {
+  private suspend fun addUnversionedFiles(sessionInfo: CommitSessionInfo): Boolean {
     if (sessionInfo.isVcsCommit) {
-      if (!addUnversionedFiles(project, getIncludedUnversionedFiles(), getChangeList(), ui.getInclusionModel())) return false
+      return withModalProgressIndicator(project, VcsBundle.message("progress.title.adding.files.to.vcs")) {
+        withContext(Dispatchers.EDT) {
+          addUnversionedFiles(project, getIncludedUnversionedFiles(), getChangeList(), ui.getInclusionModel())
+        }
+      }
     }
-    return super.prepareForCommitExecution(sessionInfo)
+    return true
   }
 
-  private fun initCommitMessage() {
-    commitMessagePolicy.init(getChangeList(), getIncludedChanges())
-    setCommitMessage(commitMessagePolicy.commitMessage)
+  private suspend fun refreshLocalChanges() {
+    withModalProgressIndicator(project, VcsBundle.message("commit.progress.title")) {
+      ChangeListManagerEx.getInstanceEx(project).promiseWaitForUpdate().await()
+      withContext(Dispatchers.EDT) {
+        ui.refreshDataBeforeCommit()
+      }
+    }
   }
 
-  private fun updateCommitMessage() {
-    commitMessagePolicy.update(getChangeList(), getCommitMessage())
-    setCommitMessage(commitMessagePolicy.commitMessage)
+  override fun saveCommitMessageBeforeCommit() {
+    commitMessagePolicy.onDialogClosed(getCommitState(), true)
   }
-
-  override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(getCommitState(), success)
 
   private fun initCommitOptions() {
     workflow.initCommitOptions(createCommitOptions())

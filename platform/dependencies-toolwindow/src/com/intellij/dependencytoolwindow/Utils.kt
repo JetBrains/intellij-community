@@ -14,51 +14,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 
-internal fun initializeToolWindow(toolWindow: ToolWindow, project: Project) {
-  toolWindow.contentManager.addSelectionChangedListener { event ->
-    if (toolWindow is ToolWindowEx) {
-      toolWindow.setAdditionalGearActions(null)
-      (event.content.component as? HasToolWindowActions)
-        ?.also { toolWindow.setAdditionalGearActions(it.gearActions) }
-    }
-    toolWindow.setTitleActions(emptyList())
-    (event.content.component as? HasToolWindowActions)
-      ?.titleActions
-      ?.also { toolWindow.setTitleActions(it.toList()) }
-  }
-
-  toolWindow.isAvailable = false
-  toolWindow.contentManager.removeAllContents(true)
-
-  DependenciesToolWindowTabProvider.availableTabsFlow(project)
-    .flowOn(project.lifecycleScope.dispatcher)
-    .map { it.map { provider -> provider.provideTab(project) } }
-    .onEach { change ->
-      val removedContent = toolWindow.contentManager.contents.filter { it !in change }.toSet()
-      val newContent = change.filter { it !in toolWindow.contentManager.contents }
-      val contentOrder = (toolWindow.contentManager.contents.toList() - removedContent + newContent)
-        .sortedBy { it.toolwindowTitle }
-        .mapIndexed { index, content -> content to index }
-        .toMap()
-      removedContent.forEach { toolWindow.contentManager.removeContent(it, true) }
-      newContent.forEach { content ->
-        contentOrder[content]?.let { order -> toolWindow.contentManager.addContent(content, order) }
-        ?: toolWindow.contentManager.addContent(content)
-      }
-      toolWindow.isAvailable = change.isNotEmpty()
-    }
-    .flowOn(Dispatchers.EDT)
-    .launchIn(project.lifecycleScope)
-
-  project.lookAndFeelFlow
-    .onEach {
-      toolWindow.contentManager.component.invalidate()
-      toolWindow.contentManager.component.repaint()
-    }
-    .flowOn(Dispatchers.EDT)
-    .launchIn(project.lifecycleScope)
-}
-
 @Suppress("FunctionName")
 internal fun SelectionChangedListener(action: (ContentManagerEvent) -> Unit): ContentManagerListener {
   return object : ContentManagerListener {

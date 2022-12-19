@@ -6,6 +6,7 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.validation.CellValidation
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -45,6 +46,8 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
 
   fun bind(property: ObservableMutableProperty<T>): SegmentedButton<T>
 
+  @ApiStatus.Experimental
+  // todo union whenItemSelected methods into onChange
   fun whenItemSelected(parentDisposable: Disposable? = null, listener: (T) -> Unit): SegmentedButton<T>
 
   @ApiStatus.Experimental
@@ -55,4 +58,6 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
    * Default value is [DEFAULT_MAX_BUTTONS_COUNT]
    */
   fun maxButtonsCount(value: Int): SegmentedButton<T>
+
+  fun validation(init: CellValidation<SegmentedButton<T>>.() -> Unit): SegmentedButton<T>
 }

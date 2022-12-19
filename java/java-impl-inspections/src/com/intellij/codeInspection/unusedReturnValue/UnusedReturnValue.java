@@ -4,11 +4,10 @@ package com.intellij.codeInspection.unusedReturnValue;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnreferencedFilter;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.unusedSymbol.VisibilityModifierChooser;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -20,8 +19,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import java.util.Objects;
 
 public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   public boolean IGNORE_BUILDER_PATTERN;
@@ -64,21 +62,17 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    if (IGNORE_BUILDER_PATTERN || highestModifier != DEFAULT_HIGHEST_MODIFIER) {
+    if (IGNORE_BUILDER_PATTERN || !Objects.equals(highestModifier, DEFAULT_HIGHEST_MODIFIER)) {
       super.writeSettings(node);
     }
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(JavaBundle.message("checkbox.ignore.simple.setters"), "IGNORE_BUILDER_PATTERN");
-    VisibilityModifierChooser modifierChooser = new VisibilityModifierChooser(() -> true,
-                                                                              highestModifier,
-                                                                              (newModifier) -> highestModifier = newModifier);
-    panel.addComponent(LabeledComponent.create(modifierChooser, JavaBundle.message("label.maximal.reported.method.visibility"),
-                                               BorderLayout.WEST));
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(
+      OptPane.checkbox("IGNORE_BUILDER_PATTERN", JavaBundle.message("checkbox.ignore.simple.setters")),
+      VisibilityModifierChooser.visibilityChooser("highestModifier", JavaBundle.message("label.maximal.reported.method.visibility"))
+    );
   }
 
   @Override

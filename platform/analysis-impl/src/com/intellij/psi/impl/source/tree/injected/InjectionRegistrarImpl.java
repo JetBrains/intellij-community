@@ -284,7 +284,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
                                                    @NotNull InjectedFileViewProvider viewProvider) {
     cacheEverything(place, documentWindow, viewProvider, psiFile);
 
-    final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(documentWindow);
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(documentWindow);
     PsiFile cachedPsiFile = ((PsiManagerEx)psiFile.getManager()).getFileManager().findCachedViewProvider(virtualFile).getPsi(psiFile.getLanguage());
     assert cachedPsiFile == psiFile : "Cached psi :"+ cachedPsiFile +" instead of "+psiFile;
 
@@ -471,7 +471,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
 
     for (int i = injected.size()-1; i>=0; i--) {
       DocumentWindowImpl oldDocument = (DocumentWindowImpl)injected.get(i);
-      final PsiFileImpl oldFile = (PsiFileImpl)documentManager.getCachedPsiFile(oldDocument);
+      PsiFileImpl oldFile = (PsiFileImpl)documentManager.getCachedPsiFile(oldDocument);
       FileViewProvider viewProvider;
       if (oldFile == null ||
           !oldFile.isValid() ||
@@ -483,8 +483,8 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
         continue;
       }
 
-      final ASTNode newInjectedNode = newInjectedPsi.getNode();
-      final ASTNode oldFileNode = oldFile.getNode();
+      ASTNode newInjectedNode = newInjectedPsi.getNode();
+      ASTNode oldFileNode = oldFile.getNode();
       assert newInjectedNode != null : "New node is null";
       if (oldDocument.areRangesEqual(newDocumentWindow)) {
         if (oldFile.getFileType() != newInjectedPsi.getFileType() || oldFile.getLanguage() != newInjectedPsi.getLanguage()) {
@@ -516,7 +516,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
     if (!oldFile.textMatches(injectedPsi)) {
       InjectedFileViewProvider oldViewProvider = (InjectedFileViewProvider)oldFile.getViewProvider();
       oldViewProvider.performNonPhysically(() -> DebugUtil.performPsiModification("injected tree diff", () -> {
-        final DiffLog diffLog = BlockSupportImpl.mergeTrees((PsiFileImpl)oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
+        DiffLog diffLog = BlockSupportImpl.mergeTrees((PsiFileImpl)oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
                                                             oldFileNode.getText());
         diffLog.doActualPsiChange(oldFile);
       }));
@@ -686,7 +686,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
           psiFile.setContentElementType(elementType);
         }
       }
-      final ASTNode parsedNode = keepTreeFromChameleoningBack(psiFile);
+      ASTNode parsedNode = keepTreeFromChameleoningBack(psiFile);
 
       assert parsedNode instanceof FileElement : "Parsed to " + parsedNode + " instead of FileElement";
 

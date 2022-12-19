@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.options;
 
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,6 @@ import org.jetbrains.annotations.Nullable;
  * @param keyValidator optional validator for keys column
  * @param valueValidator optional validator for values column
  */
-public record OptMap(@NotNull String bindId, @NotNull LocMessage label, 
+public record OptMap(@Language("jvm-field-name") @NotNull String bindId, @NotNull LocMessage label,
                      @Nullable StringValidator keyValidator, @Nullable StringValidator valueValidator) implements OptControl {
 }

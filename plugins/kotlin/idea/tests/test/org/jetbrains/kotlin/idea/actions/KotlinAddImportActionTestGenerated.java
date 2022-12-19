@@ -23,9 +23,39 @@ public class KotlinAddImportActionTestGenerated extends AbstractKotlinAddImportA
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("Class1.kt")
+    public void testClass1() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/Class1.kt");
+    }
+
+    @TestMetadata("Class2.kt")
+    public void testClass2() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/Class2.kt");
+    }
+
     @TestMetadata("ConstructorOverloadsPresent.kt")
     public void testConstructorOverloadsPresent() throws Exception {
         runTest("testData/idea/actions/kotlinAddImportAction/ConstructorOverloadsPresent.kt");
+    }
+
+    @TestMetadata("ExtendingClass1.kt")
+    public void testExtendingClass1() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/ExtendingClass1.kt");
+    }
+
+    @TestMetadata("ExtendingClass2.kt")
+    public void testExtendingClass2() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/ExtendingClass2.kt");
+    }
+
+    @TestMetadata("KotlinMinCollections.kt")
+    public void testKotlinMinCollections() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/KotlinMinCollections.kt");
+    }
+
+    @TestMetadata("KotlinMinInt.kt")
+    public void testKotlinMinInt() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/KotlinMinInt.kt");
     }
 
     @TestMetadata("MultipleMethodsAvailable.kt")
@@ -41,5 +71,20 @@ public class KotlinAddImportActionTestGenerated extends AbstractKotlinAddImportA
     @TestMetadata("SingleMethodAvailable.kt")
     public void testSingleMethodAvailable() throws Exception {
         runTest("testData/idea/actions/kotlinAddImportAction/SingleMethodAvailable.kt");
+    }
+
+    @TestMetadata("Varargs.kt")
+    public void testVarargs() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/Varargs.kt");
+    }
+
+    @TestMetadata("Varargs2.kt")
+    public void testVarargs2() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/Varargs2.kt");
+    }
+
+    @TestMetadata("Varargs3.kt")
+    public void testVarargs3() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/Varargs3.kt");
     }
 }

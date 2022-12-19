@@ -95,10 +95,6 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
           .bindSelected(settings::areInjectionsEnabled)
       }
       row {
-        checkBox(MarkdownBundle.message("markdown.settings.enable.enhance.editing.experience"))
-          .bindSelected(settings::isEnhancedEditingEnabled)
-      }
-      row {
         checkBox(MarkdownBundle.message("markdown.settings.show.problems"))
           .bindSelected(settings::showProblemsInCodeBlocks)
       }
