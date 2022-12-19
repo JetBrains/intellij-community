@@ -414,12 +414,8 @@ public final class InspectionEngine {
       boolean applyToDialects = tool.applyToDialects();
       Map<String, Boolean> map = applyToDialects ? resultsWithDialects : resultsNoDialects;
       return map.computeIfAbsent(language, __ ->
-        ContainerUtil.intersects(elementDialectIds, getDialectIdsSpecifiedForTool(language, applyToDialects)));
+        ToolLanguageUtil.isToolLanguageOneOf(elementDialectIds, language, applyToDialects));
     });
-  }
-
-  private static @NotNull Set<String> getDialectIdsSpecifiedForTool(@NotNull String langId, boolean applyToDialects) {
-    return ToolLanguageUtil.getAllMatchingLanguages(langId, applyToDialects);
   }
 
   public static @NotNull Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> inside, @NotNull List<? extends PsiElement> outside) {
