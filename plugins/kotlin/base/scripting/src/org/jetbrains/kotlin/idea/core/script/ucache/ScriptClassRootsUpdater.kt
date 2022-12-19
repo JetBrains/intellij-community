@@ -226,7 +226,7 @@ abstract class ScriptClassRootsUpdater(
                         runInEdt(ModalityState.NON_MODAL) {
                             runWriteAction {
                                 if (!project.isDisposed)
-                                    project.syncScriptEntities(it)
+                                    project.syncScriptEntities(it.toList())
                             }
                         }
                     }
