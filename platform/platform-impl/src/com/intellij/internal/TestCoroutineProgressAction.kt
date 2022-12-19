@@ -117,50 +117,74 @@ internal class TestCoroutineProgressAction : AnAction() {
 
   private suspend fun doStuff() {
     indeterminateStep("Indeterminate stage") {
-      delay(1000)
+      randomDelay()
     }
-    progressStep(endFraction = 0.25) {
-      sequentialStage()
+    progressStep(endFraction = 0.25, "Sequential stage") {
+      stage(parallel = false)
     }
-    progressStep(endFraction = 0.5, "Sequential stage") {
-      sequentialStage()
+    progressStep(endFraction = 0.5) {
+      stage(parallel = false)
     }
     progressStep(endFraction = 0.75, "Parallel stage") {
-      parallelStage()
+      stage(parallel = true)
     }
     progressStep(endFraction = 1.0) {
-      parallelStage()
+      stage(parallel = true)
     }
   }
 
-  private suspend fun sequentialStage() {
-    indeterminateStep(text = "Preparing sequential stage") {
-      delay(500)
+  private suspend fun stage(parallel: Boolean) {
+    indeterminateStep("Prepare parallel $parallel") {
+      randomDelay()
     }
-    val times = 10
-    val itemDuration = 1.0 / times
-    repeat(times) { index ->
-      indeterminateStep("Preparing $index") {
-        delay(300)
+    val items = (1..if (parallel) 100 else 5).toList()
+    val transformed = progressStep(endFraction = 0.1) {
+      items.transformWithProgress(parallel) { item, out ->
+        progressStep(endFraction = 1.0, text = "Transforming $item") {
+          if (Math.random() < 0.5) {
+            out(item)
+          }
+        }
       }
-      val endFraction = itemDuration * (index + 1)
-      progressStep(endFraction = endFraction, "Processing $index") {
-        delay((1000.toDouble() * (times - index) / times).toLong())
+    }
+    val filtered = progressStep(endFraction = 0.2) {
+      transformed.filterWithProgress(parallel) { item ->
+        progressStep(endFraction = 1.0, text = "Filtering $item") {
+          randomDelay()
+          item % 2 == 0
+        }
+      }
+    }
+    val mapped = progressStep(endFraction = 0.3) {
+      filtered.mapWithProgress(parallel) { item ->
+        progressStep(endFraction = 1.0, text = "Mapping $item") {
+          randomDelay()
+          item * 2
+        }
+      }
+    }
+    progressStep(endFraction = 1.0) {
+      mapped.forEachWithProgress(parallel) { item ->
+        handleItem(item)
       }
     }
   }
 
-  private suspend fun parallelStage() {
-    indeterminateStep("Prepare counted stage") {
-      delay(1000)
+  private suspend fun handleItem(item: Int) {
+    indeterminateStep("Prepare $item") {
+      randomDelay()
     }
-    (1..100).toList().mapParallelWithProgress { item ->
-      indeterminateStep("Prepare $item") {
-        delay(500)
+    progressStep(endFraction = 1.0, "Processing $item") {
+      progressStep(endFraction = 0.5, "Processing $item step 1") {
+        randomDelay()
       }
-      progressStep(endFraction = 1.0, "Processing $item") {
-        delay(300 + (Math.random() * 1000).toLong())
+      progressStep(endFraction = 1.0, "Processing $item step 2") {
+        randomDelay()
       }
     }
+  }
+
+  private suspend fun randomDelay() {
+    delay(100 + (Math.random() * 1000).toLong())
   }
 }

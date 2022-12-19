@@ -2,7 +2,13 @@
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.util.NlsContexts.ProgressText
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -274,47 +280,124 @@ suspend fun <T> durationStep(duration: Double, text: @ProgressText String? = nul
   }
 }
 
-suspend fun <T, R> List<T>.mapWithProgress(mapper: suspend CoroutineScope.(T) -> R): List<R> = coroutineScope {
-  val items = this@mapWithProgress
-  val reporter = progressReporter
-  if (reporter == null) {
-    items.map {
-      mapper(it)
+internal typealias TransformerOutput<R> = suspend (R) -> Unit
+
+/**
+ * Splits context progress reporter into N steps, where N = size of [this] collection,
+ * each [transform] invocation happens in a context of a separate progress step.
+ * [transform] receives an element from [this] collection, and [TransformerOutput] lambda,
+ * which should be used to feed the transformation results.
+ *
+ * Returns a list containing the results of applying the given [transform] function to each value of the original list.
+ *
+ * [mapWithProgress], [filterWithProgress], [forEachWithProgress] are implemented via this function.
+ *
+ * ### Example usage
+ *
+ * #### `transform`
+ *
+ * ```
+ * items.transformWithProgress(parallel = true) { item, out ->
+ *   when {
+ *     condition0 -> {
+ *       // transformed into nothing
+ *       return@transformWithProgress
+ *     }
+ *     condition1 -> {
+ *       progressStep(endFraction = 1.0, text = "Transforming $item into a single value") {
+ *         out(handleItem(item))
+ *       }
+ *     }
+ *     else -> {
+ *       indeterminateStep(text = "Transforming $item into multiple values") {
+ *         val (a, b) = handlePair(item)
+ *         out(a)
+ *         out(b)
+ *       }
+ *     }
+ *   }
+ * }
+ * ```
+ *
+ * #### `forEach`
+ *
+ * ```
+ * progressStep(endFraction = 0.7, text = "Processing files") {
+ *   files.forEachWithProgress(parallel = false) { file ->
+ *     val data = progressStep(endFraction = 0.2, text = "Preprocessing file $file") {
+ *       withContext(Dispatchers.IO) {
+ *         preprocess(file)
+ *       }
+ *     }
+ *     progressStep(endFraction = 1.0, text = "Processing data $file") {
+ *       applyData(data)
+ *     }
+ *   }
+ * }
+ * ```
+ *
+ * @param parallel `true` if items should be transformed in parallel, `false` to transform items sequentially
+ *
+ * @see transform
+ */
+suspend fun <T, R> Collection<T>.transformWithProgress(
+  parallel: Boolean,
+  transform: suspend (value: T, out: TransformerOutput<R>) -> Unit,
+): List<R> {
+  val items = this@transformWithProgress
+  val duration = 1.0 / items.size
+
+  suspend fun ProducerScope<R>.step(item: T) {
+    durationStep(duration, text = null) {
+      transform(item) { transformed ->
+        send(transformed)
+      }
     }
   }
-  else {
-    val duration = 1.0 / size
-    items.map { item ->
-      reporter.durationStep(duration, text = null).use { durationStep ->
-        withContext(durationStep.asContextElement()) {
-          mapper(item)
+
+  return channelFlow {
+    if (parallel) {
+      for (item in items) {
+        launch {
+          step(item)
         }
       }
+    }
+    else {
+      for (item in items) {
+        step(item)
+      }
+    }
+  }.toList()
+}
+
+/**
+ * @see transformWithProgress
+ */
+suspend fun <T, R> Collection<T>.mapWithProgress(parallel: Boolean, mapper: suspend (value: T) -> R): List<R> {
+  return transformWithProgress(parallel) { item, out ->
+    out(mapper(item))
+  }
+}
+
+/**
+ * @see transformWithProgress
+ */
+suspend fun <T> Collection<T>.filterWithProgress(parallel: Boolean, predicate: suspend (value: T) -> Boolean): List<T> {
+  return transformWithProgress(parallel) { item, out ->
+    if (predicate(item)) {
+      out(item)
     }
   }
 }
 
-suspend fun <T, R> List<T>.mapParallelWithProgress(mapper: suspend CoroutineScope.(T) -> R): List<R> = coroutineScope {
-  val reporter = progressReporter
-  val deferredList: List<Deferred<R>> = if (reporter == null) {
-    map { item ->
-      async {
-        mapper(item)
-      }
-    }
+/**
+ * @see transformWithProgress
+ */
+suspend fun <T> Collection<T>.forEachWithProgress(parallel: Boolean, action: suspend (value: T) -> Unit) {
+  transformWithProgress<_, Nothing?>(parallel) { item, _ ->
+    action(item)
   }
-  else {
-    val duration = 1.0 / size
-    map { item ->
-      val step = reporter.durationStep(duration, text = null)
-      async(step.asContextElement()) {
-        step.use {
-          mapper(item)
-        }
-      }
-    }
-  }
-  deferredList.awaitAll()
 }
 
 /**
