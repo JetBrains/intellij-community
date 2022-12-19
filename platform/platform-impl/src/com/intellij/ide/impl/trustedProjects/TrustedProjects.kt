@@ -8,15 +8,7 @@ import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
-import com.intellij.openapi.file.CanonicalPathUtil.toNioPath
-import com.intellij.openapi.file.VirtualFileUtil.toNioPathOrNull
-import com.intellij.openapi.file.converter.NioPathPrefixTreeFactory
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.modules
-import com.intellij.openapi.project.rootManager
-import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -128,31 +120,5 @@ internal object TrustedProjects {
         else -> ThreeState.YES
       }
     }
-  }
-
-  fun Project.getProjectRoots(): List<Path> {
-    val project = this
-    return CachedValuesManager.getManager(project).getCachedValue(project) {
-      val projectRoots = collectProjectRoots(project)
-      val projectRootManager = ProjectRootManager.getInstance(project)
-      CachedValueProvider.Result.create(projectRoots, projectRootManager)
-    }
-  }
-
-  private fun collectProjectRoots(project: Project): List<Path> {
-    val index = NioPathPrefixTreeFactory.createSet()
-    val basePath = project.basePath?.toNioPath()
-    if (basePath != null) {
-      index.add(basePath)
-    }
-    for (module in project.modules) {
-      for (contentRoot in module.rootManager.contentRoots) {
-        val contentPath = contentRoot.toNioPathOrNull()
-        if (contentPath != null) {
-          index.add(contentPath)
-        }
-      }
-    }
-    return index.getRoots().toList()
   }
 }
