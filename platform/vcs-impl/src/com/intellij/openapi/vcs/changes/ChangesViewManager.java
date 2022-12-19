@@ -76,10 +76,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -236,9 +234,20 @@ public class ChangesViewManager implements ChangesViewEx,
 
   private void migrateShowFlattenSetting() {
     if (!myState.myShowFlatten) {
-      myState.groupingKeys = Set.copyOf(DEFAULT_GROUPING_KEYS);
+      myState.groupingKeys.clear();
+      myState.groupingKeys.addAll(DEFAULT_GROUPING_KEYS);
       myState.myShowFlatten = true;
     }
+  }
+
+  @NotNull
+  public Collection<String> getGrouping() {
+    return myState.groupingKeys;
+  }
+
+  public void setGrouping(@NotNull Collection<String> grouping) {
+    myState.groupingKeys.clear();
+    myState.groupingKeys.addAll(grouping);
   }
 
   public static class State {
@@ -251,7 +260,7 @@ public class ChangesViewManager implements ChangesViewEx,
     public boolean myShowFlatten = true;
 
     @XCollection
-    public Set<String> groupingKeys = new HashSet<>();
+    public TreeSet<String> groupingKeys = new TreeSet<>();
 
     @Attribute("show_ignored")
     public boolean myShowIgnored;
@@ -376,9 +385,9 @@ public class ChangesViewManager implements ChangesViewEx,
 
       myView = myChangesPanel.getChangesView();
       myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
-      myView.getGroupingSupport().setGroupingKeysOrSkip(myChangesViewManager.myState.groupingKeys);
+      myView.getGroupingSupport().setGroupingKeysOrSkip(myChangesViewManager.getGrouping());
       myView.addGroupingChangeListener(e -> {
-        myChangesViewManager.myState.groupingKeys = myView.getGroupingSupport().getGroupingKeys();
+        myChangesViewManager.setGrouping(myView.getGroupingSupport().getGroupingKeys());
         scheduleRefresh();
       });
       ChangesViewDnDSupport.install(myProject, myView, this);

@@ -263,7 +263,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
                                                @NotNull Consumer<? super Collection<String>> settingsSetter) {
     groupingSupport.setGroupingKeysOrSkip(settingsGetter.get());
     groupingSupport.addPropertyChangeListener(e -> {
-      settingsSetter.accept(groupingSupport.getGroupingKeys());
+      settingsSetter.accept(ContainerUtil.sorted(groupingSupport.getGroupingKeys()));
       tree.onGroupingChanged();
     });
   }
