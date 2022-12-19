@@ -5,12 +5,12 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.RegexValidator;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -18,10 +18,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentValidator;
-import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -31,13 +27,10 @@ import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBTextField;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -59,45 +52,19 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
   }
 
   @Override
-  public @NotNull JComponent createOptionsPanel() {
-    InspectionOptionsPanel panel = new InspectionOptionsPanel();
-    panel.add(new JBLabel(PropertiesBundle.message("label.analyze.only.property.files.whose.name.matches")));
-    JBTextField textField = new JBTextField(fileNameMask) {
-      Disposable disposable = null;
-      @Override
-      public void addNotify() {
-        super.addNotify();
-        if (disposable != null) {
-          throw new IllegalStateException();
-        }
-        disposable = Disposer.newDisposable();
-        ComponentValidator validator = new ComponentValidator(disposable).withValidator(() -> {
-          String text = getText();
-          fileNameMask = text.isEmpty() ? ".*" : text;
-          String errorMessage = null;
-          try {
-            Pattern.compile(text);
-          }
-          catch (PatternSyntaxException ex) {
-            errorMessage = StringUtil.substringBefore(ex.getMessage(), "\n");
-          }
-          boolean hasError = StringUtil.isNotEmpty(errorMessage);
-          return hasError ? new ValidationInfo(errorMessage, this) : null;
-        }).andRegisterOnDocumentListener(this).installOn(this);
-        validator.revalidate();
-      }
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(
+      OptPane.string("fileNameMask", PropertiesBundle.message("label.analyze.only.property.files.whose.name.matches"),
+                     30, new RegexValidator())
+    );
+  }
 
-      @Override
-      public void removeNotify() {
-        super.removeNotify();
-        if (disposable != null) {
-          Disposer.dispose(disposable);
-          disposable = null;
-        }
-      }
-    };
-    panel.addGrowingX(textField);
-    return panel;
+  @Override
+  public void setOption(@NotNull String bindId, Object value) {
+    if (bindId.equals("fileNameMask") && "".equals(value)) {
+      value = ".*";
+    }
+    super.setOption(bindId, value);
   }
 
   @Nullable
