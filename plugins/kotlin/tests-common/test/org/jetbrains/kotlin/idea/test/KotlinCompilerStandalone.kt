@@ -224,8 +224,7 @@ class KotlinCompilerStandalone @JvmOverloads constructor(
             args += classpath.joinToString(File.pathSeparator) { it.absolutePath }
         }
 
-        val compileFun = if (useJava9) KotlinTestUtils::compileJavaFilesExternallyWithJava9 else KotlinTestUtils::compileJavaFiles
-        assert(compileFun(files, args)) { "Java files are not compiled successfully" }
+        assert(KotlinTestUtils.compileJavaFiles(files, args)) { "Java files are not compiled successfully" }
     }
 
 }
