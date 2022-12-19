@@ -49,7 +49,7 @@ class GHPRReviewCommentModelImpl(comment: GHPullRequestReviewComment) : GHPRRevi
     return updated
   }
 
-  override fun addChangesListener(listener: () -> Unit) = SimpleEventListener.addListener(changeEventDispatcher, listener)
+  override fun addAndInvokeChangesListener(listener: () -> Unit) = SimpleEventListener.addAndInvokeListener(changeEventDispatcher, listener)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

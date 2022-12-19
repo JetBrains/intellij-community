@@ -108,10 +108,9 @@ object GHPRReviewCommentComponent {
                            private val commentWrapper: Wrapper,
                            private val showResolvedMarker: Boolean) {
     init {
-      comment.addChangesListener {
+      comment.addAndInvokeChangesListener {
         update()
       }
-      update()
     }
 
     private fun update() {

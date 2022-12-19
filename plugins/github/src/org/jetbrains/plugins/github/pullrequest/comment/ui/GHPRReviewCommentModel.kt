@@ -17,5 +17,5 @@ interface GHPRReviewCommentModel {
   var isFirstInResolvedThread: Boolean
 
   fun update(comment: GHPullRequestReviewComment): Boolean
-  fun addChangesListener(listener: () -> Unit)
+  fun addAndInvokeChangesListener(listener: () -> Unit)
 }

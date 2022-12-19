@@ -40,11 +40,8 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShort
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
+import org.jetbrains.plugins.github.api.data.pullrequest.*
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState.*
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -280,8 +277,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val tagsPanel = createThreadTagsPanel(thread)
 
     val bodyPanel = Wrapper()
-    val textFlow = MutableStateFlow<@Nls String>(firstComment.body)
-    firstComment.addChangesListener { textFlow.value = firstComment.body }
+    val textFlow = MutableStateFlow<@Nls String>("")
+    firstComment.addAndInvokeChangesListener { textFlow.value = firstComment.body }
 
     val panelHandle = GHEditableHtmlPaneHandle(project, bodyPanel, firstComment::body) { newText ->
       reviewDataProvider.updateComment(EmptyProgressIndicator(), firstComment.id, newText)
@@ -427,17 +424,26 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       background = UIUtil.getPanelBackground()
     }.andOpaque()
 
+    val pendingLabel = JBLabel(" ${GithubBundle.message("pull.request.review.comment.pending")} ", UIUtil.ComponentStyle.SMALL).apply {
+      foreground = UIUtil.getContextHelpForeground()
+      background = UIUtil.getPanelBackground()
+    }.andOpaque()
+
     val tagsPanel = JPanel(HorizontalLayout(10)).apply {
       isOpaque = false
       add(outdatedLabel)
       add(resolvedLabel)
+      add(pendingLabel)
+    }
+
+    val firstComment = thread.getElementAt(0)
+    firstComment.addAndInvokeChangesListener {
+      pendingLabel.isVisible = firstComment.state == GHPullRequestReviewCommentState.PENDING
     }
 
     thread.addAndInvokeStateChangeListener {
       outdatedLabel.isVisible = thread.isOutdated
       resolvedLabel.isVisible = thread.isResolved
-
-      tagsPanel.isVisible = thread.isOutdated || thread.isResolved
     }
 
     return tagsPanel
