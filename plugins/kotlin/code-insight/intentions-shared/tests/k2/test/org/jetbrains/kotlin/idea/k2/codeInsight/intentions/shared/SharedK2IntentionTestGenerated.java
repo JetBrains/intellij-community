@@ -446,6 +446,69 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/putCallsOnSeparateLines")
+    public static class PutCallsOnSeparateLines extends AbstractSharedK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("doNotWrapFirstElement.kt")
+        public void testDoNotWrapFirstElement() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/doNotWrapFirstElement.kt");
+        }
+
+        @TestMetadata("doNotWrapFirstElement2.kt")
+        public void testDoNotWrapFirstElement2() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/doNotWrapFirstElement2.kt");
+        }
+
+        @TestMetadata("doNotWrapFirstElement3.kt")
+        public void testDoNotWrapFirstElement3() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/doNotWrapFirstElement3.kt");
+        }
+
+        @TestMetadata("dotChain.kt")
+        public void testDotChain() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/dotChain.kt");
+        }
+
+        @TestMetadata("dotChainWithParenthesis.kt")
+        public void testDotChainWithParenthesis() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/dotChainWithParenthesis.kt");
+        }
+
+        @TestMetadata("import.kt")
+        public void testImport() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/import.kt");
+        }
+
+        @TestMetadata("mixWithMultilineBody.kt")
+        public void testMixWithMultilineBody() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/mixWithMultilineBody.kt");
+        }
+
+        @TestMetadata("mixWithMultilineBodyInFirstPosition.kt")
+        public void testMixWithMultilineBodyInFirstPosition() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/mixWithMultilineBodyInFirstPosition.kt");
+        }
+
+        @TestMetadata("safeChain.kt")
+        public void testSafeChain() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/safeChain.kt");
+        }
+
+        @TestMetadata("safeChainWithLineBreaks.kt")
+        public void testSafeChainWithLineBreaks() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/safeChainWithLineBreaks.kt");
+        }
+
+        @TestMetadata("safeChainWithOneLineBreak.kt")
+        public void testSafeChainWithOneLineBreak() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/safeChainWithOneLineBreak.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/putExpressionsOnSeparateLines")
     public static class PutExpressionsOnSeparateLines extends AbstractSharedK2IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
