@@ -530,11 +530,6 @@ public final class JUnitUtil {
     }
   }
 
-  public static PsiClass findPsiClass(final String qualifiedName, final Module module, final Project project) {
-    final GlobalSearchScope scope = module == null ? GlobalSearchScope.projectScope(project) : GlobalSearchScope.moduleWithDependenciesScope(module);
-    return JavaPsiFacade.getInstance(project).findClass(qualifiedName, scope);
-  }
-
   public static PsiPackage getContainingPackage(@NotNull PsiClass psiClass) {
     PsiDirectory directory = psiClass.getContainingFile().getContainingDirectory();
     return directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
