@@ -127,7 +127,7 @@ private class PerfectLine : CompletionGolfMetric<Int>() {
 private class RecallAt(private val n: Int) : Metric {
   private val sample = Sample()
 
-  override val name: String = "Recall@$n"
+  override val name: String = "RecallAt$n"
 
   override val valueType = MetricValueType.DOUBLE
 

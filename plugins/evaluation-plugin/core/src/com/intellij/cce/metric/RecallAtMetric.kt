@@ -4,7 +4,7 @@ import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
 import java.util.stream.Collectors
 
-class FoundAtMetric(private val n: Int) : Metric {
+class RecallAtMetric(private val n: Int) : Metric {
   private val sample = Sample()
 
   override val value: Double
@@ -31,7 +31,7 @@ class FoundAtMetric(private val n: Int) : Metric {
     return fileSample.mean()
   }
 
-  override val name: String = "Found@$n"
+  override val name: String = "RecallAt$n"
 
   override val valueType = MetricValueType.DOUBLE
 }
