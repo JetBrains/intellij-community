@@ -16,6 +16,10 @@ class JavaTestDiffProvider : JvmTestDiffProvider<PsiMethodCallExpression>() {
     return null
   }
 
+  override fun isCompiled(file: PsiFile): Boolean {
+    return file is PsiCompiledFile
+  }
+
   override fun failedCall(file: PsiFile, startOffset: Int, endOffset: Int, method: UMethod?): PsiMethodCallExpression? {
     val failedCalls = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset)
       .filterIsInstance(PsiExpressionStatement::class.java)

@@ -10,11 +10,16 @@ import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.util.findElementsOfClassInRange
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.toUElementOfType
 
 class KotlinTestDiffProvider : JvmTestDiffProvider<KtCallExpression>() {
+    override fun isCompiled(file: PsiFile): Boolean {
+        return file.safeAs<KtFile>()?.isCompiled == true
+    }
+
     override fun getParamIndex(param: PsiElement): Int? {
         if (param is KtParameter) {
             return param.parent.asSafely<KtParameterList>()?.parameters?.indexOf<PsiElement>(param)
