@@ -52,7 +52,7 @@ private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean)
     layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     if (this is ActionToolbarImpl) {
       isOpaque = false
-      setMinimumButtonSize(JBUI.size(RunWidgetDefaults.actionButtonWidth(), RunWidgetDefaults.toolbarHeight()))
+      setMinimumButtonSize { JBUI.size(RunWidgetDefaults.actionButtonWidth(), RunWidgetDefaults.toolbarHeight()) }
       setActionButtonBorder(JBUI.Borders.empty())
       setSeparatorCreator { RunToolbarSeparator(isCurrentConfigurationRunning) }
       setCustomButtonLook(RunWidgetButtonLook(isCurrentConfigurationRunning))
@@ -289,7 +289,7 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return object : ActionButtonWithText(this, presentation, place, JBUI.size(RunWidgetDefaults.configurationSelectorWidth(), RunWidgetDefaults.toolbarHeight())){
+    return object : ActionButtonWithText(this, presentation, place, { JBUI.size(RunWidgetDefaults.configurationSelectorWidth(), RunWidgetDefaults.toolbarHeight()) }){
       override fun getMargins(): Insets = JBInsets.create(0, 10)
       override fun iconTextSpace(): Int = JBUI.scale(6)
       override fun shallPaintDownArrow() = true
