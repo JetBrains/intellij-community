@@ -184,10 +184,10 @@ private fun MutableList<KotlinScriptLibraryEntity>.fillWithFiles(
     sourceFiles: Collection<VirtualFile>
 ) {
     classFiles.forEach {
-        add(project.createLibraryEntity(it.path, it, KotlinScriptLibraryRootTypeId.COMPILED))
+        add(project.createLibraryEntity(it.presentableUrl, it, KotlinScriptLibraryRootTypeId.COMPILED))
     }
     sourceFiles.forEach {
-        add(project.createLibraryEntity(it.path, it, KotlinScriptLibraryRootTypeId.SOURCES))
+        add(project.createLibraryEntity(it.presentableUrl, it, KotlinScriptLibraryRootTypeId.SOURCES))
     }
 }
 

@@ -127,5 +127,6 @@
     <orderEntry type="module" module-name="intellij.java.ide.customization" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
   </component>
 </module>
