@@ -88,26 +88,32 @@ private class CompletionInvocationsCount : CompletionGolfMetric<Int>() {
     sessions.sumOf { it.lookups.count { lookup -> lookup.isNew } }
 }
 
-private class MovesCountNormalised : CompletionGolfMetric<Double>() {
+private class MovesCountNormalised : Metric {
+  private var movesCountTotal: Int = 0
+  private var minPossibleMovesTotal: Int = 0
+  private var maxPossibleMovesTotal: Int = 0
+
   override val name: String = "Moves Count Normalised"
 
   override val valueType = MetricValueType.DOUBLE
 
   override val value: Double
-    get() = sample.mean()
+    get() = (movesCountTotal - minPossibleMovesTotal).toDouble() / (maxPossibleMovesTotal - minPossibleMovesTotal)
 
-  override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Double {
-    val linesLength = sessions.sumOf { it.expectedText.length } * 2.0
+  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
     val movesCount = MovesCount().compute(sessions, comparator)
-
-    val subtrahend = sessions.count() * 2.0
+    val minPossibleMoves = sessions.count() * 2
+    val maxPossibleMoves = sessions.sumOf { it.expectedText.length } * 2
+    movesCountTotal += movesCount
+    minPossibleMovesTotal += minPossibleMoves
+    maxPossibleMovesTotal += maxPossibleMoves
 
     // Since code completion's call and the choice of option (symbol) contains in each lookup,
     // It is enough to calculate the difference for the number of lookups and extra moves (for completion case)
     // To reach 0%, you also need to subtract the minimum number of lookups (eq. number of sessions plus minimum amount of completion calls)
     // 0% - best scenario, every line was completed from start to end with first suggestion in list
     // >100% is possible, when navigation in completion takes too many moves
-    return ((movesCount - subtrahend) / (linesLength - subtrahend))
+    return ((movesCount - minPossibleMoves).toDouble() / (maxPossibleMoves - minPossibleMoves))
   }
 }
 
