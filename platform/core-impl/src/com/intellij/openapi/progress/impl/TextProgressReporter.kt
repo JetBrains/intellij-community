@@ -15,31 +15,30 @@ internal class TextProgressReporter(parentScope: CoroutineScope) : BaseProgressR
 
   val progressUpdates: Flow<FractionState<ProgressText?>> = childrenHandler.progressUpdates
 
-  override fun createStep(duration: Double?, text: ProgressText?): ProgressReporter {
+  override fun createStep(duration: Double, text: ProgressText?): ProgressReporter {
     when {
-      text == null && duration == null -> {
+      text == null && duration == 0.0 -> {
         val step = IndeterminateTextProgressReporter(cs)
         childrenHandler.applyChildUpdates(step, step.progressUpdates)
         return step
       }
-      text == null && duration != null -> {
+      text == null && duration != 0.0 -> {
         val step = TextProgressReporter(cs)
         childrenHandler.applyChildUpdates(step, duration, step.progressUpdates)
         return step
       }
-      text != null && duration == null -> {
+      text != null && duration == 0.0 -> {
         val step = SilentProgressReporter(cs)
         childrenHandler.applyChildUpdates(step, flowOf(text))
         return step
       }
-      text != null && duration != null -> {
+      else /* text != null && duration != 0.0 */ -> {
         val step = FractionReporter(cs)
         childrenHandler.applyChildUpdates(step, duration, step.progressUpdates.map { childFraction ->
           FractionState(fraction = childFraction, text)
         })
         return step
       }
-      else -> error("keeping compiler happy")
     }
   }
 

@@ -16,8 +16,8 @@ internal class FractionReporter(parentScope: CoroutineScope) : BaseProgressRepor
       it.fraction
     }
 
-  override fun createStep(duration: Double?, text: ProgressText?): ProgressReporter {
-    if (duration == null) {
+  override fun createStep(duration: Double, text: ProgressText?): ProgressReporter {
+    if (duration == 0.0) {
       return SilentProgressReporter(cs)
     }
     else {

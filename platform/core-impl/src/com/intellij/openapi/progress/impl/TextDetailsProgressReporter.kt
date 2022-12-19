@@ -19,33 +19,32 @@ class TextDetailsProgressReporter(parentScope: CoroutineScope) : BaseProgressRep
     ProgressState(text = state.text, details = state.details, fraction = fraction)
   }
 
-  override fun createStep(duration: Double?, text: ProgressText?): ProgressReporter {
+  override fun createStep(duration: Double, text: ProgressText?): ProgressReporter {
     when {
-      text == null && duration == null -> {
+      text == null && duration == 0.0 -> {
         val step = IndeterminateTextDetailsProgressReporter(cs)
         childrenHandler.applyChildUpdates(step, step.progressUpdates)
         return step
       }
-      text == null && duration != null -> {
+      text == null && duration != 0.0 -> {
         val step = TextDetailsProgressReporter(cs)
         childrenHandler.applyChildUpdates(step, duration, step.childrenHandler.progressUpdates)
         return step
       }
-      text != null && duration == null -> {
+      text != null && duration == 0.0 -> {
         val step = IndeterminateTextProgressReporter(cs)
         childrenHandler.applyChildUpdates(step, step.progressUpdates.map { childText ->
           TextDetails(text, details = childText)
         })
         return step
       }
-      text != null && duration != null -> {
+      else /* text != null && duration != 0.0 */ -> {
         val step = TextProgressReporter(cs)
         childrenHandler.applyChildUpdates(step, duration, step.progressUpdates.map { (childFraction, childText) ->
           FractionState(childFraction, TextDetails(text, details = childText))
         })
         return step
       }
-      else -> error("keeping compiler happy")
     }
   }
 

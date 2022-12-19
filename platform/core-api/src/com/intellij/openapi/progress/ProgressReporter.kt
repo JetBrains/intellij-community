@@ -38,7 +38,7 @@ import kotlin.coroutines.coroutineContext
  * ```
  *
  * ### Legend
- * A step is called "indeterminate" if its duration in the parent reporter is unknown.
+ * A step is called "indeterminate" if its duration in the parent reporter is zero.
  *
  * ### Lifecycle
  * A reporter starts in indeterminate state (internal fraction is -1.0).
@@ -153,15 +153,13 @@ interface ProgressReporter : AutoCloseable {
    * while the text of the returned child step will be used as details of this reporter.
    *
    * @param endFraction value greater than 0.0 and less or equal to 1.0,
-   * which is used to advance the fraction of the current step after the returned child step is [closed][close],
-   * or `null` if this step is indeterminate, in which case the fraction advancements in the returned step will be ignored in this reporter.
-   * If [endFraction] is not `null, then the duration of the returned step
-   * would be the difference between the previous [endFraction] and the currently requested one,
+   * which is used to advance the fraction of the current step after the returned child step is [closed][close].
+   * The duration of the returned step would be the difference between the previous [endFraction] and the currently requested one,
    * which means that each subsequent call should request [endFraction] greater than the previously requested [endFraction].
    *
    * @see close
    */
-  fun step(endFraction: Double?, text: @ProgressText String?): ProgressReporter
+  fun step(endFraction: Double, text: @ProgressText String?): ProgressReporter
 
   /**
    * Starts a child step.
@@ -169,6 +167,8 @@ interface ProgressReporter : AutoCloseable {
    * @param duration duration of the step relative to this reporter.
    * It's used to advance the fraction of the current step after the returned child step is [closed][close].
    * The sum of durations of all child steps cannot exceed 1.0.
+   * If the requested value is 0.0 the returned step is indeterminate,
+   * the fraction advancements inside the returned step will be ignored in this reporter.
    *
    * @param text text of the current step.
    * If the text is `null`, then the returned child step text will be used as text of this reporter.
@@ -214,7 +214,7 @@ interface ProgressReporter : AutoCloseable {
     fun <T> ProgressReporter.indeterminateStep(
       text: @ProgressText String?,
       action: ProgressReporter.() -> T,
-    ): T = step(endFraction = null, text).use(action)
+    ): T = durationStep(duration = 0.0, text).use(action)
 
     @JvmStatic
     fun <T> ProgressReporter.progressStep(
@@ -242,9 +242,7 @@ suspend fun <T> indeterminateStep(
   text: @ProgressText String? = null,
   action: suspend CoroutineScope.() -> T,
 ): T {
-  val reporter = coroutineContext.progressReporter
-                 ?: return coroutineScope(action)
-  return progressStep(reporter, endFraction = null, text, action)
+  return durationStep(duration = 0.0, text, action)
 }
 
 suspend fun <T> progressStep(
@@ -259,7 +257,7 @@ suspend fun <T> progressStep(
 
 private suspend fun <T> progressStep(
   parent: ProgressReporter,
-  endFraction: Double?,
+  endFraction: Double,
   text: @ProgressText String?,
   action: suspend CoroutineScope.() -> T,
 ): T {

@@ -7,7 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 
 internal class SilentProgressReporter(parentScope: CoroutineScope) : BaseProgressReporter(parentScope) {
 
-  override fun createStep(duration: Double?, text: ProgressText?): ProgressReporter {
+  override fun createStep(duration: Double, text: ProgressText?): ProgressReporter {
     return EmptyProgressReporter
   }
 

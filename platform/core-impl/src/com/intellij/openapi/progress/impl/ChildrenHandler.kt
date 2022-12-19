@@ -20,10 +20,10 @@ internal class ChildrenHandler<T>(
   }
 
   // Ordered map is used to sort by update time, the latest updated child would be the last entry in the map.
-  private val children: MutableStateFlow<Children<T>> = MutableStateFlow(Children(-1.0, persistentMapOf()))
+  private val children: MutableStateFlow<Children<T>> = MutableStateFlow(Children(0.0, persistentMapOf()))
 
   private data class Children<T>(
-    val completed: Double,
+    val completed: Double, // [0.0; 1.0]
     val active: PersistentMap<Any, FractionState<T>>,
   )
 
@@ -40,17 +40,28 @@ internal class ChildrenHandler<T>(
   }
 
   fun applyChildUpdates(step: BaseProgressReporter, childUpdates: Flow<T>) {
-    applyChildUpdates(step, -1.0, childUpdates.map {
+    applyChildUpdatesInner(step, 0.0, childUpdates.map {
       FractionState(-1.0, it)
     })
   }
 
   fun applyChildUpdates(step: BaseProgressReporter, duration: Double, childUpdates: Flow<FractionState<T>>) {
+    require(0.0 < duration && duration <= 1.0) {
+      "Duration is expected to be a value in (0.0; 1.0], got $duration"
+    }
+    applyChildUpdatesInner(step, duration, childUpdates)
+  }
+
+  private fun applyChildUpdatesInner(
+    step: BaseProgressReporter,
+    duration: Double,
+    childUpdates: Flow<FractionState<T>>,
+  ) {
     cs.launch {
       val childUpdateCollector = launch {
         childUpdates.collect { childUpdate: FractionState<T> ->
           val scaledUpdate = childUpdate.copy(
-            fraction = if (duration < 0.0) -1.0 else duration * childUpdate.fraction.coerceAtLeast(.0),
+            fraction = if (duration == 0.0) -1.0 else duration * childUpdate.fraction.coerceAtLeast(.0),
           )
           children.update { children ->
             // put the latest update to the end of [active] map
@@ -62,7 +73,7 @@ internal class ChildrenHandler<T>(
       childUpdateCollector.cancelAndJoin()
       children.update { (completed, active) ->
         Children(
-          completed = if (duration < 0.0) completed else completed.coerceAtLeast(.0) + duration,
+          completed = completed + duration,
           active = active.remove(step),
         )
       }
@@ -72,7 +83,7 @@ internal class ChildrenHandler<T>(
   private fun handleChildren(completed: Double, updates: ImmutableCollection<FractionState<T>>): FractionState<T> {
     return if (updates.isEmpty()) {
       FractionState(
-        fraction = completed,
+        fraction = if (completed == 0.0) -1.0 else completed,
         state = defaultState,
       )
     }

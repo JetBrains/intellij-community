@@ -17,7 +17,7 @@ internal class IndeterminateTextProgressReporter(parentScope: CoroutineScope) : 
       it.state
     }
 
-  override fun createStep(duration: Double?, text: ProgressText?): ProgressReporter {
+  override fun createStep(duration: Double, text: ProgressText?): ProgressReporter {
     if (text == null) {
       val reporter = IndeterminateTextProgressReporter(cs)
       childrenHandler.applyChildUpdates(reporter, reporter.progressUpdates)

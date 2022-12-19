@@ -31,17 +31,7 @@ abstract class BaseProgressReporter(parentScope: CoroutineScope) : ProgressRepor
    */
   private val lastFraction = AtomicDouble(0.0)
 
-  private fun duration(endFraction: Double?): Double? {
-    if (endFraction == null) {
-      lastFraction.getAndUpdate {
-        when {
-          it <= 0.0 -> it - 1.0 // indicate that this reporter has an indeterminate child, so rawReporter() would fail
-          it > 1.0 -> error("Cannot start an indeterminate child because this reporter is raw.")
-          else -> it // don't change
-        }
-      }
-      return null
-    }
+  private fun duration(endFraction: Double): Double {
     require(0.0 < endFraction && endFraction <= 1.0) {
       "End fraction must be in (0.0; 1.0], got: $endFraction"
     }
@@ -57,13 +47,23 @@ abstract class BaseProgressReporter(parentScope: CoroutineScope) : ProgressRepor
     return endFraction - previousFraction.coerceAtLeast(0.0)
   }
 
-  final override fun step(endFraction: Double?, text: ProgressText?): ProgressReporter {
+  final override fun step(endFraction: Double, text: ProgressText?): ProgressReporter {
     return createStep(duration(endFraction), text)
   }
 
   final override fun durationStep(duration: Double, text: ProgressText?): ProgressReporter {
-    require(0.0 < duration && duration <= 1.0) {
-      "Duration must be in (0.0; 1.0], got: $duration"
+    require(duration in 0.0..1.0) {
+      "Duration is expected to be a value in [0.0; 1.0], got $duration"
+    }
+    if (duration == 0.0) { // indeterminate
+      lastFraction.getAndUpdate {
+        when {
+          it <= 0.0 -> it - 1.0 // indicate that this reporter has an indeterminate child, so rawReporter() would fail
+          it <= 1.0 -> it // don't change
+          else -> error("Cannot start an indeterminate child because this reporter is raw.")
+        }
+      }
+      return createStep(duration = 0.0, text)
     }
     lastFraction.getAndUpdate {
       when {
@@ -79,7 +79,7 @@ abstract class BaseProgressReporter(parentScope: CoroutineScope) : ProgressRepor
     return createStep(duration, text)
   }
 
-  protected abstract fun createStep(duration: Double?, text: ProgressText?): ProgressReporter
+  protected abstract fun createStep(duration: Double, text: ProgressText?): ProgressReporter
 
   final override fun rawReporter(): RawProgressReporter {
     lastFraction.getAndUpdate {

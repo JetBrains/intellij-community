@@ -55,21 +55,17 @@ class ProgressReporterTest {
   }
 
   @Test
-  fun `duration must be greater than 0 and less or equal to 1`() {
+  fun `duration must be greater or equal to 0 and less or equal to 1`() {
     assertThrows<IllegalArgumentException> {
       progressReporterTest {
         durationStep(duration = -0.4) { fail() }
       }
     }
-    assertThrows<IllegalArgumentException> {
-      progressReporterTest {
-        durationStep(duration = -0.0) { fail() }
-      }
+    progressReporterTest {
+      durationStep(duration = -0.0) {}
     }
-    assertThrows<IllegalArgumentException> {
-      progressReporterTest {
-        durationStep(duration = 0.0) { fail() }
-      }
+    progressReporterTest {
+      durationStep(duration = 0.0) {}
     }
     assertThrows<IllegalArgumentException> {
       progressReporterTest {
