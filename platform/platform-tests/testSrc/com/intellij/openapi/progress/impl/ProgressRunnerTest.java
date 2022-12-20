@@ -52,7 +52,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   public static List<Object[]> dataOnEdt() {
     List<Object[]> result = new ArrayList<>();
     result.add(new Boolean[]{true, false});
-    if (ApplicationImpl.USE_SEPARATE_WRITE_THREAD) {
+    if (ApplicationImpl.IMPLICIT_READ_ON_EDT_DISABLED) {
       result.add(new Boolean[]{true, true});
     }
     result.add(new Boolean[]{false, false});

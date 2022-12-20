@@ -86,8 +86,6 @@ internal var EXTERNAL_LISTENER: BiFunction<String, Array<String>, Int> = BiFunct
 
 private const val IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app"
 
-// see `ApplicationImpl#USE_SEPARATE_WRITE_THREAD`
-private const val USE_SEPARATE_WRITE_THREAD_PROPERTY = "idea.use.separate.write.thread"
 private const val DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY = "idea.disable.implicit.read.on.edt"
 private const val MAGIC_MAC_PATH = "/AppTranslocation/"
 
@@ -379,9 +377,6 @@ fun processWindowsLauncherCommandLine(currentDirectory: String, args: Array<Stri
   return EXTERNAL_LISTENER.apply(currentDirectory, args)
 }
 
-internal val isUsingSeparateWriteThread: Boolean
-  get() = java.lang.Boolean.getBoolean(USE_SEPARATE_WRITE_THREAD_PROPERTY)
-
 internal val isImplicitReadOnEDTDisabled: Boolean
   get() = java.lang.Boolean.getBoolean(DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY)
 
@@ -538,7 +533,7 @@ private fun CoroutineScope.initUi(initAwtToolkitAndEventQueueJob: Job, preloadLa
     }
   }
 
-  if (isUsingSeparateWriteThread || isImplicitReadOnEDTDisabled) {
+  if (isImplicitReadOnEDTDisabled) {
     runActivity("Write Intent Lock UI class transformer loading") {
       WriteIntentLockInstrumenter.instrument()
     }

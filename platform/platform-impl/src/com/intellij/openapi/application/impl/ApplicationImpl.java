@@ -60,13 +60,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   // do not use PluginManager.processException() because it can force app to exit, but we want just to log an error and continue
   private static final Logger LOG = Logger.getInstance(ApplicationImpl.class);
 
-  /**
-   * This boolean controls whether to use thread(s) other than EDT for acquiring IW lock (i.e., running write actions) or not.
-   * If value is {@code false}, IW lock will be granted on EDT at all times, guaranteeing the same execution model as before
-   * IW lock introduction.
-   */
-  public static final boolean USE_SEPARATE_WRITE_THREAD = StartupUtil.isUsingSeparateWriteThread();
-
   public static final boolean IMPLICIT_READ_ON_EDT_DISABLED = StartupUtil.isImplicitReadOnEDTDisabled();
 
   final ReadMostlyRWLock myLock;
@@ -134,7 +127,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     ApplicationManager.setApplication(this, myLastDisposable);
 
     // Acquire IW lock on EDT indefinitely in legacy mode
-    if (!USE_SEPARATE_WRITE_THREAD && !IMPLICIT_READ_ON_EDT_DISABLED) {
+    if (!IMPLICIT_READ_ON_EDT_DISABLED) {
       EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass().getName()));
     }
 
@@ -160,7 +153,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation");
     // Acquire IW lock on EDT indefinitely in legacy mode
-    if (!USE_SEPARATE_WRITE_THREAD && !IMPLICIT_READ_ON_EDT_DISABLED) {
+    if (!IMPLICIT_READ_ON_EDT_DISABLED) {
       EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass().getName()));
     }
     activity.end();
@@ -352,7 +345,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     super.dispose();
     // Remove IW lock from EDT as EDT might be re-created, which might lead to deadlock if anybody uses this disposed app
-    if ((!USE_SEPARATE_WRITE_THREAD && !IMPLICIT_READ_ON_EDT_DISABLED) || isUnitTestMode()) {
+    if (!IMPLICIT_READ_ON_EDT_DISABLED || isUnitTestMode()) {
       invokeLater(() -> releaseWriteIntentLock(), ModalityState.NON_MODAL);
     }
 
@@ -851,7 +844,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
     // Do not ever unlock IW in legacy mode (EDT is holding lock at all times)
-    if (isWriteIntentLockAcquired() && USE_SEPARATE_WRITE_THREAD) {
+    if (isWriteIntentLockAcquired() && IMPLICIT_READ_ON_EDT_DISABLED) {
       releaseWriteIntentLock();
       try {
         return action.compute();
@@ -940,29 +933,11 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
                                             @Nullable JComponent parentComponent,
                                             @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText,
                                             @NotNull java.util.function.Consumer<? super ProgressIndicator> action) {
-    if (!USE_SEPARATE_WRITE_THREAD) {
-      // Use the Potemkin progress in legacy mode; in the new model, such execution will always move to a separate thread.
-      return runWriteActionWithClass(action.getClass(), ()->{
-        PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
-        indicator.runInSwingThread(() -> action.accept(indicator));
-        return !indicator.isCanceled();
-      });
-    }
-
-    ProgressWindow progress = createProgressWindow(title, cancelText != null, true, project, parentComponent, cancelText);
-
-    ProgressResult<Object> result = new ProgressRunner<>(() -> runWriteAction(() -> action.accept(progress)))
-      .sync()
-      .onThread(ProgressRunner.ThreadToUse.WRITE)
-      .withProgress(progress)
-      .modal()
-      .submitAndGet();
-
-    if (result.getThrowable() instanceof RuntimeException) {
-      throw (RuntimeException)result.getThrowable();
-    }
-
-    return true;
+    return runWriteActionWithClass(action.getClass(), ()->{
+      PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
+      indicator.runInSwingThread(() -> action.accept(indicator));
+      return !indicator.isCanceled();
+    });
   }
 
   private <T,E extends Throwable> T runWriteActionWithClass(@NotNull Class<?> clazz, @NotNull ThrowableComputable<T, E> computable) throws E {

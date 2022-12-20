@@ -48,8 +48,7 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
   private class MyWtExecutor(private val modality: ModalityState) : Executor {
     override fun execute(command: Runnable) {
       if (ApplicationManager.getApplication().isWriteIntentLockAcquired
-          && (ApplicationImpl.USE_SEPARATE_WRITE_THREAD
-              || !TransactionGuard.getInstance().isWriteSafeModality(modality)
+          && (!TransactionGuard.getInstance().isWriteSafeModality(modality)
               || TransactionGuard.getInstance().isWritingAllowed)
           && !ModalityState.current().dominates(modality)) {
         command.run()
