@@ -208,7 +208,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       }
     }
 
-    if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+    if (IndexDebugProperties.IS_UNIT_TEST_MODE && LOG.isTraceEnabled()) {
       LOG.debug("PersistentEnumeratorBase at " + myFile + " has been open (new = " + created + ")");
     }
   }
@@ -479,7 +479,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         if (!myClosed) {
           myClosed = true;
           doClose();
-          if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+          if (IndexDebugProperties.IS_UNIT_TEST_MODE && LOG.isTraceEnabled()) {
             LOG.info("PersistentEnumeratorBase at " + myFile + " has been closed");
           }
         }
@@ -592,7 +592,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   protected void markCorrupted() {
-    if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+    if (IndexDebugProperties.IS_UNIT_TEST_MODE && LOG.isTraceEnabled()) {
       dumpKeysOnCorruption();
     }
 
