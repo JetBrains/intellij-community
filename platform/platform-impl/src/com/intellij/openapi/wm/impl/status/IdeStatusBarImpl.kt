@@ -251,7 +251,7 @@ open class IdeStatusBarImpl internal constructor(
   /**
    * Adds widget to the left side of the status bar.
    * Please note there is no hover effect when the mouse is over the widget.
-   * Use [.addWidget] to add widget to the right side of the status bar, in this case the hover effect is on.
+   * Use [addWidget] to add widget to the right side of the status bar, in this case the hover effect is on.
    * @param widget widget to add
    */
   internal suspend fun addWidgetToLeft(widget: StatusBarWidget) {
@@ -450,8 +450,7 @@ open class IdeStatusBarImpl internal constructor(
 
     effectComponent = component
     val effectComponent = effectComponent ?: return
-    // widgets shall not be opaque, as it may conflict with a background image
-    // the following code can be dropped in future
+    // widgets shall not be opaque, as it may conflict with a background image, the following code can be dropped in the future
     effectComponent.background = null
     ClientProperty.put(effectComponent, WIDGET_EFFECT_KEY, widgetEffect)
     if (effectComponent.isEnabled && widgetEffect != null) {
