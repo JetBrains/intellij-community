@@ -740,7 +740,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     }
 
     for (FileIndentOptionsProvider provider : FileIndentOptionsProvider.EP_NAME.getExtensionList()) {
-      if (!isFullReformat || provider.useOnFullReformat()) {
+      if (provider.isAllowed(isFullReformat)) {
         IndentOptions indentOptions = provider.getIndentOptions(project,this, file);
         if (indentOptions != null) {
           if (providerProcessor != null) {

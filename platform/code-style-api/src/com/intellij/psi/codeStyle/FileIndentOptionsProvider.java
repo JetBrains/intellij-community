@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -91,5 +92,12 @@ public abstract class FileIndentOptionsProvider {
   @Nullable
   public CodeStyleStatusBarUIContributor getIndentStatusBarUiContributor(@NotNull IndentOptions indentOptions) {
     return null;
+  }
+
+  public final boolean isAllowed(boolean isFullReformat) {
+    return (!isFullReformat || useOnFullReformat()) &&
+           (!(this instanceof PsiBasedFileIndentOptionsProvider) ||
+            !ApplicationManager.getApplication().isDispatchThread() ||
+            ApplicationManager.getApplication().isHeadlessEnvironment());
   }
 }
