@@ -9,6 +9,7 @@ import kotlinx.coroutines.await
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.w3c.dom.HTMLElement
+import org.w3c.dom.Node
 import org.w3c.dom.parsing.XMLSerializer
 
 suspend fun renderBlock(block: HTMLElement, cacheId: String, content: String): String? {
@@ -19,9 +20,9 @@ suspend fun renderBlock(block: HTMLElement, cacheId: String, content: String): S
   return promise.await()
 }
 
-fun cacheBlock(cacheId: String, block: HTMLElement) {
+fun cacheBlock(cacheId: String, block: String) {
   val serializer = XMLSerializer()
-  val serialized = serializer.serializeToString(block)
+  val serialized = serializer.serializeToString(block.unsafeCast<Node>())
   val data = "$cacheId;$serialized"
   window.obtainMessagePipe()?.post("storeMermaidFile", data)
 }
@@ -35,7 +36,7 @@ suspend fun processBlock(block: HTMLElement): String? {
   val actualContent = decode(content)
   // TODO: Validate result
   val generated = renderBlock(block, cacheId, actualContent) ?: return null
-  cacheBlock(cacheId, block)
+  cacheBlock(cacheId, generated)
   return generated
 }
 
