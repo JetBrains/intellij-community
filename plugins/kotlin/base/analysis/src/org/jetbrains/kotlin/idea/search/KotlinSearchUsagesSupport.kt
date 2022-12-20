@@ -125,7 +125,7 @@ interface KotlinSearchUsagesSupport {
             getInstance(psiMethod.project).createConstructorHandle(psiMethod)
     }
 
-    fun isInvokeOfCompanionObject(psiReference: PsiReference, declaration: KtNamedDeclaration): Boolean
+    fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean
 
     fun actualsForExpected(declaration: KtDeclaration, module: Module? = null): Set<KtDeclaration>
 

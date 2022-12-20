@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.ImportPath
 
 class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
-  override fun isInvokeOfCompanionObject(psiReference: PsiReference, declaration: KtNamedDeclaration): Boolean {
+  override fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean {
     return false
   }
 

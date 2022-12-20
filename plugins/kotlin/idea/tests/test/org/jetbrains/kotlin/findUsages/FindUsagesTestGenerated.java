@@ -63,6 +63,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/kotlin/companionObject/withInvoke.0.kt");
             }
 
+            @TestMetadata("withInvokeExtension.0.kt")
+            public void testWithInvokeExtension() throws Exception {
+                runTest("testData/findUsages/kotlin/companionObject/withInvokeExtension.0.kt");
+            }
+
             @TestMetadata("withInvokeFromParent.0.kt")
             public void testWithInvokeFromParent() throws Exception {
                 runTest("testData/findUsages/kotlin/companionObject/withInvokeFromParent.0.kt");

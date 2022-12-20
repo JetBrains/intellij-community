@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -38,27 +37,32 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.match
 
 internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
-    override fun isInvokeOfCompanionObject(psiReference: PsiReference, declaration: KtNamedDeclaration): Boolean {
-        val resolve = psiReference.resolve() ?: return false
+    override fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean {
 
-        if (declaration is KtObjectDeclaration &&
-            declaration.isCompanion() &&
-            resolve is KtNamedFunction &&
-            resolve.name == OperatorNameConventions.INVOKE.asString()
-        ) {
-            val containingClassOrObject = resolve.containingClassOrObject ?: return false
-            if (containingClassOrObject == declaration) {
-                return true
-            }
-            analyze(declaration) {
-                val symbol = declaration.getSymbol() as? KtClassOrObjectSymbol ?: return false
-                val superClass = containingClassOrObject.getSymbol() as? KtClassOrObjectSymbol ?: return false
-                return symbol.isSubClassOf(superClass)
+        if (searchTarget is KtObjectDeclaration && searchTarget.isCompanion()) {
+            val invokeOperatorCandidate = psiReference.resolve() ?: return false
+            if (invokeOperatorCandidate is KtNamedFunction && invokeOperatorCandidate.name == OperatorNameConventions.INVOKE.asString()) {
+                analyze(searchTarget) {
+                    val searchTargetContainerSymbol = searchTarget.getSymbol() as? KtClassOrObjectSymbol ?: return false
+                    val invokeSymbol = invokeOperatorCandidate.getSymbol() as? KtFunctionSymbol ?: return false
+
+                    fun KtClassOrObjectSymbol.isInheritorOrSelf(
+                        superSymbol: KtClassOrObjectSymbol?
+                    ): Boolean {
+                        if (superSymbol == null) return false
+                        return superSymbol == this || isSubClassOf(superSymbol)
+                    }
+
+                    return searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.getContainingSymbol() as? KtClassOrObjectSymbol) ||
+                            searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.receiverParameter?.type?.expandedClassSymbol)
+                }
             }
         }
 
         return false
     }
+
+
 
     override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> {
         return emptySet()
