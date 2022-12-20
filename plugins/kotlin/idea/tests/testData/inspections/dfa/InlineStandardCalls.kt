@@ -5,7 +5,7 @@ fun inlineLet() {
     if (<warning descr="Condition 'y == 1' is always true">y == 1</warning>) {}
     val z = x.let { true }
     val z1 = x.let { false }
-    println(<warning descr="Condition 'z && z1' is always false"><weak_warning descr="Value of 'z' is always true">z</weak_warning> && <weak_warning descr="Value of 'z1' is always false">z1</weak_warning></warning>)
+    println(<warning descr="Condition 'z && z1' is always false"><warning descr="Condition 'z' is always true">z</warning> && <warning descr="Condition 'z1' is always false when reached">z1</warning></warning>)
 }
 
 fun inlineLetQuestion(x: Int?) {
@@ -49,7 +49,7 @@ fun inlineRun() {
             if (<warning descr="Condition 'this == 3' is always false">this == 3</warning>) x = true else y = true
         }
     }
-    println(<warning descr="Condition 'x && y' is always false"><weak_warning descr="Value of 'x' is always false">x</weak_warning> && y</warning>)
+    println(<warning descr="Condition 'x && y' is always false"><warning descr="Condition 'x' is always false">x</warning> && y</warning>)
 }
 
 fun inlineAll() {
