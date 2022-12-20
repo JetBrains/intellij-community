@@ -720,7 +720,14 @@ public final class ActionsTreeUtil {
   public static AnAction @NotNull [] getActions(@NonNls String actionGroup) {
     ActionManager actionManager = ActionManager.getInstance();
     AnAction group = actionManager.getActionOrStub(actionGroup);
-    LOG.assertTrue(group instanceof ActionGroup, actionGroup + " is " + (group == null ? "not found" : "not a group"));
+    if (group == null) {
+      LOG.error(actionGroup + " not found");
+      return AnAction.EMPTY_ARRAY;
+    }
+    else if (!(group instanceof ActionGroup)) {
+      PluginException.logPluginError(LOG, actionGroup + " is not a group", null, group.getClass());
+      return AnAction.EMPTY_ARRAY;
+    }
     return getActions((ActionGroup)group, actionManager);
   }
 
