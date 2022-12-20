@@ -125,10 +125,12 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
    */
   @NotNull
   private List<@NotNull FieldAccessorCandidate> getAccessorsToRename() {
-    return ContainerUtil.filter(
+    //noinspection UnnecessaryLocalVariable
+    List<FieldAccessorCandidate> list = ContainerUtil.filter(
       myRecordCandidate.getFieldAccessors().values(),
       fieldAccessorCandidate -> fieldAccessorCandidate != null && !fieldAccessorCandidate.isRecordStyleNaming()
     );
+    return list;
   }
 
   /**
