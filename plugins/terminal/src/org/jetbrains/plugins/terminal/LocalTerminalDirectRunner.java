@@ -16,7 +16,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
-import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
@@ -166,17 +165,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
     String newWslEnv = prevValue != null ? StringUtil.trimEnd(prevValue, ':') + ':' + wslEnv : wslEnv;
     resultEnvs.put(WslConstants.WSLENV, newWslEnv);
-  }
-
-  @Override
-  public PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
-    return super.createProcess(directory, null);
-  }
-
-  @Override
-  public @NotNull PtyProcess createProcess(@NotNull TerminalProcessOptions options,
-                                           @Nullable JBTerminalWidget widget) throws ExecutionException {
-    return super.createProcess(options, widget);
   }
 
   @Override
