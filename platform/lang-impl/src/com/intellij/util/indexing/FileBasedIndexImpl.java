@@ -1444,7 +1444,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     //todo check file still from project
     int inputId = getFileId(file);
-    Project guessedProject = project != null ? project : myIndexableFilesFilterHolder.findProjectForFile(inputId);
+    Project guessedProject = project != null ? project : findProjectForFileId(inputId);
     IndexedFileImpl indexedFile = new IndexedFileImpl(file, guessedProject);
 
     List<SingleIndexValueApplier<?>> appliers = new ArrayList<>();
@@ -1903,7 +1903,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     // handle 'content-less' indices separately
     boolean fileIsDirectory = file.isDirectory();
-    IndexedFileImpl indexedFile = new IndexedFileImpl(file, myIndexableFilesFilterHolder.findProjectForFile(fileId));
+    IndexedFileImpl indexedFile = new IndexedFileImpl(file, findProjectForFileId(fileId));
 
     FileContent fileContent = null;
     for (ID<?, ?> indexId : contentChange ? Collections.singleton(FileTypeIndex.NAME) : getContentLessIndexes(fileIsDirectory)) {
@@ -1956,6 +1956,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     else {
       IndexingFlag.setFileIndexed(file);
     }
+  }
+
+  @Nullable
+  public Project findProjectForFileId(int fileId) {
+    return myIndexableFilesFilterHolder.findProjectForFile(fileId);
   }
 
   @NotNull

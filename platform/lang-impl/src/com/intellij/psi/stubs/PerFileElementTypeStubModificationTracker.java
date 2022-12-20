@@ -7,9 +7,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.StubFileElementType;
@@ -95,8 +95,8 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
         }
         continue;
       }
-      Project project = ProjectLocator.getInstance().guessProjectForFile(file);
-      if (project != null && project.isDisposed()) continue;
+      Project project = ((FileBasedIndexImpl)FileBasedIndex.getInstance()).findProjectForFileId(((VirtualFileWithId)file).getId());
+      if (project == null || project.isDisposed()) continue;
       IndexedFile indexedFile = new IndexedFileImpl(file, project);
       var current = determineCurrentFileElementType(indexedFile);
       var beforeSuitableTypes = determinePreviousFileElementType(FileBasedIndex.getFileId(file), myStubUpdatingIndexStorage.getValue());
