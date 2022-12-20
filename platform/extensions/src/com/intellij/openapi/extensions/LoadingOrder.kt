@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.extensions
 
@@ -17,9 +17,8 @@ import java.util.*
  * is another same-type extension ID. Values can be combined in a comma-separated way. E.g. if you wish to plug before some extension XXX
  * that has "first" as its order, you must be "first, before XXX". The same with "last".
  *
- * Extension ID can be specified in the "id" attribute of corresponding XML element. When you specify order, it's usually a good practice
- * to specify also id, to allow other plugin-writers to plug relatively to your extension.
- *
+ * Extension ID can be specified in the "id" attribute of a corresponding XML element. When you specify order, it's usually good practice
+ * to specify also id, to allow other plugin-writers to plug relatively into your extension.
  * If some anchor id can't be resolved, the constraint is ignored.
  */
 @ApiStatus.Internal
