@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.ui.DirtyUI;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,6 +84,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   @Override
   public ListCellRenderer<Object> getElementsRenderer() {
     return new SearchEverywherePsiRenderer(this) {
+      @DirtyUI
       @NotNull
       @Override
       public ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
