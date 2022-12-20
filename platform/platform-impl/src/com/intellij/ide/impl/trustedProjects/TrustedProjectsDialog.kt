@@ -104,8 +104,9 @@ object TrustedProjectsDialog {
     @NlsContexts.Button trustButtonText: String,
     @NlsContexts.Button distrustButtonText: String
   ): Boolean {
-    if (project.isTrusted()) {
-      project.setTrusted(true)
+    val locatedProject = LocatedProject.locateProject(project)
+    if (TrustedProjects.isProjectTrusted(locatedProject)) {
+      TrustedProjects.setProjectTrusted(locatedProject, true)
       return true
     }
 
@@ -118,7 +119,7 @@ object TrustedProjectsDialog {
         .ask(project)
     }
 
-    project.setTrusted(answer)
+    TrustedProjects.setProjectTrusted(locatedProject, answer)
 
     TrustedProjectsStatistics.LOAD_UNTRUSTED_PROJECT_CONFIRMATION_CHOICE.log(project, answer)
 
@@ -183,8 +184,9 @@ object TrustedProjectsDialog {
     @NlsContexts.Button trustButtonText: String,
     @NlsContexts.Button distrustButtonText: String
   ): Boolean {
-    if (project.isTrusted()) {
-      project.setTrusted(true)
+    val locatedProject = LocatedProject.locateProject(project)
+    if (TrustedProjects.isProjectTrusted(locatedProject)) {
+      TrustedProjects.setProjectTrusted(locatedProject, true)
       return true
     }
 
@@ -197,7 +199,7 @@ object TrustedProjectsDialog {
         .ask(project)
     }
 
-    project.setTrusted(answer)
+    TrustedProjects.setProjectTrusted(locatedProject, answer)
 
     TrustedProjectsStatistics.LOAD_UNTRUSTED_PROJECT_CONFIRMATION_CHOICE.log(project, answer)
 
