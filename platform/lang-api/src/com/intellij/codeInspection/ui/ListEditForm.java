@@ -49,7 +49,7 @@ public class ListEditForm {
     table.setTableHeader(null);
 
     contentPanel = setupActions(ToolbarDecorator.createDecorator(table), defaultElement)
-      .setToolbarPosition(ActionToolbarPosition.RIGHT)
+      .setToolbarPosition(ActionToolbarPosition.LEFT)
       .createPanel();
     contentPanel = UI.PanelFactory.panel(contentPanel).withLabel(label).moveLabelOnTop().resizeY(true).createPanel();
     contentPanel.setMinimumSize(InspectionOptionsPanel.getMinimumListSize());
