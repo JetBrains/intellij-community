@@ -28,13 +28,13 @@ import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.util.everythingScopeExcludeFileTypes
 import org.jetbrains.kotlin.idea.base.util.excludeFileTypes
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.hasType
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isInProjectSource
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isSamInterface
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
-import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
@@ -128,10 +128,7 @@ class ExpressionsOfTypeProcessor(
 
         // optimization
         if (runReadAction {
-                searchScope is GlobalSearchScope && !FileTypeIndex.containsFileOfType(
-                    KotlinFileType.INSTANCE,
-                    searchScope
-                )
+                noKotlinFilesInScope(searchScope)
             }) return
 
         // for class from library always use plain search because we cannot search usages in compiled code (we could though)
@@ -153,6 +150,16 @@ class ExpressionsOfTypeProcessor(
                 possibleMatchesInScopeHandler(LocalSearchScope(scopeElements))
             }
         }
+    }
+
+    private fun noKotlinFilesInScope(searchScope: SearchScope): Boolean {
+        if (searchScope is GlobalSearchScope && !FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, searchScope)) {
+            return true
+        }
+        if (searchScope is LocalSearchScope && searchScope.virtualFiles.none { it.fileType == KotlinFileType.INSTANCE }) {
+            return true
+        }
+        return false
     }
 
     private fun addTask(task: Task) {
