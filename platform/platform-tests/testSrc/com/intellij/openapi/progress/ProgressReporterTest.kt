@@ -11,7 +11,6 @@ import com.intellij.util.containers.tail
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 
 class ProgressReporterTest {
 
@@ -22,22 +21,22 @@ class ProgressReporterTest {
 
   @Test
   fun `end fraction must be greater than 0 and less or equal to 1`() {
-    assertThrows<IllegalArgumentException> {
+    assertLogThrows<IllegalArgumentException> {
       progressReporterTest {
         progressStep(endFraction = -0.4) { fail() }
       }
     }
-    assertThrows<IllegalArgumentException> {
+    assertLogThrows<IllegalArgumentException> {
       progressReporterTest {
         progressStep(endFraction = -0.0) { fail() }
       }
     }
-    assertThrows<IllegalArgumentException> {
+    assertLogThrows<IllegalArgumentException> {
       progressReporterTest {
         progressStep(endFraction = 0.0) { fail() }
       }
     }
-    assertThrows<IllegalArgumentException> {
+    assertLogThrows<IllegalArgumentException> {
       progressReporterTest {
         progressStep(endFraction = 1.4) { fail() }
       }
@@ -46,7 +45,7 @@ class ProgressReporterTest {
 
   @Test
   fun `two subsequent steps must not request the same end fraction`() {
-    assertThrows<IllegalArgumentException> {
+    assertLogThrows<IllegalStateException> {
       progressReporterTest {
         progressStep(endFraction = 0.3) {}
         progressStep(endFraction = 0.3) { fail() }
@@ -56,7 +55,7 @@ class ProgressReporterTest {
 
   @Test
   fun `duration must be greater or equal to 0 and less or equal to 1`() {
-    assertThrows<IllegalArgumentException> {
+    assertLogThrows<IllegalArgumentException> {
       progressReporterTest {
         durationStep(duration = -0.4) { fail() }
       }
@@ -67,7 +66,7 @@ class ProgressReporterTest {
     progressReporterTest {
       durationStep(duration = 0.0) {}
     }
-    assertThrows<IllegalArgumentException> {
+    assertLogThrows<IllegalArgumentException> {
       progressReporterTest {
         durationStep(duration = 1.4) { fail() }
       }
@@ -76,7 +75,7 @@ class ProgressReporterTest {
 
   @Test
   fun `total duration cannot exceed 1`() {
-    assertThrows<IllegalStateException> {
+    assertLogThrows<IllegalStateException> {
       progressReporterTest {
         durationStep(duration = 0.5) {}
         durationStep(duration = 0.51) { fail() }
@@ -573,59 +572,59 @@ class ProgressReporterTest {
 
   @Test
   fun `raw step contracts`() {
-    assertThrows<IllegalStateException> {
+    assertLogThrows<IllegalStateException> {
       progressReporterTest {
         indeterminateStep {}
         checkNotNull(progressReporter).rawReporter()
       }
     }
-    assertThrows<IllegalStateException> {
+    assertLogThrows<IllegalStateException> {
       progressReporterTest {
         indeterminateStep {}
         progressStep(endFraction = 1.0) {}
         checkNotNull(progressReporter).rawReporter()
       }
     }
-    assertThrows<IllegalStateException> {
+    assertLogThrows<IllegalStateException> {
       progressReporterTest {
         indeterminateStep {}
         durationStep(0.1) {}
         checkNotNull(progressReporter).rawReporter()
       }
     }
-    assertThrows<IllegalStateException> {
+    assertLogThrows<IllegalStateException> {
       progressReporterTest {
         progressStep(endFraction = 1.0) {}
         indeterminateStep {}
         checkNotNull(progressReporter).rawReporter()
       }
     }
-    assertThrows<IllegalStateException> {
+    assertLogThrows<IllegalStateException> {
       progressReporterTest {
         durationStep(0.1) {}
         indeterminateStep {}
         checkNotNull(progressReporter).rawReporter()
       }
     }
-    assertThrows<IllegalStateException> {
+    assertLogThrows<IllegalStateException> {
       progressReporterTest {
         checkNotNull(progressReporter).rawReporter()
         indeterminateStep {}
       }
     }
-    assertThrows<IllegalStateException> {
+    assertLogThrows<IllegalStateException> {
       progressReporterTest {
         checkNotNull(progressReporter).rawReporter()
         progressStep(endFraction = 1.0) {}
       }
     }
-    assertThrows<IllegalStateException> {
+    assertLogThrows<IllegalStateException> {
       progressReporterTest {
         checkNotNull(progressReporter).rawReporter()
         durationStep(0.1) {}
       }
     }
-    assertThrows<IllegalStateException> {
+    assertLogThrows<IllegalStateException> {
       progressReporterTest {
         checkNotNull(progressReporter).rawReporter()
         checkNotNull(progressReporter).rawReporter()
@@ -786,7 +785,7 @@ class ProgressReporterTest {
       val nextToLast = (total - 1) * duration
       progressStep(endFraction = nextToLast) {} // emulate 92 steps
       durationStep(duration = duration) {} // this failed before changes
-      val t = assertThrows<IllegalStateException> {
+      val t = assertLogThrows<IllegalStateException> {
         durationStep(duration = duration) { fail() }
       }
       assertTrue(t.message!!.contains("Total duration must not exceed 1.0, duration:")) {

@@ -2,6 +2,7 @@
 package com.intellij.openapi.progress
 
 import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.getValue
 import com.intellij.util.setValue
@@ -186,4 +187,11 @@ internal suspend fun <X> childCallable(cs: CoroutineScope, action: () -> X): Cal
 
 inline fun <reified T> assertInstanceOf(instance: Any?): T {
   return assertInstanceOf(T::class.java, instance)
+}
+
+inline fun <reified T : Throwable> assertLogThrows(executable: () -> Unit): T {
+  return assertThrows<T> {
+    val loggerError = assertThrows<TestLoggerAssertionError>(executable)
+    throw requireNotNull(loggerError.cause)
+  }
 }

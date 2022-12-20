@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AssumptionViolatedException;
@@ -357,7 +358,8 @@ public final class TestLoggerFactory implements Logger.Factory {
     };
   }
 
-  static final class TestLoggerAssertionError extends AssertionError {
+  @Internal
+  public static final class TestLoggerAssertionError extends AssertionError {
     private TestLoggerAssertionError(String message, Throwable cause) {
       super(message, cause);
     }

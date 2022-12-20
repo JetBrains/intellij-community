@@ -31,29 +31,42 @@ abstract class BaseProgressReporter(parentScope: CoroutineScope) : ProgressRepor
    */
   private val lastFraction = AtomicDouble(0.0)
 
-  private fun duration(endFraction: Double): Double {
-    require(0.0 < endFraction && endFraction <= 1.0) {
-      "End fraction must be in (0.0; 1.0], got: $endFraction"
+  final override fun step(endFraction: Double, text: ProgressText?): ProgressReporter {
+    if (!(0.0 < endFraction && endFraction <= 1.0)) {
+      LOG.error(IllegalArgumentException("End fraction must be in (0.0; 1.0], got: $endFraction"))
+      return createStep(duration = 0.0, text)
     }
-    val previousFraction = lastFraction.getAndUpdate {
+    while (true) {
+      val lastFractionValue = lastFraction.get()
       when {
-        it > 1.0 -> error("Cannot start a child because this reporter is raw.")
-        endFraction <= it -> {
-          throw IllegalArgumentException("New end fraction $endFraction must be greater than the previous end fraction $it")
+        lastFractionValue <= 0.0 -> {
+          if (lastFraction.compareAndSet(lastFractionValue, endFraction)) {
+            return createStep(duration = endFraction, text)
+          }
         }
-        else -> endFraction
+        lastFractionValue <= 1.0 -> {
+          if (endFraction <= lastFractionValue) {
+            LOG.error(IllegalStateException(
+              "New end fraction $endFraction must be greater than the previous end fraction $lastFractionValue"
+            ))
+            return createStep(duration = 0.0, text)
+          }
+          else if (lastFraction.compareAndSet(lastFractionValue, endFraction)) {
+            return createStep(duration = endFraction - lastFractionValue, text)
+          }
+        }
+        else -> {
+          LOG.error(IllegalStateException("Cannot start a child because this reporter is raw."))
+          return EmptyProgressReporter
+        }
       }
     }
-    return endFraction - previousFraction.coerceAtLeast(0.0)
-  }
-
-  final override fun step(endFraction: Double, text: ProgressText?): ProgressReporter {
-    return createStep(duration(endFraction), text)
   }
 
   final override fun durationStep(duration: Double, text: ProgressText?): ProgressReporter {
-    require(duration in 0.0..1.0) {
-      "Duration is expected to be a value in [0.0; 1.0], got $duration"
+    if (duration !in 0.0..1.0) {
+      LOG.error(IllegalArgumentException("Duration is expected to be a value in [0.0; 1.0], got $duration"))
+      return createStep(duration = 0.0, text)
     }
     if (duration == 0.0) {
       return indeterminateStep(text)
@@ -64,14 +77,24 @@ abstract class BaseProgressReporter(parentScope: CoroutineScope) : ProgressRepor
   }
 
   private fun indeterminateStep(text: ProgressText?): ProgressReporter {
-    lastFraction.getAndUpdate {
+    while (true) {
+      val lastFractionValue = lastFraction.get()
       when {
-        it <= 0.0 -> it - 1.0 // indicate that this reporter has an indeterminate child, so rawReporter() would fail
-        it <= 1.0 -> it // don't change
-        else -> error("Cannot start an indeterminate child because this reporter is raw.")
+        lastFractionValue <= 0.0 -> {
+          // indicate that this reporter has an indeterminate child, so rawReporter() would fail
+          if (lastFraction.compareAndSet(lastFractionValue, lastFractionValue - 1.0)) {
+            return createStep(duration = 0.0, text)
+          }
+        }
+        lastFractionValue <= 1.0 -> {
+          return createStep(duration = 0.0, text)
+        }
+        else -> {
+          LOG.error(IllegalStateException("Cannot start an indeterminate child because this reporter is raw."))
+          return EmptyProgressReporter
+        }
       }
     }
-    return createStep(duration = 0.0, text)
   }
 
   private fun determinateStep(duration: Double, text: ProgressText?): ProgressReporter {
@@ -102,15 +125,18 @@ abstract class BaseProgressReporter(parentScope: CoroutineScope) : ProgressRepor
               }
             }
             else -> {
-              error("Total duration $newValue must not exceed 1.0, duration: $duration")
+              LOG.error(IllegalStateException("Total duration $newValue must not exceed 1.0, duration: $duration"))
+              return createStep(duration = 0.0, text)
             }
           }
         }
         lastFractionValue == 1.0 -> {
-          error("Total duration must not exceed 1.0, duration: $duration")
+          LOG.error(IllegalStateException("Total duration must not exceed 1.0, duration: $duration"))
+          return createStep(duration = 0.0, text)
         }
         else -> {
-          error("Cannot start a child because this reporter is raw.")
+          LOG.error(IllegalStateException("Cannot start a child because this reporter is raw."))
+          return EmptyProgressReporter
         }
       }
     }
@@ -119,14 +145,23 @@ abstract class BaseProgressReporter(parentScope: CoroutineScope) : ProgressRepor
   protected abstract fun createStep(duration: Double, text: ProgressText?): ProgressReporter
 
   final override fun rawReporter(): RawProgressReporter {
-    lastFraction.getAndUpdate {
-      check(it == 0.0) {
-        "This reporter already has child steps." +
-        "Wrap the call into step(endFraction=...) and call rawReporter() inside the newly started child step."
+    val previousFraction = lastFraction.getAndSet(2.0)
+    when {
+      previousFraction == 2.0 -> {
+        LOG.error(IllegalStateException("This reporter was already marked raw."))
+        return EmptyRawProgressReporter
       }
-      2.0
+      previousFraction != 0.0 -> {
+        LOG.error(IllegalStateException(
+          "This reporter already has child steps." +
+          "Wrap the call into step(endFraction=...) and call rawReporter() inside the newly started child step."
+        ))
+        return EmptyRawProgressReporter
+      }
+      else -> {
+        return asRawReporter()
+      }
     }
-    return asRawReporter()
   }
 
   protected abstract fun asRawReporter(): RawProgressReporter

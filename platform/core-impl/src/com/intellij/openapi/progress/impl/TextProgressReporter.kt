@@ -51,7 +51,9 @@ internal class TextProgressReporter(parentScope: CoroutineScope) : BaseProgressR
     }
 
     override fun fraction(fraction: Double?) {
-      check(fraction == null || fraction in 0.0..1.0)
+      if (!checkFraction(fraction)) {
+        return
+      }
       childrenHandler.progressState.update { fractionState ->
         fractionState.copy(fraction = fraction ?: -1.0)
       }

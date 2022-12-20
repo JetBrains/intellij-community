@@ -1,7 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
+import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.annotations.ApiStatus.Internal
+
+internal val LOG: Logger = Logger.getInstance("#com.intellij.openapi.progress.impl")
 
 internal data class FractionState<out T>(
   val fraction: Double,
@@ -38,6 +41,15 @@ internal fun reduceTextDetails(states: List<TextDetails>): TextDetails? {
          ?: states.firstOrNull()
 }
 
-
 @Internal
 const val ACCEPTABLE_FRACTION_OVERFLOW: Double = 1.0 / Int.MAX_VALUE
+
+internal fun checkFraction(fraction: Double?): Boolean {
+  if (fraction == null || fraction in 0.0..1.0) {
+    return true
+  }
+  else {
+    LOG.error(IllegalArgumentException("Fraction is expected to be `null` or a value in [0.0; 1.0], got $fraction"))
+    return false
+  }
+}

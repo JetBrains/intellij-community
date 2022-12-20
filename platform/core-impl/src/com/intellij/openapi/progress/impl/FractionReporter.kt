@@ -30,7 +30,9 @@ internal class FractionReporter(parentScope: CoroutineScope) : BaseProgressRepor
   override fun asRawReporter(): RawProgressReporter = object : RawProgressReporter {
 
     override fun fraction(fraction: Double?) {
-      check(fraction == null || fraction in 0.0..1.0)
+      if (!checkFraction(fraction)) {
+        return
+      }
       childrenHandler.progressState.value = FractionState(fraction ?: -1.0, null)
     }
   }
