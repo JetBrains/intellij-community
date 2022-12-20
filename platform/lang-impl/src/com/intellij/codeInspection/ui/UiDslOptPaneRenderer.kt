@@ -38,8 +38,9 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       }
 
       is OptGroup -> {
-        group(component.label.label()) {
-          component.children.forEach { render(it, tool) }
+        row { label(component.label.label()) }
+        indent {
+          component.children.forEach { child -> render(child, tool) }
         }
       }
 
