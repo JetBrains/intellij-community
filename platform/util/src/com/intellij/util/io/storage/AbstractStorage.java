@@ -318,7 +318,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       else {
         myDataTable.reclaimSpace(currentCapacity);
 
-        int newCapacity = fixedSize ? requiredLength:myCapacityAllocationPolicy.calculateCapacity(requiredLength);
+        int newCapacity = fixedSize ? requiredLength : myCapacityAllocationPolicy.calculateCapacity(requiredLength);
         if (newCapacity < requiredLength) newCapacity = requiredLength;
         address = myDataTable.allocateSpace(newCapacity);
         myRecordsTable.setAddress(record, address);
@@ -347,9 +347,13 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     withReadLock(() -> {
       final int size = myRecordsTable.getSize(record);
       assert size >= 0;
+      final int capacity = myRecordsTable.getCapacity(record);
+      assert capacity >= 0;
+      assert size <= capacity;
       final long address = myRecordsTable.getAddress(record);
       assert address >= 0;
       assert address + size < myDataTable.getFileSize();
+      assert address + capacity < myDataTable.getFileSize();
     });
   }
 
