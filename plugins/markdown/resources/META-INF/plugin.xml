@@ -121,6 +121,9 @@
 
     <typedHandler implementation="org.intellij.plugins.markdown.editor.headers.HeaderLevelInferenceTypedHandler"/>
 
+    <codeInsight.fillParagraph language="Markdown"
+                               implementationClass="org.intellij.plugins.markdown.editor.MarkdownParagraphFillHandler"/>
+
     <httpRequestHandler implementation="org.intellij.plugins.markdown.google.authorization.GoogleOAuthCallbackHandler"/>
 
     <renameHandler implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownFileRenameHandler"/>
