@@ -17,7 +17,6 @@ import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Element;
-import org.jdom.Parent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,11 +127,9 @@ public final class XDebuggerHistoryManager implements PersistentStateComponent<E
   public static class XDebuggerHistoryPathMacroFilter extends PathMacroFilter {
     @Override
     public boolean skipPathMacros(@NotNull Element element) {
-      Parent parent;
-      Parent grandParent;
       return "expression-string".equals(element.getName()) &&
-             ((parent = element.getParent()) instanceof Element) && EXPRESSION_TAG.equals(((Element)parent).getName()) &&
-             ((grandParent = parent.getParent()) instanceof Element) && EXPRESSIONS_TAG.equals(((Element)grandParent).getName());
+             (element.getParent() instanceof Element parent) && EXPRESSION_TAG.equals(parent.getName()) &&
+             (parent.getParent() instanceof Element grandParent) && EXPRESSIONS_TAG.equals(grandParent.getName());
     }
   }
 }
