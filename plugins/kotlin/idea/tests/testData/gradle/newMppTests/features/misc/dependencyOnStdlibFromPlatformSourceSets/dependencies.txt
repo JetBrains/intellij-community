@@ -30,8 +30,10 @@ MODULES
         Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
         Gradle: org.jetbrains:annotations:13.0 (TEST)
     my-app.linuxX64Main
+        Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
         my-app.commonMain (refines, COMPILE)
     my-app.linuxX64Test
+        Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
         my-app.commonMain (friend, TEST)
         my-app.commonTest (refines, TEST)
         my-app.linuxX64Main (friend, TEST)
