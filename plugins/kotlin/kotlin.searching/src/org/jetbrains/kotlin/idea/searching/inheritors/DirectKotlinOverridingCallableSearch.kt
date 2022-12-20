@@ -55,12 +55,13 @@ object DirectKotlinOverridingCallableSearch {
 class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiElement> {
     @RequiresReadLock
     override fun collectSearchRequest(parameters: SearchParameters): Query<out PsiElement>? {
-        val klass = parameters.ktCallableDeclaration.containingClassOrObject
+        val ktCallableDeclaration = runReadAction { parameters.ktCallableDeclaration.originalElement } as? KtCallableDeclaration ?: return null
+        val klass = ktCallableDeclaration.containingClassOrObject
         if (klass !is KtClass) return null
 
         val superFunction = runReadAction {
-            analyze(parameters.ktCallableDeclaration) {
-                val symbol = parameters.ktCallableDeclaration.getSymbol()
+            analyze(ktCallableDeclaration) {
+                val symbol = ktCallableDeclaration.getSymbol()
                 val adjustedSymbol = if (symbol is KtValueParameterSymbol) {
                     symbol.generatedPrimaryConstructorProperty
                 } else {
@@ -77,7 +78,7 @@ class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiEleme
                         return runReadAction {
                             analyze(ktClassOrObject) {
                                 (ktClassOrObject.getSymbol() as KtSymbolWithMembers).getDeclaredMemberScope()
-                                    .getCallableSymbols { it == parameters.ktCallableDeclaration.nameAsName }
+                                    .getCallableSymbols { it == ktCallableDeclaration.nameAsName }
                                     .forEach { overridingSymbol ->
                                         val function = overridingSymbol.psi
                                         if (function != null &&

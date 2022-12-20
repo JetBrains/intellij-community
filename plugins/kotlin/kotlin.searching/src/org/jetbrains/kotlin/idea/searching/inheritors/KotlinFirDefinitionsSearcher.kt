@@ -24,7 +24,7 @@ import java.util.concurrent.Callable
 class KotlinFirDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScopedSearch.SearchParameters> {
     override fun execute(queryParameters: DefinitionsScopedSearch.SearchParameters, consumer: Processor<in PsiElement>): Boolean {
         val processor = skipDelegatedMethodsConsumer(consumer)
-        val element = queryParameters.element
+        val element = runReadAction { queryParameters.element.originalElement }
         val scope = queryParameters.scope
 
         return when (element) {
