@@ -91,12 +91,13 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   /**
    * @deprecated use {@link #createProcess(TerminalProcessOptions)} instead
    */
+  @Deprecated(forRemoval = true)
   public @NotNull T createProcess(@NotNull TerminalProcessOptions options, @Nullable JBTerminalWidget widget) throws ExecutionException {
     return createProcess(options);
   }
 
   public @NotNull T createProcess(@NotNull TerminalProcessOptions options) throws ExecutionException {
-    return createProcess(options.getWorkingDirectory(), null);
+    return createProcess(options, null);
   }
 
   /**
@@ -104,7 +105,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
    */
   @Deprecated(forRemoval = true)
   protected T createProcess(@Nullable String directory) throws ExecutionException {
-    throw new AssertionError("Call createProcess(TerminalProcessOptions, JBTerminalWidget)");
+    throw new AssertionError("Call createProcess(TerminalProcessOptions)");
   }
 
   /**
