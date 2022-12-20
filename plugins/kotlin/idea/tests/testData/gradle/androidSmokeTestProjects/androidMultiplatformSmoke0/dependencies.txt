@@ -306,8 +306,10 @@ MODULES
         Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
         Gradle: org.jetbrains:annotations:13.0 (TEST)
     project.multiplatformAndroidJvmIosLibrary.linuxX64Main
+        Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
         project.multiplatformAndroidJvmIosLibrary.commonMain (refines, COMPILE)
     project.multiplatformAndroidJvmIosLibrary.linuxX64Test
+        Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
         project.multiplatformAndroidJvmIosLibrary.commonMain (friend, TEST)
         project.multiplatformAndroidJvmIosLibrary.commonTest (refines, TEST)
         project.multiplatformAndroidJvmIosLibrary.linuxX64Main (friend, TEST)
@@ -394,10 +396,12 @@ MODULES
         Gradle: org.jetbrains:annotations:13.0 (TEST)
         Gradle: com.squareup.okio:okio-jvm:3.2.0 (RUNTIME)
     project.multiplatformAndroidJvmIosLibrary2.linuxX64Main
+        Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
         project.multiplatformAndroidJvmIosLibrary2.commonMain (refines, COMPILE)
         project.multiplatformAndroidJvmIosLibrary.linuxX64Main (COMPILE)
         project.multiplatformAndroidJvmIosLibrary.commonMain (COMPILE)
     project.multiplatformAndroidJvmIosLibrary2.linuxX64Test
+        Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
         project.multiplatformAndroidJvmIosLibrary2.commonMain (friend, TEST)
         project.multiplatformAndroidJvmIosLibrary2.commonTest (refines, TEST)
         project.multiplatformAndroidJvmIosLibrary2.linuxX64Main (friend, TEST)
