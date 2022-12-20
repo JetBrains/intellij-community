@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -8,7 +8,10 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Method;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.Value;
 
 import java.util.Collections;
 import java.util.List;

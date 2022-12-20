@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -21,8 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.xdebugger.XExpression;
-import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.frame.XStringValueModifier;
+import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;

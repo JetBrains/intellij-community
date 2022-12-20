@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class TypeEvaluator
@@ -20,7 +20,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
 
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.filter;
+import static com.intellij.util.containers.ContainerUtil.getOnlyItem;
 
 public class TypeEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance(TypeEvaluator.class);
