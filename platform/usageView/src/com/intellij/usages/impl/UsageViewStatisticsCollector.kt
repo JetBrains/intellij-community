@@ -144,30 +144,28 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     }
 
     @JvmStatic
-    fun logItemChosen(project: Project?,
-                      usageView: UsageView,
-                      source: CodeNavigateSource,
-                      language: Language,
-                      isSimilarUsage: Boolean) {
-      logItemChosen(project, usageView, source, -1, -1, -1, language, isSimilarUsage)
+    fun logItemChosen(project: Project?, usageView: UsageView, source: CodeNavigateSource, language: Language, isSimilarUsage: Boolean) {
+      logItemChosen(project, usageView, source, null, null, null, language, isSimilarUsage)
     }
 
     @JvmStatic
     fun logItemChosen(project: Project?,
                       usageView: UsageView,
                       source: CodeNavigateSource,
-                      selectedRow: Int,
-                      numberOfRows: Int,
-                      numberOfLettersTyped: Int,
+                      selectedRow: Int?,
+                      numberOfRows: Int?,
+                      numberOfLettersTyped: Int?,
                       language: Language,
-                      isSimilarUsage: Boolean) = itemChosen.log(project,
-                                                                USAGE_VIEW.with(usageView),
-                                                                UI_LOCATION.with(source),
-                                                                IS_SIMILAR_USAGE.with(isSimilarUsage),
-                                                                SELECTED_ROW.with(selectedRow),
-                                                                NUMBER_OF_ROWS.with(numberOfRows),
-                                                                NUMBER_OF_LETTERS_TYPED.with(numberOfLettersTyped),
-                                                                EventFields.Language.with(language))
+                      isSimilarUsage: Boolean) {
+      val data = mutableListOf(USAGE_VIEW.with(usageView),
+                               UI_LOCATION.with(source),
+                               IS_SIMILAR_USAGE.with(isSimilarUsage),
+                               EventFields.Language.with(language))
+      selectedRow?.let { data.add(SELECTED_ROW.with(it)) }
+      numberOfRows?.let { data.add(NUMBER_OF_ROWS.with(it)) }
+      numberOfLettersTyped?.let { data.add(NUMBER_OF_LETTERS_TYPED.with(it)) }
+      itemChosen.log(project, data)
+    }
 
     @JvmStatic
     fun logSearchCancelled(project: Project?,
