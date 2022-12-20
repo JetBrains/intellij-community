@@ -16,8 +16,6 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -255,7 +253,9 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE);
     }
 
-    private static boolean couldBeThrowableSupplier(LoggerType loggerType, PsiParameter lastParameter, PsiExpression lastArgument) {
+    private static boolean couldBeThrowableSupplier(@NotNull LoggerType loggerType,
+                                                    @NotNull PsiParameter lastParameter,
+                                                    @NotNull PsiExpression lastArgument) {
       if (loggerType != LoggerType.LOG4J_OLD_STYLE && loggerType != LoggerType.LOG4J_FORMATTED_STYLE) {
         return false;
       }
@@ -270,34 +270,22 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       PsiClassType throwable = PsiType.getJavaLangThrowable(lastArgument.getManager(), lastArgument.getResolveScope());
 
       if (lastArgument instanceof PsiLambdaExpression lambdaExpression) {
-        Map<PsiElement, String> errors = LambdaUtil.checkReturnTypeCompatible(lambdaExpression, throwable);
-        return errors == null;
+        for (PsiExpression expression : LambdaUtil.getReturnExpressions(lambdaExpression)) {
+          if (expression == null || expression.getType() == null || !throwable.isConvertibleFrom(expression.getType())) {
+            return false;
+          }
+        }
+        return true;
       }
       if (lastArgument instanceof PsiMethodReferenceExpression referenceExpression) {
         PsiType psiType = PsiMethodReferenceUtil.getMethodReferenceReturnType(referenceExpression);
-        return throwable.isAssignableFrom(psiType) || psiType.isAssignableFrom(throwable);
+        return throwable.isConvertibleFrom(psiType);
       }
 
       PsiType type = lastArgument.getType();
-      if (!(type instanceof PsiClassType psiClassType)) {
-        return false;
-      }
-      PsiClassType.ClassResolveResult resolveGenerics = psiClassType.resolveGenerics();
-      Iterator<PsiType> iterator = resolveGenerics.getSubstitutor().getSubstitutionMap().values().iterator();
-      if (!iterator.hasNext()) {
-        return true;
-      }
-      PsiType psiType = iterator.next();
-      if (psiType == null) {
-        return true;
-      }
-      if (psiType instanceof PsiCapturedWildcardType capturedWildcardType) {
-        PsiType lowerBound = capturedWildcardType.getLowerBound();
-        PsiType upperBond = capturedWildcardType.getUpperBound();
-        return (lowerBound == null || throwable.isAssignableFrom(lowerBound) || lowerBound.isAssignableFrom(throwable)) &&
-               (throwable.isAssignableFrom(upperBond) || upperBond.isAssignableFrom(throwable));
-      }
-      return throwable.isAssignableFrom(psiType) || psiType.isAssignableFrom(throwable);
+      PsiType functionalReturnType = LambdaUtil.getFunctionalInterfaceReturnType(type);
+      if (functionalReturnType == null) return false;
+      return throwable.isConvertibleFrom(functionalReturnType);
     }
 
     @Nullable
