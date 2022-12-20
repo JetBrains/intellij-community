@@ -31,17 +31,14 @@ public final class RefCountingContentStorage extends AbstractStorage {
   private final ExecutorService myWriteRequestExecutor;
   private final boolean myUseContentHashes;
 
-  private final boolean myDoNotZipCaches;
   private static final int MAX_PENDING_WRITE_SIZE = 20 * 1024 * 1024;
 
   public RefCountingContentStorage(@NotNull Path path,
                                    @Nullable CapacityAllocationPolicy capacityAllocationPolicy,
                                    @NotNull ExecutorService writeRequestExecutor,
-                                   boolean doNotZipCaches,
                                    boolean useContentHashes) throws IOException {
     super(path, capacityAllocationPolicy);
 
-    myDoNotZipCaches = doNotZipCaches;
     myWriteRequestExecutor = writeRequestExecutor;
     myUseContentHashes = useContentHashes;
   }
@@ -56,14 +53,12 @@ public final class RefCountingContentStorage extends AbstractStorage {
 
   @Override
   public DataInputStream readStream(int record) throws IOException {
-    if (myDoNotZipCaches) return super.readStream(record);
     BufferExposingByteArrayOutputStream stream = internalReadStream(record);
     return new DataInputStream(stream.toInputStream());
   }
 
   @Override
   protected byte[] readBytes(int record) throws IOException {
-    if (myDoNotZipCaches) return super.readBytes(record);
     return internalReadStream(record).toByteArray();
   }
 
@@ -119,12 +114,6 @@ public final class RefCountingContentStorage extends AbstractStorage {
 
   @Override
   public void writeBytes(final int record, final ByteArraySequence bytes, final boolean fixedSize) throws IOException {
-
-    if (myDoNotZipCaches) {
-      super.writeBytes(record, bytes, fixedSize);
-      return;
-    }
-
     waitForPendingWriteForRecord(record);
 
     withWriteLock(() -> {

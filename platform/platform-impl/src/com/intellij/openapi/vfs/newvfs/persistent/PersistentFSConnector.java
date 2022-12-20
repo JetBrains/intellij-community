@@ -134,7 +134,6 @@ final class PersistentFSConnector {
                                                CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
                                                SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
                                                  "FSRecords Content Write Pool"),
-                                               FSRecords.useCompressionUtil,
                                                useContentHashes);
 
       // sources usually zipped with 4x ratio

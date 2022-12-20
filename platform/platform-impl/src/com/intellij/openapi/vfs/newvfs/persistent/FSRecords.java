@@ -65,12 +65,6 @@ public final class FSRecords {
   static final boolean bulkAttrReadSupport = SystemProperties.getBooleanProperty("idea.bulk.attr.read", false);
 
   /**
-   * Switches which compression approach to use:
-   * if false, then compression inside {@link com.intellij.util.io.storage.RefCountingContentStorage} is used,
-   * if true -- inside {@link PersistentFSContentAccessor}
-   */
-  static final boolean useCompressionUtil = SystemProperties.getBooleanProperty("idea.use.lightweight.compression.for.vfs", false);
-  /**
    * If true -> use {@link CompactRecordsTable} for managing attributes record, instead of default {@link com.intellij.util.io.storage.RecordsTable}
    */
   static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
@@ -108,7 +102,7 @@ public final class FSRecords {
                     nextMask(bulkAttrReadSupport,
                     nextMask(inlineAttributes,
                     nextMask(SystemProperties.getBooleanProperty(IDE_USE_FS_ROOTS_DATA_LOADER, false),
-                    nextMask(useCompressionUtil,
+                    nextMask(false, // feel free to use
                     nextMask(useSmallAttrTable,
                     nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
                     nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,

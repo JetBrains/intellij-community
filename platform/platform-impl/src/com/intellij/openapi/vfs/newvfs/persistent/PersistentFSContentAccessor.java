@@ -55,12 +55,7 @@ public final class PersistentFSContentAccessor {
   DataInputStream readContentDirectly(int contentId) throws IOException {
     myLock.readLock().lock();
     try {
-      DataInputStream stream = myFSConnection.getContents().readStream(contentId);
-      if (FSRecords.useCompressionUtil) {
-        byte[] bytes = CompressionUtil.readCompressed(stream);
-        stream = new DataInputStream(new UnsyncByteArrayInputStream(bytes));
-      }
-      return stream;
+      return myFSConnection.getContents().readStream(contentId);
     }
     finally {
       myLock.readLock().unlock();
@@ -123,19 +118,7 @@ public final class PersistentFSContentAccessor {
         }
       }
 
-      ByteArraySequence newBytes;
-      if (FSRecords.useCompressionUtil) {
-        BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
-        try (DataOutputStream outputStream = new DataOutputStream(out)) {
-          CompressionUtil.writeCompressed(outputStream, bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
-        }
-        newBytes = out.toByteArraySequence();
-      }
-      else {
-        newBytes = bytes;
-      }
-
-      contentStorage.writeBytes(contentRecordId, newBytes, fixedSize);
+      contentStorage.writeBytes(contentRecordId, bytes, fixedSize);
       return true;
     }
     finally {
