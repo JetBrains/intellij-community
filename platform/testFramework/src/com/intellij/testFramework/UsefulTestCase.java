@@ -538,6 +538,10 @@ public abstract class UsefulTestCase extends TestCase {
         builder.append(o);
       }
       builder.append('\n');
+      if (builder.length() > 1_000_000) {
+        builder.append("...\n");
+        break;
+      }
     }
     return builder.toString();
   }
