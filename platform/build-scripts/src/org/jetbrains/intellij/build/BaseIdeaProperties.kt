@@ -49,10 +49,10 @@ private val BASE_CLASS_VERSIONS = persistentHashMapOf(
 
 /**
  * Default bundled plugins for all editions of IntelliJ IDEA.
- * See also [JB_BUNDLED_PLUGINS] and [DEFAULT_BUNDLED_PLUGINS].
+ * See also [DEFAULT_BUNDLED_PLUGINS].
  */
 @Suppress("SpellCheckingInspection")
-val IDEA_BUNDLED_PLUGINS: PersistentList<String> = JB_BUNDLED_PLUGINS + persistentListOf(
+val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + persistentListOf(
   "intellij.java.plugin",
   "intellij.java.ide.customization",
   "intellij.copyright",
