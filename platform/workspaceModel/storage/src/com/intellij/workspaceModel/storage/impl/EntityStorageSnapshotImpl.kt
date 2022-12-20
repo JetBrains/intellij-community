@@ -174,11 +174,16 @@ internal class MutableEntityStorageImpl(
   override fun <T : WorkspaceEntity> addEntity(entity: T): T {
     try {
       lockWrite()
-
-      entity as ModifiableWorkspaceEntityBase<T, *>
-
-      entity.applyToBuilder(this)
-      entity.changedProperty.clear()
+      val entityToAdd = if (entity is ModifiableWorkspaceEntityBase<*, *>) {
+        entity as ModifiableWorkspaceEntityBase<T, *>
+      }
+      else {
+        @Suppress("USELESS_CAST") //this is needed to work around a bug in Kotlin compiler (KT-55555)
+        createEntityTreeCopy(entity) as ModifiableWorkspaceEntityBase<T, *>
+      }
+      
+      entityToAdd.applyToBuilder(this)
+      entityToAdd.changedProperty.clear()
     }
     finally {
       unlockWrite()
