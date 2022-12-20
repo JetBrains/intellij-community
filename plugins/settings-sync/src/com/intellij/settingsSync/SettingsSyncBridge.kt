@@ -31,7 +31,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
                          private val remoteCommunicator: SettingsSyncRemoteCommunicator,
                          private val updateChecker: SettingsSyncUpdateChecker) {
 
-  private val pendingEvents = ContainerUtil.createConcurrentList<SyncSettingsEvent>()
+  private val pendingEvents = ContainerUtil.createConcurrentList<SyncSettingsEvent.StandardEvent>()
 
   private val queue = MergingUpdateQueue("SettingsSyncBridge", 1000, false, null, parentDisposable, null,
                                          Alarm.ThreadToUse.POOLED_THREAD).apply {
@@ -47,13 +47,13 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
   private val settingsChangeListener = SettingsChangeListener { event ->
     LOG.debug("Adding settings changed event $event to the queue")
-    if (isEventExclusive(event)) { // such events will be processed separately from all others
+    if (event is SyncSettingsEvent.ExclusiveEvent) { // such events will be processed separately from all others
       queue.queue(Update.create(event) {
         processExclusiveEvent(event)
       })
     }
     else {
-      pendingEvents.add(event)
+      pendingEvents.add(event as SyncSettingsEvent.StandardEvent)
       queue.queue(updateObject)
     }
   }
@@ -84,7 +84,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
     settingsLog.logExistingSettings()
 
-    SettingsSynchronizer.checkCrossIdeSyncStatusOnServer(remoteCommunicator)
+    checkCrossIdeSyncStatusOnServer(remoteCommunicator)
 
     try {
       when (initMode) {
@@ -157,11 +157,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     object PushToServer : InitMode()
   }
 
-  private fun isEventExclusive(event: SyncSettingsEvent): Boolean {
-    return event is SyncSettingsEvent.CrossIdeSyncStateChanged
-  }
-
-  private fun processExclusiveEvent(event: SyncSettingsEvent) {
+  private fun processExclusiveEvent(event: SyncSettingsEvent.ExclusiveEvent) {
     when (event) {
       is SyncSettingsEvent.CrossIdeSyncStateChanged -> {
         LOG.info("Cross-ide sync state changed to: " + event.isCrossIdeSyncEnabled)
@@ -173,8 +169,8 @@ class SettingsSyncBridge(parentDisposable: Disposable,
         }
         forcePushToCloud(settingsLog.getMasterPosition())
       }
-      else -> {
-        LOG.error("Unexpected event $event. It should be processed within ordinary events")
+      is SyncSettingsEvent.SyncRequest -> {
+        checkServer()
       }
     }
   }
@@ -212,10 +208,6 @@ class SettingsSyncBridge(parentDisposable: Disposable,
             mergeAndPushAfterProcessingEvents = false
             stopSyncingAndRollback(previousState)
           }
-          SyncSettingsEvent.PingRequest -> {}
-          is SyncSettingsEvent.CrossIdeSyncStateChanged -> {
-            LOG.error("Unexpected event $event. It should have been processed separately")
-          }
         }
       }
 
@@ -243,6 +235,41 @@ class SettingsSyncBridge(parentDisposable: Disposable,
       SettingsSyncPushResult.Rejected -> {
         afterDeleting(DeleteServerDataResult.Error("Deletion rejected by server"))
       }
+    }
+  }
+
+  private fun checkServer() {
+    checkCrossIdeSyncStatusOnServer(remoteCommunicator)
+
+    when (remoteCommunicator.checkServerState()) {
+      is ServerState.UpdateNeeded -> {
+        LOG.info("Updating from server")
+        updateChecker.scheduleUpdateFromServer()
+        // the push will happen automatically after updating and merging (if there is anything to merge)
+      }
+      ServerState.FileNotExists -> {
+        LOG.info("No file on server, will push local settings")
+        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.MustPushRequest)
+      }
+      ServerState.UpToDate -> {
+        LOG.debug("Updating settings is not needed")
+      }
+      is ServerState.Error -> {
+        // error already logged in checkServerState
+      }
+    }
+  }
+
+  private fun checkCrossIdeSyncStatusOnServer(remoteCommunicator: SettingsSyncRemoteCommunicator) {
+    try {
+      val crossIdeSyncEnabled = remoteCommunicator.isFileExists(CROSS_IDE_SYNC_MARKER_FILE)
+      if (crossIdeSyncEnabled != SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled) {
+        LOG.info("Cross-IDE sync status on server is: ${enabledOrDisabled(crossIdeSyncEnabled)}. Updating local settings with it.")
+        SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled = crossIdeSyncEnabled
+      }
+    }
+    catch (e: Throwable) {
+      LOG.error("Couldn't check if $CROSS_IDE_SYNC_MARKER_FILE exists", e)
     }
   }
 

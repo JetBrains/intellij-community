@@ -322,9 +322,12 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       bridge.initialize(SettingsSyncBridge.InitMode.PushToServer)
     }
     val task2 = Callable {
-      SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
+      SettingsSynchronizer.syncSettings()
     }
-    ConcurrencyUtil.invokeAll(setOf(task1, task2), createBoundedScheduledExecutorService("SettingsSyncFlowTest", 2))
+
+    executeAndWaitUntilPushed {
+      ConcurrencyUtil.invokeAll(setOf(task1, task2), createBoundedScheduledExecutorService("SettingsSyncFlowTest", 2))
+    }
 
     assertTrue("Settings Sync has been disabled", SettingsSyncSettings.getInstance().syncEnabled)
 
@@ -388,7 +391,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   private fun syncSettingsAndWait() {
-    SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
+    SettingsSynchronizer.syncSettings()
     bridge.waitForAllExecuted()
   }
 

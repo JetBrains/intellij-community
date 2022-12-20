@@ -19,9 +19,9 @@ import java.nio.charset.StandardCharsets
 import java.time.Instant
 
 @ApiStatus.Internal
-fun SettingsSnapshot.assertSettingsSnapshot(build: SettingsSnapshotBuilder.() -> Unit) {
+fun SettingsSnapshot.assertSettingsSnapshot(buildExpectedSnapshot: SettingsSnapshotBuilder.() -> Unit) {
   val settingsSnapshotBuilder = SettingsSnapshotBuilder()
-  settingsSnapshotBuilder.build()
+  settingsSnapshotBuilder.buildExpectedSnapshot()
   assertFileStates(settingsSnapshotBuilder.fileStates, fileStates)
   assertFileStates(settingsSnapshotBuilder.additionalFiles, additionalFiles)
   assertEquals(settingsSnapshotBuilder.plugins, plugins?.plugins ?: emptyMap<PluginId, PluginData>())
