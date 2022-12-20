@@ -80,11 +80,11 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     this(profileName, toolSupplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance(), baseProfile, null);
   }
 
-  protected InspectionProfileImpl(@NotNull String profileName,
-                                  @NotNull InspectionToolsSupplier toolSupplier,
-                                  @NotNull BaseInspectionProfileManager profileManager,
-                                  @Nullable InspectionProfileImpl baseProfile,
-                                  @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
+  public InspectionProfileImpl(@NotNull String profileName,
+                               @NotNull InspectionToolsSupplier toolSupplier,
+                               @NotNull BaseInspectionProfileManager profileManager,
+                               @Nullable InspectionProfileImpl baseProfile,
+                               @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
     super(profileName, profileManager);
 
     myToolSupplier = toolSupplier;
