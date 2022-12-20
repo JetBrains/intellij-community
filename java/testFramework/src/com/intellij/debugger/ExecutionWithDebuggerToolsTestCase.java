@@ -9,7 +9,6 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.impl.PrioritizedTask;
-import com.intellij.debugger.impl.SynchronizationBasedSemaphore;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
