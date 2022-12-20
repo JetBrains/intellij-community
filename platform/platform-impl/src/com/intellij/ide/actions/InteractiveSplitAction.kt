@@ -7,11 +7,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorWindow
-import com.intellij.openapi.fileEditor.impl.EditorWindow.SplitterService
-import com.intellij.openapi.fileEditor.impl.EditorWindow.SplitterService.Companion.getInstance
+import com.intellij.openapi.fileEditor.impl.SplitterService
 import com.intellij.openapi.project.DumbAware
 
-internal class InteractiveSplitAction : AnAction(), DumbAware {
+private class InteractiveSplitAction : AnAction(), DumbAware {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.project != null && e.getData(CommonDataKeys.VIRTUAL_FILE) != null
   }
@@ -21,10 +20,9 @@ internal class InteractiveSplitAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     var editorWindow = e.getData(EditorWindow.DATA_KEY)
     // When invoked from editor VF in context can be different from the actual editor VF, e.g. for diff in editor tab
-    val file = if (editorWindow?.selectedFile == null) e.getData(CommonDataKeys.VIRTUAL_FILE) else editorWindow.selectedFile
-    var openedFromEditor = true
-    if (editorWindow == null) {
-      openedFromEditor = false
+    val file = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: editorWindow?.selectedFile
+    val openedFromEditor = editorWindow != null
+    if (!openedFromEditor) {
       editorWindow = FileEditorManagerEx.getInstanceEx(e.project!!).splitters.currentWindow
     }
     if (editorWindow == null) {
@@ -32,14 +30,12 @@ internal class InteractiveSplitAction : AnAction(), DumbAware {
       openFile(file = file!!, project = e.project!!)
     }
     else {
-      getInstance().activateSplitChooser(window = editorWindow, file = file!!, openedFromEditor = openedFromEditor)
+      SplitterService.getInstance().activateSplitChooser(window = editorWindow, file = file!!, openedFromEditor = openedFromEditor)
     }
   }
 
-  abstract class Key : AnAction(), DumbAware {
-    override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.EDT
-    }
+  sealed class Key : AnAction(), DumbAware {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun update(e: AnActionEvent) {
       val splitterService = ApplicationManager.getApplication().serviceIfCreated<SplitterService>()
@@ -48,61 +44,61 @@ internal class InteractiveSplitAction : AnAction(), DumbAware {
 
     internal class NextWindow : Key() {
       override fun actionPerformed(e: AnActionEvent) {
-        getInstance().nextWindow()
+        SplitterService.getInstance().nextWindow()
       }
     }
 
     internal class PreviousWindow : Key() {
       override fun actionPerformed(e: AnActionEvent) {
-        getInstance().previousWindow()
+        SplitterService.getInstance().previousWindow()
       }
     }
 
     internal class Exit : Key() {
       override fun actionPerformed(e: AnActionEvent) {
-        getInstance().stopSplitChooser(true)
+        SplitterService.getInstance().stopSplitChooser(true)
       }
     }
 
     internal class Split : Key() {
       override fun actionPerformed(e: AnActionEvent) {
-        getInstance().split(true)
+        SplitterService.getInstance().split(true)
       }
     }
 
     internal class Duplicate : Key() {
       override fun actionPerformed(e: AnActionEvent) {
-        getInstance().split(false)
+        SplitterService.getInstance().split(false)
       }
     }
 
     internal class SplitCenter : Key() {
       override fun actionPerformed(e: AnActionEvent) {
-        getInstance().setSplitSide(EditorWindow.RelativePosition.CENTER)
+        SplitterService.getInstance().setSplitSide(EditorWindow.RelativePosition.CENTER)
       }
     }
 
     internal class SplitTop : Key() {
       override fun actionPerformed(e: AnActionEvent) {
-        getInstance().setSplitSide(EditorWindow.RelativePosition.UP)
+        SplitterService.getInstance().setSplitSide(EditorWindow.RelativePosition.UP)
       }
     }
 
     internal class SplitLeft : Key() {
       override fun actionPerformed(e: AnActionEvent) {
-        getInstance().setSplitSide(EditorWindow.RelativePosition.LEFT)
+        SplitterService.getInstance().setSplitSide(EditorWindow.RelativePosition.LEFT)
       }
     }
 
     internal class SplitDown : Key() {
       override fun actionPerformed(e: AnActionEvent) {
-        getInstance().setSplitSide(EditorWindow.RelativePosition.DOWN)
+        SplitterService.getInstance().setSplitSide(EditorWindow.RelativePosition.DOWN)
       }
     }
 
     internal class SplitRight : Key() {
       override fun actionPerformed(e: AnActionEvent) {
-        getInstance().setSplitSide(EditorWindow.RelativePosition.RIGHT)
+        SplitterService.getInstance().setSplitSide(EditorWindow.RelativePosition.RIGHT)
       }
     }
   }

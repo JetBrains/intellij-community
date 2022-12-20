@@ -88,7 +88,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     // note that foo.xml is pinned
     assertOpenFiles("foo.xml");
     manager.openFile(getFile("/src/3.txt"), true);
-    // the limit is still 1, but a pinned flag prevents closing tab, and the actual tab number may exceed the limit
+    // the limit is still 1, but a pinned flag prevents closing the tab, and the actual tab number may exceed the limit
     assertOpenFiles("foo.xml", "3.txt");
 
     manager.closeAllFiles();
@@ -332,7 +332,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     manager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
     EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);
     manager.openFileImpl2(secondaryWindow, file2, new FileEditorOpenOptions().withRequestFocus(true));
-    manager.closeFile(file, secondaryWindow, true);
+    manager.closeFile(file, secondaryWindow);
 
     // the default behavior is to reuse the existing splitter
     new OpenFileDescriptor(getProject(), file).navigate(true);
@@ -350,7 +350,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     manager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
     EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);
     manager.openFileImpl2(secondaryWindow, file2, new FileEditorOpenOptions().withRequestFocus(true));
-    manager.closeFile(file, secondaryWindow, true);
+    manager.closeFile(file, secondaryWindow);
 
     // with the changed setting, we want to open the file in the current splitter (
     new OpenFileDescriptor(getProject(), file).navigate(true);
@@ -368,7 +368,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     manager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
     EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);
     manager.openFileImpl2(secondaryWindow, file2, new FileEditorOpenOptions().withRequestFocus(true));
-    manager.closeFile(file, secondaryWindow, true);
+    manager.closeFile(file, secondaryWindow);
 
     // with the changed setting, we want to open the file in the current splitter (
     new OpenFileDescriptor(getProject(), file).setUseCurrentWindow(true).navigate(true);
