@@ -254,9 +254,12 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
     }
 
     private static boolean couldBeThrowableSupplier(@NotNull LoggerType loggerType,
-                                                    @NotNull PsiParameter lastParameter,
-                                                    @NotNull PsiExpression lastArgument) {
+                                                    @Nullable PsiParameter lastParameter,
+                                                    @Nullable PsiExpression lastArgument) {
       if (loggerType != LoggerType.LOG4J_OLD_STYLE && loggerType != LoggerType.LOG4J_FORMATTED_STYLE) {
+        return false;
+      }
+      if (lastParameter == null || lastArgument == null) {
         return false;
       }
       PsiType lastParameterType = lastParameter.getType();
