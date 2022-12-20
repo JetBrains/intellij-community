@@ -31,7 +31,13 @@ private suspend fun performRender() {
 
 suspend fun main() {
   MermaidInitializationManager.initializeIfNeeded()
-  // TODO: Work started on previous patch event probably needs to be cancelled, if there is already a new event
-  IncrementalDom.afterPatchEvents().onEach { performRender() }.collect()
-  performRender()
+  coroutineScope {
+    launch {
+      // TODO: Work started on previous patch event probably needs to be cancelled, if there is already a new event
+      IncrementalDom.afterPatchEvents().onEach { performRender() }.collect()
+    }
+    launch {
+      performRender()
+    }
+  }
 }
