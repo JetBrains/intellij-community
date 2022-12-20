@@ -77,7 +77,7 @@ private const val regularFileMode = 420
 // 0777 octal -> 511 decimal
 private const val executableFileMode = 511
 
-internal fun signMacApp(
+internal fun notarizeAndBuildDmg(
   context: BuildContext,
   host: String,
   user: String,
@@ -91,9 +91,11 @@ internal fun signMacApp(
   artifactDir: Path,
   dmgImage: Path?,
   artifactBuilt: Consumer<Path>,
-  publishAppArchive: Boolean,
-  jetSignClient: Path
+  publishAppArchive: Boolean
 ) {
+  require(notarize || dmgImage != null) {
+    "Both Apple Notarization and .dmg creation are disabled"
+  }
   executeTask(host, user, password, "intellij-builds/${fullBuildNumber}") { ssh, sftp, remoteDir ->
     spanBuilder("upload file")
       .setAttribute("file", appArchiveFile.toString())
@@ -110,26 +112,22 @@ internal fun signMacApp(
       .setAttribute("host", host)
       .use {
         sftp.put(NioFileSource(scriptDir.resolve("entitlements.xml"), filePermission = regularFileMode), "$remoteDir/entitlements.xml")
-        for (fileName in listOf("sign.sh", "notarize.sh", "signapp.sh", "makedmg.sh", "makedmg.py", "codesign.sh")) {
+        for (fileName in listOf("notarize.sh", "signapp.sh", "makedmg.sh", "makedmg.py")) {
           sftp.put(NioFileSource(scriptDir.resolve(fileName), filePermission = executableFileMode), "$remoteDir/$fileName")
         }
 
         if (dmgImage != null) {
           sftp.put(NioFileSource(dmgImage, filePermission = regularFileMode), "$remoteDir/$fullBuildNumber.png")
         }
-        sftp.put(NioFileSource(jetSignClient, filePermission = executableFileMode), "$remoteDir/${jetSignClient.name}")
       }
 
     val args = listOf(
-      appArchiveFile.fileName.toString(),
+      appArchiveFile.name,
       fullBuildNumber,
-      user,
-      password,
-      codesignString,
       if (notarize) "yes" else "no",
       bundleIdentifier,
-      publishAppArchive.toString(),
-      "/Users/$user/$remoteDir/${jetSignClient.name}"
+      codesignString,
+      publishAppArchive.toString()
     )
     val buildDate = "${GlobalOptions.BUILD_DATE_IN_SECONDS}=${context.options.buildDateInSeconds}"
     val env = sequenceOf("ARTIFACTORY_URL", "SERVICE_ACCOUNT_NAME", "SERVICE_ACCOUNT_TOKEN")
@@ -156,7 +154,7 @@ internal fun signMacApp(
     }
 
     if (dmgImage != null) {
-      val fileNameWithoutExt = appArchiveFile.fileName.toString().removeSuffix(".sit")
+      val fileNameWithoutExt = appArchiveFile.name.removeSuffix(".sit")
       val dmgFile = artifactDir.resolve("$fileNameWithoutExt.dmg")
       spanBuilder("build dmg").setAttribute("file", dmgFile.toString()).useWithScope {
         processFile(localFile = dmgFile,

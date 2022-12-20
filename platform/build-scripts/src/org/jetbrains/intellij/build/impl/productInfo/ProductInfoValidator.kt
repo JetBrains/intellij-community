@@ -28,7 +28,7 @@ internal fun checkInArchive(archiveFile: Path, pathInArchive: String, context: B
   validateProductJson(jsonText = entryData.decodeToString(),
                       relativePathToProductJson = "",
                       installationDirectories = emptyList(),
-                      installationArchives = listOf(Pair(archiveFile, pathInArchive)),
+                      installationArchives = listOf(archiveFile to pathInArchive),
                       context = context)
 }
 

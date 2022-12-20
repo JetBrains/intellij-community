@@ -13,6 +13,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -161,7 +162,7 @@ class MacDistributionBuilder(override val context: BuildContext,
         )
       }
       if (publishZipOnly) {
-        Span.current().addEvent("skip DMG and SIT artifacts producing")
+        Span.current().addEvent("skip .dmg and .sit artifacts producing")
         if (context.options.buildMacArtifactsWithRuntime) {
           context.notifyArtifactBuilt(macZip)
         }
@@ -170,8 +171,7 @@ class MacDistributionBuilder(override val context: BuildContext,
         }
       }
       else {
-        buildForArch(builtinModule = context.builtinModule,
-                     arch = arch,
+        buildForArch(arch = arch,
                      macZip = macZip,
                      macZipWithoutRuntime = macZipWithoutRuntime,
                      customizer = customizer,
@@ -353,24 +353,22 @@ class MacDistributionBuilder(override val context: BuildContext,
     return customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
   }
 
-  private suspend fun buildForArch(builtinModule: BuiltinModulesFileData?,
-                                   arch: JvmArchitecture,
-                                   macZip: Path, macZipWithoutRuntime: Path?,
-                                   customizer: MacDistributionCustomizer,
+  private suspend fun buildForArch(arch: JvmArchitecture,
+                                   macZip: Path,
+                                   macZipWithoutRuntime: Path?, customizer: MacDistributionCustomizer,
                                    context: BuildContext) {
     spanBuilder("build macOS artifacts for specific arch").setAttribute("arch", arch.name).useWithScope2 {
       val notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true)
       withContext(Dispatchers.IO) {
-        buildForArch(builtinModule, arch, macZip, macZipWithoutRuntime, notarize, customizer, context)
+        buildForArch(arch, macZip, macZipWithoutRuntime, notarize, customizer, context)
         Files.deleteIfExists(macZip)
       }
     }
   }
 
-  private suspend fun buildForArch(builtinModule: BuiltinModulesFileData?,
-                                   arch: JvmArchitecture,
-                                   macZip: Path, macZipWithoutRuntime: Path?,
-                                   notarize: Boolean,
+  private suspend fun buildForArch(arch: JvmArchitecture,
+                                   macZip: Path,
+                                   macZipWithoutRuntime: Path?, notarize: Boolean,
                                    customizer: MacDistributionCustomizer,
                                    context: BuildContext) {
     val suffix = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
@@ -382,7 +380,6 @@ class MacDistributionBuilder(override val context: BuildContext,
           context
         ) {
           signAndBuildDmg(builder = this@MacDistributionBuilder,
-                          builtinModule = builtinModule,
                           context = context,
                           customizer = customizer,
                           macHostProperties = context.proprietaryBuildTools.macHostProperties,
@@ -401,7 +398,6 @@ class MacDistributionBuilder(override val context: BuildContext,
           context
         ) {
           signAndBuildDmg(builder = this@MacDistributionBuilder,
-                          builtinModule = builtinModule,
                           context = context,
                           customizer = customizer,
                           macHostProperties = context.proprietaryBuildTools.macHostProperties,
@@ -487,6 +483,10 @@ private suspend fun MacDistributionBuilder.buildMacZip(targetFile: Path,
         writeNewFile(targetFile) { targetFileChannel ->
           NoDuplicateZipArchiveOutputStream(targetFileChannel, compress = context.options.compressZipFiles).use { zipOutStream ->
             zipOutStream.setLevel(compressionLevel)
+            if (compressionLevel == Deflater.BEST_SPEED) {
+              // file is used only for transfer to mac builder
+              zipOutStream.setUseZip64(Zip64Mode.Never)
+            }
 
             zipOutStream.entry("$zipRoot/Resources/product-info.json", productJson.encodeToByteArray())
 
