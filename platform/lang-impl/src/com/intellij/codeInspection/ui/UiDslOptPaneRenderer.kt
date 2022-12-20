@@ -14,6 +14,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.fields.IntegerField
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.selected
 import javax.swing.*
 import kotlin.math.max
 
@@ -32,91 +33,8 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
   private fun Panel.render(component: OptComponent, tool: InspectionProfileEntry) {
     when (component) {
-      is OptCheckbox -> {
-        lateinit var checkbox: Cell<JBCheckBox>
-        row {
-          checkbox = checkBox(component.label.label())
-            .applyToComponent {
-              isSelected = tool.getOption(component.bindId) as Boolean
-            }
-            .onChanged { tool.setOption(component.bindId, it.isSelected) }
-        }
-
-        // Add checkbox nested components
-        if (component.children.any()) {
-          indent {
-            component.children.forEach { render(it, tool) }
-          }
-            .enabledIf(checkbox.selected)
-        }
-      }
-
-      is OptString -> {
-        row {
-          label(component.splitLabel.splitLabel().prefix)
-            .gap(RightGap.SMALL)
-
-          textField()
-            .applyToComponent {
-              if (component.width > 0) columns = component.width
-              text = tool.getOption(component.bindId) as String
-            }
-            .onChanged { tool.setOption(component.bindId, it.text) }
-            .gap(RightGap.SMALL)
-
-          val suffix = component.splitLabel.splitLabel().suffix
-          if (suffix.isNotBlank()) label(suffix)
-        }
-      }
-
-      is OptNumber -> {
-        row {
-          label(component.splitLabel.splitLabel().prefix)
-            .gap(RightGap.SMALL)
-
-          cell(IntegerField().apply {
-            minValue = component.minValue
-            maxValue = component.maxValue
-            columns = max(component.maxValue.toString().length, component.minValue.toString().length)
-            value = tool.getOption(component.bindId) as Int
-          })
-            .onChanged { tool.setOption(component.bindId, it.value) }
-            .gap(RightGap.SMALL)
-
-          val suffix = component.splitLabel.splitLabel().suffix
-          if (suffix.isNotBlank()) label(suffix)
-        }
-      }
-
-      is OptDropdown -> {
-        row {
-          label(component.splitLabel.splitLabel().prefix)
-            .gap(RightGap.SMALL)
-
-          comboBox(getComboBoxModel(component.options), getComboBoxRenderer())
-            .applyToComponent {
-              val option = tool.getOption(component.bindId)
-              @Suppress("HardCodedStringLiteral")
-              model.selectedItem = if (option is Enum<*>) option.name else option.toString()
-            }
-            .onChanged { tool.setOption(component.bindId, convertItem((it.selectedItem as OptDropdown.Option).key, tool.getOption(component.bindId).javaClass)) }
-            .gap(RightGap.SMALL)
-
-          val suffix = component.splitLabel.splitLabel().suffix
-          if (suffix.isNotBlank()) label(suffix)
-        }
-      }
-
-      is OptCustom -> {
-        row {
-          val extension = CustomComponentExtension.find(component.componentId) ?: throw IllegalStateException(
-            "Unregistered component: " + component.componentId)
-          if (extension !is CustomComponentExtensionWithSwingRenderer<*>) {
-            throw IllegalStateException("Component does not implement ")
-          }
-          // TODO: Get a parent somehow or update API
-          cell(extension.render(component, JPanel()))
-        }
+      is OptControl, is OptSettingLink, is OptCustom -> {
+        renderOptRow(component, tool)
       }
 
       is OptGroup -> {
@@ -144,32 +62,132 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           .resizableRow()
       }
 
-      is OptSettingLink -> {
-        val label = HyperlinkLabel(component.displayName)
-        label.addHyperlinkListener {
-          val dataContext = DataManager.getInstance().getDataContext(label)
-
-          val settings = Settings.KEY.getData(dataContext)
-          if (settings == null) {
-            val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return@addHyperlinkListener
-            // Settings dialog was opened without configurable hierarchy tree in the left area
-            // (e.g. by invoking "Edit inspection profile setting" fix)
-            ShowSettingsUtil.getInstance().showSettingsDialog(
-              project, { conf -> ConfigurableVisitor.getId(conf) == component.configurableID }
-            ) { conf -> component.controlLabel?.let { label -> conf.focusOn(label) } }
-          }
-          else {
-            val configurable = settings.find(component.configurableID) ?: return@addHyperlinkListener
-            settings.select(configurable)
-            component.controlLabel?.let { configurable.focusOn(it) }
-          }
-        }
-        row { cell(label) }
-      }
-
-      is OptMap -> TODO()
-      is OptSet -> TODO()
       is OptHorizontalStack -> TODO()
+    }
+  }
+
+  private val OptComponent.splitLabel: LocMessage.PrefixSuffix?
+    get() = when (this) {
+      is OptString -> splitLabel.splitLabel()
+      is OptNumber -> splitLabel.splitLabel()
+      is OptDropdown -> splitLabel.splitLabel()
+      else -> null
+    }
+
+  private val OptComponent.nestedControls: List<OptComponent>?
+    get() = when(this) {
+      is OptCheckbox -> children
+      else -> null
+    }
+
+  private fun Panel.renderOptRow(component: OptComponent, tool: InspectionProfileEntry) {
+    val splitLabel = component.splitLabel
+    lateinit var cell: Cell<JComponent>
+    when {
+      // Split label
+      splitLabel != null && splitLabel.suffix.isNotBlank() -> {
+        row {
+          label(splitLabel.prefix)
+            .gap(RightGap.SMALL)
+          cell = renderOptCell(component, tool)
+            .gap(RightGap.SMALL)
+          label(splitLabel.suffix)
+        }
+      }
+      // Split label with null suffix
+      splitLabel?.prefix != null -> row(splitLabel.prefix) { cell = renderOptCell(component, tool) }
+      // No row label (align left, control handles the label)
+      else -> row { cell = renderOptCell(component, tool) }
+    }
+
+    // Nested components
+    component.nestedControls?.let { nested ->
+      val group = indent {
+        nested.forEach { render(it, tool) }
+      }
+      if (cell.component is JBCheckBox) {
+        group.enabledIf((cell.component as JBCheckBox).selected)
+      }
+    }
+  }
+
+  private fun Row.renderOptCell(component: OptComponent, tool: InspectionProfileEntry): Cell<JComponent> {
+    return when (component) {
+        is OptCheckbox -> {
+          checkBox(component.label.label())
+            .applyToComponent {
+              isSelected = tool.getOption(component.bindId) as Boolean
+            }
+            .onChanged { tool.setOption(component.bindId, it.isSelected) }
+        }
+
+        is OptString -> {
+          textField()
+            .applyToComponent {
+              if (component.width > 0) columns = component.width
+              text = tool.getOption(component.bindId) as String
+            }
+            .onChanged { tool.setOption(component.bindId, it.text) }
+        }
+
+        is OptNumber -> {
+          cell(IntegerField().apply {
+            minValue = component.minValue
+            maxValue = component.maxValue
+            columns = max(component.maxValue.toString().length, component.minValue.toString().length)
+            value = tool.getOption(component.bindId) as Int
+          })
+            .onChanged { tool.setOption(component.bindId, it.value) }
+        }
+
+        is OptDropdown -> {
+          comboBox(getComboBoxModel(component.options), getComboBoxRenderer())
+            .applyToComponent {
+              val option = tool.getOption(component.bindId)
+              @Suppress("HardCodedStringLiteral")
+              model.selectedItem = if (option is Enum<*>) option.name else option.toString()
+            }
+            .onChanged { tool.setOption(component.bindId, convertItem((it.selectedItem as OptDropdown.Option).key, tool.getOption(component.bindId).javaClass)) }
+            .gap(RightGap.SMALL)
+        }
+
+        is OptSettingLink -> {
+          val label = HyperlinkLabel(component.displayName)
+          label.addHyperlinkListener {
+            val dataContext = DataManager.getInstance().getDataContext(label)
+
+            val settings = Settings.KEY.getData(dataContext)
+            if (settings == null) {
+              val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return@addHyperlinkListener
+              // Settings dialog was opened without configurable hierarchy tree in the left area
+              // (e.g. by invoking "Edit inspection profile setting" fix)
+              ShowSettingsUtil.getInstance().showSettingsDialog(
+                project, { conf -> ConfigurableVisitor.getId(conf) == component.configurableID }
+              ) { conf -> component.controlLabel?.let { label -> conf.focusOn(label) } }
+            }
+            else {
+              val configurable = settings.find(component.configurableID) ?: return@addHyperlinkListener
+              settings.select(configurable)
+              component.controlLabel?.let { configurable.focusOn(it) }
+            }
+          }
+          cell(label)
+        }
+
+        is OptCustom -> {
+          val extension = CustomComponentExtension.find(component.componentId) ?: throw IllegalStateException(
+            "Unregistered component: " + component.componentId)
+          if (extension !is CustomComponentExtensionWithSwingRenderer<*>) {
+            throw IllegalStateException("Component does not implement ")
+          }
+          // TODO: Get a parent somehow or update API
+          cell(extension.render(component, JPanel()))
+        }
+
+        is OptMap -> TODO()
+        is OptSet -> TODO()
+
+        is OptGroup, is OptHorizontalStack, is OptSeparator, is OptTabSet -> { throw IllegalStateException("Unsupported nested components") }
     }
   }
 
