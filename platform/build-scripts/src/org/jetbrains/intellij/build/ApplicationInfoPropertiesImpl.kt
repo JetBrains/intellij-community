@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.impl.BuildUtils
+import org.jetbrains.intellij.build.impl.readSnapshotBuildNumber
 import org.jetbrains.jps.model.JpsProject
 import java.nio.file.Files
 import java.nio.file.Path
@@ -124,8 +125,9 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
       "buildContext property is not initialized, please use different constructor"
     }
     val appInfoXmlPath = findApplicationInfoInSources(context.project, context.productProperties)
-    check("$majorVersion$minorVersion".removePrefix("20") == context.buildNumber.takeWhile { it != '.' }) {
-      "'major=$majorVersion' and 'minor=$minorVersion' attributes of '$appInfoXmlPath' don't match supplied build number '${context.buildNumber}'"
+    val snapshotBuildNumber = readSnapshotBuildNumber(context.paths.communityHomeDirRoot)
+    check("$majorVersion$minorVersion".removePrefix("20") == snapshotBuildNumber.takeWhile { it != '.' }) {
+      "'major=$majorVersion' and 'minor=$minorVersion' attributes of '$appInfoXmlPath' don't match snapshot build number '$snapshotBuildNumber'"
     }
     val artifactsServer = context.proprietaryBuildTools.artifactsServer
     var builtinPluginsRepoUrl = ""
