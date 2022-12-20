@@ -36,6 +36,10 @@ internal abstract class KtModuleByModuleInfoBase(
     open val directDependsOnDependencies: List<KtModule>
         get() = ideaModuleInfo.expectedBy.map(provider::getKtModuleByModuleInfo)
 
+    // TODO: Implement some form of caching. Also see `ProjectStructureProviderIdeImpl.getKtModuleByModuleInfo`.
+    val transitiveDependsOnDependencies: List<KtModule>
+        get() = computeTransitiveDependsOnDependencies(directDependsOnDependencies)
+
     open val directFriendDependencies: List<KtModule>
         get() = ideaModuleInfo.modulesWhoseInternalsAreVisible().map(provider::getKtModuleByModuleInfo)
 
