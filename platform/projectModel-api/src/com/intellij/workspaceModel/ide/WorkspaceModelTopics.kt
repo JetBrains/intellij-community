@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import java.util.*
@@ -34,6 +33,14 @@ class WorkspaceModelTopics : Disposable {
     @Topic.ProjectLevel
     @JvmField
     val CHANGED = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
+
+    /**
+     * Subscribe to this topic to be notified about changes in unloaded entities. 
+     * Note that most of the code should simply ignore unloaded entities and therefore shouldn't be interested in these changes. 
+     */
+    @Topic.ProjectLevel
+    @JvmField
+    val UNLOADED_ENTITIES_CHANGED = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
 
     @JvmStatic
     fun getInstance(project: Project): WorkspaceModelTopics = project.service()

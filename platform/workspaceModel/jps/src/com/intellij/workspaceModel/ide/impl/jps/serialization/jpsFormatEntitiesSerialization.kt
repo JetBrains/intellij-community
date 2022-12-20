@@ -115,21 +115,30 @@ interface JpsProjectSerializers {
     }
   }
 
-  suspend fun loadAll(reader: JpsFileContentReader, builder: MutableEntityStorage, errorReporter: ErrorReporter, project: Project?): List<EntitySource>
+  suspend fun loadAll(reader: JpsFileContentReader, builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage,
+                      unloadedModuleNames: Set<String>, errorReporter: ErrorReporter, project: Project?): List<EntitySource>
 
   fun reloadFromChangedFiles(change: JpsConfigurationFilesChange,
                              reader: JpsFileContentReader,
-                             errorReporter: ErrorReporter): Pair<Set<EntitySource>, MutableEntityStorage>
+                             unloadedModuleNames: Set<String>,
+                             errorReporter: ErrorReporter): ReloadingResult
 
   @TestOnly
   fun saveAllEntities(storage: EntityStorage, writer: JpsFileContentWriter)
 
-  fun saveEntities(storage: EntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter)
+  fun saveEntities(storage: EntityStorage, unloadedEntityStorage: EntityStorage, affectedSources: Set<EntitySource>,
+                   writer: JpsFileContentWriter)
   
   fun getAllModulePaths(): List<ModulePath>
 
   fun changeEntitySourcesToDirectoryBasedFormat(builder: MutableEntityStorage)
 }
+
+data class ReloadingResult(
+  val builder: MutableEntityStorage,
+  val unloadedEntityBuilder: MutableEntityStorage,
+  val affectedSources: Set<EntitySource>
+)
 
 interface ErrorReporter {
   fun reportError(@Nls message: String, file: VirtualFileUrl)
