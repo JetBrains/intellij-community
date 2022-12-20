@@ -320,7 +320,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     SimpleColoredComponent renderer = new SimpleColoredComponent();
     renderer.setOpaque(false);
     renderer.setIcon(group.getIcon());
-    SimpleTextAttributes attributes = deriveBgColor(SimpleTextAttributes.REGULAR_ATTRIBUTES, fileBgColor);
+    SimpleTextAttributes attributes = deriveBgColor(group.getTextAttributes(isSelected), fileBgColor);
     renderer.append(group.getPresentableGroupText(), attributes);
     SpeedSearchUtil.applySpeedSearchHighlighting(table, renderer, false, isSelected);
     panel.add(renderer);
