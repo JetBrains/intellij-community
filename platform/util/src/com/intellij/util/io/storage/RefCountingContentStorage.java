@@ -5,8 +5,14 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
+import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMaps;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +22,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -32,6 +39,18 @@ public final class RefCountingContentStorage extends AbstractStorage {
   private final boolean myUseContentHashes;
 
   private static final int MAX_PENDING_WRITE_SIZE = 20 * 1024 * 1024;
+
+  private final IntObjectMap<RecordData> myCurrentRecords = ContainerUtil.createConcurrentIntObjectMap();
+
+  private static class RecordData {
+    private final int compressedSize;
+    private final int compressedHash;
+
+    private RecordData(int size, int hash) {
+      compressedSize = size;
+      compressedHash = hash;
+    }
+  }
 
   public RefCountingContentStorage(@NotNull Path path,
                                    @Nullable CapacityAllocationPolicy capacityAllocationPolicy,
@@ -66,10 +85,28 @@ public final class RefCountingContentStorage extends AbstractStorage {
     waitForPendingWriteForRecord(record);
     byte[] result = withReadLock(() -> super.readBytes(record));
 
+    if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+      doRecordSanityCheck(record, result);
+    }
+
     try (InflaterInputStream in = new CustomInflaterInputStream(result)) {
       final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
       StreamUtil.copy(in, outputStream);
       return outputStream;
+    }
+  }
+
+  private void doRecordSanityCheck(int record, byte[] result) {
+    RecordData savedData = myCurrentRecords.get(record);
+    if (savedData == null) {
+      return;
+    }
+    int currentHash = 0;
+    if (savedData.compressedSize != result.length ||
+        savedData.compressedHash != (currentHash = new ByteArraySequence(result).hashCode())) {
+      String msg = "expected compressed len = " + savedData.compressedSize + ", but actual len = " + result.length + ", \n"
+                   + " expected content hash = " + savedData.compressedHash + ", but actual hash = " + currentHash;
+      throw new AssertionError(msg);
     }
   }
 
@@ -134,16 +171,16 @@ public final class RefCountingContentStorage extends AbstractStorage {
     try (DeflaterOutputStream out = new DeflaterOutputStream(s)) {
       out.write(bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
     }
+    ByteArraySequence compressedBytes = s.toByteArraySequence();
 
     withWriteLock(() -> {
-      doWrite(record, fixedSize, s);
+      super.writeBytes(record, compressedBytes, fixedSize);
+      if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+        myCurrentRecords.put(record, new RecordData(compressedBytes.getLength(), compressedBytes.hashCode()));
+      }
       myPendingWriteRequestsSize -= bytes.getLength();
       myPendingWriteRequests.remove(record);
     });
-  }
-
-  private void doWrite(int record, boolean fixedSize, BufferExposingByteArrayOutputStream s) throws IOException {
-    super.writeBytes(record, s.toByteArraySequence(), fixedSize);
   }
 
   @Override
