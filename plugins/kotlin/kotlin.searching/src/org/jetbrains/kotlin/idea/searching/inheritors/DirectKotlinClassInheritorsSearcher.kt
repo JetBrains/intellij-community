@@ -11,14 +11,12 @@ import com.intellij.util.Processor
 import com.intellij.util.Query
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinSuperClassIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtEnumEntry
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 
 internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassInheritorsSearch.SearchParameters, PsiElement> {
     @RequiresReadLock
@@ -49,9 +47,10 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
 
         val basePointer = runReadAction {
             analyze(baseClass) {
-                (baseClass.getSymbol() as? KtClassOrObjectSymbol)?.createPointer()
+                baseClass.getNamedClassOrObjectSymbol()?.createPointer()
             }
         } ?: return null
+
         val noLibrarySourceScope = KotlinSourceFilterScope.projectFiles(scope, project)
         return object : AbstractQuery<PsiElement>() {
             override fun processResults(consumer: Processor<in PsiElement>): Boolean {
@@ -60,8 +59,8 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
             }
 
             private fun processEnumConstantsWithClassInitializers(consumer: Processor<in PsiElement>) =
-                baseClass.collectDescendantsOfType<KtEnumEntry>().all { enumEntry ->
-                    enumEntry.body == null || consumer.process(enumEntry)
+                baseClass.declarations.all { enumEntry ->
+                    enumEntry !is KtEnumEntry || enumEntry.body == null || consumer.process(enumEntry)
                 }
 
             private fun processBaseName(name: String, consumer: Processor<in PsiElement>): Boolean {
@@ -79,14 +78,15 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
                 return true
             }
 
-            private fun isValidInheritor(ktClassOrObject: KtClassOrObject) : Boolean {
+            private fun isValidInheritor(ktClassOrObject: KtClassOrObject): Boolean {
                 ProgressManager.checkCanceled()
                 analyze(ktClassOrObject) {
                     val baseSymbol = basePointer.restoreSymbol() ?: return false
-                    val ktSymbol = ktClassOrObject.getSymbol() as? KtClassOrObjectSymbol ?: return false
+                    val ktSymbol = ktClassOrObject.getClassOrObjectSymbol() ?: return false
                     if (!parameters.includeAnonymous && ktSymbol !is KtNamedSymbol) {
                         return false
                     }
+
                     return ktSymbol.isSubClassOf(baseSymbol)
                 }
             }
