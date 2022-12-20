@@ -323,7 +323,8 @@ public class PyDocumentationBuilder {
   }
 
   private void buildFromDocstring(@NotNull final PyDocStringOwner elementDefinition, boolean isProperty) {
-    PyStringLiteralExpression docStringExpression = getEffectiveDocStringExpression(elementDefinition);
+    final PyStringLiteralExpression originalDocstring = getEffectiveDocStringExpression(elementDefinition);
+    final PyStringLiteralExpression effectiveDocstring = modifyDocStringByOwnerType(originalDocstring, elementDefinition, isProperty);
 
     if (PyUtil.isTopLevel(elementDefinition)) {
       final PsiFile containing = elementDefinition.getContainingFile();
@@ -339,11 +340,21 @@ public class PyDocumentationBuilder {
       myBody.add(PythonDocumentationProvider.describeDecorators(pyClass, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
       myBody.add(
         PythonDocumentationProvider.describeClass(pyClass, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, false, true, myContext));
-      docStringExpression = addClassDocumentation(docStringExpression, pyClass);
+      if (effectiveDocstring != null) {
+        addAttributesSection(effectiveDocstring);
+      }
+      if (originalDocstring != null) {
+        final PyFunction init = pyClass.findMethodByName(PyNames.INIT, false, myContext);
+        if (init != null) {
+          // add init parameters described in the class doc
+          addFunctionSpecificSections(originalDocstring, init);
+        }
+      }
     }
     else if (elementDefinition instanceof PyFunction pyFunction) {
       myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
       myBody.add(PythonDocumentationProvider.describeFunction(pyFunction, myContext, false));
+
       final PyClass pyClass = pyFunction.getContainingClass();
       if (!isProperty && pyClass != null) {
         final String link = getLinkToClass(pyClass, true);
@@ -351,7 +362,13 @@ public class PyDocumentationBuilder {
           myProlog.addItem(link);
         }
       }
-      docStringExpression = addFunctionDocumentation(docStringExpression, pyFunction, pyClass, isProperty);
+      if (effectiveDocstring != null) {
+        addFunctionSpecificSections(effectiveDocstring, pyFunction);
+      }
+      // if function is init without doc we will take attributes from the class doc
+      if (pyClass != null && originalDocstring == null && effectiveDocstring != null && PyUtil.isInitOrNewMethod(pyFunction)) {
+        addAttributesSection(effectiveDocstring);
+      }
     }
     else if (elementDefinition instanceof PyFile pyFile) {
       addModulePath(pyFile);
@@ -360,12 +377,12 @@ public class PyDocumentationBuilder {
       addTargetDocumentation(target, isProperty);
     }
 
-    final String formatterInput = docStringExpression != null && !isProperty ? docStringExpression.getStringValue() : null;
+    final String formatterInput = effectiveDocstring != null && !isProperty ? effectiveDocstring.getStringValue() : null;
 
     if (StringUtil.isEmpty(formatterInput) && myFormatterFragments.isEmpty()) return;
 
     final DocstringFormatterRequest output =
-      formatDocstring(myElement, new DocstringFormatterRequest(formatterInput, myFormatterFragments),
+      formatDocstring(myElement, new DocstringFormatterRequest(StringUtil.notNullize(formatterInput), myFormatterFragments),
                       List.of(FORMATTER_FRAGMENTS_FLAG));
 
     if (output != null) {
@@ -374,11 +391,33 @@ public class PyDocumentationBuilder {
     }
     else {
       // if docstring turned out PLAIN, but suddenly we have fragments or body to handle
-      if (docStringExpression != null) {
+      if (effectiveDocstring != null) {
         myContent.add(updateLines(myElement, Strings.notNullize(formatterInput)));
       }
       fillFormattedSections(myFormatterFragments);
     }
+  }
+
+  private @Nullable PyStringLiteralExpression modifyDocStringByOwnerType(@Nullable PyStringLiteralExpression docstring,
+                                                                         @NotNull PyDocStringOwner owner,
+                                                                         boolean isProperty) {
+    if (docstring == null && owner instanceof PyClass pyClass) {
+      final PyFunction init = pyClass.findMethodByName(PyNames.INIT, false, myContext);
+      // if class doesn't have any doc return init doc
+      if (init != null) {
+        return getEffectiveDocStringExpression(init);
+      }
+    }
+    else if (owner instanceof PyFunction pyFunction) {
+      final PyClass containingClass = pyFunction.getContainingClass();
+      if (docstring == null && containingClass != null) {
+        if (!isProperty) {
+          // add docstring from the parent class or function
+          return addFunctionInheritedDocString(pyFunction, containingClass);
+        }
+      }
+    }
+    return docstring;
   }
 
   private void fillFormattedSections(@NotNull List<FormatterDocFragment> fragmentList) {
@@ -395,50 +434,6 @@ public class PyDocumentationBuilder {
         };
       section.addItem(html);
     });
-  }
-
-  @Nullable
-  private PyStringLiteralExpression addFunctionDocumentation(@Nullable PyStringLiteralExpression docStringExpression,
-                                                             @NotNull PyFunction pyFunction,
-                                                             @Nullable PyClass pyClass,
-                                                             boolean isProperty) {
-    // if we have containing class, but don't have a function doc
-    if (docStringExpression == null && pyClass != null) {
-      if (!isProperty) {
-        // add docstring from the parent class or function
-        docStringExpression = addFunctionInheritedDocString(pyFunction, pyClass);
-      }
-      if (PyUtil.isInitOrNewMethod(pyFunction)) {
-        final PyStringLiteralExpression classDocstring = getEffectiveDocStringExpression(pyClass);
-        if (classDocstring != null) {
-          // we should add attributes section from class doc because it won't be added with function sections in the end
-          addAttributesSection(classDocstring);
-        }
-      }
-    }
-    if (docStringExpression != null) {
-      addFunctionSpecificSections(docStringExpression, pyFunction);
-    }
-    return docStringExpression;
-  }
-
-  @Nullable
-  private PyStringLiteralExpression addClassDocumentation(@Nullable PyStringLiteralExpression docStringExpression,
-                                                          @NotNull PyClass pyClass) {
-    final PyFunction init = pyClass.findMethodByName(PyNames.INIT, false, myContext);
-    if (docStringExpression != null) {
-      addAttributesSection(docStringExpression);
-      if (init != null) {
-        // add init parameters described in the class doc
-        addFunctionSpecificSections(docStringExpression, init);
-      }
-      return docStringExpression;
-    }
-    // if class doesn't have any doc add init doc without other sections
-    if (init != null) {
-      return getEffectiveDocStringExpression(init);
-    }
-    return null;
   }
 
   private void addTargetDocumentation(@NotNull PyTargetExpression target, boolean isProperty) {
