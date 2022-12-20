@@ -35,9 +35,9 @@ class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider
                                                                 @NotNull ProcessingContext context) {
     UExpression parent = StringFlowUtil.goUp(element, false, NlsInfo.factory());
     UElement gParent = parent.getUastParent();
-    if (gParent instanceof UPolyadicExpression &&
-        ((UPolyadicExpression)gParent).getOperator() != UastBinaryOperator.ASSIGN &&
-        (!(gParent instanceof UBinaryExpression) || ((UBinaryExpression)gParent).resolveOperator() == null)) {
+    if (gParent instanceof UPolyadicExpression uPolyadicExpression &&
+        uPolyadicExpression.getOperator() != UastBinaryOperator.ASSIGN &&
+        (!(uPolyadicExpression instanceof UBinaryExpression) || ((UBinaryExpression)uPolyadicExpression).resolveOperator() == null)) {
       return PsiReference.EMPTY_ARRAY;
     }
     Object value = element.evaluate();
