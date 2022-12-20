@@ -14,6 +14,9 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -69,6 +72,12 @@ internal fun activityFlow(project: Project): Flow<Unit> {
       override fun problemsDisappeared(file: VirtualFile) = fire()
     })
     connection.subscribe(VirtualFileAppearanceListener.TOPIC, VirtualFileAppearanceListener { fire() })
+
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun fileOpened(source: FileEditorManager, file: VirtualFile) = fire()
+      override fun fileClosed(source: FileEditorManager, file: VirtualFile) = fire()
+      override fun selectionChanged(event: FileEditorManagerEvent) = fire()
+    })
 
     fire()
 
