@@ -36,7 +36,7 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
   public boolean myIgnoreEmptyMethods = true;
 
   @Override
-  public @NotNull OptPane getOptionsPane() {
+  public @NotNull OptPane getGroovyOptionsPane() {
     return pane(
       checkbox("myIgnoreTraitMethods", GroovyBundle.message("method.may.be.static.option.ignore.trait.methods")),
       checkbox("myOnlyPrivateOrFinal", GroovyBundle.message("method.may.be.static.only.private.or.final.option")),

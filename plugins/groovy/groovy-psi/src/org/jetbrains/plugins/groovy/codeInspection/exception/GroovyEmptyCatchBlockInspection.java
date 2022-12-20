@@ -47,7 +47,7 @@ public class GroovyEmptyCatchBlockInspection extends BaseInspection {
   }
 
   @Override
-  public @NotNull OptPane getOptionsPane() {
+  public @NotNull OptPane getGroovyOptionsPane() {
     return pane(
       checkbox("myCountCommentsAsContent", GroovyBundle.message("comments.count.as.content")),
       checkbox("myIgnore", GroovyBundle.message("ignore.when.catch.parameter.is.named.ignore.or.ignored")));

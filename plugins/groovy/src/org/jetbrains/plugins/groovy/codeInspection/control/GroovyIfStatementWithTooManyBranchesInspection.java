@@ -25,7 +25,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 public class GroovyIfStatementWithTooManyBranchesInspection extends GroovyIfStatementWithTooManyBranchesInspectionBase {
 
   @Override
-  public @NotNull OptPane getOptionsPane() {
+  public @NotNull OptPane getGroovyOptionsPane() {
     return pane(
       number("m_limit", InspectionGadgetsBundle.message("if.statement.with.too.many.branches.max.option"), 2, 100));
   }

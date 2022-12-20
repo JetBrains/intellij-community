@@ -11,7 +11,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 public class GroovyOverlyNestedMethodInspection extends GroovyOverlyNestedMethodInspectionBase {
 
   @Override
-  public @NotNull OptPane getOptionsPane() {
+  public @NotNull OptPane getGroovyOptionsPane() {
     return pane(
       number("m_limit", GroovyBundle.message("overly.nested.method.nesting.limit.option"), 1, 100));
   }

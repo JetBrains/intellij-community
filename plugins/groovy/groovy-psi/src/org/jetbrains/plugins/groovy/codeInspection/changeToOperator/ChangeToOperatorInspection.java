@@ -116,7 +116,7 @@ public class ChangeToOperatorInspection extends BaseInspection {
   }
 
   @Override
-  public @NotNull OptPane getOptionsPane() {
+  public @NotNull OptPane getGroovyOptionsPane() {
     return pane(
       checkbox("useDoubleNegation", GroovyBundle.message("replace.with.operator.double.negation.option")),
       checkbox("shouldChangeCompareToEqualityToEquals", GroovyBundle.message("replace.with.operator.compareTo.equality.option")),

@@ -51,7 +51,7 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
   }
 
   @Override
-  public @NotNull OptPane getOptionsPane() {
+  public @NotNull OptPane getGroovyOptionsPane() {
     return pane(
       checkbox("ignoreOnVolatileVariables", GroovyBundle.message("checkbox.ignore.double.checked.locking.on.volatile.fields")));
   }

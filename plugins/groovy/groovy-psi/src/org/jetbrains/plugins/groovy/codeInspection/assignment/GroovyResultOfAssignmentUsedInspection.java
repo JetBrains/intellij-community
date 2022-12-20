@@ -37,7 +37,7 @@ public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
   public boolean inspectClosures = false;
 
   @Override
-  public @NotNull OptPane getOptionsPane() {
+  public @NotNull OptPane getGroovyOptionsPane() {
     return pane(
       checkbox("inspectClosures", GroovyBundle.message("checkbox.inspect.anonymous.closures")));
   }

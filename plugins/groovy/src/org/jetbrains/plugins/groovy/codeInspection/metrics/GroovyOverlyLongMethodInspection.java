@@ -25,7 +25,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 public class GroovyOverlyLongMethodInspection extends GroovyOverlyLongMethodInspectionBase {
 
   @Override
-  public @NotNull OptPane getOptionsPane() {
+  public @NotNull OptPane getGroovyOptionsPane() {
     return pane(
       number("m_limit", GroovyBundle.message("overly.long.method.statements.limit.option"), 2, 1000));
   }

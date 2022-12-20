@@ -25,7 +25,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 public class GroovyOverlyComplexMethodInspection extends GroovyOverlyComplexMethodInspectionBase {
 
   @Override
-  public @NotNull OptPane getOptionsPane() {
+  public @NotNull OptPane getGroovyOptionsPane() {
     return pane(
       number("m_limit", GroovyBundle.message("overly.complex.method.complexity.limit.option"), 1, 1000));
   }

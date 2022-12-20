@@ -25,7 +25,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 public class GroovyOverlyComplexBooleanExpressionInspection extends GroovyOverlyComplexBooleanExpressionInspectionBase {
 
   @Override
-  public @NotNull OptPane getOptionsPane() {
+  public @NotNull OptPane getGroovyOptionsPane() {
     return pane(
       number("m_limit", InspectionGadgetsBundle.message("overly.complex.boolean.expression.max.terms.option"), 2, 100));
   }

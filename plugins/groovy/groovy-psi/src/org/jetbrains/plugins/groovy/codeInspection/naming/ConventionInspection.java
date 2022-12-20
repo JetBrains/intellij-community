@@ -87,7 +87,7 @@ public abstract class ConventionInspection extends BaseInspection {
   }
 
   @Override
-  public @NotNull OptPane getOptionsPane() {
+  public @NotNull OptPane getGroovyOptionsPane() {
     return CommonOptionPanes.conventions("m_minLength", "m_maxLength", "m_regex");
   }
   

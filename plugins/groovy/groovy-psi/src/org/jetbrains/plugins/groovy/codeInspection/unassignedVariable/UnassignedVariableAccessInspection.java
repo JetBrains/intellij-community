@@ -51,7 +51,7 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
   public boolean myIgnoreBooleanExpressions = true;
 
   @Override
-  public @NotNull OptPane getOptionsPane() {
+  public @NotNull OptPane getGroovyOptionsPane() {
     return pane(checkbox("myIgnoreBooleanExpressions", GroovyBundle.message("ignore.boolean.expressions")));
   }
 

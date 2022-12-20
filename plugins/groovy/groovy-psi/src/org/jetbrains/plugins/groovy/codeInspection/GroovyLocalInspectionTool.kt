@@ -3,13 +3,14 @@ package org.jetbrains.plugins.groovy.codeInspection
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.options.OptPane
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.plugins.groovy.codeInspection.utils.checkInspectionEnabledByFileType
 import org.jetbrains.plugins.groovy.codeInspection.utils.enhanceInspectionToolPanel
+import org.jetbrains.plugins.groovy.codeInspection.utils.getFileType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor
-import javax.swing.JComponent
 
 abstract class GroovyLocalInspectionTool : LocalInspectionTool() {
 
@@ -28,8 +29,35 @@ abstract class GroovyLocalInspectionTool : LocalInspectionTool() {
 
   abstract fun buildGroovyVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): GroovyElementVisitor
 
-  final override fun createOptionsPanel(): JComponent? {
-    val panel = super.createOptionsPanel()
-    return enhanceInspectionToolPanel(this, explicitlyEnabledFileTypes, panel)
+  final override fun getOptionsPane(): OptPane {
+    val pane = getGroovyOptionsPane()
+    return enhanceInspectionToolPanel(this, pane)
+  }
+
+  override fun getOption(bindId: String): Any? {
+    val type = getFileType(bindId)
+    return if (type != null) {
+      explicitlyEnabledFileTypes.contains(type)
+    }
+    else super.getOption(bindId)
+  }
+
+  override fun setOption(bindId: String, value: Any) {
+    val type = getFileType(bindId)
+    if (type != null) {
+      if (value as Boolean) {
+        explicitlyEnabledFileTypes.add(type)
+      }
+      else {
+        explicitlyEnabledFileTypes.remove(type)
+      }
+    }
+    else {
+      super.setOption(bindId, value)
+    }
+  }
+
+  open fun getGroovyOptionsPane(): OptPane {
+    return OptPane.EMPTY
   }
 }

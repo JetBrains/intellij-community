@@ -40,7 +40,7 @@ public class GrPackageInspection extends BaseInspection {
   }
 
   @Override
-  public @NotNull OptPane getOptionsPane() {
+  public @NotNull OptPane getGroovyOptionsPane() {
     return pane(
       checkbox("myCheckScripts", GroovyBundle.message("gr.package.inspection.check.scripts")));
   }

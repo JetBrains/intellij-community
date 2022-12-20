@@ -25,7 +25,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 public class GroovyOverlyComplexArithmeticExpressionInspection extends GroovyOverlyComplexArithmeticExpressionInspectionBase {
 
   @Override
-  public @NotNull OptPane getOptionsPane() {
+  public @NotNull OptPane getGroovyOptionsPane() {
     return pane(
       number("m_limit", InspectionGadgetsBundle.message("overly.complex.arithmetic.expression.max.number.option"), 2, 100));
   }

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -29,7 +30,6 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.utils.GrInspectionUIUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 
-import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -51,9 +51,37 @@ public abstract class BaseInspection extends LocalInspectionTool {
   }
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    JComponent actualPanel = super.createOptionsPanel();
-    return GrInspectionUIUtil.enhanceInspectionToolPanel(this, explicitlyEnabledFileTypes, actualPanel);
+  public final @NotNull OptPane getOptionsPane() {
+    OptPane pane = getGroovyOptionsPane();
+    return GrInspectionUIUtil.enhanceInspectionToolPanel(this, pane);
+  }
+
+  @Override
+  public Object getOption(@NotNull String bindId) {
+    String type = GrInspectionUIUtil.getFileType(bindId);
+    if (type != null) {
+      return explicitlyEnabledFileTypes.contains(type);
+    }
+    return super.getOption(bindId);
+  }
+
+  @Override
+  public void setOption(@NotNull String bindId, Object value) {
+    String type = GrInspectionUIUtil.getFileType(bindId);
+    if (type != null) {
+      if ((Boolean)value) {
+        explicitlyEnabledFileTypes.add(type);
+      } else {
+        explicitlyEnabledFileTypes.remove(type);
+      }
+    } else {
+      super.setOption(bindId, value);
+    }
+  }
+
+  @NotNull
+  protected OptPane getGroovyOptionsPane() {
+    return OptPane.EMPTY;
   }
 
   @Nullable

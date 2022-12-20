@@ -65,7 +65,7 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
   }
 
   @Override
-  public @NotNull OptPane getOptionsPane() {
+  public @NotNull OptPane getGroovyOptionsPane() {
     return pane(
       checkbox("ignoreLazyOperators", GroovyBundle.message("checkbox.ignore.conditional.operators")),
       checkbox("ignoreObscureOperators", GroovyBundle.message("checkbox.ignore.obscure.operators")));

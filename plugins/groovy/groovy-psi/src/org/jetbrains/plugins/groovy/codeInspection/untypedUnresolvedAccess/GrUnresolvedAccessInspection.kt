@@ -25,7 +25,7 @@ class GrUnresolvedAccessInspection : GroovyLocalInspectionTool() {
   @JvmField
   var myHighlightIfMissingMethodsDeclared = true
 
-  override fun getOptionsPane() = pane(
+  override fun getGroovyOptionsPane() = pane(
     checkbox("myHighlightIfGroovyObjectOverridden", GroovyBundle.message("highlight.if.groovy.object.methods.overridden")),
     checkbox("myHighlightIfMissingMethodsDeclared", GroovyBundle.message("highlight.if.missing.methods.declared")))
 

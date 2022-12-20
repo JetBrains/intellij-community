@@ -32,7 +32,7 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
     shouldReportNulls = true
   }
 
-  override fun getOptionsPane(): OptPane = 
+  override fun getGroovyOptionsPane(): OptPane = 
     pane(checkbox("shouldReportNulls", GroovyBundle.message("checkbox.report.unmatched.null")))
 
   override fun buildVisitor(): BaseInspectionVisitor = object : BaseInspectionVisitor() {

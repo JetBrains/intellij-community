@@ -49,7 +49,7 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
   }
 
   @Override
-  public @NotNull OptPane getOptionsPane() {
+  public @NotNull OptPane getGroovyOptionsPane() {
     return pane(
       checkbox("ignoreNonEmtpyLoops", GroovyBundle.message("checkbox.only.warn.if.loop.empty")));
   }
