@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.liveTemplates.macro.AbstractSuggestVariableNameMacro
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithInitializer
-import org.jetbrains.kotlin.psi.psiUtil.siblings
 
 class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = null) : AbstractSuggestVariableNameMacro() {
     @OptIn(KtAllowAnalysisOnEdt::class)
@@ -24,13 +23,14 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
                     analyze(initializer) {
                         val nameValidator = KotlinDeclarationNameValidator(
                             declaration,
-                            declaration.siblings(withItself = false),
                             KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
                             this
                         )
 
                         with(NAME_SUGGESTER) {
-                            return suggestExpressionNames(initializer, nameValidator, defaultName = defaultName).toList()
+                            return ((defaultName?.let { sequenceOf(it) } ?: emptySequence()) + suggestExpressionNames(initializer))
+                                .filter(nameValidator)
+                                .toList()
                         }
                     }
                 }
@@ -43,12 +43,13 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
                 if (symbol != null) {
                     val nameValidator = KotlinDeclarationNameValidator(
                         declaration,
-                        declaration.siblings(withItself = false),
                         KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
                         this
                     )
                     with(NAME_SUGGESTER) {
-                        return suggestTypeNames(symbol.returnType, nameValidator, defaultName = defaultName).toList()
+                        return ((defaultName?.let { sequenceOf(it) } ?: emptySequence()) + suggestTypeNames(symbol.returnType))
+                            .filter(nameValidator)
+                            .toList()
                     }
                 }
             }

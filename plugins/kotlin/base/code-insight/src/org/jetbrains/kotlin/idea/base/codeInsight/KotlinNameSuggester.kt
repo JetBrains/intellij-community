@@ -129,13 +129,9 @@ class KotlinNameSuggester(
      *  - `intArrayOf(5)` -> {ints}
      *  - listOf(User("Mary"), User("John")) -> {users}
      */
-    fun KtAnalysisSession.suggestExpressionNames(
-        expression: KtExpression,
-        validator: (String) -> Boolean = { true },
-        defaultName: String? = null
-    ): Sequence<String> {
+    fun KtAnalysisSession.suggestExpressionNames(expression: KtExpression): Sequence<String> {
         val type = expression.getKtType() ?: return emptySequence()
-        return suggestTypeNames(type, validator, defaultName)
+        return suggestTypeNames(type)
     }
 
     /**
@@ -145,21 +141,15 @@ class KotlinNameSuggester(
      *  - `IntArray` -> {ints}
      *  - `List<User>` -> {users}
      */
-    fun KtAnalysisSession.suggestTypeNames(
-        type: KtType,
-        validator: (String) -> Boolean = { true },
-        defaultName: String? = null
-    ): Sequence<String> {
+    fun KtAnalysisSession.suggestTypeNames(type: KtType): Sequence<String> {
         return sequence {
             val primitiveType = getPrimitiveType(type)
             if (primitiveType != null) {
-                defaultName?.let { registerCompoundName(it) }
                 PRIMITIVE_TYPE_NAMES.getValue(primitiveType).forEach { registerCompoundName(it) }
                 return@sequence
             }
 
             if (type.isCharSequence || type.isString) {
-                defaultName?.let { registerCompoundName(it) }
                 registerCompoundName("string")
                 registerCompoundName("str")
                 registerCompoundName("s")
@@ -168,7 +158,6 @@ class KotlinNameSuggester(
             }
 
             if (type.isFunctionType) {
-                defaultName?.let { registerCompoundName(it) }
                 registerCompoundName("function")
                 registerCompoundName("fn")
                 registerCompoundName("f")
@@ -221,10 +210,9 @@ class KotlinNameSuggester(
                     }
                 }
 
-                defaultName?.let { registerCompoundName(it) }
                 registerClassNames(type)
             }
-        }.filter(validator)
+        }
     }
 
     /**
