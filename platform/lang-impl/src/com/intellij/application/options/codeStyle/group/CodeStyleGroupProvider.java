@@ -5,6 +5,7 @@ import com.intellij.ConfigurableFactory;
 import com.intellij.application.options.CodeStyleConfigurableWrapper;
 import com.intellij.application.options.CodeStyleSchemesConfigurable;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
+import com.intellij.lang.Language;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
@@ -15,6 +16,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +37,16 @@ public class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
 
   public Configurable createConfigurable() {
     return new CodeStyleGroupConfigurable();
+  }
+
+  @Override
+  public @Nullable String getConfigurableDisplayName() {
+    return myGroup.getDisplayName();
+  }
+
+  @Override
+  public @Nullable Language getLanguage() {
+    return myGroup.getLanguage();
   }
 
   @NotNull
