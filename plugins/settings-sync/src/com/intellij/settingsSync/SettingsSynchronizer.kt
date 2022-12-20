@@ -10,7 +10,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.settingsSync.migration.SettingsRepositoryToSettingsSyncMigration
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.ScheduledFuture
@@ -60,7 +59,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     }
 
     if (Registry.`is`("settingsSync.autoSync.on.focus", true)) {
-      scheduleSyncingOnAppFocus()
+      syncSettings()
     }
   }
 
@@ -92,13 +91,6 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.LogCurrentSettings)
   }
 
-  private fun scheduleSyncingOnAppFocus() {
-    executorService.schedule(Runnable {
-      LOG.debug("Syncing settings on app focus")
-      syncSettings()
-    }, 0, TimeUnit.SECONDS)
-  }
-
   @RequiresEdt
   private fun setupSyncingByTimer(): ScheduledFuture<*> {
     val delay = autoSyncDelay
@@ -106,11 +98,6 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
       LOG.debug("Syncing settings by timer")
       syncSettings()
     }, delay, delay, TimeUnit.SECONDS)
-  }
-
-  private fun syncSettings() {
-    val syncControls = SettingsSyncMain.getInstance().controls
-    syncSettings(syncControls.remoteCommunicator, syncControls.updateChecker)
   }
 
   @RequiresEdt
@@ -126,41 +113,8 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
 
     private val MIGRATION_EP = ExtensionPointName.create<SettingsSyncMigration>("com.intellij.settingsSyncMigration")
 
-    @RequiresBackgroundThread
-    internal fun syncSettings(remoteCommunicator: SettingsSyncRemoteCommunicator, updateChecker: SettingsSyncUpdateChecker) {
-      checkCrossIdeSyncStatusOnServer(remoteCommunicator)
-
-      when (remoteCommunicator.checkServerState()) {
-        is ServerState.UpdateNeeded -> {
-          LOG.info("Updating from server")
-          updateChecker.scheduleUpdateFromServer()
-          // the push will happen automatically after updating and merging (if there is anything to merge)
-        }
-        ServerState.FileNotExists -> {
-          LOG.info("No file on server, will push local settings")
-          SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.MustPushRequest)
-        }
-        ServerState.UpToDate -> {
-          LOG.debug("Updating settings is not needed, will check if push is needed")
-          SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.PingRequest)
-        }
-        is ServerState.Error -> {
-          // error already logged in checkServerState, we schedule update
-        }
-      }
-    }
-
-    internal fun checkCrossIdeSyncStatusOnServer(remoteCommunicator: SettingsSyncRemoteCommunicator) {
-      try {
-        val crossIdeSyncEnabled = remoteCommunicator.isFileExists(CROSS_IDE_SYNC_MARKER_FILE)
-        if (crossIdeSyncEnabled != SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled) {
-          LOG.info("Cross-IDE sync status on server is: ${enabledOrDisabled(crossIdeSyncEnabled)}. Updating local settings with it.")
-          SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled = crossIdeSyncEnabled
-        }
-      }
-      catch (e: Throwable) {
-        LOG.error("Couldn't check if $CROSS_IDE_SYNC_MARKER_FILE exists", e)
-      }
+    internal fun syncSettings() {
+      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
     }
   }
 }

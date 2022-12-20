@@ -78,14 +78,6 @@ internal abstract class SettingsSyncTestBase {
     remoteCommunicator.deleteAllFiles()
   }
 
-  protected fun assertSettingsPushed(build: SettingsSnapshotBuilder.() -> Unit) {
-    waitForSettingsPush { pushedSnap ->
-      pushedSnap.assertSettingsSnapshot {
-        build()
-      }
-    }
-  }
-
   protected fun writeToConfig(build: SettingsSnapshotBuilder.() -> Unit) {
     val builder = SettingsSnapshotBuilder()
     builder.build()
@@ -108,10 +100,8 @@ internal abstract class SettingsSyncTestBase {
     }
   }
 
-  private fun waitForSettingsPush(assertSnapshot: (SettingsSnapshot) -> Unit) {
-    val pushedSnap = remoteCommunicator.awaitForPush()
-    assertNotNull("Changes were not pushed", pushedSnap)
-    assertSnapshot(pushedSnap!!)
+  protected fun executeAndWaitUntilPushed(testExecution: () -> Unit): SettingsSnapshot {
+    return remoteCommunicator.awaitForPush(testExecution)
   }
 }
 
