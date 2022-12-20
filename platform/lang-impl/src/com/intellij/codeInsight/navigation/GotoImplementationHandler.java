@@ -179,9 +179,11 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       DumbService.getInstance(project).showDumbModeNotification(dumbModeMessage);
       return;
     }
-    Editor editor = UtilKt.mockEditor(baseElement.getContainingFile());
-    GotoData source = createDataForSource(Objects.requireNonNull(editor), baseElement.getTextOffset(), baseElement);
-    show(project, editor, baseElement.getContainingFile(), source, popup -> popup.show(new RelativePoint(e)));
+    PsiUtilCore.ensureValid(baseElement);
+    PsiFile containingFile = baseElement.getContainingFile();
+    Editor editor = UtilKt.mockEditor(containingFile);
+    GotoData source = createDataForSource(Objects.requireNonNull(editor, "No document for " + containingFile), baseElement.getTextOffset(), baseElement);
+    show(project, editor, containingFile, source, popup -> popup.show(new RelativePoint(e)));
   }
 
   @TestOnly
