@@ -4,6 +4,7 @@ package com.intellij.codeInspection.ui
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.options.*
 import com.intellij.ide.DataManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
@@ -18,19 +19,19 @@ import javax.swing.*
 import kotlin.math.max
 
 class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
-  override fun render(tool: InspectionProfileEntry): JComponent? {
+  override fun render(tool: InspectionProfileEntry, parent: Disposable?): JComponent? {
     val pane = tool.optionsPane
     if (pane.components.isEmpty()) return null
-    return render(tool, pane)
+    return render(tool, pane, parent)
   }
 
-  internal fun render(tool: InspectionProfileEntry, pane: OptPane): JComponent {
+  internal fun render(tool: InspectionProfileEntry, pane: OptPane, parent: Disposable?): JComponent {
     return panel {
-      pane.components.forEach { render(it, tool) }
+      pane.components.forEach { render(it, tool, parent) }
     }
   }
 
-  private fun Panel.render(component: OptComponent, tool: InspectionProfileEntry) {
+  private fun Panel.render(component: OptComponent, tool: InspectionProfileEntry, parent: Disposable?) {
     when (component) {
       is OptControl, is OptSettingLink, is OptCustom -> {
         renderOptRow(component, tool)
@@ -39,7 +40,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       is OptGroup -> {
         row { label(component.label.label()) }
         indent {
-          component.children.forEach { child -> render(child, tool) }
+          component.children.forEach { child -> render(child, tool, parent) }
         }
       }
 
@@ -51,7 +52,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           component.tabs.forEach { tab ->
             tabbedPane.add(tab.label.label(), com.intellij.ui.dsl.builder.panel {
               tab.content.forEach { tabComponent ->
-                render(tabComponent, tool)
+                render(tabComponent, tool, parent)
               }
             })
           }

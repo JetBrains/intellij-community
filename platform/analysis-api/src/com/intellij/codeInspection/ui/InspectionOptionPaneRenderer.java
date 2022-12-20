@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -21,8 +22,8 @@ public interface InspectionOptionPaneRenderer {
   /**
    * @param tool inspection tool whose options should be modified. 
    *             It should have {@link InspectionProfileEntry#getOptionsPane()} implemented.
+   * @param parent parent disposable whose lifecycle corresponds to the lifecycle of the created panel
    * @return swing options panel described by supplied inspection; null if there are no options. 
-   * If pane contains custom components, then the tool must implement {@link CustomComponentProvider}.
    */
-  @Nullable JComponent render(@NotNull InspectionProfileEntry tool);
+  @Nullable JComponent render(@NotNull InspectionProfileEntry tool, @Nullable Disposable parent);
 }
