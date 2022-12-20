@@ -183,4 +183,35 @@ public class UiDslOptPaneRendererTest {
     var integerFields = UIUtil.findComponentsOfType(component, IntegerField.class);
     assertEquals(1, integerFields.size());
   }
+
+  private static class MyHorizontalStackInspection extends LocalInspectionTool {
+    public boolean myBoolean = false;
+    public int myInt = 0;
+
+    @Override
+    public @NotNull OptPane getOptionsPane() {
+      return pane(
+        horizontalStack(
+        checkbox("myBoolean", "Label"),
+              number("myInt", "Split|Label", 0, 0)
+        )
+      );
+    }
+  }
+
+  @Test
+  public void testHorizontalStack() {
+    MyHorizontalStackInspection inspection = new MyHorizontalStackInspection();
+    JComponent component = new UiDslOptPaneRenderer().render(inspection);
+
+    var checkBoxes = UIUtil.findComponentsOfType(component, JCheckBox.class);
+    assertEquals(1, checkBoxes.size());
+
+    var integerFields = UIUtil.findComponentsOfType(component, IntegerField.class);
+    assertEquals(1, integerFields.size());
+
+    // Split label support
+    var labels = UIUtil.findComponentsOfType(component, JLabel.class);
+    assertEquals(2, labels.size());
+  }
 }

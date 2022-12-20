@@ -62,7 +62,21 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           .resizableRow()
       }
 
-      is OptHorizontalStack -> TODO()
+      is OptHorizontalStack -> {
+        row {
+          component.children.forEach { child ->
+            val splitLabel = child.splitLabel
+            if (splitLabel != null && splitLabel.prefix.isNotBlank()) {
+              label(splitLabel.prefix).gap(RightGap.SMALL)
+            }
+            val cell = renderOptCell(child, tool)
+            if (splitLabel != null && splitLabel.suffix.isNotBlank()) {
+              cell.gap(RightGap.SMALL)
+              label(splitLabel.suffix)
+            }
+          }
+        }
+      }
     }
   }
 
@@ -187,7 +201,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         is OptMap -> TODO()
         is OptSet -> TODO()
 
-        is OptGroup, is OptHorizontalStack, is OptSeparator, is OptTabSet -> { throw IllegalStateException("Unsupported nested components") }
+        is OptGroup, is OptHorizontalStack, is OptSeparator, is OptTabSet -> { throw IllegalStateException("Unsupported nested component: ${component.javaClass}") }
     }
   }
 
