@@ -9,21 +9,21 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.yaml.YAMLElementGenerator
+import org.jetbrains.yaml.psi.YAMLQuotedText
 import org.jetbrains.yaml.psi.YAMLScalar
-import org.jetbrains.yaml.psi.impl.YAMLQuotedTextImpl
 
-open class YAMLAddQuoteQuickFix(scalar: YAMLScalar, @Nls private val quickFixText: String) :
+class YAMLAddQuoteQuickFix(scalar: YAMLScalar, private val quickFixText: @Nls String) :
   LocalQuickFixAndIntentionActionOnPsiElement(scalar) {
-  override fun getText() = quickFixText
+  override fun getText(): @Nls String = quickFixText
 
-  override fun getFamilyName() = this.text
+  override fun getFamilyName(): @Nls String = text
 
   override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
     val text = """
           key: "${startElement.text}"
         """.trimIndent()
     val tempFile = YAMLElementGenerator.getInstance(project).createDummyYamlWithText(text)
-    val quoted = PsiTreeUtil.collectElementsOfType(tempFile, YAMLQuotedTextImpl::class.java).firstOrNull() ?: return
+    val quoted = PsiTreeUtil.collectElementsOfType(tempFile, YAMLQuotedText::class.java).firstOrNull() ?: return
     startElement.replace(quoted)
   }
 }
