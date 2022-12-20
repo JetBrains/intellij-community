@@ -13,7 +13,6 @@ import java.util.function.BiConsumer
 
 /**
  * Default bundled plugins for all products.
- * See also [JB_BUNDLED_PLUGINS].
  */
 val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.platform.images",
