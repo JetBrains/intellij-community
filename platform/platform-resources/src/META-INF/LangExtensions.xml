@@ -1352,9 +1352,9 @@
 
     <statusBarWidgetFactory id="vfsRefreshWidget" implementation="com.intellij.openapi.wm.impl.status.VfsRefreshIndicatorWidgetFactory"
                             order="first"/>
-    <statusBarWidgetFactory id="positionWidget" implementation="com.intellij.openapi.wm.impl.status.PositionPanelWidgetFactory"/>
+    <statusBarWidgetFactory id="Position" implementation="com.intellij.openapi.wm.impl.status.PositionPanelWidgetFactory"/>
     <statusBarWidgetFactory id="LineSeparator" implementation="com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory"
-                            order="after positionWidget"/>
+                            order="after Position"/>
     <statusBarWidgetFactory id="Encoding" implementation="com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory"
                             order="after LineSeparator"/>
     <statusBarWidgetFactory id="PowerSaveMode" implementation="com.intellij.openapi.wm.impl.status.PowerSaveStatusWidgetFactory"

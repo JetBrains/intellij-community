@@ -105,7 +105,7 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
         return
       }
 
-      val widget = factory.createWidget(project, parentScope)
+      val widget = createWidget(factory = factory, dataContext, parentScope = parentScope)
       widgetFactories.put(factory, widget)
       widgetIdMap.put(widget.ID(), factory)
       parentScope.launch(Dispatchers.EDT) {
