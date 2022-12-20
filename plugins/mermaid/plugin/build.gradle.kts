@@ -1,56 +1,31 @@
+import com.intellij.mermaid.build.project
+import com.intellij.mermaid.build.properties
+import com.intellij.mermaid.build.shouldBundleSourceMaps
+import com.jetbrains.plugin.structure.base.utils.createDir
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.tasks.RunIdeTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-fun properties(key: String): String {
-    return project.findProperty(key).toString()
-}
-
 plugins {
     java
+    `javascript-binaries`
     kotlin("jvm")
     id("org.jetbrains.intellij") version "1.11.0"
     id("org.jetbrains.changelog") version "1.3.1"
     id("org.jetbrains.qodana") version "0.1.13"
     id("org.jetbrains.grammarkit") version "2021.2.2"
-    id("de.undercouch.download") version "5.2.1"
 }
 
 group = properties("pluginGroup")
 version = properties("pluginVersion")
-
-val mermaidExtensionBundle: Configuration by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
-}
-
-fun DependencyHandler.project(path: String, configuration: Configuration): Dependency {
-    return project(mapOf(
-        "path" to path,
-        "configuration" to configuration.name
-    ))
-}
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    mermaidExtensionBundle(project(":browser:extension", mermaidExtensionBundle))
+    javascriptImplementation(project(":browser:extension", configurations.javascriptBinaries))
 }
-
-val copyMermaidExtensionBuildResults by tasks.registering(Copy::class) {
-    from(mermaidExtensionBundle)
-    val path = buildDir.resolve("resources/main/com/intellij/mermaid/markdown/jcef")
-    path.mkdirs()
-    into(path)
-}
-
-tasks.getByName("processResources") {
-    dependsOn(copyMermaidExtensionBuildResults)
-    inputs.dir(copyMermaidExtensionBuildResults.map { it.outputs.files.singleFile })
-}
-
 
 sourceSets {
     getByName("main").apply {
@@ -77,18 +52,20 @@ qodana {
     showReport.set(System.getenv("QODANA_SHOW_REPORT")?.toBoolean() ?: false)
 }
 
+val commonJvmArgs = listOf("-Xmx750m")
+
 val generateLexerAndParser by tasks.registering {
     dependsOn("generateLexer", "generateParser")
 }
 
-val commonJvmArgs = listOf("-Xmx750m")
+val copyMermaidExtensionBuildResults by tasks.registering(Copy::class) {
+    from(configurations.javascriptImplementation)
+    val path = buildDir.resolve("resources/main/com/intellij/mermaid/markdown/jcef")
+    path.toPath().createDir()
+    into(path)
+}
 
-val mermaidVersion = properties("mermaidVersion")
-
-val shouldBundleSourceMaps: Boolean
-    get() = (project.findProperty("shouldBundleSourceMaps") as? String)?.toBoolean() ?: false
-
-val ensureSourceMapsAreNotBundledInProductionBuild by tasks.registering {
+val ensureSourceMapsAreNotBundledInPluginDistribution by tasks.registering {
     check(!shouldBundleSourceMaps) { "Source maps should not be bundled with a production build!" }
 }
 
@@ -106,12 +83,13 @@ tasks {
     }
 
     compileKotlin {
-        dependsOn("generateLexerAndParser")
+        dependsOn(generateLexerAndParser)
     }
 
-//    wrapper {
-//        gradleVersion = properties("gradleVersion")
-//    }
+    processResources {
+        dependsOn(copyMermaidExtensionBuildResults)
+        inputs.files(copyMermaidExtensionBuildResults.map { it.outputs })
+    }
 
     withType<RunIdeTask> {
         jvmArgs = commonJvmArgs
@@ -122,7 +100,7 @@ tasks {
     }
 
     buildPlugin {
-        dependsOn(ensureSourceMapsAreNotBundledInProductionBuild)
+        dependsOn(ensureSourceMapsAreNotBundledInPluginDistribution)
     }
 
     withType<Test> {

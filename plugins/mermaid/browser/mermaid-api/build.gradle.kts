@@ -2,11 +2,7 @@ plugins {
     kotlin("js")
 }
 
-fun properties(key: String): String {
-    return project.findProperty(key).toString()
-}
-
-val mermaidVersion = properties("mermaidVersion")
+val mermaidVersion: String by project
 
 dependencies {
     implementation(kotlin("stdlib-js"))

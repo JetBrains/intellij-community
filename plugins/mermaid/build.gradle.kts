@@ -1,6 +1,4 @@
-fun properties(key: String): String {
-  return project.findProperty(key).toString()
-}
+import com.intellij.mermaid.build.properties
 
 group = properties("pluginGroup")
 version = properties("pluginVersion")
