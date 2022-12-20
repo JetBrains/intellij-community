@@ -91,7 +91,7 @@ private fun skipActivityEvent(e: AWTEvent, project: Project): Boolean {
 
   val window: Window? = WindowManager.getInstance().getFrame(project)
   if (window != null && !window.isFocused) {
-    // IDEA-304798 Skip event when window is out of focus (user is in a popup)
+    // IDEA-307406, IDEA-304798 Skip event when window is out of focus (user is in a popup)
     return true
   }
 

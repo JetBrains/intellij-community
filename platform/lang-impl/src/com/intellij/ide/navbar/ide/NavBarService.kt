@@ -19,9 +19,11 @@ import com.intellij.openapi.components.Service.Level.PROJECT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import java.awt.Window
 import javax.swing.JComponent
 
 @Service(PROJECT)
@@ -104,6 +106,11 @@ internal suspend fun focusModel(project: Project): List<NavBarVmItem> {
   val ctx = focusDataContext()
   if (ctx.getData(NavBarActionHandler.NAV_BAR_ACTION_HANDLER) != null) {
     // ignore updates while nav bar has focus
+    return emptyList()
+  }
+  val window: Window? = WindowManager.getInstance().getFrame(project)
+  if (window != null && !window.isFocused) {
+    // IDEA-307406, IDEA-304798 Skip event when window is out of focus (user is in a popup)
     return emptyList()
   }
   return contextModel(ctx, project)
