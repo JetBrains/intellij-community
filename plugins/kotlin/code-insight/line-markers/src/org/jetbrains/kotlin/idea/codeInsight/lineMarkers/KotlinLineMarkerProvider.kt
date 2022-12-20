@@ -79,8 +79,8 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
 
         val anchor = element.nameIdentifier ?: element
 
-        val isImplementsCase = klass.isInterface()
-        val gutter = if (isImplementsCase) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
+        val isAbstract = CallableOverridingsTooltip.isAbstract(element, klass)
+        val gutter = if (isAbstract) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
         val icon = gutter.icon ?: return
 
         val lineMarkerInfo = OverriddenMergeableLineMarkerInfo(
@@ -212,8 +212,7 @@ object CallableOverridingsTooltip : Function<PsiElement, String> {
         val klass = declaration.containingClassOrObject as? KtClass ?: return null
         val overridings = declaration.findAllOverridings().take(5).toList()
         if (overridings.isEmpty()) return null
-        val isAbstract = declaration.hasModifier(KtTokens.ABSTRACT_KEYWORD) ||
-                klass.isInterface() && if (declaration is KtDeclarationWithBody) !declaration.hasBody() else true
+        val isAbstract = isAbstract(declaration, klass)
         if (overridings.size == 5) {
             return if (isAbstract) DaemonBundle.message("method.is.implemented.too.many") else DaemonBundle.message("method.is.overridden.too.many")
         }
@@ -228,6 +227,10 @@ object CallableOverridingsTooltip : Function<PsiElement, String> {
                 start, true, IdeActions.ACTION_GOTO_IMPLEMENTATION)
         }
     }
+
+    fun isAbstract(declaration: KtCallableDeclaration, klass: KtClass) =
+        declaration.hasModifier(KtTokens.ABSTRACT_KEYWORD) ||
+                klass.isInterface() && if (declaration is KtDeclarationWithBody) !declaration.hasBody() else true
 }
 
 object SuperDeclarationMarkerTooltip : Function<PsiElement, String> {
