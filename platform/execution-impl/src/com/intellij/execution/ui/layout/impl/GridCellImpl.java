@@ -435,7 +435,7 @@ public final class GridCellImpl implements GridCell {
     myMinimizedContents.remove(content);
   }
 
-  private final class GridCellTabs extends SingleHeightTabs {
+  private static final class GridCellTabs extends SingleHeightTabs {
     private final ViewContextEx myContext;
 
     @Override
