@@ -551,7 +551,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
     else if (IS_PER_PROJECT_INSTANCE_ENABLED) {
       LowLevelProjectOpenProcessor.EP_NAME.extensions.forEach {
-        it.beforeProjectOpened(projectStoreBaseDir)
+        if (it.beforeProjectOpened(projectStoreBaseDir) == LowLevelProjectOpenProcessor.PrepareProjectResult.CANCEL) {
+          LOG.info("Project opening preparation has been cancelled")
+          activity.end()
+          throw ProcessCanceledException()
+        }
       }
     }
 
@@ -1414,13 +1418,6 @@ private suspend fun shouldOpenInChildProcess(projectStoreBaseDir: Path): Boolean
 
 private suspend fun openInChildProcess(projectStoreBaseDir: Path) {
   try {
-    val instancePaths = PerProjectInstancePaths(projectStoreBaseDir)
-    LowLevelProjectOpenProcessor.EP_NAME.extensions.forEach {
-      if (it.preparePathsForNewProcess(projectStoreBaseDir, instancePaths) == LowLevelProjectOpenProcessor.PreparePathsResult.CANCEL) {
-        return
-      }
-    }
-
     withContext(Dispatchers.IO) {
       ProcessBuilder(openProjectInstanceCommand(projectStoreBaseDir))
         .redirectErrorStream(true)

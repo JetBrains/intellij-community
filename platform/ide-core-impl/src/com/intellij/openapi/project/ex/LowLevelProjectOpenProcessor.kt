@@ -12,13 +12,11 @@ interface LowLevelProjectOpenProcessor {
     return false
   }
 
-  suspend fun preparePathsForNewProcess(projectPath: Path, instancePaths: PerProjectInstancePaths): PreparePathsResult {
-    return PreparePathsResult.CONTINUE
+  suspend fun beforeProjectOpened(projectPath: Path): PrepareProjectResult {
+    return PrepareProjectResult.CONTINUE
   }
 
-  suspend fun beforeProjectOpened(projectPath: Path) = Unit
-
-  enum class PreparePathsResult {
+  enum class PrepareProjectResult {
     CONTINUE, CANCEL
   }
 
