@@ -197,6 +197,14 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           cell(label)
         }
 
+        is OptSet -> {
+          @Suppress("UNCHECKED_CAST") val list = tool.getOption(component.bindId) as MutableList<String>
+          val form = ListEditForm("", component.label.label(), list)
+          cell(form.contentPanel)
+            .align(Align.FILL)
+            .resizableColumn()
+        }
+
         is OptCustom -> {
           val extension = CustomComponentExtension.find(component.componentId) ?: throw IllegalStateException(
             "Unregistered component: " + component.componentId)
@@ -208,7 +216,6 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         }
 
         is OptMap -> TODO()
-        is OptSet -> TODO()
 
         is OptGroup, is OptHorizontalStack, is OptSeparator, is OptTabSet -> { throw IllegalStateException("Unsupported nested component: ${component.javaClass}") }
     }
