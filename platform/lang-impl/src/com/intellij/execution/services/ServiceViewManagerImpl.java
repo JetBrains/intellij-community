@@ -471,9 +471,9 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       }
 
       ServiceViewItem fileItem = myModel.findItem(
-        fileCondition,
         item -> !(item instanceof ServiceModel.ServiceNode) ||
-                item.getViewDescriptor() instanceof ServiceViewLocatableDescriptor
+                item.getViewDescriptor() instanceof ServiceViewLocatableDescriptor,
+        fileCondition
       );
       if (fileItem != null) {
         Promise<Void> promise = select(fileItem.getValue(), fileItem.getRootContributor().getClass(), false, false);

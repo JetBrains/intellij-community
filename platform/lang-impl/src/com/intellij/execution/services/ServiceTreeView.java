@@ -159,7 +159,7 @@ final class ServiceTreeView extends ServiceView {
     if (selectedItem == null || !selectedItem.getValue().equals(service)) {
       AsyncPromise<Void> result = new AsyncPromise<>();
       Promise<TreePath> pathPromise =
-        safe ? myTreeModel.findPath(service, contributorClass) : myTreeModel.findPathSafe(service, contributorClass);
+        safe ? myTreeModel.findPathSafe(service, contributorClass) : myTreeModel.findPath(service, contributorClass);
       pathPromise
         .onError(result::setError)
         .onSuccess(path -> {

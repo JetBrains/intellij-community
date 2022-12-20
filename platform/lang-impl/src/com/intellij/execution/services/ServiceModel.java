@@ -118,8 +118,8 @@ final class ServiceModel implements Disposable, InvokerSupplier {
     return result;
   }
 
-  private JBIterable<ServiceViewItem> doFindItems(Condition<? super ServiceViewItem> condition,
-                                                  Condition<? super ServiceViewItem> visitChildrenCondition,
+  private JBIterable<ServiceViewItem> doFindItems(Condition<? super ServiceViewItem> visitChildrenCondition,
+                                                  Condition<? super ServiceViewItem> condition,
                                                   boolean safe) {
     return JBTreeTraverser.from((Function<ServiceViewItem, List<ServiceViewItem>>)node ->
         visitChildrenCondition.value(node) ? new ArrayList<>(node.getChildren()) : null)
@@ -137,8 +137,8 @@ final class ServiceModel implements Disposable, InvokerSupplier {
   }
 
   @Nullable
-  ServiceViewItem findItem(Condition<? super ServiceViewItem> condition, Condition<? super ServiceViewItem> visitChildrenCondition) {
-    return doFindItems(condition, visitChildrenCondition, false).first();
+  ServiceViewItem findItem(Condition<? super ServiceViewItem> visitChildrenCondition, Condition<? super ServiceViewItem> condition) {
+    return doFindItems(visitChildrenCondition, condition, false).first();
   }
 
   @Nullable
