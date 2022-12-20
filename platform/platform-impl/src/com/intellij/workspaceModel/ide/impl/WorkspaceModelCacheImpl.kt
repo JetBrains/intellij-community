@@ -35,6 +35,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
   override val enabled = forceEnableCaching || !ApplicationManager.getApplication().isUnitTestMode
 
   private val cacheFile by lazy { initCacheFile() }
+  private val unloadedEntitiesCacheFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve("unloaded-entities-cache.data") }
   private val invalidateProjectCacheMarkerFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve(".invalidate") }
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager,
@@ -75,21 +76,30 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
 
   private fun doCacheSaving() {
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
-    if (!storage.isConsistent) {
+    val unloadedStorage = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities
+    if (!storage.isConsistent || !unloadedStorage.isConsistent) {
       invalidateProjectCache()
     }
 
     if (!cachesInvalidated.get()) {
-      LOG.debug("Saving project model cache to $cacheFile")
-      val processedStorage = cachePreProcess(storage)
-      saveCache(processedStorage)
+      saveCache(storage, cacheFile)
+      //todo check that where are no entities in the storage instead
+      if (unloadedStorage != EntityStorageSnapshot.empty()) {
+        saveCache(unloadedStorage, unloadedEntitiesCacheFile)
+      }
+      else {
+        Files.deleteIfExists(unloadedEntitiesCacheFile)
+      }
     }
-
-    if (cachesInvalidated.get()) {
+    else {
       Files.deleteIfExists(cacheFile)
+      Files.deleteIfExists(unloadedEntitiesCacheFile)
     }
   }
 
+  @TestOnly
+  fun getUnloadedEntitiesCacheFilePath(): Path = unloadedEntitiesCacheFile
+  
   private fun cachePreProcess(storage: EntityStorage): EntityStorageSnapshot {
     val builder = MutableEntityStorage.from(storage)
     val nonPersistentModules = builder.entities(ModuleEntity::class.java)
@@ -103,52 +113,57 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
 
   override fun dispose() = Unit
 
-  override fun loadCache(): EntityStorage? {
-    val cacheFileAttributes = cacheFile.basicAttributesIfExists() ?: return null
+  override fun loadCache(): EntityStorage? = loadCache(cacheFile)
+  override fun loadUnloadedEntitiesCache(): EntityStorage? = loadCache(unloadedEntitiesCacheFile)
+  
+  private fun loadCache(file: Path): EntityStorage? {
+    val cacheFileAttributes = file.basicAttributesIfExists() ?: return null
+    
     val invalidateCachesMarkerFileAttributes = invalidateCachesMarkerFile.basicAttributesIfExists()
     if ((invalidateCachesMarkerFileAttributes != null && cacheFileAttributes.lastModifiedTime() < invalidateCachesMarkerFileAttributes.lastModifiedTime()) ||
         invalidateProjectCacheMarkerFile.exists() && cacheFileAttributes.lastModifiedTime() < invalidateProjectCacheMarkerFile.lastModified()) {
-      LOG.info("Skipping project model cache since '$invalidateCachesMarkerFile' is present and newer than cache file '$cacheFile'")
-      runCatching { Files.deleteIfExists(cacheFile) }
+      LOG.info("Skipping project model cache since '$invalidateCachesMarkerFile' is present and newer than cache file '$file'")
+      runCatching { Files.deleteIfExists(file) }
       return null
     }
 
-    LOG.debug("Loading project model cache from $cacheFile")
+    LOG.debug("Loading project model cache from $file")
 
     val start = System.currentTimeMillis()
-    val deserializationResult = cacheFile.inputStream().use { serializer.deserializeCache(it) }
+    val deserializationResult = file.inputStream().use { serializer.deserializeCache(it) }
     if (LOG.isDebugEnabled) {
-      LOG.debug("Loaded project model cache from $cacheFile in ${System.currentTimeMillis() - start}ms")
+      LOG.debug("Loaded project model cache from $file in ${System.currentTimeMillis() - start}ms")
     }
 
     return deserializationResult
       .onSuccess {
         when {
-          it != null -> LOG.debug("Loaded project model cache from $cacheFile in ${System.currentTimeMillis() - start}ms")
-          else -> LOG.debug("Cannot load project model from $cacheFile in ${System.currentTimeMillis() - start}ms")
+          it != null -> LOG.debug("Loaded project model cache from $file in ${System.currentTimeMillis() - start}ms")
+          else -> LOG.debug("Cannot load project model from $file in ${System.currentTimeMillis() - start}ms")
         }
       }
       .onFailure {
-        LOG.warn("Could not deserialize project model cache from $cacheFile", it)
+        LOG.warn("Could not deserialize project model cache from $file", it)
       }
       .getOrNull()
   }
 
   // Serialize and atomically replace cacheFile. Delete temporary file in any cache to avoid junk in cache folder
-  private fun saveCache(storage: EntityStorageSnapshot) {
-    val tmpFile = FileUtil.createTempFile(cacheFile.parent.toFile(), "cache", ".tmp")
+  private fun saveCache(storage: EntityStorageSnapshot, file: Path) {
+    LOG.debug("Saving project model cache to $file")
+    val tmpFile = FileUtil.createTempFile(file.parent.toFile(), "cache", ".tmp")
     try {
-      val serializationResult = tmpFile.outputStream().use { serializer.serializeCache(it, storage) }
+      val serializationResult = tmpFile.outputStream().use { serializer.serializeCache(it, cachePreProcess(storage)) }
       if (serializationResult is SerializationResult.Fail<*>) {
         LOG.warn("Workspace model cache was not serialized: ${serializationResult.info}")
       }
 
       try {
-        Files.move(tmpFile.toPath(), cacheFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+        Files.move(tmpFile.toPath(), file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
       }
       catch (e: AtomicMoveNotSupportedException) {
         LOG.warn(e)
-        Files.move(tmpFile.toPath(), cacheFile, StandardCopyOption.REPLACE_EXISTING)
+        Files.move(tmpFile.toPath(), file, StandardCopyOption.REPLACE_EXISTING)
       }
     }
     finally {

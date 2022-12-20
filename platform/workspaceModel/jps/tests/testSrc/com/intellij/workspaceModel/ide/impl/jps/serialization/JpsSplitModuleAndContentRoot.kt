@@ -515,7 +515,8 @@ class JpsSplitModuleAndContentRoot {
       "platform/workspaceModel/jps/tests/testData/serialization/splitModuleAndContentRoot/$dirBefore")
     val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(projectModel.project)
     externalStorageConfigurationManager.isEnabled = externalStorage
-    checkSaveProjectAfterChange(initialDir, dirAfter, change, virtualFileManager, "serialization/splitModuleAndContentRoot", false,
+    checkSaveProjectAfterChange(initialDir, dirAfter, { builder, _, location -> change(builder, location) }, emptySet(), 
+                                virtualFileManager, "serialization/splitModuleAndContentRoot", false,
                                 externalStorageConfigurationManager)
   }
 

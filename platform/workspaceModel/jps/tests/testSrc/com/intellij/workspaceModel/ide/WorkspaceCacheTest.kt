@@ -14,6 +14,7 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
+import com.intellij.util.io.exists
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.LoadedProjectData
 import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
@@ -23,6 +24,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import kotlinx.coroutines.runBlocking
 import org.apache.commons.lang.RandomStringUtils
 import org.junit.*
 import org.junit.Assert.*
@@ -71,6 +73,21 @@ class WorkspaceCacheTest {
 
     val modules = ModuleManager.getInstance(project2).modules
     assertEquals(initialModulesSize, modules.size)
+  }
+
+  @Test
+  fun `save cache for unloaded modules`() {
+    val project = loadProject(prepareProject().projectDir)
+    val cache = WorkspaceModelCache.getInstance(project) as WorkspaceModelCacheImpl
+    cache.saveCacheNow()
+    assertFalse("Cache for unloaded entities must not be created if no entities are unloaded", cache.getUnloadedEntitiesCacheFilePath().exists())
+    
+    runBlocking {
+      ModuleManager.getInstance(project).setUnloadedModules(listOf("newModule"))
+    }
+    
+    cache.saveCacheNow()
+    assertTrue(cache.getUnloadedEntitiesCacheFilePath().exists())
   }
 
   @Test

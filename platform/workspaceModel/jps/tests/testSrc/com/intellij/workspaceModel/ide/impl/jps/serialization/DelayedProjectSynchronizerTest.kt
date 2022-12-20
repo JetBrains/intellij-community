@@ -91,7 +91,8 @@ class DelayedProjectSynchronizerTest {
   private fun checkSerializersConsistency(project: Project) {
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
     val serializers = JpsProjectModelSynchronizer.getInstance(project).getSerializers()
-    serializers.checkConsistency(getJpsProjectConfigLocation(project)!!, storage, VirtualFileUrlManager.getInstance(project))
+    val unloadedEntitiesStorage = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities
+    serializers.checkConsistency(getJpsProjectConfigLocation(project)!!, storage, unloadedEntitiesStorage, VirtualFileUrlManager.getInstance(project))
   }
 
   @Test
@@ -152,10 +153,12 @@ class DelayedProjectSynchronizerTest {
     val fileInDirectorySourceNames = FileInDirectorySourceNames.from(projectData.storage)
 
     val originalBuilder = MutableEntityStorage.create()
+    val unloadedEntitiesBuilder = MutableEntityStorage.create()
     val configLocation = toConfigLocation(projectData.projectDir.toPath(), virtualFileManager)
-    val serializers = loadProject(configLocation, originalBuilder, virtualFileManager, fileInDirectorySourceNames) as JpsProjectSerializersImpl
-    val loadedProjectData = LoadedProjectData(originalBuilder.toSnapshot(), serializers, configLocation, projectFile)
-    serializers.checkConsistency(configLocation, loadedProjectData.storage, virtualFileManager)
+    val serializers = loadProject(configLocation, originalBuilder, virtualFileManager, emptySet(), unloadedEntitiesBuilder, fileInDirectorySourceNames) as JpsProjectSerializersImpl
+    val loadedProjectData = LoadedProjectData(originalBuilder.toSnapshot(), unloadedEntitiesBuilder.toSnapshot(), serializers, 
+                                              configLocation, projectFile)
+    serializers.checkConsistency(configLocation, loadedProjectData.storage, loadedProjectData.unloadedEntitiesStorage, virtualFileManager)
 
     assertThat(projectData.storage.entities(ModuleEntity::class.java).map {
       assertTrue(it.entitySource is JpsFileEntitySource.FileInDirectory)

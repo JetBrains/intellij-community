@@ -21,12 +21,26 @@ interface WorkspaceModel {
   val entityStorage: VersionedEntityStorage
 
   /**
+   * Returns a snapshot of the storage containing unloaded entities. 
+   * Unloaded entities must be ignored by almost all code in the IDE, so this property isn't supposed for general use.
+   * 
+   * Currently, unloaded entities correspond to modules which are unloaded using 'Load/Unload Modules' action. 
+   */
+  val currentSnapshotOfUnloadedEntities: EntityStorageSnapshot
+  
+  /**
    * Modifies the current model by calling [updater] and applying it to the storage. Requires write action.
    *
    * Use [description] to briefly describe what do you update. This message will be logged and can be used for debugging purposes.
    *   For testing there is an extension method that doesn't require a description [com.intellij.testFramework.workspaceModel.updateProjectModel].
    */
   fun updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
+
+  /**
+   * Modifies the current model of unloaded entities by calling [updater] and applying it to the storage.
+   * @param description describes the reason for the change, used for logging purposes only.
+   */
+  fun updateUnloadedEntities(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
 
   /**
    * Get builder that can be updated in background and applied later and a project model.

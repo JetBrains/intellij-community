@@ -33,6 +33,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     protected set
 
   final override val entityStorage: VersionedEntityStorageImpl
+  private val unloadedEntitiesStorage: VersionedEntityStorageImpl
   
   override val currentSnapshot: EntityStorageSnapshot
     get() = entityStorage.current
@@ -49,16 +50,18 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
 
     val initialContent = WorkspaceModelInitialTestContent.pop()
     val cache = WorkspaceModelCache.getInstance(project)
-    val projectEntities: MutableEntityStorage = when {
+    val (projectEntities, unloadedEntities) = when {
       initialContent != null -> {
         loadedFromCache = initialContent !== EntityStorageSnapshot.empty()
-        initialContent.toBuilder()
+        initialContent.toBuilder() to EntityStorageSnapshot.empty()
       }
       cache != null -> {
         val activity = startActivity("cache loading")
         val previousStorage: MutableEntityStorage?
+        val previousStorageForUnloaded: EntityStorageSnapshot
         val loadingCacheTime = measureTimeMillis {
           previousStorage = cache.loadCache()?.toBuilder()
+          previousStorageForUnloaded = cache.loadUnloadedEntitiesCache()?.toSnapshot() ?: EntityStorageSnapshot.empty()
         }
         val storage = if (previousStorage == null) {
           MutableEntityStorage.create()
@@ -70,17 +73,21 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
           previousStorage
         }
         activity.end()
-        storage
+        storage to previousStorageForUnloaded
       }
-      else -> MutableEntityStorage.create()
+      else -> MutableEntityStorage.create() to EntityStorageSnapshot.empty()
     }
 
     @Suppress("LeakingThis")
     prepareModel(project, projectEntities)
 
     entityStorage = VersionedEntityStorageImpl(projectEntities.toSnapshot())
+    unloadedEntitiesStorage = VersionedEntityStorageImpl(unloadedEntities)
     entityTracer.subscribe(project)
   }
+
+  override val currentSnapshotOfUnloadedEntities: EntityStorageSnapshot
+    get() = unloadedEntitiesStorage.current
 
   /**
    * Used only in Rider IDE
@@ -185,6 +192,22 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     }
   }
 
+  override fun updateUnloadedEntities(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    if (project.isDisposed) return
+    
+    val time = measureTimeMillis {
+      val before = currentSnapshotOfUnloadedEntities
+      val builder = MutableEntityStorage.from(before)
+      updater(builder)
+      startPreUpdateHandlers(before, builder)
+      val changes = builder.collectChanges(before)
+      val newStorage = builder.toSnapshot()
+      unloadedEntitiesStorage.replace(newStorage, changes, ::onBeforeUnloadedEntitiesChanged, ::onUnloadedEntitiesChanged)
+    }
+    log.info("Unloaded entity storage updated in $time ms: $description")
+  }
+
   final override fun getBuilderSnapshot(): BuilderSnapshot {
     val current = entityStorage.pointer
     return BuilderSnapshot(current.version, current.storage)
@@ -237,6 +260,18 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
 
     logErrorOnEventHandling {
       project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).changed(change)
+    }
+  }
+
+  private fun onBeforeUnloadedEntitiesChanged(change: VersionedStorageChange) {
+    logErrorOnEventHandling {
+      project.messageBus.syncPublisher(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED).beforeChanged(change)
+    }
+  }
+
+  private fun onUnloadedEntitiesChanged(change: VersionedStorageChange) {
+    logErrorOnEventHandling {
+      project.messageBus.syncPublisher(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED).changed(change)
     }
   }
 

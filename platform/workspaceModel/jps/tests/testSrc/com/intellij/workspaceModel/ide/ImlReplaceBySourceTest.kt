@@ -118,7 +118,7 @@ class ImlReplaceBySourceTest {
     val storageBuilder2 = MutableEntityStorage.create()
     val reader = CachingJpsFileContentReader(projectFile.asConfigLocation(virtualFileManager))
     runBlocking {
-      data.loadAll(reader, storageBuilder2, TestErrorReporter, null)
+      data.loadAll(reader, storageBuilder2, MutableEntityStorage.create(), emptySet(), TestErrorReporter, null)
     }
 
     val before = storageBuilder1.toSnapshot()
