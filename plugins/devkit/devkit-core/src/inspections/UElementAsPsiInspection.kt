@@ -36,7 +36,7 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
 
   override fun isAllowed(holder: ProblemsHolder): Boolean =
     super.isAllowed(holder)
-    && UElement::class.qualifiedName?.let { JavaPsiFacade.getInstance(holder.project).findClass(it, holder.file.resolveScope) } != null
+    && JavaPsiFacade.getInstance(holder.project).findClass(UElement::class.java.canonicalName, holder.file.resolveScope) != null
 
   private class CodeVisitor(private val uElementType: PsiClassType, private val psiElementType: PsiClassType) : AbstractUastVisitor() {
 
