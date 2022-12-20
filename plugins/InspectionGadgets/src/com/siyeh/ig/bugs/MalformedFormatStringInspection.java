@@ -98,8 +98,14 @@ public class MalformedFormatStringInspection extends BaseInspection {
                                              argumentCount, validators.length);
     }
     if (validators.length > argumentCount) {
-      return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.too.few.arguments",
-                                             argumentCount, validators.length);
+      final boolean isPrefix = ((Boolean)infos[2]).booleanValue();
+      if(isPrefix){
+        return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.at.least.too.few.arguments",
+                                               argumentCount, validators.length);
+      }else{
+        return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.too.few.arguments",
+                                               argumentCount, validators.length);
+      }
     }
     final PsiType argumentType = (PsiType)infos[2];
     final FormatDecode.Validator validator = (FormatDecode.Validator)infos[3];
@@ -124,13 +130,8 @@ public class MalformedFormatStringInspection extends BaseInspection {
       if (list == null) {
         return;
       }
-      FormatDecode.FormatArgument formatArgument = FormatDecode.FormatArgument.extract(expression, methodNames, classNames);
+      FormatDecode.FormatArgument formatArgument = FormatDecode.FormatArgument.extract(expression, methodNames, classNames, true);
       if (formatArgument == null) {
-        return;
-      }
-
-      String value = formatArgument.calculateValue();
-      if (value == null) {
         return;
       }
 
@@ -139,14 +140,34 @@ public class MalformedFormatStringInspection extends BaseInspection {
       PsiExpression[] arguments = list.getExpressions();
 
       int argumentCount = arguments.length - formatArgumentIndex;
+
+      String value = formatArgument.calculateValue();
       final FormatDecode.Validator[] validators;
-      try {
-        validators = FormatDecode.decode(value, argumentCount);
+      boolean isPrefix = false;
+      if (value != null) {
+        try {
+          validators = FormatDecode.decode(value, argumentCount);
+        }
+        catch (FormatDecode.IllegalFormatException e) {
+          registerError(formatArgument.getExpression(), e);
+          return;
+        }
       }
-      catch (FormatDecode.IllegalFormatException e) {
-        registerError(formatArgument.getExpression(), e);
-        return;
+      else {
+        String prefixValue = formatArgument.calculatePrefixValue();
+        isPrefix = true;
+        if (prefixValue == null) {
+          return;
+        }
+        try {
+          validators = FormatDecode.decodePrefix(prefixValue, argumentCount);
+        }
+        catch (FormatDecode.IllegalFormatException e) {
+          registerError(formatArgument.getExpression(), e);
+          return;
+        }
       }
+
       if (argumentCount == 1) {
         final PsiExpression argument = resolveIfPossible(arguments[formatArgumentIndex]);
         final PsiType argumentType = argument.getType();
@@ -170,12 +191,13 @@ public class MalformedFormatStringInspection extends BaseInspection {
           formatArgumentIndex = 0;
         }
       }
-      if (validators.length != argumentCount) {
+      if ((!isPrefix && validators.length != argumentCount) ||
+          (isPrefix && validators.length > argumentCount)) {
         if (expression instanceof PsiMethodCallExpression) {
-          registerMethodCallError((PsiMethodCallExpression)expression, validators, Integer.valueOf(argumentCount));
+          registerMethodCallError((PsiMethodCallExpression)expression, validators, Integer.valueOf(argumentCount), isPrefix);
         }
         else if (expression instanceof PsiNewExpression) {
-          registerNewExpressionError((PsiNewExpression)expression, validators, Integer.valueOf(argumentCount));
+          registerNewExpressionError((PsiNewExpression)expression, validators, Integer.valueOf(argumentCount), isPrefix);
         }
         return;
       }
@@ -195,7 +217,7 @@ public class MalformedFormatStringInspection extends BaseInspection {
       }
     }
 
-    private PsiExpression resolveIfPossible(PsiExpression expression) {
+    private static PsiExpression resolveIfPossible(PsiExpression expression) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
       if (expression instanceof PsiReferenceExpression) {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;

@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.FormatUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -104,7 +105,15 @@ public final class FormatDecode {
     }
   }
 
+  static Validator[] decodePrefix(String prefix, int argumentCount) {
+    return decode(prefix, argumentCount, true);
+  }
+
   public static Validator @NotNull [] decode(String formatString, int argumentCount) {
+    return decode(formatString, argumentCount, false);
+  }
+
+  private static Validator @NotNull [] decode(String formatString, int argumentCount, boolean isPrefix) {
     final ArrayList<Validator> parameters = new ArrayList<>();
 
     final Matcher matcher = fsPattern.matcher(formatString);
@@ -118,6 +127,12 @@ public final class FormatDecode {
         checkText(formatString.substring(i, start));
       }
       i = matcher.end();
+      boolean isAllVerifier = false;
+      //theoretically, it could be a correct specifier, divided into several parts, for example: "%1$t" + "Y"
+      //it is better to add ALL_VERIFIER
+      if (isPrefix && i == formatString.length()) {
+        isAllVerifier = true;
+      }
       final String specifier = matcher.group();
       final String posSpec = matcher.group("posSpec");
       final String flags = matcher.group("flags");
@@ -179,7 +194,10 @@ public final class FormatDecode {
       }
 
       final Validator allowed;
-      if (dateSpec != null) {  // a t or T
+      if (isAllVerifier) {
+        allowed = ALL_VALIDATOR;
+      }
+      else if (dateSpec != null) {  // a t or T
         checkFlags(flagBits, LEFT_JUSTIFY | PREVIOUS, specifier);
         DateTimeConversionType dateTimeConversionType = getDateTimeConversionType(conversion.charAt(0));
         if (dateTimeConversionType == DateTimeConversionType.UNKNOWN) {
@@ -251,7 +269,19 @@ public final class FormatDecode {
       storeValidator(allowed, pos, parameters, argumentCount);
     }
     if (i < formatString.length()) {
-      checkText(formatString.substring(i));
+      String endString = formatString.substring(i);
+      if (!isPrefix) {
+        checkText(endString);
+      }
+      else {
+        //only case, when fsPattern doesn't find a specifier, is when there is no any conversion.
+        //add "s" as a random reasonable conversion
+        String suggestedString = endString + "s";
+        Matcher endMatcher = fsPattern.matcher(suggestedString);
+        if (!endMatcher.find() || endMatcher.end() != suggestedString.length()) {
+          checkText(endString);
+        }
+      }
     }
 
     return parameters.toArray(new Validator[0]);
@@ -524,8 +554,15 @@ public final class FormatDecode {
     public PsiExpression getExpression() {
       return myExpression;
     }
-    
+
     public static FormatArgument extract(@NotNull PsiCallExpression expression, List<String> methodNames, List<String> classNames) {
+      return extract(expression, methodNames, classNames, false);
+    }
+
+    static FormatArgument extract(@NotNull PsiCallExpression expression,
+                                  List<String> methodNames,
+                                  List<String> classNames,
+                                  boolean allowNotConstant) {
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) return null;
       PsiExpression[] arguments = argumentList.getExpressions();
@@ -550,7 +587,7 @@ public final class FormatDecode {
         formatArgument = arguments[formatArgumentIndex];
         formatArgumentIndex++;
       }
-      if (!ExpressionUtils.hasStringType(formatArgument) || !PsiUtil.isConstantExpression(formatArgument)) {
+      if (!ExpressionUtils.hasStringType(formatArgument) || (!allowNotConstant && !PsiUtil.isConstantExpression(formatArgument))) {
         return null;
       }
       return new FormatArgument(formatArgumentIndex, formatArgument);
@@ -583,6 +620,41 @@ public final class FormatDecode {
         return null;
       }
       return (String)ConstantExpressionUtil.computeCastTo(myExpression, formatType);
+    }
+
+    public String calculatePrefixValue() {
+      StringBuilder builder = new StringBuilder();
+      boolean hasText = false;
+      final PsiType formatType = myExpression.getType();
+      if (formatType == null || !formatType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        return null;
+      }
+
+      PsiExpression psiExpression = myExpression;
+      if (myExpression instanceof PsiLocalVariable variable) {
+        if (VariableAccessUtils.variableIsAssigned(variable)) {
+          return null;
+        }
+        psiExpression = variable.getInitializer();
+      }
+
+      if (psiExpression instanceof PsiPolyadicExpression polyadicExpression) {
+        PsiExpression[] operands = polyadicExpression.getOperands();
+        for (int i = 0, length = operands.length; i < length; i++) {
+          PsiExpression operand = operands[i];
+          String stringPart = (String)ConstantExpressionUtil.computeCastTo(operand, formatType);
+          if (stringPart != null) {
+            if (i == 0) {
+              hasText = true;
+            }
+            builder.append(stringPart);
+          }
+          else {
+            return hasText ? builder.toString() : null;
+          }
+        }
+      }
+      return builder.toString();
     }
   }
 
