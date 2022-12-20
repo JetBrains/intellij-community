@@ -23,3 +23,11 @@ fun DependencyHandler.project(path: String, configuration: NamedDomainObjectProv
 fun Project.properties(key: String): String {
   return findProperty(key).toString()
 }
+
+fun Project.findBooleanProperty(name: String): Boolean {
+  val property = findProperty(name) as? String
+  return property.toBoolean()
+}
+
+val Project.isAutomatedProductionBuild: Boolean
+  get() = findBooleanProperty("automatedProductionBuild") || System.getenv("AUTOMATED_PRODUCTION_BUILD") != null

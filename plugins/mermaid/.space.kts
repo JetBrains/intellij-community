@@ -1,5 +1,10 @@
+fun Container.setProductionBuild() {
+  env["AUTOMATED_PRODUCTION_BUILD"] = "true"
+}
+
 job("Mermaid / Build") {
   container("openjdk:17") {
+    setProductionBuild()
     shellScript {
       content = "./gradlew build"
     }
@@ -8,6 +13,7 @@ job("Mermaid / Build") {
 
 job("Mermaid / Plugin Verifier") {
   container("openjdk:17") {
+    setProductionBuild()
     shellScript {
       content = "./gradlew runPluginVerifier"
     }
@@ -24,6 +30,7 @@ job("Mermaid / Release / Stable") {
     }
   }
   container("openjdk:17") {
+    setProductionBuild()
     env["MARKETPLACE_TOKEN"] = marketplaceToken
     shellScript {
       content = "./gradlew test publishPlugin"
@@ -38,6 +45,7 @@ job("Mermaid / Release / Nightly") {
     }
   }
   container("openjdk:17") {
+    setProductionBuild()
     env["MARKETPLACE_TOKEN"] = marketplaceToken
     env["MARKETPLACE_CHANNEL"] = "Nightly"
     shellScript {

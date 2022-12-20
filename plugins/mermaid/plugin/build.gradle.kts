@@ -1,7 +1,4 @@
-import com.intellij.mermaid.build.project
-import com.intellij.mermaid.build.properties
-import com.intellij.mermaid.build.shouldBundleSourceMaps
-import com.jetbrains.plugin.structure.base.utils.createDir
+import com.intellij.mermaid.build.*
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.tasks.RunIdeTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -25,6 +22,7 @@ repositories {
 
 dependencies {
     javascriptImplementation(project(":browser:extension", configurations.javascriptBinaries))
+    javascriptSourceMaps(project(":browser:extension", configurations.javascriptBinariesSourceMaps))
 }
 
 sourceSets {
@@ -55,18 +53,44 @@ qodana {
 val commonJvmArgs = listOf("-Xmx750m")
 
 val generateLexerAndParser by tasks.registering {
-    dependsOn("generateLexer", "generateParser")
+    dependsOn(tasks.generateLexer)
+    dependsOn(tasks.generateParser)
 }
 
-val copyMermaidExtensionBuildResults by tasks.registering(Copy::class) {
+val mermaidExtensionResourcePath
+    get() = buildDir.resolve("resources/main/com/intellij/mermaid/markdown/jcef")
+
+val mermaidExtensionResourceDirectory by tasks.registering {
+    doLast {
+        mkdir(mermaidExtensionResourcePath)
+    }
+}
+
+val mermaidExtensionBinaries by tasks.registering(Copy::class) {
+    dependsOn(mermaidExtensionResourceDirectory)
     from(configurations.javascriptImplementation)
-    val path = buildDir.resolve("resources/main/com/intellij/mermaid/markdown/jcef")
-    path.toPath().createDir()
-    into(path)
+    into(mermaidExtensionResourcePath)
 }
 
-val ensureSourceMapsAreNotBundledInPluginDistribution by tasks.registering {
-    check(!shouldBundleSourceMaps) { "Source maps should not be bundled with a production build!" }
+val mermaidExtensionBinariesSourceMaps by tasks.registering(Copy::class) {
+    dependsOn(mermaidExtensionResourceDirectory)
+    from(configurations.javascriptSourceMaps)
+    into(mermaidExtensionResourcePath)
+}
+
+val mermaidExtensionBuildResults by tasks.registering {
+    dependsOn(mermaidExtensionBinaries)
+    if (shouldBundleSourceMaps && !isAutomatedProductionBuild) {
+        dependsOn(mermaidExtensionBinariesSourceMaps)
+    }
+}
+
+val ensureThereAreNotSourceMapsAmongResources by tasks.registering {
+    doLast {
+        val files = mermaidExtensionResourcePath.walkTopDown()
+        val sourceMaps = files.filter { it.isSourceMap() }
+        check(sourceMaps.toList().isEmpty()) { "Plugin resource directory contains source maps" }
+    }
 }
 
 tasks {
@@ -87,8 +111,11 @@ tasks {
     }
 
     processResources {
-        dependsOn(copyMermaidExtensionBuildResults)
-        inputs.files(copyMermaidExtensionBuildResults.map { it.outputs })
+        dependsOn(mermaidExtensionBuildResults)
+        if (isAutomatedProductionBuild) {
+            dependsOn(ensureThereAreNotSourceMapsAmongResources)
+        }
+        inputs.files(mermaidExtensionBuildResults.map { it.outputs })
     }
 
     withType<RunIdeTask> {
@@ -97,10 +124,6 @@ tasks {
 
     buildSearchableOptions {
         jvmArgs = commonJvmArgs
-    }
-
-    buildPlugin {
-        dependsOn(ensureSourceMapsAreNotBundledInPluginDistribution)
     }
 
     withType<Test> {
