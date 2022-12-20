@@ -322,10 +322,26 @@ open class IdeStatusBarImpl internal constructor(
   }
 
   private fun sortRightWidgets() {
-    val sorted = widgetMap.values.toMutableList()
+    val sorted = mutableListOf<Orderable>()
+    widgetMap.values.filterTo(sorted) { it.position == Position.RIGHT }
+
+    // inject not available extension to make sort correct —
+    // e.g. `after PowerSaveMode` must work even if `PowerSaveMode` widget is disabled,
+    // because `PowerSaveMode` can specify something like `after Encoding`
+    StatusBarWidgetFactory.EP_NAME.filterableLazySequence()
+      .filter { !widgetMap.containsKey(it.id) }
+      .mapTo(sorted) {
+        object : Orderable {
+          override val orderId: String?
+            get() = it.id
+          override val order: LoadingOrder
+            get() = it.order
+        }
+      }
+
     LoadingOrder.sort(sorted)
     for ((index, item) in sorted.withIndex()) {
-      rightPanelLayout.setConstraints(item.component, GridBagConstraints().apply {
+      rightPanelLayout.setConstraints((item as? WidgetBean ?: continue).component, GridBagConstraints().apply {
         gridx = index
         gridy = 0
         fill = GridBagConstraints.VERTICAL
@@ -665,6 +681,8 @@ private class WidgetBean(
 
   override val orderId: String
     get() = widget.ID()
+
+  override fun toString(): String = "Widget(id=$orderId, order=$order, position=$position)"
 }
 
 @RequiresEdt
