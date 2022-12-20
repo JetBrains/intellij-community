@@ -38,6 +38,16 @@ public class KotlinAddImportActionTestGenerated extends AbstractKotlinAddImportA
         runTest("testData/idea/actions/kotlinAddImportAction/ConstructorOverloadsPresent.kt");
     }
 
+    @TestMetadata("ExtReceiver.kt")
+    public void testExtReceiver() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/ExtReceiver.kt");
+    }
+
+    @TestMetadata("ExtReceiver2.kt")
+    public void testExtReceiver2() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/ExtReceiver2.kt");
+    }
+
     @TestMetadata("ExtendingClass1.kt")
     public void testExtendingClass1() throws Exception {
         runTest("testData/idea/actions/kotlinAddImportAction/ExtendingClass1.kt");
@@ -46,6 +56,11 @@ public class KotlinAddImportActionTestGenerated extends AbstractKotlinAddImportA
     @TestMetadata("ExtendingClass2.kt")
     public void testExtendingClass2() throws Exception {
         runTest("testData/idea/actions/kotlinAddImportAction/ExtendingClass2.kt");
+    }
+
+    @TestMetadata("KotlinDurations.kt")
+    public void testKotlinDurations() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/KotlinDurations.kt");
     }
 
     @TestMetadata("KotlinMinCollections.kt")

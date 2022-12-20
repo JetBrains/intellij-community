@@ -313,25 +313,39 @@ internal class CallExpressionWeigher(element: KtNameReferenceExpression?) {
 
     private val kotlinTypes: List<KotlinType>?
     private val valueArgumentsSize: Int
+    private val extensionReceiver: Boolean
 
     init {
-        val callExpression = element?.getParentOfType<KtCallElement>(false)
-        val valueArgumentList = callExpression?.valueArgumentList
-        val valueArguments = callExpression?.valueArguments
-        valueArgumentsSize = valueArguments?.size ?: 0
-
-        kotlinTypes = if (valueArgumentList != null && valueArguments != null) {
-            val bindingContext = valueArgumentList.analyze(BodyResolveMode.PARTIAL)
-
-            val types = ArrayList<KotlinType>(valueArgumentsSize)
-            for (valueArgument in valueArguments) {
-                val argumentExpression = valueArgument.getArgumentExpression() ?: break
-                types += argumentExpression.getType(bindingContext) ?: break
-            }
-            types
+        var types: MutableList<KotlinType>? = null
+        val receiverExpression = (element?.parent as? KtDotQualifiedExpression)?.receiverExpression
+        extensionReceiver = if (receiverExpression != null) {
+            val bindingContext = receiverExpression.analyze(BodyResolveMode.PARTIAL)
+            types = mutableListOf()
+            receiverExpression.getType(bindingContext)?.let { types!! += it }
+            true
         } else {
-            null
+            false
         }
+
+        val callExpression = element?.getParentOfType<KtCallElement>(false)
+        if (callExpression != null) {
+            val valueArgumentList = callExpression.valueArgumentList
+            val valueArguments = callExpression.valueArguments
+            valueArgumentsSize = valueArguments.size
+
+            if (valueArgumentList != null) {
+                val bindingContext = valueArgumentList.analyze(BodyResolveMode.PARTIAL)
+
+                types = types ?: ArrayList(valueArgumentsSize)
+                for (valueArgument in valueArguments) {
+                    val argumentExpression = valueArgument.getArgumentExpression() ?: break
+                    types += argumentExpression.getType(bindingContext) ?: break
+                }
+            }
+        } else {
+            valueArgumentsSize = 0
+        }
+        kotlinTypes = types
     }
 
     fun weigh(descriptor: DeclarationDescriptor): Int {
@@ -374,37 +388,48 @@ internal class CallExpressionWeigher(element: KtNameReferenceExpression?) {
     ): Int {
         if (callableMemberDescriptor == null) return 0
 
-        val descriptorParameters = callableMemberDescriptor.valueParameters.size
-        val descriptorHasVarargParameter = callableMemberDescriptor.valueParameters.any(ValueParameterDescriptor::isVararg)
+        var weight = 0
+        val kotlinTypeIterator = kotlinTypes.iterator()
+        if (extensionReceiver) {
+            val receiverValueType = callableMemberDescriptor.extensionReceiverParameter?.value?.type
+            val kotlinType = if (kotlinTypeIterator.hasNext()) kotlinTypeIterator.next() else null
 
-        var weight = if (descriptorParameters >= valueArgumentsSize || descriptorHasVarargParameter) {
+            weight = kotlinType.weight(weight, receiverValueType) ?: weight
+        }
+        val valueParameters = callableMemberDescriptor.valueParameters
+        val descriptorParameters = valueParameters.size
+        val descriptorHasVarargParameter = valueParameters.any { it?.isVararg == true }
+
+        weight += if (descriptorParameters >= valueArgumentsSize || descriptorHasVarargParameter) {
             // same number of arguments is better than when more arguments
             if (descriptorParameters == valueArgumentsSize || descriptorHasVarargParameter) 1 else 0
         } else {
             // apply only base weigh if target has fewer parameters than expected
-            return 0
+            return weight
         }
-        val typeChecker = KotlinTypeChecker.DEFAULT
 
-        val valueParametersIterator = callableMemberDescriptor.valueParameters.iterator()
+        val valueParameterDescriptorIterator: MutableIterator<ValueParameterDescriptor> = valueParameters.iterator()
         var valueParameterDescriptor: ValueParameterDescriptor? = null
 
         // TODO: it does not cover following cases:
         //  - named parameters
-        //  - default values
+        //  - default value, e.g. `param: Int = ""`
+        //  - functional types, e.g. `Int.() -> Unit`
+        //  - functional references, e.g. `::foo`
 
-        for (kotlinType in kotlinTypes) {
-            if (!valueParametersIterator.hasNext()) {
+        while (kotlinTypeIterator.hasNext()) {
+            val kotlinType = kotlinTypeIterator.next()
+            if (!valueParameterDescriptorIterator.hasNext()) {
                 break
             }
             if (valueParameterDescriptor == null || !valueParameterDescriptor.isVararg) {
                 // vararg could be only the last parameter, there is no parameters left
-                valueParameterDescriptor = valueParametersIterator.next()
+                valueParameterDescriptor = valueParameterDescriptorIterator.next()
             }
 
             // replace `<T>` but `<*>` if needed, otherwise `<T>` has no subtypes
-            val returnType = valueParameterDescriptor?.returnType?.replaceArgumentsWithStarProjections()
-            val vararg = valueParameterDescriptor?.isVararg == true
+            val returnType = valueParameterDescriptor.returnType?.replaceArgumentsWithStarProjections()
+            val vararg = valueParameterDescriptor.isVararg
             val valueParameterType = if (vararg) {
                 // `vararg a: Int` has type `IntArray`
                 returnType?.getArrayElementType()
@@ -412,16 +437,20 @@ internal class CallExpressionWeigher(element: KtNameReferenceExpression?) {
                 returnType
             }
 
-            if (valueParameterType == null ||
-                !(typeChecker.isSubtypeOf(kotlinType, valueParameterType) ||
-                        vararg && returnType != null && typeChecker.isSubtypeOf(kotlinType, returnType))
-            ) {
-                break
-            }
-            weight = 100 * weight + 10
+            weight = kotlinType.weight(weight, valueParameterType) ?: kotlinType.weight(weight, returnType) ?: break
         }
         return weight
     }
+
+    private fun KotlinType?.weight(weight: Int, kotlinType: KotlinType?): Int? =
+        if (this == null && kotlinType == null ||
+            this != null && kotlinType != null && KotlinTypeChecker.DEFAULT.isSubtypeOf(this, kotlinType)
+        ) {
+            100 * weight + 10
+        } else {
+            null
+        }
+
 }
 
 internal class Prioritizer(
