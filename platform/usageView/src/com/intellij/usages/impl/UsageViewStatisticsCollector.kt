@@ -149,16 +149,16 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
                       source: CodeNavigateSource,
                       language: Language,
                       isSimilarUsage: Boolean) {
-      logItemChosen(project, usageView, source, language, isSimilarUsage)
+      logItemChosen(project, usageView, source, -1, -1, -1, language, isSimilarUsage)
     }
 
     @JvmStatic
     fun logItemChosen(project: Project?,
                       usageView: UsageView,
                       source: CodeNavigateSource,
-                      selectedRow:Int = -1,
-                      numberOfRows:Int = -1,
-                      numberOfLettersTyped: Int = -1,
+                      selectedRow: Int,
+                      numberOfRows: Int,
+                      numberOfLettersTyped: Int,
                       language: Language,
                       isSimilarUsage: Boolean) = itemChosen.log(project,
                                                                 USAGE_VIEW.with(usageView),
