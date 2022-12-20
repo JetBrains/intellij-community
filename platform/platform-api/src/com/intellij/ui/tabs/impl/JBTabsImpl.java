@@ -1067,17 +1067,16 @@ public class JBTabsImpl extends JComponent
                 SwingUtilities.convertPointFromScreen(point, list);
                 int clickedIndex = list.locationToIndex(point);
                 Component renderer = ListUtil.getDeepestRendererChildComponentAt(list, e.getPoint());
-                if (!(renderer instanceof JLabel)) {
+                if (!(renderer instanceof JLabel label)) {
                   return;
                 }
 
                 // the last one is expected to be 'CloseTab'
-                Object obj = ((JLabel)renderer).getClientProperty("info");
-                if (!(obj instanceof TabInfo)) {
+                Object obj = label.getClientProperty("info");
+                if (!(obj instanceof TabInfo tabInfo)) {
                   return;
                 }
 
-                TabInfo tabInfo = (TabInfo)obj;
                 e.consume();
                 boolean clickToUnpin = false;
                 if (tabInfo.isPinned()) {

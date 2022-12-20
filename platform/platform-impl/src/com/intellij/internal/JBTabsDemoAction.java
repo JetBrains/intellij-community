@@ -15,7 +15,6 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -211,7 +210,9 @@ final class JBTabsDemoAction extends AnAction {
     south.add(refire);
 
     for (Component c : south.getComponents()) {
-      ObjectUtils.consumeIfCast(c, JComponent.class, box -> box.setOpaque(false));
+      if (c instanceof JComponent box) {
+        box.setOpaque(false);
+      }
     }
 
 

@@ -1548,9 +1548,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
       for (int row : rows) {
         if (myTable.editCellAt(row, myColumnIndex)) {
-          TableCellEditor editor = myTable.getCellEditor();
-          if (editor instanceof DefaultCellEditor) {
-            ObjectUtils.consumeIfCast(((DefaultCellEditor)editor).getComponent(), JCheckBox.class, box -> box.setSelected(!box.isSelected()));
+          if (myTable.getCellEditor() instanceof DefaultCellEditor defaultCellEditor && 
+              defaultCellEditor.getComponent() instanceof JCheckBox checkBox) {
+            checkBox.setSelected(!checkBox.isSelected());
           }
           stopEditing(myTable);
           e.consume();

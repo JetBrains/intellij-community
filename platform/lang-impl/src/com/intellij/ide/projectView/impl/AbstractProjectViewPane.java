@@ -1108,8 +1108,12 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         .getTreeCellRendererComponent(getTree(), object, false, false, true, getTree().getRowForPath(path), false);
       Icon[] icon = new Icon[1];
       String[] text = new String[1];
-      ObjectUtils.consumeIfCast(component, ProjectViewRenderer.class, renderer -> icon[0] = renderer.getIcon());
-      ObjectUtils.consumeIfCast(component, SimpleColoredComponent.class, renderer -> text[0] = renderer.getCharSequence(true).toString());
+      if (component instanceof ProjectViewRenderer renderer) {
+        icon[0] = renderer.getIcon();
+      }
+      if (component instanceof SimpleColoredComponent colored) {
+        text[0] = colored.getCharSequence(true).toString();
+      }
       return new Pair<>(icon[0], text[0]);
     }
   }

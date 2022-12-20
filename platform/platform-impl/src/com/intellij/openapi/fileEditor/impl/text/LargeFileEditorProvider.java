@@ -12,7 +12,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,7 +40,9 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
   public static class LargeTextFileEditor extends TextEditorImpl {
     LargeTextFileEditor(@NotNull Project project, @NotNull VirtualFile file, @NotNull TextEditorProvider provider) {
       super(project, file, provider);
-      ObjectUtils.consumeIfCast(getEditor(), EditorEx.class, editorEx -> editorEx.setViewer(true));
+      if (getEditor() instanceof EditorEx editor) {
+        editor.setViewer(true);
+      }
     }
   }
 
