@@ -8,7 +8,6 @@ import com.intellij.codeInspection.options.PlainMessage;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -145,7 +144,7 @@ public class UiDslOptPaneRendererTest {
     assertFalse(checkBoxes.get(1).isEnabled(), "Nested checkbox controls should be disabled if the checkbox is disabled.");
 
     // Group nested controls
-    var integerFields = UIUtil.findComponentsOfType(component, IntegerField.class);
+    var integerFields = UIUtil.findComponentsOfType(component, JBTextField.class);
     assertEquals(4, integerFields.size());
   }
 
@@ -180,7 +179,7 @@ public class UiDslOptPaneRendererTest {
     // Controls inside tab panels
     var checkBoxes = UIUtil.findComponentsOfType(component, JCheckBox.class);
     assertEquals(1, checkBoxes.size());
-    var integerFields = UIUtil.findComponentsOfType(component, IntegerField.class);
+    var integerFields = UIUtil.findComponentsOfType(component, JBTextField.class);
     assertEquals(1, integerFields.size());
   }
 
@@ -207,7 +206,7 @@ public class UiDslOptPaneRendererTest {
     var checkBoxes = UIUtil.findComponentsOfType(component, JCheckBox.class);
     assertEquals(1, checkBoxes.size());
 
-    var integerFields = UIUtil.findComponentsOfType(component, IntegerField.class);
+    var integerFields = UIUtil.findComponentsOfType(component, JBTextField.class);
     assertEquals(1, integerFields.size());
 
     // Split label support

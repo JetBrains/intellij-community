@@ -12,7 +12,6 @@ import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTabbedPane
-import com.intellij.ui.components.fields.IntegerField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.selected
 import javax.swing.*
@@ -142,17 +141,26 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
               if (component.width > 0) columns = component.width
               text = tool.getOption(component.bindId) as String
             }
-            .onChanged { tool.setOption(component.bindId, it.text) }
+            .validationOnInput { textField ->
+              component.validator?.getErrorMessage(textField.text)?.let { error(it) }
+            }
+            .onChanged {
+              tool.setOption(component.bindId, it.text)
+            }
         }
 
         is OptNumber -> {
-          cell(IntegerField().apply {
-            minValue = component.minValue
-            maxValue = component.maxValue
-            columns = max(component.maxValue.toString().length, component.minValue.toString().length)
-            value = tool.getOption(component.bindId) as Int
-          })
-            .onChanged { tool.setOption(component.bindId, it.value) }
+          intTextField(component.minValue..component.maxValue)
+            .applyToComponent {
+              columns = max(component.maxValue.toString().length, component.minValue.toString().length)
+            }
+            .text(tool.getOption(component.bindId).toString())
+            .onChanged {
+              try {
+                val number = it.text.toInt()
+                tool.setOption(component.bindId, number)
+              } catch (_: NumberFormatException) {}
+            }
         }
 
         is OptDropdown -> {
