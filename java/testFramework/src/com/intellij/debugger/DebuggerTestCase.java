@@ -46,6 +46,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
@@ -65,25 +67,36 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   protected DebuggerSession myDebuggerSession;
   private ExecutionEnvironment myExecutionEnvironment;
   private RunProfileState myRunnableState;
-  private final List<Runnable> myTearDownRunnables = new ArrayList<>();
+  private final List<ThrowableRunnable<Throwable>> myTearDownRunnables = new ArrayList<>();
   private CompilerManagerImpl myCompilerManager;
 
   @Override
-  protected void tearDown() throws Exception {
-    try {
-      EdtTestUtil.runInEdtAndWait(() -> FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles());
+  protected void setUp() throws Exception {
+    super.setUp();
+    atDebuggerTearDown(() -> {
       if (myDebugProcess != null) {
         myDebugProcess.stop(true);
         myDebugProcess.waitFor();
         myDebugProcess.dispose();
       }
-      myTearDownRunnables.forEach(Runnable::run);
-      myTearDownRunnables.clear();
+    });
+    atDebuggerTearDown(() -> {
+      EdtTestUtil.runInEdtAndWait(() -> {
+        FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
+      });
+    });
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      new RunAll(myTearDownRunnables).run();
     }
     catch (Throwable e) {
       addSuppressedException(e);
     }
     finally {
+      myTearDownRunnables.clear();
       super.tearDown();
     }
     if (myCompilerManager != null) {
@@ -92,6 +105,17 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       assertTrue(myCompilerManager.awaitNettyThreadPoolTermination(1, TimeUnit.MINUTES));
       myCompilerManager = null;
     }
+  }
+
+  /**
+   * Run the given runnable as part of {@link DebuggerTestCase#tearDown() DebuggerTestCase.tearDown()}.
+   * The runnables are run in reverse order of registration.
+   * <p>
+   * See {@link #getTestRootDisposable() getTestRootDisposable()} to run some code a bit later,
+   * as part of {@link UsefulTestCase#tearDown()}.
+   */
+  protected final void atDebuggerTearDown(ThrowableRunnable<Throwable> runnable) {
+    myTearDownRunnables.add(0, runnable);
   }
 
   @Override
@@ -555,7 +579,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   private void setRendererEnabled(NodeRenderer renderer, boolean state) {
     boolean oldValue = renderer.isEnabled();
     if (oldValue != state) {
-      myTearDownRunnables.add(() -> renderer.setEnabled(oldValue));
+      atDebuggerTearDown(() -> renderer.setEnabled(oldValue));
       renderer.setEnabled(state);
     }
   }

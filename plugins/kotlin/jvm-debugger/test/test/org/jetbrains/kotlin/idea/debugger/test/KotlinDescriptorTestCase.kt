@@ -35,7 +35,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator
 import org.jetbrains.kotlin.idea.debugger.test.preference.*
 import org.jetbrains.kotlin.idea.debugger.test.util.BreakpointCreator
@@ -50,7 +49,6 @@ import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.ComparisonFailure
 import java.io.File
-import java.nio.file.Paths
 
 internal const val KOTLIN_LIBRARY_NAME = "KotlinJavaRuntime"
 internal const val TEST_LIBRARY_NAME = "TestLibrary"
@@ -126,19 +124,13 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         KotlinEvaluator.LOG_COMPILATIONS = true
         logPropagator = LogPropagator(::systemLogger).apply { attach() }
         checkPluginIsCorrect(isK2Plugin)
-    }
-
-    override fun tearDown() {
-        runAll(
-          ThrowableRunnable { KotlinEvaluator.LOG_COMPILATIONS = false },
-          ThrowableRunnable { invokeAndWaitIfNeeded { oldValues?.revertValues() } },
-          ThrowableRunnable { oldValues = null },
-          ThrowableRunnable { detachLibraries() },
-          ThrowableRunnable { logPropagator?.detach() },
-          ThrowableRunnable { logPropagator = null },
-          ThrowableRunnable { restoreEvaluatorBackend() },
-          ThrowableRunnable { super.tearDown() }
-        )
+        atDebuggerTearDown { restoreEvaluatorBackend() }
+        atDebuggerTearDown { logPropagator = null }
+        atDebuggerTearDown { logPropagator?.detach() }
+        atDebuggerTearDown { detachLibraries() }
+        atDebuggerTearDown { oldValues = null }
+        atDebuggerTearDown { invokeAndWaitIfNeeded { oldValues?.revertValues() } }
+        atDebuggerTearDown { KotlinEvaluator.LOG_COMPILATIONS = false }
     }
 
     protected fun dataFile(fileName: String): File = File(getTestDataPath(), fileName)

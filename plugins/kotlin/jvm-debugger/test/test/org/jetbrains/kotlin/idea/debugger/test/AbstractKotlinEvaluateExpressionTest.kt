@@ -60,6 +60,11 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
     private var isMultipleBreakpointsTest = false
     private var isFrameTest = false
 
+    override fun setUp() {
+        super.setUp()
+        atDebuggerTearDown { exceptions.clear() }
+    }
+
     override fun fragmentCompilerBackend() =
         FragmentCompilerBackend.JVM
 
@@ -91,16 +96,6 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
             performMultipleBreakpointTest(data)
         } else {
             performSingleBreakpointTest(data)
-        }
-    }
-
-    override fun tearDown() {
-        try {
-            exceptions.clear()
-        } catch (e: Throwable) {
-            addSuppressedException(e)
-        } finally {
-            super.tearDown()
         }
     }
 

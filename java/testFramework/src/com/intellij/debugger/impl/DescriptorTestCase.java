@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerTestCase;
@@ -29,6 +29,12 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
 
   public DescriptorTestCase() {
     super();
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    atDebuggerTearDown(() -> flushDescriptors());
   }
 
   protected NodeRenderer getToStringRenderer() {
@@ -104,19 +110,6 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
   protected void flushDescriptors() {
     myDescriptorLog.forEach((descriptor, text) -> text.print());
     myDescriptorLog.clear();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      flushDescriptors();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
   }
 
   private static boolean expandOne(Tree tree) {
