@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-jps-plugin-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-tests-for-ide:1.8.20-dev-4234" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-tests-for-ide:1.8.20-dev-4548" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/1.8.20-dev-4234/kotlin-jps-plugin-tests-for-ide-1.8.20-dev-4234.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/1.8.20-dev-4548/kotlin-jps-plugin-tests-for-ide-1.8.20-dev-4548.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/1.8.20-dev-4234/kotlin-jps-plugin-tests-for-ide-1.8.20-dev-4234-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/1.8.20-dev-4548/kotlin-jps-plugin-tests-for-ide-1.8.20-dev-4548-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
