@@ -14,7 +14,7 @@ import java.util.List;
 
 public class SortedConfigurableGroup
   extends SearchableConfigurable.Parent.Abstract
-  implements SearchableConfigurable, Weighted, ConfigurableGroup, Configurable.NoScroll {
+  implements Weighted, ConfigurableGroup, Configurable.NoScroll {
 
   private final String myId;
   private final @NlsContexts.ConfigurableName String myDisplayName;
@@ -65,6 +65,7 @@ public class SortedConfigurableGroup
     return myDisplayName;
   }
 
+  @Override
   public @NlsContexts.DetailedDescription String getDescription() {
     return myDescription;
   }
