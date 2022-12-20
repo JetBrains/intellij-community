@@ -145,7 +145,12 @@ class KotlinNameSuggester(
         return sequence {
             val primitiveType = getPrimitiveType(type)
             if (primitiveType != null) {
-                PRIMITIVE_TYPE_NAMES.getValue(primitiveType).forEach { registerCompoundName(it) }
+                val iterator = PRIMITIVE_TYPE_NAMES.getValue(primitiveType).iterator()
+                // skip first item for the primitives like `int`
+                if (iterator.hasNext()) iterator.next()
+                while(iterator.hasNext()) {
+                    registerCompoundName(iterator.next())
+                }
                 return@sequence
             }
 
@@ -199,7 +204,8 @@ class KotlinNameSuggester(
                     val primitiveElementType = FqNames.arrayClassFqNameToPrimitiveType[fqName]
                     if (primitiveElementType != null) {
                         val primitiveName = PRIMITIVE_TYPE_NAMES.getValue(primitiveElementType).first()
-                        registerCompoundName(Strings.pluralize(primitiveName))
+                        val chunk = Strings.pluralize(primitiveName)
+                        registerCompoundName(chunk)
                         return@sequence
                     }
 
