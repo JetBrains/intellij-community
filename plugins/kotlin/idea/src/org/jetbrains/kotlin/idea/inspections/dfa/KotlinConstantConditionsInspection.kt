@@ -510,6 +510,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 }
             }
             if (isAlsoChain(expression) || isLetConstant(expression) || isUpdateChain(expression)) return true
+            val kotlinType = expression.getKotlinType() ?: return false
             when (value) {
                 ConstantValue.TRUE -> {
                     if (isAndOrConditionWithNothingOperand(expression, KtTokens.OROR)) return true
@@ -548,6 +549,16 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         // zero value is passed as argument to another method or used for array access. Often, such a warning is annoying
                         return true
                     }
+                    if (parent is KtBinaryExpression) {
+                        val token = parent.operationToken
+                        if (token === KtTokens.EQEQ || token === KtTokens.EXCLEQ || token === KtTokens.EQEQEQ || token === KtTokens.EXCLEQEQEQ) {
+                            // like if (x == 0) when 'x' is known to be 0: report 'always true' instead
+                            val left = parent.left
+                            if (left != null && ConstantExpressionEvaluator.getConstant(left, bindingContext)?.getValue(kotlinType) == 0) return true
+                            val right = parent.right
+                            if (right != null && ConstantExpressionEvaluator.getConstant(right, bindingContext)?.getValue(kotlinType) == 0) return true
+                        }
+                    }
                 }
                 ConstantValue.NULL -> {
                     if (parent is KtProperty && parent.typeReference == null && expression is KtSimpleNameExpression) {
@@ -569,7 +580,6 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                             return true
                         }
                     }
-                    val kotlinType = expression.getKotlinType()
                     if (kotlinType.toDfType() == DfTypes.NULL) {
                         // According to type system, nothing but null could be stored in such an expression (likely "Void?" type)
                         return true
