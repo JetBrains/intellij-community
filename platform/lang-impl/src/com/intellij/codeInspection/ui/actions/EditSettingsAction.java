@@ -6,6 +6,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ui.InspectionOptionPaneRenderer;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -45,11 +46,11 @@ public class EditSettingsAction extends InspectionViewActionBase {
 
     if (view.isSingleInspectionRun()) {
       InspectionToolWrapper tool = getSingleTool(view);
-      JComponent panel = tool.getTool().createOptionsPanel();
-      LOG.assertTrue(panel != null, "Unexpectedly inspection '" + tool.getShortName() + "' didn't create an options panel");
       final DialogBuilder builder = new DialogBuilder()
-        .title(InspectionsBundle.message("inspection.tool.window.inspection.dialog.title", tool.getDisplayName()))
-        .centerPanel(panel);
+        .title(InspectionsBundle.message("inspection.tool.window.inspection.dialog.title", tool.getDisplayName()));
+      JComponent panel = InspectionOptionPaneRenderer.createOptionsPanel(tool.getTool(), builder);
+      LOG.assertTrue(panel != null, "Unexpectedly inspection '" + tool.getShortName() + "' didn't create an options panel");
+      builder.centerPanel(panel);
       builder.removeAllActions();
       builder.addOkAction();
       if (view.isRerunAvailable()) {

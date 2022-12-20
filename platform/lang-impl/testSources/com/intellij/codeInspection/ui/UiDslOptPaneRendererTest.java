@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.options.OptDropdown;
 import com.intellij.codeInspection.options.OptPane;
@@ -45,7 +46,7 @@ public class UiDslOptPaneRendererTest {
   @Test
   public void testControls() {
     MyInspection inspection = new MyInspection();
-    JComponent component = new UiDslOptPaneRenderer().render(inspection);
+    JComponent component = render(inspection);
 
     var textFields = UIUtil.findComponentsOfType(component, JBTextField.class);
     var checkBox = UIUtil.findComponentOfType(component, JCheckBox.class);
@@ -61,7 +62,7 @@ public class UiDslOptPaneRendererTest {
   @Test
   public void testSplitLabel() {
     MyInspection inspection = new MyInspection();
-    JComponent component = new UiDslOptPaneRenderer().render(inspection);
+    JComponent component = render(inspection);
 
     var labels = UIUtil.findComponentsOfType(component, JLabel.class);
 
@@ -81,7 +82,7 @@ public class UiDslOptPaneRendererTest {
   @Test
   public void testListeners() {
     MyInspection inspection = new MyInspection();
-    JComponent component = new UiDslOptPaneRenderer().render(inspection);
+    JComponent component = render(inspection);
 
     // Number
     var textFields = UIUtil.findComponentsOfType(component, JBTextField.class);
@@ -106,7 +107,7 @@ public class UiDslOptPaneRendererTest {
   @Test
   public void testSeparator() {
     MyInspection inspection = new MyInspection();
-    JComponent component = new UiDslOptPaneRenderer().render(inspection);
+    JComponent component = render(inspection);
     var separator = UIUtil.findComponentOfType(component, SeparatorComponent.class);
     assertNotNull(separator);
   }
@@ -136,7 +137,7 @@ public class UiDslOptPaneRendererTest {
   @Test
   public void testNestedControls() {
     MyNestedControlsInspection inspection = new MyNestedControlsInspection();
-    JComponent component = new UiDslOptPaneRenderer().render(inspection);
+    JComponent component = render(inspection);
 
     // Checkbox nested controls
     var checkBoxes = UIUtil.findComponentsOfType(component, JCheckBox.class);
@@ -146,6 +147,10 @@ public class UiDslOptPaneRendererTest {
     // Group nested controls
     var integerFields = UIUtil.findComponentsOfType(component, JBTextField.class);
     assertEquals(4, integerFields.size());
+  }
+
+  private static @NotNull JComponent render(InspectionProfileEntry inspection) {
+    return new UiDslOptPaneRenderer().render(inspection, inspection.getOptionsPane(), null);
   }
 
   private static class MyTabsInspection extends LocalInspectionTool {
@@ -169,7 +174,7 @@ public class UiDslOptPaneRendererTest {
   @Test
   public void testTabs() {
     MyTabsInspection inspection = new MyTabsInspection();
-    JComponent component = new UiDslOptPaneRenderer().render(inspection);
+    JComponent component = render(inspection);
 
     // Tabs
     var labels = UIUtil.findComponentsOfType(component, JLabel.class);
@@ -201,7 +206,7 @@ public class UiDslOptPaneRendererTest {
   @Test
   public void testHorizontalStack() {
     MyHorizontalStackInspection inspection = new MyHorizontalStackInspection();
-    JComponent component = new UiDslOptPaneRenderer().render(inspection);
+    JComponent component = render(inspection);
 
     var checkBoxes = UIUtil.findComponentsOfType(component, JCheckBox.class);
     assertEquals(1, checkBoxes.size());

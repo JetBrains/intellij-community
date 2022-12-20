@@ -14,6 +14,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ui.InspectionOptionPaneRenderer;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
@@ -161,7 +162,7 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
       @Override
       protected @NotNull JComponent getAdditionalActionSettings(@NotNull Project project) {
         final JPanel panel = new JPanel(new GridBagLayout());
-        final boolean hasOptionsPanel = toolWrapper.getTool().createOptionsPanel() != null;
+        final boolean hasOptionsPanel = InspectionOptionPaneRenderer.hasSettings(toolWrapper.getTool());
         final GridBag constraints = new GridBag()
           .setDefaultWeightX(1)
           .setDefaultWeightY(hasOptionsPanel ? 0 : 1)
@@ -171,7 +172,7 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
 
         if (hasOptionsPanel) {
           myUpdatedSettingsToolWrapper = copyToolWithSettings(toolWrapper);
-          final JComponent optionsPanel = myUpdatedSettingsToolWrapper.getTool().createOptionsPanel();
+          final JComponent optionsPanel = InspectionOptionPaneRenderer.createOptionsPanel(myUpdatedSettingsToolWrapper.getTool(), myDisposable);
           LOGGER.assertTrue(optionsPanel != null);
 
           final var separator = new TitledSeparator(IdeBundle.message("goto.inspection.action.choose.inherit.settings.from"));

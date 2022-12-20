@@ -10,6 +10,7 @@ import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -336,19 +337,22 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   }
 
   /**
-   * This method is called each time UI is shown.
-   * To get correct spacing, return a JComponent with empty insets using Kotlin UI DSL
-   * or {@link com.intellij.codeInspection.ui.InspectionOptionsPanel}.
+   * Old and discouraged way to create inspection options. Override {@link #getOptionsPane()} instead.
+   * If you need to render options, use {@link InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable)}.
    *
    * @return {@code null} if no UI options required.
    */
   public @Nullable JComponent createOptionsPanel() {
-    return InspectionOptionPaneRenderer.getInstance().render(this, null);
+    OptPane pane = getOptionsPane();
+    if (pane.equals(OptPane.EMPTY)) return null;
+    return InspectionOptionPaneRenderer.getInstance().render(this, getOptionsPane(), null);
   }
 
   /**
-   * @return declarative representation of the inspection options.
-   * @see OptPane#pane(OptComponent...) 
+   * @return declarative representation of the inspection options. If this method returns a non-empty pane, then
+   * {@link #createOptionsPanel()} is not used.
+   * @see OptPane#pane(OptComponent...)
+   * @see InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable) 
    */
   public @NotNull OptPane getOptionsPane() {
     return OptPane.EMPTY;

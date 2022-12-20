@@ -19,13 +19,7 @@ import javax.swing.*
 import kotlin.math.max
 
 class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
-  override fun render(tool: InspectionProfileEntry, parent: Disposable?): JComponent? {
-    val pane = tool.optionsPane
-    if (pane.components.isEmpty()) return null
-    return render(tool, pane, parent)
-  }
-
-  internal fun render(tool: InspectionProfileEntry, pane: OptPane, parent: Disposable?): JComponent {
+  override fun render(tool: InspectionProfileEntry, pane: OptPane, parent: Disposable?): JComponent {
     return panel {
       pane.components.forEach { render(it, tool, parent) }
     }
@@ -34,7 +28,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
   private fun Panel.render(component: OptComponent, tool: InspectionProfileEntry, parent: Disposable?) {
     when (component) {
       is OptControl, is OptSettingLink, is OptCustom -> {
-        renderOptRow(component, tool)
+        renderOptRow(component, tool, parent)
       }
 
       is OptGroup -> {
@@ -95,7 +89,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       else -> null
     }
 
-  private fun Panel.renderOptRow(component: OptComponent, tool: InspectionProfileEntry) {
+  private fun Panel.renderOptRow(component: OptComponent, tool: InspectionProfileEntry, parent: Disposable?) {
     val splitLabel = component.splitLabel
     lateinit var cell: Cell<JComponent>
     when {
@@ -118,7 +112,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
     // Nested components
     component.nestedControls?.let { nested ->
       val group = indent {
-        nested.forEach { render(it, tool) }
+        nested.forEach { render(it, tool, parent) }
       }
       if (cell.component is JBCheckBox) {
         group.enabledIf((cell.component as JBCheckBox).selected)

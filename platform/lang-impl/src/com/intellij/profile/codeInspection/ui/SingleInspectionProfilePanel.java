@@ -242,7 +242,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private void setConfigPanel(final JPanel configPanelAnchor, final ScopeToolState state) {
     configPanelAnchor.removeAll();
-    final JComponent additionalConfigPanel = state.getAdditionalConfigPanel();
+    final JComponent additionalConfigPanel = state.getAdditionalConfigPanel(myDisposable);
     if (additionalConfigPanel != null) {
       additionalConfigPanel.setBorder(InspectionUiUtilKt.getBordersForOptions(additionalConfigPanel));
       configPanelAnchor.add(

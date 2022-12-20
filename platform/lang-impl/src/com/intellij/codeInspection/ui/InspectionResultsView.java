@@ -186,8 +186,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       InspectionProfileImpl profile = getCurrentProfile();
       String toolId = Objects.requireNonNull(profile.getSingleTool());
       InspectionToolWrapper<?,?> tool = Objects.requireNonNull(profile.getInspectionTool(toolId, getProject()));
-      JComponent toolPanel = tool.getTool().createOptionsPanel();
-      mySettingsEnabled = toolPanel != null;
+      mySettingsEnabled = InspectionOptionPaneRenderer.hasSettings(tool.getTool());
     }
   }
 

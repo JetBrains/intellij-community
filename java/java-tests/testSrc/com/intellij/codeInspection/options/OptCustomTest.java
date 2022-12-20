@@ -53,7 +53,7 @@ public class OptCustomTest extends LightPlatform4TestCase {
         }
       }, getTestRootDisposable());
     MyInspection inspection = new MyInspection();
-    JComponent component = new UiDslOptPaneRenderer().render(inspection);
+    JComponent component = new UiDslOptPaneRenderer().render(inspection, inspection.getOptionsPane(), getTestRootDisposable());
     JButton button = UIUtil.findComponentOfType(component, JButton.class);
     assertEquals("3", button.getText());
     JLabel label = UIUtil.findComponentOfType(component, JLabel.class);
