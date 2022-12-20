@@ -25,7 +25,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
   private val snapshotFilePath get() = getSnapshotFilePath()
 
-  private val client get() = _client.value
+  internal val client get() = _client.value
   private val _client = lazy { createCloudConfigClient(clientVersionContext) }
   private val clientVersionContext = CloudConfigVersionContext()
 
@@ -180,9 +180,9 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     }
   }
 
-  fun downloadSnapshot(version: FileVersionInfo): InputStream? {
-    val stream = clientVersionContext.doWithVersion(snapshotFilePath, version.versionId) { filePath ->
-      client.read(filePath)
+  fun downloadSnapshot(filePath: String, version: FileVersionInfo): InputStream? {
+    val stream = clientVersionContext.doWithVersion(filePath, version.versionId) { path ->
+      client.read(path)
     }
 
     if (stream == null) {
@@ -196,7 +196,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     client.write(filePath, content.byteInputStream())
   }
 
-  fun getLatestVersion(filePath: String): FileVersionInfo? {
+  private fun getLatestVersion(filePath: String): FileVersionInfo? {
     return client.getLatestVersion(filePath)
   }
 
@@ -211,8 +211,8 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   }
 
   @Throws(Exception::class)
-  fun fetchHistory(): List<FileVersionInfo> {
-    return client.getVersions(snapshotFilePath)
+  fun fetchHistory(filePath: String): List<FileVersionInfo> {
+    return client.getVersions(filePath)
   }
 
   companion object {
@@ -239,6 +239,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
       return CloudConfigFileClientV2(url, conf, DUMMY_ETAG_STORAGE, versionContext)
     }
 
+    @VisibleForTesting
     internal fun getSnapshotFilePath() = if (SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled) {
       SETTINGS_SYNC_SNAPSHOT_ZIP
     }
