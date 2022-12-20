@@ -16067,44 +16067,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/renameClassToContainingFileName")
-    public static class RenameClassToContainingFileName extends AbstractK1IntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("Basic.kt")
-        public void testBasic() throws Exception {
-            runTest("testData/intentions/renameClassToContainingFileName/Basic.kt");
-        }
-
-        @TestMetadata("Basic2.kt")
-        public void testBasic2() throws Exception {
-            runTest("testData/intentions/renameClassToContainingFileName/Basic2.kt");
-        }
-
-        @TestMetadata("HasSameNameClass.kt")
-        public void testHasSameNameClass() throws Exception {
-            runTest("testData/intentions/renameClassToContainingFileName/HasSameNameClass.kt");
-        }
-
-        @TestMetadata("HasSameNameObject.kt")
-        public void testHasSameNameObject() throws Exception {
-            runTest("testData/intentions/renameClassToContainingFileName/HasSameNameObject.kt");
-        }
-
-        @TestMetadata("SameName.kt")
-        public void testSameName() throws Exception {
-            runTest("testData/intentions/renameClassToContainingFileName/SameName.kt");
-        }
-
-        @TestMetadata("startWithLowerCase.kt")
-        public void testStartWithLowerCase() throws Exception {
-            runTest("testData/intentions/renameClassToContainingFileName/startWithLowerCase.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/replaceAddWithPlusAssign")
     public static class ReplaceAddWithPlusAssign extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {

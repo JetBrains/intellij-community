@@ -1198,6 +1198,44 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/renameClassToContainingFileName")
+    public static class RenameClassToContainingFileName extends AbstractSharedK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("Basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../testData/intentions/renameClassToContainingFileName/Basic.kt");
+        }
+
+        @TestMetadata("Basic2.kt")
+        public void testBasic2() throws Exception {
+            runTest("../testData/intentions/renameClassToContainingFileName/Basic2.kt");
+        }
+
+        @TestMetadata("HasSameNameClass.kt")
+        public void testHasSameNameClass() throws Exception {
+            runTest("../testData/intentions/renameClassToContainingFileName/HasSameNameClass.kt");
+        }
+
+        @TestMetadata("HasSameNameObject.kt")
+        public void testHasSameNameObject() throws Exception {
+            runTest("../testData/intentions/renameClassToContainingFileName/HasSameNameObject.kt");
+        }
+
+        @TestMetadata("SameName.kt")
+        public void testSameName() throws Exception {
+            runTest("../testData/intentions/renameClassToContainingFileName/SameName.kt");
+        }
+
+        @TestMetadata("startWithLowerCase.kt")
+        public void testStartWithLowerCase() throws Exception {
+            runTest("../testData/intentions/renameClassToContainingFileName/startWithLowerCase.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/swapBinaryExpression")
     public static class SwapBinaryExpression extends AbstractSharedK2IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
