@@ -156,10 +156,7 @@ class ExpressionsOfTypeProcessor(
         if (searchScope is GlobalSearchScope && !FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, searchScope)) {
             return true
         }
-        if (searchScope is LocalSearchScope && searchScope.virtualFiles.none { it.fileType == KotlinFileType.INSTANCE }) {
-            return true
-        }
-        return false
+        return searchScope is LocalSearchScope && searchScope.virtualFiles.none { it.fileType == KotlinFileType.INSTANCE }
     }
 
     private fun addTask(task: Task) {
