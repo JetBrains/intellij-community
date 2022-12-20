@@ -64,6 +64,8 @@ private class TypingsCount : CompletionGolfMetric<Int>() {
   override val value: Double
     get() = sample.sum()
 
+  override val showByDefault: Boolean = false
+
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
     sessions.sumOf { it.lookups.count() + it.totalSkippableChars() - it.completedSkippableChars() }
 }
@@ -76,6 +78,8 @@ private class NavigationsCount : CompletionGolfMetric<Int>() {
   override val value: Double
     get() = sample.sum()
 
+  override val showByDefault: Boolean = false
+
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
     sessions.sumOf { computeMoves(it) }
 
@@ -87,6 +91,8 @@ private class CompletionInvocationsCount : CompletionGolfMetric<Int>() {
   override val name: String = "Completion Invocations"
 
   override val valueType = MetricValueType.INT
+
+  override val showByDefault: Boolean = false
 
   override val value: Double
     get() = sample.sum()

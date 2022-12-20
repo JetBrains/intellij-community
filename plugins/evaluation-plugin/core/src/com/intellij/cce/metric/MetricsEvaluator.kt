@@ -40,10 +40,10 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
   private fun registerMetric(metric: Metric) = metrics.add(metric)
 
   fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator = SuggestionsComparator.DEFAULT): List<MetricInfo> {
-    return metrics.map { MetricInfo(it.name, it.evaluate(sessions, comparator).toDouble(), evaluationType, it.valueType) }
+    return metrics.map { MetricInfo(it.name, it.evaluate(sessions, comparator).toDouble(), evaluationType, it.valueType, it.showByDefault) }
   }
 
   fun result(): List<MetricInfo> {
-    return metrics.map { MetricInfo(it.name, it.value, evaluationType, it.valueType) }
+    return metrics.map { MetricInfo(it.name, it.value, evaluationType, it.valueType, it.showByDefault) }
   }
 }
