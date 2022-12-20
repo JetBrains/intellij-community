@@ -2056,7 +2056,7 @@ public final class ContainerUtil {
   @SafeVarargs
   @Contract(pure = true)
   @Unmodifiable
-  public static @NotNull <T> List<T> packNullables(T @NotNull ... elements) {
+  public static @NotNull <T> List<@NotNull T> packNullables(@Nullable T @NotNull ... elements) {
     List<T> list = new ArrayList<>();
     for (T element : elements) {
       addIfNotNull(list, element);
