@@ -4,7 +4,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType.ELEMENT_UNDER_CARE
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class EditorConfigHighlightUsagesTest : BasePlatformTestCase() {
@@ -24,7 +23,7 @@ class EditorConfigHighlightUsagesTest : BasePlatformTestCase() {
     IdentifierHighlighterPassFactory.doWithHighlightingEnabled (project, testRootDisposable, Runnable {
       myFixture.configureByFile("${name}/.editorconfig")
       myFixture.setReadEditorMarkupModel(true)
-      ExpectedHighlightingData.expectedDuplicatedHighlighting { myFixture.checkHighlighting() }
+      myFixture.checkHighlighting()
     })
   }
 
