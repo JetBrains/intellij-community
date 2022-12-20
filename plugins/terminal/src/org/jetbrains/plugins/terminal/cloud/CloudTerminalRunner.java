@@ -12,11 +12,13 @@ import com.jediterm.terminal.TtyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.AbstractTerminalRunner;
+import org.jetbrains.plugins.terminal.TerminalProcessOptions;
 
 import java.awt.*;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalProcess> {
   private final @NlsSafe String myPipeName;
@@ -24,7 +26,7 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
   private final TtyResizeHandler myTtyResizeHandler;
   private final boolean myDeferSessionUntilFirstShown;
 
-  public CloudTerminalRunner(@NotNull Project project, @NotNull @NlsSafe String pipeName, CloudTerminalProcess process,
+  public CloudTerminalRunner(@NotNull Project project, @NotNull @NlsSafe String pipeName, @NotNull CloudTerminalProcess process,
                              @Nullable TtyResizeHandler resizeHandler,
                              boolean deferSessionUntilFirstShown) {
     super(project);
@@ -46,7 +48,7 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
   }
 
   @Override
-  public CloudTerminalProcess createProcess(@Nullable String directory) {
+  public @NotNull CloudTerminalProcess createProcess(@NotNull TerminalProcessOptions options) throws ExecutionException {
     return myProcess;
   }
 

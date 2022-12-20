@@ -88,32 +88,8 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     }
   }
 
-  /**
-   * @deprecated use {@link #createProcess(TerminalProcessOptions)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull T createProcess(@NotNull TerminalProcessOptions options, @Nullable JBTerminalWidget widget) throws ExecutionException {
-    return createProcess(options);
-  }
-
   public @NotNull T createProcess(@NotNull TerminalProcessOptions options) throws ExecutionException {
     return createProcess(options, null);
-  }
-
-  /**
-   * @deprecated use {@link #createProcess(TerminalProcessOptions)} instead
-   */
-  @Deprecated(forRemoval = true)
-  protected T createProcess(@Nullable String directory) throws ExecutionException {
-    throw new AssertionError("Call createProcess(TerminalProcessOptions)");
-  }
-
-  /**
-   * @deprecated use {@link #createProcess(TerminalProcessOptions, JBTerminalWidget)} instead
-   */
-  @Deprecated(forRemoval = true)
-  protected T createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
-    return createProcess(directory);
   }
 
   protected abstract ProcessHandler createProcessHandler(T process);
@@ -316,5 +292,29 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     ApplicationManager.getApplication().invokeLater(() -> {
       terminalWidget.setCursorVisible(false);
     }, myProject.getDisposed());
+  }
+
+  /**
+   * @deprecated use {@link #createProcess(TerminalProcessOptions)} instead
+   */
+  @Deprecated(forRemoval = true)
+  public @NotNull T createProcess(@NotNull TerminalProcessOptions options, @Nullable JBTerminalWidget widget) throws ExecutionException {
+    return createProcess(options);
+  }
+
+  /**
+   * @deprecated use {@link #createProcess(TerminalProcessOptions)} instead
+   */
+  @Deprecated(forRemoval = true)
+  protected T createProcess(@Nullable String directory) throws ExecutionException {
+    throw new AssertionError("Call createProcess(TerminalProcessOptions)");
+  }
+
+  /**
+   * @deprecated use {@link #createProcess(TerminalProcessOptions, JBTerminalWidget)} instead
+   */
+  @Deprecated(forRemoval = true)
+  protected T createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
+    return createProcess(directory);
   }
 }
