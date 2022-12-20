@@ -9,7 +9,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.Weighted;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleGroup;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -49,7 +48,7 @@ public class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
   }
 
   public class CodeStyleGroupConfigurable extends SearchableConfigurable.Parent.Abstract
-    implements Weighted, ConfigurableGroup, Configurable.NoScroll {
+    implements ConfigurableGroup, Configurable.NoScroll {
 
     @Override
     public @NonNls @NotNull String getId() {
@@ -59,11 +58,6 @@ public class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
     @Override
     public @NonNls String getHelpTopic() {
       return myGroup.getHelpTopic();
-    }
-
-    @Override
-    public int getWeight() {
-      return 0;
     }
 
     @Override
