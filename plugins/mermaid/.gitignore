@@ -1,5 +1,6 @@
 .gradle
-.idea
+.idea/*
+!.idea/icon.svg
 .qodana
 build
 kotlin-js-store
