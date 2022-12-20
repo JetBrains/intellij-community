@@ -85,7 +85,8 @@ val mermaidExtensionBuildResults by tasks.registering {
     }
 }
 
-val ensureThereAreNotSourceMapsAmongResources by tasks.registering {
+val ensureThereAreNoSourceMapsAmongResources by tasks.registering {
+    mustRunAfter(mermaidExtensionBuildResults)
     doLast {
         val files = mermaidExtensionResourcePath.walkTopDown()
         val sourceMaps = files.filter { it.isSourceMap() }
@@ -113,7 +114,7 @@ tasks {
     processResources {
         dependsOn(mermaidExtensionBuildResults)
         if (isAutomatedProductionBuild) {
-            dependsOn(ensureThereAreNotSourceMapsAmongResources)
+            dependsOn(ensureThereAreNoSourceMapsAmongResources)
         }
         inputs.files(mermaidExtensionBuildResults.map { it.outputs })
     }
