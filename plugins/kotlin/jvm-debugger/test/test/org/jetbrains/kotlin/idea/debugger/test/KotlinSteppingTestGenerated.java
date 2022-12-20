@@ -1400,6 +1400,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/smartStepIntoPropertyGetterReference.kt");
         }
 
+        @TestMetadata("smartStepIntoPropertySetter.kt")
+        public void testSmartStepIntoPropertySetter() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoPropertySetter.kt");
+        }
+
         @TestMetadata("smartStepIntoSamLambdaFromJavaFunInterface.kt")
         public void testSmartStepIntoSamLambdaFromJavaFunInterface() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoSamLambdaFromJavaFunInterface.kt");
