@@ -37,7 +37,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Base class for java line-connected exceptions (line, method, field)
+ * Base class for java line-connected breakpoints (line, method, field)
  *
  * @author egor
  */
