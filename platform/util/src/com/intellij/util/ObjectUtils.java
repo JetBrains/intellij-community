@@ -153,8 +153,9 @@ public final class ObjectUtils extends ObjectUtilsRt {
   }
 
   /**
-   * Do not use in Kotlin.
+   * @deprecated this method is unnecessary. Just write if statement (use pattern variable when possible).
    */
+  @Deprecated
   public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, @NotNull Consumer<? super T> consumer) {
     if (clazz.isInstance(obj)) {
       //noinspection unchecked
