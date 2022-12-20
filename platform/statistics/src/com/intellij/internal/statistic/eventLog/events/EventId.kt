@@ -120,7 +120,7 @@ class EventId3<in T1, in T2, in T3>(
   override fun getFields(): List<EventField<*>> = listOf(field1, field2, field3)
 }
 
-class EventDataCollector() : ArrayList<EventPair<*>>() {
+class EventDataCollector : ArrayList<EventPair<*>>() {
   var skipped = false
 
   fun skip() {

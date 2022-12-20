@@ -43,9 +43,9 @@ class CodeStyleStatusBarWidget(project: Project) : EditorBasedStatusBarPopup(pro
   }
 
   private fun getPsiFile(): PsiFile? {
-    val editor = getEditor()
-    val project = project
-    return if (editor != null && !project.isDisposed) PsiDocumentManager.getInstance(project).getPsiFile(editor.document) else null
+    val editor = getEditor() ?: return null
+    val project = project.takeIf { !it.isDisposed } ?: return null
+    return PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
   }
 
   override fun createPopup(context: DataContext): ListPopup? {

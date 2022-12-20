@@ -78,8 +78,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     this(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), null, aStep, null);
   }
 
-  public ListPopupImpl(@Nullable Project project,
-                       @NotNull ListPopupStep aStep) {
+  public ListPopupImpl(@Nullable Project project, @NotNull ListPopupStep aStep) {
     this(project, null, aStep, null);
   }
 

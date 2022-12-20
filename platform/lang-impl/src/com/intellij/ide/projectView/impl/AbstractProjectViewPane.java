@@ -1110,7 +1110,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       String[] text = new String[1];
       ObjectUtils.consumeIfCast(component, ProjectViewRenderer.class, renderer -> icon[0] = renderer.getIcon());
       ObjectUtils.consumeIfCast(component, SimpleColoredComponent.class, renderer -> text[0] = renderer.getCharSequence(true).toString());
-      return Pair.create(icon[0], text[0]);
+      return new Pair<>(icon[0], text[0]);
     }
   }
 

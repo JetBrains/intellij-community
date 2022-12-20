@@ -54,7 +54,7 @@ import javax.swing.SwingUtilities
  * via [SingleContentSupplier.KEY] that in case of single content view
  * all [JBTabs] and actions are moved into this header.
  *
- * When two or more contents exist then header looks like [TabContentLayout].
+ * When two or more contents exist, then header looks like [TabContentLayout].
  */
 internal class SingleContentLayout(
   ui: ToolWindowContentUi
@@ -345,7 +345,9 @@ internal class SingleContentLayout(
       updateTabs()
 
       jbTabs.addListener(object : TabsListener {
-        override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) = checkAndUpdate()
+        override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
+          checkAndUpdate()
+        }
         override fun tabRemoved(tabToRemove: TabInfo) = checkAndUpdate()
         override fun tabsMoved() = checkAndUpdate()
       }, this)

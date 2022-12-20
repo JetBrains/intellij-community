@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.NotNullFactory;
@@ -22,8 +22,9 @@ public final class ObjectUtils extends ObjectUtilsRt {
   public static final Object NULL = sentinel("ObjectUtils.NULL");
 
   /**
-   * Creates a new object which could be used as sentinel value (special value to distinguish from any other object). It does not equal
-   * to any other object. Usually should be assigned to the static final field.
+   * Creates a new object which could be used as a sentinel value (special value to distinguish from any other object).
+   * It does not equal to any other object.
+   * Usually should be assigned to the static final field.
    *
    * @param name an object name, returned from {@link #toString()} to simplify the debugging or heap dump analysis
    *             (guaranteed to be stored as sentinel object field). If sentinel is assigned to the static final field,
@@ -127,6 +128,9 @@ public final class ObjectUtils extends ObjectUtilsRt {
     return clazz.isInstance(obj) ? clazz.cast(obj) : null;
   }
 
+  /**
+   * Do not use in Kotlin.
+   */
   public static @Nullable <T, S> S doIfCast(@Nullable Object obj,
                                             @NotNull Class<T> clazz,
                                             @NotNull Convertor<? super T, ? extends S> convertor) {
@@ -139,12 +143,18 @@ public final class ObjectUtils extends ObjectUtilsRt {
     return obj == null ? null : function.fun(obj);
   }
 
+  /**
+   * Do not use in Kotlin.
+   */
   public static <T> void consumeIfNotNull(@Nullable T obj, @NotNull Consumer<? super T> consumer) {
     if (obj != null) {
       consumer.consume(obj);
     }
   }
 
+  /**
+   * Do not use in Kotlin.
+   */
   public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, @NotNull Consumer<? super T> consumer) {
     if (clazz.isInstance(obj)) {
       //noinspection unchecked

@@ -239,9 +239,6 @@ final class JBTabsDemoAction extends AnAction {
     tabs.addTab(new TabInfo(new JTable())).setText("Table 9").setActions(new DefaultActionGroup(), null);
 
     //tabs.getComponent().setBorder(new EmptyBorder(5, 5, 5, 5));
-    tabs.setTabSidePaintBorder(5);
-    tabs.setPaintBorder(1, 1, 1, 1);
-
     tabs.getPresentation().setActiveTabFillIn(Color.white);
 
     //tabs.setBorder(new LineBorder(Color.blue, 5));
