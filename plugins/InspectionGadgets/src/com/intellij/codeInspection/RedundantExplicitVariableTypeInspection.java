@@ -89,8 +89,8 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
       private static PsiType getNormalizedType(PsiVariable copyVariable) {
         PsiType type = copyVariable.getType();
         PsiClass refClass = PsiUtil.resolveClassInType(type);
-        if (refClass instanceof PsiAnonymousClass) {
-          type = ((PsiAnonymousClass)refClass).getBaseClassType();
+        if (refClass instanceof PsiAnonymousClass anonymousClass) {
+          type = anonymousClass.getBaseClassType();
         }
         return type;
       }
