@@ -2,6 +2,7 @@
 package com.intellij.feedback.productivityMetric.dialog
 
 import com.intellij.feedback.common.*
+import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.dialog.*
 import com.intellij.feedback.productivityMetric.bundle.ProductivityFeedbackBundle
 import com.intellij.feedback.productivityMetric.statistics.ProductivityMetricCountCollector
@@ -126,7 +127,7 @@ class ProductivityFeedbackDialog(
       }.bottomGap(BottomGap.MEDIUM)
 
       row {
-        feedbackAgreement(project) {
+        feedbackAgreement(project, CommonFeedbackBundle.message("dialog.feedback.consent.withoutEmail")) {
           showFeedbackSystemInfoDialog(project, systemInfoData.value)
         }
       }.bottomGap(BottomGap.SMALL)
