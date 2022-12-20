@@ -17,67 +17,64 @@ import org.junit.runner.RunWith;
 @TestRoot("maven/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class MavenConfigureProjectByChangingFileTestGenerated extends AbstractMavenConfigureProjectByChangingFileTest {
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/configurator/jvm")
-    public static class Jvm extends AbstractMavenConfigureProjectByChangingFileTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestWithMaven, this, testDataFilePath);
-        }
+@TestMetadata("testData/configurator/jvm")
+public class MavenConfigureProjectByChangingFileTestGenerated extends AbstractMavenConfigureProjectByChangingFileTest {
+    private void runTest(String testDataFilePath) throws Exception {
+        KotlinTestUtils.runTest(this::doTestWithMaven, this, testDataFilePath);
+    }
 
-        @TestMetadata("fixExisting")
-        public void testFixExisting() throws Exception {
-            runTest("testData/configurator/jvm/fixExisting/");
-        }
+    @TestMetadata("fixExisting")
+    public void testFixExisting() throws Exception {
+        runTest("testData/configurator/jvm/fixExisting/");
+    }
 
-        @TestMetadata("jreLib")
-        public void testJreLib() throws Exception {
-            runTest("testData/configurator/jvm/jreLib/");
-        }
+    @TestMetadata("jreLib")
+    public void testJreLib() throws Exception {
+        runTest("testData/configurator/jvm/jreLib/");
+    }
 
-        @TestMetadata("libraryMissing")
-        public void testLibraryMissing() throws Exception {
-            runTest("testData/configurator/jvm/libraryMissing/");
-        }
+    @TestMetadata("libraryMissing")
+    public void testLibraryMissing() throws Exception {
+        runTest("testData/configurator/jvm/libraryMissing/");
+    }
 
-        @TestMetadata("pluginMissing")
-        public void testPluginMissing() throws Exception {
-            runTest("testData/configurator/jvm/pluginMissing/");
-        }
+    @TestMetadata("pluginMissing")
+    public void testPluginMissing() throws Exception {
+        runTest("testData/configurator/jvm/pluginMissing/");
+    }
 
-        @TestMetadata("simpleProject")
-        public void testSimpleProject() throws Exception {
-            runTest("testData/configurator/jvm/simpleProject/");
-        }
+    @TestMetadata("simpleProject")
+    public void testSimpleProject() throws Exception {
+        runTest("testData/configurator/jvm/simpleProject/");
+    }
 
-        @TestMetadata("simpleProjectBeta")
-        public void testSimpleProjectBeta() throws Exception {
-            runTest("testData/configurator/jvm/simpleProjectBeta/");
-        }
+    @TestMetadata("simpleProjectBeta")
+    public void testSimpleProjectBeta() throws Exception {
+        runTest("testData/configurator/jvm/simpleProjectBeta/");
+    }
 
-        @TestMetadata("simpleProjectDev")
-        public void testSimpleProjectDev() throws Exception {
-            runTest("testData/configurator/jvm/simpleProjectDev/");
-        }
+    @TestMetadata("simpleProjectDev")
+    public void testSimpleProjectDev() throws Exception {
+        runTest("testData/configurator/jvm/simpleProjectDev/");
+    }
 
-        @TestMetadata("simpleProjectMilestone")
-        public void testSimpleProjectMilestone() throws Exception {
-            runTest("testData/configurator/jvm/simpleProjectMilestone/");
-        }
+    @TestMetadata("simpleProjectMilestone")
+    public void testSimpleProjectMilestone() throws Exception {
+        runTest("testData/configurator/jvm/simpleProjectMilestone/");
+    }
 
-        @TestMetadata("simpleProjectReleaseCandidate")
-        public void testSimpleProjectReleaseCandidate() throws Exception {
-            runTest("testData/configurator/jvm/simpleProjectReleaseCandidate/");
-        }
+    @TestMetadata("simpleProjectReleaseCandidate")
+    public void testSimpleProjectReleaseCandidate() throws Exception {
+        runTest("testData/configurator/jvm/simpleProjectReleaseCandidate/");
+    }
 
-        @TestMetadata("simpleProjectSnapshot")
-        public void testSimpleProjectSnapshot() throws Exception {
-            runTest("testData/configurator/jvm/simpleProjectSnapshot/");
-        }
+    @TestMetadata("simpleProjectSnapshot")
+    public void testSimpleProjectSnapshot() throws Exception {
+        runTest("testData/configurator/jvm/simpleProjectSnapshot/");
+    }
 
-        @TestMetadata("withJava9ModuleInfo")
-        public void testWithJava9ModuleInfo() throws Exception {
-            runTest("testData/configurator/jvm/withJava9ModuleInfo/");
-        }
+    @TestMetadata("withJava9ModuleInfo")
+    public void testWithJava9ModuleInfo() throws Exception {
+        runTest("testData/configurator/jvm/withJava9ModuleInfo/");
     }
 }
