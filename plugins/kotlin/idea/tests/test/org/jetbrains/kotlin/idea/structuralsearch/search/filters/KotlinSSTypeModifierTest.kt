@@ -290,6 +290,75 @@ class KotlinSSTypeModifierTest : KotlinStructuralSearchTest() {
         """.trimIndent())
     }
 
+    fun testTypeCallExpressionWithoutReceiver() {
+        myFixture.addFileToProject("A.kt", """
+            object A {
+                fun foo() { }
+            }
+        """.trimIndent())
+        myFixture.addFileToProject("B.kt", """
+            object B {
+                fun foo() { }
+            }
+        """.trimIndent())
+        doTest("'_{0,1}:[exprtype(A)].'_()", """
+            import B.foo
+            
+            fun main() {
+                <warning descr="SSR">A.foo()</warning>
+                B.foo()
+                foo()
+            }
+    """.trimIndent())
+    }
+
+    fun testTypeCallExpressionWithoutReceiverOnHigherOrderFunction() {
+        myFixture.addFileToProject("A.kt", """
+            object A {
+                fun foo() { }
+            }
+        """.trimIndent())
+        doTest("'_{0,1}:[exprtype(A)].foo()", """
+            fun bar1(foo: () -> Unit) {
+                <warning descr="SSR">A.foo()</warning>
+                foo()
+            }       
+    """.trimIndent())
+    }
+
+    fun testTypeCallExpressionWithoutReceiverOnHigherOrderExtensionFunction() {
+        myFixture.addFileToProject("A.kt", """
+            object A { }
+        """.trimIndent())
+        doTest("'_{0,1}:[exprtype(A)].foo()", """
+            fun bar1(foo: A.() -> Unit) {
+                <warning descr="SSR">A.foo()</warning>
+            }       
+    """.trimIndent())
+    }
+
+    fun testTypeCallExpressionWithoutReceiverJava() {
+        myFixture.addFileToProject("A.java", """
+            class A {
+                public static void foo() { }
+            }
+        """.trimIndent())
+        myFixture.addFileToProject("B.java", """
+            class B {
+                public static void foo() { }
+            }
+        """.trimIndent())
+        doTest("'_{0,1}:[exprtype(A)].'_()", """
+            import B.foo
+            
+            fun main() {
+                <warning descr="SSR">A.foo()</warning>
+                B.foo()
+                foo()
+            }
+    """.trimIndent())
+    }
+
     fun testTypeCallableReferenceExpression() { doTest("'_:[exprtype(A)]::'_", """
         class A {
             val x = 1

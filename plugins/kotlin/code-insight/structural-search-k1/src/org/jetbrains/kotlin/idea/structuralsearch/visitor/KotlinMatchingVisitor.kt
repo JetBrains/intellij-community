@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.structuralsearch.*
 import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinAlsoMatchCompanionObjectPredicate
 import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinAlsoMatchValVarPredicate
+import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinExprTypePredicate
 import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinMatchCallSemantics
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
@@ -318,8 +319,13 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         val other = getTreeElementDepar<KtExpression>() ?: return
         val receiverHandler = getHandler(expression.receiverExpression)
         if (receiverHandler is SubstitutionHandler && receiverHandler.minOccurs == 0 && other !is KtDotQualifiedExpression) { // can match without receiver
+            val receiverType = other.resolveExprType()
+            val receiverTypeMatches = if (receiverType != null) {
+                receiverHandler.findPredicate(KotlinExprTypePredicate::class.java)?.match(other.project, receiverType) ?: true
+            } else true
             myMatchingVisitor.result = other.parent !is KtDotQualifiedExpression
-                    && other.parent !is KtCallExpression
+                    && other.parent !is KtCallExpression // don't match name reference of calls
+                    && receiverTypeMatches
                     && myMatchingVisitor.match(expression.selectorExpression, other)
         } else {
             myMatchingVisitor.result = other is KtDotQualifiedExpression

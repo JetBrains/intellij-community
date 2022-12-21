@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.predicates
 
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
@@ -43,38 +42,34 @@ class KotlinExprTypePredicate(
     private val regex: Boolean
 ) : MatchPredicate() {
     override fun match(matchedNode: PsiElement, start: Int, end: Int, context: MatchContext): Boolean {
-        val searchedTypeNames = if (regex) listOf() else search.split('|')
-        if (matchedNode is KtExpression && matchedNode.isNull() && searchedTypeNames.contains("null")) return true
         val node = StructuralSearchUtil.getParentIfIdentifier(matchedNode)
         val type = when {
             node is KtDeclaration -> node.resolveDeclType()
-            node is KtExpression -> try {
-                String.Companion
-                node.resolveExprType() ?: node.parent?.asSafely<KtDotQualifiedExpression>()?.resolveExprType()
-            } catch (e: Exception) {
-                if (e is ControlFlowException) throw e
-                null
-            }
+            node is KtExpression -> node.resolveExprType() ?: node.parent?.asSafely<KtDotQualifiedExpression>()?.resolveExprType()
             node is KtStringTemplateEntry && node !is KtSimpleNameStringTemplateEntry -> null
             node is KtSimpleNameStringTemplateEntry -> node.expression?.resolveType()
             else -> null
         } ?: return false
+        val searchedTypeNames = if (regex) listOf() else search.split('|')
+        if (matchedNode is KtExpression && matchedNode.isNull() && searchedTypeNames.contains("null")) return true
+        return match(matchedNode.project, type)
+    }
 
-        val project = node.project
-        val scope = project.allScope()
-
+    fun match(project: Project, type: KotlinType): Boolean {
+        val searchedTypeNames = if (regex) listOf() else search.split('|')
         if (regex) {
             val delegate = RegExpPredicate(search, !ignoreCase, baseName, false, target)
             val typesToTest = mutableListOf(type)
             if (withinHierarchy) typesToTest.addAll(type.supertypes())
 
             return typesToTest.any {
-                delegate.doMatch(DescriptorRenderer.SHORT_NAMES_IN_TYPES.renderType(it), context, matchedNode)
-                        || delegate.doMatch(DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(it), context, matchedNode)
+                delegate.match(DescriptorRenderer.SHORT_NAMES_IN_TYPES.renderType(it))
+                        || delegate.match(DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(it))
             }
         }
 
         val factory = KtPsiFactory(project, false)
+        val scope = project.allScope()
         return searchedTypeNames
             .filter { it != "null" }
             .map(factory::createType)
