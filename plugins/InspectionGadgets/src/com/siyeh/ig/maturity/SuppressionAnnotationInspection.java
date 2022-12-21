@@ -17,8 +17,7 @@ package com.siyeh.ig.maturity;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
-import com.intellij.codeInspection.ui.ListEditForm;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -35,20 +34,19 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringSet;
 
 public class SuppressionAnnotationInspection extends BaseInspection {
   public List<String> myAllowedSuppressions = new ArrayList<>();
 
   @Override
-  public JComponent createOptionsPanel() {
-    final ListEditForm form = new ListEditForm(JavaBundle.message("column.name.ignore.suppressions"), JavaBundle.message("ignored.suppressions"), myAllowedSuppressions);
-    final JComponent contentPanel = form.getContentPanel();
-    contentPanel.setMinimumSize(InspectionOptionsPanel.getMinimumListSize());
-    return contentPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(stringSet("myAllowedSuppressions", JavaBundle.message("ignored.suppressions")));
   }
 
   @Override

@@ -2,9 +2,7 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -23,7 +21,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,11 +28,9 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.ui.OnePixelSplitter;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.CheckBox;
 import com.jetbrains.python.codeInsight.intentions.PyAnnotateTypesIntention;
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyImplementMethodsQuickFix;
@@ -130,33 +125,6 @@ public final class PythonUiServiceImpl extends PythonUiService {
   @Override
   public void annotateTypesIntention(Editor editor, PyFunction function) {
     PyAnnotateTypesIntention.annotateTypes(editor, function);
-  }
-
-  @Override
-  public JCheckBox createInspectionCheckBox(@NlsContexts.Checkbox String message, InspectionProfileEntry inspection, String property) {
-    return new CheckBox(message, inspection, property);
-  }
-
-  @Override
-  public JComponent createListEditForm(@NlsContexts.ColumnName String title, List<String> stringList) {
-    final ListEditForm form = new ListEditForm(title, stringList);
-    return form.getContentPanel();
-  }
-
-  @Override
-  public JComponent createListEditForm(@NlsContexts.ColumnName String title, @NlsContexts.Label String label, List<String> stringList) {
-    final ListEditForm form = new ListEditForm(title, label, stringList);
-    return form.getContentPanel();
-  }
-
-  @Override
-  public JComponent onePixelSplitter(boolean vertical, JComponent first, JComponent second) {
-    final OnePixelSplitter splitter = new OnePixelSplitter(vertical);
-
-    splitter.setFirstComponent(first);
-    splitter.setSecondComponent(second);
-
-    return splitter;
   }
 
   @Override

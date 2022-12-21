@@ -1,14 +1,11 @@
 package com.jetbrains.python;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsContexts.Checkbox;
 import com.intellij.openapi.util.NlsContexts.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,22 +71,6 @@ public class PythonUiService {
   }
 
   public void annotateTypesIntention(Editor editor, PyFunction function) {
-  }
-
-  public JCheckBox createInspectionCheckBox(@Checkbox String message, InspectionProfileEntry inspection, String property) {
-    return null;
-  }
-
-  public JComponent createListEditForm(@ColumnName String title, List<String> stringList) {
-    return null;
-  }
-
-  public JComponent createListEditForm(@ColumnName String title, @NlsContexts.Label String label, List<String> stringList) {
-    return null;
-  }
-
-  public JComponent onePixelSplitter(boolean b, JComponent first, JComponent second) {
-    return null;
   }
 
   public void showErrorHint(Editor editor, @NotNull @HintText String message) {

@@ -18,13 +18,12 @@ package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.ui.ListEditForm
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
-import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.codeInspection.options.OptPane.stringSet
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
@@ -33,7 +32,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.changePackage
 import com.jetbrains.packagesearch.intellij.plugin.util.modifyPackages
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
-import javax.swing.JPanel
 
 /**
  * An inspection that flags out-of-date dependencies in supported files, supplying a quick-fix to
@@ -66,15 +64,11 @@ abstract class PackageUpdateInspection : AbstractPackageUpdateInspectionCheck() 
         }
     }
 
-    override fun createOptionsPanel(): JPanel {
-        val panel = MultipleCheckboxOptionsPanel(this)
-
-        val injectionListTable = ListEditForm("", PackageSearchBundle.message("packagesearch.inspection.upgrade.excluded.dependencies"), excludeList)
-
-        panel.addCheckbox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable"), ::onlyStable.name)
-        panel.addGrowing(injectionListTable.contentPanel)
-
-        return panel
+    override fun getOptionsPane(): OptPane {
+        return pane(
+            checkbox("onlyStable", PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable")),
+            stringSet("excludeList", PackageSearchBundle.message("packagesearch.inspection.upgrade.excluded.dependencies"))
+        )
     }
 
     override fun ProblemsHolder.checkFile(file: PsiFile, fileModule: Module) {
