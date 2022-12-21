@@ -27,12 +27,9 @@ class JavaLibraryDataServiceExtension : LibraryDataServiceExtension {
   }
 
   private fun getMavenCoordinates(libraryData: LibraryData): MavenCoordinates? {
-    val groupId = libraryData.groupId
-    val artifactId = libraryData.artifactId
-    val version = libraryData.version
-    if (groupId != null && artifactId != null && version != null) {
-      return MavenCoordinates(groupId, artifactId, version)
-    }
-    return null;
+    val groupId = libraryData.groupId ?: return null
+    val artifactId = libraryData.artifactId ?: return null
+    val version = libraryData.version ?: return null
+    return MavenCoordinates(groupId, artifactId, version)
   }
 }
