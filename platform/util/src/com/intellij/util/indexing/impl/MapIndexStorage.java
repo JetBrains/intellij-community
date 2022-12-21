@@ -26,12 +26,14 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   private static final boolean ENABLE_WAL = SystemProperties.getBooleanProperty("idea.index.enable.wal", false);
 
   protected ValueContainerMap<Key, Value> myMap;
+
   protected SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
+  protected final ReentrantLock myCacheAccessLock = new ReentrantLock();
+
   protected final Path myBaseStorageFile;
   protected final KeyDescriptor<Key> myKeyDescriptor;
   private final int myCacheSize;
 
-  protected final ReentrantLock l = new ReentrantLock();
   private final DataExternalizer<Value> myDataExternalizer;
   private final boolean myKeyIsUniqueForIndexedFile;
   private final boolean myReadOnly;
@@ -82,7 +84,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
       @Override
       protected void onDropFromCache(final Key key, @NotNull ChangeTrackingValueContainer<Value> valueContainer) {
-        assert l.isHeldByCurrentThread();
+        assert myCacheAccessLock.isHeldByCurrentThread();
         try {
           if (!myReadOnly && valueContainer.isDirty()) {
             if (myKeyIsUniqueForIndexedFile) {
@@ -210,12 +212,10 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   @Override
   public void flush() throws IOException {
-    ConcurrencyUtil.withLock(l, () -> {
-      if (!myMap.isClosed()) {
-        myCache.clear();
-        if (myMap.isDirty()) myMap.force();
-      }
-    });
+    if (!myMap.isClosed()) {
+      clearCachedMappings();
+      if (myMap.isDirty()) myMap.force();
+    }
   }
 
   @Override
@@ -261,14 +261,16 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   @Override
   @NotNull
   public ChangeTrackingValueContainer<Value> read(final Key key) throws StorageException {
-    return ConcurrencyUtil.withLock(l, () -> {
-      try {
-        return myCache.get(key);
-      }
-      catch (RuntimeException e) {
-        return unwrapCauseAndRethrow(e);
-      }
-    });
+    myCacheAccessLock.lock();
+    try {
+      return myCache.get(key);
+    }
+    catch (RuntimeException e) {
+      return unwrapCauseAndRethrow(e);
+    }
+    finally {
+      myCacheAccessLock.unlock();
+    }
   }
 
   private void removeSingleValueDirectly(Key key, int inputId) throws IOException {
@@ -315,7 +317,13 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   @Nullable
   private ChangeTrackingValueContainer<Value> readIfCached(Key key) {
-    return ConcurrencyUtil.withLock(l, () -> myCache.getIfCached(key));
+    myCacheAccessLock.lock();
+    try {
+      return myCache.getIfCached(key);
+    }
+    finally {
+      myCacheAccessLock.unlock();
+    }
   }
 
   private static void assertKeyInputIdConsistency(@NotNull Object key, int inputId) {
@@ -324,16 +332,26 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   @Override
   public void clearCaches() {
-    ConcurrencyUtil.withLock(l, () -> {
+    myCacheAccessLock.lock();
+    try {
       for(Map.Entry<Key, ChangeTrackingValueContainer<Value>> entry:myCache.entrySet()) {
         entry.getValue().dropMergedData();
       }
-    });
+    }
+    finally {
+      myCacheAccessLock.unlock();
+    }
   }
 
   @ApiStatus.Internal
   public void clearCachedMappings() {
-    ConcurrencyUtil.withLock(l, () -> myCache.clear());
+    myCacheAccessLock.lock();
+    try {
+      myCache.clear(); // this will ensure that all new keys are made into the map
+    }
+    finally {
+      myCacheAccessLock.unlock();
+    }
   }
 
   protected static <T> T unwrapCauseAndRethrow(RuntimeException e) throws StorageException {
@@ -349,19 +367,17 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   @TestOnly
   public boolean processKeys(@NotNull Processor<? super Key> processor) throws StorageException {
-    return ConcurrencyUtil.withLock(l, () -> {
-      try {
-        myCache.clear(); // this will ensure that all new keys are made into the map
-        return doProcessKeys(processor);
-      }
-      catch (IOException e) {
-        throw new StorageException(e);
-      }
-      catch (RuntimeException e) {
-        unwrapCauseAndRethrow(e);
-        return false;
-      }
-    });
+    try {
+      clearCachedMappings(); // this will ensure that all new keys are made into the map
+      return doProcessKeys(processor);
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
+    }
+    catch (RuntimeException e) {
+      unwrapCauseAndRethrow(e);
+      return false;
+    }
   }
 
   protected boolean doProcessKeys(@NotNull Processor<? super Key> processor) throws IOException {
