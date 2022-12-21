@@ -20,12 +20,13 @@ public class HighlightInfoHolder {
   private final HighlightInfoFilter[] myFilters;
   private final AnnotationSession myAnnotationSession;
   private int myErrorCount;
-  private final List<HighlightInfo> myInfos = new ArrayList<>(5);
+  private final List<HighlightInfo> myInfos;
 
   public HighlightInfoHolder(@NotNull PsiFile contextFile, HighlightInfoFilter @NotNull ... filters) {
     myContextFile = contextFile;
     myAnnotationSession = new AnnotationSession(contextFile);
     myFilters = filters;
+    myInfos = new ArrayList<>(Math.max(10, contextFile.getTextLength() / 800)); // extrapolated from the most error-packed AbstractTreeUI
   }
 
   @NotNull
