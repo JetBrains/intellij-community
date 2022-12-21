@@ -2,7 +2,6 @@
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import org.apache.log4j.Level;
 import org.apache.log4j.Priority;
@@ -28,7 +27,7 @@ public class JulLogger extends Logger {
     }
     catch (Exception e) {
       //noinspection UseOfSystemOutOrSystemErr
-      e.printStackTrace(System.err);
+      System.err.println("Be careful, logger will be shut down earlier than application: " + e.getMessage());
     }
     CLEANER_DELAYED = delayed;
   }
@@ -201,7 +200,8 @@ public class JulLogger extends Logger {
   private static boolean delayCleanerUntilIdeShutdownActivitiesFinished() throws Exception {
     Class<?> logManagerCleanerClass = Class.forName("java.util.logging.LogManager$Cleaner");
     Class<?> appShutdownHooks = Class.forName("java.lang.ApplicationShutdownHooks");
-    Field hooksField = ReflectionUtil.findField(appShutdownHooks, IdentityHashMap.class, "hooks");
+    Field hooksField = appShutdownHooks.getDeclaredField("hooks");
+    hooksField.setAccessible(true);
     IdentityHashMap<?, ?> hooks = (IdentityHashMap<?, ?>) hooksField.get(null);
     synchronized (appShutdownHooks) {
       for (Object o : hooks.keySet()) {
