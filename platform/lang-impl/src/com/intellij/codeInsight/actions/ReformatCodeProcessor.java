@@ -184,9 +184,9 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
       try {
         EditorScrollingPositionKeeper.perform(document, true, () -> SlowOperations.allowSlowOperations(() -> {
           if (document != null) {
-            // In languages that are supported type assistant without document commit (like C++ and Kotlin)
-            // the `document` can be in uncommitted state here. In the case of external formatter,
-            // it can be a reason for formatting artifacts
+            // In languages that are supported by a non-commit typing assistant (such as C++ and Kotlin),
+            // the `document` here can be in an uncommitted state. In the case of an external formatter,
+            // this may be the cause of formatting artifacts
             PsiDocumentManager.getInstance(myProject).commitDocument(document);
           }
           if (processChangedTextOnly) {
