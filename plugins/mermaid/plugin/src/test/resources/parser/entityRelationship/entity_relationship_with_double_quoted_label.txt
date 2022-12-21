@@ -37,6 +37,5 @@ FILE
       PsiWhiteSpace(' ')
       PsiElement(COLON)(':')
       PsiWhiteSpace(' ')
-      MermaidStringImpl(STRING)
-        PsiElement(DOUBLE_QUOTE)('"')
-        PsiElement(DOUBLE_QUOTE)('"')
+      PsiElement(DOUBLE_QUOTE)('"')
+      PsiElement(DOUBLE_QUOTE)('"')

@@ -192,7 +192,7 @@ noteStatement ::= NOTE (RIGHT_OF | LEFT_OF) complexIdentifier COLON complexMessa
 
 linksStatement ::= LINKS complexIdentifier COLON linksValues
 linksValues ::= OPEN_CURLY linkContent CLOSE_CURLY
-private linkContent ::= string COLON string [COMMA linkContent]
+private linkContent ::= maybeEmptyString COLON maybeEmptyString [COMMA linkContent]
 
 linkStatement ::= LINK complexIdentifier COLON complexMessage
 
@@ -261,7 +261,7 @@ genericTypeId ::= GENERIC_TYPE {
 }
 
 relation ::= [cardinality] [relationTypeLeft] lineType [relationTypeRight] [cardinality]
-cardinality ::= string
+cardinality ::= maybeEmptyString
 
 relationTypeLeft ::= AGGREGATION
     | EXTENSION_START
@@ -319,7 +319,7 @@ private noteLine ::= simpleNoteContent [EOL] | EOL
 erDocument ::= erLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private erLines ::= erLine [erLines]
 private erLine ::= erStatement [EOL] | EOL
-erStatement ::= erIdentifier relationship erIdentifier COLON (complexLabel | string)
+erStatement ::= erIdentifier relationship erIdentifier COLON (complexLabel | maybeEmptyString)
 	| entityDeclaration
 	| erIdentifier
 	| directive
@@ -338,7 +338,7 @@ private relationshipRight ::= ZERO_OR_ONE_RIGHT | ONE_OR_MORE_RIGHT | ZERO_OR_MO
 erAttributesDocument ::= erAttributesLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramInBracesDocument" }
 private erAttributesLines ::= erAttributeLine [erAttributesLines]
 private erAttributeLine ::= erAttribute [EOL] | EOL
-erAttribute ::= (attrTypeWithGeneric | attrType) attrName [ATTR_KEY] [string]
+erAttribute ::= (attrTypeWithGeneric | attrType) attrName [ATTR_KEY] [maybeEmptyString]
 attrType ::= ATTRIBUTE_WORD
 attrTypeWithGeneric ::= attrType generic
 attrName ::= ATTRIBUTE_WORD
@@ -530,11 +530,11 @@ private commitAttributesWithMsg ::=
 branchOrder ::= ORDER COLON NUM
 commitIdAttribute ::= ID_KEYWORD COLON DOUBLE_QUOTE commitIdValue DOUBLE_QUOTE
 commitTypeAttribute ::= TYPE COLON commitType
-commitTagAttribute ::= TAG COLON string
-commitMsgAttribute ::= MSG COLON string
+commitTagAttribute ::= TAG COLON maybeEmptyString
+commitMsgAttribute ::= MSG COLON maybeEmptyString
 commit_arg ::= string
 private commitType ::= NORMAL | REVERSE | HIGHLIGHT
-commitIdValue ::= STRING_VALUE? {
+commitIdValue ::= STRING_VALUE {
     mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
 
@@ -587,7 +587,7 @@ c4Statement ::= PERSON c4Attributes
 
 c4Attributes ::= OPEN_ROUND c4AttributesRec CLOSE_ROUND
 private c4AttributesRec ::= [c4Attr] [COMMA c4AttributesRec]
-c4Attr ::= DOLLAR C4_ATTRIBUTE EQUALITY string | c4AttrComplexName | string
+c4Attr ::= DOLLAR C4_ATTRIBUTE EQUALITY string | c4AttrComplexName | maybeEmptyString
 c4AttrComplexName ::= (C4_ATTRIBUTE | DOLLAR | EQUALITY)+
 
 boundaryStatement ::= boundaryStart OPEN_CURLY boundaryBody? CLOSE_CURLY
@@ -623,8 +623,8 @@ mindmapClassStatement ::= STYLE_SEPARATOR CLASS+
 directive ::= OPEN_DIRECTIVE directiveContent? CLOSE_DIRECTIVE
 private directiveContent ::= property [COMMA directiveContent]
 property ::= directiveKey COLON directiveValue
-directiveKey ::= string | DIRECTIVE_TEXT
-directiveValue ::= string | DIRECTIVE_TEXT | object
+directiveKey ::= maybeEmptyString | DIRECTIVE_TEXT
+directiveValue ::= maybeEmptyString | DIRECTIVE_TEXT | object
 object ::= OPEN_CURLY directiveContent CLOSE_CURLY
 
 flowchartClickStatement ::= CLICK [CLICK_DATA] [HREF] string [string] [LINK_TARGET]
@@ -647,7 +647,9 @@ accStatement ::= ACC_TITLE COLON ACC_TITLE_VALUE
   | ACC_DESCR COLON ACC_DESCR_VALUE
   | ACC_DESCR OPEN_CURLY ACC_DESCR_MULTILINE_VALUE CLOSE_CURLY
 
-string ::= DOUBLE_QUOTE STRING_VALUE? DOUBLE_QUOTE
+string ::= DOUBLE_QUOTE STRING_VALUE DOUBLE_QUOTE
+private maybeEmptyString ::= DOUBLE_QUOTE DOUBLE_QUOTE | string
+
 complexIdentifier ::= ID+ {
 	mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
