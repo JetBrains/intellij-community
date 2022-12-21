@@ -124,7 +124,7 @@ open class CombinedDiffModelImpl(protected val project: Project,
     BackgroundTaskUtil.runUnderDisposeAwareIndicator(ourDisposable, {
       modelListeners.multicaster.onProgressBar(true)
 
-      val request = runBlockingCancellable(indicator) {
+      val request = indicatorRunBlockingCancellable(indicator) {
         withContext(Dispatchers.IO) { coroutineToIndicator { loadRequest(indicator, blockId, producer) } }
       }
 
