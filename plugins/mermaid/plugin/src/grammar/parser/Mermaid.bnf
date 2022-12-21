@@ -67,9 +67,9 @@ journeyStatement ::= journeyDataStatement
 	| directive
 	| accStatement
 
-journeyDataStatement ::= complexTaskName COLON (IGNORED | journeyTaskData COLON journeyNamedData (COLON journeyTaskData?)*)
+journeyDataStatement ::= complexTaskName COLON (IGNORED | journeyTaskData [COLON journeyNamedData? (COLON journeyTaskData?)*])
 
-journeySectionStatement ::= SECTION complexSectionTitle journeySectionDocument
+journeySectionStatement ::= SECTION complexSectionTitle [journeySectionDocument]
 journeySectionDocument ::= journeySectionLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private journeySectionLines ::= (journeySectionLine | IGNORED) [journeySectionLines]
 private journeySectionLine ::= journeySectionInnerStatement [EOL] | EOL
@@ -77,11 +77,11 @@ journeySectionInnerStatement ::= journeyDataStatement
 
 complexSectionTitle ::= SECTION_TITLE+
 complexTaskName ::= TASK_NAME+
-complexTaskData ::= TASK_DATA+
+complexTaskData ::= TASK_DATA*
 private recTaskData ::= complexTaskData [COMMA recTaskData]
 journeyTaskData ::= recTaskData
 
-complexNamedData ::= TASK_DATA+ { mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement" }
+complexNamedData ::= TASK_DATA* { mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement" }
 private recNamedData ::= complexNamedData [COMMA recNamedData]
 journeyNamedData ::= recNamedData
 
