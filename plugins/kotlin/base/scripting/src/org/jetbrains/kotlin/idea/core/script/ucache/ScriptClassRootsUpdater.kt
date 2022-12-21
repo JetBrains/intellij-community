@@ -154,7 +154,7 @@ abstract class ScriptClassRootsUpdater(
     fun addConfiguration(vFile: VirtualFile, configuration: ScriptCompilationConfigurationWrapper) {
         update {
             val builder = classpathRoots.builder(project)
-            builder.dontWarnAboutDependenciesExistence()
+            builder.warnAboutDependenciesExistence(false)
             builder.add(vFile, configuration)
             cache.set(builder.build())
         }
