@@ -195,7 +195,6 @@ class CompletionInvokerImpl(private val project: Project,
     var currentString = ""
 
     while (currentString != expectedLine) {
-      val lookup = callCompletion(expectedLine, null)
       val nextChar = expectedLine[currentString.length].toString()
 
       if (emulator.isSkippable(nextChar)) {
@@ -203,6 +202,8 @@ class CompletionInvokerImpl(private val project: Project,
         currentString += nextChar
         continue
       }
+
+      val lookup = callCompletion(expectedLine, null)
 
       emulator.pickBestSuggestion(currentString, lookup, session).also {
         if (invokeOnEachChar) {

@@ -104,18 +104,21 @@ class CompletionGolfFileReportGenerator(
     consumer.onTagContentUnsafe { +StringEscapeUtils.escapeHtml(tab) }
     var offset = 0
 
-    lookups.dropLast(1).forEachIndexed { index, lookup ->
+    lookups.forEachIndexed { index, lookup ->
       val currentChar = expectedText[offset]
-      val delimiter = if (currentChar.isWhitespace()) {
-        consumer.onTagContentUnsafe { +currentChar.toString() }
-        offset++
-        "delimiter delimiter-pre"
-      }
-      else "delimiter"
+      val delimiter = mutableListOf<String>().apply {
+        if (index != lookups.size - 1) {
+          add("delimiter")
+        }
+        if (currentChar.isWhitespace()) {
+          consumer.onTagContentUnsafe { +currentChar.toString() }
+          offset++
+          add("delimiter-pre")
+        }
+      }.joinToString(" ")
 
       offset = prepareSpan(expectedText, lookup, id, index, offset, delimiter)
     }
-    prepareSpan(expectedText, lookups.last(), id, lookups.size - 1, offset)
   }
 
   private fun FlowContent.prepareSpan(expectedText: String,
@@ -148,7 +151,7 @@ class CompletionGolfFileReportGenerator(
       .onEachIndexed { i, line ->
         tr {
           td("line-numbers") {
-            attributes["data-line-numbers"] = lineNumbers.toString()
+            attributes["data-line-numbers"] = (lineNumbers + i).toString()
           }
           td("code-line") {
             span { +line }

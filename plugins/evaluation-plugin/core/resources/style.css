@@ -160,7 +160,7 @@ td {
 
 /*∫*/
 .delimiter:after,
-.delimiter.delimiter-pre:before {
+.delimiter-pre:before {
     font-weight: normal;
     color: #333333;
     content: "\222B";
