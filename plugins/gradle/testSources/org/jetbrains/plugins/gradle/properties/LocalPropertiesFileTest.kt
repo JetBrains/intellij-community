@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.properties
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.common.runAll
 import org.junit.Test
 import java.io.File
 import java.util.*
@@ -15,8 +16,10 @@ class LocalPropertiesFileTest : LightPlatformTestCase() {
   private val localPropertiesPath by lazy { externalProjectPath.resolve(LOCAL_PROPERTIES_FILE_NAME).toString() }
 
   override fun tearDown() {
-    super.tearDown()
-    closeAndDeleteProject()
+    runAll(
+      { super.tearDown() },
+      { closeAndDeleteProject() }
+    )
   }
 
   @Test
