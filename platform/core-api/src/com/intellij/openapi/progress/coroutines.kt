@@ -302,7 +302,7 @@ fun <T> jobToIndicator(job: Job, indicator: ProgressIndicator, action: () -> T):
 @Deprecated(
   message = "Method was renamed. Don't use",
   replaceWith = ReplaceWith("indicatorRunBlockingCancellable(indicator, action)"),
-  level = DeprecationLevel.ERROR,
+  //level = DeprecationLevel.ERROR,
 )
 fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
   @Suppress("DEPRECATION")
