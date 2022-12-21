@@ -16,7 +16,7 @@ import git4idea.ui.branch.GitBranchManager
 import javax.swing.tree.TreePath
 
 private typealias PathAndBranch = Pair<List<String>, GitBranch>
-private typealias MatchResult = Pair<Collection<GitBranch>, Pair<GitBranch, Int>?>
+private typealias MatchResult = Pair<Collection<GitBranch>, GitBranch?>
 
 private fun getBranchComparator(repositories: List<GitRepository>, isPrefixGrouping: () -> Boolean) = compareBy<GitBranch> {
   it.isNotCurrentBranch(repositories)
@@ -144,16 +144,7 @@ internal fun getPreferredBranch(project: Project,
   val localMatch = if (branchTypeFilter != GitBranchType.REMOTE) localBranchesTree.topMatch else null
   val remoteMatch = if (branchTypeFilter != GitBranchType.LOCAL) remoteBranchesTree.topMatch else null
 
-  if (localMatch == null && remoteMatch == null) return null
-  if (localMatch != null && remoteMatch == null) return localMatch.first
-  if (localMatch == null && remoteMatch != null) return remoteMatch.first
-
-  if (localMatch!!.second >= remoteMatch!!.second) {
-    return localMatch.first
-  }
-  else {
-    return remoteMatch.first
-  }
+  return localMatch ?: remoteMatch
 }
 
 internal class LazyBranchesSubtreeHolder(
@@ -176,7 +167,7 @@ internal class LazyBranchesSubtreeHolder(
     buildSubTree(branchesList.map { (if (isPrefixGrouping()) it.name.split('/') else listOf(it.name)) to it })
   }
 
-  val topMatch: Pair<GitBranch, Int>?
+  val topMatch: GitBranch?
     get() = matchingResult.second
 
   private fun buildSubTree(prevLevel: List<PathAndBranch>): Map<String, Any> {
@@ -217,6 +208,6 @@ internal class LazyBranchesSubtreeHolder(
       }
     }
 
-    return MatchResult(result, topMatch)
+    return MatchResult(result, topMatch?.first)
   }
 }
