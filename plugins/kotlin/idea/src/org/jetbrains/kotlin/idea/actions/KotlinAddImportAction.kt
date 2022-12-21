@@ -386,7 +386,9 @@ internal class CallExpressionWeigher(element: KtNameReferenceExpression?) {
             when (descriptor) {
                 is CallableMemberDescriptor -> calculateWeight(descriptor, argumentKotlinTypes)
                 // TODO: some constructors could be not visible
-                is ClassDescriptor -> descriptor.constructors.maxOf { calculateWeight(it, argumentKotlinTypes) }
+                is ClassDescriptor -> {
+                    descriptor.constructors.maxOfOrNull { calculateWeight(it, argumentKotlinTypes) } ?: 0
+                }
                 else -> 0
             }
         return base + weight
