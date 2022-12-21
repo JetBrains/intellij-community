@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.Settings
+import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
@@ -129,6 +130,10 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
               isSelected = tool.getOption(component.bindId) as Boolean
             }
             .onChanged { tool.setOption(component.bindId, it.isSelected) }
+            .apply { component.description?.let {
+              gap(RightGap.SMALL)
+              this@renderOptCell.contextHelp (HtmlBuilder().append(it).toString())
+            } }
         }
 
         is OptString -> {

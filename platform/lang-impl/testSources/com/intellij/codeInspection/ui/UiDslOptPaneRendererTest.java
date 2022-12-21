@@ -7,6 +7,7 @@ import com.intellij.codeInspection.options.OptDropdown;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.PlainMessage;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,7 +38,8 @@ public class UiDslOptPaneRendererTest {
                  new OptDropdown.Option("o2", new PlainMessage("option 2"))
         ),
         separator(),
-        checkbox("myBoolean", ""),
+        checkbox("myBoolean", "")
+          .description("description"),
         number("myNegativeInt", "", -1000, -1)
       );
     }
@@ -110,6 +112,14 @@ public class UiDslOptPaneRendererTest {
     JComponent component = render(inspection);
     var separator = UIUtil.findComponentOfType(component, SeparatorComponent.class);
     assertNotNull(separator);
+  }
+
+  @Test
+  public void testDescription() {
+    MyInspection inspection = new MyInspection();
+    JComponent component = render(inspection);
+    var contextHelp = UIUtil.findComponentOfType(component, ContextHelpLabel.class);
+    assertNotNull(contextHelp);
   }
 
   private static class MyNestedControlsInspection extends LocalInspectionTool {
