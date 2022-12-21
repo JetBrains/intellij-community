@@ -69,7 +69,7 @@ class CoroutineToIndicatorTest : CancellationTest() {
 
   @Test
   fun `fails if context reporter is not raw`() {
-    assertThrows<IllegalStateException> {
+    assertLogThrows<IllegalStateException> {
       progressReporterTest {
         coroutineToIndicator {
           fail()

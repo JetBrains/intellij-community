@@ -7,6 +7,7 @@ import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.replaceThreadContext
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -15,6 +16,8 @@ import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
+
+private val LOG = Logger.getInstance("#com.intellij.openapi.progress")
 
 /**
  * Checks whether the coroutine is active, and throws [CancellationException] if the coroutine is canceled.
@@ -247,11 +250,14 @@ private fun <T> contextToIndicator(ctx: CoroutineContext, action: () -> T): T {
 private fun CoroutineContext.createIndicator(): ProgressIndicator {
   val contextModality = contextModality()
                         ?: ModalityState.NON_MODAL
-  check(progressReporter == null) {
-    "Current context has `ProgressReporter`. " +
-    "Please switch to `RawProgressReporter` before switching to indicator. " +
-    "See 'Progress reporting' in `coroutineToIndicator` and/or `blockingContextToIndicator`.\n" +
-    "Current context: $this"
+  if (progressReporter != null) {
+    LOG.error(IllegalStateException(
+      "Current context has `ProgressReporter`. " +
+      "Please switch to `RawProgressReporter` before switching to indicator. " +
+      "See 'Progress reporting' in `coroutineToIndicator` and/or `blockingContextToIndicator`.\n" +
+      "Current context: $this"
+    ))
+    return EmptyProgressIndicator(contextModality)
   }
   val reporter = rawProgressReporter
   return if (reporter == null) {
