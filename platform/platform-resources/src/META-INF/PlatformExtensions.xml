@@ -1357,6 +1357,7 @@
     <advancedSetting id="ide.open.readme.md.on.startup" default="true" groupKey="group.advanced.settings.startup"/>
     <advancedSetting id="editor.skip.copy.and.cut.for.empty.selection" default="false" groupKey="group.advanced.settings.editor"/>
     <advancedSetting id="editor.skip.selecting.line.after.copy.empty.selection" default="false" groupKey="group.advanced.settings.editor"/>
+    <advancedSetting id="editor.paste.line.copied.from.empty.selection" enumClass="com.intellij.openapi.editor.impl.CopiedFromEmptySelectionPasteMode" default="ENTIRE_LINE_ABOVE_CARET" groupKey="group.advanced.settings.editor"/>
     <advancedSetting id="editor.show.special.chars" default="true" groupKey="group.advanced.settings.editor"/>
     <advancedSetting id="editor.show.zoom.indicator" default="true" groupKey="group.advanced.settings.editor"/>
     <advancedSetting id="ide.cycle.scrolling" default="true" groupKey="group.advanced.settings.ui"/>
