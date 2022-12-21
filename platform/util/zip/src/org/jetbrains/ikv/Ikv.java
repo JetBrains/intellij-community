@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ikv;
 
 import com.intellij.util.lang.ByteBufferCleaner;
@@ -20,11 +20,12 @@ long array - value offset and size pairs
 int - key data size
 int - entry count
 
-Value offsets are not sequential because the array is sorted by MPH. But values are written in a user order.
-So, besides offset, we have to store size. Values are not sorted by MPH to ensure that we will map the file to memory efficiently
+Value offsets are not sequential because MPH sorts the array but values are written in a user order.
+So, besides offset, we have to store size.
+MPH does not sort values to ensure that we will map the file to memory efficiently
  (assume that the user's order groups related values together).
 
-Little endian is used because both Intel and M1 CPU uses little endian (saves a little for writing and reading integers).
+Little endian is used because both Intel and M1 CPU use little endian (saves a little for writing and reading integers).
 */
 @ApiStatus.Internal
 public abstract class Ikv<T> implements AutoCloseable {
@@ -83,7 +84,7 @@ public abstract class Ikv<T> implements AutoCloseable {
       this.offsets = offsets;
     }
 
-    // if size is known by reader
+    // if size is known by the reader
     public ByteBuffer getUnboundedValue(T key) {
       int index = evaluator.evaluate(key);
       if (index < 0) {
