@@ -48,6 +48,16 @@ public class KotlinAddImportActionTestGenerated extends AbstractKotlinAddImportA
         runTest("testData/idea/actions/kotlinAddImportAction/ExtReceiver2.kt");
     }
 
+    @TestMetadata("ExtReceiver3.kt")
+    public void testExtReceiver3() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/ExtReceiver3.kt");
+    }
+
+    @TestMetadata("ExtReceiver4.kt")
+    public void testExtReceiver4() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/ExtReceiver4.kt");
+    }
+
     @TestMetadata("ExtendingClass1.kt")
     public void testExtendingClass1() throws Exception {
         runTest("testData/idea/actions/kotlinAddImportAction/ExtendingClass1.kt");

@@ -54,6 +54,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.calls.util.getType
@@ -311,41 +312,51 @@ internal data class VariantWithPriority(val variant: AutoImportVariant, val prio
 
 internal class CallExpressionWeigher(element: KtNameReferenceExpression?) {
 
-    private val kotlinTypes: List<KotlinType>?
+    private val argumentKotlinTypes: List<KotlinType>
     private val valueArgumentsSize: Int
-    private val extensionReceiver: Boolean
+    private val receiverType: KotlinType?
 
     init {
-        var types: MutableList<KotlinType>? = null
-        val receiverExpression = (element?.parent as? KtDotQualifiedExpression)?.receiverExpression
-        extensionReceiver = if (receiverExpression != null) {
-            val bindingContext = receiverExpression.analyze(BodyResolveMode.PARTIAL)
-            types = mutableListOf()
-            receiverExpression.getType(bindingContext)?.let { types!! += it }
-            true
+        val callExpression = element?.getParentOfType<KtCallElement>(false)
+        val receiverExpression = (element?.parent as? KtQualifiedExpression)?.receiverExpression ?: element?.getParentOfType<KtLambdaExpression>(false)
+        receiverType = if (receiverExpression != null) {
+            val context = receiverExpression.analyze(BodyResolveMode.PARTIAL)
+            if (receiverExpression is KtLambdaExpression) {
+                val functionDescriptor = context[BindingContext.FUNCTION, receiverExpression.functionLiteral]
+                val implicitReceiverType = functionDescriptor?.extensionReceiverParameter?.type
+                if (implicitReceiverType != null) {
+                    implicitReceiverType
+                } else {
+                    receiverExpression.getParentOfType<KtClassOrObject>(false)?.let { classOrObject ->
+                        val ctx = classOrObject.analyze(BodyResolveMode.PARTIAL)
+                        val descriptor = ctx[BindingContext.DECLARATION_TO_DESCRIPTOR, classOrObject] as? ClassDescriptor
+                        descriptor?.defaultType
+                    }
+                }
+            } else {
+                receiverExpression.getType(context)
+            }
         } else {
-            false
+            null
         }
 
-        val callExpression = element?.getParentOfType<KtCallElement>(false)
-        if (callExpression != null) {
-            val valueArgumentList = callExpression.valueArgumentList
+        val valueArgumentList = callExpression?.valueArgumentList
+        argumentKotlinTypes = if (callExpression != null && valueArgumentList != null) {
             val valueArguments = callExpression.valueArguments
             valueArgumentsSize = valueArguments.size
 
-            if (valueArgumentList != null) {
-                val bindingContext = valueArgumentList.analyze(BodyResolveMode.PARTIAL)
+            val types = ArrayList<KotlinType>(valueArgumentsSize)
+            val bindingContext = valueArgumentList.analyze(BodyResolveMode.PARTIAL)
 
-                types = types ?: ArrayList(valueArgumentsSize)
-                for (valueArgument in valueArguments) {
-                    val argumentExpression = valueArgument.getArgumentExpression() ?: break
-                    types += argumentExpression.getType(bindingContext) ?: break
-                }
+            for (valueArgument in valueArguments) {
+                val argumentExpression = valueArgument.getArgumentExpression() ?: break
+                types += argumentExpression.getType(bindingContext) ?: break
             }
+            types
         } else {
             valueArgumentsSize = 0
+            emptyList()
         }
-        kotlinTypes = types
     }
 
     fun weigh(descriptor: DeclarationDescriptor): Int {
@@ -371,12 +382,11 @@ internal class CallExpressionWeigher(element: KtNameReferenceExpression?) {
                 else -> 0
             }
         } ?: 0
-        if (kotlinTypes == null) return base
         val weight =
             when (descriptor) {
-                is CallableMemberDescriptor -> calculateWeight(descriptor, kotlinTypes)
+                is CallableMemberDescriptor -> calculateWeight(descriptor, argumentKotlinTypes)
                 // TODO: some constructors could be not visible
-                is ClassDescriptor -> descriptor.constructors.maxOf { calculateWeight(it, kotlinTypes) }
+                is ClassDescriptor -> descriptor.constructors.maxOf { calculateWeight(it, argumentKotlinTypes) }
                 else -> 0
             }
         return base + weight
@@ -389,12 +399,9 @@ internal class CallExpressionWeigher(element: KtNameReferenceExpression?) {
         if (callableMemberDescriptor == null) return 0
 
         var weight = 0
-        val kotlinTypeIterator = kotlinTypes.iterator()
-        if (extensionReceiver) {
+        receiverType?.let {
             val receiverValueType = callableMemberDescriptor.extensionReceiverParameter?.value?.type
-            val kotlinType = if (kotlinTypeIterator.hasNext()) kotlinTypeIterator.next() else null
-
-            weight = kotlinType.weight(weight, receiverValueType) ?: weight
+            weight = it.weight(weight, receiverValueType) ?: weight
         }
         val valueParameters = callableMemberDescriptor.valueParameters
         val descriptorParameters = valueParameters.size
@@ -417,8 +424,7 @@ internal class CallExpressionWeigher(element: KtNameReferenceExpression?) {
         //  - functional types, e.g. `Int.() -> Unit`
         //  - functional references, e.g. `::foo`
 
-        while (kotlinTypeIterator.hasNext()) {
-            val kotlinType = kotlinTypeIterator.next()
+        for (kotlinType in kotlinTypes) {
             if (!valueParameterDescriptorIterator.hasNext()) {
                 break
             }
@@ -442,10 +448,8 @@ internal class CallExpressionWeigher(element: KtNameReferenceExpression?) {
         return weight
     }
 
-    private fun KotlinType?.weight(weight: Int, kotlinType: KotlinType?): Int? =
-        if (this == null && kotlinType == null ||
-            this != null && kotlinType != null && KotlinTypeChecker.DEFAULT.isSubtypeOf(this, kotlinType)
-        ) {
+    private fun KotlinType.weight(weight: Int, kotlinType: KotlinType?): Int? =
+        if (kotlinType != null && KotlinTypeChecker.DEFAULT.isSubtypeOf(this, kotlinType)) {
             100 * weight + 10
         } else {
             null
