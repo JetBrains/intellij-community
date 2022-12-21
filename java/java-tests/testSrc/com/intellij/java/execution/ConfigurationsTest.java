@@ -55,6 +55,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jdom.Element;
 
@@ -126,6 +127,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       assertEquals(ModuleManager.getInstance(myProject).getModules().length + 1, comboBox.getModel().getSize()); //no module
       comboBox.setSelectedModule(module1);
       assertTrue(configurable.isModified());
+      UIUtil.dispatchAllInvocationEvents();
       configurable.apply();
       assertFalse(configurable.isModified());
       assertEquals(Collections.singleton(module1), new HashSet<>(Arrays.asList(configuration.getModules())));
@@ -457,9 +459,11 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     PsiClass testA = findTestA(getModule2());
     JUnitConfiguration configuration = createConfiguration(testA);
     JUnitConfigurable editor = new JUnitConfigurable(myProject);
+    UIUtil.dispatchAllInvocationEvents();
     try {
       Configurable configurable = new RunConfigurationConfigurableAdapter(editor, configuration);
       configurable.reset();
+      UIUtil.dispatchAllInvocationEvents();
       final EditorTextFieldWithBrowseButton component =
         ((LabeledComponent<EditorTextFieldWithBrowseButton>)editor.getTestLocation(JUnitConfigurationModel.CLASS)).getComponent();
       assertEquals(testA.getQualifiedName(), component.getText());
