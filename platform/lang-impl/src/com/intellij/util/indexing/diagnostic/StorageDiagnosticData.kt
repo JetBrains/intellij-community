@@ -14,6 +14,7 @@ import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
+import com.intellij.util.io.DirectByteBufferAllocator
 import com.intellij.util.io.StorageLockContext
 import com.intellij.util.io.delete
 import com.intellij.util.io.stats.FilePageCacheStatistics
@@ -242,7 +243,7 @@ object StorageDiagnosticData {
       .setUnit("us").buildObserver()
 
     val disposedBuffers = otelMeter.counterBuilder("FilePageCache.disposedBuffers").buildObserver()
-    
+
     val totalCachedSizeInBytes = otelMeter.gaugeBuilder("FilePageCache.totalCachedSizeInBytes")
       .setUnit("bytes")
       .setDescription("Total size of all pages currently cached")
@@ -255,6 +256,11 @@ object StorageDiagnosticData {
       .setUnit("bytes")
       .setDescription("Cache capacity, configured on application startup")
       .ofLongs().buildObserver()
+
+    val directBufferAllocatorHits = otelMeter.counterBuilder("DirectByteBufferAllocator.hits").buildObserver();
+    val directBufferAllocatorMisses = otelMeter.counterBuilder("DirectByteBufferAllocator.misses").buildObserver();
+    val directBufferAllocatorReclaimed = otelMeter.counterBuilder("DirectByteBufferAllocator.reclaimed").buildObserver();
+    val directBufferAllocatorDisposed = otelMeter.counterBuilder("DirectByteBufferAllocator.disposed").buildObserver();
 
     otelMeter.batchCallback(
       {
@@ -277,6 +283,12 @@ object StorageDiagnosticData {
           totalPageDisposalsUs.record(pageCacheStats.totalPageDisposalUs)
 
           disposedBuffers.record(pageCacheStats.disposedBuffers.toLong())
+
+          val bufferAllocatorStats = DirectByteBufferAllocator.ALLOCATOR.statistics
+          directBufferAllocatorHits.record(bufferAllocatorStats.hits.toLong())
+          directBufferAllocatorMisses.record(bufferAllocatorStats.misses.toLong())
+          directBufferAllocatorReclaimed.record(bufferAllocatorStats.reclaimed.toLong())
+          directBufferAllocatorDisposed.record(bufferAllocatorStats.disposed.toLong())
         }
         catch (_: AlreadyDisposedException) {
 
@@ -285,7 +297,10 @@ object StorageDiagnosticData {
       uncachedFileAccess, maxRegisteredFiles, maxCacheSizeInBytes,
       pageHits, pageFastCacheHit, pageLoadsAboveSizeThreshold, pageLoads,
       totalPageLoadsUs, totalPageDisposalsUs,
-      disposedBuffers, capacityInBytes
+      disposedBuffers, capacityInBytes,
+
+      directBufferAllocatorHits, directBufferAllocatorMisses,
+      directBufferAllocatorReclaimed, directBufferAllocatorDisposed
     )
   }
 }

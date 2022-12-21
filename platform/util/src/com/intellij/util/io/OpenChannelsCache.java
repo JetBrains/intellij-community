@@ -101,7 +101,7 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
       final ChannelDescriptor descriptor = myCache.remove(path);
 
       if (descriptor != null) {
-        assert !descriptor.isLocked();
+        assert !descriptor.isLocked() : "Channel is in use: " + descriptor;
         descriptor.close();
       }
     }

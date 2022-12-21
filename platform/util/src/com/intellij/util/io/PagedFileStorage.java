@@ -7,7 +7,6 @@ import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -27,17 +26,15 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
+
 public class PagedFileStorage implements Forceable {
   static final Logger LOG = Logger.getInstance(PagedFileStorage.class);
 
-  /** Not private because {@linkplain FilePageCache} accesses its statistics */
-  static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(SystemProperties.getIntProperty("paged.file.storage.open.channel.cache.capacity", 400));
-
-  public static final int DEFAULT_PAGE_SIZE = FilePageCache.DEFAULT_PAGE_SIZE;
+  private static final int DEFAULT_PAGE_SIZE = PageCacheUtils.DEFAULT_PAGE_SIZE;
 
   @NotNull
   private static final ThreadLocal<byte[]> ourTypedIOBuffer = ThreadLocal.withInitial(() -> new byte[8]);
-  private static final StorageLockContext ourDefaultContext = new StorageLockContext(false);
 
   @NotNull
   public static final ThreadLocal<StorageLockContext> THREAD_LOCAL_STORAGE_LOCK_CONTEXT = new ThreadLocal<>();
@@ -85,7 +82,7 @@ public class PagedFileStorage implements Forceable {
       storageLockContext = context;
     }
 
-    myStorageLockContext = storageLockContext != null ? storageLockContext : ourDefaultContext;
+    myStorageLockContext = storageLockContext != null ? storageLockContext : StorageLockContext.ourDefaultContext;
     myPageSize = Math.max(pageSize > 0 ? pageSize : DEFAULT_PAGE_SIZE, AbstractStorage.PAGE_SIZE);
     myValuesAreBufferAligned = valuesAreBufferAligned;
     myStorageIndex = myStorageLockContext.getBufferCache().registerPagedFileStorage(this);

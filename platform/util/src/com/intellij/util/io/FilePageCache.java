@@ -3,12 +3,10 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.containers.hash.LongLinkedHashMap;
 import com.intellij.util.io.stats.FilePageCacheStatistics;
 import com.intellij.util.lang.CompoundRuntimeException;
-import com.intellij.util.system.CpuArch;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,7 +20,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.intellij.util.io.IOUtil.MiB;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
@@ -59,55 +56,6 @@ final class FilePageCache {
 
   static final long MAX_PAGES_COUNT = 0xFFFF_FFFFL;
   private static final long FILE_INDEX_MASK = 0xFFFF_FFFF_0000_0000L;
-
-  /**
-   * Total size of the cache, bytes
-   * It is somewhere ~100-500 Mb, or see static initializer for exact logic
-   */
-  private static final long CACHE_CAPACITY_BYTES;
-  /**
-   * Capacity of {@linkplain DirectByteBufferAllocator}. Placed here because it is initialized along with
-   * {@linkplain #CACHE_CAPACITY_BYTES}
-   */
-  static final int ALLOCATOR_SIZE;
-  /**
-   * 10Mb default, or SystemProperty('idea.max.paged.storage.cache')Mb, but not less than 1 Mb
-   */
-  static final int DEFAULT_PAGE_SIZE;
-
-  static {
-    final int defaultPageSizeMb = SystemProperties.getIntProperty("idea.paged.storage.page.size", 10);
-    DEFAULT_PAGE_SIZE = Math.max(1, defaultPageSizeMb) * MiB;
-
-    final long maxDirectMemoryToUseBytes = IOUtil.maxDirectMemory() - 2L * DEFAULT_PAGE_SIZE;
-
-    CACHE_CAPACITY_BYTES = configureCacheCapacity(maxDirectMemoryToUseBytes);
-
-    ALLOCATOR_SIZE = (int)Math.min(
-      100 * MiB,
-      Math.max(0, maxDirectMemoryToUseBytes - CACHE_CAPACITY_BYTES - 300 * MiB)
-    );
-  }
-
-  private static long configureCacheCapacity(final long maxDirectMemoryToUseBytes) {
-    //RC: basically, try to allocate cache of sys("idea.max.paged.storage.cache", default: defaultCacheCapacityMb) size,
-    //    but not less than minCacheCapacityMb,
-    //    and not more than maxDirectMemoryToUseBytes (strictly)
-
-    final int defaultCacheCapacityMb = CpuArch.is32Bit() ? 200 : 500;
-
-    final int cacheCapacityMb = SystemProperties.getIntProperty("idea.max.paged.storage.cache", defaultCacheCapacityMb);
-    final long cacheCapacityBytes = cacheCapacityMb * (long)MiB;
-
-    final int minCacheCapacityMb = 100;
-    final long minCacheCapacityBytes = Math.min(minCacheCapacityMb * MiB, maxDirectMemoryToUseBytes);
-
-    return Math.min(
-      Math.max(minCacheCapacityBytes, cacheCapacityBytes),
-      maxDirectMemoryToUseBytes
-    );
-  }
-
 
   /**
    * storageId -> storage
@@ -174,8 +122,11 @@ final class FilePageCache {
   private long myPageDisposalUs;
 
 
-  FilePageCache() {
-    cachedSizeLimit = CACHE_CAPACITY_BYTES;
+  FilePageCache(final long cacheCapacityBytes) {
+    if (cacheCapacityBytes <= 0) {
+      throw new IllegalArgumentException("Capacity(=" + cacheCapacityBytes + ") must be >0");
+    }
+    cachedSizeLimit = cacheCapacityBytes;
 
     // super hot-spot, it's very essential to use specialized collection here
     pagesByPageId = new LongLinkedHashMap<DirectBufferWrapper>(10, 0.75f, /*access order: */ true) {
@@ -449,7 +400,7 @@ final class FilePageCache {
     try {
       pagesAccessLock.lock();
       try {
-        return new FilePageCacheStatistics(PagedFileStorage.CHANNELS_CACHE.getStatistics(),
+        return new FilePageCacheStatistics(PageCacheUtils.CHANNELS_CACHE.getStatistics(),
                                            myUncachedFileAccess,
                                            myMaxRegisteredFiles,
                                            myMaxLoadedSize,

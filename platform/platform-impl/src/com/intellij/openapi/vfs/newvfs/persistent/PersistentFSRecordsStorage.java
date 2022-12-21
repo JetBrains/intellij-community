@@ -2,10 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.PagedFileStorage;
-import com.intellij.util.io.ResizeableMappedFile;
-import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -49,7 +46,7 @@ abstract class PersistentFSRecordsStorage {
 
   @VisibleForTesting
   static @NotNull ResizeableMappedFile createFile(@NotNull Path file, int recordLength) throws IOException {
-    int pageSize = PagedFileStorage.DEFAULT_PAGE_SIZE * recordLength / PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
+    int pageSize = PageCacheUtils.DEFAULT_PAGE_SIZE * recordLength / PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
 
     boolean aligned = pageSize % recordLength == 0;
     if (!aligned) {
@@ -87,6 +84,8 @@ abstract class PersistentFSRecordsStorage {
    */
   abstract boolean setFlags(int fileId, int flags) throws IOException;
 
+  //TODO RC: boolean updateFlags(fileId, int maskBits, boolean riseOrClean)
+
   abstract long getLength(int fileId) throws IOException;
 
 
@@ -107,6 +106,8 @@ abstract class PersistentFSRecordsStorage {
 
   abstract int getModCount(int fileId) throws IOException;
 
+  //TODO RC: why we need this method? Record modification is detected by actual modification -- there
+  //         are (seems to) no way to modify record bypassing it.
   abstract void markRecordAsModified(int fileId) throws IOException;
 
   abstract int getContentRecordId(int fileId) throws IOException;

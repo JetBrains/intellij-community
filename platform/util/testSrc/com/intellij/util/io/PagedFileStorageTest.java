@@ -18,6 +18,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import static com.intellij.util.io.PageCacheUtils.DEFAULT_PAGE_SIZE;
 import static org.junit.Assert.*;
 
 public class PagedFileStorageTest {
@@ -32,7 +33,7 @@ public class PagedFileStorageTest {
   public void setUp() throws IOException {
     withLock(lock, () -> {
       f = tempDir.newFile("storage").toPath();
-      s = new PagedFileStorage(f, lock, PagedFileStorage.DEFAULT_PAGE_SIZE, false, false);
+      s = new PagedFileStorage(f, lock, DEFAULT_PAGE_SIZE, false, false);
     });
   }
 

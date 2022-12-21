@@ -221,7 +221,7 @@ final class PersistentFSConnector {
       final PagedFileStorage pagedStorage = new PagedFileStorage(
         attributesFile,
         PERSISTENT_FS_STORAGE_CONTEXT,
-        PagedFileStorage.DEFAULT_PAGE_SIZE,
+        PageCacheUtils.DEFAULT_PAGE_SIZE,
         true,
         true
       );

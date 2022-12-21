@@ -24,7 +24,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
 /**
  * This implementation keeps all FSRecords always in RAM, but it still loads them from file,
  * and persist changes into the file on {@linkplain #close()}
- *
+ * <p>
  * Intended for use as a reference implementation, to compare other impls against
  * (e.g. by performance)
  */
@@ -430,11 +430,10 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
   }
 
   private void markDirty() {
-    dirty.compareAndSet(false, true);
+    dirty.set(true);
   }
 
   private void markNotDirty() {
-    dirty.compareAndSet(true, false);
+    dirty.set(false);
   }
-
 }
