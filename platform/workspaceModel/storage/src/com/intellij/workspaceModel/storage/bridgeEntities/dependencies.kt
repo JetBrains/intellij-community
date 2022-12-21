@@ -69,9 +69,6 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: LibraryEntity, modification: LibraryEntity.Builder.() -> Unit) = modifyEntity(
   LibraryEntity.Builder::class.java, entity, modification)
-
-var LibraryEntity.Builder.externalSystemId: @Child LibraryExternalSystemIdEntity?
-  by WorkspaceEntity.extension()
 //endregion
 
 val ExcludeUrlEntity.library: LibraryEntity? by WorkspaceEntity.extension()

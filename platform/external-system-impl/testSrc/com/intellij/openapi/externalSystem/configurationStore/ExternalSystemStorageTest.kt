@@ -843,14 +843,15 @@ class ExternalSystemStorageTest {
 
     val expectedDir = tempDirManager.newPath("expectedStorage")
     FileUtil.copyDir(testDataRoot.resolve("common").toFile(), expectedDir.toFile())
-    FileUtil.copyDir(testDataRoot.resolve(dataDirNameToCompareWith).toFile(), expectedDir.toFile())
+    val originalExpectedDir = testDataRoot.resolve(dataDirNameToCompareWith)
+    FileUtil.copyDir(originalExpectedDir.toFile(), expectedDir.toFile())
 
     val projectDir = project.stateStore.directoryStorePath!!.parent
-    projectDir.toFile().assertMatches(directoryContentOf(expectedDir.resolve("project")))
+    projectDir.toFile().assertMatches(directoryContentOf(expectedDir.resolve("project"), originalExpectedDir.resolve("project")))
 
     val expectedCacheDir = expectedDir.resolve("cache")
     if (Files.exists(expectedCacheDir)) {
-      cacheDir.toFile().assertMatches(directoryContentOf(expectedCacheDir), FileTextMatcher.ignoreBlankLines())
+      cacheDir.toFile().assertMatches(directoryContentOf(expectedCacheDir, originalExpectedDir.resolve("cache")), FileTextMatcher.ignoreBlankLines())
     }
     else {
       assertTrue("$cacheDir doesn't exist", !Files.exists(cacheDir) || isFolderWithoutFiles(cacheDir.toFile()))

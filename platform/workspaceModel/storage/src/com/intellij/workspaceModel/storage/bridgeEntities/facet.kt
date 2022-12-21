@@ -67,8 +67,6 @@ fun MutableEntityStorage.modifyEntity(entity: FacetEntity, modification: FacetEn
 
 var FacetEntity.Builder.childrenFacets: @Child List<FacetEntity>
   by WorkspaceEntity.extension()
-var FacetEntity.Builder.facetExternalSystemIdEntity: @Child FacetExternalSystemIdEntity?
-  by WorkspaceEntity.extension()
 //endregion
 
 val FacetEntity.childrenFacets: List<@Child FacetEntity>

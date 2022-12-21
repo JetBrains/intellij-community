@@ -5,7 +5,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.facet.FacetState
@@ -17,14 +16,14 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
     get() = ""
 
   override fun loadEntitiesFromFacetState(builder: MutableEntityStorage, moduleEntity: ModuleEntity, facetState: FacetState,
-                                          evaluateExternalSystemIdAndEntitySource: (FacetState) -> Pair<String?, EntitySource>) {
-    loadFacetEntities(builder, moduleEntity, listOf(facetState), null, evaluateExternalSystemIdAndEntitySource)
+                                          evaluateEntitySource: (FacetState) -> EntitySource) {
+    loadFacetEntities(builder, moduleEntity, listOf(facetState), null, evaluateEntitySource)
   }
 
   private fun loadFacetEntities(builder: MutableEntityStorage, moduleEntity: ModuleEntity, facetStates: List<FacetState>, underlyingFacet: FacetEntity?,
-                                evaluateExternalSystemIdAndEntitySource: (FacetState) -> Pair<String?, EntitySource>) {
+                                evaluateEntitySource: (FacetState) -> EntitySource) {
     facetStates.forEach { facetState ->
-      val (externalSystemId, entitySource) = evaluateExternalSystemIdAndEntitySource(facetState)
+      val entitySource = evaluateEntitySource(facetState)
       val configurationXmlTag = facetState.configuration?.let { JDOMUtil.write(it) }
 
       // Check for existing facet it's needed in cases when we read sub-facet located in .xml but underling facet is from .iml,
@@ -45,12 +44,7 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
         facetEntity = builder.addFacetEntity(facetState.name, facetState.facetType, configurationXmlTag, moduleEntity, underlyingFacet, entitySource)
       }
 
-      if (facetEntity != null && externalSystemId != null) {
-        builder.addEntity(FacetExternalSystemIdEntity(externalSystemId, entitySource) {
-          this.facet = facetEntity
-        })
-      }
-      loadFacetEntities(builder, moduleEntity, facetState.subFacets, facetEntity, evaluateExternalSystemIdAndEntitySource)
+      loadFacetEntities(builder, moduleEntity, facetState.subFacets, facetEntity, evaluateEntitySource)
     }
   }
 
@@ -73,11 +67,12 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
     val state = FacetState().apply {
       name = facetEntity.name
       facetType = facetEntity.facetType
+      val externalSystemIdValue = (facetEntity.entitySource as? JpsImportedEntitySource)?.externalSystemId
       if (storeExternally) {
-        externalSystemId = (facetEntity.entitySource as? JpsImportedEntitySource)?.externalSystemId
+        externalSystemId = externalSystemIdValue
       }
       else {
-        externalSystemIdInInternalStorage = facetEntity.facetExternalSystemIdEntity?.externalSystemId
+        externalSystemIdInInternalStorage = externalSystemIdValue
       }
     }
     existingFacetStates[state.name] = state

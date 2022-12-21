@@ -15,8 +15,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryPropertiesEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -101,11 +99,6 @@ internal class JpsLibrariesExternalFileSerializer(private val externalFile: JpsF
     return JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
   }
 
-  override fun getExternalSystemId(libraryEntity: LibraryEntity): String? {
-    val source = libraryEntity.entitySource
-    return (source as? JpsImportedEntitySource)?.externalSystemId
-  }
-
   override fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter) {
     writer.saveComponent(fileUrl, LIBRARY_TABLE_COMPONENT_NAME, null)
   }
@@ -142,7 +135,10 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
     }
   }
 
-  protected open fun createEntitySource(libraryTag: Element): EntitySource? = internalEntitySource
+  protected open fun createEntitySource(libraryTag: Element): EntitySource? {
+    val externalSystemId = libraryTag.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE)
+    return if (externalSystemId == null) internalEntitySource else JpsImportedEntitySource(internalEntitySource, externalSystemId, false)
+  }
 
   override fun saveEntities(mainEntities: Collection<LibraryEntity>,
                             entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
@@ -152,13 +148,10 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
 
     val componentTag = JDomSerializationUtil.createComponentElement(LIBRARY_TABLE_COMPONENT_NAME)
     mainEntities.sortedBy { it.name }.forEach {
-      componentTag.addContent(saveLibrary(it, getExternalSystemId(it), isExternalStorage))
+      val externalSystemId = (it.entitySource as? JpsImportedEntitySource)?.externalSystemId
+      componentTag.addContent(saveLibrary(it, externalSystemId, isExternalStorage))
     }
     writer.saveComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME, componentTag)
-  }
-
-  protected open fun getExternalSystemId(libraryEntity: LibraryEntity): String? {
-    return libraryEntity.externalSystemId?.externalSystemId
   }
 
   override fun toString(): String = "${javaClass.simpleName.substringAfterLast('.')}($fileUrl)"
@@ -208,12 +201,6 @@ internal fun loadLibrary(name: String, libraryElement: Element, libraryTableId: 
   val libraryEntity = builder.addLibraryEntity(name, libraryTableId, roots, excludedRoots, source)
   if (type != null) {
     builder.addLibraryPropertiesEntity(libraryEntity, type, properties)
-  }
-  val externalSystemId = libraryElement.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE)
-  if (externalSystemId != null && !isExternalStorage) {
-    builder.addEntity(LibraryExternalSystemIdEntity(externalSystemId, source) {
-      this.library = libraryEntity
-    })
   }
 
   return libraryEntity

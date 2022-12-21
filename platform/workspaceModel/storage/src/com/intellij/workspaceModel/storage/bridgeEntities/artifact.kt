@@ -68,9 +68,6 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ArtifactEntity, modification: ArtifactEntity.Builder.() -> Unit) = modifyEntity(
   ArtifactEntity.Builder::class.java, entity, modification)
-
-var ArtifactEntity.Builder.artifactExternalSystemIdEntity: @Child ArtifactExternalSystemIdEntity?
-  by WorkspaceEntity.extension()
 //endregion
 
 interface ArtifactPropertiesEntity : WorkspaceEntity {
