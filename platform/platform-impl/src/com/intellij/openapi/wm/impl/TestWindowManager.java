@@ -96,7 +96,7 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   public Component getFocusedComponent(@NotNull Window window) {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   @Override
