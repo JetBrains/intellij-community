@@ -277,8 +277,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   protected SearchScope getSearchScope(@NotNull Project project) throws ExecutionException, InterruptedException {
 
     if (myAnalyzeChanges) {
-      List<VirtualFile> files = getChangedFiles(project);
-      return GlobalSearchScope.filesWithoutLibrariesScope(project, files);
+      return getSearchScopeFromChangedFiles(project);
     }
 
     if (myScopePattern != null) {
@@ -311,6 +310,12 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     String scopeName = System.getProperty("idea.analyze.scope");
     NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
     return namedScope != null ? GlobalSearchScopesCore.filterScope(project, namedScope) : GlobalSearchScope.projectScope(project);
+  }
+
+  @NotNull
+  public SearchScope getSearchScopeFromChangedFiles(@NotNull Project project) throws ExecutionException, InterruptedException {
+    List<VirtualFile> files = getChangedFiles(project);
+    return GlobalSearchScope.filesWithoutLibrariesScope(project, files);
   }
 
   private static void addRootChangesListener(Disposable parentDisposable, InspectionsReportConverter reportConverter) {
