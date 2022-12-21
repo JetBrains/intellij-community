@@ -143,12 +143,6 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
           }
           .onReset { categoriesPanel.reset() }
           .onIsModified { categoriesPanel.isModified() }
-        bottomGap(BottomGap.MEDIUM)
-      }
-      row {
-          label(message("settings.cross.ide.sync.warning.label"))
-            .apply { component.icon = AllIcons.General.Information }
-            .visibleIf(LoggedInPredicate().and(EnabledPredicate()))
       }
     }
     SettingsSyncAuthService.getInstance().addListener(object : SettingsSyncAuthService.Listener {
