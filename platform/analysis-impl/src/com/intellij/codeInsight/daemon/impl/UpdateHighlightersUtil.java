@@ -78,8 +78,7 @@ public final class UpdateHighlightersUtil {
 
   static void addHighlighterToEditorIncrementally(@NotNull PsiFile file,
                                                   @NotNull Document document,
-                                                  int startOffset,
-                                                  int endOffset,
+                                                  @NotNull TextRange restrictRange,
                                                   @NotNull HighlightInfo info,
                                                   @Nullable EditorColorsScheme colorsScheme, // if null global scheme will be used
                                                   int group,
@@ -91,7 +90,7 @@ public final class UpdateHighlightersUtil {
     }
 
     if (isFileLevelOrGutterAnnotation(info)) return;
-    if (info.getStartOffset() < startOffset || info.getEndOffset() > endOffset) return;
+    if (!restrictRange.intersects(info)) return;
 
     MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
@@ -157,7 +156,7 @@ public final class UpdateHighlightersUtil {
                                               @NotNull Document document,
                                               int startOffset,
                                               int endOffset,
-                                              @NotNull Collection<? extends HighlightInfo> highlights,
+                                              @NotNull Collection<? extends HighlightInfo> infos,
                                               @Nullable EditorColorsScheme colorsScheme, // if null, the global scheme will be used
                                               int group,
                                               @NotNull MarkupModelEx markup) {
@@ -175,7 +174,7 @@ public final class UpdateHighlightersUtil {
 
     if (psiFile != null) {
       HighlightingSession session = HighlightingSessionImpl.createHighlightingSession(psiFile, new DaemonProgressIndicator(), colorsScheme, ProperTextRange.create(startOffset, endOffset), CanISilentlyChange.Result.UH_UH);
-      setHighlightersInRange(document, range, new ArrayList<>(highlights), markup, group, session);
+      setHighlightersInRange(document, range, new ArrayList<>(infos), markup, group, session);
     }
   }
 
@@ -249,7 +248,7 @@ public final class UpdateHighlightersUtil {
         changed[0] = true;
         return true;
       }
-      if (isWarningCoveredByError(info, overlappingIntervals, severityRegistrar)) {
+      if (isWarningCoveredByError(info, severityRegistrar, overlappingIntervals)) {
         return true;
       }
       if (info.getStartOffset() < priorityRange.getStartOffset() || info.getEndOffset() > priorityRange.getEndOffset()) {
@@ -310,7 +309,7 @@ public final class UpdateHighlightersUtil {
         changed[0] = true;
         return true;
       }
-      if (isWarningCoveredByError(info, overlappingIntervals, severityRegistrar)) {
+      if (isWarningCoveredByError(info, severityRegistrar, overlappingIntervals)) {
         return true;
       }
       if (info.getStartOffset() >= range.getStartOffset() && info.getEndOffset() <= range.getEndOffset()) {
@@ -366,11 +365,13 @@ public final class UpdateHighlightersUtil {
   }
 
   private static boolean isWarningCoveredByError(@NotNull HighlightInfo info,
-                                                 @NotNull Collection<? extends HighlightInfo> overlappingIntervals,
-                                                 @NotNull SeverityRegistrar severityRegistrar) {
+                                                 @NotNull SeverityRegistrar severityRegistrar,
+                                                 @NotNull Collection<? extends HighlightInfo> overlappingIntervals) {
     if (!isSevere(info, severityRegistrar)) {
       for (HighlightInfo overlapping : overlappingIntervals) {
-        if (isCovered(info, severityRegistrar, overlapping)) return true;
+        if (isCovered(info, severityRegistrar, overlapping)) {
+          return true;
+        }
       }
     }
     return false;
@@ -378,8 +379,7 @@ public final class UpdateHighlightersUtil {
 
   private static boolean isCovered(@NotNull HighlightInfo warning, @NotNull SeverityRegistrar severityRegistrar, @NotNull HighlightInfo candidate) {
     if (!isCoveredByOffsets(warning, candidate)) return false;
-    HighlightSeverity severity = candidate.getSeverity();
-    if (severity == HighlightInfoType.SYMBOL_TYPE_SEVERITY) return false; // syntax should not interfere with warnings
+    if (candidate.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY) return false; // syntax should not interfere with warnings
     return isSevere(candidate, severityRegistrar);
   }
 

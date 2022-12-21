@@ -186,8 +186,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                           @NotNull TextRange restrictedRange,
                           int groupId) {
     applyInEDT(() ->
-      UpdateHighlightersUtil.addHighlighterToEditorIncrementally(getPsiFile(), getDocument(), restrictedRange.getStartOffset(),
-                                                                 restrictedRange.getEndOffset(),
+      UpdateHighlightersUtil.addHighlighterToEditorIncrementally(getPsiFile(), getDocument(), restrictedRange,
                                                                  info, getColorsScheme(), groupId, myRanges2markersCache));
   }
 
