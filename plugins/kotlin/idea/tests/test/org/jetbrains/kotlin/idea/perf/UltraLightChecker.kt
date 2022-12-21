@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.asJava.KotlinAsJavaSupportBase
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
 import org.jetbrains.kotlin.idea.asJava.renderClass
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.junit.Assert
 import java.io.File
+import kotlin.test.fail
 
 object UltraLightChecker {
     fun checkClassEquivalence(file: KtFile) {
@@ -83,9 +85,11 @@ object UltraLightChecker {
         DebugReflectionUtil.walkObjects(
             10,
             mapOf(element to element.javaClass.name),
-            Any::class.java,
+            DeclarationDescriptor::class.java,
             Conditions.alwaysTrue<Any>()::value,
-            PairProcessor.alwaysTrue(),
+            PairProcessor { value, backLink ->
+                fail("Leaked descriptor ${value.javaClass.name} in ${element.javaClass.name}\n$backLink")
+            }
         )
     }
 
