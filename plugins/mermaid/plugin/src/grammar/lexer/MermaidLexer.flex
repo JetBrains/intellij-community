@@ -89,7 +89,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "erDiagram" { yybegin(entity_relationship); return EntityRelationship.ENTITY_RELATIONSHIP; }
   "gantt" { yybegin(gantt); return Gantt.GANTT; }
   "requirementDiagram" { yybegin(requirement_diagram); return Requirement.REQUIREMENT_DIAGRAM; }
-  "gitgraph" { yybegin(gitgraph); return GitGraph.GIT_GRAPH; }
+  "gitGraph" { yybegin(gitgraph); return GitGraph.GIT_GRAPH; }
   "C4Context" { yybegin (c4); return C4.C4_CONTEXT; }
   "C4Container" { yybegin (c4); return C4.C4_CONTAINER; }
   "C4Component" { yybegin (c4); return C4.C4_COMPONENT; }
