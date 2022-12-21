@@ -75,13 +75,18 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       CallMatcher.instanceCall("org.mockito.stubbing.Stubber", "when"),
       CallMatcher.staticCall("org.mockito.Mockito", "verify"),
       CallMatcher.instanceCall("org.jmock.Expectations", "allowing", "ignoring", "never", "one", "oneOf", "with")
-        .parameterTypes("T"));
+        .parameterTypes("T"),
+      //new version of jmock
+      CallMatcher.instanceCall("org.jmock.AbstractExpectations", "allowing", "ignoring", "never", "one", "oneOf", "with")
+        .parameterTypes("T"),
+      CallMatcher.instanceCall("org.jmock.syntax.ReceiverClause", "of").parameterTypes("T"));
 
-  private static final CallMatcher SKIPPING_TEST_METHODS =
+  private static final CallMatcher TEST_OR_MOCK_CONTAINER_METHODS =
     CallMatcher.anyOf(
       CallMatcher.staticCall("org.assertj.core.api.Assertions", "assertThatThrownBy", "catchThrowable", "catchThrowableOfType"),
       CallMatcher.staticCall("org.junit.jupiter.api.Assertions", "assertDoesNotThrow", "assertThrows", "assertThrowsExactly"),
-      CallMatcher.staticCall("org.junit.Assert", "assertThrows")
+      CallMatcher.staticCall("org.junit.Assert", "assertThrows"),
+      CallMatcher.instanceCall("org.mockito.MockedStatic", "when", "verify")
     );
 
   private static final Set<String> CHECK_ANNOTATIONS = Set.of(
@@ -319,12 +324,12 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
     }
 
     private static boolean isInTestContainer(PsiExpression call) {
-      PsiElement psiElement = PsiTreeUtil.getParentOfType(call, PsiLambdaExpression.class, PsiAnonymousClass.class);
+      PsiElement psiElement = PsiTreeUtil.getNonStrictParentOfType(call, PsiFunctionalExpression.class, PsiAnonymousClass.class);
       PsiElement expressionList;
-      if (psiElement instanceof PsiLambdaExpression lambdaContainer) {
-        PsiType lambdaType = lambdaContainer.getFunctionalInterfaceType();
+      if (psiElement instanceof PsiFunctionalExpression expression) {
+        PsiType lambdaType = expression.getFunctionalInterfaceType();
         if (lambdaType == null || InheritanceUtil.isInheritor(lambdaType, JAVA_UTIL_FUNCTION_SUPPLIER)) return false;
-        PsiElement skipParenthesizedExprUp = PsiUtil.skipParenthesizedExprUp(lambdaContainer);
+        PsiElement skipParenthesizedExprUp = PsiUtil.skipParenthesizedExprUp(expression);
         if (skipParenthesizedExprUp == null) return false;
         expressionList = PsiUtil.skipParenthesizedExprUp(skipParenthesizedExprUp.getParent());
       }
@@ -341,7 +346,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       }
       if (!(expressionList instanceof PsiExpressionList psiExpressionList) ||
           !(psiExpressionList.getParent() instanceof PsiMethodCallExpression methodCallExpression)) return false;
-      return SKIPPING_TEST_METHODS.test(methodCallExpression);
+      return TEST_OR_MOCK_CONTAINER_METHODS.test(methodCallExpression);
     }
 
     private static boolean hasTrivialReturnValue(PsiMethod method) {

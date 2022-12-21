@@ -139,7 +139,15 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
           public static Object assertThatThrownBy(ThrowingCallable shouldRaiseThrowable) {
             return null;
           }
-        }"""};
+        }""",
+      """
+       package org.mockito;
+       public interface MockedStatic<T> {
+        Object when(Verification v);
+        interface Verification {
+         void apply();
+        }
+       }"""};
   }
 
   public void testCanIgnoreReturnValue() {
@@ -659,8 +667,11 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
     doTest(
       """        
         import org.junit.jupiter.api.function.Executable;
+        import org.mockito.MockedStatic;
         class X {
-          public void test(String s){
+          public static String name(){return "name";}
+          public void test(String s, MockedStatic<Object> mockedStatic){
+            mockedStatic.when(X::name);
             org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, ()->Short.parseShort(s));
             org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, ()->Short.parseShort(s),
             () -> {
