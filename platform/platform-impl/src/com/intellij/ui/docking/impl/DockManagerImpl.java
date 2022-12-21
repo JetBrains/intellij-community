@@ -647,12 +647,14 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
         @Override
         public void stateChanged(@NotNull ToolWindowManager toolWindowManager,
                                  @NotNull ToolWindowManagerListener.ToolWindowManagerEventType eventType) {
-          if (eventType == ToolWindowManagerEventType.ActivateToolWindow
-              || eventType == ToolWindowManagerEventType.MovedOrResized
-              || eventType == ToolWindowManagerEventType.SetContentUiType) {
-            return;
+          // Various events can mean a tool window has been removed from the frame's stripes. The comments are not exhaustive
+          if (eventType == ToolWindowManagerEventType.HideToolWindow
+              || eventType == ToolWindowManagerEventType.SetSideToolAndAnchor   // Last tool window dragged to another stripe on another frame
+              || eventType == ToolWindowManagerEventType.SetToolWindowType      // Last tool window made floating
+              || eventType == ToolWindowManagerEventType.ToolWindowUnavailable  // Last tool window programmatically set unavailable
+              || eventType == ToolWindowManagerEventType.UnregisterToolWindow) {
+            getReady().doWhenDone(() -> closeIfEmpty());
           }
-          getReady().doWhenDone(() -> closeIfEmpty());
         }
       });
     }
