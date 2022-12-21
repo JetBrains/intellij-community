@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nls
 @ApiStatus.Experimental
 class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(project, sdk) {
 
+  @Volatile
   override var installedPackages: List<CondaPackage> = emptyList()
     private set
 
@@ -61,9 +62,7 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(p
       }
       if (result.isFailure) return@withContext result
 
-      withContext(Dispatchers.Main) {
-        installedPackages = result.getOrThrow()
-      }
+      installedPackages = result.getOrThrow()
 
       ApplicationManager.getApplication()
         .messageBus
