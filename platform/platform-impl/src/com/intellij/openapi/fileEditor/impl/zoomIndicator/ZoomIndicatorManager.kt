@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
 import com.intellij.ui.BalloonImpl
+import com.intellij.ui.JBColor
 import com.intellij.util.Alarm
 
 private const val POPUP_TIMEOUT_MS = 5000
@@ -57,7 +58,8 @@ class ZoomIndicatorManager(project: Project) {
     val b2 = JBPopupFactory.getInstance().createBalloonBuilder(view)
       .setRequestFocus(false)
       .setShadow(true)
-      .setFillColor(view.background)
+      .setFillColor(JBColor.namedColor("Toolbar.Floating.background", JBColor(0xEDEDED, 0x454A4D)))
+      .setBorderColor(JBColor.namedColor("Toolbar.Floating.borderColor", JBColor(0xEBECF0, 0x43454A)))
       .setShowCallout(false)
       .setFadeoutTime(0)
       .createBalloon().apply { setAnimationEnabled(false) }
