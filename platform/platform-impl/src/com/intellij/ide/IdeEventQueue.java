@@ -23,7 +23,10 @@ import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.ExpirableRunnable;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -32,7 +35,10 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -47,9 +53,10 @@ import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Queue;
 import java.util.*;
@@ -1247,24 +1254,24 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private static final class SequencedEventNestedFieldHolder {
-    private static final Method DISPOSE_METHOD;
+    private static final MethodHandle DISPOSE_METHOD;
     private static final Class<?> SEQUENCED_EVENT_CLASS;
 
     private static void invokeDispose(AWTEvent event) {
       try {
         DISPOSE_METHOD.invoke(event);
       }
-      catch (IllegalAccessException | InvocationTargetException e) {
+      catch (Throwable e) {
         throw new RuntimeException(e);
       }
     }
 
     static {
       try {
-        SEQUENCED_EVENT_CLASS = Class.forName("java.awt.SequencedEvent");
-        DISPOSE_METHOD = ReflectionUtil.getDeclaredMethod(SEQUENCED_EVENT_CLASS, "dispose");
+        SEQUENCED_EVENT_CLASS = IdeEventQueue.class.getClassLoader().loadClass("java.awt.SequencedEvent");
+        DISPOSE_METHOD = MethodHandles.privateLookupIn(SEQUENCED_EVENT_CLASS, MethodHandles.lookup()).findVirtual(SEQUENCED_EVENT_CLASS, "dispose", MethodType.methodType(Void.TYPE));
       }
-      catch (ClassNotFoundException e) {
+      catch (Throwable e) {
         throw new RuntimeException(e);
       }
     }

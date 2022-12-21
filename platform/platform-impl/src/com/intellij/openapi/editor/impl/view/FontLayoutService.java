@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.MethodHandleUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -11,7 +11,8 @@ import sun.font.FontDesignMetrics;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
 
 /**
  * Encapsulates logic related to font metrics. Mock instance can be used in tests to make them independent on font properties on particular
@@ -49,18 +50,32 @@ public abstract class FontLayoutService {
   }
 
   private static final class DefaultFontLayoutService extends FontLayoutService {
-    private final Method myHandleCharWidthMethod;
-    private final Method myGetLatinCharWidthMethod;
+    private final MethodHandle myHandleCharWidthMethod;
+    private final MethodHandle myGetLatinCharWidthMethod;
 
     private DefaultFontLayoutService() {
-      myHandleCharWidthMethod = ReflectionUtil.getDeclaredMethod(FontDesignMetrics.class, "handleCharWidth", int.class);
-      if (myHandleCharWidthMethod == null) {
-        LOG.warn("Couldn't access FontDesignMetrics.handleCharWidth method");
+      MethodHandle handleCharWidthMethod;
+      try {
+        handleCharWidthMethod =
+          MethodHandleUtil.getPrivateMethod(FontDesignMetrics.class, "handleCharWidth", MethodType.methodType(Float.TYPE, Integer.TYPE));
       }
-      myGetLatinCharWidthMethod = ReflectionUtil.getDeclaredMethod(FontDesignMetrics.class, "getLatinCharWidth", char.class);
-      if (myGetLatinCharWidthMethod == null) {
-        LOG.warn("Couldn't access FontDesignMetrics.getLatinCharWidth method");
+      catch (Throwable e) {
+        handleCharWidthMethod = null;
+        LOG.warn("Couldn't access FontDesignMetrics.handleCharWidth method", e);
       }
+      myHandleCharWidthMethod = handleCharWidthMethod;
+
+      MethodHandle getLatinCharWidthMethod;
+      try {
+        getLatinCharWidthMethod =
+          MethodHandleUtil.getPrivateMethod(FontDesignMetrics.class, "getLatinCharWidth", MethodType.methodType(Float.TYPE, Character.TYPE));
+      }
+      catch (Throwable e) {
+        getLatinCharWidthMethod = null;
+        LOG.warn("Couldn't access FontDesignMetrics.getLatinCharWidth method", e);
+      }
+
+      myGetLatinCharWidthMethod = getLatinCharWidthMethod;
     }
 
     @NotNull
@@ -85,17 +100,17 @@ public abstract class FontLayoutService {
       if (fontMetrics instanceof FontDesignMetrics) {
         if (codePoint < 256 && myGetLatinCharWidthMethod != null) {
           try {
-            return (float)myGetLatinCharWidthMethod.invoke(fontMetrics, (char)codePoint);
+            return (float)myGetLatinCharWidthMethod.invokeExact((FontDesignMetrics)fontMetrics, (char)codePoint);
           }
-          catch (Exception e) {
+          catch (Throwable e) {
             LOG.debug(e);
           }
         }
         if (myHandleCharWidthMethod != null) {
           try {
-            return (float)myHandleCharWidthMethod.invoke(fontMetrics, codePoint);
+            return (float)myHandleCharWidthMethod.invokeExact((FontDesignMetrics)fontMetrics, codePoint);
           }
-          catch (Exception e) {
+          catch (Throwable e) {
             LOG.debug(e);
           }
         }

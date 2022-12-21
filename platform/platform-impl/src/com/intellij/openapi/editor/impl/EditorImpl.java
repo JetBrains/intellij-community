@@ -109,7 +109,7 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
-import java.lang.reflect.Field;
+import java.lang.invoke.MethodHandle;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
@@ -3103,8 +3103,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static final Field decrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "decrButton");
-  private static final Field incrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "incrButton");
+  // not used on macOS and some other platforms - lazy creation
+  private static final class BasicScrollBarUiButtonHolder {
+    private static final MethodHandle decrButtonField = MethodHandleUtil.getPrivateField(BasicScrollBarUI.class, "decrButton", JButton.class);
+    private static final MethodHandle incrButtonField = MethodHandleUtil.getPrivateField(BasicScrollBarUI.class, "incrButton", JButton.class);
+  }
 
   final class MyScrollBar extends OpaqueAwareScrollBar {
     private static final @NonNls String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
@@ -3140,12 +3143,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       if (barUI instanceof BasicScrollBarUI) {
         try {
-          JButton decrButtonValue = (JButton)decrButtonField.get(barUI);
+          JButton decrButtonValue = (JButton)BasicScrollBarUiButtonHolder.decrButtonField.invoke(barUI);
           LOG.assertTrue(decrButtonValue != null);
           return top + decrButtonValue.getHeight();
         }
-        catch (Exception exc) {
-          throw new IllegalStateException(exc);
+        catch (Throwable e) {
+          throw new IllegalStateException(e);
         }
       }
       return top + 15;
@@ -3165,12 +3168,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       if (barUI instanceof BasicScrollBarUI) {
         try {
-          JButton incrButtonValue = (JButton)incrButtonField.get(barUI);
+          JButton incrButtonValue = (JButton)BasicScrollBarUiButtonHolder.incrButtonField.invoke(barUI);
           LOG.assertTrue(incrButtonValue != null);
           return insets.bottom + incrButtonValue.getHeight();
         }
-        catch (Exception exc) {
-          throw new IllegalStateException(exc);
+        catch (Throwable e) {
+          throw new IllegalStateException(e);
         }
       }
       if (barUI != null && APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS.equals(barUI.getClass().getName())) {

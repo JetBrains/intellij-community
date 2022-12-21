@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -27,11 +28,8 @@ public abstract class DomUIFactory {
   public static final ExtensionPointName<Consumer<DomUIFactory>> EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.dom.uiControlsProvider");
   public static final Method GET_VALUE_METHOD = ReflectionUtil.getMethod(GenericDomValue.class, "getValue");
   public static final Method SET_VALUE_METHOD = findMethod(GenericDomValue.class, "setValue");
-  public static Method GET_STRING_METHOD = ReflectionUtil.getMethod(GenericDomValue.class, "getStringValue");
-  public static Method SET_STRING_METHOD = findMethod(GenericDomValue.class, "setStringValue");
 
-  @NotNull
-  public static DomUIControl<GenericDomValue> createControl(GenericDomValue element) {
+  public static @NotNull DomUIControl<GenericDomValue> createControl(GenericDomValue element) {
     return createControl(element, false);
   }
 
@@ -50,7 +48,7 @@ public abstract class DomUIFactory {
 
   private static @NotNull BaseControl createGenericValueControl(final Type type, final GenericDomValue<?> element, boolean commitOnEveryChange) {
     final DomStringWrapper stringWrapper = new DomStringWrapper(element);
-    final Class rawType = ReflectionUtil.getRawType(type);
+    final Class rawType = ClassUtil.getRawType(type);
     if (type instanceof Class && Enum.class.isAssignableFrom(rawType)) {
       return new ComboControl(stringWrapper, rawType);
     }

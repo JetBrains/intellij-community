@@ -6,7 +6,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.impl.AppFontOptions;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.MethodHandleUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.intellij.lang.annotations.JdkConstants;
@@ -16,7 +16,8 @@ import sun.font.Font2D;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
 import java.util.List;
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -27,10 +28,10 @@ final class FontFamilyServiceImpl extends FontFamilyService {
   // might have no effect on logging performed in constructor
   private static final boolean VERBOSE_LOGGING = Boolean.getBoolean("font.family.service.verbose");
 
-  private static final Method GET_FONT_2D_METHOD = ReflectionUtil.getDeclaredMethod(Font.class, "getFont2D");
-  private static final Method GET_TYPO_FAMILY_METHOD = getFont2DMethod("getTypographicFamilyName");
-  private static final Method GET_TYPO_SUBFAMILY_METHOD = getFont2DMethod("getTypographicSubfamilyName");
-  private static final Method GET_WEIGHT_METHOD = getFont2DMethod("getWeight");
+  private static final MethodHandle GET_FONT_2D_METHOD = getFont2dMethod("getFont2D", Font.class);
+  private static final MethodHandle GET_TYPO_FAMILY_METHOD = getFont2dMethod("getTypographicFamilyName", Font2D.class);
+  private static final MethodHandle GET_TYPO_SUBFAMILY_METHOD = getFont2dMethod("getTypographicSubfamilyName", Font2D.class);
+  private static final MethodHandle GET_WEIGHT_METHOD = getFont2dMethod("getWeight", Font2D.class);
 
   private static final AffineTransform SYNTHETIC_ITALICS_TRANSFORM = AffineTransform.getShearInstance(-0.2, 0);
   private static final int PREFERRED_MAIN_WEIGHT = 400;
@@ -189,9 +190,9 @@ final class FontFamilyServiceImpl extends FontFamilyService {
     return super.migrateFontSettingImpl(family);
   }
 
-  private static Method getFont2DMethod(String methodName) {
+  private static @Nullable MethodHandle getFont2dMethod(@NotNull String methodName, @NotNull Class<?> targetClass) {
     try {
-      return ReflectionUtil.getDeclaredMethod(Font2D.class, methodName);
+      return MethodHandleUtil.getPrivateMethod(targetClass, methodName, MethodType.methodType(Font2D.class));
     }
     catch (Throwable e) {
       if (VERBOSE_LOGGING) {

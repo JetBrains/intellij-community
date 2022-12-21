@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -12,12 +12,12 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ClassMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.xml.DomElement;
@@ -114,7 +114,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
   @Override
   @Nullable
   public BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
-    final Function<DomWrapper<String>, BaseControl> factory = myCustomControlCreators.get(ReflectionUtil.getRawType(type));
+    final Function<DomWrapper<String>, BaseControl> factory = myCustomControlCreators.get(ClassUtil.getRawType(type));
     return factory == null ? null : factory.fun(wrapper);
   }
 

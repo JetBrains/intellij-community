@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -20,107 +21,11 @@ public final class ReflectionUtil {
 
   private ReflectionUtil() { }
 
-  @Nullable
-  public static Type resolveVariable(@NotNull TypeVariable<?> variable, @NotNull Class<?> classType) {
-    return resolveVariable(variable, classType, true);
+  static {
+    LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
   }
 
-  @Nullable
-  public static Type resolveVariable(@NotNull TypeVariable<?> variable, @NotNull Class<?> classType, boolean resolveInInterfacesOnly) {
-    Class<?> aClass = getRawType(classType);
-    int index = ArrayUtilRt.find(aClass.getTypeParameters(), variable);
-    if (index >= 0) {
-      return variable;
-    }
-
-    final Class<?>[] classes = aClass.getInterfaces();
-    final Type[] genericInterfaces = aClass.getGenericInterfaces();
-    for (int i = 0; i <= classes.length; i++) {
-      Class<?> anInterface;
-      if (i < classes.length) {
-        anInterface = classes[i];
-      }
-      else {
-        anInterface = aClass.getSuperclass();
-        if (resolveInInterfacesOnly || anInterface == null) {
-          continue;
-        }
-      }
-      final Type resolved = resolveVariable(variable, anInterface);
-      if (resolved instanceof Class || resolved instanceof ParameterizedType) {
-        return resolved;
-      }
-      if (resolved instanceof TypeVariable) {
-        final TypeVariable<?> typeVariable = (TypeVariable<?>)resolved;
-        index = ArrayUtilRt.find(anInterface.getTypeParameters(), typeVariable);
-        if (index < 0) {
-          LOG.error("Cannot resolve type variable:\n" + "typeVariable = " + typeVariable + "\n" + "genericDeclaration = " +
-                    declarationToString(typeVariable.getGenericDeclaration()) + "\n" + "searching in " + declarationToString(anInterface));
-        }
-        final Type type = i < genericInterfaces.length ? genericInterfaces[i] : aClass.getGenericSuperclass();
-        if (type instanceof Class) {
-          return Object.class;
-        }
-        if (type instanceof ParameterizedType) {
-          return getActualTypeArguments((ParameterizedType)type)[index];
-        }
-        throw new AssertionError("Invalid type: " + type);
-      }
-    }
-    return null;
-  }
-
-  @NotNull
-  private  static String declarationToString(@NotNull GenericDeclaration anInterface) {
-    return anInterface.toString() + Arrays.asList(anInterface.getTypeParameters()) + " loaded by " + ((Class<?>)anInterface).getClassLoader();
-  }
-
-  @NotNull
-  public static Class<?> getRawType(@NotNull Type type) {
-    if (type instanceof Class) {
-      return (Class<?>)type;
-    }
-    if (type instanceof ParameterizedType) {
-      return getRawType(((ParameterizedType)type).getRawType());
-    }
-    if (type instanceof GenericArrayType) {
-      //todo[peter] don't create new instance each time
-      return Array.newInstance(getRawType(((GenericArrayType)type).getGenericComponentType()), 0).getClass();
-    }
-    assert false : type;
-    return null;
-  }
-
-  public static Type @NotNull [] getActualTypeArguments(@NotNull ParameterizedType parameterizedType) {
-    return parameterizedType.getActualTypeArguments();
-  }
-
-  @Nullable
-  public static Class<?> substituteGenericType(@NotNull Type genericType, @NotNull Type classType) {
-    if (genericType instanceof TypeVariable) {
-      final Class<?> aClass = getRawType(classType);
-      final Type type = resolveVariable((TypeVariable<?>)genericType, aClass);
-      if (type instanceof Class) {
-        return (Class<?>)type;
-      }
-      if (type instanceof ParameterizedType) {
-        return (Class<?>)((ParameterizedType)type).getRawType();
-      }
-      if (type instanceof TypeVariable && classType instanceof ParameterizedType) {
-        final int index = ArrayUtilRt.find(aClass.getTypeParameters(), type);
-        if (index >= 0) {
-          return getRawType(getActualTypeArguments((ParameterizedType)classType)[index]);
-        }
-      }
-    }
-    else {
-      return getRawType(genericType);
-    }
-    return null;
-  }
-
-  @NotNull
-  public static List<Field> collectFields(@NotNull Class<?> clazz) {
+  public static @NotNull List<Field> collectFields(@NotNull Class<?> clazz) {
     List<Field> result = new ArrayList<>();
     for (Class<?> c : JBIterableClassTraverser.classTraverser(clazz)) {
       Collections.addAll(result, c.getDeclaredFields());
@@ -249,6 +154,14 @@ public final class ReflectionUtil {
     }
   }
 
+  /**
+   * @deprecated Use {@link java.lang.invoke.MethodHandles} instead and try to avoid using of a closed API.
+   * @see java.lang.invoke.MethodHandles
+   * @see java.lang.invoke.MethodHandles.Lookup#findVirtual
+   * @see java.lang.invoke.MethodHandles.Lookup#findStatic
+   * @see com.jetbrains.internal.JBRApi
+   */
+  @Deprecated
   public static @Nullable Method getDeclaredMethod(@NotNull Class<?> aClass, @NonNls @NotNull String name, Class<?> @NotNull ... parameters) {
     try {
       return makeAccessible(aClass.getDeclaredMethod(name, parameters));
@@ -258,7 +171,17 @@ public final class ReflectionUtil {
     }
   }
 
-  public static @Nullable Field getDeclaredField(@NotNull Class<?> aClass, final @NonNls @NotNull String name) {
+  /**
+   * @deprecated Use {@link java.lang.invoke.MethodHandles} instead and try to avoid using of a closed API.
+   * @see java.lang.invoke.MethodHandles
+   * @see java.lang.invoke.MethodHandles.Lookup#findGetter 
+   * @see java.lang.invoke.MethodHandles.Lookup#findSetter  
+   * @see java.lang.invoke.MethodHandles.Lookup#findStaticGetter   
+   * @see java.lang.invoke.MethodHandles.Lookup#findStaticSetter
+   * @see com.jetbrains.internal.JBRApi
+   */
+  @Deprecated
+  public static @Nullable Field getDeclaredField(@NotNull Class<?> aClass, @NonNls @NotNull String name) {
     return findFieldInHierarchy(aClass, field -> name.equals(field.getName()));
   }
 
@@ -280,14 +203,7 @@ public final class ReflectionUtil {
     return includeSynthetic ? Arrays.asList(methods) : filterRealMethods(methods);
   }
 
-  @NotNull
-  public static List<Field> getClassDeclaredFields(@NotNull Class<?> aClass) {
-    Field[] fields = aClass.getDeclaredFields();
-    return Arrays.asList(fields);
-  }
-
-  @NotNull
-  private static List<Method> filterRealMethods(Method @NotNull [] methods) {
+  private static @NotNull List<Method> filterRealMethods(Method @NotNull [] methods) {
     List<Method> result = new ArrayList<>();
     for (Method method : methods) {
       if (!method.isSynthetic()) {
@@ -369,23 +285,7 @@ public final class ReflectionUtil {
     }
   }
 
-  public static Type resolveVariableInHierarchy(@NotNull TypeVariable<?> variable, @NotNull Class<?> aClass) {
-    Type type;
-    Class<?> current = aClass;
-    while ((type = resolveVariable(variable, current, false)) == null) {
-      current = current.getSuperclass();
-      if (current == null) {
-        return null;
-      }
-    }
-    if (type instanceof TypeVariable) {
-      return resolveVariableInHierarchy((TypeVariable<?>)type, aClass);
-    }
-    return type;
-  }
-
-  @NotNull
-  public static <T> Constructor<T> getDefaultConstructor(@NotNull Class<T> aClass) {
+  public static @NotNull <T> Constructor<T> getDefaultConstructor(@NotNull Class<T> aClass) {
     try {
       final Constructor<T> constructor = aClass.getConstructor();
       constructor.setAccessible(true);

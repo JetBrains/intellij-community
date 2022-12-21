@@ -11,8 +11,8 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.ReflectionAssignabilityCache;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -197,7 +197,7 @@ public final class DomApplicationComponent {
   }
 
   public StaticGenericInfo getStaticGenericInfo(final Type type) {
-    return getInvocationCache(ReflectionUtil.getRawType(type)).genericInfo;
+    return getInvocationCache(ClassUtil.getRawType(type)).genericInfo;
   }
 
   InvocationCache getInvocationCache(Class<?> type) {

@@ -4,7 +4,6 @@ package com.intellij.util.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,9 +11,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
-import java.lang.reflect.InvocationTargetException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.List;
-import java.util.Objects;
 
 public final class FocusUtil {
   private static final @NonNls String SWING_FOCUS_OWNER_PROPERTY = "focusOwner";
@@ -33,21 +33,23 @@ public final class FocusUtil {
   }
 
   public static @Nullable Component getMostRecentComponent(Component component, Window ancestor) {
-    if (ancestor != null) {
-      try {
-        Component mostRecentFocusOwner = (Component)Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class,
-                                                                                                            "getMostRecentFocusOwner",
-                                                                                                            Window.class))
-          .invoke(null, ancestor);
-        if (mostRecentFocusOwner != null &&
-            SwingUtilities.isDescendingFrom(mostRecentFocusOwner, component) &&
-            mostRecentFocusOwner.isShowing()) {
-          return mostRecentFocusOwner;
-        }
+    if (ancestor == null) {
+      return null;
+    }
+
+    try {
+      MethodHandles.Lookup lookup = MethodHandles.lookup();
+      MethodHandle owner =
+        lookup.findStatic(KeyboardFocusManager.class, "getMostRecentFocusOwner", MethodType.methodType(Component.class, Window.class));
+      Component mostRecentFocusOwner = (Component)owner.invokeExact(ancestor);
+      if (mostRecentFocusOwner != null &&
+          SwingUtilities.isDescendingFrom(mostRecentFocusOwner, component) &&
+          mostRecentFocusOwner.isShowing()) {
+        return mostRecentFocusOwner;
       }
-      catch (InvocationTargetException | IllegalAccessException e) {
-        Logger.getInstance(FocusUtil.class).debug(e);
-      }
+    }
+    catch (Throwable e) {
+      Logger.getInstance(FocusUtil.class).debug(e);
     }
     return null;
   }

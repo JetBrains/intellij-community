@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
-import com.intellij.util.ReflectionUtil;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
@@ -16,11 +16,10 @@ public final class DomCollectionWrapper<T> extends DomWrapper<T> {
   private final Method mySetter;
   private final Method myGetter;
 
-  public DomCollectionWrapper(final DomElement domElement,
-                              final DomCollectionChildDescription childDescription) {
-    this(domElement, childDescription, 
-         DomUIFactory.findMethod(ReflectionUtil.getRawType(childDescription.getType()), "setValue"),
-         DomUIFactory.findMethod(ReflectionUtil.getRawType(childDescription.getType()), "getValue"));
+  public DomCollectionWrapper(DomElement domElement, DomCollectionChildDescription childDescription) {
+    this(domElement, childDescription,
+         DomUIFactory.findMethod(ClassUtil.getRawType(childDescription.getType()), "setValue"),
+         DomUIFactory.findMethod(ClassUtil.getRawType(childDescription.getType()), "getValue"));
   }
 
   public DomCollectionWrapper(DomElement domElement,
@@ -61,5 +60,4 @@ public final class DomCollectionWrapper<T> extends DomWrapper<T> {
     List<? extends DomElement> list = myChildDescription.getValues(myDomElement);
     return list.isEmpty() ? null : (T)myGetter.invoke(list.get(0));
   }
-
 }

@@ -2,10 +2,10 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.ClearableLazyValue;
-import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +36,9 @@ public final class CachedSingletonsRegistry {
     synchronized (LOCK) {
       for (Class<?> aClass : ourRegisteredClasses) {
         try {
-          cleanupClass(aClass);
+          Field field = aClass.getField("ourInstance");
+          field.setAccessible(true);
+          field.set(null, null);
         }
         catch (Exception e) {
           // Ignore cleanup failed.
@@ -47,9 +49,5 @@ public final class CachedSingletonsRegistry {
         value.drop();
       }
     }
-  }
-
-  private static void cleanupClass(Class<?> aClass) {
-    ReflectionUtil.resetField(aClass, null, "ourInstance");
   }
 }

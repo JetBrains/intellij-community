@@ -3,8 +3,7 @@ package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.diagnostic.UntraceableException;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.WeakInterner;
@@ -89,7 +88,13 @@ public final class ThrowableInterner {
   private static final Field BACKTRACE_FIELD;
 
   static {
-    BACKTRACE_FIELD = ReflectionUtil.getDeclaredField(Throwable.class, "backtrace");
+    try {
+      BACKTRACE_FIELD = Throwable.class.getDeclaredField("backtrace");
+    }
+    catch (NoSuchFieldException e) {
+      throw new RuntimeException(e);
+    }
+    BACKTRACE_FIELD.setAccessible(true);
   }
 
   private static Object[] getBacktrace(@NotNull Throwable throwable) {
