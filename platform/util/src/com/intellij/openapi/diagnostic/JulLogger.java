@@ -2,7 +2,6 @@
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.util.SystemProperties;
 import org.apache.log4j.Level;
 import org.apache.log4j.Priority;
 import org.jetbrains.annotations.NotNull;
@@ -168,7 +167,7 @@ public class JulLogger extends Logger {
       }
     }
 
-    boolean logConsole = SystemProperties.getBooleanProperty("idea.log.console", true);
+    boolean logConsole = Boolean.parseBoolean(System.getProperty("idea.log.console", "true"));
 
     java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
     IdeaLogRecordFormatter layout = new IdeaLogRecordFormatter();
