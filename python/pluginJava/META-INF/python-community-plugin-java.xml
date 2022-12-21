@@ -17,6 +17,8 @@
     <sdkEditorAdditionalOptionsProvider implementation="com.jetbrains.python.PythonSdkEditorAdditionalOptionsProvider"/>
 
     <commandLineInspectionProjectConfigurator implementation="com.jetbrains.python.inspections.PythonPluginCommandLineInspectionProjectConfigurator"/>
+    <warmupConfiguration implementation="com.jetbrains.python.inspections.PythonPluginWarmupConfiguration"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

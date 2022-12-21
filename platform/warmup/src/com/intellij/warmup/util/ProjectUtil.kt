@@ -3,29 +3,26 @@ package com.intellij.warmup.util
 
 import com.intellij.conversion.ConversionListener
 import com.intellij.conversion.ConversionService
-import com.intellij.ide.CommandLineInspectionProgressReporter
-import com.intellij.ide.CommandLineInspectionProjectConfigurator
-import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorContext
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.PatchProjectUtil
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.ide.warmup.WarmupConfiguration
+import com.intellij.ide.warmup.WarmupEventsLogger
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.durationStep
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.util.*
-import java.util.function.Predicate
 
 private val LOG = ConsoleLog
 
@@ -34,7 +31,7 @@ fun importOrOpenProject(args: OpenProjectArgs, indicator: ProgressIndicator): Pr
   // most of the sensible operations would run in the same thread
   return runUnderModalProgressIfIsEdt {
     runTaskAndLogTime("open project") {
-      importOrOpenProjectImpl(args, indicator)
+      importOrOpenProjectImpl(args)
     }
   }
 }
@@ -43,11 +40,11 @@ suspend fun importOrOpenProjectAsync(args: OpenProjectArgs, indicator: ProgressI
   LOG.info("Opening project from ${args.projectDir}...")
   // most of the sensible operations would run in the same thread
   return runTaskAndLogTime("open project") {
-    importOrOpenProjectImpl(args, indicator)
+    importOrOpenProjectImpl(args)
   }
 }
 
-private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs, indicator: ProgressIndicator): Project {
+private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
   val vfsProject = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(args.projectDir)
                    ?: throw RuntimeException("Project path ${args.projectDir} is not found")
 
@@ -59,8 +56,8 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs, indicator: Pr
 
   callProjectConversion(args)
 
-  callProjectConfigurators(args, indicator) {
-    this.configureEnvironment(it)
+  callProjectConfigurators(args) {
+    this.prepareEnvironment(args.projectDir, listener)
   }
 
   val project = runTaskAndLogTime("open project") {
@@ -77,8 +74,8 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs, indicator: Pr
 
   yieldAndWaitForDumbModeEnd(project)
 
-  callProjectConfigurators(args, indicator) {
-    this.configureProject(project, it)
+  callProjectConfigurators(args) {
+    this.runWarmup(project, listener)
 
     //the configuration may add more dumb tasks to complete
     //we flush the queue to avoid a deadlock between a modal progress & invokeLater
@@ -118,12 +115,12 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs, indicator: Pr
   return project
 }
 
-private val listener = object : ConversionListener, CommandLineInspectionProgressReporter {
-  override fun reportError(message: String) {
+private val listener = object : ConversionListener, WarmupEventsLogger {
+  override fun logError(message: String) {
     LOG.warn("PROGRESS: $message")
   }
 
-  override fun reportMessage(minVerboseLevel: Int, message: String) {
+  override fun logMessage(verbosityLevel: Int, message: String) {
     LOG.info("PROGRESS: $message")
   }
 
@@ -170,33 +167,29 @@ private suspend fun callProjectConversion(projectArgs: OpenProjectArgs) {
 
 private suspend fun callProjectConfigurators(
   projectArgs: OpenProjectArgs,
-  indicator: ProgressIndicator,
-  action: suspend CommandLineInspectionProjectConfigurator.(ConfiguratorContext) -> Unit
+  action: suspend WarmupConfiguration.() -> Unit
 ) {
 
   if (!projectArgs.configureProject) return
-  CommandLineInspectionProjectConfigurator.EP_NAME.extensionList.forEach { configurator ->
-    indicator.pushState()
-    try {
-      val context = object : ConfiguratorContext {
-        override fun getProgressIndicator() = indicator
-        override fun getLogger() = listener
-        override fun getProjectPath() = projectArgs.projectDir
-        override fun getFilesFilter(): Predicate<Path> = Predicate { true }
-        override fun getVirtualFilesFilter(): Predicate<VirtualFile> = Predicate { true }
-      }
 
-      if (configurator.name in projectArgs.disabledConfigurators) {
-        listener.reportMessage(1, "Configurator ${configurator.name} is disabled in the settings")
-      }
-      else if (configurator.isApplicable(context)) {
-        runTaskAndLogTime("configure " + configurator.name) {
-          action(configurator, context)
+  val activeConfigurators = WarmupConfiguration.EP_NAME.extensionList.filter {
+    if (it.name in projectArgs.disabledConfigurators) {
+      listener.logMessage(1, "Configurator ${it.name} is disabled in the settings")
+      false
+    } else {
+      true
+    }
+  }
+
+  val fraction = 1.0 / activeConfigurators.size.toDouble()
+
+  withLoggingProgressReporter {
+    for (configuration in activeConfigurators) {
+      durationStep(fraction, "Configurator ${configuration.name} is in action..." /* NON-NLS */) {
+        runTaskAndLogTime("Configure " + configuration.name) {
+          action(configuration)
         }
       }
-    }
-    finally {
-      indicator.popState()
     }
   }
 
