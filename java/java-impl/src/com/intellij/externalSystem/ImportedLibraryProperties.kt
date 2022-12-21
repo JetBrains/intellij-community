@@ -4,6 +4,7 @@ package com.intellij.externalSystem
 import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
 import com.intellij.java.library.MavenCoordinates
 import com.intellij.openapi.roots.libraries.LibraryProperties
+import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 
 class ImportedLibraryProperties(override var mavenCoordinates: MavenCoordinates?) : LibraryProperties<ImportedLibraryProperties.MavenCoordinatesState>(), LibraryWithMavenCoordinatesProperties  {
@@ -43,10 +44,15 @@ class ImportedLibraryProperties(override var mavenCoordinates: MavenCoordinates?
       packaging = coordinates.packaging
       classifier = coordinates.classifier
     }
+    @Attribute
     var groupId: String = ""
+    @Attribute
     var artifactId: String= ""
+    @Attribute
     var version: String = ""
+    @Attribute
     var packaging: String = JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING
+    @Attribute
     var classifier: String? = null
   }
 }
