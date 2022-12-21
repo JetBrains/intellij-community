@@ -24,7 +24,7 @@ interface WorkspaceFileIndexContributor<E : WorkspaceEntity> {
    * Implement this function and call functions from [registrar] to specify files and directories which should be included or excluded from
    * the workspace. 
    * 
-   * The implementation may use properties from [entity] or from its parents only and don't use other data which may change.
+   * The implementation may use properties from [entity] or from its parents or its children only and don't use other data which may change.
    * If properties from other entities are used for computation, their classes must be registered in [dependenciesOnOtherEntities].
    * This is necessary to ensure that [WorkspaceFileIndex] is properly updated when entities change. 
    * 
