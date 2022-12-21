@@ -83,12 +83,13 @@ public class SearchTextField extends JPanel {
         //noinspection unchecked
         if (ui instanceof Condition && ((Condition)ui).value(e)) return;
 
-        if(e.getX() < JBUIScale.scale(28) && myModel.myFullList.size() > 0) {
+        if (e.getID() == MouseEvent.MOUSE_PRESSED && e.getX() < JBUIScale.scale(28) && myModel.myFullList.size() > 0) {
           myTextField.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
           if (e.getClickCount() == 1) {
-           showPopup();
+            showPopup();
           }
-        } else {
+        }
+        else {
           myTextField.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
         }
         super.processMouseEvent(e);
