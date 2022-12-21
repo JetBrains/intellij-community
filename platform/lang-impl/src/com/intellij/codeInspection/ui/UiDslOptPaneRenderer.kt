@@ -21,20 +21,21 @@ import kotlin.math.max
 class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
   override fun render(tool: InspectionProfileEntry, pane: OptPane, parent: Disposable?): JComponent {
     return panel {
-      pane.components.forEach { render(it, tool, parent) }
+      pane.components.forEach { render(it, tool) }
     }
+      .apply { if (parent != null) registerValidators(parent) }
   }
 
-  private fun Panel.render(component: OptComponent, tool: InspectionProfileEntry, parent: Disposable?) {
+  private fun Panel.render(component: OptComponent, tool: InspectionProfileEntry) {
     when (component) {
       is OptControl, is OptSettingLink, is OptCustom -> {
-        renderOptRow(component, tool, parent)
+        renderOptRow(component, tool)
       }
 
       is OptGroup -> {
         row { label(component.label.label()) }
         indent {
-          component.children.forEach { child -> render(child, tool, parent) }
+          component.children.forEach { child -> render(child, tool) }
         }
       }
 
@@ -46,7 +47,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           component.tabs.forEach { tab ->
             tabbedPane.add(tab.label.label(), com.intellij.ui.dsl.builder.panel {
               tab.content.forEach { tabComponent ->
-                render(tabComponent, tool, parent)
+                render(tabComponent, tool)
               }
             })
           }
@@ -89,7 +90,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       else -> null
     }
 
-  private fun Panel.renderOptRow(component: OptComponent, tool: InspectionProfileEntry, parent: Disposable?) {
+  private fun Panel.renderOptRow(component: OptComponent, tool: InspectionProfileEntry) {
     val splitLabel = component.splitLabel
     lateinit var cell: Cell<JComponent>
     when {
@@ -112,7 +113,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
     // Nested components
     component.nestedControls?.let { nested ->
       val group = indent {
-        nested.forEach { render(it, tool, parent) }
+        nested.forEach { render(it, tool) }
       }
       if (cell.component is JBCheckBox) {
         group.enabledIf((cell.component as JBCheckBox).selected)
