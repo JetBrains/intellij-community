@@ -85,7 +85,7 @@ fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
 private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend CoroutineScope.() -> T): T {
   val indicator = ProgressManager.getGlobalProgressIndicator()
   if (indicator != null) {
-    return runBlockingCancellable(indicator, action)
+    return indicatorRunBlockingCancellable(indicator, action)
   }
   return ensureCurrentJob(allowOrphan) { currentJob ->
     val context = currentThreadContext() +
@@ -112,7 +112,7 @@ fun <T> runBlockingMaybeCancellable(action: suspend CoroutineScope.() -> T): T {
 }
 
 @Internal
-fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
+fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
   return ensureCurrentJob(indicator) { currentJob ->
     val context = currentThreadContext() +
                   currentJob +
@@ -294,6 +294,15 @@ fun <T> jobToIndicator(job: Job, indicator: ProgressIndicator, action: () -> T):
 }
 
 @Deprecated(
+  message = "Method was renamed. Don't use",
+  replaceWith = ReplaceWith("indicatorRunBlockingCancellable(indicator, action)"),
+  level = DeprecationLevel.ERROR,
+)
+fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
+  return indicatorRunBlockingCancellable(indicator, action)
+}
+
+@Deprecated(
   message = "Method was renamed",
   replaceWith = ReplaceWith("runBlockingCancellable(action)"),
   level = DeprecationLevel.ERROR,
@@ -308,7 +317,7 @@ fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
   level = DeprecationLevel.ERROR,
 )
 fun <T> runSuspendingAction(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
-  return runBlockingCancellable(indicator, action)
+  return indicatorRunBlockingCancellable(indicator, action)
 }
 
 @Deprecated(
