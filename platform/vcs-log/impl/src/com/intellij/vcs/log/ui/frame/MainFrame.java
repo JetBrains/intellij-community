@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -231,7 +232,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     DefaultActionGroup presentationSettingsGroup = (DefaultActionGroup)actionManager.getAction(VcsLogActionIds.PRESENTATION_SETTINGS_ACTION_GROUP);
     configureIntelliSortAction(presentationSettingsGroup);
 
-    DefaultActionGroup rightCornerGroup = (DefaultActionGroup)actionManager.getAction(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP);
+    ActionGroup rightCornerGroup = (ActionGroup)Objects.requireNonNull(
+      CustomActionsSchema.getInstance().getCorrectedAction(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP));
     ActionToolbar rightCornerToolbar = actionManager.createActionToolbar(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, rightCornerGroup, true);
     rightCornerToolbar.setTargetComponent(this);
     rightCornerToolbar.setReservePlaceAutoPopupIcon(false);

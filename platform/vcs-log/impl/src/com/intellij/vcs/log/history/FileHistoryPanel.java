@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history;
 
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -172,7 +173,8 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @NotNull
   private JComponent createActionsToolbar() {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
-    toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionIds.FILE_HISTORY_TOOLBAR_ACTION_GROUP));
+    AnAction toolbarActions = CustomActionsSchema.getInstance().getCorrectedAction(VcsLogActionIds.FILE_HISTORY_TOOLBAR_ACTION_GROUP);
+    toolbarGroup.add(Objects.requireNonNull(toolbarActions));
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.VCS_HISTORY_TOOLBAR_PLACE,
                                                                             toolbarGroup, false);
