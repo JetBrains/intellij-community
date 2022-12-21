@@ -262,16 +262,8 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         @Override
         public void onClick(MouseEvent event) {
           if (myFullValueEvaluator.isShowValuePopup()) {
-            //FileType currentFileType = myFullValueEvaluator.mySyntaxType;
-            //if (currentFileType == null || currentFileType == FileTypes.PLAIN_TEXT) {
-            //  DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, myTree.getProject(), null);
-            //} else {
-              EditorTextField textArea = new EditorTextField(myTree.getProject(), FileTypes.PLAIN_TEXT);
-              textArea.setNewDocumentAndFileType(JsonFileType.INSTANCE, null);
-              DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, myTree.getProject(), null, textArea);
-          //  }
-          }
-          else {
+            DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, myTree.getProject(), null);
+          } else {
             new HeadlessValueEvaluationCallback(XValueNodeImpl.this).startFetchingValue(myFullValueEvaluator);
           }
           event.consume();

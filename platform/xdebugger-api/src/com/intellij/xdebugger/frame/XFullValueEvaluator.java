@@ -2,12 +2,14 @@
 package com.intellij.xdebugger.frame;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -57,6 +59,8 @@ public abstract class XFullValueEvaluator {
   public @Nls String getLinkText() {
     return myLinkText;
   }
+
+  public JComponent createComponent(String fullValue) { return null; }
 
   public interface XFullValueEvaluationCallback extends Obsolescent, XValueCallback {
     void evaluated(@NotNull String fullValue);
