@@ -172,11 +172,6 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       }
 
       @Override
-      public @Nullable AnalysisScope getAnalyzerScope() {
-        return scope;
-      }
-
-      @Override
       public @NotNull CommandLineInspectionProgressReporter getLogger() {
         return InspectionApplicationBase.this;
       }
