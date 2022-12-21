@@ -78,7 +78,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
       createAction("$Cut", CefFrame::cut),
       createAction("$Copy", CefFrame::copy),
       createAction("$Paste", CefFrame::paste),
-      createAction("$Delete", CefFrame::delete),
       createAction("$SelectAll", CefFrame::selectAll),
       createAction("$Undo", CefFrame::undo),
       createAction("$Redo", CefFrame::redo)
