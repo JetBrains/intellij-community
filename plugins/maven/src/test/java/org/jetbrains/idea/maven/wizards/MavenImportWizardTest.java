@@ -208,11 +208,13 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
 
   private void waitForMavenImporting(@NotNull Project project, @NotNull VirtualFile file) {
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-    manager.waitForImportCompletion();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      manager.scheduleImportInTests(Collections.singletonList(file));
-      manager.importProjects();
-    });
+    if (!MavenUtil.isLinearImportEnabled()) {
+      manager.waitForImportCompletion();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        manager.scheduleImportInTests(Collections.singletonList(file));
+        manager.importProjects();
+      });
+    }
 
     Promise<?> promise = manager.waitForImportCompletion();
     PlatformTestUtil.waitForPromise(promise);
