@@ -1,15 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images.sync.dotnet
 
 import com.intellij.openapi.util.text.StringUtilRt
 import org.jetbrains.intellij.build.images.IconClassInfo
+import org.jetbrains.intellij.build.images.IconClasses
 import org.jetbrains.intellij.build.images.IconsClassGenerator
-import org.jetbrains.intellij.build.images.IconsClasses
 import org.jetbrains.intellij.build.images.IntellijIconClassGeneratorModuleConfig
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 
-internal class DotnetIconsClasses(override val homePath: String) : IconsClasses() {
+internal class DotnetIconClasses(override val homePath: String) : IconClasses() {
   override val modules: List<JpsModule>
     get() = super.modules.filter {
       it.name == "rider-icons"

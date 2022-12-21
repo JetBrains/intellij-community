@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images.sync.dotnet
 
-import org.jetbrains.intellij.build.images.generateIconsClasses
+import org.jetbrains.intellij.build.images.generateIconClasses
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.intellij.build.images.shutdownAppScheduledExecutorService
 import org.jetbrains.intellij.build.images.sync.*
@@ -98,7 +98,7 @@ object DotnetIconSync {
 
   private fun generateClasses() {
     step("Generating classes..")
-    generateIconsClasses(dbFile = null, config = DotnetIconsClasses(context.devRepoDir.toAbsolutePath().toString()))
+    generateIconClasses(dbFile = null, config = DotnetIconClasses(context.devRepoDir.toAbsolutePath().toString()))
   }
 
   private fun stageChanges(): Collection<String> {
