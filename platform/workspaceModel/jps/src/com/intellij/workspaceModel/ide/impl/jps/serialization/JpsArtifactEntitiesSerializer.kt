@@ -233,7 +233,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
 
     val componentTag = JDomSerializationUtil.createComponentElement(ARTIFACT_MANAGER_COMPONENT_NAME)
     val orderOfItems = if (preserveOrder) (entities[ArtifactsOrderEntity::class.java]?.firstOrNull() as? ArtifactsOrderEntity?)?.orderOfArtifacts else null
-    val sorted = sortByOrderEntity(orderOfItems, mainEntities.groupByTo(HashMap()) { it.name })
+    val sorted = sortByOrderEntity(orderOfItems, mainEntities.groupByTo(HashMap()) { it.name }.toMutableMap())
     sorted.forEach {
       componentTag.addContent(saveArtifact(it))
     }

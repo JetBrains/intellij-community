@@ -25,7 +25,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
-class JpsSplitModuleAndContentRoot {
+class JpsSplitModuleAndContentRootTest {
   @Rule
   @JvmField
   val projectModel = ProjectModelRule()
@@ -429,6 +429,26 @@ class JpsSplitModuleAndContentRoot {
       assertEquals(2, exclude.size)
       assertTrue(exclude.singleOrNull { it.entitySource is JpsFileEntitySource.FileInDirectory } != null)
       assertTrue(exclude.singleOrNull { it.entitySource is JpsImportedEntitySource } != null)
+    }
+  }
+
+  @Test
+  fun `load mixed exclude 2`() {
+    checkSaveProjectAfterChange("after/addExcludeWithDifferentOrder1", "after/addExcludeWithDifferentOrder1") { builder, configLocation ->
+      val moduleEntity = builder.entities(ModuleEntity::class.java).single()
+      val contentRootEntity = moduleEntity.contentRoots.single()
+      val exclude = contentRootEntity.excludedUrls
+      assertEquals(2, exclude.size)
+    }
+  }
+
+  @Test
+  fun `load mixed exclude 3`() {
+    checkSaveProjectAfterChange("after/addExcludeWithDifferentOrder2", "after/addExcludeWithDifferentOrder2") { builder, configLocation ->
+      val moduleEntity = builder.entities(ModuleEntity::class.java).single()
+      val contentRootEntity = moduleEntity.contentRoots.single()
+      val exclude = contentRootEntity.excludedUrls
+      assertEquals(2, exclude.size)
     }
   }
 

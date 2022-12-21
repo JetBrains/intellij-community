@@ -25,6 +25,9 @@ import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -44,12 +47,16 @@ open class ContentRootEntityImpl(val dataSource: ContentRootEntityData) : Conten
     internal val SOURCEROOTORDER_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java,
                                                                                    SourceRootOrderEntity::class.java,
                                                                                    ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val EXCLUDEURLORDER_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java,
+                                                                                   ExcludeUrlOrderEntity::class.java,
+                                                                                   ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
       EXCLUDEDURLS_CONNECTION_ID,
       SOURCEROOTS_CONNECTION_ID,
       SOURCEROOTORDER_CONNECTION_ID,
+      EXCLUDEURLORDER_CONNECTION_ID,
     )
 
   }
@@ -71,6 +78,9 @@ open class ContentRootEntityImpl(val dataSource: ContentRootEntityData) : Conten
 
   override val sourceRootOrder: SourceRootOrderEntity?
     get() = snapshot.extractOneToOneChild(SOURCEROOTORDER_CONNECTION_ID, this)
+
+  override val excludeUrlOrder: ExcludeUrlOrderEntity?
+    get() = snapshot.extractOneToOneChild(EXCLUDEURLORDER_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -379,6 +389,41 @@ open class ContentRootEntityImpl(val dataSource: ContentRootEntityData) : Conten
           this.entityLinks[EntityLink(true, SOURCEROOTORDER_CONNECTION_ID)] = value
         }
         changedProperty.add("sourceRootOrder")
+      }
+
+    override var excludeUrlOrder: ExcludeUrlOrderEntity?
+      get() {
+        val _diff = diff
+        return if (_diff != null) {
+          _diff.extractOneToOneChild(EXCLUDEURLORDER_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
+                                                                                                         EXCLUDEURLORDER_CONNECTION_ID)] as? ExcludeUrlOrderEntity
+        }
+        else {
+          this.entityLinks[EntityLink(true, EXCLUDEURLORDER_CONNECTION_ID)] as? ExcludeUrlOrderEntity
+        }
+      }
+      set(value) {
+        checkModificationAllowed()
+        val _diff = diff
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            value.entityLinks[EntityLink(false, EXCLUDEURLORDER_CONNECTION_ID)] = this
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+          _diff.addEntity(value)
+        }
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
+          _diff.updateOneToOneChildOfParent(EXCLUDEURLORDER_CONNECTION_ID, this, value)
+        }
+        else {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            value.entityLinks[EntityLink(false, EXCLUDEURLORDER_CONNECTION_ID)] = this
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+
+          this.entityLinks[EntityLink(true, EXCLUDEURLORDER_CONNECTION_ID)] = value
+        }
+        changedProperty.add("excludeUrlOrder")
       }
 
     override fun getEntityClass(): Class<ContentRootEntity> = ContentRootEntity::class.java

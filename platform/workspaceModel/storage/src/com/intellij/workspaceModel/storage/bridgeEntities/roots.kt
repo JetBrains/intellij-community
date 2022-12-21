@@ -26,6 +26,7 @@ interface ContentRootEntity : WorkspaceEntity {
     val excludedPatterns: List<@NlsSafe String>
     val sourceRoots: List<@Child SourceRootEntity>
     @Child val sourceRootOrder: SourceRootOrderEntity?
+    @Child val excludeUrlOrder: ExcludeUrlOrderEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -37,6 +38,7 @@ interface ContentRootEntity : WorkspaceEntity {
     override var excludedPatterns: MutableList<String>
     override var sourceRoots: List<SourceRootEntity>
     override var sourceRootOrder: SourceRootOrderEntity?
+    override var excludeUrlOrder: ExcludeUrlOrderEntity?
   }
 
   companion object : Type<ContentRootEntity, Builder>() {

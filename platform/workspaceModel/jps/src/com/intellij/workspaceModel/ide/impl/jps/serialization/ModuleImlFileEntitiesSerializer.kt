@@ -32,6 +32,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.StringReader
 import java.nio.file.Path
 import java.util.*
+import kotlin.collections.HashMap
 
 internal const val DEPRECATED_MODULE_MANAGER_COMPONENT_NAME = "DeprecatedModuleOptionManager"
 internal const val TEST_MODULE_PROPERTIES_COMPONENT_NAME = "TestModuleProperties"
@@ -356,14 +357,25 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     contentRootEntity: ContentRootEntity,
     entitySource: EntitySource,
   ) {
-    contentElement
+    val roots = contentElement
       .getChildren(EXCLUDE_FOLDER_TAG)
       .map { virtualFileManager.fromUrl(it.getAttributeValueStrict(URL_ATTRIBUTE)) }
-      .forEach { exclude ->
+      .onEach { exclude ->
         builder addEntity ExcludeUrlEntity(exclude, entitySource) {
           this.contentRoot = contentRootEntity
         }
       }
+    val existingOrder = contentRootEntity.excludeUrlOrder
+    if (existingOrder != null) {
+      builder.modifyEntity(existingOrder) {
+        this.order.addAll(roots)
+      }
+    }
+    else {
+      builder addEntity ExcludeUrlOrderEntity(roots, entitySource) {
+        this.contentRoot = contentRootEntity
+      }
+    }
   }
 
   private fun loadSourceRoots(contentElement: Element,
@@ -448,19 +460,21 @@ override fun saveEntities(mainEntities: Collection<ModuleEntity>,
       if (sourceRootEntities.isNotEmpty() || excludeRoots.isNotEmpty()) {
         val excludes = excludeRoots.groupBy { it.contentRoot!!.url }.toMutableMap()
         if (sourceRootEntities.isNotEmpty()) {
-          sourceRootEntities.groupBy { it.contentRoot }.forEach { contentRoot, sourceRoots ->
-            val contentRootTag = Element(CONTENT_TAG)
-            contentRootTag.setAttribute(URL_ATTRIBUTE, contentRoot.url.url)
-            saveSourceRootEntities(sourceRoots, contentRootTag, contentRoot.getSourceRootsComparator())
-            excludes[contentRoot.url]?.let {
-              saveExcludeUrls(contentRootTag, it)
-              excludes.remove(contentRoot.url)
+          sourceRootEntities.groupBy { it.contentRoot }
+            .toSortedMap(compareBy { it.url.url })
+            .forEach { (contentRoot, sourceRoots) ->
+              val contentRootTag = Element(CONTENT_TAG)
+              contentRootTag.setAttribute(URL_ATTRIBUTE, contentRoot.url.url)
+              saveSourceRootEntities(sourceRoots, contentRootTag, contentRoot.getSourceRootsComparator())
+              excludes[contentRoot.url]?.let {
+                saveExcludeUrls(contentRootTag, it)
+                excludes.remove(contentRoot.url)
+              }
+              rootElement.addContent(contentRootTag)
+              writer.saveComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, rootElement)
             }
-            rootElement.addContent(contentRootTag)
-            writer.saveComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, rootElement)
-          }
         }
-        excludes.forEach { url, exclude ->
+        excludes.toSortedMap(compareBy { it.url }).forEach { (url, exclude) ->
           val contentRootTag = Element(CONTENT_TAG)
           contentRootTag.setAttribute(URL_ATTRIBUTE, url.url)
           saveExcludeUrls(contentRootTag, exclude)
@@ -534,7 +548,7 @@ override fun saveEntities(mainEntities: Collection<ModuleEntity>,
     rootManagerElement.attributes.sortWith(knownAttributesComparator)
     //todo ensure that custom data is written in proper order
 
-    val contentEntities = module.contentRoots.filter { acceptsSource(it.entitySource) }.sortedBy { it.url.url }
+    val contentEntities = module.contentRoots.filter { acceptsSource(it.entitySource) }
 
     saveContentEntities(contentEntities, rootManagerElement)
 
@@ -549,7 +563,7 @@ override fun saveEntities(mainEntities: Collection<ModuleEntity>,
 
   private fun saveContentEntities(contentEntities: List<ContentRootEntity>,
                                   rootManagerElement: Element) {
-    contentEntities.forEach { contentEntry ->
+    contentEntities.sortedBy { it.url.url }.forEach { contentEntry ->
       val contentRootTag = Element(CONTENT_TAG)
       contentRootTag.setAttribute(URL_ATTRIBUTE, contentEntry.url.url)
 
@@ -564,9 +578,13 @@ override fun saveEntities(mainEntities: Collection<ModuleEntity>,
     }
   }
 
-  private fun saveExcludeUrls(contentRootTag: Element,
-                              excludeUrls: List<ExcludeUrlEntity>) {
-    excludeUrls.forEach {
+  private fun saveExcludeUrls(contentRootTag: Element, excludeUrls: List<ExcludeUrlEntity>) {
+    val urlMap = excludeUrls.groupByTo(HashMap()) { it.url }
+    val contentEntry = excludeUrls.firstOrNull()?.contentRoot ?: return
+    val newOrder = sortByOrderEntity(contentEntry.excludeUrlOrder?.order, urlMap) {
+      this.sortedBy { it.url.url }
+    }
+    newOrder.forEach {
       contentRootTag.addContent(Element(EXCLUDE_FOLDER_TAG).setAttribute(URL_ATTRIBUTE, it.url.url))
     }
   }

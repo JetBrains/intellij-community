@@ -8,6 +8,7 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
@@ -91,4 +92,39 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ArtifactsOrderEntity, modification: ArtifactsOrderEntity.Builder.() -> Unit) = modifyEntity(
   ArtifactsOrderEntity.Builder::class.java, entity, modification)
+//endregion
+
+interface ExcludeUrlOrderEntity : WorkspaceEntity {
+  val order: List<VirtualFileUrl>
+
+  val contentRoot: ContentRootEntity
+
+  //region generated code
+  @GeneratedCodeApiVersion(1)
+  interface Builder : ExcludeUrlOrderEntity, WorkspaceEntity.Builder<ExcludeUrlOrderEntity>, ObjBuilder<ExcludeUrlOrderEntity> {
+    override var entitySource: EntitySource
+    override var order: MutableList<VirtualFileUrl>
+    override var contentRoot: ContentRootEntity
+  }
+
+  companion object : Type<ExcludeUrlOrderEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
+    operator fun invoke(order: List<VirtualFileUrl>,
+                        entitySource: EntitySource,
+                        init: (Builder.() -> Unit)? = null): ExcludeUrlOrderEntity {
+      val builder = builder()
+      builder.order = order.toMutableWorkspaceList()
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
+  }
+  //endregion
+}
+
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ExcludeUrlOrderEntity, modification: ExcludeUrlOrderEntity.Builder.() -> Unit) = modifyEntity(
+  ExcludeUrlOrderEntity.Builder::class.java, entity, modification)
 //endregion
