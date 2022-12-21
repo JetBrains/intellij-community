@@ -232,18 +232,10 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     if (mainEntities.isEmpty()) return
 
     val componentTag = JDomSerializationUtil.createComponentElement(ARTIFACT_MANAGER_COMPONENT_NAME)
-    val artifactsByName = mainEntities.groupByTo(HashMap()) { it.name }
     val orderOfItems = if (preserveOrder) (entities[ArtifactsOrderEntity::class.java]?.firstOrNull() as? ArtifactsOrderEntity?)?.orderOfArtifacts else null
-    orderOfItems?.forEach { name ->
-      val artifacts = artifactsByName.remove(name)
-      artifacts?.forEach {
-        componentTag.addContent(saveArtifact(it))
-      }
-    }
-    artifactsByName.values.forEach {
-      it.forEach { artifact ->
-        componentTag.addContent(saveArtifact(artifact))
-      }
+    val sorted = sortByOrderEntity(orderOfItems, mainEntities.groupByTo(HashMap()) { it.name })
+    sorted.forEach {
+      componentTag.addContent(saveArtifact(it))
     }
     writer.saveComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME, componentTag)
   }
