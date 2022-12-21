@@ -252,15 +252,20 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
     boolean forceRebuild = !Comparing.equal(file, myFile);
     if (!forceRebuild && myStructureView != null) {
       StructureViewModel model = myStructureView.getTreeModel();
-      StructureViewTreeElement treeElement = model.getRoot();
-      Object value = treeElement.getValue();
-      if (value == null ||
-          value instanceof PsiElement && !((PsiElement)value).isValid() ||
-          myStructureView instanceof StructureViewComposite && ((StructureViewComposite)myStructureView).isOutdated()) {
+      if (model instanceof TextEditorBasedStructureViewModel && !((TextEditorBasedStructureViewModel)model).isValid()) {
         forceRebuild = true;
       }
-      else if (file != null) {
-        forceRebuild = FileEditorManager.getInstance(myProject).getSelectedEditor(file) != myFileEditor;
+      else {
+        StructureViewTreeElement treeElement = model.getRoot();
+        Object value = treeElement.getValue();
+        if (value == null ||
+            value instanceof PsiElement && !((PsiElement)value).isValid() ||
+            myStructureView instanceof StructureViewComposite && ((StructureViewComposite)myStructureView).isOutdated()) {
+          forceRebuild = true;
+        }
+        else if (file != null) {
+          forceRebuild = FileEditorManager.getInstance(myProject).getSelectedEditor(file) != myFileEditor;
+        }
       }
     }
     if (forceRebuild) {
