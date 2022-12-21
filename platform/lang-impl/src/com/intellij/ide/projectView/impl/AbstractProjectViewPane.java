@@ -382,6 +382,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return true;
   }
 
+  public boolean isAutoScrollEnabledWithoutFocus() {
+    return false;
+  }
+
   public boolean isFileNestingEnabled() {
     return false;
   }

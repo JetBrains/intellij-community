@@ -562,6 +562,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       protected String getActionDescription() {
         return ActionsBundle.message("action.ProjectView.AutoscrollToSource.description" );
       }
+
+      @Override
+      protected boolean needToCheckFocus() {
+        AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
+        return currentProjectViewPane == null || !currentProjectViewPane.isAutoScrollEnabledWithoutFocus();
+      }
     };
 
     project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
