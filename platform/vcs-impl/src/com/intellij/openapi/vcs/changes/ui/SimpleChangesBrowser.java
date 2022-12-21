@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class SimpleChangesBrowser extends ChangesBrowserBase {
@@ -30,8 +31,12 @@ public class SimpleChangesBrowser extends ChangesBrowserBase {
   }
 
 
+  /**
+   * @deprecated Consider overriding {@link ChangesBrowserBase} instead.
+   */
   @NotNull
   @Override
+  @Deprecated
   protected DefaultTreeModel buildTreeModel() {
     return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), myChanges, myChangeNodeDecorator);
   }
