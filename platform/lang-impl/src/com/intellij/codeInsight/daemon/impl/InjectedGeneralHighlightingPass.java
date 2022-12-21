@@ -383,7 +383,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
       }
       TextRange shiftedRange = range.shiftRight(injectionHostTextRangeStart);
 
-      overrideDefaultHighlights(myGlobalScheme, shiftedRange, token.textAttributesKeys, holder);
+      addSyntaxInjectedFragmentInfo(myGlobalScheme, shiftedRange, token.textAttributesKeys, holder);
     }
   }
 
@@ -391,10 +391,10 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
   protected void applyInformationWithProgress() {
   }
 
-  static void overrideDefaultHighlights(@NotNull EditorColorsScheme scheme,
-                                        @NotNull TextRange range,
-                                        TextAttributesKey @NotNull [] keys,
-                                        @NotNull HighlightInfoHolder holder) {
+  static void addSyntaxInjectedFragmentInfo(@NotNull EditorColorsScheme scheme,
+                                            @NotNull TextRange range,
+                                            TextAttributesKey @NotNull [] keys,
+                                            @NotNull HighlightInfoHolder holder) {
     if (range.isEmpty()) {
       return;
     }
