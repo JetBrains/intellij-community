@@ -15,19 +15,26 @@ import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UastContextKt;
 
 import java.util.*;
 
@@ -43,6 +50,8 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
     mySettings = VcsContentAnnotationSettings.getInstance(myProject);
     myCache = new ExceptionInfoCache(project, scope);
   }
+  
+  record LineResult(@Nullable UClass uClass, @Nullable PsiFile file, @Nullable String method) {}
 
   private static final class MyAdditionalHighlight extends AdditionalHighlight {
     private MyAdditionalHighlight(int start, int end) {
@@ -78,21 +87,21 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
                                @NotNull Consumer<? super AdditionalHighlight> consumer) {
     VcsContentAnnotation vcsContentAnnotation = VcsContentAnnotationImpl.getInstance(myProject);
     final LocalChangesCorrector localChangesCorrector = new LocalChangesCorrector(myProject);
-    Trinity<PsiClass, PsiFile, String> previousLineResult = null;
+    LineResult previousLineResult = null;
 
     for (int i = 0; i < copiedFragment.getLineCount(); i++) {
       final int lineStartOffset = copiedFragment.getLineStartOffset(i);
       final int lineEndOffset = copiedFragment.getLineEndOffset(i);
       final ExceptionLineParser worker = ExceptionLineParserFactory.getInstance().create(myCache);
       final String lineText = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
-      PsiFile file = ReadAction.compute(() -> {
+      LineResult lineResult = ReadAction.compute(() -> {
         if (DumbService.isDumb(myProject)) return null;
         Result result = worker.execute(lineText, lineEndOffset);
         if (result == null) return null;
-        return worker.getFile();
+        return new LineResult(worker.getUClass(), worker.getFile(), worker.getMethod());
       });
-      if (file != null) {
-        VirtualFile vf = file.getVirtualFile();
+      if (lineResult != null && lineResult.file() != null) {
+        VirtualFile vf = lineResult.file().getVirtualFile();
         if (vf.getFileSystem().isReadOnly()) continue;
 
         VcsRevisionNumber recentChangeRevision = myRevNumbersCache.get(vf);
@@ -125,7 +134,7 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
           consumer.consume(new MyAdditionalHighlight(startOffset + lineStartOffset + startFileLinkOffset,
                                                      startOffset + lineStartOffset + endFileLinkOffset));
 
-          if (worker.getPsiClass() != null) {
+          if (lineResult.uClass() != null) {
             // also check method
             final List<TextRange> ranges = findMethodRange(worker, document, previousLineResult);
             if (ranges != null) {
@@ -150,8 +159,7 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
           }
         }
       }
-      previousLineResult = worker.getResult() == null ? null :
-                           new Trinity<>(worker.getPsiClass(), file, worker.getMethod());
+      previousLineResult = worker.getResult() == null ? null : lineResult;
     }
   }
 
@@ -210,7 +218,7 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
   // line numbers
   private static List<TextRange> findMethodRange(final ExceptionLineParser worker,
                                                  final Document document,
-                                                 final Trinity<PsiClass, PsiFile, String> previousLineResult) {
+                                                 final LineResult previousLineResult) {
     return ReadAction.compute(() -> {
       List<TextRange> ranges = getTextRangeForMethod(worker, previousLineResult);
       if (ranges == null) return null;
@@ -225,18 +233,23 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
 
   // null - check all
   @Nullable
-  private static List<PsiMethod> selectMethod(final PsiMethod[] methods, final Trinity<PsiClass, PsiFile, String> previousLineResult) {
-    if (previousLineResult == null || previousLineResult.getThird() == null) return null;
+  private static List<UMethod> selectMethod(List<UMethod> methods, final LineResult previousLineResult) {
+    if (previousLineResult == null || previousLineResult.method() == null) return null;
 
-    final List<PsiMethod> result = new SmartList<>();
-    for (final PsiMethod method : methods) {
-      method.accept(new JavaRecursiveElementVisitor() {
+    final List<UMethod> result = new SmartList<>();
+    for (final UMethod method : methods) {
+      PsiElement psi = method.getSourcePsi();
+      if (psi == null) continue;
+      psi.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
-        public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
-          final PsiMethod resolved = callExpression.resolveMethod();
-          if (resolved != null) {
-            if (resolved.getName().equals(previousLineResult.getThird())) {
+        public void visitElement(@NotNull PsiElement element) {
+          super.visitElement(element);
+          UCallExpression call = UastContextKt.toUElement(element, UCallExpression.class);
+          if (call != null) {
+            PsiMethod resolved = call.resolve();
+            if (resolved != null && resolved.getName().equals(previousLineResult.method())) {
               result.add(method);
+              stopWalking();
             }
           }
         }
@@ -247,32 +260,38 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
   }
 
   private static List<TextRange> getTextRangeForMethod(final ExceptionLineParser worker,
-                                                       Trinity<PsiClass, PsiFile, String> previousLineResult) {
+                                                       LineResult previousLineResult) {
     String method = worker.getMethod();
-    PsiClass psiClass = worker.getPsiClass();
-    PsiMethod[] methods;
+    UClass psiClass = worker.getUClass();
+    if (psiClass == null) return null;
+    List<UMethod> methods;
     if (method.contains("<init>")) {
       // constructor
-      methods = psiClass.getConstructors();
+      methods = ContainerUtil.filter(psiClass.getMethods(), m -> m.isConstructor());
     }
     else if (method.contains("$")) {
       // access$100
       return null;
     }
     else {
-      methods = psiClass.findMethodsByName(method, false);
+      methods = ContainerUtil.filter(psiClass.getMethods(), m -> method.equals(m.getName()));
     }
-    if (methods.length > 0) {
-      if (methods.length == 1) {
-        final TextRange range = methods[0].getTextRange();
+    if (!methods.isEmpty()) {
+      if (methods.size() == 1) {
+        PsiElement psi = methods.get(0).getSourcePsi();
+        if (psi == null) return null;
+        final TextRange range = psi.getTextRange();
         return Collections.singletonList(range);
       }
       else {
-        List<PsiMethod> selectedMethods = selectMethod(methods, previousLineResult);
-        final List<PsiMethod> toIterate = selectedMethods == null ? Arrays.asList(methods) : selectedMethods;
+        List<UMethod> selectedMethods = selectMethod(methods, previousLineResult);
+        final List<UMethod> toIterate = selectedMethods == null ? methods : selectedMethods;
         final List<TextRange> result = new ArrayList<>();
-        for (PsiMethod psiMethod : toIterate) {
-          result.add(psiMethod.getTextRange());
+        for (UMethod psiMethod : toIterate) {
+          PsiElement psi = psiMethod.getSourcePsi();
+          if (psi != null) {
+            result.add(psi.getTextRange());
+          }
         }
         return result;
       }

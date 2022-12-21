@@ -37,6 +37,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
@@ -128,8 +130,10 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
   }
 
   @Override
-  public PsiClass getPsiClass() {
-    return ObjectUtils.tryCast(ContainerUtil.getFirstItem(myClassResolveInfo.getClasses().values()), PsiClass.class);
+  public @Nullable UClass getUClass() {
+    ExceptionInfoCache.ClassResolveInfo info = myClassResolveInfo;
+    if (info == null) return null;
+    return UastContextKt.toUElement(ContainerUtil.getFirstItem(info.getClasses().values()), UClass.class);
   }
 
   @Override
