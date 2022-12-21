@@ -54,7 +54,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   private static final Logger LOG = Logger.getInstance(SpeedSearchBase.class);
 
   private static JBInsets borderInsets() {
-    return JBUI.insets("SpeedSearch.borderInsets", JBUI.insets(0, 0, 0, 0));
+    return JBUI.insets("SpeedSearch.borderInsets", JBUI.emptyInsets());
   }
 
   private static final Key<String> SEARCH_TEXT_KEY = Key.create("SpeedSearch.searchText");
@@ -494,6 +494,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
           String newText = oldText.substring(0, offs) + str + oldText.substring(offs);
           super.insertString(offs, str, a);
           handleInsert(newText);
+          updateSelection(findElement(newText));
         }
       });
 
