@@ -341,15 +341,11 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
   @Test
   public void testProjectLibraryCoordinatesAreSet() throws Exception {
-    importProject("""
-apply plugin: 'java'
-repositories {
-  mavenCentral()
-}
-dependencies {
-  implementation "junit:junit:4.0"
-}
-""");
+    importProject(createBuildScriptBuilder()
+                    .withJavaPlugin()
+                    .withMavenCentral()
+                    .addImplementationDependency("junit:junit:4.0")
+                    .generate());
 
     assertProjectLibraryCoordinates("Gradle: junit:junit:4.0",
                                     "junit", "junit", "4.0");
