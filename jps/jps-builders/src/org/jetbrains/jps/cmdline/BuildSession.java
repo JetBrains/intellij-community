@@ -155,10 +155,33 @@ final class BuildSession implements Runnable, CanceledStatus {
     final Ref<Boolean> hasErrors = new Ref<>(false);
     final Ref<Boolean> doneSomething = new Ref<>(false);
     try {
-      ProfilingHelper profilingHelper = null;
-      if (Utils.IS_PROFILING_MODE) {
-        profilingHelper = new ProfilingHelper();
-        profilingHelper.startProfiling();
+      ProfilingHelper profilingHelper;
+
+      try {
+        Utils.ProfilingMode profilingMode;
+        profilingMode = Utils.getProfilingMode();
+
+        switch (profilingMode) {
+          case NONE:
+            profilingHelper = null;
+            break;
+          case YOURKIT_SAMPLING:
+            profilingHelper = new ProfilingHelper();
+            profilingHelper.startSamplingProfiling();
+            break;
+          case YOURKIT_TRACING:
+            profilingHelper = new ProfilingHelper();
+            profilingHelper.startTracingProfiling();
+            break;
+          default:
+            throw new IllegalArgumentException("Unsupported profiling mode: " + profilingMode);
+        }
+      }
+      catch (Throwable t) {
+        LOG.warn("Unable to start build process profiling: " + t.getMessage(), t);
+        //noinspection CallToPrintStackTrace
+        t.printStackTrace();
+        profilingHelper = null;
       }
 
       myCacheLoadManager = null;

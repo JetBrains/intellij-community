@@ -127,6 +127,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
@@ -1261,7 +1262,7 @@ public final class BuildManager implements Disposable {
     }
     int listenPort = ensureListening(cmdLine.getListenAddress());
 
-    boolean isProfilingMode = false;
+    boolean profileWithYourKit = false;
     String userDefinedHeapSize = null;
     final List<String> userAdditionalOptionsList = new SmartList<>();
     final String userAdditionalVMOptions = config.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
@@ -1278,8 +1279,8 @@ public final class BuildManager implements Disposable {
         }
         else {
           //noinspection SpellCheckingInspection
-          if ("-Dprofiling.mode=true".equals(option)) {
-            isProfilingMode = true;
+          if (option.startsWith("-Dprofiling.mode=") && !option.equals("-Dprofiling.mode=false")) {
+            profileWithYourKit = true;
           }
           userAdditionalOptionsList.add(option);
         }
@@ -1348,7 +1349,6 @@ public final class BuildManager implements Disposable {
     if (Registry.is("compiler.build.report.statistics")) {
       cmdLine.addParameter("-D" + GlobalOptions.REPORT_BUILD_STATISTICS + "=true");
     }
-    //noinspection SpellCheckingInspection
     if (Registry.is("compiler.natural.int.multimap.impl")) {  // todo: temporary flag to evaluate experimental multi-map implementation
       //noinspection SpellCheckingInspection
       cmdLine.addParameter("-Djps.mappings.natural.int.multimap.impl=true");
@@ -1372,7 +1372,7 @@ public final class BuildManager implements Disposable {
       LOG.warn("Failed to create build working directory " + hostWorkingDirectory);
     }
 
-    if (isProfilingMode) {
+    if (profileWithYourKit) {
       try {
         YourKitProfilerService yourKitProfilerService = ApplicationManager.getApplication().getService(YourKitProfilerService.class);
         if (yourKitProfilerService == null) {
@@ -1504,7 +1504,21 @@ public final class BuildManager implements Disposable {
     cmdLine.addParameter(launcherClass.getName());
 
     final List<String> cp = myClasspathManager.getBuildProcessClasspath(project);
-    cmdLine.addClasspathParameter(cp, isProfilingMode ? Collections.singletonList("yjp-controller-api-redist.jar") : Collections.emptyList());
+    if (profileWithYourKit) {
+      String yjpControllerFileName = "yjp-controller-api-redist.jar";
+      Path yjpControllerPath = Path.of(cmdLine.getWorkingDirectory(), yjpControllerFileName);
+      LOG.debug("JPS process profiling with YourKit is enabled, " +
+                "adding '" + yjpControllerFileName + "' to classpath, " +
+                "full path '" + yjpControllerPath + "'");
+      if (!Files.exists(yjpControllerPath)) {
+        LOG.warn("JPS process profiling is enabled, but '" + yjpControllerPath + "' is missing");
+      }
+
+      cmdLine.addClasspathParameter(cp, Collections.singletonList(yjpControllerFileName));
+    }
+    else {
+      cmdLine.addClasspathParameter(cp, Collections.emptyList());
+    }
 
     for (BuildProcessParametersProvider buildProcessParametersProvider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
       for (String path : buildProcessParametersProvider.getAdditionalPluginPaths()) {
