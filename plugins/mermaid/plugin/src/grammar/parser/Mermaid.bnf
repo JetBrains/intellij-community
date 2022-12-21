@@ -29,16 +29,16 @@
 file ::= start
 private start ::= EOL start | directive start | diagram
 
-private diagram ::= pieHeader pieDocument
-	| JOURNEY journeyDocument
-	| flowchartHeader flowchartDocument
-	| SEQUENCE sequenceDocument
+private diagram ::= pieHeader [pieDocument]
+	| JOURNEY [journeyDocument]
+	| flowchartHeader [flowchartDocument]
+	| SEQUENCE [sequenceDocument]
 	| CLASS_DIAGRAM classDocument
-	| STATE_DIAGRAM stateDocument
-	| ENTITY_RELATIONSHIP erDocument
-	| GANTT ganttDocument
-	| REQUIREMENT_DIAGRAM requirementDocument
-	| GIT_GRAPH gitGraphDocument
+	| STATE_DIAGRAM [stateDocument]
+	| ENTITY_RELATIONSHIP [erDocument]
+	| GANTT [ganttDocument]
+	| REQUIREMENT_DIAGRAM [requirementDocument]
+	| GIT_GRAPH [gitGraphDocument]
 	| c4Header c4Document
 	| MINDMAP mindmapDocument
 
