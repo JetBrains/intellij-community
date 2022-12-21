@@ -85,6 +85,7 @@ fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
 private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend CoroutineScope.() -> T): T {
   val indicator = ProgressManager.getGlobalProgressIndicator()
   if (indicator != null) {
+    @Suppress("DEPRECATION")
     return indicatorRunBlockingCancellable(indicator, action)
   }
   return ensureCurrentJob(allowOrphan) { currentJob ->
@@ -111,6 +112,11 @@ fun <T> runBlockingMaybeCancellable(action: suspend CoroutineScope.() -> T): T {
   return runBlockingCancellable(allowOrphan = true, action)
 }
 
+@Deprecated(
+  "This method is public for compatibility. " +
+  "It is not supposed to be used outside of the platform. " +
+  "Use `runBlockingCancellable` instead."
+)
 @Internal
 fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
   return ensureCurrentJob(indicator) { currentJob ->
@@ -299,6 +305,7 @@ fun <T> jobToIndicator(job: Job, indicator: ProgressIndicator, action: () -> T):
   level = DeprecationLevel.ERROR,
 )
 fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
+  @Suppress("DEPRECATION")
   return indicatorRunBlockingCancellable(indicator, action)
 }
 
@@ -317,6 +324,7 @@ fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
   level = DeprecationLevel.ERROR,
 )
 fun <T> runSuspendingAction(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
+  @Suppress("DEPRECATION")
   return indicatorRunBlockingCancellable(indicator, action)
 }
 
