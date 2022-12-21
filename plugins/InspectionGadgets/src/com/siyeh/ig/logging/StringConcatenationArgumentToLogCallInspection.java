@@ -3,14 +3,14 @@ package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptDropdown;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -18,18 +18,19 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import one.util.streamex.EntryStream;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * @author Bas Leijdekkers
@@ -49,27 +50,20 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
   }
   @SuppressWarnings("PublicField") public int warnLevel = 0;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final ComboBox<String> comboBox = new ComboBox<>(new String[]{
+  public @NotNull OptPane getOptionsPane() {
+    @Nls String[] options = {
       InspectionGadgetsBundle.message("all.levels.option"),
       InspectionGadgetsBundle.message("warn.level.and.lower.option"),
       InspectionGadgetsBundle.message("info.level.and.lower.option"),
       InspectionGadgetsBundle.message("debug.level.and.lower.option"),
       InspectionGadgetsBundle.message("trace.level.option")
-    });
-    comboBox.setSelectedIndex(warnLevel);
-    comboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        warnLevel = comboBox.getSelectedIndex();
-      }
-    });
-    return new FormBuilder()
-      .addLabeledComponent(InspectionGadgetsBundle.message("warn.on.label"), comboBox)
-      .addVerticalGap(-1)
-      .getPanel();
+    };
+    return pane(
+      dropdown("warnLevel", InspectionGadgetsBundle.message("warn.on.label"),
+                       EntryStream.of(options).mapKeyValue((idx, name) -> option(String.valueOf(idx), name))
+                         .toArray(OptDropdown.Option.class))
+    );
   }
 
   @NotNull
