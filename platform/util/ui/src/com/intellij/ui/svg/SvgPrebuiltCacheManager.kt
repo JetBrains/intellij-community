@@ -37,7 +37,7 @@ class SvgPrebuiltCacheManager(private val dbDir: Path) {
     private fun getSynchronized(): Ikv.SizeUnawareIkv<Int> {
       var store = store
       if (store == null) {
-        store = Ikv.loadSizeUnawareIkv(dbDir.resolve("icons-v2-$scale$classifier.db"), intKeyHash)
+        store = Ikv.loadSizeUnawareIkv(dbDir.resolve("icons-v3-$scale$classifier.db"), intKeyHash)
         this.store = store
       }
       return store
@@ -56,9 +56,12 @@ class SvgPrebuiltCacheManager(private val dbDir: Path) {
       2.5f -> list.s2_5.getOrCreate()
       else -> return null
     }
+
     val data = store.getUnboundedValue(key) ?: return null
-    val storedKey = readVar(data)
-    if (storedKey != key) return null
+    val storedKey = data.getInt()
+    if (storedKey != key) {
+      return null
+    }
 
     val actualWidth: Int
     val actualHeight: Int

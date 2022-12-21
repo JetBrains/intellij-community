@@ -326,8 +326,9 @@ private fun addEntry(map: IkvWriter, image: BufferedImage, imageKey: Int, totalS
   assert(!image.colorModel.isAlphaPremultiplied)
 
   val data = (image.raster.dataBuffer as DataBufferInt).data
-  val buffer = bufferAllocator.allocate(5 * 3 + data.size * Int.SIZE_BYTES  + 1)
-  writeVar(buffer, imageKey)
+  val buffer = bufferAllocator.allocate(Int.SIZE_BYTES + 5 * 2 + data.size * Int.SIZE_BYTES  + 1)
+  // don't use a var int - image key it is a hash (often negative)
+  buffer.putInt(imageKey)
   if (w == h) {
     if (w < 254) {
       buffer.put(w.toByte())
@@ -400,7 +401,7 @@ private class StoreContainer(private val scale: Float, private val classifier: S
   private fun getSynchronized(): IkvWriter {
     var store = store
     if (store == null) {
-      val file = dbDir.resolve("icons-v2-$scale$classifier.db")
+      val file = dbDir.resolve("icons-v3-$scale$classifier.db")
       this.file = file
       store = sizeUnawareIkvWriter(file)
       this.store = store
