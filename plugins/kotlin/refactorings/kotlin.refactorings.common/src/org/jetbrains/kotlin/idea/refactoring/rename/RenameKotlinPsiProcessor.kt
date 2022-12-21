@@ -13,6 +13,7 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
@@ -185,7 +186,7 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
     ) {
         when (element) {
             is KtLightMethod -> {
-                val kotlinElement = element.unwrapped ?: return
+                val kotlinElement = element.kotlinOrigin ?: return
                 val defensiveCopy = kotlinElement.copy()
 
                 RenameUtil.doRenameGenericNamedElement(defensiveCopy, newName, usagesToRename, null)
@@ -202,6 +203,11 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
                 RenameLightElementsHelper.renameFacadeLightClass(element, newName)
 
                 listener?.elementRenamed(element)
+            }
+
+            is KtLightClass -> {
+                val kotlinElement = element.kotlinOrigin ?: return
+                RenameUtil.doRenameGenericNamedElement(kotlinElement, newName, usagesToRename, listener)
             }
 
             else -> {
