@@ -28,7 +28,6 @@ class GitBranchesTreeSingleRepoModel(
 
   private val branchesTreeCache = mutableMapOf<Any, List<Any>>()
 
-  private var branchTypeFilter: GitBranchType? = null
   private var branchNameMatcher: MinusculeMatcher? by observable(null) { _, _, matcher -> rebuild(matcher) }
 
   override var isPrefixGrouping: Boolean by equalVetoingObservable(branchManager.isGroupingEnabled(GROUPING_BY_DIRECTORY)) {
@@ -75,8 +74,7 @@ class GitBranchesTreeSingleRepoModel(
   }
 
   private fun getTopLevelNodes(): List<Any> {
-    return if (branchTypeFilter != null) topLevelActions + branchTypeFilter!!
-    else topLevelActions + GitBranchType.LOCAL + GitBranchType.REMOTE
+    return topLevelActions + GitBranchType.LOCAL + GitBranchType.REMOTE
   }
 
   private fun getBranchTreeNodes(branchType: GitBranchType, path: List<String>): List<Any> {
@@ -92,10 +90,9 @@ class GitBranchesTreeSingleRepoModel(
   override fun getPreferredSelection(): TreePath? = getPreferredBranch()?.let { createTreePathFor(this, it) }
 
   private fun getPreferredBranch(): GitBranch? =
-    getPreferredBranch(project, listOf(repository), branchNameMatcher, branchTypeFilter, localBranchesTree, remoteBranchesTree)
+    getPreferredBranch(project, listOf(repository), branchNameMatcher, localBranchesTree, remoteBranchesTree)
 
-  override fun filterBranches(type: GitBranchType?, matcher: MinusculeMatcher?) {
-    branchTypeFilter = type
+  override fun filterBranches(matcher: MinusculeMatcher?) {
     branchNameMatcher = matcher
   }
 

@@ -90,7 +90,7 @@ class GitBranchesTreeMultiRepoModel(
   override fun getPreferredSelection(): TreePath? = getPreferredBranch()?.let { createTreePathFor(this, it) }
 
   private fun getPreferredBranch(): GitBranch? =
-    getPreferredBranch(project, repositories, null, null, commonLocalBranchesTree, commonRemoteBranchesTree)
+    getPreferredBranch(project, repositories, null, commonLocalBranchesTree, commonRemoteBranchesTree)
 
   private fun haveFilteredBranches(): Boolean = !commonLocalBranchesTree.isEmpty() || !commonRemoteBranchesTree.isEmpty()
 }

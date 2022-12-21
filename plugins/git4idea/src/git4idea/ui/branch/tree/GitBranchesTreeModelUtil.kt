@@ -106,43 +106,38 @@ internal fun createTreePathFor(model: GitBranchesTreeModel, value: Any): TreePat
 internal fun getPreferredBranch(project: Project,
                                 repositories: List<GitRepository>,
                                 branchNameMatcher: MinusculeMatcher?,
-                                branchTypeFilter: GitBranchType?,
                                 localBranchesTree: LazyBranchesSubtreeHolder,
                                 remoteBranchesTree: LazyBranchesSubtreeHolder): GitBranch? {
   if (branchNameMatcher == null) {
-    if (branchTypeFilter != GitBranchType.REMOTE) {
-      if (repositories.size == 1) {
-        val repository = repositories.single()
-        val recentBranches = GitVcsSettings.getInstance(project).recentBranchesByRepository
-        val recentBranch = recentBranches[repository.root.path]?.let { recentBranchName ->
-          localBranchesTree.branches.find { it.name == recentBranchName }
-        }
-        if (recentBranch != null) {
-          return recentBranch
-        }
-
-        val currentBranch = repository.currentBranch
-        if (currentBranch != null) {
-          return currentBranch
-        }
-
-        return null
+    if (repositories.size == 1) {
+      val repository = repositories.single()
+      val recentBranches = GitVcsSettings.getInstance(project).recentBranchesByRepository
+      val recentBranch = recentBranches[repository.root.path]?.let { recentBranchName ->
+        localBranchesTree.branches.find { it.name == recentBranchName }
       }
-      else {
-        val branch = (GitVcsSettings.getInstance(project).recentCommonBranch ?: repositories.getCommonCurrentBranch())
-          ?.let { recentOrCommonBranchName ->
-            localBranchesTree.branches.find { it.name == recentOrCommonBranchName }
-          }
-        return branch
+      if (recentBranch != null) {
+        return recentBranch
       }
-    }
-    else {
+
+      val currentBranch = repository.currentBranch
+      if (currentBranch != null) {
+        return currentBranch
+      }
+
       return null
     }
+    else {
+      val branch = (GitVcsSettings.getInstance(project).recentCommonBranch ?: repositories.getCommonCurrentBranch())
+        ?.let { recentOrCommonBranchName ->
+          localBranchesTree.branches.find { it.name == recentOrCommonBranchName }
+        }
+      return branch
+    }
+
   }
 
-  val localMatch = if (branchTypeFilter != GitBranchType.REMOTE) localBranchesTree.topMatch else null
-  val remoteMatch = if (branchTypeFilter != GitBranchType.LOCAL) remoteBranchesTree.topMatch else null
+  val localMatch = localBranchesTree.topMatch
+  val remoteMatch = remoteBranchesTree.topMatch
 
   return localMatch ?: remoteMatch
 }

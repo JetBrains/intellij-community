@@ -24,7 +24,6 @@ import com.intellij.util.containers.FList
 import git4idea.GitBranch
 import git4idea.GitVcs
 import git4idea.actions.branch.GitBranchActionsUtil
-import git4idea.branch.GitBranchType
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions.EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP
 import git4idea.ui.branch.tree.*
@@ -97,30 +96,14 @@ class GitBranchesTreePopupStep(internal val project: Project,
     treeModel.isPrefixGrouping = state
   }
 
-  private val LOCAL_SEARCH_PREFIX = "/l"
-  private val REMOTE_SEARCH_PREFIX = "/r"
-
   fun setSearchPattern(pattern: String?) {
     if (pattern == null || pattern == "/") {
       treeModel.filterBranches()
       return
     }
 
-    var branchType: GitBranchType? = null
-    var processedPattern = pattern
-
-    if (pattern.startsWith(LOCAL_SEARCH_PREFIX)) {
-      branchType = GitBranchType.LOCAL
-      processedPattern = pattern.removePrefix(LOCAL_SEARCH_PREFIX).trimStart()
-    }
-
-    if (pattern.startsWith(REMOTE_SEARCH_PREFIX)) {
-      branchType = GitBranchType.REMOTE
-      processedPattern = pattern.removePrefix(REMOTE_SEARCH_PREFIX).trimStart()
-    }
-
-    val matcher = PreferStartMatchMatcherWrapper(NameUtil.buildMatcher("*$processedPattern").build())
-    treeModel.filterBranches(branchType, matcher)
+    val matcher = PreferStartMatchMatcherWrapper(NameUtil.buildMatcher("*$pattern").build())
+    treeModel.filterBranches(matcher)
   }
 
   fun updateTreeModelIfNeeded(tree: Tree, pattern: String?) {

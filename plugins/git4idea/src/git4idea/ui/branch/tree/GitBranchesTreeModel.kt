@@ -14,7 +14,7 @@ interface GitBranchesTreeModel : TreeModel {
 
   fun getPreferredSelection(): TreePath?
 
-  fun filterBranches(type: GitBranchType? = null, matcher: MinusculeMatcher? = null) {}
+  fun filterBranches(matcher: MinusculeMatcher? = null) {}
 
   object TreeRoot
   data class BranchesPrefixGroup(val type: GitBranchType, val prefix: List<String>, val repository: GitRepository? = null)

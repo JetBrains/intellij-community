@@ -33,7 +33,6 @@ class GitBranchesTreeMultiRepoFilteringModel(
 
   private val branchesTreeCache = mutableMapOf<Any, List<Any>>()
 
-  private var branchTypeFilter: GitBranchType? = null
   private var branchNameMatcher: MinusculeMatcher? by observable(null) { _, _, matcher -> rebuild(matcher) }
 
   override var isPrefixGrouping: Boolean by equalVetoingObservable(branchManager.isGroupingEnabled(GROUPING_BY_DIRECTORY)) {
@@ -88,16 +87,9 @@ class GitBranchesTreeMultiRepoFilteringModel(
       }
       is GitRepository -> {
         branchesTreeCache.getOrPut(parent) {
-          val typeFilter = branchTypeFilter
-          if (typeFilter != null) {
-            listOf(BranchTypeUnderRepository(parent, typeFilter))
-          }
-          else {
-            listOf(BranchTypeUnderRepository(parent, GitBranchType.LOCAL),
-                   BranchTypeUnderRepository(parent, GitBranchType.REMOTE))
-          }
+          listOf(BranchTypeUnderRepository(parent, GitBranchType.LOCAL),
+                 BranchTypeUnderRepository(parent, GitBranchType.REMOTE))
         }
-
       }
       else -> emptyList()
     }
@@ -106,8 +98,7 @@ class GitBranchesTreeMultiRepoFilteringModel(
   private fun getTopLevelNodes(): List<Any> {
     val repositoriesExpanded = listOf(branchesSubtreeSeparator) + repositories
 
-    return if (branchTypeFilter != null) topLevelActions + branchTypeFilter!! + repositoriesExpanded
-    else topLevelActions + GitBranchType.LOCAL + GitBranchType.REMOTE + repositoriesExpanded
+    return topLevelActions + GitBranchType.LOCAL + GitBranchType.REMOTE + repositoriesExpanded
   }
 
   private fun getBranchTreeNodes(branchType: GitBranchType, path: List<String>, repository: GitRepository? = null): List<Any> {
@@ -125,10 +116,9 @@ class GitBranchesTreeMultiRepoFilteringModel(
   override fun getPreferredSelection(): TreePath? = getPreferredBranch()?.let { createTreePathFor(this, it) }
 
   private fun getPreferredBranch(): GitBranch? =
-    getPreferredBranch(project, repositories, branchNameMatcher, branchTypeFilter, commonLocalBranchesTree, commonRemoteBranchesTree)
+    getPreferredBranch(project, repositories, branchNameMatcher, commonLocalBranchesTree, commonRemoteBranchesTree)
 
-  override fun filterBranches(type: GitBranchType?, matcher: MinusculeMatcher?) {
-    branchTypeFilter = type
+  override fun filterBranches(matcher: MinusculeMatcher?) {
     branchNameMatcher = matcher
   }
 
