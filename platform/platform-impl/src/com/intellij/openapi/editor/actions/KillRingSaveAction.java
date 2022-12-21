@@ -77,5 +77,10 @@ public class KillRingSaveAction extends TextComponentEditorAction {
         }
       }
     }
+
+    @Override
+    protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+      return !myRemove || editor.getDocument().isWritable();
+    }
   }
 }
