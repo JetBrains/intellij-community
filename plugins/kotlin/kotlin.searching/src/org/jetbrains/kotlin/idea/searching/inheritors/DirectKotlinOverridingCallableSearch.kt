@@ -63,12 +63,12 @@ class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiEleme
         val klass = ktCallableDeclaration.containingClassOrObject
         if (klass !is KtClass) return null
 
-        val superDeclarationPointer = ktCallableDeclaration.createSmartPointer()
+        val superDeclarationPointer = runReadAction { ktCallableDeclaration.createSmartPointer() }
 
         return CollectionQuery(
             klass.findAllInheritors(parameters.searchScope).mapNotNull { it.unwrapped as? KtClassOrObject }.toList()
         ).flatMapping { ktClassOrObject ->
-            val ktClassOrObjectPointer = ktClassOrObject.createSmartPointer()
+            val ktClassOrObjectPointer = runReadAction { ktClassOrObject.createSmartPointer() }
             object : AbstractQuery<PsiElement>() {
                 override fun processResults(consumer: Processor<in PsiElement>): Boolean = runReadAction {
                     val classOrObject = ktClassOrObjectPointer.element ?: return@runReadAction true
