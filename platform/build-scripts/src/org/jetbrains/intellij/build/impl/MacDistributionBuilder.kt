@@ -28,7 +28,9 @@ import java.nio.file.attribute.PosixFilePermission
 import java.time.LocalDate
 import java.util.function.BiConsumer
 import java.util.zip.Deflater
+import kotlin.io.path.exists
 import kotlin.io.path.extension
+import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 
 class MacDistributionBuilder(override val context: BuildContext,
@@ -491,12 +493,25 @@ private suspend fun MacDistributionBuilder.buildMacZip(targetFile: Path,
             zipOutStream.entry("$zipRoot/Resources/product-info.json", productJson.encodeToByteArray())
 
             val fileFilter: (Path, String) -> Boolean = { sourceFile, relativePath ->
-              if (relativePath.endsWith(".txt") && !relativePath.contains('/')) {
-                zipOutStream.entry("$zipRoot/Resources/${relativePath}", sourceFile)
-                false
-              }
-              else {
-                true
+              val contentsDir = !relativePath.contains('/')
+              when {
+                contentsDir && relativePath.endsWith(".txt") -> {
+                  zipOutStream.entry("$zipRoot/Resources/$relativePath", sourceFile)
+                  false
+                }
+                contentsDir && sourceFile.name != "Info.plist" -> {
+                  error("Only Info.plist file is allowed in $zipRoot directory but found $zipRoot/$relativePath")
+                }
+                !contentsDir && relativePath.startsWith("bin/") && sourceFile.extension == "jnilib" -> {
+                  val dylib = sourceFile.nameWithoutExtension + ".dylib"
+                  check(sourceFile.resolveSibling(dylib).exists()) {
+                    "$dylib->${sourceFile.name} symlink is expected in $zipRoot/bin"
+                  }
+                  true
+                }
+                else -> {
+                  true
+                }
               }
             }
             for (dir in directories) {

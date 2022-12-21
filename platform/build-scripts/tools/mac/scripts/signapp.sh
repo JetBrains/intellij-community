@@ -63,32 +63,6 @@ log "$SIT_FILE unzipped and removed"
 
 APPLICATION_PATH="$EXPLODED/$BUILD_NAME"
 
-find "$APPLICATION_PATH/Contents/bin" \
-  -maxdepth 1 -type f -name '*.jnilib' -print0 |
-  while IFS= read -r -d $'\0' file; do
-    if [ -f "$file" ]; then
-      log "Linking $file"
-      b="$(basename "$file" .jnilib)"
-      ln -sf "$b.jnilib" "$(dirname "$file")/$b.dylib"
-    fi
-  done
-
-find "$APPLICATION_PATH/Contents/" \
-  -maxdepth 1 -type f -name '*.txt' -print0 |
-  while IFS= read -r -d $'\0' file; do
-    if [ -f "$file" ]; then
-      log "Moving $file"
-      mv "$file" "$APPLICATION_PATH/Contents/Resources"
-    fi
-  done
-
-non_plist=$(find "$APPLICATION_PATH/Contents/" -maxdepth 1 -type f -and -not -name 'Info.plist' | wc -l)
-if [[ $non_plist -gt 0 ]]; then
-  log "Only Info.plist file is allowed in Contents directory but found $non_plist file(s):"
-  log "$(find "$APPLICATION_PATH/Contents/" -maxdepth 1 -type f -and -not -name 'Info.plist')"
-  exit 1
-fi
-
 function notarize() {
   set +x
   if [[ -f "$HOME/.notarize_token" ]]; then
