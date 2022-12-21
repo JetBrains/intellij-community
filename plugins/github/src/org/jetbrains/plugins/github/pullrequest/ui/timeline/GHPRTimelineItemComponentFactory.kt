@@ -362,7 +362,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val actor = firstComment.author ?: ghostUser
     val titlePanel = createTitlePane(actor, firstComment.dateCreated, tagsPanel)
     val mainItem = buildTimelineItem(avatarIconsProvider, actor, content) {
-      header = titlePanel to actionsPanel
+      withHeader(titlePanel, actionsPanel)
       maxContentWidth = null
     }
 

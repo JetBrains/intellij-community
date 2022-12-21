@@ -64,7 +64,7 @@ internal object GHPRTimelineItemUIUtil {
                          content: JComponent,
                          actionsPanel: JComponent? = null): JComponent =
     buildTimelineItem(avatarIconsProvider, actor, content) {
-      header = createTitleTextPane(actor, date) to actionsPanel
+      withHeader(createTitleTextPane(actor, date), actionsPanel)
       iconTooltip = actor.getPresentableName()
     }
 

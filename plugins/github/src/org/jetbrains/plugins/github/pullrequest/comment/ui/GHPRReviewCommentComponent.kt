@@ -94,7 +94,7 @@ object GHPRReviewCommentComponent {
                                           { avatarIconsProvider.getIcon(author.avatarUrl, it) },
                                           editablePaneHandle.panel) {
       iconTooltip = author.getPresentableName()
-      header = title to actionsPanel
+      withHeader(title, actionsPanel)
       this.maxContentWidth = maxContentWidth - type.fullLeftShift
     }
   }

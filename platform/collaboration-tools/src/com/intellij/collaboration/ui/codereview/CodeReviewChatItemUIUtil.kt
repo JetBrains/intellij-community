@@ -124,8 +124,16 @@ object CodeReviewChatItemUIUtil {
 
     /**
      * Header components - title and actions
+     * Actions component will only be visible on item hover
      */
-    var header: Pair<JComponent, JComponent?>? = null
+    var header: HeaderComponents? = null
+
+    /**
+     * Helper fun to setup [HeaderComponents]
+     */
+    fun withHeader(title: JComponent, actions: JComponent? = null) = apply {
+      header = HeaderComponents(title, actions)
+    }
 
     fun build(): JComponent =
       content.wrapIfNotNull(maxContentWidth) { comp, maxWidth ->
@@ -140,7 +148,7 @@ object CodeReviewChatItemUIUtil {
         val iconPanel = simplePanel().addToTop(iconLabel).andTransparent()
         simplePanel(it).addToLeft(iconPanel).andTransparent()
       }.also {
-        actionsVisibleOnHover(it, header?.second)
+        actionsVisibleOnHover(it, header?.actions)
       }.apply {
         border = JBUI.Borders.empty(type.paddingInsets)
       }.let { withHoverHighlight(it) }
@@ -149,6 +157,8 @@ object CodeReviewChatItemUIUtil {
       if (value != null) block(it, value) else it
     }
   }
+
+  data class HeaderComponents(val title: JComponent, val actions: JComponent?)
 
   // TODO: custom layouts
   object ComponentFactory {
