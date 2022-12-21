@@ -8,7 +8,7 @@ import org.intellij.lang.annotations.MagicConstant
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.fail
 
-internal object ProjectFileIndexScopes {
+object ProjectFileIndexScopes {
   const val NOT_IN_PROJECT = 0
   const val IN_CONTENT = 1 shl 0 
   const val IN_LIBRARY = 1 shl 1
