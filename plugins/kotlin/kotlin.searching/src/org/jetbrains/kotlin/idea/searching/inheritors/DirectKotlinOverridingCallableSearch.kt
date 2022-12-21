@@ -12,7 +12,6 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -22,6 +21,7 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 object DirectKotlinOverridingCallableSearch {
 
@@ -55,45 +55,41 @@ object DirectKotlinOverridingCallableSearch {
 class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiElement> {
     @RequiresReadLock
     override fun collectSearchRequest(parameters: SearchParameters): Query<out PsiElement>? {
-        val ktCallableDeclaration = runReadAction { parameters.ktCallableDeclaration.originalElement } as? KtCallableDeclaration ?: return null
+        val ktCallableDeclaration = runReadAction {
+            parameters.ktCallableDeclaration.originalElement
+        } as? KtCallableDeclaration ?: return null
+
+        val ktCallableDeclarationName = ktCallableDeclaration.nameAsName ?: return null
         val klass = ktCallableDeclaration.containingClassOrObject
         if (klass !is KtClass) return null
 
-        val superFunction = runReadAction {
-            analyze(ktCallableDeclaration) {
-                val symbol = ktCallableDeclaration.getSymbol()
-                val adjustedSymbol = if (symbol is KtValueParameterSymbol) {
-                    symbol.generatedPrimaryConstructorProperty
-                } else {
-                    symbol
-                }
-                adjustedSymbol?.createPointer()
-            }
-        }
+        val superDeclarationPointer = ktCallableDeclaration.createSmartPointer()
 
-        return CollectionQuery(klass.findAllInheritors(parameters.searchScope).mapNotNull { it.unwrapped as? KtClassOrObject }.toList())
-            .flatMapping { ktClassOrObject ->
-                object : AbstractQuery<PsiElement>() {
-                    override fun processResults(consumer: Processor<in PsiElement>): Boolean {
-                        return runReadAction {
-                            analyze(ktClassOrObject) {
-                                (ktClassOrObject.getSymbol() as KtSymbolWithMembers).getDeclaredMemberScope()
-                                    .getCallableSymbols { it == ktCallableDeclaration.nameAsName }
-                                    .forEach { overridingSymbol ->
-                                        val function = overridingSymbol.psi
-                                        if (function != null &&
-                                            overridingSymbol.getDirectlyOverriddenSymbols().any { it.psi == superFunction?.restoreSymbol()?.psi } &&
-                                            !consumer.process(function)
-                                        ) {
-                                            return@runReadAction false
-                                        }
-                                    }
-                                return@runReadAction true
+        return CollectionQuery(
+            klass.findAllInheritors(parameters.searchScope).mapNotNull { it.unwrapped as? KtClassOrObject }.toList()
+        ).flatMapping { ktClassOrObject ->
+            val ktClassOrObjectPointer = ktClassOrObject.createSmartPointer()
+            object : AbstractQuery<PsiElement>() {
+                override fun processResults(consumer: Processor<in PsiElement>): Boolean = runReadAction {
+                    val classOrObject = ktClassOrObjectPointer.element ?: return@runReadAction true
+
+                    analyze(classOrObject) {
+                        val superFunction = superDeclarationPointer.element ?: return@runReadAction false
+
+                        (classOrObject.getSymbol() as KtSymbolWithMembers).getDeclaredMemberScope()
+                            .getCallableSymbols { it == ktCallableDeclarationName }
+                            .all { overridingSymbol ->
+                                val function = overridingSymbol.psi
+                                if (function != null && overridingSymbol.getDirectlyOverriddenSymbols().any { it.psi == superFunction }) {
+                                    consumer.process(function)
+                                } else {
+                                    true
+                                }
                             }
-                        }
                     }
                 }
             }
+        }
     }
 }
 
@@ -115,19 +111,19 @@ internal class DirectKotlinOverridingMethodDelegatedSearcher : Searcher<SearchPa
         val baseFunction = parameters.ktCallableDeclaration
         val methods = baseFunction.toLightMethods()
 
-        val queries = methods.map { lightMethod ->
+        return methods.map<PsiMethod, Query<PsiElement>> { lightMethod ->
             EVERYTHING_BUT_KOTLIN.createQuery(JavaOverridingMethodsSearcherFromKotlinParameters(lightMethod, parameters.searchScope, true))
-                .flatMapping { psiMethod ->
+                .flatMapping<PsiElement?> { psiMethod ->
                     object : AbstractQuery<PsiElement>() {
-                        override fun processResults(consumer: Processor<in PsiElement>): Boolean {
-                            return runReadAction {
-                                psiMethod.hierarchicalMethodSignature.superSignatures.any { hs -> hs.method.isEquivalentTo(lightMethod) } && consumer.process(psiMethod)
+                        override fun processResults(consumer: Processor<in PsiElement>): Boolean = runReadAction {
+                            if (psiMethod.hierarchicalMethodSignature.superSignatures.any { hs -> hs.method.isEquivalentTo(lightMethod) }) {
+                                consumer.process(psiMethod)
+                            } else {
+                                true
                             }
                         }
                     }
                 }
         }
-
-        return queries
     }
 }
