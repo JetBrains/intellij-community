@@ -41,38 +41,60 @@ suspend fun checkCanceled() {
  *
  * This is a bridge for invoking suspending code from blocking code.
  *
- * Example: running a coroutine under indicator.
- * ```
- * ProgressManager.getInstance().runProcess({
- *   runBlockingCancellable {
- *     someSuspendingFunctionWhichDoesntKnowAboutIndicator()
- *   }
- * }, progress);
- * ```
+ * ### IMPORTANT
  *
- * Example 2: running a coroutine under current job.
- * ```
- * launch { // given a coroutine
- *   blockingContext { // installs the current job
- *     runBlockingCancellable { // becomes a child of the current job
- *       someSuspendingFunction()
- *     }
- *   }
- * }
- * ```
+ * Coroutines use [currentCoroutineContext] to handle cancellation or to pass [ModalityState] around.
+ * [ProgressManager.checkCanceled], [ModalityState.defaultModalityState]
+ * (and [Application.invokeAndWait][com.intellij.openapi.application.Application.invokeAndWait] by extension),
+ * and many other platform methods **DO NOT work in a coroutine**.
+ * - Instead of [ProgressManager.checkCanceled] use [ensureActive] in a coroutine.
+ * - [ModalityState] is not expected to be used explicitly. Instead of `invokeAndWait` or `invokeLater` use
+ *   `withContext(`[Dispatchers.EDT][com.intellij.openapi.application.EDT]`) {}` in a coroutine.
+ *   If actually needed (twink twice), use [contextModality] to obtain the context [ModalityState].
+ * - To invoke older code, which cannot be modified but relies on [ProgressManager.checkCanceled] or
+ *   [Application.invokeAndWait][com.intellij.openapi.application.Application.invokeAndWait],
+ *   use [blockingContext] to switch from a coroutine to the blocking context.
  *
- * If this function is invoked without a current job or indicator, then it may block just as a regular [runBlocking].
+ * ### Non-cancellable `runBlocking`
+ *
+ * If this function is invoked in a thread without a current job or indicator, then it may block just as a regular [runBlocking].
  * To prevent such usage an exception is logged.
- * Normally, it should not occur in client code, as it's expected to happen only in the newer code which
- * was introduced in a brief moment of time between the initial version (v0) and the current version (v1) of this function.
- * To potentially block, the clients now have to migrate to [runBlockingMaybeCancellable]
- * which repeats exact semantics of v0 w.r.t to cancellation.
+ *
+ * What to do with that exception? Options:
+ * - Make sure this method is called under a context job.
+ *   If it's run from a coroutine somewhere deeper in the trace, use [blockingContext] in the latest possible frame.
+ * - Make sure this method is called under an indicator by installing one as a thread indicator via [ProgressManager.runProcess].
+ * - Fall back to [runBlockingMaybeCancellable]. **It may freeze because nobody can cancel it from outside**.
  *
  * ### Progress reporting
  *
  * - If invoked under indicator, installs [RawProgressReporter], which methods delegate to the indicator, into the [action] context.
  * - If the thread context contains [ProgressReporter], installs it into the [action] context as is.
  * - If the thread context contains [RawProgressReporter], installs it into the [action] context as is.
+ *
+ * ### Examples
+ *
+ * #### Running a coroutine inside a code which is run under indicator
+ * ```
+ * ProgressManager.getInstance().runProcess({
+ *   ... // deeper in the trace
+ *     runBlockingCancellable {
+ *       someSuspendingFunction()
+ *     }
+ * }, progress);
+ * ```
+ *
+ * #### Running a coroutine inside a code which is run under job
+ * ```
+ * launch { // given a coroutine
+ *   readAction { // suspending read action installs job to the thread context
+ *     ... // deeper in the trace
+ *       runBlockingCancellable { // becomes a child of the thread context job
+ *         someSuspendingFunction()
+ *       }
+ *   }
+ * }
+ * ```
  *
  * @throws ProcessCanceledException if [current indicator][ProgressManager.getGlobalProgressIndicator] is cancelled
  * @throws CancellationException if [current job][Cancellation.currentJob] is cancelled
