@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 use std::collections::HashMap;
-use std::fs;
+use std::{env, fs};
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
@@ -321,7 +321,7 @@ impl RemoteDevLaunchConfiguration {
             // ("jdk.lang.Process.launchMechanism", "vfork"),
         ];
 
-        match std::env::var("REMOTE_DEV_JDK_DETECTION") {
+        match env::var("REMOTE_DEV_JDK_DETECTION") {
             Ok(remote_dev_jdk_detection_value) => {
                 match remote_dev_jdk_detection_value.as_str() {
                     "1" | "true" => {
@@ -391,26 +391,50 @@ impl RemoteDevLaunchConfiguration {
     }
 
     fn init_project_trust_file_if_needed(&self) -> Result<PathBuf> {
-        let ij_starter_command = &self.ij_starter_command;
+        let ij_started_command = (&self.ij_starter_command).as_str();
+        match ij_started_command {
+            "cwmHost" | "cwmHostNoLobby" => {
+                debug!("Running with '{ij_started_command}' command, considering making project trust checks")
+            }
+            _ => { }
+        };
+
         let ij_host_config_dir = &self.config_dir;
         let trust_file_path = ij_host_config_dir.join("accepted-trust-warning");
 
-        if ij_starter_command != "cwmHostNoLobby" {
+        if trust_file_path.exists() {
+            debug!("{trust_file_path:?} exists, considering project trusted");
             return Ok(trust_file_path)
         }
 
-        if !trust_file_path.exists() &&
-            std::env::var("REMOTE_DEV_TRUST_PROJECTS").is_err() &&
-            std::env::var("REMOTE_DEV_NON_INTERACTIVE").is_err() {
+        let vars = [
+            "REMOTE_DEV_TRUST_PROJECTS",
+            "REMOTE_DEV_NON_INTERACTIVE"
+        ];
 
-            create_trust_file(&trust_file_path)
-                .context("Failed to create a trust file")?;
+        for key in vars {
+            match env::var(key) {
+                Ok(_) => {
+                    debug!("{key:?} env var is set, considering project trusted");
+                    return Ok(trust_file_path)
+                }
+                Err(_) => {
+                    debug!("{key:?} env var is not set")
+                }
+            };
         }
+
+        create_trust_file(&trust_file_path)
+            .context("Failed to create a trust file")?;
 
         Ok(trust_file_path)
     }
 
     fn set_ij_stored_host_password_if_needed(&self) -> Result<()> {
+        if &self.ij_starter_command != "cwmHost" {
+            return Ok(())
+        }
+
         let ij_host_config_dir = &self.config_dir;
         let ij_stored_host_passwd = ij_host_config_dir.join("cwm-passwd");
 
@@ -419,9 +443,9 @@ impl RemoteDevLaunchConfiguration {
             return Ok(());
         }
 
-        if std::env::var("CWM_NO_PASSWORD").is_ok()
-            && std::env::var("CWM_HOST_PASSWORD").is_ok()
-            && std::env::var("REMOTE_DEV_NON_INTERACTIVE").is_ok() {
+        if env::var("CWM_NO_PASSWORD").is_ok()
+            && env::var("CWM_HOST_PASSWORD").is_ok()
+            && env::var("REMOTE_DEV_NON_INTERACTIVE").is_ok() {
 
             info!("No password required. As CWM_NO_PASSWORD, CWM_HOST_PASSWORD and REMOTE_DEV_NON_INTERACTIVE are set");
             return Ok(());
@@ -436,7 +460,7 @@ impl RemoteDevLaunchConfiguration {
         );
 
         let password = rpassword::read_password()?;
-        std::env::set_var("CWM_HOST_PASSWORD", &password);
+        env::set_var("CWM_HOST_PASSWORD", &password);
 
         info!("Delete {:?} and re-run host if you want to change provided password.", ij_stored_host_passwd);
 
@@ -466,7 +490,7 @@ pub struct RemoteDevArgs {
 }
 
 fn print_help() {
-    todo!("")
+    println!("TODO: help")
 }
 
 fn init_env_vars() -> Result<()> {
@@ -479,17 +503,17 @@ fn init_env_vars() -> Result<()> {
     ];
 
     for (key, value) in remote_dev_env_var_values {
-        match std::env::var(key) {
+        match env::var(key) {
             Ok(old_value) => {
                 let backup_key = format!("INTELLIJ_ORIGINAL_ENV_{key}");
                 debug!("'{key}' has already been assigned the value {old_value}, overriding to {value}. \
                         Old value will be preserved for child processes.");
-                std::env::set_var(backup_key, old_value)
+                env::set_var(backup_key, old_value)
             }
             Err(_) => { }
         }
 
-        std::env::set_var(key, value)
+        env::set_var(key, value)
     }
 
     return Ok(())
