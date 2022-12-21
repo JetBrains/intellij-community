@@ -494,5 +494,14 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     @Override
     public void removeTerminationCallback(@NotNull Runnable onTerminated) {
     }
+
+    @Override
+    public void addNotification(@NotNull JComponent notificationComponent, @NotNull Disposable disposable) {
+      widget().add(notificationComponent, BorderLayout.NORTH);
+      Disposer.register(disposable, () -> {
+        widget().remove(notificationComponent);
+        widget().revalidate();
+      });
+    }
   }
 }

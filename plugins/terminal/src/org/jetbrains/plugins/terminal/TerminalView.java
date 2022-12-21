@@ -109,9 +109,9 @@ public final class TerminalView implements Disposable {
       .collect(Collectors.toSet());
   }
 
-  private final List<Consumer<JBTerminalWidget>> myTerminalSetupHandlers = new CopyOnWriteArrayList<>();
+  private final List<Consumer<TerminalWidget>> myTerminalSetupHandlers = new CopyOnWriteArrayList<>();
 
-  public void addNewTerminalSetupHandler(@NotNull Consumer<JBTerminalWidget> listener, @NotNull Disposable parentDisposable) {
+  public void addNewTerminalSetupHandler(@NotNull Consumer<TerminalWidget> listener, @NotNull Disposable parentDisposable) {
     myTerminalSetupHandlers.add(listener);
     if (!Disposer.tryRegister(parentDisposable, () -> { myTerminalSetupHandlers.remove(listener); })) {
       myTerminalSetupHandlers.remove(listener);
@@ -299,7 +299,8 @@ public final class TerminalView implements Disposable {
     panel.setContent(container.getWrapperPanel());
     panel.addFocusListener(createFocusListener(toolWindow));
 
-    myTerminalSetupHandlers.forEach(consumer -> consumer.accept(terminalWidget));
+    TerminalWidget finalWidget = widget;
+    myTerminalSetupHandlers.forEach(consumer -> consumer.accept(finalWidget));
     panel.updateDFState();
 
     updatePreferredFocusableComponent(content, widget);
@@ -484,8 +485,16 @@ public final class TerminalView implements Disposable {
     return any;
   }
 
+  /**
+   * @deprecated use {@link #getContainer(TerminalWidget)} instead
+   */
+  @Deprecated(forRemoval = true)
   public @NotNull TerminalContainer getContainer(@NotNull JBTerminalWidget terminalWidget) {
-    return Objects.requireNonNull(myContainerByWidgetMap.get(terminalWidget.asNewWidget()));
+    return Objects.requireNonNull(getContainer(terminalWidget.asNewWidget()));
+  }
+
+  public @Nullable TerminalContainer getContainer(@NotNull TerminalWidget terminalWidget) {
+    return myContainerByWidgetMap.get(terminalWidget);
   }
 
   public void closeTab(@NotNull Content content) {
