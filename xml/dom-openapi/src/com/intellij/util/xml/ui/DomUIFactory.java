@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -24,9 +24,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 public abstract class DomUIFactory {
-
-  public final static ExtensionPointName<Consumer<DomUIFactory>> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.dom.uiControlsProvider");
-
+  public static final ExtensionPointName<Consumer<DomUIFactory>> EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.dom.uiControlsProvider");
   public static final Method GET_VALUE_METHOD = ReflectionUtil.getMethod(GenericDomValue.class, "getValue");
   public static final Method SET_VALUE_METHOD = findMethod(GenericDomValue.class, "setValue");
   public static Method GET_STRING_METHOD = ReflectionUtil.getMethod(GenericDomValue.class, "getStringValue");
@@ -37,8 +35,7 @@ public abstract class DomUIFactory {
     return createControl(element, false);
   }
 
-  @NotNull
-  public static DomUIControl<GenericDomValue> createControl(GenericDomValue element, boolean commitOnEveryChange) {
+  public static @NotNull DomUIControl<GenericDomValue> createControl(GenericDomValue element, boolean commitOnEveryChange) {
     return createGenericValueControl(DomUtil.getGenericValueParameter(element.getDomElementType()), element, commitOnEveryChange);
   }
 
@@ -51,8 +48,7 @@ public abstract class DomUIFactory {
       new DomCollectionWrapper<>(parent, parent.getGenericInfo().getCollectionChildDescription("description")), commitOnEveryChange);
   }
 
-  @NotNull
-  private static BaseControl createGenericValueControl(final Type type, final GenericDomValue<?> element, boolean commitOnEveryChange) {
+  private static @NotNull BaseControl createGenericValueControl(final Type type, final GenericDomValue<?> element, boolean commitOnEveryChange) {
     final DomStringWrapper stringWrapper = new DomStringWrapper(element);
     final Class rawType = ReflectionUtil.getRawType(type);
     if (type instanceof Class && Enum.class.isAssignableFrom(rawType)) {
@@ -81,8 +77,7 @@ public abstract class DomUIFactory {
     return getDomUIFactory().createTextControl(stringWrapper, commitOnEveryChange);
   }
 
-  @Nullable
-  public static Method findMethod(Class clazz, @NonNls String methodName) {
+  public static @Nullable Method findMethod(Class clazz, @NonNls String methodName) {
     for (Method method : ReflectionUtil.getClassPublicMethods(clazz)) {
       if (methodName.equals(method.getName())) {
         return method;
@@ -103,15 +98,10 @@ public abstract class DomUIFactory {
 
   public abstract void registerCustomCellEditor(@NotNull Class aClass, Function<DomElement, TableCellEditor> creator);
 
-  @Nullable
-  public abstract BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange);
+  public abstract @Nullable BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange);
 
   public static BaseControl createTextControl(GenericDomValue value, final boolean commitOnEveryChange) {
     return getDomUIFactory().createTextControl(new DomStringWrapper(value), commitOnEveryChange);
-  }
-
-  public static BaseControl createTextControl(DomWrapper<String> wrapper) {
-    return getDomUIFactory().createTextControl(wrapper, false);
   }
 
   public static DomUIFactory getDomUIFactory() {

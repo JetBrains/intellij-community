@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.diagnostic.UntraceableException;
@@ -113,13 +113,12 @@ public final class ThrowableInterner {
       }
     }
     catch (Throwable e) {
-      //noinspection ConstantConditions
-      ExceptionUtil.rethrowAllAsUnchecked(e);
+      ExceptionUtilRt.rethrowUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
-  @NotNull
-  public static Throwable intern(@NotNull Throwable throwable) {
+  public static @NotNull Throwable intern(@NotNull Throwable throwable) {
     return getBacktrace(throwable) == null ? throwable : myTraceInterner.intern(throwable);
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.dnd.SmoothAutoScroller;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -30,8 +31,6 @@ import java.awt.event.*;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Map;
-
-import static com.intellij.ide.dnd.SmoothAutoScroller.installDropTargetAsNecessary;
 
 public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Queryable,
                                            ComponentWithFileColors, TreePathBackgroundSupplier {
@@ -921,7 +920,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public void setTransferHandler(TransferHandler handler) {
-    installDropTargetAsNecessary(this);
+    SmoothAutoScroller.installDropTargetAsNecessary(this);
     super.setTransferHandler(handler);
   }
 }

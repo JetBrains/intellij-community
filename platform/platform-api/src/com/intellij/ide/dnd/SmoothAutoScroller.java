@@ -20,7 +20,7 @@ import static com.intellij.util.ui.TimerUtil.createNamedTimer;
 
 /**
  * This class provides the application-wide scroller for drag targets.
- * Note, that the target component must not use default auto-scrolling.
+ * Note that the target component must not use default auto-scrolling.
  *
  * @see Autoscroll
  * @see JComponent#setAutoscrolls
@@ -156,13 +156,18 @@ public final class SmoothAutoScroller {
 
     private boolean validate(DropTargetDragEvent event) {
       JComponent component = getComponent(event);
-      if (component == null) return false;
+      if (component == null) {
+        return false;
+      }
 
       Point location = new Point(this.screen);
       SwingUtilities.convertPointFromScreen(location, component);
 
       Rectangle bounds = component.getVisibleRect();
-      if (!bounds.contains(location.x, location.y)) return false; // mouse out of component
+      // mouse out of a component
+      if (!bounds.contains(location.x, location.y)) {
+        return false;
+      }
 
       int margin = (int)(5 * sysScale(component));
       int deltaX = getDelta(3, margin, location.x, bounds.x, bounds.x + bounds.width);
@@ -223,7 +228,7 @@ public final class SmoothAutoScroller {
     if (component == null) return null; // heavyweight components are not supported
     if (component instanceof Autoscroll) return null; // Swing DnD is used
     if (component.getAutoscrolls()) return null; // default scroller is used
-    if (!component.isShowing()) return null; // component is not visible on screen
+    if (!component.isShowing()) return null; // the component is not visible on screen
     return ClientProperty.isTrue(component, ENABLED) ? component : null;
   }
 

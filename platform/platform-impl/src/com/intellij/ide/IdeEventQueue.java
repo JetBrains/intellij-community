@@ -308,10 +308,6 @@ public final class IdeEventQueue extends EventQueue {
     _addProcessor(dispatcher, parent, myPreProcessors);
   }
 
-  public void removePreprocessor(@NotNull EventDispatcher dispatcher) {
-    myPreProcessors.remove(dispatcher);
-  }
-
   private static void _addProcessor(@NotNull EventDispatcher dispatcher,
                                     @Nullable Disposable parent,
                                     @NotNull Collection<? super EventDispatcher> set) {

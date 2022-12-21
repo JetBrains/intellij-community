@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.ClearableLazyValue;
@@ -18,16 +18,14 @@ public final class CachedSingletonsRegistry {
 
   private CachedSingletonsRegistry() {}
 
-  @Nullable
-  public static <T> T markCachedField(@NotNull Class<T> klass) {
+  public static @Nullable <T> T markCachedField(@NotNull Class<T> klass) {
     synchronized (LOCK) {
       ourRegisteredClasses.add(klass);
     }
     return null;
   }
 
-  @NotNull
-  public static <T> ClearableLazyValue<T> markLazyValue(@NotNull ClearableLazyValue<T> lazyValue) {
+  public static @NotNull <T> ClearableLazyValue<T> markLazyValue(@NotNull ClearableLazyValue<T> lazyValue) {
     synchronized (LOCK) {
       ourRegisteredLazyValues.add(lazyValue);
     }
@@ -41,7 +39,8 @@ public final class CachedSingletonsRegistry {
           cleanupClass(aClass);
         }
         catch (Exception e) {
-          // Ignore cleanup failed. In some cases we cannot find ourInstance field if idea.jar is scrambled and names of the private fields changed
+          // Ignore cleanup failed.
+          // In some cases, we cannot find ourInstance field if idea.jar is scrambled and the names of the private fields changed
         }
       }
       for (ClearableLazyValue<?> value : ourRegisteredLazyValues) {
