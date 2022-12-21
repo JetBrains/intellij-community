@@ -59,13 +59,13 @@ public class FormatOnSaveAction extends ActionsOnSaveFileDocumentManagerListener
       return;
     }
 
-    procesFiles(project, allFiles, filesToFormat, filesToOptimizeImports);
+    processFiles(project, allFiles, filesToFormat, filesToOptimizeImports);
   }
 
-  private void procesFiles(@NotNull Project project,
-                           @NotNull List<PsiFile> allFiles,
-                           @NotNull List<PsiFile> filesToFormat,
-                           @NotNull List<PsiFile> filesToOptimizeImports) {
+  private void processFiles(@NotNull Project project,
+                            @NotNull List<PsiFile> allFiles,
+                            @NotNull List<PsiFile> filesToFormat,
+                            @NotNull List<PsiFile> filesToOptimizeImports) {
     boolean onlyChangedLines = VcsFacade.getInstance().hasActiveVcss(project) &&
                                FormatOnSaveOptions.getInstance(project).isFormatOnlyChangedLines();
 
