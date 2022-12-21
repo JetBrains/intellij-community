@@ -1590,7 +1590,7 @@ public final class BuildManager implements Disposable {
         notification.addAction(new DumbAwareAction(JavaCompilerBundle.message("action.show.snapshot.location.text")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            RevealFileAction.openDirectory(new File(SystemProperties.getUserHome(), "snapshots"));
+            RevealFileAction.openDirectory(new File(SystemProperties.getUserHome(), "Snapshots"));
             notification.expire();
           }
         });
