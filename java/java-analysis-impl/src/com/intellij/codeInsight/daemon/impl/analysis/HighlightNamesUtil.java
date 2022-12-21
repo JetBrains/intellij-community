@@ -98,7 +98,7 @@ public final class HighlightNamesUtil {
     return TextAttributes.merge(scopeAttributes, regularAttributes);
   }
   
-  private static TextAttributes mergeWithVisibilityAttributes(PsiModifierListOwner listOwner, TextAttributes basedAttributes, @NotNull TextAttributesScheme colorsScheme) {
+  private static TextAttributes mergeWithVisibilityAttributes(@NotNull PsiModifierListOwner listOwner, TextAttributes basedAttributes, @NotNull TextAttributesScheme colorsScheme) {
     TextAttributesKey attributesKey = null;
     if (listOwner.hasModifierProperty(PsiModifier.PUBLIC)) {
       attributesKey = JavaHighlightingColors.PUBLIC_REFERENCE_ATTRIBUTES;
