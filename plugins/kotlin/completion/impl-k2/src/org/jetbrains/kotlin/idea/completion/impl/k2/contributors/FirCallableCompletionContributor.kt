@@ -101,7 +101,16 @@ internal open class FirCallableCompletionContributor(
         val implicitReceivers = implicitScopesContext.implicitReceivers
         val implicitReceiversTypes = implicitReceivers.map { it.type }
 
-        val availableNonExtensions = collectNonExtensions(implicitScopes, visibilityChecker, scopeNameFilter) { filter(it) }
+        val syntheticJavaPropertiesScopes = implicitReceiversTypes.mapNotNull { type ->
+            type.getSyntheticJavaPropertiesScope()?.getDeclarationScope()
+        }.asCompositeScope()
+
+        val availableNonExtensions = collectNonExtensions(
+            implicitScopes,
+            syntheticJavaPropertiesScopes,
+            visibilityChecker,
+            scopeNameFilter
+        ) { filter(it) }
         val extensionsWhichCanBeCalled = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)
 
         // TODO: consider relying on tower resolver when populating callable entries. For example
@@ -172,7 +181,13 @@ internal open class FirCallableCompletionContributor(
                 if (symbol.classKind == KtClassKind.ENUM_CLASS) {
                     collectDotCompletionForCallableReceiver(implicitScopes, explicitReceiver, context, extensionChecker, visibilityChecker)
                 }
-                collectNonExtensions(symbol.getStaticMemberScope(), visibilityChecker, scopeNameFilter).forEach { memberSymbol ->
+                val nonExtensions = collectNonExtensions(
+                    symbol.getStaticMemberScope(),
+                    syntheticJavaPropertiesScope = null,
+                    visibilityChecker,
+                    scopeNameFilter
+                )
+                nonExtensions.forEach { memberSymbol ->
                     addCallableSymbolToCompletion(
                         context,
                         memberSymbol,
@@ -247,8 +262,14 @@ internal open class FirCallableCompletionContributor(
         explicitReceiverTypeHint: KtType? = null
     ) {
         val possibleReceiverScope = typeOfPossibleReceiver.getTypeScope()?.getDeclarationScope() ?: return
+        val syntheticJavaPropertiesScope = typeOfPossibleReceiver.getSyntheticJavaPropertiesScope()?.getDeclarationScope()
 
-        val nonExtensionMembers = collectNonExtensions(possibleReceiverScope, visibilityChecker, scopeNameFilter) { filter(it) }
+        val nonExtensionMembers = collectNonExtensions(
+            possibleReceiverScope,
+            syntheticJavaPropertiesScope,
+            visibilityChecker,
+            scopeNameFilter
+        ) { filter(it) }
         val extensionNonMembers = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)
 
         nonExtensionMembers.forEach {

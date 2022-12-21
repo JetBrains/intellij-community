@@ -3300,6 +3300,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
             public void testSyntheticExtensions2() throws Exception {
                 runTest("../testData/basic/java/syntheticExtensions/SyntheticExtensions2.kt");
             }
+
+            @TestMetadata("WithoutReceiver.kt")
+            public void testWithoutReceiver() throws Exception {
+                runTest("../testData/basic/java/syntheticExtensions/WithoutReceiver.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

@@ -26,24 +26,29 @@ internal fun createStarTypeArgumentsList(typeArgumentsCount: Int): String =
  */
 internal fun KtAnalysisSession.collectNonExtensions(
     scope: KtScope,
+    syntheticJavaPropertiesScope: KtScope?,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: KtScopeNameFilter,
     skipJavaGettersAndSetters: Boolean = true,
     symbolFilter: (KtCallableSymbol) -> Boolean = { true }
-): Iterable<KtCallableSymbol> {
-    val nonExtensions = scope.getCallableSymbols { name ->
-        listOfNotNull(name, name.toJavaGetterName(), name.toJavaSetterName()).any(scopeNameFilter)
-    }
-        .filterNot { it.isExtension }
-        .filter { symbolFilter(it) }
-        .filter { visibilityChecker.isVisible(it) }
-        .toList()
+): Sequence<KtCallableSymbol> {
+    // make the filter aware of prefixes
+    // for example, a variable with the name `prop` satisfies the filter for all the following prefixes: "p", "getP", "setP"
+    val getAndSetPrefixesAwareFilter: KtScopeNameFilter =
+        { name -> listOfNotNull(name, name.toJavaGetterName(), name.toJavaSetterName()).any(scopeNameFilter) }
+
+    val syntheticProperties = syntheticJavaPropertiesScope
+        ?.getCallableSymbols(getAndSetPrefixesAwareFilter)
+        ?.filterIsInstance<KtSyntheticJavaPropertySymbol>()
+        .orEmpty()
+
+    val nonExtensions = sequence {
+        yieldAll(syntheticProperties)
+        yieldAll(scope.getCallableSymbols(getAndSetPrefixesAwareFilter))
+    }.filter { !it.isExtension && symbolFilter(it) && visibilityChecker.isVisible(it) }
 
     return if (skipJavaGettersAndSetters) {
-        val javaGettersAndSetters = nonExtensions
-            .filterIsInstance<KtSyntheticJavaPropertySymbol>()
-            .flatMap { listOfNotNull(it.javaGetterSymbol, it.javaSetterSymbol) }
-            .toSet()
+        val javaGettersAndSetters = syntheticProperties.flatMap { listOfNotNull(it.javaGetterSymbol, it.javaSetterSymbol) }.toSet()
 
         nonExtensions.filter { it !in javaGettersAndSetters }
     } else {
@@ -61,6 +66,7 @@ internal fun KtDeclaration.canDefinitelyNotBeSeenFromOtherFile(): Boolean {
             // internal declarations from library are invisible from source modules
             true
         }
+
         else -> false
     }
 }

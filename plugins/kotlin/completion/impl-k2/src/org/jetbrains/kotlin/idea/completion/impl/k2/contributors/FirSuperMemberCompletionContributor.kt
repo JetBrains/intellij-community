@@ -44,8 +44,7 @@ internal class FirSuperMemberCompletionContributor(
         )
 
         val (nonExtensionMembers: Iterable<Pair<KtType, KtCallableSymbol>>, namesNeedDisambiguation: Set<Name>) = if (superType !is KtIntersectionType) {
-            val scope = superType.getTypeScope()?.getDeclarationScope() ?: return
-            collectNonExtensions(scope, visibilityChecker, scopeNameFilter).map { superType to it }.asIterable() to emptySet()
+            getNonExtensionsMemberSymbols(superType, visibilityChecker).map { superType to it }.asIterable() to emptySet()
         } else {
             getSymbolsAndNamesNeedDisambiguation(superType.conjuncts, visibilityChecker)
         }
@@ -90,9 +89,10 @@ internal class FirSuperMemberCompletionContributor(
     private fun KtAnalysisSession.getNonExtensionsMemberSymbols(
         receiverType: KtType,
         visibilityChecker: CompletionVisibilityChecker
-    ): Iterable<KtCallableSymbol> {
-        val possibleReceiverScope = receiverType.getTypeScope()?.getDeclarationScope() ?: return emptyList()
-        return collectNonExtensions(possibleReceiverScope, visibilityChecker, scopeNameFilter)
+    ): Sequence<KtCallableSymbol> {
+        val scope = receiverType.getTypeScope()?.getDeclarationScope() ?: return emptySequence()
+        val syntheticJavaPropertiesScope = receiverType.getSyntheticJavaPropertiesScope()?.getDeclarationScope()
+        return collectNonExtensions(scope, syntheticJavaPropertiesScope, visibilityChecker, scopeNameFilter)
     }
 
     private fun KtAnalysisSession.collectCallToSuperMember(
