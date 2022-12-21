@@ -147,6 +147,11 @@ public abstract class KotlinGoToSuperDeclarationsHandlerTestGenerated extends Ab
                 performTest();
             }
 
+            @TestMetadata("primaryConstructorProperty.kt")
+            public void testPrimaryConstructorProperty() throws Exception {
+                performTest();
+            }
+
             @TestMetadata("singleSuperProperty.kt")
             public void testSingleSuperProperty() throws Exception {
                 performTest();

@@ -9,10 +9,7 @@ import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.codeInsight.SuperDeclaration
 import org.jetbrains.kotlin.idea.k2.codeinsight.KotlinGoToSuperDeclarationsHandler
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.*
 
 abstract class AbstractKotlinGoToSuperDeclarationsHandlerTest : NewLightKotlinCodeInsightFixtureTestCase() {
     override val pluginKind: KotlinPluginKind
@@ -22,8 +19,11 @@ abstract class AbstractKotlinGoToSuperDeclarationsHandlerTest : NewLightKotlinCo
         myFixture.configureAdditionalJavaFile()
         val file = myFixture.configureByDefaultFile() as KtFile
         val element = file.findElementAt(editor.caretModel.offset)
-        val declaration =
+        var declaration =
             PsiTreeUtil.getParentOfType<KtDeclaration>(element, *KotlinGoToSuperDeclarationsHandler.ALLOWED_DECLARATION_CLASSES)
+        if (declaration is KtParameter && !declaration.hasValOrVar()) {
+            declaration = PsiTreeUtil.getParentOfType<KtDeclaration>(element, *KotlinGoToSuperDeclarationsHandler.ALLOWED_DECLARATION_CLASSES)
+        }
         val superDeclarations = declaration?.let { KotlinGoToSuperDeclarationsHandler.findSuperDeclarations(it)}
         val actualText = render(superDeclarations?.items ?: emptyList())
         checkTextByExpectedPath(".expected", actualText)

@@ -25,7 +25,8 @@ class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler {
         val ALLOWED_DECLARATION_CLASSES = arrayOf(
             KtNamedFunction::class.java,
             KtClassOrObject::class.java,
-            KtProperty::class.java
+            KtProperty::class.java,
+            KtParameter::class.java
         )
 
         fun findSuperDeclarations(targetDeclaration: KtDeclaration): HandlerResult? {
@@ -88,7 +89,10 @@ class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(GotoSuperAction.FEATURE_ID)
 
         val element = file.findElementAt(editor.caretModel.offset) ?: return
-        val targetDeclaration = PsiTreeUtil.getParentOfType<KtDeclaration>(element, *ALLOWED_DECLARATION_CLASSES) ?: return
+        var targetDeclaration = PsiTreeUtil.getParentOfType<KtDeclaration>(element, *ALLOWED_DECLARATION_CLASSES) ?: return
+        if (targetDeclaration is KtParameter && !targetDeclaration.hasValOrVar()) {
+           targetDeclaration = PsiTreeUtil.getParentOfType<KtDeclaration>(element, *ALLOWED_DECLARATION_CLASSES) ?: return
+        }
         gotoSuperDeclarations(targetDeclaration)?.showInBestPositionFor(editor)
     }
 
