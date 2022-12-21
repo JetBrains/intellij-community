@@ -212,46 +212,28 @@ public interface Configurable extends UnnamedConfigurable {
     @NotNull Collection<BaseExtensionPointName<?>> getDependencies();
   }
 
-  default boolean isModified(@NotNull JTextField textField, @NotNull String value) {
-    return !StringUtil.equals(textField.getText().trim(), value);
-  }
-
-  default boolean isModified(@NotNull JTextField textField, int value, @NotNull UINumericRange range) {
-    try {
-      int currentValue = Integer.parseInt(textField.getText().trim());
-      return range.fit(currentValue) == currentValue && currentValue != value;
-    }
-    catch (NumberFormatException e) {
-      return false;
-    }
-  }
-
-  default boolean isModified(@NotNull JToggleButton toggleButton, boolean value) {
-    return toggleButton.isSelected() != value;
-  }
-
   /**
    * Ask opened configurable to focus on a control with a specified label.
    * It could be a tab name, name of the tree item, checkbox label, etc.
-   * The configurable may or may not ignore this request. 
+   * The configurable may or may not ignore this request.
    * Default implementation does nothing.
-   * 
+   *
    * @param label localized label name of the control to focus on.
    */
   default void focusOn(@NotNull @Nls String label) {
-    
+
   }
 
   interface TopComponentController {
     TopComponentController EMPTY = new TopComponentController() {
       @Override
-      public void setLeftComponent(@Nullable Component component) {}
+      public void setLeftComponent(@Nullable Component component) { }
 
       @Override
-      public void showProgress(boolean start) {}
+      public void showProgress(boolean start) { }
 
       @Override
-      public void showProject(boolean hasProject) {}
+      public void showProject(boolean hasProject) { }
     };
 
     void setLeftComponent(@Nullable Component component);
@@ -267,5 +249,59 @@ public interface Configurable extends UnnamedConfigurable {
     }
 
     @NotNull Component getCenterComponent(@NotNull TopComponentController controller);
+  }
+
+
+  /**
+   * @deprecated Prefer using {@link #isFieldModified(JTextField, String)}
+   */
+  @Deprecated(forRemoval = true)
+  default boolean isModified(@NotNull JTextField textField, @NotNull String value) {
+    return isFieldModified(textField, value);
+  }
+
+  /**
+   * @deprecated Prefer using {@link #isFieldModified(JTextField, int, UINumericRange)}
+   */
+  @Deprecated(forRemoval = true)
+  default boolean isModified(@NotNull JTextField textField, int value, @NotNull UINumericRange range) {
+    return isFieldModified(textField, value, range);
+  }
+
+  /**
+   * @deprecated Prefer using {@link #isCheckboxModified(JCheckBox, boolean)}
+   */
+  @Deprecated(forRemoval = true)
+  default boolean isModified(@NotNull JToggleButton toggleButton, boolean value) {
+    return toggleButton.isSelected() != value;
+  }
+
+
+  static boolean isFieldModified(@NotNull JTextField textField, @NotNull String value) {
+    return !StringUtil.equals(textField.getText().trim(), value);
+  }
+
+  static boolean isFieldModified(@NotNull JTextField textField, int value, @NotNull UINumericRange range) {
+    try {
+      int currentValue = Integer.parseInt(textField.getText().trim());
+      return range.fit(currentValue) == currentValue && currentValue != value;
+    }
+    catch (NumberFormatException e) {
+      return false;
+    }
+  }
+
+  static boolean isFieldModified(@NotNull JTextField textField, int value) {
+    try {
+      int fieldValue = Integer.parseInt(textField.getText().trim());
+      return fieldValue != value;
+    }
+    catch (NumberFormatException e) {
+      return false;
+    }
+  }
+
+  static boolean isCheckboxModified(@NotNull JCheckBox checkbox, boolean value) {
+    return checkbox.isSelected() != value;
   }
 }
