@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "BlockingMethodInNonBlockingContext")
+@file:OptIn(ExperimentalCoroutinesApi::class)
 
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.text.Formats
-import com.intellij.ui.svg.ImageValue
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.ui.svg.SvgTranscoder
 import com.intellij.ui.svg.createSvgDocument
@@ -12,15 +12,13 @@ import com.intellij.util.io.DigestUtil
 import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.*
 import org.apache.batik.transcoder.TranscoderException
 import org.jetbrains.ikv.builder.IkvWriter
 import org.jetbrains.ikv.builder.sizeUnawareIkvWriter
 import org.jetbrains.intellij.build.io.ByteBufferAllocator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.mvstore.DataUtil
-import org.jetbrains.mvstore.MVMap
-import org.jetbrains.mvstore.type.IntDataType
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferInt
 import java.nio.ByteBuffer
@@ -28,9 +26,7 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.NotDirectoryException
 import java.nio.file.Path
-import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.system.exitProcess
 
@@ -48,7 +44,7 @@ private class FileInfo(val file: Path) {
  * Works together with [SvgCacheManager] to generate pre-cached icons
  */
 internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = null) {
-  /// the 4.0 scale is used on retina macOS for product icon, adds few more scales for few icons
+  /// the 4.0 scale is used on retina macOS for product icon, adds a few more scales for few icons
   //private val productIconScales = (scales + scales.map { it * 2 }).toSortedSet().toFloatArray()
 
   //private val productIconPrefixes = mutableListOf<String>()
@@ -69,11 +65,6 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
       }
 
       exitProcess(0)
-    }
-
-    @JvmStatic
-    fun optimize(dbDir: Path, compilationOutputRoot: Path, dirs: List<Path>): List<Path> {
-      return ImageSvgPreCompiler(compilationOutputRoot).compileIcons(dbDir, dirs)
     }
 
     private fun mainImpl(args: Array<String>) {
@@ -98,74 +89,25 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
       val compiler = ImageSvgPreCompiler()
       // todo
       //productIcons.forEach(compiler::addProductIconPrefix)
-      compiler.compileIcons(Path.of(dbDir), dirs)
+      runBlocking {
+        compiler.compileIcons(Path.of(dbDir), dirs)
+      }
     }
   }
 
-  fun preCompileIcons(modules: List<JpsModule>, dbFile: Path) {
+  suspend fun preCompileIcons(modules: List<JpsModule>, dbFile: Path) {
     val javaExtensionService = JpsJavaExtensionService.getInstance()
     compileIcons(dbFile, modules.mapNotNull { javaExtensionService.getOutputDirectory(it, false)?.toPath() })
   }
 
-  @Suppress("PropertyName")
-  private class Stores(classifier: String, dbDir: Path) {
-    val s1 = StoreContainer(1f, classifier, dbDir)
-    val s1_25 = StoreContainer(1.25f, classifier, dbDir)
-    val s1_5 = StoreContainer(1.5f, classifier, dbDir)
-    val s2 = StoreContainer(2f, classifier, dbDir)
-    val s2_5 = StoreContainer(2.5f, classifier, dbDir)
-
-    fun close(list: MutableList<Path>) {
-      s1.close()
-      s1_25.close()
-      s1_5.close()
-      s2.close()
-      s2_5.close()
-
-      s1.file?.let { list.add(it) }
-      s1_25.file?.let { list.add(it) }
-      s1_5.file?.let { list.add(it) }
-      s2.file?.let { list.add(it) }
-      s2_5.file?.let { list.add(it) }
-    }
-  }
-
-  private class StoreContainer(private val scale: Float, private val classifier: String, private val dbDir: Path) {
-    @Volatile
-    private var store: IkvWriter? = null
-    var file: Path? = null
-      private set
-
-    fun getOrCreate() = store ?: getSynchronized()
-
-    @Synchronized
-    private fun getSynchronized(): IkvWriter {
-      var store = store
-      if (store == null) {
-        val file = dbDir.resolve("icons-v2-$scale$classifier.db")
-        this.file = file
-        store = sizeUnawareIkvWriter(file)
-        this.store = store
-      }
-      return store
-    }
-
-    fun close() {
-      store?.close()
-    }
-  }
-
-  fun compileIcons(dbDir: Path, dirs: List<Path>): List<Path> {
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private suspend fun compileIcons(dbDir: Path, dirs: List<Path>): List<Path> {
     Files.createDirectories(dbDir)
 
     val lightStores = Stores("", dbDir)
     val darkStores = Stores("-d", dbDir)
     val resultFiles = ArrayList<Path>()
     try {
-      val mapBuilder = MVMap.Builder<Int, ImageValue>()
-      mapBuilder.keyType(IntDataType.INSTANCE)
-      mapBuilder.valueType(ImageValue.ImageValueSerializer())
-
       val getMapByScale: (scale: Float, isDark: Boolean) -> IkvWriter = { scale, isDark ->
         val list = if (isDark) darkStores else lightStores
         when (scale) {
@@ -179,20 +121,20 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
       }
 
       val rootRobotData = IconRobotsData(parent = null, ignoreSkipTag = false, usedIconsRobots = null)
-      val result = ForkJoinTask.invokeAll(dirs.map { dir ->
-        ForkJoinTask.adapt(Callable {
-          val result = mutableListOf<IconData>()
-          processDir(dir, dir, 1, rootRobotData, result)
-          result
-        })
-      }).flatMap { it.rawResult }
+      val result = withContext(Dispatchers.IO) {
+        dirs.map { dir ->
+          async {
+            val result = mutableListOf<IconData>()
+            processDir(dir = dir, rootDir = dir, level = 1, rootRobotData = rootRobotData, result = result)
+            result
+          }
+        }
+      }.flatMap { it.getCompleted() }
 
       val array: Array<IconData?> = result.toTypedArray()
       array.sortBy { it!!.variants.first() }
 
-      /// the expected scales of images that we have
-      /// the macOS touch bar uses 2.5x scale
-      /// the application icon (which one?) is 4x on macOS
+      /// the expected scales of images that we have the macOS touch bar uses 2.5x scale, the application icon (which one?) is 4x on macOS
       val scales = floatArrayOf(
         1f,
         1.25f, /*Windows*/
@@ -203,12 +145,13 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
 
       val collisionGuard = ConcurrentHashMap<Int, FileInfo>()
       for ((index, icon) in array.withIndex()) {
-        // key is the same for all variants
-        // check collision only here - after sorting (so, we produce stable results as we skip same icon every time)
+        // the key is the same for all variants
+        // check collision only here - after sorting (so, we produce stable results as we skip the same icon every time)
         if (checkCollision(icon!!.imageKey, icon.variants[0], icon.light1xData, collisionGuard)) {
           array[index] = null
         }
       }
+
       // cannot be processed concurrently due to IDEA-303866
       scales.map { scale ->
         ByteBufferAllocator().use { bufferAllocator ->
@@ -331,7 +274,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     //println("$id: ${variants.joinToString { rootDir.relativize(it).toString() }}")
 
     val variants = icon.variants
-    // key is the same for all variants
+    // the key is the same for all variants
     val imageKey = icon.imageKey
 
     val light2x = variants.find { it.toString().endsWith("@2x.svg") }
@@ -383,7 +326,7 @@ private fun addEntry(map: IkvWriter, image: BufferedImage, imageKey: Int, totalS
   assert(!image.colorModel.isAlphaPremultiplied)
 
   val data = (image.raster.dataBuffer as DataBufferInt).data
-  val buffer = bufferAllocator.allocate(DataUtil.VAR_INT_MAX_SIZE * 3 + data.size * Int.SIZE_BYTES  + 1)
+  val buffer = bufferAllocator.allocate(5 * 3 + data.size * Int.SIZE_BYTES  + 1)
   writeVar(buffer, imageKey)
   if (w == h) {
     if (w < 254) {
@@ -443,4 +386,52 @@ private fun getImageCommonName(fileName: String): String {
   }
 
   throw IllegalStateException("Not a SVG: $fileName")
+}
+
+private class StoreContainer(private val scale: Float, private val classifier: String, private val dbDir: Path) {
+  @Volatile
+  private var store: IkvWriter? = null
+  var file: Path? = null
+    private set
+
+  fun getOrCreate() = store ?: getSynchronized()
+
+  @Synchronized
+  private fun getSynchronized(): IkvWriter {
+    var store = store
+    if (store == null) {
+      val file = dbDir.resolve("icons-v2-$scale$classifier.db")
+      this.file = file
+      store = sizeUnawareIkvWriter(file)
+      this.store = store
+    }
+    return store
+  }
+
+  fun close() {
+    store?.close()
+  }
+}
+
+@Suppress("PropertyName")
+private class Stores(classifier: String, dbDir: Path) {
+  val s1 = StoreContainer(1f, classifier, dbDir)
+  val s1_25 = StoreContainer(1.25f, classifier, dbDir)
+  val s1_5 = StoreContainer(1.5f, classifier, dbDir)
+  val s2 = StoreContainer(2f, classifier, dbDir)
+  val s2_5 = StoreContainer(2.5f, classifier, dbDir)
+
+  fun close(list: MutableList<Path>) {
+    s1.close()
+    s1_25.close()
+    s1_5.close()
+    s2.close()
+    s2_5.close()
+
+    s1.file?.let { list.add(it) }
+    s1_25.file?.let { list.add(it) }
+    s1_5.file?.let { list.add(it) }
+    s2.file?.let { list.add(it) }
+    s2_5.file?.let { list.add(it) }
+  }
 }

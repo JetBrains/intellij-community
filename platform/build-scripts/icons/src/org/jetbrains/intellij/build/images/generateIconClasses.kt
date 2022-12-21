@@ -2,14 +2,14 @@
 package org.jetbrains.intellij.build.images
 
 import com.intellij.util.concurrency.AppExecutorUtil
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.images.sync.jpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
-import java.nio.file.Paths
 
 fun main(args: Array<String>) {
   try {
-    generateIconClasses(args.firstOrNull()?.let { Paths.get(it) })
+    generateIconClasses(args.firstOrNull()?.let { Path.of(it) })
   }
   finally {
     shutdownAppScheduledExecutorService()
@@ -62,7 +62,9 @@ internal fun generateIconClasses(dbFile: Path?, config: IconClasses = IntellijIc
 
   if (dbFile != null) {
     val preCompiler = ImageSvgPreCompiler()
-    preCompiler.preCompileIcons(modules, dbFile)
+    runBlocking {
+      preCompiler.preCompileIcons(modules, dbFile)
+    }
   }
 
   val checker = ImageSanityChecker(home)
