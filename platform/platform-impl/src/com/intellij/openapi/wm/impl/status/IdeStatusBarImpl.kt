@@ -687,7 +687,7 @@ private class WidgetBean(
 
 @RequiresEdt
 internal fun createComponentByWidgetPresentation(presentation: WidgetPresentation, project: Project, scope: CoroutineScope): JComponent {
-  val toolTipTextSupplier = Supplier { runBlockingModal(project, title = "") { presentation.getTooltipText() } }
+  val toolTipTextSupplier = { runBlockingModal(project, title = "") { presentation.getTooltipText() } }
   return when (presentation) {
     is TextWidgetPresentation -> {
       val panel = TextPanel(toolTipTextSupplier)
@@ -700,8 +700,8 @@ internal fun createComponentByWidgetPresentation(presentation: WidgetPresentatio
           .distinctUntilChanged()
           .collectLatest { text ->
             withContext(Dispatchers.EDT) {
+              panel.isVisible = !text.isNullOrEmpty()
               panel.text = text
-              panel.isVisible = !text.isEmpty()
             }
           }
       }
@@ -805,7 +805,9 @@ private class IconPresentationComponent(private val presentation: IconPresentati
   }
 }
 
-private class TextPresentationComponent(private val presentation: TextPresentation) : TextPanel(Supplier(presentation::getTooltipText)), StatusBarWidgetWrapper {
+private class TextPresentationComponent(
+  private val presentation: TextPresentation,
+) : TextPanel(presentation::getTooltipText), StatusBarWidgetWrapper {
   init {
     setTextAlignment(presentation.getAlignment())
     border = JBUI.CurrentTheme.StatusBar.Widget.border()
@@ -816,9 +818,8 @@ private class TextPresentationComponent(private val presentation: TextPresentati
   }
 
   override fun beforeUpdate() {
-    val text = presentation.getText()
-    setText(text)
-    isVisible = !text.isEmpty()
+    text = presentation.getText()
+    isVisible = text != null
   }
 }
 

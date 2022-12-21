@@ -514,25 +514,31 @@ public final class UIUtil {
 
   public static boolean isReallyTypedEvent(@NotNull KeyEvent e) {
     char c = e.getKeyChar();
-    if (c == KeyEvent.CHAR_UNDEFINED) return false; // ignore CHAR_UNDEFINED, like Swing text components do
-    if (c < 0x20 || c == 0x7F) return false;
-
-    // Allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4
-    if (SystemInfoRt.isWindows && c >= 0x200C && c <= 0x200F) return true;
-
-    if (SystemInfoRt.isMac) {
-      return !e.isMetaDown() && !e.isControlDown();
+    if (c == KeyEvent.CHAR_UNDEFINED) {
+      // ignore CHAR_UNDEFINED, like Swing text components do
+      return false;
+    }
+    if (c < 0x20 || c == 0x7F) {
+      return false;
     }
 
-    return !e.isAltDown() && !e.isControlDown();
+    // allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4
+    if (SystemInfoRt.isWindows && c >= 0x200C && c <= 0x200F) {
+      return true;
+    }
+    else if (SystemInfoRt.isMac) {
+      return !e.isMetaDown() && !e.isControlDown();
+    }
+    else {
+      return !e.isAltDown() && !e.isControlDown();
+    }
   }
 
   public static int getStringY(final @NotNull String string, final @NotNull Rectangle bounds, final @NotNull Graphics2D g) {
-    final int centerY = bounds.height / 2;
-    final Font font = g.getFont();
-    final FontRenderContext frc = g.getFontRenderContext();
-    final Rectangle stringBounds = font.getStringBounds(string.isEmpty() ? " " : string, frc).getBounds();
-
+    int centerY = bounds.height / 2;
+    Font font = g.getFont();
+    FontRenderContext frc = g.getFontRenderContext();
+    Rectangle stringBounds = font.getStringBounds(string.isEmpty() ? " " : string, frc).getBounds();
     return (int)(centerY - stringBounds.height / 2.0 - stringBounds.y);
   }
 
@@ -607,14 +613,6 @@ public final class UIUtil {
     }
   }
 
-  /**
-   * @deprecated Use {@link LinePainter2D#paint(Graphics2D, double, double, double, double)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static void drawLine(@NotNull Graphics g, int x1, int y1, int x2, int y2) {
-    LinePainter2D.paint((Graphics2D)g, x1, y1, x2, y2);
-  }
-
   public static void drawLine(@NotNull Graphics2D g, int x1, int y1, int x2, int y2, @Nullable Color bgColor, @Nullable Color fgColor) {
     Color oldFg = g.getColor();
     Color oldBg = g.getBackground();
@@ -681,6 +679,7 @@ public final class UIUtil {
     text = text.replaceAll("&", "");
     action.putValue(Action.NAME, text);
   }
+
   public static void assignMnemonic(@NotNull @Nls String text, @NotNull Action action) {
     int mnemoPos = text.indexOf('&');
     if (mnemoPos >= 0 && mnemoPos < text.length() - 2) {

@@ -15,13 +15,15 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.StatusBarWidget.*
 import com.intellij.openapi.wm.TextWidgetPresentation
 import com.intellij.openapi.wm.WidgetPresentationDataContext
 import com.intellij.ui.UIBundle
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.Component
@@ -90,16 +92,16 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun text(): Flow<@NlsContexts.Label String> {
+  override fun text(): Flow<@NlsContexts.Label String?> {
     return merge(updateTextRequests, dataContext.currentFileEditor.map { (it as? TextEditor)?.editor })
       .debounce(100.milliseconds)
       .mapLatest { editor ->
-        if (editor == null || DISABLE_FOR_EDITOR.isIn(editor)) "" else readAction { getPositionText(editor) }
+        if (editor == null || DISABLE_FOR_EDITOR.isIn(editor)) null else readAction { getPositionText(editor) }
       }
       .combine(charCountRequests.mapLatest { task ->
         Character.codePointCount(task.text, task.startOffset, task.endOffset).toString()
       }) { text, charCount ->
-        text.replaceFirst(CHAR_COUNT_UNKNOWN, charCount)
+        text?.replaceFirst(CHAR_COUNT_UNKNOWN, charCount)
       }
   }
 

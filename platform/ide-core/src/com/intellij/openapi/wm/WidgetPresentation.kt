@@ -29,14 +29,14 @@ interface WidgetPresentationFactory {
 @ApiStatus.Experimental
 interface TextWidgetPresentation : WidgetPresentation {
   /**
-   * Taken on account only on a first init — dynamic change is not supported.
+   * Taken on account only on a first init, dynamic change is not supported.
    */
   val alignment: Float
 
   /**
    * Using `distinctUntilChanged` is not required - handled by a platform.
    */
-  fun text(): Flow<@NlsContexts.Label String>
+  fun text(): Flow<@NlsContexts.Label String?>
 }
 
 @ApiStatus.Experimental

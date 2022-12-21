@@ -1,299 +1,233 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl.status;
+@file:Suppress("ReplaceGetOrSet")
 
-import com.intellij.ide.ui.AntialiasingType;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsContexts.StatusBarText;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ClientProperty;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.*;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.openapi.wm.impl.status
 
-import javax.accessibility.Accessible;
-import javax.accessibility.AccessibleContext;
-import javax.accessibility.AccessibleRole;
-import javax.swing.*;
-import java.awt.*;
-import java.util.function.Supplier;
+import com.intellij.ide.ui.AntialiasingType
+import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl.WidgetEffect
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.*
+import org.jetbrains.annotations.Nls
+import java.awt.*
+import javax.accessibility.Accessible
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
+import javax.swing.*
 
-public class TextPanel extends JPanel implements Accessible {
-  public static final String PROPERTY_TEXT = "TextPanel.text";
-  private final Supplier<@Nullable @NlsContexts.Tooltip String> toolTipTextSupplier;
-
-  private @Nullable @Nls String myText;
-
-  private Integer myPrefHeight;
-  private Dimension myExplicitSize;
-
-  protected float myAlignment;
-
-  protected TextPanel() {
-    this(null);
-  }
-
-  protected TextPanel(@Nullable Supplier<@Nullable @NlsContexts.Tooltip String> toolTipTextSupplier) {
-    this.toolTipTextSupplier = toolTipTextSupplier;
-
-    setOpaque(false);
-    updateUI();
-  }
-
-  @Override
-  public String getToolTipText() {
-    return toolTipTextSupplier == null ? super.getToolTipText() : toolTipTextSupplier.get();
-  }
-
-  @Override
-  public void updateUI() {
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
-    Object value = UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS);
-    if (value == null) {
-      value = RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
-    }
-    putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, value);
-  }
-
-  @Override
-  public Font getFont() {
-    return SystemInfoRt.isMac && !ExperimentalUI.isNewUI() ? JBFont.small() : JBFont.label();
-  }
-
-  public void recomputeSize() {
-    JLabel label = new JLabel("XXX"); //NON-NLS
-    label.setFont(getFont());
-    myPrefHeight = label.getPreferredSize().height;
-  }
-
-  @Override
-  protected void paintComponent(final Graphics g) {
-    @Nls String s = getText();
-    int panelWidth = getWidth();
-    int panelHeight = getHeight();
-    if (s == null) return;
-
-    Graphics2D g2 = (Graphics2D)g;
-    g2.setFont(getFont());
-    UISettings.setupAntialiasing(g);
-
-    Rectangle bounds = new Rectangle(panelWidth, panelHeight);
-    FontMetrics fm = g.getFontMetrics();
-    int textWidth = fm.stringWidth(s);
-    int x = textWidth > panelWidth ? getInsets().left : getTextX(g2);
-    int maxWidth = panelWidth - x - getInsets().right;
-    if (textWidth > maxWidth) {
-      s = truncateText(s, bounds, fm, new Rectangle(), new Rectangle(), maxWidth);
-    }
-
-    int y = UIUtil.getStringY(s, bounds, g2);
-    if (ExperimentalUI.isNewUI() && SystemInfo.isJetBrainsJvm) {
-      y += fm.getLeading(); // See SimpleColoredComponent.getTextBaseline
-    }
-
-    var effect = ClientProperty.get(this, IdeStatusBarImpl.Companion.getWIDGET_EFFECT_KEY$intellij_platform_ide_impl());
-    Color foreground;
-    foreground = isEnabled() ? effect == IdeStatusBarImpl.WidgetEffect.PRESSED ? JBUI.CurrentTheme.StatusBar.Widget.PRESSED_FOREGROUND :
-                               effect == IdeStatusBarImpl.WidgetEffect.HOVER ? JBUI.CurrentTheme.StatusBar.Widget.HOVER_FOREGROUND :
-                               JBUI.CurrentTheme.StatusBar.Widget.FOREGROUND : NamedColorUtil.getInactiveTextColor();
-
-    g2.setColor(foreground);
-    g2.drawString(s, x, y);
-  }
-
-  protected int getTextX(Graphics g) {
-    String text = getText();
-    Insets insets = getInsets();
-    if (text == null || myAlignment == Component.LEFT_ALIGNMENT) {
-      return insets.left;
-    }
-    if (myAlignment == Component.RIGHT_ALIGNMENT) {
-      FontMetrics fm = g.getFontMetrics();
-      int textWidth = fm.stringWidth(text);
-      return getWidth() - insets.right - textWidth;
-    }
-    if (myAlignment == Component.CENTER_ALIGNMENT) {
-      FontMetrics fm = g.getFontMetrics();
-      int textWidth = fm.stringWidth(text);
-      return (getWidth() - insets.left - insets.right - textWidth) / 2 + insets.left;
-    }
-    return insets.left;
-  }
-
-  protected @Nls String truncateText(@Nls String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
-    return SwingUtilities.layoutCompoundLabel(this, fm, text, null, SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.CENTER,
-                                              SwingConstants.TRAILING,
-                                              bounds, iconR, textR, 0);
-  }
-
-  public void setTextAlignment(final float alignment) {
-    myAlignment = alignment;
-  }
-
-  public final void setText(@Nullable @StatusBarText String text) {
-    text = StringUtil.notNullize(text);
-    if (text.equals(myText)) {
-      return;
-    }
-
-    String oldAccessibleName = null;
-    if (accessibleContext != null) {
-      oldAccessibleName = accessibleContext.getAccessibleName();
-    }
-
-    String oldText = myText;
-    myText = text;
-    firePropertyChange(PROPERTY_TEXT, oldText, text);
-
-    if ((accessibleContext != null) && !StringUtil.equals(accessibleContext.getAccessibleName(), oldAccessibleName)) {
-      accessibleContext.firePropertyChange(
-        AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
-        oldAccessibleName,
-        accessibleContext.getAccessibleName());
-    }
-
-    setPreferredSize(getPanelDimensionFromFontMetrics(myText));
-    revalidate();
-    repaint();
-  }
-
-  public @Nullable @Nls String getText() {
-    return myText;
-  }
-
-  @Override
-  public Dimension getPreferredSize() {
-    if (myExplicitSize != null) {
-      return myExplicitSize;
-    }
-
-    String text = getTextForPreferredSize();
-    return getPanelDimensionFromFontMetrics(text);
-  }
-
-  private Dimension getPanelDimensionFromFontMetrics(String text) {
-    Insets insets = getInsets();
-    int width = insets.left + insets.right + (text != null ? getFontMetrics(getFont()).stringWidth(text) : 0);
-    int height = (myPrefHeight == null) ? getMinimumSize().height : myPrefHeight;
-    return new Dimension(width, height);
-  }
-
+open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: (() -> String?)? = null) : JPanel(), Accessible {
   /**
    * @return the text that is used to calculate the preferred size
    */
-  protected @Nullable String getTextForPreferredSize() {
-    return myText;
+  protected open val textForPreferredSize: @Nls String?
+    get() = text
+
+  private var preferredHeight: Int? = null
+  private var explicitSize: Dimension? = null
+  protected var alignment: Float = 0f
+    private set
+
+  init {
+    isOpaque = false
+    @Suppress("LeakingThis")
+    updateUI()
   }
 
-  public void setExplicitSize(@Nullable Dimension explicitSize) {
-    myExplicitSize = explicitSize;
+  companion object {
+    const val PROPERTY_TEXT = "TextPanel.text"
   }
 
-  public static class WithIconAndArrows extends TextPanel {
-    private static final int GAP = JBUIScale.scale(2);
-    private @Nullable Icon myIcon;
+  override fun getToolTipText(): String? = toolTipTextSupplier?.invoke() ?: super.getToolTipText()
 
-    public WithIconAndArrows() {
-      super(null);
+  override fun updateUI() {
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
+    putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS,
+                      UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS) ?: RenderingHints.VALUE_FRACTIONALMETRICS_OFF)
+  }
+
+  override fun getFont(): Font = if (SystemInfoRt.isMac && !ExperimentalUI.isNewUI()) JBFont.small() else JBFont.label()
+
+  fun recomputeSize() {
+    val label = JLabel("XXX") //NON-NLS
+    label.font = font
+    preferredHeight = label.preferredSize.height
+  }
+
+  override fun paintComponent(g: Graphics) {
+    var s: @Nls String = text ?: return
+
+    val panelWidth = width
+    val panelHeight = height
+
+    g as Graphics2D
+    g.font = font
+    setupAntialiasing(g)
+    val bounds = Rectangle(panelWidth, panelHeight)
+    val fontMetrics = g.getFontMetrics()
+    val textWidth = fontMetrics.stringWidth(s)
+    val insets = insets
+    val x = if (textWidth > panelWidth) insets.left else getTextX(g)
+    val maxWidth = panelWidth - x - insets.right
+    if (textWidth > maxWidth) {
+      s = truncateText(text = s, bounds = bounds, fm = fontMetrics, textR = Rectangle(), iconR = Rectangle(), maxWidth = maxWidth)
     }
 
-    public WithIconAndArrows(@Nullable Supplier<@Nullable @NlsContexts.Tooltip String> toolTipTextSupplier) {
-      super(toolTipTextSupplier);
+    var y = UIUtil.getStringY(s, bounds, g)
+    if (SystemInfo.isJetBrainsJvm && ExperimentalUI.isNewUI()) {
+      // see SimpleColoredComponent.getTextBaseline
+      y += fontMetrics.leading
     }
 
-    @Override
-    protected void paintComponent(final @NotNull Graphics g) {
-      super.paintComponent(g);
-      Icon icon = myIcon == null || isEnabled() ? myIcon : IconLoader.getDisabledIcon(myIcon);
-      if (icon != null) {
-        icon.paintIcon(this, g, getIconX(g), getHeight() / 2 - icon.getIconHeight() / 2);
+    val effect = ClientProperty.get(this, IdeStatusBarImpl.WIDGET_EFFECT_KEY)
+    val foreground: Color = if (isEnabled) {
+      when (effect) {
+        WidgetEffect.PRESSED -> JBUI.CurrentTheme.StatusBar.Widget.PRESSED_FOREGROUND
+        WidgetEffect.HOVER -> JBUI.CurrentTheme.StatusBar.Widget.HOVER_FOREGROUND
+        else -> JBUI.CurrentTheme.StatusBar.Widget.FOREGROUND
+      }
+    }
+    else {
+      NamedColorUtil.getInactiveTextColor()
+    }
+    g.color = foreground
+    g.drawString(s, x, y)
+  }
+
+  protected open fun getTextX(g: Graphics): Int {
+    val text = text
+    val insets = insets
+    return when {
+      text == null || alignment == LEFT_ALIGNMENT -> insets.left
+      alignment == RIGHT_ALIGNMENT -> width - insets.right - g.fontMetrics.stringWidth(text)
+      alignment == CENTER_ALIGNMENT -> (width - insets.left - insets.right - g.fontMetrics.stringWidth(text)) / 2 + insets.left
+      else -> insets.left
+    }
+  }
+
+  protected open fun truncateText(text: @Nls String,
+                                  bounds: Rectangle?,
+                                  fm: FontMetrics?,
+                                  textR: Rectangle?,
+                                  iconR: Rectangle?,
+                                  maxWidth: Int): @Nls String {
+    return SwingUtilities.layoutCompoundLabel(this, fm, text, null, SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.CENTER,
+                                              SwingConstants.TRAILING,
+                                              bounds, iconR, textR, 0)
+  }
+
+  fun setTextAlignment(alignment: Float) {
+    this.alignment = alignment
+  }
+
+  var text: @Nls String? = null
+    set(value) {
+      val text = value?.takeIf(String::isNotEmpty)
+      if (text == field) {
+        return
+      }
+
+      val accessibleContext = accessibleContext
+      val oldAccessibleName = accessibleContext?.accessibleName
+      val oldText = field
+      field = text
+      firePropertyChange(PROPERTY_TEXT, oldText, text)
+      if (accessibleContext != null && accessibleContext.accessibleName != oldAccessibleName) {
+        accessibleContext.firePropertyChange(
+          AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+          oldAccessibleName,
+          accessibleContext.accessibleName
+        )
+      }
+      preferredSize = getPanelDimensionFromFontMetrics(text)
+      revalidate()
+      repaint()
+    }
+
+  override fun getPreferredSize(): Dimension = explicitSize ?: getPanelDimensionFromFontMetrics(textForPreferredSize)
+
+  private fun getPanelDimensionFromFontMetrics(text: String?): Dimension {
+    val insets = insets
+    val width = insets.left + insets.right + (if (text == null) 0 else getFontMetrics(font).stringWidth(text))
+    return Dimension(width, preferredHeight ?: minimumSize.height)
+  }
+
+  fun setExplicitSize(explicitSize: Dimension?) {
+    this.explicitSize = explicitSize
+  }
+
+  open class WithIconAndArrows : TextPanel {
+    companion object {
+      private val GAP = JBUIScale.scale(2)
+    }
+
+    open var icon: Icon? = null
+
+    constructor() : super(null)
+    constructor(toolTipTextSupplier: (() -> String?)?) : super(toolTipTextSupplier)
+
+    override fun paintComponent(g: Graphics) {
+      super.paintComponent(g)
+      val icon = if (icon == null || isEnabled) icon else IconLoader.getDisabledIcon(icon!!)
+      icon?.paintIcon(this, g, getIconX(g), height / 2 - icon.iconHeight / 2)
+    }
+
+    override fun getPreferredSize(): Dimension {
+      val preferredSize = super.getPreferredSize()
+      if (icon == null) {
+        return preferredSize
+      }
+      else {
+        return Dimension((preferredSize.width + icon!!.iconWidth).coerceAtLeast(height), preferredSize.height)
       }
     }
 
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension preferredSize = super.getPreferredSize();
-      if (myIcon == null) {
-        return preferredSize;
+    override fun getTextX(g: Graphics): Int {
+      val x = super.getTextX(g)
+      return when {
+        icon == null || alignment == RIGHT_ALIGNMENT -> x
+        alignment == CENTER_ALIGNMENT -> x + (icon!!.iconWidth + GAP) / 2
+        alignment == LEFT_ALIGNMENT -> x + icon!!.iconWidth + GAP
+        else -> x
       }
-      return new Dimension(Math.max(preferredSize.width + myIcon.getIconWidth(), getHeight()), preferredSize.height);
     }
 
-    @Override
-    protected int getTextX(Graphics g) {
-      int x = super.getTextX(g);
-      if (myIcon == null || myAlignment == RIGHT_ALIGNMENT) {
-        return x;
+    private fun getIconX(g: Graphics): Int {
+      val x = super.getTextX(g)
+      return when {
+        icon == null || text == null || alignment == LEFT_ALIGNMENT -> x
+        alignment == CENTER_ALIGNMENT -> x - (icon!!.iconWidth + GAP) / 2
+        alignment == RIGHT_ALIGNMENT -> x - icon!!.iconWidth - GAP
+        else -> x
       }
-      if (myAlignment == CENTER_ALIGNMENT) {
-        return x + (myIcon.getIconWidth() + GAP) / 2;
-      }
-      if (myAlignment == LEFT_ALIGNMENT) {
-        return x + myIcon.getIconWidth() + GAP;
-      }
-      return x;
     }
 
-    private int getIconX(Graphics g) {
-      int x = super.getTextX(g);
-      if (myIcon == null || getText() == null || myAlignment == LEFT_ALIGNMENT) {
-        return x;
-      }
-      if (myAlignment == CENTER_ALIGNMENT) {
-        return x - (myIcon.getIconWidth() + GAP) / 2;
-      }
-      if (myAlignment == RIGHT_ALIGNMENT) {
-        return x - myIcon.getIconWidth() - GAP;
-      }
-      return x;
-    }
-
-    public void setIcon(@Nullable Icon icon) {
-      myIcon = icon;
-    }
-
-    public boolean hasIcon() { return myIcon != null; }
-
-    public @Nullable Icon getIcon() { return myIcon; }
+    fun hasIcon(): Boolean = icon != null
   }
 
   // used externally
-  @SuppressWarnings("unused")
-  public static class ExtraSize extends TextPanel {
-    public ExtraSize() {
-      super(null);
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension size = super.getPreferredSize();
-      return new Dimension(size.width + 3, size.height);
+  @Suppress("unused")
+  open class ExtraSize : TextPanel(null) {
+    override fun getPreferredSize(): Dimension {
+      val size = super.getPreferredSize()
+      return Dimension(size.width + 3, size.height)
     }
   }
 
-  @Override
-  public AccessibleContext getAccessibleContext() {
+  override fun getAccessibleContext(): AccessibleContext {
     if (accessibleContext == null) {
-      accessibleContext = new AccessibleTextPanel();
+      accessibleContext = AccessibleTextPanel()
     }
-    return accessibleContext;
+    return accessibleContext
   }
 
-  protected class AccessibleTextPanel extends AccessibleJComponent {
-    @Override
-    public AccessibleRole getAccessibleRole() {
-      return AccessibleRole.LABEL;
-    }
+  private inner class AccessibleTextPanel : AccessibleJComponent() {
+    override fun getAccessibleRole(): AccessibleRole = AccessibleRole.LABEL
 
-    @Override
-    public String getAccessibleName() {
-      return myText;
-    }
+    override fun getAccessibleName(): String? = text
   }
 }
