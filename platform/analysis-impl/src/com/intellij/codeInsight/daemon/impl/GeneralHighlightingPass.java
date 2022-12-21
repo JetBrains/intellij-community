@@ -464,15 +464,14 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       public boolean add(@Nullable HighlightInfo info) {
         boolean added = super.add(info);
         if (info != null && added) {
-          queueInfoToUpdateIncrementally(info);
+          queueInfoToUpdateIncrementally(info, info.getGroup() == 0 ? Pass.UPDATE_ALL : info.getGroup());
         }
         return added;
       }
     };
   }
 
-  protected void queueInfoToUpdateIncrementally(@NotNull HighlightInfo info) {
-    int group = info.getGroup() == 0 ? Pass.UPDATE_ALL : info.getGroup();
+  void queueInfoToUpdateIncrementally(@NotNull HighlightInfo info, int group) {
     if (info.getSeverity() == HighlightSeverity.ERROR) {
       myHasErrorSeverity = true;
     }

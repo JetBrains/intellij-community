@@ -693,12 +693,46 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   @NotNull
   public ProperTextRange injectedToHost(@NotNull TextRange injected) {
     int start = injectedToHost(injected.getStartOffset(), false, true);
+    ProperTextRange fixedTextRange = getFixedTextRange(start);
+    if (fixedTextRange != null) {
+      return fixedTextRange;
+    }
     int end = injectedToHost(injected.getEndOffset(), true, true);
     if (end < start) {
       end = injectedToHost(injected.getEndOffset(), false, true);
     }
     return new ProperTextRange(start, end);
   }
+
+  @Nullable("null means invalid")
+  private ProperTextRange getFixedTextRange(int startOffset) {
+    ProperTextRange fixedTextRange;
+    TextRange textRange = getHostRange(startOffset);
+    if (textRange == null) {
+      // todo[cdr] check this fix. prefix/suffix code annotation case
+      textRange = findNearestTextRange(startOffset);
+      if (textRange == null) return null;
+      boolean isBefore = startOffset < textRange.getStartOffset();
+      fixedTextRange = new ProperTextRange(isBefore ? textRange.getStartOffset() - 1 : textRange.getEndOffset(),
+                                     isBefore ? textRange.getStartOffset() : textRange.getEndOffset() + 1);
+    }
+    else {
+      fixedTextRange = null;
+    }
+    return fixedTextRange;
+  }
+
+  @Nullable("null means invalid")
+  private TextRange findNearestTextRange(int startOffset) {
+    TextRange textRange = null;
+    for (Segment marker : getHostRanges()) {
+      TextRange curRange = ProperTextRange.create(marker);
+      if (curRange.getStartOffset() > startOffset && textRange != null) break;
+      textRange = curRange;
+    }
+    return textRange;
+  }
+
 
   @Override
   public int injectedToHostLine(int line) {
