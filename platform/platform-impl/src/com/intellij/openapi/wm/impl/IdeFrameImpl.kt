@@ -58,8 +58,6 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
     fun appClosing() {}
   }
 
-  override fun createRootPane(): JRootPane? = null
-
   internal fun doSetRootPane(rootPane: JRootPane?) {
     super.setRootPane(rootPane)
     if (rootPane != null && isVisible && SystemInfoRt.isMac) {
