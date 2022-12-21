@@ -56,6 +56,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.psi.PsiDocumentManager;
@@ -1063,11 +1064,25 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         window.setTitleActions(titleActions);
       }
     }
+
+    List<AnAction> tabActions = new ArrayList<>();
+    createTabActions(tabActions);
+    if (!tabActions.isEmpty()) {
+      ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
+      if (window instanceof ToolWindowEx) {
+        ((ToolWindowEx)window).setTabActions(tabActions.toArray(AnAction[]::new));
+      }
+    }
   }
 
   protected void createTitleActions(@NotNull List<? super AnAction> titleActions) {
     AnAction action = ActionManager.getInstance().getAction("ProjectViewToolbar");
     if (action != null) titleActions.add(action);
+  }
+
+  protected void createTabActions(@NotNull List<? super AnAction> tabActions) {
+    AnAction action = ActionManager.getInstance().getAction("ProjectViewTabToolbar");
+    if (action != null) tabActions.add(action);
   }
 
   protected boolean isShowMembersOptionSupported() {
