@@ -7,10 +7,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,11 +38,8 @@ final class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
     super(project, vcs.getShortName());
     myVcs = vcs;
     myProjectSettings = projectSettings;
-  }
 
-  @Override
-  protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
-    connection.subscribe(HgVcs.STATUS_TOPIC, (p, root) -> updateLater());
+    myConnection.subscribe(HgVcs.STATUS_TOPIC, (p, root) -> updateLater());
   }
 
   @Override
@@ -51,7 +48,7 @@ final class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
   }
 
   @Override
-  public StatusBarWidget copy() {
+  public @NotNull StatusBarWidget copy() {
     return new HgStatusWidget(myVcs, getProject(), myProjectSettings);
   }
 
@@ -72,8 +69,9 @@ final class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
   }
 
   @Override
-  protected @NotNull JBPopup getWidgetPopup(@NotNull Project project, @NotNull HgRepository repository) {
-    return HgBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(myStatusBar.getComponent())).asListPopup();
+  protected JBPopup getWidgetPopup(@NotNull Project project, @NotNull HgRepository repository) {
+    StatusBar statusBar = myStatusBar;
+    return statusBar == null ? null : HgBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(statusBar.getComponent())).asListPopup();
   }
 
   @Override

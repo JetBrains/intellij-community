@@ -24,7 +24,6 @@ import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
@@ -47,20 +46,15 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   protected DvcsStatusWidget(@NotNull Project project, @NotNull @Nls String vcsName) {
     super(project);
     myVcsName = vcsName;
-  }
 
-  @Override
-  protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
-    super.registerCustomListeners(connection);
-
-    connection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, new VcsRepositoryMappingListener() {
+    myConnection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, new VcsRepositoryMappingListener() {
       @Override
       public void mappingChanged() {
         LOG.debug("repository mappings changed");
         updateLater();
       }
     });
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         LOG.debug("selection changed");
