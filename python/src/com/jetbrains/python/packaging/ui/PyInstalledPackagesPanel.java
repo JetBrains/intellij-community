@@ -19,6 +19,7 @@ import com.intellij.webcore.packaging.*;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import icons.PythonIcons;
@@ -193,17 +194,17 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         @Override
         public boolean isSelected(AnActionEvent e) {
           final Sdk sdk = getSelectedSdk();
-          return sdk != null && PyPackageManager.getInstance(sdk) instanceof PyCondaPackageManagerImpl &&
-                 ((PyCondaPackageManagerImpl)PyPackageManager.getInstance(sdk)).useConda();
+          var bridge = (PythonPackageManagementServiceBridge)myPackageManagementService;
+          return sdk != null && bridge.isConda() && bridge.getUseConda();
         }
 
         @Override
         public void setSelected(AnActionEvent e, boolean state) {
           final Sdk sdk = getSelectedSdk();
           if (sdk == null) return;
-          final PyPackageManager manager = PyPackageManager.getInstance(sdk);
-          if (manager instanceof PyCondaPackageManagerImpl) {
-            ((PyCondaPackageManagerImpl)manager).useConda(state);
+          var bridge = (PythonPackageManagementServiceBridge)myPackageManagementService;
+          if (bridge.isConda()) {
+            bridge.setUseConda(state);
           }
           updatePackages(myPackageManagementService);
         }
@@ -211,7 +212,8 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         @Override
         public boolean isVisible() {
           final Sdk sdk = getSelectedSdk();
-          return sdk != null && PythonSdkUtil.isConda(sdk);
+          var bridge = (PythonPackageManagementServiceBridge)myPackageManagementService;
+          return sdk != null && bridge.isConda();
         }
 
         @Override
