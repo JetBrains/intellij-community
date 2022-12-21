@@ -8,6 +8,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
+import com.intellij.navigation.TargetPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ToolbarLabelAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -88,7 +89,7 @@ public class ImplementationViewComponent extends JPanel {
     return myElements != null && myElements.length > 0;
   }
 
-  private record FileDescriptor(@NotNull VirtualFile file, @NotNull ImplementationViewElement element) {
+  private record FileDescriptor(@NotNull VirtualFile file, @NotNull TargetPresentation element) {
   }
 
   public ImplementationViewComponent(Collection<? extends ImplementationViewElement> elements,
@@ -257,10 +258,10 @@ public class ImplementationViewComponent extends JPanel {
                                            FileDescriptor value, int index, boolean selected, boolean hasFocus) {
         setBackground(UIUtil.getListBackground(selected, true));
         if (value != null) {
-          ImplementationViewElement element = value.element;
+          @NotNull TargetPresentation targetPresentation = value.element;
           setIcon(getIconForFile(value.file, project));
-          append(element.getPresentableText());
-          String presentation = element.getContainerPresentation();
+          append(targetPresentation.getPresentableText());
+          String presentation = targetPresentation.getContainerText();
           if (presentation != null) {
             append("  ");
             append(StringUtil.trimStart(StringUtil.trimEnd(presentation, ")"), "("), SimpleTextAttributes.GRAYED_ATTRIBUTES);
@@ -352,15 +353,24 @@ public class ImplementationViewComponent extends JPanel {
       VirtualFile file = element.getContainingFile();
       if (file == null) continue;
       if (names.size() > 1) {
-        files.add(new FileDescriptor(file, element));
+        files.add(new FileDescriptor(file, getPresentation(element)));
       }
       else {
-        files.add(new FileDescriptor(file, element.getContainingMemberOrSelf()));
+        files.add(new FileDescriptor(file, getPresentation(element.getContainingMemberOrSelf())));
       }
       candidates.add(element);
     }
 
     fun.fun(candidates.toArray(new ImplementationViewElement[0]), files);
+  }
+
+  @NotNull
+  private static TargetPresentation getPresentation(ImplementationViewElement element) {
+    return TargetPresentation.builder(element.getPresentableText())
+      .locationText(element.getLocationText(), element.getLocationIcon())
+      .containerText(element.getContainerPresentation())
+      .icon(element.getLocationIcon())
+      .presentation();
   }
 
   private static Icon getIconForFile(VirtualFile virtualFile, Project project) {
