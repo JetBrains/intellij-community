@@ -12,7 +12,7 @@ import com.intellij.testFramework.UsefulTestCase
 import java.io.IOException
 import java.util.*
 
-class DirectoryIndexForUnloadedModuleTest : DirectoryIndexTestCase() {
+class UnloadedModulesInProjectFileIndexTest : DirectoryIndexTestCase() {
   @Throws(IOException::class)
   fun testUnloadedModule() {
     val unloadedModule = createModule("unloaded")
