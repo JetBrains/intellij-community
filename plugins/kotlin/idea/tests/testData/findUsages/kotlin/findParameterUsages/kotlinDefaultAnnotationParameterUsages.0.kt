@@ -9,3 +9,5 @@ fun test1() {
 @KAnn(value = "abc")
 fun test2() {
 }
+
+// FIR_COMPARISON
