@@ -98,18 +98,18 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         val resolvedDeclarationsStrings = resolvedDeclaration.map { r -> methodSignature(r.element) }
         assertContainsElements(
             resolvedDeclarationsStrings,
-            "PsiType:void print(PsiType:boolean)",
-            "PsiType:void print(PsiType:char)",
-            "PsiType:void print(PsiType:int)",
-            "PsiType:void print(PsiType:long)",
-            "PsiType:void print(PsiType:float)",
-            "PsiType:void print(PsiType:double)",
-            "PsiType:void print(PsiType:char[])",
-            "PsiType:void print(PsiType:String)",
-            "PsiType:void print(PsiType:Object)"
+            "void print(boolean)",
+            "void print(char)",
+            "void print(int)",
+            "void print(long)",
+            "void print(float)",
+            "void print(double)",
+            "void print(char[])",
+            "void print(java.lang.String)",
+            "void print(java.lang.Object)"
         )
 
-        TestCase.assertEquals("PsiType:Unit", functionCall.getExpressionType()?.toString())
+        TestCase.assertEquals("kotlin.Unit", functionCall.getExpressionType()?.canonicalText)
 
         val firstArgument = main.findElementByText<UElement>("1")
         val firstParameter = functionCall.getArgumentForParameter(0)
@@ -117,7 +117,14 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
     }
 
     private fun methodSignature(psiMethod: PsiMethod): String {
-        return "${psiMethod.returnType} ${psiMethod.name}(${psiMethod.parameterList.parameters.joinToString(", ") { it.type.toString() }})"
+        return buildString {
+            append(psiMethod.returnType?.canonicalText)
+            append(" ")
+            append(psiMethod.name)
+            append("(")
+            psiMethod.parameterList.parameters.joinTo(this, separator = ", ") { it.type.canonicalText }
+            append(")")
+        }
     }
 
     fun checkMultiResolveJavaAmbiguous(myFixture: JavaCodeInsightTestFixture) {
@@ -616,7 +623,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             .orFail("cant resolve from $withDefaultCapitalize")
         TestCase.assertEquals("capitalize", withDefaultCapitalizeResolved.name)
         TestCase.assertEquals(1, withDefaultCapitalizeResolved.parameterList.parametersCount)
-        TestCase.assertEquals("PsiType:String", withDefaultCapitalizeResolved.parameterList.parameters[0].type.toString())
+        TestCase.assertEquals("java.lang.String", withDefaultCapitalizeResolved.parameterList.parameters[0].type.canonicalText)
 
         val withoutDefaultCapitalize = uFile.findElementByTextFromPsi<UCallExpression>("capitalize(Locale.US)", strict = false)
             .orFail("cant convert to UCallExpression")
@@ -624,8 +631,8 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             .orFail("cant resolve from $withoutDefaultCapitalize")
         TestCase.assertEquals("capitalize", withoutDefaultCapitalizeResolved.name)
         TestCase.assertEquals(2, withoutDefaultCapitalizeResolved.parameterList.parametersCount)
-        TestCase.assertEquals("PsiType:String", withoutDefaultCapitalizeResolved.parameterList.parameters[0].type.toString())
-        TestCase.assertEquals("PsiType:Locale", withoutDefaultCapitalizeResolved.parameterList.parameters[1].type.toString())
+        TestCase.assertEquals("java.lang.String", withoutDefaultCapitalizeResolved.parameterList.parameters[0].type.canonicalText)
+        TestCase.assertEquals("java.util.Locale", withoutDefaultCapitalizeResolved.parameterList.parameters[1].type.canonicalText)
 
         val withDefaultUpperCase = uFile.findElementByTextFromPsi<UCallExpression>("toUpperCase()", strict = false)
             .orFail("cant convert to UCallExpression")
@@ -633,7 +640,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             .orFail("cant resolve from $withDefaultUpperCase")
         TestCase.assertEquals("toUpperCase", withDefaultUpperCaseResolved.name)
         TestCase.assertEquals(1, withDefaultUpperCaseResolved.parameterList.parametersCount)
-        TestCase.assertEquals("PsiType:String", withDefaultUpperCaseResolved.parameterList.parameters[0].type.toString())
+        TestCase.assertEquals("java.lang.String", withDefaultUpperCaseResolved.parameterList.parameters[0].type.canonicalText)
 
         val withoutDefaultUpperCase = uFile.findElementByTextFromPsi<UCallExpression>("toUpperCase(Locale.US)", strict = false)
             .orFail("cant convert to UCallExpression")
@@ -641,8 +648,8 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             .orFail("cant resolve from $withoutDefaultUpperCase")
         TestCase.assertEquals("toUpperCase", withoutDefaultUpperCaseResolved.name)
         TestCase.assertEquals(2, withoutDefaultUpperCaseResolved.parameterList.parametersCount)
-        TestCase.assertEquals("PsiType:String", withoutDefaultUpperCaseResolved.parameterList.parameters[0].type.toString())
-        TestCase.assertEquals("PsiType:Locale", withoutDefaultUpperCaseResolved.parameterList.parameters[1].type.toString())
+        TestCase.assertEquals("java.lang.String", withoutDefaultUpperCaseResolved.parameterList.parameters[0].type.canonicalText)
+        TestCase.assertEquals("java.util.Locale", withoutDefaultUpperCaseResolved.parameterList.parameters[1].type.canonicalText)
     }
 
     fun checkArgumentMappingDefaultValue(myFixture: JavaCodeInsightTestFixture) {
@@ -869,10 +876,10 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         val setResolved = (set.resolve() as? PsiMethod)
             .orFail("cant resolve from $set")
         TestCase.assertEquals("set", setResolved.name)
-        TestCase.assertEquals(2, setResolved.parameters.size)
-        TestCase.assertEquals("PsiType:long", setResolved.parameters[0].type.toString())
-        TestCase.assertEquals("PsiType:E", setResolved.parameters[1].type.toString())
-        TestCase.assertEquals("PsiType:void", setResolved.returnType?.toString())
+        TestCase.assertEquals(2, setResolved.parameterList.parameters.size)
+        TestCase.assertEquals("long", setResolved.parameterList.parameters[0].type.canonicalText)
+        TestCase.assertEquals("E", setResolved.parameterList.parameters[1].type.canonicalText)
+        TestCase.assertEquals("void", setResolved.returnType?.canonicalText)
 
         val op = uFile.findElementByTextFromPsi<UBinaryExpression>("array[42L] =", strict = false)
             .orFail("cant convert to UBinaryExpression")
@@ -885,9 +892,9 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         val getResolved = (get.resolve() as? PsiMethod)
             .orFail("cant resolve from $get")
         TestCase.assertEquals("get", getResolved.name)
-        TestCase.assertEquals(1, getResolved.parameters.size)
-        TestCase.assertEquals("PsiType:int", getResolved.parameters[0].type.toString())
-        TestCase.assertEquals("PsiType:E", getResolved.returnType?.toString())
+        TestCase.assertEquals(1, getResolved.parameterList.parameters.size)
+        TestCase.assertEquals("int", getResolved.parameterList.parameters[0].type.canonicalText)
+        TestCase.assertEquals("E", getResolved.returnType?.canonicalText)
     }
 
     fun checkOperatorOverloads(myFixture: JavaCodeInsightTestFixture) {
@@ -1083,7 +1090,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             .orFail("cant resolve $uCallExpression")
         // NB: the return type is not a substituted type, String, but the original one, T, since it's resolved to
         // the original function Box#foo()T, not a fake overridden one in SubBox.
-        TestCase.assertEquals("PsiType:T", foo.returnType?.toString())
+        TestCase.assertEquals("T", foo.returnType?.canonicalText)
     }
 
     fun checkResolveEnumEntrySuperType(myFixture: JavaCodeInsightTestFixture) {
