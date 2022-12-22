@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import kotlin.Pair;
 import org.jdom.Element;
@@ -274,33 +275,27 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     Set<String> foundIds = findConfigurablesByDescriptions(descriptionOptions);
     if (foundIds == null) return new ConfigurableHit(nameHits, nameFullHits, Collections.emptySet());
 
-    Set<Configurable> contentHits = new LinkedHashSet<>(effectiveConfigurables);
-    for (Iterator<Configurable> it = contentHits.iterator(); it.hasNext(); ) {
-      Configurable configurable = it.next();
-      boolean needToRemove = true;
+    List<Configurable> contentHits = ContainerUtil.filter(effectiveConfigurables, configurable -> {
       if (configurable instanceof SearchableConfigurable &&
           foundIds.contains(((SearchableConfigurable)configurable).getId())) {
-        needToRemove = false;
+        return true;
       }
       if (configurable instanceof SearchableConfigurable.Merged) {
         final List<Configurable> mergedConfigurables = ((SearchableConfigurable.Merged)configurable).getMergedConfigurables();
         for (Configurable mergedConfigurable : mergedConfigurables) {
           if (mergedConfigurable instanceof SearchableConfigurable &&
               foundIds.contains(((SearchableConfigurable)mergedConfigurable).getId())) {
-            needToRemove = false;
-            break;
+            return true;
           }
         }
       }
-      if (needToRemove) {
-        it.remove();
-      }
-    }
+      return false;
+    });
 
-    if (type == DocumentEvent.EventType.CHANGE && previouslyFiltered != null && effectiveConfigurables.equals(contentHits)) {
+    if (type == DocumentEvent.EventType.CHANGE && previouslyFiltered != null && effectiveConfigurables.size() == contentHits.size()) {
       return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, project);
     }
-    return new ConfigurableHit(nameHits, nameFullHits, contentHits);
+    return new ConfigurableHit(nameHits, nameFullHits, new LinkedHashSet<>(contentHits));
   }
 
   @Nullable
