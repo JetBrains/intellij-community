@@ -257,23 +257,59 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     }
 
     // operate with substring
+    Set<String> descriptionOptions = new HashSet<>();
     if (options.isEmpty()) {
       String[] components = WORD_SEPARATOR_CHARS.split(optionToCheck);
       if (components.length > 0) {
-        Collections.addAll(options, components);
+        Collections.addAll(descriptionOptions, components);
       }
       else {
-        options.add(option);
+        descriptionOptions.add(option);
+      }
+    }
+    else {
+      descriptionOptions.addAll(options);
+    }
+
+    Set<String> foundIds = findConfigurablesByDescriptions(descriptionOptions);
+    if (foundIds == null) return new ConfigurableHit(nameHits, nameFullHits, Collections.emptySet());
+
+    Set<Configurable> contentHits = new LinkedHashSet<>(effectiveConfigurables);
+    for (Iterator<Configurable> it = contentHits.iterator(); it.hasNext(); ) {
+      Configurable configurable = it.next();
+      boolean needToRemove = true;
+      if (configurable instanceof SearchableConfigurable &&
+          foundIds.contains(((SearchableConfigurable)configurable).getId())) {
+        needToRemove = false;
+      }
+      if (configurable instanceof SearchableConfigurable.Merged) {
+        final List<Configurable> mergedConfigurables = ((SearchableConfigurable.Merged)configurable).getMergedConfigurables();
+        for (Configurable mergedConfigurable : mergedConfigurables) {
+          if (mergedConfigurable instanceof SearchableConfigurable &&
+              foundIds.contains(((SearchableConfigurable)mergedConfigurable).getId())) {
+            needToRemove = false;
+            break;
+          }
+        }
+      }
+      if (needToRemove) {
+        it.remove();
       }
     }
 
-    Set<Configurable> contentHits = new LinkedHashSet<>(effectiveConfigurables);
+    if (type == DocumentEvent.EventType.CHANGE && previouslyFiltered != null && effectiveConfigurables.equals(contentHits)) {
+      return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, project);
+    }
+    return new ConfigurableHit(nameHits, nameFullHits, contentHits);
+  }
 
+  @Nullable
+  private Set<String> findConfigurablesByDescriptions(@NotNull Set<String> descriptionOptions) {
     Set<String> helpIds = null;
-    for (String opt : options) {
-      final Set<OptionDescription> optionIds = getAcceptableDescriptions(opt);
+    for (String prefix : descriptionOptions) {
+      final Set<OptionDescription> optionIds = getAcceptableDescriptions(prefix);
       if (optionIds == null) {
-        return new ConfigurableHit(nameHits, nameFullHits, Collections.emptySet());
+        return null;
       }
 
       final Set<String> ids = new HashSet<>();
@@ -285,34 +321,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
       }
       helpIds.retainAll(ids);
     }
-
-    if (helpIds != null) {
-      for (Iterator<Configurable> it = contentHits.iterator(); it.hasNext(); ) {
-        Configurable configurable = it.next();
-        boolean needToRemove = true;
-        if (configurable instanceof SearchableConfigurable && helpIds.contains(((SearchableConfigurable)configurable).getId())) {
-          needToRemove = false;
-        }
-        if (configurable instanceof SearchableConfigurable.Merged) {
-          final List<Configurable> mergedConfigurables = ((SearchableConfigurable.Merged)configurable).getMergedConfigurables();
-          for (Configurable mergedConfigurable : mergedConfigurables) {
-            if (mergedConfigurable instanceof SearchableConfigurable &&
-                helpIds.contains(((SearchableConfigurable)mergedConfigurable).getId())) {
-              needToRemove = false;
-              break;
-            }
-          }
-        }
-        if (needToRemove) {
-          it.remove();
-        }
-      }
-    }
-
-    if (type == DocumentEvent.EventType.CHANGE && previouslyFiltered != null && effectiveConfigurables.equals(contentHits)) {
-      return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, project);
-    }
-    return new ConfigurableHit(nameHits, nameFullHits, contentHits);
+    return helpIds;
   }
 
   public synchronized @Nullable Set<OptionDescription> getAcceptableDescriptions(@Nullable String prefix) {
