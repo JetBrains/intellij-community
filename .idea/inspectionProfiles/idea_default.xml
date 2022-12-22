@@ -1425,6 +1425,24 @@
         <constraint name="psiElement" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Raw runBlocking" description="Standard library `runBlocking` may block indefinitely because does not take thread context `Job` or thread `ProgressIndicator` into account.&#10;Use `com.intellij.openapi.progress.runBlockingCancellable` instead. Read its doc if it fails with an error that there is no job or indicator in the current thread." suppressId="RAW_RUN_BLOCKING" problemDescriptor="Use `runBlockingCancellable` instead" text="runBlocking {&#10;  $statement$&#10;}&#10;" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.openapi.progress.runBlockingCancellable {&#10;  $statement$&#10;}&#10;">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="statement" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Raw runBlocking" text="runBlocking($context$, $block$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.openapi.progress.runBlockingCancellable {&#10;  withContext($context$, $block$)&#10;}">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="context" within="" contains="" />
+        <constraint name="block" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Raw runBlocking" text="runBlocking($context$) {&#10;  $statement$&#10;}" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.openapi.progress.runBlockingCancellable {&#10;  withContext($context$) {&#10;    $statement$&#10;  }&#10;}">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="statement" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="context" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Raw runBlocking" text="runBlocking(block = $block$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.openapi.progress.runBlockingCancellable($block$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="block" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="reachabilityFence() shouldn't be called with complex expression" description="Only local variable references and &quot;this&quot; should be passed to reachabilityFence() method. &#10;Passing complex expression which calculate/create some object doesn't make sense &#10;because avoiding garbage-collecting this object is trivial when the object is just created. " problemDescriptor="Only locals/'this' should be passed to reachabilityFence()" text="reachabilityFence($k$);" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="k" regexp="\w+" negateName="true" within="" contains="" />

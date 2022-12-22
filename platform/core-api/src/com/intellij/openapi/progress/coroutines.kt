@@ -118,6 +118,7 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend Cor
                   currentJob +
                   CoroutineName("job run blocking")
     replaceThreadContext(EmptyCoroutineContext).use {
+      @Suppress("RAW_RUN_BLOCKING")
       runBlocking(context, action)
     }
   }
@@ -150,6 +151,7 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
                   CoroutineName("indicator run blocking") +
                   IndicatorRawProgressReporter(indicator).asContextElement()
     replaceThreadContext(EmptyCoroutineContext).use {
+      @Suppress("RAW_RUN_BLOCKING")
       runBlocking(context, action)
     }
   }

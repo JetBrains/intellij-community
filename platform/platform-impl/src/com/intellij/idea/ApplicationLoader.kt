@@ -8,7 +8,8 @@ import com.intellij.diagnostic.*
 import com.intellij.history.LocalHistory
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.ui.IconMapLoader
@@ -50,9 +51,8 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
-import java.util.concurrent.*
 import java.util.concurrent.CancellationException
+import java.util.concurrent.CompletableFuture
 import java.util.function.BiFunction
 import kotlin.system.exitProcess
 
@@ -60,6 +60,7 @@ import kotlin.system.exitProcess
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
 fun initApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
+  @Suppress("RAW_RUN_BLOCKING")
   runBlocking(rootTask()) {
     val euaTaskDeferred = if (AppMode.isHeadless()) {
       null
