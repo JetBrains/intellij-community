@@ -214,13 +214,18 @@ public final class ReflectionUtil {
   }
 
   public static @Nullable Class<?> getMethodDeclaringClass(@NotNull Class<?> instanceClass, @NonNls @NotNull String methodName, Class<?> @NotNull ... parameters) {
-    Method method = getMethod(instanceClass, methodName, parameters);
-    if (method != null) return method.getDeclaringClass();
+    try {
+      return instanceClass.getMethod(methodName, parameters).getDeclaringClass();
+    }
+    catch (NoSuchMethodException ignore) {
+    }
 
     while (instanceClass != null) {
-      method = getDeclaredMethod(instanceClass, methodName, parameters);
-      if (method != null) return method.getDeclaringClass();
-
+      try {
+        return instanceClass.getDeclaredMethod(methodName, parameters).getDeclaringClass();
+      }
+      catch (NoSuchMethodException ignored) {
+      }
       instanceClass = instanceClass.getSuperclass();
     }
     return null;
