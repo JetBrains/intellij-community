@@ -72,7 +72,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   override fun removeFacet(facet: Facet<*>?) {
     if (facet == null) return
     if (facet is FacetBridge<*>) {
-      facet.removeFromStorage(diff, moduleEntity)
+      facet.removeFromStorage(diff)
     } else {
       val facetEntity = diff.facetMapping().getEntities(facet).singleOrNull() as? FacetEntity ?: return
       removeFacetEntityWithSubFacets(facetEntity)
@@ -97,7 +97,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
 
   override fun rename(facet: Facet<*>, newName: String) {
     if (facet is FacetBridge<*>) {
-      facet.rename(diff, moduleEntity, newName)
+      facet.rename(diff, newName)
     } else {
       val entity = diff.facetMapping().getEntities(facet).single() as FacetEntity
       val newEntity = diff.modifyEntity(entity) {
