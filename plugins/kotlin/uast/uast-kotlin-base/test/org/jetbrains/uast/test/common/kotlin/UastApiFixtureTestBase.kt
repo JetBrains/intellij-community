@@ -27,12 +27,12 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         val uFile = myFixture.file.toUElement()!!
 
         TestCase.assertEquals(
-            "PsiType:List<?>",
-            uFile.findElementByTextFromPsi<UExpression>("arr[0]").getExpressionType().toString()
+            "java.util.List<?>",
+            uFile.findElementByTextFromPsi<UExpression>("arr[0]").getExpressionType()?.canonicalText
         )
         TestCase.assertEquals(
-            "PsiType:List<?>",
-            uFile.findElementByTextFromPsi<UExpression>("lst[0]").getExpressionType().toString()
+            "java.util.List<?>",
+            uFile.findElementByTextFromPsi<UExpression>("lst[0]").getExpressionType()?.canonicalText
         )
     }
 
@@ -121,7 +121,7 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
             .orFail("cant convert to UCallExpression")
         TestCase.assertEquals("putString", uCallExpression.methodName)
-        TestCase.assertEquals("PsiType:MyBundle", uCallExpression.receiverType?.toString())
+        TestCase.assertEquals("MyBundle", uCallExpression.receiverType?.canonicalText)
     }
 
     fun checkSubstitutedReceiverType(myFixture: JavaCodeInsightTestFixture) {
@@ -141,7 +141,7 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
             .orFail("cant convert to UCallExpression")
         TestCase.assertEquals("use", uCallExpression.methodName)
-        TestCase.assertEquals("PsiType:String", uCallExpression.receiverType?.toString())
+        TestCase.assertEquals("java.lang.String", uCallExpression.receiverType?.canonicalText)
     }
 
     fun checkCallKindOfSamConstructor(myFixture: JavaCodeInsightTestFixture) {
@@ -176,14 +176,19 @@ interface UastApiFixtureTestBase : UastPluginSelection {
             """.trimIndent()
         )
 
-        val errorType = "PsiType:<ErrorType>"
-        val expectedPsiTypes = setOf("PsiType:Inner", errorType)
+        val errorType = "<ErrorType>"
+        val expectedPsiTypes = setOf("Outer.Inner", errorType)
         myFixture.file.accept(object : PsiRecursiveElementVisitor() {
             override fun visitElement(element: PsiElement) {
                 // Mimic what [IconLineMarkerProvider#collectSlowLineMarkers] does.
                 element.toUElementOfType<UCallExpression>()?.let {
-                    val expressionType = it.getExpressionType()?.toString() ?: errorType
-                    TestCase.assertTrue(expressionType in expectedPsiTypes)
+                    val expressionType = it.getExpressionType()?.canonicalText ?: errorType
+                    TestCase.assertTrue(
+                        expressionType,
+                        expressionType in expectedPsiTypes ||
+                                // FE1.0 outputs Outer.no_name_in_PSI_hashcode.Inner
+                                (expressionType.startsWith("Outer.") && expressionType.endsWith(".Inner"))
+                    )
                 }
 
                 super.visitElement(element)
@@ -223,7 +228,7 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         val uFile = myFixture.file.toUElement()!!
         val uLambdaExpression = uFile.findElementByTextFromPsi<ULambdaExpression>("{ dummy() }")
             .orFail("cant convert to ULambdaExpression")
-        TestCase.assertEquals("PsiType:ThrowingRunnable", uLambdaExpression.functionalInterfaceType?.toString())
+        TestCase.assertEquals("test.pkg.ThrowingRunnable", uLambdaExpression.functionalInterfaceType?.canonicalText)
     }
 
 }
