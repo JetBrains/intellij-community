@@ -73,6 +73,11 @@ public class KotlinAddImportActionTestGenerated extends AbstractKotlinAddImportA
         runTest("testData/idea/actions/kotlinAddImportAction/KotlinDurations.kt");
     }
 
+    @TestMetadata("KotlinDurations2.kt")
+    public void testKotlinDurations2() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/KotlinDurations2.kt");
+    }
+
     @TestMetadata("KotlinMinCollections.kt")
     public void testKotlinMinCollections() throws Exception {
         runTest("testData/idea/actions/kotlinAddImportAction/KotlinMinCollections.kt");
@@ -86,6 +91,11 @@ public class KotlinAddImportActionTestGenerated extends AbstractKotlinAddImportA
     @TestMetadata("MultipleMethodsAvailable.kt")
     public void testMultipleMethodsAvailable() throws Exception {
         runTest("testData/idea/actions/kotlinAddImportAction/MultipleMethodsAvailable.kt");
+    }
+
+    @TestMetadata("MultipleMethodsAvailable2.kt")
+    public void testMultipleMethodsAvailable2() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/MultipleMethodsAvailable2.kt");
     }
 
     @TestMetadata("OverloadsPresent.kt")

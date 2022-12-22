@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.completion.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.completion.KotlinStatisticsInfo
@@ -61,6 +62,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
+import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.types.typeUtil.replaceArgumentsWithStarProjections
 import java.awt.BorderLayout
 import javax.swing.Icon
@@ -321,21 +323,14 @@ internal class CallExpressionWeigher(element: KtNameReferenceExpression?) {
         val receiverExpression = (element?.parent as? KtQualifiedExpression)?.receiverExpression ?: element?.getParentOfType<KtLambdaExpression>(false)
         receiverType = if (receiverExpression != null) {
             val context = receiverExpression.analyze(BodyResolveMode.PARTIAL)
-            if (receiverExpression is KtLambdaExpression) {
+            val type = if (receiverExpression is KtLambdaExpression) {
                 val functionDescriptor = context[BindingContext.FUNCTION, receiverExpression.functionLiteral]
-                val implicitReceiverType = functionDescriptor?.extensionReceiverParameter?.type
-                if (implicitReceiverType != null) {
-                    implicitReceiverType
-                } else {
-                    receiverExpression.getParentOfType<KtClassOrObject>(false)?.let { classOrObject ->
-                        val ctx = classOrObject.analyze(BodyResolveMode.PARTIAL)
-                        val descriptor = ctx[BindingContext.DECLARATION_TO_DESCRIPTOR, classOrObject] as? ClassDescriptor
-                        descriptor?.defaultType
-                    }
-                }
+                functionDescriptor?.extensionReceiverParameter?.type ?: receiverExpression.getParentOfType<KtClassOrObject>(false)
+                    ?.resolveToDescriptorIfAny()?.defaultType
             } else {
                 receiverExpression.getType(context)
             }
+            type?.takeIf { it.isMarkedNullable }?.makeNotNullable() ?: type
         } else {
             null
         }
