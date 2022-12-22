@@ -6,6 +6,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker.checkByJavaFile
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker.checkDescriptorsLeak
@@ -36,11 +37,14 @@ abstract class AbstractUltraLightClassLoadingTest : KotlinLightCodeInsightFixtur
                 null
             } as? KtFile
 
+            if (file.isScript()) {
+                ScriptConfigurationManager.updateScriptDependenciesSynchronously(file)
+            }
+
             val ktClassOrObjects = UltraLightChecker.allClasses(file)
-            val classList = ktClassOrObjects.mapNotNull(KtClassOrObject::toLightClass) + listOfNotNull(
-                file,
-                additionalPsiFile,
-            ).flatMap(KtFile::toLightElements).filterIsInstance<PsiClass>().distinct()
+            val classList = listOfNotNull(file.script?.toLightClass()) +
+                    ktClassOrObjects.mapNotNull(KtClassOrObject::toLightClass) +
+                    listOfNotNull(file, additionalPsiFile).flatMap(KtFile::toLightElements).filterIsInstance<PsiClass>().distinct()
 
             checkByJavaFile(testDataPath, classList)
             classList.forEach { checkDescriptorsLeak(it) }

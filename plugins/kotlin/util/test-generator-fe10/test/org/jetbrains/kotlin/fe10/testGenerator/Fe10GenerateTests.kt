@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.addImportAlias.AbstractAddImportAliasTest53
 import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightClassLoadingTest
 import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightClassSanityTest
 import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightFacadeClassTest15
-import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightScriptLoadingTest
 import org.jetbrains.kotlin.checkers.*
 import org.jetbrains.kotlin.copyright.AbstractUpdateKotlinCopyrightTest
 import org.jetbrains.kotlin.findUsages.*
@@ -97,10 +96,7 @@ import org.jetbrains.kotlin.idea.parameterInfo.AbstractParameterInfoTest
 import org.jetbrains.kotlin.idea.perf.stats.AbstractPerformanceBasicCompletionHandlerStatNamesTest
 import org.jetbrains.kotlin.idea.perf.stats.AbstractPerformanceHighlightingStatNamesTest
 import org.jetbrains.kotlin.idea.perf.synthetic.*
-import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiFileTest
-import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiModuleTest
-import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
-import org.jetbrains.kotlin.idea.quickfix.AbstractSharedK1QuickFixTest
+import org.jetbrains.kotlin.idea.quickfix.*
 import org.jetbrains.kotlin.idea.refactoring.AbstractNameSuggestionProviderTest
 import org.jetbrains.kotlin.idea.refactoring.copy.AbstractCopyTest
 import org.jetbrains.kotlin.idea.refactoring.copy.AbstractMultiModuleCopyTest
@@ -1045,23 +1041,15 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractIdeLightClassTest> {
-            model("asJava/lightClasses/lightClassByFqName", excludedDirectories = listOf("delegation", "script"), pattern = KT_WITHOUT_DOTS)
-        }
-
-        testClass<AbstractIdeLightClassForScriptTest> {
-            model("asJava/lightClasses/script/ide", pattern = KT_OR_KTS_WITHOUT_DOTS)
+            model("asJava/lightClasses/lightClassByFqName", pattern = KT_OR_KTS_WITHOUT_DOTS)
         }
 
         testClass<AbstractUltraLightClassSanityTest> {
-            model("asJava/lightClasses/lightClassByFqName", pattern = KT_OR_KTS)
+            model("asJava/lightClasses/lightClassByFqName", pattern = KT_OR_KTS_WITHOUT_DOTS)
         }
 
         testClass<AbstractUltraLightClassLoadingTest> {
-            model("asJava/lightClasses/lightClassByPsi", pattern = KT_OR_KTS)
-        }
-
-        testClass<AbstractUltraLightScriptLoadingTest> {
-            model("asJava/lightClasses/ultraLightScripts", pattern = KT_OR_KTS)
+            model("asJava/lightClasses/lightClassByPsi", pattern = KT_OR_KTS_WITHOUT_DOTS)
         }
 
         testClass<AbstractUltraLightFacadeClassTest15> {

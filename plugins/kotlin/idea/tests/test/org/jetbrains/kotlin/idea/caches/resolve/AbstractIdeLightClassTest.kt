@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.*
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.KotlinDaemonAnalyzerTestCase
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
@@ -27,8 +27,9 @@ import kotlin.test.assertNotNull
 abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase() {
     fun doTest(@Suppress("UNUSED_PARAMETER") unused: String) {
         val fileName = fileName()
+        val fileExtension = fileName.substringAfterLast('.')
         val extraFilePath = when {
-            fileName.endsWith(fileExtension) -> fileName.replace(fileExtension, ".extra$fileExtension")
+            fileName.endsWith(fileExtension) -> fileName.replace(fileExtension, "extra.$fileExtension")
             else -> error("Invalid test data extension")
         }
 
@@ -57,8 +58,6 @@ abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase
     }
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk8()
-
-    open val fileExtension = ".kt"
 }
 
 abstract class AbstractIdeCompiledLightClassTest : KotlinDaemonAnalyzerTestCase() {
