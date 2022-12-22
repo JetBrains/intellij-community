@@ -162,4 +162,77 @@ class SingleEventDispatcherTest {
       testDetach(serviceDisposable, eventDisposable, listenerDisposable)
     }
   }
+
+  @Test
+  fun `test filtered event dispatcher`() {
+    val mainDispatcher = SingleEventDispatcher.create<String>()
+    val parameter1Dispatcher = mainDispatcher.filterEvents { it == "parameter1" }
+    val parameter2Dispatcher = mainDispatcher.filterEvents { it == "parameter2" }
+
+    val mainEventCounter = AtomicInteger()
+    val parameter1EventCounter = AtomicInteger()
+    val parameter2EventCounter = AtomicInteger()
+
+    val counters = listOf(mainEventCounter, parameter1EventCounter, parameter2EventCounter)
+
+    Disposer.newDisposable().use { disposable ->
+      mainEventCounter.set(0)
+      parameter1EventCounter.set(0)
+      parameter2EventCounter.set(0)
+
+      mainDispatcher.whenEventHappened(disposable) {
+        mainEventCounter.incrementAndGet()
+      }
+      parameter1Dispatcher.whenEventHappened(disposable) {
+        assertEquals("parameter1", it)
+        parameter1EventCounter.incrementAndGet()
+      }
+      parameter2Dispatcher.whenEventHappened(disposable) {
+        assertEquals("parameter2", it)
+        parameter2EventCounter.incrementAndGet()
+      }
+
+      assertEquals(listOf(0, 0, 0), counters.map { it.get() })
+      mainDispatcher.fireEvent("parameter")
+      assertEquals(listOf(1, 0, 0), counters.map { it.get() })
+      mainDispatcher.fireEvent("parameter1")
+      assertEquals(listOf(2, 1, 0), counters.map { it.get() })
+      mainDispatcher.fireEvent("parameter2")
+      assertEquals(listOf(3, 1, 1), counters.map { it.get() })
+      mainDispatcher.fireEvent("parameter1")
+      assertEquals(listOf(4, 2, 1), counters.map { it.get() })
+      mainDispatcher.fireEvent("parameter2")
+      assertEquals(listOf(5, 2, 2), counters.map { it.get() })
+    }
+
+    Disposer.newDisposable().use { disposable ->
+      mainEventCounter.set(0)
+      parameter1EventCounter.set(0)
+      parameter2EventCounter.set(0)
+
+      mainDispatcher.whenEventHappened(disposable) {
+        mainEventCounter.incrementAndGet()
+      }
+      parameter1Dispatcher.onceWhenEventHappened(disposable) {
+        assertEquals("parameter1", it)
+        parameter1EventCounter.incrementAndGet()
+      }
+      parameter2Dispatcher.onceWhenEventHappened(disposable) {
+        assertEquals("parameter2", it)
+        parameter2EventCounter.incrementAndGet()
+      }
+
+      assertEquals(listOf(0, 0, 0), counters.map { it.get() })
+      mainDispatcher.fireEvent("parameter")
+      assertEquals(listOf(1, 0, 0), counters.map { it.get() })
+      mainDispatcher.fireEvent("parameter1")
+      assertEquals(listOf(2, 1, 0), counters.map { it.get() })
+      mainDispatcher.fireEvent("parameter2")
+      assertEquals(listOf(3, 1, 1), counters.map { it.get() })
+      mainDispatcher.fireEvent("parameter1")
+      assertEquals(listOf(4, 1, 1), counters.map { it.get() })
+      mainDispatcher.fireEvent("parameter2")
+      assertEquals(listOf(5, 1, 1), counters.map { it.get() })
+    }
+  }
 }

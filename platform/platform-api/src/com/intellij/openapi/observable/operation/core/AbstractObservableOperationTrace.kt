@@ -2,6 +2,8 @@
 package com.intellij.openapi.observable.operation.core
 
 import com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+import com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
+import com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2
 import com.intellij.openapi.observable.operation.OperationExecutionId
 import com.intellij.openapi.observable.operation.OperationExecutionStatus
 import org.jetbrains.annotations.ApiStatus
@@ -15,18 +17,18 @@ abstract class AbstractObservableOperationTrace : ObservableTaskOperationTrace {
   private val finishTaskMulticaster = SingleEventDispatcher.create2<OperationExecutionId, OperationExecutionStatus>()
   private val detachTaskMulticaster = SingleEventDispatcher.create<OperationExecutionId>()
 
-  override val scheduleTaskObservable: SingleEventDispatcher.Observable1<OperationExecutionId> = scheduleTaskMulticaster
-  override val startTaskObservable: SingleEventDispatcher.Observable1<OperationExecutionId> = startTaskMulticaster
-  override val finishTaskObservable: SingleEventDispatcher.Observable2<OperationExecutionId, OperationExecutionStatus> = finishTaskMulticaster
-  override val detachTaskObservable: SingleEventDispatcher.Observable1<OperationExecutionId> = detachTaskMulticaster
+  override val scheduleTaskObservable: SingleEventDispatcher<OperationExecutionId> = scheduleTaskMulticaster
+  override val startTaskObservable: SingleEventDispatcher<OperationExecutionId> = startTaskMulticaster
+  override val finishTaskObservable: SingleEventDispatcher2<OperationExecutionId, OperationExecutionStatus> = finishTaskMulticaster
+  override val detachTaskObservable: SingleEventDispatcher<OperationExecutionId> = detachTaskMulticaster
 
   private val scheduleMulticaster = SingleEventDispatcher.create()
   private val startMulticaster = SingleEventDispatcher.create()
   private val finishMulticaster = SingleEventDispatcher.create()
 
-  override val scheduleObservable: SingleEventDispatcher.Observable = scheduleMulticaster
-  override val startObservable: SingleEventDispatcher.Observable = startMulticaster
-  override val finishObservable: SingleEventDispatcher.Observable = finishMulticaster
+  override val scheduleObservable: SingleEventDispatcher0 = scheduleMulticaster
+  override val startObservable: SingleEventDispatcher0 = startMulticaster
+  override val finishObservable: SingleEventDispatcher0 = finishMulticaster
 
   protected fun fireOperationScheduled() =
     scheduleMulticaster.fireEvent()
