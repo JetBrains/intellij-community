@@ -18,9 +18,6 @@ abstract class AbstractUltraLightClassSanityTest : KotlinLightCodeInsightFixture
         val sourceText = ioFile.readText()
 
         val file = myFixture.addFileToProject(ioFile.name, sourceText) as KtFile
-
-        UltraLightChecker.checkForReleaseCoroutine(sourceText, module)
-
         if (file.safeIsScript()) {
             ScriptConfigurationManager.updateScriptDependenciesSynchronously(file)
         }
