@@ -60,7 +60,7 @@ object UltraLightChecker {
         val extendedTypeRendererOld = PsiClassRenderer.extendedTypeRenderer
         return try {
             PsiClassRenderer.extendedTypeRenderer = testDataPath.endsWith("typeAnnotations.kt")
-            lightClasses.joinToString("\n\n") { it.renderClass() }
+            lightClasses.sortedBy { it.name }.joinToString("\n\n") { it.renderClass() }
         } finally {
             PsiClassRenderer.extendedTypeRenderer = extendedTypeRendererOld
         }
