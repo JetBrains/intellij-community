@@ -140,14 +140,12 @@ private class HideAction(private val toolWindow: ToolWindowImpl)
 }
 
 private class SquareAnActionButton(private val window: ToolWindowImpl) : ToggleActionButton(window.stripeTitle, null), DumbAware {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
   override fun isSelected(e: AnActionEvent): Boolean {
     e.presentation.icon = window.icon ?: AllIcons.Toolbar.Unknown
     scaleIcon(e.presentation)
     return window.isVisible
-  }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {

@@ -2082,7 +2082,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     @Override
