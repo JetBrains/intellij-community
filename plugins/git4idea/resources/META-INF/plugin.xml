@@ -17,9 +17,6 @@
 
   <resource-bundle>messages.GitBundle</resource-bundle>
 
-  <content>
-    <module name="intellij.vcs.git/terminal"/>
-  </content>
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
   </dependencies>

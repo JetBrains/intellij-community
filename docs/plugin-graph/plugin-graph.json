@@ -3618,18 +3618,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "TO",
-    "name": "intellij.vcs.git/terminal",
-    "n": "i.vcs.git/terminal",
-    "package": "git4idea.terminal",
-    "sourceModule": "intellij.vcs.git",
-    "descriptor": "community/plugins/git4idea/resources/intellij.vcs.git.terminal.xml",
-    "parent": "cJP",
-    "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "cIV",
     "n": "org.jetbrains.plugins.github"
   }
