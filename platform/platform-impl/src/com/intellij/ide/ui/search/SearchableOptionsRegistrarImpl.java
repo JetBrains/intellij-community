@@ -220,15 +220,15 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
   private @NotNull ConfigurableHit findConfigurables(@NotNull List<? extends ConfigurableGroup> groups,
                                                      DocumentEvent.EventType type,
-                                                     @Nullable Collection<Configurable> configurables,
+                                                     @Nullable Collection<Configurable> previouslyFiltered,
                                                      @NotNull String option,
                                                      @Nullable Project project) {
-    if (configurables == null || configurables.isEmpty()) {
-      configurables = null;
+    if (previouslyFiltered == null || previouslyFiltered.isEmpty()) {
+      previouslyFiltered = null;
     }
 
     Collection<Configurable> effectiveConfigurables;
-    if (configurables == null) {
+    if (previouslyFiltered == null) {
       effectiveConfigurables = new LinkedHashSet<>();
       Consumer<Configurable> consumer = new CollectConsumer<>(effectiveConfigurables);
       for (ConfigurableGroup group : groups) {
@@ -236,7 +236,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
       }
     }
     else {
-      effectiveConfigurables = configurables;
+      effectiveConfigurables = previouslyFiltered;
     }
 
     String optionToCheck = Strings.toLowerCase(option.trim());
@@ -279,7 +279,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     }
 
     Set<Configurable> contentHits;
-    if (configurables == null) {
+    if (previouslyFiltered == null) {
       contentHits = (Set<Configurable>)effectiveConfigurables;
     }
     else {
@@ -327,7 +327,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
       }
     }
 
-    if (type == DocumentEvent.EventType.CHANGE && configurables != null && currentConfigurables.equals(contentHits)) {
+    if (type == DocumentEvent.EventType.CHANGE && previouslyFiltered != null && currentConfigurables.equals(contentHits)) {
       return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, project);
     }
     return new ConfigurableHit(nameHits, nameFullHits, contentHits);
