@@ -47,7 +47,7 @@
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl"/>
     <projectService serviceInterface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex"
                     serviceImplementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl"/>
-    <projectService serviceInterface="com.intellij.workspaceModel.storage.url.VirtualFileUrlManager"
+    <applicationService serviceInterface="com.intellij.workspaceModel.storage.url.VirtualFileUrlManager"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl"/>
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.VirtualFileUrlsLazyInitializer"/>
 
@@ -77,7 +77,7 @@
     <registryKey key="platform.projectModel.workspace.model.file.index" defaultValue="true"
                  description="Use new implementation of ProjectFileIndex based on WorkspaceModel with incremental updates"
                  restartRequired="true"/>
-    
+
   </extensions>
 
   <projectListeners>

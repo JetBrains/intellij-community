@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependenciesCache;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -21,6 +22,7 @@ import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.util.indexing.roots.builders.SyntheticLibraryIteratorBuilder;
+import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryEntityUtils;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
@@ -58,7 +60,7 @@ class RescannedRootsUtil {
     ProjectFileIndexImpl fileIndex = (ProjectFileIndexImpl)index;
     ArrayList<IndexableIteratorBuilder> result = new ArrayList<>();
     Iterator<VirtualFile> iterator = excludedRoots.iterator();
-    VirtualFileUrlManager urlManager = project.getService(VirtualFileUrlManager.class);
+    VirtualFileUrlManager urlManager = ApplicationManager.getApplication().getService(VirtualFileUrlManager.class);
 
     while (iterator.hasNext()) {
       VirtualFile excluded = iterator.next();
