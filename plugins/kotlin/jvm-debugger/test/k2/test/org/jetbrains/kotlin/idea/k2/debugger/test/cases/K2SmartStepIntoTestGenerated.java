@@ -118,6 +118,11 @@ public class K2SmartStepIntoTestGenerated extends AbstractK2SmartStepIntoTest {
         runTest("../testData/smartStepInto/invoke.kt");
     }
 
+    @TestMetadata("javaSyntheticPropertyReference.kt")
+    public void testJavaSyntheticPropertyReference() throws Exception {
+        runTest("../testData/smartStepInto/javaSyntheticPropertyReference.kt");
+    }
+
     @TestMetadata("libraryFun.kt")
     public void testLibraryFun() throws Exception {
         runTest("../testData/smartStepInto/libraryFun.kt");
