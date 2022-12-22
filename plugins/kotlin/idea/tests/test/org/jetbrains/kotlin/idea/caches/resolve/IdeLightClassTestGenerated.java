@@ -332,49 +332,6 @@ public abstract class IdeLightClassTestGenerated extends AbstractIdeLightClassTe
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByFqName/object")
-    public static class Object extends AbstractIdeLightClassTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @Override
-        protected void setUp() {
-            compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/object");
-            super.setUp();
-        }
-
-        @TestMetadata("SimpleObject.kt")
-        public void testSimpleObject() throws Exception {
-            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/object/SimpleObject.kt"));
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByFqName/publicField")
-    public static class PublicField extends AbstractIdeLightClassTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @Override
-        protected void setUp() {
-            compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/publicField");
-            super.setUp();
-        }
-
-        @TestMetadata("CompanionObject.kt")
-        public void testCompanionObject() throws Exception {
-            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/publicField/CompanionObject.kt"));
-        }
-
-        @TestMetadata("Simple.kt")
-        public void testSimple() throws Exception {
-            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/publicField/Simple.kt"));
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByFqName")
     public static class Uncategorized extends AbstractIdeLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -430,6 +387,11 @@ public abstract class IdeLightClassTestGenerated extends AbstractIdeLightClassTe
         @TestMetadata("AnnotationRepeatable.kt")
         public void testAnnotationRepeatable() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/AnnotationRepeatable.kt"));
+        }
+
+        @TestMetadata("CompanionObject.kt")
+        public void testCompanionObject() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/CompanionObject.kt"));
         }
 
         @TestMetadata("Constructors.kt")
@@ -550,6 +512,16 @@ public abstract class IdeLightClassTestGenerated extends AbstractIdeLightClassTe
         @TestMetadata("PublishedApi.kt")
         public void testPublishedApi() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/PublishedApi.kt"));
+        }
+
+        @TestMetadata("SimpleObject.kt")
+        public void testSimpleObject() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/SimpleObject.kt"));
+        }
+
+        @TestMetadata("SimplePublicField.kt")
+        public void testSimplePublicField() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/SimplePublicField.kt"));
         }
 
         @TestMetadata("SpecialAnnotationsOnAnnotationClass.kt")
