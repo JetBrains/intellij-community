@@ -1,7 +1,8 @@
 from _pydevd_bundle.pydevd_constants import IS_PYCHARM
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
 from _pydevd_bundle.pydevd_resolver import defaultResolver, MAX_ITEMS_TO_HANDLE, TOO_LARGE_ATTR, TOO_LARGE_MSG
-from _pydevd_bundle.pydevd_utils import get_var_and_offset, format_numpy_array
+from _pydevd_bundle.pydevd_utils import get_var_and_offset
+from _pydevd_bundle.pydevd_repr_utils import get_value_repr
 from .pydevd_helpers import find_mod_attr
 
 import inspect
@@ -111,7 +112,7 @@ class NDArrayStrProvider(object):
         return nd_array is not None and inspect.isclass(type_object) and issubclass(type_object, nd_array)
 
     def get_str(self, val):
-        return format_numpy_array(val, MAX_ITEMS_TO_HANDLE)
+        return get_value_repr(val)
 
 
 class NdArrayItemsContainerProvider(object):
