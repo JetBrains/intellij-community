@@ -1,4 +1,4 @@
-// "Replace with findFirst()" "true-preview"
+// "Collapse loop with stream 'findFirst()'" "true-preview"
 
 class Lookup {
   boolean matches(char[] lookup) {}

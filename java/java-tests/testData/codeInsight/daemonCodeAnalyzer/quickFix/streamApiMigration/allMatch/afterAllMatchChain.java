@@ -1,4 +1,4 @@
-// "Replace with allMatch()" "true-preview"
+// "Collapse loop with stream 'allMatch()'" "true-preview"
 
 import java.util.List;
 

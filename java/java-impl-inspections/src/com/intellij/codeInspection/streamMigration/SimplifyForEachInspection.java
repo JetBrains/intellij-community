@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.intention.FileModifier;
@@ -61,7 +61,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
         boolean lastOpChanged = !(context.myMigration instanceof ForEachMigration);
         if (opCountChanged || lastOpChanged) {
             String customMessage = lastOpChanged ?
-                                   JavaBundle.message("inspection.simplify.for.each.replace", context.myMigration.getReplacement()) :
+                                   CommonQuickFixBundle.message("fix.replace.with.x", context.myMigration.getReplacement() + "()") :
                                    JavaBundle.message("inspection.simplify.for.each.extract.intermediate.operations");
           ProblemHighlightType highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
           holder.registerProblem(context.myMainStatement, customMessage, highlightType, getRange(call).shiftRight(-call.getTextOffset()),

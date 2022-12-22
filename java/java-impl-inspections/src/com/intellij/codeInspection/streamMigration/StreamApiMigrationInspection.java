@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -94,11 +94,9 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
   @Contract("null, null -> true; null, !null -> false")
   private static boolean sameReference(PsiExpression expr1, PsiExpression expr2) {
     if (expr1 == null && expr2 == null) return true;
-    if (!(expr1 instanceof PsiReferenceExpression) || !(expr2 instanceof PsiReferenceExpression)) return false;
-    PsiReferenceExpression ref1 = (PsiReferenceExpression)expr1;
-    PsiReferenceExpression ref2 = (PsiReferenceExpression)expr2;
-    return Objects.equals(ref1.getReferenceName(), ref2.getReferenceName()) && sameReference(ref1.getQualifierExpression(),
-                                                                                             ref2.getQualifierExpression());
+    if (!(expr1 instanceof PsiReferenceExpression ref1) || !(expr2 instanceof PsiReferenceExpression ref2)) return false;
+    return Objects.equals(ref1.getReferenceName(), ref2.getReferenceName()) && 
+           sameReference(ref1.getQualifierExpression(), ref2.getQualifierExpression());
   }
 
   /**
@@ -119,8 +117,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       return assignment.getRExpression();
     }
     else if (JavaTokenType.EQ.equals(assignment.getOperationTokenType())) {
-      if (assignment.getRExpression() instanceof PsiBinaryExpression) {
-        PsiBinaryExpression binOp = (PsiBinaryExpression)assignment.getRExpression();
+      if (assignment.getRExpression() instanceof PsiBinaryExpression binOp) {
         IElementType op = TypeConversionUtil.convertEQtoOperation(compoundAssignmentOp);
         if (op.equals(binOp.getOperationTokenType())) {
           if (sameReference(binOp.getLOperand(), assignment.getLExpression())) {
@@ -152,8 +149,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       return var;
     }
     else if (JavaTokenType.EQ.equals(assignment.getOperationTokenType())) {
-      if (assignment.getRExpression() instanceof PsiBinaryExpression) {
-        PsiBinaryExpression binOp = (PsiBinaryExpression)assignment.getRExpression();
+      if (assignment.getRExpression() instanceof PsiBinaryExpression binOp) {
         IElementType op = TypeConversionUtil.convertEQtoOperation(compoundAssignmentOp);
         if (op.equals(binOp.getOperationTokenType())) {
           PsiExpression left = binOp.getLOperand();
@@ -180,11 +176,8 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
         return ((PsiUnaryExpression)expression).getOperand();
       }
     }
-    else if (expression instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
-      if (ExpressionUtils.isLiteral(extractAddend(assignment), 1)) {
-        return assignment.getLExpression();
-      }
+    else if (expression instanceof PsiAssignmentExpression assignment && ExpressionUtils.isLiteral(extractAddend(assignment), 1)) {
+      return assignment.getLExpression();
     }
     return null;
   }
@@ -299,13 +292,10 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
   static boolean isVariableSuitableForStream(PsiVariable variable, PsiStatement statement, TerminalBlock tb) {
     PsiElement block = PsiUtil.getVariableCodeBlock(variable, statement);
     if (block != null) {
-      Predicate<PsiElement> notAllowedWrite = e -> {
-        if (!(e instanceof PsiReferenceExpression)) return false;
-        PsiReferenceExpression ref = (PsiReferenceExpression)e;
-        return PsiUtil.isAccessedForWriting(ref) &&
-               ref.isReferenceTo(variable) &&
-               tb.operations().noneMatch(op -> op.isWriteAllowed(variable, ref));
-      };
+      Predicate<PsiElement> notAllowedWrite = e -> e instanceof PsiReferenceExpression ref && 
+                                                   PsiUtil.isAccessedForWriting(ref) &&
+                                                   ref.isReferenceTo(variable) &&
+                                                   tb.operations().noneMatch(op -> op.isWriteAllowed(variable, ref));
       if (PsiTreeUtil.processElements(block, notAllowedWrite.negate()::test)) return true;
     }
     return HighlightControlFlowUtil.isEffectivelyFinal(variable, statement, null);
@@ -466,7 +456,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
     FindExtremumMigration.ExtremumTerminal extremumTerminal = FindExtremumMigration.extract(tb, nonFinalVariables);
     if (extremumTerminal != null) {
-      return new FindExtremumMigration(true, FindExtremumMigration.getOperation(extremumTerminal.isMax()) + "()");
+      return new FindExtremumMigration(true, FindExtremumMigration.getOperation(extremumTerminal.isMax()));
     }
     for (OperationReductionMigration.ReductionOperation reductionOperation : OperationReductionMigration.OPERATIONS) {
       if (getAccumulatedVariable(tb, nonFinalVariables, reductionOperation) != null) {
@@ -1326,8 +1316,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       PsiExpression updateExpr = null;
       IElementType op;
       PsiUnaryExpression unaryExpression = null;
-      if (expression instanceof PsiAssignmentExpression) {
-        PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
+      if (expression instanceof PsiAssignmentExpression assignment) {
         op = TypeConversionUtil.convertEQtoOperation(assignment.getOperationTokenType());
         updateExpr = assignment.getRExpression();
         if (!ExpressionUtils.isReferenceTo(assignment.getLExpression(), variable)) return null;

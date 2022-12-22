@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,15 +14,14 @@ class MatchMigration extends BaseStreamApiMigration {
   private static final Logger LOG = Logger.getInstance(MatchMigration.class);
 
   MatchMigration(boolean shouldWarn, String methodName) {
-    super(shouldWarn, methodName+"()");
+    super(shouldWarn, methodName);
   }
 
   @Override
   PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
     PsiStatement sourceStatement = tb.getStreamSourceStatement();
     CommentTracker ct = new CommentTracker();
-    if(tb.getSingleStatement() instanceof PsiReturnStatement) {
-      PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
+    if(tb.getSingleStatement() instanceof PsiReturnStatement returnStatement) {
       PsiLiteralExpression literal = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue()), 
                                                          PsiLiteralExpression.class);
       if (literal != null && literal.getValue() instanceof Boolean) {
@@ -76,11 +61,10 @@ class MatchMigration extends BaseStreamApiMigration {
       PsiExpression rValue = assignment.getRExpression();
       if ((lValue instanceof PsiReferenceExpression) && rValue != null) {
         PsiElement maybeVar = ((PsiReferenceExpression)lValue).resolve();
-        if (maybeVar instanceof PsiVariable) {
+        if (maybeVar instanceof PsiVariable var) {
           // Simplify single assignments like this:
           // boolean flag = false;
           // for(....) if(...) {flag = true; break;}
-          PsiVariable var = (PsiVariable)maybeVar;
           PsiExpression initializer = var.getInitializer();
           InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(var, sourceStatement);
           if (initializer != null && status != ControlFlowUtils.InitializerUsageStatus.UNKNOWN) {
@@ -111,15 +95,13 @@ class MatchMigration extends BaseStreamApiMigration {
                                              @NotNull TerminalBlock tb) {
     String origStream = tb.generate(ct);
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(contextElement.getProject());
-    PsiExpression stream = elementFactory.createExpressionFromText(origStream, contextElement);
-    LOG.assertTrue(stream instanceof PsiMethodCallExpression);
-    PsiElement nameElement = ((PsiMethodCallExpression)stream).getMethodExpression().getReferenceNameElement();
+    PsiMethodCallExpression stream = (PsiMethodCallExpression)elementFactory.createExpressionFromText(origStream, contextElement);
+    PsiElement nameElement = stream.getMethodExpression().getReferenceNameElement();
     if (nameElement != null && nameElement.getText().equals("filter")) {
       if (methodName.equals("noneMatch")) {
         // Try to reduce noneMatch(x -> !(condition)) to allMatch(x -> condition)
-        PsiExpression[] expressions = ((PsiMethodCallExpression)stream).getArgumentList().getExpressions();
-        if (expressions.length == 1 && expressions[0] instanceof PsiLambdaExpression) {
-          PsiLambdaExpression lambda = (PsiLambdaExpression)expressions[0];
+        PsiExpression[] expressions = stream.getArgumentList().getExpressions();
+        if (expressions.length == 1 && expressions[0] instanceof PsiLambdaExpression lambda) {
           PsiElement lambdaBody = lambda.getBody();
           if (lambdaBody instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)lambdaBody)) {
             PsiExpression negated = BoolUtils.getNegated((PsiExpression)lambdaBody);

@@ -1,4 +1,4 @@
-// "Replace with forEach" "true-preview"
+// "Collapse loop with stream 'forEach()'" "true-preview"
 
 public class Test {
   public static void main(String[] args) {

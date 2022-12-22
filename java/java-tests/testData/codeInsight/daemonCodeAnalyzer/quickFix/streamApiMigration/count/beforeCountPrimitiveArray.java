@@ -1,4 +1,4 @@
-// "Replace with count()" "true-preview"
+// "Collapse loop with stream 'count()'" "true-preview"
 
 public class Main {
   public int testPrimitiveArray(int[] data) {
