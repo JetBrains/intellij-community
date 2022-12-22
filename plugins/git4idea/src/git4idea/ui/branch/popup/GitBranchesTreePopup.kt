@@ -183,26 +183,12 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     val haveBranches = traverseNodesAndExpand()
     if (haveBranches) {
       selectPreferred()
-      expandCurrentBranches()
+      traverseNodesAndExpand()
     }
     super.updateSpeedSearchColors(!haveBranches)
     if (!pattern.isNullOrBlank()) {
       tree.emptyText.text = GitBundle.message("git.branches.popup.tree.no.branches", pattern)
     }
-  }
-
-  private fun expandCurrentBranches() {
-    TreeUtil.treeTraverser(tree)
-      .mapNotNull { node ->
-        when {
-          node is GitBranch && isChild() && treeStep.repositories.any { it.currentBranch == node } -> node
-          node is GitBranch && !isChild() && treeStep.repositories.all { it.currentBranch == node } -> node
-          node is BranchUnderRepository && node.repository.currentBranch == node.branch -> node
-          else -> null
-        }
-      }
-      .mapNotNull(treeStep::createTreePathFor)
-      .forEach { path -> TreeUtil.promiseExpand(tree, path) }
   }
 
   private fun traverseNodesAndExpand(): Boolean {
@@ -481,7 +467,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     if (!isNewUI) {
       selectPreferred()
     }
-    expandCurrentBranches()
+    traverseNodesAndExpand()
     if (treeStep.isSpeedSearchEnabled) {
       installSpeedSearchActions()
     }
