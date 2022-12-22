@@ -3,6 +3,7 @@ package com.intellij.openapi.options.ex;
 
 import com.intellij.BundleBase;
 import com.intellij.ide.actions.ConfigurablesPatcher;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -488,7 +489,7 @@ public final class ConfigurableExtensionPointUtil {
   public static String getConfigurablePath(Class<? extends Configurable> configurableClass, Project project) {
     List<String> path = new ArrayList<>();
     collectPath(configurableClass, path, getConfigurableGroup(project, true).getConfigurables());
-    return StringUtil.join(path, " | ");
+    return StringUtil.join(path, SearchableOptionsRegistrar.SETTINGS_GROUP_SEPARATOR);
   }
 
   private static void collectPath(Class<? extends Configurable> configurableClass, List<? super String> path, Configurable[] configurables) {
