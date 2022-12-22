@@ -3,11 +3,10 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ConcurrentFactoryMap
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
@@ -24,6 +23,7 @@ import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.*
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
+import java.io.File
 
 internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl: String) : JpsDirectoryEntitiesSerializerFactory<LibraryEntity> {
   override val componentName: String
@@ -64,6 +64,21 @@ internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl:
 }
 
 private const val LIBRARY_TABLE_COMPONENT_NAME = "libraryTable"
+
+internal class JpsGlobalLibrariesFileSerializer(entitySource: JpsFileEntitySource.ExactGlobalFile)
+  : JpsLibraryEntitiesSerializer(entitySource.file, entitySource,
+                                 LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL)),
+    JpsFileEntityTypeSerializer<LibraryEntity> {
+  override val isExternalStorage: Boolean
+    get() = false
+  override val entityFilter: (LibraryEntity) -> Boolean
+    get() = { it.tableId::class == LibraryTableId.GlobalLibraryTableId::class}
+
+  override fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter) {
+    writer.saveComponent(fileUrl, LIBRARY_TABLE_COMPONENT_NAME, null)
+  }
+}
+
 
 internal class JpsLibrariesFileSerializer(entitySource: JpsFileEntitySource.ExactFile, libraryTableId: LibraryTableId)
   : JpsLibraryEntitiesSerializer(entitySource.file, entitySource, libraryTableId), JpsFileEntityTypeSerializer<LibraryEntity> {
