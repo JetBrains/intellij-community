@@ -19,10 +19,129 @@ import static org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifact
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByFqName")
-public abstract class IdeCompiledLightClassTestGenerated extends AbstractIdeCompiledLightClassTest {
+public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLightClassesByFqNameTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors")
+    public static class CompilationErrors extends AbstractIdeLightClassesByFqNameTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors");
+            super.setUp();
+        }
+
+        @TestMetadata("ActualClass.kt")
+        public void testActualClass() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/ActualClass.kt"));
+        }
+
+        @TestMetadata("ActualTypeAlias.kt")
+        public void testActualTypeAlias() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/ActualTypeAlias.kt"));
+        }
+
+        @TestMetadata("ActualTypeAliasCustomJvmPackageName.kt")
+        public void testActualTypeAliasCustomJvmPackageName() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/ActualTypeAliasCustomJvmPackageName.kt"));
+        }
+
+        @TestMetadata("AllInlineOnly.kt")
+        public void testAllInlineOnly() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/AllInlineOnly.kt"));
+        }
+
+        @TestMetadata("AnnotationModifiers.kt")
+        public void testAnnotationModifiers() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/AnnotationModifiers.kt"));
+        }
+
+        @TestMetadata("EnumNameOverride.kt")
+        public void testEnumNameOverride() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/EnumNameOverride.kt"));
+        }
+
+        @TestMetadata("ExpectClass.kt")
+        public void testExpectClass() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/ExpectClass.kt"));
+        }
+
+        @TestMetadata("ExpectObject.kt")
+        public void testExpectObject() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/ExpectObject.kt"));
+        }
+
+        @TestMetadata("ExpectedNestedClass.kt")
+        public void testExpectedNestedClass() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/ExpectedNestedClass.kt"));
+        }
+
+        @TestMetadata("ExpectedNestedClassInObject.kt")
+        public void testExpectedNestedClassInObject() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/ExpectedNestedClassInObject.kt"));
+        }
+
+        @TestMetadata("FunctionWithoutName.kt")
+        public void testFunctionWithoutName() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/FunctionWithoutName.kt"));
+        }
+
+        @TestMetadata("JvmPackageName.kt")
+        public void testJvmPackageName() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/JvmPackageName.kt"));
+        }
+
+        @TestMetadata("LocalInAnnotation.kt")
+        public void testLocalInAnnotation() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/LocalInAnnotation.kt"));
+        }
+
+        @TestMetadata("PrivateInTrait.kt")
+        public void testPrivateInTrait() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/PrivateInTrait.kt"));
+        }
+
+        @TestMetadata("PropertyWithoutName.kt")
+        public void testPropertyWithoutName() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/PropertyWithoutName.kt"));
+        }
+
+        @TestMetadata("RepetableAnnotations.kt")
+        public void testRepetableAnnotations() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/RepetableAnnotations.kt"));
+        }
+
+        @TestMetadata("SameName.kt")
+        public void testSameName() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/SameName.kt"));
+        }
+
+        @TestMetadata("TopLevelDestructuring.kt")
+        public void testTopLevelDestructuring() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/TopLevelDestructuring.kt"));
+        }
+
+        @TestMetadata("TraitClassObjectField.kt")
+        public void testTraitClassObjectField() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/TraitClassObjectField.kt"));
+        }
+
+        @TestMetadata("TwoOverrides.kt")
+        public void testTwoOverrides() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/TwoOverrides.kt"));
+        }
+
+        @TestMetadata("WrongAnnotations.kt")
+        public void testWrongAnnotations() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/WrongAnnotations.kt"));
+        }
+    }
+
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByFqName/delegation")
-    public static class Delegation extends AbstractIdeCompiledLightClassTest {
+    public static class Delegation extends AbstractIdeLightClassesByFqNameTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -46,7 +165,7 @@ public abstract class IdeCompiledLightClassTestGenerated extends AbstractIdeComp
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByFqName/facades")
-    public static class Facades extends AbstractIdeCompiledLightClassTest {
+    public static class Facades extends AbstractIdeLightClassesByFqNameTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -79,8 +198,62 @@ public abstract class IdeCompiledLightClassTestGenerated extends AbstractIdeComp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByFqName/ideRegression")
+    public static class IdeRegression extends AbstractIdeLightClassesByFqNameTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ideRegression");
+            super.setUp();
+        }
+
+        @TestMetadata("AllOpenAnnotatedClasses.kt")
+        public void testAllOpenAnnotatedClasses() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ideRegression/AllOpenAnnotatedClasses.kt"));
+        }
+
+        @TestMetadata("ImplementingCharSequenceAndNumber.kt")
+        public void testImplementingCharSequenceAndNumber() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ideRegression/ImplementingCharSequenceAndNumber.kt"));
+        }
+
+        @TestMetadata("ImplementingMap.kt")
+        public void testImplementingMap() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ideRegression/ImplementingMap.kt"));
+        }
+
+        @TestMetadata("ImplementingMutableSet.kt")
+        public void testImplementingMutableSet() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ideRegression/ImplementingMutableSet.kt"));
+        }
+
+        @TestMetadata("InheritingInterfaceDefaultImpls.kt")
+        public void testInheritingInterfaceDefaultImpls() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ideRegression/InheritingInterfaceDefaultImpls.kt"));
+        }
+
+        @TestMetadata("OverridingFinalInternal.kt")
+        public void testOverridingFinalInternal() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ideRegression/OverridingFinalInternal.kt"));
+        }
+
+        @TestMetadata("OverridingInternal.kt")
+        public void testOverridingInternal() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ideRegression/OverridingInternal.kt"));
+        }
+
+        @TestMetadata("OverridingProtected.kt")
+        public void testOverridingProtected() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ideRegression/OverridingProtected.kt"));
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations")
-    public static class NullabilityAnnotations extends AbstractIdeCompiledLightClassTest {
+    public static class NullabilityAnnotations extends AbstractIdeLightClassesByFqNameTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -183,8 +356,32 @@ public abstract class IdeCompiledLightClassTestGenerated extends AbstractIdeComp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByFqName/script")
+    public static class Script extends AbstractIdeLightClassesByFqNameTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/script");
+            super.setUp();
+        }
+
+        @TestMetadata("HelloWorld.kts")
+        public void testHelloWorld() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/script/HelloWorld.kts"));
+        }
+
+        @TestMetadata("InnerClasses.kts")
+        public void testInnerClasses() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/script/InnerClasses.kts"));
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByFqName")
-    public static class Uncategorized extends AbstractIdeCompiledLightClassTest {
+    public static class Uncategorized extends AbstractIdeLightClassesByFqNameTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

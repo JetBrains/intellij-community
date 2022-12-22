@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
-abstract class AbstractUltraLightClassLoadingTest : KotlinLightCodeInsightFixtureTestCase() {
+abstract class AbstractIdeLightClassesByPsiTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     open fun doTest(testDataPath: String) {
