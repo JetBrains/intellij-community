@@ -131,7 +131,7 @@ internal class LibraryModifiableModelBridgeImpl(
     update {
       val currentEntitySource = entitySource
       if (currentEntitySource is JpsFileEntitySource) {
-        entitySource = JpsImportedEntitySource(currentEntitySource, externalSource.id, originalLibrary.project.isExternalStorageEnabled)
+        entitySource = JpsImportedEntitySource(currentEntitySource, externalSource.id, originalLibrary.project!!.isExternalStorageEnabled)
       }
     }
   }
