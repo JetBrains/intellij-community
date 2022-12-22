@@ -1507,9 +1507,11 @@ public final class BuildManager implements Disposable {
     if (profileWithYourKit) {
       String yjpControllerFileName = "yjp-controller-api-redist.jar";
       Path yjpControllerPath = Path.of(cmdLine.getWorkingDirectory(), yjpControllerFileName);
-      LOG.debug("JPS process profiling with YourKit is enabled, " +
-                "adding '" + yjpControllerFileName + "' to classpath, " +
-                "full path '" + yjpControllerPath + "'");
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("JPS process profiling with YourKit is enabled, " +
+                  "adding '" + yjpControllerFileName + "' to classpath, " +
+                  "full path '" + yjpControllerPath + "'");
+      }
       if (!Files.exists(yjpControllerPath)) {
         LOG.warn("JPS process profiling is enabled, but '" + yjpControllerPath + "' is missing");
       }
