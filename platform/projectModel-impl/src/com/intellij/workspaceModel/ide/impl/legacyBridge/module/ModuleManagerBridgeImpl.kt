@@ -25,8 +25,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.precomputeExtensionModel
 import com.intellij.util.graph.*
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridgeImpl
@@ -280,8 +278,6 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     withContext(Dispatchers.EDT) {
       ApplicationManager.getApplication().runWriteAction {
         ProjectRootManagerEx.getInstanceEx(project).withRootsChange(RootsChangeRescanningInfo.NO_RESCAN_NEEDED).use {
-          val workspaceFileIndex = if (WorkspaceFileIndexEx.IS_ENABLED) WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx else null
-          workspaceFileIndex?.unloadModules(moduleEntitiesToUnload)
           WorkspaceModel.getInstance(project).updateProjectModel("Update unloaded modules") { builder ->
             for (entity in moduleEntitiesToUnload) {
               builder.removeEntity(entity)
@@ -304,7 +300,6 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
               }
             }
           }
-          workspaceFileIndex?.loadModules(moduleEntitiesToLoad)
         }
       }
     }

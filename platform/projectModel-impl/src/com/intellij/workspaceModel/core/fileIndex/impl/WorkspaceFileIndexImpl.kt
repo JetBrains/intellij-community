@@ -21,7 +21,6 @@ import com.intellij.util.CollectionQuery
 import com.intellij.util.Query
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexEx {
   companion object {
@@ -75,14 +74,6 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
 
   override fun ensureInitialized() {
     getOrCreateMainIndexData()
-  }
-
-  override fun unloadModules(entities: List<ModuleEntity>) {
-    indexData?.unloadModules(entities)
-  }
-
-  override fun loadModules(entities: List<ModuleEntity>) {
-    indexData?.loadModules(entities)
   }
 
   override fun <D : WorkspaceFileSetData> findFileSetWithCustomData(file: VirtualFile,
@@ -172,8 +163,8 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     indexData?.updateDirtyEntities()
   }
 
-  fun onEntitiesChanged(event: VersionedStorageChange) {
-    indexData?.onEntitiesChanged(event)
+  fun onEntitiesChanged(event: VersionedStorageChange, storageKind: EntityStorageKind) {
+    indexData?.onEntitiesChanged(event, storageKind)
   }
 }
 

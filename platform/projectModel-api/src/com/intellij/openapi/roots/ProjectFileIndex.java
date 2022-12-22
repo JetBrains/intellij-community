@@ -205,4 +205,10 @@ public interface ProjectFileIndex extends FileIndex {
   default SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
     return null;
   }
+
+  /**
+   * Returns name of the unloaded module to which content {@code fileOrDir} belongs, or {@code null} if {@code fileOrDir} doesn't belong
+   * to an unloaded module.
+   */
+  @Nullable String getUnloadedModuleNameForFile(@NotNull VirtualFile fileOrDir);
 }

@@ -354,6 +354,16 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @Override
+  public @Nullable String getUnloadedModuleNameForFile(@NotNull VirtualFile fileOrDir) {
+    if (myWorkspaceFileIndex != null) {
+      WorkspaceFileSetWithCustomData<UnloadedModuleContentRootData> fileSet =
+        myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, false, true, false, false, UnloadedModuleContentRootData.class);
+      return fileSet != null ? fileSet.getData().getModuleName() : null;
+    }
+    return getInfoForFileOrDirectory(fileOrDir).getUnloadedModuleName();
+  }
+
+  @Override
   protected boolean isScopeDisposed() {
     return myProject.isDisposed();
   }

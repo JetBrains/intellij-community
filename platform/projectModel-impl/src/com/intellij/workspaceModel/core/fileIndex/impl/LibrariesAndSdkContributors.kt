@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.MultiMap
+import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
@@ -77,7 +78,7 @@ internal class LibrariesAndSdkContributors(private val project: Project,
                              data: WorkspaceFileSetData) {
       rootFileSupplier.getLibraryRoots(library, rootType).forEach { root ->
         if (RootFileSupplier.ensureValid(root, library, null)) {
-          val fileSet = WorkspaceFileSetImpl(root, kind, reference, data)
+          val fileSet = WorkspaceFileSetImpl(root, kind, reference, EntityStorageKind.MAIN, data)
           fileSets.putValue(root, fileSet)
           fileSetsByPackagePrefix.addFileSet("", fileSet)
           libraryRoots.putValue(library, root)
@@ -90,7 +91,7 @@ internal class LibrariesAndSdkContributors(private val project: Project,
     registerLibraryRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, reference, LibrarySourceRootFileSetData(null, ""))
     (library as? LibraryEx)?.let { rootFileSupplier.getExcludedRoots(it) }?.forEach {
       if (RootFileSupplier.ensureValid(it, library, null)) {
-        fileSets.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, reference))
+        fileSets.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, reference, EntityStorageKind.MAIN))
         libraryRoots.putValue(library, it)
       }
     }
@@ -101,7 +102,7 @@ internal class LibrariesAndSdkContributors(private val project: Project,
       sdk.rootProvider.getUrls(rootType).forEach { url ->
         val root = rootFileSupplier.findFileByUrl(url)
         if (root != null && RootFileSupplier.ensureValid(root, sdk, null)) {
-          val fileSet = WorkspaceFileSetImpl(root, kind, reference, data)
+          val fileSet = WorkspaceFileSetImpl(root, kind, reference, EntityStorageKind.MAIN, data)
           fileSets.putValue(root, fileSet)
           fileSetsByPackagePrefix.addFileSet("", fileSet)
           sdkRoots.putValue(sdk, root)
