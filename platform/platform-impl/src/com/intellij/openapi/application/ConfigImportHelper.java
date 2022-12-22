@@ -230,7 +230,9 @@ public final class ConfigImportHelper {
       }
     }
 
-    if (vmOptionFileChanged) {
+    // TODO remove hack, should we support vmoptions import in per project?
+    // TODO If so, we need to patch restarter.
+    if (vmOptionFileChanged && !ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED) {
       log.info("The vmoptions file has changed, restarting...");
 
       List<String> properties = new ArrayList<>();
@@ -1150,6 +1152,7 @@ public final class ConfigImportHelper {
   }
 
   private static boolean blockImport(Path path, Path oldConfig, Path newConfig, Path oldPluginsDir, @Nullable ConfigImportSettings settings) {
+    if (ProjectManagerEx.Companion.isChildProcessPath(path)) return true;
     if (oldConfig.equals(path.getParent())) {
       Path fileName = path.getFileName();
       return shouldSkipFileDuringImport(path, settings) ||

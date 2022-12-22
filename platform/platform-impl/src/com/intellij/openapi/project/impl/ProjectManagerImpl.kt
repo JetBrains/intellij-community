@@ -1391,9 +1391,27 @@ private suspend fun shouldOpenInChildProcess(projectStoreBaseDir: Path): Boolean
   return LowLevelProjectOpenProcessor.EP_NAME.extensions.any { it.shouldOpenInNewProcess(projectStoreBaseDir) }
 }
 
+private fun isEmpty(path: Path): Boolean {
+  if (Files.isDirectory(path)) {
+    Files.list(path).use { entries -> return !entries.findFirst().isPresent }
+  }
+  return false
+}
+
+private fun setConfigImportOptionForPerProject(projectStoreBaseDir: Path) {
+  val currentConfigDir = PathManager.getConfigDir()
+  val newConfigDir = PerProjectInstancePaths(projectStoreBaseDir).getConfigDir()
+
+  // do not copy config if it already exists
+  if (Files.isDirectory(newConfigDir) && !isEmpty(newConfigDir)) return
+
+  CustomConfigMigrationOption.MigrateFromCustomPlace(currentConfigDir).writeConfigMarkerFile(newConfigDir)
+}
+
 private suspend fun openInChildProcess(projectStoreBaseDir: Path) {
   try {
     withContext(Dispatchers.IO) {
+      setConfigImportOptionForPerProject(projectStoreBaseDir)
       ProcessBuilder(openProjectInstanceCommand(projectStoreBaseDir))
         .redirectErrorStream(true)
         .redirectOutput(ProcessBuilder.Redirect.appendTo(PathManager.getLogDir().resolve("idea.log").toFile()))
