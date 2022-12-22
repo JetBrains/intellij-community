@@ -18,7 +18,7 @@ import static org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifact
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/ultraLightScripts")
+@TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/ultraLightScripts")
 public class UltraLightScriptLoadingTestGenerated extends AbstractUltraLightScriptLoadingTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -26,22 +26,22 @@ public class UltraLightScriptLoadingTestGenerated extends AbstractUltraLightScri
 
     @Override
     protected void setUp() {
-        compilerTestData("compiler/testData/asJava/ultraLightScripts");
+        compilerTestData("compiler/testData/asJava/lightClasses/ultraLightScripts");
         super.setUp();
     }
 
     @TestMetadata("FunsPropsAndFields.kts")
     public void testFunsPropsAndFields() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightScripts/FunsPropsAndFields.kts"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightScripts/FunsPropsAndFields.kts"));
     }
 
     @TestMetadata("HelloWorld.kts")
     public void testHelloWorld() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightScripts/HelloWorld.kts"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightScripts/HelloWorld.kts"));
     }
 
     @TestMetadata("InnerClasses.kts")
     public void testInnerClasses() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightScripts/InnerClasses.kts"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightScripts/InnerClasses.kts"));
     }
 }

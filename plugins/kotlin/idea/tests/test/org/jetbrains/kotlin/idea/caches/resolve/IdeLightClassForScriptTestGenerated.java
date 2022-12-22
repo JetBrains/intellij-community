@@ -18,7 +18,7 @@ import static org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifact
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/script/ide")
+@TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/script/ide")
 public class IdeLightClassForScriptTestGenerated extends AbstractIdeLightClassForScriptTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -26,17 +26,17 @@ public class IdeLightClassForScriptTestGenerated extends AbstractIdeLightClassFo
 
     @Override
     protected void setUp() {
-        compilerTestData("compiler/testData/asJava/script/ide");
+        compilerTestData("compiler/testData/asJava/lightClasses/script/ide");
         super.setUp();
     }
 
     @TestMetadata("HelloWorld.kts")
     public void testHelloWorld() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/script/ide/HelloWorld.kts"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/script/ide/HelloWorld.kts"));
     }
 
     @TestMetadata("InnerClasses.kts")
     public void testInnerClasses() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/script/ide/InnerClasses.kts"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/script/ide/InnerClasses.kts"));
     }
 }

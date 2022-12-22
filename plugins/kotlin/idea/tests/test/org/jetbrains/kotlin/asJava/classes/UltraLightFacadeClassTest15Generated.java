@@ -18,7 +18,7 @@ import static org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifact
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/ultraLightFacades")
+@TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/ultraLightFacades")
 public class UltraLightFacadeClassTest15Generated extends AbstractUltraLightFacadeClassTest15 {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -26,77 +26,77 @@ public class UltraLightFacadeClassTest15Generated extends AbstractUltraLightFaca
 
     @Override
     protected void setUp() {
-        compilerTestData("compiler/testData/asJava/ultraLightFacades");
+        compilerTestData("compiler/testData/asJava/lightClasses/ultraLightFacades");
         super.setUp();
     }
 
     @TestMetadata("coroutines.kt")
     public void testCoroutines() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightFacades/coroutines.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightFacades/coroutines.kt"));
     }
 
     @TestMetadata("importAliases.kt")
     public void testImportAliases() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightFacades/importAliases.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightFacades/importAliases.kt"));
     }
 
     @TestMetadata("inlineOnly.kt")
     public void testInlineOnly() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightFacades/inlineOnly.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightFacades/inlineOnly.kt"));
     }
 
     @TestMetadata("jvmField.kt")
     public void testJvmField() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightFacades/jvmField.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightFacades/jvmField.kt"));
     }
 
     @TestMetadata("jvmName.kt")
     public void testJvmName() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightFacades/jvmName.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightFacades/jvmName.kt"));
     }
 
     @TestMetadata("jvmWildcardAnnotations.kt")
     public void testJvmWildcardAnnotations() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightFacades/jvmWildcardAnnotations.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightFacades/jvmWildcardAnnotations.kt"));
     }
 
     @TestMetadata("lateinitProperty.kt")
     public void testLateinitProperty() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightFacades/lateinitProperty.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightFacades/lateinitProperty.kt"));
     }
 
     @TestMetadata("multifileFacade.kt")
     public void testMultifileFacade() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightFacades/multifileFacade.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightFacades/multifileFacade.kt"));
     }
 
     @TestMetadata("multifileFacadeJvmName.kt")
     public void testMultifileFacadeJvmName() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightFacades/multifileFacadeJvmName.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightFacades/multifileFacadeJvmName.kt"));
     }
 
     @TestMetadata("properties.kt")
     public void testProperties() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightFacades/properties.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightFacades/properties.kt"));
     }
 
     @TestMetadata("script.kts")
     public void testScript() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightFacades/script.kts"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightFacades/script.kts"));
     }
 
     @TestMetadata("simpleFunctions.kt")
     public void testSimpleFunctions() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightFacades/simpleFunctions.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightFacades/simpleFunctions.kt"));
     }
 
     @TestMetadata("throwsAnnotation.kt")
     public void testThrowsAnnotation() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightFacades/throwsAnnotation.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightFacades/throwsAnnotation.kt"));
     }
 
     @TestMetadata("wildcardOptimization.kt")
     public void testWildcardOptimization() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightFacades/wildcardOptimization.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightFacades/wildcardOptimization.kt"));
     }
 }

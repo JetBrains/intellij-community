@@ -18,7 +18,7 @@ import static org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifact
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/ultraLightClasses")
+@TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/ultraLightClasses")
 public class UltraLightClassLoadingTestGenerated extends AbstractUltraLightClassLoadingTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -26,197 +26,197 @@ public class UltraLightClassLoadingTestGenerated extends AbstractUltraLightClass
 
     @Override
     protected void setUp() {
-        compilerTestData("compiler/testData/asJava/ultraLightClasses");
+        compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses");
         super.setUp();
     }
 
     @TestMetadata("annotationWithSetParamPropertyModifier.kt")
     public void testAnnotationWithSetParamPropertyModifier() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/annotationWithSetParamPropertyModifier.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/annotationWithSetParamPropertyModifier.kt"));
     }
 
     @TestMetadata("annotations.kt")
     public void testAnnotations() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/annotations.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/annotations.kt"));
     }
 
     @TestMetadata("classModifiers.kt")
     public void testClassModifiers() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/classModifiers.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/classModifiers.kt"));
     }
 
     @TestMetadata("constructors.kt")
     public void testConstructors() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/constructors.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/constructors.kt"));
     }
 
     @TestMetadata("coroutines.kt")
     public void testCoroutines() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/coroutines.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/coroutines.kt"));
     }
 
     @TestMetadata("dataClasses.kt")
     public void testDataClasses() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/dataClasses.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/dataClasses.kt"));
     }
 
     @TestMetadata("defaultMethodInKotlinWithSettingAll.kt")
     public void testDefaultMethodInKotlinWithSettingAll() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/defaultMethodInKotlinWithSettingAll.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/defaultMethodInKotlinWithSettingAll.kt"));
     }
 
     @TestMetadata("defaultMethodInKotlinWithSettingAllCompatibility.kt")
     public void testDefaultMethodInKotlinWithSettingAllCompatibility() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/defaultMethodInKotlinWithSettingAllCompatibility.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/defaultMethodInKotlinWithSettingAllCompatibility.kt"));
     }
 
     @TestMetadata("delegatesWithAnnotations.kt")
     public void testDelegatesWithAnnotations() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/delegatesWithAnnotations.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/delegatesWithAnnotations.kt"));
     }
 
     @TestMetadata("delegatingToInterfaces.kt")
     public void testDelegatingToInterfaces() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/delegatingToInterfaces.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/delegatingToInterfaces.kt"));
     }
 
     @TestMetadata("dollarsInNameLocal.kt")
     public void testDollarsInNameLocal() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/dollarsInNameLocal.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/dollarsInNameLocal.kt"));
     }
 
     @TestMetadata("enums.kt")
     public void testEnums() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/enums.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/enums.kt"));
     }
 
     @TestMetadata("generics.kt")
     public void testGenerics() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/generics.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/generics.kt"));
     }
 
     @TestMetadata("implementingKotlinCollections.kt")
     public void testImplementingKotlinCollections() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/implementingKotlinCollections.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/implementingKotlinCollections.kt"));
     }
 
     @TestMetadata("importAliases.kt")
     public void testImportAliases() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/importAliases.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/importAliases.kt"));
     }
 
     @TestMetadata("inferringAnonymousObjectTypes.kt")
     public void testInferringAnonymousObjectTypes() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/inferringAnonymousObjectTypes.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/inferringAnonymousObjectTypes.kt"));
     }
 
     @TestMetadata("inheritance.kt")
     public void testInheritance() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/inheritance.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/inheritance.kt"));
     }
 
     @TestMetadata("inlineClasses.kt")
     public void testInlineClasses() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/inlineClasses.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/inlineClasses.kt"));
     }
 
     @TestMetadata("inlineOnly.kt")
     public void testInlineOnly() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/inlineOnly.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/inlineOnly.kt"));
     }
 
     @TestMetadata("inlineReified.kt")
     public void testInlineReified() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/inlineReified.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/inlineReified.kt"));
     }
 
     @TestMetadata("jvmField.kt")
     public void testJvmField() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/jvmField.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/jvmField.kt"));
     }
 
     @TestMetadata("jvmName.kt")
     public void testJvmName() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/jvmName.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/jvmName.kt"));
     }
 
     @TestMetadata("jvmOverloads.kt")
     public void testJvmOverloads() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/jvmOverloads.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/jvmOverloads.kt"));
     }
 
     @TestMetadata("jvmRecord.kt")
     public void testJvmRecord() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/jvmRecord.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/jvmRecord.kt"));
     }
 
     @TestMetadata("jvmStaticOnPropertySetter.kt")
     public void testJvmStaticOnPropertySetter() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/jvmStaticOnPropertySetter.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/jvmStaticOnPropertySetter.kt"));
     }
 
     @TestMetadata("jvmSynthetic.kt")
     public void testJvmSynthetic() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/jvmSynthetic.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/jvmSynthetic.kt"));
     }
 
     @TestMetadata("jvmSyntheticForAccessors.kt")
     public void testJvmSyntheticForAccessors() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/jvmSyntheticForAccessors.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/jvmSyntheticForAccessors.kt"));
     }
 
     @TestMetadata("jvmWildcardAnnotations.kt")
     public void testJvmWildcardAnnotations() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/jvmWildcardAnnotations.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/jvmWildcardAnnotations.kt"));
     }
 
     @TestMetadata("LateinitProperties.kt")
     public void testLateinitProperties() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/LateinitProperties.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/LateinitProperties.kt"));
     }
 
     @TestMetadata("lateinitProperty.kt")
     public void testLateinitProperty() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/lateinitProperty.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/lateinitProperty.kt"));
     }
 
     @TestMetadata("localClassDerived.kt")
     public void testLocalClassDerived() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/localClassDerived.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/localClassDerived.kt"));
     }
 
     @TestMetadata("objects.kt")
     public void testObjects() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/objects.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/objects.kt"));
     }
 
     @TestMetadata("properties.kt")
     public void testProperties() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/properties.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/properties.kt"));
     }
 
     @TestMetadata("simpleFunctions.kt")
     public void testSimpleFunctions() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/simpleFunctions.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/simpleFunctions.kt"));
     }
 
     @TestMetadata("throwsAnnotation.kt")
     public void testThrowsAnnotation() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/throwsAnnotation.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/throwsAnnotation.kt"));
     }
 
     @TestMetadata("typeAliases.kt")
     public void testTypeAliases() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/typeAliases.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/typeAliases.kt"));
     }
 
     @TestMetadata("typeAnnotations.kt")
     public void testTypeAnnotations() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/typeAnnotations.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/typeAnnotations.kt"));
     }
 
     @TestMetadata("wildcardOptimization.kt")
     public void testWildcardOptimization() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/wildcardOptimization.kt"));
+        runTest(compilerTestData("compiler/testData/asJava/lightClasses/ultraLightClasses/wildcardOptimization.kt"));
     }
 }
