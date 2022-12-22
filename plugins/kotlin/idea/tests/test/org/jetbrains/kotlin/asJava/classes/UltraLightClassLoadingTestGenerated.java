@@ -19,204 +19,292 @@ import static org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifact
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByPsi")
-public class UltraLightClassLoadingTestGenerated extends AbstractUltraLightClassLoadingTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+public abstract class UltraLightClassLoadingTestGenerated extends AbstractUltraLightClassLoadingTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByPsi/facades")
+    public static class Facades extends AbstractUltraLightClassLoadingTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades");
+            super.setUp();
+        }
+
+        @TestMetadata("coroutines.kt")
+        public void testCoroutines() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/coroutines.kt"));
+        }
+
+        @TestMetadata("importAliases.kt")
+        public void testImportAliases() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/importAliases.kt"));
+        }
+
+        @TestMetadata("inlineOnly.kt")
+        public void testInlineOnly() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/inlineOnly.kt"));
+        }
+
+        @TestMetadata("jvmField.kt")
+        public void testJvmField() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/jvmField.kt"));
+        }
+
+        @TestMetadata("jvmName.kt")
+        public void testJvmName() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/jvmName.kt"));
+        }
+
+        @TestMetadata("jvmWildcardAnnotations.kt")
+        public void testJvmWildcardAnnotations() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/jvmWildcardAnnotations.kt"));
+        }
+
+        @TestMetadata("lateinitProperty.kt")
+        public void testLateinitProperty() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/lateinitProperty.kt"));
+        }
+
+        @TestMetadata("multifileFacade.kt")
+        public void testMultifileFacade() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/multifileFacade.kt"));
+        }
+
+        @TestMetadata("multifileFacadeJvmName.kt")
+        public void testMultifileFacadeJvmName() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/multifileFacadeJvmName.kt"));
+        }
+
+        @TestMetadata("properties.kt")
+        public void testProperties() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/properties.kt"));
+        }
+
+        @TestMetadata("simpleFunctions.kt")
+        public void testSimpleFunctions() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/simpleFunctions.kt"));
+        }
+
+        @TestMetadata("throwsAnnotation.kt")
+        public void testThrowsAnnotation() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/throwsAnnotation.kt"));
+        }
+
+        @TestMetadata("wildcardOptimization.kt")
+        public void testWildcardOptimization() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/wildcardOptimization.kt"));
+        }
     }
 
-    @Override
-    protected void setUp() {
-        compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi");
-        super.setUp();
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByPsi")
+    public static class Uncategorized extends AbstractUltraLightClassLoadingTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("annotationWithSetParamPropertyModifier.kt")
-    public void testAnnotationWithSetParamPropertyModifier() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/annotationWithSetParamPropertyModifier.kt"));
-    }
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi");
+            super.setUp();
+        }
 
-    @TestMetadata("annotations.kt")
-    public void testAnnotations() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/annotations.kt"));
-    }
+        @TestMetadata("annotationWithSetParamPropertyModifier.kt")
+        public void testAnnotationWithSetParamPropertyModifier() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/annotationWithSetParamPropertyModifier.kt"));
+        }
 
-    @TestMetadata("classModifiers.kt")
-    public void testClassModifiers() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/classModifiers.kt"));
-    }
+        @TestMetadata("annotations.kt")
+        public void testAnnotations() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/annotations.kt"));
+        }
 
-    @TestMetadata("constructors.kt")
-    public void testConstructors() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/constructors.kt"));
-    }
+        @TestMetadata("classModifiers.kt")
+        public void testClassModifiers() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/classModifiers.kt"));
+        }
 
-    @TestMetadata("coroutines.kt")
-    public void testCoroutines() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/coroutines.kt"));
-    }
+        @TestMetadata("constructors.kt")
+        public void testConstructors() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/constructors.kt"));
+        }
 
-    @TestMetadata("dataClasses.kt")
-    public void testDataClasses() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/dataClasses.kt"));
-    }
+        @TestMetadata("coroutines.kt")
+        public void testCoroutines() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/coroutines.kt"));
+        }
 
-    @TestMetadata("defaultMethodInKotlinWithSettingAll.kt")
-    public void testDefaultMethodInKotlinWithSettingAll() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/defaultMethodInKotlinWithSettingAll.kt"));
-    }
+        @TestMetadata("dataClasses.kt")
+        public void testDataClasses() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/dataClasses.kt"));
+        }
 
-    @TestMetadata("defaultMethodInKotlinWithSettingAllCompatibility.kt")
-    public void testDefaultMethodInKotlinWithSettingAllCompatibility() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/defaultMethodInKotlinWithSettingAllCompatibility.kt"));
-    }
+        @TestMetadata("defaultMethodInKotlinWithSettingAll.kt")
+        public void testDefaultMethodInKotlinWithSettingAll() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/defaultMethodInKotlinWithSettingAll.kt"));
+        }
 
-    @TestMetadata("delegatesWithAnnotations.kt")
-    public void testDelegatesWithAnnotations() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/delegatesWithAnnotations.kt"));
-    }
+        @TestMetadata("defaultMethodInKotlinWithSettingAllCompatibility.kt")
+        public void testDefaultMethodInKotlinWithSettingAllCompatibility() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/defaultMethodInKotlinWithSettingAllCompatibility.kt"));
+        }
 
-    @TestMetadata("delegatingToInterfaces.kt")
-    public void testDelegatingToInterfaces() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/delegatingToInterfaces.kt"));
-    }
+        @TestMetadata("delegatesWithAnnotations.kt")
+        public void testDelegatesWithAnnotations() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/delegatesWithAnnotations.kt"));
+        }
 
-    @TestMetadata("dollarsInNameLocal.kt")
-    public void testDollarsInNameLocal() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/dollarsInNameLocal.kt"));
-    }
+        @TestMetadata("delegatingToInterfaces.kt")
+        public void testDelegatingToInterfaces() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/delegatingToInterfaces.kt"));
+        }
 
-    @TestMetadata("enums.kt")
-    public void testEnums() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/enums.kt"));
-    }
+        @TestMetadata("dollarsInNameLocal.kt")
+        public void testDollarsInNameLocal() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/dollarsInNameLocal.kt"));
+        }
 
-    @TestMetadata("generics.kt")
-    public void testGenerics() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/generics.kt"));
-    }
+        @TestMetadata("enums.kt")
+        public void testEnums() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/enums.kt"));
+        }
 
-    @TestMetadata("implementingKotlinCollections.kt")
-    public void testImplementingKotlinCollections() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/implementingKotlinCollections.kt"));
-    }
+        @TestMetadata("generics.kt")
+        public void testGenerics() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/generics.kt"));
+        }
 
-    @TestMetadata("importAliases.kt")
-    public void testImportAliases() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/importAliases.kt"));
-    }
+        @TestMetadata("implementingKotlinCollections.kt")
+        public void testImplementingKotlinCollections() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/implementingKotlinCollections.kt"));
+        }
 
-    @TestMetadata("inferringAnonymousObjectTypes.kt")
-    public void testInferringAnonymousObjectTypes() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/inferringAnonymousObjectTypes.kt"));
-    }
+        @TestMetadata("importAliases.kt")
+        public void testImportAliases() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/importAliases.kt"));
+        }
 
-    @TestMetadata("inheritance.kt")
-    public void testInheritance() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/inheritance.kt"));
-    }
+        @TestMetadata("inferringAnonymousObjectTypes.kt")
+        public void testInferringAnonymousObjectTypes() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/inferringAnonymousObjectTypes.kt"));
+        }
 
-    @TestMetadata("inlineClasses.kt")
-    public void testInlineClasses() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/inlineClasses.kt"));
-    }
+        @TestMetadata("inheritance.kt")
+        public void testInheritance() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/inheritance.kt"));
+        }
 
-    @TestMetadata("inlineOnly.kt")
-    public void testInlineOnly() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/inlineOnly.kt"));
-    }
+        @TestMetadata("inlineClasses.kt")
+        public void testInlineClasses() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/inlineClasses.kt"));
+        }
 
-    @TestMetadata("inlineReified.kt")
-    public void testInlineReified() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/inlineReified.kt"));
-    }
+        @TestMetadata("inlineOnly.kt")
+        public void testInlineOnly() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/inlineOnly.kt"));
+        }
 
-    @TestMetadata("jvmField.kt")
-    public void testJvmField() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/jvmField.kt"));
-    }
+        @TestMetadata("inlineReified.kt")
+        public void testInlineReified() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/inlineReified.kt"));
+        }
 
-    @TestMetadata("jvmName.kt")
-    public void testJvmName() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/jvmName.kt"));
-    }
+        @TestMetadata("jvmField.kt")
+        public void testJvmField() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/jvmField.kt"));
+        }
 
-    @TestMetadata("jvmOverloads.kt")
-    public void testJvmOverloads() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/jvmOverloads.kt"));
-    }
+        @TestMetadata("jvmName.kt")
+        public void testJvmName() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/jvmName.kt"));
+        }
 
-    @TestMetadata("jvmRecord.kt")
-    public void testJvmRecord() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/jvmRecord.kt"));
-    }
+        @TestMetadata("jvmOverloads.kt")
+        public void testJvmOverloads() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/jvmOverloads.kt"));
+        }
 
-    @TestMetadata("jvmStaticOnPropertySetter.kt")
-    public void testJvmStaticOnPropertySetter() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/jvmStaticOnPropertySetter.kt"));
-    }
+        @TestMetadata("jvmRecord.kt")
+        public void testJvmRecord() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/jvmRecord.kt"));
+        }
 
-    @TestMetadata("jvmSynthetic.kt")
-    public void testJvmSynthetic() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/jvmSynthetic.kt"));
-    }
+        @TestMetadata("jvmStaticOnPropertySetter.kt")
+        public void testJvmStaticOnPropertySetter() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/jvmStaticOnPropertySetter.kt"));
+        }
 
-    @TestMetadata("jvmSyntheticForAccessors.kt")
-    public void testJvmSyntheticForAccessors() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/jvmSyntheticForAccessors.kt"));
-    }
+        @TestMetadata("jvmSynthetic.kt")
+        public void testJvmSynthetic() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/jvmSynthetic.kt"));
+        }
 
-    @TestMetadata("jvmWildcardAnnotations.kt")
-    public void testJvmWildcardAnnotations() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/jvmWildcardAnnotations.kt"));
-    }
+        @TestMetadata("jvmSyntheticForAccessors.kt")
+        public void testJvmSyntheticForAccessors() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/jvmSyntheticForAccessors.kt"));
+        }
 
-    @TestMetadata("LateinitProperties.kt")
-    public void testLateinitProperties() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/LateinitProperties.kt"));
-    }
+        @TestMetadata("jvmWildcardAnnotations.kt")
+        public void testJvmWildcardAnnotations() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/jvmWildcardAnnotations.kt"));
+        }
 
-    @TestMetadata("lateinitProperty.kt")
-    public void testLateinitProperty() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/lateinitProperty.kt"));
-    }
+        @TestMetadata("LateinitProperties.kt")
+        public void testLateinitProperties() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/LateinitProperties.kt"));
+        }
 
-    @TestMetadata("localClassDerived.kt")
-    public void testLocalClassDerived() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/localClassDerived.kt"));
-    }
+        @TestMetadata("lateinitProperty.kt")
+        public void testLateinitProperty() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/lateinitProperty.kt"));
+        }
 
-    @TestMetadata("objects.kt")
-    public void testObjects() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/objects.kt"));
-    }
+        @TestMetadata("localClassDerived.kt")
+        public void testLocalClassDerived() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/localClassDerived.kt"));
+        }
 
-    @TestMetadata("properties.kt")
-    public void testProperties() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/properties.kt"));
-    }
+        @TestMetadata("objects.kt")
+        public void testObjects() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/objects.kt"));
+        }
 
-    @TestMetadata("simpleFunctions.kt")
-    public void testSimpleFunctions() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/simpleFunctions.kt"));
-    }
+        @TestMetadata("properties.kt")
+        public void testProperties() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/properties.kt"));
+        }
 
-    @TestMetadata("throwsAnnotation.kt")
-    public void testThrowsAnnotation() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/throwsAnnotation.kt"));
-    }
+        @TestMetadata("script.kts")
+        public void testScript() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/script.kts"));
+        }
 
-    @TestMetadata("typeAliases.kt")
-    public void testTypeAliases() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/typeAliases.kt"));
-    }
+        @TestMetadata("simpleFunctions.kt")
+        public void testSimpleFunctions() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/simpleFunctions.kt"));
+        }
 
-    @TestMetadata("typeAnnotations.kt")
-    public void testTypeAnnotations() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/typeAnnotations.kt"));
-    }
+        @TestMetadata("throwsAnnotation.kt")
+        public void testThrowsAnnotation() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/throwsAnnotation.kt"));
+        }
 
-    @TestMetadata("wildcardOptimization.kt")
-    public void testWildcardOptimization() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/wildcardOptimization.kt"));
+        @TestMetadata("typeAliases.kt")
+        public void testTypeAliases() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/typeAliases.kt"));
+        }
+
+        @TestMetadata("typeAnnotations.kt")
+        public void testTypeAnnotations() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/typeAnnotations.kt"));
+        }
+
+        @TestMetadata("wildcardOptimization.kt")
+        public void testWildcardOptimization() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/wildcardOptimization.kt"));
+        }
     }
 }
