@@ -495,7 +495,7 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
         stateSnapshot = workspaceModel.entityStorage.current
 
         for (libraryPropertiesEntity in stateSnapshot.entities(LibraryPropertiesEntity::class.java)) {
-          checkCanceled()
+          checkCancelled()
 
           if (includeGlobalLibs || libraryPropertiesEntity.library.tableId !is LibraryTableId.GlobalLibraryTableId) {
             val properties = libraryPropertiesEntity.getPropertiesIfRepositoryLibrary()
