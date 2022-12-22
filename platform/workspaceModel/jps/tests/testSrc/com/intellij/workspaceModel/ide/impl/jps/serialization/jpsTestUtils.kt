@@ -1,11 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.configurationStore.StoreUtil.saveDocumentsAndProjectsAndApp
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.components.PathMacroMap
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
@@ -13,10 +18,13 @@ import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.replaceService
 import com.intellij.util.LineSeparator
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.util.io.assertMatches
+import com.intellij.util.io.directoryContentOf
+import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
+import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -338,4 +346,41 @@ internal fun checkSaveProjectAfterChange(originalProjectFile: File,
   }
 
   assertDirectoryMatches(projectData.projectDir, expectedDir, emptySet(), emptyList())
+}
+
+internal fun copyAndLoadGlobalEntities(originalFile: String? = null, expectedFile: String? = null, testDir: File, parentDisposable: Disposable, action: (JpsFileEntitySource.ExactGlobalFile) -> Unit) {
+  val optionsFolder = testDir.resolve("options")
+  PathManager.setExplicitConfigPath(testDir.absolutePath)
+  ApplicationManager.getApplication().stateStore.setPath(testDir.toPath())
+  ApplicationManager.getApplication().stateStore.clearCaches()
+  JpsGlobalEntitiesSerializers.enableGlobalEntitiesLoading()
+  // Copy original file before loading
+  if (originalFile != null) {
+    val globalEntitiesFolder = File(PathManagerEx.getCommunityHomePath(),
+                                    "platform/workspaceModel/jps/tests/testData/serialization/globalLibraries/$originalFile")
+    FileUtil.copyDir(globalEntitiesFolder, optionsFolder)
+  }
+
+  // Reinitialize application level services
+  val application = ApplicationManager.getApplication()
+  ApplicationManager.getApplication().replaceService(JpsGlobalModelSynchronizer::class.java, JpsGlobalModelSynchronizerImpl(), parentDisposable)
+  ApplicationManager.getApplication().replaceService(GlobalWorkspaceModel::class.java, GlobalWorkspaceModel(), parentDisposable)
+
+  // Entity source for global entities
+  val virtualFileManager = VirtualFileUrlManager.getGlobalInstance()
+  val globalLibrariesFile = virtualFileManager.fromUrl("$testDir/options/applicationLibraries.xml")
+  val entitySource = JpsFileEntitySource.ExactGlobalFile(globalLibrariesFile)
+
+  action(entitySource)
+
+  // Save current state and check it's expected
+  if (expectedFile != null) {
+    application.invokeAndWait { saveDocumentsAndProjectsAndApp(true) }
+    val globalEntitiesFolder = File(PathManagerEx.getCommunityHomePath(), "platform/workspaceModel/jps/tests/testData/serialization/globalLibraries/$expectedFile")
+    optionsFolder.assertMatches(directoryContentOf(globalEntitiesFolder.toPath()), filePathFilter = { it.contains("applicationLibraries.xml") })
+  }
+
+  JpsGlobalEntitiesSerializers.disableGlobalEntitiesLoading()
+  ApplicationManager.getApplication().stateStore.clearCaches()
+  PathManager.setExplicitConfigPath(null)
 }

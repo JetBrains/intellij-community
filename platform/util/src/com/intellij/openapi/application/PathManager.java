@@ -9,6 +9,7 @@ import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -305,6 +306,11 @@ public final class PathManager {
     }
 
     return ourConfigPath;
+  }
+
+  @TestOnly
+  public static void setExplicitConfigPath(@Nullable String path) {
+    ourConfigPath = path;
   }
 
   public static @NotNull String getScratchPath() {
