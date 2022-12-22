@@ -13,6 +13,7 @@ import com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 import com.intellij.util.indexing.IndexableFilesIndex
 import com.intellij.util.indexing.roots.IndexableFilesIndexImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.OrderRootsCacheBridge
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
 
@@ -76,7 +77,11 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
     }
 
     private fun shouldListen(library: Library): Boolean {
-      //project-level libraries are stored in WorkspaceModel, and changes in their roots are handled by RootsChangeWatcher 
+      //project and global level libraries are stored in WorkspaceModel, and changes in their roots are handled by RootsChangeWatcher
+      if (GlobalLibraryTableBridge.isEnabled()) {
+        return library.table?.tableLevel != LibraryTablesRegistrar.PROJECT_LEVEL &&
+               library.table?.tableLevel != LibraryTablesRegistrar.APPLICATION_LEVEL
+      }
       return library.table?.tableLevel != LibraryTablesRegistrar.PROJECT_LEVEL
     }
 
