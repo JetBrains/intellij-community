@@ -1,6 +1,5 @@
 package com.intellij.cce.report
 
-import com.google.gson.GsonBuilder
 import com.intellij.cce.metric.MetricInfo
 import com.intellij.cce.metric.MetricValueType
 import com.intellij.cce.metric.SuggestionsComparator
@@ -26,12 +25,7 @@ class HtmlReportGenerator(
   isCompletionGolfEvaluation: Boolean
 ) : FullReportGenerator {
   companion object {
-    private val gson = GsonBuilder().apply {
-      this.setPrettyPrinting()
-    }.create()
-
     private const val globalReportName = "index.html"
-    private const val metricsInfoName = "metrics.json"
 
     private val resources = listOf(
       "/script.js",
@@ -108,7 +102,6 @@ class HtmlReportGenerator(
 
   override fun generateGlobalReport(globalMetrics: List<MetricInfo>): Path {
     val reportPath = Paths.get(dirs.filterDir.toString(), globalReportName)
-    val metricsPath = Paths.get(dirs.filterDir.toString(), metricsInfoName)
 
     val reportTitle = "Code Completion Report for filters \"$filterName\" and \"$comparisonFilterName\""
     createHTML().html {
@@ -134,7 +127,6 @@ class HtmlReportGenerator(
         script { unsafe { raw(getMetricsTable(globalMetrics)) } }
       }
     }.also { html -> reportPath.writeText(html) }
-    metricsPath.writeText(gson.toJson(mapOf("metrics" to globalMetrics)))
 
     return reportPath
   }
