@@ -261,7 +261,8 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
 
   private static List<TextRange> getTextRangeForMethod(final ExceptionLineParser worker,
                                                        LineResult previousLineResult) {
-    String method = worker.getMethod();
+    String method = worker.getMethod().replaceFirst("\\$lambda\\$\\d+$", "")
+      .replaceFirst("^lambda\\$(.+)\\$\\d+$", "$1");
     UClass psiClass = worker.getUClass();
     if (psiClass == null) return null;
     List<UMethod> methods;
