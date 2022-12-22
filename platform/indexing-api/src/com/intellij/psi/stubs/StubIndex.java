@@ -21,17 +21,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 public abstract class StubIndex {
-
-  private static StubIndex ourInstance = CachedSingletonsRegistry.markCachedField(StubIndex.class);
+  private static final Supplier<StubIndex> ourInstance = CachedSingletonsRegistry.lazy(() -> {
+    return ApplicationManager.getApplication().getService(StubIndex.class);
+  });
 
   public static StubIndex getInstance() {
-    var instance = ourInstance;
-    if (instance == null) {
-      ourInstance = instance = ApplicationManager.getApplication().getService(StubIndex.class);
-    }
-    return instance;
+    return ourInstance.get();
   }
 
   /**

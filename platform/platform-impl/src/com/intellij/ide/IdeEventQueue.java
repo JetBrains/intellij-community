@@ -361,6 +361,7 @@ public final class IdeEventQueue extends EventQueue {
       super.dispatchEvent(e);
       return;
     }
+
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     long startedAt = System.currentTimeMillis();
     PerformanceWatcher performanceWatcher = PerformanceWatcher.getInstanceOrNull();
