@@ -4,6 +4,8 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.async.combineAndCollect
 import com.intellij.collaboration.ui.ComponentListPanelFactory
+import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.onHyperlinkActivated
@@ -24,9 +26,7 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.text.JBDateFormat
 import com.intellij.util.ui.JBUI
@@ -65,7 +65,6 @@ import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.SwingConstants
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
@@ -144,7 +143,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
             }
           }
         }
-      }.fold(JPanel(VerticalLayout(4)).apply { isOpaque = false }) { panel, commitPane ->
+      }.fold(VerticalListPanel(4)) { panel, commitPane ->
         panel.apply {
           add(commitPane)
         }
@@ -152,9 +151,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
 
     val commitsCount = commits.size
 
-    val contentPanel = JPanel(VerticalLayout(4, SwingConstants.LEFT)).apply {
-      isOpaque = false
-
+    val contentPanel = VerticalListPanel(4).apply {
       val titleText = if (commitsCount == 1) {
         GithubBundle.message("pull.request.timeline.commit.added")
       }
@@ -193,7 +190,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
           .successOnEdt { textPane.updateText(it.body) }
       }
       contentPanel = panelHandle.panel
-      actionsPanel = if (details.viewerCanUpdate) NonOpaquePanel(HorizontalLayout(8)).apply {
+      actionsPanel = if (details.viewerCanUpdate) HorizontalListPanel(8).apply {
         add(GHTextActions.createEditButton(panelHandle))
       }
       else null
@@ -214,7 +211,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       commentsDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText)
         .successOnEdt { textPane.setHtmlBody(it.convertToHtml(project)) }
     }
-    val actionsPanel = NonOpaquePanel(HorizontalLayout(8)).apply {
+    val actionsPanel = HorizontalListPanel(8).apply {
       if (comment.viewerCanUpdate) add(GHTextActions.createEditButton(panelHandle))
       if (comment.viewerCanDelete) add(GHTextActions.createDeleteButton {
         commentsDataProvider.deleteComment(EmptyProgressIndicator(), comment.id)
@@ -285,7 +282,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
         .successOnEdt { firstComment.update(it) }
     }
 
-    val actionsPanel = NonOpaquePanel(HorizontalLayout(8)).apply {
+    val actionsPanel = HorizontalListPanel(8).apply {
       if (firstComment.canBeUpdated) add(GHTextActions.createEditButton(panelHandle))
       if (firstComment.canBeDeleted) add(GHTextActions.createDeleteButton {
         reviewDataProvider.deleteComment(EmptyProgressIndicator(), firstComment.id)
@@ -406,8 +403,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       }
     }
 
-    return JPanel(VerticalLayout(0)).apply {
-      isOpaque = false
+    return VerticalListPanel().apply {
       add(mainItem)
       add(commentsPanel)
     }
@@ -429,7 +425,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       background = UIUtil.getPanelBackground()
     }.andOpaque()
 
-    val tagsPanel = JPanel(HorizontalLayout(10)).apply {
+    val tagsPanel = HorizontalListPanel(10).apply {
       isOpaque = false
       add(outdatedLabel)
       add(resolvedLabel)
@@ -463,7 +459,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       panelHandle = null
     }
 
-    val actionsPanel = NonOpaquePanel(HorizontalLayout(8)).apply {
+    val actionsPanel = HorizontalListPanel(8).apply {
       if (panelHandle != null && review.viewerCanUpdate) add(GHTextActions.createEditButton(panelHandle))
     }
 

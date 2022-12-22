@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -11,7 +12,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -74,8 +74,7 @@ internal class GHPRListPanelFactory(private val project: Project,
     }
     OutdatedPanelController(listLoader, listUpdatesChecker, outdatedStatePanel, disposable)
 
-    val controlsPanel = JPanel(VerticalLayout(0)).apply {
-      isOpaque = false
+    val controlsPanel = VerticalListPanel().apply {
       add(searchPanel)
       add(outdatedStatePanel)
     }

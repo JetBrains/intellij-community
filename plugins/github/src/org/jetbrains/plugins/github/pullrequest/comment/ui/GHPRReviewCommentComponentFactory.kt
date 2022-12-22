@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.openapi.project.Project
-import com.intellij.ui.components.panels.VerticalLayout
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.pullrequest.comment.GHMarkdownToHtmlConverter
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChange
@@ -10,7 +10,6 @@ import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeApplier
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 
 class GHPRReviewCommentComponentFactory(private val project: Project) {
@@ -33,9 +32,7 @@ class GHPRReviewCommentComponentFactory(private val project: Project) {
     val suggestedChangeApplier = GHSuggestedChangeApplier(project, suggestedChangeHelper.repository, suggestedChange)
     val suggestedChangeComponent = GHPRReviewSuggestedChangeComponentFactory(project, thread, suggestedChangeApplier, suggestedChangeHelper)
 
-    return JPanel(VerticalLayout(0)).apply {
-      isOpaque = false
-
+    return VerticalListPanel().apply {
       commentBlocks.forEach {
         when (it.commentType) {
           CommentType.COMMENT -> add(HtmlEditorPane(it.content))

@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.InlineIconButton
@@ -113,7 +113,7 @@ object TimelineDiffComponentFactory {
       diffComponent.bindVisibility(this, collapsedState.map { !it })
     }
 
-    return RoundedPanel(VerticalLayout(0), 8).apply {
+    return RoundedPanel(ListLayout.vertical(0), 8).apply {
       isOpaque = false
       add(createFileNameComponent(filePath, expandCollapseButton, onFileClick))
       add(diffComponent)

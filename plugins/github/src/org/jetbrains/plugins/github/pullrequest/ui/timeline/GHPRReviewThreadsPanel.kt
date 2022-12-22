@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
-import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.collaboration.ui.VerticalListPanel
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -12,12 +12,8 @@ import javax.swing.event.ListDataListener
 object GHPRReviewThreadsPanel {
 
   fun create(model: ListModel<GHPRReviewThreadModel>, threadComponentFactory: (GHPRReviewThreadModel) -> JComponent): JComponent {
-    val panel = JPanel(VerticalLayout(0)).apply {
-      isOpaque = false
-    }
-
+    val panel = VerticalListPanel()
     Controller(model, panel, threadComponentFactory)
-
     return panel
   }
 

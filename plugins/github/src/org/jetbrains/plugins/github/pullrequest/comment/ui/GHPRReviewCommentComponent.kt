@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -21,7 +21,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHe
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 
 object GHPRReviewCommentComponent {
@@ -75,16 +74,14 @@ object GHPRReviewCommentComponent {
       isVisible = comment.canBeDeleted
     }
 
-    val actionsPanel = JPanel(HorizontalLayout(8)).apply {
-      isOpaque = false
+    val actionsPanel = HorizontalListPanel(8).apply {
       isVisible = editButton.isVisible && deleteButton.isVisible
 
       add(editButton)
       add(deleteButton)
     }
 
-    val title = JPanel(HorizontalLayout(12)).apply {
-      isOpaque = false
+    val title = HorizontalListPanel(12).apply {
       add(titlePane)
       add(pendingLabel)
       add(resolvedLabel)

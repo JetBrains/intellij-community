@@ -1,13 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHActor
@@ -24,7 +24,6 @@ import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHAvatarIconsProvider, private val ghostUser: GHUser)
   : GHPRTimelineEventComponentFactory<GHPRTimelineEvent> {
@@ -65,8 +64,7 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
         titlePane
       }
       else {
-        JPanel(VerticalLayout(4)).apply {
-          isOpaque = false
+        VerticalListPanel(4).apply {
           add(titlePane)
           add(createDescriptionComponent(detailsText))
         }

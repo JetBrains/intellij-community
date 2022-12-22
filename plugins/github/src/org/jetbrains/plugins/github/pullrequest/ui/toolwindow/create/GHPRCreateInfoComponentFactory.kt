@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.ListenableProgressIndicator
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.util.CollectionDelta
@@ -19,7 +20,6 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
-import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -164,7 +164,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     }
     val createButton = JBOptionButton(createAction, arrayOf(createDraftAction))
     val cancelButton = JButton(cancelAction)
-    val actionsPanel = JPanel(HorizontalLayout(8)).apply {
+    val actionsPanel = HorizontalListPanel(8).apply {
       add(createButton)
       add(cancelButton)
     }

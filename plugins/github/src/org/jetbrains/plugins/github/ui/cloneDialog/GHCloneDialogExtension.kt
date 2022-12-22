@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
+import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
@@ -10,8 +11,7 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
-import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
@@ -83,7 +83,7 @@ private class GHCloneDialogExtensionComponent(project: Project, modalityState: M
 }
 
 private class GHCloneDialogLoginPanel(account: GithubAccount?) :
-  JBPanel<GHCloneDialogLoginPanel>(VerticalLayout(0)),
+  JBPanel<GHCloneDialogLoginPanel>(ListLayout.vertical(0)),
   Disposable {
 
   private val titlePanel =
@@ -94,7 +94,7 @@ private class GHCloneDialogLoginPanel(account: GithubAccount?) :
   private val contentPanel = Wrapper()
 
   private val chooseLoginUiPanel: JPanel =
-    JPanel(HorizontalLayout(0)).apply {
+    HorizontalListPanel().apply {
       border = JBEmptyBorder(getRegularPanelInsets())
 
       val loginViaGHButton = JButton(message("login.via.github.action")).apply { addActionListener { setOAuthLoginUi() } }

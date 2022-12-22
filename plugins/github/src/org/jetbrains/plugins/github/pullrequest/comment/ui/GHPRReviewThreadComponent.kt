@@ -4,7 +4,9 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
@@ -19,8 +21,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
-import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.containers.nullize
 import com.intellij.util.text.JBDateFormat
 import com.intellij.util.ui.JBUI
@@ -38,7 +38,10 @@ import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtensionComponentBase.Companion.items
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.awt.event.ActionEvent
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
@@ -53,9 +56,7 @@ object GHPRReviewThreadComponent {
                      suggestedChangeHelper: GHPRSuggestedChangeHelper,
                      ghostUser: GHUser,
                      currentUser: GHUser): JComponent {
-    val panel = JPanel(VerticalLayout(0)).apply {
-      isOpaque = false
-    }
+    val panel = VerticalListPanel()
     val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
                                                                      reviewDataProvider,
                                                                      avatarIconsProvider,
@@ -123,8 +124,7 @@ object GHPRReviewThreadComponent {
 
     val unResolveLink = createUnResolveLink(reviewDataProvider, thread)
 
-    return JPanel(HorizontalLayout(8)).apply {
-      isOpaque = false
+    return HorizontalListPanel(8).apply {
       border = JBUI.Borders.empty(INLAY_COMPONENT_TYPE.contentLeftShift)
 
       add(toggleReplyLink)
@@ -253,8 +253,7 @@ object GHPRReviewThreadComponent {
       override fun contentsChanged(e: ListDataEvent) = Unit
     })
 
-    val repliesPanel = JPanel(HorizontalLayout(8)).apply {
-      isOpaque = false
+    val repliesPanel = HorizontalListPanel(8).apply {
       add(authorsLabel)
       add(repliesLink)
       add(lastReplyDateLabel)
@@ -262,8 +261,7 @@ object GHPRReviewThreadComponent {
 
     val unResolveLink = createUnResolveLink(reviewDataProvider, thread)
 
-    return JPanel(HorizontalLayout(14)).apply {
-      isOpaque = false
+    return HorizontalListPanel(14).apply {
       add(repliesPanel)
       unResolveLink?.also {
         add(it)

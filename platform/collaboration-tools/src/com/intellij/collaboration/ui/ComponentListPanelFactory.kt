@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui
 
-import com.intellij.ui.components.panels.VerticalLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ListModel
@@ -10,9 +9,7 @@ import javax.swing.event.ListDataListener
 
 object ComponentListPanelFactory {
   fun <T : Any> createVertical(model: ListModel<T>, componentFactory: (T) -> JComponent, gap: Int): JPanel {
-    val panel = JPanel(VerticalLayout(gap)).apply {
-      isOpaque = false
-    }
+    val panel = VerticalListPanel(gap)
 
     model.addListDataListener(object : ListDataListener {
       override fun intervalRemoved(e: ListDataEvent) {

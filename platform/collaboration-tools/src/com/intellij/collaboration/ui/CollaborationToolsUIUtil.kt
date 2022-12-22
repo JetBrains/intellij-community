@@ -13,6 +13,7 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.SearchTextField
+import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.content.Content
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
@@ -157,6 +158,18 @@ object CollaborationToolsUIUtil {
     return bw + lw
   }
 }
+
+@Suppress("FunctionName")
+fun VerticalListPanel(gap: Int = 0): JPanel =
+  JPanel(ListLayout.vertical(gap)).apply {
+    isOpaque = false
+  }
+
+@Suppress("FunctionName")
+fun HorizontalListPanel(gap: Int = 0): JPanel =
+  JPanel(ListLayout.horizontal(gap)).apply {
+    isOpaque = false
+  }
 
 internal fun <E> ListModel<E>.findIndex(item: E): Int {
   for (i in 0 until size) {

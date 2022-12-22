@@ -2,10 +2,10 @@
 package com.intellij.collaboration.ui.codereview
 
 import com.intellij.collaboration.ui.JPanelWithBackground
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.comment.ReviewUIUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.hover.HoverStateListener
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
@@ -174,9 +174,7 @@ object CodeReviewChatItemUIUtil {
         }
       }
 
-      return JPanel(VerticalLayout(4)).apply {
-        isOpaque = false
-
+      return VerticalListPanel(4).apply {
         add(headerPanel)
         add(item)
       }

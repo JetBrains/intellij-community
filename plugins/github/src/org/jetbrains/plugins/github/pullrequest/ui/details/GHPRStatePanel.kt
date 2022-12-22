@@ -2,10 +2,10 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.async.CompletableFutureUtil
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.icons.AllIcons
 import com.intellij.ui.CardLayoutPanel
 import com.intellij.ui.components.JBOptionButton
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.NamedColorUtil
 import icons.CollaborationToolsIcons
@@ -106,8 +106,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
             icon = AllIcons.RunConfigurations.TestError
             text = GithubBundle.message("pull.request.repo.access.required")
           }
-          JPanel(VerticalLayout(STATUSES_GAP)).apply {
-            isOpaque = false
+          VerticalListPanel(STATUSES_GAP).apply {
             add(stateLabel)
             add(accessDeniedLabel)
           }
@@ -146,8 +145,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
         val stateLabel = JLabel(GithubBundle.message("pull.request.loading.status"), AllIcons.RunConfigurations.TestNotRan,
                                 SwingConstants.LEFT)
         val accessDeniedLabel = createAccessDeniedLabel(isDraft)
-        return JPanel(VerticalLayout(STATUSES_GAP, SwingConstants.LEFT)).apply {
-          isOpaque = false
+        return VerticalListPanel(STATUSES_GAP).apply {
           add(stateLabel)
           add(accessDeniedLabel)
         }
@@ -197,8 +195,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
 
         val accessDeniedLabel = createAccessDeniedLabel(isDraft)
 
-        return JPanel(VerticalLayout(STATUSES_GAP, SwingConstants.LEFT)).apply {
-          isOpaque = false
+        return VerticalListPanel(STATUSES_GAP).apply {
           add(statusChecks)
           add(requiredReviewsLabel)
           add(conflictsLabel)
