@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.fe10.testGenerator
 import org.jetbrains.kotlin.AbstractDataFlowValueRenderingTest
 import org.jetbrains.kotlin.addImport.AbstractAddImportTest
 import org.jetbrains.kotlin.addImportAlias.AbstractAddImportAliasTest53
+import org.jetbrains.kotlin.asJava.classes.AbstractIdeCompiledLightClassesByFqNameTest
+import org.jetbrains.kotlin.asJava.classes.AbstractIdeLightClassesByFqNameTest
 import org.jetbrains.kotlin.asJava.classes.AbstractIdeLightClassesByPsiTest
 import org.jetbrains.kotlin.checkers.*
 import org.jetbrains.kotlin.copyright.AbstractUpdateKotlinCopyrightTest
@@ -16,7 +18,9 @@ import org.jetbrains.kotlin.idea.AbstractWorkSelectionTest
 import org.jetbrains.kotlin.idea.actions.AbstractGotoTestOrCodeActionTest
 import org.jetbrains.kotlin.idea.actions.AbstractKotlinAddImportActionTest
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.caches.resolve.*
+import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiModuleLineMarkerTest
+import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiPlatformHighlightingTest
+import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiplatformAnalysisTest
 import org.jetbrains.kotlin.idea.codeInsight.*
 import org.jetbrains.kotlin.idea.codeInsight.codevision.AbstractKotlinCodeVisionProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractCodeInsightActionTest
