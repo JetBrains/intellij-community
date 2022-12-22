@@ -69,7 +69,7 @@ data class JdkItem(
   val jdkMajorVersion: Int,
   @NlsSafe
   val jdkVersion: String,
-  private val jdkVendorVersion: String?,
+  val jdkVendorVersion: String?,
   val suggestedSdkName: String,
 
   val os: String,
