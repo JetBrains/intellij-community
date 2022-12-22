@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.asJava.classes
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
-import org.jetbrains.kotlin.idea.perf.UltraLightChecker
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.name.FqName
@@ -19,8 +18,6 @@ abstract class AbstractUltraLightFacadeClassTest15 : KotlinLightCodeInsightFixtu
         val testDataFile = File(testDataPath)
         val sourceText = testDataFile.readText()
         myFixture.addFileToProject(testDataFile.name, sourceText) as KtFile
-
-        UltraLightChecker.checkForReleaseCoroutine(sourceText, module)
 
         val additionalFile = File("$testDataPath.1")
         if (additionalFile.exists()) {

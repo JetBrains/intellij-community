@@ -2,20 +2,17 @@
 
 package org.jetbrains.kotlin.idea.perf
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Conditions
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.PairProcessor
 import com.intellij.util.ref.DebugReflectionUtil
-import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupportBase
-import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
 import org.jetbrains.kotlin.idea.asJava.renderClass
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -28,15 +25,6 @@ object UltraLightChecker {
     fun checkClassEquivalence(file: KtFile) {
         for (ktClass in allClasses(file)) {
             checkClassEquivalence(ktClass)
-        }
-    }
-
-    fun checkForReleaseCoroutine(sourceFileText: String, module: Module) {
-        if (sourceFileText.contains("//RELEASE_COROUTINE_NEEDED")) {
-            TestCase.assertTrue(
-                "Test should be runned under language version that supports released coroutines",
-                module.languageVersionSettings.supportsFeature(LanguageFeature.ReleaseCoroutines)
-            )
         }
     }
 

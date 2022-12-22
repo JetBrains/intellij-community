@@ -29,7 +29,6 @@ abstract class AbstractUltraLightClassLoadingTest : KotlinLightCodeInsightFixtur
         withCustomCompilerOptions(sourceText, project, module) {
             val file = myFixture.addFileToProject(testDataFile.name, sourceText) as KtFile
 
-            UltraLightChecker.checkForReleaseCoroutine(sourceText, module)
             val additionalFile = File("$testDataPath.1")
             val additionalPsiFile = if (additionalFile.exists()) {
                 myFixture.addFileToProject(additionalFile.name.replaceFirst(".kt.1", "1.kt"), additionalFile.readText())
