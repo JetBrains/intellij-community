@@ -5,6 +5,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.model.psi.PsiExternalReferenceHost;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +55,7 @@ public interface PsiLanguageInjectionHost extends PsiExternalReferenceHost {
     void visit(@NotNull PsiFile injectedPsi, @NotNull List<? extends Shred> places);
   }
 
+  @ApiStatus.NonExtendable
   interface Shred {
     @Nullable("returns null when the host document marker is invalid")
     Segment getHostRangeMarker();

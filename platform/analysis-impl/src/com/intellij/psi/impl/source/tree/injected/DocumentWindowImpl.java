@@ -4,7 +4,6 @@ package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -20,7 +19,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.ObjectUtils;
@@ -88,23 +86,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     return null;
   }
 
-  private static final class CachedText {
-    private final String text;
-    private final long modificationStamp;
-
-    private CachedText(@NotNull String text, long modificationStamp) {
-      this.text = text;
-      this.modificationStamp = modificationStamp;
-    }
-
-    @NotNull
-    private String getText() {
-      return text;
-    }
-
-    private long getModificationStamp() {
-      return modificationStamp;
-    }
+  private record CachedText(@NotNull String text, long modificationStamp) {
   }
 
 
@@ -167,11 +149,11 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   public String getText() {
     CachedText cachedText = myCachedText;
 
-    if (cachedText == null || cachedText.getModificationStamp() != getModificationStamp()) {
+    if (cachedText == null || cachedText.modificationStamp() != getModificationStamp()) {
       myCachedText = cachedText = new CachedText(calcText(), getModificationStamp());
     }
 
-    return cachedText.getText();
+    return cachedText.text();
   }
 
   @NotNull
@@ -411,26 +393,8 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
 
   @Override
   @NotNull
-  public RangeMarker createRangeMarker(int startOffset, int endOffset) {
-    ProperTextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
-    RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange);
-    int startShift = Math.max(0, hostToInjected(hostRange.getStartOffset()) - startOffset);
-    int endShift = Math.max(0, endOffset - hostToInjected(hostRange.getEndOffset()) - startShift);
-    return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker, startShift, endShift);
-  }
-
-  @Override
-  @NotNull
   public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
-    if (!surviveOnExternalChange) {
-      return createRangeMarker(startOffset, endOffset);
-    }
-    ProperTextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
-    //todo persistent?
-    RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange.getStartOffset(), hostRange.getEndOffset(), true);
-    int startShift = Math.max(0, hostToInjected(hostRange.getStartOffset()) - startOffset);
-    int endShift = Math.max(0, endOffset - hostToInjected(hostRange.getEndOffset()) - startShift);
-    return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker, startShift, endShift);
+    return new RangeMarkerWindow(this, startOffset, endOffset, surviveOnExternalChange);
   }
 
   @Override
@@ -647,7 +611,10 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     return offsetInLeftFragment;
   }
 
-  @Override
+  /**
+   * @param minHostOffset if {@code true} minimum host offset corresponding to given injected offset is returned, otherwise maximum related
+   *                      host offset is returned
+   */
   public int injectedToHost(int injectedOffset, boolean minHostOffset) {
     return injectedToHost(injectedOffset, minHostOffset, true);
   }
@@ -659,6 +626,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
         return hostRangeMarker == null ? 0 : hostRangeMarker.getStartOffset();
       }
       int prevEnd = 0;
+      //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < myShreds.size(); i++) {
         PsiLanguageInjectionHost.Shred shred = myShreds.get(i);
         Segment currentRange = shred.getHostRangeMarker();
@@ -766,10 +734,6 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     }
   }
 
-  /**
-   * @deprecated Use {@link InjectedLanguageManager#intersectWithAllEditableFragments(PsiFile, TextRange)} instead
-   */
-  @Deprecated
   @Nullable
   private TextRange intersectWithEditable(@NotNull TextRange rangeToEdit) {
     int startOffset = -1;

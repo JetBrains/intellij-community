@@ -91,9 +91,11 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
 
   @Override
   public PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider injectedProvider) {
+    //noinspection removal
     if (!(injectedProvider instanceof InjectedFileViewProvider)) {
       return null;
     }
+    //noinspection removal
     return ((InjectedFileViewProvider)injectedProvider).getShreds().getHostPointer().getElement();
   }
 
@@ -126,7 +128,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   @Override
   public int injectedToHost(@NotNull PsiElement injectedContext, int injectedOffset, boolean minHostOffset) {
     DocumentWindow documentWindow = getDocumentWindow(injectedContext);
-    return documentWindow == null ? injectedOffset : documentWindow.injectedToHost(injectedOffset, minHostOffset);
+    return documentWindow == null ? injectedOffset : ((DocumentWindowImpl)documentWindow).injectedToHost(injectedOffset, minHostOffset);
   }
 
   private static DocumentWindow getDocumentWindow(@NotNull PsiElement element) {
@@ -290,6 +292,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
 
   @Override
   public boolean isInjectedFragment(@NotNull PsiFile injectedFile) {
+    //noinspection removal
     return injectedFile.getViewProvider() instanceof InjectedFileViewProvider;
   }
 
@@ -464,7 +467,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   }
 
   private static class PsiManagerRegisteredInjectorsAdapter implements MultiHostInjector {
-    public static final PsiManagerRegisteredInjectorsAdapter INSTANCE = new PsiManagerRegisteredInjectorsAdapter();
+    static final PsiManagerRegisteredInjectorsAdapter INSTANCE = new PsiManagerRegisteredInjectorsAdapter();
     @Override
     public void getLanguagesToInject(@NotNull MultiHostRegistrar injectionPlacesRegistrar, @NotNull PsiElement context) {
       PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
