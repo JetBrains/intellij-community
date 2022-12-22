@@ -22,6 +22,7 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.readText
 import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.AbstractWorkspaceModelCache
 import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
@@ -65,7 +66,7 @@ class DelayedProjectSynchronizerTest {
   fun setUp() {
     WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
     virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
-    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheImpl.PluginAwareEntityTypesResolver, virtualFileManager)
+    serializer = EntityStorageSerializerImpl(AbstractWorkspaceModelCache.PluginAwareEntityTypesResolver, virtualFileManager)
     registerFacetType(MockFacetType(), disposableRule.disposable)
     registerFacetType(AnotherMockFacetType(), disposableRule.disposable)
   }

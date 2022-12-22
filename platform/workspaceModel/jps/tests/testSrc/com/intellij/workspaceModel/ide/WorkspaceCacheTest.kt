@@ -16,6 +16,7 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.io.exists
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
+import com.intellij.workspaceModel.ide.impl.AbstractWorkspaceModelCache
 import com.intellij.workspaceModel.ide.impl.jps.serialization.LoadedProjectData
 import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
 import com.intellij.workspaceModel.storage.EntitySource
@@ -46,7 +47,7 @@ class WorkspaceCacheTest {
   fun setUp() {
     WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
     virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
-    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheImpl.PluginAwareEntityTypesResolver, virtualFileManager, WorkspaceModelCacheImpl::collectExternalCacheVersions)
+    serializer = EntityStorageSerializerImpl(AbstractWorkspaceModelCache.PluginAwareEntityTypesResolver, virtualFileManager, WorkspaceModelCacheImpl::collectExternalCacheVersions)
   }
 
   @After
