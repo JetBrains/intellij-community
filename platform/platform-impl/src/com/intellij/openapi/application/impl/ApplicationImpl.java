@@ -132,7 +132,9 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     ApplicationManager.setApplication(this, myLastDisposable);
 
     // Acquire IW lock on EDT indefinitely in legacy mode
-    EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass().getName()));
+    if (!USE_SEPARATE_WRITE_THREAD) {
+      EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass().getName()));
+    }
 
     NoSwingUnderWriteAction.watchForEvents(this);
   }
@@ -157,7 +159,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation");
     // Acquire IW lock on EDT indefinitely in legacy mode
     if (!USE_SEPARATE_WRITE_THREAD) {
-      EventQueue.invokeLater(() -> acquireWriteIntentLock(getClass().getName()));
+      EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass().getName()));
     }
     activity.end();
 
@@ -302,7 +304,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean isWriteIntentLockAcquired() {
-    return myLock.isWriteThread();
+    return myLock.isWriteThread() && myLock.isWriteIntentLocked();
   }
 
   @Deprecated
@@ -1041,7 +1043,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean isReadAccessAllowed() {
-    return isWriteIntentLockAcquired() || myLock.isReadLockedByThisThread();
+    return myLock.isWriteThread() || myLock.isReadLockedByThisThread();
   }
 
   @Override
@@ -1296,7 +1298,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean isWriteAccessAllowed() {
-    return isWriteIntentLockAcquired() && myLock.isWriteLocked();
+    return myLock.isWriteThread() && myLock.isWriteLocked();
   }
 
   @Override
