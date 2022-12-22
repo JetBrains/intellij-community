@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.application.Application;
@@ -31,10 +31,6 @@ import java.lang.reflect.Method;
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   private static final Logger LOG = Logger.getInstance(ButtonlessScrollBarUI.class);
 
-  @Deprecated(forRemoval = true)
-  public static JBColor getTrackBackgroundDefault() {
-    return new JBColor(LightColors.SLIGHTLY_GRAY, UIUtil.getListBackground());
-  }
   private JBColor getTrackBackground() {
     return jbColor(LightColors.SLIGHTLY_GRAY, UIUtil.getListBackground());
   }
@@ -99,7 +95,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
         boolean vertical = isVertical();
         Point position = viewport.getViewPosition();
-        // we don't take viewport's size here since it often changes on scrollbar appearance.
+        // we don't take viewport's size here, since it often changes on scrollbar appearance.
         // instead, we want to only react on visible area resizes
         Dimension dimension = scrollpane.getSize();
 
@@ -367,11 +363,6 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
   }
 
-  @Deprecated(forRemoval = true)
-  public static BasicScrollBarUI createNormal() {
-    return new ButtonlessScrollBarUI();
-  }
-
   @Override
   protected void installDefaults() {
     final int incGap = UIManager.getInt("ScrollBar.incrementButtonGap");
@@ -608,7 +599,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     if (alwaysShowTrack() || myMouseOverScrollbarExpandLevel > 0) {
       doPaintTrack(g, c, trackBounds);
     }
-    RegionPainter<Object> painter = ComponentUtil.getClientProperty(c, JBScrollBar.TRACK);
+    RegionPainter<Object> painter = ClientProperty.get(c, JBScrollBar.TRACK);
     if (painter != null) {
       painter.paint((Graphics2D)g, trackBounds.x, trackBounds.y, trackBounds.width, trackBounds.height, null);
     }
