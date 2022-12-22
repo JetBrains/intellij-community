@@ -43,7 +43,8 @@ import java.util.regex.Pattern;
 
 @SuppressWarnings("Duplicates")
 public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
-  private static final ExtensionPointName<SearchableOptionContributor> EP_NAME = new ExtensionPointName<>("com.intellij.search.optionContributor");
+  private static final ExtensionPointName<SearchableOptionContributor> EP_NAME =
+    new ExtensionPointName<>("com.intellij.search.optionContributor");
 
   // option => array of packed OptionDescriptor
   private volatile Map<CharSequence, long[]> storage = Collections.emptyMap();
@@ -139,7 +140,8 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     identifierTable = processor.getIdentifierTable();
   }
 
-  static void processSearchableOptions(@NotNull Predicate<? super String> fileNameFilter, @NotNull BiConsumer<? super String, ? super Element> consumer) {
+  static void processSearchableOptions(@NotNull Predicate<? super String> fileNameFilter,
+                                       @NotNull BiConsumer<? super String, ? super Element> consumer) {
     Set<ClassLoader> visited = Collections.newSetFromMap(new IdentityHashMap<>());
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPluginSet().getEnabledModules()) {
       ClassLoader classLoader = plugin.getPluginClassLoader();
@@ -165,13 +167,18 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   }
 
   /**
-   * @return XYZT:64 bits where X:16 bits - id of the interned groupName
-   *                            Y:16 bits - id of the interned id
-   *                            Z:16 bits - id of the interned hit
-   *                            T:16 bits - id of the interned path
+   * @return XYZT:64 bits where
+   * X:16 bits - id of the interned groupName
+   * Y:16 bits - id of the interned id
+   * Z:16 bits - id of the interned hit
+   * T:16 bits - id of the interned path
    */
   @SuppressWarnings("SpellCheckingInspection")
-  static long pack(@NotNull String id, @Nullable String hit, @Nullable String path, @Nullable String groupName, @NotNull IndexedCharsInterner identifierTable) {
+  static long pack(@NotNull String id,
+                   @Nullable String hit,
+                   @Nullable String path,
+                   @Nullable String groupName,
+                   @NotNull IndexedCharsInterner identifierTable) {
     long _id = identifierTable.toId(id.trim());
     long _hit = hit == null ? Short.MAX_VALUE : identifierTable.toId(hit.trim());
     long _path = path == null ? Short.MAX_VALUE : identifierTable.toId(path.trim());
@@ -298,7 +305,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     }
 
     if (helpIds != null) {
-      for (Iterator<Configurable> it = contentHits.iterator(); it.hasNext();) {
+      for (Iterator<Configurable> it = contentHits.iterator(); it.hasNext(); ) {
         Configurable configurable = it.next();
         boolean needToRemove = true;
         if (configurable instanceof SearchableConfigurable && helpIds.contains(((SearchableConfigurable)configurable).getId())) {
@@ -406,8 +413,9 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
         theOnlyResult = description;
       }
 
-      if (resultSet.isEmpty())
+      if (resultSet.isEmpty()) {
         resultSet.add(theOnlyResult.getPath());
+      }
     }
 
     return resultSet;
@@ -426,7 +434,9 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   }
 
   @ApiStatus.Internal
-  public static void collectProcessedWordsWithoutStemming(@NotNull String text, @NotNull Set<? super String> result, @NotNull Set<String> stopWords) {
+  public static void collectProcessedWordsWithoutStemming(@NotNull String text,
+                                                          @NotNull Set<? super String> result,
+                                                          @NotNull Set<String> stopWords) {
     for (String opt : WORD_SEPARATOR_CHARS.split(Strings.toLowerCase(text))) {
       if (stopWords.contains(opt)) {
         continue;
