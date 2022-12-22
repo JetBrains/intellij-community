@@ -2649,6 +2649,46 @@ public class PyTypingTest extends PyTestCase {
              """);
   }
 
+  // PY-54336
+  public void testReusedTypeVarsAndInheritanceDoNotCauseRecursiveSubstitution() {
+    doTest("Sub[T1]",
+           """
+             from typing import Generic, TypeVar
+
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+
+             class Super(Generic[T1]):
+                 pass
+
+             class Sub(Super[T2]):
+                 def __init__(self, xs: list[T2]):
+                     pass
+
+             def func(xs: list[T1]):
+                 expr = Sub(xs)
+             """);
+  }
+
+  // PY-50542
+  public void testReusedTypeVarsInOppositeOrderDoNotCauseRecursiveSubstitution() {
+    doTest("str",
+           """
+             from typing import TypeVar
+                          
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+                          
+             def f(x: T1, y: T2) -> T2:
+                 pass
+                          
+             def g(x: T2, y: T1):
+                 return f(x, y)
+                          
+             expr = g(42, 'foo')
+             """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

@@ -1594,27 +1594,6 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   // PY-54336
-  public void testReusedTypeVarsCauseRecursiveSubstitution() {
-    doTest("Sub[T1]",
-           """
-             from typing import Generic, TypeVar
-
-             T1 = TypeVar('T1')
-             T2 = TypeVar('T2')
-
-             class Super(Generic[T1]):
-                 pass
-
-             class Sub(Super[T2]):
-                 def __init__(self, xs: list[T2]):
-                     pass
-
-             def func(xs: list[T1]):
-                 expr = Sub(xs)
-             """);
-  }
-
-  // PY-54336
   public void testCyclePreventionDuringGenericsSubstitution() {
     PyGenericType typeVarT = new PyGenericType("T", null, false);
     PyGenericType typeVarV = new PyGenericType("V", null, false);
