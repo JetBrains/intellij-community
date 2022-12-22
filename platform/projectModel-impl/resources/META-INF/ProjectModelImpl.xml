@@ -79,4 +79,9 @@
                  restartRequired="true"/>
     
   </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSynchronizerListener"
+              topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
+  </projectListeners>
 </idea-plugin>

@@ -33,9 +33,8 @@ import com.intellij.project.stateStore
 import com.intellij.util.PlatformUtils.isIntelliJ
 import com.intellij.util.PlatformUtils.isRider
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
+import com.intellij.workspaceModel.ide.impl.*
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -216,6 +215,12 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, unloadedEntitiesBuilder, unloadedModuleNames, it, project) }
       fileContentReader.clearCache()
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.entityTracer?.printInfoAboutTracedEntity(builder, "JPS files")
+      if (GlobalLibraryTableBridge.isEnabled()) {
+        childActivity = childActivity?.endAndStart("applying entities from global storage")
+        val mutableStorage = MutableEntityStorage.create()
+        GlobalWorkspaceModel.getInstance().applyStateToBuilder(mutableStorage)
+        builder.addDiff(mutableStorage)
+      }
       childActivity = childActivity?.endAndStart("applying loaded changes (in queue)")
       return LoadedProjectEntities(builder, unloadedEntitiesBuilder, sourcesToUpdate)
     }
@@ -345,7 +350,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   @TestOnly
   fun markAllEntitiesAsDirty() {
     val allSources = WorkspaceModel.getInstance(project).entityStorage.current.entitiesBySource { true }.keys +
-                     WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.entitiesBySource { true }.keys 
+                     WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.entitiesBySource { true }.keys
     synchronized(sourcesToSave) {
       sourcesToSave.addAll(allSources)
     }
