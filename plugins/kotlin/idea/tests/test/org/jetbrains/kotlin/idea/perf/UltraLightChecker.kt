@@ -12,7 +12,6 @@ import com.intellij.util.ref.DebugReflectionUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupportBase
-import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
 import org.jetbrains.kotlin.idea.asJava.renderClass
@@ -66,15 +65,15 @@ object UltraLightChecker {
         }
     }
 
-    fun checkClassEquivalence(ktClass: KtClassOrObject): KtUltraLightClass? {
+    fun checkClassEquivalence(ktClass: KtClassOrObject): PsiClass? {
         val javaSupport = KotlinAsJavaSupport.getInstance(ktClass.project).cast<KotlinAsJavaSupportBase<*>>()
-        val ultraLightClass = javaSupport.createLightClass(ktClass)?.value?.cast<KtUltraLightClass>() ?: return null
-        val secondULInstance = javaSupport.createLightClass(ktClass)?.value?.cast<KtUltraLightClass>()
+        val ultraLightClass = javaSupport.createLightClass(ktClass)?.value ?: return null
+        val secondULInstance = javaSupport.createLightClass(ktClass)?.value
         Assert.assertNotNull(secondULInstance)
         Assert.assertTrue(ultraLightClass !== secondULInstance)
         secondULInstance!!
-        Assert.assertEquals(ultraLightClass.ownMethods.size, secondULInstance.ownMethods.size)
-        Assert.assertTrue(ultraLightClass.ownMethods.containsAll(secondULInstance.ownMethods))
+        Assert.assertEquals(ultraLightClass.methods.size, secondULInstance.methods.size)
+        Assert.assertTrue(ultraLightClass.methods.asList().containsAll(secondULInstance.methods.asList()))
 
         return ultraLightClass
     }
