@@ -1045,31 +1045,31 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractIdeLightClassTest> {
-            model("asJava/lightClasses", excludedDirectories = listOf("delegation", "script"), pattern = KT_WITHOUT_DOTS)
+            model("asJava/lightClasses/lightClasses", excludedDirectories = listOf("delegation", "script"), pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractIdeLightClassForScriptTest> {
-            model("asJava/script/ide", pattern = KT_OR_KTS_WITHOUT_DOTS)
+            model("asJava/lightClasses/script/ide", pattern = KT_OR_KTS_WITHOUT_DOTS)
         }
 
         testClass<AbstractUltraLightClassSanityTest> {
-            model("asJava/lightClasses", pattern = KT_OR_KTS)
+            model("asJava/lightClasses/lightClasses", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractUltraLightClassLoadingTest> {
-            model("asJava/ultraLightClasses", pattern = KT_OR_KTS)
+            model("asJava/lightClasses/ultraLightClasses", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractUltraLightScriptLoadingTest> {
-            model("asJava/ultraLightScripts", pattern = KT_OR_KTS)
+            model("asJava/lightClasses/ultraLightScripts", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractUltraLightFacadeClassTest15> {
-            model("asJava/ultraLightFacades", pattern = KT_OR_KTS)
+            model("asJava/lightClasses/ultraLightFacades", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractIdeCompiledLightClassTest> {
-            model("asJava/lightClasses", excludedDirectories = listOf("local", "compilationErrors", "ideRegression", "script"), pattern = KT_OR_KTS_WITHOUT_DOTS)
+            model("asJava/lightClasses/lightClasses", excludedDirectories = listOf("local", "compilationErrors", "ideRegression", "script"), pattern = KT_OR_KTS_WITHOUT_DOTS)
         }
     }
 
