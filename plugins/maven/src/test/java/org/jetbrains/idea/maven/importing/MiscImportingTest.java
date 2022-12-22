@@ -3,11 +3,15 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -22,6 +26,7 @@ import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporterKt;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.junit.Assume;
 import org.junit.Test;
@@ -206,6 +211,39 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
     myEventsTestHelper.assertRootsChanged(isWorkspaceImport() ? 0 : 1);
     myEventsTestHelper.assertWorkspaceModelChanges(isWorkspaceImport() ? 0 : 1);
+  }
+
+  @Test
+  public void testSetExternalSourceForExistingLibrary() {
+    /* this test checks that the external source will be restored if it wasn't saved due to the bug (IDEA-264750);
+       the bug isn't relevant for Workspace Import because it is actual only if "Store generated files under project root" is switched on */
+    MavenProjectsManager.getInstance(myProject).getImportingSettings().setWorkspaceImportEnabled(false);
+
+    String libraryName = "Maven: junit:junit:4.0";
+    LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
+    WriteAction.runAndWait(() -> {
+      LibraryTable.ModifiableModel model = libraryTable.getModifiableModel();
+      model.createLibrary(libraryName);
+      model.commit();
+    });
+
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                        <version>4.0</version>
+                      </dependency>
+                    </dependencies>""");
+    importProject();
+
+    assertModules("project");
+    Library library = getModuleLibDep("project", libraryName).getLibrary();
+    assertNotNull(library);
+    assertNotNull(library.getExternalSource());
   }
 
   @Test

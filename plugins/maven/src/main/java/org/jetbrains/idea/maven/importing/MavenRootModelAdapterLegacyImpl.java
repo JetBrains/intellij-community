@@ -371,6 +371,9 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
     }
     Library.ModifiableModel libraryModel = provider.getModifiableLibraryModel(library);
 
+    if (library.getExternalSource() == null) {
+      ((LibraryEx.ModifiableModelEx)libraryModel).setExternalSource(getMavenExternalSource());
+    }
     updateUrl(libraryModel, OrderRootType.CLASSES, artifact, null, null, true);
     updateUrl(libraryModel, OrderRootType.SOURCES, artifact, MavenExtraArtifactType.SOURCES, project, false);
     updateUrl(libraryModel, JavadocOrderRootType.getInstance(), artifact, MavenExtraArtifactType.DOCS, project, false);

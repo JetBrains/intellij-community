@@ -360,7 +360,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     assertEquals(scope, dep.getScope());
   }
 
-  private LibraryOrderEntry getModuleLibDep(String moduleName, String depName) {
+  protected LibraryOrderEntry getModuleLibDep(String moduleName, String depName) {
     return getModuleDep(moduleName, depName, LibraryOrderEntry.class);
   }
 
