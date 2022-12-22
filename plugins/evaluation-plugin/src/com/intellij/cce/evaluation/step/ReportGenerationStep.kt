@@ -7,7 +7,7 @@ import com.intellij.cce.metric.MetricsEvaluator
 import com.intellij.cce.metric.SuggestionsComparator
 import com.intellij.cce.report.FullReportGenerator
 import com.intellij.cce.report.HtmlReportGenerator
-import com.intellij.cce.report.MetricsInfoReportGenerator
+import com.intellij.cce.report.JsonReportGenerator
 import com.intellij.cce.report.PlainTextReportGenerator
 import com.intellij.cce.util.Progress
 import com.intellij.cce.workspace.EvaluationWorkspace
@@ -71,7 +71,7 @@ class ReportGenerationStep(
             featuresStorages,
             isCompletionGolfEvaluation
           ),
-          MetricsInfoReportGenerator(
+          JsonReportGenerator(
             workspace.reportsDirectory(),
             filter.name,
             comparisonStorage.reportName,

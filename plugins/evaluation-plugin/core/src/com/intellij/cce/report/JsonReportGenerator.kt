@@ -9,12 +9,12 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.writeText
 
-class MetricsInfoReportGenerator(
+class JsonReportGenerator(
   outputDir: String,
   filterName: String,
   comparisonFilterName: String,
 ) : FullReportGenerator {
-  override val type = "metrics"
+  override val type = "json"
 
   private val metricPerFile = mutableMapOf<String, List<MetricInfo>>()
 
