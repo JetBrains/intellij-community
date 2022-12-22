@@ -158,8 +158,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       ProfilingHelper profilingHelper;
 
       try {
-        Utils.ProfilingMode profilingMode;
-        profilingMode = Utils.getProfilingMode();
+        Utils.ProfilingMode profilingMode = Utils.getProfilingMode();
 
         switch (profilingMode) {
           case NONE:
