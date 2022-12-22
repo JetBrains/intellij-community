@@ -64,6 +64,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleModuleData;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -585,7 +586,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         }
       });
       if (outputDirs.stream().anyMatch(path -> FileUtil.isAncestor(ideaOutDir, new File(path), false))) {
-        excludeOutDir(ideModule, ideaOutDir);
+        GradleUtil.excludeOutDir(ideModule, ideaOutDir);
       }
       return;
     }
@@ -635,7 +636,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       }
 
       if (!resolverCtx.isDelegatedBuild() && !inheritOutputDirs && (outputDir == null || testOutputDir == null)) {
-        excludeOutDir(ideModule, ideaOutDir);
+        GradleUtil.excludeOutDir(ideModule, ideaOutDir);
       }
     }
 
@@ -677,21 +678,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       .filter(f -> f.getPath().contains(firstExistingLang))
       .findFirst()
       .orElse(ContainerUtil.getFirstItem(outputDirectories));
-  }
-
-  private static void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
-    ContentRootData excludedContentRootData;
-    DataNode<ContentRootData> contentRootDataDataNode = ExternalSystemApiUtil.find(ideModule, ProjectKeys.CONTENT_ROOT);
-    if (contentRootDataDataNode == null ||
-        !FileUtil.isAncestor(new File(contentRootDataDataNode.getData().getRootPath()), ideaOutDir, false)) {
-      excludedContentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, ideaOutDir.getPath());
-      ideModule.createChild(ProjectKeys.CONTENT_ROOT, excludedContentRootData);
-    }
-    else {
-      excludedContentRootData = contentRootDataDataNode.getData();
-    }
-
-    excludedContentRootData.storePath(ExternalSystemSourceType.EXCLUDED, ideaOutDir.getPath());
   }
 
   @Override

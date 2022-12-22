@@ -67,6 +67,8 @@ import java.util.*;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findAll;
 import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
+import static org.jetbrains.plugins.gradle.util.GradleUtil.excludeOutDir;
+import static org.jetbrains.plugins.gradle.util.GradleUtil.unexcludeOutDir;
 
 public final class GradleManager
   implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSystemAutoImportAware, StartupActivity, ExternalSystemManager<
@@ -376,6 +378,7 @@ public final class GradleManager
                 for (DataNode<GradleSourceSetData> sourceSetDataNode : findAll(moduleDataNode, GradleSourceSetData.KEY)) {
                   sourceSetDataNode.getData().useExternalCompilerOutput(delegatedBuild);
                 }
+                toggleExcludeOutDir(moduleDataNode, delegatedBuild);
               }
               ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, project);
             });
@@ -397,6 +400,17 @@ public final class GradleManager
     GradleLocalSettings localSettings = GradleLocalSettings.getInstance(project);
     patchRecentTasks(adjustedPaths, localSettings);
     patchAvailableProjects(adjustedPaths, localSettings);
+  }
+
+  private static void toggleExcludeOutDir(DataNode<ModuleData> moduleDataNode, boolean delegatedBuild) {
+    ModuleData module = moduleDataNode.getData();
+    File ideaOutDir = new File(module.getLinkedExternalProjectPath(), "out");
+    module.useExternalCompilerOutput(delegatedBuild);
+    if (!delegatedBuild) {
+      excludeOutDir(moduleDataNode, ideaOutDir);
+    } else {
+      unexcludeOutDir(moduleDataNode, ideaOutDir);
+    }
   }
 
   @Nullable
