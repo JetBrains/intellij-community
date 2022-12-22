@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +15,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.stream.Stream;
 
 import static com.intellij.util.PathUtil.getParentPath;
@@ -22,6 +24,9 @@ import static com.intellij.util.PathUtil.getParentPath;
  * Unless stated otherwise, all paths are {@link org.jetbrains.annotations.SystemDependent @SystemDependent}.
  */
 final class CanonicalPathMap {
+  private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+    "CanonicalPathMap", ProcessIOExecutorService.INSTANCE, Runtime.getRuntime().availableProcessors());
+
   static CanonicalPathMap empty() {
     return new CanonicalPathMap(Collections.emptyNavigableSet(), Collections.emptyNavigableSet(), Collections.emptyNavigableSet());
   }
@@ -50,7 +55,7 @@ final class CanonicalPathMap {
         if (canonicalRoot != null && OSAgnosticPathUtil.COMPARATOR.compare(canonicalRoot, root) != 0) {
           canonicalPathMappings.put(root, canonicalRoot);
         }
-      }, ProcessIOExecutorService.INSTANCE))
+      }, ourExecutor))
       .toArray(CompletableFuture[]::new);
     CompletableFuture.allOf(futures).join();
 
