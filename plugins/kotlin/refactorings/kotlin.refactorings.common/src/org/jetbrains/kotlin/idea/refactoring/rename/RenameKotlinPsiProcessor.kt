@@ -16,6 +16,7 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.elements.KtLightParameter
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -185,6 +186,11 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
         listener: RefactoringElementListener?
     ) {
         when (element) {
+            is KtLightParameter -> {
+                val kotlinElement = element.kotlinOrigin ?: return
+                RenameUtil.doRenameGenericNamedElement(kotlinElement, newName, usagesToRename, listener)
+            }
+
             is KtLightMethod -> {
                 val kotlinElement = element.kotlinOrigin ?: return
                 val defensiveCopy = kotlinElement.copy()

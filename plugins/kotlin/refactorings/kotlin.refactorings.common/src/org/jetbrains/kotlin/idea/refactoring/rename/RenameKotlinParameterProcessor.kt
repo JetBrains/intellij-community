@@ -7,7 +7,9 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.asJava.elements.KtLightParameter
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.util.or
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.psi.KtFunction
@@ -16,7 +18,14 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.utils.SmartList
 
 class RenameKotlinParameterProcessor : RenameKotlinPsiProcessor() {
-    override fun canProcessElement(element: PsiElement) = element is KtParameter && element.ownerFunction is KtFunction
+    override fun canProcessElement(element: PsiElement): Boolean = when {
+        element is KtParameter && element.ownerFunction is KtFunction -> true
+
+        // rename started from java (for example by automatic renamer)
+        element is KtLightParameter -> true
+
+        else -> false
+    }
 
     override fun isToSearchInComments(psiElement: PsiElement) = KotlinCommonRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_PARAMETER
 
@@ -44,8 +53,9 @@ class RenameKotlinParameterProcessor : RenameKotlinPsiProcessor() {
         searchScope: SearchScope,
         searchInCommentsAndStrings: Boolean
     ): Collection<PsiReference> {
-        val correctScope = if (element is KtParameter) {
-            searchScope or element.useScopeForRename
+        val kotlinElement = element.unwrapped ?: return emptyList()
+        val correctScope = if (kotlinElement is KtParameter) {
+            searchScope or kotlinElement.useScopeForRename
         } else {
             searchScope
         }
