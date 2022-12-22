@@ -13,6 +13,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.NonExtendable
 interface ObservableTaskOperationTrace: ObservableOperationTrace {
 
+  val state: ObservableOperationState
+
   val scheduleTaskObservable: SingleEventDispatcher<OperationExecutionId>
 
   val startTaskObservable: SingleEventDispatcher<OperationExecutionId>
