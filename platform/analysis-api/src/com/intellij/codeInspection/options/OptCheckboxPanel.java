@@ -6,6 +6,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * A panel of checkboxes, whose children components are rendered on the right side and only visible when a particular checkbox is
+ * selected.
+ * @param children checkboxes that appear on the panel
+ */
 public record OptCheckboxPanel(@NotNull List<@NotNull OptCheckbox> children) implements OptRegularComponent {
   @Override
   public @NotNull OptCheckboxPanel prefix(@NotNull String bindPrefix) {
