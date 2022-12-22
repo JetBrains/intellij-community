@@ -15,23 +15,19 @@ import java.util.List;
 public final class AppMode {
   public static final String DISABLE_NON_BUNDLED_PLUGINS = "disableNonBundledPlugins";
   public static final String DONT_REOPEN_PROJECTS = "dontReopenProjects";
-
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
-
   public static final String CWM_HOST_COMMAND = "cwmHost";
   public static final String CWM_HOST_NO_LOBBY_COMMAND = "cwmHostNoLobby";
 
   static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
+
   private static final String AWT_HEADLESS = "java.awt.headless";
 
   private static boolean isHeadless;
   private static boolean isCommandLine;
   private static boolean isLightEdit;
-
   private static boolean disableNonBundledPlugins;
-
   private static boolean dontReopenProjects;
-
   private static boolean isRemoteDevHost;
 
   public static boolean isDisableNonBundledPlugins() {
@@ -54,6 +50,12 @@ public final class AppMode {
     return isHeadless;
   }
 
+  public static boolean isRemoteDevHost() {
+    return isRemoteDevHost;
+  }
+
+  /** @deprecated please use {@link #isRemoteDevHost()} */
+  @Deprecated
   public static boolean isIsRemoteDevHost() {
     return isRemoteDevHost;
   }
@@ -135,11 +137,6 @@ public final class AppMode {
 
   public static String getDevBuildRunDirName(@NotNull String platformPrefix) {
     String result = System.getProperty("dev.build.dir");
-    if (result == null) {
-      return platformPrefix.equals("Idea") ? "idea-community" : platformPrefix;
-    }
-    else {
-      return result;
-    }
+    return result != null ? result : platformPrefix.equals("Idea") ? "idea-community" : platformPrefix;
   }
 }

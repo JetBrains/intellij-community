@@ -72,7 +72,7 @@ public final class StartupErrorReporter {
       stream.println(title);
       stream.println(message);
 
-      if (!hasGraphics || AppMode.isCommandLine() || GraphicsEnvironment.isHeadless() || AppMode.isIsRemoteDevHost()) {
+      if (!hasGraphics || AppMode.isCommandLine() || GraphicsEnvironment.isHeadless() || AppMode.isRemoteDevHost()) {
         return;
       }
 

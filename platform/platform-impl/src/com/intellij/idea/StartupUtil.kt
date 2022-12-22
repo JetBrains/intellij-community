@@ -775,7 +775,7 @@ private fun CoroutineScope.lockSystemDirs(configImportNeededDeferred: Job,
 
               // Temporary hack to debug "Zombie" process issue. See CWM-7058
               // TL;DR ShutDownTracker gets called but application still exists
-              if (AppMode.isIsRemoteDevHost()) {
+              if (AppMode.isRemoteDevHost()) {
                 val stacktrace = Thread.currentThread().stackTrace.joinToString("\n")
                 println("ShutDownTracker stacktrace:\n$stacktrace")
               }

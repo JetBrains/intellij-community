@@ -4,7 +4,9 @@
 package com.intellij.idea
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
-import com.intellij.diagnostic.*
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.rootTask
+import com.intellij.diagnostic.runActivity
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.startup.StartupActionScriptManager
@@ -17,7 +19,6 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 import java.util.function.Supplier
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -108,7 +109,7 @@ private fun bootstrap(startupTimings: LinkedHashMap<String, Long>) {
   }
 
   startupTimings.put("classloader init", System.nanoTime())
-  BootstrapClassLoaderUtil.initClassLoader(AppMode.isIsRemoteDevHost())
+  BootstrapClassLoaderUtil.initClassLoader(AppMode.isRemoteDevHost())
 }
 
 private fun preProcessRawArgs(rawArgs: Array<String>): List<String> {
