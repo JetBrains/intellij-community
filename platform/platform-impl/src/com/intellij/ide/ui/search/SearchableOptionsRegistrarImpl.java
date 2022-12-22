@@ -58,7 +58,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
   private static final Logger LOG = Logger.getInstance(SearchableOptionsRegistrarImpl.class);
   @NonNls
-  private static final Pattern REG_EXP = Pattern.compile("[^\\pL&&[^-]]+");
+  private static final Pattern WORD_SEPARATOR_CHARS = Pattern.compile("[^-\\pL\\d]+");
 
   public SearchableOptionsRegistrarImpl() {
     Application app = ApplicationManager.getApplication();
@@ -262,7 +262,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     Set<Configurable> currentConfigurables = type == DocumentEvent.EventType.CHANGE ? new HashSet<>(effectiveConfigurables) : null;
     // operate with substring
     if (options.isEmpty()) {
-      String[] components = REG_EXP.split(optionToCheck);
+      String[] components = WORD_SEPARATOR_CHARS.split(optionToCheck);
       if (components.length > 0) {
         Collections.addAll(options, components);
       }
@@ -427,7 +427,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
   @ApiStatus.Internal
   public static void collectProcessedWordsWithoutStemming(@NotNull String text, @NotNull Set<? super String> result, @NotNull Set<String> stopWords) {
-    for (String opt : REG_EXP.split(Strings.toLowerCase(text))) {
+    for (String opt : WORD_SEPARATOR_CHARS.split(Strings.toLowerCase(text))) {
       if (stopWords.contains(opt)) {
         continue;
       }
@@ -450,7 +450,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
   static void collectProcessedWords(@NotNull String text, @NotNull Set<? super String> result, @NotNull Set<String> stopWords) {
     String toLowerCase = StringUtil.toLowerCase(text);
-    final String[] options = REG_EXP.split(toLowerCase);
+    final String[] options = WORD_SEPARATOR_CHARS.split(toLowerCase);
     for (String opt : options) {
       if (stopWords.contains(opt)) {
         continue;
