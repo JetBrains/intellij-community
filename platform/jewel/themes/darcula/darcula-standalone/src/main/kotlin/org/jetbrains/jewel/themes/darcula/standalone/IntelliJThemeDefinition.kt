@@ -9,7 +9,13 @@ import org.jetbrains.jewel.IntelliJTheme as BaseIntelliJTheme
 
 @Composable
 fun IntelliJTheme(isDark: Boolean, content: @Composable () -> Unit) =
-    if (isDark) IntelliJThemeDark(content) else IntelliJThemeLight(content)
+    BaseIntelliJTheme(
+        if (isDark) IntelliJPalette.darcula else IntelliJPalette.light,
+        IntelliJMetrics.default,
+        if (isDark) IntelliJPainters.darcula else IntelliJPainters.light,
+        if (isDark) IntelliJTypography.darcula else IntelliJTypography.light,
+        content
+    )
 
 @Composable
 fun IntelliJThemeLight(content: @Composable () -> Unit) =
