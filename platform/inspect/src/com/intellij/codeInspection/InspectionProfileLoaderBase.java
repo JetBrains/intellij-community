@@ -2,29 +2,27 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolsSupplier;
 import com.intellij.codeInspection.inspectionProfile.YamlInspectionProfileImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.parser.ParserException;
 
 import java.io.File;
 
-public abstract class InspectionProfileLoaderBase implements InspectionProfileLoader {
+public abstract class InspectionProfileLoaderBase<T extends InspectionProfileImpl> implements InspectionProfileLoader<T> {
   protected Project project;
 
   public InspectionProfileLoaderBase(Project project) {
     this.project = project;
   }
 
-  public InspectionProfileManager getProfileManager(Project project )  {
-    return InspectionProjectProfileManager.getInstance(project);
-  }
-
   @Nullable
-  protected InspectionProfileImpl tryLoadProfileFromYaml(@NotNull String profilePath) {
+  protected InspectionProfileImpl tryLoadProfileFromYaml(@NotNull String profilePath,
+                                                         @NotNull InspectionToolsSupplier inspectionToolsSupplier,
+                                                         @NotNull InspectionProfileManager profileManager) {
     if (!YamlInspectionProfileImpl.isYamlFile(profilePath)) {
       return null;
     }
@@ -32,7 +30,7 @@ public abstract class InspectionProfileLoaderBase implements InspectionProfileLo
       throw new InspectionApplicationException("Inspection profile '" + profilePath + "' does not exist");
     }
     try {
-      return YamlInspectionProfileImpl.loadFrom(project, profilePath, getProfileManager(project)).buildEffectiveProfile();
+      return YamlInspectionProfileImpl.loadFrom(project, profilePath, inspectionToolsSupplier, profileManager).buildEffectiveProfile();
     }
     catch (ParserException e) {
       // snakeyaml doesn't provide any information about where the YAML stream comes from,

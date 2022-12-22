@@ -3,9 +3,11 @@ package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolWrapper
+import com.intellij.codeInspection.ex.InspectionToolsSupplier
 
 interface YamlInspectionProfile : InspectionGroupProvider {
   val profileName: String?
+  val inspectionToolsSupplier: InspectionToolsSupplier
   val baseProfile: InspectionProfileImpl
   val configurations: List<YamlBaseConfig>
   val groups: List<YamlInspectionGroup>

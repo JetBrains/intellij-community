@@ -80,11 +80,11 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     this(profileName, toolSupplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance(), baseProfile, null);
   }
 
-  public InspectionProfileImpl(@NotNull String profileName,
-                               @NotNull InspectionToolsSupplier toolSupplier,
-                               @NotNull BaseInspectionProfileManager profileManager,
-                               @Nullable InspectionProfileImpl baseProfile,
-                               @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
+  protected InspectionProfileImpl(@NotNull String profileName,
+                                  @NotNull InspectionToolsSupplier toolSupplier,
+                                  @NotNull BaseInspectionProfileManager profileManager,
+                                  @Nullable InspectionProfileImpl baseProfile,
+                                  @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
     super(profileName, profileManager);
 
     myToolSupplier = toolSupplier;
@@ -337,7 +337,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
    * @return an InspectionToolWrapper associated with this tool.
    */
   @Override
-  public @Nullable InspectionToolWrapper getInspectionTool(@NotNull String shortName, Project project) {
+  public @Nullable InspectionToolWrapper getInspectionTool(@NotNull String shortName, @Nullable Project project) {
     ToolsImpl tools = getToolsOrNull(shortName, project);
     return tools == null ? null : tools.getTool();
   }

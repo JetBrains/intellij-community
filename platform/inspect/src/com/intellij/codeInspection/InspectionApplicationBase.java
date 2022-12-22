@@ -711,7 +711,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   private @NotNull InspectionProfileImpl loadInspectionProfile(@NotNull Project project) {
-    InspectionProfileLoader profileLoader = getInspectionProfileLoader(project);
+    var profileLoader = getInspectionProfileLoader(project);
     InspectionProfileImpl profile = profileLoader.tryLoadProfileByNameOrPath(myProfileName, myProfilePath, "command line",
                                                                              (msg) -> onFailure(msg));
     if (profile != null) return profile;
@@ -736,8 +736,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     return InspectionProjectProfileManager.getInstance(project);
   }
 
-  public @NotNull InspectionProfileLoader getInspectionProfileLoader(@NotNull Project project) {
-    return new InspectionProfileLoaderBase(project) {
+  public @NotNull InspectionProfileLoader<? extends InspectionProfileImpl> getInspectionProfileLoader(@NotNull Project project) {
+    return new InspectionProfileLoaderBase<>(project) {
       @Override
       public @Nullable InspectionProfileImpl loadProfileByName(@NotNull String profileName) {
         InspectionProfileManager.getInstance().getProfiles(); //  force init provided profiles
@@ -757,7 +757,9 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
       @Override
       public @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) {
-        InspectionProfileImpl inspectionProfileFromYaml = tryLoadProfileFromYaml(profilePath);
+        InspectionProfileImpl inspectionProfileFromYaml = tryLoadProfileFromYaml(profilePath,
+                                                                                 InspectionToolRegistrar.getInstance(),
+                                                                                 InspectionProjectProfileManager.getInstance(project));
         if (inspectionProfileFromYaml != null) return inspectionProfileFromYaml;
 
         try {

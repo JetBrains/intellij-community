@@ -2,26 +2,24 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.function.Consumer;
 
-public interface InspectionProfileLoader {
+public interface InspectionProfileLoader<T extends InspectionProfileImpl> {
   @Nullable
-  InspectionProfileImpl loadProfileByName(@NotNull String profileName);
+  T loadProfileByName(@NotNull String profileName);
 
   @Nullable
-  InspectionProfileImpl loadProfileByPath(@NotNull String profilePath);
+  T loadProfileByPath(@NotNull String profilePath);
 
   @Nullable
-  default InspectionProfileImpl tryLoadProfileByNameOrPath(@Nullable String profileName, @Nullable String profilePath,
-                                                           @NotNull String configSource, @NotNull Consumer<@NotNull String> onFailure) {
+  default T tryLoadProfileByNameOrPath(@Nullable String profileName, @Nullable String profilePath,
+                                       @NotNull String configSource, @NotNull Consumer<@NotNull String> onFailure) {
     //fetch profile by name from project file (project profiles can be disabled)
     if (profileName != null && !profileName.isEmpty()) {
-      InspectionProfileImpl inspectionProfile = loadProfileByName(profileName);
+      T inspectionProfile = loadProfileByName(profileName);
       if (inspectionProfile == null) {
         onFailure.accept(InspectionsBundle.message("inspection.application.profile.was.not.found.by.name.0.1", profileName, configSource));
       }
@@ -29,7 +27,7 @@ public interface InspectionProfileLoader {
     }
 
     if (profilePath != null && !profilePath.isEmpty()) {
-      InspectionProfileImpl inspectionProfile = loadProfileByPath(profilePath);
+      T inspectionProfile = loadProfileByPath(profilePath);
       if (inspectionProfile == null) {
         onFailure.accept(InspectionsBundle.message("inspection.application.profile.failed.configure.by.path.0.1", profilePath, configSource));
       }

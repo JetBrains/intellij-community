@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.codeInspection.ex.InspectionToolWrapper
+import com.intellij.codeInspection.ex.InspectionToolsSupplier
 import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.PROFILE_DIR
@@ -66,6 +67,7 @@ class CompositeGroupProvider : InspectionGroupProvider {
 }
 
 class YamlInspectionProfileImpl private constructor(override val profileName: String?,
+                                                    override val inspectionToolsSupplier: InspectionToolsSupplier,
                                                     override val baseProfile: InspectionProfileImpl,
                                                     override val configurations: List<YamlBaseConfig>,
                                                     override val groups: List<YamlInspectionGroup>,
@@ -75,6 +77,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
     @JvmStatic
     fun loadFrom(project: Project,
                  filepath: String = "${getDefaultProfileDirectory(project)}/profile.yaml",
+                 toolsSupplier: InspectionToolsSupplier = InspectionToolRegistrar.getInstance(),
                  profileManager: InspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
     ): YamlInspectionProfileImpl {
       val profile = readConfig(project, filepath)
@@ -90,7 +93,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
         }
       }
       groupProvider.addProvider(customGroupProvider)
-      return YamlInspectionProfileImpl(profile.name, baseProfile, configurations, groups, groupProvider)
+      return YamlInspectionProfileImpl(profile.name, toolsSupplier, baseProfile, configurations, groups, groupProvider)
     }
 
     private fun findBaseProfile(profileManager: InspectionProfileManager, profileName: String?): InspectionProfileImpl {
@@ -131,7 +134,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
   }
 
   fun buildEffectiveProfile(): InspectionProfileImpl {
-    val effectiveProfile: InspectionProfileImpl = InspectionProfileImpl("Default", InspectionToolRegistrar.getInstance(), baseProfile)
+    val effectiveProfile: InspectionProfileImpl = InspectionProfileImpl("Default", inspectionToolsSupplier, baseProfile)
       .also { profile ->
         profile.initInspectionTools()
         profile.copyFrom(baseProfile)
