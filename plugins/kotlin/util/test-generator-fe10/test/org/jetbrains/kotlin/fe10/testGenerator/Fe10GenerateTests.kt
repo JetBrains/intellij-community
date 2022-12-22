@@ -1042,7 +1042,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractIdeLightClassTest> {
-            model("asJava/lightClasses/lightClasses", excludedDirectories = listOf("delegation", "script"), pattern = KT_WITHOUT_DOTS)
+            model("asJava/lightClasses/lightClassByFqName", excludedDirectories = listOf("delegation", "script"), pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractIdeLightClassForScriptTest> {
@@ -1050,7 +1050,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractUltraLightClassSanityTest> {
-            model("asJava/lightClasses/lightClasses", pattern = KT_OR_KTS)
+            model("asJava/lightClasses/lightClassByFqName", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractUltraLightClassLoadingTest> {
@@ -1066,7 +1066,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractIdeCompiledLightClassTest> {
-            model("asJava/lightClasses/lightClasses", excludedDirectories = listOf("local", "compilationErrors", "ideRegression", "script"), pattern = KT_OR_KTS_WITHOUT_DOTS)
+            model(
+                "asJava/lightClasses/lightClassByFqName",
+                excludedDirectories = listOf("local", "compilationErrors", "ideRegression", "script"),
+                pattern = KT_OR_KTS_WITHOUT_DOTS,
+            )
         }
     }
 
