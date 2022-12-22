@@ -1,9 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.ImportOptimizer;
@@ -18,15 +15,17 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class JavaImportOptimizer implements ImportOptimizer {
   private static final Logger LOG = Logger.getInstance(JavaImportOptimizer.class);
 
   @Override
   @NotNull
-  public Runnable processFile(@NotNull final PsiFile file) {
+  public Runnable processFile(@NotNull PsiFile file) {
     if (!(file instanceof PsiJavaFile)) {
       return EmptyRunnable.getInstance();
     }
@@ -40,10 +39,6 @@ public class JavaImportOptimizer implements ImportOptimizer {
 
       @Override
       public void run() {
-        SlowOperations.allowSlowOperations(this::doRun);
-      }
-
-      private void doRun() {
         try {
           final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
           final Document document = manager.getDocument(file);
@@ -52,30 +47,17 @@ public class JavaImportOptimizer implements ImportOptimizer {
           }
           final PsiImportList oldImportList = ((PsiJavaFile)file).getImportList();
           assert oldImportList != null;
-          final Multiset<PsiElement> oldImports = HashMultiset.create();
-          for (PsiImportStatement statement : oldImportList.getImportStatements()) {
-            oldImports.add(statement.resolve());
+          final List<String> oldImports = new ArrayList<>();
+          for (PsiImportStatementBase statement : oldImportList.getAllImportStatements()) {
+            oldImports.add(statement.getText());
           }
-
-          final Multiset<PsiElement> oldStaticImports = HashMultiset.create();
-          for (PsiImportStaticStatement statement : oldImportList.getImportStaticStatements()) {
-            oldStaticImports.add(statement.resolve());
-          }
-
           oldImportList.replace(newImportList);
-          for (PsiImportStatement statement : newImportList.getImportStatements()) {
-            if (!oldImports.remove(statement.resolve())) {
+          for (PsiImportStatementBase statement : newImportList.getAllImportStatements()) {
+            if (!oldImports.remove(statement.getText())) {
               myImportsAdded++;
             }
           }
           myImportsRemoved += oldImports.size();
-
-          for (PsiImportStaticStatement statement : newImportList.getImportStaticStatements()) {
-            if (!oldStaticImports.remove(statement.resolve())) {
-              myImportsAdded++;
-            }
-          }
-          myImportsRemoved += oldStaticImports.size();
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
