@@ -33,12 +33,12 @@ final class CanonicalPathMap {
 
   private final NavigableSet<String> myOptimizedRecursiveWatchRoots;
   private final NavigableSet<String> myOptimizedFlatWatchRoots;
-  private @NotNull Collection<? extends Pair<String, String>> myInitialPathMappings;
+  private Collection<Pair<String, String>> myInitialPathMappings;
   private final MultiMap<String, String> myPathMappings;
 
   CanonicalPathMap(@NotNull NavigableSet<String> optimizedRecursiveWatchRoots,
                    @NotNull NavigableSet<String> optimizedFlatWatchRoots,
-                   @NotNull Collection<? extends Pair<String, String>> initialPathMappings) {
+                   @NotNull Collection<Pair<String, String>> initialPathMappings) {
     myOptimizedRecursiveWatchRoots = optimizedRecursiveWatchRoots;
     myOptimizedFlatWatchRoots = optimizedFlatWatchRoots;
     myInitialPathMappings = initialPathMappings;
@@ -94,14 +94,14 @@ final class CanonicalPathMap {
 
     for (var mapping: myInitialPathMappings) {
       var currentMapping = mapping.first;
-      // If mappings are sorted, below check should improve performance by avoiding unnecessary gets from the concurrent multimap.
+      // If mappings are sorted, the below check should improve performance by avoiding unnecessary gets from the concurrent multi-map.
       if (!currentMapping.equals(lastMapping) || lastCollection == null) {
         lastMapping = mapping.first;
         lastCollection = myPathMappings.getModifiable(lastMapping);
       }
       lastCollection.add(mapping.second);
     }
-    // Free the memory
+    // Freeing the memory
     myInitialPathMappings = null;
   }
 
@@ -135,7 +135,7 @@ final class CanonicalPathMap {
    * then filters out those that do not fall under watched roots.
    *
    * <h3>Exactness</h3>
-   * Some watchers (notable the native one on OS X) report a parent directory as dirty instead of the "exact" file path.
+   * Some watchers (e.g. the native one on macOS) report a parent directory as dirty instead of the "exact" file path.
    * <p>
    * For flat roots, it means that if and only if the exact dirty file path is returned, we should compare the parent to the flat roots,
    * otherwise we should compare to a path given to us because it is already the parent of the actual dirty path.
