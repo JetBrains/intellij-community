@@ -4,14 +4,14 @@ package org.jetbrains.kotlin.idea.fir.asJava.classes
 
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.classes.AbstractIdeLightClassesByPsiTest
+import org.jetbrains.kotlin.asJava.classes.UltraLightChecker.allClasses
+import org.jetbrains.kotlin.asJava.classes.UltraLightChecker.getJavaFileForTest
+import org.jetbrains.kotlin.asJava.classes.UltraLightChecker.renderLightClasses
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.fir.findUsages.doTestWithFIRFlagsByPath
-import org.jetbrains.kotlin.idea.perf.UltraLightChecker
-import org.jetbrains.kotlin.idea.perf.UltraLightChecker.getJavaFileForTest
-import org.jetbrains.kotlin.idea.perf.UltraLightChecker.renderLightClasses
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractFirClassLoadingTest : AbstractIdeLightClassesByPsiTest() {
@@ -34,7 +34,7 @@ abstract class AbstractFirClassLoadingTest : AbstractIdeLightClassesByPsiTest() 
             val expectedTextFile = getJavaFileForTest(testDataPath)
 
             val renderedClasses = executeOnPooledThreadInReadAction {
-                val lightClasses = UltraLightChecker.allClasses(file).mapNotNull { classFabric.getLightClass(it) }
+                val lightClasses = allClasses(file).mapNotNull { classFabric.getLightClass(it) }
                 renderLightClasses(testDataPath, lightClasses)
             }
 

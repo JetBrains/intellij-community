@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.caches.resolve
+package org.jetbrains.kotlin.asJava.classes
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
@@ -40,7 +40,7 @@ internal fun testLightClass(
     KotlinTestUtils.assertEqualsToFile(expected, actual)
 }
 
-fun findClass(fqName: String, ktFile: KtFile?, project: Project): PsiClass? {
+fun findLightClass(fqName: String, ktFile: KtFile?, project: Project): PsiClass? {
     ktFile?.script?.let {
         return it.toLightClass()
     }
