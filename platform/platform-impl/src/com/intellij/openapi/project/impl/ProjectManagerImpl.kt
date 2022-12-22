@@ -76,9 +76,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.File
 import java.io.IOException
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.LinkOption
@@ -166,15 +164,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         }
       }
     })
-
-    // register unlocking perProject dirs action
-    if (IS_PER_PROJECT_INSTANCE_READY) {
-      connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
-        override fun projectClosed(project: Project) {
-          clearPerProjectDirsForProject(PerProjectInstancePaths(Path.of(project.basePath!!)).getSystemDir())
-        }
-      })
-    }
 
     excludeRootsCache = ExcludeRootsCache(connection)
   }
@@ -576,10 +565,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
     }
 
-    // if we are opening project in the current process (not yet PER_PROJECT), lock per-project directory
-    if (IS_PER_PROJECT_INSTANCE_READY) {
-      lockPerProjectDirForProject(PerProjectInstancePaths(projectStoreBaseDir).getSystemDir())
-    }
 
     if (!options.forceOpenInNewFrame) {
       val openProjects = openProjects
@@ -1328,46 +1313,6 @@ interface ProjectServiceContainerCustomizer {
    * but before components are instantiated.
    */
   fun serviceRegistered(project: Project)
-}
-
-private fun readOneLine(file: Path) = Files.newBufferedReader(file).use { it.readLine().trim() }
-
-private fun copyLineFromFileToNewSystemDir(fileName: String, systemDir: Path) {
-  val line = readOneLine(PathManager.getSystemDir().resolve(fileName))
-  val newPath = systemDir.resolve(fileName)
-  File(newPath.parent.toUri()).mkdirs()
-  Files.write(newPath, line.toByteArray(StandardCharsets.UTF_8))
-}
-
-// TODO actual FileLocks?
-private fun lockPerProjectDirForProject(
-  systemDir: Path,
-) {
-  // copy current token
-  copyLineFromFileToNewSystemDir(SpecialConfigFiles.TOKEN_FILE, systemDir)
-
-  // copy current port
-  copyLineFromFileToNewSystemDir(SpecialConfigFiles.PORT_FILE, systemDir)
-
-  PathManager.lockPerProjectPath(systemDir)
-}
-
-private fun deleteFileFromNewSystemDir(fileName: String, systemDir: Path) {
-  val filePath = systemDir.resolve(fileName)
-  if (filePath.exists()) Files.delete(filePath)
-}
-
-// TODO actual FileLocks?
-private fun clearPerProjectDirsForProject(
-  systemDir: Path,
-) {
-  PathManager.unlockPerProjectPath(systemDir)
-
-  // delete current token
-  deleteFileFromNewSystemDir(SpecialConfigFiles.TOKEN_FILE, systemDir)
-
-  // delete current port
-  deleteFileFromNewSystemDir(SpecialConfigFiles.PORT_FILE, systemDir)
 }
 
 /**
