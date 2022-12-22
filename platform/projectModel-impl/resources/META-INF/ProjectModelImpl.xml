@@ -30,9 +30,14 @@
                         serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl"/>
     <applicationService serviceImplementation="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"/>
     <!-- Global Workspace Model -->
+    <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge"
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl"/>
     <applicationService serviceInterface="com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl"/>
     <applicationService serviceImplementation="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel"/>
+    <registryKey key="workspace.model.global.library.bridge" defaultValue="true"
+                 description="Enables new implementation for global libraries which works via Workspace Model"
+                 restartRequired="true"/>
 
     <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade"
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexFacade"/>
