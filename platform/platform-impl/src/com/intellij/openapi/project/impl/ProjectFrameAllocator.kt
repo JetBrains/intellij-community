@@ -25,7 +25,6 @@ import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.progress.util.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.guessProjectDir
@@ -41,7 +40,6 @@ import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.toolWindow.computeToolWindowBeans
 import com.intellij.ui.*
-import com.intellij.util.ui.*
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
@@ -215,7 +213,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, private val
 
       watcher(frameHelper, loadingState)
 
-      // in a separate EDT task, as EDT is used for write actions and frame initialization should not slow down project opening
+      // in a separate EDT task, as EDT is used for write actions and frame initialization, should not slow down project opening
       withContext(Dispatchers.EDT) {
         frameHelper.init()
       }
@@ -243,7 +241,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, private val
     })
     val frameHelper = withContext(Dispatchers.EDT) {
       val frameHelper = ProjectFrameHelper(frameProducer.create(), loadingState = loadingState)
-      // must be after preInit (frame decorator is required to set full screen mode)
+      // must be after preInit (frame decorator is required to set a full-screen mode)
       frameHelper.frame.isVisible = true
       updateFullScreenState(frameHelper, frameInfo)
       frameHelper
@@ -251,7 +249,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, private val
 
     watcher(frameHelper, loadingState)
 
-    // in a separate EDT task, as EDT is used for write actions and frame initialization should not slow down project opening
+    // in a separate EDT task, as EDT is used for write actions and frame initialization, should not slow down project opening
     withContext(Dispatchers.EDT) {
       frameHelper.init()
     }
@@ -391,21 +389,35 @@ internal interface ProjectFrameProducer {
   fun create(): IdeFrameImpl
 }
 
+internal fun applyBoundsOrDefault(frame: JFrame, bounds: Rectangle?) {
+  if (bounds == null) {
+    setDefaultSize(frame)
+    frame.setLocationRelativeTo(null)
+  }
+  else {
+    frame.bounds = bounds
+  }
+}
+
+private fun setDefaultSize(frame: JFrame) {
+  val size = ScreenUtil.getMainScreenBounds().size
+  size.width = min(1400, size.width - 20)
+  size.height = min(1000, size.height - 40)
+  frame.size = size
+  frame.minimumSize = Dimension(340, frame.minimumSize.height)
+}
+
 @ApiStatus.Internal
 internal fun createNewProjectFrame(frameInfo: FrameInfo?): ProjectFrameProducer {
   val deviceBounds = frameInfo?.bounds
   if (deviceBounds == null) {
-    val size = ScreenUtil.getMainScreenBounds().size
-    size.width = min(1400, size.width - 20)
-    size.height = min(1000, size.height - 40)
     return object : ProjectFrameProducer {
       override val device = null
 
       override fun create(): IdeFrameImpl {
         val frame = IdeFrameImpl()
         SplashManager.hideBeforeShow(frame)
-        frame.size = size
-        frame.minimumSize = Dimension(340, frame.minimumSize.height)
+        setDefaultSize(frame)
         frame.setLocationRelativeTo(null)
         return frame
       }
@@ -415,17 +427,17 @@ internal fun createNewProjectFrame(frameInfo: FrameInfo?): ProjectFrameProducer 
     val boundsAndDevice = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(deviceBounds)
     val state = frameInfo.extendedState
     val isMaximized = FrameInfoHelper.isMaximized(state)
-    val graphicsDevice = boundsAndDevice.second
+    val graphicsDevice = boundsAndDevice?.second
     return object : ProjectFrameProducer {
       override val device = graphicsDevice
 
       override fun create(): IdeFrameImpl {
         val frame = IdeFrameImpl()
         SplashManager.hideBeforeShow(frame)
-        if (isMaximized && frame.extendedState == Frame.NORMAL) {
+        if (isMaximized && frame.extendedState == Frame.NORMAL && boundsAndDevice != null) {
           frame.normalBounds = boundsAndDevice.first
         }
-        frame.bounds = boundsAndDevice.first
+        applyBoundsOrDefault(frame, boundsAndDevice?.first)
         frame.extendedState = state
         frame.minimumSize = Dimension(340, frame.minimumSize.height)
         return frame

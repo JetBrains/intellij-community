@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.project.impl.applyBoundsOrDefault
 import com.intellij.openapi.project.impl.createNewProjectFrame
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.*
@@ -85,7 +86,7 @@ internal class LightEditFrameWrapper(
           windowManager.defaultFrameInfoHelper.copyFrom(frameInfo)
         }
         frameInfo.bounds?.let {
-          frame.frame.bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it).first
+          applyBoundsOrDefault(frame.frame, FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it)?.first)
         }
       }
 

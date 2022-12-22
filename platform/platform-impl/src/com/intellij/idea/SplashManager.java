@@ -101,7 +101,11 @@ public final class SplashManager {
     frame.setAutoRequestFocus(false);
     frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-    frame.setBounds(FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(savedBounds).getFirst());
+    var devicePair = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(savedBounds);
+    // this functionality under the flag - fully correct behavior is not needed here (that's default is not applied if null)
+    if (devicePair != null) {
+      frame.setBounds(devicePair.getFirst());
+    }
     frame.setExtendedState(extendedState);
 
     frame.setMinimumSize(new Dimension(340, (int)frame.getMinimumSize().getHeight()));
