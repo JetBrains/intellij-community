@@ -10,24 +10,27 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.Node
+import org.w3c.dom.asList
 import org.w3c.dom.parsing.XMLSerializer
 
-suspend fun renderBlock(block: HTMLElement, cacheId: String, content: String): String? {
+suspend fun renderBlock(block: HTMLElement, cacheId: String, content: String): Node? {
   val id = "mermaid-generated-$cacheId"
-  val promise = Mermaid.api.renderAsync(id, content, block) { svg ->
+  var node: Node? = null
+  Mermaid.api.renderAsync(id, content, block) { svg ->
     block.innerHTML = svg
-  }
-  return promise.await()
+    node = block.childNodes.asList().firstOrNull { it.nodeName == "svg" }
+  }.await()
+  return node
 }
 
-fun cacheBlock(cacheId: String, block: String) {
+fun cacheBlock(cacheId: String, block: Node) {
   val serializer = XMLSerializer()
-  val serialized = serializer.serializeToString(block.unsafeCast<Node>())
+  val serialized = serializer.serializeToString(block)
   val data = "$cacheId;$serialized"
   window.obtainMessagePipe()?.post("storeMermaidFile", data)
 }
 
-suspend fun processBlock(block: HTMLElement): String? {
+suspend fun processBlock(block: HTMLElement): Node? {
   block.removeAttribute("data-processed")
   val cacheId = block.getAttribute("data-cache-id")
   checkNotNull(cacheId) { "data-cache-id was not set for block" }
