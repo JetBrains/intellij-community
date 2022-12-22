@@ -13,7 +13,9 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.MethodHandleUtil;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -21,8 +23,9 @@ import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Method;
 
 /**
  * @author max
@@ -409,38 +412,46 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     startMacScrollbarFadeout();
   }
 
-  private static final Method setValueFrom = ReflectionUtil.getDeclaredMethod(TrackListener.class, "setValueFrom", MouseEvent.class);
-  static {
-    LOG.assertTrue(setValueFrom != null, "Cannot get TrackListener.setValueFrom method");
-  }
+  private static final SynchronizedClearableLazy<@Nullable MethodHandle> setValueFrom = new SynchronizedClearableLazy<>(() -> {
+    try {
+      return MethodHandleUtil.getPrivateMethod(TrackListener.class, "setValueFrom", MethodType.methodType(Void.TYPE, MouseEvent.class));
+    }
+    catch (Throwable e) {
+      LOG.error("Cannot get TrackListener.setValueFrom method", e);
+      return null;
+    }
+  });
 
   @Override
   protected TrackListener createTrackListener() {
     return new TrackListener() {
       @Override
-      public void mousePressed(MouseEvent e) {
+      public void mousePressed(MouseEvent event) {
         if (scrollbar.isEnabled()
-            && SwingUtilities.isLeftMouseButton(e)
-            && !getThumbBounds().contains(e.getPoint())
+            && SwingUtilities.isLeftMouseButton(event)
             && NSScrollerHelper.getClickBehavior() == NSScrollerHelper.ClickBehavior.JumpToSpot
-            && setValueFrom != null) {
+            && !getThumbBounds().contains(event.getPoint())) {
 
-          switch (scrollbar.getOrientation()) {
-            case Adjustable.VERTICAL -> offset = getThumbBounds().height / 2;
-            case Adjustable.HORIZONTAL -> offset = getThumbBounds().width / 2;
-          }
-          isDragging = true;
-          try {
-            setValueFrom.invoke(this, e);
-          }
-          catch (Exception ex) {
-            LOG.error(ex);
-          }
+          MethodHandle setValueFrom = ButtonlessScrollBarUI.setValueFrom.getValue();
+          if (setValueFrom != null) {
+            switch (scrollbar.getOrientation()) {
+              case Adjustable.VERTICAL -> offset = getThumbBounds().height / 2;
+              case Adjustable.HORIZONTAL -> offset = getThumbBounds().width / 2;
+            }
 
-          return;
+            isDragging = true;
+            try {
+              setValueFrom.invoke(this, event);
+            }
+            catch (Throwable e) {
+              LOG.error(e);
+            }
+
+            return;
+          }
         }
 
-        super.mousePressed(e);
+        super.mousePressed(event);
       }
     };
   }

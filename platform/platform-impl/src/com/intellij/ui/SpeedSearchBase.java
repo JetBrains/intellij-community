@@ -806,6 +806,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   // TODO remove after the transition period
   private final boolean myElementAtImplemented;
+
   {
     boolean elementAtImplemented;
     try {

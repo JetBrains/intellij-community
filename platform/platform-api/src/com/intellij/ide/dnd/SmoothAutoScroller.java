@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 
 import static com.intellij.openapi.util.SystemInfo.JAVA_VERSION;
 import static com.intellij.ui.scale.JBUIScale.sysScale;
@@ -71,11 +73,12 @@ public final class SmoothAutoScroller {
 
     private DragListener() {
       try {
-        //noinspection ConstantConditions
-        listener = (DropTargetListener)ReflectionUtil.getDeclaredMethod(TransferHandler.class, "getDropTargetListener").invoke(null);
+        listener = (DropTargetListener)MethodHandles.privateLookupIn(TransferHandler.class, MethodHandles.lookup())
+          .findStatic(TransferHandler.class, "getDropTargetListener", MethodType.methodType(DropTargetListener.class))
+          .invokeExact();
       }
-      catch (Exception exception) {
-        throw new InternalError("Unexpected JDK: " + JAVA_VERSION, exception);
+      catch (Throwable e) {
+        throw new InternalError("Unexpected JDK: " + JAVA_VERSION, e);
       }
     }
 
