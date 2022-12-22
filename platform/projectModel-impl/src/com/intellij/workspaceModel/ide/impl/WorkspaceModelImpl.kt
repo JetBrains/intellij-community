@@ -13,6 +13,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.*
@@ -255,7 +256,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     if (project.isDisposed) return
     //it is important to update WorkspaceFileIndex before other listeners are called because they may rely on it
     logErrorOnEventHandling {
-      (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.onEntitiesChanged(change)
+      (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.onEntitiesChanged(change, EntityStorageKind.MAIN)
     }
 
     logErrorOnEventHandling {
@@ -270,6 +271,10 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
   }
 
   private fun onUnloadedEntitiesChanged(change: VersionedStorageChange) {
+    //it is important to update WorkspaceFileIndex before other listeners are called because they may rely on it
+    logErrorOnEventHandling {
+      (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.onEntitiesChanged(change, EntityStorageKind.UNLOADED)
+    }
     logErrorOnEventHandling {
       project.messageBus.syncPublisher(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED).changed(change)
     }
