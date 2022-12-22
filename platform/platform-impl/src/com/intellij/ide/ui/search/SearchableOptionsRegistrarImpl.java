@@ -211,32 +211,22 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   @Override
   public @NotNull ConfigurableHit getConfigurables(@NotNull List<? extends ConfigurableGroup> groups,
                                                    DocumentEvent.EventType type,
-                                                   @Nullable Set<? extends Configurable> configurables,
+                                                   @Nullable Set<? extends Configurable> previouslyFiltered,
                                                    @NotNull String option,
                                                    @Nullable Project project) {
-    //noinspection unchecked
-    return findConfigurables(groups, type, (Collection<Configurable>)configurables, option, project);
-  }
-
-  private @NotNull ConfigurableHit findConfigurables(@NotNull List<? extends ConfigurableGroup> groups,
-                                                     DocumentEvent.EventType type,
-                                                     @Nullable Collection<Configurable> previouslyFiltered,
-                                                     @NotNull String option,
-                                                     @Nullable Project project) {
     if (previouslyFiltered == null || previouslyFiltered.isEmpty()) {
       previouslyFiltered = null;
     }
 
-    Collection<Configurable> effectiveConfigurables;
+    Set<Configurable> effectiveConfigurables = new LinkedHashSet<>();
     if (previouslyFiltered == null) {
-      effectiveConfigurables = new LinkedHashSet<>();
       Consumer<Configurable> consumer = new CollectConsumer<>(effectiveConfigurables);
       for (ConfigurableGroup group : groups) {
         SearchUtil.processExpandedGroups(group, consumer);
       }
     }
     else {
-      effectiveConfigurables = previouslyFiltered;
+      effectiveConfigurables.addAll(previouslyFiltered);
     }
 
     String optionToCheck = Strings.toLowerCase(option.trim());
@@ -266,7 +256,6 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
       }
     }
 
-    Set<Configurable> currentConfigurables = type == DocumentEvent.EventType.CHANGE ? new HashSet<>(effectiveConfigurables) : null;
     // operate with substring
     if (options.isEmpty()) {
       String[] components = WORD_SEPARATOR_CHARS.split(optionToCheck);
@@ -278,20 +267,13 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
       }
     }
 
-    Set<Configurable> contentHits;
-    if (previouslyFiltered == null) {
-      contentHits = (Set<Configurable>)effectiveConfigurables;
-    }
-    else {
-      contentHits = new LinkedHashSet<>(effectiveConfigurables);
-    }
+    Set<Configurable> contentHits = new LinkedHashSet<>(effectiveConfigurables);
 
     Set<String> helpIds = null;
     for (String opt : options) {
       final Set<OptionDescription> optionIds = getAcceptableDescriptions(opt);
       if (optionIds == null) {
-        contentHits.clear();
-        return new ConfigurableHit(nameHits, nameFullHits, contentHits);
+        return new ConfigurableHit(nameHits, nameFullHits, Collections.emptySet());
       }
 
       final Set<String> ids = new HashSet<>();
@@ -327,7 +309,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
       }
     }
 
-    if (type == DocumentEvent.EventType.CHANGE && previouslyFiltered != null && currentConfigurables.equals(contentHits)) {
+    if (type == DocumentEvent.EventType.CHANGE && previouslyFiltered != null && effectiveConfigurables.equals(contentHits)) {
       return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, project);
     }
     return new ConfigurableHit(nameHits, nameFullHits, contentHits);
