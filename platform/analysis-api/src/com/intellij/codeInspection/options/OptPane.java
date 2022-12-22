@@ -94,6 +94,15 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
   }
 
   /**
+   * @param checkboxes checkboxes to display at the panel
+   * @return a panel of checkboxes, whose children components are rendered on the right side and only visible when a particular checkbox is
+   * selected.
+   */
+  public static @NotNull OptCheckboxPanel checkboxPanel(@NotNull OptCheckbox @NotNull ... checkboxes) {
+    return new OptCheckboxPanel(List.of(checkboxes));
+  }
+
+  /**
    * @param bindId     identifier of binding variable used by inspection; the corresponding variable is expected to be int
    * @param splitLabel label to display around the control
    * @param minValue   minimal allowed value of the variable

@@ -8,7 +8,8 @@ import java.util.List;
 /**
  * Basic interface for all the components that could be displayed in options panel
  */
-public sealed interface OptComponent permits OptControl, OptCustom, OptGroup, OptHorizontalStack, OptSeparator, OptTabSet, OptSettingLink {
+public sealed interface OptComponent permits OptControl, OptCustom, OptGroup, OptHorizontalStack, OptSeparator, OptTabSet, OptSettingLink,
+                                             OptCheckboxPanel {
   /**
    * @return list of all components that are nested inside this component
    */

@@ -86,6 +86,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           }
         }
       }
+      is OptCheckboxPanel -> TODO()
     }
   }
 
@@ -229,6 +230,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         is OptMap -> TODO()
 
         is OptGroup, is OptHorizontalStack, is OptSeparator, is OptTabSet -> { throw IllegalStateException("Unsupported nested component: ${component.javaClass}") }
+        is OptCheckboxPanel -> TODO()
     }
   }
 
