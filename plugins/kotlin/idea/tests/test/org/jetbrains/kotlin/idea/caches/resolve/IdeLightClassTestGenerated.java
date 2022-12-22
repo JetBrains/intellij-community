@@ -140,6 +140,30 @@ public abstract class IdeLightClassTestGenerated extends AbstractIdeLightClassTe
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByFqName/delegation")
+    public static class Delegation extends AbstractIdeLightClassTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/delegation");
+            super.setUp();
+        }
+
+        @TestMetadata("Function.kt")
+        public void testFunction() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/delegation/Function.kt"));
+        }
+
+        @TestMetadata("Property.kt")
+        public void testProperty() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/delegation/Property.kt"));
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByFqName/facades")
     public static class Facades extends AbstractIdeLightClassTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -328,6 +352,30 @@ public abstract class IdeLightClassTestGenerated extends AbstractIdeLightClassTe
         @TestMetadata("VoidReturn.kt")
         public void testVoidReturn() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/VoidReturn.kt"));
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByFqName/script")
+    public static class Script extends AbstractIdeLightClassTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/script");
+            super.setUp();
+        }
+
+        @TestMetadata("HelloWorld.kts")
+        public void testHelloWorld() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/script/HelloWorld.kts"));
+        }
+
+        @TestMetadata("InnerClasses.kts")
+        public void testInnerClasses() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/script/InnerClasses.kts"));
         }
     }
 
