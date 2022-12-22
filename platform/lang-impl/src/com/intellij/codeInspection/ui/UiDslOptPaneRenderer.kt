@@ -91,6 +91,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
   private fun Panel.renderOptRow(component: OptComponent, tool: InspectionProfileEntry, withBottomGap: Boolean = false) {
     val splitLabel = component.splitLabel
+    val nestedInRow = component.nestedInRow
     lateinit var cell: Cell<JComponent>
     when {
       // Split label
@@ -106,14 +107,23 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       // Split label with null suffix
       splitLabel?.prefix != null -> row(splitLabel.prefix) { cell = renderOptCell(component, tool) }
       // No row label (align left, control handles the label)
-      else -> row { cell = renderOptCell(component, tool) }
+      else -> row {
+        cell = renderOptCell(component, tool)
+
+        nestedInRow?.let { nested ->
+          renderOptCell(nested, tool)
+            .enabledIf((cell.component as JBCheckBox).selected)
+        }
+      }
     }
       .applyIf(withBottomGap) { bottomGap(BottomGap.SMALL) }
 
     // Nested components
     component.nestedControls?.let { nested ->
       val group = indent {
-        nested.forEachIndexed { i, component -> render(component, tool, i == 0) }
+        nested
+          .drop(if (nestedInRow != null) 1 else 0)
+          .forEachIndexed { i, component -> render(component, tool, i == 0) }
       }
       if (cell.component is JBCheckBox) {
         group.enabledIf((cell.component as JBCheckBox).selected)
@@ -234,6 +244,20 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       is OptCheckbox -> children
       else -> null
     }
+
+  /**
+   * Returns the nested component to be rendered in the parent row.
+   * This is the case for [OptString], [OptNumber] or [OptDropdown] with blank labels as first checkbox child.
+   */
+  private val OptComponent.nestedInRow: OptComponent?
+    get() {
+      if (this !is OptCheckbox) return null
+      val child = children.firstOrNull() ?: return null
+      val label = child.splitLabel ?: return null
+      if (label.prefix.isBlank() && label.suffix.isBlank()) return child
+      return null
+    }
+
 
   private val OptComponent.hasBottomGap: Boolean
     get() = this is OptGroup
