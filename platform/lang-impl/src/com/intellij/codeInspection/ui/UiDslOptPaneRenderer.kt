@@ -117,6 +117,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       }
     }
       .applyIf(withBottomGap) { bottomGap(BottomGap.SMALL) }
+      .applyIf(component.hasResizableRow) { resizableRow() }
 
     // Nested components
     component.nestedControls?.let { nested ->
@@ -261,6 +262,9 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
   private val OptComponent.hasBottomGap: Boolean
     get() = this is OptGroup
+
+  private val OptComponent.hasResizableRow: Boolean
+    get() = this is OptSet
 
   private fun convertItem(key: String, type: Class<*>): Any {
     @Suppress("UNCHECKED_CAST")
