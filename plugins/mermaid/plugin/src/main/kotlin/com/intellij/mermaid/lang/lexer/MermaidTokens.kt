@@ -217,6 +217,9 @@ object MermaidTokens {
   @JvmField
   val ATTRIBUTE_WORD = MermaidToken("ATTRIBUTE_WORD")
 
+  @JvmField
+  val FRONTMATTER = MermaidToken("FRONTMATTER")
+
   object Pie {
     @JvmField
     val PIE = MermaidToken("Pie.PIE")

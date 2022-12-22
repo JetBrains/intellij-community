@@ -97,6 +97,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "C4Deployment" { yybegin (c4); return C4.C4_DEPLOYMENT; }
   "mindmap" { yybegin(mindmap); return Mindmap.MINDMAP; }
 
+  ---\s*[\n\r](.|[\n\r])*[\n\r]--- { return FRONTMATTER; }
+
   ";" { return SEMICOLON; }
   [^\s%;{]+ { return BAD_CHARACTER; }
   [^] { yybegin(YYINITIAL); return BAD_CHARACTER; }

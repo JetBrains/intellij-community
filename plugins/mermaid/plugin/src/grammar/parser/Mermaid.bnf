@@ -26,7 +26,7 @@
   generateTokens=false
 }
 
-file ::= start
+file ::= [FRONTMATTER EOL] start
 private start ::= EOL start | directive start | diagram
 
 private diagram ::= pieHeader [pieDocument]
