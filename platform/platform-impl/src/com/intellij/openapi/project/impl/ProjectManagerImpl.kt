@@ -84,8 +84,8 @@ import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
-import kotlin.io.path.exists
 import kotlin.io.path.div
+import kotlin.io.path.exists
 import kotlin.io.path.writeText
 
 @Suppress("OVERRIDE_DEPRECATION")
@@ -564,7 +564,14 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     if (shouldOpenInChildProcess(projectStoreBaseDir)) {
       openInChildProcess(projectStoreBaseDir)
-      return null
+      if (!IS_CHILD_PROCESS) {
+        withContext(Dispatchers.EDT) {
+          ApplicationManagerEx.getApplicationEx().exit(true, true)
+        }
+      }
+      else {
+        return null
+      }
     }
     else if (IS_PER_PROJECT_INSTANCE_ENABLED) {
       LowLevelProjectOpenProcessor.EP_NAME.extensions.forEach {
