@@ -68,6 +68,16 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
     return true;
   }
 
+  /**
+   * Transform this pane to a tab
+   * 
+   * @param label tab title
+   * @return a {@link OptTabSet.TabInfo} object that contains all the controls from this pane
+   */
+  public OptTabSet.TabInfo asTab(@NotNull @NlsContexts.TabTitle String label) {
+    return new OptTabSet.TabInfo(new PlainMessage(label), components());
+  }
+
   /* DSL */
 
   /**
@@ -317,7 +327,8 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
   /**
    * @param tabs tabs description
    * @return set of tabs
-   * @see #tab(String, OptComponent...) 
+   * @see #tab(String, OptComponent...)
+   * @see #asTab(String) 
    */
   public static @NotNull OptTabSet tabs(@NotNull OptTabSet.TabInfo @NotNull ... tabs) {
     return new OptTabSet(List.of(tabs));
@@ -329,7 +340,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @return tab description
    * @see #tabs(OptTabSet.TabInfo...) 
    */
-  public static @NotNull OptTabSet.TabInfo tab(@NotNull @NlsContexts.Label String label, @NotNull OptComponent @NotNull ... children) {
+  public static @NotNull OptTabSet.TabInfo tab(@NotNull @NlsContexts.TabTitle String label, @NotNull OptComponent @NotNull ... children) {
     return new OptTabSet.TabInfo(new PlainMessage(label), List.of(children));
   }
 

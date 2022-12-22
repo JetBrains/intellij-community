@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import static com.intellij.codeInspection.options.OptPane.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+@SuppressWarnings("InjectedReferences")
 public class OptPaneTest {
   @Test
   public void construction() {
@@ -31,4 +32,19 @@ public class OptPaneTest {
     OptControl three = pane.findControl("three");
     assertTrue(three instanceof OptCheckbox checkbox && checkbox.label().label().equals("Three"));
   }
+  
+  @Test
+  public void asTab() {
+    OptPane pane1 = pane(checkbox("one", "One"),
+                        checkbox("two", "Two"));
+    OptPane pane2 = pane(checkbox("three", "Three"),
+                        checkbox("four", "Four"));
+    OptPane result = pane(tabs(
+      pane1.asTab("Tab1"),
+      pane2.asTab("Tab2")
+    ));
+    OptControl three = result.findControl("three");
+    assertTrue(three instanceof OptCheckbox checkbox && checkbox.label().label().equals("Three"));
+  }
+  
 }
