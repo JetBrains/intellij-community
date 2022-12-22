@@ -13,6 +13,7 @@
       "showWriteAccess.svg": "actions/showWriteAccess.svg",
       "showReadAccess.svg": "actions/showReadAccess.svg",
       "showImportStatements.svg": "actions/showImportStatements.svg",
+      "toggleVisibility.svg": "actions/toggleVisibility.svg",
       "undeploy.svg": "nodes/undeploy.svg"
     },
     "bookmarks": {
