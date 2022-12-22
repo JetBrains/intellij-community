@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.addImport.AbstractAddImportTest
 import org.jetbrains.kotlin.addImportAlias.AbstractAddImportAliasTest53
 import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightClassLoadingTest
 import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightClassSanityTest
-import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightFacadeClassTest15
 import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightScriptLoadingTest
 import org.jetbrains.kotlin.checkers.*
 import org.jetbrains.kotlin.copyright.AbstractUpdateKotlinCopyrightTest
@@ -1039,10 +1038,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractUltraLightScriptLoadingTest> {
             model("asJava/lightClasses/ultraLightScripts", pattern = KT_OR_KTS)
-        }
-
-        testClass<AbstractUltraLightFacadeClassTest15> {
-            model("asJava/lightClasses/ultraLightFacades", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractIdeCompiledLightClassTest> {
