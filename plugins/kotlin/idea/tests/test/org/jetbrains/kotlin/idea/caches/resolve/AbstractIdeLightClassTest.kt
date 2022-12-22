@@ -27,8 +27,9 @@ import kotlin.test.assertNotNull
 abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase() {
     fun doTest(@Suppress("UNUSED_PARAMETER") unused: String) {
         val fileName = fileName()
+        val fileExtension = fileName.substringAfterLast('.')
         val extraFilePath = when {
-            fileName.endsWith(fileExtension) -> fileName.replace(fileExtension, ".extra$fileExtension")
+            fileName.endsWith(fileExtension) -> fileName.replace(fileExtension, "extra.$fileExtension")
             else -> error("Invalid test data extension")
         }
 
@@ -57,8 +58,6 @@ abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase
     }
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_STDLIB_JDK8
-
-    open val fileExtension = ".kt"
 }
 
 abstract class AbstractIdeCompiledLightClassTest : KotlinDaemonAnalyzerTestCase() {

@@ -166,11 +166,6 @@ public abstract class UltraLightClassSanityTestGenerated extends AbstractUltraLi
         public void testProperty() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/delegation/Property.kt"));
         }
-
-        @TestMetadata("WithPlatformTypes.NoCompile.kt")
-        public void testWithPlatformTypes_NoCompile() throws Exception {
-            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/delegation/WithPlatformTypes.NoCompile.kt"));
-        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -189,11 +184,6 @@ public abstract class UltraLightClassSanityTestGenerated extends AbstractUltraLi
         @TestMetadata("AllPrivate.kt")
         public void testAllPrivate() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/AllPrivate.kt"));
-        }
-
-        @TestMetadata("EmptyFile.NoCompile.kt")
-        public void testEmptyFile_NoCompile() throws Exception {
-            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/EmptyFile.NoCompile.kt"));
         }
 
         @TestMetadata("MultiFile.kt")
@@ -255,29 +245,14 @@ public abstract class UltraLightClassSanityTestGenerated extends AbstractUltraLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ideRegression/OverridingFinalInternal.kt"));
         }
 
-        @TestMetadata("OverridingFinalInternal.extra.kt")
-        public void testOverridingFinalInternal_extra() throws Exception {
-            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ideRegression/OverridingFinalInternal.extra.kt"));
-        }
-
         @TestMetadata("OverridingInternal.kt")
         public void testOverridingInternal() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ideRegression/OverridingInternal.kt"));
         }
 
-        @TestMetadata("OverridingInternal.extra.kt")
-        public void testOverridingInternal_extra() throws Exception {
-            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ideRegression/OverridingInternal.extra.kt"));
-        }
-
         @TestMetadata("OverridingProtected.kt")
         public void testOverridingProtected() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ideRegression/OverridingProtected.kt"));
-        }
-
-        @TestMetadata("OverridingProtected.extra.kt")
-        public void testOverridingProtected_extra() throws Exception {
-            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ideRegression/OverridingProtected.extra.kt"));
         }
     }
 
