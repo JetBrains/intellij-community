@@ -1,5 +1,6 @@
 package com.intellij.cce.report
 
+import com.google.gson.GsonBuilder
 import com.intellij.cce.metric.MetricInfo
 import com.intellij.cce.metric.MetricValueType
 import com.intellij.cce.metric.SuggestionsComparator
@@ -14,6 +15,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import kotlin.io.path.writeText
 
 class HtmlReportGenerator(
   outputDir: String,
@@ -24,7 +26,13 @@ class HtmlReportGenerator(
   isCompletionGolfEvaluation: Boolean
 ) : FullReportGenerator {
   companion object {
+    private val gson = GsonBuilder().apply {
+      this.setPrettyPrinting()
+    }.create()
+
     private const val globalReportName = "index.html"
+    private const val metricsInfoName = "metrics.json"
+
     private val resources = listOf(
       "/script.js",
       "/style.css",
@@ -48,7 +56,8 @@ class HtmlReportGenerator(
 
   private var fileGenerator: FileReportGenerator = if (isCompletionGolfEvaluation) {
     CompletionGolfFileReportGenerator(filterName, comparisonFilterName, featuresStorages, dirs)
-  } else {
+  }
+  else {
     BasicFileReportGenerator(suggestionsComparators, filterName, comparisonFilterName, featuresStorages, dirs)
   }
 
@@ -99,6 +108,8 @@ class HtmlReportGenerator(
 
   override fun generateGlobalReport(globalMetrics: List<MetricInfo>): Path {
     val reportPath = Paths.get(dirs.filterDir.toString(), globalReportName)
+    val metricsPath = Paths.get(dirs.filterDir.toString(), metricsInfoName)
+
     val reportTitle = "Code Completion Report for filters \"$filterName\" and \"$comparisonFilterName\""
     createHTML().html {
       head {
@@ -122,7 +133,9 @@ class HtmlReportGenerator(
         div { id = "metricsTable" }
         script { unsafe { raw(getMetricsTable(globalMetrics)) } }
       }
-    }.also { html -> FileWriter(reportPath.toString()).use { it.write(html) } }
+    }.also { html -> reportPath.writeText(html) }
+    metricsPath.writeText(gson.toJson(mapOf("metrics" to globalMetrics)))
+
     return reportPath
   }
 

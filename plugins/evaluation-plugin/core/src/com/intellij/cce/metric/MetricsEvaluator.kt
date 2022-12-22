@@ -31,13 +31,15 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
   }
 
   fun registerCompletionGolfMetrics() {
-    createCompletionGolfMetrics().forEach { registerMetric(it) }
+    registerMetric(createCompletionGolfMetrics())
     registerMetric(MeanLatencyMetric(true))
     registerMetric(MaxLatencyMetric())
     registerMetric(SessionsCountMetric())
   }
 
   private fun registerMetric(metric: Metric) = metrics.add(metric)
+
+  private fun registerMetric(metrics: Collection<Metric>) = this.metrics.addAll(metrics)
 
   fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator = SuggestionsComparator.DEFAULT): List<MetricInfo> {
     return metrics.map { MetricInfo(it.name, it.evaluate(sessions, comparator).toDouble(), evaluationType, it.valueType, it.showByDefault) }

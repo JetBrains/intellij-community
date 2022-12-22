@@ -73,14 +73,16 @@ class ReportGenerationStep(
         )
         if (ApplicationManager.getApplication().isUnitTestMode) reportGenerators.add(
           PlainTextReportGenerator(workspace.reportsDirectory(), filter.name))
-        val reports = generateReport(reportGenerators,
-                                     sessionFiles,
-                                     sessionStorages,
-                                     workspaces.map { it.errorsStorage },
-                                     evaluationTitles,
-                                     suggestionsComparators,
-                                     comparisonStorage,
-                                     strategies)
+        val reports = generateReport(
+          reportGenerators,
+          sessionFiles,
+          sessionStorages,
+          workspaces.map { it.errorsStorage },
+          evaluationTitles,
+          suggestionsComparators,
+          comparisonStorage,
+          strategies
+        )
         for (report in reports) {
           workspace.addReport(report.type, filter.name, comparisonStorage.reportName, report.path)
         }
@@ -106,14 +108,16 @@ class ReportGenerationStep(
     return sessionFiles
   }
 
-  private fun generateReport(reportGenerators: List<FullReportGenerator>,
-                             sessionFiles: Map<String, List<SessionsInfo>>,
-                             sessionStorages: List<SessionsStorage>,
-                             errorStorages: List<FileErrorsStorage>,
-                             evaluationTitles: List<String>,
-                             suggestionsComparators: List<SuggestionsComparator>,
-                             comparisonStorage: CompareSessionsStorage,
-                             strategies: List<CompletionStrategy>): List<ReportInfo> {
+  private fun generateReport(
+    reportGenerators: List<FullReportGenerator>,
+    sessionFiles: Map<String, List<SessionsInfo>>,
+    sessionStorages: List<SessionsStorage>,
+    errorStorages: List<FileErrorsStorage>,
+    evaluationTitles: List<String>,
+    suggestionsComparators: List<SuggestionsComparator>,
+    comparisonStorage: CompareSessionsStorage,
+    strategies: List<CompletionStrategy>,
+  ): List<ReportInfo> {
     val title2evaluator = evaluationTitles.mapIndexed { index, title ->
       title to MetricsEvaluator.withDefaultMetrics(title, strategies[index])
     }.toMap()
@@ -136,14 +140,14 @@ class ReportGenerationStep(
       comparisonStorage.clear()
       reportGenerators.forEach { it.generateFileReport(fileEvaluations) }
     }
-    for (errorsStorage in errorStorages)
+    for (errorsStorage in errorStorages) {
       reportGenerators.forEach { it.generateErrorReports(errorsStorage.getErrors()) }
+    }
+
+    val metrics = title2evaluator.values.map(MetricsEvaluator::result).flatten()
+
     return reportGenerators.map {
-      ReportInfo(it.type, it.generateGlobalReport(
-        title2evaluator.values
-          .map { value -> value.result() }
-          .flatten())
-      )
+      ReportInfo(it.type, it.generateGlobalReport(metrics))
     }
   }
 
