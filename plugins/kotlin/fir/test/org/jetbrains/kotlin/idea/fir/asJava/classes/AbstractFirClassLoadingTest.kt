@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.fir.asJava.classes
 
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
-import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightClassLoadingTest
+import org.jetbrains.kotlin.asJava.classes.AbstractIdeLightClassesByPsiTest
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.fir.findUsages.doTestWithFIRFlagsByPath
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import java.io.File
 
-abstract class AbstractFirClassLoadingTest : AbstractUltraLightClassLoadingTest() {
+abstract class AbstractFirClassLoadingTest : AbstractIdeLightClassesByPsiTest() {
 
     override fun isFirPlugin(): Boolean = true
 
