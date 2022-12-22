@@ -100,6 +100,35 @@ public abstract class UltraLightClassLoadingTestGenerated extends AbstractUltraL
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByPsi/scripts")
+    public static class Scripts extends AbstractUltraLightClassLoadingTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/scripts");
+            super.setUp();
+        }
+
+        @TestMetadata("FunsPropsAndFields.kts")
+        public void testFunsPropsAndFields() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/scripts/FunsPropsAndFields.kts"));
+        }
+
+        @TestMetadata("HelloWorld.kts")
+        public void testHelloWorld() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/scripts/HelloWorld.kts"));
+        }
+
+        @TestMetadata("InnerClasses.kts")
+        public void testInnerClasses() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/scripts/InnerClasses.kts"));
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByPsi")
     public static class Uncategorized extends AbstractUltraLightClassLoadingTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -275,11 +304,6 @@ public abstract class UltraLightClassLoadingTestGenerated extends AbstractUltraL
         @TestMetadata("properties.kt")
         public void testProperties() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/properties.kt"));
-        }
-
-        @TestMetadata("script.kts")
-        public void testScript() throws Exception {
-            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/script.kts"));
         }
 
         @TestMetadata("simpleFunctions.kt")
