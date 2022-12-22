@@ -3,7 +3,9 @@ package com.intellij.util.indexing.impl.storage
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.*
+import com.intellij.util.indexing.contentQueue.IndexUpdateRunner
 import com.intellij.util.indexing.impl.IndexStorage
 import com.intellij.util.indexing.impl.forward.*
 import com.intellij.util.indexing.snapshot.SnapshotInputMappings
@@ -72,10 +74,11 @@ object DefaultIndexStorageLayout {
       storageFile,
       extension.keyDescriptor,
       extension.valueExternalizer,
+      AppExecutorUtil.getAppExecutorService(),
       extension.cacheSize,
       extension.keyIsUniqueForIndexedFile(),
       extension.traceKeyHashToVirtualFileMapping(),
-      extension.enableWal()
+      extension.enableWal(),
     ) {
       override fun initMapAndCache() {
         assert(PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get() == null)

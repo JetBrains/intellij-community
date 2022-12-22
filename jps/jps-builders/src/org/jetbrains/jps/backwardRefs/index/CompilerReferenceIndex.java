@@ -309,6 +309,7 @@ public class CompilerReferenceIndex<Input> {
                                            true,
                                            false,
                                            readOnly,
+                                           null,
                                            null);
   }
 }
