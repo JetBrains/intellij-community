@@ -15,11 +15,6 @@ import java.util.List;
 import java.util.function.Function;
 
 final class DocumentationBuilderKit {
-  static final TagWrapper TagBold = new TagWrapper("b");
-  static final TagWrapper TagSmall = new TagWrapper("small");
-  static final TagWrapper TagCode = new TagWrapper("code");
-  static final TagWrapper TagSpan = new TagWrapper("span");
-
   public final static @NonNls String BR = "<br>";
 
   @NotNull
@@ -74,13 +69,6 @@ final class DocumentationBuilderKit {
 
     TagWrapper(String tag) {
       myTag = tag;
-    }
-
-    public TagWrapper withAttribute(String name, String value) {
-      TagWrapper result = new TagWrapper(myTag);
-      result.myAttributes.addAll(myAttributes);
-      result.myAttributes.add(Pair.create(name, value));
-      return result;
     }
 
     @Override

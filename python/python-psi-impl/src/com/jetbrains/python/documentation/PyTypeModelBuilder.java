@@ -5,6 +5,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -41,7 +42,7 @@ public class PyTypeModelBuilder {
       return visitor.getString();
     }
 
-    public void toBodyWithLinks(@NotNull ChainIterable<String> body, @NotNull PsiElement anchor) {
+    public void toBodyWithLinks(@NotNull HtmlBuilder body, @NotNull PsiElement anchor) {
       final TypeToBodyWithLinksVisitor visitor = new TypeToBodyWithLinksVisitor(body, anchor);
       accept(visitor);
     }
@@ -493,23 +494,23 @@ public class PyTypeModelBuilder {
   }
 
   private static class TypeToBodyWithLinksVisitor extends TypeNameVisitor {
-    private final ChainIterable<String> myBody;
+    private final HtmlBuilder myBody;
     private final PsiElement myAnchor;
 
-    TypeToBodyWithLinksVisitor(ChainIterable<String> body, PsiElement anchor) {
+    TypeToBodyWithLinksVisitor(HtmlBuilder body, PsiElement anchor) {
       myBody = body;
       myAnchor = anchor;
     }
 
     @Override
     protected void add(String s) {
-      myBody.addItem(combUp(s));
+      myBody.appendRaw(combUp(s));
     }
 
     @Override
     protected void addType(String name) {
       final TypeEvalContext context = TypeEvalContext.userInitiated(myAnchor.getProject(), myAnchor.getContainingFile());
-      myBody.addItem(PyDocumentationLink.toPossibleClass(name, myAnchor, context));
+      myBody.appendRaw(PyDocumentationLink.toPossibleClass(name, myAnchor, context));
     }
   }
 
