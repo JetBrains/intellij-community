@@ -85,6 +85,8 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
 import kotlin.io.path.exists
+import kotlin.io.path.div
+import kotlin.io.path.writeText
 
 @Suppress("OVERRIDE_DEPRECATION")
 @Internal
@@ -549,6 +551,15 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       LOG.info("Project is not trusted, aborting")
       activity.end()
       throw ProcessCanceledException()
+    }
+
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      // write current PID to file to kill process if it hangs
+      if (IS_CHILD_PROCESS) {
+        val pid = ProcessHandle.current().pid()
+        val pidsFile = PathManager.getSystemDir() / "pids.txt"
+        pidsFile.writeText(pid.toString())
+      }
     }
 
     if (shouldOpenInChildProcess(projectStoreBaseDir)) {
@@ -1356,7 +1367,7 @@ private suspend fun shouldOpenInChildProcess(projectStoreBaseDir: Path): Boolean
   }
 
   if (!ApplicationManager.getApplication().isHeadlessEnvironment &&
-      ApplicationManager.getApplication().isInternal) {
+      java.lang.Boolean.getBoolean("ide.per.project.instance.debug")) {
     withContext(Dispatchers.EDT) {
       @Suppress("HardCodedStringLiteral")
       Messages.showMessageDialog(
@@ -1400,46 +1411,44 @@ private suspend fun openInChildProcess(projectStoreBaseDir: Path) {
   }
 }
 
-private fun openProjectInstanceArgs(projectStoreBaseDir: Path): Array<String> {
+private fun openProjectInstanceArgs(projectStoreBaseDir: Path): List<String> {
   val instancePaths = PerProjectInstancePaths(projectStoreBaseDir)
 
-  return mapOf(
-    PathManager.PROPERTY_SYSTEM_PATH to instancePaths.getSystemDir(),
-    PathManager.PROPERTY_CONFIG_PATH to instancePaths.getConfigDir(),
-    PathManager.PROPERTY_LOG_PATH to instancePaths.getLogDir(),
-    PathManager.PROPERTY_PLUGINS_PATH to PathManager.getPluginsDir(),
-    ProjectManagerEx.PER_PROJECT_OPTION_NAME to ProjectManagerEx.PerProjectState.ENABLED
-  ).map { (key, value) ->
-    "-D$key=$value"
-  }.toTypedArray()
-  // TODO add vm options
-  // for (vmOption in VMOptions.readOptions("", true)) {
-  //  command += vmOption.asPatchedAgentLibOption()
-  //             ?: vmOption.asPatchedVMOption("splash", "false")
-  //             ?: vmOption.asPatchedVMOption("nosplash", "true")
-  //             ?: vmOption.asPatchedVMOption(ConfigImportHelper.SHOW_IMPORT_CONFIG_DIALOG_PROPERTY, "default-production")
-  //             ?: customProperties.keys.firstOrNull { vmOption.isVMOption(it) }?.let { customProperties.remove(it) }
-  //             ?: vmOption
-  //}
+  return buildList {
+    addAll(mapOf(
+      PathManager.PROPERTY_SYSTEM_PATH to instancePaths.getSystemDir(),
+      PathManager.PROPERTY_CONFIG_PATH to instancePaths.getConfigDir(),
+      PathManager.PROPERTY_LOG_PATH to instancePaths.getLogDir(),
+      PathManager.PROPERTY_PLUGINS_PATH to PathManager.getPluginsDir(),
+      ProjectManagerEx.PER_PROJECT_OPTION_NAME to ProjectManagerEx.PerProjectState.ENABLED
+    ).map { (key, value) ->
+      "-D$key=$value"
+    }.toTypedArray())
+
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      val customTestScriptPath = PerProjectInstancePaths(projectStoreBaseDir).getSystemDir() / VMOptions.TEST_SCRIPT_FILE_NAME
+      add("-Dtestscript.filename=${customTestScriptPath}")
+    }
+  }
 }
 
 private fun macOpenProjectInstanceCommand(projectStoreBaseDir: Path): List<String> {
-  return listOf(
-    "open",
-    "-n",
-    Restarter.getIdeStarter().toString(),
-    "--args",
-    *openProjectInstanceArgs(projectStoreBaseDir),
-    projectStoreBaseDir.toString(),
-  )
+  return buildList {
+    add("open")
+    add("-n")
+    add(Restarter.getIdeStarter().toString())
+    add("--args")
+    addAll(openProjectInstanceArgs(projectStoreBaseDir))
+    add(projectStoreBaseDir.toString())
+  }
 }
 
 private fun linuxOpenProjectInstanceCommand(projectStoreBaseDir: Path): List<String> {
-  return listOf(
-    Restarter.getIdeStarter().toString(),
-    *openProjectInstanceArgs(projectStoreBaseDir),
-    projectStoreBaseDir.toString(),
-  )
+  return buildList {
+    add(Restarter.getIdeStarter().toString())
+    addAll(openProjectInstanceArgs(projectStoreBaseDir))
+    add(projectStoreBaseDir.toString())
+  }
 }
 
 private fun openProjectInstanceCommand(projectStoreBaseDir: Path): List<String> {

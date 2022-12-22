@@ -64,11 +64,11 @@ class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
       withContext(Dispatchers.EDT) {
         WindowManager.getInstance().updateDefaultFrameInfoOnProjectClose(project)
 
-        // prevent the script from stopping on project close
-        context.setProject(null)
-
         // for backward compatibility with older code
         if (closeProjectBeforeOpening) {
+          // prevent the script from stopping on project close
+          context.setProject(null)
+
           ProjectManager.getInstance().closeAndDispose(project)
         }
       }
@@ -93,7 +93,12 @@ class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
     }
     else {
       newProject = ProjectManagerEx.getInstanceEx().openProjectAsync(Path.of(projectPath), OpenProjectTask(forceOpenInNewFrame = true))
-                   ?: throw IllegalStateException("Failed to open the project: $projectPath")
+      if (newProject == null) {
+        // Don't stop if project was opened in a new instance
+        if (ProjectManagerEx.IS_PER_PROJECT_INSTANCE_READY) return
+        throw IllegalStateException("Failed to open the project: $projectPath")
+      }
+
       if (shouldOpenInSmartMode(newProject)) {
         val job = CompletableDeferred<Any?>()
         DumbService.getInstance(newProject).smartInvokeLater {
