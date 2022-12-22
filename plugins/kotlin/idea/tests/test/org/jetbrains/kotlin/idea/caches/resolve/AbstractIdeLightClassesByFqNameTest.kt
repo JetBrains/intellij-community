@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 import kotlin.test.assertNotNull
 
-abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase() {
+abstract class AbstractIdeLightClassesByFqNameTest : KotlinLightCodeInsightFixtureTestCase() {
     fun doTest(@Suppress("UNUSED_PARAMETER") unused: String) {
         val fileName = fileName()
         val fileExtension = fileName.substringAfterLast('.')
@@ -34,9 +34,9 @@ abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase
             else -> error("Invalid test data extension")
         }
 
-        val fileText = File(testDataPath, fileName).readText()
+        val fileText = File(testDataDirectory, fileName).readText()
         withCustomCompilerOptions(fileText, project, module) {
-            val testFiles = if (File(testDataPath, extraFilePath).isFile) listOf(fileName, extraFilePath) else listOf(fileName)
+            val testFiles = if (File(testDataDirectory, extraFilePath).isFile) listOf(fileName, extraFilePath) else listOf(fileName)
             myFixture.configureByFiles(*testFiles.toTypedArray())
             if ((myFixture.file as? KtFile)?.isScript() == true) {
                 ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
@@ -63,7 +63,7 @@ abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk8()
 }
 
-abstract class AbstractIdeCompiledLightClassTest : KotlinDaemonAnalyzerTestCase() {
+abstract class AbstractIdeCompiledLightClassesByFqNameTest : KotlinDaemonAnalyzerTestCase() {
     override fun setUp() {
         super.setUp()
 

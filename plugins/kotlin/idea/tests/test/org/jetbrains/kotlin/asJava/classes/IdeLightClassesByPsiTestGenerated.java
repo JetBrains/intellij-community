@@ -19,10 +19,10 @@ import static org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifact
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByPsi")
-public abstract class UltraLightClassLoadingTestGenerated extends AbstractUltraLightClassLoadingTest {
+public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLightClassesByPsiTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByPsi/facades")
-    public static class Facades extends AbstractUltraLightClassLoadingTest {
+    public static class Facades extends AbstractIdeLightClassesByPsiTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -101,7 +101,7 @@ public abstract class UltraLightClassLoadingTestGenerated extends AbstractUltraL
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByPsi/scripts")
-    public static class Scripts extends AbstractUltraLightClassLoadingTest {
+    public static class Scripts extends AbstractIdeLightClassesByPsiTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -130,7 +130,7 @@ public abstract class UltraLightClassLoadingTestGenerated extends AbstractUltraL
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByPsi")
-    public static class Uncategorized extends AbstractUltraLightClassLoadingTest {
+    public static class Uncategorized extends AbstractIdeLightClassesByPsiTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
