@@ -16,27 +16,39 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.selected
+import com.intellij.util.applyIf
 import javax.swing.*
 import kotlin.math.max
 
 class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
   override fun render(tool: InspectionProfileEntry, pane: OptPane, parent: Disposable?): JComponent {
     return panel {
-      pane.components.forEach { render(it, tool) }
+      pane.components.forEachIndexed { i, component ->
+        render(component, tool, i != 0 && !pane.components[i - 1].hasBottomGap)
+      }
     }
       .apply { if (parent != null) registerValidators(parent) }
   }
 
-  private fun Panel.render(component: OptComponent, tool: InspectionProfileEntry) {
+  /**
+   * Renders an [OptComponent].
+   *
+   * @param isFirst true if the component is first in a hierarchy (then [OptGroup] doesn't need a top gap)
+   * @param withBottomGap true if the component is the last of a group which should have a bottom gap
+   */
+  private fun Panel.render(component: OptComponent, tool: InspectionProfileEntry, isFirst: Boolean = false, withBottomGap: Boolean = false) {
     when (component) {
       is OptControl, is OptSettingLink, is OptCustom -> {
-        renderOptRow(component, tool)
+        renderOptRow(component, tool, withBottomGap)
       }
 
       is OptGroup -> {
-        row { label(component.label.label()) }
-        indent {
-          component.children.forEach { child -> render(child, tool) }
+        panel {
+          row { label(component.label.label()) }
+            .apply { if (isFirst) topGap(TopGap.SMALL) }
+          indent {
+            component.children.forEachIndexed { i, child -> render(child, tool, i == 0, i == component.children.lastIndex) }
+          }
         }
       }
 
@@ -47,8 +59,8 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           val tabbedPane = JBTabbedPane(SwingConstants.TOP)
           component.tabs.forEach { tab ->
             tabbedPane.add(tab.label.label(), com.intellij.ui.dsl.builder.panel {
-              tab.content.forEach { tabComponent ->
-                render(tabComponent, tool)
+              tab.content.forEachIndexed { i, tabComponent ->
+                render(tabComponent, tool, i == 0)
               }
             })
           }
@@ -77,21 +89,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
     }
   }
 
-  private val OptComponent.splitLabel: LocMessage.PrefixSuffix?
-    get() = when (this) {
-      is OptString -> splitLabel.splitLabel()
-      is OptNumber -> splitLabel.splitLabel()
-      is OptDropdown -> splitLabel.splitLabel()
-      else -> null
-    }
-
-  private val OptComponent.nestedControls: List<OptComponent>?
-    get() = when(this) {
-      is OptCheckbox -> children
-      else -> null
-    }
-
-  private fun Panel.renderOptRow(component: OptComponent, tool: InspectionProfileEntry) {
+  private fun Panel.renderOptRow(component: OptComponent, tool: InspectionProfileEntry, withBottomGap: Boolean = false) {
     val splitLabel = component.splitLabel
     lateinit var cell: Cell<JComponent>
     when {
@@ -110,11 +108,12 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       // No row label (align left, control handles the label)
       else -> row { cell = renderOptCell(component, tool) }
     }
+      .applyIf(withBottomGap) { bottomGap(BottomGap.SMALL) }
 
     // Nested components
     component.nestedControls?.let { nested ->
       val group = indent {
-        nested.forEach { render(it, tool) }
+        nested.forEachIndexed { i, component -> render(component, tool, i == 0) }
       }
       if (cell.component is JBCheckBox) {
         group.enabledIf((cell.component as JBCheckBox).selected)
@@ -221,6 +220,23 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         is OptGroup, is OptHorizontalStack, is OptSeparator, is OptTabSet -> { throw IllegalStateException("Unsupported nested component: ${component.javaClass}") }
     }
   }
+
+  private val OptComponent.splitLabel: LocMessage.PrefixSuffix?
+    get() = when (this) {
+      is OptString -> splitLabel.splitLabel()
+      is OptNumber -> splitLabel.splitLabel()
+      is OptDropdown -> splitLabel.splitLabel()
+      else -> null
+    }
+
+  private val OptComponent.nestedControls: List<OptComponent>?
+    get() = when(this) {
+      is OptCheckbox -> children
+      else -> null
+    }
+
+  private val OptComponent.hasBottomGap: Boolean
+    get() = this is OptGroup
 
   private fun convertItem(key: String, type: Class<*>): Any {
     @Suppress("UNCHECKED_CAST")
