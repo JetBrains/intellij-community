@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.perf
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Conditions
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.PairProcessor
@@ -11,7 +12,6 @@ import com.intellij.util.ref.DebugReflectionUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupportBase
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
@@ -44,7 +44,7 @@ object UltraLightChecker {
     fun allClasses(file: KtFile): List<KtClassOrObject> =
         SyntaxTraverser.psiTraverser(file).filter(KtClassOrObject::class.java).toList()
 
-    fun checkByJavaFile(testDataPath: String, lightClasses: List<KtLightClass>) {
+    fun checkByJavaFile(testDataPath: String, lightClasses: List<PsiClass>) {
         val expectedTextFile = getJavaFileForTest(testDataPath)
         val renderedResult = renderLightClasses(testDataPath, lightClasses)
         KotlinTestUtils.assertEqualsToFile(expectedTextFile, renderedResult)
@@ -56,7 +56,7 @@ object UltraLightChecker {
         return expectedTextFile
     }
 
-    fun renderLightClasses(testDataPath: String, lightClasses: List<KtLightClass>): String {
+    fun renderLightClasses(testDataPath: String, lightClasses: List<PsiClass>): String {
         val extendedTypeRendererOld = PsiClassRenderer.extendedTypeRenderer
         return try {
             PsiClassRenderer.extendedTypeRenderer = testDataPath.endsWith("typeAnnotations.kt")
@@ -89,7 +89,7 @@ object UltraLightChecker {
         )
     }
 
-    fun checkDescriptorsLeak(lightClass: KtLightClass) {
+    fun checkDescriptorsLeak(lightClass: PsiClass) {
         checkDescriptorLeakOnElement(lightClass)
         lightClass.methods.forEach {
             checkDescriptorLeakOnElement(it)

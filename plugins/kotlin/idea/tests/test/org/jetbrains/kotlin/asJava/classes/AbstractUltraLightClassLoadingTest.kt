@@ -2,8 +2,10 @@
 
 package org.jetbrains.kotlin.asJava.classes
 
+import com.intellij.psi.PsiClass
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker.checkByJavaFile
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker.checkDescriptorsLeak
@@ -11,6 +13,7 @@ import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
@@ -26,21 +29,25 @@ abstract class AbstractUltraLightClassLoadingTest : KotlinLightCodeInsightFixtur
             val file = myFixture.addFileToProject(testDataFile.name, sourceText) as KtFile
 
             UltraLightChecker.checkForReleaseCoroutine(sourceText, module)
-
-            val checkByJavaFile = InTextDirectivesUtils.isDirectiveDefined(sourceText, "CHECK_BY_JAVA_FILE")
+            val additionalFile = File("$testDataPath.1")
+            val additionalPsiFile = if (additionalFile.exists()) {
+                myFixture.addFileToProject(additionalFile.name.replaceFirst(".kt.1", "1.kt"), additionalFile.readText())
+            } else {
+                null
+            } as? KtFile
 
             val ktClassOrObjects = UltraLightChecker.allClasses(file)
+            val classList = ktClassOrObjects.mapNotNull(KtClassOrObject::toLightClass) + listOfNotNull(
+                file,
+                additionalPsiFile,
+            ).flatMap(KtFile::toLightElements).filterIsInstance<PsiClass>().distinct()
 
-            if (checkByJavaFile) {
-                val classList = ktClassOrObjects.mapNotNull { it.toLightClass() }
-                checkByJavaFile(testDataPath, classList)
-                classList.forEach { checkDescriptorsLeak(it) }
-            } else {
-                for (ktClass in ktClassOrObjects) {
-                    val ultraLightClass = UltraLightChecker.checkClassEquivalence(ktClass)
-                    if (ultraLightClass != null) {
-                        checkDescriptorsLeak(ultraLightClass)
-                    }
+            checkByJavaFile(testDataPath, classList)
+            classList.forEach { checkDescriptorsLeak(it) }
+            for (ktClass in ktClassOrObjects) {
+                val ultraLightClass = UltraLightChecker.checkClassEquivalence(ktClass)
+                if (ultraLightClass != null) {
+                    checkDescriptorsLeak(ultraLightClass)
                 }
             }
         }
