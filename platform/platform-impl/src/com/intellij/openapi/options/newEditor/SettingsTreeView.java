@@ -174,7 +174,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
     myModel = FilteringTreeModel.createModel(structure, myFilter, this);
     myFilter.addListener((preferredSelection, adjustSelection, now) -> {
-      myModel.updateTree(myTree, !myFilter.getFilterText().isEmpty(), preferredSelection);
+      myModel.updateTree(myTree, !myFilter.isEmptyFilter(), preferredSelection);
       return Promises.resolvedPromise();
     }, this);
     myTree.setModel(new AsyncTreeModel(myModel, this));

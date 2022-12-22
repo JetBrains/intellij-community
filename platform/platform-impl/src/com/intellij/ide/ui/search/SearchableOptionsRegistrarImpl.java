@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.search;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -11,10 +12,12 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.CollectConsumer;
@@ -219,6 +222,13 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
       previouslyFiltered = null;
     }
 
+    String optionToCheck = Strings.toLowerCase(option.trim());
+
+    ConfigurableHit foundByPath = findGroupsByPath(groups, optionToCheck);
+    if (foundByPath != null) {
+      return foundByPath;
+    }
+
     Set<Configurable> effectiveConfigurables = new LinkedHashSet<>();
     if (previouslyFiltered == null) {
       Consumer<Configurable> consumer = new CollectConsumer<>(effectiveConfigurables);
@@ -230,12 +240,10 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
       effectiveConfigurables.addAll(previouslyFiltered);
     }
 
-    String optionToCheck = Strings.toLowerCase(option.trim());
-    Set<String> options = getProcessedWordsWithoutStemming(optionToCheck);
-
     Set<Configurable> nameHits = new LinkedHashSet<>();
     Set<Configurable> nameFullHits = new LinkedHashSet<>();
 
+    Set<String> options = getProcessedWordsWithoutStemming(optionToCheck);
     if (options.isEmpty()) {
       for (Configurable each : effectiveConfigurables) {
         if (each.getDisplayName() != null) {
@@ -274,7 +282,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
     Set<String> foundIds = findConfigurablesByDescriptions(descriptionOptions);
     if (foundIds == null) {
-      return new ConfigurableHit(nameHits, nameFullHits, Collections.emptySet());
+      return new ConfigurableHit(nameHits, nameFullHits, Collections.emptySet(), option);
     }
 
     List<Configurable> contentHits = filterById(effectiveConfigurables, foundIds);
@@ -282,7 +290,80 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     if (type == DocumentEvent.EventType.CHANGE && previouslyFiltered != null && effectiveConfigurables.size() == contentHits.size()) {
       return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, project);
     }
-    return new ConfigurableHit(nameHits, nameFullHits, new LinkedHashSet<>(contentHits));
+    return new ConfigurableHit(nameHits, nameFullHits, new LinkedHashSet<>(contentHits), option);
+  }
+
+  @Nullable
+  private static ConfigurableHit findGroupsByPath(@NotNull List<? extends ConfigurableGroup> groups, @NotNull String path) {
+    List<String> split = parseSettingsPath(path);
+    if (split == null || split.isEmpty()) return null;
+
+    ConfigurableGroup root = ContainerUtil.getOnlyItem(groups);
+    List<Configurable> topLevel;
+    if (root instanceof SearchableConfigurable &&
+        ((SearchableConfigurable)root).getId().equals(ConfigurableExtensionPointUtil.ROOT_CONFIGURABLE_ID)) {
+      topLevel = Arrays.asList(root.getConfigurables());
+    }
+    else {
+      topLevel = ContainerUtil.filterIsInstance(groups, Configurable.class);
+    }
+
+    List<Configurable> current = topLevel;
+    Configurable lastMatched = null;
+    int lastMatchedIndex = -1;
+
+    for (int i = 0; i < split.size(); i++) {
+      String option = split.get(i);
+      Configurable matched = ContainerUtil.find(current, group -> StringUtil.equalsIgnoreCase(group.getDisplayName(), option));
+      if (matched == null) break;
+
+      lastMatched = matched;
+      lastMatchedIndex = i;
+
+      if (matched instanceof Configurable.Composite) {
+        current = Arrays.asList(((Configurable.Composite)matched).getConfigurables());
+      }
+      else {
+        break;
+      }
+    }
+    if (lastMatched == null) return null;
+
+    String spotlightFilter = lastMatchedIndex + 1 < split.size()
+                             ? StringUtil.join(split.subList(lastMatchedIndex + 1, split.size()), " ")
+                             : "";
+
+    Set<Configurable> hits = Collections.singleton(lastMatched);
+    return new ConfigurableHit(hits, hits, hits, spotlightFilter);
+  }
+
+  private static @Nullable List<String> parseSettingsPath(@NotNull String path) {
+    if (!path.contains(SETTINGS_GROUP_SEPARATOR)) return null;
+
+    @NotNull List<String> split = ContainerUtil.map(StringUtil.split(path, SETTINGS_GROUP_SEPARATOR), String::trim);
+    List<@NlsSafe String> prefixes = Arrays.asList("Settings",
+                                                   "Preferences",
+                                                   "File | Settings",
+                                                   CommonBundle.message("action.settings.path"),
+                                                   CommonBundle.message("action.settings.path.mac"),
+                                                   CommonBundle.message("action.settings.path.macOS.ventura"));
+    for (String prefix : prefixes) {
+      split = skipPrefixIfNeeded(prefix, split);
+    }
+    return split;
+  }
+
+  private static @NotNull List<String> skipPrefixIfNeeded(@NotNull String prefix, @NotNull List<String> split) {
+    if (split.isEmpty()) return split;
+
+    List<String> prefixSplit = ContainerUtil.map(StringUtil.split(prefix, SETTINGS_GROUP_SEPARATOR), String::trim);
+    if (split.size() < prefixSplit.size()) return split;
+
+    for (int i = 0; i < prefixSplit.size(); i++) {
+      if (!StringUtil.equalsIgnoreCase(split.get(i), prefixSplit.get(i))) return split;
+    }
+
+    return split.subList(prefixSplit.size(), split.size());
   }
 
   @NotNull

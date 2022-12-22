@@ -13,6 +13,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightColors;
@@ -59,7 +60,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
         // must be set only after initializing (to avoid concurrent modifications)
         searchableOptionRegistrar = r;
         ApplicationManager.getApplication().invokeLater(() -> {
-           update(DocumentEvent.EventType.CHANGE, false, true);
+          update(DocumentEvent.EventType.CHANGE, false, true);
         }, ModalityState.any(), project == null ? ApplicationManager.getApplication().getDisposed() : project.getDisposed());
       });
     }
@@ -127,9 +128,20 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     return true;
   }
 
-  String getFilterText() {
+  public boolean isEmptyFilter() {
+    return StringUtil.isEmpty(mySearch.getText());
+  }
+
+  @NotNull String getFilterText() {
     String text = mySearch.getText();
     return text == null ? "" : text.trim();
+  }
+
+  @NotNull String getSpotlightFilterText() {
+    if (myHits != null) {
+      return myHits.getSpotlightFilter();
+    }
+    return getFilterText();
   }
 
   private void setHoldingFilter(boolean holding) {
