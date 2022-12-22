@@ -14,6 +14,9 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
+import com.intellij.workspaceModel.ide.impl.jps.serialization.*
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NonNls
@@ -23,7 +26,7 @@ internal class ApplicationPathMacroManager : PathMacroManager(null)
 
 @NonNls const val APP_CONFIG = "\$APP_CONFIG$"
 
-open class ApplicationStoreImpl : ComponentStoreWithExtraComponents() {
+open class ApplicationStoreImpl : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
   override val storageManager = ApplicationStorageManager(ApplicationManager.getApplication(), PathMacroManager.getInstance(ApplicationManager.getApplication()))
 
   override val serviceContainer: ComponentManagerImpl
@@ -62,6 +65,8 @@ open class ApplicationStoreImpl : ComponentStoreWithExtraComponents() {
       }
     }
   }
+
+  override fun createContentReader(): JpsFileContentReader = AppStorageContentReader()
 
   override fun toString() = "app"
 }
