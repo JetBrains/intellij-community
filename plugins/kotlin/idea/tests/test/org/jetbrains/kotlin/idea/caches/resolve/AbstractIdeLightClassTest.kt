@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.KotlinDaemonAnalyzerTestCase
 import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.perf.UltraLightChecker
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -54,6 +55,8 @@ abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase
                     }
                 },
             )
+
+            UltraLightChecker.checkClassEquivalence(ktFile)
         }
     }
 

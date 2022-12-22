@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.AbstractDataFlowValueRenderingTest
 import org.jetbrains.kotlin.addImport.AbstractAddImportTest
 import org.jetbrains.kotlin.addImportAlias.AbstractAddImportAliasTest53
 import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightClassLoadingTest
-import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightClassSanityTest
 import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightFacadeClassTest15
 import org.jetbrains.kotlin.checkers.*
 import org.jetbrains.kotlin.copyright.AbstractUpdateKotlinCopyrightTest
@@ -1041,10 +1040,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractIdeLightClassTest> {
-            model("asJava/lightClasses/lightClassByFqName", pattern = KT_OR_KTS_WITHOUT_DOTS)
-        }
-
-        testClass<AbstractUltraLightClassSanityTest> {
             model("asJava/lightClasses/lightClassByFqName", pattern = KT_OR_KTS_WITHOUT_DOTS)
         }
 
