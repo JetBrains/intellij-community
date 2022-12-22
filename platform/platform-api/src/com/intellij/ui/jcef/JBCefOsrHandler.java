@@ -129,7 +129,11 @@ class JBCefOsrHandler implements CefRenderHandler {
       Dimension size = getDevImageSize();
       if (size.width != width || size.height != height) {
         image = (JBHiDPIScaledImage)RetinaImage.createFrom(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB_PRE), myScale.getJreBiased(), null);
-        volatileImage = myComponent.getGraphicsConfiguration().createCompatibleVolatileImage(width, height, Transparency.TRANSLUCENT);
+        GraphicsConfiguration gc = myComponent.getGraphicsConfiguration();
+        if (gc != null)
+          volatileImage = gc.createCompatibleVolatileImage(width, height, Transparency.TRANSLUCENT);
+        else
+          volatileImage = myComponent.createVolatileImage(width, height);
         dirtyRects = new Rectangle[]{new Rectangle(0, 0, width, height)};
       }
     }
