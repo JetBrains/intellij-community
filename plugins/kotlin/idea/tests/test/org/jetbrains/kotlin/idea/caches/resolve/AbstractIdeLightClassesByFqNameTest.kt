@@ -2,24 +2,18 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.psi.*
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiModifierList
+import com.intellij.psi.PsiModifierListOwner
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.*
-import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.idea.KotlinDaemonAnalyzerTestCase
-import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker
-import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.load.java.JvmAnnotationNames
-import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
@@ -61,110 +55,6 @@ abstract class AbstractIdeLightClassesByFqNameTest : KotlinLightCodeInsightFixtu
     }
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk8()
-}
-
-abstract class AbstractIdeCompiledLightClassesByFqNameTest : KotlinDaemonAnalyzerTestCase() {
-    override fun setUp() {
-        super.setUp()
-
-        val testName = getTestName(false)
-
-        val testDataDir = TestMetadataUtil.getTestData(this::class.java)
-        val testFile = listOf(File(testDataDir, "$testName.kt"), File(testDataDir, "$testName.kts")).first { it.exists() }
-
-        val extraClasspath = mutableListOf(TestKotlinArtifacts.jetbrainsAnnotations, TestKotlinArtifacts.kotlinStdlibJdk8)
-        if (testFile.extension == "kts") {
-            extraClasspath += TestKotlinArtifacts.kotlinScriptRuntime
-        }
-
-        val extraOptions = KotlinTestUtils.parseDirectives(testFile.readText())[
-                CompilerTestDirectives.JVM_TARGET_DIRECTIVE.substringBefore(":")
-        ]?.let { jvmTarget ->
-            listOf("-jvm-target", jvmTarget)
-        } ?: emptyList()
-
-        val libraryJar = KotlinCompilerStandalone(
-            listOf(testFile),
-            classpath = extraClasspath,
-            options = extraOptions
-        ).compile()
-
-        val jarUrl = "jar://" + FileUtilRt.toSystemIndependentName(libraryJar.absolutePath) + "!/"
-        ModuleRootModificationUtil.addModuleLibrary(module, jarUrl)
-    }
-
-    fun doTest(testDataPath: String) {
-        val testDataFile = File(testDataPath)
-        val expectedFile = KotlinTestUtils.replaceExtension(testDataFile, "compiled.java").let {
-            if (it.exists()) it else KotlinTestUtils.replaceExtension(testDataFile, "java")
-        }
-        withCustomCompilerOptions(testDataFile.readText(), project, module) {
-            testLightClass(
-                expectedFile,
-                testDataFile,
-                { it },
-                {
-                    findClass(it, null, project)?.apply {
-                        PsiElementChecker.checkPsiElementStructure(this)
-                    }
-                },
-                MembersFilterForCompiledClasses
-            )
-        }
-    }
-
-    private object MembersFilterForCompiledClasses : PsiClassRenderer.MembersFilter {
-        override fun includeMethod(psiMethod: PsiMethod): Boolean {
-            // Exclude methods for local functions.
-            // JVM_IR generates local functions (and some lambdas) as private methods in the surrounding class.
-            // Such methods are private and have names such as 'foo$...'.
-            // They are not a part of the public API, and are not represented in the light classes.
-            // NB this is a heuristic, and it will obviously fail for declarations such as 'private fun `foo$bar`() {}'.
-            // However, it allows writing code in more or less "idiomatic" style in the light class tests
-            // without thinking about private ABI and compiler optimizations.
-            if (psiMethod.modifierList.hasExplicitModifier(PsiModifier.PRIVATE)) {
-                return '$' !in psiMethod.name
-            }
-            return super.includeMethod(psiMethod)
-        }
-    }
-}
-
-private fun testLightClass(
-    expected: File,
-    testData: File,
-    normalize: (String) -> String,
-    findLightClass: (String) -> PsiClass?,
-    membersFilter: PsiClassRenderer.MembersFilter = PsiClassRenderer.MembersFilter.DEFAULT
-) {
-    val actual = LightClassTestCommon.getActualLightClassText(
-        testData,
-        findLightClass = findLightClass,
-        normalizeText = { text ->
-            //NOTE: ide and compiler differ in names generated for parameters with unspecified names
-            text.replace("java.lang.String s,", "java.lang.String p,")
-                .replace("java.lang.String s)", "java.lang.String p)")
-                .replace("java.lang.String s1", "java.lang.String p1")
-                .replace("java.lang.String s2", "java.lang.String p2")
-                .replace("java.lang.Object o)", "java.lang.Object p)")
-                .replace("java.lang.String[] strings", "java.lang.String[] p")
-                .removeLinesStartingWith("@" + JvmAnnotationNames.METADATA_FQ_NAME.asString())
-                .run(normalize)
-        },
-        membersFilter = membersFilter
-    )
-    KotlinTestUtils.assertEqualsToFile(expected, actual)
-}
-
-fun findClass(fqName: String, ktFile: KtFile?, project: Project): PsiClass? {
-    ktFile?.script?.let {
-        return it.toLightClass()
-    }
-
-    return JavaPsiFacade.getInstance(project).findClass(fqName, GlobalSearchScope.allScope(project))
-        ?: PsiTreeUtil.findChildrenOfType(ktFile, KtClassOrObject::class.java)
-            .find { fqName.endsWith(it.nameAsName!!.asString()) }
-            ?.toLightClass()
 }
 
 private fun checkConsistency(lightClass: KtLightClass) {
@@ -214,8 +104,4 @@ private fun checkModifierList(modifierList: PsiModifierList) {
         // check searching for non-existent annotation doesn't trigger exact resolve
         modifierList.findAnnotation("some.package.MadeUpAnnotation")
     }
-}
-
-private fun String.removeLinesStartingWith(prefix: String): String {
-    return lines().filterNot { it.trimStart().startsWith(prefix) }.joinToString(separator = "\n")
 }
