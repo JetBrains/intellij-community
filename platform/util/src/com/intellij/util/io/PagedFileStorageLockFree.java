@@ -328,13 +328,9 @@ public class PagedFileStorageLockFree implements PagedStorage {
       throw new AssertionError("Page " + pageIndex + " must be >=0");
     }
 
-    if (pages == null) {
-      throw new ClosedStorageException("Storage is already closed: " + file);
-    }
-
     while (true) {
       if (isClosed()) {
-        throw new ClosedStorageException("Storage is already closed");
+        throw new ClosedStorageException("Storage is already closed: " + file);
       }
       final Page page = pages.lookupOrCreate(
         pageIndex,
@@ -342,19 +338,21 @@ public class PagedFileStorageLockFree implements PagedStorage {
         this::loadPageData
       );
 
-      //RC: check page is USABLE, and increment useCount:
-      try {
-        //MAYBE RC: invent some way to wait without busy-spinning, since page loading could take
-        //         quite a time
+      try {//busy-spin on: check page is USABLE, and increment useCount
         while (!page.tryAcquireForUse(this)) {
           Thread.yield();
           //MAYBE RC: Thread.onSpinWait(); (java9+)
+          //TODO RC: invent some way to wait without busy-spinning, since page loading could take
+          //         quite a time...
         }
+        pageCache.getStatistics().pageQueried(page.pageSize());
         return page;
       }
       catch (IOException ignore) {
-        //page is already RELEASED -> try to get the page again
         LOG.trace("Page " + page + " likely released -> request it again");
+        //RC: Worst case: page is in the middle of unmapping (~ABOUT_TO_UNMAP), we can't interrupt
+        //    this process, we could only wait until page will be finally unmapped, and request it
+        //    again afterwards -- so it will be mapped back, again.
         //MAYBE RC: we could try to assist page reclamation here: i.e. check it is ABOUT_TO_RECLAIM,
         //          .flush() if dirty...
       }

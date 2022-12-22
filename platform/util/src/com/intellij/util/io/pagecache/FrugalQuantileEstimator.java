@@ -75,4 +75,13 @@ public class FrugalQuantileEstimator {
   public double currentEstimation() {
     return currentEstimation;
   }
+
+  @Override
+  public String toString() {
+    return "FrugalQuantileEstimator[" +
+           "target: " + targetPercentileToEstimate * 100 + " %-ile" +
+           ", current: " + currentEstimation +
+           ", step: " + step +
+           ']';
+  }
 }

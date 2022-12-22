@@ -12,10 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.LockSupport;
 
 import static com.intellij.util.io.IOUtil.GiB;
@@ -40,8 +37,11 @@ public abstract class PerformanceOfFileAccessBaseTest {
   //===== Response time (aka 'single shot') benchmarks params:
 
   protected static final int RESPONSE_TIME_SHOTS = Integer.getInteger("PerformanceOfFileAccessBase.RESPONSE_TIME_SHOTS", 100_000);
-  protected static final int DELAY_BETWEEN_RESPONSE_TIME_SHOTS_NS = 2_000_000;
+  //protected static final int DELAY_BETWEEN_RESPONSE_TIME_SHOTS_NS = 2_000_000;
+  protected static final int DELAY_BETWEEN_RESPONSE_TIME_SHOTS_NS = 500_000;
   protected static final int SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT = 128;
+
+  protected static final int DIFFERENT_OFFSETS_TO_REQUEST = 1000;
 
 
   @Rule
@@ -120,7 +120,6 @@ public abstract class PerformanceOfFileAccessBaseTest {
                                                                   final int responseTimeShots) throws InterruptedException {
     final ExecutorService pool = Executors.newFixedThreadPool(threads);
 
-
     final Histogram[] histograms = new Histogram[threads];
     for (int i = 0; i < histograms.length; i++) {
       histograms[i] = new Histogram(2);
@@ -139,7 +138,7 @@ public abstract class PerformanceOfFileAccessBaseTest {
             task.call();
             final long finishedAtNs = System.nanoTime();
             final long elapsedNs = finishedAtNs - startedAtNs;
-            invocationStatsUs.recordValue(elapsedNs / 1000);
+            invocationStatsUs.recordValue(NANOSECONDS.toMicros(elapsedNs));
 
             if (sleepTimeNs < elapsedNs) {
               LockSupport.parkNanos(sleepTimeNs - elapsedNs);
@@ -187,5 +186,20 @@ public abstract class PerformanceOfFileAccessBaseTest {
       responseTimeUsHisto.getValueAtPercentile(99),
       responseTimeUsHisto.getMaxValue()
     );
+  }
+
+  protected static long estimatePagesToLoad(final long cacheCapacityInPages,
+                                            final int numberOfDifferentPagesRequested,
+                                            final int totalRequestsCount) {
+    final long expectedPagesAllocated;
+    if (cacheCapacityInPages >= numberOfDifferentPagesRequested) {
+      expectedPagesAllocated = numberOfDifferentPagesRequested;
+    }
+    else {
+      final double cacheEffectiveness = Math.min(cacheCapacityInPages * 1.0 / numberOfDifferentPagesRequested, 1);
+      expectedPagesAllocated = cacheCapacityInPages +
+                               (long)((totalRequestsCount - cacheCapacityInPages) * (1 - cacheEffectiveness));
+    }
+    return expectedPagesAllocated;
   }
 }

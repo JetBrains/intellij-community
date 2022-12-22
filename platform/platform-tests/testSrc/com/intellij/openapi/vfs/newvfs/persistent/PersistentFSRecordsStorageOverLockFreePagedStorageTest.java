@@ -2,10 +2,12 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 
+import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.PagedFileStorageLockFree;
 import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -14,6 +16,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsOverLockFreePagedStorage.RECORD_SIZE_IN_BYTES;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
 public class PersistentFSRecordsStorageOverLockFreePagedStorageTest
   extends PersistentFSRecordsStorageTestBase<PersistentFSRecordsOverLockFreePagedStorage> {
@@ -24,6 +27,14 @@ public class PersistentFSRecordsStorageOverLockFreePagedStorageTest
   public PersistentFSRecordsStorageOverLockFreePagedStorageTest() { super(MAX_RECORDS_TO_INSERT); }
 
   private StorageLockContext storageContext;
+
+  @BeforeClass
+  public static void beforeClass() throws Exception {
+    assumeTrue(
+      "LockFree FilePageCache must be enabled: see PageCacheUtils.LOCK_FREE_VFS_ENABLED",
+      PageCacheUtils.LOCK_FREE_VFS_ENABLED
+    );
+  }
 
   @NotNull
   @Override

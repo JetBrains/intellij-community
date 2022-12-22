@@ -12,6 +12,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.Assume.assumeTrue;
 
 
 public class PagedFileStorageLockFreeTest {
@@ -20,6 +21,14 @@ public class PagedFileStorageLockFreeTest {
   public final TemporaryFolder tmpDirectory = new TemporaryFolder();
 
   private StorageLockContext storageContext;
+
+  @BeforeClass
+  public static void beforeClass() throws Exception {
+    assumeTrue(
+      "LockFree FilePageCache must be enabled: see PageCacheUtils.LOCK_FREE_VFS_ENABLED",
+      PageCacheUtils.LOCK_FREE_VFS_ENABLED
+    );
+  }
 
   @Before
   public void setUp() throws Exception {

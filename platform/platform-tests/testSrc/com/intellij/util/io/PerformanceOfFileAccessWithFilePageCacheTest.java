@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.util.io.stats.FilePageCacheStatistics;
 import org.HdrHistogram.Histogram;
 import org.jetbrains.annotations.NotNull;
 import org.junit.FixMethodOrder;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.IntStream;
 
 /**
  * Measures throughput:
@@ -219,13 +221,16 @@ public class PerformanceOfFileAccessWithFilePageCacheTest extends PerformanceOfF
     final File file = createRandomContentFileOfSize(FILE_SIZE);
     final ByteBuffer buffer = randomContentBufferOfSize(BUFFER_SIZE);
 
-    final long blocksCount = FILE_SIZE / BUFFER_SIZE;
+    final long pagesCount = FILE_SIZE / BUFFER_SIZE;
+    final long[] offsetsToRequest = IntStream.range(0, DIFFERENT_OFFSETS_TO_REQUEST)
+      .mapToLong(i -> ThreadLocalRandom.current().nextLong(FILE_SIZE))
+      .toArray();
     final PagedFileStorage pagedStorage = new PagedFileStorage(file.toPath(), storageContext, BUFFER_SIZE, true, true);
     try {
       final Callable<Void> task = () -> {
         final ThreadLocalRandom rnd = ThreadLocalRandom.current();
-        final long blockNo = rnd.nextLong(blocksCount);
-        final long blockOffset = blockNo * BUFFER_SIZE;
+        final int requestNo = rnd.nextInt(offsetsToRequest.length);
+        final long blockOffset = offsetsToRequest[requestNo] % FILE_SIZE;
         pagedStorage.lockRead();
         try {
           final DirectBufferWrapper page = pagedStorage.getByteBuffer(blockOffset, /*forWrite: */ false);
@@ -261,6 +266,21 @@ public class PerformanceOfFileAccessWithFilePageCacheTest extends PerformanceOfF
         RESPONSE_TIME_SHOTS,
         responseTimeUsHisto
       );
+
+      final FilePageCache pageCache = storageContext.getBufferCache();
+      final long cacheCapacityBytes = pageCache.getMaxSize();
+      final long expectedPagesAllocated = estimatePagesToLoad(
+        cacheCapacityBytes / BUFFER_SIZE,
+        DIFFERENT_OFFSETS_TO_REQUEST,
+        THREADS * RESPONSE_TIME_SHOTS
+      );
+      System.out.printf("Cache capacity %d Mb, expected pages to load: %d\n",
+                        cacheCapacityBytes / IOUtil.MiB,
+                        expectedPagesAllocated
+      );
+
+      final FilePageCacheStatistics statistics = pageCache.getStatistics();
+      System.out.println(statistics);
     }
     finally {
       pagedStorage.close();
@@ -272,13 +292,16 @@ public class PerformanceOfFileAccessWithFilePageCacheTest extends PerformanceOfF
     final File file = createRandomContentFileOfSize(FILE_SIZE);
     final ByteBuffer buffer = randomContentBufferOfSize(BUFFER_SIZE);
 
-    final long blocksCount = FILE_SIZE / BUFFER_SIZE;
+    final long pagesCount = FILE_SIZE / BUFFER_SIZE;
+    final long[] offsetsToRequest = IntStream.range(0, DIFFERENT_OFFSETS_TO_REQUEST)
+      .mapToLong(i -> ThreadLocalRandom.current().nextLong(FILE_SIZE))
+      .toArray();
     final PagedFileStorage pagedStorage = new PagedFileStorage(file.toPath(), storageContext, BUFFER_SIZE, true, true);
     try {
       final Callable<Void> task = () -> {
         final ThreadLocalRandom rnd = ThreadLocalRandom.current();
-        final long blockNo = rnd.nextLong(blocksCount);
-        final long blockOffset = blockNo * BUFFER_SIZE;
+        final int requestNo = rnd.nextInt(offsetsToRequest.length);
+        final long blockOffset = offsetsToRequest[requestNo] % FILE_SIZE;
         pagedStorage.lockWrite();
         try {
           final DirectBufferWrapper page = pagedStorage.getByteBuffer(blockOffset, /*forWrite: */ true);
@@ -314,6 +337,21 @@ public class PerformanceOfFileAccessWithFilePageCacheTest extends PerformanceOfF
         RESPONSE_TIME_SHOTS,
         responseTimeUsHisto
       );
+
+      final FilePageCache pageCache = storageContext.getBufferCache();
+      final long cacheCapacityBytes = pageCache.getMaxSize();
+      final long expectedPagesAllocated = estimatePagesToLoad(
+        cacheCapacityBytes / BUFFER_SIZE,
+        DIFFERENT_OFFSETS_TO_REQUEST,
+        THREADS * RESPONSE_TIME_SHOTS
+      );
+      System.out.printf("Cache capacity %d Mb, expected pages to load: %d\n",
+                        cacheCapacityBytes / IOUtil.MiB,
+                        expectedPagesAllocated
+      );
+
+      final FilePageCacheStatistics statistics = pageCache.getStatistics();
+      System.out.println(statistics);
     }
     finally {
       pagedStorage.close();

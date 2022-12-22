@@ -4,7 +4,7 @@ package com.intellij.util.io;
 import com.intellij.util.io.FilePageCacheLockFree.Page;
 import org.HdrHistogram.Histogram;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.IntStream;
 
 import static org.junit.Assume.assumeTrue;
 
@@ -33,13 +34,14 @@ import static org.junit.Assume.assumeTrue;
 @FixMethodOrder(MethodSorters.JVM)
 public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends PerformanceOfFileAccessBaseTest {
 
+
   /** Write/read each file more than once -- to be sure :) */
   private static final int TWICE = 2;
 
   private final StorageLockContext storageContext = new StorageLockContext(true, true, true);
 
-  @Before
-  public void setUp() throws Exception {
+  @BeforeClass
+  public static void beforeClass() throws Exception {
     assumeTrue("PageCacheUtils.LOCK_FREE_VFS_ENABLED must be set for this test to run",
                PageCacheUtils.LOCK_FREE_VFS_ENABLED);
   }
@@ -190,7 +192,7 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
 
     final long elapsedNs = finishedAtNs - startedAtNs;
     final long totalWrittenBytes = TWICE * FILE_SIZE * THREADS;
-    printReportForThroughput("Written sequentially, " + THREADS + " threads, uncontended, via PageCacheNew", totalWrittenBytes, elapsedNs);
+    printReportForThroughput("Write sequentially, " + THREADS + " threads, uncontended, via PageCacheNew", totalWrittenBytes, elapsedNs);
   }
 
   @Test
@@ -218,7 +220,7 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
 
     final long elapsedNs = finishedAtNs - startedAtNs;
     final long totalWrittenBytes = TWICE * FILE_SIZE * THREADS;
-    printReportForThroughput("Written randomly, " + THREADS + " threads, uncontended, via PageCacheNew", totalWrittenBytes, elapsedNs);
+    printReportForThroughput("Write randomly, " + THREADS + " threads, uncontended, via PageCacheNew", totalWrittenBytes, elapsedNs);
   }
 
   //======================= Response-time (one-shot): ========
@@ -228,12 +230,15 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
     final File file = createRandomContentFileOfSize(FILE_SIZE);
     final ByteBuffer buffer = randomContentBufferOfSize(BUFFER_SIZE);
 
-    final long blocksCount = FILE_SIZE / BUFFER_SIZE;
+    final long pagesCount = FILE_SIZE / BUFFER_SIZE;
+    final long[] offsetsToRequest = IntStream.range(0, DIFFERENT_OFFSETS_TO_REQUEST)
+      .mapToLong(i -> ThreadLocalRandom.current().nextLong(FILE_SIZE))
+      .toArray();
     try (final PagedFileStorageLockFree pagedStorage = new PagedFileStorageLockFree(file.toPath(), storageContext, BUFFER_SIZE, true)) {
       final Callable<Void> task = () -> {
         final ThreadLocalRandom rnd = ThreadLocalRandom.current();
-        final long blockNo = rnd.nextLong(blocksCount);
-        final long blockOffset = blockNo * BUFFER_SIZE;
+        final int requestNo = rnd.nextInt(offsetsToRequest.length);
+        final long blockOffset = offsetsToRequest[requestNo] % FILE_SIZE;
         try (final Page page = pagedStorage.pageByOffset(blockOffset, /*forWrite: */ false)) {
           buffer.clear();
           //emulate 'read':
@@ -259,6 +264,20 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
         RESPONSE_TIME_SHOTS,
         responseTimeUsHisto
       );
+
+      final FilePageCacheLockFree pageCache = storageContext.pageCache();
+      final long cacheCapacityBytes = pageCache.getCacheCapacityBytes();
+      final long expectedPagesAllocated = estimatePagesToLoad(
+        cacheCapacityBytes / BUFFER_SIZE,
+        DIFFERENT_OFFSETS_TO_REQUEST,
+        THREADS * RESPONSE_TIME_SHOTS
+      );
+      System.out.printf("Cache capacity %d Mb, expected pages to load: %d\n",
+                        cacheCapacityBytes / IOUtil.MiB,
+                        expectedPagesAllocated
+      );
+
+      System.out.println(pageCache.getStatistics());
     }
   }
 
@@ -267,12 +286,15 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
     final File file = createRandomContentFileOfSize(FILE_SIZE);
     final ByteBuffer buffer = randomContentBufferOfSize(BUFFER_SIZE);
 
-    final long blocksCount = FILE_SIZE / BUFFER_SIZE;
+    final long pagesCount = FILE_SIZE / BUFFER_SIZE;
+    final long[] offsetsToRequest = IntStream.range(0, DIFFERENT_OFFSETS_TO_REQUEST)
+      .mapToLong(i -> ThreadLocalRandom.current().nextLong(FILE_SIZE))
+      .toArray();
     try (final PagedFileStorageLockFree pagedStorage = new PagedFileStorageLockFree(file.toPath(), storageContext, BUFFER_SIZE, true)) {
       final Callable<Void> task = () -> {
         final ThreadLocalRandom rnd = ThreadLocalRandom.current();
-        final long blockNo = rnd.nextLong(blocksCount);
-        final long blockOffset = blockNo * BUFFER_SIZE;
+        final int requestNo = rnd.nextInt(offsetsToRequest.length);
+        final long blockOffset = offsetsToRequest[requestNo] % FILE_SIZE;
         try (final Page page = pagedStorage.pageByOffset(blockOffset, /*forWrite: */ true)) {
           //emulate 'write':
           buffer.clear();
@@ -292,12 +314,26 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
       final long finishedAtNs = System.nanoTime();
 
       printReportForResponseTime(
-        "Write randomly",
+        "Write randomly, at " + DIFFERENT_OFFSETS_TO_REQUEST + " offsets",
         SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT,
         DELAY_BETWEEN_RESPONSE_TIME_SHOTS_NS,
         RESPONSE_TIME_SHOTS,
         responseTimeUsHisto
       );
+
+      final FilePageCacheLockFree pageCache = storageContext.pageCache();
+      final long cacheCapacityBytes = pageCache.getCacheCapacityBytes();
+      final long expectedPagesAllocated = estimatePagesToLoad(
+        cacheCapacityBytes / BUFFER_SIZE,
+        DIFFERENT_OFFSETS_TO_REQUEST,
+        THREADS * RESPONSE_TIME_SHOTS
+      );
+      System.out.printf("Cache capacity %d Mb, expected pages to load: %d\n",
+                        cacheCapacityBytes / IOUtil.MiB,
+                        expectedPagesAllocated
+      );
+
+      System.out.println(pageCache.getStatistics());
     }
   }
 
