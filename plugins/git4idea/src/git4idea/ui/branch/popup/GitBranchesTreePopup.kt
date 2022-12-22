@@ -70,6 +70,8 @@ import java.awt.event.*
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.*
+import javax.swing.event.TreeExpansionEvent
+import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
@@ -92,6 +94,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   internal var userResized: Boolean
     private set
+
+  private val expandedPaths = HashSet<TreePath>()
 
   init {
     setParentValue(parentValue)
@@ -154,7 +158,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     tree = BranchesTree(treeStep.treeModel).also {
       configureTreePresentation(it)
       overrideTreeActions(it)
-      addTreeMouseControlsListeners(it)
+      addTreeListeners(it)
       Disposer.register(this) {
         it.model = null
       }
@@ -184,11 +188,16 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     if (haveBranches) {
       selectPreferred()
       traverseNodesAndExpand()
+      expandPreviouslyExpandedBranches()
     }
     super.updateSpeedSearchColors(!haveBranches)
     if (!pattern.isNullOrBlank()) {
       tree.emptyText.text = GitBundle.message("git.branches.popup.tree.no.branches", pattern)
     }
+  }
+
+  private fun expandPreviouslyExpandedBranches() {
+    expandedPaths.toSet().forEach { path -> TreeUtil.promiseExpand(tree, path) }
   }
 
   private fun traverseNodesAndExpand(): Boolean {
@@ -441,9 +450,18 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     }
   }
 
-  private fun addTreeMouseControlsListeners(tree: JTree) = with(tree) {
+  private fun addTreeListeners(tree: JTree) = with(tree) {
     addMouseMotionListener(SelectionMouseMotionListener())
     addMouseListener(SelectOnClickListener())
+    addTreeExpansionListener(object : TreeExpansionListener {
+      override fun treeExpanded(event: TreeExpansionEvent) {
+        expandedPaths.add(event.path)
+      }
+
+      override fun treeCollapsed(event: TreeExpansionEvent) {
+        expandedPaths.remove(event.path)
+      }
+    })
   }
 
   override fun getActionMap(): ActionMap = tree.actionMap
