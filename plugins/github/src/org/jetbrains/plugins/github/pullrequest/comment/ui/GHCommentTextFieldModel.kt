@@ -17,7 +17,7 @@ class GHCommentTextFieldModel(
   project: Project,
   initialText: String,
   private val submitter: (String) -> CompletableFuture<*>
-) : CommentTextFieldModelBase(project, initialText) {
+) : CommentTextFieldModelBase(project, initialText.filter { it != '\r' }) {
 
   constructor(project: Project, submitter: (String) -> CompletableFuture<*>) : this(project, "", submitter)
 
