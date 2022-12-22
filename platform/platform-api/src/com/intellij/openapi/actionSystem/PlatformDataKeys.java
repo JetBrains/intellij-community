@@ -46,7 +46,7 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
   public static final DataKey<String> PREDEFINED_TEXT = DataKey.create("predefined.text.value");
 
   public static final DataKey<String> SPEED_SEARCH_TEXT = DataKey.create("speed.search.text");
-  public static final DataKey<Object> SPEED_SEARCH_COMPONENT = DataKey.create("speed.search.component.value");
+  public static final DataKey<Object> SPEED_SEARCH_COMPONENT = DataKey.create("speed.search.component");
 
   /**
    * Returns {@link Point} to guess where to show context menu invoked by key.

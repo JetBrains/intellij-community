@@ -124,6 +124,9 @@ public final class Switcher extends BaseSwitcherAction {
         SwitcherVirtualFile item = ContainerUtil.getOnlyItem(files.getSelectedValuesList());
         return item == null ? null : item.getFile();
       }
+      if (PlatformDataKeys.SPEED_SEARCH_TEXT.is(dataId)) {
+        return mySpeedSearch.isPopupActive() ? mySpeedSearch.getEnteredPrefix() : null;
+      }
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         if (files.isSelectionEmpty()) return null;
         VirtualFile[] array = ContainerUtil.map2Array(files.getSelectedValuesList(), VirtualFile.class, SwitcherVirtualFile::getFile);

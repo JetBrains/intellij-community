@@ -27,7 +27,6 @@ import com.intellij.ui.components.TextComponentEmptyText;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.touchbar.Touchbar;
-import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -383,7 +382,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   @Nullable
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    if (SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.is(dataId)) {
+    if (PlatformDataKeys.SPEED_SEARCH_TEXT.is(dataId)) {
       return mySearchTextComponent.getText();
     }
     return myDataProviderDelegate != null ? myDataProviderDelegate.getData(dataId) : null;

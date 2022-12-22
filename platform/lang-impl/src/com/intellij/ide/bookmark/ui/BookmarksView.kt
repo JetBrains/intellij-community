@@ -26,7 +26,6 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.preview.DescriptorPreview
-import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.RestoreSelectionListener
 import com.intellij.ui.tree.StructureTreeModel
@@ -100,7 +99,6 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
     PlatformDataKeys.SELECTED_ITEMS.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Any>())
     PlatformDataKeys.SELECTED_ITEM.`is`(dataId) -> selectedNodes?.firstOrNull()
-    SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.`is`(dataId) -> SpeedSearchSupply.getSupply(tree)?.enteredPrefix
     PlatformDataKeys.VIRTUAL_FILE.`is`(dataId) -> selectedNode?.asVirtualFile
     PlatformDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selectedFiles?.toTypedArray()
     else -> null
