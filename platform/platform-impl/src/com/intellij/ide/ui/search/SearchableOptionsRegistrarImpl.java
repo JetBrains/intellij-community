@@ -273,29 +273,36 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     }
 
     Set<String> foundIds = findConfigurablesByDescriptions(descriptionOptions);
-    if (foundIds == null) return new ConfigurableHit(nameHits, nameFullHits, Collections.emptySet());
+    if (foundIds == null) {
+      return new ConfigurableHit(nameHits, nameFullHits, Collections.emptySet());
+    }
 
-    List<Configurable> contentHits = ContainerUtil.filter(effectiveConfigurables, configurable -> {
+    List<Configurable> contentHits = filterById(effectiveConfigurables, foundIds);
+
+    if (type == DocumentEvent.EventType.CHANGE && previouslyFiltered != null && effectiveConfigurables.size() == contentHits.size()) {
+      return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, project);
+    }
+    return new ConfigurableHit(nameHits, nameFullHits, new LinkedHashSet<>(contentHits));
+  }
+
+  @NotNull
+  private static List<Configurable> filterById(@NotNull Set<Configurable> configurables, @NotNull Set<String> configurableIds) {
+    return ContainerUtil.filter(configurables, configurable -> {
       if (configurable instanceof SearchableConfigurable &&
-          foundIds.contains(((SearchableConfigurable)configurable).getId())) {
+          configurableIds.contains(((SearchableConfigurable)configurable).getId())) {
         return true;
       }
       if (configurable instanceof SearchableConfigurable.Merged) {
         final List<Configurable> mergedConfigurables = ((SearchableConfigurable.Merged)configurable).getMergedConfigurables();
         for (Configurable mergedConfigurable : mergedConfigurables) {
           if (mergedConfigurable instanceof SearchableConfigurable &&
-              foundIds.contains(((SearchableConfigurable)mergedConfigurable).getId())) {
+              configurableIds.contains(((SearchableConfigurable)mergedConfigurable).getId())) {
             return true;
           }
         }
       }
       return false;
     });
-
-    if (type == DocumentEvent.EventType.CHANGE && previouslyFiltered != null && effectiveConfigurables.size() == contentHits.size()) {
-      return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, project);
-    }
-    return new ConfigurableHit(nameHits, nameFullHits, new LinkedHashSet<>(contentHits));
   }
 
   @Nullable
