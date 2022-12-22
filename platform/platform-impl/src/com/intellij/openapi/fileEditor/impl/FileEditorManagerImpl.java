@@ -350,10 +350,9 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   private @NotNull EditorsSplitters getActiveSplittersSync() {
     assertDispatchThread();
     if (Registry.is("ide.navigate.to.recently.focused.editor", false)) {
-      List<EditorsSplitters> splitters = new ArrayList<>(getAllSplitters());
-      if (!splitters.isEmpty()) {
-        splitters.sort((o1, o2) -> Long.compare(o2.getLastFocusGainedTime(), o1.getLastFocusGainedTime()));
-        return splitters.get(0);
+      final EditorsSplitters splitters = getLastFocusedSplitters();
+      if (splitters != null) {
+        return splitters;
       }
     }
     IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
@@ -1552,6 +1551,16 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   @Override
   public @NotNull EditorsSplitters getSplitters() {
     return ApplicationManager.getApplication().isDispatchThread() ? getActiveSplittersSync() : getMainSplitters();
+  }
+
+  public @Nullable EditorsSplitters getLastFocusedSplitters() {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      final Set<EditorsSplitters> splitters = getAllSplitters();
+      if (!splitters.isEmpty()) {
+        return splitters.stream().min((o1, o2) -> Long.compare(o2.getLastFocusGainedTime(), o1.getLastFocusGainedTime())).get();
+      }
+    }
+    return null;
   }
 
   @Override

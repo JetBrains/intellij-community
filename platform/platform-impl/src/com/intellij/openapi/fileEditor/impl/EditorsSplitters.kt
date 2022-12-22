@@ -68,7 +68,6 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
 import javax.swing.*
-import com.intellij.openapi.application.readAction
 
 private val OPEN_FILES_ACTIVITY = Key.create<Activity>("open.files.activity")
 private val LOG = logger<EditorsSplitters>()
@@ -1000,14 +999,11 @@ private fun getSplittersToFocus(project: Project?): EditorsSplitters? {
     return getSplittersForProject(activeWindow, project)
   }
   if (activeWindow is IdeFrame.Child) {
-    if (project == null) {
-      project = (activeWindow as IdeFrame.Child).project
-    }
-    return getSplittersForProject(activeWindow, project)
+    return getLastFocusedSplittersForProject(activeWindow, project ?: (activeWindow as IdeFrame).project)
   }
   val frame = FocusManagerImpl.getInstance().lastFocusedFrame
   if (frame is IdeFrameImpl && frame.isActive) {
-    return getSplittersForProject(activeWindow, frame.getProject())
+    return getLastFocusedSplittersForProject(activeWindow, frame.getProject())
   }
 
   // getSplitters is not implemented in unit test mode
@@ -1025,4 +1021,11 @@ private fun getSplittersForProject(activeWindow: Window?, project: Project?): Ed
                           ?: return null
   val splitters = if (activeWindow == null) null else fileEditorManager.getSplittersFor(activeWindow)
   return splitters ?: fileEditorManager.splitters
+}
+
+private fun getLastFocusedSplittersForProject(activeWindow: Window?, project: Project?): EditorsSplitters? {
+  val fileEditorManager = (if (project == null || project.isDisposed) null else FileEditorManagerEx.getInstanceEx(project))
+                          ?: return null
+  return (fileEditorManager as? FileEditorManagerImpl)?.getLastFocusedSplitters()
+         ?: getSplittersForProject(activeWindow, project)
 }
