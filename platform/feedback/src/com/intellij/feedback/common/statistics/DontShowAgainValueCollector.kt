@@ -10,10 +10,10 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 
 class DontShowAgainValueCollector : ApplicationUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("feedback.in.ide.dont.show.again.state", 1)
+    private val GROUP = EventLogGroup("feedback.in.ide.dont.show.again.state", 2)
 
-    private val DISABLED_VERSION_GROUP = GROUP.registerEvent("disabledVersions",
-                                                             EventFields.StringListValidatedByInlineRegexp("versionList", "\\d*\\.\\d*"))
+    private val DISABLED_VERSION_GROUP = GROUP.registerEvent(
+      "disabledVersions", EventFields.StringListValidatedByRegexp("versionList", "version"))
   }
 
   override fun getGroup(): EventLogGroup = GROUP

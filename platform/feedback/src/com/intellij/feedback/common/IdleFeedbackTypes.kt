@@ -190,7 +190,7 @@ enum class IdleFeedbackTypes {
     notification.addAction(
       NotificationAction.createSimpleExpiring(getGiveFeedbackNotificationLabel()) {
         if (!forTest) {
-          logRespondNotificationActionInvoked(fusFeedbackId)
+          logRespondNotificationActionInvoked(this)
         }
         val dialog = createFeedbackDialog(project, forTest)
         dialog.show()
@@ -208,14 +208,14 @@ enum class IdleFeedbackTypes {
       NotificationAction.createSimpleExpiring(getCancelFeedbackNotificationLabel()) {
         if (!forTest) {
           isFeedbackNotificationDisabled = true
-          logDisableNotificationActionInvoked(fusFeedbackId)
+          logDisableNotificationActionInvoked(this)
         }
         getNotificationOnCancelAction(project)()
       }
     )
     notification.notify(project)
     if (!forTest) {
-      logRequestNotificationShown(fusFeedbackId)
+      logRequestNotificationShown(this)
       updateStateAfterNotificationShowed()
     }
   }

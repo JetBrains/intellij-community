@@ -60,7 +60,7 @@ class ProductivityFeedbackDialog(
     super.doOKAction()
     ProductivityMetricCountCollector.logProductivityMetricFeedback(productivityProperty.get(),
                                                                    proficiencyProperty.get(),
-                                                                   usingExperience.get() ?: "No data")
+                                                                   mapExperienceToInt(usingExperience.get()))
     val feedbackData = FeedbackRequestData(feedbackReportId, createCollectedDataJsonString())
     submitFeedback(project, feedbackData,
                    { }, { },
@@ -154,5 +154,19 @@ class ProductivityFeedbackDialog(
     val cancelAction = super.getCancelAction()
     cancelAction.putValue(Action.NAME, ProductivityFeedbackBundle.message("dialog.cancel.label"))
     return cancelAction
+  }
+  
+  private fun mapExperienceToInt(experience: String?): Int {
+    return when (experience) {
+      ProductivityFeedbackBundle.message("dialog.combobox.item.1") -> 1
+      ProductivityFeedbackBundle.message("dialog.combobox.item.2") -> 2
+      ProductivityFeedbackBundle.message("dialog.combobox.item.3") -> 3
+      ProductivityFeedbackBundle.message("dialog.combobox.item.4") -> 4
+      ProductivityFeedbackBundle.message("dialog.combobox.item.5") -> 5
+      ProductivityFeedbackBundle.message("dialog.combobox.item.6") -> 6
+      ProductivityFeedbackBundle.message("dialog.combobox.item.7") -> 7
+      ProductivityFeedbackBundle.message("dialog.combobox.item.8") -> 8
+      else -> -1
+    }
   }
 }
