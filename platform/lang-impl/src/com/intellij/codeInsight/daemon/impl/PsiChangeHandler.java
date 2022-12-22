@@ -87,7 +87,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
   }
 
   private void updateChangesForDocument(@NotNull Document document) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     if (myProject.isDisposed()) return;
     List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
     if (toUpdate == null) {
@@ -178,7 +178,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
   }
 
   private void queueElement(@NotNull PsiElement child, boolean whitespaceOptimizationAllowed, @NotNull PsiTreeChangeEvent event) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     PsiFile file = event.getFile();
     if (file == null) file = child.getContainingFile();
     if (file == null) {
@@ -207,7 +207,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
   }
 
   private void updateByChange(@NotNull PsiElement child, @NotNull Document document, boolean whitespaceOptimizationAllowed) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     PsiFile file;
     try {
       file = child.getContainingFile();

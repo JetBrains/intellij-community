@@ -113,7 +113,7 @@ public final class LockWrappingClassVisitor extends ClassVisitor {
     if (!isCurrentThreadEdt()) return false; // do not do anything for non-EDT calls
 
     ApplicationEx application = getApplicationEx();
-    if (application.isWriteThread()) return false;
+    if (application.isWriteIntentLockAcquired()) return false;
 
     application.acquireWriteIntentLock(invokedClassFqn);
     return true;

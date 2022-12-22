@@ -186,7 +186,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
       return
     }
 
-    ApplicationManager.getApplication().assertIsWriteThread()
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
     val oldDisposable = rootPointersDisposable
     val newDisposable = Disposer.newDisposable()
     if (ApplicationManager.getApplication().isUnitTestMode) {

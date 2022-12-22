@@ -723,7 +723,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     }
     myCollectedEvents = null;
     long start = System.currentTimeMillis();
-    ApplicationManager.getApplication().assertIsWriteThread(); // guarantees no attempts to get read action lock under "this" lock
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired(); // guarantees no attempts to get read action lock under "this" lock
     incModificationCount();
 
     //noinspection SynchronizeOnThis

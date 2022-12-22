@@ -197,7 +197,7 @@ public interface Application extends ComponentManager {
    * Asserts whether the method is being called from under the write-intent lock.
    */
   @ApiStatus.Experimental
-  void assertIsWriteThread();
+  void assertWriteIntentLockAcquired();
 
   /**
    * Adds an {@link ApplicationListener}.
@@ -252,7 +252,7 @@ public interface Application extends ComponentManager {
   /**
    * Checks if the current thread is the event dispatch thread and has IW lock acquired.
    *
-   * @see #isWriteThread()
+   * @see #isWriteIntentLockAcquired()
    * @return {@code true} if the current thread is the Swing dispatch thread with IW lock, {@code false} otherwise.
    */
   @Contract(pure = true)
@@ -265,7 +265,7 @@ public interface Application extends ComponentManager {
    */
   @ApiStatus.Experimental
   @Contract(pure = true)
-  boolean isWriteThread();
+  boolean isWriteIntentLockAcquired();
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
@@ -526,5 +526,20 @@ public interface Application extends ComponentManager {
   @Deprecated
   @SuppressWarnings({"override", "DeprecatedIsStillUsed"})
   <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName);
+
+  /** @deprecated bad name, use {@link #isWriteIntentLockAcquired()} instead */
+  @Deprecated
+  @ApiStatus.Experimental
+  @Contract(pure = true)
+  default boolean isWriteThread() {
+    return isWriteIntentLockAcquired();
+  }
+
+  /** @deprecated bad name, use {@link #assertWriteIntentLockAcquired()} instead */
+  @Deprecated
+  @ApiStatus.Experimental
+  default void assertIsWriteThread() {
+    assertWriteIntentLockAcquired();
+  }
   //</editor-fold>
 }

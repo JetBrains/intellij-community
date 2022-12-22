@@ -323,7 +323,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       "Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful"
     }
 
-    app.assertIsWriteThread()
+    app.assertWriteIntentLockAcquired()
     @Suppress("TestOnlyProblems")
     if (isLight(project)) {
       // if we close project at the end of the test, just mark it closed;

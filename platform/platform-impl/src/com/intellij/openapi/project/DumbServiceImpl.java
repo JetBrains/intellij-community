@@ -182,7 +182,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     myBalloon.dispose();
 
     synchronized (myRunWhenSmartQueue) {
@@ -435,7 +435,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public void cancelAllTasksAndWait() {
     Application application = ApplicationManager.getApplication();
-    if (!application.isWriteThread() || application.isWriteAccessAllowed()) {
+    if (!application.isWriteIntentLockAcquired() || application.isWriteAccessAllowed()) {
       throw new AssertionError("Must be called on write thread without write action");
     }
 
@@ -550,7 +550,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void completeJustSubmittedTasks() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     assert myProject.isInitialized();
     if (myState.get() != State.SCHEDULED_TASKS) {
       return;

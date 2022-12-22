@@ -159,7 +159,7 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
   private void decrementPostponedCounter() {
     Application application = ApplicationManager.getApplication();
     if (--getContext().myPostponedCounter == 0) {
-      if (application.isWriteAccessAllowed() || !application.isWriteThread()) {
+      if (application.isWriteAccessAllowed() || !application.isWriteIntentLockAcquired()) {
         doPostponedFormatting();
       }
       else {

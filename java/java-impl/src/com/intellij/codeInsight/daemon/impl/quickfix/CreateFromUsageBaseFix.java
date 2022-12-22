@@ -366,7 +366,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
                                       final TemplateEditingListener listener,
                                       final @NlsContexts.Command String commandName) {
     Runnable runnable = () -> TemplateManager.getInstance(project).startTemplate(editor, template, listener);
-    if (!ApplicationManager.getApplication().isWriteThread() || IntentionPreviewUtils.isIntentionPreviewActive()) {
+    if (!ApplicationManager.getApplication().isWriteIntentLockAcquired() || IntentionPreviewUtils.isIntentionPreviewActive()) {
       runnable.run();
     } else {
       CommandProcessor.getInstance().executeCommand(project, runnable, commandName, commandName);

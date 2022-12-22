@@ -706,7 +706,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       boolean preventCaching = dumbModeAccessTypeStack.empty();
       dumbModeAccessTypeStack.push(dumbModeAccessType);
       Disposable disposable = Disposer.newDisposable();
-      if (app.isWriteThread()) {
+      if (app.isWriteIntentLockAcquired()) {
         app.getMessageBus().connect(disposable).subscribe(PsiModificationTracker.TOPIC,
                                                           () -> RecursionManager.dropCurrentMemoizationCache());
       }

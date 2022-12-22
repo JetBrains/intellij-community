@@ -40,7 +40,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
                                 @NotNull Runnable transaction) {
     ModalityState modality = expectedContext == null ? ModalityState.NON_MODAL : ((TransactionIdImpl)expectedContext).myModality;
     Application app = ApplicationManager.getApplication();
-    if (app.isWriteThread() && myWritingAllowed && !ModalityState.current().dominates(modality)) {
+    if (app.isWriteIntentLockAcquired() && myWritingAllowed && !ModalityState.current().dominates(modality)) {
       if (!Disposer.isDisposed(parentDisposable)) {
         transaction.run();
       }
@@ -53,7 +53,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
   @Override
   public void submitTransactionAndWait(@NotNull final Runnable runnable) throws ProcessCanceledException {
     Application app = ApplicationManager.getApplication();
-    if (app.isWriteThread()) {
+    if (app.isWriteIntentLockAcquired()) {
       if (!myWritingAllowed) {
         @NonNls String message = "Cannot run synchronous submitTransactionAndWait from invokeLater. " +
                                  "Please use asynchronous submit*Transaction. " +
@@ -119,7 +119,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
 
   @Override
   public boolean isWritingAllowed() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     return myWritingAllowed;
   }
 
@@ -129,7 +129,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
   }
 
   public void assertWriteActionAllowed() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     if (!myWritingAllowed && areAssertionsEnabled() && !myErrorReported) {
       // please assign exceptions here to Peter
       LOG.error(reportWriteUnsafeContext(ModalityState.current()));
@@ -164,7 +164,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
 
   @Override
   public TransactionIdImpl getContextTransaction() {
-    if (ApplicationManager.getApplication().isWriteThread()) {
+    if (ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
       if (!myWritingAllowed) {
         return null;
       }
@@ -187,7 +187,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
       @Override
       public void run() {
         if (isWriteSafeModality(modalityState)) {
-          ApplicationManager.getApplication().assertIsWriteThread();
+          ApplicationManager.getApplication().assertWriteIntentLockAcquired();
           runWithWritingAllowed(runnable);
         }
         else {

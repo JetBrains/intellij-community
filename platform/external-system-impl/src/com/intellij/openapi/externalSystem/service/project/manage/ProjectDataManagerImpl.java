@@ -59,12 +59,12 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
   @Override
   public <T> void importData(@NotNull DataNode<T> node, @NotNull Project project) {
     Application app = ApplicationManager.getApplication();
-    if (!app.isWriteThread() && app.isReadAccessAllowed()) {
+    if (!app.isWriteIntentLockAcquired() && app.isReadAccessAllowed()) {
       throw new IllegalStateException("importData() must not be called with a global read lock on a background thread. " +
                                       "It will deadlock committing project model changes in write action");
     }
 
-    if (app.isWriteThread()) {
+    if (app.isWriteIntentLockAcquired()) {
       if (!myLock.tryLock()) {
         throw new IllegalStateException("importData() can not wait on write thread for imports on background threads." +
                                         " Consider running importData() on background thread.");

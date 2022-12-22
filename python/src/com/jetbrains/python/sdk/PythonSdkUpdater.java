@@ -317,7 +317,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     // When a new interpreter is still being generated, we need to wait until it finishes and SDK
     // is properly written in ProjectJdkTable. Otherwise, a concurrent background update might fail.
     boolean isSavedSdk = PythonSdkUtil.findSdkByKey(PythonSdkType.getSdkKey(sdk)) != null;
-    if (application.isWriteThread() && !isSavedSdk) {
+    if (application.isWriteIntentLockAcquired() && !isSavedSdk) {
       application.invokeLaterOnWriteThread(() -> scheduleUpdate(sdk, project, request));
     }
     else {

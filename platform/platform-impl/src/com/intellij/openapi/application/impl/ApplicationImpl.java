@@ -301,7 +301,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   @Override
-  public boolean isWriteThread() {
+  public boolean isWriteIntentLockAcquired() {
     return myLock.isWriteThread();
   }
 
@@ -834,7 +834,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action) {
-    if (isWriteThread()) {
+    if (isWriteIntentLockAcquired()) {
       action.run();
     }
     else {
@@ -851,7 +851,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
     // Do not ever unlock IW in legacy mode (EDT is holding lock at all times)
-    if (isWriteThread() && USE_SEPARATE_WRITE_THREAD) {
+    if (isWriteIntentLockAcquired() && USE_SEPARATE_WRITE_THREAD) {
       releaseWriteIntentLock();
       try {
         return action.compute();
@@ -1041,7 +1041,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean isReadAccessAllowed() {
-    return isWriteThread() || myLock.isReadLockedByThisThread();
+    return isWriteIntentLockAcquired() || myLock.isReadLockedByThisThread();
   }
 
   @Override
@@ -1068,8 +1068,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   @Override
-  public void assertIsWriteThread() {
-    if (!isWriteThread()) {
+  public void assertWriteIntentLockAcquired() {
+    if (!isWriteIntentLockAcquired()) {
       throwThreadAccessException("Access is allowed from write thread only");
     }
   }
@@ -1141,7 +1141,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     PluginException.reportDeprecatedUsage("Application.acquireReadActionLock", "Use `runReadAction()` instead");
 
     // if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
-    return isWriteThread() || myLock.isReadLockedByThisThread() ? AccessToken.EMPTY_ACCESS_TOKEN : new ReadAccessToken();
+    return isWriteIntentLockAcquired() || myLock.isReadLockedByThisThread() ? AccessToken.EMPTY_ACCESS_TOKEN : new ReadAccessToken();
   }
 
   private volatile boolean myWriteActionPending;
@@ -1152,7 +1152,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   private void startWrite(@NotNull Class<?> clazz) {
-    assertIsWriteThread();
+    assertWriteIntentLockAcquired();
     assertNotInsideListener();
     myWriteActionPending = true;
     try {
@@ -1296,7 +1296,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean isWriteAccessAllowed() {
-    return isWriteThread() && myLock.isWriteLocked();
+    return isWriteIntentLockAcquired() && myLock.isWriteLocked();
   }
 
   @Override
@@ -1311,7 +1311,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
    * callers should be ready for those.
    */
   public void executeSuspendingWriteAction(@Nullable Project project, @NotNull @NlsContexts.DialogTitle String title, @NotNull Runnable runnable) {
-    assertIsWriteThread();
+    assertWriteIntentLockAcquired();
     if (!myLock.isWriteLocked()) {
       runModalProgress(project, title, runnable);
       return;

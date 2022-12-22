@@ -637,7 +637,7 @@ final class FileTypeDetectionService implements Disposable {
         return ByteArraySequence.EMPTY;
       }
       try {
-        return ProgressManager.getInstance().isInNonCancelableSection() || ApplicationManager.getApplication().isWriteThread()
+        return ProgressManager.getInstance().isInNonCancelableSection() || ApplicationManager.getApplication().isWriteIntentLockAcquired()
                ? readFirstBytesFromFile(file, bufferLength)
                : myReadFirstBytesFromFileRelay.accessDiskWithCheckCanceled(new VirtualFileWithLength(file, bufferLength));
       }

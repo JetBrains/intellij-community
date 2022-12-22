@@ -307,6 +307,10 @@ final class ReadMostlyRWLock {
     return writeAcquired;
   }
 
+  boolean isWriteIntentLocked() {
+    return writeIntent.get();
+  }
+
   @Override
   public String toString() {
     return "ReadMostlyRWLock{" +

@@ -29,7 +29,7 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
 
   private static void checkThreading() {
     Application app = ApplicationManager.getApplication();
-    app.assertIsWriteThread();
+    app.assertWriteIntentLockAcquired();
     if (!app.isWriteAccessAllowed()) return;
 
     if (app.isUnitTestMode() && Registry.is("tests.assert.clear.read.only.status.outside.write.action")) {

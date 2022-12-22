@@ -129,7 +129,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
 
   protected long doRefresh(boolean asynchronous, @Nullable Runnable postAction) {
     if (!asynchronous) {
-      ApplicationManager.getApplication().assertIsWriteThread();
+      ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     }
 
     for (VirtualFileSystem fileSystem : getPhysicalFileSystems()) {
@@ -144,7 +144,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   @Override
   public void refreshWithoutFileWatcher(final boolean asynchronous) {
     if (!asynchronous) {
-      ApplicationManager.getApplication().assertIsWriteThread();
+      ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     }
 
     for (VirtualFileSystem fileSystem : getPhysicalFileSystems()) {
