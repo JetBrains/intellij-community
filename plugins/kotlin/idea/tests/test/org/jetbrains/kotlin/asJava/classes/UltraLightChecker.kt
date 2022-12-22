@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.perf
+package org.jetbrains.kotlin.asJava.classes
 
 import com.intellij.openapi.util.Conditions
 import com.intellij.psi.PsiClass

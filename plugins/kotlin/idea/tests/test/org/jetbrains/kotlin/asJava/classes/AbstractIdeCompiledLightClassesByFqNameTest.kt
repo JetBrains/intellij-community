@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.caches.resolve
+package org.jetbrains.kotlin.asJava.classes
 
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -37,13 +37,13 @@ abstract class AbstractIdeCompiledLightClassesByFqNameTest : KotlinDaemonAnalyze
         }
 
         val libraryJar = KotlinCompilerStandalone(
-          listOf(testFile),
-          classpath = extraClasspath,
-          options = extraOptions
+            listOf(testFile),
+            classpath = extraClasspath,
+            options = extraOptions
         ).compile()
 
         val jarUrl = "jar://" + FileUtilRt.toSystemIndependentName(libraryJar.absolutePath) + "!/"
-      ModuleRootModificationUtil.addModuleLibrary(module, jarUrl)
+        ModuleRootModificationUtil.addModuleLibrary(module, jarUrl)
     }
 
     fun doTest(testDataPath: String) {
@@ -51,19 +51,20 @@ abstract class AbstractIdeCompiledLightClassesByFqNameTest : KotlinDaemonAnalyze
         val expectedFile = KotlinTestUtils.replaceExtension(testDataFile, "compiled.java").let {
             if (it.exists()) it else KotlinTestUtils.replaceExtension(testDataFile, "java")
         }
-      withCustomCompilerOptions(testDataFile.readText(), project, module) {
-        testLightClass(
-          expectedFile,
-          testDataFile,
-          { it },
-          {
-            findClass(it, null, project)?.apply {
-              PsiElementChecker.checkPsiElementStructure(this)
-            }
-          },
-          MembersFilterForCompiledClasses
-        )
-      }
+
+        withCustomCompilerOptions(testDataFile.readText(), project, module) {
+            testLightClass(
+                expectedFile,
+                testDataFile,
+                { it },
+                {
+                    findLightClass(it, null, project)?.apply {
+                        PsiElementChecker.checkPsiElementStructure(this)
+                    }
+                },
+                MembersFilterForCompiledClasses
+            )
+        }
     }
 
     private object MembersFilterForCompiledClasses : PsiClassRenderer.MembersFilter {

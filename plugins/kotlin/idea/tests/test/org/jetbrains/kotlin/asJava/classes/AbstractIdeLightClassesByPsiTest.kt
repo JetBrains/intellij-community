@@ -4,12 +4,11 @@ package org.jetbrains.kotlin.asJava.classes
 
 import com.intellij.psi.PsiClass
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.asJava.classes.UltraLightChecker.checkByJavaFile
+import org.jetbrains.kotlin.asJava.classes.UltraLightChecker.checkDescriptorsLeak
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.perf.UltraLightChecker
-import org.jetbrains.kotlin.idea.perf.UltraLightChecker.checkByJavaFile
-import org.jetbrains.kotlin.idea.perf.UltraLightChecker.checkDescriptorsLeak
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
