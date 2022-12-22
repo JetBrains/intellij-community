@@ -12,6 +12,7 @@ import com.intellij.ide.bookmark.ui.tree.VirtualFileVisitor
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
@@ -71,13 +72,6 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   val selectedNodes
     get() = tree.selectionPaths?.mapNotNull { TreeUtil.getAbstractTreeNode(it) }?.ifEmpty { null }
 
-  private val selectedFiles: List<VirtualFile>?
-    get() {
-      val nodes = selectedNodes ?: return null
-      val files = nodes.mapNotNull { it.asVirtualFile }
-      return if (files.size == nodes.size) files else null
-    }
-
   private val previousOccurrence
     get() = when (val occurrence = selectedNode?.bookmarkOccurrence) {
       null -> BookmarkOccurrence.lastLineBookmark(project)
@@ -99,8 +93,16 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
     PlatformDataKeys.SELECTED_ITEMS.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Any>())
     PlatformDataKeys.SELECTED_ITEM.`is`(dataId) -> selectedNodes?.firstOrNull()
-    PlatformDataKeys.VIRTUAL_FILE.`is`(dataId) -> selectedNode?.asVirtualFile
-    PlatformDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selectedFiles?.toTypedArray()
+    PlatformDataKeys.BGT_DATA_PROVIDER.`is`(dataId) -> {
+      val selectedNodes = selectedNodes
+      DataProvider { slowDataId -> getSlowData(slowDataId, selectedNodes) }
+    }
+    else -> null
+  }
+
+  private fun getSlowData(dataId: String, selection: List<AbstractTreeNode<*>>?) = when {
+    PlatformDataKeys.VIRTUAL_FILE.`is`(dataId) -> selection?.firstOrNull()?.asVirtualFile
+    PlatformDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selection?.mapNotNull { it.asVirtualFile }?.ifEmpty { null }?.toTypedArray()
     else -> null
   }
 
