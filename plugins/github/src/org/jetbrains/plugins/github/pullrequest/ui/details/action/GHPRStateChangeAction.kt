@@ -2,11 +2,15 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.action
 
 import com.intellij.openapi.util.NlsActions
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStateModel
 import javax.swing.AbstractAction
 
-abstract class GHPRStateChangeAction(@NlsActions.ActionText actionName: String, protected val stateModel: GHPRStateModel)
-  : AbstractAction(actionName) {
+internal abstract class GHPRStateChangeAction(
+  actionName: @NlsActions.ActionText String,
+  protected val stateModel: GHPRStateModel,
+  protected val securityService: GHPRSecurityService
+) : AbstractAction(actionName) {
 
   init {
     stateModel.addAndInvokeBusyStateChangedListener(::update)

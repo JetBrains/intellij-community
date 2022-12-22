@@ -114,6 +114,14 @@ fun JLabel.bindIcon(scope: CoroutineScope, iconFlow: Flow<Icon?>) {
   }
 }
 
+fun JButton.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    textFlow.collect {
+      text = it
+    }
+  }
+}
+
 fun Wrapper.bindContent(scope: CoroutineScope, contentFlow: Flow<JComponent>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     contentFlow.collect {

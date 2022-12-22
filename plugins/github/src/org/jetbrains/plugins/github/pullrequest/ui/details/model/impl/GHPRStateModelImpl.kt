@@ -127,7 +127,7 @@ class GHPRStateModelImpl(private val project: Project,
     }
   }
 
-  private fun submitTask(request: () -> CompletableFuture<*>?) {
+  override fun submitTask(request: () -> CompletableFuture<*>?) {
     if (isBusy) return
     isBusy = true
     actionError = null

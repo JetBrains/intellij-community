@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
 import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.mapState
 import com.intellij.openapi.Disposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,16 +12,18 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRMetadataModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel.ReviewState
 
-class GHPRReviewFlowViewModelImpl(
+internal class GHPRReviewFlowViewModelImpl(
   scope: CoroutineScope,
   metadataModel: GHPRMetadataModel,
   securityService: GHPRSecurityService,
   detailsDataProvider: GHPRDetailsDataProvider,
+  reviewDataProvider: GHPRReviewDataProvider,
   disposable: Disposable
 ) : GHPRReviewFlowViewModel {
   private val currentUser = securityService.currentUser
@@ -48,6 +51,25 @@ class GHPRReviewFlowViewModelImpl(
       }
     }
 
+  override val reviewState: StateFlow<ReviewState> = reviewerAndReviewState.mapState(scope) { reviews ->
+    when {
+      reviews.values.all { it == ReviewState.ACCEPTED } -> ReviewState.ACCEPTED
+      reviews.values.any { it == ReviewState.WAIT_FOR_UPDATES } -> ReviewState.WAIT_FOR_UPDATES
+      else -> ReviewState.NEED_REVIEW
+    }
+  }
+
+  override val roleState: StateFlow<GHPRReviewFlowViewModel.ReviewRole> = reviewerAndReviewState.mapState(scope) {
+    when {
+      currentUser == metadataModel.getAuthor() -> GHPRReviewFlowViewModel.ReviewRole.AUTHOR
+      reviewerAndReviewState.value.containsKey(currentUser) -> GHPRReviewFlowViewModel.ReviewRole.REVIEWER
+      else -> GHPRReviewFlowViewModel.ReviewRole.GUEST
+    }
+  }
+
+  private val _pendingCommentsState: MutableStateFlow<Int> = MutableStateFlow(0)
+  override val pendingCommentsState: StateFlow<Int> = _pendingCommentsState.asStateFlow()
+
   private fun convertPullRequestReviewState(pullRequestReviewState: GHPullRequestReviewState): ReviewState = when (pullRequestReviewState) {
     GHPullRequestReviewState.APPROVED -> ReviewState.ACCEPTED
     GHPullRequestReviewState.CHANGES_REQUESTED,
@@ -66,6 +88,12 @@ class GHPRReviewFlowViewModelImpl(
       addDetailsLoadedListener(disposable) {
         _requestedReviewersState.value = loadedDetails!!.reviewRequests.mapNotNull { it.requestedReviewer }
         pullRequestReviewState.value = loadedDetails!!.reviews.associate { it.author!! as GHUser to it.state }
+      }
+    }
+
+    reviewDataProvider.addPendingReviewListener(disposable) {
+      reviewDataProvider.loadPendingReview().thenAccept { pendingComments ->
+        _pendingCommentsState.value = pendingComments?.comments?.totalCount ?: 0
       }
     }
   }

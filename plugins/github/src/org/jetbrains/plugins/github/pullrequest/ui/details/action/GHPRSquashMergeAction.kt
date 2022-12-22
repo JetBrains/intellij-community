@@ -2,11 +2,16 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.action
 
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStateModel
 import java.awt.event.ActionEvent
 
-internal class GHPRSquashMergeAction(stateModel: GHPRStateModel)
-  : GHPRMergeAction(GithubBundle.message("pull.request.merge.squash.action"), stateModel) {
+internal class GHPRSquashMergeAction(stateModel: GHPRStateModel, securityService: GHPRSecurityService)
+  : GHPRMergeAction(GithubBundle.message("pull.request.merge.squash.action"), stateModel, securityService) {
 
   override fun actionPerformed(e: ActionEvent?) = stateModel.submitSquashMergeTask()
+
+  override fun computeEnabled(): Boolean {
+    return super.computeEnabled() && securityService.isSquashMergeAllowed()
+  }
 }

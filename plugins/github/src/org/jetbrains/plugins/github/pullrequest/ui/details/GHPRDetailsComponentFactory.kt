@@ -12,6 +12,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadDetailsAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadStateAction
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.*
@@ -26,20 +27,23 @@ internal object GHPRDetailsComponentFactory {
              scope: CoroutineScope,
              reviewDetailsVm: GHPRDetailsViewModel,
              reviewFlowVm: GHPRReviewFlowViewModel,
+             dataProvider: GHPRDataProvider,
              repositoryDataService: GHPRRepositoryDataService,
              securityService: GHPRSecurityService,
              avatarIconsProvider: GHAvatarIconsProvider,
              branchesModel: GHPRBranchesModel,
-             detailsModel: GHPRDetailsModel,
+             metadataModel: GHPRMetadataModel,
              stateModel: GHPRStateModel): JComponent {
     val title = GHPRTitleComponent.create(scope, reviewDetailsVm)
     val description = GHPRDetailsDescriptionComponentFactory.create(scope, reviewDetailsVm)
     val branches = GHPRDetailsBranchesComponentFactory.create(project, repositoryDataService, branchesModel)
     val statusChecks = GHPRStatusChecksComponentFactory.create(scope, reviewDetailsVm, reviewFlowVm, securityService, avatarIconsProvider)
-    val state = GHPRStatePanel(securityService, stateModel).also {
-      detailsModel.addAndInvokeDetailsChangedListener {
-        it.select(detailsModel.state, true)
-      }
+    val state = GHPRStatePanel(
+      scope,
+      reviewDetailsVm, reviewFlowVm,
+      dataProvider, securityService, stateModel, metadataModel,
+      avatarIconsProvider
+    ).also {
       PopupHandler.installPopupMenu(it, DefaultActionGroup(GHPRReloadStateAction()), "GHPRStatePanelPopup")
     }
 

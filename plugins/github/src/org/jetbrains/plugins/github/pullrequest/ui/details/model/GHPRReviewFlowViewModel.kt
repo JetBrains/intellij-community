@@ -4,13 +4,22 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.model
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 
-interface GHPRReviewFlowViewModel {
+internal interface GHPRReviewFlowViewModel {
   val requestedReviewersState: StateFlow<List<GHPullRequestRequestedReviewer>>
   val reviewerAndReviewState: StateFlow<Map<GHPullRequestRequestedReviewer, ReviewState>>
+  val reviewState: StateFlow<ReviewState>
+  val roleState: StateFlow<ReviewRole>
+  val pendingCommentsState: StateFlow<Int>
 
   enum class ReviewState {
     ACCEPTED,
     WAIT_FOR_UPDATES,
     NEED_REVIEW,
+  }
+
+  enum class ReviewRole {
+    AUTHOR,
+    REVIEWER,
+    GUEST
   }
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
+import java.util.concurrent.CompletableFuture
 
 interface GHPRStateModel {
 
@@ -21,6 +22,8 @@ interface GHPRStateModel {
   fun submitMergeTask()
   fun submitRebaseMergeTask()
   fun submitSquashMergeTask()
+
+  fun submitTask(request: () -> CompletableFuture<*>?)
 
   fun addAndInvokeDraftStateListener(listener: () -> Unit)
   fun addAndInvokeMergeabilityStateLoadingResultListener(listener: () -> Unit)

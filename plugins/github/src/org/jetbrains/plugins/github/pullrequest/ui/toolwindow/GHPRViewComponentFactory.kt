@@ -250,16 +250,15 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                      metadataModel,
                                                      dataContext.securityService,
                                                      dataProvider.detailsData,
+                                                     dataProvider.reviewData,
                                                      disposable)
 
       GHPRDetailsComponentFactory.create(project,
                                          scope,
-                                         reviewDetailsVm,
-                                         reviewFlowVm,
-                                         dataContext.repositoryDataService,
-                                         dataContext.securityService,
-                                         dataContext.avatarIconsProvider,
-                                         branchesModel, detailsModel, stateModel)
+                                         reviewDetailsVm, reviewFlowVm,
+                                         dataProvider,
+                                         dataContext.repositoryDataService, dataContext.securityService, dataContext.avatarIconsProvider,
+                                         branchesModel, metadataModel, stateModel)
     }.also {
       reloadDetailsAction.registerCustomShortcutSet(it, uiDisposable)
     }
