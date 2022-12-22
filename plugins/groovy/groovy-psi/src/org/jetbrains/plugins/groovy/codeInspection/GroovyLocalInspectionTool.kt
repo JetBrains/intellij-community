@@ -4,11 +4,12 @@ package org.jetbrains.plugins.groovy.codeInspection
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptionController
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.plugins.groovy.codeInspection.utils.checkInspectionEnabledByFileType
 import org.jetbrains.plugins.groovy.codeInspection.utils.enhanceInspectionToolPanel
-import org.jetbrains.plugins.groovy.codeInspection.utils.getFileType
+import org.jetbrains.plugins.groovy.codeInspection.utils.getFileTypeController
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor
 
@@ -34,27 +35,8 @@ abstract class GroovyLocalInspectionTool : LocalInspectionTool() {
     return enhanceInspectionToolPanel(this, pane)
   }
 
-  override fun getOption(bindId: String): Any? {
-    val type = getFileType(bindId)
-    return if (type != null) {
-      explicitlyEnabledFileTypes.contains(type)
-    }
-    else super.getOption(bindId)
-  }
-
-  override fun setOption(bindId: String, value: Any) {
-    val type = getFileType(bindId)
-    if (type != null) {
-      if (value as Boolean) {
-        explicitlyEnabledFileTypes.add(type)
-      }
-      else {
-        explicitlyEnabledFileTypes.remove(type)
-      }
-    }
-    else {
-      super.setOption(bindId, value)
-    }
+  override fun getOptionController(): OptionController {
+    return super.getOptionController().onPrefix("fileType", getFileTypeController(explicitlyEnabledFileTypes))
   }
 
   open fun getGroovyOptionsPane(): OptPane {

@@ -16,4 +16,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public record OptSet(@Language("jvm-field-name") @NotNull String bindId, 
                      @NotNull LocMessage label, @Nullable StringValidator validator) implements OptControl {
+  @Override
+  public @NotNull OptSet prefix(@NotNull String bindPrefix) {
+    return new OptSet(bindPrefix + "." + bindId, label, validator);
+  }
 }

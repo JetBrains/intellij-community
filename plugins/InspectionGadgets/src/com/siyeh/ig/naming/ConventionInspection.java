@@ -18,6 +18,7 @@ package com.siyeh.ig.naming;
 import com.intellij.codeInspection.options.CommonOptionPanes;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptRegularComponent;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.util.InvalidDataException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -119,15 +120,16 @@ public abstract class ConventionInspection extends BaseInspection {
   }
 
   @Override
-  public void setOption(@NotNull String bindId, Object value) {
-    super.setOption(bindId, value);
-    try {
-      m_regexPattern = Pattern.compile(m_regex);
-    }
-    catch (PatternSyntaxException ignore) {
-      m_regex = getDefaultRegex();
-      m_regexPattern = Pattern.compile(m_regex);
-    }
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController().onValueSet("m_regex", value -> {
+      try {
+        m_regexPattern = Pattern.compile(m_regex);
+      }
+      catch (PatternSyntaxException ignore) {
+        m_regex = getDefaultRegex();
+        m_regexPattern = Pattern.compile(m_regex);
+      }
+    });
   }
 
   @Override

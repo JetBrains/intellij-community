@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ReadAction;
@@ -47,9 +48,9 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
   }
 
   @Override
-  public void setOption(@NotNull String bindId, Object value) {
-    super.setOption(bindId, value);
-    REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL;
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController()
+      .onValueSet((bindId, value) -> REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL);
   }
 
   public static class NavigateToNullLiteralArguments extends LocalQuickFixOnPsiElement {

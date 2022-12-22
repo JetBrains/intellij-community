@@ -130,7 +130,7 @@ public class SetInspectionOptionFix implements OnTheFlyLocalFix, LowPriorityActi
       if (myExtractor != null) {
         inspection = myExtractor.apply(inspection);
       }
-      inspection.setOption(myProperty, value);
+      inspection.getOptionController().setOption(myProperty, value);
     });
   }
 

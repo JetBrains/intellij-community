@@ -3,6 +3,7 @@ package com.intellij.codeInspection.options;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,5 +42,10 @@ public record OptCheckbox(@Language("jvm-field-name") @NotNull String bindId,
       throw new IllegalStateException("Description is already set");
     }
     return new OptCheckbox(bindId(), label(), children(), description);
+  }
+
+  @Override
+  public @NotNull OptCheckbox prefix(@NotNull String bindPrefix) {
+    return new OptCheckbox(bindPrefix + "." + bindId, label, ContainerUtil.map(children, c -> c.prefix(bindPrefix)), description);
   }
 }

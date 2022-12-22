@@ -15,4 +15,14 @@ public sealed interface OptComponent permits OptRegularComponent, OptTab {
   default @NotNull List<? extends @NotNull OptComponent> children() {
     return List.of();
   }
+
+  /**
+   * @param bindPrefix prefix to add to bindId values
+   * @return an equivalent component but every control has bindId prefixed with bindPrefix and dot.
+   * Could be useful to compose a complex form from independent parts. To process prefixed options,
+   * use {@link OptionController#onPrefix(String, OptionController)} 
+   */
+  default @NotNull OptComponent prefix(@NotNull String bindPrefix) {
+    return this;
+  }
 }

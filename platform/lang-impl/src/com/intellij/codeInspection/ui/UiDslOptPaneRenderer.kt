@@ -24,7 +24,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
   override fun render(tool: InspectionProfileEntry, pane: OptPane, parent: Disposable?): JComponent {
     return panel {
       pane.components.forEachIndexed { i, component ->
-        render(component, tool, i != 0 && !pane.components[i - 1].hasBottomGap)
+        render(component, tool.optionController, i != 0 && !pane.components[i - 1].hasBottomGap)
       }
     }
       .apply { if (parent != null) registerValidators(parent) }
@@ -36,7 +36,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
    * @param isFirst true if the component is first in a hierarchy (then [OptGroup] doesn't need a top gap)
    * @param withBottomGap true if the component is the last of a group which should have a bottom gap
    */
-  private fun Panel.render(component: OptComponent, tool: InspectionProfileEntry, isFirst: Boolean = false, withBottomGap: Boolean = false) {
+  private fun Panel.render(component: OptRegularComponent, tool: OptionController, isFirst: Boolean = false, withBottomGap: Boolean = false) {
     when (component) {
       is OptControl, is OptSettingLink, is OptCustom -> {
         renderOptRow(component, tool, withBottomGap)
@@ -59,7 +59,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           val tabbedPane = JBTabbedPane(SwingConstants.TOP)
           component.children.forEach { tab ->
             tabbedPane.add(tab.label.label(), com.intellij.ui.dsl.builder.panel {
-              tab.content.forEachIndexed { i, tabComponent ->
+              tab.children.forEachIndexed { i, tabComponent ->
                 render(tabComponent, tool, i == 0)
               }
             })
@@ -87,11 +87,10 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         }
       }
       is OptCheckboxPanel -> TODO()
-      is OptTab -> TODO()
     }
   }
 
-  private fun Panel.renderOptRow(component: OptComponent, tool: InspectionProfileEntry, withBottomGap: Boolean = false) {
+  private fun Panel.renderOptRow(component: OptRegularComponent, tool: OptionController, withBottomGap: Boolean = false) {
     val splitLabel = component.splitLabel
     val nestedInRow = component.nestedInRow
     lateinit var cell: Cell<JComponent>
@@ -134,7 +133,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
     }
   }
 
-  private fun Row.renderOptCell(component: OptComponent, tool: InspectionProfileEntry): Cell<JComponent> {
+  private fun Row.renderOptCell(component: OptRegularComponent, tool: OptionController): Cell<JComponent> {
     return when (component) {
         is OptCheckbox -> {
           checkBox(component.label.label())
@@ -232,7 +231,6 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
         is OptGroup, is OptHorizontalStack, is OptSeparator, is OptTabSet -> { throw IllegalStateException("Unsupported nested component: ${component.javaClass}") }
         is OptCheckboxPanel -> TODO()
-      is OptTab -> TODO()
     }
   }
 
@@ -244,7 +242,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       else -> null
     }
 
-  private val OptComponent.nestedControls: List<OptComponent>?
+  private val OptComponent.nestedControls: List<OptRegularComponent>?
     get() = when(this) {
       is OptCheckbox -> children
       else -> null
@@ -254,7 +252,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
    * Returns the nested component to be rendered in the parent row.
    * This is the case for [OptString], [OptNumber] or [OptDropdown] with blank labels as first checkbox child.
    */
-  private val OptComponent.nestedInRow: OptComponent?
+  private val OptComponent.nestedInRow: OptRegularComponent?
     get() {
       if (this !is OptCheckbox) return null
       val child = children.firstOrNull() ?: return null

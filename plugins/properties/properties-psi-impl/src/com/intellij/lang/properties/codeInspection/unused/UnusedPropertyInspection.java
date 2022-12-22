@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.RegexValidator;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -60,11 +61,10 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
   }
 
   @Override
-  public void setOption(@NotNull String bindId, Object value) {
-    if (bindId.equals("fileNameMask") && "".equals(value)) {
-      value = ".*";
-    }
-    super.setOption(bindId, value);
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController().onValueSet("fineNameMask", value -> {
+      if ("".equals(value)) fileNameMask = ".*";
+    });
   }
 
   @Nullable

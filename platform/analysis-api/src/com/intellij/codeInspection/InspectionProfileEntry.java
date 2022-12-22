@@ -3,8 +3,9 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
-import com.intellij.codeInspection.options.OptComponent;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptRegularComponent;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.ui.InspectionOptionPaneRenderer;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.diagnostic.PluginException;
@@ -351,7 +352,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   /**
    * @return declarative representation of the inspection options. If this method returns a non-empty pane, then
    * {@link #createOptionsPanel()} is not used.
-   * @see OptPane#pane(OptComponent...)
+   * @see OptPane#pane(OptRegularComponent...) 
    * @see InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable) 
    */
   public @NotNull OptPane getOptionsPane() {
@@ -359,46 +360,34 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   }
 
   /**
-   * Fetches the inspection option with given ID. Default implementation reads the instance field
-   * with name equals to the specified ID. A particular inspection may override this method
-   * if it requires custom logic.
-   *
-   * @param bindId ID of inspection option; identifier of some control inside the {@link OptPane}
-   *               returned by {@link #getOptionsPane()} call
-   * @return inspection option with a given ID
-   * @throws IllegalArgumentException if bindId is unknown
-   * @see #setOption(String, Object)
+   * @return a controller to process inspection options. The default implementation
+   * finds a field with the corresponding name and uses/updates its value.
+   * If you need to process some options specially, you can override this method in particular inspection
+   * and compose a new controller using methods like {@link OptionController#onPrefix} and
+   * {@link OptionController#onValue}.
    */
-  public Object getOption(@NotNull String bindId) {
-    Field field;
-    try {
-      field = ReflectionUtil.findAssignableField(getClass(), null, bindId);
-    }
-    catch (NoSuchFieldException e) {
-      throw new IllegalArgumentException("Inspection " + getClass().getName() + ": Unable to find bindId = " + bindId, e);
-    }
-    return ReflectionUtil.getFieldValue(field, this);
-  }
-
-  /**
-   * Updates the inspection option with given ID. Default implementation writes the instance field
-   * with name equals to the specified ID. A particular inspection may override this method
-   * if it requires custom logic.
-   *
-   * @param bindId ID of inspection option; identifier of some control inside the {@link OptPane}
-   *               returned by {@link #getOptionsPane()} call
-   * @param value  new value for the option
-   * @throws IllegalArgumentException if bindId is unknown
-   * @see #getOption(String)
-   */
-  public void setOption(@NotNull String bindId, Object value) {
-    try {
-      final Field field = ReflectionUtil.findAssignableField(getClass(), null, bindId);
-      field.set(this, value);
-    }
-    catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new IllegalArgumentException("Inspection " + getClass().getName() + ": Unable to find bindId = " + bindId, e);
-    }
+  public @NotNull OptionController getOptionController() {
+    return OptionController.of(
+      bindId -> {
+        Field field;
+        try {
+          field = ReflectionUtil.findAssignableField(getClass(), null, bindId);
+        }
+        catch (NoSuchFieldException e) {
+          throw new IllegalArgumentException("Inspection " + getClass().getName() + ": Unable to find bindId = " + bindId, e);
+        }
+        return ReflectionUtil.getFieldValue(field, this);
+      },
+      (bindId, value) -> {
+        try {
+          final Field field = ReflectionUtil.findAssignableField(getClass(), null, bindId);
+          field.set(this, value);
+        }
+        catch (NoSuchFieldException | IllegalAccessException e) {
+          throw new IllegalArgumentException("Inspection " + getClass().getName() + ": Unable to find bindId = " + bindId, e);
+        }
+      }
+    );
   }
 
   /**

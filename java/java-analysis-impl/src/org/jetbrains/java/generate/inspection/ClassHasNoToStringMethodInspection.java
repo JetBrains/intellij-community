@@ -19,6 +19,7 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.RegexValidator;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -176,14 +177,15 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
   }
 
   @Override
-  public void setOption(@NotNull String bindId, Object value) {
-    super.setOption(bindId, value);
-    try {
-      excludeClassNamesPattern = Pattern.compile(excludeClassNames);
-    }
-    catch (PatternSyntaxException ignore) {
-      excludeClassNamesPattern = null;
-    }
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController().onValueSet("excludeClassNames", value -> {
+      try {
+        excludeClassNamesPattern = Pattern.compile(excludeClassNames);
+      }
+      catch (PatternSyntaxException ignore) {
+        excludeClassNamesPattern = null;
+      }
+    });
   }
 
     @Override

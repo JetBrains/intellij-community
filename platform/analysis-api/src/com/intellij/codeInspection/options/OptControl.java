@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public sealed interface OptControl extends OptRegularComponent permits OptCheckbox, OptDropdown, OptMap, OptNumber, OptSet, OptString {
   /**
    * @return identifier of control, and at the same time the name of the binding variable used by inspection 
-   * acceptable by {@link InspectionProfileEntry#getOption(String)} and {@link InspectionProfileEntry#setOption(String, Object)}
+   * acceptable by {@link InspectionProfileEntry#getOptionController()}
    * (name of the field by default). The bindId must be unique within single option pane. 
    * For {@link OptCustom} control, it's not required to have a corresponding field,
    * but the bindId still must unique identify the control. 
@@ -23,7 +23,7 @@ public sealed interface OptControl extends OptRegularComponent permits OptCheckb
    * @return value of the option bound to this control
    */
   default Object getValue(@NotNull InspectionProfileEntry tool) {
-    return tool.getOption(bindId());
+    return tool.getOptionController().getOption(bindId());
   }
 
   /**
@@ -31,6 +31,6 @@ public sealed interface OptControl extends OptRegularComponent permits OptCheckb
    * @param value value to write. It's the caller responsibility to provide the value of compatible type. 
    */
   default void setValue(@NotNull InspectionProfileEntry tool, @Nullable Object value) {
-    tool.setOption(bindId(), value);
+    tool.getOptionController().setOption(bindId(), value);
   }
 }

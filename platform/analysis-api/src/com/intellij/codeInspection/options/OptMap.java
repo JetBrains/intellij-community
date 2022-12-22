@@ -15,4 +15,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public record OptMap(@Language("jvm-field-name") @NotNull String bindId, @NotNull LocMessage label,
                      @Nullable StringValidator keyValidator, @Nullable StringValidator valueValidator) implements OptControl {
+  @Override
+  public @NotNull OptMap prefix(@NotNull String bindPrefix) {
+    return new OptMap(bindPrefix + "." + bindId, label, keyValidator, valueValidator);
+  }
 }

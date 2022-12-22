@@ -20,6 +20,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -89,15 +90,15 @@ public class ImplicitTypeConversion extends XPathInspection {
       group(XPathBundle.message("label.to", STRING),
             checkbox("0", XPathBundle.message("label.from", NODESET)),
             checkbox("2", XPathBundle.message("label.from", NUMBER)),
-            checkbox("3", XPathBundle.message("label.from", BOOLEAN))),
+            checkbox("3", XPathBundle.message("label.from", BOOLEAN))).prefix("c"),
       group(XPathBundle.message("label.to", NUMBER),
             checkbox("4", XPathBundle.message("label.from", NODESET)),
             checkbox("5", XPathBundle.message("label.from", STRING)),
-            checkbox("7", XPathBundle.message("label.from", BOOLEAN))),
+            checkbox("7", XPathBundle.message("label.from", BOOLEAN))).prefix("c"),
       group(XPathBundle.message("label.to", BOOLEAN),
             checkbox("8", XPathBundle.message("label.from", NODESET)),
             checkbox("9", XPathBundle.message("label.from", STRING)),
-            checkbox("10", XPathBundle.message("label.from", NUMBER))),
+            checkbox("10", XPathBundle.message("label.from", NUMBER))).prefix("c"),
       separator(),
       checkbox("FLAG_EXPLICIT_CONVERSION", XPathBundle.message("checkbox.always.flag.explicit.conversion.to.unexpected.type")),
       checkbox("IGNORE_NODESET_TO_BOOLEAN_VIA_STRING", XPathBundle.message("checkbox.ignore.conversion.of.nodeset.to.boolean.by.string.conversion"))
@@ -105,20 +106,11 @@ public class ImplicitTypeConversion extends XPathInspection {
   }
 
   @Override
-  public Object getOption(@NotNull String bindId) {
-    if (Character.isDigit(bindId.charAt(0))) {
-      return OPTIONS.get(Integer.parseInt(bindId));
-    }
-    return super.getOption(bindId);
-  }
-
-  @Override
-  public void setOption(@NotNull String bindId, Object value) {
-    if (Character.isDigit(bindId.charAt(0))) {
-      OPTIONS.set(Integer.parseInt(bindId), (Boolean) value);
-    } else {
-      super.setOption(bindId, value);
-    }
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController().onPrefix(
+      "c",
+      bindId -> OPTIONS.get(Integer.parseInt(bindId)),
+      (bindId, value) -> OPTIONS.set(Integer.parseInt(bindId), (Boolean) value));
   }
 
   @Override

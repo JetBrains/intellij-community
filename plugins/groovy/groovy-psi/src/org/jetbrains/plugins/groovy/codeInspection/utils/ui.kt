@@ -3,8 +3,9 @@
 package org.jetbrains.plugins.groovy.codeInspection.utils
 
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.options.OptComponent
+import com.intellij.codeInspection.options.OptCheckbox
 import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptionController
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
@@ -14,18 +15,26 @@ import org.jetbrains.plugins.groovy.codeInspection.getDisableableFileTypes
 internal fun enhanceInspectionToolPanel(tool: LocalInspectionTool, pane: OptPane): OptPane {
   val disableableFileTypes = getDisableableFileTypes(tool.javaClass)
   if (disableableFileTypes.isEmpty()) return pane
-  val checkboxes = arrayListOf<OptComponent>()
+  val checkboxes = arrayListOf<OptCheckbox>()
   for (fileType in disableableFileTypes) {
-    checkboxes.add(OptPane.checkbox("fileType_" + fileType.name, fileType.displayName))
+    checkboxes.add(OptPane.checkbox(fileType.name, fileType.displayName))
   }
   return OptPane(
     pane.components +
-    OptPane.group(GroovyBundle.message("inspection.separator.disable.in.file.types"), *checkboxes.toTypedArray())
+    OptPane.group(GroovyBundle.message("inspection.separator.disable.in.file.types"), *checkboxes.toTypedArray()).prefix("fileType")
   )
 }
 
-internal fun getFileType(bindId: String): String? {
-  return if (bindId.startsWith("fileType_")) bindId.substringAfter("fileType_") else null
+internal fun getFileTypeController(explicitlyEnabledFileTypes: MutableSet<String>): OptionController {
+  return OptionController.of(explicitlyEnabledFileTypes::contains,
+    { bindId: String, value: Any ->
+      if (value as Boolean) {
+        explicitlyEnabledFileTypes.add(bindId)
+      }
+      else {
+        explicitlyEnabledFileTypes.remove(bindId)
+      }
+    })
 }
 
 internal fun checkInspectionEnabledByFileType(tool: LocalInspectionTool, element: PsiElement, explicitlyAllowedFileTypes: Set<String>) : Boolean {

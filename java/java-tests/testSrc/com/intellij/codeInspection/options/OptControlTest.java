@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.codeInspection.options.OptPane.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class OptControlTest {
   private static class MyInspection extends LocalInspectionTool {
@@ -29,25 +29,51 @@ public class OptControlTest {
     public final Map<String, Boolean> options = new HashMap<>();
 
     @Override
-    public void setOption(@NotNull String bindId, Object value) {
-      options.put(bindId, (Boolean)value);
-    }
-
-    @Override
-    public Object getOption(@NotNull String bindId) {
-      return options.getOrDefault(bindId, false);
+    public @NotNull OptionController getOptionController() {
+      return OptionController.of(
+        bindId -> options.getOrDefault(bindId, false),
+        (bindId, value) -> options.put(bindId, (Boolean)value)
+      );
     }
 
     @Override
     public @NotNull OptPane getOptionsPane() {
+      //noinspection InjectedReferences
       return pane(
         checkbox("check1", "1"),
         checkbox("check2", "2")
       );
     }
   }
-  
-  
+
+  private static class MyDelegateOptionInspection extends LocalInspectionTool {
+    public int value;
+    public int valueDouble;
+    public boolean box;
+    public final Map<String, Boolean> options = new HashMap<>();
+
+    @Override
+    public @NotNull OptPane getOptionsPane() {
+      //noinspection InjectedReferences
+      return pane(
+        checkbox("box", ""),
+        number("value", "", 1, 100),
+        number("valueDouble", "", 1, 100),
+        group("Advanced",
+              checkbox("c1", ""),
+              checkbox("c2", "")).prefix("adv")
+      );
+    }
+
+    @Override
+    public @NotNull OptionController getOptionController() {
+      return super.getOptionController()
+        .onPrefix("adv", bindId -> options.getOrDefault(bindId, true),
+                  (bindId, value) -> options.put(bindId, (Boolean)value))
+        .onValue("valueDouble", () -> valueDouble / 2, val -> valueDouble = 2 * (int)val);
+    }
+  }
+
   @Test
   public void readWrite() {
     MyInspection inspection = new MyInspection();
@@ -71,5 +97,24 @@ public class OptControlTest {
     check2.setValue(inspection, true);
     assertEquals(Boolean.TRUE, check2.getValue(inspection));
     assertEquals(Map.of("check1", true, "check2", true), inspection.options);
+  }
+
+  @Test
+  public void readWriteDelegate() {
+    MyDelegateOptionInspection inspection = new MyDelegateOptionInspection();
+    OptPane pane = inspection.getOptionsPane();
+    pane.findControl("box").setValue(inspection, true);
+    pane.findControl("value").setValue(inspection, 5);
+    pane.findControl("valueDouble").setValue(inspection, 11);
+    assertEquals(11, pane.findControl("valueDouble").getValue(inspection));
+    pane.findControl("adv.c1").setValue(inspection, true);
+    assertEquals(true, pane.findControl("adv.c1").getValue(inspection));
+    pane.findControl("adv.c2").setValue(inspection, false);
+    assertEquals(5, inspection.value);
+    assertEquals(22, inspection.valueDouble);
+    assertTrue(inspection.box);
+    assertTrue(inspection.options.get("c1"));
+    assertFalse(inspection.options.get("c2"));
+    assertNull(inspection.options.get("c3"));
   }
 }

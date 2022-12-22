@@ -20,8 +20,9 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.options.OptComponent;
+import com.intellij.codeInspection.options.OptCheckbox;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -117,25 +118,24 @@ public class PyCompatibilityInspection extends PyInspection {
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    @SuppressWarnings("LanguageMismatch") OptComponent[] versionCheckboxes = 
-      ContainerUtil.map2Array(SUPPORTED_IN_SETTINGS, OptComponent.class, ver -> checkbox(ver, ver));
+    @SuppressWarnings("LanguageMismatch") OptCheckbox[] versionCheckboxes =
+      ContainerUtil.map2Array(SUPPORTED_IN_SETTINGS, OptCheckbox.class, ver -> checkbox(ver, ver));
     return pane(group(PyPsiBundle.message("INSP.compatibility.check.for.compatibility.with.python.versions"), versionCheckboxes));
   }
 
   @Override
-  public Object getOption(@NotNull String bindId) {
-    return ourVersions.contains(bindId);
-  }
-
-  @Override
-  public void setOption(@NotNull String bindId, Object value) {
-    boolean checked = (boolean) value;
-    if (!checked) {
-      ourVersions.remove(bindId);
-    }
-    else if (!ourVersions.contains(bindId)) {
-      ourVersions.add(bindId);
-    }
+  public @NotNull OptionController getOptionController() {
+    return OptionController.of(
+      ourVersions::contains,
+      (bindId, value) -> {
+        boolean checked = (boolean)value;
+        if (!checked) {
+          ourVersions.remove(bindId);
+        }
+        else if (!ourVersions.contains(bindId)) {
+          ourVersions.add(bindId);
+        }
+      });
   }
 
   @NotNull

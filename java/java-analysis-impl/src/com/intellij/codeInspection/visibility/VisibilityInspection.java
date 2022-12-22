@@ -6,8 +6,9 @@ import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
-import com.intellij.codeInspection.options.OptComponent;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptRegularComponent;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -25,7 +26,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
-import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -53,7 +53,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    List<OptComponent> checkboxes = new ArrayList<>(List.of(
+    List<OptRegularComponent> checkboxes = new ArrayList<>(List.of(
       checkbox("SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS", JavaAnalysisBundle.message("inspection.visibility.option.package.private.members")),
       checkbox("SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES", JavaAnalysisBundle.message(
         "inspection.visibility.package.private.top.level.classes")),
@@ -62,35 +62,17 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     ));
     for (EntryPoint entryPoint : EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensions()) {
       if (entryPoint instanceof EntryPointWithVisibilityLevel epWithLevel) {
-        checkboxes.add(checkbox(epWithLevel.getId(), epWithLevel.getTitle()));
+        checkboxes.add(checkbox(epWithLevel.getId(), epWithLevel.getTitle()).prefix("ep"));
       }
     }
     return new OptPane(checkboxes);
   }
-  
-  private static @Nullable EntryPointWithVisibilityLevel findById(@NotNull String bindId) {
-    return (EntryPointWithVisibilityLevel)ContainerUtil.find(EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList(),
-                              entryPoint -> entryPoint instanceof EntryPointWithVisibilityLevel epWithLevel &&
-                                            epWithLevel.getId().equals(bindId));
-  }
 
   @Override
-  public Object getOption(@NotNull String bindId) {
-    EntryPointWithVisibilityLevel ep = findById(bindId);
-    if (ep != null) {
-      return isEntryPointEnabled(ep);
-    }
-    return super.getOption(bindId);
-  }
-
-  @Override
-  public void setOption(@NotNull String bindId, Object value) {
-    EntryPointWithVisibilityLevel ep = findById(bindId);
-    if (ep != null) {
-      myExtensions.put(bindId, (Boolean)value);
-    } else {
-      super.setOption(bindId, value);
-    }
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController().onPrefix(
+      "ep", bindId -> myExtensions.getOrDefault(bindId, true),
+      (bindId, value) -> myExtensions.put(bindId, (Boolean)value));
   }
 
   @NotNull

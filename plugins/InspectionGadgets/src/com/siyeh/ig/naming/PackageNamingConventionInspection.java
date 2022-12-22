@@ -8,6 +8,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.options.CommonOptionPanes;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.reference.RefPackage;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -95,15 +96,16 @@ public class PackageNamingConventionInspection extends PackageGlobalInspection {
   }
 
   @Override
-  public void setOption(@NotNull String bindId, Object value) {
-    super.setOption(bindId, value);
-    try {
-      m_regexPattern = Pattern.compile(m_regex);
-    }
-    catch (PatternSyntaxException ignore) {
-      m_regex = DEFAULT_REGEX;
-      m_regexPattern = Pattern.compile(m_regex);
-    }
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController().onValueSet("m_regex", value -> {
+      try {
+        m_regexPattern = Pattern.compile(m_regex);
+      }
+      catch (PatternSyntaxException ignore) {
+        m_regex = DEFAULT_REGEX;
+        m_regexPattern = Pattern.compile(m_regex);
+      }
+    });
   }
 
   boolean isValid(String name) {

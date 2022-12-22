@@ -25,7 +25,12 @@ public record OptDropdown(@Language("jvm-field-name") @NotNull String bindId,
       }
     }
   }
-  
+
+  @Override
+  public @NotNull OptDropdown prefix(@NotNull String bindPrefix) {
+    return new OptDropdown(bindPrefix + "." + bindId, splitLabel, options);
+  }
+
   /**
    * Drop down option
    * 

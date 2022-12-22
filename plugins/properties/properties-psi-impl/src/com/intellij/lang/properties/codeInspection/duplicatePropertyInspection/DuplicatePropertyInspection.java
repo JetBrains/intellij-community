@@ -6,6 +6,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.options.OptDropdown;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.lang.properties.IProperty;
@@ -346,20 +347,13 @@ public final class DuplicatePropertyInspection extends GlobalSimpleInspectionToo
   }
 
   @Override
-  public Object getOption(@NotNull String bindId) {
-    if (bindId.equals("SCOPE")) {
-      return CURRENT_FILE ? "file" : MODULE_WITH_DEPENDENCIES ? "module" : "project";
-    }
-    return super.getOption(bindId);
-  }
-
-  @Override
-  public void setOption(@NotNull String bindId, Object value) {
-    if (bindId.equals("SCOPE")) {
-      CURRENT_FILE = "file".equals(value);
-      MODULE_WITH_DEPENDENCIES = "module".equals(value);
-    } else {
-      super.setOption(bindId, value);
-    }
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController().onValue(
+      "SCOPE",
+      () -> CURRENT_FILE ? "file" : MODULE_WITH_DEPENDENCIES ? "module" : "project",
+      value -> {
+        CURRENT_FILE = "file".equals(value);
+        MODULE_WITH_DEPENDENCIES = "module".equals(value);
+      });
   }
 }

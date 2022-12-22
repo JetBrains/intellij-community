@@ -3,6 +3,7 @@ package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -55,24 +56,17 @@ public class DependsOnGroupsInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   @Override
-  public Object getOption(@NotNull String bindId) {
-    if (bindId.equals("groups")) {
-      return StringUtil.join(ArrayUtilRt.toStringArray(groups), ",");
-    }
-    return super.getOption(bindId);
-  }
-
-  @Override
-  public void setOption(@NotNull String bindId, Object value) {
-    if (bindId.equals("groups")) {
-      groups.clear();
-      String text = (String)value;
-      if (!StringUtil.isEmptyOrSpaces(text)) {
-        ContainerUtil.addAll(groups, text.split("[, ]"));
-      }
-    } else {
-      super.setOption(bindId, value);
-    }
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController().onValue(
+      "groups",
+      () -> StringUtil.join(ArrayUtilRt.toStringArray(groups), ","),
+      value -> {
+        groups.clear();
+        String text = (String)value;
+        if (!StringUtil.isEmptyOrSpaces(text)) {
+          ContainerUtil.addAll(groups, text.split("[, ]"));
+        }
+      });
   }
 
   @Override

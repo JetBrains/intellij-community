@@ -3,6 +3,7 @@ package com.intellij.codeInspection.i18n.inconsistentResourceBundle;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -46,19 +47,16 @@ public final class InconsistentResourceBundleInspection extends GlobalSimpleInsp
   }
 
   @Override
-  public Object getOption(@NotNull String bindId) {
-    return isProviderEnabled(bindId);
-  }
-
-  @Override
-  public void setOption(@NotNull String bindId, Object value) {
-    boolean boolValue = (Boolean)value;
-    if (boolValue) {
-      mySettings.remove(bindId);
-    }
-    else {
-      mySettings.put(bindId, false);
-    }
+  public @NotNull OptionController getOptionController() {
+    return OptionController.of(this::isProviderEnabled, (bindId, value) -> {
+      boolean boolValue = (Boolean)value;
+      if (boolValue) {
+        mySettings.remove(bindId);
+      }
+      else {
+        mySettings.put(bindId, false);
+      }
+    });
   }
 
   @Override

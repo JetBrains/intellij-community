@@ -9,6 +9,7 @@ import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.codeInspection.options.OptDropdown
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.*
+import com.intellij.codeInspection.options.OptionController
 import com.intellij.java.JavaBundle
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
@@ -52,17 +53,13 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
     )
   }
 
-  override fun getOption(bindId: String): Any = 
-    if (bindId == "effectiveLanguageLevel") effectiveLanguageLevel?.name ?: "null"
-    else super.getOption(bindId)
-
-  override fun setOption(bindId: String, value: Any?) {
-    if (bindId == "effectiveLanguageLevel") {
-      effectiveLanguageLevel = if (value == "null") null else LanguageLevel.valueOf(value as String)
-    } else {
-      super.setOption(bindId, value)
-    }
-  } 
+  override fun getOptionController(): OptionController {
+    return super.getOptionController().onValue(
+      "effectiveLanguageLevel",
+      { effectiveLanguageLevel?.name ?: "null" },
+      { value -> effectiveLanguageLevel = if (value == "null") null else LanguageLevel.valueOf(value as String) }
+    )
+  }
   
   override fun readSettings(node: Element) {
     val element = node.getChild(EFFECTIVE_LL)
