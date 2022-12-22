@@ -748,7 +748,9 @@ public class ChangesViewManager implements ChangesViewEx,
     private @NotNull Promise<?> scheduleRefreshWithDelay(int delayMillis, @NotNull ModalityState modalityState) {
       setBusy(true);
       return myBackgroundRefresher.requestRefresh(delayMillis, this::refreshView)
-        .thenAsync(callback -> AppUIExecutor.onUiThread(modalityState).submit(callback))
+        .thenAsync(callback -> callback != null
+                               ? AppUIExecutor.onUiThread(modalityState).submit(callback)
+                               : null)
         .onProcessed(__ -> setBusy(false));
     }
 
