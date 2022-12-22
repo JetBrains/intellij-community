@@ -478,6 +478,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val actualFileSource = getActualFileSource(source) ?: return null
 
     return when (actualFileSource) {
+      is JpsFileEntitySource.ExactGlobalFile -> actualFileSource.file.url
       is JpsFileEntitySource.ExactFile -> actualFileSource.file.url
       is JpsFileEntitySource.FileInDirectory -> {
         val fileName = fileIdToFileName.get(actualFileSource.fileNameId) ?: run {

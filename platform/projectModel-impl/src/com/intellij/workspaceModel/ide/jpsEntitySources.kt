@@ -9,8 +9,10 @@ import com.esotericsoftware.kryo.kryo5.io.Output
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelExternalSource
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
@@ -45,6 +47,13 @@ sealed class JpsProjectConfigLocation {
     override val projectFilePath: String
       get() = JpsPathUtil.urlToPath(iprFile.url)
   }
+
+  object DummyProjectConfigLocation : JpsProjectConfigLocation() {
+    override val projectFilePath: String
+      get() = "dummy"
+    override val baseDirectoryUrl: VirtualFileUrl
+      get() = VirtualFileUrlManager.getGlobalInstance().fromUrl("")
+  }
 }
 
 /**
@@ -52,6 +61,14 @@ sealed class JpsProjectConfigLocation {
  */
 sealed class JpsFileEntitySource : EntitySource {
   abstract val projectLocation: JpsProjectConfigLocation
+
+  /**
+   * Represents a specific xml file containing configuration of global IntelliJ IDEA entities.
+   */
+  data class ExactGlobalFile(val file: VirtualFileUrl): JpsFileEntitySource() {
+    override val projectLocation: JpsProjectConfigLocation
+      get() = JpsProjectConfigLocation.DummyProjectConfigLocation
+  }
 
   /**
    * Represents a specific xml file containing configuration of some entities of IntelliJ IDEA project.
