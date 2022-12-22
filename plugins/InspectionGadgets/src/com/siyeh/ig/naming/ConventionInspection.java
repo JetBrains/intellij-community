@@ -16,8 +16,8 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.options.CommonOptionPanes;
-import com.intellij.codeInspection.options.OptComponent;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptRegularComponent;
 import com.intellij.openapi.util.InvalidDataException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -107,8 +107,8 @@ public abstract class ConventionInspection extends BaseInspection {
     m_regexPattern = Pattern.compile(m_regex);
   }
 
-  public OptComponent @NotNull [] createExtraOptions() {
-    return new OptComponent[0];
+  public OptRegularComponent @NotNull [] createExtraOptions() {
+    return new OptRegularComponent[0];
   }
 
   @Override

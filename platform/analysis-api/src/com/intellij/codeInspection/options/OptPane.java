@@ -24,7 +24,7 @@ import java.util.function.Predicate;
  *
  * @param components list of components on the pane
  */
-public record OptPane(@NotNull List<@NotNull OptComponent> components) {
+public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
   public OptPane {
     Set<String> ids = new HashSet<>();
     traverse(components, comp -> {
@@ -61,7 +61,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
     return processor.found;
   }
 
-  private static boolean traverse(@NotNull List<@NotNull OptComponent> components, @NotNull Predicate<@NotNull OptComponent> processor) {
+  private static boolean traverse(@NotNull List<? extends @NotNull OptComponent> components, @NotNull Predicate<@NotNull OptComponent> processor) {
     for (OptComponent component : components) {
       if (!processor.test(component) || !traverse(component.children(), processor)) return false;
     }
@@ -72,10 +72,10 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * Transform this pane to a tab
    * 
    * @param label tab title
-   * @return a {@link OptTabSet.TabInfo} object that contains all the controls from this pane
+   * @return a {@link OptTab} object that contains all the controls from this pane
    */
-  public OptTabSet.TabInfo asTab(@NotNull @NlsContexts.TabTitle String label) {
-    return new OptTabSet.TabInfo(new PlainMessage(label), components());
+  public OptTab asTab(@NotNull @NlsContexts.TabTitle String label) {
+    return new OptTab(new PlainMessage(label), components());
   }
 
   /* DSL */
@@ -85,7 +85,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @return the pane
    * @see InspectionProfileEntry#getOptionsPane()
    */
-  public static @NotNull OptPane pane(@NotNull OptComponent @NotNull ... components) {
+  public static @NotNull OptPane pane(@NotNull OptRegularComponent @NotNull ... components) {
     return new OptPane(List.of(components));
   }
 
@@ -99,7 +99,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    */
   public static @NotNull OptCheckbox checkbox(@Language("jvm-field-name") @NotNull String bindId,
                                               @NotNull @NlsContexts.Label String label,
-                                              @NotNull OptComponent @NotNull ... children) {
+                                              @NotNull OptRegularComponent @NotNull ... children) {
     return new OptCheckbox(bindId, new PlainMessage(label), List.of(children), null);
   }
 
@@ -297,7 +297,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @param children list of child components
    * @return a group of controls with a name
    */
-  public static @NotNull OptGroup group(@NotNull @NlsContexts.Label String label, @NotNull OptComponent @NotNull ... children) {
+  public static @NotNull OptGroup group(@NotNull @NlsContexts.Label String label, @NotNull OptRegularComponent @NotNull ... children) {
     return new OptGroup(new PlainMessage(label), List.of(children));
   }
 
@@ -305,7 +305,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @param children list of child components
    * @return a horizontal stack of controls
    */
-  public static @NotNull OptHorizontalStack horizontalStack(@NotNull OptComponent @NotNull ... children) {
+  public static @NotNull OptHorizontalStack horizontalStack(@NotNull OptRegularComponent @NotNull ... children) {
     return new OptHorizontalStack(List.of(children));
   }
 
@@ -330,7 +330,7 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @see #tab(String, OptComponent...)
    * @see #asTab(String) 
    */
-  public static @NotNull OptTabSet tabs(@NotNull OptTabSet.TabInfo @NotNull ... tabs) {
+  public static @NotNull OptTabSet tabs(@NotNull OptTab @NotNull ... tabs) {
     return new OptTabSet(List.of(tabs));
   }
 
@@ -338,10 +338,10 @@ public record OptPane(@NotNull List<@NotNull OptComponent> components) {
    * @param label tab label
    * @param children tab content
    * @return tab description
-   * @see #tabs(OptTabSet.TabInfo...) 
+   * @see #tabs(OptTab...) 
    */
-  public static @NotNull OptTabSet.TabInfo tab(@NotNull @NlsContexts.TabTitle String label, @NotNull OptComponent @NotNull ... children) {
-    return new OptTabSet.TabInfo(new PlainMessage(label), List.of(children));
+  public static @NotNull OptTab tab(@NotNull @NlsContexts.TabTitle String label, @NotNull OptRegularComponent @NotNull ... children) {
+    return new OptTab(new PlainMessage(label), List.of(children));
   }
 
   /**

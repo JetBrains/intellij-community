@@ -5,9 +5,5 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public record OptCheckboxPanel(@NotNull List<@NotNull OptCheckbox> checkboxes) implements OptComponent {
-  @Override
-  public @NotNull List<@NotNull OptComponent> children() {
-    return List.copyOf(checkboxes);
-  }
+public record OptCheckboxPanel(@NotNull List<@NotNull OptCheckbox> children) implements OptRegularComponent {
 }

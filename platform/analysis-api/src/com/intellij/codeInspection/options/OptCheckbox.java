@@ -20,7 +20,7 @@ import java.util.List;
  */
 public record OptCheckbox(@Language("jvm-field-name") @NotNull String bindId,
                           @NotNull LocMessage label,
-                          @NotNull List<@NotNull OptComponent> children,
+                          @NotNull List<@NotNull OptRegularComponent> children,
                           @Nullable HtmlChunk description) implements OptControl {
   /**
    * @param description textual description

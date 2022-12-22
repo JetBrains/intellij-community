@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  * @param componentId ID of component, to instantiate the corresponding renderer
  * @param data component-specific data string, to assist the rendering
  */
-public record OptCustom(@NotNull String componentId, @NotNull String data) implements OptComponent {
+public record OptCustom(@NotNull String componentId, @NotNull String data) implements OptRegularComponent {
   public OptCustom(@NotNull String componentId) {
     this(componentId, "");
   }

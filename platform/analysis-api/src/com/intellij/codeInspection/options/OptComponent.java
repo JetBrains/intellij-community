@@ -8,12 +8,11 @@ import java.util.List;
 /**
  * Basic interface for all the components that could be displayed in options panel
  */
-public sealed interface OptComponent permits OptControl, OptCustom, OptGroup, OptHorizontalStack, OptSeparator, OptTabSet, OptSettingLink,
-                                             OptCheckboxPanel {
+public sealed interface OptComponent permits OptRegularComponent, OptTab {
   /**
    * @return list of all components that are nested inside this component
    */
-  default @NotNull List<@NotNull OptComponent> children() {
+  default @NotNull List<? extends @NotNull OptComponent> children() {
     return List.of();
   }
 }

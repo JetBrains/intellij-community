@@ -11,5 +11,5 @@ import java.util.List;
  * @param label label to display above the group
  * @param children list of child components
  */
-public record OptGroup(@NotNull LocMessage label, @NotNull List<@NotNull OptComponent> children) implements OptComponent {
+public record OptGroup(@NotNull LocMessage label, @NotNull List<@NotNull OptRegularComponent> children) implements OptRegularComponent {
 }

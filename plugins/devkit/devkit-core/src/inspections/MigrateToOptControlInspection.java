@@ -6,10 +6,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.options.OptCheckbox;
-import com.intellij.codeInspection.options.OptComponent;
-import com.intellij.codeInspection.options.OptNumber;
-import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.*;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
@@ -73,9 +70,9 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
                ContainerUtil.getLastItem(expressions) instanceof UReturnExpression returnExpression &&
                returnExpression.getReturnExpression() instanceof USimpleNameReferenceExpression ref &&
                var.equals(UastContextKt.toUElement(ref.resolve()))) {
-        List<OptComponent> components = new ArrayList<>();
+        List<OptRegularComponent> components = new ArrayList<>();
         for (int i = 1; i < expressions.size() - 1; i++) {
-          OptComponent component = null;
+          OptRegularComponent component = null;
           if (expressions.get(i) instanceof UQualifiedReferenceExpression qualRef &&
               qualRef.getReceiver() instanceof USimpleNameReferenceExpression callRef &&
               var.equals(UastContextKt.toUElement(callRef.resolve())) &&
@@ -225,7 +222,7 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
 
   static void serialize(@NotNull OptPane pane, @NotNull StringBuilder builder) {
     builder.append(OPT_PANE + ".pane(\n");
-    List<@NotNull OptComponent> components = pane.components();
+    var components = pane.components();
     for (OptComponent component : components) {
       serialize(component, builder);
       builder.append(",\n");

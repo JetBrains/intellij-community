@@ -57,7 +57,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       is OptTabSet -> {
         row {
           val tabbedPane = JBTabbedPane(SwingConstants.TOP)
-          component.tabs.forEach { tab ->
+          component.children.forEach { tab ->
             tabbedPane.add(tab.label.label(), com.intellij.ui.dsl.builder.panel {
               tab.content.forEachIndexed { i, tabComponent ->
                 render(tabComponent, tool, i == 0)
@@ -87,6 +87,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         }
       }
       is OptCheckboxPanel -> TODO()
+      is OptTab -> TODO()
     }
   }
 
@@ -231,6 +232,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
         is OptGroup, is OptHorizontalStack, is OptSeparator, is OptTabSet -> { throw IllegalStateException("Unsupported nested component: ${component.javaClass}") }
         is OptCheckboxPanel -> TODO()
+      is OptTab -> TODO()
     }
   }
 

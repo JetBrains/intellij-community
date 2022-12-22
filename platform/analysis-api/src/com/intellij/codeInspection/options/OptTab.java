@@ -6,9 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Set of tabs
- *
- * @param tabs tabs description 
+ * @param label   tab label
+ * @param content tab content
  */
-public record OptTabSet(@NotNull List<@NotNull OptTab> children) implements OptRegularComponent {
+public record OptTab(@NotNull LocMessage label, @NotNull List<@NotNull OptRegularComponent> content) implements OptComponent {
 }

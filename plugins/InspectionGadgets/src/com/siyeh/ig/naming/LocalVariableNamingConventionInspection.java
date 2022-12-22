@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.options.OptComponent;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptRegularComponent;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -36,8 +36,8 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
   public boolean m_ignoreCatchParameters = false;
 
   @Override
-  public OptComponent @NotNull [] createExtraOptions() {
-    return new OptComponent[] {
+  public OptRegularComponent @NotNull [] createExtraOptions() {
+    return new OptRegularComponent[] {
       OptPane.checkbox("m_ignoreForLoopParameters", InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.option")),
       OptPane.checkbox("m_ignoreCatchParameters", InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.catch.option"))
     };

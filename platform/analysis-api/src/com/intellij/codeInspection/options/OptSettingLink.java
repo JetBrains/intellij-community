@@ -16,5 +16,5 @@ import org.jetbrains.annotations.Nullable;
  */
 public record OptSettingLink(@NotNull @NlsContexts.Label String displayName,
                              @NotNull @NonNls String configurableID,
-                             @Nullable @Nls String controlLabel) implements OptComponent {
+                             @Nullable @Nls String controlLabel) implements OptRegularComponent {
 }

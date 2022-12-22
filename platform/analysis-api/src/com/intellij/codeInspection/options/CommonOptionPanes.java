@@ -15,8 +15,8 @@ public class CommonOptionPanes {
   public static @NotNull OptPane conventions(@Language("jvm-field-name") @NonNls @NotNull String minLengthProperty,
                                              @Language("jvm-field-name") @NonNls @NotNull String maxLengthProperty,
                                              @Language("jvm-field-name") @NonNls @NotNull String regexProperty,
-                                             @NotNull OptComponent @NotNull ... extraComponents) {
-    OptComponent[] components = {
+                                             @NotNull OptRegularComponent @NotNull ... extraComponents) {
+    OptRegularComponent[] components = {
       string(regexProperty, InspectionsBundle.message("label.pattern"), 30, new RegexValidator()),
       number(minLengthProperty, InspectionsBundle.message("label.min.length"), 1, 1_000_000),
       number(maxLengthProperty, InspectionsBundle.message("label.max.length"), 1, 1_000_000)

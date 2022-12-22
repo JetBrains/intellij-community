@@ -8,5 +8,5 @@ import org.jetbrains.annotations.Nullable;
  * 
  * @param label to use
  */
-public record OptSeparator(@Nullable LocMessage label) implements OptComponent {
+public record OptSeparator(@Nullable LocMessage label) implements OptRegularComponent {
 }

@@ -11,5 +11,5 @@ import java.util.List;
  *
  * @param children list of child components
  */
-public record OptHorizontalStack(@NotNull List<@NotNull OptComponent> children) implements OptComponent {
+public record OptHorizontalStack(@NotNull List<@NotNull OptComponent> children) implements OptRegularComponent {
 }
