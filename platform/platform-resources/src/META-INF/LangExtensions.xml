@@ -1021,8 +1021,7 @@
     <toolWindow id="Project" anchor="left" icon="AllIcons.Toolwindows.ToolWindowProject"
                 factoryClass="com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory"/>
 
-    <toolWindow id="Dependencies" anchor="bottom" icon="PlatformDependencyToolwindowIcons.ArtifactSmall"
-                factoryClass="com.intellij.dependencytoolwindow.DependencyToolWindowFactory"/>
+    <postStartupActivity implementation="com.intellij.dependencytoolwindow.DependencyToolWindowFactory"/>
 
     <toolWindowExtractor implementation="com.intellij.dependencytoolwindow.DependencyToolWindowViewModelExtractor"/>
 

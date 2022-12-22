@@ -10,16 +10,17 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.util.Function
 import com.intellij.util.messages.Topic
 import com.jetbrains.packagesearch.intellij.plugin.data.LoadingContainer
@@ -27,21 +28,21 @@ import com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchCachesServi
 import com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectCachesService
 import com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.AsyncModuleTransformer
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.FlowModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.lifecycle.PackageSearchLifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.PkgsUiCommandsService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateModifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementOperationExecutor
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementPanel
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlin.coroutines.resume
@@ -58,15 +59,6 @@ internal val packageVersionNormalizer: PackageVersionNormalizer
 
 internal val Project.packageSearchProjectCachesService: PackageSearchProjectCachesService
     get() = service()
-
-internal val Project.toolWindowManagerFlow: Flow<ToolWindow>
-    get() = messageBusFlow(ToolWindowManagerListener.TOPIC) {
-        object : ToolWindowManagerListener {
-            override fun toolWindowShown(toolWindow: ToolWindow) {
-                trySend(toolWindow)
-            }
-        }
-    }
 
 fun <L : Any, K> Project.messageBusFlow(
     topic: Topic<L>,
@@ -178,3 +170,41 @@ val Project.dependencyModifierService
 
 internal val Project.loadingContainer
     get() = service<LoadingContainer>()
+
+internal sealed interface FileEditorEvent {
+
+    val file: VirtualFile
+
+    @JvmInline
+    value class FileOpened(override val file: VirtualFile) : FileEditorEvent
+
+    @JvmInline
+    value class FileClosed(override val file: VirtualFile) : FileEditorEvent
+}
+
+private val Project.project
+    get() = this
+
+internal val Project.fileOpenedFlow
+    get() = flow {
+        val buffer: MutableList<VirtualFile> = FileEditorManager.getInstance(project).openFiles
+            .toMutableList()
+        emit(buffer.toList())
+        messageBusFlow(FileEditorManagerListener.FILE_EDITOR_MANAGER) {
+            object : FileEditorManagerListener {
+                override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+                    trySend(FileEditorEvent.FileOpened(file))
+                }
+
+                override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+                    trySend(FileEditorEvent.FileClosed(file))
+                }
+            }
+        }.collect {
+            when (it) {
+                is FileEditorEvent.FileClosed -> buffer.remove(it.file)
+                is FileEditorEvent.FileOpened -> buffer.add(it.file)
+            }
+            emit(buffer.toList())
+        }
+    }
