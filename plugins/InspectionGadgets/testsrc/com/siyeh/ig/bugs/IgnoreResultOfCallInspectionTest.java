@@ -147,7 +147,21 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         interface Verification {
          void apply();
         }
-       }"""};
+       }""",
+      """
+      package java.nio;
+      public abstract class ByteBuffer{
+        abstract boolean hasRemaining();
+      }
+      """,
+      """
+      package java.nio.channels;
+      import java.nio.ByteBuffer;
+      import java.io.IOException;
+      public abstract class FileChannel{
+        public abstract int write(ByteBuffer src) throws IOException;
+      }
+      """};
   }
 
   public void testCanIgnoreReturnValue() {
@@ -696,5 +710,30 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
           }
         }
         """);
+  }
+
+  public void testArgumentSideEffects() {
+    doTest("""
+        import java.nio.channels.FileChannel;
+        import java.nio.ByteBuffer;
+        import java.io.IOException;
+        class X {
+          public static void withoutSideEffects(FileChannel fch, ByteBuffer[] srcs) throws IOException {
+            fch./*Result of 'FileChannel.write()' is ignored*/write/**/(srcs);
+          }
+          public static long useResult(FileChannel fch, ByteBuffer[] srcs) throws IOException {
+            return fch.write(srcs);
+          }
+          public static void hasSideEffect(FileChannel fch, ByteBuffer[] srcs) throws IOException {
+            do{
+              fch.write(srcs);
+            } while (test(srcs));
+          }
+          
+          public static boolean test(ByteBuffer[] srcs){
+            return srcs[0].hasRemaining();
+          }
+        }
+    """);
   }
 }

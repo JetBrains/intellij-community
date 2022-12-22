@@ -56,6 +56,10 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterCount(1);
   private static final CallMatcher COLLECTOR_TO_COLLECTION =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toCollection").parameterCount(1);
+
+  private static final CallMatcher KNOWN_ARGUMENT_SIDE_EFFECTS = CallMatcher.anyOf(
+    (CallMatcher.instanceCall( "java.nio.channels.FileChannel","write")));
+
   private static final CallMapper<String> KNOWN_EXCEPTIONAL_SIDE_EFFECTS = new CallMapper<String>()
     .register(CallMatcher.staticCall("java.util.regex.Pattern", "compile"), "java.util.regex.PatternSyntaxException")
     .register(CallMatcher.anyOf(
@@ -121,6 +125,10 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       .add("java.net.InetAddress",".*")
       .add("java.net.URI",".*")
       .add("java.nio.channels.AsynchronousChannelGroup",".*")
+      .add("java.nio.channels.Channel","isOpen")
+      .add("java.nio.channels.FileChannel","open|map|lock|tryLock|write")
+      .add("java.nio.channels.ScatteringByteChannel","read")
+      .add("java.nio.channels.SocketChannel","open|socket|isConnected|isConnectionPending")
       .add("java.util.Arrays", ".*")
       .add("java.util.Collections", "(?!addAll).*")
       .add("java.util.List", "of")
@@ -245,6 +253,9 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       if (m_reportAllNonLibraryCalls && !LibraryUtil.classIsInLibrary(aClass)) {
         return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, null);
       }
+      if(isKnownArgumentSideEffect(call)){
+        return false;
+      }
       if (isKnownExceptionalSideEffectCaught(call)) {
         return false;
       }
@@ -272,6 +283,33 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
         }
       }
       return null;
+    }
+
+    private static boolean isKnownArgumentSideEffect(PsiExpression call) {
+      if (!(call instanceof PsiMethodCallExpression callExpression)) {
+        return false;
+      }
+      if (!KNOWN_ARGUMENT_SIDE_EFFECTS.test(callExpression)) {
+        return false;
+      }
+      PsiMethod method = PsiTreeUtil.getParentOfType(call, PsiMethod.class);
+      if (method == null) {
+        return false;
+      }
+      PsiExpressionList list = callExpression.getArgumentList();
+      for (PsiExpression argument : list.getExpressions()) {
+        if (TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(argument.getType())) {
+          continue;
+        }
+        if (argument instanceof  PsiReferenceExpression referenceExpression &&
+            referenceExpression.resolve() instanceof PsiVariable variable) {
+          List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable, method);
+          if (ContainerUtil.exists(references, ref -> ref.getTextOffset() > argument.getTextOffset())) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
 
     private static boolean isKnownExceptionalSideEffectCaught(PsiExpression call) {
