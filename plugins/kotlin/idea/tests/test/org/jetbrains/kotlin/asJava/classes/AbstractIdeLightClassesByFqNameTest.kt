@@ -1,15 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.caches.resolve
+package org.jetbrains.kotlin.asJava.classes
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiModifierList
 import com.intellij.psi.PsiModifierListOwner
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.*
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.perf.UltraLightChecker
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -43,7 +40,7 @@ abstract class AbstractIdeLightClassesByFqNameTest : KotlinLightCodeInsightFixtu
                 testData,
                 { LightClassTestCommon.removeEmptyDefaultImpls(it) },
                 { fqName ->
-                    findClass(fqName, ktFile, project)?.apply {
+                    findLightClass(fqName, ktFile, project)?.apply {
                         checkConsistency(this as KtLightClass)
                         PsiElementChecker.checkPsiElementStructure(this)
                     }
