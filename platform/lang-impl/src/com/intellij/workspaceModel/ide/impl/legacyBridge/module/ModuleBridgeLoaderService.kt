@@ -7,6 +7,7 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
@@ -21,10 +22,12 @@ import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import kotlinx.coroutines.Dispatchers
@@ -75,6 +78,13 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
         project.putUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES, true)
       }
       loadModules(project, activity, null, null, workspaceModel.loadedFromCache)
+      if (GlobalLibraryTableBridge.isEnabled()) {
+        withContext(Dispatchers.EDT) {
+          runWriteAction {
+            GlobalWorkspaceModel.getInstance().applyStateToProject(project)
+          }
+        }
+      }
     }
     else {
       LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")

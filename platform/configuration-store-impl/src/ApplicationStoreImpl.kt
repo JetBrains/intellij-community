@@ -47,6 +47,9 @@ open class ApplicationStoreImpl : ComponentStoreWithExtraComponents(), Applicati
 
   override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
     val saveSessionManager = createSaveSessionProducerManager()
+    if (GlobalLibraryTableBridge.isEnabled()) {
+      (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities(AppStorageContentWriter(saveSessionManager))
+    }
     saveSettingsSavingComponentsAndCommitComponents(result, forceSavingAllSettings, saveSessionManager)
     // todo can we store default project in parallel to regular saving? for now only flush on disk is async, but not component committing
     coroutineScope {

@@ -30,6 +30,8 @@
                         serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl"/>
     <applicationService serviceImplementation="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"/>
     <!-- Global Workspace Model -->
+    <applicationService serviceInterface="com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer"
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl"/>
     <applicationService serviceImplementation="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel"/>
 
     <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade"
