@@ -59,7 +59,6 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
   for (parameter in parameters) {
     commandLineBuilder.addParameter(parameter.apply(targetEnvironment))
   }
-  initPythonPath(envs, true, ArrayList(), targetEnvironment.request)
   sdk.targetAdditionalData?.pathsAddedByUser?.map { it.value }?.forEach { path ->
     appendToPythonPath(constant(path), targetEnvironment.targetPlatform)
   }
