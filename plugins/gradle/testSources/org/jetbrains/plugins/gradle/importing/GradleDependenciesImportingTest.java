@@ -15,6 +15,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -29,6 +31,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.GradleManager;
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -211,6 +214,26 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleLibDepScope("project", "Gradle: junit:junit:4.11", DependencyScope.TEST);
   }
 
+  @Test
+  @TargetVersions(BASE_GRADLE_VERSION)
+  public void testSetExternalSourceForExistingLibrary() throws IOException {
+    String libraryName = "Gradle: junit:junit:" + GradleBuildScriptBuilderUtil.getJunit4Version();
+    WriteAction.runAndWait(() -> {
+      LibraryTable.ModifiableModel model = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getModifiableModel();
+      model.createLibrary(libraryName);
+      model.commit();
+    });
+
+    importProject(createBuildScriptBuilder()
+                    .withJavaPlugin()
+                    .withJUnit4()
+                    .generate());
+    assertModules("project", "project.main", "project.test");
+    Library library = assertSingleLibraryOrderEntry("project.test", libraryName).getLibrary();
+    assertNotNull(library);
+    assertNotNull(library.getExternalSource());
+  }
+  
   @Test
   @TargetVersions("2.0 <=> 6.9")
   public void testTransitiveNonTransitiveDependencyScopeMerge() throws Exception {

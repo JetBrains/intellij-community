@@ -17,10 +17,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -81,12 +78,16 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
 
     final String libraryName = toImport.getInternalName();
     Library library = modelsProvider.getLibraryByName(libraryName);
+    ProjectModelExternalSource source = ExternalSystemApiUtil.toExternalSource(toImport.getOwner());
     if (library != null) {
+      if (library.getExternalSource() == null) {
+        ((LibraryEx.ModifiableModelEx)modelsProvider.getModifiableLibraryModel(library)).setExternalSource(source);
+      }
       syncPaths(toImport, library, modelsProvider);
       return;
     }
     LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
-    library = librariesModel.createLibrary(libraryName, getLibraryKind(toImport), ExternalSystemApiUtil.toExternalSource(toImport.getOwner()));
+    library = librariesModel.createLibrary(libraryName, getLibraryKind(toImport), source);
     Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
     prepareNewLibrary(toImport, libraryName, libraryModel);
   }
