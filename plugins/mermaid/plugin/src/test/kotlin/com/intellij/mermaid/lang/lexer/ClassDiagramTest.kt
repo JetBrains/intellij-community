@@ -184,7 +184,6 @@ class ClassDiagramTest : MermaidLexerTestCase() {
     doTest(content)
   }
 
-
   fun `test complex attribute`() {
     val content = """
     classDiagram
@@ -194,6 +193,24 @@ class ClassDiagramTest : MermaidLexerTestCase() {
       class C2 {
         met  <;>.h[]   id:+,((f) ()()
       }
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test notes`() {
+    val content = """
+    classDiagram
+      note "line1\nline2"
+      
+      class A
+      note for A "line1\nline2"
+      
+      class B {
+      }
+      note for B "line1\nline2"
+      
+      C --> D
+      note for C "line1\nline2"
     """.trimIndent()
     doTest(content)
   }

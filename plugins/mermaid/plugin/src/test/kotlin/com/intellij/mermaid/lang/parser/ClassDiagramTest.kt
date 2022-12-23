@@ -34,4 +34,6 @@ class ClassDiagramTest : MermaidParserTestCase("class") {
   fun `test class attributes with square parenthesis`() = doTest(true)
 
   fun `test complex attribute`() = doTest(true)
+
+  fun `test notes`() = doTest(true)
 }

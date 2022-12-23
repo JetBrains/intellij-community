@@ -426,6 +426,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "callback" { yypushstate(click); return CALLBACK; }
   "{" { yybegin(struct); return OPEN_CURLY; }
   ":::" { yypushstate(class_style_id); return STYLE_SEPARATOR; }
+  "note for" { return ClassDiagram.NOTE_FOR; }
+  "note" { return NOTE; }
 }
 <class_style_id> {
   [\w_]+ { yypopstate(); return ID; }

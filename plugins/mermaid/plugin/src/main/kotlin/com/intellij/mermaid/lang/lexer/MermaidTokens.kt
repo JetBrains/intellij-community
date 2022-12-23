@@ -456,6 +456,9 @@ object MermaidTokens {
 
     @JvmField
     val DOTTED_LINE = MermaidToken("ClassDiagram.DOTTED_LINE")
+
+    @JvmField
+    val NOTE_FOR = MermaidToken("ClassDiagram.NOTE_FOR")
   }
 
   object StateDiagram {
