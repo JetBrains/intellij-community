@@ -802,7 +802,7 @@ open class EditorsSplitters internal constructor(
       if (component !== window.panel) {
         // reuse
         findWindowWith(component)?.let { rightSplitWindow ->
-          manager.openFile(file = file, suggestedWindow = rightSplitWindow, options = FileEditorOpenOptions(requestFocus = requestFocus))
+          manager.openFile(file = file, window = rightSplitWindow, options = FileEditorOpenOptions(requestFocus = requestFocus))
           return rightSplitWindow
         }
       }

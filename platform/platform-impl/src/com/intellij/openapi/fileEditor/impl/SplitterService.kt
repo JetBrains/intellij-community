@@ -91,7 +91,7 @@ internal class SplitterService {
 
     val file = state.file
     if (position == RelativePosition.CENTER) {
-      activeWindow.manager.openFile(file = file, suggestedWindow = null, options = FileEditorOpenOptions(requestFocus = true))
+      activeWindow.manager.openFile(file = file, window = null, options = FileEditorOpenOptions(requestFocus = true))
     }
     else {
       activeWindow.split(

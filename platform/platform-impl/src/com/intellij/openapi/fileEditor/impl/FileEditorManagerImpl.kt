@@ -369,9 +369,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     }
 
     @JvmStatic
-    fun forbidSplitFor(file: VirtualFile): Boolean {
-      return java.lang.Boolean.TRUE == file.getUserData(SplitAction.FORBID_TAB_SPLIT)
-    }
+    fun forbidSplitFor(file: VirtualFile): Boolean = file.getUserData(SplitAction.FORBID_TAB_SPLIT) == true
 
     internal fun getOriginalFile(file: VirtualFile): VirtualFile {
       return BackedVirtualFile.getOriginFileIfBacked(if (file is VirtualFileWindow) file.delegate else file)
@@ -762,16 +760,15 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     return isFileOpen(file) || allClientFileEditorManagers.any { it.isFileOpen(file) }
   }
 
-  override fun openFile(file: VirtualFile,
-                        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") suggestedWindow: EditorWindow?,
-                        options: FileEditorOpenOptions): FileEditorComposite {
-    var window = suggestedWindow
+  override fun openFile(file: VirtualFile, window: EditorWindow?, options: FileEditorOpenOptions): FileEditorComposite {
     require(file.isValid) { "file is not valid: $file" }
-    EDT.isCurrentThreadEdt()
-    if (window != null && window.isDisposed) {
-      window = null
+
+    var windowToOpenIn = window
+    if (windowToOpenIn != null && windowToOpenIn.isDisposed) {
+      windowToOpenIn = null
     }
-    if (window == null) {
+
+    if (windowToOpenIn == null) {
       val mode = getOpenMode(IdeEventQueue.getInstance().trueCurrentEvent)
       if (mode == OpenMode.NEW_WINDOW) {
         if (forbidSplitFor(file)) {
@@ -786,7 +783,7 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
         }
       }
     }
-    var windowToOpenIn = window
+
     if (windowToOpenIn == null && (options.reuseOpen || !getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER))) {
       windowToOpenIn = findWindowInAllSplitters(file)
     }
@@ -873,9 +870,12 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
     if (forbidSplitFor(file) && !window.isFileOpen(file)) {
       closeFile(file)
     }
-    val result = Ref<FileEditorComposite>()
-    CommandProcessor.getInstance().executeCommand(project, { result.set(openFileImpl4(window, file, null, options)) }, "", null)
-    return result.get()
+
+    var result: FileEditorComposite? = null
+    CommandProcessor.getInstance().executeCommand(project, {
+      result = openFileImpl4(window = window, _file = file, entry = null, options = options)
+    }, "", null)
+    return result!!
   }
 
   /**
@@ -1233,16 +1233,17 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
       realDescriptor = descriptor
     }
 
-    val result = SmartList<FileEditor>()
+    var result: List<FileEditor> = emptyList()
     var selectedEditor: FileEditor? = null
     CommandProcessor.getInstance().executeCommand(project, {
       val file = realDescriptor.file
-      val openOptions = FileEditorOpenOptions()
-        .withReuseOpen(!realDescriptor.isUseCurrentWindow)
-        .withUsePreviewTab(realDescriptor.isUsePreviewTab)
-        .withRequestFocus(focusEditor)
-      val editors = openFile(file = file, suggestedWindow = null, options = openOptions).allEditors
-      result.addAll(editors)
+      val openOptions = FileEditorOpenOptions(
+        reuseOpen = !realDescriptor.isUseCurrentWindow,
+        usePreviewTab = realDescriptor.isUsePreviewTab,
+        requestFocus = focusEditor,
+      )
+      val editors = openFile(file = file, window = null, options = openOptions).allEditors
+      result = editors
       var navigated = false
       for (editor in editors) {
         if (editor is NavigatableFileEditor && getSelectedEditor(realDescriptor.file) === editor) { // try to navigate opened editor
