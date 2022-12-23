@@ -34,4 +34,8 @@ public abstract class CustomComponentExtension<T> {
     if (!data.isEmpty()) throw new IllegalArgumentException();
     return null;
   }
+  
+  public @NotNull OptCustom component(T t) {
+    return new OptCustom(componentId(), serializeData(t));
+  }
 }
