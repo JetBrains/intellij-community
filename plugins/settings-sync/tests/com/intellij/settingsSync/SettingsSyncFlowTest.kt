@@ -111,9 +111,8 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
     remoteCommunicator.prepareFileOnServer(SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(),
-                                                                                      isDeleted = true), emptySet(), null))
-    SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
-    bridge.waitForAllExecuted()
+                                                                                      isDeleted = true), emptySet(), null, emptySet()))
+    syncSettingsAndWait()
 
     assertFalse("Settings sync was not disabled", SettingsSyncSettings.getInstance().syncEnabled)
   }
@@ -303,8 +302,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       fileState("options/editor.xml", "Editor from Server")
     })
 
-    SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
-    bridge.waitForAllExecuted()
+    syncSettingsAndWait()
 
     assertFileWithContent("Editor from Server", (settingsSyncStorage / "options" / "editor.xml"))
     assertFileWithContent("LaF Initial", (settingsSyncStorage / "options" / "laf.xml"))
@@ -355,12 +353,43 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
     remoteCommunicator.deleteAllFiles()
 
-    SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
-    bridge.waitForAllExecuted()
+    syncSettingsAndWait()
 
     assertServerSnapshot {
       fileState("options/editor.xml", "Editor Initial")
     }
+  }
+
+  @Test fun `unknown additional files should be stored to the history`() {
+    initSettingsSync()
+    remoteCommunicator.prepareFileOnServer(settingsSnapshot {
+      additionalFile("newformat.json", "File with new unknown format")
+    })
+
+    syncSettingsAndWait()
+
+    assertFileWithContent("File with new unknown format", settingsSyncStorage / ".metainfo" / "newformat.json")
+    FileRepositoryBuilder.create(settingsSyncStorage.resolve(".git").toFile()).use { repository ->
+      val git = Git(repository)
+      val latestCommit = git.log().add(repository.findRef("HEAD").objectId).call().toList().first()
+      assertEquals("Unexpected content in commit",
+                   "File with new unknown format",
+                   getContent(repository, latestCommit, ".metainfo/newformat.json"))
+    }
+  }
+
+  @Test fun `unknown additional files should be sent to the server`() {
+    (settingsSyncStorage / ".metainfo" / "newformat.json").write("File with new unknown format")
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    assertServerSnapshot {
+      additionalFile("newformat.json", "File with new unknown format")
+    }
+  }
+
+  private fun syncSettingsAndWait() {
+    SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
+    bridge.waitForAllExecuted()
   }
 
   private fun suppressFailureOnLogError(expectedException: RuntimeException, activity: () -> Unit) {

@@ -230,7 +230,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
   private fun deleteServerData(afterDeleting: (DeleteServerDataResult) -> Unit) {
     val deletionSnapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true),
-                                            emptySet(), null)
+                                            emptySet(), null, emptySet())
     val pushResult = pushToCloud(deletionSnapshot, force = true)
     LOG.info("Deleting server data. Result: $pushResult")
     when (pushResult) {
