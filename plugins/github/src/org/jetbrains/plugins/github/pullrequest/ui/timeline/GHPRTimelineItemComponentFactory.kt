@@ -278,7 +278,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       reviewDataProvider.updateComment(EmptyProgressIndicator(), firstComment.id, newText)
         .successOnEdt { firstComment.update(it) }
     }.apply {
-      maxPaneWidth = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH
+      maxEditorWidth = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH
     }
 
     val actionsPanel = HorizontalListPanel(8).apply {
@@ -315,9 +315,11 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
         combineAndCollect(thread.collapsedState, textFlow) { collapsed, text ->
           removeAll()
           if (collapsed) {
-            panelHandle.maxPaneHeight = UIUtil.getUnscaledLineHeight(bodyPanel) * 2
             val textPane = HtmlEditorPane(text).apply {
               foreground = UIUtil.getContextHelpForeground()
+            }.let {
+              CollaborationToolsUIUtil
+                .wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH, UIUtil.getUnscaledLineHeight(bodyPanel) * 2)
             }
 
             bodyPanel.setContent(textPane)
@@ -326,9 +328,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
             add(collapsedThreadActionsComponent)
           }
           else {
-            panelHandle.maxPaneHeight = null
             val commentComponent = GHPRReviewCommentComponent
-              .createCommentBodyComponent(project, suggestedChangeHelper, thread, text)
+              .createCommentBodyComponent(project, suggestedChangeHelper, thread, text, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
             bodyPanel.setContent(commentComponent)
             add(diff)
             add(panelHandle.panel)

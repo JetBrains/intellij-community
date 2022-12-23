@@ -26,23 +26,16 @@ internal class GHEditableHtmlPaneHandle(private val project: Project,
                                         private val getSourceText: () -> String,
                                         private val updateText: (String) -> CompletableFuture<out Any?>) {
 
-  private val paneLayout = SizeRestrictedSingleComponentLayout()
+  private val editorPaneLayout = SizeRestrictedSingleComponentLayout()
 
   val panel = JPanel(null).apply {
     isOpaque = false
   }
 
-  var maxPaneWidth: Int?
-    get() = paneLayout.maxWidth
+  var maxEditorWidth: Int?
+    get() = editorPaneLayout.maxWidth
     set(value) {
-      paneLayout.maxWidth = value
-      panel.validate()
-      panel.repaint()
-    }
-  var maxPaneHeight: Int?
-    get() = paneLayout.maxHeight
-    set(value) {
-      paneLayout.maxHeight = value
+      editorPaneLayout.maxWidth = value
       panel.validate()
       panel.repaint()
     }
@@ -80,8 +73,8 @@ internal class GHEditableHtmlPaneHandle(private val project: Project,
       editor = GHCommentTextFieldFactory(model).create(GHCommentTextFieldFactory.ActionsConfig(actions, cancelAction))
       panel.remove(paneComponent)
       with(panel) {
-        layout = BorderLayout()
-        add(editor!!, BorderLayout.CENTER)
+        layout = editorPaneLayout
+        add(editor!!)
         revalidate()
         repaint()
       }
@@ -97,8 +90,8 @@ internal class GHEditableHtmlPaneHandle(private val project: Project,
       panel.remove(it)
     }
     with(panel) {
-      layout = paneLayout
-      add(paneComponent)
+      layout = BorderLayout()
+      add(paneComponent, BorderLayout.CENTER)
       revalidate()
       repaint()
     }

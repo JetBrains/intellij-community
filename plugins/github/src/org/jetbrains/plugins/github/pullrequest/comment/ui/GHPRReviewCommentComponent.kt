@@ -22,7 +22,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUt
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
 
-
 object GHPRReviewCommentComponent {
 
   fun create(project: Project,
@@ -55,14 +54,19 @@ object GHPRReviewCommentComponent {
       isOpaque = false
     }
 
+    val maxTextWidth = maxContentWidth - type.contentLeftShift
+
     Controller(project,
                thread, comment,
                suggestedChangeHelper,
                pendingLabel, resolvedLabel, commentWrapper,
-               showResolvedMarker)
+               showResolvedMarker,
+               maxTextWidth)
 
     val editablePaneHandle = GHEditableHtmlPaneHandle(project, commentWrapper, comment::body) {
       reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, it)
+    }.apply {
+      maxEditorWidth = maxTextWidth
     }
 
     val editButton = GHTextActions.createEditButton(editablePaneHandle).apply {
@@ -92,7 +96,7 @@ object GHPRReviewCommentComponent {
                                           editablePaneHandle.panel) {
       iconTooltip = author.getPresentableName()
       withHeader(title, actionsPanel)
-      this.maxContentWidth = maxContentWidth - type.fullLeftShift
+      this.maxContentWidth = null
     }
   }
 
@@ -103,7 +107,8 @@ object GHPRReviewCommentComponent {
                            private val pendingLabel: JComponent,
                            private val resolvedLabel: JComponent,
                            private val commentWrapper: Wrapper,
-                           private val showResolvedMarker: Boolean) {
+                           private val showResolvedMarker: Boolean,
+                           private val maxTextWidth: Int) {
     init {
       comment.addAndInvokeChangesListener {
         update()
@@ -111,7 +116,7 @@ object GHPRReviewCommentComponent {
     }
 
     private fun update() {
-      val commentComponent = createCommentBodyComponent(project, suggestedChangeHelper, thread, comment.body)
+      val commentComponent = createCommentBodyComponent(project, suggestedChangeHelper, thread, comment.body, maxTextWidth)
       commentWrapper.setContent(commentComponent)
       commentWrapper.repaint()
 
@@ -132,16 +137,17 @@ object GHPRReviewCommentComponent {
   fun createCommentBodyComponent(project: Project,
                                  suggestedChangeHelper: GHPRSuggestedChangeHelper,
                                  thread: GHPRReviewThreadModel,
-                                 commentBody: @Nls String): JComponent {
+                                 commentBody: @Nls String,
+                                 maxTextWidth: Int): JComponent {
     val commentComponentFactory = GHPRReviewCommentComponentFactory(project)
     val commentComponent = if (GHSuggestedChange.containsSuggestedChange(commentBody)) {
       val suggestedChange = GHSuggestedChange.create(commentBody,
                                                      thread.diffHunk, thread.filePath,
                                                      thread.startLine ?: thread.line, thread.line)
-      commentComponentFactory.createCommentWithSuggestedChangeComponent(thread, suggestedChange, suggestedChangeHelper)
+      commentComponentFactory.createCommentWithSuggestedChangeComponent(thread, suggestedChange, suggestedChangeHelper, maxTextWidth)
     }
     else {
-      commentComponentFactory.createCommentComponent(commentBody)
+      commentComponentFactory.createCommentComponent(commentBody, maxTextWidth)
     }
     return commentComponent
   }
