@@ -29,15 +29,15 @@ class SizeRestrictedSingleComponentLayout(
   }
 
   override fun minimumLayoutSize(parent: Container): Dimension =
-    (component?.minimumSize ?: Dimension(0, 0)).also {
+    component?.takeIf { it.isVisible }?.minimumSize?.also {
       JBInsets.addTo(it, parent.insets)
-    }
+    } ?: Dimension(0, 0)
 
   private fun getWidthRestriction(): Int = maxWidth?.let(JBUIScale::scale) ?: Int.MAX_VALUE
   private fun getHeightRestriction(): Int = maxHeight?.let(JBUIScale::scale) ?: Int.MAX_VALUE
 
   override fun preferredLayoutSize(parent: Container): Dimension {
-    val prefSize = component?.preferredSize ?: return Dimension(0, 0)
+    val prefSize = component?.takeIf { it.isVisible }?.preferredSize ?: return Dimension(0, 0)
 
     val prefWidth = min(prefSize.width, getWidthRestriction())
     val prefHeight = min(prefSize.height, getHeightRestriction())
@@ -48,7 +48,7 @@ class SizeRestrictedSingleComponentLayout(
   }
 
   override fun maximumLayoutSize(target: Container): Dimension {
-    val maxSize = component?.maximumSize ?: return Dimension(0, 0)
+    val maxSize = component?.takeIf { it.isVisible }?.maximumSize ?: return Dimension(0, 0)
 
     val maxWidth = min(maxSize.width, getWidthRestriction())
     val maxHeight = min(maxSize.height, getHeightRestriction())
@@ -59,6 +59,8 @@ class SizeRestrictedSingleComponentLayout(
   }
 
   override fun layoutContainer(parent: Container) {
+    if (component?.isVisible != true) return
+
     val bounds = Rectangle(0, 0, parent.width, parent.height)
     JBInsets.removeFrom(bounds, parent.insets)
 
