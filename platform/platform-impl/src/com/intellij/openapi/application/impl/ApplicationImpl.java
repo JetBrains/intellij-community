@@ -67,6 +67,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
    */
   public static final boolean USE_SEPARATE_WRITE_THREAD = StartupUtil.isUsingSeparateWriteThread();
 
+  public static final boolean IMPLICIT_READ_ON_EDT_DISABLED = StartupUtil.isImplicitReadOnEDTDisabled();
+
   final ReadMostlyRWLock myLock;
 
   /**
@@ -132,7 +134,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     ApplicationManager.setApplication(this, myLastDisposable);
 
     // Acquire IW lock on EDT indefinitely in legacy mode
-    if (!USE_SEPARATE_WRITE_THREAD) {
+    if (!USE_SEPARATE_WRITE_THREAD && !IMPLICIT_READ_ON_EDT_DISABLED) {
       EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass().getName()));
     }
 
@@ -158,7 +160,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation");
     // Acquire IW lock on EDT indefinitely in legacy mode
-    if (!USE_SEPARATE_WRITE_THREAD) {
+    if (!USE_SEPARATE_WRITE_THREAD && !IMPLICIT_READ_ON_EDT_DISABLED) {
       EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass().getName()));
     }
     activity.end();
@@ -299,7 +301,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean isDispatchThread() {
-    return EDT.isEdt(Thread.currentThread());
+    return EDT.isCurrentThreadEdt();
   }
 
   @Override
@@ -337,6 +339,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       expired = captured.getSecond();
     }
     Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, state);
+    // Don't need to enable implicit read, as Write Intent lock includes Explicit Read
     LaterInvocator.invokeLater(state, expired, wrapWithRunIntendedWriteAction(r));
   }
 
@@ -349,7 +352,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     super.dispose();
     // Remove IW lock from EDT as EDT might be re-created, which might lead to deadlock if anybody uses this disposed app
-    if (!USE_SEPARATE_WRITE_THREAD || isUnitTestMode()) {
+    if ((!USE_SEPARATE_WRITE_THREAD && !IMPLICIT_READ_ON_EDT_DISABLED) || isUnitTestMode()) {
       invokeLater(() -> releaseWriteIntentLock(), ModalityState.NON_MODAL);
     }
 
@@ -902,8 +905,11 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   @Override
-  public void acquireWriteIntentLock(@NotNull String invokedClassFqn) {
+  public boolean acquireWriteIntentLock(@NotNull String invokedClassFqn) {
+    if (myLock.isWriteThread() && (myLock.isWriteIntentLocked() || myLock.isWriteLocked()))
+      return false;
     myLock.writeIntentLock();
+    return true;
   }
 
   @Override
@@ -1038,7 +1044,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean isReadAccessAllowed() {
-    return myLock.isWriteThread() || myLock.isReadLockedByThisThread();
+    return myLock.isReadAllowed();
   }
 
   @Override
@@ -1404,6 +1410,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
            + (isCommandLine() ? " (command line)" : "")
            + (writeActionPending || writeActionInProgress || writeAccessAllowed ? " (WA" + (writeActionPending ? " pending" : "") + (writeActionInProgress ? " inProgress" : "") + (writeAccessAllowed ? " allowed" : "") + ")" : "")
            + (isReadAccessAllowed() ? " (RA allowed)" : "")
+           + (IMPLICIT_READ_ON_EDT_DISABLED ? " (IR on EDT disabled)" : "")
            + (isInImpatientReader() ? " (impatient reader)" : "")
            + (isExitInProgress() ? " (exit in progress)" : "")
       ;
@@ -1443,5 +1450,21 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public boolean isComponentCreated() {
     return getContainerState().get().compareTo(ContainerState.COMPONENT_CREATED) >= 0;
+  }
+
+  @Override
+  public void withoutImplicitRead(@NotNull Runnable runnable) {
+    if (!IMPLICIT_READ_ON_EDT_DISABLED) {
+      runnable.run();
+      return;
+    }
+
+    boolean oldVal = myLock.isImplicitReadAllowed();
+    try {
+      myLock.setImplicitReadAllowance(false);
+      runnable.run();
+    } finally {
+      myLock.setImplicitReadAllowance(oldVal);
+    }
   }
 }

@@ -766,7 +766,7 @@ public final class IdeEventQueue extends EventQueue {
       dispatchMouseEvent(e);
     }
     else {
-      defaultDispatchEvent(e);
+      application.withoutImplicitRead(() -> defaultDispatchEvent(e));
     }
   }
 

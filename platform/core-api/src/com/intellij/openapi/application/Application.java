@@ -480,6 +480,11 @@ public interface Application extends ComponentManager {
 
   boolean isEAP();
 
+  @ApiStatus.Internal
+  default void withoutImplicitRead(@NotNull Runnable runnable) {
+    runnable.run();
+  }
+
   /**
    * @deprecated this scope will die only with the application => plugin coroutines which use it will leak on unloading.
    * Instead, use Disposable application service approach described here https://youtrack.jetbrains.com/articles/IDEA-A-237338670
