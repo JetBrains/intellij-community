@@ -53,7 +53,8 @@ internal class SettingsSyncPluginManager : Disposable {
   }
 
   private fun firePluginsStateChangeEvent(pluginsState: SettingsSyncPluginsState) {
-    val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()), emptySet(), pluginsState)
+    val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()),
+                                    emptySet(), pluginsState, emptySet())
     SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
   }
 

@@ -39,7 +39,7 @@ internal class TestCloudConfigRemoteCommunicator : TestRemoteCommunicator() {
   }
 
   private fun snapshotForDeletion() =
-    SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true), emptySet(), null)
+    SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true), emptySet(), null, emptySet())
 
   override fun awaitForPush(): SettingsSnapshot? {
     pushedLatch = CountDownLatch(1)

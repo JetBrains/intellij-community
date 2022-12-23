@@ -87,7 +87,7 @@ internal class SettingsRepositoryToSettingsSyncMigration {
         })
       }
     }
-    return SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()), fileStates, plugins = null)
+    return SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()), fileStates, plugins = null, emptySet())
   }
 
   private fun showNotificationAboutUnbundling(executorService: ScheduledExecutorService) {
