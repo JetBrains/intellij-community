@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.async.combineAndCollect
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.ComponentListPanelFactory
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
@@ -56,7 +57,6 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProv
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.TIMELINE_ITEM_WIDTH
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.buildTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTitlePane
@@ -224,22 +224,29 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   private fun createComponent(review: GHPullRequestReview): JComponent {
     val reviewThreadsModel = reviewsThreadsModelsProvider.getReviewThreadsModel(review.id)
 
-    val loadingLabel = JLabel(ApplicationBundle.message("label.loading.page.please.wait")).apply {
-      foreground = UIUtil.getContextHelpForeground()
+    val loadingPanel = JPanel(SingleComponentCenteringLayout()).apply {
+      isOpaque = false
+      add(JLabel(ApplicationBundle.message("label.loading.page.please.wait")).apply {
+        foreground = UIUtil.getContextHelpForeground()
+      })
+    }.let {
+      CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
+    }.apply {
+      border = CodeReviewTimelineUIUtil.ITEM_BORDER
       isVisible = !reviewThreadsModel.loaded
     }
 
     reviewThreadsModel.addListDataListener(object : ListDataListener {
       override fun intervalAdded(e: ListDataEvent?) {
-        loadingLabel.isVisible = !reviewThreadsModel.loaded
+        loadingPanel.isVisible = !reviewThreadsModel.loaded
       }
 
       override fun intervalRemoved(e: ListDataEvent?) {
-        loadingLabel.isVisible = !reviewThreadsModel.loaded
+        loadingPanel.isVisible = !reviewThreadsModel.loaded
       }
 
       override fun contentsChanged(e: ListDataEvent?) {
-        loadingLabel.isVisible = !reviewThreadsModel.loaded
+        loadingPanel.isVisible = !reviewThreadsModel.loaded
       }
     })
 
@@ -248,20 +255,10 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     }
 
     val reviewItem = createReviewContentItem(review)
-    return JPanel(MigLayout(LC().hideMode(3)
-                              .gridGap("0", "0")
-                              .insets("0")
-                              .flowY()
-                              .fill())).apply {
-      isOpaque = false
-
-      add(loadingLabel, CC().grow().push()
-        .alignX("center")
-        .maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}")
-        .gapLeft("${CodeReviewTimelineUIUtil.ITEM_HOR_PADDING}")
-        .gapRight("${CodeReviewTimelineUIUtil.ITEM_HOR_PADDING}"))
-      add(threadsPanel, CC().minWidth("0").grow().push().minWidth("0"))
-      add(reviewItem, CC().minWidth("0").grow().push().minWidth("0"))
+    return VerticalListPanel(0).apply {
+      add(loadingPanel)
+      add(threadsPanel)
+      add(reviewItem)
     }
   }
 
@@ -280,6 +277,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val panelHandle = GHEditableHtmlPaneHandle(project, bodyPanel, firstComment::body) { newText ->
       reviewDataProvider.updateComment(EmptyProgressIndicator(), firstComment.id, newText)
         .successOnEdt { firstComment.update(it) }
+    }.apply {
+      maxPaneWidth = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH
     }
 
     val actionsPanel = HorizontalListPanel(8).apply {
@@ -305,17 +304,13 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     }
 
     val collapsedThreadActionsComponent = GHPRReviewThreadComponent
-      .getCollapsedThreadActionsComponent(reviewDataProvider, avatarIconsProvider, thread, repliesCollapsedState, ghostUser).apply {
+      .getCollapsedThreadActionsComponent(reviewDataProvider, avatarIconsProvider, thread, repliesCollapsedState, ghostUser).let {
+        CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
+      }.apply {
         border = JBUI.Borders.empty(3, 0, 7, 0)
       }
 
-    val content = JPanel(MigLayout(LC()
-                                     .fill().flowY()
-                                     .hideMode(3)
-                                     .gridGap("0", "4")
-                                     .insets("0", "0", "0", "0"))).apply {
-      isOpaque = false
-    }.apply {
+    val content = VerticalListPanel(6).apply {
       coroutineScopeProvider.launchInScope {
         combineAndCollect(thread.collapsedState, textFlow) { collapsed, text ->
           removeAll()
@@ -326,24 +321,18 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
             }
 
             bodyPanel.setContent(textPane)
-            add(panelHandle.panel, CC()
-              .grow()
-              .maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}"))
-            add(diff, CC().grow().minWidth("0"))
-            add(collapsedThreadActionsComponent, CC()
-              .maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}"))
+            add(panelHandle.panel)
+            add(diff)
+            add(collapsedThreadActionsComponent)
           }
           else {
             panelHandle.maxPaneHeight = null
             val commentComponent = GHPRReviewCommentComponent
               .createCommentBodyComponent(project, suggestedChangeHelper, thread, text)
             bodyPanel.setContent(commentComponent)
-            add(diff, CC().grow().minWidth("0"))
-            add(panelHandle.panel, CC()
-              .grow()
-              .maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}"))
-            add(collapsedThreadActionsComponent, CC()
-              .maxWidth("${CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH}"))
+            add(diff)
+            add(panelHandle.panel)
+            add(collapsedThreadActionsComponent)
           }
           revalidate()
           repaint()
@@ -371,25 +360,16 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val commentsListPanel = ComponentListPanelFactory.createVertical(thread.repliesModel, commentComponentFactory, 0)
 
     val commentsPanel = if (reviewDataProvider.canComment()) {
-      val layout = MigLayout(LC()
-                               .flowY()
-                               .fill()
-                               .gridGap("0", "0")
-                               .insets("0"))
-
       val actionsComponent = GHPRReviewThreadComponent
-        .createUncollapsedThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser) {}.apply {
+        .createUncollapsedThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser) {}.let {
+          CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
+        }.apply {
           border = JBUI.Borders.empty(CodeReviewChatItemUIUtil.ComponentType.FULL_SECONDARY.inputPaddingInsets)
         }
 
-      JPanel(layout).apply {
-        isOpaque = false
-        add(commentsListPanel,
-            CC().grow().push()
-              .minWidth("0"))
-        add(actionsComponent,
-            CC().grow().push()
-              .minWidth("0").maxWidth("$TIMELINE_ITEM_WIDTH"))
+      VerticalListPanel().apply {
+        add(commentsListPanel)
+        add(actionsComponent)
       }
     }
     else {

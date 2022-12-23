@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
@@ -22,14 +23,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.flow.MutableStateFlow
-import net.miginfocom.layout.AC
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
@@ -47,12 +45,12 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataPro
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.TIMELINE_ITEM_WIDTH
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.JPanel
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 
@@ -113,7 +111,9 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       if (PlatformDataKeys.UI_DISPOSABLE.`is`(it)) uiDisposable else null
     })
 
-    val header = GHPRTitleComponent.create(detailsModel).apply {
+    val header = GHPRTitleComponent.create(detailsModel).let {
+      CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
+    }.apply {
       border = JBUI.Borders.empty(CodeReviewTimelineUIUtil.HEADER_VERT_PADDING, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)
     }
 
@@ -139,36 +139,39 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     }
 
     val timeline = TimelineComponentFactory.create(timelineModel, itemComponentFactory, 0)
-
-    val errorPanel = GHHtmlErrorPanel.create(errorModel).apply {
-      border = JBUI.Borders.empty(8, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)
-    }
-
     val timelineLoader = editor.timelineLoader
-    val loadingIcon = JLabel(AnimatedIcon.Default()).apply {
-      border = JBUI.Borders.empty(8, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)
-      isVisible = timelineLoader.loading
-    }
-    timelineLoader.addLoadingStateChangeListener(uiDisposable) {
-      loadingIcon.isVisible = timelineLoader.loading
+
+    val progressAndErrorPanel = JPanel(ListLayout.vertical(0, ListLayout.Alignment.CENTER)).apply {
+      isOpaque = false
+
+      val errorPanel = GHHtmlErrorPanel.create(errorModel).apply {
+        border = CodeReviewTimelineUIUtil.ITEM_BORDER
+      }
+
+      val loadingIcon = JLabel(AnimatedIcon.Default()).apply {
+        border = CodeReviewTimelineUIUtil.ITEM_BORDER
+        isVisible = timelineLoader.loading
+      }
+      timelineLoader.addLoadingStateChangeListener(uiDisposable) {
+        loadingIcon.isVisible = timelineLoader.loading
+      }
+
+      add(errorPanel)
+      add(loadingIcon)
+    }.let {
+      CollaborationToolsUIUtil
+        .wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH + CodeReviewTimelineUIUtil.ITEM_HOR_PADDING * 2)
     }
 
-    val timelinePanel = ScrollablePanel().apply {
+    val timelinePanel = ScrollablePanel(ListLayout.vertical(0)).apply {
       isOpaque = false
       border = JBUI.Borders.empty(CodeReviewTimelineUIUtil.VERT_PADDING, 0)
 
-      layout = MigLayout(LC().gridGap("0", "0")
-                           .insets("0", "0", "0", "0")
-                           .fill()
-                           .flowY(),
-                         AC().grow().gap("push"))
+      add(header)
+      add(descriptionWrapper)
+      add(timeline)
 
-      add(header, CC().growX().maxWidth("$TIMELINE_ITEM_WIDTH"))
-      add(descriptionWrapper, CC().growX())
-      add(timeline, CC().growX().minWidth(""))
-
-      add(errorPanel, CC().hideMode(2).width("$TIMELINE_ITEM_WIDTH"))
-      add(loadingIcon, CC().hideMode(2).width("$TIMELINE_ITEM_WIDTH"))
+      add(progressAndErrorPanel)
 
       if (editor.securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)) {
         val commentField = createCommentField(editor.commentsData,
@@ -176,7 +179,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                                               editor.securityService.currentUser).apply {
           border = JBUI.Borders.empty(CodeReviewChatItemUIUtil.ComponentType.FULL.inputPaddingInsets)
         }
-        add(commentField, CC().growX().pushX())
+        add(commentField)
       }
     }
 

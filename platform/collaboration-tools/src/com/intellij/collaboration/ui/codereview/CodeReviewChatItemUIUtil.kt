@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview
 
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil.wrapWithLimitedSize
 import com.intellij.collaboration.ui.JPanelWithBackground
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.comment.ReviewUIUtil
@@ -137,7 +138,7 @@ object CodeReviewChatItemUIUtil {
 
     fun build(): JComponent =
       content.wrapIfNotNull(maxContentWidth) { comp, maxWidth ->
-        ComponentFactory.wrapWithWidthLimit(comp, maxWidth)
+        wrapWithLimitedSize(comp, maxWidth = maxWidth)
       }.wrapIfNotNull(header) { comp, (title, actions) ->
         ComponentFactory.wrapWithHeader(comp, title, actions)
       }.let {
@@ -177,16 +178,6 @@ object CodeReviewChatItemUIUtil {
       return VerticalListPanel(4).apply {
         add(headerPanel)
         add(item)
-      }
-    }
-
-    fun wrapWithWidthLimit(item: JComponent, maxWidth: Int): JComponent {
-      return JPanel(null).apply {
-        layout = MigLayout(LC().gridGap("0", "0").insets("0", "0", "0", "0").fill()).apply {
-          columnConstraints = "[][]"
-        }
-        isOpaque = false
-        add(item, CC().grow().push().minWidth("0").maxWidth("${maxWidth}"))
       }
     }
   }

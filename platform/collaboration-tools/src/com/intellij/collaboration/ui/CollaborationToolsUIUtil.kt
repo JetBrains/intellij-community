@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui
 
 import com.intellij.application.subscribe
+import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
@@ -156,6 +157,18 @@ object CollaborationToolsUIUtil {
     val bw: Int = if (UIUtil.isUnderDefaultMacTheme()) 3 else DarculaUIUtil.BW.unscaled.toInt()
     val lw: Int = if (UIUtil.isUnderDefaultMacTheme()) 0 else DarculaUIUtil.LW.unscaled.toInt()
     return bw + lw
+  }
+
+  fun wrapWithLimitedSize(component: JComponent, maxWidth: Int? = null, maxHeight: Int? = null): JComponent {
+    val layout = SizeRestrictedSingleComponentLayout().apply {
+      this.maxWidth = maxWidth
+      this.maxHeight = maxHeight
+    }
+    return JPanel(layout).apply {
+      name = "Size limit wrapper"
+      isOpaque = false
+      add(component)
+    }
   }
 }
 
