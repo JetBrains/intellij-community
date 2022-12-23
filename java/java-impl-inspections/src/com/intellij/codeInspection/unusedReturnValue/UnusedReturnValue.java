@@ -2,11 +2,11 @@
 package com.intellij.codeInspection.unusedReturnValue;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.options.JavaInspectionControls;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnreferencedFilter;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.unusedSymbol.VisibilityModifierChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiMethod;
@@ -71,7 +71,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   public @NotNull OptPane getOptionsPane() {
     return OptPane.pane(
       OptPane.checkbox("IGNORE_BUILDER_PATTERN", JavaBundle.message("checkbox.ignore.simple.setters")),
-      VisibilityModifierChooser.visibilityChooser("highestModifier", JavaBundle.message("label.maximal.reported.method.visibility"))
+      JavaInspectionControls.visibilityChooser("highestModifier", JavaBundle.message("label.maximal.reported.method.visibility"))
     );
   }
 

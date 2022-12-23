@@ -4,11 +4,11 @@ package com.intellij.codeInspection.sameParameterValue;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.options.JavaInspectionControls;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.unusedSymbol.VisibilityModifierChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,7 +61,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("ignoreWhenRefactoringIsComplicated", JavaBundle.message("label.ignore.complicated.fix")),
-      VisibilityModifierChooser.visibilityChooser("highestModifier", JavaBundle.message("label.maximal.reported.method.visibility")),
+      JavaInspectionControls.visibilityChooser("highestModifier", JavaBundle.message("label.maximal.reported.method.visibility")),
       number("minimalUsageCount", JavaBundle.message("label.minimal.reported.method.usage.count"), 1, 100)
     );
   }

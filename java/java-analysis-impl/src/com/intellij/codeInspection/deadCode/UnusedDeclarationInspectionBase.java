@@ -45,7 +45,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   public boolean ADD_APPLET_TO_ENTRIES = true;
   public boolean ADD_SERVLET_TO_ENTRIES = true;
   public boolean ADD_NONJAVA_TO_ENTRIES = true;
-  private boolean TEST_ENTRY_POINTS = true;
+  protected boolean TEST_ENTRY_POINTS = true;
 
   public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
   public static final String ALTERNATIVE_ID = "UnusedDeclaration";

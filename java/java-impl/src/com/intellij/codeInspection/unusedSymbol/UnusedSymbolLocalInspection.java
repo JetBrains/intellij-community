@@ -2,14 +2,16 @@
 
 package com.intellij.codeInspection.unusedSymbol;
 
-import com.intellij.psi.PsiModifier;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInspection.options.OptDropdown;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.java.JavaBundle;
+import com.intellij.psi.util.AccessModifier;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase {
 
@@ -20,114 +22,28 @@ public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase
   public UnusedSymbolLocalInspection() {
   }
 
-  public class OptionsPanel {
-    private JCheckBox myCheckLocalVariablesCheckBox;
-    private JCheckBox myCheckClassesCheckBox;
-    private JCheckBox myCheckFieldsCheckBox;
-    private JCheckBox myCheckMethodsCheckBox;
-    private JCheckBox myCheckParametersCheckBox;
-    private JCheckBox myAccessors;
-    private JPanel myPanel;
-    private JLabel myClassVisibilityCb;
-    private JLabel myFieldVisibilityCb;
-    private JLabel myMethodVisibilityCb;
-    private JLabel myMethodParameterVisibilityCb;
-    private JCheckBox myCheckParameterExcludingHierarchyCheckBox;
-    private JCheckBox myInnerClassesCheckBox;
-    private JLabel myInnerClassVisibilityCb;
-
-    public OptionsPanel() {
-      myCheckLocalVariablesCheckBox.setSelected(LOCAL_VARIABLE);
-      myCheckClassesCheckBox.setSelected(CLASS);
-      myCheckFieldsCheckBox.setSelected(FIELD);
-      myCheckMethodsCheckBox.setSelected(METHOD);
-      myInnerClassesCheckBox.setSelected(INNER_CLASS);
-      myCheckParametersCheckBox.setSelected(PARAMETER);
-      myCheckParameterExcludingHierarchyCheckBox.setSelected(myCheckParameterExcludingHierarchy);
-      myCheckParameterExcludingHierarchyCheckBox.setBorder(JBUI.Borders.emptyLeft(5));
-      myAccessors.setSelected(!isIgnoreAccessors());
-      updateEnableState();
-
-      final ActionListener listener = new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          LOCAL_VARIABLE = myCheckLocalVariablesCheckBox.isSelected();
-          CLASS = myCheckClassesCheckBox.isSelected();
-          INNER_CLASS = myInnerClassesCheckBox.isSelected();
-          FIELD = myCheckFieldsCheckBox.isSelected();
-          METHOD = myCheckMethodsCheckBox.isSelected();
-          setIgnoreAccessors(!myAccessors.isSelected());
-          PARAMETER = myCheckParametersCheckBox.isSelected();
-          setCheckParameterExcludingHierarchy(myCheckParameterExcludingHierarchyCheckBox.isSelected());
-
-          updateEnableState();
-        }
-      };
-      myCheckLocalVariablesCheckBox.addActionListener(listener);
-      myCheckFieldsCheckBox.addActionListener(listener);
-      myCheckMethodsCheckBox.addActionListener(listener);
-      myCheckClassesCheckBox.addActionListener(listener);
-      myCheckParametersCheckBox.addActionListener(listener);
-      myCheckParameterExcludingHierarchyCheckBox.addActionListener(listener);
-      myInnerClassesCheckBox.addActionListener(listener);
-      myAccessors.addActionListener(listener);
-     }
-
-    private void updateEnableState() {
-      UIUtil.setEnabled(myClassVisibilityCb, CLASS, true);
-      UIUtil.setEnabled(myInnerClassVisibilityCb, INNER_CLASS, true);
-      UIUtil.setEnabled(myFieldVisibilityCb, FIELD, true);
-      UIUtil.setEnabled(myMethodVisibilityCb, METHOD, true);
-      UIUtil.setEnabled(myMethodParameterVisibilityCb, PARAMETER, true);
-      setEnabledExcludingHierarchyCheckbox(getParameterVisibility());
-      myAccessors.setEnabled(METHOD);
-    }
-
-    public JComponent getPanel() {
-      return myPanel;
-    }
-
-    private void createUIComponents() {
-      myClassVisibilityCb = new VisibilityModifierChooser(() -> CLASS,
-                                                          myClassVisibility,
-                                                          modifier -> setClassVisibility(modifier),
-                                                          new String[]{PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC});
-
-      myInnerClassVisibilityCb = new VisibilityModifierChooser(() -> INNER_CLASS,
-                                                               myInnerClassVisibility,
-                                                               modifier -> setInnerClassVisibility(modifier));
-
-      myFieldVisibilityCb = new VisibilityModifierChooser(() -> FIELD,
-                                                          myFieldVisibility,
-                                                          modifier -> setFieldVisibility(modifier));
-
-      myMethodVisibilityCb = new VisibilityModifierChooser(() -> METHOD,
-                                                           myMethodVisibility,
-                                                           modifier -> setMethodVisibility(modifier));
-
-      myMethodParameterVisibilityCb = new VisibilityModifierChooser(() -> PARAMETER,
-                                                                    myParameterVisibility,
-                                                                    modifier -> {
-                                                                      setParameterVisibility(modifier);
-                                                                      setEnabledExcludingHierarchyCheckbox(modifier);
-                                                                    });
-
-      myAccessors = new JCheckBox() {
-        @Override
-        public void setEnabled(boolean b) {
-          super.setEnabled(b && METHOD);
-        }
-      };
-    }
-
-    private void setEnabledExcludingHierarchyCheckbox(@Nullable String modifier) {
-      myCheckParameterExcludingHierarchyCheckBox.setVisible(!PsiModifier.PRIVATE.equals(modifier));
-    }
-  }
-
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new OptionsPanel().getPanel();
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("CLASS", JavaBundle.message("inspection.unused.symbol.check.classes"),
+               modifierSelector("myClassVisibility")),
+      checkbox("INNER_CLASS", JavaBundle.message("inspection.unused.symbol.check.inner.classes"),
+               modifierSelector("myInnerClassVisibility")),
+      checkbox("FIELD", JavaBundle.message("inspection.unused.symbol.check.fields"),
+               modifierSelector("myFieldVisibility")),
+      checkbox("METHOD", JavaBundle.message("inspection.unused.symbol.check.methods"),
+               modifierSelector("myMethodVisibility"),
+               checkbox("myIgnoreAccessors", JavaBundle.message("inspection.unused.symbol.check.accessors"))),
+      checkbox("PARAMETER", JavaBundle.message("inspection.unused.symbol.check.parameters"),
+               modifierSelector("myParameterVisibility"),
+               checkbox("myCheckParameterExcludingHierarchy",
+                        JavaBundle.message("inspection.unused.symbol.check.parameters.excluding.hierarchy"))),
+      checkbox("LOCAL_VARIABLE", JavaBundle.message("inspection.unused.symbol.check.localvars"))
+    );
+  }
+  
+  private static OptDropdown modifierSelector(@Language("jvm-field-name") @NotNull String bindId) {
+    return dropdown(bindId, "", List.of(AccessModifier.values()),
+                            AccessModifier::toPsiModifier, AccessModifier::toString);
   }
 }

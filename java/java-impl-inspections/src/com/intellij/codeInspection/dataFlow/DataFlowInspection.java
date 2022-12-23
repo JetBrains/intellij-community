@@ -1,10 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteSideEffectsAwareFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
+import com.intellij.codeInsight.options.JavaInspectionButtons;
+import com.intellij.codeInsight.options.JavaInspectionControls;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.fix.BoxPrimitiveInTernaryFix;
 import com.intellij.codeInspection.dataFlow.fix.FindDfaProblemCauseFix;
@@ -215,7 +216,8 @@ public class DataFlowInspection extends DataFlowInspectionBase {
                message("inspection.data.flow.ignore.assert.statements")),
       checkbox("REPORT_UNSOUND_WARNINGS",
                message("inspection.data.flow.report.problems.that.happen.only.on.some.code.paths")),
-      NullableNotNullDialog.configureAnnotationsButton()
+      JavaInspectionControls.button(
+        JavaInspectionButtons.ButtonKind.NULLABILITY_ANNOTATIONS)
     );
   }
 }
