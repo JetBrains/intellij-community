@@ -33,6 +33,7 @@ fun main(rawArgs: Array<String>) {
   try {
     bootstrap(startupTimings)
     startupTimings.put("main scope creating", System.nanoTime())
+    @Suppress("RAW_RUN_BLOCKING")
     runBlocking(rootTask()) {
       StartUpMeasurer.addTimings(startupTimings, "bootstrap")
       val appInitPreparationActivity = StartUpMeasurer.startActivity("app initialization preparation")
@@ -129,10 +130,10 @@ private fun preProcessRawArgs(rawArgs: Array<String>): List<String> {
 @Suppress("HardCodedStringLiteral")
 private fun installPluginUpdates() {
   try {
-    // referencing `StartupActionScriptManager` is ok - a string constant will be inlined
+    // referencing `StartupActionScriptManager` is OK - a string constant will be inlined
     val scriptFile = Path.of(PathManager.getPluginTempPath(), StartupActionScriptManager.ACTION_SCRIPT_FILE)
     if (Files.isRegularFile(scriptFile)) {
-      // load StartupActionScriptManager and all others related class (ObjectInputStream and so on loaded as part of class define)
+      // load StartupActionScriptManager and all other related class (ObjectInputStream and so on loaded as part of class define)
       // only if there is an action script to execute
       StartupActionScriptManager.executeActionScript()
     }

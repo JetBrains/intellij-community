@@ -10,6 +10,7 @@ import com.intellij.diagnostic.*
 import com.intellij.diagnostic.telemetry.TraceManager
 import com.intellij.ide.*
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
+import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
@@ -91,11 +92,11 @@ private const val MAGIC_MAC_PATH = "/AppTranslocation/"
 
 private var socketLock: SocketLock? = null
 
-// checked - using Deferred type doesn't lead to loading this class on StartupUtil init
+// checked - using a Deferred type doesn't lead to loading this class on StartupUtil init
 internal var shellEnvDeferred: Deferred<Boolean?>? = null
   private set
 
-// mainDispatcher is a sequential - use it with care
+// mainDispatcher is sequential - use it with care
 fun CoroutineScope.startApplication(args: List<String>,
                                     appStarterDeferred: Deferred<AppStarter>,
                                     mainScope: CoroutineScope,
@@ -249,8 +250,10 @@ fun CoroutineScope.startApplication(args: List<String>,
       }
     }
 
-    app to initLafJob
+    app
   }
+
+  val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
 
   mainScope.launch {
     // required for appStarter.prepareStart
@@ -267,6 +270,7 @@ fun CoroutineScope.startApplication(args: List<String>,
         args = args,
         log = logDeferred.await(),
         appStarter = appStarterDeferred.await(),
+        euaDocumentDeferred = euaDocumentDeferred,
       )
       if (!PlatformUtils.isRider()) {
         PluginManagerCore.scheduleDescriptorLoading(mainScope, zipFilePoolDeferred)
@@ -277,8 +281,21 @@ fun CoroutineScope.startApplication(args: List<String>,
       schedulePluginDescriptorLoading.join()
     }
 
-    // with main dispatcher (appStarter uses runBlocking - block main thread and not some coroutine thread)
-    appStarter.start(args, appDeferred)
+    val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
+      null
+    }
+    else {
+      async(CoroutineName("eua document") + Dispatchers.Default) {
+        prepareShowEuaIfNeededTask(euaDocumentDeferred.await(), asyncScope = this@startApplication)
+      }
+    }
+
+    // with the main dispatcher for non-technical reasons
+    appStarter.start(InitAppContext(context = coroutineContext,
+                                    args = args,
+                                    appDeferred = appDeferred,
+                                    initLafJob = initLafJob,
+                                    euaTaskDeferred = euaTaskDeferred))
   }
 }
 
@@ -389,7 +406,9 @@ private fun runPreAppClass(log: Logger, args: List<String>) {
   }
 }
 
-private suspend fun importConfig(args: List<String>, log: Logger, appStarter: AppStarter) {
+private suspend fun importConfig(args: List<String>, log: Logger,
+                                 appStarter: AppStarter,
+                                 euaDocumentDeferred: Deferred<EndUserAgreement.Document?>) {
   var activity = StartUpMeasurer.startActivity("screen reader checking")
   try {
     withContext(RawSwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
@@ -406,7 +425,7 @@ private suspend fun importConfig(args: List<String>, log: Logger, appStarter: Ap
     UIManager.setLookAndFeel(IntelliJLaf())
   }
 
-  val veryFirstStartOnThisComputer = coroutineScope { prepareShowEuaIfNeededTask(loadEuaDocument(), asyncScope = this)?.invoke() ?: false }
+  val veryFirstStartOnThisComputer = euaDocumentDeferred.await() != null
   withContext(RawSwingDispatcher) {
     ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, newConfigDir, args, log)
   }
@@ -544,7 +563,7 @@ private fun blockATKWrapper() {
 
   val activity = StartUpMeasurer.startActivity("atk wrapper blocking")
   if (ScreenReader.isEnabled(ScreenReader.ATK_WRAPPER)) {
-    // Replacing `AtkWrapper` with a dummy `Object`. It'll be instantiated & garbage collected right away, a NOP.
+    // Replacing `AtkWrapper` with a fake `Object`. It'll be instantiated & garbage collected right away, a NOP.
     System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object")
     Logger.getInstance(StartupUiUtil::class.java).info(ScreenReader.ATK_WRAPPER + " is blocked, see IDEA-149219")
   }
@@ -926,8 +945,7 @@ fun canonicalPath(path: String): Path {
 interface AppStarter {
   fun prepareStart(args: List<String>) {}
 
-  /* called from IDE init thread */
-  suspend fun start(args: List<String>, appDeferred: Deferred<Any>)
+  suspend fun start(context: InitAppContext)
 
   /* called from IDE init thread */
   fun beforeImportConfigs() {}

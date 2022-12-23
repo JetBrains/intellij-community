@@ -1,7 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ApplicationLoader")
 @file:Internal
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "RAW_RUN_BLOCKING")
+
 package com.intellij.idea
 
 import com.intellij.diagnostic.*
@@ -59,30 +60,27 @@ import kotlin.system.exitProcess
 @Suppress("SSBasedInspection")
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
-fun initApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
-  @Suppress("RAW_RUN_BLOCKING")
-  runBlocking(rootTask()) {
-    val euaTaskDeferred = if (AppMode.isHeadless()) {
-      null
-    }
-    else {
-      async(CoroutineName("eua document") + Dispatchers.Default) {
-        prepareShowEuaIfNeededTask(loadEuaDocument(), asyncScope = this@runBlocking)
-      }
-    }
-    doInitApplication(rawArgs, appDeferred, euaTaskDeferred)
+fun initApplication(context: InitAppContext) {
+  runBlocking(context.context) {
+    doInitApplication(rawArgs = context.args,
+                      appDeferred = context.appDeferred,
+                      initLafJob = context.initLafJob,
+                      euaTaskDeferred = context.euaTaskDeferred)
   }
 }
 
-private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>, euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?) {
+// executed in the main scope with a sequential dispatcher - don't forget this
+private suspend fun doInitApplication(rawArgs: List<String>,
+                                      appDeferred: Deferred<Application>,
+                                      initLafJob: Job,
+                                      euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?) {
   val initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization")
   val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
     PluginManagerCore.getInitPluginFuture().await()
   }
 
-  val (app, initLafJob) = initAppActivity.runChild("app waiting") {
-    @Suppress("UNCHECKED_CAST")
-    appDeferred.await() as Pair<ApplicationImpl, Job>
+  val app = initAppActivity.runChild("app waiting") {
+    appDeferred.await() as ApplicationImpl
   }
 
   val loadIconMapping: Job? = coroutineScope {
@@ -118,15 +116,15 @@ private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferr
   }
 
   coroutineScope {
-    // LaF must be initialized before app init because icons maybe requested and as result,
-    // scale must be already initialized (especially important for Linux)
+    // LaF must be initialized before app init because icons maybe requested and, as a result,
+    // a scale must be already initialized (especially important for Linux)
     runActivity("init laf waiting") {
       initLafJob.join()
     }
 
     euaTaskDeferred?.await()?.invoke()
 
-    // executed in main thread
+    // executed in the main scope
     launch {
       loadIconMapping?.join()
       val lafManagerDeferred = launch(CoroutineName("laf initialization") + RawSwingDispatcher) {
@@ -216,13 +214,14 @@ private suspend fun initApplicationImpl(args: List<String>,
       }
     }
   }
-  // no need to use pool once started
+  // no need to use a pool once started
   ZipFilePool.POOL = null
 }
 
 fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
   launch {
-    // LocalHistory wants ManagingFS, it should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner
+    // LocalHistory wants ManagingFS.
+    // It should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner.
     app.getServiceAsync(ManagingFS::class.java).join()
     // PlatformVirtualFileManager also wants ManagingFS
     launch { app.getServiceAsync(VirtualFileManager::class.java) }
@@ -366,6 +365,7 @@ private fun addActivateAndWindowsCliListeners() {
 
   EXTERNAL_LISTENER = BiFunction { currentDirectory, args ->
     LOG.info("External Windows command received")
+    @Suppress("RAW_RUN_BLOCKING")
     runBlocking(Dispatchers.Default) {
       val result = handleExternalCommand(args.asList(), currentDirectory)
       try {
@@ -379,7 +379,9 @@ private fun addActivateAndWindowsCliListeners() {
 
   ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
     override fun appWillBeClosed(isRestart: Boolean) {
-      addExternalInstanceListener { CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down"))) }
+      addExternalInstanceListener {
+        CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")))
+      }
       EXTERNAL_LISTENER = BiFunction { _, _ -> AppExitCodes.ACTIVATE_DISPOSING }
     }
   })
@@ -424,7 +426,7 @@ fun initConfigurationStore(app: ApplicationImpl) {
 
   activity = activity.endAndStart("init app store")
 
-  // we set it after beforeApplicationLoaded call, because the app store can depend on stream provider state
+  // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
   app.stateStore.setPath(configPath)
   StartUpMeasurer.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
   activity.end()
