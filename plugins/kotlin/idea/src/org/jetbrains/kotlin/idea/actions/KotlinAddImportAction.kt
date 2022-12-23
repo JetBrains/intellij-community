@@ -320,17 +320,17 @@ internal class CallExpressionWeigher(element: KtNameReferenceExpression?) {
 
     init {
         val callExpression = element?.getParentOfType<KtCallElement>(false)
-        val receiverExpression = (element?.parent as? KtQualifiedExpression)?.receiverExpression ?: element?.getParentOfType<KtLambdaExpression>(false)
+        val receiverExpression = element?.getParentOfType<KtQualifiedExpression>(false)?.receiverExpression ?: element?.getParentOfType<KtLambdaExpression>(false)
         receiverType = if (receiverExpression != null) {
             val context = receiverExpression.analyze(BodyResolveMode.PARTIAL)
-            val type = if (receiverExpression is KtLambdaExpression) {
+            if (receiverExpression is KtLambdaExpression) {
                 val functionDescriptor = context[BindingContext.FUNCTION, receiverExpression.functionLiteral]
                 functionDescriptor?.extensionReceiverParameter?.type ?: receiverExpression.getParentOfType<KtClassOrObject>(false)
                     ?.resolveToDescriptorIfAny()?.defaultType
             } else {
                 receiverExpression.getType(context)
             }
-            type?.takeIf { it.isMarkedNullable }?.makeNotNullable() ?: type
+            //type?.takeIf { it.isMarkedNullable }?.makeNotNullable() ?: type
         } else {
             null
         }
@@ -445,12 +445,27 @@ internal class CallExpressionWeigher(element: KtNameReferenceExpression?) {
         return weight
     }
 
-    private fun KotlinType.weight(weight: Int, kotlinType: KotlinType?): Int? =
-        if (kotlinType != null && KotlinTypeChecker.DEFAULT.isSubtypeOf(this, kotlinType)) {
-            100 * weight + 10
+    private fun KotlinType.weight(weight: Int, kotlinType: KotlinType?): Int? {
+        if (kotlinType == null) return null
+        val typeMarkedNullable = kotlinType.isMarkedNullable
+        val markedNullable = isMarkedNullable
+
+        val adjustedType: KotlinType
+        val nullablesWeight = if (typeMarkedNullable == markedNullable) {
+            adjustedType = this
+            2
+        } else {
+            adjustedType = if (markedNullable) makeNotNullable() else this
+            // no reason to make `kotlinType` not nullable as `T` is a subtype of `T?`
+            0
+        }
+
+        return if (KotlinTypeChecker.DEFAULT.isSubtypeOf(adjustedType, kotlinType)) {
+            100 * weight + 10 + nullablesWeight
         } else {
             null
         }
+    }
 
 }
 
