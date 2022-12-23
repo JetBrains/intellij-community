@@ -12,7 +12,7 @@ class NotSeenString {
         String s3_str = i + 1 + "" + "text";
         String s4 = new Object() + "" + 1 + i + null;
         String s4_expr = new Object() + "" + (3 + /*hi*/ 2) + null + i;
-        String s4_expr = new Object() + "" + "text" + null + i;
+        String s4_str = new Object() + "" + "text" + null + i;
         String s5 = "" + null + i + null;
         String s6 = "" + new Object() + i + null;
         String s7 = "" + new Object() + "text" + i + null;
