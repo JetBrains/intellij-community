@@ -91,8 +91,11 @@ fun CheckboxImpl(
     content: @Composable (Modifier, Modifier, Int, Painter?, TextStyle, Dp) -> Unit
 ) {
     var isHovered by remember { mutableStateOf(false) }
-    var interactionState by remember(state, interactionSource, enabled) {
+    var interactionState by remember(interactionSource, enabled) {
         mutableStateOf(CheckboxState(state, ButtonMouseState.None, enabled = enabled))
+    }
+    remember(state) {
+        interactionState = interactionState.copy(toggle = state)
     }
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->

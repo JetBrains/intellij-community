@@ -90,8 +90,11 @@ fun RadioButtonImpl(
     content: @Composable (Modifier, Modifier, Int, Painter?, TextStyle, Dp) -> Unit
 ) {
     var isHovered by remember { mutableStateOf(false) }
-    var interactionState by remember(selected, interactionSource, enabled) {
+    var interactionState by remember(interactionSource, enabled) {
         mutableStateOf(RadioButtonState(selected, ButtonMouseState.None, enabled = enabled))
+    }
+    remember(selected) {
+        interactionState = interactionState.copy(checked = selected)
     }
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
