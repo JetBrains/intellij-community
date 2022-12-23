@@ -24,6 +24,7 @@ class MindmapTest : MermaidLexerTestCase() {
         id((I am a circle))
         id))I am a bang((
         id)I am a cloud(
+        id{{I am a hexagon}}
         I am the default shape
     """.trimIndent()
     doTest(content)

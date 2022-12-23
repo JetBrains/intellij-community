@@ -770,9 +770,10 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   ")"  |
   "((" |
   "("  |
-  "[" { yybegin(mindmap_node); return Mindmap.NODE_DESCR_START; }
+  "["  |
+  "{{" { yybegin(mindmap_node); return Mindmap.NODE_DESCR_START; }
 
-  [^:(\[\s\-)][^(\[\s\-)]* { return ID; }
+  [^:(\[\s\-){}][^(\[\s\-){}]* { return ID; }
 }
 <mindmap_class> {
   [^\s]* { return CLASS; }
@@ -786,15 +787,16 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 <mindmap_node> {
   \" { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
 
-  [^\"\s)\](][^\"\s)\](]* { return Mindmap.NODE_DESCR; }
+  [^\"\s)\](}][^\"\s)\](}]* { return Mindmap.NODE_DESCR; }
 
-  "))" { yybegin(mindmap); return Mindmap.NODE_DESCR_END; }
-  ")" { yybegin(mindmap); return Mindmap.NODE_DESCR_END; }
-  "]" { yybegin(mindmap); return Mindmap.NODE_DESCR_END; }
-  "(-" { yybegin(mindmap); return Mindmap.NODE_DESCR_END; }
-  "-)" { yybegin(mindmap); return Mindmap.NODE_DESCR_END; }
-  "((" { yybegin(mindmap); return Mindmap.NODE_DESCR_END; }
-  "(" { yybegin(mindmap); return Mindmap.NODE_DESCR_END; }
+  "))" |
+  ")"  |
+  "]"  |
+  "(-" |
+  "-)" |
+  "((" |
+  "("  |
+  "}}" { yybegin(mindmap); return Mindmap.NODE_DESCR_END; }
 
   [^\S\r\n]+ { return WHITE_SPACE; }
 }
