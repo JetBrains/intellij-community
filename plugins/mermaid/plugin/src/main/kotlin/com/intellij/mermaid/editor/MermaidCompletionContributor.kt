@@ -258,7 +258,7 @@ class MermaidCompletionContributor : CompletionContributor() {
     //region Git Graph
     extend(
       CompletionType.BASIC,
-      psiElement().atTopLevelOfDiagram(psiElement(MermaidTokens.GitGraph.GIT_GRAPH)),
+      psiElement().atTopLevelOfDiagram(psiElement(MermaidElements.GIT_GRAPH_HEADER)),
       GitGraphSimpleCompletionProvider()
     )
     extend(
@@ -286,6 +286,11 @@ class MermaidCompletionContributor : CompletionContributor() {
         psiElement(MermaidTokens.COLON)
       ),
       GitGraphCommitTypeCompletionProvider()
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().afterLeaf(psiElement(MermaidTokens.GitGraph.GIT_GRAPH)),
+      GitGraphDirectionCompletionProvider()
     )
     //endregion
 

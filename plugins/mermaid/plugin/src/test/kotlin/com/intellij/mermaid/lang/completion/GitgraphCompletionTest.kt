@@ -14,6 +14,8 @@ class GitgraphCompletionTest : MermaidBaseTestCase("completion/diagrams/gitgraph
 
   fun `test commit type`() = doTest("NORMAL", "REVERSE", "HIGHLIGHT")
 
+  fun `test dir`() = doTest("LR", "BT")
+
   private fun doTest(vararg variants: String) {
     val testName = getTestName(true)
     myFixture.testCompletionVariants("${testName}.mermaid", *variants)

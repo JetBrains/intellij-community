@@ -7,16 +7,16 @@ class GitGraphTest : MermaidLexerTestCase() {
   fun `test simple git graph`() {
     val content = """
     gitGraph
-     commit
-     commit
-     branch develop
-     checkout develop
-     commit
-     commit
-     checkout main
-     merge develop
-     commit
-     commit
+      commit
+      commit
+      branch develop
+      checkout develop
+      commit
+      commit
+      checkout main
+      merge develop
+      commit
+      commit
     """.trimIndent()
     doTest(content)
   }
@@ -89,6 +89,22 @@ class GitGraphTest : MermaidLexerTestCase() {
       commit
       checkout main
       merge "branch"
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test colon`() {
+    val content = """
+    gitGraph:
+      commit
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test dir`() {
+    val content = """
+    gitGraph LR:
+      commit
     """.trimIndent()
     doTest(content)
   }

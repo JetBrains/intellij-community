@@ -197,6 +197,9 @@ class GitGraphCommitCompletionProvider(private val keywords: List<String>) : Mer
 class GitGraphCommitTypeCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("NORMAL", "REVERSE", "HIGHLIGHT"))
 
+class GitGraphDirectionCompletionProvider :
+  MermaidSimpleCompletionProvider(listOf("LR", "BT"))
+
 
 class C4CompletionProvider : MermaidLiveTemplateCompletionProvider() {
   private val simpleKeywords = listOf(

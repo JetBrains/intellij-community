@@ -38,7 +38,7 @@ private diagram ::= pieHeader [pieDocument]
 	| ENTITY_RELATIONSHIP [erDocument]
 	| GANTT [ganttDocument]
 	| REQUIREMENT_DIAGRAM [requirementDocument]
-	| GIT_GRAPH [gitGraphDocument]
+	| gitGraphHeader [gitGraphDocument]
 	| c4Header c4Document
 	| MINDMAP mindmapDocument
 
@@ -413,6 +413,8 @@ relationshipDef ::= identifier ARROW_LEFT reqRelationship REQ_LINE identifier
 
 reqRelationship ::= CONTAINS | COPIES | DERIVES | SATISFIES | VERIFIES | REFINES | TRACES
 
+
+gitGraphHeader ::= GIT_GRAPH [DIR] COLON | GIT_GRAPH
 
 gitGraphDocument ::= gitGraphLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private gitGraphLines ::= gitGraphLine [gitGraphLines]

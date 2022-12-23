@@ -1,0 +1,7 @@
+GitGraph.GIT_GRAPH ('gitGraph')
+WHITE_SPACE (' ')
+DIR ('LR')
+COLON (':')
+EOL ('\n')
+WHITE_SPACE ('  ')
+GitGraph.COMMIT ('commit')

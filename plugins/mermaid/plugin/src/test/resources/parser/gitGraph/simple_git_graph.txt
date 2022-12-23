@@ -1,5 +1,6 @@
 FILE
-  PsiElement(GitGraph.GIT_GRAPH)('gitGraph')
+  MermaidGitGraphHeaderImpl(GIT_GRAPH_HEADER)
+    PsiElement(GitGraph.GIT_GRAPH)('gitGraph')
   MermaidGitGraphDocumentImpl(GIT_GRAPH_DOCUMENT)
     PsiElement(EOL)('\n')
     PsiWhiteSpace(' ')
