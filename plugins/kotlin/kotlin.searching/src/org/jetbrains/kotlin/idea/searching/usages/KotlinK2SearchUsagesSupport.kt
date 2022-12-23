@@ -11,9 +11,13 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.MethodSignatureUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
 import org.jetbrains.kotlin.analysis.api.analyzeWithReadAction
 import org.jetbrains.kotlin.analysis.api.calls.KtDelegatedConstructorCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -23,6 +27,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isInheritable
@@ -289,12 +294,25 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         }
     }
 
+    private fun noAnnotationsShortNameRenderer(): KtDeclarationRenderer {
+        return KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+            annotationRenderer = annotationRenderer.with {
+                annotationFilter = KtRendererAnnotationsFilter.NONE
+            }
+        }
+    }
+
     override fun formatJavaOrLightMethod(method: PsiMethod): String {
-        return "FORMAT JAVA OR LIGHT METHOD ${method.name}"
+        val unwrapped = method.unwrapped as KtDeclaration
+        return analyzeInModalWindow(unwrapped, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+            unwrapped.getSymbol().render(noAnnotationsShortNameRenderer())
+        }
     }
 
     override fun formatClass(classOrObject: KtClassOrObject): String {
-        return "FORMAT CLASS ${classOrObject.name}"
+        return analyzeInModalWindow(classOrObject, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+            classOrObject.getSymbol().render(noAnnotationsShortNameRenderer())
+        }
     }
 
     override fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration? {
