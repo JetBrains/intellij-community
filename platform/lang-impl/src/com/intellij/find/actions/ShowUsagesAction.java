@@ -410,7 +410,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     Project project = parameters.project;
-    UsageViewImpl usageView = createUsageView(project);
+    UsageViewImpl usageView = createUsageView(project, actionHandler.getTargetLanguage());
     ReadAction.nonBlocking(() -> actionHandler.getEventData()).submit(AppExecutorUtil.getAppExecutorService()).onSuccess(
       (eventData) -> UsageViewStatisticsCollector.logSearchStarted(project, usageView, CodeNavigateSource.ShowUsagesPopup, eventData));
     final SearchScope searchScope = actionHandler.getSelectedScope();
@@ -651,15 +651,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   }
 
   @NotNull
-  private static UsageViewImpl createUsageView(@NotNull Project project) {
-    UsageViewPresentation usageViewPresentation = new UsageViewPresentation();
-    usageViewPresentation.setDetachedMode(true);
-    return new UsageViewImpl(project, usageViewPresentation, UsageTarget.EMPTY_ARRAY, null) {
-      @Override
-      public @NotNull UsageViewSettings getUsageViewSettings() {
-        return ShowUsagesSettings.getInstance().getState();
-      }
-    };
+  private static UsageViewImpl createUsageView(@NotNull Project project, @Nullable Language targetLanguage) {
+    return project.getService(UsageViewPopupManager.class).createUsageViewPopup(targetLanguage);
   }
 
   private static @NotNull Predicate<? super Usage> originUsageCheck(@Nullable Editor editor) {
