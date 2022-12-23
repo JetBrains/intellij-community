@@ -77,20 +77,11 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
     CommentTracker beforeLastCommentTracker = new CommentTracker();
     for (PsiElement child : polyadicExpression.getChildren()) {
       if (!meetBeforeLast) {
-        if (beforeLast != child) {
-          builder.append(child.getText());
-          generalCommentTracker.markUnchanged(child);
-        }
-        else {
+        if (beforeLast == child) {
           meetBeforeLast = true;
-          if (!seenStringBefore) {
-            builder.append(buildReplacement(beforeLast, seenStringBefore, generalCommentTracker));
-          }
-          else {
-            builder.append(child.getText());
-            generalCommentTracker.markUnchanged(child);
-          }
         }
+        builder.append(child.getText());
+        generalCommentTracker.markUnchanged(child);
       }
       else {
         if (child instanceof PsiJavaToken token && token.getTokenType() == JavaTokenType.PLUS) {
@@ -103,7 +94,11 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
       }
     }
 
-    final PsiElement replacementExpression = generalCommentTracker.replaceAndRestoreComments(polyadicExpression, builder.toString().trim());
+    String text = builder.toString().trim();
+    if(!seenStringBefore){
+      text = "String.valueOf(" + text + ')';
+    }
+    final PsiElement replacementExpression = generalCommentTracker.replaceAndRestoreComments(polyadicExpression, text);
     if (replacementExpression instanceof PsiPolyadicExpression psiPolyadicExpression) {
       PsiExpression[] expressionOperands = psiPolyadicExpression.getOperands();
       if (expressionOperands.length == 0) {
