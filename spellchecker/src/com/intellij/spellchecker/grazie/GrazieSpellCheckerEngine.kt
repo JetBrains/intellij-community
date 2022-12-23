@@ -26,7 +26,6 @@ import com.intellij.spellchecker.grazie.async.WordListLoader
 import com.intellij.spellchecker.grazie.dictionary.ExtendedWordListWithFrequency
 import com.intellij.spellchecker.grazie.dictionary.WordListAdapter
 import com.intellij.util.containers.SLRUCache
-import kotlinx.coroutines.runBlocking
 
 internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
   override fun getTransformation(): Transformation = Transformation()
@@ -35,14 +34,14 @@ internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
 
   private val adapter = WordListAdapter()
 
-  private val mySpeller: GrazieAsyncSpeller = GrazieAsyncSpeller(project) {
+  private val speller: GrazieAsyncSpeller = GrazieAsyncSpeller(project) {
     GrazieSplittingSpeller(
       GrazieSpeller(createSpellerConfig()),
       GrazieSplittingSpeller.UserConfig()
     )
   }
 
-  private fun createSpellerConfig(): GrazieSpeller.UserConfig {
+  private suspend fun createSpellerConfig(): GrazieSpeller.UserConfig {
     val path = "/dictionary/en"
     val wordList = ExtendedWordListWithFrequency(
       HunspellWordList.create(
@@ -56,7 +55,7 @@ internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
       dictionary = wordList,
       rules = RuleDictionary.Aggregated(
         IgnoreRuleDictionary.standard(tooShortLength = 2),
-        runBlocking { DictionaryResources.getReplacingRules("/rule/en", FromResourcesDataLoader) }
+        DictionaryResources.getReplacingRules("/rule/en", FromResourcesDataLoader)
       ),
       isAlien = { !Alphabet.ENGLISH.matchAny(it) && adapter.isAlien(it) }
     )
@@ -76,7 +75,7 @@ internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
 
   private data class SuggestionsRequest(val word: String, val maxSuggestions: Int)
   private val suggestionsCache = SLRUCache.create<SuggestionsRequest, List<String>>(1024, 1024) { request ->
-    mySpeller.suggest(request.word, request.maxSuggestions).take(request.maxSuggestions)
+    speller.suggest(request.word, request.maxSuggestions).take(request.maxSuggestions)
   }
 
   override fun isDictionaryLoad(name: String) = adapter.containsSource(name)
@@ -96,14 +95,14 @@ internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
   }
 
   override fun isCorrect(word: String): Boolean {
-    if (mySpeller.isAlien(word)) return true
+    if (speller.isAlien(word)) return true
 
-    return mySpeller.isMisspelled(word, false).not()
+    return speller.isMisspelled(word, false).not()
   }
 
   override fun getSuggestions(word: String, maxSuggestions: Int, maxMetrics: Int): List<String> {
-    if (mySpeller.isCreated) {
-      return synchronized(mySpeller) {
+    if (speller.isCreated) {
+      return synchronized(speller) {
         suggestionsCache.get(SuggestionsRequest(word, maxSuggestions))
       }
     }
