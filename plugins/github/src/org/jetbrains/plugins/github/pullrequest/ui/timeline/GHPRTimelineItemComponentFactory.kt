@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.buildChildren
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.ColorUtil
@@ -34,6 +35,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -62,9 +64,12 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUt
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTitlePane
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
+import java.awt.Component
+import java.awt.Container
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
@@ -303,12 +308,60 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       }
     }
 
+    val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
+                                                                     reviewDataProvider, avatarIconsProvider,
+                                                                     suggestedChangeHelper,
+                                                                     CodeReviewChatItemUIUtil.ComponentType.FULL_SECONDARY,
+                                                                     false,
+                                                                     CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
+
+
+    val commentsListPanel = ComponentListPanelFactory.createVertical(thread.repliesModel, commentComponentFactory, 0)
+
+    val commentsPanel = if (reviewDataProvider.canComment()) {
+      val actionsComponent = GHPRReviewThreadComponent
+        .createUncollapsedThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser) {}.let {
+          CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
+        }.apply {
+          border = JBUI.Borders.empty(CodeReviewChatItemUIUtil.ComponentType.FULL_SECONDARY.inputPaddingInsets)
+        }
+
+      VerticalListPanel().apply {
+        add(commentsListPanel)
+        add(actionsComponent)
+
+        focusTraversalPolicy = object : LayoutFocusTraversalPolicy() {
+          override fun getDefaultComponent(aContainer: Container?): Component? {
+            return if (aContainer == this@apply) {
+              IdeFocusManager.findInstanceByComponent(aContainer).getFocusTargetFor(actionsComponent)
+            }
+            else {
+              super.getDefaultComponent(aContainer)
+            }
+          }
+        }
+      }
+    }
+    else {
+      commentsListPanel
+    }
+
     val collapsedThreadActionsComponent = GHPRReviewThreadComponent
-      .getCollapsedThreadActionsComponent(reviewDataProvider, avatarIconsProvider, thread, repliesCollapsedState, ghostUser).let {
+      .getCollapsedThreadActionsComponent(reviewDataProvider, avatarIconsProvider, thread, ghostUser) {
+        repliesCollapsedState.update { !it }
+        CollaborationToolsUIUtil.focusPanel(commentsPanel)
+      }.let {
         CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
       }.apply {
         border = JBUI.Borders.empty(3, 0, 7, 0)
       }
+
+    coroutineScopeProvider.launchInScope {
+      repliesCollapsedState.collect {
+        collapsedThreadActionsComponent.isVisible = it
+        commentsPanel.isVisible = !it
+      }
+    }
 
     val content = VerticalListPanel(6).apply {
       coroutineScopeProvider.launchInScope {
@@ -348,40 +401,6 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val mainItem = buildTimelineItem(avatarIconsProvider, actor, content) {
       withHeader(titlePanel, actionsPanel)
       maxContentWidth = null
-    }
-
-    val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
-                                                                     reviewDataProvider, avatarIconsProvider,
-                                                                     suggestedChangeHelper,
-                                                                     CodeReviewChatItemUIUtil.ComponentType.FULL_SECONDARY,
-                                                                     false,
-                                                                     CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
-
-
-    val commentsListPanel = ComponentListPanelFactory.createVertical(thread.repliesModel, commentComponentFactory, 0)
-
-    val commentsPanel = if (reviewDataProvider.canComment()) {
-      val actionsComponent = GHPRReviewThreadComponent
-        .createUncollapsedThreadActionsComponent(project, reviewDataProvider, thread, avatarIconsProvider, currentUser) {}.let {
-          CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
-        }.apply {
-          border = JBUI.Borders.empty(CodeReviewChatItemUIUtil.ComponentType.FULL_SECONDARY.inputPaddingInsets)
-        }
-
-      VerticalListPanel().apply {
-        add(commentsListPanel)
-        add(actionsComponent)
-      }
-    }
-    else {
-      commentsListPanel
-    }
-
-    coroutineScopeProvider.launchInScope {
-      repliesCollapsedState.collect {
-        collapsedThreadActionsComponent.isVisible = it
-        commentsPanel.isVisible = !it
-      }
     }
 
     return VerticalListPanel().apply {

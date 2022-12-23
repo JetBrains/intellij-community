@@ -197,11 +197,11 @@ object GHPRReviewThreadComponent {
   fun getCollapsedThreadActionsComponent(reviewDataProvider: GHPRReviewDataProvider,
                                          avatarIconsProvider: GHAvatarIconsProvider,
                                          thread: GHPRReviewThreadModel,
-                                         repliesCollapsedState: MutableStateFlow<Boolean>,
-                                         ghostUser: GHUser): JComponent {
+                                         ghostUser: GHUser,
+                                         onReply: () -> Unit): JComponent {
     val authorsLabel = JLabel()
     val repliesLink = LinkLabel<Any>("", null, LinkListener { _, _ ->
-      repliesCollapsedState.update { !it }
+      onReply()
     })
     val lastReplyDateLabel = JLabel().apply {
       foreground = UIUtil.getContextHelpForeground()
