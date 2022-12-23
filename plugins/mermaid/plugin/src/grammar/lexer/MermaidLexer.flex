@@ -556,20 +556,41 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 //---entity-relationship----------------------------------------------------------
 <entity_relationship> {
-	[a-zA-Z][\w\-\.]* { return ID; }
-  [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+  "|o" |
+  "o|" |
+  "one or zero" |
+  "zero or one" { return EntityRelationship.ZERO_OR_ONE; }
 
-  \|o { return EntityRelationship.ZERO_OR_ONE_LEFT; }
-  \}o { return EntityRelationship.ZERO_OR_MORE_LEFT; }
-  \}\| { return EntityRelationship.ONE_OR_MORE_LEFT; }
-  \|\| {return EntityRelationship.ONLY_ONE; }
-  o\| { return EntityRelationship.ZERO_OR_ONE_RIGHT; }
-  o\{ { return EntityRelationship.ZERO_OR_MORE_RIGHT; }
-  \|\{ { return EntityRelationship.ONE_OR_MORE_RIGHT; }
-  \-\- { return EntityRelationship.IDENTIFYING; }
-  \.\. { return EntityRelationship.NON_IDENTIFYING; }
-  \.\- { return EntityRelationship.NON_IDENTIFYING; }
-  \-\. { return EntityRelationship.NON_IDENTIFYING; }
+  "}|" |
+  "|{" |
+  "1+" |
+  "one or more" |
+  "one or many" |
+  "many(1)" { return EntityRelationship.ONE_OR_MORE; }
+
+  "}o" |
+  "o{" |
+  "zero or more" |
+  "zero or many" |
+  "0+" |
+  "many(0)" |
+  "many"  { return EntityRelationship.ZERO_OR_MORE; }
+
+  "||" |
+  "one" |
+  "only one" |
+  "1" { return EntityRelationship.ONLY_ONE; }
+
+  "--" |
+  "to" { return EntityRelationship.IDENTIFYING; }
+
+  ".." |
+  ".-" |
+  "-." |
+  "optionally to" { return EntityRelationship.NON_IDENTIFYING; }
+
+  [a-zA-Z][\w\-\.]* { return ID; }
+  [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
 
   ":" { yypushstate(relationship_description); return COLON; }
   "{" { yybegin(entity_attributes); return OPEN_CURLY; }

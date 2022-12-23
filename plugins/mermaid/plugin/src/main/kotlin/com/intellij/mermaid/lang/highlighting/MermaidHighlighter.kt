@@ -115,13 +115,10 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     return when (tokenType) {
       MermaidTokens.EntityRelationship.ENTITY_RELATIONSHIP -> arrayOf(MermaidTextAttributes.keyword)
 
-      MermaidTokens.EntityRelationship.ZERO_OR_ONE_LEFT,
-      MermaidTokens.EntityRelationship.ONE_OR_MORE_LEFT,
-      MermaidTokens.EntityRelationship.ZERO_OR_MORE_LEFT,
+      MermaidTokens.EntityRelationship.ZERO_OR_ONE,
+      MermaidTokens.EntityRelationship.ONE_OR_MORE,
+      MermaidTokens.EntityRelationship.ZERO_OR_MORE,
       MermaidTokens.EntityRelationship.ONLY_ONE,
-      MermaidTokens.EntityRelationship.ZERO_OR_ONE_RIGHT,
-      MermaidTokens.EntityRelationship.ONE_OR_MORE_RIGHT,
-      MermaidTokens.EntityRelationship.ZERO_OR_MORE_RIGHT,
       MermaidTokens.EntityRelationship.IDENTIFYING,
       MermaidTokens.EntityRelationship.NON_IDENTIFYING -> arrayOf(MermaidTextAttributes.operationSign)
 

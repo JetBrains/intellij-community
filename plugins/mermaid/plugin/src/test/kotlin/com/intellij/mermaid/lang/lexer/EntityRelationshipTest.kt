@@ -68,4 +68,14 @@ class EntityRelationshipTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test cardinality aliases`() {
+    val content = """
+    erDiagram
+      CUSTOMER only one -- zero or many ORDER : places
+      ORDER one to one or more LINE-ITEM : contains
+      CUSTOMER }| optionally to |{ DELIVERY-ADDRESS : uses
+    """.trimIndent()
+    doTest(content)
+  }
 }

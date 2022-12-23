@@ -477,25 +477,16 @@ object MermaidTokens {
     val ENTITY_RELATIONSHIP = MermaidToken("EntityRelationship.ENTITY_RELATIONSHIP")
 
     @JvmField
-    val ZERO_OR_ONE_LEFT = MermaidToken("EntityRelationship.ZERO_OR_ONE_LEFT")
+    val ZERO_OR_ONE = MermaidToken("EntityRelationship.ZERO_OR_ONE")
 
     @JvmField
-    val ONE_OR_MORE_LEFT = MermaidToken("EntityRelationship.ONE_OR_MORE_LEFT")
+    val ONE_OR_MORE = MermaidToken("EntityRelationship.ONE_OR_MORE")
+
+    @JvmField
+    val ZERO_OR_MORE = MermaidToken("EntityRelationship.ZERO_OR_MORE")
 
     @JvmField
     val ONLY_ONE = MermaidToken("EntityRelationship.ONLY_ONE")
-
-    @JvmField
-    val ZERO_OR_MORE_LEFT = MermaidToken("EntityRelationship.ZERO_OR_MORE_LEFT")
-
-    @JvmField
-    val ZERO_OR_ONE_RIGHT = MermaidToken("EntityRelationship.ZERO_OR_ONE_RIGHT")
-
-    @JvmField
-    val ONE_OR_MORE_RIGHT = MermaidToken("EntityRelationship.ONE_OR_MORE_RIGHT")
-
-    @JvmField
-    val ZERO_OR_MORE_RIGHT = MermaidToken("EntityRelationship.ZERO_OR_MORE_RIGHT")
 
     @JvmField
     val IDENTIFYING = MermaidToken("EntityRelationship.IDENTIFYING")

@@ -335,9 +335,8 @@ erIdentifier ::= ID | string {
 
 entityDeclaration ::= erIdentifier OPEN_CURLY EOL erAttributesDocument? CLOSE_CURLY
 
-relationship ::= relationshipLeft (IDENTIFYING | NON_IDENTIFYING) relationshipRight
-private relationshipLeft ::= ZERO_OR_ONE_LEFT | ONE_OR_MORE_LEFT | ZERO_OR_MORE_LEFT | ONLY_ONE
-private relationshipRight ::= ZERO_OR_ONE_RIGHT | ONE_OR_MORE_RIGHT | ZERO_OR_MORE_RIGHT | ONLY_ONE
+relationship ::= erCardinality (IDENTIFYING | NON_IDENTIFYING) erCardinality
+private erCardinality ::= ZERO_OR_ONE | ONE_OR_MORE | ZERO_OR_MORE | ONLY_ONE
 
 erAttributesDocument ::= erAttributesLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramInBracesDocument" }
 private erAttributesLines ::= erAttributeLine [erAttributesLines]
