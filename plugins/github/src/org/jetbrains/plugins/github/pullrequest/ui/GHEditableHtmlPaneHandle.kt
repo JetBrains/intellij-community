@@ -84,7 +84,7 @@ internal class GHEditableHtmlPaneHandle(private val project: Project,
       with(panel) {
         layout = BorderLayout()
         add(editor!!, BorderLayout.CENTER)
-        validate()
+        revalidate()
         repaint()
       }
     }
@@ -101,7 +101,7 @@ internal class GHEditableHtmlPaneHandle(private val project: Project,
     with(panel) {
       layout = paneLayout
       add(paneComponent)
-      validate()
+      revalidate()
       repaint()
     }
     editor = null
