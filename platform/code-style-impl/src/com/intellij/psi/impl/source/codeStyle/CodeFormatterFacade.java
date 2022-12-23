@@ -151,7 +151,7 @@ public class CodeFormatterFacade {
     final Project project = file.getProject();
     Document document = file.getViewProvider().getDocument();
     final List<FormatTextRange> textRanges = ranges.getRanges();
-    if (document instanceof DocumentWindow && InjectedFormattingOptionsService.getInstance().shouldDelegateToTopLevel(file)) {
+    if (document instanceof DocumentWindow && shouldDelegateToTopLevel(file)) {
       file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
       final DocumentWindow documentWindow = (DocumentWindow)document;
       for (FormatTextRange range : textRanges) {
@@ -463,6 +463,15 @@ public class CodeFormatterFacade {
     List<TextRange> enabledRanges = formatterTagHandler.getEnabledRanges(file.getNode(), new TextRange(startOffset, endOffset));
 
     myEditorFacade.wrapLongLinesIfNecessary(file, document, startOffset, endOffset, enabledRanges, rightMargin);
+  }
+
+  private static boolean shouldDelegateToTopLevel(@NotNull PsiFile file) {
+    for (var provider: InjectedFormattingOptionsProvider.EP_NAME.getExtensions()) {
+      var result = provider.shouldDelegateToTopLevel(file);
+      if (result == null) continue;
+      return result;
+    }
+    return true;
   }
 }
 
