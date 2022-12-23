@@ -20,7 +20,7 @@ internal object MermaidSpacingBuilder {
     MermaidTokens.Flowchart.SUBGRAPH,
     MermaidTokens.Flowchart.STYLE,
     MermaidTokens.Flowchart.LINK_STYLE,
-    MermaidTokens.Flowchart.CLASS_DEF,
+    MermaidTokens.CLASS_DEF,
     MermaidTokens.CLASS,
     MermaidElements.NODE_STATEMENT
   )

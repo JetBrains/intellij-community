@@ -18,4 +18,6 @@ class StateTest : MermaidParserTestCase("state") {
   fun `test direction`() = doTest(true)
 
   fun `test comments`() = doTest(true)
+
+  fun `test class def`() = doTest(true)
 }

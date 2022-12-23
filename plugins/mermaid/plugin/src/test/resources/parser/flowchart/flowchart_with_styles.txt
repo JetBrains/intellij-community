@@ -150,7 +150,7 @@ FILE
     PsiWhiteSpace('  ')
     MermaidFlowchartStatementImpl(FLOWCHART_STATEMENT)
       MermaidClassDefStatementImpl(CLASS_DEF_STATEMENT)
-        PsiElement(Flowchart.CLASS_DEF)('classDef')
+        PsiElement(CLASS_DEF)('classDef')
         PsiWhiteSpace(' ')
         PsiElement(Flowchart.STYLE_TARGET)('someclass')
         PsiWhiteSpace(' ')

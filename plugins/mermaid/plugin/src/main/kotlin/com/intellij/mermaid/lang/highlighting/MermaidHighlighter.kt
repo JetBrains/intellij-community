@@ -34,7 +34,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       MermaidTokens.Flowchart.SUBGRAPH,
       MermaidTokens.Flowchart.STYLE,
       MermaidTokens.Flowchart.STYLE_OPT,
-      MermaidTokens.Flowchart.CLASS_DEF -> arrayOf(MermaidTextAttributes.keyword)
+      MermaidTokens.CLASS_DEF -> arrayOf(MermaidTextAttributes.keyword)
 
       MermaidTokens.Flowchart.START_ARROW -> arrayOf(MermaidTextAttributes.operationSign)
 

@@ -289,6 +289,8 @@ stateDiagramStatement ::= stateDeclaration
   | stateId ARROW stateId [COLON complexLabel]
   | stateId
   | stateNote
+  | stateClassDefStatement
+  | cssClassStatement
   | directionStatement
   | directive
 	| accStatement
@@ -305,7 +307,7 @@ private innerStateDiagramStatement ::= stateDiagramStatement | dividerStatement
 
 dividerStatement ::= DIVIDER
 
-private stateId ::= identifier | specialState
+private stateId ::= identifier [STYLE_SEPARATOR identifier] | specialState [STYLE_SEPARATOR identifier]
 specialState ::= OPEN_SQUARE STAR CLOSE_SQUARE
 description ::= string
 
@@ -318,6 +320,11 @@ simpleNoteContent ::= NOTE_CONTENT+
 complexNoteContent ::= noteLines
 private noteLines ::= noteLine [noteLines]
 private noteLine ::= simpleNoteContent [EOL] | EOL
+
+stateClassDefStatement ::= CLASS_DEF CLASS_DEF_ID CLASS_DEF_STYLE_OPTS
+  | CLASS_DEF DEFAULT CLASS_DEF_STYLE_OPTS
+
+cssClassStatement ::= CLASS CLASS_ENTITY_IDS STYLE_CLASS
 
 
 erDocument ::= erLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }

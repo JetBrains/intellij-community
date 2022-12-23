@@ -124,4 +124,21 @@ class StateTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test class def`() {
+    val content = """
+    stateDiagram-v2
+      [*] --> A
+      A --> B: test({ foo#colon; 'far' })
+      B --> [*]
+      classDef badBadEvent fill:#f00,color:white,font-weight:bold 
+      class B badBadEvent
+
+      classDef yourState font-style:italic,font-weight:bold,fill:white
+
+      yswsii: Your state with spaces in it
+      [*] --> yswsii:::yourState
+    """.trimIndent()
+    doTest(content)
+  }
 }

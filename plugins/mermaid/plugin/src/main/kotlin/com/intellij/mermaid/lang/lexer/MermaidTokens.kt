@@ -220,6 +220,12 @@ object MermaidTokens {
   @JvmField
   val FRONTMATTER = MermaidToken("FRONTMATTER")
 
+  @JvmField
+  val DEFAULT = MermaidToken("DEFAULT")
+
+  @JvmField
+  val CLASS_DEF = MermaidToken("CLASS_DEF")
+
   object Pie {
     @JvmField
     val PIE = MermaidToken("Pie.PIE")
@@ -326,12 +332,6 @@ object MermaidTokens {
 
     @JvmField
     val STYLE_VAL = MermaidToken("Flowchart.STYLE_VAL")
-
-    @JvmField
-    val CLASS_DEF = MermaidToken("Flowchart.CLASS_DEF")
-
-    @JvmField
-    val DEFAULT = MermaidToken("Flowchart.DEFAULT")
   }
 
   object Sequence {
@@ -470,6 +470,27 @@ object MermaidTokens {
 
     @JvmField
     val DIVIDER = MermaidToken("StateDiagram.DIVIDER")
+
+    @JvmField
+    val CLASS_DEF_ID = MermaidToken("StateDiagram.CLASS_DEF_ID")
+
+    @JvmField
+    val CLASS_DEF_STYLE_OPTS = MermaidToken("StateDiagram.CLASS_DEF_STYLE_OPTS")
+
+    @JvmField
+    val CLASS_ENTITY_IDS = MermaidToken("StateDiagram.CLASS_ENTITY_IDS")
+
+    @JvmField
+    val STYLE_CLASS = MermaidToken("StateDiagram.STYLE_CLASS")
+
+    @JvmField
+    val SCALE = MermaidToken("StateDiagram.SCALE")
+
+    @JvmField
+    val WIDTH = MermaidToken("StateDiagram.WIDTH")
+
+    @JvmField
+    val WIDTH_VALUE = MermaidToken("StateDiagram.WIDTH_VALUE")
   }
 
   object EntityRelationship {
