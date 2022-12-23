@@ -125,7 +125,7 @@ object GHPRReviewThreadComponent {
     val unResolveLink = createUnResolveLink(reviewDataProvider, thread)
 
     return HorizontalListPanel(8).apply {
-      border = JBUI.Borders.empty(INLAY_COMPONENT_TYPE.contentLeftShift)
+      border = JBUI.Borders.emptyLeft(INLAY_COMPONENT_TYPE.contentLeftShift)
 
       add(toggleReplyLink)
       add(unResolveLink)
