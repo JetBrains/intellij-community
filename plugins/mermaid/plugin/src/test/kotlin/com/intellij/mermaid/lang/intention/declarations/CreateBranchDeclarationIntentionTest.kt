@@ -8,6 +8,8 @@ class CreateBranchDeclarationIntentionTest : MermaidBaseTestCase("intention/decl
 
   fun `test checkout`() = doTest()
 
+  fun `test quoted`() = doTest()
+
   private fun doTest() {
     val testName = getTestName(true)
     myFixture.configureByFile("${testName}_before.mermaid")

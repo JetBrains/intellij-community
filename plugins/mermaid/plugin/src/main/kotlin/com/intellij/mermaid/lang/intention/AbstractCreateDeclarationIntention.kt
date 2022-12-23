@@ -10,7 +10,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 
-abstract class AbstractCreateDeclarationIntention(private val className: String) : BaseElementAtCaretIntentionAction() {
+abstract class AbstractCreateDeclarationIntention(private val className: String, private val isQuoted: Boolean = false) :
+  BaseElementAtCaretIntentionAction() {
   abstract fun createDeclarationPsiElement(project: Project, name: String): PsiElement?
 
   override fun getFamilyName() = MermaidBundle.message("fix.create.declaration")
@@ -24,7 +25,14 @@ abstract class AbstractCreateDeclarationIntention(private val className: String)
   private fun createDeclaration(project: Project, element: PsiElement) {
     val statement = element.parentOfType(type = STATEMENTS) ?: return
     val document = element.parentOfType(type = DIAGRAM_DOCUMENTS) ?: return
-    val declaration = createDeclarationPsiElement(project, className.replace(" ", "\\\\ "))
+
+    val name = buildString {
+      if (isQuoted) append("\"")
+      append(className.replace(" ", "\\\\ "))
+      if (isQuoted) append("\"")
+    }
+
+    val declaration = createDeclarationPsiElement(project, name)
       ?: return
 
     document.addBefore(declaration, statement)

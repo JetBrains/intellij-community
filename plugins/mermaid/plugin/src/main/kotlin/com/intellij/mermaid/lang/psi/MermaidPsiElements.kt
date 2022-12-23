@@ -19,6 +19,13 @@ interface MermaidClassDiagramIdentifierHolder : PsiElement {
 
 interface MermaidClassDiagramIdentifierDeclarationHolder : MermaidClassDiagramIdentifierHolder
 
+interface MermaidGitGraphBranchIdentifierHolder : PsiElement {
+  val gitGraphBranchIdentifier: MermaidGitGraphBranchIdentifier
+}
+
+fun MermaidGitGraphBranchIdentifierHolder.identifier() = gitGraphBranchIdentifier.identifier ?: gitGraphBranchIdentifier.quotedBranchIdentifier!!
+fun MermaidGitGraphBranchIdentifierHolder.isQuoted() = gitGraphBranchIdentifier.quotedBranchIdentifier != null
+
 interface MermaidPsiElement : NavigatablePsiElement
 
 @Suppress("UnstableApiUsage")

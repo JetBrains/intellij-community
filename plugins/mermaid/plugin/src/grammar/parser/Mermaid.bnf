@@ -425,10 +425,22 @@ gitGraphStatement ::= commitStatement
 	| directive
 	| accStatement
 
-branchStatement ::= BRANCH identifier [branchOrder]
+gitGraphBranchIdentifier ::= identifier | DOUBLE_QUOTE quotedBranchIdentifier DOUBLE_QUOTE
+quotedBranchIdentifier ::= STRING_VALUE {
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
+
+
+branchStatement ::= BRANCH gitGraphBranchIdentifier [branchOrder] {
+  implements="com.intellij.mermaid.lang.psi.MermaidGitGraphBranchIdentifierHolder"
+}
 cherryPickStatement ::= CHERRY_PICK cherryPickAttributes
-mergeStatement ::= MERGE identifier [commitAttributes]
-checkoutStatement ::= CHECKOUT identifier
+mergeStatement ::= MERGE gitGraphBranchIdentifier [commitAttributes] {
+  implements="com.intellij.mermaid.lang.psi.MermaidGitGraphBranchIdentifierHolder"
+}
+checkoutStatement ::= CHECKOUT gitGraphBranchIdentifier {
+  implements="com.intellij.mermaid.lang.psi.MermaidGitGraphBranchIdentifierHolder"
+}
 commitStatement ::=
     COMMIT commitAttributesWithMsg
   | COMMIT [commit_arg]

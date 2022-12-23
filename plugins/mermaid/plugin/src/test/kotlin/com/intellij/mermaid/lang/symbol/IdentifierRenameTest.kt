@@ -22,6 +22,8 @@ class IdentifierRenameTest : MermaidBaseTestCase("symbol/rename") {
 
   fun `test rename several declarations`() = doTest()
 
+  fun `test rename quoted`() = doTest()
+
   private fun doTest() {
     val testName = getTestName(true)
     val before = testName + "_before.mermaid"

@@ -79,4 +79,17 @@ class GitGraphTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test quoted branch names`() {
+    val content = """
+    gitGraph
+      commit
+      branch "branch"
+      checkout "branch"
+      commit
+      checkout main
+      merge "branch"
+    """.trimIndent()
+    doTest(content)
+  }
 }

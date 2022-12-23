@@ -33,11 +33,8 @@ class GitGraphAnnotator : Annotator {
     }
   }
 
-  private fun annotateUnresolvedBranch(element: PsiElement, holder: AnnotationHolder) {
-    val identifier =
-      (element as? MermaidMergeStatement)?.identifier
-        ?: (element as? MermaidCheckoutStatement)?.identifier
-        ?: return
+  private fun annotateUnresolvedBranch(element: MermaidGitGraphBranchIdentifierHolder, holder: AnnotationHolder) {
+    val identifier = element.identifier()
 
     if (identifier.textMatches(MAIN)) return
 
@@ -48,7 +45,7 @@ class GitGraphAnnotator : Annotator {
       .filterIsInstance<MermaidGitGraphStatement>()
       .map { it.firstChild }
       .filterIsInstance<MermaidBranchStatement>()
-      .map { it.identifier }
+      .map { it.identifier() }
       .filter { identifier.textMatches(it) }
 
     if (matchingIds.toList().isNotEmpty()) {
@@ -58,7 +55,7 @@ class GitGraphAnnotator : Annotator {
     holder.newAnnotation(HighlightSeverity.ERROR, MermaidBundle.message("annotator.unresolved.branch"))
       .range(identifier.textRange)
       .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL)
-      .withFix(CreateBranchDeclarationIntention(identifier.text))
+      .withFix(CreateBranchDeclarationIntention(identifier.text, element.isQuoted()))
       .create()
   }
 
@@ -157,7 +154,7 @@ class GitGraphAnnotator : Annotator {
   }
 
   private fun annotateConflictingBranch(element: MermaidBranchStatement, holder: AnnotationHolder) {
-    val identifier = element.identifier
+    val identifier = element.identifier()
 
     if (identifier.textMatches(MAIN)) {
       addConflictingBranchAnnotation(holder, identifier.textRange)
@@ -173,7 +170,7 @@ class GitGraphAnnotator : Annotator {
     val matchingIds = siblings
       .filterIsInstance<MermaidBranchStatement>()
       .filter { it != element }
-      .map { it.identifier }
+      .map { it.identifier() }
       .filter { identifier.textMatches(it) }
 
     if (matchingIds.none()) {
@@ -190,8 +187,8 @@ class GitGraphAnnotator : Annotator {
       .create()
   }
 
-  private class CreateBranchDeclarationIntention(@SafeFieldForPreview private val className: String) :
-    AbstractCreateDeclarationIntention(className) {
+  private class CreateBranchDeclarationIntention(@SafeFieldForPreview private val className: String, isQuoted: Boolean) :
+    AbstractCreateDeclarationIntention(className, isQuoted) {
     override fun getText(): String = MermaidBundle.message("fix.create.branch.declaration", className)
 
     override fun createDeclarationPsiElement(project: Project, name: String) = createBranchStatement(project, name)

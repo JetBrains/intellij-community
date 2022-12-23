@@ -14,4 +14,6 @@ class GitGraphTest : MermaidParserTestCase("gitGraph") {
   fun `test order`() = doTest(true)
 
   fun `test merge`() = doTest(true)
+
+  fun `test quoted branch names`() = doTest(true)
 }
