@@ -10,8 +10,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Objects;
 
-import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.info;
-import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.verbose;
+import static org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.info;
+import static org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.verbose;
 
 public final class KotlinCompiler {
   private static final String KOTLIN_IDE_MAVEN_REPOSITORY_URL = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies";

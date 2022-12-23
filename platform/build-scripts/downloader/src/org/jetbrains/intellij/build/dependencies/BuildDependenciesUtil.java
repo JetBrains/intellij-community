@@ -42,10 +42,12 @@ public final class BuildDependenciesUtil {
 
   private static final boolean isPosix = FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
   private static final int octal_0111 = Integer.parseInt("111", 8);
-  private static final boolean isWindows = System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("windows");
+  public static final boolean isWindows = System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("windows");
+
+  public static final boolean underTeamCity = System.getenv("TEAMCITY_VERSION") != null;
 
   @SuppressWarnings("HttpUrlsUsage")
-  private static DocumentBuilder createDocumentBuilder() {
+  public static DocumentBuilder createDocumentBuilder() {
     // from https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html#jaxp-documentbuilderfactory-saxparserfactory-and-dom4j
 
     DocumentBuilderFactory dbf = DocumentBuilderFactory.newDefaultInstance();
@@ -93,7 +95,7 @@ public final class BuildDependenciesUtil {
     }
   }
 
-  private static Element getSingleChildElement(Element parent, String tagName) {
+  public static Element getSingleChildElement(Element parent, String tagName) {
     NodeList childNodes = parent.getChildNodes();
 
     ArrayList<Element> result = new ArrayList<>();

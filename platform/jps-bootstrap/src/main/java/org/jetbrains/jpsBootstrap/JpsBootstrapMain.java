@@ -15,6 +15,7 @@ import org.apache.commons.cli.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging;
 import org.jetbrains.intellij.build.dependencies.JdkDownloader;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.JpsModel;
@@ -32,7 +33,10 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.stream.Collectors;
 
-import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.*;
+import static org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.*;
+import static org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.underTeamCity;
+import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.getTeamCitySystemProperties;
+import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.toBooleanChecked;
 
 @SuppressWarnings({"SameParameterValue"})
 public class JpsBootstrapMain {
@@ -141,7 +145,7 @@ public class JpsBootstrapMain {
     }
 
     String verboseEnv = System.getenv(JPS_BOOTSTRAP_VERBOSE);
-    JpsBootstrapUtil.setVerboseEnabled(cmdline.hasOption(OPT_VERBOSE) || (verboseEnv != null && toBooleanChecked(verboseEnv)));
+    BuildDependenciesLogging.setVerboseEnabled(cmdline.hasOption(OPT_VERBOSE) || (verboseEnv != null && toBooleanChecked(verboseEnv)));
 
     String communityHomeString = System.getenv(COMMUNITY_HOME_ENV);
     if (communityHomeString == null) {
@@ -159,7 +163,7 @@ public class JpsBootstrapMain {
 
   private Path downloadJdk() {
     Path jdkHome;
-    if (JpsBootstrapUtil.underTeamCity) {
+    if (underTeamCity) {
       jdkHome = JdkDownloader.getJdkHome(communityHome);
       SetParameterServiceMessage setParameterServiceMessage = new SetParameterServiceMessage(
         "jps.bootstrap.java.home", jdkHome.toString()
