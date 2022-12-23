@@ -263,6 +263,15 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   override val windows: Array<EditorWindow>
     get() = emptyArray()
 
+  override fun getSelectedEditor(file: VirtualFile): FileEditor? {
+    if (!isCurrentlyUnderLocalId) {
+      return clientFileEditorManager?.getSelectedEditor()
+    }
+
+    getEditor(file)?.let { return TextEditorProvider.getInstance().getTextEditor(it) }
+    return testEditorSplitter.getEditorAndProvider(file)?.first
+  }
+
   override fun getSelectedEditorWithRemotes(): Array<FileEditor> {
     val result: MutableList<FileEditor> = ArrayList()
     Collections.addAll(result, *selectedEditors)
