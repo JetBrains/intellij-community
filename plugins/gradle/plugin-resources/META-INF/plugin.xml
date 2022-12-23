@@ -103,6 +103,9 @@
     <externalExecutionAware id="gradle" key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware"/>
     <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationExtension" order="last"/>
 
+    <externalSystemTaskNotificationListener
+      implementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager$BuildLayoutParametersCacheCleanupListener"/>
+
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManager"
                         serviceImplementation="org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManagerImpl"/>
@@ -182,6 +185,13 @@
     <statistics.notificationIdsHolder implementation="org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder"/>
     <iconMapper mappingFile="GradleIconMappings.json"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="org.jetbrains.plugins.gradle.service.GradleInstallationManager$BuildLayoutParametersCacheCleanupListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    <listener class="org.jetbrains.plugins.gradle.service.GradleInstallationManager$BuildLayoutParametersCacheCleanupListener"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+  </applicationListeners>
 
   <actions>
     <group id="Gradle.GenerateGroup">
