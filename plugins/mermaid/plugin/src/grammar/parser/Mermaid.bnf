@@ -355,6 +355,7 @@ ganttStatement ::= DATE_FORMAT
   | INCLUDES
   | AXIS_FORMAT
   | TODAY_MARKER
+  | TICK_INTERVAL
   | ganttSectionStatement
   | ganttDataStatement
 	| directive

@@ -77,4 +77,12 @@ class GanttTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test tickInterval`() {
+    val content = """
+    gantt
+      tickInterval 1day
+    """.trimIndent()
+    doTest(content)
+  }
 }

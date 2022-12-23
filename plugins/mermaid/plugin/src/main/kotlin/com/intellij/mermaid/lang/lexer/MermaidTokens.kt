@@ -517,6 +517,9 @@ object MermaidTokens {
 
     @JvmField
     val TODAY_MARKER = MermaidToken("Gantt.TODAY_MARKER")
+
+    @JvmField
+    val TICK_INTERVAL = MermaidToken("Gantt.TICK_INTERVAL")
   }
 
   object Requirement {

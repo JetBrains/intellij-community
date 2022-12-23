@@ -1,0 +1,4 @@
+Gantt.GANTT ('gantt')
+EOL ('\n')
+WHITE_SPACE ('  ')
+Gantt.TICK_INTERVAL ('tickInterval 1day')

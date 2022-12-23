@@ -8,4 +8,6 @@ class GanttTest : MermaidParserTestCase("gantt") {
   fun `test click statements`() = doTest(true)
 
   fun `test today marker`() = doTest(true)
+
+  fun `test tick interval`() = doTest(true)
 }
