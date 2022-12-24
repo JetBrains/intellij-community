@@ -323,14 +323,19 @@ internal class CallExpressionWeigher(element: KtNameReferenceExpression?) {
         val receiverExpression = element?.getParentOfType<KtQualifiedExpression>(false)?.receiverExpression ?: element?.getParentOfType<KtLambdaExpression>(false)
         receiverType = if (receiverExpression != null) {
             val context = receiverExpression.analyze(BodyResolveMode.PARTIAL)
-            if (receiverExpression is KtLambdaExpression) {
+            val type = if (receiverExpression is KtLambdaExpression) {
                 val functionDescriptor = context[BindingContext.FUNCTION, receiverExpression.functionLiteral]
                 functionDescriptor?.extensionReceiverParameter?.type ?: receiverExpression.getParentOfType<KtClassOrObject>(false)
                     ?.resolveToDescriptorIfAny()?.defaultType
             } else {
                 receiverExpression.getType(context)
             }
-            //type?.takeIf { it.isMarkedNullable }?.makeNotNullable() ?: type
+            // use non-nullable type if safe call is used i.e `val value: T? = ...; value?.smth()`
+            if (receiverExpression.parent is KtSafeQualifiedExpression) {
+                type?.makeNotNullable()
+            } else {
+                type
+            }
         } else {
             null
         }

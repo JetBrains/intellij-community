@@ -108,6 +108,11 @@ public class KotlinAddImportActionTestGenerated extends AbstractKotlinAddImportA
         runTest("testData/idea/actions/kotlinAddImportAction/Nullable2.kt");
     }
 
+    @TestMetadata("Nullable3.kt")
+    public void testNullable3() throws Exception {
+        runTest("testData/idea/actions/kotlinAddImportAction/Nullable3.kt");
+    }
+
     @TestMetadata("OverloadsPresent.kt")
     public void testOverloadsPresent() throws Exception {
         runTest("testData/idea/actions/kotlinAddImportAction/OverloadsPresent.kt");
