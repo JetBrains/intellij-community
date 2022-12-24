@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -26,8 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.psi.JavaTokenType.*;
 
 public final class JavaSharedImplUtil {
   private static final Logger LOG = Logger.getInstance(JavaSharedImplUtil.class);
@@ -205,13 +203,14 @@ public final class JavaSharedImplUtil {
       if (nextParent instanceof PsiConditionalExpression && parent == ((PsiConditionalExpression)nextParent).getCondition()) {
         return nextParent;
       }
-      if (nextParent instanceof PsiPrefixExpression && ((PsiPrefixExpression)nextParent).getOperationTokenType().equals(EXCL)) {
+      if (nextParent instanceof PsiPrefixExpression &&
+          ((PsiPrefixExpression)nextParent).getOperationTokenType().equals(JavaTokenType.EXCL)) {
         negated = !negated;
         continue;
       }
       if (nextParent instanceof PsiPolyadicExpression) {
         IElementType tokenType = ((PsiPolyadicExpression)nextParent).getOperationTokenType();
-        if (tokenType.equals(ANDAND) && !negated || tokenType.equals(OROR) && negated) continue;
+        if (tokenType.equals(JavaTokenType.ANDAND) && !negated || tokenType.equals(JavaTokenType.OROR) && negated) continue;
       }
       if (nextParent instanceof PsiIfStatement) {
         while (nextParent.getParent() instanceof PsiLabeledStatement) {
