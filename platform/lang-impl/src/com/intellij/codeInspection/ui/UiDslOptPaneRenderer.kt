@@ -86,7 +86,12 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           }
         }
       }
-      is OptCheckboxPanel -> TODO()
+      is OptCheckboxPanel -> {
+        panel {
+          // TODO: proper rendering
+          component.children.forEachIndexed { i, child -> render(child, tool, i == 0, i == component.children.lastIndex) }
+        }
+      }
     }
   }
 
@@ -229,8 +234,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
         is OptMap -> TODO()
 
-        is OptGroup, is OptHorizontalStack, is OptSeparator, is OptTabSet -> { throw IllegalStateException("Unsupported nested component: ${component.javaClass}") }
-        is OptCheckboxPanel -> TODO()
+        is OptCheckboxPanel, is OptGroup, is OptHorizontalStack, is OptSeparator, is OptTabSet -> { throw IllegalStateException("Unsupported nested component: ${component.javaClass}") }
     }
   }
 
