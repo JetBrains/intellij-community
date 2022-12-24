@@ -461,15 +461,19 @@ public final class DebuggerUIUtil {
     @Override
     public void evaluated(@NotNull final String fullValue, @Nullable final Font font) {
       AppUIUtil.invokeOnEdt(() -> {
-        JComponent component = myEvaluator.createComponent(fullValue);
-        if (component == null) {
-          EditorTextField textArea = createTextViewer(fullValue, myProject);
-          if (font != null) {
-            textArea.setFont(font);
+        try {
+          JComponent component = myEvaluator.createComponent(fullValue);
+          if (component == null) {
+            EditorTextField textArea = createTextViewer(fullValue, myProject);
+            if (font != null) {
+              textArea.setFont(font);
+            }
+            component = textArea;
           }
-          component = textArea;
+          myPanel.add(component);
+        } catch (Exception e) {
+          errorOccurred(e.toString());
         }
-        myPanel.add(component);
       });
     }
 

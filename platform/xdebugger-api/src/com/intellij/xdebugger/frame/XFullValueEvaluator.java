@@ -41,8 +41,6 @@ public abstract class XFullValueEvaluator {
     return myShowValuePopup;
   }
 
-  public FileType mySyntaxType;
-
   @NotNull
   public XFullValueEvaluator setShowValuePopup(boolean value) {
     myShowValuePopup = value;
