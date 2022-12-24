@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ikv.builder
 
 import org.jetbrains.ikv.RecSplitSettings
@@ -44,6 +44,12 @@ class IkvWriter(private val channel: FileChannel,
     }
     while (data.hasRemaining())
     position = currentPosition.toInt()
+  }
+
+  fun write(key: Int, writer: (FileChannel, position: Long) -> Long) {
+    val oldPosition = position
+    position = writer(channel, oldPosition.toLong()).toInt()
+    indexBuilder.add(Entry(key, oldPosition, position - oldPosition))
   }
 
   override fun close() {

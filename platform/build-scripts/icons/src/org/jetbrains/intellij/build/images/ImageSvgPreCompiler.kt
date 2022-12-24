@@ -4,14 +4,14 @@
 
 package org.jetbrains.intellij.build.images
 
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Formats
 import com.intellij.ui.svg.SvgCacheManager
-import com.intellij.ui.svg.SvgTranscoder
-import com.intellij.ui.svg.createSvgDocument
 import com.intellij.util.io.DigestUtil
 import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import kotlinx.coroutines.*
 import org.apache.batik.transcoder.TranscoderException
 import org.jetbrains.ikv.builder.IkvWriter
@@ -19,16 +19,18 @@ import org.jetbrains.ikv.builder.sizeUnawareIkvWriter
 import org.jetbrains.intellij.build.io.ByteBufferAllocator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
-import java.awt.image.BufferedImage
-import java.awt.image.DataBufferInt
+import org.jetbrains.skia.Bitmap
+import org.jetbrains.skia.ColorType
+import org.jetbrains.skia.impl.BufferUtil
 import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.NotDirectoryException
 import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.system.exitProcess
+import kotlin.system.measureTimeMillis
 
 private class FileInfo(val file: Path) {
   companion object {
@@ -39,6 +41,15 @@ private class FileInfo(val file: Path) {
 
   val checksum: ByteArray by lazy(LazyThreadSafetyMode.PUBLICATION) { digest(file) }
 }
+
+/// the expected scales of images that we have the macOS touch bar uses 2.5x scale, the application icon (which one?) is 4x on macOS
+private val scales = floatArrayOf(
+  1f,
+  1.25f, /*Windows*/
+  1.5f, /*Windows*/
+  2.0f,
+  2.5f /*macOS touchBar*/
+)
 
 /**
  * Works together with [SvgCacheManager] to generate pre-cached icons
@@ -67,6 +78,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
       exitProcess(0)
     }
 
+    @Suppress("RAW_RUN_BLOCKING")
     private fun mainImpl(args: Array<String>) {
       println("Pre-building SVG images...")
       if (args.isEmpty()) {
@@ -102,64 +114,59 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private suspend fun compileIcons(dbDir: Path, dirs: List<Path>): List<Path> {
+    val rootRobotData = IconRobotsData(parent = null, ignoreSkipTag = false, usedIconsRobots = null)
+    val result: MutableList<IconData?> = withContext(Dispatchers.IO) {
+      dirs.map { dir ->
+        async {
+          val result = mutableListOf<IconData>()
+          processDir(dir = dir, rootDir = dir, level = 1, rootRobotData = rootRobotData, result = result)
+          result
+        }
+      }
+    }.flatMapTo(mutableListOf()) { it.getCompleted() }
+    result.sortBy { it!!.variants.first() }
+
+    val collisionGuard = Int2ObjectOpenHashMap<FileInfo>()
+    for ((index, icon) in result.withIndex()) {
+      // the key is the same for all variants
+      // check collision only here - after sorting (so, we produce stable results as we skip the same icon every time)
+      if (checkCollision(icon!!.imageKey, icon.variants[0], icon.light1xData, collisionGuard)) {
+        result.set(index, null)
+      }
+    }
+
+    NioFiles.deleteRecursively(dbDir)
     Files.createDirectories(dbDir)
 
     val lightStores = Stores("", dbDir)
     val darkStores = Stores("-d", dbDir)
     val resultFiles = ArrayList<Path>()
+
+    val getMapByScale: (scale: Float, isDark: Boolean) -> IkvWriter = { scale, isDark ->
+      val list = if (isDark) darkStores else lightStores
+      when (scale) {
+        1f -> list.s1.getOrCreate()
+        1.25f -> list.s1_25.getOrCreate()
+        1.5f -> list.s1_5.getOrCreate()
+        2f -> list.s2.getOrCreate()
+        2.5f -> list.s2_5.getOrCreate()
+        else -> throw UnsupportedOperationException("Scale $scale is not supported")
+      }
+    }
+
     try {
-      val getMapByScale: (scale: Float, isDark: Boolean) -> IkvWriter = { scale, isDark ->
-        val list = if (isDark) darkStores else lightStores
-        when (scale) {
-          1f -> list.s1.getOrCreate()
-          1.25f -> list.s1_25.getOrCreate()
-          1.5f -> list.s1_5.getOrCreate()
-          2f -> list.s2.getOrCreate()
-          2.5f -> list.s2_5.getOrCreate()
-          else -> throw UnsupportedOperationException("Scale $scale is not supported")
-        }
-      }
-
-      val rootRobotData = IconRobotsData(parent = null, ignoreSkipTag = false, usedIconsRobots = null)
-      val result = withContext(Dispatchers.IO) {
-        dirs.map { dir ->
-          async {
-            val result = mutableListOf<IconData>()
-            processDir(dir = dir, rootDir = dir, level = 1, rootRobotData = rootRobotData, result = result)
-            result
-          }
-        }
-      }.flatMap { it.getCompleted() }
-
-      val array: Array<IconData?> = result.toTypedArray()
-      array.sortBy { it!!.variants.first() }
-
-      /// the expected scales of images that we have the macOS touch bar uses 2.5x scale, the application icon (which one?) is 4x on macOS
-      val scales = floatArrayOf(
-        1f,
-        1.25f, /*Windows*/
-        1.5f, /*Windows*/
-        2.0f,
-        2.5f /*macOS touchBar*/
-      )
-
-      val collisionGuard = ConcurrentHashMap<Int, FileInfo>()
-      for ((index, icon) in array.withIndex()) {
-        // the key is the same for all variants
-        // check collision only here - after sorting (so, we produce stable results as we skip the same icon every time)
-        if (checkCollision(icon!!.imageKey, icon.variants[0], icon.light1xData, collisionGuard)) {
-          array[index] = null
-        }
-      }
-
-      // cannot be processed concurrently due to IDEA-303866
-      scales.map { scale ->
-        ByteBufferAllocator().use { bufferAllocator ->
-          for (icon in array) {
-            processImage(icon = icon ?: continue, getMapByScale = getMapByScale, scale = scale, bufferAllocator = bufferAllocator)
+      val time = measureTimeMillis {
+        // batik - cannot be processed concurrently due to https://youtrack.jetbrains.com/issue/IDEA-303866
+        // skia - parallel processing doesn't bring benefit (not yet clear why)
+        for (scale in scales) {
+          ByteBufferAllocator().use { bufferAllocator ->
+            for (icon in result) {
+              processImage(icon = icon ?: continue, getMapByScale = getMapByScale, scale = scale, bufferAllocator = bufferAllocator)
+            }
           }
         }
       }
+      println("$time ms")
 
       //println("${Formats.formatFileSize(totalSize.get().toLong())} (${totalSize.get()}, iconCount=${totalFiles.get()}, resultSize=${result.size})")
     }
@@ -192,7 +199,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     return resultFiles
   }
 
-  private class IconData(val light1xData: ByteArray, val variants: List<Path>, val imageKey: Int)
+  private class IconData(val light1xFile: Path, val light1xData: ByteArray, val variants: List<Path>, val imageKey: Int)
 
   private fun processDir(dir: Path,
                          rootDir: Path,
@@ -256,10 +263,10 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
       }
 
       val light1xBytes = light1xData.toByteArray()
-      val imageKey = getImageKey(light1xBytes, light1x.fileName.toString())
+      val imageKey = getImageKey(fileData = light1xBytes, fileName = light1x.fileName.toString())
       totalFiles.addAndGet(variants.size)
       try {
-        result.add(IconData(light1xBytes, variants, imageKey))
+        result.add(IconData(light1xFile = light1x, light1xData = light1xBytes, variants = variants, imageKey = imageKey))
       }
       catch (e: TranscoderException) {
         throw RuntimeException("Cannot process $commonName (variants=$variants)", e)
@@ -278,25 +285,25 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     val imageKey = icon.imageKey
 
     val light2x = variants.find { it.toString().endsWith("@2x.svg") }
-    var document = if (scale >= 2 && light2x != null) {
-      createSvgDocument(null, Files.newInputStream(light2x))
+    var file = if (scale >= 2 && light2x != null) {
+      light2x
     }
     else {
-      createSvgDocument(null, icon.light1xData)
+      icon.light1xFile
     }
-    addEntry(getMapByScale(scale, false), SvgTranscoder.createImage(scale, document, null), imageKey, totalSize, bufferAllocator)
+    addEntry(getMapByScale(scale, false), renderSvgUsingSkia(file, scale), imageKey, totalSize, bufferAllocator)
 
     val dark2x = variants.find { it.toString().endsWith("@2x_dark.svg") }
     val dark1x = variants.find { it !== dark2x && it.toString().endsWith("_dark.svg") } ?: return
-    document = createSvgDocument(null, Files.newInputStream(if (scale >= 2 && dark2x != null) dark2x else dark1x))
-    val image = SvgTranscoder.createImage(scale, document, null)
-    addEntry(getMapByScale(scale, true), image, imageKey, totalSize, bufferAllocator)
+    file = if (scale >= 2 && dark2x != null) dark2x else dark1x
+    addEntry(getMapByScale(scale, true), renderSvgUsingSkia(file, scale), imageKey, totalSize, bufferAllocator)
   }
 
-  private fun checkCollision(imageKey: Int, file: Path, fileNormalizedData: ByteArray,
-                             collisionGuard: ConcurrentHashMap<Int, FileInfo>): Boolean {
+  private fun checkCollision(imageKey: Int,
+                             file: Path,
+                             fileNormalizedData: ByteArray,
+                             collisionGuard: Int2ObjectOpenHashMap<FileInfo>): Boolean {
     val duplicate = collisionGuard.putIfAbsent(imageKey, FileInfo(file)) ?: return false
-
     if (duplicate.checksum.contentEquals(FileInfo.digest(fileNormalizedData))) {
       assert(duplicate.file !== file)
       Span.current().addEvent("${getRelativeToCompilationOutPath(duplicate.file)} duplicates ${getRelativeToCompilationOutPath(file)}")
@@ -318,37 +325,91 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
   }
 }
 
-private fun addEntry(map: IkvWriter, image: BufferedImage, imageKey: Int, totalSize: AtomicInteger, bufferAllocator: ByteBufferAllocator) {
-  val w = image.width
-  val h = image.height
+@Suppress("DuplicatedCode")
+private fun addEntry(map: IkvWriter, bitmap: Bitmap, imageKey: Int, totalSize: AtomicInteger, bufferAllocator: ByteBufferAllocator) {
+  val w = bitmap.width
+  val h = bitmap.height
 
-  assert(image.type == BufferedImage.TYPE_INT_ARGB)
-  assert(!image.colorModel.isAlphaPremultiplied)
+  map.write(imageKey) { channel, position ->
+    var currentPosition = position
 
-  val data = (image.raster.dataBuffer as DataBufferInt).data
-  val buffer = bufferAllocator.allocate(Int.SIZE_BYTES + 5 * 2 + data.size * Int.SIZE_BYTES  + 1)
+    val headerBuffer = writeHeader(bufferAllocator = bufferAllocator, imageKey = imageKey, w = w, h = h)
+    headerBuffer.flip()
+    currentPosition = writeData(currentPosition, channel, headerBuffer, totalSize)
+
+    val pixelNativePointer = bitmap.peekPixels()!!.addr
+    val pixelBuffer = BufferUtil.getByteBufferFromPointer(pixelNativePointer, bitmap.rowBytes * bitmap.height)
+    when (bitmap.colorInfo.colorType) {
+      ColorType.BGRA_8888 -> {
+        // convert from BGRA to ARGB
+        for (i in 0 until (pixelBuffer.limit() - 4) step 4) {
+          val b = pixelBuffer[i]
+          val g = pixelBuffer[i + 1]
+          val r = pixelBuffer[i + 2]
+          val a = pixelBuffer[i + 3]
+
+          pixelBuffer.put(i, a)
+          pixelBuffer.put(i + 1, r)
+          pixelBuffer.put(i + 2, g)
+          pixelBuffer.put(i + 3, b)
+        }
+        currentPosition = writeData(currentPosition, channel, pixelBuffer, totalSize)
+      }
+      ColorType.RGBA_8888 -> {
+        // convert from RGBA to ARGB
+        for (i in 0 until (pixelBuffer.limit() - 4) step 4) {
+          val r = pixelBuffer[i]
+          val g = pixelBuffer[i + 1]
+          val b = pixelBuffer[i + 2]
+          val a = pixelBuffer[i + 3]
+
+          pixelBuffer.put(i, a)
+          pixelBuffer.put(i + 1, r)
+          pixelBuffer.put(i + 2, g)
+          pixelBuffer.put(i + 3, b)
+        }
+        currentPosition = writeData(currentPosition, channel, pixelBuffer, totalSize)
+      }
+      else -> throw UnsupportedOperationException(bitmap.colorInfo.colorType.toString())
+    }
+
+    currentPosition
+  }
+}
+
+private fun writeData(position: Long, channel: FileChannel, buffer: ByteBuffer, totalSize: AtomicInteger): Long {
+  totalSize.addAndGet(buffer.remaining())
+
+  var currentPosition = position
+  do {
+    currentPosition += channel.write(buffer, currentPosition)
+  }
+  while (buffer.hasRemaining())
+  return currentPosition
+}
+
+private fun writeHeader(bufferAllocator: ByteBufferAllocator,
+                       imageKey: Int,
+                       w: Int,
+                       h: Int): ByteBuffer {
+  val headerBuffer = bufferAllocator.allocate(Int.SIZE_BYTES + 5 * 2 * Int.SIZE_BYTES + 1)
   // don't use a var int - image key it is a hash (often negative)
-  buffer.putInt(imageKey)
+  headerBuffer.putInt(imageKey)
   if (w == h) {
     if (w < 254) {
-      buffer.put(w.toByte())
+      headerBuffer.put(w.toByte())
     }
     else {
-      buffer.put(255.toByte())
-      writeVar(buffer, w)
+      headerBuffer.put(255.toByte())
+      writeVar(headerBuffer, w)
     }
   }
   else {
-    buffer.put(254.toByte())
-    writeVar(buffer, w)
-    writeVar(buffer, h)
+    headerBuffer.put(254.toByte())
+    writeVar(headerBuffer, w)
+    writeVar(headerBuffer, h)
   }
-
-  buffer.asIntBuffer().put(data)
-  buffer.position(buffer.position() + (data.size * Int.SIZE_BYTES))
-  buffer.flip()
-  totalSize.addAndGet(buffer.remaining())
-  map.write(imageKey, buffer)
+  return headerBuffer
 }
 
 private fun writeVar(buf: ByteBuffer, value: Int) {

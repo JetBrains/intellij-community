@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
@@ -30,10 +30,11 @@ internal fun isIcon(file: Path): Boolean {
     return false
   }
 
-  val size = imageSize(file) ?: return false
   if (file.startsWith(androidIcons)) {
     return true
   }
+
+  val size = imageSize(file) ?: return false
   return size.height == size.width || size.height <= 100 && size.width <= 100
 }
 
