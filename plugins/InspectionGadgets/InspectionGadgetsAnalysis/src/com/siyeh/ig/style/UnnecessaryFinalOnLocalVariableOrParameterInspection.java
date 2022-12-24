@@ -33,7 +33,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean onlyWarnOnAbstractMethods = false;
 
   @SuppressWarnings("PublicField")
@@ -179,7 +179,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
       check(parameter);
     }
 
-    private boolean isNecessaryFinal(PsiVariable variable, PsiElement context) {
+    private static boolean isNecessaryFinal(PsiVariable variable, PsiElement context) {
       return PsiUtil.isConstantExpression(variable.getInitializer()) ||
              !PsiUtil.isLanguageLevel8OrHigher(variable) && VariableAccessUtils.variableIsUsedInInnerClass(variable, context);
     }
