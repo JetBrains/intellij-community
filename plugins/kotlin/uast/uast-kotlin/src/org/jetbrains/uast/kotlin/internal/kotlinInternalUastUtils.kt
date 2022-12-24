@@ -160,15 +160,13 @@ internal fun KotlinType.toPsiType(
             KtTypeMappingMode.VALUE_PARAMETER -> {
                 KotlinUastTypeMapper.typeSystem.getOptimalModeForValueParameter(
                     approximatedType,
-                    isForUast = true
-                )
+                ).mapTypeAliases(TypeMappingMode.GENERIC_ARGUMENT_UAST)
             }
             KtTypeMappingMode.RETURN_TYPE -> {
                 KotlinUastTypeMapper.typeSystem.getOptimalModeForReturnType(
                     approximatedType,
                     isAnnotationMethod = context.containingClass()?.isAnnotation() == true,
-                    isForUast = true
-                )
+                ).mapTypeAliases(TypeMappingMode.GENERIC_ARGUMENT_UAST)
             }
             KtTypeMappingMode.GENERIC_ARGUMENT -> TypeMappingMode.GENERIC_ARGUMENT_UAST
             else -> TypeMappingMode.DEFAULT_UAST
