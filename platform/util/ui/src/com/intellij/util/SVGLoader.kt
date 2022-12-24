@@ -203,8 +203,6 @@ object SVGLoader {
 
   /**
    * Loads an image with the specified `width` and `height` (in user space). Size specified in svg file is ignored.
-   *
-   *
    * Note: always pass `url` when it is available.
    */
   @Throws(IOException::class)
@@ -236,9 +234,9 @@ object SVGLoader {
   @Throws(IOException::class)
   @JvmStatic
   fun getDocumentSize(stream: InputStream, scale: Float): ImageLoader.Dimension2DDouble {
-    // In order to get the size we parse the whole document and build a tree ("GVT"), what might be too expensive.
+    // In order to get the size, we parse the whole document and build a tree ("GVT"), what might be too expensive.
     // So, to optimize we extract the svg header (possibly prepended with <?xml> header) and parse only it.
-    // Assumes 8-bit encoding of the input stream (no one in theirs right mind would use wide characters for SVG anyway).
+    // Assumes 8-bit encoding of the input stream (no one in his right mind would use wide characters for SVG anyway).
     val buffer = BufferExposingByteArrayOutputStream(100)
     val bytes = ByteArray(3)
     var checkClosingBracket = false

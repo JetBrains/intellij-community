@@ -4,7 +4,6 @@ package com.intellij.ui.svg
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.ImageLoader
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.ikv.Ikv
 import org.jetbrains.ikv.UniversalHash
 import java.awt.Image
@@ -13,36 +12,9 @@ import java.nio.file.Path
 
 private val intKeyHash = UniversalHash.IntHash()
 
-@ApiStatus.Internal
-class SvgPrebuiltCacheManager(private val dbDir: Path) {
-  private val lightStores = Stores("")
-  private val darkStores = Stores("-d")
-
-  @Suppress("PropertyName")
-  private inner class Stores(classifier: String) {
-    val s1 = StoreContainer(1f, classifier)
-    val s1_25 = StoreContainer(1.25f, classifier)
-    val s1_5 = StoreContainer(1.5f, classifier)
-    val s2 = StoreContainer(2f, classifier)
-    val s2_5 = StoreContainer(2.5f, classifier)
-  }
-
-  private inner class StoreContainer(private val scale: Float, private val classifier: String) {
-    @Volatile
-    private var store: Ikv.SizeUnawareIkv<Int>? = null
-
-    fun getOrCreate() = store ?: getSynchronized()
-
-    @Synchronized
-    private fun getSynchronized(): Ikv.SizeUnawareIkv<Int> {
-      var store = store
-      if (store == null) {
-        store = Ikv.loadSizeUnawareIkv(dbDir.resolve("icons-v3-$scale$classifier.db"), intKeyHash)
-        this.store = store
-      }
-      return store
-    }
-  }
+internal class SvgPrebuiltCacheManager(dbDir: Path) {
+  private val lightStores = Stores(dbDir, "")
+  private val darkStores = Stores(dbDir, "-d")
 
   fun loadFromCache(key: Int, scale: Float, isDark: Boolean, docSize: ImageLoader.Dimension2DDouble? = null): Image? {
     val start = StartUpMeasurer.getCurrentTimeIfEnabled()
@@ -84,6 +56,32 @@ class SvgPrebuiltCacheManager(private val dbDir: Path) {
     val image = SvgCacheManager.readImage(data, actualWidth, actualHeight)
     IconLoadMeasurer.svgPreBuiltLoad.end(start)
     return image
+  }
+}
+
+@Suppress("PropertyName")
+private class Stores(dbDir: Path, classifier: String) {
+  val s1 = StoreContainer(dbDir, 1f, classifier)
+  val s1_25 = StoreContainer(dbDir, 1.25f, classifier)
+  val s1_5 = StoreContainer(dbDir, 1.5f, classifier)
+  val s2 = StoreContainer(dbDir, 2f, classifier)
+  val s2_5 = StoreContainer(dbDir, 2.5f, classifier)
+}
+
+private class StoreContainer(private val dbDir: Path, private val scale: Float, private val classifier: String) {
+  @Volatile
+  private var store: Ikv.SizeUnawareIkv<Int>? = null
+
+  fun getOrCreate() = store ?: getSynchronized()
+
+  @Synchronized
+  private fun getSynchronized(): Ikv.SizeUnawareIkv<Int> {
+    var store = store
+    if (store == null) {
+      store = Ikv.loadSizeUnawareIkv(dbDir.resolve("icons-v3-$scale$classifier.db"), intKeyHash)
+      this.store = store
+    }
+    return store
   }
 }
 
