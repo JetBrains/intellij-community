@@ -87,10 +87,9 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
         return;
       }
       final PsiElement firstElement = declaredElements[0];
-      if (!(firstElement instanceof PsiLocalVariable)) {
+      if (!(firstElement instanceof final PsiLocalVariable firstVariable)) {
         return;
       }
-      final PsiLocalVariable firstVariable = (PsiLocalVariable)firstElement;
       if (!firstVariable.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
@@ -139,11 +138,8 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
       final PsiResourceList resourceList = statement.getResourceList();
       if (resourceList != null && reportLocalVariables) {
         for (PsiResourceListElement element : resourceList) {
-          if (element instanceof PsiResourceVariable) {
-            final PsiResourceVariable variable = (PsiResourceVariable)element;
-            if (variable.hasModifierProperty(PsiModifier.FINAL)) {
-              registerModifierError(PsiModifier.FINAL, variable, variable);
-            }
+          if (element instanceof final PsiResourceVariable variable && variable.hasModifierProperty(PsiModifier.FINAL)) {
+            registerModifierError(PsiModifier.FINAL, variable, variable);
           }
         }
       }
