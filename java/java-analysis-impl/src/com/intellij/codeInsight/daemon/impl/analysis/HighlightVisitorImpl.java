@@ -690,6 +690,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
     add(checkFeature(statement, HighlightingFeature.FOR_EACH));
+    if (!myHolder.hasErrorResults()) {
+      PsiForeachDeclarationElement iterationDeclaration = statement.getIterationDeclaration();
+      if (iterationDeclaration instanceof PsiPattern) {
+        add(checkFeature(iterationDeclaration, HighlightingFeature.RECORD_PATTERNS_IN_FOR_EACH));
+      }
+    }
   }
 
   @Override
@@ -1802,12 +1808,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitVariable(@NotNull PsiVariable variable) {
     super.visitVariable(variable);
     if (variable instanceof PsiPatternVariable) {
-      PsiElement context = PsiTreeUtil.getParentOfType(variable, PsiInstanceOfExpression.class, PsiCaseLabelElementList.class);
-      HighlightingFeature feature = context instanceof PsiInstanceOfExpression ?
-                                    HighlightingFeature.PATTERNS :
-                                    HighlightingFeature.PATTERNS_IN_SWITCH;
-      PsiIdentifier varIdentifier = ((PsiPatternVariable)variable).getNameIdentifier();
-      add(checkFeature(varIdentifier, feature));
+      PsiElement context = PsiTreeUtil.getParentOfType(variable,
+                                                       PsiInstanceOfExpression.class,
+                                                       PsiCaseLabelElementList.class,
+                                                       PsiForeachStatement.class);
+      if (!(context instanceof PsiForeachStatement)) {
+        HighlightingFeature feature = context instanceof PsiInstanceOfExpression ?
+                                      HighlightingFeature.PATTERNS :
+                                      HighlightingFeature.PATTERNS_IN_SWITCH;
+        PsiIdentifier varIdentifier = ((PsiPatternVariable)variable).getNameIdentifier();
+        add(checkFeature(varIdentifier, feature));
+      }
     }
     try {
       if (!myHolder.hasErrorResults()) add(HighlightUtil.checkVarTypeApplicability(variable));
