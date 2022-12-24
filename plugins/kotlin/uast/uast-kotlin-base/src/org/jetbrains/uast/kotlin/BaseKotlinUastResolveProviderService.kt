@@ -74,7 +74,7 @@ interface BaseKotlinUastResolveProviderService {
 
     fun resolveToDeclaration(ktExpression: KtExpression): PsiElement?
 
-    fun resolveToType(ktTypeReference: KtTypeReference, source: UElement, boxed: Boolean): PsiType?
+    fun resolveToType(ktTypeReference: KtTypeReference, source: UElement, isBoxed: Boolean): PsiType?
 
     fun resolveToType(ktTypeReference: KtTypeReference, containingLightDeclaration: PsiModifierListOwner?): PsiType?
 
