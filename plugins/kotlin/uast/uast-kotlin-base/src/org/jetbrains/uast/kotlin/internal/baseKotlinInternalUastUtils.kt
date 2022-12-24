@@ -190,27 +190,27 @@ fun convertUnitToVoidIfNeeded(
 
 class PsiTypeConversionConfiguration(
     val typeOwnerKind: TypeOwnerKind,
-    val boxed: Boolean = false,
+    val isBoxed: Boolean = false,
     val typeMappingMode: KtTypeMappingMode = KtTypeMappingMode.DEFAULT_UAST,
 ) {
     companion object {
         fun create(
             ktElement: KtElement,
-            boxed: Boolean = false,
+            isBoxed: Boolean = false,
             isForFake: Boolean = false,
         ): PsiTypeConversionConfiguration {
             return PsiTypeConversionConfiguration(
                 ktElement.typeOwnerKind,
-                boxed,
-                ktElement.ktTypeMappingMode(boxed, isForFake)
+                isBoxed,
+                ktElement.ktTypeMappingMode(isBoxed, isForFake)
             )
         }
 
-        private fun KtElement.ktTypeMappingMode(boxed: Boolean, isForFake: Boolean): KtTypeMappingMode {
+        private fun KtElement.ktTypeMappingMode(isBoxed: Boolean, isForFake: Boolean): KtTypeMappingMode {
             return when {
                 isForFake && this is KtParameter -> KtTypeMappingMode.VALUE_PARAMETER
                 isForFake && this is KtCallableDeclaration -> KtTypeMappingMode.RETURN_TYPE
-                boxed -> KtTypeMappingMode.GENERIC_ARGUMENT
+                isBoxed -> KtTypeMappingMode.GENERIC_ARGUMENT
                 else -> KtTypeMappingMode.DEFAULT_UAST
             }
         }

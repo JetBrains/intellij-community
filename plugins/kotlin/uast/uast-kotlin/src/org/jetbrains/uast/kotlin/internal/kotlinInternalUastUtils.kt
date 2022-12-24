@@ -114,7 +114,7 @@ internal fun KotlinType.toPsiType(
 
     if (arguments.isEmpty()) {
         val typeFqName = this.constructor.declarationDescriptor?.fqNameSafe
-        fun PsiPrimitiveType.orBoxed() = if (config.boxed) getBoxedType(context) else this
+        fun PsiPrimitiveType.orBoxed() = if (config.isBoxed) getBoxedType(context) else this
         val psiType = when (typeFqName) {
             StandardClassIds.Int.asSingleFqName() -> PsiType.INT.orBoxed()
             StandardClassIds.Long.asSingleFqName() -> PsiType.LONG.orBoxed()
@@ -124,7 +124,7 @@ internal fun KotlinType.toPsiType(
             StandardClassIds.Char.asSingleFqName() -> PsiType.CHAR.orBoxed()
             StandardClassIds.Double.asSingleFqName() -> PsiType.DOUBLE.orBoxed()
             StandardClassIds.Float.asSingleFqName() -> PsiType.FLOAT.orBoxed()
-            StandardClassIds.Unit.asSingleFqName() -> convertUnitToVoidIfNeeded(context, config.typeOwnerKind, config.boxed)
+            StandardClassIds.Unit.asSingleFqName() -> convertUnitToVoidIfNeeded(context, config.typeOwnerKind, config.isBoxed)
             StandardClassIds.String.asSingleFqName() -> PsiType.getJavaLangString(context.manager, context.resolveScope)
             else -> {
                 when (val typeConstructor = this.constructor) {
@@ -491,7 +491,7 @@ private fun resolveToPsiClass(uElement: () -> UElement?, declarationDescriptor: 
     }?.toPsiType(
         uElement.invoke(),
         context,
-        PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION, boxed = true)
+        PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION, isBoxed = true)
     ).let { PsiTypesUtil.getPsiClass(it) }
 
 private fun DeclarationDescriptor.toSource(): PsiElement? {
