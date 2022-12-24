@@ -3,14 +3,17 @@ package com.intellij.util.io;
 
 import com.intellij.util.io.FilePageCacheLockFree.Page;
 import com.intellij.util.io.FilePageCacheLockFree.PagesTable;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -177,6 +180,62 @@ public class PagesTableTest {
         .isNotEqualTo(page);
     }
   }
+
+  @Test
+  public void hashTableProbeLengthsAreNotTooLong() throws IOException {
+    //For 3 different distribution of pages (sequential, random, random-blocks)
+    // check that >=95% of entries could be found in (0,1,2) probes:
+    final double expectedWeightOf3Probes = 0.95;
+    
+    //It is not a comprehensive hash-table test, just a sanity check to verify that no
+    //  silly mistakes or unlucky combination of params lead to degenerated hash table.
+
+
+    final int[] sequentialPageIndexes = IntStream.rangeClosed(0, PAGES_TO_CREATE)
+      .toArray();
+    checkProbeLengthsAreShort("Sequential pages", sequentialPageIndexes, expectedWeightOf3Probes);
+
+    final ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    final int[] randomPageIndexes = IntStream.rangeClosed(0, PAGES_TO_CREATE)
+      .map(i -> rnd.nextInt(2 * PAGES_TO_CREATE))
+      .toArray();
+    checkProbeLengthsAreShort("Random pages", randomPageIndexes, expectedWeightOf3Probes);
+
+    final int[] randomBlocksOfPageIndexes = IntStream.rangeClosed(0, PAGES_TO_CREATE / 4)
+      .flatMap(i -> {
+        final int startPageNo = rnd.nextInt(2 * PAGES_TO_CREATE);
+        return IntStream.of(startPageNo, startPageNo + 1, startPageNo + 2, startPageNo + 4);
+      }).toArray();
+    checkProbeLengthsAreShort("Random blocks of 4 pages", randomBlocksOfPageIndexes, expectedWeightOf3Probes);
+  }
+
+  private static void checkProbeLengthsAreShort(final String caption,
+                                                final int[] pageIndexes,
+                                                final double expectedRatioOfFirst3Probes) throws IOException {
+    final PagesTable pages = new PagesTable(8);
+    for (int pageIndex : pageIndexes) {
+      pages.lookupOrCreate(
+        pageIndex,
+        PagesTableTest::createBlankPage,
+        PagesTableTest::allocateAndLoadPage
+      );
+    }
+
+    final Int2IntMap probeLengthsHisto = pages.collectProbeLengthsHistogram();
+    final int totalEntries = probeLengthsHisto.values().intStream().sum();
+
+    final int totalEntriesFoundIn3Probes = IntStream.of(0, 1, 2)
+      .map(probeLengthsHisto::get)
+      .sum();
+    final double totalRatioOfFirst3Probes = totalEntriesFoundIn3Probes * 1.0 / totalEntries;
+
+    final String probesLengthHisto = pages.probeLengthsHistogram();
+    System.out.println(caption + ":\n" + probesLengthHisto);
+    assertThat(totalRatioOfFirst3Probes)
+      .describedAs((expectedRatioOfFirst3Probes * 100) + "% of entries in hash table should be found in (0, 1, 2)-probes")
+      .isGreaterThan(expectedRatioOfFirst3Probes);
+  }
+
 
   //=========== infrastructure:
 

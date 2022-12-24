@@ -7,6 +7,9 @@ import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.io.pagecache.FilePageCacheStatistics;
 import com.intellij.util.io.pagecache.FrugalQuantileEstimator;
 import com.intellij.util.io.pagecache.PageContentLoader;
+import it.unimi.dsi.fastutil.HashCommon;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +27,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntFunction;
 
 import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.joining;
 
 /**
  * Maintains 'pages' of data (in the form of {@linkplain Page}), from file storages {@linkplain PagedFileStorageLockFree}.
@@ -189,7 +193,8 @@ public final class FilePageCacheLockFree implements AutoCloseable {
           Thread.sleep(1);
         }
         else if (pagesRemainedToReclaim > 0) {
-          Thread.yield();//allocation pressure high: just yield
+          //allocation pressure high, but we ~catch up with it: just yield
+          Thread.yield();
         }
         else {
           //allocation pressure is so high we don't catch up with it:
@@ -199,7 +204,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
         }
       }
       catch (InterruptedException e) {
-        return;
+        break;
       }
       catch (Throwable t) {
         LOG.error("Exception in FilePageCache housekeeper thread (thread continue to run)", t);
@@ -213,9 +218,18 @@ public final class FilePageCacheLockFree implements AutoCloseable {
   //        QuantilesEstimator(80-90%) to estimate percentage of pages to prepare to reclaim.
   //        Also use it to estimate how much 'eager flushes' needs to be done.
   //     2. In .allocatePageBuffer(): trace counts of .flush() invoked, and heap buffers allocated
-  //     5. If a lot of .flush() invoked -> increase probability of 'eager flushes' in (2)
-  //     6. How to use 'heap buffers count' and 'capacity overflow'?
+  //     3. If a lot of .flush() invoked -> increase probability of 'eager flushes' in (2)
+  //     4. How to use 'heap buffers count' and 'capacity overflow'?
 
+
+  //================================================================================================
+  // IDEA: errors reporting -- there are a lot of cases there something errorness could be done async
+  //       in a housekeeper thread (or IO-pool). But it rises a question about errors reporting:
+  //       e.g. how to report IOException during page.flush() if the flush has happened in a IO-pool,
+  //       triggered by page allocation pressure, not by any client actions? This is the same question
+  //       that is solved with SIGBUS signal in Linux OS file cache impl.
+  //       Better solution could be: ring buffer of last 16 exceptions, that could be requested from
+  //       any thread, and cleared.
 
   //================================================================================================
   // IDEA: Find out current 'page reclamation pressure' -- i.e. if there are a lot of pages still
@@ -248,6 +262,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     final Map<Path, PagesTable> pagesPerStorage = threadSafeCopyOfPagesPerStorage();
     pagesForReclaimCollector.startCollectingTurn();
     try {
+      //TODO RC: organize all tables pages in Iterable<Page>
       final Collection<PagesTable> pagesTables = pagesPerStorage.values();
       for (PagesTable pagesTable : pagesTables) {
         final AtomicReferenceArray<Page> pages = pagesTable.pages;
@@ -285,37 +300,35 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       pagesForReclaimCollector.finishCollectingTurn();
     }
 
+    pagesToProbablyReclaimQueue = pagesForReclaimCollector.pagesForReclaimAsQueue();
+
+    //if <50% of pages collected to reclaim are clean -> try to eagerly flush some dirty pages:
+    final int pagesFlushed = pagesForReclaimCollector.ensureEnoughCleanPagesToReclaim(0.5);
+
     //Usually we reclaim pages from the new page allocation path, so the page is evicted only
     // if another page needs its space. To make page allocation path faster, though, we limit the
     // amount of reclamation work to be done there, and allow to allocate 'above the capacity', from
     // Heap -- if not enough pages to reclaim could be found. Here we compensate for those 'above
     // the capacity' allocations: if we allocated too much above the capacity, we start to reclaim
     // pages in housekeeper thread:
-    if (totalNativeBytesCached.get() + totalHeapBytesCached.get() > cacheCapacityBytes) {
-      int remainsToReclaim = 10;
-      final List<Page> candidates = pagesForReclaimCollector.pagesForReclaimNonDirty;
-      for (final Iterator<Page> it = candidates.iterator();
-           it.hasNext() && remainsToReclaim > 0; ) {
-        final Page candidate = it.next();
-        if (candidate.isUsable() && candidate.usageCount() == 0) {
-          final ByteBuffer data = candidate.data;
-          if (data != null && !data.isDirect()) {
-            final int finalState = candidate.tryMoveTowardsTomb(/*entombYoung: */false);
-            if (finalState == Page.STATE_TOMBSTONE) {
-              unmapPageAndReclaimBuffer(candidate);
-              it.remove();
-              remainsToReclaim--;
-            }
+    int remainsToReclaim = 10;
+    while (totalNativeBytesCached.get() + totalHeapBytesCached.get() > cacheCapacityBytes
+           && remainsToReclaim > 0) {
+      final Page candidate = pagesToProbablyReclaimQueue.poll();
+      if (candidate == null) {
+        break;
+      }
+      if (candidate.isUsable() && candidate.usageCount() == 0) {
+        final ByteBuffer data = candidate.data;
+        if (data != null && !data.isDirect()) {
+          final int finalState = candidate.tryMoveTowardsTomb(/*entombYoung: */false);
+          if (finalState == Page.STATE_TOMBSTONE) {
+            unmapPageAndReclaimBuffer(candidate);
+            remainsToReclaim--;
           }
         }
       }
     }
-
-    pagesToProbablyReclaimQueue = pagesForReclaimCollector.pagesForReclaimAsQueue();
-
-    //if <50% of pages collected to reclaim are clean -> try to eagerly flush some dirty pages:
-    final int pagesFlushed = pagesForReclaimCollector.ensureEnoughCleanPagesToReclaim(0.5);
-    statistics.pagesFlushed(pagesFlushed);
   }
 
   private static int adjustPageUsefulness(final @NotNull Page page) {
@@ -489,7 +502,6 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       //         thread
       try {
         candidateToReclaim.flush();
-        statistics.pagesFlushed(1);
       }
       catch (IOException e) {
         throw new UncheckedIOException("Can't flush page: " + candidateToReclaim, e);
@@ -597,7 +609,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
 
     protected PagesTable(final int initialSize) {
-      this(initialSize, 0.5f);
+      this(initialSize, 0.4f);
     }
 
     protected PagesTable(final int initialSize,
@@ -676,20 +688,21 @@ public final class FilePageCacheLockFree implements AutoCloseable {
             final int newTableSize = (int)((pagesCount / loadFactor) * GROWTH_FACTOR);
             rehashToSize(newTableSize);
 
-            //FIXME RC: we need not only enlargement, but also shrinking! PageTable grows big temporary,
-            //         while we read the file intensively -- but after that period table should shrinks.
-            //         Contrary to the enlargement, shrinking is better to be implemented by maintenance
-            //         thread, in background. This is because a lot of entries in enlarged table would be
-            //         a tombstones (pages already reclaimed, but entries remain) and keep count of those
-            //         tombstones is not convenient -- Page status change is generally detached PageTable
-            //         logic, and better to keep that way. But maintenance thread scans all the pages anyway,
-            //         so it could easily count (tombstones vs alive) entries, and trigger shrinking if there
-            //         are <30-40% entries are alive.
+            //RC: we need not only enlargement, but also shrinking! PageTable grows big temporarily,
+            //    while we read the file intensively -- but after that period the table should shrink.
+            //    Contrary to the enlargement, shrinking is better to be implemented by maintenance
+            //    thread, in background. This is because a lot of entries in the enlarged table
+            //    would be tombstones (pages already reclaimed, but entries remain) and maintaining
+            //    the count of those tombstones is not convenient -- Page status changes are generally
+            //    detached from PageTable logic, and better be kept that way. But the maintenance thread
+            //    regularly scans all the pages anyway, so it could easily count (tombstones vs alive)
+            //    entries, and trigger shrinking if there are <30-40% entries are alive.
           }
         }
         else {
-          // (page == null && insertionIndex < 0) -> no space remains in table
-          // But it is unexpected, since we resize table well in advance
+          // (page == null && insertionIndex < 0)
+          // => no space remains in table
+          //    => this is unexpected, since we resize table well in advance
           throw new AssertionError("Bug: table[len:" + pages.length() + "] is full, but only " + pagesCount + " entries are in." + pages);
         }
       }
@@ -724,6 +737,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       }
     }
 
+    //@GuardedBy(pagesLock.writeLock)
     private void rehashToSize(final int newPagesSize) {
       assert pagesLock.writeLock().isHeldByCurrentThread() : "Must hold writeLock while rehashing";
 
@@ -769,7 +783,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
           final int insertionIndex = insertionIndexRef.get();
 
           if (pageMustNotBeFound != null) {
-            throw new AssertionError("Page[#" + pageIndex + "] copying now can't be already in .newPages! " + targetPages);
+            throw new AssertionError("Page[#" + pageIndex + "] is copying now -- can't be already in .newPages! " + targetPages);
           }
           if (insertionIndex < 0) {
             //either targetPages is too small to fit, or code bug in hashing logic
@@ -788,19 +802,19 @@ public final class FilePageCacheLockFree implements AutoCloseable {
                                                  final int pageIndex,
                                                  final @Nullable IntRef insertionIndexRef) {
       final int length = pages.length();
-      final int index = pageIndex % length;
-      final int probeStep = probeStep(length);
+      final int initialSlotIndex = hash(pageIndex) % length;
+      final int probeStep = 1; // = linear probing
 
       int firstTombstoneIndex = -1;
-      for (int probeIndex = index, probeNo = 0;
+      for (int slotIndex = initialSlotIndex, probeNo = 0;
            probeNo < length;
            probeNo++) {
-        final Page page = pages.get(probeIndex);
+        final Page page = pages.get(slotIndex);
 
         if (page == null) {
           //end of the probing sequence reached: no such page
           if (insertionIndexRef != null) {
-            final int insertionIndex = firstTombstoneIndex >= 0 ? firstTombstoneIndex : probeIndex;
+            final int insertionIndex = firstTombstoneIndex >= 0 ? firstTombstoneIndex : slotIndex;
             insertionIndexRef.set(insertionIndex);
           }
           return null;
@@ -812,17 +826,17 @@ public final class FilePageCacheLockFree implements AutoCloseable {
             //first tombstone is a place to insert new item _if already existent not found_
             // -> we still need to scan until the end of probing sequence to ensure no page
             // with pageIndex exist, but then we'll use firstTombstoneIndex to insert a new page:
-            firstTombstoneIndex = probeIndex;
+            firstTombstoneIndex = slotIndex;
           }
         }
         else if (page.pageIndex == pageIndex) {
           if (insertionIndexRef != null) {
-            insertionIndexRef.set(probeIndex);
+            insertionIndexRef.set(slotIndex);
           }
           return page;
         }
 
-        probeIndex = (probeIndex + probeStep) % length;
+        slotIndex = (slotIndex + probeStep) % length;
       }
 
       //no page found AND no space to insert -> need resize
@@ -832,9 +846,61 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       return null;
     }
 
-    private static int probeStep(final int length) {
-      //MAYBE RC: choose something prime
-      return length - 1;
+    private static int hash(final int pageIndex) {
+      return Math.abs(HashCommon.mix(pageIndex));
+    }
+
+
+    public String probeLengthsHistogram() {
+      final Int2IntMap histo = collectProbeLengthsHistogram();
+      final int sum = histo.values().intStream().sum();
+      return histo.keySet().intStream()
+        .sorted()
+        .mapToObj(len -> String.format("%3d: %4d (%4.1f%%)", len, histo.get(len), histo.get(len) * 100.0 / sum))
+        .collect(joining("\n"));
+    }
+
+    public Int2IntMap collectProbeLengthsHistogram() {
+      final Int2IntOpenHashMap histo = new Int2IntOpenHashMap();
+      for (int i = 0; i < pages.length(); i++) {
+        final Page page = pages.get(i);
+        if (page != null) {
+          final int probingLength = probingSequenceLengthFor(pages, page.pageIndex);
+          histo.addTo(probingLength, 1);
+        }
+      }
+      return histo;
+    }
+
+    private static int probingSequenceLengthFor(final @NotNull AtomicReferenceArray<Page> pages,
+                                                final int pageIndex) {
+      //RC: this is a reduced copy of findPageOrInsertionIndex() -> better adjust
+      //    findPageOrInsertionIndex() to return probes count via additional out-param.
+      final int length = pages.length();
+      final int initialSlotIndex = hash(pageIndex) % length;
+      final int probeStep = 1; //=linear probing
+
+      for (int slotIndex = initialSlotIndex, probeNo = 0;
+           probeNo < length;
+           probeNo++) {
+        final Page page = pages.get(slotIndex);
+
+        if (page == null) {
+          return probeNo;
+        }
+
+        if (page.isTombstone()) {
+          //Tombstone: page was removed -> look up further, but remember the position
+        }
+        else if (page.pageIndex == pageIndex) {
+          return probeNo;
+        }
+
+        slotIndex = (slotIndex + probeStep) % length;
+      }
+
+      //no page found
+      return pages.length();
     }
   }
 
@@ -1234,44 +1300,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       return tokensOfUsefulness;
     }
 
-    // ====================================================================
-
-    public void regionModified(final int startOffsetModified,
-                               final int length) {
-      lockPageForWrite();
-      try {
-        final long modifiedRegion = modifiedRegionPacked;
-        final int minOffsetModified = unpackMinOffsetModified(modifiedRegion);
-        final int maxOffsetModified = unpackMaxOffsetModifiedExclusive(modifiedRegion);
-
-        final int minOffsetModifiedNew = Math.min(minOffsetModified, startOffsetModified);
-        final int endOffset = startOffsetModified + length;
-        final int maxOffsetModifiedNew = Math.max(maxOffsetModified, endOffset);
-
-        final long modifiedRegionNew = ((long)minOffsetModifiedNew)
-                                       | (((long)maxOffsetModifiedNew) << Integer.SIZE);
-        this.modifiedRegionPacked = modifiedRegionNew;
-
-        pageToStorageHandle.modifiedRegionUpdated(
-          offsetInFile() + startOffsetModified,
-          length
-        );
-        if (modifiedRegion == 0 && modifiedRegionNew != 0) {
-          pageToStorageHandle.pageBecomeDirty();
-        }
-      }
-      finally {
-        unlockPageForWrite();
-      }
-    }
-
-    private static int unpackMaxOffsetModifiedExclusive(final long modifiedRegionPacked) {
-      return (int)(modifiedRegionPacked >> Integer.SIZE);
-    }
-
-    private static int unpackMinOffsetModified(final long modifiedRegionPacked) {
-      return (int)modifiedRegionPacked;
-    }
+    // ================ dirty region/flush control: =================================
 
     public boolean isDirty() {
       return modifiedRegionPacked != EMPTY_MODIFIED_REGION;
@@ -1288,19 +1317,22 @@ public final class FilePageCacheLockFree implements AutoCloseable {
         //    competing .flush() will short-circuit.
         lockPageForRead();
         try {
+          //FIXME RC: here is the race which leads to storage.isDirty() being only "eventually
+          //          consistent". Race is going like this: lets have a single dirty page, and
+          //          2 threads, thread_1 & thread_2, compete for page.flush(). thread_1 wins
+          //          the race, and continues towards .pageBecomeClean(), but not reach it yet (i.e.
+          //          because of IO). thread_2 loses the race, and exits .flush() early, and checks
+          //          storage.isDirty() -- which is still true, since thread_1 has not yet reached
+          //          .pageBecomeClean()!
+          //          Possible solution: use dedicated exclusive lock for flush, and assign region=EMPTY
+          //          only at the end of the method, after .pageBecomeClean()
+          //          I postpone it since this looks like not very important omission (today)
+
           while (true) {//CAS loop for modifiedRegion:
             final long modifiedRegion = modifiedRegionPacked;
             if (modifiedRegion == EMPTY_MODIFIED_REGION) {
               //competing flush: somebody else already did the job
               return;
-              //FIXME RC: here is the race which leads to storage.isDirty() only eventually consistent
-              //          Race is going like this: lets have storage with single dirty page. thread_1
-              //          & thread_2 compete for page.flush(). thread_1 wins the race, and continue
-              //          towards .pageBecomeClean(), but not reach it yet (i.e. because of IO).
-              //          thread_2 lose the race, and exits .flush(), and checks storage.isDirty()
-              //          which is still true, since thread_1 is not yet reached .pageBecomeClean()
-              //          Probably solution: use separate exclusive lock for flush, and assign region=EMPTY
-              //          only at the end of the method, after .pageBecomeClean()
             }
             final int minOffsetModified = unpackMinOffsetModified(modifiedRegion);
             final int maxOffsetModifiedExclusive = unpackMaxOffsetModifiedExclusive(modifiedRegion);
@@ -1322,6 +1354,43 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       }
     }
 
+    //@GuardedBy(pageLock.writeLock)
+    private void regionModified(final int startOffsetModified,
+                                final int length) {
+      assert pageLock.writeLock().isHeldByCurrentThread() : "writeLock must be held while calling this method";
+      final long modifiedRegionOld = modifiedRegionPacked;
+      final int minOffsetModifiedOld = unpackMinOffsetModified(modifiedRegionOld);
+      final int maxOffsetModifiedOld = unpackMaxOffsetModifiedExclusive(modifiedRegionOld);
+
+      final int minOffsetModifiedNew = Math.min(minOffsetModifiedOld, startOffsetModified);
+      final int endOffset = startOffsetModified + length;
+      final int maxOffsetModifiedNew = Math.max(maxOffsetModifiedOld, endOffset);
+
+      if (minOffsetModifiedOld == minOffsetModifiedNew
+          && maxOffsetModifiedOld == maxOffsetModifiedNew) {
+        return;
+      }
+
+      final long modifiedRegionNew = ((long)minOffsetModifiedNew)
+                                     | (((long)maxOffsetModifiedNew) << Integer.SIZE);
+      this.modifiedRegionPacked = modifiedRegionNew;
+
+      pageToStorageHandle.modifiedRegionUpdated(
+        offsetInFile() + startOffsetModified,
+        length
+      );
+      if (modifiedRegionOld == 0 && modifiedRegionNew != 0) {
+        pageToStorageHandle.pageBecomeDirty();
+      }
+    }
+
+    private static int unpackMinOffsetModified(final long modifiedRegionPacked) {
+      return (int)modifiedRegionPacked;
+    }
+
+    private static int unpackMaxOffsetModifiedExclusive(final long modifiedRegionPacked) {
+      return (int)(modifiedRegionPacked >> Integer.SIZE);
+    }
 
     /* =============== content access methods: ======================================================== */
 
@@ -1530,6 +1599,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
     void pageBecomeClean();
 
+    /** region [startOffsetInFile, length) of file is modified */
     void modifiedRegionUpdated(final long startOffsetInFile,
                                final int length);
 
@@ -1593,14 +1663,12 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       );
     }
 
-    //TODO RC: pass in Iterable<Page> instead of Map<Page>
-
     public void startCollectingTurn() {
       pagesForReclaimDirty = new ArrayList<>(5);
       pagesForReclaimNonDirty = new ArrayList<>(5);
     }
 
-    public void finishCollectingTurn() {  //FIXME: sorting by volatile field is unstable!
+    public void finishCollectingTurn() {
       pagesForReclaimDirty.sort(BY_USEFULNESS);
       pagesForReclaimNonDirty.sort(BY_USEFULNESS);
     }

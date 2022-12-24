@@ -14,12 +14,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
-import static com.intellij.testFramework.assertions.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeTrue;
 
 /**
  *
@@ -32,93 +32,12 @@ public class PagedFileStorageLockFree_MultiThreadedTest {
   @Rule
   public final TemporaryFolder tmpDirectory = new TemporaryFolder();
 
-
-  //FIXME RC: test is flaky due to racy .flush() which competes with eager flushes in housekeeper thread
-  @Test
-  public void concurrentFlushesNotificationsIsSerializable() throws Exception {
-    final AtomicInteger dirtyPagesCount = new AtomicInteger(0);
-    final PageToStorageHandle handle = new PageToStorageHandle() {
-      @Override
-      public void pageBecomeDirty() {
-        dirtyPagesCount.incrementAndGet();
-      }
-
-      @Override
-      public void pageBecomeClean() {
-        dirtyPagesCount.decrementAndGet();
-      }
-
-      @Override
-      public void modifiedRegionUpdated(final long startOffsetInFile, final int length) {
-      }
-
-      @Override
-      public void flushBytes(final @NotNull ByteBuffer dataToFlush, final long offsetInFile) throws IOException {
-      }
-    };
-    final Page page = new Page(0, 0, 1024, null, handle);
-    page.prepareForUse(_page -> ByteBuffer.allocate(_page.pageSize()));
-    page.tryAcquireForUse(this);
-
-    final AtomicBoolean running = new AtomicBoolean(true);
-    final AtomicInteger goLatch = new AtomicInteger(0);
-    final AtomicInteger resetLatch = new AtomicInteger(16);
-    final AtomicReference<AssertionError> error = new AtomicReference<>(null);
-    final Thread[] threads = new Thread[16];
-    for (int i = 0; i < threads.length; i++) {
-      threads[i] = new Thread(() -> {
-        while (running.get()) {
-          while (goLatch.get() == 0) {
-          }
-          try {
-            page.flush();
-          }
-          catch (IOException e) {
-            e.printStackTrace();
-          }
-          final int dirtyPages = dirtyPagesCount.get();
-          if (dirtyPages != 0) {
-            error.set(new AssertionError("Dirty pages must be 0 since the only page is just successfully .flush()-ed: " + dirtyPages));
-          }
-          goLatch.decrementAndGet();
-          while (resetLatch.get() == 0) {
-          }
-          resetLatch.decrementAndGet();
-        }
-      }, "thread-" + i);
-
-      threads[i].start();
-    }
-    try {
-      for (int i = 0; i < 100_000; i++) {
-        page.putLong(0, Long.MAX_VALUE);//make dirty:
-
-        resetLatch.set(0);                   //close reset-latch
-        goLatch.set(threads.length);         //open go-latch
-
-        while (goLatch.get() > 0) ;           //wait for all threads to pass .flush()
-
-        assertThat(dirtyPagesCount.get())
-          .describedAs("Dirty pages must be 0 since the only page is just successfully .flush()-ed")
-          .isEqualTo(0);
-        final AssertionError errorFromThread = error.get();
-        if (errorFromThread != null) {
-          //None of the threads should see dirtyPagesCount>0 after its own flush() completed
-          throw errorFromThread;
-        }
-
-        resetLatch.set(threads.length);      //open reset-latch
-        while (resetLatch.get() > 0) ;        //wait for all threads to return to go-latch
-      }
-    }
-    finally {
-      running.set(false);
-      resetLatch.set(threads.length);      //open reset-latch
-    }
-
-    for (Thread thread : threads) {
-      thread.join();
-    }
+  @BeforeClass
+  public static void beforeClass() throws Exception {
+    assumeTrue(
+      "LockFree FilePageCache must be enabled: see PageCacheUtils.LOCK_FREE_VFS_ENABLED",
+      PageCacheUtils.LOCK_FREE_VFS_ENABLED
+    );
   }
 
   @Test
@@ -141,6 +60,7 @@ public class PagedFileStorageLockFree_MultiThreadedTest {
     final ExecutorService threadPool = Executors.newFixedThreadPool(threads);
     final int cacheCapacityBytes = PAGE_SIZE * DEFAULT_PAGES_COUNT;
     final File file = tmpDirectory.newFile();
+
     try (FilePageCacheLockFree filePageCache = new FilePageCacheLockFree(cacheCapacityBytes)) {
       final StorageLockContext storageContext = new StorageLockContext(filePageCache, true, true, true);
       for (int tryNo = 0; tryNo < tryes; tryNo++) {
@@ -180,6 +100,226 @@ public class PagedFileStorageLockFree_MultiThreadedTest {
           }
         }
       }
+    }
+  }
+
+
+  //FIXME RC: test is flaky due to racy .flush() which competes with eager flushes in housekeeper thread
+  @Test
+  //@Ignore
+  public void concurrentFlushesNotificationsIsSerializable() throws Exception {
+    final int threadsCount = Runtime.getRuntime().availableProcessors() - 1;
+
+    final AtomicInteger dirtyPagesCount = new AtomicInteger(0);
+    final AtomicReference<Thread> cleaningThread = new AtomicReference<>();
+    final PageToStorageHandle handle = new PageToStorageHandle() {
+      @Override
+      public void pageBecomeDirty() {
+        final int dirtyPages = dirtyPagesCount.incrementAndGet();
+        cleaningThread.set(null);
+        if (dirtyPages != 1) {
+          throw new AssertionError("Should be only one dirty page: " + dirtyPages);
+        }
+      }
+
+      @Override
+      public void pageBecomeClean() {
+        Thread.yield();
+        final int dirtyPages = dirtyPagesCount.decrementAndGet();
+        cleaningThread.set(Thread.currentThread());
+        if (dirtyPages != 0) {
+          throw new AssertionError("Should be 0 dirty pages: " + dirtyPages);
+        }
+      }
+
+      @Override
+      public void modifiedRegionUpdated(final long startOffsetInFile, final int length) { /*nothing*/ }
+
+      @Override
+      public void flushBytes(final @NotNull ByteBuffer dataToFlush, final long offsetInFile) { /*nothing*/ }
+    };
+    final Page page = new Page(0, 0, 1024, null, handle);
+    page.prepareForUse(_page -> ByteBuffer.allocate(_page.pageSize()));
+    page.tryAcquireForUse(this);
+
+    final Thread[] threads = new Thread[threadsCount];
+
+    try (BusyWaitingBarrier barrier = new BusyWaitingBarrier(threadsCount)) {
+      final AtomicReference<AssertionError> error = new AtomicReference<>(null);
+
+      for (int i = 0; i < threads.length; i++) {
+        threads[i] = new Thread(() -> {
+          try {
+            while (!Thread.currentThread().isInterrupted()) {
+              barrier.waitOnBarrier();
+
+              try {
+                page.flush();
+              }
+              catch (IOException e) {
+                //not possible since we don't do any IO really
+                e.printStackTrace();
+              }
+
+              final int dirtyPages = dirtyPagesCount.get();
+              if (dirtyPages != 0) {
+                error.set(
+                  new AssertionError("Dirty pages(=" + dirtyPages + ") must be 0 since the only page is just successfully .flush()-ed")
+                );
+              }
+            }
+            System.out.println("Interrupted -> exit");
+          }
+          catch (InterruptedException e) {
+            System.out.println("Interrupted -> exit");
+          }
+        }, "thread-" + i);
+
+        threads[i].start();
+      }
+
+      barrier.waitForAllThreadsToCome();
+      for (int i = 0; i < 100_000; i++) {
+        page.putLong(0, Long.MAX_VALUE);    //make the page dirty
+
+        barrier.openBarrierAndWaitForAllThreadsToPass();
+
+        barrier.waitForAllThreadsToCome();               //wait for all threads to pass .flush()
+        assertEquals("Dirty pages must be 0 since the only page is just successfully .flush()-ed",
+                     0,
+                     dirtyPagesCount.get()
+        );
+
+        final AssertionError errorFromThread = error.get();
+        if (errorFromThread != null) {
+          //None of the threads should see dirtyPagesCount>0 after its own flush() completed
+          throw new AssertionError("Turn: " + i, errorFromThread);
+        }
+      }
+    }
+
+    for (Thread thread : threads) {
+      thread.join();
+    }
+  }
+
+  //FIXME RC: it looks like a bug in jvm(!), but I want to check it against other JVM/OS versions
+  @Test
+  //@Ignore("")
+  public void busyWaitingBarrierWorkConsistently() throws Exception {
+    final int threadsCount = Runtime.getRuntime().availableProcessors() - 1;
+
+    final Thread[] threads = new Thread[threadsCount];
+    try (BusyWaitingBarrier barrier = new BusyWaitingBarrier(threadsCount)) {
+      for (int i = 0; i < threads.length; i++) {
+        threads[i] = new Thread(() -> {
+          try {
+            while (!Thread.currentThread().isInterrupted()) {
+              barrier.waitOnBarrier();
+            }
+            System.out.println("Interrupted -> exit");
+          }
+          catch (InterruptedException e) {
+            System.out.println("Interrupted -> exit");
+          }
+        }, "thread-" + i);
+
+        threads[i].start();
+      }
+
+      for (int i = 0; i < 100_000; i++) {
+        final int threadsWaiting = barrier.waitForAllThreadsToCome();
+
+        barrier.openBarrierAndWaitForAllThreadsToPass();
+      }
+    }
+
+    for (Thread thread : threads) {
+      thread.join();
+    }
+  }
+
+
+  private static class BusyWaitingBarrier implements AutoCloseable {
+    private final int threadsCount;
+
+    private final AtomicInteger threadsWaitingOnBarrier = new AtomicInteger(0);
+    private final AtomicInteger threadsAllowedToPassBarrier = new AtomicInteger(0);
+
+    private volatile boolean closed = false;
+
+    private BusyWaitingBarrier(final int count) { threadsCount = count; }
+
+    public BusyWaitingBarrier waitOnBarrier() throws InterruptedException {
+      threadsWaitingOnBarrier.incrementAndGet();
+      try {
+        while (true) {//spinning
+          final int allowedToPass = threadsAllowedToPassBarrier.get();
+          if (allowedToPass > 0) {
+            if (threadsAllowedToPassBarrier.compareAndSet(allowedToPass, allowedToPass - 1)) {
+              return this;
+            }
+          }
+          checkClosed();
+        }
+      }
+      finally {
+        threadsWaitingOnBarrier.decrementAndGet();
+      }
+    }
+
+    public BusyWaitingBarrier openBarrierAndWaitForAllThreadsToPass() throws InterruptedException {
+      //waitForAllThreadsToCome();
+      final int threadsWaiting = threadsWaitingOnBarrier.get();
+      if (threadsWaiting != threadsCount) {
+        throw new IllegalStateException(threadsWaiting + " waiting, but must be " + threadsCount);
+      }
+      final int allowedToPass = threadsAllowedToPassBarrier.get();
+      if (allowedToPass != 0) {
+        throw new IllegalStateException(allowedToPass + " must be 0");
+      }
+
+      //open the barrier:
+      threadsAllowedToPassBarrier.addAndGet(threadsCount);
+
+      waitForAllThreadsToPass();
+      return this;
+    }
+
+    public int waitForAllThreadsToCome() throws InterruptedException {
+      while (threadsWaitingOnBarrier.get() < threadsCount) {
+        //spinning
+        checkClosed();
+      }
+
+      final int threadsWaiting = threadsWaitingOnBarrier.get();
+      if (threadsWaiting != threadsCount) {
+        throw new IllegalStateException(threadsWaiting + " waiting, but must be " + threadsCount);
+      }
+      return threadsWaiting;
+    }
+
+    private BusyWaitingBarrier waitForAllThreadsToPass() throws InterruptedException {
+      while (threadsAllowedToPassBarrier.get() > 0) {
+        //spinning
+        checkClosed();
+      }
+      return this;
+    }
+
+    private void checkClosed() throws InterruptedException {
+      if (isClosed()) {
+        throw new InterruptedException("Barrier was closed");
+      }
+    }
+
+    @Override
+    public void close() throws Exception {
+      closed = true;
+    }
+
+    public boolean isClosed() {
+      return closed;
     }
   }
 }

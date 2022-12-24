@@ -171,10 +171,10 @@ public abstract class PerformanceOfFileAccessBaseTest {
                                                    final Histogram responseTimeUsHisto) {
     final double meanResponseTimeUs = responseTimeUsHisto.getMean();
     final double averageDelayBetweenShotsUs = averageDelayBetweenShotsNs / 1000.0;
-    final double totalTimePerRoundUs = meanResponseTimeUs + averageDelayBetweenShotsUs;
+    final double totalTimePerRoundUs = Math.max(meanResponseTimeUs, averageDelayBetweenShotsUs);
     final double perThreadUtilizationPercents = meanResponseTimeUs * 100.0 / totalTimePerRoundUs;
     System.out.printf(
-      "%-60s: %d bytes, %d threads, [%.1f us avg + %.0f us in between, u=%.1f%%] => {50%%: %d, 90%%: %d, 99%%: %d, max: %d } us\n",
+      "%-50s: %d bytes, %d threads, [%.1f us avg, %.0f us in between, u=%.1f%%] => {50%%: %d, 90%%: %d, 99%%: %d, max: %d } us\n",
       caption,
       bytesPerShot,
       THREADS,

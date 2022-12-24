@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.io.pagecache.FilePageCacheStatistics;
 import com.intellij.util.io.pagecache.PagedStorage;
 import com.intellij.util.io.storage.AbstractStorage;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +72,10 @@ public class PagedFileStorageLockFree implements PagedStorage {
 
     @Override
     public void pageBecomeClean() {
-      dirtyPagesCount.decrementAndGet();
+      final int dirtyPages = dirtyPagesCount.decrementAndGet();
+      if (dirtyPages < 0) {
+        throw new AssertionError("Bug: dirty pages (=" + dirtyPages + ") can't be negative");
+      }
     }
 
     @Override
@@ -328,6 +332,9 @@ public class PagedFileStorageLockFree implements PagedStorage {
       throw new AssertionError("Page " + pageIndex + " must be >=0");
     }
 
+    final FilePageCacheStatistics statistics = pageCache.getStatistics();
+    final long startedAtNs = statistics.startTimestampNs();
+
     while (true) {
       if (isClosed()) {
         throw new ClosedStorageException("Storage is already closed: " + file);
@@ -338,14 +345,21 @@ public class PagedFileStorageLockFree implements PagedStorage {
         this::loadPageData
       );
 
+      //TODO RC: avoid without busy-spinning, since page loading could take quite a time.
+      //         We could try acquire page write lock:
+      //         1) if we acquired the lock, and page is NOT_READY_YET -> we could help page loading,
+      //         i.e. initiate .prepareToUse() from current thread.
+      //         2) if we acquired the lock, but page is USABLE -> release the lock immediately, and
+      //         just proceed
+      //         3) if we get blocked -> ok, other thread does the loading, and we're waiting for
+      //         it without spinning
+
       try {//busy-spin on: check page is USABLE, and increment useCount
         while (!page.tryAcquireForUse(this)) {
           Thread.yield();
           //MAYBE RC: Thread.onSpinWait(); (java9+)
-          //TODO RC: invent some way to wait without busy-spinning, since page loading could take
-          //         quite a time...
         }
-        pageCache.getStatistics().pageQueried(page.pageSize());
+        statistics.pageRequested(page.pageSize(), startedAtNs);
         return page;
       }
       catch (IOException ignore) {
@@ -482,6 +496,8 @@ public class PagedFileStorageLockFree implements PagedStorage {
     if (!pageToLoad.isNotReadyYet()) {
       throw new AssertionError("Page must be NOT_READY_YET, but " + pageToLoad);
     }
+    final FilePageCacheStatistics statistics = pageCache.getStatistics();
+    final long startedAtNs = statistics.startTimestampNs();
     final ByteBuffer pageBuffer = pageCache.allocatePageBuffer(pageSize);
     useChannel(ch -> {
       final int readBytes = ch.read(pageBuffer, pageToLoad.offsetInFile());
@@ -489,6 +505,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
         final int startFrom = Math.max(0, readBytes);
         fillWithZeroes(pageBuffer, startFrom, pageSize);
       }
+      statistics.pageRead(readBytes, startedAtNs);
       return pageBuffer;
     }, isReadOnly());
     return pageBuffer;
@@ -496,10 +513,15 @@ public class PagedFileStorageLockFree implements PagedStorage {
 
   private void flushPage(final @NotNull ByteBuffer bufferToSave,
                          final long offsetInFile) throws IOException {
+    final FilePageCacheStatistics statistics = pageCache.getStatistics();
+    final long startedAtNs = statistics.startTimestampNs();
+    final int bytesToStore = bufferToSave.remaining();
     useChannel(ch -> {
       ch.write(bufferToSave, offsetInFile);
       return null;
     }, isReadOnly());
+
+    statistics.pageWritten(bytesToStore, startedAtNs);
   }
 
   private static final int MAX_FILLER_SIZE = 8192;

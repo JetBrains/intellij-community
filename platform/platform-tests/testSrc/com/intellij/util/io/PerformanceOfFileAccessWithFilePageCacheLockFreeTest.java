@@ -229,6 +229,7 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
   public void responseTime_Random_Read_ViaFilePageCacheNew() throws IOException, InterruptedException {
     final File file = createRandomContentFileOfSize(FILE_SIZE);
     final ByteBuffer buffer = randomContentBufferOfSize(BUFFER_SIZE);
+    final FilePageCacheLockFree pageCache = storageContext.pageCache();
 
     final long pagesCount = FILE_SIZE / BUFFER_SIZE;
     final long[] offsetsToRequest = IntStream.range(0, DIFFERENT_OFFSETS_TO_REQUEST)
@@ -265,7 +266,6 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
         responseTimeUsHisto
       );
 
-      final FilePageCacheLockFree pageCache = storageContext.pageCache();
       final long cacheCapacityBytes = pageCache.getCacheCapacityBytes();
       final long expectedPagesAllocated = estimatePagesToLoad(
         cacheCapacityBytes / BUFFER_SIZE,
@@ -277,14 +277,15 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
                         expectedPagesAllocated
       );
 
-      System.out.println(pageCache.getStatistics());
     }
+    System.out.println(pageCache.getStatistics().toPrettyString());
   }
 
   @Test
   public void responseTime_Random_Write_ViaFilePageCacheNew() throws IOException, InterruptedException {
     final File file = createRandomContentFileOfSize(FILE_SIZE);
     final ByteBuffer buffer = randomContentBufferOfSize(BUFFER_SIZE);
+    final FilePageCacheLockFree pageCache = storageContext.pageCache();
 
     final long pagesCount = FILE_SIZE / BUFFER_SIZE;
     final long[] offsetsToRequest = IntStream.range(0, DIFFERENT_OFFSETS_TO_REQUEST)
@@ -321,7 +322,7 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
         responseTimeUsHisto
       );
 
-      final FilePageCacheLockFree pageCache = storageContext.pageCache();
+
       final long cacheCapacityBytes = pageCache.getCacheCapacityBytes();
       final long expectedPagesAllocated = estimatePagesToLoad(
         cacheCapacityBytes / BUFFER_SIZE,
@@ -333,8 +334,8 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
                         expectedPagesAllocated
       );
 
-      System.out.println(pageCache.getStatistics());
     }
+    System.out.println(pageCache.getStatistics().toPrettyString());
   }
 
 
