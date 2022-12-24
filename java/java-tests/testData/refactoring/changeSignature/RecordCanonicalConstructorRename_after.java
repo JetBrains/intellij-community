@@ -33,4 +33,10 @@ class Use {
             System.out.println(y + z + x);
         }
     }
+
+    void bar(Rec[] recs) {
+      for (Rec(int y, int z, int x) : recs) {
+        System.out.println(y + z + x);
+      }
+    }
 }
