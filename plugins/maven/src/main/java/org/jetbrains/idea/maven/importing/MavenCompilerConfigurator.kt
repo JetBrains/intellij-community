@@ -121,13 +121,13 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
   }
 
   override fun process(modifiableModelsProvider: IdeModifiableModelsProvider,
-                       module: Module,
-                       rootModel: MavenRootModelAdapter?,
-                       mavenModel: MavenProjectsTree,
-                       mavenProject: MavenProject,
-                       changes: MavenProjectChanges,
-                       mavenProjectToModuleName: Map<MavenProject, String>,
-                       postTasks: List<MavenProjectsProcessorTask>) {
+              module: Module,
+              rootModel: MavenRootModelAdapter,
+              mavenModel: MavenProjectsTree,
+              mavenProject: MavenProject,
+              changes: MavenProjectChanges,
+              mavenProjectToModuleName: Map<MavenProject, String>,
+              postTasks: List<MavenProjectsProcessorTask>) {
     val project = module.project
 
     // select (and cache) default compiler extension

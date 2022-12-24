@@ -14,10 +14,8 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.notificationGroup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.PathUtil
@@ -91,14 +89,14 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
     }
 
     override fun process(
-        modifiableModelsProvider: IdeModifiableModelsProvider,
-        module: Module,
-        rootModel: MavenRootModelAdapter,
-        mavenModel: MavenProjectsTree,
-        mavenProject: MavenProject,
-        changes: MavenProjectChanges,
-        mavenProjectToModuleName: MutableMap<MavenProject, String>,
-        postTasks: MutableList<MavenProjectsProcessorTask>
+      modifiableModelsProvider: IdeModifiableModelsProvider,
+      module: Module,
+      rootModel: MavenRootModelAdapter,
+      mavenModel: MavenProjectsTree,
+      mavenProject: MavenProject,
+      changes: MavenProjectChanges,
+      mavenProjectToModuleName: MutableMap<MavenProject, String>,
+      postTasks: MutableList<MavenProjectsProcessorTask>
     ) {
 
         if (changes.hasPluginsChanges()) {
