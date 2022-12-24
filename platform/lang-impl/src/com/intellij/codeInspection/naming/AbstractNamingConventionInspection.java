@@ -5,7 +5,10 @@ import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
+import com.intellij.codeInspection.options.OptCheckboxPanel;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptRegularComponent;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,20 +21,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.SyntheticElement;
 import com.intellij.serialization.SerializationException;
-import com.intellij.ui.CheckBoxList;
-import com.intellij.ui.CheckBoxListListener;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -234,47 +230,30 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
     }
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
-    CardLayout layout = new CardLayout();
-    JPanel descriptionPanel = new JPanel(layout);
-    descriptionPanel.setBorder(JBUI.Borders.emptyLeft(20));
-    panel.add(descriptionPanel, BorderLayout.CENTER);
-    CheckBoxList<NamingConvention<T>> list = new CheckBoxList<>();
-    list.setBorder(JBUI.Borders.empty());
+  public @NotNull OptPane getOptionsPane() {
     List<NamingConvention<T>> values = new ArrayList<>(myNamingConventions.values());
     Collections.reverse(values);
-    for (NamingConvention<T> convention : values) {
+    return OptPane.pane(new OptCheckboxPanel(ContainerUtil.map(values, convention -> {
       String shortName = convention.getShortName();
-      list.addItem(convention, convention.getElementDescription(), !myDisabledShortNames.contains(shortName));
-      final JComponent optionsPanel = myNamingConventionBeans.get(shortName).createOptionsPanel();
-      if (optionsPanel instanceof InspectionOptionsPanel inspectionOptionsPanel) {
-        inspectionOptionsPanel.addGlueIfNeeded();
-      }
-      descriptionPanel.add(optionsPanel, shortName);
+      NamingConventionBean bean = myNamingConventionBeans.get(shortName);
+      //noinspection LanguageMismatch
+      return OptPane.checkbox(shortName, convention.getElementDescription(),
+                              bean.getOptionsPane().prefix(shortName).components().toArray(new OptRegularComponent[0]));
+    })));
+  }
+
+  @NotNull
+  @Override
+  public OptionController getOptionController() {
+    OptionController controller = OptionController.of(
+      shortName -> !myDisabledShortNames.contains(shortName),
+      (shortName, value) -> setEnabled((boolean)value, shortName)
+    );
+    for (Map.Entry<String, NamingConventionBean> entry : myNamingConventionBeans.entrySet()) {
+      controller = controller.onPrefix(entry.getKey(), entry.getValue().getOptionController());
     }
-    list.addListSelectionListener((e) -> {
-      int selectedIndex = list.getSelectedIndex();
-      NamingConvention<T> item = list.getItemAt(selectedIndex);
-      if (item != null) {
-        String shortName = item.getShortName();
-        layout.show(descriptionPanel, shortName);
-        UIUtil.setEnabled(descriptionPanel, list.isItemSelected(selectedIndex), true);
-      }
-    });
-    list.setCheckBoxListListener(new CheckBoxListListener() {
-      @Override
-      public void checkBoxSelectionChanged(int index, boolean value) {
-        NamingConvention<T> convention = values.get(index);
-        setEnabled(value, convention.getShortName());
-        UIUtil.setEnabled(descriptionPanel, value, true);
-      }
-    });
-    list.setSelectedIndex(0);
-    panel.add(new JBScrollPane(list), BorderLayout.WEST);
-    return panel;
+    return controller;
   }
 
   public void setEnabled(boolean value, String conventionShortName) {

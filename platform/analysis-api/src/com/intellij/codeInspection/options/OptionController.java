@@ -22,7 +22,7 @@ public interface OptionController {
    * @param value  new value for the option
    * @throws IllegalArgumentException if bindId is unknown
    * @see #getOption(String)
-   * @see InspectionProfileEntry#getOptionController() 
+   * @see InspectionProfileEntry#getOptionController()
    */
   void setOption(@NotNull String bindId, Object value);
 
@@ -183,6 +183,24 @@ public interface OptionController {
       @Override
       public Object getOption(@NotNull String bindId) {
         return getter.apply(bindId);
+      }
+    };
+  }
+
+  /**
+   * @return an empty controller that cannot get or set any option. Can be used as an initial value to build more complex controller
+   * using subsequent {@code onPrefix}, {@code onValue}, etc. calls.
+   */
+  static OptionController empty() {
+    return new OptionController() {
+      @Override
+      public void setOption(@NotNull String bindId, Object value) {
+        throw new IllegalArgumentException(bindId);
+      }
+
+      @Override
+      public Object getOption(@NotNull String bindId) {
+        throw new IllegalArgumentException(bindId);
       }
     };
   }

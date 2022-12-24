@@ -74,8 +74,18 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
    * @param label tab title
    * @return a {@link OptTab} object that contains all the controls from this pane
    */
-  public OptTab asTab(@NotNull @NlsContexts.TabTitle String label) {
+  public @NotNull OptTab asTab(@NotNull @NlsContexts.TabTitle String label) {
     return new OptTab(new PlainMessage(label), components());
+  }
+
+  /**
+   * @param bindPrefix prefix to add to bindId values
+   * @return an equivalent component but every control has bindId prefixed with bindPrefix and dot.
+   * Could be useful to compose a complex form from independent parts. To process prefixed options,
+   * use {@link OptionController#onPrefix(String, OptionController)}
+   */
+  public @NotNull OptPane prefix(@NotNull String bindPrefix) {
+    return new OptPane(ContainerUtil.map(components(), c -> c.prefix(bindPrefix)));
   }
 
   /* DSL */
