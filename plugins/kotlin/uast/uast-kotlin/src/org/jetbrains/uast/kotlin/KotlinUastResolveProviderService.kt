@@ -261,8 +261,8 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return resolveToDeclarationImpl(ktExpression)
     }
 
-    override fun resolveToType(ktTypeReference: KtTypeReference, source: UElement, boxed: Boolean): PsiType? {
-        return ktTypeReference.toPsiType(source, boxed)
+    override fun resolveToType(ktTypeReference: KtTypeReference, source: UElement, isBoxed: Boolean): PsiType? {
+        return ktTypeReference.toPsiType(source, isBoxed)
     }
 
     override fun resolveToType(ktTypeReference: KtTypeReference, containingLightDeclaration: PsiModifierListOwner?): PsiType? {
@@ -273,7 +273,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     override fun getReceiverType(ktCallElement: KtCallElement, source: UElement): PsiType? {
         val resolvedCall = ktCallElement.getResolvedCall(ktCallElement.analyze()) ?: return null
         val receiver = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver ?: return null
-        return receiver.type.toPsiType(source, ktCallElement, PsiTypeConversionConfiguration.create(ktCallElement, boxed = true))
+        return receiver.type.toPsiType(source, ktCallElement, PsiTypeConversionConfiguration.create(ktCallElement, isBoxed = true))
     }
 
     override fun getAccessorReceiverType(ktSimpleNameExpression: KtSimpleNameExpression, source: UElement): PsiType? {
@@ -283,7 +283,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return receiver.type.toPsiType(
             source,
             ktSimpleNameExpression,
-            PsiTypeConversionConfiguration.create(ktSimpleNameExpression, boxed = true)
+            PsiTypeConversionConfiguration.create(ktSimpleNameExpression, isBoxed = true)
         )
     }
 
@@ -294,7 +294,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return ktType.toPsiType(
             source,
             ktDoubleColonExpression,
-            PsiTypeConversionConfiguration.create(ktDoubleColonExpression, boxed = true)
+            PsiTypeConversionConfiguration.create(ktDoubleColonExpression, isBoxed = true)
         )
     }
 
@@ -338,7 +338,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             ktDeclaration,
             PsiTypeConversionConfiguration.create(
                 ktDeclaration,
-                boxed = returnType.isMarkedNullable,
+                isBoxed = returnType.isMarkedNullable,
             )
         )
     }
@@ -356,7 +356,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             ktDeclaration,
             PsiTypeConversionConfiguration.create(
                 ktDeclaration,
-                boxed = returnType.isMarkedNullable,
+                isBoxed = returnType.isMarkedNullable,
                 isForFake = isForFake,
             )
         )

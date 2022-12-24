@@ -56,7 +56,7 @@ internal fun KtAnalysisSession.toPsiClass(
     source: UElement?,
     context: KtElement,
     typeOwnerKind: TypeOwnerKind,
-    boxed: Boolean = true,
+    isBoxed: Boolean = true,
 ): PsiClass? {
     (context as? KtClass)?.toLightClass()?.let { return it }
     return PsiTypesUtil.getPsiClass(
@@ -64,7 +64,7 @@ internal fun KtAnalysisSession.toPsiClass(
             ktType,
             source,
             context,
-            PsiTypeConversionConfiguration(typeOwnerKind, boxed = boxed)
+            PsiTypeConversionConfiguration(typeOwnerKind, isBoxed = isBoxed)
         )
     )
 }
@@ -142,7 +142,7 @@ private fun KtAnalysisSession.toPsiMethodForDeserialized(
             source = null,
             context,
             TypeOwnerKind.DECLARATION,
-            boxed = false
+            isBoxed = false
         )?.lookup(fake = false)
     } ?:
     // Deserialized top-level function
@@ -202,7 +202,7 @@ internal fun KtAnalysisSession.toPsiType(
     config: PsiTypeConversionConfiguration,
 ): PsiType {
     if (ktType is KtNonErrorClassType && ktType.ownTypeArguments.isEmpty()) {
-        fun PsiPrimitiveType.orBoxed() = if (config.boxed) getBoxedType(context) else this
+        fun PsiPrimitiveType.orBoxed() = if (config.isBoxed) getBoxedType(context) else this
         val psiType = when (ktType.classId) {
             StandardClassIds.Int -> PsiType.INT.orBoxed()
             StandardClassIds.Long -> PsiType.LONG.orBoxed()
@@ -212,7 +212,7 @@ internal fun KtAnalysisSession.toPsiType(
             StandardClassIds.Char -> PsiType.CHAR.orBoxed()
             StandardClassIds.Double -> PsiType.DOUBLE.orBoxed()
             StandardClassIds.Float -> PsiType.FLOAT.orBoxed()
-            StandardClassIds.Unit -> convertUnitToVoidIfNeeded(context, config.typeOwnerKind, config.boxed)
+            StandardClassIds.Unit -> convertUnitToVoidIfNeeded(context, config.typeOwnerKind, config.isBoxed)
             StandardClassIds.String -> PsiType.getJavaLangString(context.manager, context.resolveScope)
             else -> null
         }
@@ -253,7 +253,7 @@ internal fun KtAnalysisSession.receiverType(
         context,
         PsiTypeConversionConfiguration.create(
             context,
-            boxed = true,
+            isBoxed = true,
         )
     )
 }
