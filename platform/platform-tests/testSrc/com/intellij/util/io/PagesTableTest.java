@@ -164,7 +164,8 @@ public class PagesTableTest {
         PagesTableTest::allocateAndLoadPage
       );
       //entomb the page:
-      page.tryMoveTowardsTomb(false);
+      page.tryMoveTowardsPreTombstone(false);
+      page.entomb();
 
       assertThat(pages.lookupIfExist(pageIndex))
         .describedAs("TOMBSTONEs are ignored for lookups")
@@ -183,12 +184,11 @@ public class PagesTableTest {
 
   @Test
   public void hashTableProbeLengthsAreNotTooLong() throws IOException {
-    //For 3 different distribution of pages (sequential, random, random-blocks)
+    //It is not a comprehensive hash-table test, just a sanity check: verify that hash table
+    // implementation is not degenerate due to silly mistakes or unlucky combination of params.
+    //For 3 different distributions of pages (sequential, random, random-blocks)
     // check that >=95% of entries could be found in (0,1,2) probes:
     final double expectedWeightOf3Probes = 0.95;
-    
-    //It is not a comprehensive hash-table test, just a sanity check to verify that no
-    //  silly mistakes or unlucky combination of params lead to degenerated hash table.
 
 
     final int[] sequentialPageIndexes = IntStream.rangeClosed(0, PAGES_TO_CREATE)

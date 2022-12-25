@@ -49,7 +49,6 @@ public class PersistentFSRecordsStorageOverLockFreePagedStorageTest
     pagedStorage = new PagedFileStorageLockFree(
       storagePath,
       storageContext,
-      //128<<10,
       pageSize,
       nativeBytesOrder
     );

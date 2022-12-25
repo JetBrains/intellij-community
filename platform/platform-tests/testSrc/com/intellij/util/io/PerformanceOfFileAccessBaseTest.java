@@ -32,7 +32,7 @@ public abstract class PerformanceOfFileAccessBaseTest {
   protected static final int BUFFER_SIZE = Integer.getInteger("PerformanceOfFileAccessBase.BUFFER_SIZE", 1 << 20);
 
   // = max (32*5)=160 Gb of files
-  protected static final int THREADS = Integer.getInteger("PerformanceOfFileAccessBase.THREADS", 5);
+  protected static final int THREADS = Integer.getInteger("PerformanceOfFileAccessBase.THREADS", 3);
 
   //===== Response time (aka 'single shot') benchmarks params:
 

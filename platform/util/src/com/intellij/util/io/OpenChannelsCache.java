@@ -180,5 +180,14 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
     public void close() throws IOException {
       myChannel.close();
     }
+
+    @Override
+    public String toString() {
+      return "ChannelDescriptor{" +
+             "locks=" + myLockCount +
+             ", channel=" + myChannel +
+             ", readOnly=" + myReadOnly +
+             '}';
+    }
   }
 }

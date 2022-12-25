@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /**
- * TODO RC: Basically I want all classes around file-page caching to be
+ * TODO RC: Basically I want _all_ classes around file-page caching to be
  * moved in dedicated package -- i.e. here. E.g.:
  * {@link com.intellij.util.io.FilePageCacheLockFree},
  * {@link com.intellij.util.io.PagedFileStorageLockFree}

@@ -94,7 +94,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       records[i] = generateRecordFields(recordId);
     }
 
-    final int threadsCount = Runtime.getRuntime().availableProcessors() * 2;
+    final int threadsCount = Runtime.getRuntime().availableProcessors();
 
     final Thread[] threads = new Thread[threadsCount];
     for (int i = 0; i < threads.length; i++) {
@@ -139,7 +139,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       records[i] = generateRecordFields(recordId);
     }
 
-    final int threadsCount = Runtime.getRuntime().availableProcessors() * 2;
+    final int threadsCount = Runtime.getRuntime().availableProcessors();
 
     final Thread[] threads = new Thread[threadsCount];
     for (int threadNo = 0; threadNo < threads.length; threadNo++) {

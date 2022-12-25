@@ -14,6 +14,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
@@ -57,9 +58,6 @@ public class PagedFileStorageLockFree implements PagedStorage {
    * in the {@link #pageCache}.
    */
   private volatile Future<?> closingInProgress = null;
-
-  private final transient Object inputStreamLock = new Object();
-
 
   private final AtomicInteger dirtyPagesCount = new AtomicInteger(0);
   private final AtomicLong actualSize = new AtomicLong(0);
@@ -148,37 +146,6 @@ public class PagedFileStorageLockFree implements PagedStorage {
   @Override
   public boolean isNativeBytesOrder() {
     return nativeBytesOrder;
-  }
-
-
-  public <R> @NotNull R readInputStream(final @NotNull ThrowableNotNullFunction<? super InputStream, R, ? extends IOException> consumer)
-    throws IOException {
-    synchronized (inputStreamLock) {
-      try {
-        return useChannel(ch -> {
-          ch.position(0);
-          return consumer.fun(Channels.newInputStream(ch));
-        }, true);
-      }
-      catch (NoSuchFileException ignored) {
-        return consumer.fun(new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY));
-      }
-    }
-  }
-
-  public <R> @NotNull R readChannel(final @NotNull ThrowableNotNullFunction<? super ReadableByteChannel, R, ? extends IOException> consumer)
-    throws IOException {
-    synchronized (inputStreamLock) {
-      try {
-        return useChannel(ch -> {
-          ch.position(0);
-          return consumer.fun(ch);
-        }, true);
-      }
-      catch (NoSuchFileException ignored) {
-        return consumer.fun(Channels.newChannel(new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY)));
-      }
-    }
   }
 
 
@@ -345,8 +312,8 @@ public class PagedFileStorageLockFree implements PagedStorage {
         this::loadPageData
       );
 
-      //TODO RC: avoid without busy-spinning, since page loading could take quite a time.
-      //         We could try acquire page write lock:
+      //TODO RC: Avoid busy-spinning, since page loading could take quite a time.
+      //         We could try to acquire page write lock:
       //         1) if we acquired the lock, and page is NOT_READY_YET -> we could help page loading,
       //         i.e. initiate .prepareToUse() from current thread.
       //         2) if we acquired the lock, but page is USABLE -> release the lock immediately, and
@@ -366,7 +333,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
         LOG.trace("Page " + page + " likely released -> request it again");
         //RC: Worst case: page is in the middle of unmapping (~ABOUT_TO_UNMAP), we can't interrupt
         //    this process, we could only wait until page will be finally unmapped, and request it
-        //    again afterwards -- so it will be mapped back, again.
+        //    again afterwards -- so it will be mapped back, anew.
         //MAYBE RC: we could try to assist page reclamation here: i.e. check it is ABOUT_TO_RECLAIM,
         //          .flush() if dirty...
       }
@@ -420,12 +387,9 @@ public class PagedFileStorageLockFree implements PagedStorage {
     return closingInProgress;
   }
 
-  public void ensureCachedSizeAtLeast(final long size) {
-    if (actualSize.get() < size) {
-      actualSize.set(size);
-    }
+  public int toOffsetInPage(final long offsetInFile) {
+    return (int)(offsetInFile % pageSize);
   }
-
 
   @Override
   public String toString() {
@@ -434,15 +398,10 @@ public class PagedFileStorageLockFree implements PagedStorage {
 
   /* ==================== infrastructure: ============================================================ */
 
-
   private int toPageIndex(final long offsetInFile) {
     final int pageIndex = (int)(offsetInFile / pageSize);
     assert pageIndex >= 0 : "pageIndex(offset: " + offsetInFile + ") = " + pageIndex + ", but must be >=0";
     return pageIndex;
-  }
-
-  private int toOffsetInPage(final long offsetInFile) {
-    return (int)(offsetInFile % pageSize);
   }
 
   /** @return true if value is fully located on a single page */
@@ -499,6 +458,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
     final FilePageCacheStatistics statistics = pageCache.getStatistics();
     final long startedAtNs = statistics.startTimestampNs();
     final ByteBuffer pageBuffer = pageCache.allocatePageBuffer(pageSize);
+    pageBuffer.order(nativeBytesOrder ? ByteOrder.nativeOrder() : ByteOrder.BIG_ENDIAN);
     useChannel(ch -> {
       final int readBytes = ch.read(pageBuffer, pageToLoad.offsetInFile());
       if (readBytes < pageSize) {

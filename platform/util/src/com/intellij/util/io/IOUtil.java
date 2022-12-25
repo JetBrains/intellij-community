@@ -14,11 +14,13 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.io.DataOutputStream;
 import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.IntFunction;
@@ -378,5 +380,56 @@ public final class IOUtil {
     try (final DataInputStream dis = new DataInputStream(bis)) {
       return externalizer.read(dis);
     }
+  }
+
+  public static String toString(final @NotNull ByteBuffer buffer) {
+    final byte[] bytes = new byte[buffer.capacity()];
+    final ByteBuffer slice = buffer.duplicate();
+    slice.position(0)
+      .limit(buffer.capacity());
+    slice.get(bytes);
+    return Arrays.toString(bytes);
+  }
+
+  @NotNull
+  public static String toHexString(final @NotNull ByteBuffer buffer) {
+    return toHexString(buffer, /*pageSize: */ -1);
+  }
+
+  @NotNull
+  public static String toHexString(final @NotNull ByteBuffer buffer,
+                                   final int pageSize) {
+    final byte[] bytes = new byte[buffer.capacity()];
+    final ByteBuffer slice = buffer.duplicate();
+    slice.position(0)
+      .limit(buffer.capacity());
+    slice.get(bytes);
+    return toHexString(bytes, pageSize);
+  }
+
+  @NotNull
+  public static String toHexString(final byte[] bytes) {
+    return toHexString(bytes, /*pageSize: */-1);
+  }
+
+  @NotNull
+  public static String toHexString(final byte[] bytes,
+                                   final int pageSize) {
+    final StringBuilder sb = new StringBuilder(bytes.length * 3);
+    for (int i = 0; i < bytes.length; i++) {
+      final byte b = bytes[i];
+      final int unsignedByte = Byte.toUnsignedInt(b);
+      if (unsignedByte < 16) {//Integer.toHexString format it single-digit, which ruins blocks alignment
+        sb.append("0");
+      }
+      sb.append(Integer.toHexString(unsignedByte));
+      if (pageSize > 0 && i % pageSize == pageSize - 1) {
+        sb.append('\n');
+      }
+      else {
+        sb.append(' ');
+      }
+    }
+    return sb.toString();
   }
 }

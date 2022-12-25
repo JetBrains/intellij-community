@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.util.io.FilePageCacheLockFree.Page;
 import org.assertj.core.description.TextDescription;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
@@ -9,14 +10,20 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 
 public class PagedFileStorageLockFreeTest {
-  public static final int PAGE_SIZE = 4096;
+  public static final int PAGE_SIZE = 8192;
+
   @Rule
   public final TemporaryFolder tmpDirectory = new TemporaryFolder();
 
@@ -63,6 +70,15 @@ public class PagedFileStorageLockFreeTest {
       assertThat(valueReadBack)
         .withFailMessage("Value read back must be the same as the one written")
         .isEqualTo(valueToWrite);
+    }
+  }
+
+  @Test
+  public void closedStorageCouldBeReopenedAgainImmediately() throws Exception {
+    final File file = tmpDirectory.newFile();
+    for (int tryNo = 0; tryNo < 1000; tryNo++) {
+      try (PagedFileStorageLockFree storage = new PagedFileStorageLockFree(file.toPath(), storageContext, PAGE_SIZE, true)) {
+      }
     }
   }
 
@@ -248,6 +264,158 @@ public class PagedFileStorageLockFreeTest {
     }
   }
 
+  @Test
+  public void uncontendedMultiThreadedWrites_ReadBackUnchanged_Playground() throws IOException, InterruptedException {
+    final long cacheCapacityBytes = storageContext.pageCache().getCacheCapacityBytes();
+    final int pagesInCache = (int)(cacheCapacityBytes / PAGE_SIZE);
+    final int fileSize = (2 * pagesInCache + 20) * PAGE_SIZE;
+    final int blockSize = 64;
+    final int threads = Runtime.getRuntime().availableProcessors() - 1;
+
+    final ExecutorService pool = Executors.newFixedThreadPool(threads);
+
+    assertEquals(
+      "N stamps must fit into a page",
+      0,
+      PAGE_SIZE % blockSize
+    );
+
+    final File file = tmpDirectory.newFile();
+    try (final PagedFileStorageLockFree pagedStorage = openFile(file)) {
+      try {
+        final List<Future<Void>> futures = IntStream.range(0, threads)
+          .mapToObj(threadNo -> (Callable<Void>)() -> {
+            for (long offset = threadNo * blockSize;
+                 offset < fileSize;
+                 offset += threads * blockSize) {
+              try (final Page page = pagedStorage.pageByOffset(offset, true)) {
+                final int offsetOnPage = pagedStorage.toOffsetInPage(offset);
+                page.putLong(offsetOnPage, threadNo + 1);
+              }
+            }
+            return null;
+          })
+          .map(pool::submit)
+          .toList();
+      }
+      finally {
+        pool.shutdown();
+        assertTrue(
+          "Must terminated in 10 min",
+          pool.awaitTermination(10, TimeUnit.MINUTES)
+        );
+      }
+    }
+    
+    try (final PagedFileStorageLockFree pagedStorage = openFile(file)) {
+      //now try to read it back:
+      boolean fail = false;
+      for (long offset = 0; offset < fileSize; offset += blockSize) {
+        try (final Page page = pagedStorage.pageByOffset(offset, false)) {
+          final int offsetInPage = pagedStorage.toOffsetInPage(offset);
+          final long value = page.getLong(offsetInPage);
+          final long expectedValue = (offset / blockSize) % threads + 1;
+          if (value != expectedValue) {
+            final String fullPageContent = page.read(
+              offsetInPage, blockSize,
+              pageBuffer -> {
+                return IOUtil.toHexString(pageBuffer, /*paginate: */ blockSize);
+              }
+            );
+            fail = true;
+            System.out.println("page[" + page.pageIndex() + " x " + PAGE_SIZE + " +" + offsetInPage + " = " + offset + "]: \n" +
+                               "expected: " + expectedValue + "\n" +
+                               " but was: " + value + "\n" +
+                               "storage.length: " + pagedStorage.length() + "\n" +
+                               "cacheCapacity:  " + cacheCapacityBytes + "\n" +
+                               "full page content: \n" + fullPageContent);
+          }
+        }
+      }
+      if (fail) {
+        fail("");
+      }
+    }
+  }
+
+
+  @Test
+  public void uncontendedMultiThreadedWrites_ReadBackUnchanged() throws IOException, InterruptedException {
+    final int pagesInCache = (int)(storageContext.pageCache().getCacheCapacityBytes() / PAGE_SIZE);
+    final int fileSize = (2 * pagesInCache + 20) * PAGE_SIZE;
+    final int blockSize = 64;
+    final int threads = Runtime.getRuntime().availableProcessors() - 1;
+
+    final ExecutorService pool = Executors.newFixedThreadPool(threads);
+
+    final byte[] stamp = generateRandomByteArray(blockSize);
+    assertEquals(
+      "N stamps must fit into a page",
+      0,
+      PAGE_SIZE % stamp.length
+    );
+
+    final File file = tmpDirectory.newFile();
+    try (final PagedFileStorageLockFree pagedStorage = openFile(file)) {
+      try {
+        final List<Future<Void>> futures = IntStream.range(0, threads)
+          .mapToObj(threadNo -> (Callable<Void>)() -> {
+            for (long offset = threadNo * stamp.length;
+                 offset < fileSize;
+                 offset += threads * stamp.length) {
+              try (final Page page = pagedStorage.pageByOffset(offset, true)) {
+                final int offsetOnPage = pagedStorage.toOffsetInPage(offset);
+                page.write(
+                  offsetOnPage, stamp.length,
+                  pageBuffer -> {
+                    return pageBuffer.put(stamp);
+                  });
+              }
+            }
+            return null;
+          })
+          .map(pool::submit)
+          .toList();
+      }
+      finally {
+        pool.shutdown();
+        assertTrue(
+          "Must terminated in 10 min",
+          pool.awaitTermination(10, TimeUnit.MINUTES)
+        );
+      }
+
+      //now try to read it back:
+      final byte[] buffer = new byte[stamp.length];
+      for (long offset = 0; offset < fileSize; offset += stamp.length) {
+        try (final Page page = pagedStorage.pageByOffset(offset, false)) {
+          final int offsetInPage = pagedStorage.toOffsetInPage(offset);
+          page.read(
+            offsetInPage, stamp.length,
+            pageBuffer -> {
+              return pageBuffer.get(buffer);
+            }
+          );
+          if (!Arrays.equals(buffer, stamp)) {
+            final String fullPageContent = page.read(
+              offsetInPage, stamp.length,
+              pageBuffer -> {
+                return IOUtil.toHexString(pageBuffer, /*paginate: */ blockSize);
+              }
+            );
+            fail("page[" + page.pageIndex() + " x " + PAGE_SIZE + " +" + offsetInPage + " = " + offset + "]: \n" +
+                 "expected: " + IOUtil.toHexString(stamp) + "\n" +
+                 " but was: " + IOUtil.toHexString(buffer) + "\n" +
+                 "storage.length: " + pagedStorage.length() + "\n" +
+                 "full page content: \n" + fullPageContent);
+          }
+          //clean buffer before next turn:
+          Arrays.fill(buffer, (byte)0);
+        }
+      }
+    }
+  }
+
 
   @NotNull
   private PagedFileStorageLockFree openFile(final @NotNull File file) throws IOException {
@@ -257,5 +425,13 @@ public class PagedFileStorageLockFreeTest {
       PAGE_SIZE,
       true
     );
+  }
+
+  private static byte @NotNull [] generateRandomByteArray(final int length) {
+    final byte[] stamp = new byte[length];
+    for (int i = 0; i < stamp.length; i++) {
+      stamp[i] = (byte)ThreadLocalRandom.current().nextInt(Byte.MIN_VALUE, Byte.MAX_VALUE);
+    }
+    return stamp;
   }
 }

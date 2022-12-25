@@ -219,7 +219,6 @@ public final class FilePageCacheLockFree implements AutoCloseable {
   //        Also use it to estimate how much 'eager flushes' needs to be done.
   //     2. In .allocatePageBuffer(): trace counts of .flush() invoked, and heap buffers allocated
   //     3. If a lot of .flush() invoked -> increase probability of 'eager flushes' in (2)
-  //     4. How to use 'heap buffers count' and 'capacity overflow'?
 
 
   //================================================================================================
@@ -277,8 +276,8 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
           if (page.isAboutToUnmap() && page.usageCount() == 0) {
             //reclaim page right now, no need to enqueue it for later:
-            final int finalState = page.tryMoveTowardsTomb(false);
-            if (finalState == Page.STATE_TOMBSTONE) {
+            final boolean succeed = page.tryMoveTowardsPreTombstone(/*entombYoung: */false);
+            if (succeed) {
               unmapPageAndReclaimBuffer(page);
               continue;
             }
@@ -321,8 +320,8 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       if (candidate.isUsable() && candidate.usageCount() == 0) {
         final ByteBuffer data = candidate.data;
         if (data != null && !data.isDirect()) {
-          final int finalState = candidate.tryMoveTowardsTomb(/*entombYoung: */false);
-          if (finalState == Page.STATE_TOMBSTONE) {
+          final boolean succeed = candidate.tryMoveTowardsPreTombstone(/*entombYoung: */false);
+          if (succeed) {
             unmapPageAndReclaimBuffer(candidate);
             remainsToReclaim--;
           }
@@ -380,9 +379,9 @@ public final class FilePageCacheLockFree implements AutoCloseable {
           try {
             PageCacheUtils.CHANNELS_CACHE.closeChannel(file);
           }
-          catch (IOException e) {
-            LOG.error("Can't close channel for " + file, e);
-            futureToFinalize.completeExceptionally(e);
+          catch (Throwable t) {
+            LOG.error("Can't close channel for " + file, t);
+            futureToFinalize.completeExceptionally(t);
           }
           successfullyReclaimed++;
           synchronized (pagesPerFile) {
@@ -417,98 +416,104 @@ public final class FilePageCacheLockFree implements AutoCloseable {
    * such a page. Method is designed to be called repeatedly, until all pages are reclaimed.
    */
   protected boolean tryToReclaimAll(final @NotNull PagesTable pagesTable) {
-    final AtomicReferenceArray<Page> pages = pagesTable.pages;
-    boolean somePagesStillInUse = false;
-    for (int i = 0; i < pages.length(); i++) {
-      final Page page = pages.get(i);
-      if (page == null || page.isTombstone()) {
-        continue;
-      }
-
-      if (!page.isNotReadyYet()) {
-        //Simple cases: USABLE or ABOUT_TO_UNMAP
-        final int finalState = page.tryMoveTowardsTomb(/*entombYoung: */false);
-        if (finalState == Page.STATE_TOMBSTONE) {
-          unmapPageAndReclaimBuffer(page);
+    pagesTable.pagesLock.writeLock().lock();
+    try {
+      final AtomicReferenceArray<Page> pages = pagesTable.pages;
+      boolean somePagesStillInUse = false;
+      for (int i = 0; i < pages.length(); i++) {
+        final Page page = pages.get(i);
+        if (page == null || page.isTombstone()) {
+          continue;
         }
-      }
-      else {
-        //More tangled cases: Page could be
-        // 1) NOT_READY_YET (=> usageCount=0)
-        // 2) was NOT_READY_YET just before but is already promoted to USABLE
 
-        //MAYBE RC: Really, this branch is just an optimization, a try to release pages a bit faster.
-        //          If we remove this branch, NOT_READY_YET pages will be naturally promoted to USABLE,
-        //          and next .tryToReclaimAll() call moves them to ABOUT_TO_RECLAIM and eventually
-        //          TOMBSTONE by the branch above alone. So the branch above (!isNotReadyYet) is the
-        //          crucial one, while this branch just tries to avoid (short-circuit) unnecessary
-        //          allocation-loading-reclaiming of the pages that are initialized concurrently with
-        //          .close().
-        //          Now, except for tests & benchmarks, I doubt there are many cases there a lot of
-        //          pages initialized concurrently with .close() -- so, it seems, this branch provides
-        //          little benefit for its complexity.
-        //          There is a reason, though, why I leave this branch here: it also adds 'robustness'.
-        //          I.e. if page acquisition code _fails_ and leaves the page in NOT_READY_YET state --
-        //          this branch _could_ reclaim such a page, while without it the page remains leaking.
-        //          Maybe I'll reconsider this in the future.
-
-        //Acquire page.writeLock to stop page from being promoted to USABLE (if it hasn't been yet):
-        if (page.pageLock.writeLock().tryLock()) {
-          try {
-            final int finalState = page.tryMoveTowardsTomb(/*entombYoung: */ true);
-            if (finalState == Page.STATE_TOMBSTONE) {
-              //If we just entomb NOT_READY_YET page => it has .data=null
-              //   but page could be already promoted to USABLE, in which case .data != null, and
-              //   should be reclaimed:
-              if (page.data != null) {
-                unmapPageAndReclaimBuffer(page);
-              }
-            }
-          }
-          finally {
-            page.pageLock.writeLock().unlock();
-          }
-        }
-        else {
-          //We've lost the race: somebody locked the page for read/write, hence page (likely)
-          // was promoted to USABLE and acquired (usageCount>0).
-          // => try at least to mark the page as ABOUT_TO_UNMAP, to stop additional clients
-          // => wait till next time, hope the page will be released then
-          //MAYBE RC: seems like this is neat-peeking -- case is rare, and process it here adds almost
-          //          nothing, but complicates code. Better leave such pages until next turn?
-          final int finalState = page.tryMoveTowardsTomb(/*entombYoung: */ false);
-          if (finalState == Page.STATE_TOMBSTONE) {
+        if (!page.isNotReadyYet()) {
+          //Simple cases: USABLE or ABOUT_TO_UNMAP
+          final boolean succeed = page.tryMoveTowardsPreTombstone(/*entombYoung: */false);
+          if (succeed) {
             unmapPageAndReclaimBuffer(page);
           }
         }
-      }
+        else {
+          //More tangled cases: Page could be
+          // 1) NOT_READY_YET (=> usageCount=0)
+          // 2) was NOT_READY_YET just before but is already promoted to USABLE
 
-      //if !TOMBSTONE => wait till next time, hope the page will be released eventually
-      somePagesStillInUse = !page.isTombstone();
+          //MAYBE RC: Really, this branch is just an optimization, a try to release pages a bit faster.
+          //          If we remove this branch, NOT_READY_YET pages will be naturally promoted to USABLE,
+          //          and next .tryToReclaimAll() call moves them to ABOUT_TO_RECLAIM and eventually
+          //          TOMBSTONE by the branch above alone. So the branch above (!isNotReadyYet) is the
+          //          crucial one, while this branch just tries to avoid (short-circuit) unnecessary
+          //          allocation-loading-reclaiming of the pages that are initialized concurrently with
+          //          .close().
+          //          Now, except for tests & benchmarks, I doubt there are many cases there a lot of
+          //          pages initialized concurrently with .close() -- so, it seems, this branch provides
+          //          little benefit for its complexity.
+          //          There is a reason, though, why I leave this branch here: it also adds 'robustness'.
+          //          I.e. if page acquisition code _fails_ and leaves the page in NOT_READY_YET state --
+          //          this branch reclaims such a page, while without it the page remains leaking.
+          //          Maybe I'll reconsider this in the future.
+
+          //Acquire page.writeLock to stop page from being promoted to USABLE (if it hasn't been yet):
+          if (page.pageLock.writeLock().tryLock()) {
+            try {
+              final boolean succeed = page.tryMoveTowardsPreTombstone(/*entombYoung: */ true);
+              if (succeed) {
+                //If we just entomb NOT_READY_YET page => it has .data=null
+                //   but page could be already promoted to USABLE, in which case .data != null, and
+                //   should be reclaimed:
+                if (page.data != null) {
+                  unmapPageAndReclaimBuffer(page);
+                }
+              }
+            }
+            finally {
+              page.pageLock.writeLock().unlock();
+            }
+          }
+          else {
+            //We've lost the race: somebody locked the page for read/write, hence page (likely)
+            // was promoted to USABLE and acquired (usageCount>0).
+            // => try at least to mark the page as ABOUT_TO_UNMAP, to stop additional clients
+            // => wait till next time, hope the page will be released then
+            //MAYBE RC: seems like this is neat-peeking -- case is rare, and process it here adds almost
+            //          nothing, but complicates code. Better leave such pages until next turn?
+            final boolean succeed = page.tryMoveTowardsPreTombstone(/*entombYoung: */false);
+            if (succeed) {
+              unmapPageAndReclaimBuffer(page);
+            }
+          }
+        }
+
+        //if !TOMBSTONE => wait till next time, hope the page will be released eventually
+        somePagesStillInUse |= !page.isTombstone();
+      }
+      return somePagesStillInUse;
     }
-    return somePagesStillInUse;
+    finally {
+      pagesTable.pagesLock.writeLock().unlock();
+    }
   }
 
   /**
    * Reclaims the page: flushes page content if needed, and release page buffer.
    * Page must be in state=TOMBSTONE (throws AssertionError otherwise)
    */
-  private void unmapPageAndReclaimBuffer(final @NotNull Page candidateToReclaim) {
-    if (!candidateToReclaim.isTombstone()) {
-      throw new AssertionError("Bug: page must be TOMBSTONE: " + candidateToReclaim);
+  private void unmapPageAndReclaimBuffer(final @NotNull Page pageToReclaim) {
+    if (!pageToReclaim.isPreTombstone()) {
+      throw new AssertionError("Bug: page must be PRE_TOMBSTONE: " + pageToReclaim);
     }
-    if (candidateToReclaim.isDirty()) {
+    if (pageToReclaim.isDirty()) {
       //MAYBE RC: flush() could be off-loaded to IO thread pool, instead of slowing down housekeeper
       //         thread
       try {
-        candidateToReclaim.flush();
+        pageToReclaim.flush();
       }
       catch (IOException e) {
-        throw new UncheckedIOException("Can't flush page: " + candidateToReclaim, e);
+        throw new UncheckedIOException("Can't flush page: " + pageToReclaim, e);
       }
     }
 
-    final ByteBuffer data = candidateToReclaim.detachTombstoneBuffer();
+    final ByteBuffer data = pageToReclaim.detachTombstoneBuffer();
     if (data.isDirect()) {
       DirectByteBufferAllocator.ALLOCATOR.release(data);
       totalNativeBytesCached.addAndGet(-data.capacity());
@@ -518,6 +523,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       totalHeapBytesCached.addAndGet(-data.capacity());
       statistics.pageReclaimedHeap(data.capacity());
     }
+    pageToReclaim.entomb();
   }
 
   @NotNull
@@ -573,8 +579,8 @@ public final class FilePageCacheLockFree implements AutoCloseable {
         }
       }
 
-      final int finalState = candidateToReclaim.tryMoveTowardsTomb(/*entombYoung: */false);
-      if (finalState == Page.STATE_TOMBSTONE) {
+      final boolean succeed = candidateToReclaim.tryMoveTowardsPreTombstone(/*entombYoung: */false);
+      if (succeed) {
         // > 1 thread could try to reclaim the page, but we win the race:
         unmapPageAndReclaimBuffer(candidateToReclaim);
       }
@@ -605,6 +611,8 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     @NotNull
     private volatile AtomicReferenceArray<Page> pages;
 
+    //TODO RC: seems like we don't need R-W lock here -- simple lock is enough, even intrinsic one
+    //         The only method we use readLock is .flushAll(), and it looks like it is flawed anyway
     private transient final ReentrantReadWriteLock pagesLock = new ReentrantReadWriteLock();
 
 
@@ -771,28 +779,38 @@ public final class FilePageCacheLockFree implements AutoCloseable {
      *
      * @return number of pages copied
      */
+    //@GuardedBy(pagesLock.writeLock)
     private static int rehashWithoutTombstones(final @NotNull AtomicReferenceArray<Page> sourcePages,
                                                final @NotNull AtomicReferenceArray<Page> targetPages) {
       final IntRef insertionIndexRef = new IntRef();
       int pagesCopied = 0;
       for (int i = 0; i < sourcePages.length(); i++) {
         final Page page = sourcePages.get(i);
-        if (page != null && !page.isTombstone()) {
-          final int pageIndex = page.pageIndex;
-          final Page pageMustNotBeFound = findPageOrInsertionIndex(targetPages, pageIndex, insertionIndexRef);
-          final int insertionIndex = insertionIndexRef.get();
-
-          if (pageMustNotBeFound != null) {
-            throw new AssertionError("Page[#" + pageIndex + "] is copying now -- can't be already in .newPages! " + targetPages);
-          }
-          if (insertionIndex < 0) {
-            //either targetPages is too small to fit, or code bug in hashing logic
-            throw new AssertionError("Insertion index must be found for Page[#" + pageIndex + "] during rehash. " + targetPages);
-          }
-
-          targetPages.set(insertionIndex, page);
-          pagesCopied++;
+        if (page == null) {
+          continue;
         }
+        else if (page.isTombstone()) {
+          continue;
+        }
+        final int pageIndex = page.pageIndex;
+        final Page pageMustNotBeFound = findPageOrInsertionIndex(targetPages, pageIndex, insertionIndexRef);
+        final int insertionIndex = insertionIndexRef.get();
+
+        if (pageMustNotBeFound != null) {
+          throw new AssertionError("Page[#" + pageIndex + "] is copying now -- can't be already in .newPages! " +
+                                   "\nsource: " + sourcePages +
+                                   "\ntarget: " + targetPages);
+        }
+        if (insertionIndex < 0) {
+          //either targetPages is too small to fit, or code bug in hashing logic
+          throw new AssertionError("Insertion index must be found for Page[#" + pageIndex + "] during rehash. " +
+                                   " source.length: " + sourcePages.length() + " target.length: " + targetPages.length() +
+                                   "\nsource: " + sourcePages +
+                                   "\ntarget: " + targetPages);
+        }
+
+        targetPages.set(insertionIndex, page);
+        pagesCopied++;
       }
       return pagesCopied;
     }
@@ -924,15 +942,34 @@ public final class FilePageCacheLockFree implements AutoCloseable {
      * Page is prepared to unmap and release/reclaim. Clients who already get the Page before transition
      * to that state -- could continue to use it, but new clients are not allowed to get the Page. Hence,
      * in this state .usageCount could be >0, but could not increase anymore -- only decrease.
-     * Only transition to STATE_TOMBSTONE is allowed.
+     * Only transition to STATE_PRE_TOMBSTONE is allowed.
      */
     public static final int STATE_ABOUT_TO_UNMAP = 2;
+    /**
+     * Intermediate state between (ABOUT_TO_UNMAP, usedCount=0) and TOMBSTONE. Only transition to
+     * STATE_TOMBSTONE is allowed if !isDirty().
+     * <p>
+     * State is a bit superficial, it is introduced to remove contention on cleanup procedures:
+     * thread that transitions page from (ABOUT_TO_UNMAP, usedCount=0) to PRE_TOMBSTONE is the
+     * thread responsible for final cleanup: flush the page if it is dirty, and reclaim the page
+     * buffer.
+     * <p>
+     * The key point here is: cleanup procedures are thread-safe, but not concurrent: e.g. .flush()
+     * is blocking. If we allow initiate cleanup straight from the state (ABOUT_TO_UNMAP,usedCount=0),
+     * then it is quite possible >1 threads try that, and all but one be blocked on a lock inside
+     * .flush() -- which is useless.
+     * <p>
+     * Instead, all such threads contend on transition (ABOUT_TO_UNMAP,usedCount=0) -> PRE_TOMBSTONE
+     * which is non-blocking, CAS-based. One thread wins that CAS, and follows along with the
+     * cleanups without any interference, while other threads are free to do anything else.
+     */
+    public static final int STATE_PRE_TOMBSTONE = 3;
     /**
      * Page is unmapped, its buffer is released/reclaimed -- i.e. there no page anymore, only remnant.
      * Terminal state: no transition allowed, tombstone Page occupies slot in a PageTable until it is
      * either replaced with another Page, or removed during resize/rehash.
      */
-    public static final int STATE_TOMBSTONE = 3;
+    public static final int STATE_TOMBSTONE = 4;
 
     private static final AtomicIntegerFieldUpdater<Page> STATE_UPDATER = AtomicIntegerFieldUpdater.newUpdater(
       Page.class,
@@ -971,7 +1008,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
      * [USABLE and ABOUT_TO_UNMAP] states, and should be accessed in those states only.
      */
     //@GuardedBy("pageLock")
-    private ByteBuffer data;
+    private ByteBuffer data = null;
 
     /**
      * Modified region [minOffsetModified, maxOffsetModified) of {@linkplain #data}, packed into a single
@@ -995,13 +1032,12 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
 
     private volatile int tokensOfUsefulness = TOKENS_INITIALLY;//for reclamation management
-    private int tokensOfUsefulnessLocal = 0;//for reclamation management
+    private int tokensOfUsefulnessLocal = 0;                   //for reclamation management
 
-    protected Page(final long offsetInFile,
-                   final int pageIndex,
-                   final int pageSize,
-                   final @Nullable ByteBuffer data,
-                   final @NotNull PageToStorageHandle pageToStorageHandle) {
+    private Page(final long offsetInFile,
+                 final int pageIndex,
+                 final int pageSize,
+                 final @NotNull PageToStorageHandle pageToStorageHandle) {
       if (offsetInFile < 0) {
         throw new IllegalArgumentException("offsetInFile(=" + offsetInFile + ") must be >=0");
       }
@@ -1014,21 +1050,19 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       this.offsetInFile = offsetInFile;
       this.pageIndex = pageIndex;
       this.pageSize = pageSize;
-      this.data = data;
       this.pageToStorageHandle = pageToStorageHandle;
     }
 
     protected Page(final int pageIndex,
                    final int pageSize,
-                   final @Nullable ByteBuffer data,
                    final @NotNull PageToStorageHandle pageToStorageHandle) {
-      this(pageIndex * (long)pageSize, pageIndex, pageSize, data, pageToStorageHandle);
+      this(pageIndex * (long)pageSize, pageIndex, pageSize, pageToStorageHandle);
     }
 
     public static Page notReady(final int index,
                                 final int pageSize,
                                 final @NotNull PageToStorageHandle pageToStorageHandle) {
-      final Page page = new Page(index, pageSize, null, pageToStorageHandle);
+      final Page page = new Page(index, pageSize, pageToStorageHandle);
       page.statePacked = packState(STATE_NOT_READY_YET, 0);
       return page;
     }
@@ -1078,6 +1112,10 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
     public boolean isAboutToUnmap() {
       return inState(STATE_ABOUT_TO_UNMAP);
+    }
+
+    public boolean isPreTombstone() {
+      return inState(STATE_PRE_TOMBSTONE);
     }
 
     public boolean isTombstone() {
@@ -1173,12 +1211,12 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     }
 
     /**
-     * Moves page along the state transition graph towards TOMBSTONE state as much as it is possible.
-     * Returns the final state reached, if at least 1 transition was done, or -1 if no transitions are
-     * available in the current state.
+     * Moves page along the state transition graph towards PRE_TOMBSTONE state as much as it is possible.
+     *
+     * @return true if PRE_TOMBSTONE state is reached, false if something prevents transition to that
+     * state
      */
-    protected int tryMoveTowardsTomb(final boolean entombYoung) {
-      int lastSuccessMove = -1;
+    protected boolean tryMoveTowardsPreTombstone(final boolean entombYoung) {
       while (true) {
         final int packedState = statePacked;
         final int state = unpackState(packedState);
@@ -1189,31 +1227,33 @@ public final class FilePageCacheLockFree implements AutoCloseable {
               if (!pageLock.writeLock().isHeldByCurrentThread()) {
                 throw new AssertionError(".writeLock must be held for entombYoung[NOT_READY_YET=>TOMBSTONE] transition");
               }
-              final int newPackedState = packState(STATE_TOMBSTONE, 0);
+              final int newPackedState = packState(STATE_PRE_TOMBSTONE, 0);
               if (STATE_UPDATER.compareAndSet(this, packedState, newPackedState)) {
-                return STATE_TOMBSTONE;
+                return true;
               }
             }
-            return lastSuccessMove;
+            return false;
           }
           case STATE_USABLE: {
             final int newPackedState = packState(STATE_ABOUT_TO_UNMAP, usageCount);
             if (STATE_UPDATER.compareAndSet(this, packedState, newPackedState)) {
-              lastSuccessMove = STATE_ABOUT_TO_UNMAP;
               continue;
             }
           }
           case STATE_ABOUT_TO_UNMAP: {
             if (usageCount > 0) {
-              return lastSuccessMove;
+              return false;
             }
-            final int newPackedState = packState(STATE_TOMBSTONE, 0);
+            final int newPackedState = packState(STATE_PRE_TOMBSTONE, 0);
             if (STATE_UPDATER.compareAndSet(this, packedState, newPackedState)) {
-              return STATE_TOMBSTONE;
+              return true;
             }
           }
+          case STATE_PRE_TOMBSTONE: {
+            return false;
+          }
           case STATE_TOMBSTONE: {
-            return lastSuccessMove;
+            return false;
           }
           default: {
             throw new AssertionError("Code bug: unknown state " + state + ": " + this);
@@ -1223,13 +1263,37 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     }
 
     /**
+     * [PRE_TOMBSTONE => TOMBSTONE] page transition: terminal transition. Page must be !dirty.
+     * The only thread allowed to call this method is the thread wins the transition => PRE_TOMBSTONE
+     * -- i.e. there should be no competition/concurrency on this method call.
+     */
+    protected void entomb() {
+      if (isDirty()) {
+        throw new AssertionError("Bug: page must be !dirty to be TOMBSTONE-ed, but: " + this);
+      }
+      //Really, on PRE_TOMBSTONE it should be no competition -> only one thread is responsible
+      //  for the page transition below PRE_TOMBSTONE. But be safe, and do the CAS anyway:
+      final int packedState = statePacked;
+      final int state = unpackState(packedState);
+      final int usageCount = unpackUsageCount(packedState);
+      if (state != STATE_PRE_TOMBSTONE) {
+        throw new AssertionError("Bug: page.state be PRE_TOMBSTONE, but " + state + ", page: " + this);
+      }
+
+      final int newPackedState = packState(STATE_TOMBSTONE, 0);
+      if (!STATE_UPDATER.compareAndSet(this, packedState, newPackedState)) {
+        throw new AssertionError("Bug: somebody interferes with PRE_TOMBSTONE->TOMBSTONE transition. " + this);
+      }
+    }
+
+    /**
      * Detaches .data buffer from the page: returns .data and assign .data=null
      * Page must be [TOMBSTONE] to call this method. Method can be invoked only once -- subsequent
      * invocations will throw an exception.
      */
     protected ByteBuffer detachTombstoneBuffer() {
-      if (!isTombstone()) {
-        throw new AssertionError("Bug: only TOMBSTONES could detach buffer");
+      if (!isPreTombstone()) {
+        throw new AssertionError("Bug: only PRE_TOMBSTONES could detach buffer");
       }
       //Lock to avoid races with .prepareForUse() & .flush()
       pageLock.writeLock().lock();
@@ -1308,27 +1372,44 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
     @Override
     public void flush() throws IOException {
+      //RC: flush is logically a read-op, hence only readLock is needed. But we also need to update
+      //    a modified region, which is a write-op.
+      //    There are few ways to deal with dirty region updates: e.g. update modifiedRegion with CAS.
+      //    Together (readLock + CAS update) implicitly avoids concurrent flushes: by holding readLock
+      //    we already ensure nobody _modifies_ page concurrently with us. The only possible contender
+      //    is another .flush() call -- and by CAS-ing modifiedRegion to empty _before_ actual
+      //    .flushBytes() we ensure such competing .flush() will short-circuit. This is the 'most
+      //    concurrent' approach, but it has issues with consistency: namely, storage is notified
+      //    about dirty page 'flushed' only after actual CAS updates modifiedRegion to empty. This
+      //    means what other thread could see page.isDirty()=false, but at the same time
+      //    storage.isDirty() = true, since page flush is not yet propagated to storage. Even worse:
+      //    another thread could call page.flush() and still see storage.isDirty()=true -- because
+      //    .flush() is short-circuit on early .isDirty() check.
+      //
+      //    This is a trade-off: 'more concurrent' data structures have 'less consistent' state --
+      //    basically, state becomes more distributed. But such a tradeoff seems unjustified here:
+      //    really, we don't need concurrent flushes, while 'eventually consistent' .isDirty() could
+      //    create a lot of confusion for storage users. Hence, I've chosen another approach: use
+      //    additional lock inside .flush() to completely avoid concurrent flushes. This lock allows
+      //    to reset dirty region _after_ actual .flushBytes().
+      //
+      //    This still creates an 'inconsistency' though: another thread could see storage.isDirty()
+      //    = false, while some page.isDirty()=true -- but I tend to think there are fewer possibilities
+      //    for confusion here. Let's see how it goes: I left alternative .flush() implementations for
+      //    the reference.
+
+      flushWithAdditionalLock();
+    }
+
+    private void flushWithAdditionalLock() throws IOException {
       if (isDirty()) {
         //RC: flush is logically a read-op, hence only readLock is needed. But we also need to update
-        //    a modified region, which is implemented with CAS. Together this (readLock + CAS update)
-        //    implicitly avoids concurrent flushes: by holding readLock we already ensure nobody
+        //    a modified region, which is write-op. By holding readLock we already ensure nobody
         //    _modifies_ page concurrently with us. The only possible contender is another .flush()
-        //    call -- and by CAS-ing modified region to empty _before_ actual flushing we ensure such
-        //    competing .flush() will short-circuit.
+        //    call -- hence we use another exclusive lock to avoid concurrent flushes.
         lockPageForRead();
         try {
-          //FIXME RC: here is the race which leads to storage.isDirty() being only "eventually
-          //          consistent". Race is going like this: lets have a single dirty page, and
-          //          2 threads, thread_1 & thread_2, compete for page.flush(). thread_1 wins
-          //          the race, and continues towards .pageBecomeClean(), but not reach it yet (i.e.
-          //          because of IO). thread_2 loses the race, and exits .flush() early, and checks
-          //          storage.isDirty() -- which is still true, since thread_1 has not yet reached
-          //          .pageBecomeClean()!
-          //          Possible solution: use dedicated exclusive lock for flush, and assign region=EMPTY
-          //          only at the end of the method, after .pageBecomeClean()
-          //          I postpone it since this looks like not very important omission (today)
-
-          while (true) {//CAS loop for modifiedRegion:
+          synchronized (this) {
             final long modifiedRegion = modifiedRegionPacked;
             if (modifiedRegion == EMPTY_MODIFIED_REGION) {
               //competing flush: somebody else already did the job
@@ -1336,16 +1417,15 @@ public final class FilePageCacheLockFree implements AutoCloseable {
             }
             final int minOffsetModified = unpackMinOffsetModified(modifiedRegion);
             final int maxOffsetModifiedExclusive = unpackMaxOffsetModifiedExclusive(modifiedRegion);
-            if (MODIFIED_REGION_UPDATER.compareAndSet(this, modifiedRegion, EMPTY_MODIFIED_REGION)) {
-              //we won the CAS competition: execute the flush
-              final ByteBuffer sliceToSave = data.duplicate();
-              sliceToSave.position(minOffsetModified)
-                .limit(maxOffsetModifiedExclusive);
 
-              pageToStorageHandle.flushBytes(sliceToSave, offsetInFile + minOffsetModified);
-              pageToStorageHandle.pageBecomeClean();
-              return;
-            }
+            //we won the CAS competition: execute the flush
+            final ByteBuffer sliceToSave = data.duplicate();
+            sliceToSave.position(minOffsetModified)
+              .limit(maxOffsetModifiedExclusive);
+
+            pageToStorageHandle.flushBytes(sliceToSave, offsetInFile + minOffsetModified);
+            pageToStorageHandle.pageBecomeClean();
+            modifiedRegionPacked = EMPTY_MODIFIED_REGION;
           }
         }
         finally {
@@ -1394,6 +1474,9 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
     /* =============== content access methods: ======================================================== */
 
+    //RC: I'd expect generic read/write methods to be the main API for accessing page, because
+    //    they are range-lock-friendly -- if we needed to move to range locks instead of current
+    //    per-page locks, read/write methods are a natural fit.
 
     public <OUT, E extends Exception> OUT read(final int startOffset,
                                                final int length,
@@ -1425,10 +1508,15 @@ public final class FilePageCacheLockFree implements AutoCloseable {
         final ByteBuffer slice = data.duplicate();
         slice.position(startOffset)
           .limit(startOffset + length);
-        return writer.fun(slice);
+        try {
+          return writer.fun(slice);
+        }
+        finally {
+          regionModified(startOffset, length);
+          checkPageIsValidForAccess();
+        }
       }
       finally {
-        regionModified(startOffset, length);
         pageLock.writeLock().unlock();
       }
     }
@@ -1580,12 +1668,24 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
     @Override
     public String toString() {
+      final long modifiedRegion = modifiedRegionPacked;
+      final int packedState = statePacked;
       return "Page[#" + pageIndex + ", size: " + pageSize + "b, offsetInFile: " + offsetInFile + "b]" +
              "{" +
-             "state: " + unpackState(statePacked) + ", " +
-             "inUse: " + unpackUsageCount(statePacked) + ", " +
-             "dirty: " + isDirty() +
-             "}";
+             "state: " + unpackState(packedState) + ", " +
+             "inUse: " + unpackUsageCount(packedState) +
+             "}, dirtyRegion: " +
+             "[" + unpackMinOffsetModified(modifiedRegion) + ".." + unpackMaxOffsetModifiedExclusive(modifiedRegion) + ") ";
+    }
+
+    public String formatData() {
+      final ByteBuffer _data = data;
+      if (_data != null) {
+        return IOUtil.toHexString(_data);
+      }
+      else {
+        return "null";
+      }
     }
   }
 
@@ -1594,7 +1694,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
    * happened in Page, and also storage links Page to an appropriate region of a file, which is
    * needed for flush(). This interface abstracts such a relationship.
    */
-  interface PageToStorageHandle {
+  public interface PageToStorageHandle {
     void pageBecomeDirty();
 
     void pageBecomeClean();
