@@ -40,6 +40,9 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
   public boolean reportLocalVariables = true;
 
   @SuppressWarnings("PublicField")
+  public boolean reportPatternVariables = true;
+
+  @SuppressWarnings("PublicField")
   public boolean reportParameters = true;
 
   @Override
@@ -59,6 +62,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("reportLocalVariables", InspectionGadgetsBundle.message("unnecessary.final.report.local.variables.option")),
+      checkbox("reportPatternVariables", InspectionGadgetsBundle.message("unnecessary.final.report.pattern.variables.option")),
       checkbox("reportParameters", InspectionGadgetsBundle.message("unnecessary.final.report.parameters.option"),
                checkbox("onlyWarnOnAbstractMethods", InspectionGadgetsBundle.message("unnecessary.final.on.parameter.only.interface.option"))));
   }
@@ -133,6 +137,14 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
     }
 
     @Override
+    public void visitPatternVariable(@NotNull PsiPatternVariable variable) {
+      super.visitPatternVariable(variable);
+      if (reportPatternVariables && variable.hasModifierProperty(PsiModifier.FINAL)) {
+        registerModifierError(PsiModifier.FINAL, variable, variable);
+      }
+    }
+
+    @Override
     public void visitTryStatement(@NotNull PsiTryStatement statement) {
       super.visitTryStatement(statement);
       final PsiResourceList resourceList = statement.getResourceList();
@@ -168,7 +180,8 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
       if (onlyWarnOnAbstractMethods || !reportParameters) {
         return;
       }
-      final PsiParameter parameter = statement.getIterationParameter();
+      PsiForeachDeclarationElement iterationDeclaration = statement.getIterationDeclaration();
+      if (!(iterationDeclaration instanceof PsiParameter parameter)) return;
       if (!parameter.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
