@@ -125,7 +125,7 @@ public final class Switcher extends BaseSwitcherAction {
         return item == null ? null : item.getFile();
       }
       if (PlatformDataKeys.SPEED_SEARCH_TEXT.is(dataId)) {
-        return mySpeedSearch.isPopupActive() ? mySpeedSearch.getEnteredPrefix() : null;
+        return mySpeedSearch != null && mySpeedSearch.isPopupActive() ? mySpeedSearch.getEnteredPrefix() : null;
       }
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         if (files.isSelectionEmpty()) return null;
