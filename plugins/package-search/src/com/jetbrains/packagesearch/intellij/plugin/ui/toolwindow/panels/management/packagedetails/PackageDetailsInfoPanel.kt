@@ -179,7 +179,7 @@ internal class PackageDetailsInfoPanel : JPanel() {
         }
 
         descriptionLabel.isVisible = true
-        descriptionLabel.text = description.normalizeWhitespace().withHtmlStyling(wordWrap = true)
+        descriptionLabel.text = description.normalizeWhitespace()?.withHtmlStyling(wordWrap = true)
     }
 
     private fun displayRepositoriesIfAny(

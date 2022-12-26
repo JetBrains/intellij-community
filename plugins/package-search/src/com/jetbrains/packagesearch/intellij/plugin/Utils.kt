@@ -19,19 +19,20 @@ package com.jetbrains.packagesearch.intellij.plugin
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstalledDependency
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.asInstalledDependencyOrNull
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
-import org.apache.commons.lang3.StringUtils
 import java.nio.file.Path
 
-internal fun looksLikeGradleVariable(version: NormalizedPackageVersion<*>) = version.versionName.startsWith("$")
+internal fun looksLikeGradleVariable(version: NormalizedPackageVersion<*>): Boolean = version.versionName.startsWith("$")
 
 @NlsSafe
-internal fun @receiver:NlsSafe String?.normalizeWhitespace() = StringUtils.normalizeSpace(this)
+internal fun @receiver:NlsSafe String?.normalizeWhitespace(): String? = this?.replace("\\s+".toRegex(), " ")?.trim()
 
 internal fun String?.nullIfBlank(): String? = if (isNullOrBlank()) null else this
 
 fun VirtualFile.toNioPathOrNull(): Path? = fileSystem.getNioPath(this)
 
-internal fun Map<PackageSearchModule, PackageSearchModule.Dependencies>.getInstalledDependencies() =
-    asSequence().flatMap { it.value.declared.mapNotNull { it.asInstalledDependencyOrNull() } }.toSet()
+internal fun Map<PackageSearchModule, PackageSearchModule.Dependencies>.getInstalledDependencies(): Set<InstalledDependency> {
+    return asSequence().flatMap { it.value.declared.mapNotNull { it.asInstalledDependencyOrNull() } }.toSet()
+}

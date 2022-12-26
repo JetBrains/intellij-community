@@ -33,8 +33,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="commons-collections" level="project" />
-    <orderEntry type="library" name="commons-lang3" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
@@ -70,5 +68,6 @@
     <orderEntry type="library" name="ktor-client-cio" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
     <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
+    <orderEntry type="library" name="caffeine" level="project" />
   </component>
 </module>
