@@ -13,6 +13,7 @@ import com.intellij.xdebugger.XDebuggerUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.debugger.core.findElementAtLine
+import org.jetbrains.kotlin.idea.debugger.core.isLambdaOrAnonymous
 import org.jetbrains.kotlin.idea.util.findElementsOfClassInRange
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -98,7 +99,7 @@ inline fun <reified T : PsiElement> getElementsAtLineIfAny(file: KtFile, line: I
 
 fun getLambdasAtLineIfAny(file: KtFile, line: Int): List<KtFunction> {
     return getElementsAtLineIfAny<KtFunction>(file, line)
-        .filter { (it is KtFunctionLiteral || it.name == null) && it.getLineNumber() == line }
+        .filter { it.isLambdaOrAnonymous && it.getLineNumber() == line }
 }
 
 fun KtCallableDeclaration.isInlineOnly(): Boolean {

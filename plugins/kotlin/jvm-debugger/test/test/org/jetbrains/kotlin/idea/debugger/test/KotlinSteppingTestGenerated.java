@@ -1105,6 +1105,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/breakpointOnWhen.kt");
         }
 
+        @TestMetadata("breakpointsInNestedLambdas.kt")
+        public void testBreakpointsInNestedLambdas() throws Exception {
+            runTest("testData/stepping/custom/breakpointsInNestedLambdas.kt");
+        }
+
         @TestMetadata("constantConditions.kt")
         public void testConstantConditions() throws Exception {
             runTest("testData/stepping/custom/constantConditions.kt");
@@ -1345,6 +1350,16 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/smartStepIntoInlineFun.kt");
         }
 
+        @TestMetadata("smartStepIntoInlineLambdaMixedWithOrdinaryOnLine.kt")
+        public void testSmartStepIntoInlineLambdaMixedWithOrdinaryOnLine() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoInlineLambdaMixedWithOrdinaryOnLine.kt");
+        }
+
+        @TestMetadata("smartStepIntoInlineLambdasInFunctionsWithSameName.kt")
+        public void testSmartStepIntoInlineLambdasInFunctionsWithSameName() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoInlineLambdasInFunctionsWithSameName.kt");
+        }
+
         @TestMetadata("smartStepIntoInlinedFunLiteral.kt")
         public void testSmartStepIntoInlinedFunLiteral() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoInlinedFunLiteral.kt");
@@ -1398,6 +1413,16 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
         @TestMetadata("smartStepIntoMethodReference.kt")
         public void testSmartStepIntoMethodReference() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoMethodReference.kt");
+        }
+
+        @TestMetadata("smartStepIntoNestedInlineLambdas.kt")
+        public void testSmartStepIntoNestedInlineLambdas() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoNestedInlineLambdas.kt");
+        }
+
+        @TestMetadata("smartStepIntoNestedInlineLambdasOnSameLine.kt")
+        public void testSmartStepIntoNestedInlineLambdasOnSameLine() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoNestedInlineLambdasOnSameLine.kt");
         }
 
         @TestMetadata("smartStepIntoNullSafeFunctionCalls.kt")

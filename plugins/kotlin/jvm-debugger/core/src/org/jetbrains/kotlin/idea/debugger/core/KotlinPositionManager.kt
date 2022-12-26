@@ -28,6 +28,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.parentsOfType
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.frame.XStackFrame
@@ -35,7 +36,6 @@ import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
@@ -44,10 +44,7 @@ import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.analysis.isInlinedArgument
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.psi.getContainingValueArgument
-import org.jetbrains.kotlin.idea.base.psi.getEndLineOffset
-import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
-import org.jetbrains.kotlin.idea.base.psi.getStartLineOffset
+import org.jetbrains.kotlin.idea.base.psi.*
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_TYPES
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.debugger.base.util.*
@@ -276,28 +273,126 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         val literalsOrFunctions = getLambdasAtLineIfAny(file, lineNumber)
         if (literalsOrFunctions.isEmpty()) return null
 
-        return literalsOrFunctions.getAppropriateLiteralBasedOnDeclaringClassName(location, currentLocationClassName) ?:
-               literalsOrFunctions.getAppropriateLiteralBasedOnLambdaName(location, lineNumber)
+        return literalsOrFunctions.getAppropriateLiteral(currentLocationClassName, location, lineNumber)
     }
 
-    private fun List<KtFunction>.getAppropriateLiteralBasedOnDeclaringClassName(
-        location: Location,
-        currentLocationClassName: String
-    ): KtFunction? {
+    private fun List<KtFunction>.getAppropriateLiteral(currentLocationClassName: String, location: Location, lineNumber: Int): KtFunction? {
         val firstLiteral = firstOrNull() ?: return null
+        val inlinedLiteralsOnLine = mutableListOf<KtFunction>()
+        var parentLiteral: KtFunction? = null
         analyze(firstLiteral) {
             forEach { literal ->
-                if (isInlinedArgument(literal, true)) {
-                    if (isInsideInlineArgument(literal, location, debugProcess as DebugProcessImpl)) {
-                        return literal
+                if (isInlinedArgument(literal, checkNonLocalReturn = true)) {
+                    if (literal.getInlineLambdaMarkerVariableStartLine() == lineNumber) {
+                        inlinedLiteralsOnLine.add(literal)
                     }
                 } else if (literal.firstChild.calculatedClassNameMatches(currentLocationClassName)) {
-                    return literal
+                    parentLiteral = literal
                 }
             }
         }
 
-        return null
+        parentLiteral?.let { parent ->
+            return inlinedLiteralsOnLine
+                .filterHasInParent(parent)
+                .getAppropriateLiteralBasedOnInlineLambdasBorders(location, lineNumber)
+                ?: parent
+        }
+        return inlinedLiteralsOnLine.getAppropriateLiteralBasedOnInlineLambdasBorders(location, lineNumber)
+            ?: getAppropriateLiteralBasedOnLambdaName(location, lineNumber)
+    }
+
+    private fun List<KtFunction>.getAppropriateLiteralBasedOnInlineLambdasBorders(
+        location: Location,
+        lineNumber: Int
+    ): KtFunction? {
+        if (isEmpty()) return null
+
+        val method = location.safeMethod() ?: return null
+        val markerVariables = method
+            .getSortedInlineLambdaVariablesOnLine(lineNumber)
+            .filterEnclosingLambdas(this, lineNumber)
+            ?: return null
+
+        // In this example:
+        //   inline fun foo() {
+        //     1.let { it + 1 }.let { it + 2 } // Line X
+        //   }
+        //
+        //   fun main() {
+        //     foo()
+        //     foo()
+        //   }
+        // There are 2 inlined literals on line X:
+        //   { it + 1 } // 1
+        //   { it + 2 } // 2
+        // However if we stop on a breakpoint on this line, we will see 4 inline lambda marker variables:
+        //   $i$a-let-...$...$1$iv // 1 -- { it + 1 }
+        //   $i$a-let-...$...$2$iv // 2 -- { it + 2 }
+        //   $i$a-let-...$...$1$iv // 3 -- { it + 1 } again
+        //   $i$a-let-...$...$2$iv // 4 -- { it + 2 } again
+        // The first two marker variables correspond with the first inlining of the `foo` function,
+        // and the other two variable correspond with the second one.
+        // If, for example, the borders of marker variable 3 contain a location, it means that
+        // we should return the first (3 % 2 = 1) literal.
+        // If the check below fails, it means that something has gone wrong, and we can't rely on the
+        // logic described above.
+        if (markerVariables.size % size != 0) {
+            return null
+        }
+
+        var indexOfLastBordersIncludingLocation = -1
+        for ((i, variableWithLocation) in markerVariables.withIndex()) {
+            val borders = variableWithLocation.variable.getBorders() ?: continue
+            if (borders.contains(location)) {
+                indexOfLastBordersIncludingLocation = i
+            } else if (indexOfLastBordersIncludingLocation != -1) {
+                break
+            }
+        }
+
+        if (indexOfLastBordersIncludingLocation == -1) {
+            return null
+        }
+        return getOrNull(indexOfLastBordersIncludingLocation % size)
+    }
+
+    // Sometimes the number of the inline lambda marker variables
+    // on a particular line can be larger than the number of
+    // the inlined literals on the same line.
+    // In this example:
+    //   1.let {        // Line 1
+    //     2.let { it } // Line 2
+    //   }              // Line 3
+    // two inline lambda marker variables start on line 2:
+    //   $i$a-let-...$...$1
+    //   $i$a-let-...$...$1$1
+    // However there is only one inlined literal on line 2.
+    // The first variable belong to the enclosing lambda.
+    private fun List<VariableWithLocation>.filterEnclosingLambdas(
+        inlinedLiteralsOnLine: List<KtFunction>,
+        lineNumber: Int
+    ): List<VariableWithLocation>? {
+        val firstLiteral = inlinedLiteralsOnLine.firstOrNull() ?: return this
+        if (!firstLiteral.hasParentInlineFunctionLiteralStartingOnLine(lineNumber)) {
+            return this
+        }
+
+        fun Iterator<VariableWithLocation>.nextOrNull(): VariableWithLocation? {
+            return if (hasNext()) next() else null
+        }
+
+        val iterator = iterator()
+        val result = mutableListOf<VariableWithLocation>()
+        while (iterator.hasNext()) {
+            iterator.nextOrNull() ?: return null
+            repeat(inlinedLiteralsOnLine.size) {
+                val variable = iterator.nextOrNull() ?: return null
+                result.add(variable)
+            }
+        }
+
+        return result
     }
 
     private fun PsiElement.calculatedClassNameMatches(currentLocationClassName: String): Boolean {
@@ -311,6 +406,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     private fun List<KtFunction>.getAppropriateLiteralBasedOnLambdaName(location: Location, lineNumber: Int): KtFunction? {
+        if (isEmpty()) return null
+
         val method = location.safeMethod() ?: return null
         if (!method.name().isGeneratedIrBackendLambdaMethodName()) {
             return null
@@ -494,6 +591,43 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                     debugProcess.requestsManager.createClassPrepareRequest(requestor, "$name$*")
                 )
             }
+    }
+}
+
+private fun List<KtFunction>.filterHasInParent(parentLiteral: KtFunction): List<KtFunction> =
+    filter {
+        it.parentsOfType<KtFunction>(withSelf = false).contains(parentLiteral)
+    }
+
+private fun KtFunction.getInlineLambdaMarkerVariableStartLine(): Int? {
+    if (!isLambdaOrAnonymous) return null
+    for (parameter in valueParameters) {
+        val destructuringDeclaration = parameter.destructuringDeclaration ?: continue
+        return destructuringDeclaration.getLineNumber()
+    }
+
+    val body = bodyExpression ?: return null
+    val firstStatement = (body as? KtBlockExpression)?.statements?.firstOrNull()
+    if (firstStatement != null) {
+        return firstStatement.getLineNumber()
+    }
+    return body.getLineNumber()
+}
+
+private fun Method.getSortedInlineLambdaVariablesOnLine(lineNumber: Int): List<VariableWithLocation> {
+    return sortedVariablesWithLocation().filter {
+        it.name.startsWith(LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) &&
+                it.location.getZeroBasedLineNumber() == lineNumber
+    }
+}
+
+private fun KtFunction.hasParentInlineFunctionLiteralStartingOnLine(lineNumber: Int): Boolean {
+    return analyze(this) {
+        val functionParent = parentOfType<KtFunction>(withSelf = false)
+        functionParent != null &&
+                functionParent.isLambdaOrAnonymous &&
+                functionParent.getInlineLambdaMarkerVariableStartLine() == lineNumber &&
+                isInlinedArgument(functionParent, checkNonLocalReturn = true)
     }
 }
 

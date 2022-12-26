@@ -1,0 +1,15 @@
+LineBreakpoint created at breakpointsInNestedLambdas.kt:11 lambdaOrdinal = -1
+LineBreakpoint created at breakpointsInNestedLambdas.kt:16 lambdaOrdinal = 2
+LineBreakpoint created at breakpointsInNestedLambdas.kt:20 lambdaOrdinal = 1
+Run Java
+Connected to the target VM
+breakpointsInNestedLambdas.kt:11
+breakpointsInNestedLambdas.kt:4
+breakpointsInNestedLambdas.kt:16
+breakpointsInNestedLambdas.kt:5
+breakpointsInNestedLambdas.kt:20
+breakpointsInNestedLambdas.kt:3
+resuming breakpointsInNestedLambdas.kt:20
+Disconnected from the target VM
+
+Process finished with exit code 0
