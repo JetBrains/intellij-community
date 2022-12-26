@@ -10,6 +10,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -19,6 +20,7 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.EntryStream;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -156,10 +158,13 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       final PsiExpression[] operands = polyadicExpression.getOperands();
       boolean addPlus = false;
       boolean inStringLiteral = false;
+      boolean isStringBlock = false;
+      StringBuilder logText = new StringBuilder();
+      int indent = 0;
       for (PsiExpression operand : operands) {
         if (ExpressionUtils.isEvaluatedAtCompileTime(operand)) {
           final String text = operand.getText();
-          if (ExpressionUtils.hasStringType(operand) && operand instanceof PsiLiteralExpression) {
+          if (ExpressionUtils.hasStringType(operand) && operand instanceof PsiLiteralExpression literalExpression) {
             final int count = StringUtil.getOccurrenceCount(text, "{}");
             for (int i = 0; i < count && usedArguments + i < arguments.length; i++) {
               newArguments.add(PsiUtil.skipParenthesizedExprDown((PsiExpression)arguments[i + usedArguments].copy()));
@@ -169,20 +174,24 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
               if (addPlus) {
                 newMethodCall.append('+');
               }
-              newMethodCall.append('"');
               inStringLiteral = true;
             }
-            newMethodCall.append(text, 1, text.length() - 1);
+            if (!isStringBlock && literalExpression.isTextBlock()) {
+              indent = PsiLiteralUtil.getTextBlockIndent(literalExpression);
+            }
+            isStringBlock = isStringBlock || literalExpression.isTextBlock();
+            logText.append(literalExpression.getValue());
           }
           else if (operand instanceof PsiLiteralExpression && PsiType.CHAR.equals(operand.getType()) && inStringLiteral) {
             final Object value = ((PsiLiteralExpression)operand).getValue();
             if (value instanceof Character) {
-              newMethodCall.append(StringUtil.escapeStringCharacters(value.toString()));
+              logText.append(value);
             }
           }
           else {
             if (inStringLiteral) {
-              newMethodCall.append('"');
+              addLogStrings(newMethodCall, logText, isStringBlock, indent);
+              isStringBlock = false;
               inStringLiteral = false;
             }
             if (addPlus) {
@@ -197,10 +206,9 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
             if (addPlus) {
               newMethodCall.append('+');
             }
-            newMethodCall.append('"');
             inStringLiteral = true;
           }
-          newMethodCall.append("{}");
+          logText.append("{}");
         }
         addPlus = true;
       }
@@ -208,7 +216,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
         newArguments.add(arguments[usedArguments++]);
       }
       if (inStringLiteral) {
-        newMethodCall.append('"');
+        addLogStrings(newMethodCall, logText, isStringBlock, indent);
       }
       if (!varArgs && newArguments.size() > 2) {
         newMethodCall.append(", new Object[]{");
@@ -236,6 +244,26 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       }
       newMethodCall.append(')');
       PsiReplacementUtil.replaceExpression(methodCallExpression, newMethodCall.toString());
+    }
+
+    private static void addLogStrings(StringBuilder methodCall, StringBuilder logText, boolean isStringBlock, int indent) {
+      if (!isStringBlock) {
+        methodCall.append('"')
+          .append(StringUtil.escapeStringCharacters(logText.toString()))
+          .append('"');
+        logText.delete(0, logText.length());
+        return;
+      }
+      String delimiters = "\n" + " ".repeat(indent);
+
+      String preparedText = StreamEx.of(logText.toString().split("\n", -1))
+        .map(line -> line.endsWith(" ") ? line.substring(0, line.length() - 1) + "\\s" : line)
+        .joining(delimiters, delimiters, "");
+      preparedText = PsiLiteralUtil.escapeTextBlockCharacters(preparedText, true, true, false);
+      methodCall.append("\"\"\"")
+        .append(preparedText)
+        .append("\"\"\"");
+      logText.delete(0, logText.length());
     }
 
     public static boolean isAvailable(PsiExpression expression) {
@@ -300,7 +328,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       registerMethodCallError(expression, argument);
     }
 
-    private boolean containsNonConstantConcatenation(@Nullable PsiExpression expression) {
+    private static boolean containsNonConstantConcatenation(@Nullable PsiExpression expression) {
       if (expression instanceof PsiParenthesizedExpression) {
         final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
         return containsNonConstantConcatenation(parenthesizedExpression.getExpression());
