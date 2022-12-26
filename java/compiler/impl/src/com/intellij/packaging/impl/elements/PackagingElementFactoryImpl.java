@@ -197,6 +197,13 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
 
   @NotNull
   @Override
+  public PackagingElement<?> createTestModuleOutput(@NotNull String moduleName, @NotNull Project project) {
+    ModulePointer pointer = ModulePointerManager.getInstance(project).create(moduleName);
+    return new TestModuleOutputPackagingElement(project, pointer);
+  }
+
+  @NotNull
+  @Override
   public PackagingElement<?> createTestModuleOutput(@NotNull Module module) {
     ModulePointer pointer = ModulePointerManager.getInstance(module.getProject()).create(module);
     return new TestModuleOutputPackagingElement(module.getProject(), pointer);

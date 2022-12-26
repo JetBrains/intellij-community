@@ -41,6 +41,9 @@ public abstract class PackagingElementFactory {
   public abstract PackagingElement<?> createModuleSource(@NotNull Module module);
 
   @NotNull
+  public abstract PackagingElement<?> createTestModuleOutput(@NotNull String moduleName, @NotNull Project project);
+
+  @NotNull
   public abstract PackagingElement<?> createTestModuleOutput(@NotNull Module module);
 
   @NotNull

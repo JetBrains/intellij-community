@@ -55,8 +55,6 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
                          MavenProject mavenProject,
                          MavenProjectChanges changes,
                          IdeModifiableModelsProvider modifiableModelsProvider) {
-    prepareImporter(mavenProject);
-
     if (!isFacetDetectionDisabled(module.getProject())) {
       disableFacetAutodetection(module, modifiableModelsProvider);
       ensureFacetExists(module, mavenProject, modifiableModelsProvider);
@@ -72,9 +70,6 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     f = myFacetType.createFacet(module, myDefaultFacetName, myFacetType.createDefaultConfiguration(), null);
     model.addFacet(f, MavenRootModelAdapter.getMavenExternalSource());
     setupFacet(f, mavenProject);
-  }
-
-  protected void prepareImporter(MavenProject p) {
   }
 
   /**

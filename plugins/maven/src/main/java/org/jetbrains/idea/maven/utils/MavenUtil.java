@@ -1342,11 +1342,19 @@ public class MavenUtil {
   }
 
   public static String getArtifactName(String packaging, Module module, boolean exploded) {
-    return module.getName() + ":" + packaging + (exploded ? " exploded" : "");
+    return getArtifactName(packaging, module.getName(), exploded);
+  }
+
+  public static String getArtifactName(String packaging, String moduleName, boolean exploded) {
+    return moduleName + ":" + packaging + (exploded ? " exploded" : "");
   }
 
   public static String getEjbClientArtifactName(Module module, boolean exploded) {
-    return module.getName() + ":ejb" + (exploded ? CLIENT_EXPLODED_ARTIFACT_SUFFIX : CLIENT_ARTIFACT_SUFFIX);
+    return getEjbClientArtifactName(module.getName(), exploded);
+  }
+
+  public static String getEjbClientArtifactName(String moduleName, boolean exploded) {
+    return moduleName + ":ejb" + (exploded ? CLIENT_EXPLODED_ARTIFACT_SUFFIX : CLIENT_ARTIFACT_SUFFIX);
   }
 
   public static String getIdeaVersionToPassToMavenProcess() {
