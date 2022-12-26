@@ -5,6 +5,7 @@ package com.intellij.ui.svg
 
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.ImageLoader
 import org.jetbrains.annotations.ApiStatus
@@ -23,7 +24,8 @@ import java.util.function.BiConsumer
 
 private const val IMAGE_KEY_SIZE = java.lang.Long.BYTES + 3
 
-private fun getLogger() = Logger.getInstance(SvgCacheManager::class.java)
+private val LOG: Logger
+  get() = logger<SvgCacheManager>()
 
 @ApiStatus.Internal
 data class SvgCacheMapper(@JvmField internal val scale: Float,
@@ -70,7 +72,7 @@ class SvgCacheManager(dbFile: Path) {
       .backgroundExceptionHandler(storeErrorHandler)
       .autoCommitDelay(60000)
       .compressionLevel(1)
-    store = storeBuilder.openOrNewOnIoError(dbFile, true) { getLogger().debug("Cannot open icon cache database", it) }
+    store = storeBuilder.openOrNewOnIoError(dbFile, true) { LOG.debug("Cannot open icon cache database", it) }
     storeErrorHandler.isStoreOpened = true
     val mapBuilder = MVMap.Builder<ByteArray, ImageValue>()
     mapBuilder.keyType(FixedByteArrayDataType(IMAGE_KEY_SIZE))
@@ -82,7 +84,7 @@ class SvgCacheManager(dbFile: Path) {
     var isStoreOpened = false
 
     override fun accept(e: Throwable, store: MVStore) {
-      val logger = getLogger()
+      val logger = LOG
       if (isStoreOpened) {
         logger.error("Icon cache error (db=$store)")
       }
@@ -116,12 +118,12 @@ class SvgCacheManager(dbFile: Path) {
       return image
     }
     catch (e: Throwable) {
-      getLogger().error(e)
+      LOG.error(e)
       try {
         map.remove(key)
       }
       catch (e1: Exception) {
-        getLogger().error("Cannot remove invalid entry", e1)
+        LOG.error("Cannot remove invalid entry", e1)
       }
       return null
     }
@@ -140,7 +142,7 @@ private fun getCacheKey(themeDigest: ByteArray, imageBytes: ByteArray): ByteArra
     Xxh3.hash(imageBytes), Xxh3.hash(themeDigest)))
 
   val buffer = ByteBuffer.allocate(IMAGE_KEY_SIZE)
-  // add content size to key to reduce chance of hash collision (write as medium int)
+  // add content size to a key to reduce chance of hash collision (write as medium int)
   buffer.put((imageBytes.size ushr 16).toByte())
   buffer.put((imageBytes.size ushr 8).toByte())
   buffer.put(imageBytes.size.toByte())
