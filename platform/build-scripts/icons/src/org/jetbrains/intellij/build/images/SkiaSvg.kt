@@ -8,8 +8,11 @@ import org.jetbrains.skia.svg.SVGLength
 import org.jetbrains.skia.svg.SVGLengthUnit
 import java.nio.file.Path
 
-internal fun renderSvgUsingSkia(file: Path, scale: Float): Bitmap {
-  val svg = SVGDOM(Data.makeFromFileName(file.toString()))
+internal fun createSvgDom(file: Path): SVGDOM = SVGDOM(Data.makeFromFileName(file.toString()))
+
+internal fun renderSvgUsingSkia(file: Path, scale: Float): Bitmap = renderSvgUsingSkia(svg = createSvgDom(file), scale)
+
+internal fun renderSvgUsingSkia(svg: SVGDOM, scale: Float): Bitmap {
   val root = svg.root!!
   val width = svgLengthToPixel(root.width)
   val height = svgLengthToPixel(root.height)

@@ -21,7 +21,9 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.ColorType
+import org.jetbrains.skia.Data
 import org.jetbrains.skia.impl.BufferUtil
+import org.jetbrains.skia.svg.SVGDOM
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.Files
@@ -115,7 +117,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
   @OptIn(ExperimentalCoroutinesApi::class)
   private suspend fun compileIcons(dbDir: Path, dirs: List<Path>): List<Path> {
     val rootRobotData = IconRobotsData(parent = null, ignoreSkipTag = false, usedIconsRobots = null)
-    val result: MutableList<IconData?> = withContext(Dispatchers.IO) {
+    val result: MutableList<IconData> = withContext(Dispatchers.IO) {
       dirs.map { dir ->
         async {
           val result = mutableListOf<IconData>()
@@ -124,16 +126,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
         }
       }
     }.flatMapTo(mutableListOf()) { it.getCompleted() }
-    result.sortBy { it!!.variants.first() }
-
-    val collisionGuard = Int2ObjectOpenHashMap<FileInfo>()
-    for ((index, icon) in result.withIndex()) {
-      // the key is the same for all variants
-      // check collision only here - after sorting (so, we produce stable results as we skip the same icon every time)
-      if (checkCollision(icon!!.imageKey, icon.variants[0], icon.light1xData, collisionGuard)) {
-        result.set(index, null)
-      }
-    }
+    result.sortBy { it.variants.first() }
 
     NioFiles.deleteRecursively(dbDir)
     Files.createDirectories(dbDir)
@@ -155,20 +148,26 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     }
 
     try {
+      val collisionGuard = Int2ObjectOpenHashMap<FileInfo>()
       val time = measureTimeMillis {
-        // batik - cannot be processed concurrently due to https://youtrack.jetbrains.com/issue/IDEA-303866
-        // skia - parallel processing doesn't bring benefit (not yet clear why)
-        for (scale in scales) {
-          ByteBufferAllocator().use { bufferAllocator ->
-            for (icon in result) {
-              processImage(icon = icon ?: continue, getMapByScale = getMapByScale, scale = scale, bufferAllocator = bufferAllocator)
+        ByteBufferAllocator().use { bufferAllocator ->
+          for (icon in result) {
+            // the key is the same for all variants
+            // check collision only here - after sorting (so, we produce stable results as we skip the same icon every time)
+            if (checkCollision(imageKey = icon.imageKey,
+                               file = icon.variants[0],
+                               fileNormalizedData = icon.light1xData,
+                               collisionGuard = collisionGuard)) {
+              continue
             }
+
+            processImage(icon = icon, getMapByScale = getMapByScale, bufferAllocator = bufferAllocator)
           }
         }
       }
       println("$time ms")
 
-      //println("${Formats.formatFileSize(totalSize.get().toLong())} (${totalSize.get()}, iconCount=${totalFiles.get()}, resultSize=${result.size})")
+      println("${Formats.formatFileSize(totalSize.get().toLong())} (${totalSize.get()}, iconCount=${totalFiles.get()}, resultSize=${result.size})")
     }
     catch (e: Throwable) {
       try {
@@ -198,8 +197,6 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     resultFiles.sort()
     return resultFiles
   }
-
-  private class IconData(val light1xFile: Path, val light1xData: ByteArray, val variants: List<Path>, val imageKey: Int)
 
   private fun processDir(dir: Path,
                          rootDir: Path,
@@ -266,7 +263,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
       val imageKey = getImageKey(fileData = light1xBytes, fileName = light1x.fileName.toString())
       totalFiles.addAndGet(variants.size)
       try {
-        result.add(IconData(light1xFile = light1x, light1xData = light1xBytes, variants = variants, imageKey = imageKey))
+        result.add(IconData(light1xData = light1xBytes, variants = variants, imageKey = imageKey))
       }
       catch (e: TranscoderException) {
         throw RuntimeException("Cannot process $commonName (variants=$variants)", e)
@@ -276,27 +273,26 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
 
   private fun processImage(icon: IconData,
                            getMapByScale: (scale: Float, isDark: Boolean) -> IkvWriter,
-                           scale: Float,
                            bufferAllocator: ByteBufferAllocator) {
     //println("$id: ${variants.joinToString { rootDir.relativize(it).toString() }}")
 
     val variants = icon.variants
     // the key is the same for all variants
     val imageKey = icon.imageKey
+    val light1x = SVGDOM(Data.makeFromBytes(icon.light1xData))
+    val light2x = variants.firstOrNull { it.toString().endsWith("@2x.svg") }?.let { createSvgDom(it) }
 
-    val light2x = variants.find { it.toString().endsWith("@2x.svg") }
-    var file = if (scale >= 2 && light2x != null) {
-      light2x
-    }
-    else {
-      icon.light1xFile
-    }
-    addEntry(getMapByScale(scale, false), renderSvgUsingSkia(file, scale), imageKey, totalSize, bufferAllocator)
+    val dark2xFile = variants.find { it.toString().endsWith("@2x_dark.svg") }
+    val dark1x = variants.find { it !== dark2xFile && it.toString().endsWith("_dark.svg") }?.let { createSvgDom(it) }
+    val dark2x = dark2xFile?.let { createSvgDom(it) }
 
-    val dark2x = variants.find { it.toString().endsWith("@2x_dark.svg") }
-    val dark1x = variants.find { it !== dark2x && it.toString().endsWith("_dark.svg") } ?: return
-    file = if (scale >= 2 && dark2x != null) dark2x else dark1x
-    addEntry(getMapByScale(scale, true), renderSvgUsingSkia(file, scale), imageKey, totalSize, bufferAllocator)
+    for (scale in scales) {
+      var svg = if (scale >= 2 && light2x != null) light2x else light1x
+      addEntry(getMapByScale(scale, false), renderSvgUsingSkia(svg = svg, scale = scale), imageKey, totalSize, bufferAllocator)
+
+      svg = if (scale >= 2 && dark2x != null) dark2x else (dark1x ?: continue)
+      addEntry(getMapByScale(scale, true), renderSvgUsingSkia(svg, scale), imageKey, totalSize, bufferAllocator)
+    }
   }
 
   private fun checkCollision(imageKey: Int,
@@ -324,6 +320,10 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     }
   }
 }
+
+private class IconData(@JvmField val light1xData: ByteArray,
+                       @JvmField val variants: List<Path>,
+                       @JvmField val imageKey: Int)
 
 @Suppress("DuplicatedCode")
 private fun addEntry(map: IkvWriter, bitmap: Bitmap, imageKey: Int, totalSize: AtomicInteger, bufferAllocator: ByteBufferAllocator) {
