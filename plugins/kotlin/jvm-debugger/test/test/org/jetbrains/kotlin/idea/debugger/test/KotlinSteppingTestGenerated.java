@@ -1355,6 +1355,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/smartStepIntoInlineFun.kt");
         }
 
+        @TestMetadata("smartStepIntoInlineLambdasOnSameLine.kt")
+        public void testSmartStepIntoInlineLambdasOnSameLine() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoInlineLambdasOnSameLine.kt");
+        }
+
         @TestMetadata("smartStepIntoInlinedFunLiteral.kt")
         public void testSmartStepIntoInlinedFunLiteral() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoInlinedFunLiteral.kt");
