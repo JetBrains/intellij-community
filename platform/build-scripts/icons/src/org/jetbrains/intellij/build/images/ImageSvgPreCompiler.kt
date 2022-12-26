@@ -135,18 +135,6 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     val darkStores = Stores("-d", dbDir)
     val resultFiles = ArrayList<Path>()
 
-    val getMapByScale: (scale: Float, isDark: Boolean) -> IkvWriter = { scale, isDark ->
-      val list = if (isDark) darkStores else lightStores
-      when (scale) {
-        1f -> list.s1.getOrCreate()
-        1.25f -> list.s1_25.getOrCreate()
-        1.5f -> list.s1_5.getOrCreate()
-        2f -> list.s2.getOrCreate()
-        2.5f -> list.s2_5.getOrCreate()
-        else -> throw UnsupportedOperationException("Scale $scale is not supported")
-      }
-    }
-
     try {
       val collisionGuard = Int2ObjectOpenHashMap<FileInfo>()
       val time = measureTimeMillis {
@@ -161,7 +149,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
               continue
             }
 
-            processImage(icon = icon, getMapByScale = getMapByScale, bufferAllocator = bufferAllocator)
+            processImage(icon = icon, lightStores = lightStores, darkStores = darkStores, bufferAllocator = bufferAllocator)
           }
         }
       }
@@ -235,7 +223,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
           idToVariants.computeIfAbsent(getImageCommonName(fileName)) { mutableListOf() }.add(file)
         }
         else if (!fileName.endsWith(".class")) {
-          processDir(file, rootDir, level + 1, rootRobotData.fork(file, rootDir), result)
+          processDir(dir = file, rootDir = rootDir, level = level + 1, rootRobotData = rootRobotData.fork(file, rootDir), result = result)
         }
       }
       idToVariants ?: return
@@ -271,9 +259,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     }
   }
 
-  private fun processImage(icon: IconData,
-                           getMapByScale: (scale: Float, isDark: Boolean) -> IkvWriter,
-                           bufferAllocator: ByteBufferAllocator) {
+  private fun processImage(icon: IconData, lightStores: Stores, darkStores: Stores, bufferAllocator: ByteBufferAllocator) {
     //println("$id: ${variants.joinToString { rootDir.relativize(it).toString() }}")
 
     val variants = icon.variants
@@ -287,11 +273,17 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     val dark2x = dark2xFile?.let { createSvgDom(it) }
 
     for (scale in scales) {
-      var svg = if (scale >= 2 && light2x != null) light2x else light1x
-      addEntry(getMapByScale(scale, false), renderSvgUsingSkia(svg = svg, scale = scale), imageKey, totalSize, bufferAllocator)
+      addEntry(map = getMapByScale(list = lightStores, scale = scale),
+               bitmap = renderSvgUsingSkia(svg = if (scale >= 2 && light2x != null) light2x else light1x, scale = scale),
+               imageKey = imageKey,
+               totalSize = totalSize,
+               bufferAllocator = bufferAllocator)
 
-      svg = if (scale >= 2 && dark2x != null) dark2x else (dark1x ?: continue)
-      addEntry(getMapByScale(scale, true), renderSvgUsingSkia(svg, scale), imageKey, totalSize, bufferAllocator)
+      addEntry(map = getMapByScale(list = darkStores, scale = scale),
+               bitmap = renderSvgUsingSkia(svg = if (scale >= 2 && dark2x != null) dark2x else (dark1x ?: continue), scale = scale),
+               imageKey = imageKey,
+               totalSize = totalSize,
+               bufferAllocator = bufferAllocator)
     }
   }
 
@@ -318,6 +310,17 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     else {
       return file
     }
+  }
+}
+
+private fun getMapByScale(list: Stores, scale: Float): IkvWriter {
+  return when (scale) {
+    1f -> list.s1.getOrCreate()
+    1.25f -> list.s1_25.getOrCreate()
+    1.5f -> list.s1_5.getOrCreate()
+    2f -> list.s2.getOrCreate()
+    2.5f -> list.s2_5.getOrCreate()
+    else -> throw UnsupportedOperationException("Scale $scale is not supported")
   }
 }
 

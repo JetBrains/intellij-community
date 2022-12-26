@@ -83,7 +83,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
 
         val sourceRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).single().file.absolutePath
         val resourceRoot = module.getSourceRoots(JavaResourceRootType.RESOURCE).single()
-        // avoid merge conflicts - do not transform StudioIcons to nested class of AndroidIcons
+        // avoid a merge conflict - do not transform StudioIcons to a nested class of AndroidIcons
         var imageCollector = ImageCollector(projectHome, moduleConfig = moduleConfig)
         val imagesA = imageCollector.collectSubDir(resourceRoot, "icons", includePhantom = true)
         imageCollector.printUsedIconRobots()
@@ -160,8 +160,8 @@ internal open class IconsClassGenerator(private val projectHome: Path,
 
   fun processModule(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?) {
     val classCode = StringBuilder()
-    for (iconsClassInfo in getIconClassInfo(module, moduleConfig)) {
-      val outFile = iconsClassInfo.outFile
+    for (iconClassInfo in getIconClassInfo(module, moduleConfig)) {
+      val outFile = iconClassInfo.outFile
       val oldText = try {
         Files.readString(outFile)
       }
@@ -170,7 +170,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       }
 
       classCode.setLength(0)
-      val newText = writeClass(getCopyrightComment(oldText), iconsClassInfo, classCode)
+      val newText = writeClass(getCopyrightComment(oldText), iconClassInfo, classCode)
       if (newText.isNullOrEmpty()) {
         if (Files.exists(outFile)) {
           obsoleteClasses.add(outFile)
@@ -284,14 +284,14 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     result.append(" class ").append(info.className).append(" {\n")
     if (info.customLoad) {
       append(result, "private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {", 1)
-      append(result, "return $iconLoaderCode.loadRasterizedIcon(path, ${info.className}.class.getClassLoader(), cacheKey, flags);", 2)
+      append(result, "return $ICON_MANAGER_CODE.loadRasterizedIcon(path, ${info.className}.class.getClassLoader(), cacheKey, flags);", 2)
       append(result, "}", 1)
 
       val customExternalLoad = images.any { it.deprecation?.replacementContextClazz != null }
       if (customExternalLoad) {
         result.append('\n')
         append(result, "private static @NotNull Icon load(@NotNull String path, @NotNull Class<?> clazz) {", 1)
-        append(result, "return $iconLoaderCode.getIcon(path, clazz);", 2)
+        append(result, "return $ICON_MANAGER_CODE.getIcon(path, clazz);", 2)
         append(result, "}", 1)
       }
     }
@@ -413,12 +413,12 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       }
     }
 
-    // backward compatibility - use streaming camel case for StudioIcons
+    // backward compatibility - use a streaming camel case for StudioIcons
     val iconName = generateIconFieldName(file)
     val deprecation = image.deprecation
 
     if (deprecation?.replacementContextClazz != null) {
-      val method = if (customLoad) "load" else "$iconLoaderCode.getIcon"
+      val method = if (customLoad) "load" else "$ICON_MANAGER_CODE.getIcon"
       append(result, "public static final @NotNull Icon $iconName = " +
                      "$method(\"${deprecation.replacement}\", ${deprecation.replacementContextClazz}.class);", level)
       return
@@ -466,7 +466,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       key = 0
     }
 
-    val method = if (customLoad) "load" else "$iconLoaderCode.getIcon"
+    val method = if (customLoad) "load" else "$ICON_MANAGER_CODE.getIcon"
     val relativePath = rootPrefix + rootDir.relativize(imageFile).systemIndependentPath
     assert(relativePath.startsWith("/"))
     append(result, "${javaDoc}public static final @NotNull Icon $iconName = " +
@@ -636,10 +636,10 @@ private fun capitalize(name: String): String {
   }
 }
 
-private const val iconLoaderCode = "IconManager.getInstance()"
+private const val ICON_MANAGER_CODE = "IconManager.getInstance()"
 
 // grid-layout.svg duplicates grid-view.svg, but grid-layout_dark.svg differs from grid-view_dark.svg
-// so, add filename to image id to support such scenario
+// so, add filename to image id to support such a scenario
 internal fun getImageKey(fileData: ByteArray, fileName: String): Int {
   val h = Murmur3_32Hash.Murmur3_32Hasher(0)
   h.putBytes(fileData, 0, fileData.size)
@@ -648,7 +648,7 @@ internal fun getImageKey(fileData: ByteArray, fileName: String): Int {
 }
 
 // remove line separators to unify line separators (\n vs \r\n), trim lines
-// normalization is required because cache key is based on content
+// normalization is required because a cache key is based on content
 internal fun loadAndNormalizeSvgFile(svgFile: Path): String {
   val builder = StringBuilder()
   Files.lines(svgFile).use { lines ->
@@ -667,7 +667,7 @@ internal fun loadAndNormalizeSvgFile(svgFile: Path): String {
         }
 
         builder.append(line, start, end)
-        // if tag is not closed, space must be added to ensure that code on next line is separated from previous line of code
+        // if tag is not closed, space must be added to ensure that code on the next line is separated from the previous line of code
         if (builder[end - 1] != '>') {
           builder.append(' ')
         }
