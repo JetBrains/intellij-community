@@ -526,7 +526,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
                        ? independentPath
                        : "file:" + independentPath;
     URL url = new URL(null, urlString);
-    Image image = ImageLoader.loadCustomIcon(url);
+    Image image = ImageLoader.INSTANCE.loadCustomIcon(url);
     return image != null ? new JBImageIcon(image) : null;
   }
 

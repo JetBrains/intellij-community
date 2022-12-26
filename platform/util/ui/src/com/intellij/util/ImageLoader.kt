@@ -1,420 +1,226 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util;
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.ui.icons.IconLoadMeasurer;
-import com.intellij.ui.icons.ImageDescriptor;
-import com.intellij.ui.icons.LoadIconParameters;
-import com.intellij.ui.scale.DerivedScaleType;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.ui.svg.SvgCacheMapper;
-import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.io.URLUtil;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.StartupUiUtil;
-import org.imgscalr.Scalr;
-import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.util
 
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.MemoryCacheImageInputStream;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.awt.image.BufferedImageOp;
-import java.awt.image.FilteredImageSource;
-import java.awt.image.ImageFilter;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.ui.icons.IconLoadMeasurer
+import com.intellij.ui.icons.ImageDescriptor
+import com.intellij.ui.icons.LoadIconParameters
+import com.intellij.ui.icons.LoadIconParameters.Companion.defaultParameters
+import com.intellij.ui.scale.DerivedScaleType
+import com.intellij.ui.scale.JBUIScale.isHiDPI
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.svg.SvgCacheMapper
+import com.intellij.util.ImageLoader.USE_CACHE
+import com.intellij.util.SVGLoader.DEFAULT_THEME
+import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
+import com.intellij.util.SVGLoader.load
+import com.intellij.util.SVGLoader.loadFromClassResource
+import com.intellij.util.SVGLoader.loadWithoutCache
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.io.URLUtil
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.StartupUiUtil
+import org.imgscalr.Scalr
+import org.intellij.lang.annotations.MagicConstant
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.NonNls
+import java.awt.Component
+import java.awt.Image
+import java.awt.Toolkit
+import java.awt.image.BufferedImage
+import java.awt.image.FilteredImageSource
+import java.awt.image.ImageFilter
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.io.IOException
+import java.io.InputStream
+import java.net.HttpURLConnection
+import java.net.URI
+import java.net.URL
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
+import javax.imageio.ImageIO
+import javax.imageio.stream.MemoryCacheImageInputStream
+import javax.swing.Icon
+import kotlin.math.roundToInt
 
-public final class ImageLoader {
-  public static final int ALLOW_FLOAT_SCALING = 0x01;
-  public static final int USE_CACHE           = 0x02;
-  public static final int USE_DARK            = 0x04;
-  public static final int USE_SVG             = 0x08;
+private val LOG: Logger
+  get() = logger<ImageLoader>()
 
-  private static @NotNull Logger getLogger() {
-    return Logger.getInstance(ImageLoader.class);
-  }
+object ImageLoader {
+  const val ALLOW_FLOAT_SCALING = 0x01
+  const val USE_CACHE = 0x02
+  const val USE_DARK = 0x04
+  const val USE_SVG = 0x08
 
-  @ApiStatus.Internal
-  public static final class ImageCache {
-    public static final ImageCache INSTANCE = new ImageCache();
+  @get:Internal
+  val ourComponent: Component by lazy { object : Component() {} }
 
-    private ImageCache() {
-    }
-
-    private static final long CACHED_IMAGE_MAX_SIZE = (long)(SystemProperties.getFloatProperty("ide.cached.image.max.size", 1.5f) * 1024 * 1024);
-    @SuppressWarnings("SSBasedInspection")
-    private final Set<String> ioMissCache = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
-    private final ConcurrentMap<CacheKey, Image> imageCache = CollectionFactory.createConcurrentSoftValueMap();
-    // https://github.com/JetBrains/intellij-community/pull/1242
-    private final ConcurrentMap<CacheKey, Image> largeImageCache = CollectionFactory.createConcurrentWeakValueMap();
-
-    @ApiStatus.Internal
-    public static boolean isIconTooLargeForCache(@NotNull Icon icon) {
-      return 4L * icon.getIconWidth() * icon.getIconHeight() > CACHED_IMAGE_MAX_SIZE;
-    }
-
-    public void clearCache() {
-      imageCache.clear();
-      largeImageCache.clear();
-      ioMissCache.clear();
-    }
-  }
-
-  public static final class Dimension2DDouble {
-    private double myWidth;
-    private double myHeight;
-
-    public Dimension2DDouble(double width, double height) {
-      myWidth = width;
-      myHeight = height;
-    }
-
-    public void setSize(Dimension2DDouble size) {
-      myWidth = size.myWidth;
-      myHeight = size.myHeight;
-    }
-
-    public void setSize(double width, double height) {
-      myWidth = width;
-      myHeight = height;
-    }
-
-    public double getWidth() {
-      return myWidth;
-    }
-
-    public double getHeight() {
-      return myHeight;
-    }
-  }
-
-  // @2x is used even for SVG icons by intention
-  private static void addFileNameVariant(boolean retina,
-                                         boolean isDark,
-                                         boolean isStroke,
-                                         boolean isSvg,
-                                         String name,
-                                         String ext,
-                                         float scale,
-                                         @NotNull List<? super ImageDescriptor> list) {
-    String _ext = isSvg ? "svg" : ext;
-    float _scale = isSvg ? scale : retina ? 2 : 1;
-
-    if (isStroke) {
-      list.add(new ImageDescriptor(name + "_stroke." + _ext, _scale, isSvg, false, true));
-    }
-    if (retina && isDark) {
-      list.add(new ImageDescriptor(name + "@2x_dark." + _ext, _scale, isSvg, true, false));
-    }
-    list.add(new ImageDescriptor(name + (isDark ? "_dark" : "") + (retina ? "@2x" : "") + "." + _ext, _scale, isSvg, isDark, false));
-    if (retina) {
-      // a fallback to 1x icon
-      list.add(new ImageDescriptor(name + (isDark ? "_dark" : "") + "." + _ext, isSvg ? scale : 1, isSvg, isDark, false));
-    }
+  @Internal
+  fun isIconTooLargeForCache(icon: Icon): Boolean {
+    return 4L * icon.iconWidth * icon.iconHeight > CACHED_IMAGE_MAX_SIZE
   }
 
   // Some duplication here: isDark presents in parameters and in flags
-  @ApiStatus.Internal
-  public static @Nullable Image loadImage(@NotNull String path,
-                                          @NotNull LoadIconParameters parameters,
-                                          @Nullable Class<?> resourceClass,
-                                          @Nullable ClassLoader classLoader,
-                                          @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
-                                          boolean isUpScaleNeeded) {
-    long start = StartUpMeasurer.getCurrentTimeIfEnabled();
+  @Internal
+  fun loadImage(path: String,
+                parameters: LoadIconParameters,
+                resourceClass: Class<*>? = null,
+                classLoader: ClassLoader?,
+                @MagicConstant(flagsFromClass = ImageLoader::class) flags: Int,
+                isUpScaleNeeded: Boolean): Image? {
+    val start = StartUpMeasurer.getCurrentTimeIfEnabled()
+    val descriptors = createImageDescriptorList(path = path, flags = flags, scaleContext = parameters.scaleContext)
+    val imageCache = ImageCache.INSTANCE
+    var ioExceptionThrown = false
+    for (i in descriptors.indices) {
+      val descriptor = descriptors.get(i)
+      ioExceptionThrown = try {
+        // check only for the first one, as io miss cache doesn't have a scale
+        val image = loadByDescriptor(descriptor = descriptor,
+                                     flags = flags,
+                                     resourceClass = resourceClass,
+                                     classLoader = classLoader,
+                                     ioMissCache = if (i == 0) imageCache.ioMissCache else null,
+                                     imageCache = imageCache,
+                                     ioMissCacheKey = path,
+                                     colorPatcher = parameters.colorPatcher) ?: continue
+        if (start != -1L) {
+          IconLoadMeasurer.addLoading(isSvg = descriptor.isSvg, start = start)
+        }
 
-    List<ImageDescriptor> descriptors = createImageDescriptorList(path, flags, parameters.scaleContext);
-    ImageCache imageCache = ImageCache.INSTANCE;
-    boolean ioExceptionThrown = false;
-    for (int i = 0; i < descriptors.size(); i++) {
-      ImageDescriptor descriptor = descriptors.get(i);
-      try {
-        // check only for the first one, as io miss cache doesn't have scale
-        Image image = loadByDescriptor(descriptor, flags, resourceClass, classLoader,
-                                       i == 0 ? imageCache.ioMissCache : null, imageCache, path, parameters.colorPatcher);
-        if (image == null) {
-          continue;
-        }
-        if (start != -1) {
-          IconLoadMeasurer.addLoading(descriptor.isSvg, start);
-        }
-        boolean isHiDpiNeeded = StartupUiUtil.isJreHiDPI(parameters.scaleContext);
-        return convertImage(image, parameters.filters, flags, parameters.scaleContext, isUpScaleNeeded,
-                            isHiDpiNeeded, descriptor.scale, descriptor.isSvg);
+        val isHiDpiNeeded = StartupUiUtil.isJreHiDPI(parameters.scaleContext)
+        return convertImage(image = image,
+                            filters = parameters.filters,
+                            flags = flags,
+                            scaleContext = parameters.scaleContext,
+                            isUpScaleNeeded = isUpScaleNeeded,
+                            isHiDpiNeeded = isHiDpiNeeded,
+                            imageScale = descriptor.scale,
+                            isSvg = descriptor.isSvg)
       }
-      catch (IOException e) {
-        ioExceptionThrown = true;
+      catch (e: IOException) {
+        true
       }
     }
-
     if (ioExceptionThrown) {
-      imageCache.ioMissCache.add(path);
+      imageCache.ioMissCache.add(path)
     }
-    return null;
+    return null
   }
 
-  @ApiStatus.Internal
-  public static @Nullable BufferedImage loadImageForStartUp(@NotNull String requestedPath, @NotNull ClassLoader classLoader) {
-    ScaleContext scaleContext = ScaleContext.create();
-    List<ImageDescriptor> descriptors = createImageDescriptorList(requestedPath, ALLOW_FLOAT_SCALING, scaleContext);
-    for (ImageDescriptor descriptor : descriptors) {
+  @Internal
+  fun loadImageForStartUp(requestedPath: String, classLoader: ClassLoader): BufferedImage? {
+    val scaleContext = ScaleContext.create()
+    val descriptors = createImageDescriptorList(requestedPath, ALLOW_FLOAT_SCALING, scaleContext)
+    for (descriptor in descriptors) {
       try {
-        byte[] data = getResourceData(descriptor.path, null, classLoader);
-        if (data == null) {
-          continue;
-        }
-
-        Image image;
-        if (descriptor.isSvg) {
-          return SVGLoader.loadWithoutCache(data, descriptor.scale);
+        val data = getResourceData(path = descriptor.path, resourceClass = null, classLoader = classLoader) ?: continue
+        val image: Image
+        return if (descriptor.isSvg) {
+          loadWithoutCache(data, descriptor.scale)
         }
         else {
-          image = loadPng(new ByteArrayInputStream(data), descriptor.scale, null);
-          float scale = (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE);
+          image = loadPng(stream = ByteArrayInputStream(data), scale = descriptor.scale, originalUserSize = null)
+          var scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
           if (descriptor.scale > 1) {
             // compensate the image original scale
-            scale /= descriptor.scale;
+            scale /= descriptor.scale
           }
-          return (BufferedImage)scaleImage(image, scale);
+          scaleImage(image, scale.toDouble()) as BufferedImage
         }
       }
-      catch (IOException ignore) {
+      catch (ignore: IOException) {
       }
     }
-    return null;
+    return null
   }
 
-  private static @Nullable Image loadByDescriptor(@NotNull ImageDescriptor descriptor,
-                                                  @MagicConstant(flags = USE_CACHE) int flags,
-                                                  @Nullable Class<?> resourceClass,
-                                                  @Nullable ClassLoader classLoader,
-                                                  @Nullable Set<String> ioMissCache,
-                                                  @NotNull ImageCache imageCache,
-                                                  @Nullable String ioMissCacheKey,
-                                                  @Nullable SVGLoader.SvgElementColorPatcherProvider colorPatcher) throws IOException {
-    CacheKey cacheKey = null;
-    boolean tmpPatcher = false;
-    byte[] digest = null;
-    if (colorPatcher != null) {
-      SVGLoader.SvgElementColorPatcher subPatcher = colorPatcher.forPath(descriptor.path);
-      if (subPatcher != null) {
-        digest = subPatcher.digest();
-        if (digest == null) {
-          tmpPatcher = true;
-        }
-      }
-    }
-    if (digest == null) {
-      digest = SVGLoader.INSTANCE.getDEFAULT_THEME();
-    }
-
-    if ((flags & USE_CACHE) == USE_CACHE && !tmpPatcher) {
-      cacheKey = new CacheKey(descriptor.path, descriptor.isSvg ? descriptor.scale : 0, digest);
-      Image image = imageCache.imageCache.get(cacheKey);
-      if (image != null) {
-        return image;
-      }
-
-      image = imageCache.largeImageCache.get(cacheKey);
-      if (image != null) {
-        return image;
-      }
-    }
-
-    if (ioMissCache != null && ioMissCache.contains(ioMissCacheKey)) {
-      return null;
-    }
-
-    Image image = loadByDescriptorWithoutCache(descriptor, resourceClass, classLoader, colorPatcher);
-    if (image == null) {
-      return null;
-    }
-
-    if (cacheKey != null) {
-      if (4L * image.getWidth(null) * image.getHeight(null) <= ImageCache.CACHED_IMAGE_MAX_SIZE) {
-        imageCache.imageCache.put(cacheKey, image);
-      }
-      else {
-        imageCache.largeImageCache.put(cacheKey, image);
-      }
-    }
-    return image;
-  }
-
-  private static @Nullable Image loadByDescriptorWithoutCache(@NotNull ImageDescriptor descriptor,
-                                                              @Nullable Class<?> resourceClass,
-                                                              @Nullable ClassLoader classLoader,
-                                                              @Nullable SVGLoader.SvgElementColorPatcherProvider colorPatcher
-  ) throws IOException {
-    Image image;
-    long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-    if (resourceClass == null && (classLoader == null || URLUtil.containsScheme(descriptor.path)) && !descriptor.path.startsWith("file://")) {
-      URLConnection connection = new URL(descriptor.path).openConnection();
-      if (connection instanceof HttpURLConnection) {
-        connection.addRequestProperty("User-Agent", "IntelliJ");
-      }
-
-      try (InputStream stream = connection.getInputStream()) {
-        if (descriptor.isSvg) {
-          image = SVGLoader.load(descriptor.path, stream, descriptor.getSvgMapper(), colorPatcher, null);
-        }
-        else {
-          image = loadPng(stream, descriptor.scale, null);
-        }
-      }
-      if (start != -1) {
-        IconLoadMeasurer.loadFromUrl.end(start);
-      }
-    }
-    else {
-      if (descriptor.isSvg) {
-        image = SVGLoader.INSTANCE.loadFromClassResource(resourceClass, classLoader, descriptor.path, 0, descriptor.getSvgMapper(),
-                                                         colorPatcher, null);
-      }
-      else {
-        image = loadPngFromClassResource(descriptor.path, resourceClass, classLoader, descriptor.scale, null);
-      }
-      if (start != -1) {
-        IconLoadMeasurer.loadFromResources.end(start);
-      }
-    }
-    return image;
-  }
-
-  static byte @Nullable [] getResourceData(@NotNull String path, @Nullable Class<?> resourceClass, @Nullable ClassLoader classLoader)
-    throws IOException {
-    assert resourceClass != null || classLoader != null || path.startsWith("file://");
-
+  @Internal
+  internal fun getResourceData(path: String, resourceClass: Class<*>?, classLoader: ClassLoader?): ByteArray? {
+    assert(resourceClass != null || classLoader != null || path.startsWith("file://"))
     if (classLoader != null) {
-      boolean isAbsolute = path.startsWith("/");
-      byte[] data = ResourceUtil.getResourceAsBytes(isAbsolute ? path.substring(1) : path, classLoader, true);
+      val isAbsolute = path.startsWith("/")
+      val data = ResourceUtil.getResourceAsBytes(if (isAbsolute) path.substring(1) else path, classLoader, true)
       if (data != null || isAbsolute) {
-        return data;
+        return data
       }
     }
-
-    if (resourceClass != null) {
-      try (InputStream stream = resourceClass.getResourceAsStream(path)) {
-        return stream == null ? null : stream.readAllBytes();
-      }
-    }
-
+    resourceClass?.getResourceAsStream(path)?.use { stream -> return stream.readAllBytes() }
     if (path.startsWith("file:/")) {
-      Path nioPath = Path.of(URI.create(path));
+      val nioPath = Path.of(URI.create(path))
       try {
-        return Files.readAllBytes(nioPath);
+        return Files.readAllBytes(nioPath)
       }
-      catch (NoSuchFileException e) {
-        return null;
+      catch (e: NoSuchFileException) {
+        return null
       }
-      catch (IOException e) {
-        getLogger().warn(e);
+      catch (e: IOException) {
+        LOG.warn(e)
       }
     }
-    return null;
+    return null
   }
 
-  @ApiStatus.Internal
-  public static @Nullable Image loadPngFromClassResource(String path,
-                                                         @Nullable Class<?> resourceClass,
-                                                         @Nullable ClassLoader classLoader,
-                                                         float scale,
-                                                         @Nullable Dimension2DDouble originalUserSize) throws IOException {
-    byte[] data = getResourceData(path, resourceClass, classLoader);
-    if (data == null) {
-      return null;
-    }
-    return loadPng(new ByteArrayInputStream(data), scale, originalUserSize);
+  @Internal
+  fun loadPngFromClassResource(path: String, classLoader: ClassLoader?, scale: Float, resourceClass: Class<*>? = null): Image? {
+    val data = getResourceData(path = path, resourceClass = resourceClass, classLoader = classLoader) ?: return null
+    return loadPng(stream = ByteArrayInputStream(data), scale = scale, originalUserSize = null)
   }
 
-  @ApiStatus.Internal
-  public static @NotNull Image loadFromStream(@NotNull InputStream stream,
-                                              @Nullable String path,
-                                              float scale,
-                                              @NotNull ImageLoader.Dimension2DDouble originalUserSize,
-                                              @MagicConstant(flags = {USE_DARK, USE_SVG}) int flags) throws IOException {
-    try (stream) {
-      if ((flags & USE_SVG) == USE_SVG) {
-        SvgCacheMapper mapper = new SvgCacheMapper(scale, (flags & USE_DARK) == USE_DARK, false);
-        return SVGLoader.load(path, stream, mapper, null, originalUserSize);
+  @Internal
+  fun loadFromStream(stream: InputStream,
+                     path: String?,
+                     scale: Float,
+                     originalUserSize: Dimension2DDouble,
+                     @MagicConstant(flags = [USE_DARK.toLong(), USE_SVG.toLong()]) flags: Int): Image {
+    stream.use {
+      return if (flags and USE_SVG == USE_SVG) {
+        val mapper = SvgCacheMapper(scale = scale, isDark = flags and USE_DARK == USE_DARK, isStroke = false, docSize = originalUserSize)
+        load(path = path, stream = stream, mapper = mapper, colorPatcher = null)
       }
       else {
-        return loadPng(stream, scale, originalUserSize);
+        loadPng(stream = stream, scale = scale, originalUserSize = originalUserSize)
       }
     }
   }
 
-  private static @NotNull BufferedImage loadPng(@NotNull InputStream stream, float scale, @Nullable Dimension2DDouble originalUserSize) throws IOException {
-    long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-    BufferedImage image;
-    ImageReader reader = ImageIO.getImageReadersByFormatName("png").next();
-    try (MemoryCacheImageInputStream imageInputStream = new MemoryCacheImageInputStream(stream)) {
-      reader.setInput(imageInputStream, true, true);
-      image = reader.read(0, null);
-    }
-    finally {
-      reader.dispose();
-    }
-    if (originalUserSize != null) {
-      originalUserSize.setSize(image.getWidth() / scale, image.getHeight() / scale);
-    }
-    if (start != -1) {
-      IconLoadMeasurer.pngDecoding.end(start);
-    }
-    return image;
-  }
-
-  public static @Nullable Image convertImage(@NotNull Image image,
-                                             @NotNull List<? extends ImageFilter> filters,
-                                             @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
-                                             ScaleContext scaleContext,
-                                             boolean isUpScaleNeeded,
-                                             boolean isHiDpiNeeded,
-                                             float imageScale,
-                                             boolean isSvg) {
+  fun convertImage(image: Image,
+                   filters: List<ImageFilter?>,
+                   @MagicConstant(flagsFromClass = ImageLoader::class) flags: Int,
+                   scaleContext: ScaleContext,
+                   isUpScaleNeeded: Boolean,
+                   isHiDpiNeeded: Boolean,
+                   imageScale: Float,
+                   isSvg: Boolean): Image {
+    var result = image
     if (isUpScaleNeeded && !isSvg) {
-      float scale = adjustScaleFactor((flags & ALLOW_FLOAT_SCALING) == ALLOW_FLOAT_SCALING, (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE));
+      var scale = adjustScaleFactor(
+        flags and ALLOW_FLOAT_SCALING == ALLOW_FLOAT_SCALING, scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat())
       if (imageScale > 1) {
         // compensate the image original scale
-        scale /= imageScale;
+        scale /= imageScale
       }
-      image = scaleImage(image, scale);
+      result = scaleImage(result, scale.toDouble())
     }
-
     if (!filters.isEmpty()) {
-      Toolkit toolkit = Toolkit.getDefaultToolkit();
-      for (ImageFilter filter : filters) {
+      val toolkit = Toolkit.getDefaultToolkit()
+      for (filter in filters) {
         if (filter != null) {
-          image = toolkit.createImage(new FilteredImageSource(ImageUtil.toBufferedImage(image, false).getSource(), filter));
+          result = toolkit.createImage(FilteredImageSource(ImageUtil.toBufferedImage(result, false).source, filter))
         }
       }
     }
-
     if (isHiDpiNeeded) {
       // The {originalUserSize} can contain calculation inaccuracy. If we use it to derive the HiDPI image scale
       // in JBHiDPIScaledImage, the derived scale will also be inaccurate and this will cause distortions
@@ -424,237 +230,408 @@ public final class ImageLoader {
       // To avoid that, we instead directly use the provided ScaleContext which contains correct ScaleContext.SYS_SCALE,
       // the image user space size will then be derived by JBHiDPIScaledImage (it is assumed the derived size is equal to
       // {originalUserSize} * DerivedScaleType.EFF_USR_SCALE, taking into account calculation accuracy).
-      image = new JBHiDPIScaledImage(image, scaleContext, BufferedImage.TYPE_INT_ARGB);
+      result = JBHiDPIScaledImage(result, scaleContext, BufferedImage.TYPE_INT_ARGB)
     }
-    return image;
+    return result
   }
 
-  public static @NotNull List<ImageDescriptor> getImageDescriptors(@NotNull String path,
-                                                                   @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
-                                                                   @NotNull ScaleContext scaleContext) {
-    return createImageDescriptorList(path, flags, scaleContext);
+  fun getImageDescriptors(path: String,
+                          @MagicConstant(flagsFromClass = ImageLoader::class) flags: Int,
+                          scaleContext: ScaleContext): List<ImageDescriptor> {
+    return createImageDescriptorList(path = path, flags = flags, scaleContext = scaleContext)
   }
 
-  private static @NotNull List<ImageDescriptor> createImageDescriptorList(@NotNull String path,
-                                                                          @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
-                                                                          @NotNull ScaleContext scaleContext) {
-    // prefer retina images for HiDPI scale, because downscaling retina images provides a better result than up-scaling non-retina images
-    float pixScale = (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE);
-
-    int i = path.lastIndexOf('.');
-    String name = i < 0 ? path : path.substring(0, i);
-    String ext = i < 0 || (i == path.length() - 1) ? "" : path.substring(i + 1);
-    float scale = adjustScaleFactor((flags & ALLOW_FLOAT_SCALING) == ALLOW_FLOAT_SCALING, pixScale);
-
-    List<ImageDescriptor> list;
+  private fun createImageDescriptorList(path: String,
+                                        @MagicConstant(flagsFromClass = ImageLoader::class) flags: Int,
+                                        scaleContext: ScaleContext): List<ImageDescriptor> {
+    // prefer retina images for HiDPI scale, because downscaling retina images provide a better result than up-scaling non-retina images
+    val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
+    val i = path.lastIndexOf('.')
+    val name = if (i < 0) path else path.substring(0, i)
+    val ext = if (i < 0 || i == path.length - 1) "" else path.substring(i + 1)
+    val scale = adjustScaleFactor(
+      flags and ALLOW_FLOAT_SCALING == ALLOW_FLOAT_SCALING, pixScale)
+    val list: List<ImageDescriptor>
     if (!path.startsWith("file:") && path.contains("://")) {
-      int qI = path.lastIndexOf('?');
-      boolean isSvg = StringUtilRt.endsWithIgnoreCase(qI == -1 ? path : path.substring(0, qI), ".svg");
-      list = Collections.singletonList(new ImageDescriptor(name + "." + ext, 1f, isSvg, true, false));
+      val qI = path.lastIndexOf('?')
+      val isSvg = StringUtilRt.endsWithIgnoreCase(if (qI == -1) path else path.substring(0, qI), ".svg")
+      list = listOf(ImageDescriptor("$name.$ext", 1f, isSvg, true, false))
     }
     else {
-      boolean isSvg = "svg".equalsIgnoreCase(ext);
-      boolean isDark = (flags & USE_DARK) == USE_DARK;
-      boolean retina = JBUIScale.isHiDPI(pixScale);
-
-      list = new ArrayList<>();
-      if (!isSvg && (flags & USE_SVG) == USE_SVG) {
-        addFileNameVariant(retina, isDark, true, false, name, ext, scale, list);
+      val isSvg = "svg".equals(ext, ignoreCase = true)
+      val isDark = flags and USE_DARK == USE_DARK
+      val retina = isHiDPI(pixScale.toDouble())
+      list = ArrayList()
+      if (!isSvg && flags and USE_SVG == USE_SVG) {
+        addFileNameVariant(retina, isDark, true, false, name, ext, scale, list)
       }
-      addFileNameVariant(retina, isDark, false, isSvg, name, ext, scale, list);
+      addFileNameVariant(retina, isDark, false, isSvg, name, ext, scale, list)
       if (isDark) {
         // fallback to non-dark
-        addFileNameVariant(retina, false, false, isSvg, name, ext, scale, list);
-        if (!isSvg && (flags & USE_SVG) == USE_SVG) {
-          addFileNameVariant(false, false, false, true, name, ext, scale, list);
+        addFileNameVariant(retina, false, false, isSvg, name, ext, scale, list)
+        if (!isSvg && flags and USE_SVG == USE_SVG) {
+          addFileNameVariant(false, false, false, true, name, ext, scale, list)
         }
       }
     }
-    return list;
+    return list
   }
 
-  public static final Component ourComponent = new Component() {
-  };
-
-  public static @Nullable Image loadFromUrl(@NotNull URL url) {
-    int flags = USE_SVG | USE_CACHE | ALLOW_FLOAT_SCALING;
-    boolean isDark = StartupUiUtil.isUnderDarcula();
+  @JvmStatic
+  fun loadFromUrl(url: URL): Image? {
+    var flags = USE_SVG or USE_CACHE or ALLOW_FLOAT_SCALING
+    val isDark = StartupUiUtil.isUnderDarcula()
     if (isDark) {
-      flags |= USE_DARK;
+      flags = flags or USE_DARK
     }
-    String path = url.toString();
-    return loadImage(path, LoadIconParameters.defaultParameters(isDark), null, null, flags, !path.endsWith(".svg"));
+    val path = url.toString()
+    return loadImage(path = path,
+                     parameters = defaultParameters(isDark),
+                     classLoader = null,
+                     flags = flags,
+                     isUpScaleNeeded = !path.endsWith(".svg"))
   }
 
   /**
    * Loads an image of available resolution (1x, 2x, ...) and scales to address the provided scale context.
-   * Then wraps the image with {@link JBHiDPIScaledImage} if necessary.
+   * Then wraps the image with [JBHiDPIScaledImage] if necessary.
    */
-  public static @Nullable Image loadFromUrl(@NotNull String path,
-                                            @Nullable Class<?> aClass,
-                                            @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
-                                            @NotNull ScaleContext scaleContext) {
+  fun loadFromUrl(path: String,
+                  aClass: Class<*>?,
+                  @MagicConstant(flagsFromClass = ImageLoader::class) flags: Int,
+                  scaleContext: ScaleContext): Image? {
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
-    // In IDE-managed HiDPI mode with scale > 1.0 we scale images manually - pass isUpScaleNeeded = true
-    LoadIconParameters parameters = new LoadIconParameters(Collections.emptyList(), scaleContext, (flags & USE_DARK) == USE_DARK, null, false);
-    return loadImage(path, parameters, aClass, null, flags, !path.endsWith(".svg"));
+    // In IDE-managed HiDPI mode with a scale > 1.0 we scale images manually - pass isUpScaleNeeded = true
+    val parameters = LoadIconParameters(emptyList(), scaleContext, flags and USE_DARK == USE_DARK, null, false)
+    return loadImage(path = path,
+                     parameters = parameters,
+                     resourceClass = aClass,
+                     classLoader = null,
+                     flags = flags,
+                     isUpScaleNeeded = !path.endsWith(".svg"))
   }
 
-  public static float adjustScaleFactor(boolean allowFloatScaling, float scale) {
-    return allowFloatScaling ? scale : JBUIScale.isHiDPI(scale) ? 2f : 1f;
+  fun adjustScaleFactor(allowFloatScaling: Boolean, scale: Float): Float {
+    return if (allowFloatScaling) scale else if (isHiDPI(scale.toDouble())) 2f else 1f
   }
 
-  public static @NotNull Image scaleImage(@NotNull Image image, double scale) {
+  @JvmStatic
+  fun scaleImage(image: Image, scale: Double): Image {
     if (scale == 1.0) {
-      return image;
+      return image
     }
-
-    if (image instanceof JBHiDPIScaledImage) {
-      return ((JBHiDPIScaledImage)image).scale(scale);
+    if (image is JBHiDPIScaledImage) {
+      return image.scale(scale)
     }
-
-    int w = image.getWidth(null);
-    int h = image.getHeight(null);
+    val w = image.getWidth(null)
+    val h = image.getHeight(null)
     if (w <= 0 || h <= 0) {
-      return image;
+      return image
     }
-
-    int width = (int)Math.round(scale * w);
-    int height = (int)Math.round(scale * h);
+    val width = (scale * w).roundToInt()
+    val height = (scale * h).roundToInt()
     // Using "QUALITY" instead of "ULTRA_QUALITY" results in images that are less blurry
     // because ultra quality performs a few more passes when scaling, which introduces blurriness
     // when the scaling factor is relatively small (i.e. <= 3.0f) -- which is the case here.
-    return Scalr.resize(ImageUtil.toBufferedImage(image, false), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, width, height, (BufferedImageOp[])null);
+    return Scalr.resize(ImageUtil.toBufferedImage(image, false), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, width, height, null)
   }
 
-  @NotNull
-  public static Image scaleImage(@NotNull Image image, int targetSize) {
-    return scaleImage(image, targetSize, targetSize);
-  }
+  @JvmStatic
+  fun scaleImage(image: Image, targetSize: Int): Image = scaleImage(image = image, targetWidth = targetSize, targetHeight = targetSize)
 
-  @NotNull
-  public static Image scaleImage(@NotNull Image image, int targetWidth, int targetHeight) {
-    if (image instanceof JBHiDPIScaledImage) {
-      return ((JBHiDPIScaledImage)image).scale(targetWidth, targetHeight);
-    }
-    int w = image.getWidth(null);
-    int h = image.getHeight(null);
-
-    if (w <= 0 || h <= 0 || w == targetWidth && h == targetHeight) {
-      return image;
+  @JvmStatic
+  fun scaleImage(image: Image, targetWidth: Int, targetHeight: Int): Image {
+    if (image is JBHiDPIScaledImage) {
+      return image.scale(targetWidth, targetHeight)
     }
 
-    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT,
-                        targetWidth, targetHeight,
-                        (BufferedImageOp[])null);
+    val w = image.getWidth(null)
+    val h = image.getHeight(null)
+    return if (w <= 0 || h <= 0 || w == targetWidth && h == targetHeight) {
+      image
+    }
+    else {
+      Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, targetWidth, targetHeight, null)
+    }
   }
 
-  /**
-   * @deprecated Use {@link #loadFromResource(String, Class)}
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  public static @Nullable Image loadFromResource(@NonNls @NotNull String s) {
-    Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
-    return callerClass == null ? null : loadFromResource(s, callerClass);
+  @JvmStatic
+  @Deprecated("Use {@link #loadFromResource(String, Class)}")
+  fun loadFromResource(s: @NonNls String): Image? {
+    val callerClass = ReflectionUtil.getGrandCallerClass()
+    return if (callerClass == null) null else loadFromResource(s, callerClass)
   }
 
-  public static @Nullable Image loadFromResource(@NonNls @NotNull String path, @NotNull Class<?> aClass) {
-    int flags = USE_SVG | ALLOW_FLOAT_SCALING | USE_CACHE;
-    boolean isDark = StartupUiUtil.isUnderDarcula();
+  @JvmStatic
+  fun loadFromResource(path: @NonNls String, aClass: Class<*>): Image? {
+    var flags = USE_SVG or ALLOW_FLOAT_SCALING or USE_CACHE
+    val isDark = StartupUiUtil.isUnderDarcula()
     if (isDark) {
-      flags |= USE_DARK;
+      flags = flags or USE_DARK
     }
-    return loadImage(path, LoadIconParameters.defaultParameters(isDark), aClass, null, flags, false);
+    return loadImage(path = path,
+                     parameters = defaultParameters(isDark),
+                     resourceClass = aClass,
+                     classLoader = null,
+                     flags = flags,
+                     isUpScaleNeeded = false)
   }
 
-  public static Image loadFromBytes(byte @NotNull [] bytes) {
-    return loadFromStream(new ByteArrayInputStream(bytes));
+  @JvmStatic
+  fun loadFromBytes(bytes: ByteArray): Image? {
+    return loadFromStream(ByteArrayInputStream(bytes))
   }
 
-  public static Image loadFromStream(@NotNull InputStream inputStream) {
+  @JvmStatic
+  fun loadFromStream(inputStream: InputStream): Image? {
     // for backward compatibility assume the image is hidpi-aware (includes default SYS_SCALE)
-    ScaleContext scaleContext = ScaleContext.create();
-    try (inputStream) {
-      ImageLoader.Dimension2DDouble originalUserSize = new ImageLoader.Dimension2DDouble(0, 0);
-      float scale = (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE);
-      Image image = loadPng(inputStream, scale, originalUserSize);
-      if (StartupUiUtil.isJreHiDPI(scaleContext)) {
-        double userScale = scaleContext.getScale(DerivedScaleType.EFF_USR_SCALE);
-        image = new JBHiDPIScaledImage(image, originalUserSize.getWidth() * userScale, originalUserSize.getHeight() * userScale,
-                                       BufferedImage.TYPE_INT_ARGB);
+    val scaleContext = ScaleContext.create()
+    try {
+      inputStream.use {
+        val originalUserSize = Dimension2DDouble(0.0, 0.0)
+        val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
+        var image: Image? = loadPng(inputStream, scale, originalUserSize)
+        if (StartupUiUtil.isJreHiDPI(scaleContext)) {
+          val userScale = scaleContext.getScale(DerivedScaleType.EFF_USR_SCALE)
+          image = JBHiDPIScaledImage(image!!, originalUserSize.width * userScale, originalUserSize.height * userScale,
+                                     BufferedImage.TYPE_INT_ARGB)
+        }
+        return image
       }
-      return image;
     }
-    catch (IOException e) {
-      getLogger().error(e);
+    catch (e: IOException) {
+      LOG.error(e)
     }
-    return null;
+    return null
   }
 
-  @SuppressWarnings("unused")
-  public static @Nullable Image loadCustomIcon(@NotNull File file) throws IOException {
-    return loadCustomIcon(file.toURI().toURL());
+  @Suppress("unused")
+  @Throws(IOException::class)
+  @JvmStatic
+  fun loadCustomIcon(file: File): Image? {
+    return loadCustomIcon(file.toURI().toURL())
   }
 
-  public static @Nullable Image loadCustomIcon(@NotNull URL url) throws IOException {
-    String iconPath = url.toString();
-    ScaleContext scaleContext = ScaleContext.create();
-    // probably, need implement naming conventions: filename ends with @2x => HiDPI (scale=2)
-    float scale = (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE);
-    ImageDescriptor imageDescriptor = new ImageDescriptor(iconPath, scale, StringUtilRt.endsWithIgnoreCase(iconPath, ".svg"), iconPath.contains("_dark."), iconPath.contains("_stroke."));
-    Image icon = ImageUtil.ensureHiDPI(
-      loadByDescriptor(imageDescriptor, USE_CACHE, null, null, null, ImageCache.INSTANCE, null, null),
-      scaleContext);
-    if (icon == null) {
-      return null;
-    }
-
-    int w = icon.getWidth(null);
-    int h = icon.getHeight(null);
+  @Throws(IOException::class)
+  fun loadCustomIcon(url: URL): Image? {
+    val iconPath = url.toString()
+    val scaleContext = ScaleContext.create()
+    // probably, need it implements naming conventions: filename ends with @2x => HiDPI (scale=2)
+    val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
+    val imageDescriptor = ImageDescriptor(iconPath, scale, StringUtilRt.endsWithIgnoreCase(iconPath, ".svg"), iconPath.contains("_dark."),
+                                          iconPath.contains("_stroke."))
+    val icon = ImageUtil.ensureHiDPI(
+      loadByDescriptor(descriptor = imageDescriptor,
+                       flags = USE_CACHE,
+                       resourceClass = null,
+                       classLoader = null,
+                       ioMissCache = null,
+                       imageCache = ImageCache.INSTANCE,
+                       ioMissCacheKey = null,
+                       colorPatcher = null),
+      scaleContext) ?: return null
+    val w = icon.getWidth(null)
+    val h = icon.getHeight(null)
     if (w <= 0 || h <= 0) {
-      getLogger().error("negative image size: w=" + w + ", h=" + h + ", path=" + iconPath);
-      return null;
+      LOG.error("negative image size: w=$w, h=$h, path=$iconPath")
+      return null
+    }
+    if (w > EmptyIcon.ICON_18.iconWidth || h > EmptyIcon.ICON_18.iconHeight) {
+      val s = EmptyIcon.ICON_18.iconWidth / w.coerceAtLeast(h).toDouble()
+      return scaleImage(icon, s)
+    }
+    return icon
+  }
+
+  class Dimension2DDouble(var width: Double, var height: Double) {
+    fun setSize(size: Dimension2DDouble) {
+      width = size.width
+      height = size.height
     }
 
-    if (w > EmptyIcon.ICON_18.getIconWidth() || h > EmptyIcon.ICON_18.getIconHeight()) {
-      double s = EmptyIcon.ICON_18.getIconWidth()/(double)Math.max(w, h);
-      return scaleImage(icon, s);
+    fun setSize(width: Double, height: Double) {
+      this.width = width
+      this.height = height
     }
-
-    return icon;
   }
 }
 
-final class CacheKey {
-  private final String path;
-  private final double scale;
-  private final byte @NotNull [] digest;
-
-  CacheKey(@NotNull String path, double scale, byte @NotNull [] digest) {
-    this.path = path;
-    this.scale = scale;
-    this.digest = digest;
+@Internal
+class ImageCache private constructor() {
+  companion object {
+    val INSTANCE = ImageCache()
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
+  @JvmField
+  internal val ioMissCache: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
+  @JvmField
+  internal val imageCache: ConcurrentMap<CacheKey, Image> = CollectionFactory.createConcurrentSoftValueMap<CacheKey, Image>()
 
-    CacheKey key = (CacheKey)o;
-    return key.scale == scale && path.equals(key.path) && Arrays.equals(key.digest, digest);
+  // https://github.com/JetBrains/intellij-community/pull/1242
+  @JvmField
+  internal val largeImageCache = CollectionFactory.createConcurrentWeakValueMap<CacheKey, Image>()
+
+  fun clearCache() {
+    imageCache.clear()
+    largeImageCache.clear()
+    ioMissCache.clear()
+  }
+}
+
+internal val CACHED_IMAGE_MAX_SIZE = (SystemProperties.getFloatProperty("ide.cached.image.max.size", 1.5f) * 1024 * 1024).toLong()
+
+// @2x is used even for SVG icons by intention
+private fun addFileNameVariant(retina: Boolean,
+                               isDark: Boolean,
+                               isStroke: Boolean,
+                               isSvg: Boolean,
+                               name: String,
+                               ext: String,
+                               scale: Float,
+                               list: MutableList<ImageDescriptor>) {
+  val effectiveExt = if (isSvg) "svg" else ext
+  val effectiveScale: Float = if (isSvg) scale else if (retina) 2f else 1f
+  if (isStroke) {
+    list.add(ImageDescriptor(name + "_stroke." + effectiveExt, effectiveScale, isSvg, false, true))
+  }
+  if (retina && isDark) {
+    list.add(ImageDescriptor("$name@2x_dark.$effectiveExt", effectiveScale, isSvg, true, false))
+  }
+  list.add(
+    ImageDescriptor(name + (if (isDark) "_dark" else "") + (if (retina) "@2x" else "") + "." + effectiveExt, effectiveScale, isSvg, isDark, false))
+  if (retina) {
+    // a fallback to 1x icon
+    list.add(ImageDescriptor(name + (if (isDark) "_dark" else "") + "." + effectiveExt, if (isSvg) scale else 1f, isSvg, isDark, false))
+  }
+}
+
+private fun loadByDescriptor(descriptor: ImageDescriptor,
+                             @MagicConstant(flags = [USE_CACHE.toLong()]) flags: Int,
+                             resourceClass: Class<*>?,
+                             classLoader: ClassLoader?,
+                             ioMissCache: Set<String?>?,
+                             imageCache: ImageCache,
+                             ioMissCacheKey: String?,
+                             colorPatcher: SvgElementColorPatcherProvider?): Image? {
+  var cacheKey: CacheKey? = null
+  var tmpPatcher = false
+  var digest: ByteArray? = null
+  if (colorPatcher != null) {
+    val subPatcher = colorPatcher.forPath(descriptor.path)
+    if (subPatcher != null) {
+      digest = subPatcher.digest()
+      if (digest == null) {
+        tmpPatcher = true
+      }
+    }
+  }
+  if (digest == null) {
+    digest = DEFAULT_THEME
+  }
+  if ((flags and USE_CACHE) == USE_CACHE && !tmpPatcher) {
+    cacheKey = CacheKey(path = descriptor.path, scale = (if (descriptor.isSvg) descriptor.scale else 0f), digest = digest)
+    (imageCache.imageCache.get(cacheKey) ?: imageCache.largeImageCache.get(cacheKey))?.let {
+      return it
+    }
+  }
+  if (ioMissCache != null && ioMissCache.contains(ioMissCacheKey)) {
+    return null
   }
 
-  @Override
-  public int hashCode() {
-    long temp = Double.doubleToLongBits(scale);
-    int result = Objects.hash(path, (int)(temp ^ (temp >>> 32)));
-    result = 31 * result + Arrays.hashCode(digest);
-    return result;
+  val image = loadByDescriptorWithoutCache(descriptor = descriptor,
+                                           resourceClass = resourceClass,
+                                           classLoader = classLoader,
+                                           colorPatcher = colorPatcher) ?: return null
+  if (cacheKey != null) {
+    if (4L * image.getWidth(null) * image.getHeight(null) <= CACHED_IMAGE_MAX_SIZE) {
+      imageCache.imageCache.put(cacheKey, image)
+    }
+    else {
+      imageCache.largeImageCache.put(cacheKey, image)
+    }
+  }
+  return image
+}
+
+private fun loadByDescriptorWithoutCache(descriptor: ImageDescriptor,
+                                         resourceClass: Class<*>?,
+                                         classLoader: ClassLoader?,
+                                         colorPatcher: SvgElementColorPatcherProvider?): Image? {
+  var image: Image?
+  val start = StartUpMeasurer.getCurrentTimeIfEnabled()
+  if (resourceClass == null && (classLoader == null || URLUtil.containsScheme(descriptor.path)) && !descriptor.path.startsWith("file://")) {
+    val connection = URL(descriptor.path).openConnection()
+    (connection as? HttpURLConnection)?.addRequestProperty("User-Agent", "IntelliJ")
+    connection.getInputStream().use { stream ->
+      image = if (descriptor.isSvg) {
+        load(path = descriptor.path, stream = stream, mapper = descriptor.toSvgMapper(), colorPatcher = colorPatcher)
+      }
+      else {
+        loadPng(stream = stream, scale = descriptor.scale, originalUserSize = null)
+      }
+    }
+    if (start != -1L) {
+      IconLoadMeasurer.loadFromUrl.end(start)
+    }
+  }
+  else {
+    image = if (descriptor.isSvg) {
+      loadFromClassResource(resourceClass = resourceClass,
+                            classLoader = classLoader,
+                            path = descriptor.path,
+                            rasterizedCacheKey = 0,
+                            mapper = descriptor.toSvgMapper(),
+                            colorPatcher = colorPatcher)
+    }
+    else {
+      ImageLoader.loadPngFromClassResource(path = descriptor.path,
+                                           resourceClass = resourceClass,
+                                           classLoader = classLoader,
+                                           scale = descriptor.scale)
+    }
+    if (start != -1L) {
+      IconLoadMeasurer.loadFromResources.end(start)
+    }
+  }
+  return image
+}
+
+private fun loadPng(stream: InputStream, scale: Float, originalUserSize: ImageLoader.Dimension2DDouble?): BufferedImage {
+  val start = StartUpMeasurer.getCurrentTimeIfEnabled()
+  var image: BufferedImage
+  val reader = ImageIO.getImageReadersByFormatName("png").next()
+  try {
+    MemoryCacheImageInputStream(stream).use { imageInputStream ->
+      reader.setInput(imageInputStream, true, true)
+      image = reader.read(0, null)
+    }
+  }
+  finally {
+    reader.dispose()
+  }
+  originalUserSize?.setSize((image.width / scale).toDouble(), (image.height / scale).toDouble())
+  if (start != -1L) {
+    IconLoadMeasurer.pngDecoding.end(start)
+  }
+  return image
+}
+
+internal class CacheKey(private val path: String, private val scale: Float, private val digest: ByteArray) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) {
+      return true
+    }
+    if (other == null || javaClass != other.javaClass) {
+      return false
+    }
+    val key = other as CacheKey
+    return key.scale == scale && path == key.path && key.digest.contentEquals(digest)
+  }
+
+  override fun hashCode(): Int {
+    var result = path.hashCode()
+    result = 31 * result + java.lang.Float.floatToIntBits(scale)
+    result = 31 * result + digest.contentHashCode()
+    return result
   }
 }

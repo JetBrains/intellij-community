@@ -146,8 +146,8 @@ public final class IconLoader {
     if (prev != next) {
       iconToDisabledIcon.clear();
       // clear svg cache
-      ImageLoader.ImageCache.INSTANCE.clearCache();
-      // iconCache is not cleared because it contains original icon (instance that will delegate to)
+      ImageCache.Companion.getINSTANCE().clearCache();
+      // iconCache is not cleared because it contains an original icon (instance that will delegate to)
     }
   }
 
@@ -176,7 +176,7 @@ public final class IconLoader {
   public static void clearCacheInTests() {
     iconCache.clear();
     iconToDisabledIcon.clear();
-    ImageLoader.ImageCache.INSTANCE.clearCache();
+    ImageCache.Companion.getINSTANCE().clearCache();
     pathTransformGlobalModCount.incrementAndGet();
   }
 
@@ -201,7 +201,7 @@ public final class IconLoader {
       int separatorIndex = -1;
       do {
         dotIndex = path.lastIndexOf('.', dotIndex - 1);
-        // if starts with lower case char - it is package name
+        // if starts with a lower case, char - it is a package name
         if (dotIndex == -1 || Character.isLowerCase(path.charAt(dotIndex + 1))) {
           break;
         }
@@ -274,7 +274,7 @@ public final class IconLoader {
       if (classLoader == null) {
         return null;
       }
-      return ImageLoader.loadImage(path, parameters, null, classLoader, flags, !path.endsWith(".svg"));
+      return ImageLoader.INSTANCE.loadImage(path, parameters, null, classLoader, flags, !path.endsWith(".svg"));
     }
 
     @Override
@@ -285,7 +285,7 @@ public final class IconLoader {
 
     @Override
     public @Nullable ImageDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform) {
-      // this resolver is already produced as result of patch
+      // this resolver is already produced as a result of a patch
       return null;
     }
 
@@ -317,7 +317,7 @@ public final class IconLoader {
       return new FinalImageDataLoader(path.substring(1), classLoader == null ? transform.getClass().getClassLoader() : classLoader);
     }
 
-    // This use case for temp themes only. Here we want immediately replace existing icon to a local one
+    // This uses case for temp themes only. Here we want to immediately replace the existing icon with a local one
     if (path != null && path.startsWith("file:/")) {
       try {
         ImageDataByUrlLoader resolver = new ImageDataByUrlLoader(new URL(path), path, classLoader, false);
@@ -350,7 +350,7 @@ public final class IconLoader {
   }
 
   /**
-   * Might return null if icon was not found.
+   * Might return null if the icon was not found.
    * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String, ClassLoader)}
    */
   public static @Nullable Icon findIcon(@NotNull String path, @NotNull Class<?> aClass) {
@@ -606,7 +606,7 @@ public final class IconLoader {
   }
 
   /**
-   * Creates new icon with the color patching applied.
+   * Creates a new icon with the color patching applied.
    */
   public static @NotNull Icon colorPatchedIcon(@NotNull Icon icon, @NotNull SVGLoader.SvgElementColorPatcherProvider colorPatcher) {
     return replaceCachedImageIcons(icon, (imageIcon) -> {
@@ -615,10 +615,9 @@ public final class IconLoader {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public static Icon patchColorsInCacheImageIcon(@NotNull CachedImageIcon imageIcon,
-                                                 @NotNull SVGLoader.@NotNull SvgElementColorPatcherProvider colorPatcher,
-                                                 @Nullable("when not overridden") Boolean isDark) {
+  public static @NotNull Icon patchColorsInCacheImageIcon(@NotNull CachedImageIcon imageIcon,
+                                                          @NotNull SVGLoader.@NotNull SvgElementColorPatcherProvider colorPatcher,
+                                                          @Nullable("when not overridden") Boolean isDark) {
     if (isDark != null) {
       Icon variant = imageIcon.getDarkIcon(isDark);
       if (variant instanceof CachedImageIcon) {
@@ -629,7 +628,7 @@ public final class IconLoader {
   }
 
   /**
-   * Creates new icon with the low-level CachedImageIcon changing
+   * Creates a new icon with the low-level CachedImageIcon changing
    */
   @ApiStatus.Internal
   public static @NotNull Icon replaceCachedImageIcons(@NotNull Icon icon,
@@ -675,7 +674,7 @@ public final class IconLoader {
   }
 
   /**
-   * Creates new icon with the filter applied.
+   * Creates a new icon with the filter applied.
    */
   public static @NotNull Icon filterIcon(@NotNull Icon icon,
                                          @NotNull Supplier<? extends RGBImageFilter> filterSupplier,
@@ -708,11 +707,10 @@ public final class IconLoader {
     return scale;
   }
 
-  @NotNull
-  static JBImageIcon renderFilteredIcon(@NotNull Icon icon,
-                                        double scale,
-                                        @NotNull Supplier<? extends RGBImageFilter> filterSupplier,
-                                        @Nullable Component ancestor) {
+  static @NotNull JBImageIcon renderFilteredIcon(@NotNull Icon icon,
+                                                 double scale,
+                                                 @NotNull Supplier<? extends RGBImageFilter> filterSupplier,
+                                                 @Nullable Component ancestor) {
     @SuppressWarnings("UndesirableClassUsage")
     BufferedImage image =
       new BufferedImage((int)(scale * icon.getIconWidth()), (int)(scale * icon.getIconHeight()), BufferedImage.TYPE_INT_ARGB);
@@ -757,9 +755,8 @@ public final class IconLoader {
         return icon.getIconWidth();
       }
 
-      @NotNull
       @Override
-      public Icon replaceBy(@NotNull IconReplacer replacer) {
+      public @NotNull Icon replaceBy(@NotNull IconReplacer replacer) {
         return getTransparentIcon(replacer.replaceIcon(icon), alpha);
       }
 
@@ -845,8 +842,8 @@ public final class IconLoader {
 
     private volatile CachedImageIcon darkVariant;
 
-    private final @Nullable SVGLoader.SvgElementColorPatcherProvider myColorPatcher;
-    private final boolean myUseStroke;
+    private final @Nullable SVGLoader.SvgElementColorPatcherProvider colorPatcher;
+    private final boolean useStroke;
 
     private final Object lock = new Object();
     // ImageIcon (if small icon) or SoftReference<ImageIcon> (if large icon)
@@ -877,10 +874,10 @@ public final class IconLoader {
       originalResolver = resolver;
       isDarkOverridden = darkOverridden;
       this.localFilterSupplier = localFilterSupplier;
-      this.myColorPatcher = colorPatcher;
-      myUseStroke = useStroke;
+      this.colorPatcher = colorPatcher;
+      this.useStroke = useStroke;
 
-      // For instance, ShadowPainter updates the context from outside.
+      // for instance, ShadowPainter updates the context from and outside
       getScaleContext().addUpdateListener(() -> realIcon = null);
     }
 
@@ -1021,7 +1018,7 @@ public final class IconLoader {
         synchronized (lock) {
           if (isDark) result = darkVariant;
           if (result == null) {
-            result = new CachedImageIcon(originalPath, resolver, isDark, localFilterSupplier, myColorPatcher, myUseStroke);
+            result = new CachedImageIcon(originalPath, resolver, isDark, localFilterSupplier, colorPatcher, useStroke);
             if (isDark) darkVariant = result;
           }
         }
@@ -1043,7 +1040,7 @@ public final class IconLoader {
 
     @Override
     public final @NotNull CachedImageIcon copy() {
-      CachedImageIcon result = new CachedImageIcon(originalPath, resolver, isDarkOverridden, localFilterSupplier, myColorPatcher, myUseStroke);
+      CachedImageIcon result = new CachedImageIcon(originalPath, resolver, isDarkOverridden, localFilterSupplier, colorPatcher, useStroke);
       result.pathTransformModCount = pathTransformModCount;
       return result;
     }
@@ -1053,7 +1050,7 @@ public final class IconLoader {
       if (resolver == null) {
         return EMPTY_ICON;
       }
-      return new CachedImageIcon(originalPath, resolver, isDarkOverridden, filterSupplier, myColorPatcher, myUseStroke);
+      return new CachedImageIcon(originalPath, resolver, isDarkOverridden, filterSupplier, colorPatcher, useStroke);
     }
 
     private @NotNull Icon createWithPatcher(@NotNull SVGLoader.SvgElementColorPatcherProvider colorPatcher) {
@@ -1061,7 +1058,7 @@ public final class IconLoader {
       if (resolver == null) {
         return EMPTY_ICON;
       }
-      return new CachedImageIcon(originalPath, resolver, isDarkOverridden, localFilterSupplier, colorPatcher, myUseStroke);
+      return new CachedImageIcon(originalPath, resolver, isDarkOverridden, localFilterSupplier, colorPatcher, useStroke);
     }
 
     public @NotNull Icon createStrokeIcon() {
@@ -1069,7 +1066,7 @@ public final class IconLoader {
       if (resolver == null) {
         return EMPTY_ICON;
       }
-      return new CachedImageIcon(originalPath, resolver, isDarkOverridden, localFilterSupplier, myColorPatcher, true);
+      return new CachedImageIcon(originalPath, resolver, isDarkOverridden, localFilterSupplier, colorPatcher, true);
     }
 
     private boolean isDark() {
@@ -1093,8 +1090,7 @@ public final class IconLoader {
       return resolver == null ? null : resolver.getUrl();
     }
 
-    @Nullable
-    public Image loadImage(@NotNull ScaleContext scaleContext, boolean isDark) {
+    public @Nullable Image loadImage(@NotNull ScaleContext scaleContext, boolean isDark) {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
 
       ImageDataLoader resolver = this.resolver;
@@ -1102,8 +1098,8 @@ public final class IconLoader {
         return null;
       }
 
-      SVGLoader.SvgElementColorPatcherProvider colorPatcher = myColorPatcher != null ? myColorPatcher : SVGLoader.getColorPatcherProvider();
-      Image image = resolver.loadImage(new LoadIconParameters(getFilters(), scaleContext, isDark, colorPatcher, myUseStroke));
+      SVGLoader.SvgElementColorPatcherProvider colorPatcher = this.colorPatcher == null ? SVGLoader.getColorPatcherProvider() : this.colorPatcher;
+      Image image = resolver.loadImage(new LoadIconParameters(getFilters(), scaleContext, isDark, colorPatcher, useStroke));
       if (start != -1) {
         IconLoadMeasurer.findIconLoad.end(start);
       }
@@ -1186,7 +1182,7 @@ public final class IconLoader {
       }
 
       icon = createScaledIcon(image, host, scale);
-      if (icon != null && !ImageLoader.ImageCache.isIconTooLargeForCache(icon)) {
+      if (icon != null && !ImageLoader.INSTANCE.isIconTooLargeForCache(icon)) {
         cache.put(cacheKey, new SoftReference<>(icon));
       }
       return icon;
@@ -1245,8 +1241,9 @@ public final class IconLoader {
       return url;
     }
 
-    // Find either PNG or SVG icon. The icon will then be wrapped into CachedImageIcon
-    // which will load proper icon version depending on the context - UI theme, DPI.
+    // Find either PNG or SVG icon.
+    // The icon will then be wrapped into CachedImageIcon,
+    // which will load a proper icon version depending on the context - UI theme, DPI.
     // SVG version, when present, has more priority than PNG.
     // See for details: com.intellij.util.ImageLoader.ImageDescList#create
     if (path.endsWith(".png")) {
@@ -1263,9 +1260,8 @@ public final class IconLoader {
 
   public static @NotNull Icon createLazy(@NotNull Supplier<? extends @NotNull Icon> producer) {
     return new LazyIcon() {
-      @NotNull
       @Override
-      public Icon replaceBy(@NotNull IconReplacer replacer) {
+      public @NotNull Icon replaceBy(@NotNull IconReplacer replacer) {
         return createLazy(() -> replacer.replaceIcon(producer.get()));
       }
 

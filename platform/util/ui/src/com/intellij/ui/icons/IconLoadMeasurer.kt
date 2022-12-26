@@ -1,74 +1,69 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.icons;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.icons
 
-import com.intellij.diagnostic.StartUpMeasurer;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+import com.intellij.diagnostic.StartUpMeasurer
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import java.util.concurrent.atomic.LongAdder
 
 @ApiStatus.Internal
-public final class IconLoadMeasurer {
-  public static final Counter svgDecoding = new Counter("svg-decode");
-  private static final Counter svgLoading = new Counter("svg-load");
+object IconLoadMeasurer {
+  @JvmField
+  val svgDecoding = Counter("svg-decode")
+  private val svgLoading = Counter("svg-load")
+  @JvmField
+  val svgPreBuiltLoad = Counter("svg-prebuilt")
+  @JvmField
+  val svgCacheWrite = Counter("svg-cache-write")
+  @JvmField
+  val svgCacheRead = Counter("svg-cache-read")
+  @JvmField
+  val pngDecoding = Counter("png-decode")
 
-  public static final Counter svgPreBuiltLoad = new Counter("svg-prebuilt");
-  public static final Counter svgCacheWrite = new Counter("svg-cache-write");
-  public static final Counter svgCacheRead = new Counter("svg-cache-read");
+  private val pngLoading = Counter("png-load")
 
-  public static final Counter pngDecoding = new Counter("png-decode");
-  private static final Counter pngLoading = new Counter("png-load");
-
-  public static final Counter findIcon = new Counter("find-icon");
-  public static final Counter findIconLoad = new Counter("find-icon-load");
-
-  public static final Counter loadFromUrl = new Counter("load-from-url");
-  public static final Counter loadFromResources = new Counter("load-from-resource");
+  @JvmField
+  val findIcon = Counter("find-icon")
+  @JvmField
+  val findIconLoad = Counter("find-icon-load")
+  @JvmField
+  val loadFromUrl = Counter("load-from-url")
+  @JvmField
+  val loadFromResources = Counter("load-from-resource")
 
   /**
    * Get icon for action. Measured to understand impact.
    */
-  public static final Counter actionIcon = new Counter("action-icon");
+  @JvmField
+  val actionIcon: Counter = Counter("action-icon")
 
-  public static @NotNull List<Counter> getStats() {
-    return Arrays.asList(findIcon, findIconLoad,
-                         loadFromUrl, loadFromResources,
-                         svgLoading, svgDecoding, svgPreBuiltLoad, svgCacheRead, svgCacheWrite,
-                         pngLoading, pngDecoding,
-                         actionIcon);
+  val stats: List<Counter>
+    get() {
+      return listOf(findIcon, findIconLoad,
+                    loadFromUrl, loadFromResources,
+                    svgLoading, svgDecoding, svgPreBuiltLoad, svgCacheRead, svgCacheWrite,
+                    pngLoading, pngDecoding,
+                    actionIcon)
+    }
+
+  fun addLoading(isSvg: Boolean, start: Long) {
+    (if (isSvg) svgLoading else pngLoading).end(start)
   }
 
-  public static void addLoading(boolean isSvg, long start) {
-    (isSvg ? svgLoading : pngLoading).end(start);
-  }
+  class Counter internal constructor(@JvmField val name: @NonNls String) {
+    private val counter = LongAdder()
+    private val totalDuration = LongAdder()
 
-  public static final class Counter {
-    public final String name;
+    val count: Int
+      get() = counter.sum().toInt()
 
-    private final AtomicInteger counter = new AtomicInteger();
-    private final AtomicLong totalDuration = new AtomicLong();
+    fun getTotalDuration(): Long = totalDuration.sum()
 
-    private Counter(@NotNull @NonNls String name) {
-      this.name = name;
-    }
-
-    public int getCount() {
-      return counter.get();
-    }
-
-    public long getTotalDuration() {
-      return totalDuration.get();
-    }
-
-    public void end(long startTime) {
+    fun end(startTime: Long) {
       if (startTime > 0) {
-        long duration = StartUpMeasurer.getCurrentTime() - startTime;
-        counter.incrementAndGet();
-        totalDuration.getAndAdd(duration);
+        val duration = StartUpMeasurer.getCurrentTime() - startTime
+        counter.increment()
+        totalDuration.add(duration)
       }
     }
   }

@@ -28,18 +28,25 @@ private val LOG: Logger
   get() = logger<SvgCacheManager>()
 
 @ApiStatus.Internal
-data class SvgCacheMapper(@JvmField internal val scale: Float,
-                          @JvmField internal val isDark: Boolean,
-                          @JvmField internal val isStroke: Boolean) {
-  constructor(scale: Float) : this(scale, false, false)
-  val key = scale + (if (isDark) 10000 else 0) + (if (isStroke) 100000 else 0)
-  val name = "icons@" + scale + (if (isDark) "_d" else "") + (if (isStroke) "_s" else "")
+class SvgCacheMapper(
+  @JvmField internal val scale: Float,
+  @JvmField internal val isDark: Boolean,
+  @JvmField internal val isStroke: Boolean,
+  @JvmField internal val docSize: ImageLoader.Dimension2DDouble? = null,
+) {
+  constructor(scale: Float) : this(scale = scale, isDark = false, isStroke = false)
+
+  internal val key: Float
+    get() = scale + (if (isDark) 10_000 else 0) + (if (isStroke) 100_000 else 0)
+
+  internal val name: String
+    get() = "icons@$scale${if (isDark) "_d" else ""}${if (isStroke) "_s" else ""}"
 }
 
 @ApiStatus.Internal
 class SvgCacheManager(dbFile: Path) {
   private val store: MVStore
-  private val scaleToMap: MutableMap<Float, MVMap<ByteArray, ImageValue>> = ConcurrentHashMap(2, 0.75f, 2)
+  private val scaleToMap = ConcurrentHashMap<Float, MVMap<ByteArray, ImageValue>>(2, 0.75f, 2)
   private val mapBuilder: MVMap.Builder<ByteArray, ImageValue>
 
   companion object {
@@ -103,17 +110,14 @@ class SvgCacheManager(dbFile: Path) {
     store.triggerAutoSave()
   }
 
-  fun loadFromCache(themeDigest: ByteArray,
-                    imageBytes: ByteArray,
-                    mapper: SvgCacheMapper,
-                    docSize: ImageLoader.Dimension2DDouble?): Image? {
+  fun loadFromCache(themeDigest: ByteArray, imageBytes: ByteArray, mapper: SvgCacheMapper): Image? {
     val key = getCacheKey(themeDigest, imageBytes)
     val map = getMap(mapper, scaleToMap, store, mapBuilder)
     try {
       val start = StartUpMeasurer.getCurrentTimeIfEnabled()
       val data = map.get(key) ?: return null
       val image = readImage(data)
-      docSize?.setSize((data.w / mapper.scale).toDouble(), (data.h / mapper.scale).toDouble())
+      mapper.docSize?.setSize((data.w / mapper.scale).toDouble(), (data.h / mapper.scale).toDouble())
       IconLoadMeasurer.svgCacheRead.end(start)
       return image
     }
@@ -130,16 +134,15 @@ class SvgCacheManager(dbFile: Path) {
   }
 
   fun storeLoadedImage(themeDigest: ByteArray, imageBytes: ByteArray, mapper: SvgCacheMapper, image: BufferedImage) {
-    val key = getCacheKey(themeDigest, imageBytes)
-    getMap(mapper, scaleToMap, store, mapBuilder).put(key, writeImage(image))
+    val key = getCacheKey(themeDigest = themeDigest, imageBytes = imageBytes)
+    getMap(mapper = mapper, scaleToMap = scaleToMap, store = store, mapBuilder = mapBuilder).put(key, writeImage(image))
   }
 }
 
 private val ZERO_POINT = Point(0, 0)
 
 private fun getCacheKey(themeDigest: ByteArray, imageBytes: ByteArray): ByteArray {
-  val contentDigest = Xxh3.hashLongs(longArrayOf(
-    Xxh3.hash(imageBytes), Xxh3.hash(themeDigest)))
+  val contentDigest = Xxh3.hashLongs(longArrayOf(Xxh3.hash(imageBytes), Xxh3.hash(themeDigest)))
 
   val buffer = ByteBuffer.allocate(IMAGE_KEY_SIZE)
   // add content size to a key to reduce chance of hash collision (write as medium int)

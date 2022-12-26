@@ -83,7 +83,11 @@ class ImageDataByPathLoader private constructor(val path: String,
     if (parameters.isDark) {
       flags = flags or ImageLoader.USE_DARK
     }
-    return ImageLoader.loadImage(path, parameters, null, classLoader, flags, !path.endsWith(".svg"))
+    return ImageLoader.loadImage(path = path,
+                                 parameters = parameters,
+                                 classLoader = classLoader,
+                                 flags = flags,
+                                 isUpScaleNeeded = !path.endsWith(".svg"))
   }
 
   override val url: URL?

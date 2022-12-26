@@ -134,11 +134,11 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
 
 private fun writeIcons(writer: JsonGenerator) {
   writer.array("icons") {
-    for (stat in IconLoadMeasurer.getStats()) {
+    for (stat in IconLoadMeasurer.stats) {
       writer.obj {
         writer.writeStringField("name", stat.name)
         writer.writeNumberField("count", stat.count)
-        writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stat.totalDuration))
+        writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stat.getTotalDuration()))
       }
     }
   }
@@ -160,7 +160,8 @@ private fun writeServiceStats(writer: JsonGenerator) {
     var module = 0
   }
 
-  // components can be inferred from data, but to verify that items reported correctly (and because for items threshold is applied (not all are reported))
+  // components can be inferred from data,
+  // but to verify that item reported correctly (and because for an item threshold is applied (not all are reported))
   val component = StatItem("component")
   val service = StatItem("service")
 

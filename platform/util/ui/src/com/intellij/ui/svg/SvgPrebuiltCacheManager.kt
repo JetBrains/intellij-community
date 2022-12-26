@@ -3,7 +3,6 @@ package com.intellij.ui.svg
 
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ui.icons.IconLoadMeasurer
-import com.intellij.util.ImageLoader
 import org.jetbrains.ikv.Ikv
 import org.jetbrains.ikv.UniversalHash
 import java.awt.Image
@@ -16,11 +15,11 @@ internal class SvgPrebuiltCacheManager(dbDir: Path) {
   private val lightStores = Stores(dbDir, "")
   private val darkStores = Stores(dbDir, "-d")
 
-  fun loadFromCache(key: Int, scale: Float, isDark: Boolean, docSize: ImageLoader.Dimension2DDouble? = null): Image? {
+  fun loadFromCache(key: Int, mapper: SvgCacheMapper): Image? {
     val start = StartUpMeasurer.getCurrentTimeIfEnabled()
-    val list = if (isDark) darkStores else lightStores
+    val list = if (mapper.isDark) darkStores else lightStores
     // not supported scale
-    val store = when (scale) {
+    val store = when (mapper.scale) {
       1f -> list.s1.getOrCreate()
       1.25f -> list.s1_25.getOrCreate()
       1.5f -> list.s1_5.getOrCreate()
@@ -51,7 +50,7 @@ internal class SvgPrebuiltCacheManager(dbDir: Path) {
       actualHeight = readVar(data)
     }
 
-    docSize?.setSize((actualWidth / scale).toDouble(), (actualHeight / scale).toDouble())
+    mapper.docSize?.setSize((actualWidth / mapper.scale).toDouble(), (actualHeight / mapper.scale).toDouble())
 
     val image = SvgCacheManager.readImage(data, actualWidth, actualHeight)
     IconLoadMeasurer.svgPreBuiltLoad.end(start)

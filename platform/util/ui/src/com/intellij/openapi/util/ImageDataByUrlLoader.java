@@ -84,7 +84,7 @@ public final class ImageDataByUrlLoader implements ImageDataLoader {
       }
       path = url.toString();
     }
-    return ImageLoader.loadImage(path, parameters, ownerClass, classLoader, flags, !path.endsWith(".svg"));
+    return ImageLoader.INSTANCE.loadImage(path, parameters, ownerClass, classLoader, flags, !path.endsWith(".svg"));
   }
 
   /**

@@ -210,7 +210,7 @@ final class PainterHelper implements Painter.Listener {
       @NotNull Insets insets
     ) {
       var scaleContext = ScaleContext.create(g);
-      // round up because we'd rather have the image clipped by 1 pixel than leave one pixel without background
+      // round up because we'd rather have the image clipped by 1 pixel than leave one pixel without a background
       int componentWidth = PaintUtil.alignIntToInt(component.getWidth(), scaleContext, PaintUtil.RoundingMode.CEIL, null);
       int componentHeight = PaintUtil.alignIntToInt(component.getHeight(), scaleContext, PaintUtil.RoundingMode.CEIL, null);
       executePaint(g, componentWidth, componentHeight, image, fillType, anchor, alpha, insets);
@@ -575,7 +575,7 @@ final class PainterHelper implements Painter.Listener {
         boolean flipH = imageLoadSettings.flipH();
         boolean isSvg = imageLoadSettings.isSvg();
         BufferedImageFilter flipFilter = flipV || flipH ? flipFilter(flipV, flipH) : null;
-        return ImageLoader.convertImage(
+        return ImageLoader.INSTANCE.convertImage(
           image,
           flipFilter == null ? Collections.emptyList() : Collections.singletonList(flipFilter),
           ImageLoader.ALLOW_FLOAT_SCALING, ScaleContext.create(),

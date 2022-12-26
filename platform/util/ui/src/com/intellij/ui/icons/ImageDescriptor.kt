@@ -1,46 +1,30 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.icons;
+package com.intellij.ui.icons
 
-import com.intellij.ui.svg.SvgCacheMapper;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ui.svg.SvgCacheMapper
+import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-public final class ImageDescriptor {
-  public static final int HAS_2x = 1;
-  public static final int HAS_DARK = 2;
-  public static final int HAS_DARK_2x = 4;
-  public static final int HAS_STROKE = 8;
-
-  public final boolean isDark;
-  public final @NotNull String path;
-  public final float scale; // initial scale factor
-  public final boolean isSvg;
-  public final boolean isStroke;
-
-  public ImageDescriptor(@NotNull String path, float scale, boolean isSvg, boolean isDark, boolean isStroke) {
-    assert !path.isEmpty();
-
-    this.path = path;
-    this.scale = scale;
-    this.isSvg = isSvg;
-    this.isDark = isDark;
-    this.isStroke = isStroke;
+class ImageDescriptor(
+  @JvmField val path: String,
+  // initial scale factor
+  @JvmField val scale: Float,
+  @JvmField val isSvg: Boolean,
+  @JvmField val isDark: Boolean,
+  @JvmField val isStroke: Boolean,
+) {
+  companion object {
+    const val HAS_2x = 1
+    const val HAS_DARK = 2
+    const val HAS_DARK_2x = 4
+    const val HAS_STROKE = 8
   }
 
-  @ApiStatus.Internal
-  @Contract(" -> new")
-  public @NotNull SvgCacheMapper getSvgMapper() {
-    return new SvgCacheMapper(scale, isDark, isStroke);
+  init {
+    assert(!path.isEmpty())
   }
 
-  public @NotNull String getPath() {
-    return path;
-  }
+  internal fun toSvgMapper(): SvgCacheMapper = SvgCacheMapper(scale = scale, isDark = isDark, isStroke = isStroke)
 
-  @Override
-  public String toString() {
-    return path + ", scale: " + scale + ", isSvg: " + isSvg;
-  }
+  override fun toString(): String = "$path, scale: $scale, isSvg: $isSvg"
 }

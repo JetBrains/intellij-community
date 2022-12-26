@@ -103,7 +103,7 @@ public final class Splash extends Dialog {
   }
 
   static @Nullable Image doLoadImage(@NotNull String path, float sysScale) {
-    BufferedImage originalImage = ImageLoader.loadImageForStartUp(path, Splash.class.getClassLoader());
+    BufferedImage originalImage = ImageLoader.INSTANCE.loadImageForStartUp(path, Splash.class.getClassLoader());
     if (originalImage == null) {
       return null;
     }

@@ -1,314 +1,253 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui;
+package com.intellij.ui
 
-import com.intellij.AbstractBundle;
-import com.intellij.DynamicBundle;
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.IconLayerProvider;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.icons.IconLoadMeasurer;
-import com.intellij.ui.icons.ImageDataLoader;
-import com.intellij.ui.mac.foundation.MacUtil;
-import com.intellij.util.BitUtil;
-import com.intellij.util.IconUtil;
-import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.ResourceBundle;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import com.intellij.AbstractBundle
+import com.intellij.DynamicBundle
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.icons.AllIcons
+import com.intellij.ide.IconLayerProvider
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.*
+import com.intellij.openapi.util.IconLoader.CachedImageIcon
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.icons.IconLoadMeasurer
+import com.intellij.ui.icons.ImageDataLoader
+import com.intellij.ui.mac.foundation.MacUtil
+import com.intellij.util.BitUtil
+import com.intellij.util.IconUtil
+import com.intellij.util.ui.EmptyIcon
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
+import java.awt.Graphics2D
+import java.awt.Paint
+import java.lang.ref.WeakReference
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.function.Function
+import java.util.function.Supplier
+import javax.swing.Icon
 
 @ApiStatus.Internal
-public final class CoreIconManager implements IconManager, CoreAwareIconManager {
-  private static final List<IconLayer> iconLayers = new CopyOnWriteArrayList<>();
-  private static final int FLAGS_LOCKED = 0x800;
-
-  @Override
-  public @NotNull Icon getPlatformIcon(@NotNull PlatformIcons id) {
-    return switch (id) {
-      case Public -> AllIcons.Nodes.Public;
-      case Private -> AllIcons.Nodes.C_private;
-      case Protected -> AllIcons.Nodes.C_protected;
-      case Local -> AllIcons.Nodes.C_plocal;
-
-      case TodoDefault -> AllIcons.General.TodoDefault;
-      case TodoQuestion -> AllIcons.General.TodoQuestion;
-      case TodoImportant -> AllIcons.General.TodoImportant;
-
-      case NodePlaceholder -> AllIcons.Nodes.NodePlaceholder;
-      case WarningDialog -> AllIcons.General.WarningDialog;
-      case Copy -> AllIcons.Actions.Copy;
-      case Import -> AllIcons.ToolbarDecorator.Import;
-      case Export -> AllIcons.ToolbarDecorator.Export;
-      case Stub -> AllIcons.Actions.Stub;
-      case TestStateRun -> AllIcons.RunConfigurations.TestState.Run;
-
-      case Package -> AllIcons.Nodes.Package;
-      case Folder -> AllIcons.Nodes.Folder;
-      case IdeaModule -> AllIcons.Nodes.IdeaModule;
-
-      case TextFileType -> AllIcons.FileTypes.Text;
-      case ArchiveFileType -> AllIcons.FileTypes.Archive;
-      case UnknownFileType -> AllIcons.FileTypes.Unknown;
-      case CustomFileType -> AllIcons.FileTypes.Custom;
-      case JavaClassFileType -> AllIcons.FileTypes.JavaClass;
-      case JspFileType -> AllIcons.FileTypes.Jsp;
-      case JavaFileType -> AllIcons.FileTypes.Java;
-      case PropertiesFileType -> AllIcons.FileTypes.Properties;
-
-      case JavaModule -> AllIcons.Nodes.JavaModule;
-      case Variable -> AllIcons.Nodes.Variable;
-      case Field -> AllIcons.Nodes.Field;
-      case Method -> AllIcons.Nodes.Method;
-      case Class -> AllIcons.Nodes.Class;
-      case AbstractClass -> AllIcons.Nodes.AbstractClass;
-      case AbstractException -> AllIcons.Nodes.AbstractException;
-      case AnonymousClass -> AllIcons.Nodes.AnonymousClass;
-      case Enum -> AllIcons.Nodes.Enum;
-      case Aspect -> AllIcons.Nodes.Aspect;
-      case Annotation -> AllIcons.Nodes.Annotationtype;
-      case Function -> AllIcons.Nodes.Function;
-      case Interface -> AllIcons.Nodes.Interface;
-      case AbstractMethod -> AllIcons.Nodes.AbstractMethod;
-      case MethodReference -> AllIcons.Nodes.MethodReference;
-      case Property -> AllIcons.Nodes.Property;
-      case Parameter -> AllIcons.Nodes.Parameter;
-      case Lambda -> AllIcons.Nodes.Lambda;
-      case Record -> AllIcons.Nodes.Record;
-      case Tag -> AllIcons.Nodes.Tag;
-      case ExceptionClass -> AllIcons.Nodes.ExceptionClass;
-      case ClassInitializer -> AllIcons.Nodes.ClassInitializer;
-      case Plugin -> AllIcons.Nodes.Plugin;
-      case PpWeb -> AllIcons.Nodes.PpWeb;
-
-      case StaticMark -> AllIcons.Nodes.StaticMark;
-      case FinalMark -> AllIcons.Nodes.FinalMark;
-      case TestMark -> AllIcons.RunConfigurations.TestMark;
-      case JunitTestMark -> AllIcons.Nodes.JunitTestMark;
-      case RunnableMark -> AllIcons.Nodes.RunnableMark;
-    };
-  }
-
-  @Override
-  public @NotNull Icon getIcon(@NotNull String path, @NotNull Class<?> aClass) {
-    Icon icon = IconLoader.getIcon(path, aClass);
-    Supplier<String> tooltip = new IconDescriptionLoader(path);
-    if (icon instanceof ScalableIcon) {
-      return new ScalableIconWrapperWithToolTip((ScalableIcon)icon, tooltip);
-    }
-    else {
-      return new IconWrapperWithToolTip(icon, tooltip);
+class CoreIconManager : IconManager, CoreAwareIconManager {
+  override fun getPlatformIcon(id: PlatformIcons): Icon {
+    return when (id) {
+      PlatformIcons.Public -> AllIcons.Nodes.Public
+      PlatformIcons.Private -> AllIcons.Nodes.C_private
+      PlatformIcons.Protected -> AllIcons.Nodes.C_protected
+      PlatformIcons.Local -> AllIcons.Nodes.C_plocal
+      PlatformIcons.TodoDefault -> AllIcons.General.TodoDefault
+      PlatformIcons.TodoQuestion -> AllIcons.General.TodoQuestion
+      PlatformIcons.TodoImportant -> AllIcons.General.TodoImportant
+      PlatformIcons.NodePlaceholder -> AllIcons.Nodes.NodePlaceholder
+      PlatformIcons.WarningDialog -> AllIcons.General.WarningDialog
+      PlatformIcons.Copy -> AllIcons.Actions.Copy
+      PlatformIcons.Import -> AllIcons.ToolbarDecorator.Import
+      PlatformIcons.Export -> AllIcons.ToolbarDecorator.Export
+      PlatformIcons.Stub -> AllIcons.Actions.Stub
+      PlatformIcons.TestStateRun -> AllIcons.RunConfigurations.TestState.Run
+      PlatformIcons.Package -> AllIcons.Nodes.Package
+      PlatformIcons.Folder -> AllIcons.Nodes.Folder
+      PlatformIcons.IdeaModule -> AllIcons.Nodes.IdeaModule
+      PlatformIcons.TextFileType -> AllIcons.FileTypes.Text
+      PlatformIcons.ArchiveFileType -> AllIcons.FileTypes.Archive
+      PlatformIcons.UnknownFileType -> AllIcons.FileTypes.Unknown
+      PlatformIcons.CustomFileType -> AllIcons.FileTypes.Custom
+      PlatformIcons.JavaClassFileType -> AllIcons.FileTypes.JavaClass
+      PlatformIcons.JspFileType -> AllIcons.FileTypes.Jsp
+      PlatformIcons.JavaFileType -> AllIcons.FileTypes.Java
+      PlatformIcons.PropertiesFileType -> AllIcons.FileTypes.Properties
+      PlatformIcons.JavaModule -> AllIcons.Nodes.JavaModule
+      PlatformIcons.Variable -> AllIcons.Nodes.Variable
+      PlatformIcons.Field -> AllIcons.Nodes.Field
+      PlatformIcons.Method -> AllIcons.Nodes.Method
+      PlatformIcons.Class -> AllIcons.Nodes.Class
+      PlatformIcons.AbstractClass -> AllIcons.Nodes.AbstractClass
+      PlatformIcons.AbstractException -> AllIcons.Nodes.AbstractException
+      PlatformIcons.AnonymousClass -> AllIcons.Nodes.AnonymousClass
+      PlatformIcons.Enum -> AllIcons.Nodes.Enum
+      PlatformIcons.Aspect -> AllIcons.Nodes.Aspect
+      PlatformIcons.Annotation -> AllIcons.Nodes.Annotationtype
+      PlatformIcons.Function -> AllIcons.Nodes.Function
+      PlatformIcons.Interface -> AllIcons.Nodes.Interface
+      PlatformIcons.AbstractMethod -> AllIcons.Nodes.AbstractMethod
+      PlatformIcons.MethodReference -> AllIcons.Nodes.MethodReference
+      PlatformIcons.Property -> AllIcons.Nodes.Property
+      PlatformIcons.Parameter -> AllIcons.Nodes.Parameter
+      PlatformIcons.Lambda -> AllIcons.Nodes.Lambda
+      PlatformIcons.Record -> AllIcons.Nodes.Record
+      PlatformIcons.Tag -> AllIcons.Nodes.Tag
+      PlatformIcons.ExceptionClass -> AllIcons.Nodes.ExceptionClass
+      PlatformIcons.ClassInitializer -> AllIcons.Nodes.ClassInitializer
+      PlatformIcons.Plugin -> AllIcons.Nodes.Plugin
+      PlatformIcons.PpWeb -> AllIcons.Nodes.PpWeb
+      PlatformIcons.StaticMark -> AllIcons.Nodes.StaticMark
+      PlatformIcons.FinalMark -> AllIcons.Nodes.FinalMark
+      PlatformIcons.TestMark -> AllIcons.RunConfigurations.TestMark
+      PlatformIcons.JunitTestMark -> AllIcons.Nodes.JunitTestMark
+      PlatformIcons.RunnableMark -> AllIcons.Nodes.RunnableMark
     }
   }
 
-  @Override
-  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, int cacheKey, int flags) {
-    assert !path.isEmpty() && path.charAt(0) != '/';
-    return new IconWithToolTipImpl(path, createRasterizedImageDataLoader(path, classLoader, cacheKey, flags));
+  override fun getIcon(path: String, aClass: Class<*>): Icon {
+    val icon = IconLoader.getIcon(path, aClass)
+    val tooltip = IconDescriptionLoader(path)
+    return if (icon is ScalableIcon) ScalableIconWrapperWithToolTip(icon, tooltip) else IconWrapperWithToolTip(icon, tooltip)
   }
 
-  // reflective path is not supported
-  // result is not cached
-  @SuppressWarnings("DuplicatedCode")
-  private static @NotNull ImageDataLoader createRasterizedImageDataLoader(@NotNull String path,
-                                                                          @NotNull ClassLoader classLoader,
-                                                                          int cacheKey,
-                                                                          int imageFlags) {
-    long startTime = StartUpMeasurer.getCurrentTimeIfEnabled();
-    Pair<String, ClassLoader> patchedPath = IconLoader.patchPath(path, classLoader);
-    ImageDataLoader resolver;
-    WeakReference<ClassLoader> classLoaderWeakRef = new WeakReference<>(classLoader);
-    if (patchedPath == null) {
-      resolver = new RasterizedImageDataLoader(path, classLoaderWeakRef, path, classLoaderWeakRef, cacheKey, imageFlags);
-    }
-    else {
-      // not safe for now to decide should patchPath return path with leading slash or not
-      resolver = RasterizedImageDataLoaderKt.createPatched(path, classLoaderWeakRef, patchedPath, cacheKey, imageFlags);
-    }
-    if (startTime != -1) {
-      IconLoadMeasurer.findIcon.end(startTime);
-    }
-    return resolver;
+  override fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon {
+    assert(!path.isEmpty() && path[0] != '/')
+    return IconWithToolTipImpl(originalPath = path, resolver = createRasterizedImageDataLoader(path = path,
+                                                                                               classLoader = classLoader,
+                                                                                               cacheKey = cacheKey,
+                                                                                               imageFlags = flags))
   }
 
-  private static final class IconWithToolTipImpl extends IconLoader.CachedImageIcon implements IconWithToolTip {
-    private String result;
-    private boolean isTooltipCalculated;
+  override fun createEmptyIcon(icon: Icon): Icon = EmptyIcon.create(icon)
 
-    private IconWithToolTipImpl(@NotNull String originalPath, @NotNull ImageDataLoader resolver) {
-      super(originalPath, resolver, null, null);
-    }
-
-    @Override
-    public @NlsContexts.Tooltip @Nullable String getToolTip(boolean composite) {
-      if (!isTooltipCalculated) {
-        result = findIconDescription(Objects.requireNonNull(getOriginalPath()));
-        isTooltipCalculated = true;
-      }
-      //noinspection HardCodedStringLiteral
-      return result;
-    }
+  override fun <T> createDeferredIcon(base: Icon?, param: T, iconProducer: Function<in T, out Icon>): Icon {
+    return IconDeferrer.getInstance().defer(base, param, iconProducer)
   }
 
-  @Override
-  public @NotNull Icon createEmptyIcon(@NotNull Icon icon) {
-    return EmptyIcon.create(icon);
-  }
-
-  @Override
-  public @NotNull <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> iconProducer) {
-    return IconDeferrer.getInstance().defer(base, param, iconProducer);
-  }
-
-  @Override
-  public void registerIconLayer(int flagMask, @NotNull Icon icon) {
-    for (IconLayer iconLayer : iconLayers) {
+  override fun registerIconLayer(flagMask: Int, icon: Icon) {
+    for (iconLayer in iconLayers) {
       if (iconLayer.flagMask == flagMask) {
-        return;
+        return
       }
     }
-    iconLayers.add(new IconLayer(flagMask, icon));
+    iconLayers.add(IconLayer(flagMask, icon))
   }
 
-  @Override
-  public @NotNull Icon tooltipOnlyIfComposite(@NotNull Icon icon) {
-    return new IconWrapperWithToolTipComposite(icon);
+  override fun tooltipOnlyIfComposite(icon: Icon): Icon = IconWrapperWithToolTipComposite(icon)
+
+  override fun createRowIcon(iconCount: Int, alignment: com.intellij.ui.icons.RowIcon.Alignment): com.intellij.ui.icons.RowIcon {
+    return RowIcon(iconCount, alignment)
   }
 
-  @Override
-  public @NotNull com.intellij.ui.icons.RowIcon createRowIcon(int iconCount, com.intellij.ui.icons.RowIcon.Alignment alignment) {
-    return new RowIcon(iconCount, alignment);
-  }
+  override fun createRowIcon(vararg icons: Icon): com.intellij.ui.icons.RowIcon = RowIcon(*icons)
 
-  @Override
-  public @NotNull com.intellij.ui.icons.RowIcon createRowIcon(Icon @NotNull ... icons) {
-    return new RowIcon(icons);
-  }
-
-  @Override
-  public @NotNull RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
-    List<Icon> layersFromProviders = new ArrayList<>();
-    for (IconLayerProvider provider : IconLayerProvider.EP_NAME.getExtensionList()) {
-      Icon layerIcon = provider.getLayerIcon(instance, BitUtil.isSet(flags, FLAGS_LOCKED));
-      if (layerIcon != null) {
-        layersFromProviders.add(layerIcon);
+  override fun createLayeredIcon(instance: Iconable, icon: Icon, flags: Int): RowIcon {
+    val layersFromProviders = ArrayList<Icon>()
+    for (provider in IconLayerProvider.EP_NAME.extensionList) {
+      provider.getLayerIcon(instance, BitUtil.isSet(flags, FLAGS_LOCKED))?.let {
+        layersFromProviders.add(it)
       }
     }
+
+    var effectiveIcon: Icon? = icon
     if (flags != 0 || !layersFromProviders.isEmpty()) {
-      List<Icon> iconLayers = new ArrayList<>();
-      for (IconLayer l : CoreIconManager.iconLayers) {
+      val result = ArrayList<Icon>()
+      for (l in iconLayers) {
         if (BitUtil.isSet(flags, l.flagMask)) {
-          iconLayers.add(l.icon);
+          result.add(l.icon)
         }
       }
-      iconLayers.addAll(layersFromProviders);
-      LayeredIcon layeredIcon = new LayeredIcon(1 + iconLayers.size());
-      layeredIcon.setIcon(icon, 0);
-      for (int i = 0; i < iconLayers.size(); i++) {
-        Icon icon1 = iconLayers.get(i);
-        layeredIcon.setIcon(icon1, i + 1);
+      result.addAll(layersFromProviders)
+      val layeredIcon = LayeredIcon(1 + result.size)
+      layeredIcon.setIcon(effectiveIcon, 0)
+      for (i in result.indices) {
+        val icon1 = result[i]
+        layeredIcon.setIcon(icon1, i + 1)
       }
-      icon = layeredIcon;
+      effectiveIcon = layeredIcon
     }
 
-    RowIcon baseIcon = new RowIcon(2);
-    baseIcon.setIcon(icon, 0);
-    return baseIcon;
+    val baseIcon = RowIcon(2)
+    baseIcon.setIcon(effectiveIcon, 0)
+    return baseIcon
   }
 
-  @Override
-  public @NotNull Icon createOffsetIcon(@NotNull Icon icon) {
-    return new OffsetIcon(icon);
+  override fun createOffsetIcon(icon: Icon): Icon = OffsetIcon(icon)
+
+  override fun colorize(g: Graphics2D, source: Icon, color: Color): Icon = IconUtil.colorize(g, source, color)
+
+  override fun createLayered(vararg icons: Icon): Icon = LayeredIcon(*icons)
+
+  override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon = IconUtil.getIcon(file, flags, project)
+
+  override fun wakeUpNeo(reason: Any): Runnable = MacUtil.wakeUpNeo(reason)
+
+  override fun withIconBadge(icon: Icon, color: Paint): Icon = BadgeIcon(icon, color)
+}
+
+private class IconWithToolTipImpl(originalPath: String,
+                                  resolver: ImageDataLoader) : CachedImageIcon(originalPath, resolver, null, null), IconWithToolTip {
+  @NlsSafe
+  private var result: String? = null
+  private var isTooltipCalculated = false
+
+  override fun getToolTip(composite: Boolean): @NlsContexts.Tooltip String? {
+    if (!isTooltipCalculated) {
+      result = findIconDescription(originalPath!!)
+      isTooltipCalculated = true
+    }
+    return result
   }
+}
 
-  @Override
-  public @NotNull Icon colorize(Graphics2D g, @NotNull Icon source, @NotNull Color color) {
-    return IconUtil.colorize(g, source, color);
+private class IconLayer(@JvmField val flagMask: Int, @JvmField val icon: Icon) {
+  init {
+    BitUtil.assertOneBitMask(flagMask)
   }
+}
 
-  @Override
-  public @NotNull Icon createLayered(Icon @NotNull ... icons) {
-    return new LayeredIcon(icons);
+private class IconDescriptionLoader(private val path: String) : Supplier<String?> {
+  private var result: String? = null
+  private var isCalculated = false
+
+  override fun get(): String? {
+    if (!isCalculated) {
+      result = findIconDescription(path)
+      isCalculated = true
+    }
+    return result
   }
+}
 
-  @Override
-  public @NotNull Icon getIcon(@NotNull VirtualFile file, int flags, @Nullable Project project) {
-    return IconUtil.getIcon(file, flags, project);
+private val iconLayers = CopyOnWriteArrayList<IconLayer>()
+private const val FLAGS_LOCKED = 0x800
+
+// a reflective path is not supported, a result is not cached
+private fun createRasterizedImageDataLoader(path: String, classLoader: ClassLoader, cacheKey: Int, imageFlags: Int): ImageDataLoader {
+  val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
+  val patchedPath = IconLoader.patchPath(path, classLoader)
+  val classLoaderWeakRef = WeakReference(classLoader)
+  val resolver = if (patchedPath == null) {
+    RasterizedImageDataLoader(path = path,
+                              classLoaderRef = classLoaderWeakRef,
+                              originalPath = path,
+                              originalClassLoaderRef = classLoaderWeakRef,
+                              cacheKey = cacheKey,
+                              flags = imageFlags)
   }
-
-  @Override
-  public @NotNull Runnable wakeUpNeo(@NotNull Object reason) {
-    return MacUtil.wakeUpNeo(reason);
+  else {
+    // not safe for now to decide should patchPath return a path with leading slash or not
+    createPatched(originalPath = path,
+                  originalClassLoaderRef = classLoaderWeakRef,
+                  patched = patchedPath,
+                  cacheKey = cacheKey,
+                  imageFlags = imageFlags)
   }
+  if (startTime != -1L) {
+    IconLoadMeasurer.findIcon.end(startTime)
+  }
+  return resolver
+}
 
-  private static final class IconLayer {
-    private final int flagMask;
-    private final @NotNull Icon icon;
-
-    private IconLayer(int flagMask, @NotNull Icon icon) {
-      BitUtil.assertOneBitMask(flagMask);
-      this.flagMask = flagMask;
-      this.icon = icon;
+private fun findIconDescription(path: String): String? {
+  val pathWithoutExt = path.removeSuffix(".svg")
+  val key = "icon." + (if (pathWithoutExt.startsWith("/")) pathWithoutExt.substring(1) else pathWithoutExt).replace('/', '.') + ".tooltip"
+  var result: String? = null
+  IconDescriptionBundleEP.EP_NAME.processWithPluginDescriptor { ep, descriptor ->
+    val classLoader = descriptor.pluginClassLoader ?: CoreIconManager::class.java.classLoader
+    val bundle = DynamicBundle.getResourceBundle(classLoader!!, ep.resourceBundle)
+    val description = AbstractBundle.messageOrNull(bundle, key)
+    if (description != null) {
+      result = description
     }
   }
-
-  private static final class IconDescriptionLoader implements Supplier<String> {
-    private final String path;
-    private String result;
-    private boolean isCalculated;
-
-    private IconDescriptionLoader(String path) {
-      this.path = path;
-    }
-
-    @Override
-    public String get() {
-      if (!isCalculated) {
-        result = findIconDescription(path);
-        isCalculated = true;
-      }
-      return result;
-    }
+  if (result == null && Registry.`is`("ide.icon.tooltips.trace.missing", false)) {
+    logger<CoreIconManager>().info("Icon tooltip requested but not found for $path")
   }
-
-  private static @Nullable String findIconDescription(@NotNull String path) {
-    String pathWithoutExt = Strings.trimEnd(path, ".svg");
-    String key = "icon." + (pathWithoutExt.startsWith("/") ? pathWithoutExt.substring(1) : pathWithoutExt).replace('/', '.') + ".tooltip";
-    Ref<String> result = new Ref<>();
-    IconDescriptionBundleEP.EP_NAME.processWithPluginDescriptor((ep, descriptor) -> {
-      ClassLoader classLoader = descriptor == null ? null : descriptor.getPluginClassLoader();
-      if (classLoader == null) {
-        classLoader = CoreIconManager.class.getClassLoader();
-      }
-      ResourceBundle bundle = DynamicBundle.getResourceBundle(classLoader, ep.resourceBundle);
-      String description = AbstractBundle.messageOrNull(bundle, key);
-      if (description != null) {
-        result.set(description);
-      }
-    });
-    if (result.get() == null && Registry.is("ide.icon.tooltips.trace.missing", false)) {
-      Logger.getInstance(CoreIconManager.class).info("Icon tooltip requested but not found for " + path);
-    }
-    return result.get();
-  }
-
-  @Override
-  public @NotNull Icon withIconBadge(@NotNull Icon icon, @NotNull Paint color) {
-    return new BadgeIcon(icon, color);
-  }
+  return result
 }
