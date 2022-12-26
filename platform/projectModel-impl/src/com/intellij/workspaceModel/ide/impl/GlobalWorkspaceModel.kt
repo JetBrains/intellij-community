@@ -151,6 +151,7 @@ class GlobalWorkspaceModel: Disposable {
   }
 
   fun applyStateToBuilder(targetBuilder: MutableEntityStorage) {
+    LOG.info("Sync global entities with mutable entity storage")
     targetBuilder.replaceBySource(globalEntitiesFilter, entityStorage.current)
   }
 

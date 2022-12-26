@@ -27,6 +27,7 @@ import kotlinx.coroutines.*
  * [x] Fix entity source
  * [] Sync only entities linked to module
  * [] Rework delayed synchronize
+ * [x] Check sync with Maven and External system
  */
 
 class JpsGlobalModelSynchronizerImpl: JpsGlobalModelSynchronizer {

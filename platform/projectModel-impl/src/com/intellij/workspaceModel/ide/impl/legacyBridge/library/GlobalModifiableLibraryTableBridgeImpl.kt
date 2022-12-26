@@ -70,6 +70,7 @@ internal class GlobalModifiableLibraryTableBridgeImpl(private val libraryTable: 
 
     val libraryEntity = entityStorageOnDiff.current.findLibraryEntity(library as LibraryBridge)
     if (libraryEntity != null) {
+      (library as LibraryBridgeImpl).clearTargetBuilder()
       diff.removeEntity(libraryEntity)
       if (myAddedLibraries.remove(library)) {
         Disposer.dispose(library)
@@ -81,18 +82,25 @@ internal class GlobalModifiableLibraryTableBridgeImpl(private val libraryTable: 
     GlobalWorkspaceModel.getInstance().updateModel("Global library table commit") {
       it.addDiff(diff)
     }
+    libraries.forEach { library -> (library as LibraryBridgeImpl).clearTargetBuilder() }
   }
 
   override fun getLibraryIterator(): Iterator<Library> = libraries.iterator()
 
   override fun getLibraryByName(name: String): Library? {
     val libraryEntity = diff.resolve(LibraryId(name, LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL))) ?: return null
-    return diff.libraryMap.getDataByEntity(libraryEntity)
+    val libraryBridge = diff.libraryMap.getDataByEntity(libraryEntity)
+    (libraryBridge as LibraryBridgeImpl).setTargetBuilder(this.diff)
+    return libraryBridge
   }
 
   override fun getLibraries(): Array<Library> {
     return diff.entities(LibraryEntity::class.java).filter { it.tableId::class == LibraryTableId.GlobalLibraryTableId::class }
-      .mapNotNull { diff.libraryMap.getDataByEntity(it) }
+      .mapNotNull {
+        val libraryBridge = diff.libraryMap.getDataByEntity(it)
+        (libraryBridge as LibraryBridgeImpl).setTargetBuilder(this.diff)
+        libraryBridge
+      }
       .toList().toTypedArray()
   }
 
@@ -104,5 +112,6 @@ internal class GlobalModifiableLibraryTableBridgeImpl(private val libraryTable: 
 
     myAddedLibraries.forEach { Disposer.dispose(it) }
     myAddedLibraries.clear()
+    libraries.forEach { library -> (library as LibraryBridgeImpl).clearTargetBuilder() }
   }
 }

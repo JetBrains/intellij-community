@@ -181,6 +181,10 @@ class LibraryBridgeImpl(
     dispatcher.multicaster.rootSetChanged(this)
   }
 
+  fun setTargetBuilder(builder: MutableEntityStorage) {
+    targetBuilder = builder
+  }
+
   fun clearTargetBuilder() {
     targetBuilder = null
   }
