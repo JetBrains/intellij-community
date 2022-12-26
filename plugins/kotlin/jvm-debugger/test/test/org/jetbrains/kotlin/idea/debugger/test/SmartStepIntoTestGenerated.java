@@ -28,6 +28,11 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
         runTest("testData/smartStepInto/annotation.kt");
     }
 
+    @TestMetadata("anonymousExtensionFunction.kt")
+    public void testAnonymousExtensionFunction() throws Exception {
+        runTest("testData/smartStepInto/anonymousExtensionFunction.kt");
+    }
+
     @TestMetadata("arrayAccess.kt")
     public void testArrayAccess() throws Exception {
         runTest("testData/smartStepInto/arrayAccess.kt");
