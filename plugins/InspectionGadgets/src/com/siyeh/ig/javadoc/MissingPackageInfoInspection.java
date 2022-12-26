@@ -47,7 +47,8 @@ public class MissingPackageInfoInspection extends PackageGlobalInspection {
     final Project project = globalInspectionContext.getProject();
     final PsiPackage aPackage = ReadAction.compute(() -> JavaPsiFacade.getInstance(project).findPackage(packageName));
     boolean needsPackageInfo =
-      ReadAction.compute(() -> MoveAnnotationToPackageInfoFileFix.getPackageInfoFile(aPackage) == null && aPackage.getClasses().length > 0);
+      ReadAction.compute(() -> aPackage == null ||
+                               MoveAnnotationToPackageInfoFileFix.getPackageInfoFile(aPackage) == null && aPackage.getClasses().length > 0);
     if (!needsPackageInfo) {
       return null;
     }
