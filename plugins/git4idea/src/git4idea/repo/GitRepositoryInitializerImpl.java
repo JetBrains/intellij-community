@@ -37,7 +37,7 @@ final class GitRepositoryInitializerImpl implements GitRepositoryInitializer {
     GitInit.configureVcsMappings(project, root);
     GitUtil.generateGitignoreFileIfNeeded(project, root);
     // make sure .idea/.gitignore is created before adding files
-    project.getService(GitIgnoreInStoreDirGenerator.class).generateGitignoreInStoreDirIfNeeded();
+    project.getService(GitIgnoreInStoreDirGenerator.class).generateGitignoreInStoreDirIfNeededSync();
 
     if (addFilesToVcs) {
       StoreUtil.saveSettings(project, true); // ensure vcs.xml is up-to-date

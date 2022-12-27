@@ -25,6 +25,7 @@ import com.intellij.util.io.createFile
 import git4idea.GitUtil
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertFalse
 import java.io.File
@@ -104,7 +105,9 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
   fun `test generation default gitignore content in config dir`() {
     val gitIgnore = file("$DIRECTORY_STORE_FOLDER/$GITIGNORE").assertNotExists().file
 
-    GitIgnoreInStoreDirGenerator(project).run()
+    runBlocking {
+      GitIgnoreInStoreDirGenerator(project).run()
+    }
 
     assertGitignoreValid(gitIgnore,
                          """
