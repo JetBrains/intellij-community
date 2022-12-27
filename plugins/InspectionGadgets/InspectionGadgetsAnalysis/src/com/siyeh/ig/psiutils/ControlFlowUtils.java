@@ -397,6 +397,12 @@ public final class ControlFlowUtils {
     return systemExitFinder.exitFound();
   }
 
+  public static boolean containsYield(@NotNull PsiElement element){
+    final YieldFinder returnFinder = new YieldFinder();
+    element.accept(returnFinder);
+    return returnFinder.yieldFound();
+  }
+
   public static boolean elementContainsCallToMethod(PsiElement context, @NonNls String containingClassName, PsiType returnType,
     @NonNls String methodName, PsiType... parameterTypes) {
     final MethodCallFinder methodCallFinder = new MethodCallFinder(containingClassName, returnType, methodName, parameterTypes);
@@ -1216,6 +1222,52 @@ public final class ControlFlowUtils {
       stopWalking();
     }
   }
+
+  private static class YieldFinder extends JavaRecursiveElementWalkingVisitor {
+    private boolean myFound;
+
+    private boolean yieldFound() {
+      return myFound;
+    }
+
+    @Override
+    public void visitExpression(@NotNull PsiExpression expression) {
+      // don't drill down
+    }
+
+    @Override
+    public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
+      myFound = true;
+      stopWalking();
+    }
+
+    @Override
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
+      if (myFound) {
+        return;
+      }
+      final PsiExpression condition = statement.getCondition();
+      final Object value = ExpressionUtils.computeConstantExpression(condition);
+      if (Boolean.FALSE != value) {
+        final PsiStatement thenBranch = statement.getThenBranch();
+        if (thenBranch != null) {
+          thenBranch.accept(this);
+        }
+      }
+      if (Boolean.TRUE != value) {
+        final PsiStatement elseBranch = statement.getElseBranch();
+        if (elseBranch != null) {
+          elseBranch.accept(this);
+        }
+      }
+    }
+
+    @Override
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
+      // don't drill down
+    }
+  }
+
 
   private static class BreakFinder extends JavaRecursiveElementWalkingVisitor {
 

@@ -66,4 +66,31 @@ public class InfiniteLoopStatement {
             }
         }
     }
+
+    void testYield(int i){
+      String text = switch (i){
+        case 1 -> "test";
+        default -> {
+          while (true){
+            if(i<1){
+              yield "test2";
+            }
+            i--;
+          }
+        }
+      };
+      String text2 = switch (i){
+        case 1 -> "test";
+        default -> {
+          <warning descr="'while' statement cannot complete without throwing an exception">while</warning> (true){
+            String inner = switch (i){
+              case 2 -> "test2";
+              default -> {
+                yield "test3";
+              }
+            };
+          }
+        }
+      };
+    }
 }

@@ -95,6 +95,9 @@ public class InfiniteLoopStatementInspection extends BaseInspection {
       if (ControlFlowUtils.containsSystemExit(statement)) {
         return;
       }
+      if (PsiTreeUtil.getParentOfType(statement, PsiSwitchExpression.class) != null && ControlFlowUtils.containsYield(statement)) {
+        return;
+      }
       if (myIgnoreInThreadTopLevel) {
         PsiElement parent = PsiTreeUtil.findFirstParent(statement, element -> element instanceof PsiMethod ||
                                                                               element instanceof PsiLambdaExpression ||
