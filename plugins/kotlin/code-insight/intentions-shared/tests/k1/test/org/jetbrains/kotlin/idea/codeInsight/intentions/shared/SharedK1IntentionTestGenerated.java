@@ -446,6 +446,254 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/operatorToFunction")
+    public static class OperatorToFunction extends AbstractSharedK1IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("arrayAccessMultipleIndex.kt")
+        public void testArrayAccessMultipleIndex() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/arrayAccessMultipleIndex.kt");
+        }
+
+        @TestMetadata("arrayAccessOneIndex.kt")
+        public void testArrayAccessOneIndex() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/arrayAccessOneIndex.kt");
+        }
+
+        @TestMetadata("arrayAssignmentMultipleIndex.kt")
+        public void testArrayAssignmentMultipleIndex() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/arrayAssignmentMultipleIndex.kt");
+        }
+
+        @TestMetadata("assignment.kt")
+        public void testAssignment() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/assignment.kt");
+        }
+
+        @TestMetadata("binarayNotEqNullable.kt")
+        public void testBinarayNotEqNullable() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binarayNotEqNullable.kt");
+        }
+
+        @TestMetadata("binaryEqEqNonNullable.kt")
+        public void testBinaryEqEqNonNullable() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryEqEqNonNullable.kt");
+        }
+
+        @TestMetadata("binaryEqEqNotNullInLeftSide.kt")
+        public void testBinaryEqEqNotNullInLeftSide() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryEqEqNotNullInLeftSide.kt");
+        }
+
+        @TestMetadata("binaryEqEqNotNullInRightSide.kt")
+        public void testBinaryEqEqNotNullInRightSide() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryEqEqNotNullInRightSide.kt");
+        }
+
+        @TestMetadata("binaryEqEqNullInLeftSide.kt")
+        public void testBinaryEqEqNullInLeftSide() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryEqEqNullInLeftSide.kt");
+        }
+
+        @TestMetadata("binaryEqEqNullInRightSide.kt")
+        public void testBinaryEqEqNullInRightSide() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryEqEqNullInRightSide.kt");
+        }
+
+        @TestMetadata("binaryEqEqNullable.kt")
+        public void testBinaryEqEqNullable() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryEqEqNullable.kt");
+        }
+
+        @TestMetadata("binaryNotEqNonNullable.kt")
+        public void testBinaryNotEqNonNullable() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryNotEqNonNullable.kt");
+        }
+
+        @TestMetadata("binaryNotIn.kt")
+        public void testBinaryNotIn() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryNotIn.kt");
+        }
+
+        @TestMetadata("binaryPlus.kt")
+        public void testBinaryPlus() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryPlus.kt");
+        }
+
+        @TestMetadata("binaryPlusEquals.kt")
+        public void testBinaryPlusEquals() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryPlusEquals.kt");
+        }
+
+        @TestMetadata("binaryPlusEqualsNotResolved.kt")
+        public void testBinaryPlusEqualsNotResolved() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryPlusEqualsNotResolved.kt");
+        }
+
+        @TestMetadata("binaryRangeTo.kt")
+        public void testBinaryRangeTo() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryRangeTo.kt");
+        }
+
+        @TestMetadata("binaryRangeUntil.kt")
+        public void testBinaryRangeUntil() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryRangeUntil.kt");
+        }
+
+        @TestMetadata("binaryTimesEquals.kt")
+        public void testBinaryTimesEquals() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryTimesEquals.kt");
+        }
+
+        @TestMetadata("binaryTimesEqualsNotResolved.kt")
+        public void testBinaryTimesEqualsNotResolved() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/binaryTimesEqualsNotResolved.kt");
+        }
+
+        @TestMetadata("compoundAssignment.kt")
+        public void testCompoundAssignment() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/compoundAssignment.kt");
+        }
+
+        @TestMetadata("compoundAssignment2.kt")
+        public void testCompoundAssignment2() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/compoundAssignment2.kt");
+        }
+
+        @TestMetadata("emptyInvoke.kt")
+        public void testEmptyInvoke() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/emptyInvoke.kt");
+        }
+
+        @TestMetadata("functionCallMultipleArgument.kt")
+        public void testFunctionCallMultipleArgument() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/functionCallMultipleArgument.kt");
+        }
+
+        @TestMetadata("functionCallWithMultipleArgumentsAndSingleLambda.kt")
+        public void testFunctionCallWithMultipleArgumentsAndSingleLambda() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/functionCallWithMultipleArgumentsAndSingleLambda.kt");
+        }
+
+        @TestMetadata("functionCallWithSingleLambda.kt")
+        public void testFunctionCallWithSingleLambda() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/functionCallWithSingleLambda.kt");
+        }
+
+        @TestMetadata("inRightSideOfAssignment.kt")
+        public void testInRightSideOfAssignment() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/inRightSideOfAssignment.kt");
+        }
+
+        @TestMetadata("incompleteBinaryExpression.kt")
+        public void testIncompleteBinaryExpression() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/incompleteBinaryExpression.kt");
+        }
+
+        @TestMetadata("incompleteUnaryExpression.kt")
+        public void testIncompleteUnaryExpression() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/incompleteUnaryExpression.kt");
+        }
+
+        @TestMetadata("invokeOnAnonymousFunction.kt")
+        public void testInvokeOnAnonymousFunction() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/invokeOnAnonymousFunction.kt");
+        }
+
+        @TestMetadata("invokeOnAnonymousFunctionWithReceiver.kt")
+        public void testInvokeOnAnonymousFunctionWithReceiver() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/invokeOnAnonymousFunctionWithReceiver.kt");
+        }
+
+        @TestMetadata("invokeOnAnonymousFunctionWithReceiver2.kt")
+        public void testInvokeOnAnonymousFunctionWithReceiver2() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/invokeOnAnonymousFunctionWithReceiver2.kt");
+        }
+
+        @TestMetadata("keepComments.kt")
+        public void testKeepComments() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/keepComments.kt");
+        }
+
+        @TestMetadata("notApplicableAssignment.kt")
+        public void testNotApplicableAssignment() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/notApplicableAssignment.kt");
+        }
+
+        @TestMetadata("notApplicableCallWithInvokeMethod.kt")
+        public void testNotApplicableCallWithInvokeMethod() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/notApplicableCallWithInvokeMethod.kt");
+        }
+
+        @TestMetadata("notApplicableFunctionCallWithCallableReference.kt")
+        public void testNotApplicableFunctionCallWithCallableReference() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/notApplicableFunctionCallWithCallableReference.kt");
+        }
+
+        @TestMetadata("notApplicableNewClassObject.kt")
+        public void testNotApplicableNewClassObject() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/notApplicableNewClassObject.kt");
+        }
+
+        @TestMetadata("notApplicablePostfixPlusPlusInIfExpression.kt")
+        public void testNotApplicablePostfixPlusPlusInIfExpression() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/notApplicablePostfixPlusPlusInIfExpression.kt");
+        }
+
+        @TestMetadata("notApplicablePostfixPlusPlusInNestedIfExpression.kt")
+        public void testNotApplicablePostfixPlusPlusInNestedIfExpression() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/notApplicablePostfixPlusPlusInNestedIfExpression.kt");
+        }
+
+        @TestMetadata("notApplicablePostfixPlusPlusInProperty.kt")
+        public void testNotApplicablePostfixPlusPlusInProperty() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/notApplicablePostfixPlusPlusInProperty.kt");
+        }
+
+        @TestMetadata("notApplicablePostfixPlusPlusInWhenExpression.kt")
+        public void testNotApplicablePostfixPlusPlusInWhenExpression() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/notApplicablePostfixPlusPlusInWhenExpression.kt");
+        }
+
+        @TestMetadata("pluPlus.kt")
+        public void testPluPlus() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/pluPlus.kt");
+        }
+
+        @TestMetadata("postfixMinusMinus.kt")
+        public void testPostfixMinusMinus() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/postfixMinusMinus.kt");
+        }
+
+        @TestMetadata("postfixPlusPlusInIfExpression.kt")
+        public void testPostfixPlusPlusInIfExpression() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/postfixPlusPlusInIfExpression.kt");
+        }
+
+        @TestMetadata("postfixPlusPlusInLoop.kt")
+        public void testPostfixPlusPlusInLoop() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/postfixPlusPlusInLoop.kt");
+        }
+
+        @TestMetadata("postfixPlusPlusInWhenExpression.kt")
+        public void testPostfixPlusPlusInWhenExpression() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/postfixPlusPlusInWhenExpression.kt");
+        }
+
+        @TestMetadata("prefixPlus.kt")
+        public void testPrefixPlus() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/prefixPlus.kt");
+        }
+
+        @TestMetadata("prefixPlusPlus.kt")
+        public void testPrefixPlusPlus() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/prefixPlusPlus.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/putCallsOnSeparateLines")
     public static class PutCallsOnSeparateLines extends AbstractSharedK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {

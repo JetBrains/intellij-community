@@ -1,38 +1,40 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.intentions
+package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
-import org.jetbrains.kotlin.psi2ir.deparenthesize
-import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
     KtExpression::class.java,
-    KotlinIdeaAnalysisBundle.lazyMessage("replace.overloaded.operator.with.function.call"),
+    KotlinBundle.lazyMessage("replace.overloaded.operator.with.function.call"),
 ) {
     companion object {
         fun replaceExplicitInvokeCallWithImplicit(qualifiedExpression: KtDotQualifiedExpression): KtExpression? {
@@ -82,10 +84,13 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
             else parentIsUsedAsExpression(parent)
         }
 
-        private fun parentIsUsedAsExpression(element: PsiElement): Boolean = when (val parent = element.parent) {
-            is KtLoopExpression, is KtFile -> false
-            is KtIfExpression, is KtWhenExpression -> (parent as KtExpression).isUsedAsExpression(parent.analyze(BodyResolveMode.PARTIAL_WITH_CFA))
-            else -> true
+        @OptIn(KtAllowAnalysisOnEdt::class)
+        private fun parentIsUsedAsExpression(element: PsiElement): Boolean = allowAnalysisOnEdt {
+            when (val parent = element.parent) {
+                is KtLoopExpression, is KtFile -> false
+                is KtIfExpression, is KtWhenExpression -> analyze(parent as KtExpression) { parent.isUsedAsExpression() }
+                else -> true
+            }
         }
 
         private fun isApplicableBinary(element: KtBinaryExpression, caretOffset: Int): Boolean {
@@ -113,18 +118,21 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
             return lbracket.textRange.containsOffset(caretOffset) || rbracket.textRange.containsOffset(caretOffset)
         }
 
+        @OptIn(KtAllowAnalysisOnEdt::class)
+        private fun isImplicitInvokeFunctionCall(element: KtCallExpression): Boolean = allowAnalysisOnEdt {
+            analyze(element) {
+                val functionCall = element.resolveCall().singleFunctionCallOrNull()
+                functionCall is KtSimpleFunctionCall && functionCall.isImplicitInvoke
+            }
+        }
+
         private fun isApplicableCall(element: KtCallExpression, caretOffset: Int): Boolean {
             val lbrace = (element.valueArgumentList?.leftParenthesis
                 ?: element.lambdaArguments.firstOrNull()?.getLambdaExpression()?.leftCurlyBrace
                 ?: return false) as PsiElement
             if (!lbrace.textRange.containsOffset(caretOffset)) return false
 
-            val resolvedCall = element.resolveToCall(BodyResolveMode.FULL)
-            val descriptor = resolvedCall?.resultingDescriptor
-            if (descriptor is FunctionDescriptor && descriptor.getName() == OperatorNameConventions.INVOKE) {
-                if (element.parent is KtDotQualifiedExpression &&
-                    element.calleeExpression?.text == OperatorNameConventions.INVOKE.asString()
-                ) return false
+            if (isImplicitInvokeFunctionCall(element)) {
                 return element.valueArgumentList != null || element.lambdaArguments.isNotEmpty()
             }
             return false
@@ -171,10 +179,8 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
                 return element
             }
 
-            val context = element.analyze(BodyResolveMode.PARTIAL)
-            val functionCandidate = element.getResolvedCall(context)
-            val functionName = functionCandidate?.candidateDescriptor?.name.toString()
-            val elemType = context.getType(left)
+            val functionName = getCalledFunctionName(element)?.asString()
+            val receiverIsNullable = isOfNullableType(left)
 
             @NonNls
             val pattern = when (op) {
@@ -198,8 +204,8 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
                     else if (remSupported) "$0 = $0.rem($1)"
                     else "$0 = $0.mod($1)"
                 }
-                KtTokens.EQEQ -> if (elemType?.isMarkedNullable != false) "$0?.equals($1) ?: ($1 == null)" else "$0.equals($1)"
-                KtTokens.EXCLEQ -> if (elemType?.isMarkedNullable != false) "!($0?.equals($1) ?: ($1 == null))" else "!$0.equals($1)"
+                KtTokens.EQEQ -> if (receiverIsNullable != false) "$0?.equals($1) ?: ($1 == null)" else "$0.equals($1)"
+                KtTokens.EXCLEQ -> if (receiverIsNullable != false) "!($0?.equals($1) ?: ($1 == null))" else "!$0.equals($1)"
                 KtTokens.GT -> "$0.compareTo($1) > 0"
                 KtTokens.LT -> "$0.compareTo($1) < 0"
                 KtTokens.GTEQ -> "$0.compareTo($1) >= 0"
@@ -209,6 +215,23 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
 
             val transformed = KtPsiFactory(element.project).createExpressionByPattern(pattern, left, right)
             return element.replace(transformed) as KtExpression
+        }
+
+        @OptIn(KtAllowAnalysisOnEdt::class)
+        private fun isOfNullableType(expression: KtExpression): Boolean? = allowAnalysisOnEdt {
+            analyze(expression) {
+                expression.getKtType()?.isMarkedNullable
+            }
+        }
+
+        @OptIn(KtAllowAnalysisOnEdt::class)
+        private fun getCalledFunctionName(element: KtBinaryExpression): Name? = allowAnalysisOnEdt {
+            analyze(element) {
+                val resolvedCall = element.resolveCall()?.singleFunctionCallOrNull()
+                val targetSymbol = resolvedCall?.partiallyAppliedSymbol?.symbol
+
+                (targetSymbol as? KtNamedSymbol)?.name
+            }
         }
 
         private fun convertArrayAccess(element: KtArrayAccessExpression): KtExpression {
@@ -247,7 +270,7 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
         private fun convertCall(element: KtCallExpression): KtExpression {
             val callee = element.calleeExpression!!
             val receiver = element.parent?.safeAs<KtQualifiedExpression>()?.receiverExpression
-            val isAnonymousFunctionWithReceiver = receiver != null && callee.deparenthesize() is KtNamedFunction
+            val isAnonymousFunctionWithReceiver = receiver != null && callee.safeDeparenthesize() is KtNamedFunction
             val argumentsList = element.valueArgumentList
             val argumentString = argumentsList?.text?.removeSurrounding("(", ")") ?: ""
             val argumentsWithReceiverIfNeeded = if (isAnonymousFunctionWithReceiver) {
