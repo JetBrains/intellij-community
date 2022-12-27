@@ -267,7 +267,7 @@ public final class IncProjectBuilder {
       return;
     }
     final BuildTargetsState targetsState = myProjectDescriptor.getTargetsState();
-    final long timeThreshold = targetsState.getLastSuccessfulRebuildDuration();
+    final long timeThreshold = targetsState.getLastSuccessfulRebuildDuration() * 95 / 100; // 95% of last registered clean rebuild time
     if (timeThreshold <= 0) {
       return; // no stats available
     }
