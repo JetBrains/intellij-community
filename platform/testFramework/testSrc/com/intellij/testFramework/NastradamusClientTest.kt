@@ -34,6 +34,7 @@ class NastradamusClientTest {
 
   @Before
   fun beforeEach() {
+    Assume.assumeFalse("Until IJI-1000 is fixed", true)
     tcMockServer.start()
     tcClient = getTeamCityClientWithMock()
     nastradamus = getNastradamusClientWithMock(teamCityClient = tcClient)
