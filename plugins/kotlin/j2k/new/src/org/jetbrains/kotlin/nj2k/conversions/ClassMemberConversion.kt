@@ -32,13 +32,17 @@ class ClassMemberConversion(context: NewJ2kConverterContext) : RecursiveApplicab
             annotationList.annotations +=
                 throwsAnnotation(throwsList.map { it.type.updateNullabilityRecursively(NotNull) }, symbolProvider)
         }
+
         if (isMainFunctionDeclaration()) {
-            annotationList.annotations += jvmAnnotation("JvmStatic", symbolProvider)
+            if (!isTopLevel()) {
+                annotationList.annotations += jvmAnnotation("JvmStatic", symbolProvider)
+            }
             parameters.single().let {
                 it.type.type = JKJavaArrayType(typeFactory.types.string, NotNull)
                 it.isVarArgs = false
             }
         }
+
         psi<PsiMethod>()?.let { psiMethod ->
             context.externalCodeProcessor.addMember(JKPhysicalMethodData(psiMethod))
         }

@@ -178,6 +178,11 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
         runTest("testData/copyPaste/MethodWithOnlyOneAnnotation.java");
     }
 
+    @TestMetadata("NoJvmStaticForTopLevelFunction.java")
+    public void testNoJvmStaticForTopLevelFunction() throws Exception {
+        runTest("testData/copyPaste/NoJvmStaticForTopLevelFunction.java");
+    }
+
     @TestMetadata("OnlyClosingBrace.java")
     public void testOnlyClosingBrace() throws Exception {
         runTest("testData/copyPaste/OnlyClosingBrace.java");
