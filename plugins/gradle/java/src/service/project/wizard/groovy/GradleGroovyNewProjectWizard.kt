@@ -43,23 +43,34 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       gradleDsl = GradleDsl.GROOVY
     }
 
-    override fun setupSettingsUI(builder: Panel) {
-      super.setupSettingsUI(builder)
-      with(builder) {
-        row(GroovyBundle.message("label.groovy.sdk")) {
-          groovySdkComboBox(context, groovySdkProperty)
-        }.bottomGap(BottomGap.SMALL)
-        row {
-          checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
-            .bindSelected(addSampleCodeProperty)
-            .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
-        }.topGap(TopGap.SMALL)
+    private fun setupGroovySdkUI(builder: Panel) {
+      builder.row(GroovyBundle.message("label.groovy.sdk")) {
+        groovySdkComboBox(context, groovySdkProperty)
+      }.bottomGap(BottomGap.SMALL)
+    }
+
+    private fun setupSampleCodeUI(builder: Panel) {
+      builder.row {
+        checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
+          .bindSelected(addSampleCodeProperty)
+          .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
       }
     }
 
-    override fun setupProject(project: Project) {
-      super.setupProject(project)
+    override fun setupSettingsUI(builder: Panel) {
+      setupJavaSdkUI(builder)
+      setupGroovySdkUI(builder)
+      setupGradleDslUI(builder)
+      setupParentsUI(builder)
+      setupSampleCodeUI(builder)
+    }
 
+    override fun setupAdvancedSettingsUI(builder: Panel) {
+      setupGroupIdUI(builder)
+      setupArtifactIdUI(builder)
+    }
+
+    override fun setupProject(project: Project) {
       linkGradleProject(project) {
         when (val groovySdk = groovySdk) {
           null -> withPlugin("groovy")

@@ -41,27 +41,37 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     var addSampleCode by addSampleCodeProperty
     val generateOnboardingTips by generateOnboardingTipsProperty
 
-    override fun setupSettingsUI(builder: Panel) {
-      super.setupSettingsUI(builder)
-      with(builder) {
-        row {
-          checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
-            .bindSelected(addSampleCodeProperty)
-            .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
-        }.topGap(TopGap.SMALL)
-        indent {
-          row {
-            checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
-              .bindSelected(generateOnboardingTipsProperty)
-              .whenStateChangedFromUi { logAddSampleOnboardingTipsChangedEvent(it) }
-          }
-        }.enabledIf(addSampleCodeProperty)
+    private fun setupSampleCodeUI(builder: Panel) {
+      builder.row {
+        checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
+          .bindSelected(addSampleCodeProperty)
+          .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
       }
     }
 
-    override fun setupProject(project: Project) {
-      super.setupProject(project)
+    private fun setupSampleCodeWithOnBoardingTipsUI(builder: Panel) {
+      builder.indent {
+        row {
+          checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
+            .bindSelected(generateOnboardingTipsProperty)
+            .whenStateChangedFromUi { logAddSampleOnboardingTipsChangedEvent(it) }
+        }
+      }.enabledIf(addSampleCodeProperty)
+    }
 
+    override fun setupSettingsUI(builder: Panel) {
+      setupJavaSdkUI(builder)
+      setupParentsUI(builder)
+      setupSampleCodeUI(builder)
+      setupSampleCodeWithOnBoardingTipsUI(builder)
+    }
+
+    override fun setupAdvancedSettingsUI(builder: Panel) {
+      setupGroupIdUI(builder)
+      setupArtifactIdUI(builder)
+    }
+
+    override fun setupProject(project: Project) {
       val builder = InternalMavenModuleBuilder().apply {
         moduleJdk = sdk
         name = parentStep.name

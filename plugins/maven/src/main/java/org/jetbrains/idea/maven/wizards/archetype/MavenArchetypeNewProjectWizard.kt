@@ -5,7 +5,6 @@ import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.REGULAR_MATCHED_A
 import com.intellij.execution.util.setEmptyState
 import com.intellij.execution.util.setVisibleRowCount
 import com.intellij.icons.AllIcons
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
@@ -26,14 +25,11 @@ import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionF
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Cell
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable
 import com.intellij.openapi.externalSystem.service.ui.spinner.ComponentSpinnerExtension.Companion.setSpinning
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.util.transform
-import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.collectionModel
-import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ColoredListCellRenderer
@@ -112,80 +108,88 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       archetypeVersionProperty.afterChange { if (isAutoReloadArchetypeModel) reloadArchetypeDescriptor() }
     }
 
-    override fun setupSettingsUI(builder: Panel) {
-      super.setupSettingsUI(builder)
-      with(builder) {
+    fun setupCatalogUI(builder: Panel) {
+      builder.row {
+        layout(RowLayout.LABEL_ALIGNED)
+        catalogComboBox = ComboBox(CollectionComboBoxModel())
+        label(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.label"))
+          .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
+          .applyToComponent { icon = AllIcons.General.ContextHelp }
+          .applyToComponent { toolTipText = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.tooltip") }
+        cell(catalogComboBox)
+          .applyToComponent { renderer = CatalogRenderer() }
+          .applyToComponent { setSwingPopup(false) }
+          .bindItem(catalogItemProperty)
+          .columns(COLUMNS_MEDIUM)
+          .gap(RightGap.SMALL)
+        link(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.manage.button")) {
+          manageCatalogs()
+        }
+      }.bottomGap(BottomGap.SMALL)
+    }
+
+    fun setupArchetypeUI(builder: Panel) {
+      builder.row {
+        layout(RowLayout.LABEL_ALIGNED)
+        archetypeComboBox = TextCompletionComboBox(context.project, ArchetypeConverter())
+        label(MavenWizardBundle.message("maven.new.project.wizard.archetype.label"))
+          .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
+          .applyToComponent { icon = AllIcons.General.ContextHelp }
+          .applyToComponent { toolTipText = MavenWizardBundle.message("maven.new.project.wizard.archetype.tooltip") }
+        cell(archetypeComboBox)
+          .applyToComponent { bindSelectedItem(archetypeItemProperty) }
+          .align(AlignX.FILL)
+          .resizableColumn()
+          .validationOnApply { validateArchetypeId() }
+          .gap(RightGap.SMALL)
+        button(MavenWizardBundle.message("maven.new.project.wizard.archetype.add.button")) {
+          addArchetype()
+        }
+      }.bottomGap(BottomGap.SMALL)
+    }
+
+    fun setupArchetypeVersionUI(builder: Panel) {
+      builder.row(MavenWizardBundle.message("maven.new.project.wizard.archetype.version.label")) {
+        archetypeVersionComboBox = TextCompletionComboBox(context.project, ArchetypeVersionConverter())
+        cell(archetypeVersionComboBox)
+          .applyToComponent { bindSelectedItem(archetypeVersionProperty) }
+          .validationOnApply { validateArchetypeVersion() }
+          .columns(10)
+      }.bottomGap(BottomGap.SMALL)
+    }
+
+    fun setupArchetypeDescriptorUI(builder: Panel) {
+      builder.group(MavenWizardBundle.message("maven.new.project.wizard.archetype.properties.title")) {
         row {
-          layout(RowLayout.LABEL_ALIGNED)
-          catalogComboBox = ComboBox(CollectionComboBoxModel())
-          label(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.label"))
-            .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
-            .applyToComponent { icon = AllIcons.General.ContextHelp }
-            .applyToComponent { toolTipText = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.tooltip") }
-          cell(catalogComboBox)
-            .applyToComponent { renderer = CatalogRenderer() }
-            .applyToComponent { setSwingPopup(false) }
-            .bindItem(catalogItemProperty)
-            .columns(COLUMNS_MEDIUM)
-            .gap(RightGap.SMALL)
-          link(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.manage.button")) {
-            manageCatalogs()
-          }
-        }.topGap(TopGap.SMALL)
-        row {
-          layout(RowLayout.LABEL_ALIGNED)
-          archetypeComboBox = TextCompletionComboBox(context.project, ArchetypeConverter())
-          label(MavenWizardBundle.message("maven.new.project.wizard.archetype.label"))
-            .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
-            .applyToComponent { icon = AllIcons.General.ContextHelp }
-            .applyToComponent { toolTipText = MavenWizardBundle.message("maven.new.project.wizard.archetype.tooltip") }
-          cell(archetypeComboBox)
-            .applyToComponent { bindSelectedItem(archetypeItemProperty) }
-            .align(AlignX.FILL)
+          archetypeDescriptorTable = PropertiesTable()
+            .setVisibleRowCount(3)
+            .setEmptyState(MavenWizardBundle.message("maven.new.project.wizard.archetype.properties.empty"))
+            .bindProperties(archetypeDescriptorProperty.transform(
+              { it.map { (k, v) -> PropertiesTable.Property(k, v) } },
+              { it.associate { (n, v) -> n to v } }
+            ))
+          archetypeDescriptorPanel = archetypeDescriptorTable.component
+          cell(archetypeDescriptorPanel)
+            .align(Align.FILL)
             .resizableColumn()
-            .validationOnApply { validateArchetypeId() }
-            .gap(RightGap.SMALL)
-          button(MavenWizardBundle.message("maven.new.project.wizard.archetype.add.button")) {
-            addArchetype()
-          }
-        }.topGap(TopGap.SMALL)
-        row(MavenWizardBundle.message("maven.new.project.wizard.archetype.version.label")) {
-          archetypeVersionComboBox = TextCompletionComboBox(context.project, ArchetypeVersionConverter())
-          cell(archetypeVersionComboBox)
-            .applyToComponent { bindSelectedItem(archetypeVersionProperty) }
-            .validationOnApply { validateArchetypeVersion() }
-            .columns(10)
-        }.topGap(TopGap.SMALL)
-        group(MavenWizardBundle.message("maven.new.project.wizard.archetype.properties.title")) {
-          row {
-            archetypeDescriptorTable = PropertiesTable()
-              .setVisibleRowCount(3)
-              .setEmptyState(MavenWizardBundle.message("maven.new.project.wizard.archetype.properties.empty"))
-              .bindProperties(archetypeDescriptorProperty.transform(
-                { it.map { (k, v) -> PropertiesTable.Property(k, v) } },
-                { it.associate { (n, v) -> n to v } }
-              ))
-            archetypeDescriptorPanel = archetypeDescriptorTable.component
-            cell(archetypeDescriptorPanel)
-              .align(Align.FILL)
-              .resizableColumn()
-          }.resizableRow()
         }.resizableRow()
-      }
+      }.resizableRow()
+    }
+
+    override fun setupSettingsUI(builder: Panel) {
+      setupJavaSdkUI(builder)
+      setupParentsUI(builder)
+      setupCatalogUI(builder)
+      setupArchetypeUI(builder)
+      setupArchetypeVersionUI(builder)
+      setupArchetypeDescriptorUI(builder)
       UiNotifyConnector.doWhenFirstShown(catalogComboBox) { reloadCatalogs() }
     }
 
     override fun setupAdvancedSettingsUI(builder: Panel) {
-      super.setupAdvancedSettingsUI(builder)
-      with(builder) {
-        row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.label")) {
-          textField()
-            .bindText(versionProperty.trim())
-            .columns(COLUMNS_MEDIUM)
-            .trimmedTextValidation(CHECK_NON_EMPTY)
-            .whenTextChangedFromUi { logVersionChanged() }
-        }.bottomGap(BottomGap.SMALL)
-      }
+      setupGroupIdUI(builder)
+      setupArtifactIdUI(builder)
+      setupVersionUI(builder)
     }
 
     fun ValidationInfoBuilder.validateArchetypeId(): ValidationInfo? {
@@ -317,8 +321,6 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      super.setupProject(project)
-
       val builder = InternalMavenModuleBuilder().apply {
         moduleJdk = sdk
         name = parentStep.name

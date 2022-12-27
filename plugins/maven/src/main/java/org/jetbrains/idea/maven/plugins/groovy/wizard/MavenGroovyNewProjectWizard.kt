@@ -53,23 +53,33 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
     private var addSampleCode by addSampleCodeProperty
 
-    override fun setupSettingsUI(builder: Panel) {
-      super.setupSettingsUI(builder)
-      with(builder) {
-        row(GroovyBundle.message("label.groovy.sdk")) {
-          mavenGroovySdkComboBox(groovySdkProperty)
-        }.bottomGap(BottomGap.SMALL)
-        row {
-          checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
-            .bindSelected(addSampleCodeProperty)
-            .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
-        }.topGap(TopGap.SMALL)
+    private fun setupGroovySdkUI(builder: Panel) {
+      builder.row(GroovyBundle.message("label.groovy.sdk")) {
+        mavenGroovySdkComboBox(groovySdkProperty)
+      }.bottomGap(BottomGap.SMALL)
+    }
+
+    private fun setupSampleCodeUI(builder: Panel) {
+      builder.row {
+        checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
+          .bindSelected(addSampleCodeProperty)
+          .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
       }
     }
 
-    override fun setupProject(project: Project) {
-      super.setupProject(project)
+    override fun setupSettingsUI(builder: Panel) {
+      setupJavaSdkUI(builder)
+      setupGroovySdkUI(builder)
+      setupParentsUI(builder)
+      setupSampleCodeUI(builder)
+    }
 
+    override fun setupAdvancedSettingsUI(builder: Panel) {
+      setupGroupIdUI(builder)
+      setupArtifactIdUI(builder)
+    }
+
+    override fun setupProject(project: Project) {
       val builder = MavenGroovyNewProjectBuilder(groovySdk.getVersion() ?: GROOVY_SDK_FALLBACK_VERSION).apply {
         moduleJdk = sdk
         name = parentStep.name

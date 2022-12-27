@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.tools.projectWizard.maven
 
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
@@ -17,7 +16,6 @@ import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -25,7 +23,7 @@ import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
-import org.jetbrains.kotlin.tools.projectWizard.kmpWizardLink
+import org.jetbrains.kotlin.tools.projectWizard.setupKmpWizardLinkUI
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 
 internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
@@ -47,22 +45,27 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
         private val addSampleCode by addSampleCodeProperty
 
-        override fun setupSettingsUI(builder: Panel) {
-            super.setupSettingsUI(builder)
-            with(builder) {
-                row {
-                    checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
-                        .bindSelected(addSampleCodeProperty)
-                        .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
-                }.topGap(TopGap.SMALL)
-
-                kmpWizardLink(context)
+        private fun setupSampleCodeUI(builder: Panel) {
+            builder.row {
+                checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
+                    .bindSelected(addSampleCodeProperty)
+                    .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
             }
         }
 
-        override fun setupProject(project: Project) {
-            logSdkFinished(sdk)
+        override fun setupSettingsUI(builder: Panel) {
+            setupJavaSdkUI(builder)
+            setupParentsUI(builder)
+            setupSampleCodeUI(builder)
+            setupKmpWizardLinkUI(builder)
+        }
 
+        override fun setupAdvancedSettingsUI(builder: Panel) {
+            setupGroupIdUI(builder)
+            setupArtifactIdUI(builder)
+        }
+
+        override fun setupProject(project: Project) {
             ExternalProjectsManagerImpl.setupCreatedProject(project)
             MavenProjectsManager.setupCreatedMavenProject(project)
             project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)

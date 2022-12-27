@@ -50,31 +50,28 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
   override fun createView(data: ProjectData) = GradleDataView(data)
 
-  override fun setupUI(builder: Panel) {
-    with(builder) {
-      row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-        val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
-        sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
-          .validationOnApply { validateGradleVersion() }
-          .columns(COLUMNS_MEDIUM)
-          .whenItemSelectedFromUi { logSdkChanged(sdk) }
-      }.bottomGap(BottomGap.SMALL)
-      row(GradleBundle.message("gradle.dsl.new.project.wizard")) {
-        segmentedButton(listOf(GradleDsl.KOTLIN, GradleDsl.GROOVY)) {
-          when (it) {
-            GradleDsl.KOTLIN -> GradleBundle.message("gradle.dsl.new.project.wizard.kotlin")
-            GradleDsl.GROOVY -> GradleBundle.message("gradle.dsl.new.project.wizard.groovy")
-          }
-        }
-          .bind(gradleDslProperty)
-          .whenItemSelectedFromUi { logDslChanged(it == GradleDsl.KOTLIN) }
-      }.bottomGap(BottomGap.SMALL)
-    }
-    super.setupUI(builder)
+  protected fun setupJavaSdkUI(builder: Panel) {
+    builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
+      val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
+      sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
+        .validationOnApply { validateGradleVersion() }
+        .columns(COLUMNS_MEDIUM)
+        .whenItemSelectedFromUi { logSdkChanged(sdk) }
+        .onApply { logSdkFinished(sdk) }
+    }.bottomGap(BottomGap.SMALL)
   }
 
-  override fun setupProject(project: Project) {
-    logSdkFinished(sdk)
+  protected fun setupGradleDslUI(builder: Panel) {
+    builder.row(GradleBundle.message("gradle.dsl.new.project.wizard")) {
+      segmentedButton(listOf(GradleDsl.KOTLIN, GradleDsl.GROOVY)) {
+        when (it) {
+          GradleDsl.KOTLIN -> GradleBundle.message("gradle.dsl.new.project.wizard.kotlin")
+          GradleDsl.GROOVY -> GradleBundle.message("gradle.dsl.new.project.wizard.groovy")
+        }
+      }
+        .bind(gradleDslProperty)
+        .whenItemSelectedFromUi { logDslChanged(it == GradleDsl.KOTLIN) }
+    }.bottomGap(BottomGap.SMALL)
   }
 
   override fun findAllParents(): List<ProjectData> {

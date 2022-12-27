@@ -21,7 +21,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
-import com.intellij.ui.UIBundle.*
+import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 
@@ -44,22 +44,27 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
         private val sdk by sdkProperty
         private val addSampleCode by addSampleCodeProperty
 
-        override fun setupUI(builder: Panel) {
-            with(builder) {
-                row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-                    val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
-                    sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
-                        .columns(COLUMNS_MEDIUM)
-                        .whenItemSelectedFromUi { logSdkChanged(sdk) }
-                }
-                row {
-                    checkBox(message("label.project.wizard.new.project.add.sample.code"))
-                        .bindSelected(addSampleCodeProperty)
-                        .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
-                }.topGap(TopGap.SMALL)
+        private fun setupJavaSdkUI(builder: Panel) {
+            builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
+                val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
+                sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
+                    .columns(COLUMNS_MEDIUM)
+                    .whenItemSelectedFromUi { logSdkChanged(sdk) }
+            }.bottomGap(BottomGap.SMALL)
+        }
 
-                kmpWizardLink(context)
+        private fun setupSampleCodeUI(builder: Panel) {
+            builder.row {
+                checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
+                    .bindSelected(addSampleCodeProperty)
+                    .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
             }
+        }
+
+        override fun setupUI(builder: Panel) {
+            setupJavaSdkUI(builder)
+            setupSampleCodeUI(builder)
+            setupKmpWizardLinkUI(builder)
         }
 
         override fun setupProject(project: Project) =

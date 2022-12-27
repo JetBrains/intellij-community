@@ -12,6 +12,7 @@ import com.intellij.ide.wizard.chain
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.ui.dsl.builder.Panel
 import java.nio.file.Paths
 
 class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
@@ -27,9 +28,13 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     BuildSystemJavaNewProjectWizardData by parent,
     IntelliJJavaNewProjectWizardData {
 
-    override fun setupProject(project: Project) {
-      super.setupProject(project)
+    override fun setupSettingsUI(builder: Panel) {
+      setupJavaSdkUI(builder)
+      setupSampleCodeUI(builder)
+      setupSampleCodeWithOnBoardingTipsUI(builder)
+    }
 
+    override fun setupProject(project: Project) {
       val builder = JavaModuleBuilder()
       val moduleFile = Paths.get(moduleFileLocation, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
 

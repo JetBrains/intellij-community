@@ -21,7 +21,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.toUiPathProperty
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
@@ -82,72 +81,103 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     moduleFileLocationProperty.dependsOn(contentRootProperty, ::suggestModuleFilePath)
   }
 
-  open fun Panel.customOptions() {}
+  protected fun setupJavaSdkUI(builder: Panel) {
+    builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
+      val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
+      sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
+        .columns(COLUMNS_MEDIUM)
+        .whenItemSelectedFromUi { logSdkChanged(sdk) }
+        .onApply { logSdkFinished(sdk) }
+    }.bottomGap(BottomGap.SMALL)
+  }
 
-  open fun Panel.customAdditionalOptions() {}
-
-  override fun setupUI(builder: Panel) {
-    with(builder) {
-      row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-        val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
-        sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
-          .columns(COLUMNS_MEDIUM)
-          .whenItemSelectedFromUi { logSdkChanged(sdk) }
-      }
-      customOptions()
-      row {
-        checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
-          .bindSelected(addSampleCodeProperty)
-          .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
-      }.topGap(TopGap.SMALL)
-      indent {
-        row {
-          checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
-            .bindSelected(generateOnboardingTipsProperty)
-            .whenStateChangedFromUi { logAddSampleOnboardingTipsChangedEvent(it) }
-        }
-      }.enabledIf(addSampleCodeProperty)
-      collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
-        row(UIBundle.message("label.project.wizard.new.project.module.name")) {
-          textField()
-            .bindText(moduleNameProperty)
-            .align(AlignX.FILL)
-            .validationOnInput { validateModuleName() }
-            .validationOnApply { validateModuleName() }
-            .whenTextChangedFromUi { logModuleNameChanged() }
-        }.bottomGap(BottomGap.SMALL)
-        row(UIBundle.message("label.project.wizard.new.project.content.root")) {
-          val browseDialogTitle = UIBundle.message("label.project.wizard.new.project.content.root.title")
-          val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-            .withPathToTextConvertor(::getPresentablePath)
-            .withTextToPathConvertor(::getCanonicalPath)
-          textFieldWithBrowseButton(browseDialogTitle, context.project, fileChooserDescriptor)
-            .bindText(contentRootProperty.toUiPathProperty())
-            .align(AlignX.FILL)
-            .validationOnApply { validateContentRoot() }
-            .whenTextChangedFromUi { userDefinedContentRoot = true }
-            .whenTextChangedFromUi { logContentRootChanged() }
-        }.bottomGap(BottomGap.SMALL)
-        row(UIBundle.message("label.project.wizard.new.project.module.file.location")) {
-          val browseDialogTitle = UIBundle.message("label.project.wizard.new.project.module.file.location.title")
-          val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-            .withPathToTextConvertor(::getPresentablePath)
-            .withTextToPathConvertor(::getCanonicalPath)
-          textFieldWithBrowseButton(browseDialogTitle, context.project, fileChooserDescriptor)
-            .bindText(moduleFileLocationProperty.toUiPathProperty())
-            .align(AlignX.FILL)
-            .validationOnApply { validateModuleFileLocation() }
-            .whenTextChangedFromUi { userDefinedModuleFileLocation = true }
-            .whenTextChangedFromUi { logModuleFileLocationChanged() }
-        }.bottomGap(BottomGap.SMALL)
-
-        customAdditionalOptions()
-      }.topGap(TopGap.MEDIUM)
+  protected fun setupSampleCodeUI(builder: Panel) {
+    builder.row {
+      checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
+        .bindSelected(addSampleCodeProperty)
+        .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
     }
   }
 
-  override fun setupProject(project: Project) {
-    logSdkFinished(sdk)
+  protected fun setupSampleCodeWithOnBoardingTipsUI(builder: Panel) {
+    builder.indent {
+      row {
+        checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
+          .bindSelected(generateOnboardingTipsProperty)
+          .whenStateChangedFromUi { logAddSampleOnboardingTipsChangedEvent(it) }
+      }
+    }.enabledIf(addSampleCodeProperty)
+  }
+
+  protected fun setupModuleNameUI(builder: Panel) {
+    builder.row(UIBundle.message("label.project.wizard.new.project.module.name")) {
+      textField()
+        .bindText(moduleNameProperty)
+        .align(AlignX.FILL)
+        .validationOnInput { validateModuleName() }
+        .validationOnApply { validateModuleName() }
+        .whenTextChangedFromUi { logModuleNameChanged() }
+    }.bottomGap(BottomGap.SMALL)
+  }
+
+  protected fun setupModuleContentRootUI(builder: Panel) {
+    builder.row(UIBundle.message("label.project.wizard.new.project.content.root")) {
+      val browseDialogTitle = UIBundle.message("label.project.wizard.new.project.content.root.title")
+      val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        .withPathToTextConvertor(::getPresentablePath)
+        .withTextToPathConvertor(::getCanonicalPath)
+      textFieldWithBrowseButton(browseDialogTitle, context.project, fileChooserDescriptor)
+        .bindText(contentRootProperty.toUiPathProperty())
+        .align(AlignX.FILL)
+        .validationOnApply { validateContentRoot() }
+        .whenTextChangedFromUi { userDefinedContentRoot = true }
+        .whenTextChangedFromUi { logContentRootChanged() }
+    }.bottomGap(BottomGap.SMALL)
+  }
+
+  protected fun setupModuleFileLocationUI(builder: Panel) {
+    builder.row(UIBundle.message("label.project.wizard.new.project.module.file.location")) {
+      val browseDialogTitle = UIBundle.message("label.project.wizard.new.project.module.file.location.title")
+      val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        .withPathToTextConvertor(::getPresentablePath)
+        .withTextToPathConvertor(::getCanonicalPath)
+      textFieldWithBrowseButton(browseDialogTitle, context.project, fileChooserDescriptor)
+        .bindText(moduleFileLocationProperty.toUiPathProperty())
+        .align(AlignX.FILL)
+        .validationOnApply { validateModuleFileLocation() }
+        .whenTextChangedFromUi { userDefinedModuleFileLocation = true }
+        .whenTextChangedFromUi { logModuleFileLocationChanged() }
+    }.bottomGap(BottomGap.SMALL)
+  }
+
+  protected open fun setupSettingsUI(builder: Panel) {
+    setupJavaSdkUI(builder)
+    @Suppress("DEPRECATION")
+    builder.customOptions()
+    setupSampleCodeUI(builder)
+  }
+
+  protected open fun setupAdvancedSettingsUI(builder: Panel) {
+    setupModuleNameUI(builder)
+    setupModuleContentRootUI(builder)
+    setupModuleFileLocationUI(builder)
+    @Suppress("DEPRECATION")
+    builder.customAdditionalOptions()
+  }
+
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Implements setupSettingsUI function directly")
+  open fun Panel.customOptions() = Unit
+
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Implements setupAdvancedSettingsUI function directly")
+  open fun Panel.customAdditionalOptions() = Unit
+
+  override fun setupUI(builder: Panel) {
+    setupSettingsUI(builder)
+    builder.collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
+      setupAdvancedSettingsUI(this)
+    }.topGap(TopGap.MEDIUM)
   }
 
   private fun ValidationInfoBuilder.validateModuleName(): ValidationInfo? {
