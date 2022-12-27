@@ -183,14 +183,15 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection imp
       if (ancestor instanceof PsiParameter) {
         final PsiParameter parameter = (PsiParameter)ancestor;
         final PsiElement scope = parameter.getDeclarationScope();
-        if (scope instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)scope;
+        if (scope instanceof PsiMethod method) {
           if (MethodUtils.hasSuper(method)) {
             return true;
           }
         }
-        else if (scope instanceof PsiForeachStatement) {
-          final PsiForeachStatement foreachStatement = (PsiForeachStatement)scope;
+        else if (scope instanceof PsiLambdaExpression) {
+          return true;
+        }
+        else if (scope instanceof PsiForeachStatement foreachStatement) {
           final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
           if (iteratedValue == null) {
             return true; // incomplete code
@@ -201,8 +202,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection imp
           return isWildcardRequired(typeElement, foreachTypeElement, JavaGenericsUtil.getCollectionItemType(iteratedValue));
         }
       }
-      else if (ancestor instanceof PsiLocalVariable) {
-        final PsiLocalVariable localVariable = (PsiLocalVariable)ancestor;
+      else if (ancestor instanceof PsiLocalVariable localVariable) {
         final PsiExpression initializer = localVariable.getInitializer();
         return initializer != null && isWildcardRequired(typeElement, localVariable.getTypeElement(), initializer.getType());
       }
