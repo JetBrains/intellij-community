@@ -123,14 +123,12 @@ public final class CommandLineWaitingManager {
     @Override
     public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                    @NotNull VirtualFile file) {
+      if (PropertiesComponent.getInstance().getBoolean(DO_NOT_SHOW_KEY, false)) return null;
+      CommandLineWaitingManager manager = ApplicationManager.getApplication().getServiceIfCreated(CommandLineWaitingManager.class);
+      if (manager == null || !manager.hasHookFor(file) || manager.myDismissedObjects.contains(file)) return null;
+
       return fileEditor -> {
-        if (!PropertiesComponent.getInstance().getBoolean(DO_NOT_SHOW_KEY, false)) {
-          CommandLineWaitingManager manager = ApplicationManager.getApplication().getServiceIfCreated(CommandLineWaitingManager.class);
-          if (manager != null && manager.hasHookFor(file) && !manager.myDismissedObjects.contains(file)) {
-            return new MyNotificationPanel(file);
-          }
-        }
-        return null;
+        return new MyNotificationPanel(file);
       };
     }
   }
