@@ -59,6 +59,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.EventDispatcher
+import com.intellij.util.SlowOperations
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -424,14 +425,18 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
   private fun getTrackerProvider(virtualFile: VirtualFile): LocalLineStatusTrackerProvider? {
-    if (!canCreateTrackerFor(virtualFile)) {
-      return null
-    }
+    SlowOperations.allowSlowOperations("LineStatusTracker.getTrackerProvider").use {
+      if (!canCreateTrackerFor(virtualFile)) {
+        return null
+      }
 
-    LocalLineStatusTrackerProvider.EP_NAME.findFirstSafe { it.isTrackedFile(project, virtualFile) }?.let {
-      return it
+      LocalLineStatusTrackerProvider.EP_NAME.findFirstSafe { it.isTrackedFile(project, virtualFile) }?.let {
+        return it
+      }
+      return listOf(ChangelistsLocalStatusTrackerProvider, DefaultLocalStatusTrackerProvider).find {
+        it.isTrackedFile(project, virtualFile)
+      }
     }
-    return listOf(ChangelistsLocalStatusTrackerProvider, DefaultLocalStatusTrackerProvider).find { it.isTrackedFile(project, virtualFile) }
   }
 
   @RequiresEdt
