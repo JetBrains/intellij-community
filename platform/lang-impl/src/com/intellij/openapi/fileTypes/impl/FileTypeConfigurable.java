@@ -148,8 +148,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   }
 
   private void updateFileTypeList() {
-    List<FileTypeManagerImpl.FileTypeWithDescriptor> types = ContainerUtil.filter(myTempFileTypes, ftd -> !ftd.fileType.isReadOnly());
-    types.sort((o1, o2) -> o1.fileType.getDescription().compareToIgnoreCase(o2.fileType.getDescription()));
+    List<FileTypeManagerImpl.FileTypeWithDescriptor> types = ContainerUtil.sorted(ContainerUtil.filter(myTempFileTypes, ftd -> !ftd.fileType.isReadOnly()),
+    (o1, o2) -> o1.fileType.getDescription().compareToIgnoreCase(o2.fileType.getDescription()));
     myRecognizedFileType.setFileTypes(types);
   }
 
@@ -687,9 +687,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
     private void refill(@NotNull List<String> patterns) {
       clearList();
-      Collections.sort(patterns);
       DefaultListModel<String> model = (DefaultListModel<String>)myList.getModel();
-      for (@NlsSafe String pattern : patterns) {
+      for (@NlsSafe String pattern : ContainerUtil.sorted(patterns)) {
         model.addElement(pattern);
       }
       ScrollingUtil.ensureSelectionExists(myList);

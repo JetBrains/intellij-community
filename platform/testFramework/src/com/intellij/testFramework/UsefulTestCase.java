@@ -703,8 +703,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static @NotNull String toString(@NotNull Collection<?> collection, @NotNull String separator) {
-    List<String> list = ContainerUtil.map2List(collection, String::valueOf);
-    Collections.sort(list);
+    List<String> list = ContainerUtil.sorted(ContainerUtil.map2List(collection, String::valueOf));
     StringBuilder builder = new StringBuilder();
     boolean flag = false;
     for (String o : list) {

@@ -27,7 +27,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 class OverrideFileTypeAction extends DumbAwareAction {
-
   @Override
   public void update(@NotNull AnActionEvent e) {
     VirtualFile[] files = getContextFiles(e, file -> OverrideFileTypeManager.getInstance().getFileValue(file) == null);

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -277,8 +278,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
                 containerType2Usage.putValue(usage.getContainingElement().getTypeName(), usage);
               }
 
-              List<String> types = new ArrayList<>(containerType2Usage.keySet());
-              Collections.sort(types);
+              List<String> types = ContainerUtil.sorted(containerType2Usage.keySet());
 
               final StringBuilder sb = new StringBuilder("Library '");
               Library libraryModel = myContext.getLibraryModel(library);

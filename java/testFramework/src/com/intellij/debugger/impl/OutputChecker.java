@@ -7,6 +7,7 @@ import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -14,7 +15,6 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -188,7 +188,7 @@ public class OutputChecker {
 
     if (application == null) return buffer;
 
-    return application.runReadAction((ThrowableComputable<String, Exception>)() -> {
+    return ReadAction.compute(() -> {
       String result = buffer;
 
       result = StringUtil.replace(result, "\r\n", "\n");

@@ -40,6 +40,7 @@ import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,6 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
@@ -346,8 +346,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
     @Nullable
     private Integer getLineEntry() {
-      final ArrayList<Integer> list = new ArrayList<>(myLines.keySet());
-      Collections.sort(list);
+      List<Integer> list = ContainerUtil.sorted(myLines.keySet());
       int size = list.size();
       final LineData data = getLineData(myLineNumber);
       final int currentStatus = data != null ? data.getStatus() : LineCoverage.NONE;

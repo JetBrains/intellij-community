@@ -206,12 +206,11 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
   public List<Bookmark> getValidBookmarks() {
     List<Bookmark> answer = ContainerUtil.filter(myBookmarks.values(), b -> b.isValid());
     if (UISettings.getInstance().getSortBookmarks()) {
-      Collections.sort(answer);
+      return ContainerUtil.sorted(answer);
     }
     else {
-      answer.sort(Comparator.comparingInt(b -> b.index));
+      return ContainerUtil.sorted(answer, Comparator.comparingInt(b -> b.index));
     }
-    return answer;
   }
 
   @NotNull

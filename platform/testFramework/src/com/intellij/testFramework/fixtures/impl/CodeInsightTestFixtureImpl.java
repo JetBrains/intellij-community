@@ -1861,13 +1861,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                                @NotNull Collection<? extends T> segments,
                                                                @NotNull String tagName,
                                                                @Nullable Function<? super T, String> attrCalculator) {
-    List<Border> borders = new LinkedList<>();
-    for (T region : segments) {
-      String attr = attrCalculator == null ? null : attrCalculator.fun(region);
-      borders.add(new CodeInsightTestFixtureImpl.Border(true, region.getStartOffset(), attr));
-      borders.add(new CodeInsightTestFixtureImpl.Border(false, region.getEndOffset(), ""));
-    }
-    Collections.sort(borders);
+    List<Border> borders =
+    segments.stream()
+        .flatMap(region -> Stream.of(
+          new CodeInsightTestFixtureImpl.Border(true, region.getStartOffset(), attrCalculator == null ? null : attrCalculator.fun(region)),
+          new CodeInsightTestFixtureImpl.Border(false, region.getEndOffset(), "")))
+      .sorted()
+      .toList();
 
     StringBuilder result = new StringBuilder(text);
     for (CodeInsightTestFixtureImpl.Border border : borders) {

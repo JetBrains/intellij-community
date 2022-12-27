@@ -628,10 +628,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
       (ResourceBundleFileStructureViewElement)myStructureViewComponent.getTreeModel().getRoot();
     final Set<String> propertyKeys = ResourceBundleFileStructureViewElement.getPropertiesMap(myResourceBundle, root.isShowOnlyIncomplete()).keySet();
     final boolean isAlphaSorted = myStructureViewComponent.isActionActive(Sorter.ALPHA_SORTER_ID);
-    final List<String> keysOrder = new ArrayList<>(propertyKeys);
-    if (isAlphaSorted) {
-      Collections.sort(keysOrder);
-    }
+    List<String> keysOrder = isAlphaSorted ? ContainerUtil.sorted(propertyKeys) : new ArrayList<>(propertyKeys);
 
     final String currentKey = selectedProperty.getKey();
     final int idx = keysOrder.indexOf(currentKey);
