@@ -25,6 +25,16 @@ import java.util.function.Function;
 public final class GroovyStubNotificationProvider implements EditorNotificationProvider {
   static final String GROOVY_STUBS = "groovyStubs";
 
+  @Override
+  public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+                                                                                                                 @NotNull VirtualFile file) {
+    if (!file.getName().endsWith(".java") || !file.getPath().contains(GROOVY_STUBS)) return null;
+    final PsiClass psiClass = findClassByStub(project, file);
+    if (psiClass == null) return null;
+
+    return fileEditor -> decorateStubFile(file, project, fileEditor);
+  }
+
   @Nullable
   @VisibleForTesting
   public static PsiClass findClassByStub(Project project, VirtualFile stubFile) {
@@ -60,20 +70,5 @@ public final class GroovyStubNotificationProvider implements EditorNotificationP
       }
     }));
     return panel;
-  }
-
-  @Override
-  public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
-                                                                                                                 @NotNull VirtualFile file) {
-    return fileEditor -> {
-      if (file.getName().endsWith(".java") && file.getPath().contains(GROOVY_STUBS)) {
-        final PsiClass psiClass = findClassByStub(project, file);
-        if (psiClass != null) {
-          return decorateStubFile(file, project, fileEditor);
-        }
-      }
-
-      return null;
-    };
   }
 }
