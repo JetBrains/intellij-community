@@ -24,6 +24,7 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.*
 import com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap
 import com.intellij.workspaceModel.storage.impl.indices.*
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
@@ -728,7 +729,7 @@ class EntityStorageSerializerImpl(
   private inner class VirtualFileUrlSerializer : Serializer<VirtualFileUrl>(false, true) {
     override fun write(kryo: Kryo, output: Output, obj: VirtualFileUrl) {
       // TODO Write IDs only
-      kryo.writeObject(output, obj.urlSegments)
+      kryo.writeObject(output, (obj as VirtualFileUrlImpl).getUrlSegments())
     }
 
     override fun read(kryo: Kryo, input: Input, type: Class<out VirtualFileUrl>): VirtualFileUrl {
