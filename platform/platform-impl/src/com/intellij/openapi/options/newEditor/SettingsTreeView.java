@@ -31,6 +31,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -55,11 +56,14 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
@@ -104,6 +108,25 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     setComponentPopupMenuTo(myTree);
 
     myTree.setTransferHandler(new TransferHandler() {
+      @Override
+      public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
+        return ArrayUtil.contains(DataFlavor.stringFlavor, transferFlavors);
+      }
+
+      @Override
+      public boolean importData(JComponent comp, Transferable t) {
+        try {
+          String value = ObjectUtils.tryCast(t.getTransferData(DataFlavor.stringFlavor), String.class);
+          if (value == null) return false;
+
+          myFilter.setFilterText(value);
+          return true;
+        }
+        catch (IOException | UnsupportedFlavorException e) {
+          return false;
+        }
+      }
+
       @Nullable
       @Override
       protected Transferable createTransferable(JComponent c) {

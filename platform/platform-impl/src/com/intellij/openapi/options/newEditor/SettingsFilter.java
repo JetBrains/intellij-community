@@ -60,7 +60,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
         // must be set only after initializing (to avoid concurrent modifications)
         searchableOptionRegistrar = r;
         ApplicationManager.getApplication().invokeLater(() -> {
-          update(DocumentEvent.EventType.CHANGE, false, true);
+           update(DocumentEvent.EventType.CHANGE, false, true);
         }, ModalityState.any(), project == null ? ApplicationManager.getApplication().getDisposed() : project.getDisposed());
       });
     }
@@ -126,6 +126,10 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
       }
     }
     return true;
+  }
+
+  void setFilterText(@NotNull String text) {
+    mySearch.setText(text);
   }
 
   public boolean isEmptyFilter() {
