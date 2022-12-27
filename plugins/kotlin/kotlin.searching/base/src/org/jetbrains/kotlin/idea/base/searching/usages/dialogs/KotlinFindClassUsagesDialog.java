@@ -165,7 +165,7 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
     public void configureLabelComponent(@NotNull SimpleColoredComponent coloredComponent) {
         KtClassOrObject originalClass = getOriginalClass();
         if (originalClass != null) {
-            coloredComponent.append(KotlinSearchUsagesSupport.Companion.formatClass(originalClass));
+            Utils.configureLabelComponent(coloredComponent, originalClass);
         }
     }
 

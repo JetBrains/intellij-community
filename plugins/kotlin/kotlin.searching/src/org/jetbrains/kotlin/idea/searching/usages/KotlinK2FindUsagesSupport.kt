@@ -17,11 +17,15 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
 import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.CHECK_SUPER_METHODS_YES_NO_DIALOG
 import org.jetbrains.kotlin.idea.base.util.showYesNoCancelDialog
@@ -76,8 +80,24 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
     }
 
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String {
-        // TODO: implement this
-        return (declaration as? KtNamedDeclaration)?.name ?: "SUPPORT FOR FIR"
+        return analyzeInModalWindow(declaration, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+            declaration.getSymbol().render(noAnnotationsShortNameRenderer())
+        }
+    }
+
+    private fun noAnnotationsShortNameRenderer(): KtDeclarationRenderer {
+        return KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+            annotationRenderer = annotationRenderer.with {
+                annotationFilter = KtRendererAnnotationsFilter.NONE
+            }
+        }
+    }
+
+    override fun formatJavaOrLightMethod(method: PsiMethod): String {
+        val unwrapped = method.unwrapped as KtDeclaration
+        return analyzeInModalWindow(unwrapped, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+            unwrapped.getSymbol().render(noAnnotationsShortNameRenderer())
+        }
     }
 
     override fun isKotlinConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean {

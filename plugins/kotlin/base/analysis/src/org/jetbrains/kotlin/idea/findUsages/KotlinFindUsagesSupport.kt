@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiConstructorCall
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
@@ -33,6 +35,10 @@ interface KotlinFindUsagesSupport {
         fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String? =
             getInstance(declaration.project).tryRenderDeclarationCompactStyle(declaration)
 
+        @NlsSafe
+        fun formatJavaOrLightMethod(method: PsiMethod): String =
+            getInstance(method.project).formatJavaOrLightMethod(method)
+
         fun PsiReference.isConstructorUsage(ktClassOrObject: KtClassOrObject): Boolean {
             fun isJavaConstructorUsage(): Boolean {
                 val call = element.getNonStrictParentOfType<PsiConstructorCall>()
@@ -54,6 +60,8 @@ interface KotlinFindUsagesSupport {
     fun isDataClassComponentFunction(element: KtParameter): Boolean
 
     fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String?
+
+    fun formatJavaOrLightMethod(method: PsiMethod): String
 
     fun isKotlinConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean
 

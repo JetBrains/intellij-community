@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
@@ -35,6 +36,9 @@ class KotlinFindUsagesSupportImpl : KotlinFindUsagesSupport {
 
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String? =
         org.jetbrains.kotlin.idea.search.usagesSearch.tryRenderDeclarationCompactStyle(declaration)
+
+    override fun formatJavaOrLightMethod(method: PsiMethod): String =
+        org.jetbrains.kotlin.idea.refactoring.formatJavaOrLightMethod(method)
 
     override fun isKotlinConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean =
         psiReference.isKotlinConstructorUsage(ktClassOrObject)

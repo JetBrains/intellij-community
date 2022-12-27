@@ -110,12 +110,6 @@ class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
     override fun isInheritable(ktClass: KtClass): Boolean =
         ktClass.isInheritable()
 
-    override fun formatJavaOrLightMethod(method: PsiMethod): String =
-        org.jetbrains.kotlin.idea.refactoring.formatJavaOrLightMethod(method)
-
-    override fun formatClass(classOrObject: KtClassOrObject): String =
-        org.jetbrains.kotlin.idea.refactoring.formatClass(classOrObject)
-
     override fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration? =
         declaration.expectedDeclarationIfAny()
 

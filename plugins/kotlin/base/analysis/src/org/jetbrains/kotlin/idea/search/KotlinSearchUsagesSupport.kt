@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.search
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
@@ -98,14 +97,6 @@ interface KotlinSearchUsagesSupport {
         fun KtClass.isInheritable(): Boolean =
             getInstance(project).isInheritable(this)
 
-        @NlsSafe
-        fun formatJavaOrLightMethod(method: PsiMethod): String =
-            getInstance(method.project).formatJavaOrLightMethod(method)
-
-        @NlsSafe
-        fun formatClass(classOrObject: KtClassOrObject): String =
-            getInstance(classOrObject.project).formatClass(classOrObject)
-
         fun KtDeclaration.expectedDeclarationIfAny(): KtDeclaration? =
             getInstance(project).expectedDeclarationIfAny(this)
 
@@ -180,9 +171,6 @@ interface KotlinSearchUsagesSupport {
 
     fun isInheritable(ktClass: KtClass): Boolean
 
-    fun formatJavaOrLightMethod(method: PsiMethod): String
-
-    fun formatClass(classOrObject: KtClassOrObject): String
 
     fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration?
 
