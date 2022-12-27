@@ -14,7 +14,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ExpandedItemListCellRendererWrapper;
 import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
@@ -162,11 +167,18 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
         JList<Object> list = (JList<Object>)component;
         int row = list.getUI().locationToIndex(list, me.getPoint());
         if (row != -1) {
-          Component rendererComponent = list.getCellRenderer()
-            .getListCellRendererComponent(list, list.getModel().getElementAt(row), row, list.getSelectionModel().isSelectedIndex(row),
+          Object value = list.getModel().getElementAt(row);
+          ListCellRenderer<? super Object> renderer = ExpandedItemListCellRendererWrapper.unwrap(list.getCellRenderer());
+
+          if (renderer instanceof UiInspectorListRendererContextProvider contextProvider) {
+            clickInfo.addAll(contextProvider.getUiInspectorContext(list, value, row));
+          }
+          clickInfo.addAll(findActionsFor(value));
+
+          Component rendererComponent = renderer
+            .getListCellRendererComponent(list, value, row, list.getSelectionModel().isSelectedIndex(row),
                                           list.hasFocus());
           rendererComponent.setBounds(list.getCellBounds(row, row));
-          clickInfo.addAll(findActionsFor(list.getModel().getElementAt(row)));
           clickInfo.add(new PropertyBean(RENDERER_BOUNDS, list.getUI().getCellBounds(list, row, row)));
           clickInfo.addAll(ComponentPropertiesCollector.collect(rendererComponent));
           return Pair.create(clickInfo, rendererComponent);
@@ -177,8 +189,25 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
         int row = table.rowAtPoint(me.getPoint());
         int column = table.columnAtPoint(me.getPoint());
         if (row != -1 && column != -1) {
-          Component rendererComponent = table.getCellRenderer(row, column)
-            .getTableCellRendererComponent(table, table.getValueAt(row, column), table.getSelectionModel().isSelectedIndex(row),
+          Object value = table.getValueAt(row, column);
+          TableCellRenderer renderer = table.getCellRenderer(row, column);
+
+          if (renderer instanceof UiInspectorTableRendererContextProvider contextProvider) {
+            clickInfo.addAll(contextProvider.getUiInspectorContext(table, value, row, column));
+          }
+
+          if (component instanceof TreeTable treeTable) {
+            TreeTableTree tree = treeTable.getTree();
+            TreeCellRenderer treeRenderer = tree.getOriginalCellRenderer();
+            if (treeRenderer instanceof UiInspectorTreeRendererContextProvider contextProvider) {
+              int treeRow = treeTable.convertRowIndexToModel(row);
+              Object treeValue = tree.getPathForRow(treeRow).getLastPathComponent();
+              clickInfo.addAll(contextProvider.getUiInspectorContext(tree, treeValue, treeRow));
+            }
+          }
+
+          Component rendererComponent = renderer
+            .getTableCellRendererComponent(table, value, table.getSelectionModel().isSelectedIndex(row),
                                            table.hasFocus(), row, column);
           rendererComponent.setBounds(table.getCellRect(row, column, false));
           clickInfo.add(new PropertyBean(RENDERER_BOUNDS, table.getCellRect(row, column, true)));
@@ -190,12 +219,19 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
         JTree tree = (JTree)component;
         TreePath path = tree.getClosestPathForLocation(me.getX(), me.getY());
         if (path != null) {
-          Object object = path.getLastPathComponent();
-          Component rendererComponent = tree.getCellRenderer().getTreeCellRendererComponent(
-            tree, object, tree.getSelectionModel().isPathSelected(path),
+          int row = tree.getRowForPath(path);
+          Object value = path.getLastPathComponent();
+          TreeCellRenderer renderer = tree.getCellRenderer();
+
+          if (renderer instanceof UiInspectorTreeRendererContextProvider contextProvider) {
+            clickInfo.addAll(contextProvider.getUiInspectorContext(tree, value, row));
+          }
+
+          Component rendererComponent = renderer.getTreeCellRendererComponent(
+            tree, value, tree.getSelectionModel().isPathSelected(path),
             tree.isExpanded(path),
-            tree.getModel().isLeaf(object),
-            tree.getRowForPath(path), tree.hasFocus());
+            tree.getModel().isLeaf(value),
+            row, tree.hasFocus());
           rendererComponent.setBounds(tree.getPathBounds(path));
           clickInfo.add(new PropertyBean(RENDERER_BOUNDS, tree.getPathBounds(path)));
           clickInfo.addAll(ComponentPropertiesCollector.collect(rendererComponent));
@@ -212,7 +248,8 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
       }
       if (object instanceof QuickFixWrapper) {
         return findActionsFor(((QuickFixWrapper)object).getFix());
-      } else if (object instanceof IntentionActionDelegate) {
+      }
+      else if (object instanceof IntentionActionDelegate) {
         IntentionAction delegate = ((IntentionActionDelegate)object).getDelegate();
         if (delegate != object) {
           return findActionsFor(delegate);

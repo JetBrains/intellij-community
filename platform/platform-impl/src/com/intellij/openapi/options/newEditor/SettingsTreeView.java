@@ -5,6 +5,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorTreeRendererContextProvider;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -496,14 +499,14 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   }
 
   private final class MyNode extends CachingSimpleNode {
-    private final Configurable.Composite myComposite;
-    private final Configurable myConfigurable;
+    private final @Nullable Configurable.Composite myComposite;
+    private final @NotNull Configurable myConfigurable;
     private final @NlsContexts.ConfigurableName String myDisplayName;
     private final int myLevel;
     private ConfigurableTreeRenderer myRenderer;
     private boolean myPrepareRenderer = true;
 
-    private MyNode(CachingSimpleNode parent, Configurable configurable, int level) {
+    private MyNode(CachingSimpleNode parent, @NotNull Configurable configurable, int level) {
       super(prepareProject(parent, configurable), parent);
       myComposite = configurable instanceof Configurable.Composite ? (Configurable.Composite)configurable : null;
       myConfigurable = configurable;
@@ -567,7 +570,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     }
   }
 
-  private final class MyRenderer extends CellRendererPanel implements TreeCellRenderer {
+  private final class MyRenderer extends CellRendererPanel implements TreeCellRenderer, UiInspectorTreeRendererContextProvider {
     final SimpleColoredComponent myTextLabel = new SimpleColoredComponent();
     final JLabel myNodeIcon = new JLabel();
     final JLabel myProjectIcon = new JLabel();
@@ -738,6 +741,24 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
         myRenderInfo = null;
       }
+    }
+
+    @Override
+    public @NotNull List<PropertyBean> getUiInspectorContext(@NotNull JTree tree, @Nullable Object value, int row) {
+      MyNode node = extractNode(value);
+      if (node == null) return Collections.emptyList();
+
+      Configurable configurable = ConfigurableWrapper.cast(Configurable.class, node.myConfigurable);
+      if (configurable == null) return Collections.emptyList();
+
+      List<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Configurable class", UiInspectorUtil.getClassName(configurable), true));
+      if (configurable instanceof SearchableConfigurable searchableConfigurable) {
+        result.add(new PropertyBean("Configurable ID", searchableConfigurable.getId(), true));
+        result.add(new PropertyBean("Configurable HelpTopic", configurable.getHelpTopic()));
+      }
+
+      return result;
     }
   }
 
