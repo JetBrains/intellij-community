@@ -17,37 +17,29 @@ import java.util.function.Function
 import javax.swing.JComponent
 
 class UntrustedProjectNotificationProvider : EditorNotificationProvider, DumbAware {
-  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
-    return Function { createNotificationPanel(it, project) }
-  }
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
+    if (project.isTrusted()) return null
 
-  private fun createNotificationPanel(fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
-    if (project.isTrusted()) {
-      return null
-    }
-    return UntrustedProjectEditorNotificationPanel(project, fileEditor) {
-      if (confirmLoadingUntrustedProject(
-          project,
-          IdeBundle.message("untrusted.project.general.dialog.title"),
-          IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfoEx.getInstanceEx().fullApplicationName),
-          IdeBundle.message("untrusted.project.dialog.trust.button"),
-          IdeBundle.message("untrusted.project.dialog.distrust.button"))
-      ) {
-        ApplicationManager.getApplication().messageBus
-          .syncPublisher(TrustedProjectsListener.TOPIC)
-          .onProjectTrustedFromNotification(project)
+    return Function {
+      UntrustedProjectEditorNotificationPanel(project, it) {
+        if (confirmLoadingUntrustedProject(
+            project,
+            IdeBundle.message("untrusted.project.general.dialog.title"),
+            IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfoEx.getInstanceEx().fullApplicationName),
+            IdeBundle.message("untrusted.project.dialog.trust.button"),
+            IdeBundle.message("untrusted.project.dialog.distrust.button"))
+        ) {
+          ApplicationManager.getApplication().messageBus
+            .syncPublisher(TrustedProjectsListener.TOPIC)
+            .onProjectTrustedFromNotification(project)
+        }
       }
     }
   }
 
-  companion object {
-    private val KEY = Key.create<EditorNotificationPanel?>("UntrustedProjectNotification")
-  }
-
   internal class TrustedListener : TrustedProjectsListener {
     override fun onProjectTrusted(project: Project) {
-      EditorNotifications.getInstance(project)
-        .updateAllNotifications()
+      EditorNotifications.getInstance(project).updateAllNotifications()
     }
   }
 }
