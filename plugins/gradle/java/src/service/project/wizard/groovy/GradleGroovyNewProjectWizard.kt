@@ -10,12 +10,10 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.chain
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardData.GradleDsl
@@ -40,7 +38,7 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     private val addSampleCodeProperty = propertyGraph.property(true)
       .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
 
-    private var addSampleCode by addSampleCodeProperty
+    var addSampleCode by addSampleCodeProperty
 
     init {
       gradleDsl = GradleDsl.GROOVY
@@ -88,22 +86,19 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
       ExternalProjectsManagerImpl.setupCreatedProject(project)
       builder.commit(project)
-      if (addSampleCode) {
-        runWriteAction {
-          val groovySourcesDirectory = builder.contentEntryPath + "/src/main/groovy"
-          val directory = VfsUtil.createDirectoryIfMissing(groovySourcesDirectory)
-          if (directory != null) {
-            builder.createSampleGroovyCodeFile(project, directory)
-          }
-        }
-      }
     }
   }
 
-  private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+  private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
+
     override fun setupAssets(project: Project) {
       outputDirectory = "$path/$name"
       addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
+      if (parent.addSampleCode) {
+        val sourcePath = createJavaSourcePath("src/main/groovy", parent.groupId, "Main.groovy")
+        addTemplateAsset(sourcePath, "Groovy Sample Code", "PACKAGE_NAME" to parent.groupId)
+        addFilesToOpen(sourcePath)
+      }
     }
   }
 }

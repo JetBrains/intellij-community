@@ -41,10 +41,14 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
     this.assets.addAll(assets)
   }
 
-  fun addTemplateProperties(vararg properties: Pair<String, Any>) =
-    addTemplateProperties(properties.toMap())
+  fun addTemplateAsset(sourcePath: String, templateName: String, vararg properties: Pair<String, Any>) {
+    addTemplateAsset(sourcePath, templateName, properties.toMap())
+  }
 
-  private fun addTemplateProperties(properties: Map<String, Any>) {
+  fun addTemplateAsset(sourcePath: String, templateName: String, properties: Map<String, Any>) {
+    val templateManager = FileTemplateManager.getDefaultInstance()
+    val template = templateManager.getInternalTemplate(templateName)
+    addAssets(GeneratorTemplateFile(sourcePath, template))
     templateProperties.putAll(properties)
   }
 
@@ -91,10 +95,8 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
   }
 
   companion object {
-    fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourceRootPath: String, aPackage: String, generateOnboardingTips: Boolean) {
-      val templateName = if (generateOnboardingTips) "SampleCodeWithOnboardingTips.java" else "SampleCode"
-      val templateManager = FileTemplateManager.getDefaultInstance()
-      val template = templateManager.getInternalTemplate(templateName)
+
+    fun createJavaSourcePath(sourceRootPath: String, aPackage: String, fileName: String): String {
       val packageDirectory = aPackage.replace('.', '/')
       val pathJoiner = StringJoiner("/")
       if (sourceRootPath.isNotEmpty()) {
@@ -103,30 +105,35 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
       if (packageDirectory.isNotEmpty()) {
         pathJoiner.add(packageDirectory)
       }
-      pathJoiner.add("Main.java")
-      val path = pathJoiner.toString()
+      pathJoiner.add(fileName)
+      return pathJoiner.toString()
+    }
 
-      addAssets(GeneratorTemplateFile(path, template))
-      addFilesToOpen(path)
-      addTemplateProperties("PACKAGE_NAME" to aPackage)
+    fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourceRootPath: String, aPackage: String, generateOnboardingTips: Boolean) {
+      val templateName = if (generateOnboardingTips) "SampleCodeWithOnboardingTips.java" else "SampleCode"
+      val sourcePath = createJavaSourcePath(sourceRootPath, aPackage, "Main.java")
+      addTemplateAsset(sourcePath, templateName, buildMap {
+        put("PACKAGE_NAME", aPackage)
+        if (generateOnboardingTips) {
+          //@formatter:off
+          put("SearchEverywhereComment1", JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.1", if (SystemInfo.isMac) "⇧" else "Shift"))
+          put("SearchEverywhereComment2", JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.2"))
 
-      if (generateOnboardingTips) {
-        addTemplateProperties("SearchEverywhereComment1" to JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.1",
-                                                                                       if (SystemInfo.isMac) "⇧" else "Shift"))
-        addTemplateProperties("SearchEverywhereComment2" to JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.2"))
+          put("ShowIntentionComment1", JavaStartersBundle.message("onboarding.show.intention.tip.comment.1", KeymapUtil.getShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)))
+          put("ShowIntentionComment2", JavaStartersBundle.message("onboarding.show.intention.tip.comment.2", ApplicationNamesInfo.getInstance().fullProductName))
 
-        addTemplateProperties("ShowIntentionComment1" to JavaStartersBundle.message("onboarding.show.intention.tip.comment.1", KeymapUtil.getShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)))
-        addTemplateProperties("ShowIntentionComment2" to JavaStartersBundle.message("onboarding.show.intention.tip.comment.2", ApplicationNamesInfo.getInstance().fullProductName))
+          put("RunComment", JavaStartersBundle.message("onboarding.run.comment", KeymapUtil.getShortcutText(IdeActions.ACTION_DEFAULT_RUNNER)))
 
-        addTemplateProperties("RunComment" to JavaStartersBundle.message("onboarding.run.comment", KeymapUtil.getShortcutText(IdeActions.ACTION_DEFAULT_RUNNER)))
-
-        addTemplateProperties("DebugComment1" to JavaStartersBundle.message("onboarding.debug.comment.1", KeymapUtil.getShortcutText(IdeActions.ACTION_DEFAULT_DEBUGGER)))
-        addTemplateProperties("DebugComment2" to JavaStartersBundle.message("onboarding.debug.comment.2", KeymapUtil.getShortcutText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)))
-      }
+          put("DebugComment1", JavaStartersBundle.message("onboarding.debug.comment.1", KeymapUtil.getShortcutText(IdeActions.ACTION_DEFAULT_DEBUGGER)))
+          put("DebugComment2", JavaStartersBundle.message("onboarding.debug.comment.2", KeymapUtil.getShortcutText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)))
+          //@formatter:on
+        }
+      })
+      addFilesToOpen(sourcePath)
     }
 
     @JvmStatic
-    fun AssetsNewProjectWizardStep.prepareTipsInEditor(project: Project) = whenProjectCreated(project) l@{
+    fun AssetsNewProjectWizardStep.prepareTipsInEditor(project: Project) = whenProjectCreated(project) {
       val template = FileTemplateManager.getDefaultInstance().getInternalTemplate("SampleCode")
       val simpleSampleText = template.getText(templateProperties)
       for (extension in NewProjectOnboardingTips.EP_NAME.extensions) {
