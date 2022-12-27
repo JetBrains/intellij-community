@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.lookups
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
@@ -28,7 +28,7 @@ internal object TypeTextProvider {
 
         return when (symbol) {
             is KtTypeAliasSymbol -> symbol.expandedType.render(renderer, position = Variance.INVARIANT)
-            is KtFunctionSymbol -> substitutor.substitute(symbol.returnType).render(renderer, position = Variance.INVARIANT)
+            is KtFunctionLikeSymbol -> substitutor.substitute(symbol.returnType).render(renderer, position = Variance.INVARIANT)
 
             is KtVariableLikeSymbol -> {
                 val symbolType = substitutor.substitute(symbol.returnType)

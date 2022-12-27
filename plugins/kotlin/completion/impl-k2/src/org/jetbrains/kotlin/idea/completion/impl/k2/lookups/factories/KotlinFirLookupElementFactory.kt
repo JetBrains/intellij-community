@@ -37,6 +37,7 @@ class KotlinFirLookupElementFactory {
     ): LookupElement {
         return when (symbol) {
             is KtCallableSymbol -> createCallableLookupElement(
+                symbol.name,
                 symbol,
                 detectCallableOptions(symbol, importStrategyDetector),
                 substitutor,
@@ -49,12 +50,13 @@ class KotlinFirLookupElementFactory {
     }
 
     fun KtAnalysisSession.createCallableLookupElement(
+        name: Name,
         symbol: KtCallableSymbol,
         options: CallableInsertionOptions,
         substitutor: KtSubstitutor,
     ): LookupElementBuilder {
         return when (symbol) {
-            is KtFunctionSymbol -> with(functionLookupElementFactory) { createLookup(symbol, options, substitutor) }
+            is KtFunctionLikeSymbol -> with(functionLookupElementFactory) { createLookup(name, symbol, options, substitutor) }
             is KtVariableLikeSymbol -> with(variableLookupElementFactory) { createLookup(symbol, options, substitutor) }
             else -> throw IllegalArgumentException("Cannot create a lookup element for $symbol")
         }

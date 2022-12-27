@@ -11,7 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.endOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
@@ -28,19 +28,20 @@ import org.jetbrains.kotlin.renderer.render
 
 internal class FunctionLookupElementFactory {
     fun KtAnalysisSession.createLookup(
-        symbol: KtFunctionSymbol,
+        name: Name,
+        symbol: KtFunctionLikeSymbol,
         options: CallableInsertionOptions,
         substitutor: KtSubstitutor,
     ): LookupElementBuilder {
         val lookupObject = FunctionCallLookupObject(
-            symbol.name,
+            name,
             options,
             renderFunctionParameters(symbol, substitutor),
             inputValueArguments = symbol.valueParameters.isNotEmpty(),
             insertEmptyLambda = insertLambdaBraces(symbol),
         )
 
-        val builder = LookupElementBuilder.create(lookupObject, symbol.name.asString())
+        val builder = LookupElementBuilder.create(lookupObject, name.asString())
             .withTailText(getTailText(symbol, substitutor))
             .let { withSymbolInfo(symbol, it, substitutor) }
 

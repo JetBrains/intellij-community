@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -37,15 +38,20 @@ internal fun KtAnalysisSession.collectNonExtensions(
     val getAndSetPrefixesAwareFilter: KtScopeNameFilter =
         { name -> listOfNotNull(name, name.toJavaGetterName(), name.toJavaSetterName()).any(scopeNameFilter) }
 
+    val innerClasses = scope.getClassifierSymbols(scopeNameFilter).filterIsInstance<KtNamedClassOrObjectSymbol>().filter { it.isInner }
+    val innerClassesConstructors = innerClasses.flatMap { it.getDeclaredMemberScope().getConstructors() }
+
     val syntheticProperties = syntheticJavaPropertiesScope
         ?.getCallableSymbols(getAndSetPrefixesAwareFilter)
         ?.filterIsInstance<KtSyntheticJavaPropertySymbol>()
         .orEmpty()
 
-    val nonExtensions = sequence {
-        yieldAll(syntheticProperties)
-        yieldAll(scope.getCallableSymbols(getAndSetPrefixesAwareFilter))
-    }.filter { !it.isExtension && symbolFilter(it) && visibilityChecker.isVisible(it) }
+    val callableSymbols = scope.getCallableSymbols(getAndSetPrefixesAwareFilter)
+
+    val nonExtensions = (innerClassesConstructors + syntheticProperties + callableSymbols)
+        .filterNot { it.isExtension }
+        .filter { symbolFilter(it) }
+        .filter { visibilityChecker.isVisible(it) }
 
     return if (skipJavaGettersAndSetters) {
         val javaGettersAndSetters = syntheticProperties.flatMap { listOfNotNull(it.javaGetterSymbol, it.javaSetterSymbol) }.toSet()

@@ -1,4 +1,5 @@
-
+// FIR_COMPARISON
+// FIR_IDENTICAL
 abstract class A {
     inner class InnerInA
 }

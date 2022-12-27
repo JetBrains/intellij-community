@@ -108,11 +108,16 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         priority: ItemPriority? = null,
         explicitReceiverTypeHint: KtType? = null,
     ) {
-        if (symbol !is KtNamedSymbol) return
+        val name = when (symbol) {
+            is KtNamedSymbol -> symbol.name
+            is KtConstructorSymbol -> (symbol.getContainingSymbol() as? KtNamedClassOrObjectSymbol)?.name
+            else -> null
+        } ?: return
+
         // Don't offer any deprecated items that could leads to compile errors.
         if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return
         val lookup = with(lookupElementFactory) {
-            createCallableLookupElement(symbol, options, substitutor)
+            createCallableLookupElement(name, symbol, options, substitutor)
         }
         priority?.let { lookup.priority = it }
         lookup.callableWeight = getCallableMetadata(context, symbol, substitutor)

@@ -2780,6 +2780,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/common/KeywordsAreLowInParameterTypeCompletion4.kt");
             }
 
+            @TestMetadata("localInnerClass.kt")
+            public void testLocalInnerClass() throws Exception {
+                runTest("../testData/basic/common/localInnerClass.kt");
+            }
+
             @TestMetadata("LocalMultideclarationValues.kt")
             public void testLocalMultideclarationValues() throws Exception {
                 runTest("../testData/basic/common/LocalMultideclarationValues.kt");
