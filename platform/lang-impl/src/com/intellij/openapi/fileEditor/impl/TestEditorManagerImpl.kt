@@ -219,6 +219,11 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     }
 
   override fun getSelectedEditorWithProvider(file: VirtualFile): FileEditorWithProvider? {
+    if (!isCurrentlyUnderLocalId) {
+      val clientManager = clientFileEditorManager ?: return null
+      return clientManager.getComposite(file)?.selectedWithProvider
+    }
+
     val editor = getEditor(file)
     if (editor != null) {
       val textEditorProvider = TextEditorProvider.getInstance()
@@ -321,6 +326,12 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   }
 
   override fun closeFile(file: VirtualFile) {
+    if (!isCurrentlyUnderLocalId) {
+      val clientManager = clientFileEditorManager ?: return
+      clientManager.closeFile(file, false)
+      return
+    }
+
     val editor = virtualFileToEditor.remove(file)
     if (editor != null) {
       val editorProvider = TextEditorProvider.getInstance()
