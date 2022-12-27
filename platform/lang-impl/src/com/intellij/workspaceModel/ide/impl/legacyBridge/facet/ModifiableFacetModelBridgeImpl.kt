@@ -146,7 +146,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
       diff.mutableFacetMapping().removeMapping(facetEntity)
       diff.mutableFacetMapping().addMapping(newEntity, facet)
     }
-    allFacets.filter { it is FacetBridge<*> && (it.module as ModuleBridge).moduleEntityId == moduleEntity.symbolicId }
+    allFacets.filter { it is FacetBridge<*> }
       .forEach { facet ->
         facet as FacetBridge<*>
         facet.applyChangesToStorage(diff, facet.module as ModuleBridge)
