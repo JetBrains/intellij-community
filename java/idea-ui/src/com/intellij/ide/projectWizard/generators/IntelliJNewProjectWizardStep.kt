@@ -9,6 +9,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logM
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logModuleNameChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
+import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep.Companion.proposeToGenerateOnboardingTipsByDefault
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseData
@@ -47,7 +48,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   final override val moduleFileLocationProperty = propertyGraph.lazyProperty(::suggestModuleFilePath)
   final override val addSampleCodeProperty = propertyGraph.property(true)
     .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
-  private val generateOnboardingTipsProperty = propertyGraph.property(AssetsNewProjectWizardStep.proposeToGenerateOnboardingTipsByDefault())
+  private val generateOnboardingTipsProperty = propertyGraph.property(proposeToGenerateOnboardingTipsByDefault())
     .bindBooleanStorage(GENERATE_ONBOARDING_TIPS_NAME)
 
   final override var sdk by sdkProperty

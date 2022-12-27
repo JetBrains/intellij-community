@@ -55,7 +55,7 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     }
   }
 
-  private class AssetsStep(parent: Step) : AssetsNewProjectWizardStep(parent) {
+  private class AssetsStep(parent: Step) : AssetsJavaNewProjectWizardStep(parent) {
     override fun setupAssets(project: Project) {
       outputDirectory = contentRoot
       addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
