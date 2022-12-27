@@ -587,11 +587,12 @@ private fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(in
           val toolkit = Toolkit.getDefaultToolkit()
           val aClass = toolkit.javaClass
           if (aClass.name == "sun.awt.X11.XToolkit") {
-            val field = ReflectionUtil.findAssignableField(aClass, null, "awtAppClassName")
-            field.set(toolkit, AppUIUtil.getFrameClass())
+            MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
+              .findStaticSetter(aClass, "awtAppClassName", String::class.java)
+              .invoke(AppUIUtil.getFrameClass())
           }
         }
-        catch (ignore: Exception) {
+        catch (ignore: Throwable) {
         }
       }
     }
