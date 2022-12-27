@@ -20,20 +20,19 @@ public class LightEditNonExistentFileNotificationProvider implements EditorNotif
   @Override
   public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                  @NotNull VirtualFile file) {
+    if (!LightEdit.owns(project)) return null;
+    @NlsSafe String creationMessage = file.getUserData(LightEditUtil.CREATION_MESSAGE);
+    if (creationMessage == null) return null;
+
     return fileEditor -> {
-      if (LightEdit.owns(project)) {
-        @NlsSafe String creationMessage = file.getUserData(LightEditUtil.CREATION_MESSAGE);
-        if (creationMessage != null) {
-          EditorNotificationPanel notificationPanel =
-            new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Error).text(creationMessage);
-          notificationPanel.createActionLabel(ApplicationBundle.message("light.edit.file.creation.failed.hide.message"), () -> {
-            file.putUserData(LightEditUtil.CREATION_MESSAGE, null);
-            EditorNotifications.getInstance(project).updateNotifications(file);
-          });
-          return notificationPanel;
-        }
-      }
-      return null;
+      EditorNotificationPanel notificationPanel =
+        new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Error).text(creationMessage);
+      notificationPanel.createActionLabel(ApplicationBundle.message("light.edit.file.creation.failed.hide.message"), () -> {
+        file.putUserData(LightEditUtil.CREATION_MESSAGE, null);
+        EditorNotifications.getInstance(project).updateNotifications(file);
+      });
+
+      return notificationPanel;
     };
   }
 }
