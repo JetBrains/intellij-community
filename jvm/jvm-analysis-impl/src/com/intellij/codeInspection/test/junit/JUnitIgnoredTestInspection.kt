@@ -20,8 +20,7 @@ class JUnitIgnoredTestInspection : AbstractBaseUastLocalInspectionTool() {
   @JvmField
   var onlyReportWithoutReason = true
 
-  override fun getOptionsPane() = pane(
-    checkbox("onlyReportWithoutReason", JvmAnalysisBundle.message("jvm.inspections.junit.ignored.test.ignore.reason.option")))
+  override fun getOptionsPane() = pane(checkbox("onlyReportWithoutReason", JvmAnalysisBundle.message("jvm.inspections.junit.ignored.test.ignore.reason.option")))
 
   private fun shouldInspect(file: PsiFile) = isJUnit4InScope(file) || isJUnit5InScope(file)
 

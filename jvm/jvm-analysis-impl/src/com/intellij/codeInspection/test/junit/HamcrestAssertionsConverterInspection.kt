@@ -28,12 +28,10 @@ class HamcrestAssertionsConverterInspection : AbstractBaseUastLocalInspectionToo
   @JvmField
   var importMemberOnDemand = true
 
-  override fun getOptionsPane() = pane(
-    checkbox("importMemberOnDemand", JvmAnalysisBundle.message("jvm.inspections.migrate.assert.to.matcher.option")))
+  override fun getOptionsPane() = pane(checkbox("importMemberOnDemand", JvmAnalysisBundle.message("jvm.inspections.migrate.assert.to.matcher.option")))
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    val matcherFqn =
-      JavaPsiFacade.getInstance(holder.project).findClass(ORG_HAMCREST_MATCHERS, holder.file.resolveScope)?.qualifiedName
+    val matcherFqn = JavaPsiFacade.getInstance(holder.project).findClass(ORG_HAMCREST_MATCHERS, holder.file.resolveScope)?.qualifiedName
       ?: JavaPsiFacade.getInstance(holder.project).findClass(ORG_HAMCREST_CORE_MATCHERS, holder.file.resolveScope)?.qualifiedName
       ?: return PsiElementVisitor.EMPTY_VISITOR
 
