@@ -17,6 +17,11 @@ internal fun Class<*>.getPrivateMethod(name: String, type: MethodType): MethodHa
 }
 
 @Internal
+internal fun Class<*>.getPublicMethod(name: String, type: MethodType): MethodHandle {
+  return LOOKUP.findVirtual(this, name, type)
+}
+
+@Internal
 internal fun Class<*>.getPrivateField(name: String, type: Class<*>): MethodHandle {
   return MethodHandles.privateLookupIn(this, LOOKUP).findGetter(this, name, type)
 }

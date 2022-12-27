@@ -28,10 +28,23 @@ final class FontFamilyServiceImpl extends FontFamilyService {
   // might have no effect on logging performed in constructor
   private static final boolean VERBOSE_LOGGING = Boolean.getBoolean("font.family.service.verbose");
 
-  private static final MethodHandle GET_FONT_2D_METHOD = getFont2dMethod("getFont2D", Font.class);
-  private static final MethodHandle GET_TYPO_FAMILY_METHOD = getFont2dMethod("getTypographicFamilyName", Font2D.class);
-  private static final MethodHandle GET_TYPO_SUBFAMILY_METHOD = getFont2dMethod("getTypographicSubfamilyName", Font2D.class);
-  private static final MethodHandle GET_WEIGHT_METHOD = getFont2dMethod("getWeight", Font2D.class);
+  private static final MethodHandle GET_FONT_2D_METHOD;
+
+  static {
+    MethodHandle getFont2d;
+    try {
+      getFont2d = MethodHandleUtil.getPrivateMethod(Font.class, "getFont2D", MethodType.methodType(Font2D.class));
+    }
+    catch (Throwable e) {
+      LOG.warn(e);
+      getFont2d = null;
+    }
+    GET_FONT_2D_METHOD = getFont2d;
+  }
+
+  private static final MethodHandle GET_TYPO_FAMILY_METHOD = getFont2dMethod("getTypographicFamilyName", String.class);
+  private static final MethodHandle GET_TYPO_SUBFAMILY_METHOD = getFont2dMethod("getTypographicSubfamilyName", String.class);
+  private static final MethodHandle GET_WEIGHT_METHOD = getFont2dMethod("getWeight", Integer.TYPE);
 
   private static final AffineTransform SYNTHETIC_ITALICS_TRANSFORM = AffineTransform.getShearInstance(-0.2, 0);
   private static final int PREFERRED_MAIN_WEIGHT = 400;
@@ -190,14 +203,12 @@ final class FontFamilyServiceImpl extends FontFamilyService {
     return super.migrateFontSettingImpl(family);
   }
 
-  private static @Nullable MethodHandle getFont2dMethod(@NotNull String methodName, @NotNull Class<?> targetClass) {
+  private static @Nullable MethodHandle getFont2dMethod(@NotNull String methodName, @NotNull Class<?> type) {
     try {
-      return MethodHandleUtil.getPrivateMethod(targetClass, methodName, MethodType.methodType(Font2D.class));
+      return MethodHandleUtil.getPublicMethod(Font2D.class, methodName, MethodType.methodType(type));
     }
     catch (Throwable e) {
-      if (VERBOSE_LOGGING) {
-        LOG.warn(e);
-      }
+      LOG.warn(e);
       return null;
     }
   }
