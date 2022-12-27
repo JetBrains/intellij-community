@@ -16,9 +16,9 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class EmptyClassInspection extends BaseInspection {
 
@@ -50,19 +50,15 @@ public class EmptyClassInspection extends BaseInspection {
   public boolean commentsAreContent = true;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-
-    panel.addGrowing(annotationsListControl);
-    panel.addCheckbox(InspectionGadgetsBundle.message("empty.class.ignore.parameterization.option"), "ignoreClassWithParameterization");
-    panel.addCheckbox(
-      InspectionGadgetsBundle.message("inspection.empty.class.ignore.subclasses.option", CommonClassNames.JAVA_LANG_THROWABLE),
-      "ignoreThrowables");
-    panel.addCheckbox(InspectionGadgetsBundle.message("comments.as.content.option"), "commentsAreContent");
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringSet("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                new JavaClassValidator(null, true)),
+      checkbox("ignoreClassWithParameterization", InspectionGadgetsBundle.message("empty.class.ignore.parameterization.option")),
+      checkbox("ignoreThrowables",
+               InspectionGadgetsBundle.message("inspection.empty.class.ignore.subclasses.option", CommonClassNames.JAVA_LANG_THROWABLE)),
+      checkbox("commentsAreContent", InspectionGadgetsBundle.message("comments.as.content.option"))
+    );
   }
 
   @Override

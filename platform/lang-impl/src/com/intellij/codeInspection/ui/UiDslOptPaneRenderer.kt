@@ -216,7 +216,12 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
         is OptSet -> {
           @Suppress("UNCHECKED_CAST") val list = tool.getOption(component.bindId) as MutableList<String>
-          val form = ListEditForm("", component.label.label(), list)
+          val validator = component.validator
+          val form = if (validator is StringValidatorWithSwingSelector) {
+            ListEditForm("", component.label.label(), list, "", validator::select)
+          } else {
+            ListEditForm("", component.label.label(), list)
+          }
           cell(form.contentPanel)
             .align(Align.FILL)
             .resizableColumn()
