@@ -1126,8 +1126,7 @@ public final class HighlightUtil {
       isAllowed = PsiModifier.STATIC.equals(modifier);
     }
     else if (modifierOwner instanceof PsiLocalVariable || modifierOwner instanceof PsiParameter) {
-      isAllowed = PsiModifier.FINAL.equals(modifier) &&
-                  (!(modifierOwner instanceof PsiPatternVariable) || PsiUtil.isLanguageLevel16OrHigher(modifierOwner));
+      isAllowed = PsiModifier.FINAL.equals(modifier);
     }
     else if (modifierOwner instanceof PsiReceiverParameter || modifierOwner instanceof PsiRecordComponent) {
       isAllowed = false;

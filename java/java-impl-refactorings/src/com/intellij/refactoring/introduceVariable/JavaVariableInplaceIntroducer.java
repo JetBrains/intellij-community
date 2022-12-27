@@ -241,7 +241,6 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     if (currentVariableRange == null) return;
 
     final PsiVariable variable = getVariable();
-    if (variable instanceof PsiPatternVariable && !PsiUtil.isLanguageLevel16OrHigher(variable)) return;
     boolean canBeVarType = myCanBeVarType && variable instanceof PsiLocalVariable;
     if (myCantChangeFinalModifier && !canBeVarType) return;
 
