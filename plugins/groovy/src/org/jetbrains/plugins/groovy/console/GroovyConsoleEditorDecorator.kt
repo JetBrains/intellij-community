@@ -12,15 +12,13 @@ import java.util.function.Function
 import javax.swing.JComponent
 
 class GroovyConsoleEditorDecorator : EditorNotificationProvider {
-  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
-    return Function { createNotificationPanel(file, project) }
-  }
-
-  private fun createNotificationPanel(file: VirtualFile, project: Project): JComponent? {
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     val consoleService = GroovyConsoleStateService.getInstance(project)
     if (!consoleService.isProjectConsole(file)) return null
-    val actionGroup = DefaultActionGroup(EXECUTE_ACTION, GrSelectModuleAction(project, file))
-    val menu = ActionManager.getInstance().createActionToolbar("GroovyConsole", actionGroup, true)
-    return menu.component
+
+    return Function {
+      val actionGroup = DefaultActionGroup(EXECUTE_ACTION, GrSelectModuleAction(project, file))
+       ActionManager.getInstance().createActionToolbar("GroovyConsole", actionGroup, true).component
+    }
   }
 }
