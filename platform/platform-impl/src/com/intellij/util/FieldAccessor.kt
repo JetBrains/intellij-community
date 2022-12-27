@@ -49,7 +49,7 @@ class FieldAccessor<E, T> @JvmOverloads constructor(private val aClass: Class<E>
       return null
     }
     try {
-      return fieldRef!!.get()!![`object`] as T
+      return fieldRef!!.get()!!.get(`object`) as T
     }
     catch (e: IllegalAccessException) {
       LOG.warn("Field not accessible: " + aClass.name + "." + name)
