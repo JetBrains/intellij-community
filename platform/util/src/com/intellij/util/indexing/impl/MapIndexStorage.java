@@ -19,7 +19,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, MeasurableIndexStore {
@@ -39,15 +38,14 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   private final boolean myKeyIsUniqueForIndexedFile;
   private final boolean myReadOnly;
   private final boolean myEnableWal;
-  private final @NotNull ValueContainerInputRemapping myInputRemapping;
-  private final @Nullable ExecutorService mySerializationExecutor;
+  @NotNull private final ValueContainerInputRemapping myInputRemapping;
 
   public MapIndexStorage(Path storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
                          @NotNull DataExternalizer<Value> valueExternalizer,
                          final int cacheSize,
                          boolean keyIsUniqueForIndexedFile) throws IOException {
-    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false, false, null, null);
+    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false, false, null);
   }
 
   public MapIndexStorage(Path storageFile,
@@ -58,8 +56,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
                          boolean initialize,
                          boolean readOnly,
                          boolean enableWal,
-                         @Nullable ValueContainerInputRemapping inputRemapping,
-                         @Nullable ExecutorService serializationExecutor) throws IOException {
+                         @Nullable ValueContainerInputRemapping inputRemapping) throws IOException {
     myBaseStorageFile = storageFile;
     myKeyDescriptor = keyDescriptor;
     myCacheSize = cacheSize;
@@ -73,7 +70,6 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
       inputRemapping = ValueContainerInputRemapping.IDENTITY;
     }
     myInputRemapping = inputRemapping;
-    mySerializationExecutor = serializationExecutor;
     if (initialize) initMapAndCache();
   }
 
@@ -145,7 +141,6 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     return new ValueContainerMap<>(persistentMap,
                                    myKeyDescriptor,
                                    myDataExternalizer,
-                                   mySerializationExecutor,
                                    myKeyIsUniqueForIndexedFile);
   }
 

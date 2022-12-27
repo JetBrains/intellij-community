@@ -179,7 +179,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   private static StringIndex createIndex(String testName, EnumeratorStringDescriptor keyDescriptor, boolean readOnly) {
     final File storageFile = FileUtil.createTempFile("index_test", "storage")
     final File metaIndexFile = FileUtil.createTempFile("index_test_inputs", "storage")
-    final VfsAwareMapIndexStorage indexStorage = new VfsAwareMapIndexStorage(storageFile.toPath(), keyDescriptor, new EnumeratorStringDescriptor(), null,
+    final VfsAwareMapIndexStorage indexStorage = new VfsAwareMapIndexStorage(storageFile.toPath(), keyDescriptor, new EnumeratorStringDescriptor(),
                                                                              16 * 1024, readOnly)
     return new StringIndex(testName, indexStorage, metaIndexFile, !readOnly)
   }

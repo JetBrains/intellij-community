@@ -38,7 +38,7 @@ final class CharSequenceHashInlineKeyDescriptor extends InlineKeyDescriptor<Char
 
     @Override
     public boolean equals(Object obj) {
-      return obj.hashCode() == hashCode;
+      throw new UnsupportedOperationException();
     }
 
     @Override

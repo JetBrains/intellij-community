@@ -19,11 +19,9 @@ import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
@@ -335,7 +333,6 @@ public final class StubIndexImpl extends StubIndexEx {
           storageFile,
           myWrappedExtension.getKeyDescriptor(),
           myWrappedExtension.getValueExternalizer(),
-          AppExecutorUtil.getAppExecutorService(),
           myWrappedExtension.getCacheSize(),
           myWrappedExtension.keyIsUniqueForIndexedFile(),
           myWrappedExtension.traceKeyHashToVirtualFileMapping(),

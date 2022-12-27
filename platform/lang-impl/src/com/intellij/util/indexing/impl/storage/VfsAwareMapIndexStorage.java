@@ -20,7 +20,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
@@ -32,18 +31,16 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
   public VfsAwareMapIndexStorage(Path storageFile,
                                  @NotNull KeyDescriptor<Key> keyDescriptor,
                                  @NotNull DataExternalizer<Value> valueExternalizer,
-                                 @Nullable ExecutorService serializationExecutor,
                                  final int cacheSize,
                                  final boolean readOnly
   ) throws IOException {
-    super(storageFile, keyDescriptor, valueExternalizer, cacheSize, false, true, readOnly, false, null, serializationExecutor);
+    super(storageFile, keyDescriptor, valueExternalizer, cacheSize, false, true, readOnly, false, null);
     myBuildKeyHashToVirtualFileMapping = false;
   }
 
   public VfsAwareMapIndexStorage(Path storageFile,
                                  @NotNull KeyDescriptor<Key> keyDescriptor,
                                  @NotNull DataExternalizer<Value> valueExternalizer,
-                                 @Nullable ExecutorService serializationExecutor,
                                  final int cacheSize,
                                  boolean keyIsUniqueForIndexedFile,
                                  boolean buildKeyHashToVirtualFileMapping,
@@ -56,8 +53,7 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
           false,
           false,
           enableWal,
-          null,
-          serializationExecutor);
+          null);
     myBuildKeyHashToVirtualFileMapping = buildKeyHashToVirtualFileMapping;
     initMapAndCache();
   }
