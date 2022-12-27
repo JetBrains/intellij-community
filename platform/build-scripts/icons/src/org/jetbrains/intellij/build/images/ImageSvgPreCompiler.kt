@@ -336,26 +336,11 @@ private fun addEntry(map: IkvWriter, bitmap: Bitmap, imageKey: Int, totalSize: A
 
     val pixelNativePointer = bitmap.peekPixels()!!.addr
     val pixelBuffer = BufferUtil.getByteBufferFromPointer(pixelNativePointer, bitmap.rowBytes * bitmap.height)
-    when (bitmap.colorInfo.colorType) {
-      ColorType.BGRA_8888 -> {
-        currentPosition = writeData(currentPosition, channel, pixelBuffer, totalSize)
-      }
-      ColorType.RGBA_8888 -> {
-        // convert from RGBA to ARGB
-        for (i in 0 until (pixelBuffer.limit() - 4) step 4) {
-          val r = pixelBuffer[i]
-          val g = pixelBuffer[i + 1]
-          val b = pixelBuffer[i + 2]
-          val a = pixelBuffer[i + 3]
-
-          pixelBuffer.put(i, a)
-          pixelBuffer.put(i + 1, r)
-          pixelBuffer.put(i + 2, g)
-          pixelBuffer.put(i + 3, b)
-        }
-        currentPosition = writeData(currentPosition, channel, pixelBuffer, totalSize)
-      }
-      else -> throw UnsupportedOperationException(bitmap.colorInfo.colorType.toString())
+    if (bitmap.colorInfo.colorType == ColorType.BGRA_8888) {
+      currentPosition = writeData(currentPosition, channel, pixelBuffer, totalSize)
+    }
+    else {
+      throw UnsupportedOperationException(bitmap.colorInfo.colorType.toString())
     }
 
     currentPosition
