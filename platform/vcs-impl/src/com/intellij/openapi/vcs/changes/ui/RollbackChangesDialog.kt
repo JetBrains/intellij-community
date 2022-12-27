@@ -13,106 +13,88 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.LocalChangesBrowser.AllChanges
 import com.intellij.openapi.vcs.changes.ui.LocalChangesBrowser.SelectedChangeLists
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.ui.JBUI
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.RollbackUtil
 import org.jetbrains.annotations.Nls
-import java.awt.BorderLayout
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
 import javax.swing.JCheckBox
 import javax.swing.JComponent
-import javax.swing.JPanel
 
-class RollbackChangesDialog private constructor(private val myProject: Project, private val myBrowser: LocalChangesBrowser)
-  : DialogWrapper(myProject, true) {
+class RollbackChangesDialog private constructor(private val project: Project,
+                                                private val browser: LocalChangesBrowser)
+  : DialogWrapper(project, true) {
 
-  private val myInvokedFromModalContext: Boolean
-  private val myDeleteLocallyAddedFiles: JCheckBox
-  private val myInfoCalculator: ChangeInfoCalculator
-  private val myCommitLegendPanel: CommitLegendPanel
-  private val myListChangeListener: Runnable
-  private val myOperationName: @Nls String?
+  private val changeInfoCalculator = ChangeInfoCalculator()
+  private val commitLegend = CommitLegendPanel(changeInfoCalculator)
+
+  private lateinit var deleteLocallyAddedFilesCheckBox: JCheckBox
+  private val operationName: @Nls String
 
   init {
-    myInvokedFromModalContext = LaterInvocator.isInModalContext()
-    myInfoCalculator = ChangeInfoCalculator()
-    myCommitLegendPanel = CommitLegendPanel(myInfoCalculator)
+    Disposer.register(disposable, browser)
+    browser.setInclusionChangedListener { inclusionListener() }
 
-    Disposer.register(disposable, myBrowser)
-    val operationName = operationNameByChanges(myProject, myBrowser.allChanges)
-    setOKButtonText(operationName)
-    myOperationName = UIUtil.removeMnemonic(operationName)
-    myBrowser.setToggleActionTitle(VcsBundle.message("changes.action.include.in.operation.name", StringUtil.toLowerCase(myOperationName)))
-    title = VcsBundle.message("changes.action.rollback.custom.title", myOperationName)
+    val operationNameWithMnemonic = operationNameByChanges(project, browser.allChanges)
+    setOKButtonText(operationNameWithMnemonic)
     setCancelButtonText(CommonBundle.getCloseButtonText())
-    myDeleteLocallyAddedFiles = JCheckBox(VcsBundle.message("changes.checkbox.delete.locally.added.files"))
-    myDeleteLocallyAddedFiles.isSelected = PropertiesComponent.getInstance().isTrueValue(DELETE_LOCALLY_ADDED_FILES_KEY)
-    myDeleteLocallyAddedFiles.addActionListener {
-      PropertiesComponent.getInstance().setValue(DELETE_LOCALLY_ADDED_FILES_KEY, myDeleteLocallyAddedFiles.isSelected)
-    }
+
+    operationName = UIUtil.removeMnemonic(operationNameWithMnemonic)
+    browser.setToggleActionTitle(VcsBundle.message("changes.action.include.in.operation.name", StringUtil.toLowerCase(operationName)))
+    title = VcsBundle.message("changes.action.rollback.custom.title", operationName)
+
     init()
 
-    myListChangeListener = Runnable {
-      val allChanges = myBrowser.allChanges
-      val includedChanges: Collection<Change> = myBrowser.includedChanges
-      myInfoCalculator.update(allChanges, ArrayList(includedChanges))
-      myCommitLegendPanel.update()
-      val hasNewFiles = ContainerUtil.exists(includedChanges) { change: Change -> change.type == Change.Type.NEW }
-      myDeleteLocallyAddedFiles.isEnabled = hasNewFiles
+    inclusionListener()
+  }
+
+  override fun createCenterPanel(): JComponent {
+    return panel {
+      row {
+        cell(browser)
+          .align(Align.FILL)
+      }.resizableRow()
+      row {
+        cell(commitLegend.component)
+      }
+      row {
+        deleteLocallyAddedFilesCheckBox = checkBox(VcsBundle.message("changes.checkbox.delete.locally.added.files"))
+          .bindSelected({ PropertiesComponent.getInstance().isTrueValue(DELETE_LOCALLY_ADDED_FILES_KEY) },
+                        { newValue -> PropertiesComponent.getInstance().setValue(DELETE_LOCALLY_ADDED_FILES_KEY, newValue) })
+          .component
+      }
     }
-    myBrowser.setInclusionChangedListener(myListChangeListener)
-    myListChangeListener.run()
+  }
+
+  private fun inclusionListener() {
+    val allChanges = browser.allChanges
+    val includedChanges = browser.includedChanges
+    changeInfoCalculator.update(allChanges, includedChanges.toList())
+    commitLegend.update()
+
+    val hasNewFiles = includedChanges.any { change -> change.type == Change.Type.NEW }
+    deleteLocallyAddedFilesCheckBox.isEnabled = hasNewFiles
   }
 
   override fun doOKAction() {
     super.doOKAction()
-    val worker = RollbackWorker(myProject, myOperationName, myInvokedFromModalContext)
-    worker.doRollback(myBrowser.includedChanges, myDeleteLocallyAddedFiles.isSelected)
+
+    RollbackWorker(project, operationName, LaterInvocator.isInModalContext())
+      .doRollback(browser.includedChanges, deleteLocallyAddedFilesCheckBox.isSelected)
   }
 
-  override fun createCenterPanel(): JComponent {
-    val panel = JPanel(GridBagLayout())
-    val gb = GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                JBUI.insets(1), 0, 0)
-    gb.fill = GridBagConstraints.HORIZONTAL
-    gb.weightx = 1.0
-    val border = JPanel(BorderLayout())
-    border.border = JBUI.Borders.emptyTop(2)
-    border.add(myBrowser, BorderLayout.CENTER)
-    gb.fill = GridBagConstraints.BOTH
-    gb.weighty = 1.0
-    ++gb.gridy
-    panel.add(border, gb)
-    val commitLegendPanel: JComponent = myCommitLegendPanel.component
-    commitLegendPanel.border = JBUI.Borders.emptyLeft(4)
-    gb.fill = GridBagConstraints.NONE
-    gb.weightx = 0.0
-    gb.weighty = 0.0
-    ++gb.gridy
-    panel.add(commitLegendPanel, gb)
-    ++gb.gridy
-    panel.add(myDeleteLocallyAddedFiles, gb)
-    return panel
-  }
+  override fun getPreferredFocusedComponent(): JComponent = browser.preferredFocusedComponent
 
-  override fun getPreferredFocusedComponent(): JComponent {
-    return myBrowser.preferredFocusedComponent
-  }
-
-  override fun getDimensionServiceKey(): String {
-    return "RollbackChangesDialog"
-  }
+  override fun getDimensionServiceKey(): String = "RollbackChangesDialog"
 
   companion object {
-    const val DELETE_LOCALLY_ADDED_FILES_KEY = "delete.locally.added.files"
+    private const val DELETE_LOCALLY_ADDED_FILES_KEY = "delete.locally.added.files"
 
     @JvmStatic
     fun rollbackChanges(project: Project, changes: Collection<Change>) {
-      val browser: LocalChangesBrowser
       val changeListManager = ChangeListManagerEx.getInstanceEx(project)
-      browser = if (changeListManager.areChangeListsEnabled()) {
+      val browser = if (changeListManager.areChangeListsEnabled()) {
         val lists = changeListManager.getAffectedLists(changes)
         SelectedChangeLists(project, lists)
       }
@@ -126,9 +108,8 @@ class RollbackChangesDialog private constructor(private val myProject: Project, 
 
     @JvmStatic
     fun rollbackChanges(project: Project) {
-      val browser: LocalChangesBrowser
       val changeListManager = ChangeListManager.getInstance(project)
-      browser = if (changeListManager.areChangeListsEnabled()) {
+      val browser = if (changeListManager.areChangeListsEnabled()) {
         val lists = listOf(changeListManager.defaultChangeList)
         SelectedChangeLists(project, lists)
       }
@@ -141,14 +122,15 @@ class RollbackChangesDialog private constructor(private val myProject: Project, 
     @JvmStatic
     fun rollbackChanges(project: Project, changeList: LocalChangeList) {
       val lists = listOf(changeList)
-      val browser: LocalChangesBrowser = SelectedChangeLists(project, lists)
+      val browser = SelectedChangeLists(project, lists)
       showRollbackDialog(project, browser)
     }
 
     private fun showRollbackDialog(project: Project, browser: LocalChangesBrowser) {
       if (browser.allChanges.isEmpty()) {
         val operationName = UIUtil.removeMnemonic(RollbackUtil.getRollbackOperationName(project))
-        Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text"),
+        Messages.showWarningDialog(project,
+                                   VcsBundle.message("commit.dialog.no.changes.detected.text"),
                                    VcsBundle.message("changes.action.rollback.nothing", operationName))
         return
       }
