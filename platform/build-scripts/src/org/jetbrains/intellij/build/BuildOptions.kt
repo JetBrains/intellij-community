@@ -10,7 +10,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
+import java.util.*
 import java.util.concurrent.ThreadLocalRandom
+import java.util.concurrent.TimeUnit
+import kotlin.collections.HashSet
 
 /**
  * Pass comma-separated names of build steps (see below) to this system property to skip them.
@@ -177,6 +180,8 @@ class BuildOptions {
      */
     const val RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY = "intellij.build.dependencies.resolution.retry.delay.ms"
     const val TARGET_OS_PROPERTY = "intellij.build.target.os"
+
+    private val currentBuildTimeInSeconds = System.currentTimeMillis() / 1000
   }
 
   var classesOutputDirectory: String? = System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
@@ -324,7 +329,21 @@ class BuildOptions {
   /**
    * See [GlobalOptions.BUILD_DATE_IN_SECONDS]
    */
-  var buildDateInSeconds: Long = 0
+  val buildDateInSeconds: Long = run {
+    val sourceDateEpoch = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS)
+    val minZipTime = GregorianCalendar(1980, 0, 1)
+    val minZipTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(minZipTime.timeInMillis)
+    val value = sourceDateEpoch?.toLong() ?: currentBuildTimeInSeconds
+    require(value >= minZipTimeInSeconds) {
+      ".zip archive cannot store timestamps older than ${minZipTime.time} " +
+      "(see specification: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT) " +
+      "but ${GlobalOptions.BUILD_DATE_IN_SECONDS}=$sourceDateEpoch was supplied. " +
+      "If timestamps aren't stored then .zip content files modification time will be set to extraction time " +
+      "diverging from modification times specified in .manifest."
+    }
+    value
+  }
+
   var randomSeedNumber: Long = 0
 
   @ApiStatus.Experimental
@@ -342,9 +361,6 @@ class BuildOptions {
       targetOsId == OsFamily.LINUX.osId -> persistentListOf(OsFamily.LINUX)
       else -> throw IllegalStateException("Unknown target OS $targetOsId")
     }
-
-    val sourceDateEpoch = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS)
-    buildDateInSeconds = sourceDateEpoch?.toLong() ?: (System.currentTimeMillis() / 1000)
     val randomSeedString = System.getProperty("intellij.build.randomSeed")
     randomSeedNumber = if (randomSeedString == null || randomSeedString.isBlank()) {
       ThreadLocalRandom.current().nextLong()

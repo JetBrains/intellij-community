@@ -7,7 +7,6 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.reproducibleBuilds.diffTool.FileTreeContentComparison
-import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -16,7 +15,6 @@ import kotlin.io.path.name
 import kotlin.io.path.writeText
 
 internal class BuildArtifactsReproducibilityTest {
-  private val buildDateInSeconds = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS)?.toLongOrNull()
   private val randomSeedNumber = Random().nextLong()
   private val iterationsChannel = Channel<BuildContext>()
   val iterations = if (isEnabled) 2 else 1
@@ -27,10 +25,6 @@ internal class BuildArtifactsReproducibilityTest {
 
   fun configure(options: BuildOptions) {
     if (!isEnabled) return
-    requireNotNull(buildDateInSeconds) {
-      "${GlobalOptions.BUILD_DATE_IN_SECONDS} environment variable is required"
-    }
-    options.buildDateInSeconds = buildDateInSeconds
     options.randomSeedNumber = randomSeedNumber
     options.buildStepsToSkip.remove(BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP)
     options.buildMacArtifactsWithRuntime = true

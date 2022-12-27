@@ -325,7 +325,11 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
         .setAttribute("includeTests", includeTests)
         .setAttribute("cacheDir", compilationData.dataStorageRoot.toString())
         .useWithScope {
-          Standalone.runBuild({ context.projectModel }, compilationData.dataStorageRoot.toFile(), messageHandler, scopes, false)
+          Standalone.runBuild(
+            { context.projectModel }, compilationData.dataStorageRoot.toFile(),
+            mapOf(GlobalOptions.BUILD_DATE_IN_SECONDS to "${context.options.buildDateInSeconds}"),
+            messageHandler, scopes, false
+          )
         }
       if (!messageHandler.errorMessagesByCompiler.isEmpty) {
         for ((key, value) in messageHandler.errorMessagesByCompiler.entrySet()) {
