@@ -7,11 +7,9 @@ import com.intellij.ui.svg.SvgTranscoder
 import com.intellij.ui.svg.createSvgDocument
 import com.intellij.util.LineSeparator
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.diff.Diff
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.util.lang.Murmur3_32Hash
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -19,10 +17,12 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
+import org.jetbrains.xxh3.Xxh3
 import java.awt.image.BufferedImage
 import java.io.File
 import java.nio.file.*
 import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import javax.imageio.ImageIO
 import javax.xml.stream.XMLStreamException
@@ -59,8 +59,8 @@ internal open class IconsClassGenerator(private val projectHome: Path,
   private val processedClasses = AtomicInteger()
   private val processedIcons = AtomicInteger()
   private val processedPhantom = AtomicInteger()
-  private val modifiedClasses = ContainerUtil.createConcurrentList<ModifiedClass>()
-  private val obsoleteClasses = ContainerUtil.createConcurrentList<Path>()
+  private val modifiedClasses = CopyOnWriteArrayList<ModifiedClass>()
+  private val obsoleteClasses = CopyOnWriteArrayList<Path>()
 
   private val utilUi: JpsModule by lazy {
     modules.find { it.name == "intellij.platform.util.ui" } ?: error("Can't load module 'util'")
@@ -641,10 +641,7 @@ private const val ICON_MANAGER_CODE = "IconManager.getInstance()"
 // grid-layout.svg duplicates grid-view.svg, but grid-layout_dark.svg differs from grid-view_dark.svg
 // so, add filename to image id to support such a scenario
 internal fun getImageKey(fileData: ByteArray, fileName: String): Int {
-  val h = Murmur3_32Hash.Murmur3_32Hasher(0)
-  h.putBytes(fileData, 0, fileData.size)
-  h.putString(fileName)
-  return h.hash()
+  return Xxh3.hashLongs(longArrayOf(Xxh3.hash(fileData), Xxh3.hash(fileName))).toInt()
 }
 
 // remove line separators to unify line separators (\n vs \r\n), trim lines
