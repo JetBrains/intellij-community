@@ -1,85 +1,75 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.util;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Ref;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.lang.reflect.Field;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.Ref
+import org.jetbrains.annotations.NonNls
+import java.lang.reflect.Field
 
 /**
  * Thread unsafe field accessor.
  *
  * @param <E> the type of the field's class
  * @param <T> the type of the field
- */
-public class FieldAccessor<E, T> {
-  private static final Logger LOG = Logger.getInstance(FieldAccessor.class);
-
-  private Ref<Field> myFieldRef;
-  private final Class<E> myClass;
-  private final String myName;
-  private final Class<T> myType;
-
-  public FieldAccessor(@NotNull Class<E> aClass, @NotNull @NonNls String name) {
-    this(aClass, name, null);
-  }
-
-  public FieldAccessor(@NotNull Class<E> aClass, @NotNull @NonNls String name, @Nullable Class<T> type) {
-    myClass = aClass;
-    myName = name;
-    myType = type;
-  }
-
-  public boolean isAvailable() {
-    if (myFieldRef == null) {
-      try {
-        myFieldRef = new Ref<>();
-        myFieldRef.set(ReflectionUtil.findAssignableField(myClass, myType, myName));
-        myFieldRef.get().setAccessible(true);
+</T></E> */
+class FieldAccessor<E, T> @JvmOverloads constructor(private val aClass: Class<E>,
+                                                    private val name: @NonNls String,
+                                                    private val type: Class<T>? = null) {
+  private var fieldRef: Ref<Field?>? = null
+  val isAvailable: Boolean
+    get() {
+      if (fieldRef == null) {
+        fieldRef = Ref()
+        var result: Field? = null
+        run {
+          var aClass: Class<*>? = this.aClass
+          while (aClass != null) {
+            for (candidate in aClass.declaredFields) {
+              if (name == candidate.name && (type == null || type.isAssignableFrom(candidate.type))) {
+                candidate.isAccessible = true
+                result = candidate
+                break
+              }
+            }
+            aClass = aClass.superclass
+          }
+        }
+        if (result == null) {
+          LOG.warn("Field not found: " + aClass.name + "." + name)
+          return false
+        }
+        fieldRef!!.set(result)
+        fieldRef!!.get()!!.isAccessible = true
       }
-      catch (NoSuchFieldException e) {
-        LOG.warn("Field not found: " + myClass.getName() + "." + myName);
-      }
+      return fieldRef!!.get() != null
     }
-    return myFieldRef.get() != null;
+
+  operator fun get(`object`: E?): T? {
+    if (!isAvailable) {
+      return null
+    }
+    try {
+      return fieldRef!!.get()!![`object`] as T
+    }
+    catch (e: IllegalAccessException) {
+      LOG.warn("Field not accessible: " + aClass.name + "." + name)
+    }
+    return null
   }
 
-  public T get(@Nullable E object) {
-    if (!isAvailable()) return null;
+  operator fun set(`object`: E?, value: T?) {
+    if (!isAvailable) {
+      return
+    }
     try {
-      //noinspection unchecked
-      return (T)myFieldRef.get().get(object);
+      fieldRef!!.get()!![`object`] = value
     }
-    catch (IllegalAccessException e) {
-      LOG.warn("Field not accessible: " + myClass.getName() + "." + myName);
+    catch (e: IllegalAccessException) {
+      LOG.warn("Field not accessible: " + aClass.name + "." + name)
     }
-    return null;
   }
 
-  public void set(@Nullable E object, @Nullable T value) {
-    if (!isAvailable()) return;
-    try {
-      myFieldRef.get().set(object, value);
-    }
-    catch (IllegalAccessException e) {
-      LOG.warn("Field not accessible: " + myClass.getName() + "." + myName);
-    }
+  companion object {
+    private val LOG = Logger.getInstance(FieldAccessor::class.java)
   }
 }
