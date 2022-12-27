@@ -84,12 +84,12 @@ object DotnetIconSync {
     context.devRepoDir = context.devRepoRoot.resolve(path.devPath)
     context.iconRepoDir = context.iconRepo.resolve(path.iconsPath)
     context.devRepoDir.toFile().walkTopDown().forEach {
-      if (isImage(it)) {
+      if (isImage(it.toPath())) {
         it.delete() || error("Unable to delete $it")
       }
     }
     context.iconRepoDir.toFile().walkTopDown().forEach {
-      if (isImage(it) && context.iconFilter(it.toPath())) {
+      if (isImage(it.toPath()) && context.iconFilter(it.toPath())) {
         val target = context.devRepoDir.resolve(context.iconRepoDir.relativize(it.toPath()))
         it.copyTo(target.toFile(), overwrite = true)
       }

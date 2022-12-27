@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.FileUtil
@@ -83,14 +85,14 @@ internal class ImageInfo(val id: String,
   }
 }
 
-internal data class ImageFlags(val used: Boolean, val deprecation: DeprecationData?)
+internal data class ImageFlags(@JvmField val used: Boolean, @JvmField val deprecation: DeprecationData?)
 
-internal class ImageSyncFlags(val skipSync: Boolean, val forceSync: Boolean)
+internal class ImageSyncFlags(@JvmField val skipSync: Boolean, @JvmField val forceSync: Boolean)
 
-internal data class DeprecationData(val comment: String?,
-                                    val replacement: String?,
-                                    val replacementContextClazz: String?,
-                                    val replacementReference: String?)
+internal data class DeprecationData(@JvmField val comment: String?,
+                                    @JvmField val replacement: String?,
+                                    @JvmField val replacementContextClazz: String?,
+                                    @JvmField val replacementReference: String?)
 
 internal class ImageCollector(private val projectHome: Path,
                               private val iconsOnly: Boolean = true,
@@ -99,7 +101,7 @@ internal class ImageCollector(private val projectHome: Path,
   // files processed in parallel, so, concurrent data structures must be used
   private val icons = ConcurrentHashMap<String, ImageInfo>()
   private val phantomIcons = ConcurrentHashMap<String, ImageInfo>()
-  private val usedIconsRobots: MutableSet<Path> = Collections.newSetFromMap(ConcurrentHashMap())
+  private val usedIconRobots: MutableSet<Path> = Collections.newSetFromMap(ConcurrentHashMap())
 
   fun collect(module: JpsModule, includePhantom: Boolean = false): Collection<ImageInfo> {
     for (sourceRoot in module.sourceRoots) {
@@ -148,8 +150,8 @@ internal class ImageCollector(private val projectHome: Path,
   }
 
   fun printUsedIconRobots() {
-    if (usedIconsRobots.isNotEmpty()) {
-      println(usedIconsRobots.joinToString(separator = "\n") { "Found icon-robots: $it" })
+    if (usedIconRobots.isNotEmpty()) {
+      println(usedIconRobots.joinToString(separator = "\n") { "Found icon-robots: $it" })
     }
   }
 
@@ -166,12 +168,16 @@ internal class ImageCollector(private val projectHome: Path,
       return
     }
 
-    val iconRoot = downToRoot(rootDir, rootDir, attributes.isDirectory, null, IconRobotsData(null, ignoreSkipTag, usedIconsRobots), 0)
-                   ?: return
+    val iconRoot = downToRoot(root = rootDir,
+                              file = rootDir,
+                              isDirectory = attributes.isDirectory,
+                              common = null,
+                              robotData = IconRobotsData(null, ignoreSkipTag, usedIconRobots),
+                              level = 0) ?: return
     val robotData = rootRobotData.fork(iconRoot, rootDir)
 
-    processDirectory(iconRoot, rootDir, sourceRoot, robotData, "", 0)
-    processPhantomIcons(iconRoot, sourceRoot, robotData, "")
+    processDirectory(dir = iconRoot, rootDir = rootDir, sourceRoot = sourceRoot, robotData = robotData, prefix = "", level = 0)
+    processPhantomIcons(root = iconRoot, sourceRoot = sourceRoot, robotData = robotData, prefix = "")
   }
 
   private fun processDirectory(dir: Path,
@@ -223,10 +229,10 @@ internal class ImageCollector(private val projectHome: Path,
 
   private fun upToProjectHome(dir: Path): IconRobotsData {
     if (dir == projectHome) {
-      return IconRobotsData(null, ignoreSkipTag, usedIconsRobots)
+      return IconRobotsData(null, ignoreSkipTag, usedIconRobots)
     }
 
-    val parent = dir.parent ?: return IconRobotsData(null, ignoreSkipTag, usedIconsRobots)
+    val parent = dir.parent ?: return IconRobotsData(null, ignoreSkipTag, usedIconRobots)
     return upToProjectHome(parent).fork(parent, projectHome)
   }
 
@@ -274,7 +280,7 @@ private data class OwnDeprecatedIcon(val relativeFile: String, val data: Depreca
 
 internal class IconRobotsData(private val parent: IconRobotsData? = null,
                               private val ignoreSkipTag: Boolean,
-                              private val usedIconsRobots: MutableSet<Path>?) {
+                              private val usedIconRobots: MutableSet<Path>?) {
   private val skip = ArrayList<Pattern>()
   private val used = ArrayList<Pattern>()
   private val deprecated = ArrayList<DeprecatedEntry>()
@@ -291,7 +297,7 @@ internal class IconRobotsData(private val parent: IconRobotsData? = null,
     return mergeImageFlags(flags, parentFlags, file)
   }
 
-  fun getImageSyncFlags(file: Path) = ImageSyncFlags(skipSync = matches(file, skipSync), forceSync = matches(file, forceSync))
+  fun getImageSyncFlags(file: Path): ImageSyncFlags = ImageSyncFlags(skipSync = matches(file, skipSync), forceSync = matches(file, forceSync))
 
   fun getOwnDeprecatedIcons(): List<Pair<String, ImageFlags>> {
     return ownDeprecatedIcons.map { Pair(it.relativeFile, ImageFlags(used = false, deprecation = it.data)) }
@@ -312,9 +318,9 @@ internal class IconRobotsData(private val parent: IconRobotsData? = null,
       return this
     }
 
-    usedIconsRobots?.add(robots)
+    usedIconRobots?.add(robots)
 
-    val answer = IconRobotsData(this, ignoreSkipTag, usedIconsRobots)
+    val answer = IconRobotsData(this, ignoreSkipTag, usedIconRobots)
     parse(robots,
           RobotFileHandler("skip:") { value -> answer.skip.add(compilePattern(dir, root, value)) },
           RobotFileHandler("used:") { value -> answer.used.add(compilePattern(dir, root, value)) },
@@ -343,7 +349,7 @@ internal class IconRobotsData(private val parent: IconRobotsData? = null,
   }
 
   private fun computeReplacementReference(comment: String?): String? {
-    // allow only same class fields (IDEA-218345)
+    // allow only the same class fields (IDEA-218345)
     return comment?.substringAfter("use {@link #", "")?.substringBefore('}')?.trim()?.takeIf { it.isNotEmpty() }
   }
 

@@ -142,7 +142,6 @@ object SVGLoader {
   }
 
   @Throws(IOException::class)
-  @JvmStatic
   fun loadWithoutCache(content: ByteArray, scale: Float): BufferedImage {
     return try {
       SvgTranscoder.createImage(scale, createDocument(null, ByteArrayInputStream(content)), null)

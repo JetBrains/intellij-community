@@ -13,7 +13,6 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import kotlinx.coroutines.*
-import org.apache.batik.transcoder.TranscoderException
 import org.jetbrains.ikv.builder.IkvWriter
 import org.jetbrains.ikv.builder.sizeUnawareIkvWriter
 import org.jetbrains.intellij.build.io.ByteBufferAllocator
@@ -116,7 +115,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private suspend fun compileIcons(dbDir: Path, dirs: List<Path>): List<Path> {
-    val rootRobotData = IconRobotsData(parent = null, ignoreSkipTag = false, usedIconsRobots = null)
+    val rootRobotData = IconRobotsData(parent = null, ignoreSkipTag = false, usedIconRobots = null)
     val result: MutableList<IconData> = withContext(Dispatchers.IO) {
       dirs.map { dir ->
         async {
@@ -250,12 +249,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
       val light1xBytes = light1xData.toByteArray()
       val imageKey = getImageKey(fileData = light1xBytes, fileName = light1x.fileName.toString())
       totalFiles.addAndGet(variants.size)
-      try {
-        result.add(IconData(light1xData = light1xBytes, variants = variants, imageKey = imageKey))
-      }
-      catch (e: TranscoderException) {
-        throw RuntimeException("Cannot process $commonName (variants=$variants)", e)
-      }
+      result.add(IconData(light1xData = light1xBytes, variants = variants, imageKey = imageKey))
     }
   }
 
