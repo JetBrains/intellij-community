@@ -360,7 +360,10 @@ class MacDistributionBuilder(override val context: BuildContext,
                                    macZipWithoutRuntime: Path?, customizer: MacDistributionCustomizer,
                                    context: BuildContext) {
     spanBuilder("build macOS artifacts for specific arch").setAttribute("arch", arch.name).useWithScope2 {
-      val notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true)
+      val notarize = SystemProperties.getBooleanProperty(
+        "intellij.build.mac.notarize",
+        !context.isStepSkipped(BuildOptions.MAC_NOTARIZE_STEP)
+      )
       withContext(Dispatchers.IO) {
         buildForArch(arch, macZip, macZipWithoutRuntime, notarize, customizer, context)
         Files.deleteIfExists(macZip)

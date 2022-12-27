@@ -36,6 +36,7 @@ fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: Produ
     BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP,
     BuildOptions.WIN_SIGN_STEP,
     BuildOptions.MAC_SIGN_STEP,
+    BuildOptions.MAC_NOTARIZE_STEP,
   ))
   options.buildMacArtifactsWithRuntime = false
   options.buildMacArtifactsWithoutRuntime = false

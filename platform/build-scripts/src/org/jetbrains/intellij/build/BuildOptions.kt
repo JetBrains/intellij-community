@@ -72,6 +72,9 @@ class BuildOptions {
     /** Sign macOS distribution.  */
     const val MAC_SIGN_STEP = "mac_sign"
 
+    /** Notarize macOS distribution.  */
+    const val MAC_NOTARIZE_STEP = "mac_notarize"
+
     /** Build Linux artifacts.  */
     const val LINUX_ARTIFACTS_STEP = "linux_artifacts"
 
