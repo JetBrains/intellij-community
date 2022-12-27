@@ -750,6 +750,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
 
+            @TestMetadata("callWithLambdaArgument.kt")
+            public void testCallWithLambdaArgument() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/callWithLambdaArgument.kt");
+            }
+
             @TestMetadata("callWithPlatformTypeReceiver.kt")
             public void testCallWithPlatformTypeReceiver() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/callWithPlatformTypeReceiver.kt");
