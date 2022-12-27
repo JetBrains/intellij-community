@@ -853,25 +853,26 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   }
 
   private fun doTrimSize(fileToIgnore: VirtualFile?, closeNonModifiedFilesFirst: Boolean, transferFocus: Boolean) {
-    val limit = tabLimit
-    val closingOrder = getTabClosingOrder(closeNonModifiedFilesFirst)
     val selectedFile = selectedFile
-    if (selectedFile != null && shouldCloseSelected(selectedFile, fileToIgnore)) {
+
+    val alreadyClosedFile = if (selectedFile != null && shouldCloseSelected(selectedFile, fileToIgnore)) {
       defaultCloseFile(selectedFile, transferFocus)
-      closingOrder.remove(selectedFile)
-    }
+      selectedFile
+    } else null
 
     // close all preview tabs
     for (file in getComposites().filter { it.isPreview }.map { it.file }.filter { it != fileToIgnore }.distinct().toList()) {
       defaultCloseFile(file = file, transferFocus = transferFocus)
     }
 
-    for (file in closingOrder) {
-      if (tabbedPane.tabCount <= limit || tabbedPane.tabCount == 0 || areAllTabsPinned(fileToIgnore)) {
-        return
-      }
+    val limit = tabLimit
+    if (tabbedPane.tabCount <= limit || tabbedPane.tabCount == 0 || areAllTabsPinned(fileToIgnore)) {
+      return
+    }
 
-      if (fileCanBeClosed(file, fileToIgnore)) {
+    val closingOrder = getTabClosingOrder(closeNonModifiedFilesFirst)
+    for (file in closingOrder) {
+      if (file != alreadyClosedFile && fileCanBeClosed(file, fileToIgnore)) {
         defaultCloseFile(file, transferFocus)
       }
     }
