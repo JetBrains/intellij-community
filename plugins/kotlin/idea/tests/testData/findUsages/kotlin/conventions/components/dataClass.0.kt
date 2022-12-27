@@ -27,6 +27,5 @@ fun List<A>.ext1() {
 
 fun <T> T.getThis(): T = this
 
-// FIR_COMPARISON
 // FIR_COMPARISON_WITH_DISABLED_COMPONENTS
 // IGNORE_FIR_LOG

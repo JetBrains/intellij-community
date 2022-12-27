@@ -63,9 +63,16 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     }
 
 
-
     override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> {
         return emptySet()
+    }
+
+    override fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration? {
+        return null
+    }
+
+    override fun isExpectDeclaration(declaration: KtDeclaration): Boolean {
+        return false
     }
 
     override fun dataClassComponentMethodName(element: KtParameter): String? {
@@ -227,7 +234,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         searchDeeply: Boolean,
         processor: (superMember: PsiElement, overridingMember: PsiElement) -> Boolean
     ): Boolean {
-        return false
+        TODO()
     }
 
     override fun findSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {
@@ -261,7 +268,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     }
 
     override fun isInProjectSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean): Boolean {
-        return RootKindFilter.projectSources.copy(includeProjectSourceFiles = includeScriptsOutsideSourceRoots).matches(element)
+        return RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = includeScriptsOutsideSourceRoots).matches(element)
     }
 
     /**
@@ -286,14 +293,6 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
             Modality.OPEN, Modality.SEALED, Modality.ABSTRACT -> true
             Modality.FINAL -> false
         }
-    }
-
-    override fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration? {
-        return null
-    }
-
-    override fun isExpectDeclaration(declaration: KtDeclaration): Boolean {
-        return false
     }
 
     override fun canBeResolvedWithFrontEnd(element: PsiElement): Boolean {
