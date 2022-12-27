@@ -198,6 +198,9 @@ fun JKFieldAccessExpression.isInDecrementOrIncrement(): Boolean =
         else -> false
     }
 
+fun JKVariable.hasUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
+    findUsages(scope, context).isNotEmpty()
+
 fun JKVariable.hasWritableUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
     findUsages(scope, context).any {
         it.asAssignmentFromTarget() != null

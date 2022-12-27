@@ -238,6 +238,11 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
         runTest("testData/copyPaste/SingleWordFromIdentifier.java");
     }
 
+    @TestMetadata("TopLevelMainWithUsedArgs.java")
+    public void testTopLevelMainWithUsedArgs() throws Exception {
+        runTest("testData/copyPaste/TopLevelMainWithUsedArgs.java");
+    }
+
     @TestMetadata("UnconvertedMethodReference.java")
     public void testUnconvertedMethodReference() throws Exception {
         runTest("testData/copyPaste/UnconvertedMethodReference.java");
