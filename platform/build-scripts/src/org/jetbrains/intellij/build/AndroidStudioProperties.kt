@@ -149,8 +149,8 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
         spec.withModule("intellij.c.testing", spec.mainJarName)
         spec.withModule("intellij.cidr.modulemap.language", spec.mainJarName)
       },
-      PluginLayout.simplePlugin("intellij.c.clangd"),
-      PluginLayout.simplePlugin("intellij.c.clangdBridge"),
+      PluginLayout.plugin("intellij.c.clangd"),
+      PluginLayout.plugin("intellij.c.clangdBridge"),
     ))
   }
 
