@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 fun foo(paramTest: Int = 12) {}
 
 fun test() {

@@ -161,6 +161,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractHighLevelBasicCompletionHandlerTest> {
             model("handlers/basic", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
+            model("handlers", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX, isRecursive = false)
         }
 
         testClass<AbstractHighLevelJavaCompletionHandlerTest> {

@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 fun foo(f: (Int) -> Unit) = 12
 
 fun test() {

@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 fun foo(first: Int = 999, second: Int = 12, third: Int = 99) {
 
 }

@@ -1,5 +1,10 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 infix fun <A, B> A.to(that: B): Pair<A, B> = Pair(this, that)
 
 fun foo() {
     val pair = 1 to<caret>
 }
+
+// ELEMENT: to
+// TAIL_TEXT: "(that: B) (<root>) for A"

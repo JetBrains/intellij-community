@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 fun foo() {
     class LocalClass {
         inner class Nested {}
@@ -5,3 +7,5 @@ fun foo() {
         val v: <caret>
     }
 }
+
+// ELEMENT: Nested

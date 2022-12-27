@@ -5,3 +5,5 @@ class C {
 fun foo(c: C) {
     c.Inner(<caret>)
 }
+
+// ELEMENT: Inner

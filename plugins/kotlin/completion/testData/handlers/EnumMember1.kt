@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 enum class E {
     A
     B
@@ -7,3 +9,5 @@ enum class E {
 fun foo() {
     val e = E. <caret>
 }
+
+// ELEMENT: A
