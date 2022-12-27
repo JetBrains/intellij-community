@@ -59,9 +59,8 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
   for (parameter in parameters) {
     commandLineBuilder.addParameter(parameter.apply(targetEnvironment))
   }
-  sdk.targetAdditionalData?.pathsAddedByUser?.map { it.value }?.forEach { path ->
-    appendToPythonPath(constant(path), targetEnvironment.targetPlatform)
-  }
+  val userPathList = sdk.targetAdditionalData?.pathsAddedByUser?.map { it.value }?.map { constant(it) }?.toMutableList() ?: ArrayList()
+  initPythonPath(envs, true, userPathList, targetEnvironment.request, false)
   for ((name, value) in envs) {
     commandLineBuilder.addEnvironmentVariable(name, value.apply(targetEnvironment))
   }
