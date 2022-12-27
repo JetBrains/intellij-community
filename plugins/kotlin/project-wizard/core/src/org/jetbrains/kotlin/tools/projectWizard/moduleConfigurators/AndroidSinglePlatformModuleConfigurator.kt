@@ -29,8 +29,6 @@ object AndroidSinglePlatformModuleConfigurator :
     AndroidModuleConfigurator {
     override val moduleKind: ModuleKind get() = ModuleKind.singlePlatformAndroid
 
-    override fun getNewAndroidManifestPath(module: Module): Path? = null
-
     @NonNls
     override val id = "android"
 
@@ -65,13 +63,8 @@ object AndroidSinglePlatformModuleConfigurator :
         +super<AndroidModuleConfigurator>.createBuildFileIRs(reader, configurationData, module)
         +RepositoryIR((DefaultRepository.JCENTER))
         +AndroidConfigIR(
-            javaPackage = when (reader.createAndroidPlugin(module)) {
-                AndroidGradlePlugin.APPLICATION -> module.javaPackage(configurationData.pomIr)
-                AndroidGradlePlugin.LIBRARY -> null
-            },
-            newManifestPath = getNewAndroidManifestPath(module),
-            printVersionCode = true,
-            printBuildTypes = true,
+            javaPackage = module.javaPackage(configurationData.pomIr),
+            isApplication = true,
         )
     }
 
@@ -119,7 +112,7 @@ object AndroidSinglePlatformModuleConfigurator :
         TemplatesPlugin.addFileTemplates.execute(
             listOf(
                 FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.activityMainXml, modulePath, settings),
-                FileTemplate(getAndroidManifestXml(module), modulePath, settings),
+                FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.androidManifestXml, modulePath, settings),
                 FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.colorsXml, modulePath, settings),
                 FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.stylesXml, modulePath, settings),
                 FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.mainActivityKt(javaPackage), modulePath, settings)

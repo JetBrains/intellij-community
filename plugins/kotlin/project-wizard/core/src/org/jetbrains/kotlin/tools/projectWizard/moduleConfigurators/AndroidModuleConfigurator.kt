@@ -23,14 +23,12 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModulesToIrConversionData
-import org.jetbrains.kotlin.tools.projectWizard.plugins.templates.TemplatesPlugin
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.JavaPackage
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.DefaultRepository
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repository
 import org.jetbrains.kotlin.tools.projectWizard.settings.javaPackage
-import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplate
 import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplateDescriptor
 import java.nio.file.Path
 
@@ -38,21 +36,6 @@ interface AndroidModuleConfigurator : ModuleConfigurator,
     ModuleConfiguratorWithSettings,
     ModuleConfiguratorWithModuleType,
     GradleModuleConfigurator {
-
-    fun getNewAndroidManifestPath(module: Module): Path?
-
-    private fun getManifestPathOrDefault(module: Module): Path =
-        getNewAndroidManifestPath(module) ?: ("src" / "main" / "AndroidManifest.xml")
-
-    fun getAndroidManifestXml(module: Module) = FileTemplateDescriptor(
-        "android/AndroidManifest.xml.vm",
-        getManifestPathOrDefault(module)
-    )
-
-    fun getAndroidManifestForLibraryXml(module: Module) = FileTemplateDescriptor(
-        "android/AndroidManifestLibrary.xml.vm",
-        getManifestPathOrDefault(module)
-    )
 
     override val moduleType: ModuleType
         get() = ModuleType.android
@@ -92,6 +75,11 @@ interface AndroidModuleConfigurator : ModuleConfigurator,
         StdlibType.StdlibJdk7
 
     object FileTemplateDescriptors {
+        val androidManifestXml = FileTemplateDescriptor(
+            "android/AndroidManifest.xml",
+            "src" / "main" / "AndroidManifest.xml"
+        )
+
         val activityMainXml = FileTemplateDescriptor(
             "android/activity_main.xml.vm",
             "src" / "main" / "res" / "layout" / "activity_main.xml"
@@ -133,9 +121,6 @@ interface AndroidModuleConfigurator : ModuleConfigurator,
 
 object AndroidTargetConfigurator : AndroidTargetConfiguratorBase(),
                                    ModuleConfiguratorWithTests {
-    override fun getNewAndroidManifestPath(module: Module): Path =
-        Defaults.SRC_DIR / "${module.name}Main" / "AndroidManifest.xml"
-
     override fun defaultTestFramework(): KotlinTestFramework = KotlinTestFramework.JUNIT4
 
     override fun skipResolutionStrategy(data: ModulesToIrConversionData) =
@@ -170,8 +155,6 @@ object AndroidTargetConfigurator : AndroidTargetConfiguratorBase(),
             +super<AndroidTargetConfiguratorBase>.createBuildFileIRs(reader, configurationData, module)
             +super<ModuleConfiguratorWithTests>.createBuildFileIRs(reader, configurationData, module)
         }
-
-    override val androidPrintVersionAndBuildTypes = false
 }
 
 abstract class AndroidTargetConfiguratorBase : TargetConfigurator,
@@ -196,28 +179,8 @@ abstract class AndroidTargetConfiguratorBase : TargetConfigurator,
         configurationData: ModulesToIrConversionData,
         module: Module,
         modulePath: Path
-    ): TaskResult<Unit> = computeM {
-        val javaPackage = module.javaPackage(configurationData.pomIr)
-
-        val sharedModule = configurationData.getDependentModules(module).get().find { dependency ->
-            dependency.configurator is MppModuleConfigurator
-        }
-
-        val sharedPackage = sharedModule?.javaPackage(configurationData.pomIr)
-
-        val settings = mapOf(
-            "package" to javaPackage.asCodePackage(),
-            "sharedPackage" to sharedPackage?.asCodePackage()
-        )
-
-        TemplatesPlugin.addFileTemplates.execute(
-            listOf(
-                FileTemplate(getAndroidManifestForLibraryXml(module), modulePath, settings)
-            )
-        )
-
+    ): TaskResult<Unit> =
         GradlePlugin.gradleProperties.addValues("android.useAndroidX" to true)
-    }
 
     override fun createSettingsGradleIRs(
         reader: Reader,
@@ -236,17 +199,10 @@ abstract class AndroidTargetConfiguratorBase : TargetConfigurator,
         buildList {
             +super<AndroidModuleConfigurator>.createBuildFileIRs(reader, configurationData, module)
             +AndroidConfigIR(
-                javaPackage = when (reader.createAndroidPlugin(module)) {
-                    AndroidGradlePlugin.APPLICATION -> module.javaPackage(configurationData.pomIr)
-                    AndroidGradlePlugin.LIBRARY -> null
-                },
-                newManifestPath = getNewAndroidManifestPath(module),
-                printVersionCode = androidPrintVersionAndBuildTypes,
-                printBuildTypes = androidPrintVersionAndBuildTypes,
+                javaPackage = module.javaPackage(configurationData.pomIr),
+                isApplication = reader.createAndroidPlugin(module) == AndroidGradlePlugin.APPLICATION
             )
         }
-
-    protected abstract val androidPrintVersionAndBuildTypes: Boolean
 
     val androidPlugin by enumSetting<AndroidGradlePlugin>(
         KotlinNewProjectWizardBundle.message("module.configurator.android.setting.android.plugin"),

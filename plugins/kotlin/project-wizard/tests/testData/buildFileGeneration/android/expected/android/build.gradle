@@ -13,17 +13,14 @@ dependencies {
 }
 
 android {
-    compileSdkVersion 31
+    namespace 'testGroupId.android'
+    compileSdk 32
     defaultConfig {
         applicationId 'testGroupId.android'
-        minSdkVersion 24
-        targetSdkVersion 31
+        minSdk 24
+        targetSdk 32
         versionCode 1
         versionName '1.0'
-    }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
     }
     buildTypes {
         'release' {
