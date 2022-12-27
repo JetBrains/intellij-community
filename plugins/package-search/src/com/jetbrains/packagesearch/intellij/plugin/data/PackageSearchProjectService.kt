@@ -20,7 +20,10 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.Service.*
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiManager
@@ -30,6 +33,7 @@ import com.jetbrains.packagesearch.intellij.plugin.getInstalledDependencies
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstalledDependenciesUsages
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.util.BackgroundLoadingBarController
 import com.jetbrains.packagesearch.intellij.plugin.util.PowerSaveModeState
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
@@ -37,7 +41,6 @@ import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo.TraceSource.SE
 import com.jetbrains.packagesearch.intellij.plugin.util.catchAndLog
 import com.jetbrains.packagesearch.intellij.plugin.util.combineLatest
 import com.jetbrains.packagesearch.intellij.plugin.util.debounceBatch
-import com.jetbrains.packagesearch.intellij.plugin.util.fileOpenedFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.filesChangedEventFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.loadingContainer
@@ -62,17 +65,15 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import org.jetbrains.idea.packagesearch.api.PackageSearchApiClient
@@ -87,22 +88,20 @@ internal class PackageSearchProjectService(private val project: Project) : Dispo
     )
 
     private val restartChannel = Channel<Unit>()
-    private val restartFlow = restartChannel.receiveAsFlow()
-        .shareIn(project.lifecycleScope, SharingStarted.Lazily)
 
     val allKnownRepositoriesFlow by timer(1.hours)
         .map(project.loadingContainer) {
             dataProvider.fetchKnownRepositories()
                 .map { RepositoryModel(it.id, it.friendlyName, it.url, it) }
         }
-        .stateInAndCatchAndLog(project.lifecycleScope, SharingStarted.Lazily, emptyList())
+        .stateInAndCatchAndLog(project.lifecycleScope, SharingStarted.Eagerly, emptyList())
 
     private val packageSearchModulesFlow by combine(
         project.trustedProjectFlow,
         ApplicationManager.getApplication().powerSaveModeFlow.map { it == PowerSaveModeState.DISABLED }
     ) { results: Array<Boolean> -> results.all { it } }
         .flatMapLatest { isPkgsEnabled -> if (isPkgsEnabled) project.nativeModulesFlow else emptyFlow() }
-        .replayOn(project.moduleChangesSignalFlow, restartFlow)
+        .replayOn(project.moduleChangesSignalFlow)
         .map(project.loadingContainer) { nativeModules ->
             project.moduleTransformers.parallelMap { it.transformModules(project, nativeModules) }
                 .flatten()
@@ -110,7 +109,7 @@ internal class PackageSearchProjectService(private val project: Project) : Dispo
         .catchAndLog()
 
     val packageSearchModulesStateFlow = packageSearchModulesFlow
-        .stateIn(project.lifecycleScope, SharingStarted.Lazily, emptyList())
+        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyList())
 
     val isAvailable
         get() = packageSearchModulesStateFlow.value.isNotEmpty()
@@ -144,7 +143,7 @@ internal class PackageSearchProjectService(private val project: Project) : Dispo
             repositoriesDeclarationsByModule.toMutableMap()
                 .apply { putAll(changes.associateWith { it.getDeclaredRepositories(knownRepositories) }) }
         }
-        .stateInAndCatchAndLog(project.lifecycleScope, SharingStarted.Lazily, emptyMap())
+        .stateInAndCatchAndLog(project.lifecycleScope, SharingStarted.Eagerly, emptyMap())
 
     private val declarationsChanges by moduleChangesFlow
         .map { it.associateWith { it.getDependencies() } }
@@ -158,7 +157,7 @@ internal class PackageSearchProjectService(private val project: Project) : Dispo
         ) { declaredDependenciesByModule, changes ->
             declaredDependenciesByModule.toMutableMap().apply { putAll(changes) }
         }
-        .stateInAndCatchAndLog(project.lifecycleScope, SharingStarted.Lazily, emptyMap())
+        .stateInAndCatchAndLog(project.lifecycleScope, SharingStarted.Eagerly, emptyMap())
 
     private val remoteData by declaredDependenciesByModuleFlow
         .filter { it.isNotEmpty() }
@@ -182,23 +181,19 @@ internal class PackageSearchProjectService(private val project: Project) : Dispo
         loadingContainer = project.loadingContainer
     ) { packageSearchModules, remoteData ->
         installedDependenciesUsages(project, packageSearchModules, remoteData)
-    }.stateInAndCatchAndLog(project.lifecycleScope, SharingStarted.Lazily, InstalledDependenciesUsages.EMPTY)
+    }.stateInAndCatchAndLog(project.lifecycleScope, SharingStarted.Eagerly, InstalledDependenciesUsages.EMPTY)
 
     init {
-
-        val openedBuildFilesFlow = combine(
-            project.fileOpenedFlow,
-            packageSearchModulesFlow.map { it.mapNotNull { it.buildFile }.toSet() }
-        ) { openedFiles, buildFiles ->
-            openedFiles intersect buildFiles
-        }.shareIn(project.lifecycleScope, SharingStarted.Eagerly, 1)
-
-        openedBuildFilesFlow
+        // allows rerunning PKGS inspections on already opened files
+        // when the data is finally available or changes for PackageUpdateInspection
+        // or when a build file changes
+        installedDependenciesFlow.flatMapLatest { packageSearchModulesFlow }
+            .map { it.mapNotNull { it.buildFile?.path } }
             .filter { it.isNotEmpty() }
-            .take(1)
-            .flatMapLatest { installedDependenciesFlow }
-            .flatMapLatest { openedBuildFilesFlow }
-            .flatMapMerge { it.asFlow() }
+            .flatMapLatest { knownBuildFiles ->
+                FileEditorManager.getInstance(project).openFiles
+                    .filter { it.path in knownBuildFiles }.asFlow()
+            }
             .mapNotNull { readAction { PsiManager.getInstance(project).findFile(it) } }
             .onEach { readAction { DaemonCodeAnalyzer.getInstance(project).restart(it) } }
             .flowOn(Dispatchers.EDT)

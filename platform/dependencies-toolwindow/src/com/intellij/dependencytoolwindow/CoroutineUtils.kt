@@ -40,8 +40,10 @@ val <T : Any> ExtensionPointName<T>.extensionsFlow: Flow<List<T>>
 @Service(Service.Level.PROJECT)
 internal class DependencyToolwindowLifecycleScope : CoroutineScope, Disposable {
 
+  val dispatcher = AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()
+
   override val coroutineContext =
-    SupervisorJob() + CoroutineName(this::class.qualifiedName!!) + AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()
+    SupervisorJob() + CoroutineName(this::class.qualifiedName!!) + dispatcher
 
   override fun dispose() {
     cancel("Disposing ${this::class.simpleName}")
@@ -51,7 +53,7 @@ internal class DependencyToolwindowLifecycleScope : CoroutineScope, Disposable {
 internal val Project.lifecycleScope: DependencyToolwindowLifecycleScope
   get() = service()
 
-internal fun <L : Any, K> Project.messageBusFlow(
+fun <L : Any, K> Project.messageBusFlow(
   topic: Topic<L>,
   initialValue: (suspend () -> K)? = null,
   listener: suspend ProducerScope<K>.() -> L
