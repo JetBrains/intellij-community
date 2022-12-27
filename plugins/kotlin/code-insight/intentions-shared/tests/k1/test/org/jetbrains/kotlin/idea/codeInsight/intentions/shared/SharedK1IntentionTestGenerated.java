@@ -567,6 +567,11 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
             runTest("../testData/intentions/operatorToFunction/emptyInvoke.kt");
         }
 
+        @TestMetadata("functionCallCaretOnCall.kt")
+        public void testFunctionCallCaretOnCall() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/functionCallCaretOnCall.kt");
+        }
+
         @TestMetadata("functionCallMultipleArgument.kt")
         public void testFunctionCallMultipleArgument() throws Exception {
             runTest("../testData/intentions/operatorToFunction/functionCallMultipleArgument.kt");
