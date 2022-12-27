@@ -28,6 +28,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -164,16 +165,7 @@ public class SwitchBlockHighlightingModel {
       String expected = JavaErrorBundle.message(is7 ? "valid.switch.17.selector.types" : "valid.switch.selector.types");
       HighlightInfo.Builder info =
         createError(mySelector, JavaErrorBundle.message("incompatible.types", expected, JavaHighlightUtil.formatType(mySelectorType)));
-      if (myBlock instanceof PsiSwitchStatement switchStatement) {
-        IntentionAction action = getFixFactory().createConvertSwitchToIfIntention(switchStatement);
-        info.registerFix(action, null, null, null, null);
-      }
-      if (PsiType.LONG.equals(mySelectorType) || PsiType.FLOAT.equals(mySelectorType) || PsiType.DOUBLE.equals(mySelectorType)) {
-        IntentionAction action1 = getFixFactory().createAddTypeCastFix(PsiType.INT, mySelector);
-        info.registerFix(action1, null, null, null, null);
-        IntentionAction action = getFixFactory().createWrapWithAdapterFix(PsiType.INT, mySelector);
-        info.registerFix(action, null, null, null, null);
-      }
+      registerFixesOnInvalidSelector(info);
       if (requiredLevel != null) {
         IntentionAction action = getFixFactory().createIncreaseLanguageLevelFix(requiredLevel);
         info.registerFix(action, null, null, null, null);
@@ -181,6 +173,19 @@ public class SwitchBlockHighlightingModel {
       holder.add(info.create());
     }
     checkIfAccessibleType(holder);
+  }
+
+  protected void registerFixesOnInvalidSelector(HighlightInfo.Builder builder) {
+    if (myBlock instanceof PsiSwitchStatement switchStatement) {
+      IntentionAction action = getFixFactory().createConvertSwitchToIfIntention(switchStatement);
+      builder.registerFix(action, null, null, null, null);
+    }
+    if (PsiType.LONG.equals(mySelectorType) || PsiType.FLOAT.equals(mySelectorType) || PsiType.DOUBLE.equals(mySelectorType)) {
+      IntentionAction addTypeCastFix = getFixFactory().createAddTypeCastFix(PsiType.INT, mySelector);
+      builder.registerFix(addTypeCastFix, null, null, null, null);
+      IntentionAction wrapWithAdapterFix = getFixFactory().createWrapWithAdapterFix(PsiType.INT, mySelector);
+      builder.registerFix(wrapWithAdapterFix, null, null, null, null);
+    }
   }
 
   void checkSwitchLabelValues(@NotNull HighlightInfoHolder holder) {
@@ -470,16 +475,7 @@ public class SwitchBlockHighlightingModel {
       if (kind == null) {
         HighlightInfo.Builder info = createError(mySelector, JavaErrorBundle.message("switch.invalid.selector.types",
                                                                              JavaHighlightUtil.formatType(mySelectorType)));
-        if (myBlock instanceof PsiSwitchStatement switchStatement) {
-          IntentionAction action = getFixFactory().createConvertSwitchToIfIntention(switchStatement);
-          info.registerFix(action, null, null, null, null);
-        }
-        if (PsiType.LONG.equals(mySelectorType) || PsiType.FLOAT.equals(mySelectorType) || PsiType.DOUBLE.equals(mySelectorType)) {
-          IntentionAction action1 = getFixFactory().createAddTypeCastFix(PsiType.INT, mySelector);
-          info.registerFix(action1, null, null, null, null);
-          IntentionAction action = getFixFactory().createWrapWithAdapterFix(PsiType.INT, mySelector);
-          info.registerFix(action, null, null, null, null);
-        }
+        registerFixesOnInvalidSelector(info);
         holder.add(info.create());
       }
       checkIfAccessibleType(holder);
@@ -750,11 +746,7 @@ public class SwitchBlockHighlightingModel {
           if (switchLabelElement.isDefaultCase()) {
             if (existPattern) {
               PsiElement defaultKeyword = switchLabelElement.getFirstChild();
-              alreadyFallThroughElements.add(defaultKeyword);
-              HighlightInfo.Builder info = createError(defaultKeyword, JavaErrorBundle.message("switch.illegal.fall.through.from"));
-              IntentionAction action = getFixFactory().createSplitSwitchBranchWithSeveralCaseValuesAction();
-              info.registerFix(action, null, null, null, null);
-              holder.add(info.create());
+              addIllegalFallThroughError(defaultKeyword, "switch.illegal.fall.through.from", holder, alreadyFallThroughElements);
             }
             existsDefault = true;
             continue;
@@ -767,41 +759,25 @@ public class SwitchBlockHighlightingModel {
                 existsTypeTestPattern = true;
               }
               if (existPattern || existsConst || (existsNull && !existsTypeTestPattern) || existsDefault) {
-                alreadyFallThroughElements.add(currentElement);
-                HighlightInfo.Builder info = createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.to"));
-                IntentionAction action = getFixFactory().createSplitSwitchBranchWithSeveralCaseValuesAction();
-                info.registerFix(action, null, null, null, null);
-                holder.add(info.create());
+                addIllegalFallThroughError(currentElement, "switch.illegal.fall.through.to", holder, alreadyFallThroughElements);
               }
               existPattern = true;
             }
             else if (isNullType(currentElement)) {
               if (existPattern && !existsTypeTestPattern) {
-                alreadyFallThroughElements.add(currentElement);
-                HighlightInfo.Builder info = createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.from"));
-                IntentionAction action = getFixFactory().createSplitSwitchBranchWithSeveralCaseValuesAction();
-                info.registerFix(action, null, null, null, null);
-                holder.add(info.create());
+                addIllegalFallThroughError(currentElement, "switch.illegal.fall.through.from", holder, alreadyFallThroughElements);
               }
               existsNull = true;
             }
             else if (isConstantLabelElement(currentElement)) {
               if (existPattern) {
-                alreadyFallThroughElements.add(currentElement);
-                HighlightInfo.Builder info = createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.from"));
-                IntentionAction action = getFixFactory().createSplitSwitchBranchWithSeveralCaseValuesAction();
-                info.registerFix(action, null, null, null, null);
-                holder.add(info.create());
+                addIllegalFallThroughError(currentElement, "switch.illegal.fall.through.from", holder, alreadyFallThroughElements);
               }
               existsConst = true;
             }
             else if (currentElement instanceof PsiDefaultCaseLabelElement) {
               if (existPattern) {
-                alreadyFallThroughElements.add(currentElement);
-                HighlightInfo.Builder info = createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.from"));
-                IntentionAction action = getFixFactory().createSplitSwitchBranchWithSeveralCaseValuesAction();
-                info.registerFix(action, null, null, null, null);
-                holder.add(info.create());
+                addIllegalFallThroughError(currentElement, "switch.illegal.fall.through.from", holder, alreadyFallThroughElements);
               }
               existsDefault = true;
             }
@@ -809,6 +785,17 @@ public class SwitchBlockHighlightingModel {
         }
       }
       checkFallThroughInSwitchLabels(switchBlockGroup, holder, alreadyFallThroughElements);
+    }
+
+    private static void addIllegalFallThroughError(@NotNull PsiElement element,
+                                                   @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key,
+                                                   @NotNull HighlightInfoHolder holder,
+                                                   @NotNull Set<PsiElement> alreadyFallThroughElements) {
+      alreadyFallThroughElements.add(element);
+      HighlightInfo.Builder info = createError(element, JavaErrorBundle.message(key));
+      IntentionAction action = getFixFactory().createSplitSwitchBranchWithSeveralCaseValuesAction();
+      info.registerFix(action, null, null, null, null);
+      holder.add(info.create());
     }
 
     private static void checkFallThroughInSwitchLabels(@NotNull List<? extends List<? extends PsiSwitchLabelStatementBase>> switchBlockGroup,
