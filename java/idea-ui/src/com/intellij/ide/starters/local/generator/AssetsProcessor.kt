@@ -60,8 +60,7 @@ abstract class AbstractAssetsProcessor : AssetsProcessor {
 
   private fun generateSources(outputDirectory: Path, asset: GeneratorResourceFile): Path {
     try {
-      val resourceStream = asset.resource.openStream()
-      val content = resourceStream.use { it.readBytes() }
+      val content = asset.resource.openStream().use { it.readBytes() }
       val file = findOrCreateFile(outputDirectory, asset.targetFileName)
       setBinaryContent(file, content)
       return file
