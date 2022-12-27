@@ -454,7 +454,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
     }
 
     private void printClassName(ConsoleView consoleView, String className) {
-      String[] parts = className.split("@");  // there are can be class name with hashcode
+      String[] parts = className.split("@");  // there can be a class name with hashcode
       String classFqn = parts[0];
       PsiElement classElement = UiInspectorUtil.findClassByFqn(myProject, classFqn);
       if (classElement != null) {
@@ -499,7 +499,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
     }
 
     private void printIconPath(ConsoleView consoleView, IconLoader.CachedImageIcon icon) {
-      URL iconUrl = icon.getURL();
+      URL iconUrl = icon.getUrl();
       if (iconUrl != null) {
         VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(iconUrl.getPath());
         if (file != null && myProject != null) {

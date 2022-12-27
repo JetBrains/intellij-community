@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scale;
 
 import com.intellij.openapi.util.IconLoader;
@@ -11,10 +11,9 @@ import com.intellij.ui.DeferredIconImpl;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RestoreScaleRule;
 import com.intellij.ui.RetrievableIcon;
+import com.intellij.ui.scale.paint.ImageComparator;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.ui.scale.paint.ImageComparator;
-import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -127,7 +126,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
      * (B) override scale
      */
     if (!(icon instanceof RetrievableIcon)) { // RetrievableIcon may return a copy of its wrapped icon and we may fail to override scale in the origin.
-      Icon iconB = IconUtil.overrideScale(IconLoader.copy(icon, null, true), USR_SCALE.of(ICON_OVER_USR_SCALE));
+      Icon iconB = IconUtil.overrideScale(IconLoader.INSTANCE.copy(icon, null, true), USR_SCALE.of(ICON_OVER_USR_SCALE));
 
       usrSize2D = ICON_BASE_SIZE * ICON_OVER_USR_SCALE * iconContext.getScale(OBJ_SCALE);
       usrSize = (int)Math.round(usrSize2D);
@@ -193,7 +192,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     assertThat(icon.getIconWidth()).describedAs(testDescription + ": unexpected icon user width").isEqualTo(usrSize);
     assertThat(icon.getIconHeight()).describedAs(testDescription + ": unexpected icon user height").isEqualTo(usrSize);
 
-    Assertions.assertThat(ImageUtil.getRealWidth(IconLoader.toImage(icon, ctx))).describedAs(testDescription + ": unexpected icon real width").isEqualTo(devSize);
+    assertThat(ImageUtil.getRealWidth(IconLoader.toImage(icon, ctx))).describedAs(testDescription + ": unexpected icon real width").isEqualTo(devSize);
     assertThat(ImageUtil.getRealHeight(IconLoader.toImage(icon, ctx))).describedAs(testDescription + ": unexpected icon real height").isEqualTo(devSize);
   }
 

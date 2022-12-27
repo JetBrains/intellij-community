@@ -19,15 +19,15 @@ import javax.swing.Icon
 
 @Suppress("HardCodedStringLiteral")
 @ApiStatus.Internal
-class ImageDataByPathLoader private constructor(val path: String,
-                                                val classLoader: ClassLoader,
+class ImageDataByPathLoader private constructor(private val path: String,
+                                                private val classLoader: ClassLoader,
                                                 private val original: ImageDataByPathLoader?) : ImageDataLoader {
   companion object {
     // cache is not used - image data resolved using cache in any case
     @JvmStatic
     fun findIcon(@NonNls originalPath: String,
                  originalClassLoader: ClassLoader,
-                 cache: MutableMap<Pair<String, ClassLoader>, CachedImageIcon>?): Icon? {
+                 cache: MutableMap<Pair<String, ClassLoader?>, CachedImageIcon>?): Icon? {
       val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
 
       @Suppress("NAME_SHADOWING")
@@ -37,10 +37,18 @@ class ImageDataByPathLoader private constructor(val path: String,
       val classLoader = patched?.second ?: originalClassLoader
       val icon: Icon? = when {
         IconLoader.isReflectivePath(path) -> IconLoader.getReflectiveIcon(path, classLoader)
-        cache == null -> createIcon(originalPath, originalClassLoader, patched, path, classLoader)
+        cache == null -> createIcon(originalPath = originalPath,
+                                    originalClassLoader = originalClassLoader,
+                                    patched = patched,
+                                    path = path,
+                                    classLoader = classLoader)
         else -> {
            cache.computeIfAbsent(Pair(originalPath, originalClassLoader)) {
-            createIcon(it.first, it.second, patched, path, classLoader)
+            createIcon(originalPath = it.first,
+                       originalClassLoader = it.second!!,
+                       patched = patched,
+                       path = path,
+                       classLoader = classLoader)
           }
         }
       }
@@ -52,12 +60,12 @@ class ImageDataByPathLoader private constructor(val path: String,
 
     private fun createIcon(originalPath: @NonNls String,
                            originalClassLoader: ClassLoader,
-                           patched: Pair<String, ClassLoader?>?,
+                           patched: kotlin.Pair<String, ClassLoader?>?,
                            path: String,
                            classLoader: ClassLoader): CachedImageIcon {
       val loader = ImageDataByPathLoader(originalPath, originalClassLoader, null)
       val resolver = if (patched == null) loader else ImageDataByPathLoader(path, classLoader, loader)
-      return CachedImageIcon(null, resolver, null, null)
+      return CachedImageIcon(originalPath = null, resolver = resolver)
     }
 
     private fun normalizePath(patchedPath: String): String {

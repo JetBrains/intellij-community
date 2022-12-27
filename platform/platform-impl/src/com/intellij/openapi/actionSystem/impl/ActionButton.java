@@ -398,7 +398,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
     else if (IconLoader.isGoodSize(myIcon)) {
       Supplier<RGBImageFilter> disableFilter = myPresentation.getClientProperty(Presentation.DISABLE_ICON_FILTER);
-      myDisabledIcon = IconLoader.getDisabledIcon(myIcon, disableFilter, this);
+      myDisabledIcon = IconLoader.INSTANCE.getDisabledIcon(myIcon, disableFilter == null ? null : disableFilter::get);
     }
     else {
       myDisabledIcon = null;

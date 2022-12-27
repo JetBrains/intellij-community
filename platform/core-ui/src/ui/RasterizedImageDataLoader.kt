@@ -4,7 +4,6 @@ package com.intellij.ui
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ImageDataByUrlLoader
-import com.intellij.openapi.util.Pair
 import com.intellij.ui.icons.*
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.svg.SvgCacheMapper

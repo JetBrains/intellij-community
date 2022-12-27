@@ -1,1387 +1,1104 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.util;
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "DeprecatedCallableAddReplaceWith")
 
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.ui.ImageDataByPathLoader;
-import com.intellij.reference.SoftReference;
-import com.intellij.ui.*;
-import com.intellij.ui.icons.*;
-import com.intellij.ui.paint.PaintUtil;
-import com.intellij.ui.scale.*;
-import com.intellij.util.*;
-import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.FixedHashMap;
-import com.intellij.util.ui.*;
-import org.jetbrains.annotations.*;
+package com.intellij.openapi.util
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.awt.image.ImageFilter;
-import java.awt.image.RGBImageFilter;
-import java.lang.invoke.MethodHandles;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.ui.ImageDataByPathLoader.Companion.findIcon
+import com.intellij.openapi.util.IconLoader.getReflectiveIcon
+import com.intellij.openapi.util.IconLoader.isReflectivePath
+import com.intellij.openapi.util.IconLoader.patchPath
+import com.intellij.reference.SoftReference
+import com.intellij.ui.*
+import com.intellij.ui.icons.*
+import com.intellij.ui.paint.PaintUtil
+import com.intellij.ui.scale.DerivedScaleType
+import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.ui.scale.JBUIScale.sysScale
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleContextSupport
+import com.intellij.ui.scale.ScaleType
+import com.intellij.util.*
+import com.intellij.util.ImageLoader.loadImage
+import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
+import com.intellij.util.SVGLoader.colorPatcherProvider
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.ui.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
+import java.awt.*
+import java.awt.image.BufferedImage
+import java.awt.image.ImageFilter
+import java.awt.image.RGBImageFilter
+import java.lang.invoke.MethodHandles
+import java.lang.ref.Reference
+import java.lang.ref.WeakReference
+import java.net.MalformedURLException
+import java.net.URL
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Function
+import java.util.function.Supplier
+import javax.swing.Icon
+import javax.swing.ImageIcon
+import javax.swing.JComponent
+
+private val LOG: Logger
+  get() = logger<IconLoader>()
+
+private val LOOKUP = MethodHandles.lookup()
+
+// the key: Pair(path, classLoader)
+private val iconCache = ConcurrentHashMap<Pair<String, ClassLoader?>, IconLoader.CachedImageIcon>(100, 0.9f, 2)
+
+// contains mapping between icons and disabled icons
+private val iconToDisabledIcon = CollectionFactory.createConcurrentWeakMap<() -> RGBImageFilter, MutableMap<Icon, Icon>>()
+
+@Volatile
+private var STRICT_GLOBAL = false
+
+private val STRICT_LOCAL: ThreadLocal<Boolean> = object : ThreadLocal<Boolean>() {
+  override fun initialValue(): Boolean = false
+
+  override fun get(): Boolean = STRICT_GLOBAL || super.get()
+}
+
+private val pathTransform = AtomicReference(
+  IconTransform(StartupUiUtil.isUnderDarcula(), arrayOf<IconPathPatcher>(DeprecatedDuplicatesIconPathPatcher()), null)
+)
+
+private val pathTransformGlobalModCount = AtomicInteger()
+
+private var isActivated = !GraphicsEnvironment.isHeadless()
+
+internal val fakeComponent: JComponent by lazy { object : JComponent() {} }
 
 /**
  * Provides access to icons used in the UI.
- * <p/>
- * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/reference_guide/work_with_icons_and_images.html">Working with Icons and Images</a>
+ * Please see [Working with Icons and Images](http://www.jetbrains.org/intellij/sdk/docs/reference_guide/work_with_icons_and_images.html)
  * about supported formats, organization, and accessing icons in plugins.
  *
  * @see com.intellij.util.IconUtil
  */
-public final class IconLoader {
-  private static final Logger LOG = Logger.getInstance(IconLoader.class);
-  private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
-
-  // the key: Pair(path, classLoader)
-  private static final Map<@NotNull Pair<String, ClassLoader>, @NotNull CachedImageIcon> iconCache = new ConcurrentHashMap<>(100, 0.9f, 2);
-
-  // contains mapping between icons and disabled icons.
-  private static final Map<@NotNull Supplier<@NotNull RGBImageFilter>, Map<@NotNull Icon, @NotNull Icon>> iconToDisabledIcon =
-    CollectionFactory.createConcurrentWeakMap();
-
-  private static volatile boolean STRICT_GLOBAL;
-
-  private static final ThreadLocal<Boolean> STRICT_LOCAL = new ThreadLocal<>() {
-    @Override
-    protected Boolean initialValue() {
-      return false;
-    }
-
-    @Override
-    public Boolean get() {
-      return STRICT_GLOBAL || super.get();
-    }
-  };
-
-  private static final AtomicReference<IconTransform> pathTransform = new AtomicReference<>(
-    new IconTransform(StartupUiUtil.isUnderDarcula(), new IconPathPatcher[]{new DeprecatedDuplicatesIconPathPatcher()}, null)
-  );
-  private static final AtomicInteger pathTransformGlobalModCount = new AtomicInteger();
-
-  private static boolean isActivated = !GraphicsEnvironment.isHeadless();
-
-  static final JComponent fakeComponent = new JComponent() {};
-
-  private IconLoader() {}
-
+object IconLoader {
   @ApiStatus.Internal
-  public static @Nullable Icon loadCustomVersion(@NotNull CachedImageIcon icon, int width, int height) {
-    ImageDataLoader resolver = icon.resolver;
-    URL url = resolver == null ? null : resolver.getUrl();
-    String path = url == null ? null : url.toString();
+  fun loadCustomVersion(icon: CachedImageIcon, width: Int, height: Int): Icon? {
+    val resolver = icon.resolver
+    val url = resolver?.url
+    val path = url?.toString()
     if (path != null && path.endsWith(".svg")) {
-      String modified = path.substring(0, path.length() - 4) + "@" + width + "x" + height + ".svg";
+      val modified = "${path.substring(0, path.length - 4)}@${width}x$height.svg"
       try {
-        Icon foundIcon = findIcon(new URL(modified));
-        if (foundIcon instanceof CachedImageIcon && foundIcon.getIconWidth() == JBUIScale.scale(width) && foundIcon.getIconHeight() == JBUIScale.scale(height)) {
-          return foundIcon;
+        val foundIcon = findIcon(URL(modified))
+        if (foundIcon is CachedImageIcon && foundIcon.getIconWidth() == scale(width) && foundIcon.getIconHeight() == scale(height)) {
+          return foundIcon
         }
       }
-      catch (MalformedURLException ignore) {
+      catch (ignore: MalformedURLException) {
       }
     }
-    return null;
+    return null
   }
 
-  /** @param size the size before system scaling (without JBUIScale.scale) */
+  /** @param size the size before system scaling (without JBUIScale.scale)
+   */
   @ApiStatus.Internal
-  public static Icon loadCustomVersionOrScale(@NotNull ScalableIcon icon, int size) {
-    if (icon.getIconWidth() == JBUIScale.scale(size)) {
-      return icon;
+  fun loadCustomVersionOrScale(icon: ScalableIcon, size: Int): Icon {
+    if (icon.iconWidth == scale(size)) {
+      return icon
     }
-
-    Icon cachedIcon = icon;
-    if (!(cachedIcon instanceof CachedImageIcon) && cachedIcon instanceof RetrievableIcon) {
-      cachedIcon = ((RetrievableIcon)cachedIcon).retrieveIcon();
+    var cachedIcon: Icon = icon
+    if (cachedIcon !is CachedImageIcon && cachedIcon is RetrievableIcon) {
+      cachedIcon = cachedIcon.retrieveIcon()
     }
-    if (cachedIcon instanceof CachedImageIcon) {
-      Icon version = loadCustomVersion((CachedImageIcon)cachedIcon, size, size);
-      if (version != null) return version;
+    if (cachedIcon is CachedImageIcon) {
+      val version = loadCustomVersion(cachedIcon, size, size)
+      if (version != null) return version
     }
-
-    return icon.scale(JBUIScale.scale(1.0f) * size / icon.getIconWidth());
+    return icon.scale(scale(1.0f) * size / icon.iconWidth)
   }
 
   @TestOnly
-  public static <T> T performStrictly(@NotNull Supplier<? extends T> computable) {
-    STRICT_LOCAL.set(true);
-    try {
-      return computable.get();
+  @JvmStatic
+  fun <T> performStrictly(computable: Supplier<out T>): T {
+    STRICT_LOCAL.set(true)
+    return try {
+      computable.get()
     }
     finally {
-      STRICT_LOCAL.set(false);
+      STRICT_LOCAL.set(false)
     }
   }
 
-  public static void setStrictGlobally(boolean strict) {
-    STRICT_GLOBAL = strict;
+  fun setStrictGlobally(strict: Boolean) {
+    STRICT_GLOBAL = strict
   }
 
-  private static void updateTransform(@NotNull Function<? super IconTransform, @NotNull IconTransform> updater) {
-    IconTransform prev;
-    IconTransform next;
-    do {
-      prev = pathTransform.get();
-      next = updater.apply(prev);
-    }
-    while (!pathTransform.compareAndSet(prev, next));
-    pathTransformGlobalModCount.incrementAndGet();
-
-    if (prev != next) {
-      iconToDisabledIcon.clear();
-      // clear svg cache
-      ImageCache.Companion.getINSTANCE().clearCache();
-      // iconCache is not cleared because it contains an original icon (instance that will delegate to)
-    }
+  @JvmStatic
+  fun installPathPatcher(patcher: IconPathPatcher) {
+    updateTransform { it.withPathPatcher(patcher) }
   }
 
-  public static void installPathPatcher(@NotNull IconPathPatcher patcher) {
-    updateTransform(transform -> transform.withPathPatcher(patcher));
+  @JvmStatic
+  fun removePathPatcher(patcher: IconPathPatcher) {
+    updateTransform { it.withoutPathPatcher(patcher) }
   }
 
-  public static void removePathPatcher(@NotNull IconPathPatcher patcher) {
-    updateTransform(transform -> transform.withoutPathPatcher(patcher));
+  @JvmStatic
+  fun setUseDarkIcons(useDarkIcons: Boolean) {
+    updateTransform { it.withDark(useDarkIcons) }
   }
 
-  public static void setUseDarkIcons(boolean useDarkIcons) {
-    updateTransform(transform -> transform.withDark(useDarkIcons));
+  @JvmStatic
+  fun setFilter(filter: ImageFilter?) {
+    updateTransform { it.withFilter(filter) }
   }
 
-  public static void setFilter(ImageFilter filter) {
-    updateTransform(transform -> transform.withFilter(filter));
-  }
-
-  public static void clearCache() {
+  @JvmStatic
+  fun clearCache() {
     // copy the transform to trigger update of cached icons
-    updateTransform(IconTransform::copy);
+    updateTransform(IconTransform::copy)
   }
 
   @TestOnly
-  public static void clearCacheInTests() {
-    iconCache.clear();
-    iconToDisabledIcon.clear();
-    ImageCache.Companion.getINSTANCE().clearCache();
-    pathTransformGlobalModCount.incrementAndGet();
+  @JvmStatic
+  fun clearCacheInTests() {
+    iconCache.clear()
+    iconToDisabledIcon.clear()
+    ImageCache.INSTANCE.clearCache()
+    pathTransformGlobalModCount.incrementAndGet()
   }
 
-  /**
-   * @deprecated Use {@link #getIcon(String, ClassLoader)}
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull Icon getIcon(@NonNls @NotNull String path) {
-    Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
-    assert callerClass != null : path;
-    return getIcon(path, callerClass);
+  @Deprecated("Use {@link #getIcon(String, ClassLoader)}", level = DeprecationLevel.ERROR)
+  @JvmStatic
+  fun getIcon(path: @NonNls String): Icon {
+    return getIcon(path = path, aClass = ReflectionUtil.getGrandCallerClass() ?: error(path))
   }
 
-  public static @Nullable Icon getReflectiveIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
-    try {
-      int dotIndex = path.lastIndexOf('.');
-      String fieldName = path.substring(dotIndex + 1);
-
-      StringBuilder builder;
-      builder = new StringBuilder(path.length() + 20);
-      builder.append(path, 0, dotIndex);
-      int separatorIndex = -1;
+  @JvmStatic
+  fun getReflectiveIcon(path: String, classLoader: ClassLoader): Icon? {
+    return try {
+      var dotIndex = path.lastIndexOf('.')
+      val fieldName = path.substring(dotIndex + 1)
+      val builder = StringBuilder(path.length + 20)
+      builder.append(path, 0, dotIndex)
+      var separatorIndex = -1
       do {
-        dotIndex = path.lastIndexOf('.', dotIndex - 1);
+        dotIndex = path.lastIndexOf('.', dotIndex - 1)
         // if starts with a lower case, char - it is a package name
-        if (dotIndex == -1 || Character.isLowerCase(path.charAt(dotIndex + 1))) {
-          break;
+        if (dotIndex == -1 || Character.isLowerCase(path[dotIndex + 1])) {
+          break
         }
-
         if (separatorIndex != -1) {
-          builder.setCharAt(separatorIndex, '$');
+          builder.setCharAt(separatorIndex, '$')
         }
-        separatorIndex = dotIndex;
+        separatorIndex = dotIndex
       }
-      while (true);
-
-      if (!Character.isLowerCase(builder.charAt(0))) {
+      while (true)
+      if (!Character.isLowerCase(builder[0])) {
         if (separatorIndex != -1) {
-          builder.setCharAt(separatorIndex, '$');
+          builder.setCharAt(separatorIndex, '$')
         }
-        builder.insert(0, path.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.");
+        builder.insert(0, if (path.startsWith("AllIcons.")) "com.intellij.icons." else "icons.")
       }
-
-      Class<?> aClass = classLoader.loadClass(builder.toString());
-      return (Icon)LOOKUP.findStaticGetter(aClass, fieldName, Icon.class).invoke();
+      val aClass = classLoader.loadClass(builder.toString())
+      LOOKUP.findStaticGetter(aClass, fieldName, Icon::class.java).invoke() as Icon
     }
-    catch (Throwable e) {
-      LOG.warn("Cannot get reflective icon (path=" + path + ")", e);
-      return null;
-    }
-  }
-
-  /**
-   * @deprecated Use {@link #findIcon(String, ClassLoader)}.
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable Icon findIcon(@NonNls @NotNull String path) {
-    Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
-    return callerClass == null ? null : findIcon(path, callerClass.getClassLoader());
-  }
-
-  public static @NotNull Icon getIcon(@NotNull String path, @NotNull Class<?> aClass) {
-    Icon icon = findIcon(path, aClass, aClass.getClassLoader(), null, true);
-    if (icon == null) {
-      throw new IllegalStateException("Icon cannot be found in '" + path + "', class='" + aClass.getName() + "'");
-    }
-    return icon;
-  }
-
-  public static @NotNull Icon getIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
-    Icon icon = findIcon(path, classLoader);
-    if (icon == null) {
-      throw new IllegalStateException("Icon cannot be found in '" + path + "', classLoader='" + classLoader + "'");
-    }
-    return icon;
-  }
-
-  private static final class FinalImageDataLoader implements ImageDataLoader {
-    private final WeakReference<ClassLoader> classLoaderRef;
-    private final String path;
-
-    FinalImageDataLoader(@NotNull String path, @NotNull ClassLoader classLoader) {
-      this.path = path;
-      classLoaderRef = new WeakReference<>(classLoader);
-    }
-
-    @Override
-    public @Nullable Image loadImage(@NotNull LoadIconParameters parameters) {
-      // do not use cache
-      int flags = ImageLoader.ALLOW_FLOAT_SCALING;
-      if (parameters.isDark) {
-        flags |= ImageLoader.USE_DARK;
-      }
-      ClassLoader classLoader = classLoaderRef.get();
-      if (classLoader == null) {
-        return null;
-      }
-      return ImageLoader.INSTANCE.loadImage(path, parameters, null, classLoader, flags, !path.endsWith(".svg"));
-    }
-
-    @Override
-    public @Nullable URL getUrl() {
-      ClassLoader classLoader = classLoaderRef.get();
-      return classLoader == null ? null : classLoader.getResource(path);
-    }
-
-    @Override
-    public @Nullable ImageDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform) {
-      // this resolver is already produced as a result of a patch
-      return null;
-    }
-
-    @Override
-    public boolean isMyClassLoader(@NotNull ClassLoader classLoader) {
-      return classLoaderRef.get() == classLoader;
-    }
-
-    @Override
-    public String toString() {
-      return "FinalImageDataLoader(" +
-             ", classLoader=" + classLoaderRef.get() +
-             ", path='" + path + '\'' +
-             ')';
+    catch (e: Throwable) {
+      LOG.warn("Cannot get reflective icon (path=$path)", e)
+      null
     }
   }
 
-  public static @Nullable ImageDataLoader createNewResolverIfNeeded(@Nullable ClassLoader originalClassLoader,
-                                                                    @NotNull String originalPath,
-                                                                    @NotNull IconTransform transform) {
-    Pair<String, ClassLoader> patchedPath = transform.patchPath(originalPath, originalClassLoader);
-    if (patchedPath == null) {
-      return null;
-    }
+  @Deprecated("Use {@link #findIcon(String, ClassLoader)}.", level = DeprecationLevel.ERROR)
+  @JvmStatic
+  fun findIcon(path: @NonNls String): Icon? {
+    val callerClass = ReflectionUtil.getGrandCallerClass() ?: return null
+    return findIcon(path = path, classLoader = callerClass.classLoader)
+  }
 
-    ClassLoader classLoader = patchedPath.second == null ? originalClassLoader : patchedPath.second;
-    String path = patchedPath.first;
+  @JvmStatic
+  fun getIcon(path: String, aClass: Class<*>): Icon {
+    return findIcon(originalPath = path, aClass = aClass, classLoader = aClass.classLoader, handleNotFound = null, deferUrlResolve = true)
+           ?: throw IllegalStateException("Icon cannot be found in '" + path + "', class='" + aClass.name + "'")
+  }
+
+  @JvmStatic
+  fun getIcon(path: String, classLoader: ClassLoader): Icon {
+    return findIcon(path = path, classLoader = classLoader)
+           ?: throw IllegalStateException("Icon cannot be found in '$path', classLoader='$classLoader'")
+  }
+
+  fun createNewResolverIfNeeded(originalClassLoader: ClassLoader?,
+                                originalPath: String,
+                                transform: IconTransform): ImageDataLoader? {
+    val patchedPath = transform.patchPath(originalPath, originalClassLoader) ?: return null
+    val classLoader = if (patchedPath.second == null) originalClassLoader else patchedPath.second
+    val path = patchedPath.first
     if (path != null && path.startsWith("/")) {
-      return new FinalImageDataLoader(path.substring(1), classLoader == null ? transform.getClass().getClassLoader() : classLoader);
+      return FinalImageDataLoader(path = path.substring(1), classLoader = classLoader ?: transform.javaClass.classLoader)
     }
 
     // This uses case for temp themes only. Here we want to immediately replace the existing icon with a local one
     if (path != null && path.startsWith("file:/")) {
       try {
-        ImageDataByUrlLoader resolver = new ImageDataByUrlLoader(new URL(path), path, classLoader, false);
-        resolver.resolve();
-        return resolver;
+        val resolver = ImageDataByUrlLoader(URL(path), path, classLoader, false)
+        resolver.resolve()
+        return resolver
       }
-      catch (MalformedURLException ignore) {
+      catch (ignore: MalformedURLException) {
       }
     }
-    return null;
+    return null
   }
 
   @TestOnly
-  public static void activate() {
-    isActivated = true;
+  @JvmStatic
+  fun activate() {
+    isActivated = true
   }
 
   @TestOnly
-  public static void deactivate() {
-    isActivated = false;
-  }
-
-  /**
-   * @deprecated Use {@link #findIcon(String, ClassLoader)}
-   */
-  @SuppressWarnings("unused")
-  @Deprecated(forRemoval = true)
-  public static @Nullable Icon findLafIcon(@NotNull String key, @NotNull Class<?> aClass, boolean strict) {
-    return findIcon(key + ".png", aClass, aClass.getClassLoader(), strict ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE, true);
+  @JvmStatic
+  fun deactivate() {
+    isActivated = false
   }
 
   /**
    * Might return null if the icon was not found.
-   * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String, ClassLoader)}
+   * Use only if you expected null return value, otherwise see [IconLoader.getIcon]
    */
-  public static @Nullable Icon findIcon(@NotNull String path, @NotNull Class<?> aClass) {
-    return ImageDataByPathLoader.findIcon(path, aClass.getClassLoader(), iconCache);
+  @JvmStatic
+  fun findIcon(path: String, aClass: Class<*>): Icon? {
+    return findIcon(originalPath = path, originalClassLoader = aClass.classLoader, cache = iconCache)
   }
 
-  public static @Nullable Icon findIcon(@NotNull String path, @NotNull Class<?> aClass, boolean deferUrlResolve, boolean strict) {
-    return findIcon(path, aClass, aClass.getClassLoader(), strict ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE, deferUrlResolve);
+  @JvmStatic
+  fun findIcon(path: String, aClass: Class<*>, deferUrlResolve: Boolean, strict: Boolean): Icon? {
+    return findIcon(originalPath = path,
+                    aClass = aClass,
+                    classLoader = aClass.classLoader,
+                    handleNotFound = if (strict) HandleNotFound.THROW_EXCEPTION else HandleNotFound.IGNORE,
+                    deferUrlResolve = deferUrlResolve)
   }
 
-  public static boolean isReflectivePath(@NotNull String path) {
-    return !path.isEmpty() && path.charAt(0) != '/' && path.contains("Icons.");
+  fun isReflectivePath(path: String): Boolean {
+    return !path.isEmpty() && path[0] != '/' && path.contains("Icons.")
   }
 
-  public static @Nullable Icon findIcon(@Nullable URL url) {
-    return findIcon(url, true);
-  }
-
-  public static @Nullable Icon findIcon(@Nullable URL url, boolean storeToCache) {
+  @JvmStatic
+  @JvmOverloads
+  fun findIcon(url: URL?, storeToCache: Boolean = true): Icon? {
     if (url == null) {
-      return null;
+      return null
     }
 
-    Pair<String, ClassLoader> key = new Pair<>(url.toString(), null);
-    if (storeToCache) {
-      return iconCache.computeIfAbsent(key, __ -> new CachedImageIcon(url, true));
+    val key = Pair<String, ClassLoader?>(url.toString(), null)
+    return if (storeToCache) {
+      iconCache.computeIfAbsent(key) { CachedImageIcon(url = url, useCacheOnLoad = true) }
     }
     else {
-      CachedImageIcon icon = iconCache.get(key);
-      return icon == null ? new CachedImageIcon(url, false) : icon;
+      iconCache.get(key) ?: CachedImageIcon(url = url, useCacheOnLoad = false)
     }
   }
 
-  @SuppressWarnings("DuplicatedCode")
-  private static @Nullable Icon findIcon(@NotNull String originalPath,
-                                         @Nullable Class<?> aClass,
-                                         @NotNull ClassLoader classLoader,
-                                         @Nullable HandleNotFound handleNotFound,
-                                         boolean deferUrlResolve) {
-    if (!deferUrlResolve) {
-      return ImageDataByPathLoader.findIcon(originalPath, classLoader, iconCache);
+  @JvmStatic
+  fun patchPath(originalPath: String, classLoader: ClassLoader): kotlin.Pair<String, ClassLoader>? {
+    return pathTransform.get().patchPath(originalPath, classLoader)
+  }
+
+  @JvmStatic
+  fun findIcon(path: String, classLoader: ClassLoader): Icon? {
+    return findIcon(originalPath = path, originalClassLoader = classLoader, cache = iconCache)
+  }
+
+  @JvmStatic
+  fun findResolvedIcon(path: String, classLoader: ClassLoader): Icon? {
+    val icon = findIcon(originalPath = path, originalClassLoader = classLoader, cache = iconCache)
+    return if (icon is CachedImageIcon && icon.getRealIcon() === CachedImageIcon.EMPTY_ICON) null else icon
+  }
+
+  @JvmOverloads
+  @JvmStatic
+  fun toImage(icon: Icon, ctx: ScaleContext? = null): Image? {
+    var effectiveIcon = icon
+    var effectiveScaleContext = ctx
+    if (effectiveIcon is RetrievableIcon) {
+      effectiveIcon = getOrigin(effectiveIcon)
+    }
+    if (effectiveIcon is CachedImageIcon) {
+      effectiveIcon = effectiveIcon.getRealIcon(effectiveScaleContext)
+    }
+    if (effectiveIcon is ImageIcon) {
+      return effectiveIcon.image
+    }
+    if (effectiveIcon.iconWidth <= 0 || effectiveIcon.iconHeight <= 0) {
+      return null
     }
 
-    long startTime = StartUpMeasurer.getCurrentTimeIfEnabled();
-    Pair<String, ClassLoader> patchedPath = patchPath(originalPath, classLoader);
-    String path = patchedPath == null ? originalPath : patchedPath.first;
-    if (patchedPath != null && patchedPath.second != null) {
-      classLoader = patchedPath.second;
-    }
-
-    Icon icon;
-    if (isReflectivePath(path)) {
-      icon = getReflectiveIcon(path, classLoader);
+    val image: BufferedImage
+    if (GraphicsEnvironment.isHeadless()) {
+      // for testing purpose
+      image = ImageUtil.createImage(effectiveScaleContext, effectiveIcon.iconWidth.toDouble(), effectiveIcon.iconHeight.toDouble(),
+                                    BufferedImage.TYPE_INT_ARGB, PaintUtil.RoundingMode.ROUND)
     }
     else {
-      Pair<String, ClassLoader> key = new Pair<>(originalPath, classLoader);
-      CachedImageIcon cachedIcon = iconCache.get(key);
-      if (cachedIcon == null) {
-        cachedIcon = iconCache.computeIfAbsent(key, k -> {
-          ClassLoader classLoader1 = k.getSecond();
-          ImageDataLoader resolver;
-          HandleNotFound effectiveHandleNotFound = handleNotFound;
-          if (effectiveHandleNotFound == null) {
-            effectiveHandleNotFound = STRICT_LOCAL.get() ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.IGNORE;
-          }
-          resolver = new ImageDataByUrlLoader(path, aClass, classLoader1, effectiveHandleNotFound, /* useCacheOnLoad = */ true);
-          return new CachedImageIcon(originalPath, resolver, null, null);
-        });
+      if (effectiveScaleContext == null) {
+        effectiveScaleContext = ScaleContext.create()
+      }
+      image = if (StartupUiUtil.isJreHiDPI(effectiveScaleContext)) {
+        JBHiDPIScaledImage(effectiveScaleContext, effectiveIcon.iconWidth.toDouble(), effectiveIcon.iconHeight.toDouble(),
+                           BufferedImage.TYPE_INT_ARGB_PRE,
+                           PaintUtil.RoundingMode.ROUND)
       }
       else {
-        ScaleContext scaleContext = ScaleContext.create();
-        if (!cachedIcon.getScaleContext().equals(scaleContext)) {
-          // honor scale context as 'iconCache' doesn't do that
-          cachedIcon = cachedIcon.copy();
-          cachedIcon.updateScaleContext(scaleContext);
-        }
+        GraphicsEnvironment.getLocalGraphicsEnvironment()
+          .defaultScreenDevice.defaultConfiguration
+          .createCompatibleImage(
+            PaintUtil.RoundingMode.ROUND.round(effectiveScaleContext.apply(effectiveIcon.iconWidth.toDouble(), DerivedScaleType.DEV_SCALE)),
+            PaintUtil.RoundingMode.ROUND.round(effectiveScaleContext.apply(effectiveIcon.iconHeight.toDouble(), DerivedScaleType.DEV_SCALE)),
+            Transparency.TRANSLUCENT
+          )
       }
-      icon = cachedIcon;
     }
 
-    if (startTime != -1) {
-      IconLoadMeasurer.findIcon.end(startTime);
-    }
-    return icon;
-  }
-
-  public static @Nullable Pair<String, ClassLoader> patchPath(@NotNull String originalPath, @NotNull ClassLoader classLoader) {
-    return pathTransform.get().patchPath(originalPath, classLoader);
-  }
-
-  public static @Nullable Icon findIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
-    return ImageDataByPathLoader.findIcon(path, classLoader, iconCache);
-  }
-
-  public static @Nullable Icon findResolvedIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
-    Icon icon = ImageDataByPathLoader.findIcon(path, classLoader, iconCache);
-    if (icon instanceof CachedImageIcon && ((CachedImageIcon)icon).getRealIcon() == CachedImageIcon.EMPTY_ICON) {
-      return null;
-    }
-    return icon;
-  }
-
-  public static @Nullable Image toImage(@NotNull Icon icon) {
-    return toImage(icon, null);
-  }
-
-  public static @Nullable Image toImage(@NotNull Icon icon, @Nullable ScaleContext ctx) {
-    if (icon instanceof RetrievableIcon) {
-      icon = getOrigin((RetrievableIcon)icon);
-    }
-    if (icon instanceof CachedImageIcon) {
-      icon = ((CachedImageIcon)icon).getRealIcon(ctx);
-    }
-
-    if (icon instanceof ImageIcon) {
-      return ((ImageIcon)icon).getImage();
-    }
-    else {
-      if (icon.getIconWidth() <= 0 || icon.getIconHeight() <= 0) {
-        return null;
-      }
-      BufferedImage image;
-      if (GraphicsEnvironment.isHeadless()) {
-        // for testing purpose
-        image = ImageUtil.createImage(ctx, icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB, PaintUtil.RoundingMode.ROUND);
-      }
-      else {
-        if (ctx == null) ctx = ScaleContext.create();
-        if (StartupUiUtil.isJreHiDPI(ctx)) {
-          image = new JBHiDPIScaledImage(ctx, icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB_PRE, PaintUtil.RoundingMode.ROUND);
-        } else {
-          image = GraphicsEnvironment.getLocalGraphicsEnvironment()
-            .getDefaultScreenDevice().getDefaultConfiguration()
-            .createCompatibleImage(PaintUtil.RoundingMode.ROUND.round(ctx.apply(icon.getIconWidth(), DerivedScaleType.DEV_SCALE)),
-                                   PaintUtil.RoundingMode.ROUND.round(ctx.apply(icon.getIconHeight(), DerivedScaleType.DEV_SCALE)),
-                                   Transparency.TRANSLUCENT);
-        }
-      }
-      Graphics2D g = image.createGraphics();
-      try {
-        icon.paintIcon(null, g, 0, 0);
-      }
-      finally {
-        g.dispose();
-      }
-      return image;
-    }
-  }
-
-  public static @NotNull Icon copy(@NotNull Icon icon, @Nullable Component ancestor, boolean deepCopy) {
-    if (icon instanceof CopyableIcon) {
-      return deepCopy ? ((CopyableIcon)icon).deepCopy() : ((CopyableIcon)icon).copy();
-    }
-
-    BufferedImage image = ImageUtil.createImage(ancestor == null ? null : ancestor.getGraphicsConfiguration(),
-                                                icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-    Graphics2D g = image.createGraphics();
+    val g = image.createGraphics()
     try {
-      icon.paintIcon(ancestor, g, 0, 0);
+      effectiveIcon.paintIcon(null, g, 0, 0)
     }
     finally {
-      g.dispose();
+      g.dispose()
     }
-
-    return new JBImageIcon(image) {
-      final int originalWidth = icon.getIconWidth();
-      final int originalHeight = icon.getIconHeight();
-      @Override
-      public int getIconWidth() {
-        return originalWidth;
-      }
-
-      @Override
-      public int getIconHeight() {
-        return originalHeight;
-      }
-    };
+    return image
   }
 
-  private static @Nullable ImageIcon createScaledIcon(@NotNull Image image, @NotNull CachedImageIcon cii, float scale) {
-    // image wasn't loaded or broken
-    if (image.getHeight(null) < 1) {
-      return null;
+  fun copy(icon: Icon, ancestor: Component?, deepCopy: Boolean): Icon {
+    if (icon is CopyableIcon) {
+      return if (deepCopy) icon.deepCopy() else icon.copy()
     }
 
-    ImageIcon icon = new ScaledResultIcon(image, cii, scale);
-    if (!isGoodSize(icon)) {
-      // # 22481
-      LOG.error("Invalid icon: " + cii);
-      return CachedImageIcon.EMPTY_ICON;
+    val image = ImageUtil.createImage(ancestor?.graphicsConfiguration, icon.iconWidth, icon.iconHeight, BufferedImage.TYPE_INT_ARGB)
+    val g = image.createGraphics()
+    try {
+      icon.paintIcon(ancestor, g, 0, 0)
     }
-    return icon;
-  }
-
-  private static class ScaledResultIcon extends JBImageIcon implements ReplaceableIcon {
-    private final CachedImageIcon myOriginal;
-    private final float myScale;
-
-    ScaledResultIcon(@NotNull Image image, CachedImageIcon original, float scale) {
-      super(image);
-      myOriginal = original;
-      myScale = scale;
+    finally {
+      g.dispose()
     }
 
-    @Override
-    public @NotNull Icon replaceBy(@NotNull IconReplacer replacer) {
-      Icon originalReplaced = replacer.replaceIcon(myOriginal);
-      if (originalReplaced instanceof ScalableIcon) {
-        return ((ScalableIcon)originalReplaced).scale(myScale);
-      } else {
-        LOG.error("The result after replacing cannot be scaled: " + originalReplaced);
-        return this;
-      }
+    return object : JBImageIcon(image) {
+      val originalWidth = icon.iconWidth
+      val originalHeight = icon.iconHeight
+      override fun getIconWidth(): Int = originalWidth
+
+      override fun getIconHeight(): Int = originalHeight
     }
   }
 
-  public static boolean isGoodSize(final @NotNull Icon icon) {
-    return icon.getIconWidth() > 0 && icon.getIconHeight() > 0;
+  @JvmStatic
+  fun isGoodSize(icon: Icon): Boolean {
+    return icon.iconWidth > 0 && icon.iconHeight > 0
   }
 
   /**
    * Gets (creates if necessary) disabled icon based on the passed one.
    *
-   * @return {@code ImageIcon} constructed from disabled image of passed icon.
+   * @return `ImageIcon` constructed from disabled image of passed icon.
    */
-  public static @NotNull Icon getDisabledIcon(@NotNull Icon icon) {
-    return getDisabledIcon(icon, null);
-  }
-
-  /**
-   * Same as {@link #getDisabledIcon(Icon)} with an ancestor component for HiDPI-awareness.
-   */
-  public static @NotNull Icon getDisabledIcon(@NotNull Icon icon, @Nullable Component ancestor) {
-    return getDisabledIcon(icon, null, ancestor);
+  @JvmStatic
+  fun getDisabledIcon(icon: Icon): Icon {
+    return getDisabledIcon(icon = icon, disableFilter = null)
   }
 
   @ApiStatus.Internal
-  public static @NotNull Icon getDisabledIcon(@NotNull Icon icon, @Nullable Supplier<RGBImageFilter> disableFilter, @Nullable Component ancestor) {
+  fun getDisabledIcon(icon: Icon, disableFilter: (() -> RGBImageFilter)?): Icon {
     if (!isActivated) {
-      return icon;
+      return icon
     }
 
-    if (icon instanceof LazyIcon) {
-      icon = ((LazyIcon)icon).getOrComputeIcon();
-    }
-
-    Supplier<RGBImageFilter> filter = disableFilter != null ? disableFilter : UIUtil::getGrayFilter; /* returns laf-aware instance */
-
-    return iconToDisabledIcon.computeIfAbsent(filter, (d) -> CollectionFactory.createConcurrentWeakMap())
-      .computeIfAbsent(icon, existingIcon -> {
-        return filterIcon(existingIcon, filter, ancestor);
-      });
+    val effectiveIcon = if (icon is LazyIcon) icon.getOrComputeIcon() else icon
+    val filter = disableFilter ?: { UIUtil.getGrayFilter() } /* returns laf-aware instance */
+    return iconToDisabledIcon
+      .computeIfAbsent(filter) { CollectionFactory.createConcurrentWeakMap() }
+      .computeIfAbsent(effectiveIcon) { filterIcon(icon = it, filterSupplier = filter) }
   }
 
   /**
    * Creates a new icon with the color patching applied.
    */
-  public static @NotNull Icon colorPatchedIcon(@NotNull Icon icon, @NotNull SVGLoader.SvgElementColorPatcherProvider colorPatcher) {
-    return replaceCachedImageIcons(icon, (imageIcon) -> {
-      return patchColorsInCacheImageIcon(imageIcon, colorPatcher, null);
-    });
+  fun colorPatchedIcon(icon: Icon, colorPatcher: SvgElementColorPatcherProvider): Icon {
+    return replaceCachedImageIcons(icon) { patchColorsInCacheImageIcon(imageIcon = it!!, colorPatcher = colorPatcher, isDark = null) }!!
   }
 
   @ApiStatus.Internal
-  public static @NotNull Icon patchColorsInCacheImageIcon(@NotNull CachedImageIcon imageIcon,
-                                                          @NotNull SVGLoader.@NotNull SvgElementColorPatcherProvider colorPatcher,
-                                                          @Nullable("when not overridden") Boolean isDark) {
+  fun patchColorsInCacheImageIcon(imageIcon: CachedImageIcon, colorPatcher: SvgElementColorPatcherProvider, isDark: Boolean?): Icon {
+    var result = imageIcon
     if (isDark != null) {
-      Icon variant = imageIcon.getDarkIcon(isDark);
-      if (variant instanceof CachedImageIcon) {
-        imageIcon = (CachedImageIcon)variant;
+      val variant = result.getDarkIcon(isDark)
+      if (variant is CachedImageIcon) {
+        result = variant
       }
     }
-    return imageIcon.createWithPatcher(colorPatcher);
+    return result.createWithPatcher(colorPatcher)
   }
 
   /**
    * Creates a new icon with the low-level CachedImageIcon changing
    */
   @ApiStatus.Internal
-  public static @NotNull Icon replaceCachedImageIcons(@NotNull Icon icon,
-                                                      @NotNull Function<? super CachedImageIcon, ? extends Icon> cachedImageIconReplacer) {
-    IconReplacer replacer = new IconReplacer() {
-      @Override
-      @Contract("null -> null; !null -> !null")
-      public Icon replaceIcon(Icon icon) {
-        if (icon == null) {
-          return null;
-        }
-
-        if (icon instanceof DummyIcon) {
-          return icon;
-        }
-
-        if (icon instanceof EmptyIcon) {
-          return icon;
-        }
-
-        if (icon instanceof LazyIcon) {
-          return replaceIcon(((LazyIcon)icon).getOrComputeIcon());
-        }
-
-        if (icon instanceof ReplaceableIcon) {
-          return ((ReplaceableIcon)icon).replaceBy(this);
-        }
-
-        if (!isGoodSize(icon)) {
-          LOG.error(icon);
-          return CachedImageIcon.EMPTY_ICON;
-        }
-
-        if (icon instanceof CachedImageIcon) {
-          return cachedImageIconReplacer.apply((CachedImageIcon)icon);
-        }
-        else {
-          return icon;
+  fun replaceCachedImageIcons(icon: Icon, cachedImageIconReplacer: (CachedImageIcon?) -> Icon): Icon? {
+    val replacer: IconReplacer = object : IconReplacer {
+      override fun replaceIcon(icon: Icon?): Icon? {
+        return when {
+          icon == null || icon is DummyIcon || icon is EmptyIcon -> icon
+          icon is LazyIcon -> replaceIcon(icon.getOrComputeIcon())
+          icon is ReplaceableIcon -> icon.replaceBy(this)
+          !isGoodSize(icon) -> {
+            LOG.error(icon)
+            CachedImageIcon.EMPTY_ICON
+          }
+          icon is CachedImageIcon -> cachedImageIconReplacer(icon)
+          else -> icon
         }
       }
-    };
-    return replacer.replaceIcon(icon);
+    }
+    return replacer.replaceIcon(icon)
   }
 
   /**
    * Creates a new icon with the filter applied.
    */
-  public static @NotNull Icon filterIcon(@NotNull Icon icon,
-                                         @NotNull Supplier<? extends RGBImageFilter> filterSupplier,
-                                         @SuppressWarnings("unused") @Nullable Component ancestor) {
-    if (icon instanceof LazyIcon) {
-      icon = ((LazyIcon)icon).getOrComputeIcon();
+  fun filterIcon(icon: Icon, filterSupplier: () -> RGBImageFilter): Icon {
+    val effectiveIcon = if (icon is LazyIcon) icon.getOrComputeIcon() else icon
+    if (!isGoodSize(effectiveIcon)) {
+      // # 22481
+      LOG.error(effectiveIcon)
+      return CachedImageIcon.EMPTY_ICON
     }
-
-    if (!isGoodSize(icon)) {
-      LOG.error(icon); // # 22481
-      return CachedImageIcon.EMPTY_ICON;
-    }
-
-    if (icon instanceof CachedImageIcon) {
-      return ((CachedImageIcon)icon).createWithFilter(filterSupplier);
-    }
-
-    return new FilteredIcon(icon, filterSupplier);
-  }
-
-  static double getScaleToRenderIcon(@NotNull Icon icon, @Nullable Component ancestor) {
-    double scale;
-    ScaleContextSupport ctxSupport = getScaleContextSupport(icon);
-    if (ctxSupport == null) {
-      scale = JreHiDpiUtil.isJreHiDPI((GraphicsConfiguration)null) ? JBUIScale.sysScale(ancestor) : 1.0f;
+    return if (effectiveIcon is CachedImageIcon) {
+      effectiveIcon.createWithFilter(filterSupplier)
     }
     else {
-      scale = JreHiDpiUtil.isJreHiDPI((GraphicsConfiguration)null) ? ctxSupport.getScale(ScaleType.SYS_SCALE) : 1.0f;
+      FilteredIcon(effectiveIcon, filterSupplier)
     }
-    return scale;
   }
 
-  static @NotNull JBImageIcon renderFilteredIcon(@NotNull Icon icon,
-                                                 double scale,
-                                                 @NotNull Supplier<? extends RGBImageFilter> filterSupplier,
-                                                 @Nullable Component ancestor) {
-    @SuppressWarnings("UndesirableClassUsage")
-    BufferedImage image =
-      new BufferedImage((int)(scale * icon.getIconWidth()), (int)(scale * icon.getIconHeight()), BufferedImage.TYPE_INT_ARGB);
-    final Graphics2D graphics = image.createGraphics();
+  fun getScaleToRenderIcon(icon: Icon, ancestor: Component?): Float {
+    val ctxSupport = getScaleContextSupport(icon)
+    val scale = if (ctxSupport == null) {
+      (if (JreHiDpiUtil.isJreHiDPI(null as GraphicsConfiguration?)) sysScale(ancestor) else 1.0f)
+    }
+    else {
+      if (JreHiDpiUtil.isJreHiDPI(null as GraphicsConfiguration?)) ctxSupport.getScale(ScaleType.SYS_SCALE).toFloat() else 1.0f
+    }
+    return scale
+  }
 
-    graphics.setColor(Gray.TRANSPARENT);
-    graphics.fillRect(0, 0, icon.getIconWidth(), icon.getIconHeight());
-    graphics.scale(scale, scale);
+  fun renderFilteredIcon(icon: Icon,
+                         scale: Double,
+                         filterSupplier: Supplier<out RGBImageFilter?>,
+                         ancestor: Component?): JBImageIcon {
+    @Suppress("UndesirableClassUsage")
+    val image = BufferedImage((scale * icon.iconWidth).toInt(), (scale * icon.iconHeight).toInt(), BufferedImage.TYPE_INT_ARGB)
+    val graphics = image.createGraphics()
+    graphics.color = Gray.TRANSPARENT
+    graphics.fillRect(0, 0, icon.iconWidth, icon.iconHeight)
+    graphics.scale(scale, scale)
     // We want to paint here on the fake component:
     // painting on the real component will have other coordinates at least.
     // Also, it may be significant if the icon contains updatable icon (e.g. DeferredIcon), and it will schedule incorrect repaint
-    icon.paintIcon(fakeComponent, graphics, 0, 0);
-
-    graphics.dispose();
-
-    Image img = ImageUtil.filter(image, filterSupplier.get());
+    icon.paintIcon(fakeComponent, graphics, 0, 0)
+    graphics.dispose()
+    var img = ImageUtil.filter(image, filterSupplier.get())
     if (StartupUiUtil.isJreHiDPI(ancestor)) {
-      img = RetinaImage.createFrom(img, scale, null);
+      img = RetinaImage.createFrom(img!!, scale, null)
     }
-
-    return new JBImageIcon(img);
+    return JBImageIcon(img!!)
   }
 
-  public static @NotNull Icon getTransparentIcon(@NotNull Icon icon) {
-    return getTransparentIcon(icon, 0.5f);
+  @JvmStatic
+  fun getTransparentIcon(icon: Icon): Icon {
+    return getTransparentIcon(icon, 0.5f)
   }
 
-  public static @NotNull Icon getTransparentIcon(@NotNull Icon icon, float alpha) {
-    return new RetrievableIcon() {
-      @Override
-      public @NotNull Icon retrieveIcon() {
-        return icon;
-      }
+  @JvmStatic
+  fun getTransparentIcon(icon: Icon, alpha: Float): Icon {
+    return object : RetrievableIcon {
+      override fun retrieveIcon(): Icon = icon
 
-      @Override
-      public int getIconHeight() {
-        return icon.getIconHeight();
-      }
+      override fun getIconHeight(): Int = icon.iconHeight
 
-      @Override
-      public int getIconWidth() {
-        return icon.getIconWidth();
-      }
+      override fun getIconWidth(): Int = icon.iconWidth
 
-      @Override
-      public @NotNull Icon replaceBy(@NotNull IconReplacer replacer) {
-        return getTransparentIcon(replacer.replaceIcon(icon), alpha);
-      }
+      override fun replaceBy(replacer: IconReplacer): Icon = getTransparentIcon(replacer.replaceIcon(icon), alpha)
 
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        GraphicsUtil.paintWithAlpha(g, alpha,() -> icon.paintIcon(c, g, x, y));
+      override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+        GraphicsUtil.paintWithAlpha(g, alpha) { icon.paintIcon(c, g, x, y) }
       }
-    };
+    }
   }
 
   /**
    * Gets a snapshot of the icon, immune to changes made by these calls:
-   * {@link #setFilter(ImageFilter)}, {@link #setUseDarkIcons(boolean)}
+   * [.setFilter], [.setUseDarkIcons]
    *
    * @param icon the source icon
    * @return the icon snapshot
    */
-  public static @NotNull Icon getIconSnapshot(@NotNull Icon icon) {
-    if (icon instanceof CachedImageIcon) {
-      return ((CachedImageIcon)icon).getRealIcon();
+  @JvmStatic
+  fun getIconSnapshot(icon: Icon): Icon {
+    return if (icon is CachedImageIcon) {
+      icon.getRealIcon()
     }
-    return icon;
+    else icon
   }
 
   /**
-   *  For internal usage. Converts the icon to 1x scale when applicable.
+   * For internal usage. Converts the icon to 1x scale when applicable.
    */
   @ApiStatus.Internal
-  public static @NotNull Icon getMenuBarIcon(@NotNull Icon icon, boolean dark) {
-    if (icon instanceof RetrievableIcon) {
-      icon = getOrigin((RetrievableIcon)icon);
+  fun getMenuBarIcon(icon: Icon, dark: Boolean): Icon {
+    var effectiveIcon = icon
+    if (effectiveIcon is RetrievableIcon) {
+      effectiveIcon = getOrigin(effectiveIcon)
     }
-    if (icon instanceof MenuBarIconProvider) {
-      return ((MenuBarIconProvider)icon).getMenuBarIcon(dark);
-    }
-    return icon;
+    return if (effectiveIcon is MenuBarIconProvider) effectiveIcon.getMenuBarIcon(dark) else effectiveIcon
   }
 
   /**
-   * Returns a copy of the provided {@code icon} with darkness set to {@code dark}.
-   * The method takes effect on a {@link CachedImageIcon} (or its wrapper) only.
+   * Returns a copy of the provided `icon` with darkness set to `dark`.
+   * The method takes effect on a [CachedImageIcon] (or its wrapper) only.
    */
-  public static @NotNull Icon getDarkIcon(@NotNull Icon icon, boolean dark) {
-    if (icon instanceof RetrievableIcon) {
-      icon = getOrigin((RetrievableIcon)icon);
+  @JvmStatic
+  fun getDarkIcon(icon: Icon, dark: Boolean): Icon {
+    var effectiveIcon = icon
+    if (effectiveIcon is RetrievableIcon) {
+      effectiveIcon = getOrigin(effectiveIcon)
     }
-    if (icon instanceof DarkIconProvider) {
-      return ((DarkIconProvider)icon).getDarkIcon(dark);
-    }
-    return icon;
+    return if (effectiveIcon is DarkIconProvider) effectiveIcon.getDarkIcon(dark) else effectiveIcon
   }
 
-  public static void detachClassLoader(@NotNull ClassLoader classLoader) {
-    iconCache.entrySet().removeIf(entry -> {
-      CachedImageIcon icon = entry.getValue();
-      return icon.detachClassLoader(classLoader) || entry.getKey().second == classLoader;
-    });
-
-    for (Map<Icon, Icon> map : iconToDisabledIcon.values()) {
-      map.keySet().removeIf(icon -> icon instanceof CachedImageIcon && ((CachedImageIcon)icon).detachClassLoader(classLoader));
+  fun detachClassLoader(classLoader: ClassLoader) {
+    iconCache.entries.removeIf { (key, icon): Map.Entry<Pair<String, ClassLoader?>, CachedImageIcon> ->
+      icon.detachClassLoader(classLoader) || key.second === classLoader
+    }
+    for (map in iconToDisabledIcon.values) {
+      map.keys.removeIf { it is CachedImageIcon && it.detachClassLoader(classLoader) }
     }
   }
 
-  @ApiStatus.Internal
-  public static class CachedImageIcon extends ScaleContextSupport implements CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider {
-    @SuppressWarnings("UndesirableClassUsage")
-    public static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
-      @Override
-      public @NonNls String toString() {
-        return "Empty icon " + super.toString();
+  internal fun doResolve(path: String?,
+                classLoader: ClassLoader?,
+                ownerClass: Class<*>?,
+                handleNotFound: HandleNotFound): URL? {
+    var effectivePath = path
+    var url: URL? = null
+    if (effectivePath != null) {
+      if (classLoader != null) {
+        // paths in ClassLoader getResource must not start with "/"
+        effectivePath = if (effectivePath[0] == '/') effectivePath.substring(1) else effectivePath
+        url = findUrl(path = effectivePath, urlProvider = classLoader::getResource)
       }
-    };
+      if (url == null && ownerClass != null) {
+        // some plugins use findIcon("icon.png",IconContainer.class)
+        url = findUrl(path = effectivePath, urlProvider = ownerClass::getResource)
+      }
+    }
+    if (url == null) {
+      handleNotFound.handle("Can't find icon in '$effectivePath' near $classLoader")
+    }
+    return url
+  }
 
-    private final @Nullable String originalPath;
-    private volatile @Nullable ImageDataLoader resolver;
-    private final @Nullable ImageDataLoader originalResolver;
-    private final @Nullable("when not overridden") Boolean isDarkOverridden;
-    @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-    private int pathTransformModCount = -1;
+  @JvmStatic
+  fun createLazy(producer: Supplier<out Icon>): Icon {
+    return object : LazyIcon() {
+      override fun replaceBy(replacer: IconReplacer): Icon {
+        return createLazy { replacer.replaceIcon(producer.get()) }
+      }
 
-    private final @Nullable Supplier<? extends RGBImageFilter> localFilterSupplier;
-    private final ScaledIconCache scaledIconCache = new ScaledIconCache(this);
+      override fun compute(): Icon = producer.get()
+    }
+  }
 
-    private volatile CachedImageIcon darkVariant;
+  @ApiStatus.Internal
+  open class CachedImageIcon private constructor(val originalPath: String?,
+                                                   @field:Volatile var resolver: ImageDataLoader?,
+                                                   darkOverridden: Boolean?,
+                                                   private val localFilterSupplier: (() -> RGBImageFilter)? = null,
+                                                   private val colorPatcher: SvgElementColorPatcherProvider? = null,
+                                                   private val useStroke: Boolean = false) : ScaleContextSupport(), CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider {
+    companion object {
+      @Suppress("UndesirableClassUsage")
+      val EMPTY_ICON: ImageIcon = object : ImageIcon(BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
+        override fun toString(): String = "Empty icon ${super.toString()}"
+      }
 
-    private final @Nullable SVGLoader.SvgElementColorPatcherProvider colorPatcher;
-    private final boolean useStroke;
+      private fun unwrapIcon(icon: Any?): ImageIcon? {
+        return when (icon) {
+          null -> null
+          is Reference<*> -> icon.get() as ImageIcon?
+          else -> icon as ImageIcon?
+        }
+      }
+    }
 
-    private final Object lock = new Object();
+    private val originalResolver = resolver
+    private val isDarkOverridden: Boolean?
+    private var pathTransformModCount = -1
+    @Suppress("LeakingThis")
+    private val scaledIconCache = ScaledIconCache(this)
+
+    @Volatile
+    private var darkVariant: CachedImageIcon? = null
+    private val lock = Any()
+
     // ImageIcon (if small icon) or SoftReference<ImageIcon> (if large icon)
-    private volatile @Nullable Object realIcon;
+    @Volatile
+    private var realIcon: Any? = null
 
-    public CachedImageIcon(@NotNull URL url, boolean useCacheOnLoad) {
-      this(null, new ImageDataByUrlLoader(url, null, useCacheOnLoad), null, null);
+    constructor(url: URL, useCacheOnLoad: Boolean) : this(originalPath = null,
+                                                          resolver = ImageDataByUrlLoader(url, null, useCacheOnLoad),
+                                                          darkOverridden = null,
+                                                          colorPatcher = null) {
 
       // if url is explicitly specified, it means that path should be not transformed
-      pathTransformModCount = pathTransformGlobalModCount.get();
+      pathTransformModCount = pathTransformGlobalModCount.get()
     }
 
-    public CachedImageIcon(@Nullable String originalPath,
-                           @Nullable ImageDataLoader resolver,
-                           @Nullable Boolean darkOverridden,
-                           @Nullable Supplier<? extends RGBImageFilter> localFilterSupplier) {
-      this(originalPath, resolver, darkOverridden, localFilterSupplier, null, false);
-    }
+    constructor(originalPath: String?, resolver: ImageDataLoader?) : this(originalPath = originalPath,
+                                                                          resolver = resolver,
+                                                                          darkOverridden = null,
+                                                                          colorPatcher = null)
 
-    protected CachedImageIcon(@Nullable String originalPath,
-                              @Nullable ImageDataLoader resolver,
-                              @Nullable Boolean darkOverridden,
-                              @Nullable Supplier<? extends RGBImageFilter> localFilterSupplier,
-                              @Nullable SVGLoader.SvgElementColorPatcherProvider colorPatcher,
-                              boolean useStroke) {
-      this.originalPath = originalPath;
-      this.resolver = resolver;
-      originalResolver = resolver;
-      isDarkOverridden = darkOverridden;
-      this.localFilterSupplier = localFilterSupplier;
-      this.colorPatcher = colorPatcher;
-      this.useStroke = useStroke;
+    init {
+      isDarkOverridden = darkOverridden
 
       // for instance, ShadowPainter updates the context from and outside
-      getScaleContext().addUpdateListener(() -> realIcon = null);
+      scaleContext.addUpdateListener { realIcon = null }
     }
 
-    private static @Nullable ImageIcon unwrapIcon(Object icon) {
-      if (icon == null) {
-        return null;
-      }
-      else if (icon instanceof Reference) {
-        //noinspection unchecked
-        return ((Reference<ImageIcon>)icon).get();
-      }
-      else {
-        return (ImageIcon)icon;
-      }
+    override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+      getRealIcon(ScaleContext.create(if (g is Graphics2D) g else null)).paintIcon(c, g, x, y)
     }
 
-    @Override
-    public final void paintIcon(Component c, Graphics g, int x, int y) {
-      Graphics2D g2d = g instanceof Graphics2D ? (Graphics2D)g : null;
-      ScaleContext scaleContext = ScaleContext.create(g2d);
-      getRealIcon(scaleContext).paintIcon(c, g, x, y);
-    }
+    override fun getIconWidth(): Int = getRealIcon(null).iconWidth
 
-    @Override
-    public int getIconWidth() {
-      return getRealIcon(null).getIconWidth();
-    }
+    override fun getIconHeight(): Int = getRealIcon(null).iconHeight
 
-    @Override
-    public int getIconHeight() {
-      return getRealIcon(null).getIconHeight();
-    }
-
-    @Override
-    public float getScale() {
-      return 1.0f;
-    }
+    override fun getScale(): Float = 1.0f
 
     @ApiStatus.Internal
-    public final @NotNull ImageIcon getRealIcon() {
-      return getRealIcon(null);
-    }
+    fun getRealIcon(): ImageIcon = getRealIcon(null)
 
     @TestOnly
-    public final @Nullable ImageIcon doGetRealIcon() {
-      return unwrapIcon(realIcon);
-    }
+    fun doGetRealIcon(): ImageIcon? = unwrapIcon(realIcon)
 
-    public final @Nullable String getOriginalPath() {
-      return originalPath;
-    }
-
-    private @NotNull ImageIcon getRealIcon(@Nullable ScaleContext context) {
-      ImageDataLoader resolver = this.resolver;
+    fun getRealIcon(context: ScaleContext?): ImageIcon {
       if (resolver == null || !isActivated) {
-        return EMPTY_ICON;
+        return EMPTY_ICON
       }
 
-      Object realIcon;
+      var realIcon: Any?
       if (pathTransformGlobalModCount.get() == pathTransformModCount) {
-        realIcon = this.realIcon;
+        realIcon = this.realIcon
       }
       else {
-        synchronized (lock) {
-          this.resolver = originalResolver;
-          resolver = this.resolver;
-          if (resolver == null) {
-            return EMPTY_ICON;
-          }
-
+        synchronized(lock) {
+          this.resolver = originalResolver
+          val resolver = this.resolver ?: return EMPTY_ICON
           if (pathTransformGlobalModCount.get() == pathTransformModCount) {
-            realIcon = this.realIcon;
+            realIcon = this.realIcon
           }
           else {
-            pathTransformModCount = pathTransformGlobalModCount.get();
-            realIcon = null;
-            this.realIcon = null;
-            scaledIconCache.clear();
+            pathTransformModCount = pathTransformGlobalModCount.get()
+            realIcon = null
+            this.realIcon = null
+            scaledIconCache.clear()
             if (originalPath != null) {
-              resolver = resolver.patch(originalPath, pathTransform.get());
-              if (resolver != null) {
-                this.resolver = resolver;
+              resolver.patch(originalPath = originalPath, transform = pathTransform.get())?.let {
+                this.resolver = it
               }
             }
           }
         }
       }
 
-      synchronized (lock) {
+      synchronized(lock) {
         // try returning the current icon as the context is up-to-date
         if (!updateScaleContext(context) && realIcon != null) {
-          ImageIcon icon = unwrapIcon(realIcon);
-          if (icon != null) {
-            return icon;
+          unwrapIcon(realIcon)?.let {
+            return it
           }
         }
 
-        ImageIcon icon = scaledIconCache.getOrScaleIcon(1.0f);
-        if (icon != null) {
-          this.realIcon = icon.getIconWidth() < 50 && icon.getIconHeight() < 50 ? icon : new SoftReference<>(icon);
-          return icon;
+        scaledIconCache.getOrScaleIcon(1.0f)?.let { icon ->
+          this.realIcon = if (icon.iconWidth < 50 && icon.iconHeight < 50) icon else SoftReference(icon)
+          return icon
         }
       }
-      return EMPTY_ICON;
+      return EMPTY_ICON
     }
 
-    @Override
-    public final String toString() {
-      ImageDataLoader resolver = this.resolver;
-      if (resolver != null) {
-        return resolver.toString();
-      }
-      return originalPath != null ? originalPath : "unknown path";
+    override fun toString(): String {
+      return resolver?.toString() ?: (originalPath ?: "unknown path")
     }
 
-    @Override
-    public final @NotNull Icon scale(float scale) {
+    override fun scale(scale: Float): Icon {
       if (scale == 1.0f) {
-        return this;
+        return this
       }
 
       // force state update & cache reset
-      getRealIcon();
-
-      Icon icon = scaledIconCache.getOrScaleIcon(scale);
-      return icon == null ? this : icon;
+      getRealIcon()
+      val icon: Icon? = scaledIconCache.getOrScaleIcon(scale)
+      return icon ?: this
     }
 
-    @Override
-    public final @NotNull Icon getDarkIcon(boolean isDark) {
-      ImageDataLoader resolver = this.resolver;
-      if (resolver == null) {
-        return EMPTY_ICON;
-      }
-
-      CachedImageIcon result = isDark ? darkVariant : null;
+    override fun getDarkIcon(isDark: Boolean): Icon {
+      val resolver = resolver ?: return EMPTY_ICON
+      var result = if (isDark) darkVariant else null
       if (result == null) {
-        synchronized (lock) {
-          if (isDark) result = darkVariant;
+        synchronized(lock) {
+          if (isDark) result = darkVariant
           if (result == null) {
-            result = new CachedImageIcon(originalPath, resolver, isDark, localFilterSupplier, colorPatcher, useStroke);
-            if (isDark) darkVariant = result;
+            result = CachedImageIcon(originalPath, resolver, isDark, localFilterSupplier, colorPatcher, useStroke)
+            if (isDark) darkVariant = result
           }
         }
       }
-      return result;
+      return result!!
     }
 
-    @Override
-    public final @NotNull Icon getMenuBarIcon(boolean isDark) {
-      boolean useMRI = SystemInfoRt.isMac;
-      ScaleContext ctx = useMRI ? ScaleContext.create() : ScaleContext.createIdentity();
-      ctx.setScale(ScaleType.USR_SCALE.of(1));
-      Image img = loadImage(ctx, isDark);
+    override fun getMenuBarIcon(isDark: Boolean): Icon {
+      val useMRI = SystemInfoRt.isMac
+      val ctx = if (useMRI) ScaleContext.create() else ScaleContext.createIdentity()
+      ctx.setScale(ScaleType.USR_SCALE.of(1.0))
+      var img = loadImage(ctx, isDark)
       if (useMRI) {
-        img = MultiResolutionImageProvider.convertFromJBImage(img);
+        img = MultiResolutionImageProvider.convertFromJBImage(img)
       }
-      return img == null ? this : new ImageIcon(img);
+      return if (img == null) this else ImageIcon(img)
     }
 
-    @Override
-    public final @NotNull CachedImageIcon copy() {
-      CachedImageIcon result = new CachedImageIcon(originalPath, resolver, isDarkOverridden, localFilterSupplier, colorPatcher, useStroke);
-      result.pathTransformModCount = pathTransformModCount;
-      return result;
+    override fun copy(): CachedImageIcon {
+      val result = CachedImageIcon(originalPath = originalPath,
+                                   resolver = resolver,
+                                   darkOverridden = isDarkOverridden,
+                                   localFilterSupplier = localFilterSupplier,
+                                   colorPatcher = colorPatcher,
+                                   useStroke = useStroke)
+      result.pathTransformModCount = pathTransformModCount
+      return result
     }
 
-    private @NotNull Icon createWithFilter(@NotNull Supplier<? extends RGBImageFilter> filterSupplier) {
-      ImageDataLoader resolver = this.resolver;
-      if (resolver == null) {
-        return EMPTY_ICON;
-      }
-      return new CachedImageIcon(originalPath, resolver, isDarkOverridden, filterSupplier, colorPatcher, useStroke);
+    internal fun createWithFilter(filterSupplier: () -> RGBImageFilter): Icon {
+      val resolver = resolver ?: return EMPTY_ICON
+      return CachedImageIcon(originalPath = originalPath,
+                             resolver = resolver,
+                             darkOverridden = isDarkOverridden,
+                             localFilterSupplier = filterSupplier,
+                             colorPatcher = colorPatcher,
+                             useStroke = useStroke)
     }
 
-    private @NotNull Icon createWithPatcher(@NotNull SVGLoader.SvgElementColorPatcherProvider colorPatcher) {
-      ImageDataLoader resolver = this.resolver;
-      if (resolver == null) {
-        return EMPTY_ICON;
-      }
-      return new CachedImageIcon(originalPath, resolver, isDarkOverridden, localFilterSupplier, colorPatcher, useStroke);
+    fun createWithPatcher(colorPatcher: SvgElementColorPatcherProvider): Icon {
+      val resolver = resolver ?: return EMPTY_ICON
+      return CachedImageIcon(originalPath = originalPath,
+                             resolver = resolver,
+                             darkOverridden = isDarkOverridden,
+                             localFilterSupplier = localFilterSupplier,
+                             colorPatcher = colorPatcher,
+                             useStroke = useStroke)
     }
 
-    public @NotNull Icon createStrokeIcon() {
-      ImageDataLoader resolver = this.resolver;
-      if (resolver == null) {
-        return EMPTY_ICON;
-      }
-      return new CachedImageIcon(originalPath, resolver, isDarkOverridden, localFilterSupplier, colorPatcher, true);
+    fun createStrokeIcon(): Icon {
+      val resolver = resolver ?: return EMPTY_ICON
+      return CachedImageIcon(originalPath = originalPath,
+                             resolver = resolver,
+                             darkOverridden = isDarkOverridden,
+                             localFilterSupplier = localFilterSupplier,
+                             colorPatcher = colorPatcher,
+                             useStroke = true)
     }
 
-    private boolean isDark() {
-      return isDarkOverridden == null ? pathTransform.get().isDark() : isDarkOverridden;
-    }
+    val isDark: Boolean
+      get() = isDarkOverridden ?: pathTransform.get().isDark
 
-    private @NotNull List<ImageFilter> getFilters() {
-      ImageFilter global = pathTransform.get().getFilter();
-      ImageFilter local = localFilterSupplier == null ? null : localFilterSupplier.get();
-      if (global != null && local != null) {
-        return Arrays.asList(global, local);
-      }
-      if (global != null) {
-        return Collections.singletonList(global);
-      }
-      return local == null ? Collections.emptyList() : Collections.singletonList(local);
-    }
-
-    public final @Nullable URL getURL() {
-      ImageDataLoader resolver = this.resolver;
-      return resolver == null ? null : resolver.getUrl();
-    }
-
-    public @Nullable Image loadImage(@NotNull ScaleContext scaleContext, boolean isDark) {
-      long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-
-      ImageDataLoader resolver = this.resolver;
-      if (resolver == null) {
-        return null;
-      }
-
-      SVGLoader.SvgElementColorPatcherProvider colorPatcher = this.colorPatcher == null ? SVGLoader.getColorPatcherProvider() : this.colorPatcher;
-      Image image = resolver.loadImage(new LoadIconParameters(getFilters(), scaleContext, isDark, colorPatcher, useStroke));
-      if (start != -1) {
-        IconLoadMeasurer.findIconLoad.end(start);
-      }
-      return image;
-    }
-
-    final boolean detachClassLoader(@NotNull ClassLoader loader) {
-      ImageDataLoader resolver = this.resolver;
-      //noinspection DuplicatedCode
-      if (resolver == null) {
-        return true;
-      }
-
-      synchronized (lock) {
-        resolver = this.resolver;
-        if (resolver == null) {
-          return true;
+    private val filters: List<ImageFilter>
+      get() {
+        val global = pathTransform.get().filter
+        val local = localFilterSupplier?.invoke()
+        return when {
+          global != null && local != null -> listOf(global, local)
+          global != null -> listOf(global)
+          else -> listOfNotNull(local)
         }
+      }
 
+    val url: URL?
+      get() = this.resolver?.url
+
+    fun loadImage(scaleContext: ScaleContext, isDark: Boolean): Image? {
+      val start = StartUpMeasurer.getCurrentTimeIfEnabled()
+      val resolver = resolver ?: return null
+      val colorPatcher = colorPatcher ?: colorPatcherProvider
+      val image = resolver.loadImage(LoadIconParameters(filters = filters,
+                                                        scaleContext = scaleContext,
+                                                        isDark = isDark,
+                                                        colorPatcher = colorPatcher,
+                                                        isStroke = useStroke))
+      if (start != -1L) {
+        IconLoadMeasurer.findIconLoad.end(start)
+      }
+      return image
+    }
+
+    fun detachClassLoader(loader: ClassLoader): Boolean {
+      if (resolver == null) {
+        return true
+      }
+
+      synchronized(lock) {
+        val resolver = this.resolver ?: return true
         if (!resolver.isMyClassLoader(loader)) {
-          return false;
+          return false
         }
 
-        this.resolver = null;
-        scaledIconCache.clear();
-
-        CachedImageIcon darkVariant = this.darkVariant;
+        this.resolver = null
+        scaledIconCache.clear()
+        val darkVariant = darkVariant
         if (darkVariant != null) {
-          this.darkVariant = null;
-          darkVariant.detachClassLoader(loader);
+          this.darkVariant = null
+          darkVariant.detachClassLoader(loader)
         }
-
-        return true;
+        return true
       }
     }
 
-    public int getImageFlags() {
-      ImageDataLoader resolver = this.resolver;
-      if (resolver == null) {
-        return 0;
+    val imageFlags: Int
+      get() {
+        return (this.resolver ?: return 0).flags
       }
-      return resolver.getFlags();
+  }
+}
+
+private fun getOrigin(icon: RetrievableIcon): Icon {
+  val maxDeep = 10
+  var origin = icon.retrieveIcon()
+  var level = 0
+  while (origin is RetrievableIcon && level < maxDeep) {
+    ++level
+    origin = origin.retrieveIcon()
+  }
+  if (origin is RetrievableIcon) {
+    LOG.error("can't calculate origin icon (too deep in hierarchy), src: $icon")
+  }
+  return origin
+}
+
+/**
+ * Returns [ScaleContextSupport] which best represents this icon taking into account its compound structure, or null when not applicable.
+ */
+private fun getScaleContextSupport(icon: Icon): ScaleContextSupport? {
+  return when (icon) {
+    is ScaleContextSupport -> icon
+    is RetrievableIcon -> getScaleContextSupport(icon.retrieveIcon())
+    is CompositeIcon -> {
+      if (icon.iconCount == 0) {
+        return null
+      }
+      getScaleContextSupport(icon.getIcon(0) ?: return null)
     }
+    else -> null
+  }
+}
+
+private fun updateTransform(updater: Function<in IconTransform, IconTransform>) {
+  var prev: IconTransform
+  var next: IconTransform
+  do {
+    prev = pathTransform.get()
+    next = updater.apply(prev)
+  }
+  while (!pathTransform.compareAndSet(prev, next))
+  pathTransformGlobalModCount.incrementAndGet()
+  if (prev != next) {
+    iconToDisabledIcon.clear()
+    // clear svg cache
+    ImageCache.INSTANCE.clearCache()
+    // iconCache is not cleared because it contains an original icon (instance that will delegate to)
+  }
+}
+
+private fun findIcon(originalPath: String,
+                     aClass: Class<*>?,
+                     classLoader: ClassLoader,
+                     handleNotFound: HandleNotFound?,
+                     deferUrlResolve: Boolean): Icon? {
+  var effectiveClassLoader = classLoader
+  if (!deferUrlResolve) {
+    return findIcon(originalPath = originalPath, originalClassLoader = effectiveClassLoader, cache = iconCache)
   }
 
-  private static final class ScaledIconCache {
-    private static final int SCALED_ICONS_CACHE_LIMIT = 5;
-
-    private final CachedImageIcon host;
-    private final Map<Long, SoftReference<ImageIcon>> cache = Collections.synchronizedMap(new FixedHashMap<>(SCALED_ICONS_CACHE_LIMIT));
-
-    private ScaledIconCache(@NotNull CachedImageIcon host) {
-      this.host = host;
-    }
-
-    private static long key(@NotNull ScaleContext context) {
-      return ((long)Float.floatToIntBits((float)context.getScale(DerivedScaleType.EFF_USR_SCALE)) << 32) |
-             ((long)Float.floatToIntBits((float)context.getScale(ScaleType.SYS_SCALE)) & 0xffffffffL);
-    }
-
-    /**
-     * Retrieves the orig icon scaled by the provided scale.
-     */
-    ImageIcon getOrScaleIcon(float scale) {
-      ScaleContext scaleContext = host.getScaleContext();
-      if (scale != 1) {
-        scaleContext = scaleContext.copy();
-        scaleContext.setScale(ScaleType.OBJ_SCALE.of(scale));
-      }
-
-      long cacheKey = key(scaleContext);
-      ImageIcon icon = SoftReference.dereference(cache.get(cacheKey));
-      if (icon != null) {
-        return icon;
-      }
-
-      Image image = host.loadImage(scaleContext, host.isDark());
-      if (image == null) {
-        return null;
-      }
-
-      icon = createScaledIcon(image, host, scale);
-      if (icon != null && !ImageLoader.INSTANCE.isIconTooLargeForCache(icon)) {
-        cache.put(cacheKey, new SoftReference<>(icon));
-      }
-      return icon;
-    }
-
-    public void clear() {
-      cache.clear();
-    }
+  val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
+  val patchedPath = patchPath(originalPath = originalPath, classLoader = effectiveClassLoader)
+  val path = patchedPath?.first ?: originalPath
+  if (patchedPath?.second != null) {
+    effectiveClassLoader = patchedPath.second
   }
 
-  @ApiStatus.Internal
-  enum HandleNotFound {
-    THROW_EXCEPTION {
-      @Override
-      void handle(@NotNull String msg) {
-        throw new RuntimeException(msg);
-      }
-    },
-    LOG_ERROR {
-      @Override
-      void handle(@NotNull String msg) {
-        LOG.error(msg);
-      }
-    },
-    IGNORE;
-
-    void handle(@NotNull String msg) throws RuntimeException {}
+  val icon: Icon?
+  if (isReflectivePath(path)) {
+    icon = getReflectiveIcon(path = path, classLoader = effectiveClassLoader)
   }
-
-  static @Nullable URL doResolve(@Nullable String path,
-                                 @Nullable ClassLoader classLoader,
-                                 @Nullable Class<?> ownerClass,
-                                 @NotNull HandleNotFound handleNotFound) {
-    URL url = null;
-    if (path != null) {
-      if (classLoader != null) {
-        // paths in ClassLoader getResource must not start with "/"
-        path = path.charAt(0) == '/' ? path.substring(1) : path;
-        url = findUrl(path, classLoader::getResource);
+  else {
+    val key = Pair(originalPath, effectiveClassLoader)
+    var cachedIcon = iconCache.get(key)
+    if (cachedIcon == null) {
+      cachedIcon = iconCache.computeIfAbsent(key) { k ->
+        val classLoader1 = k.getSecond()
+        val effectiveHandleNotFound = handleNotFound
+                                      ?: if (STRICT_LOCAL.get()) HandleNotFound.THROW_EXCEPTION else HandleNotFound.IGNORE
+        val resolver = ImageDataByUrlLoader(path, aClass, classLoader1, effectiveHandleNotFound,  /* useCacheOnLoad = */true)
+        IconLoader.CachedImageIcon(originalPath = originalPath, resolver = resolver)
       }
-      if (url == null && ownerClass != null) {
-        // some plugins use findIcon("icon.png",IconContainer.class)
-        url = findUrl(path, ownerClass::getResource);
-      }
-    }
-    if (url == null) {
-      handleNotFound.handle("Can't find icon in '" + path + "' near " + classLoader);
-    }
-    return url;
-  }
-
-  @SuppressWarnings("DuplicateExpressions")
-  private static @Nullable URL findUrl(@NotNull String path, @NotNull Function<? super String, URL> urlProvider) {
-    URL url = urlProvider.apply(path);
-    if (url != null) {
-      return url;
-    }
-
-    // Find either PNG or SVG icon.
-    // The icon will then be wrapped into CachedImageIcon,
-    // which will load a proper icon version depending on the context - UI theme, DPI.
-    // SVG version, when present, has more priority than PNG.
-    // See for details: com.intellij.util.ImageLoader.ImageDescList#create
-    if (path.endsWith(".png")) {
-      path = path.substring(0, path.length() - 4) + ".svg";
-    }
-    else if (path.endsWith(".svg")) {
-      path = path.substring(0, path.length() - 4) + ".png";
     }
     else {
-      LOG.debug("unexpected path: ", path);
+      val scaleContext = ScaleContext.create()
+      if (cachedIcon.scaleContext != scaleContext) {
+        // honor scale context as 'iconCache' doesn't do that
+        cachedIcon = cachedIcon.copy()
+        cachedIcon.updateScaleContext(scaleContext)
+      }
     }
-    return urlProvider.apply(path);
+    icon = cachedIcon
+  }
+  if (startTime != -1L) {
+    IconLoadMeasurer.findIcon.end(startTime)
+  }
+  return icon
+}
+
+internal enum class HandleNotFound {
+  THROW_EXCEPTION {
+    override fun handle(msg: String) {
+      throw RuntimeException(msg)
+    }
+  },
+  IGNORE;
+
+  open fun handle(msg: String) {
+  }
+}
+
+private abstract class LazyIcon : ScaleContextSupport(), CopyableIcon, RetrievableIcon {
+  private var wasComputed = false
+
+  @Volatile
+  private var icon: Icon? = null
+
+  private var transformModCount = pathTransformGlobalModCount.get()
+
+  override fun isComplex(): Boolean = true
+
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+    if (updateScaleContext(ScaleContext.create(g as Graphics2D))) {
+      icon = null
+    }
+
+    getOrComputeIcon().paintIcon(c, g, x, y)
   }
 
-  public static @NotNull Icon createLazy(@NotNull Supplier<? extends @NotNull Icon> producer) {
-    return new LazyIcon() {
-      @Override
-      public @NotNull Icon replaceBy(@NotNull IconReplacer replacer) {
-        return createLazy(() -> replacer.replaceIcon(producer.get()));
-      }
+  override fun getIconWidth(): Int = getOrComputeIcon().iconWidth
 
-      @Override
-      protected @NotNull Icon compute() {
-        return producer.get();
-      }
-    };
+  override fun getIconHeight(): Int = getOrComputeIcon().iconHeight
+
+  @Synchronized
+  fun getOrComputeIcon(): Icon {
+    var icon = icon
+    val newTransformModCount = pathTransformGlobalModCount.get()
+    if (icon != null && wasComputed && transformModCount == newTransformModCount) {
+      return icon
+    }
+
+    transformModCount = newTransformModCount
+    wasComputed = true
+    icon = try {
+      compute()
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error("Cannot compute icon", e)
+      IconManager.getInstance().getPlatformIcon(PlatformIcons.Stub)
+    }
+    this.icon = icon
+    return icon!!
   }
 
-  @ApiStatus.Internal
-  public abstract static class LazyIcon extends ScaleContextSupport implements CopyableIcon, RetrievableIcon {
-    private boolean myWasComputed;
-    private volatile Icon myIcon;
-    private int myTransformModCount = pathTransformGlobalModCount.get();
+  protected abstract fun compute(): Icon
 
-    /**
-     * @deprecated Use {@link IconLoader#createLazy}.
-     */
-    @SuppressWarnings({"RedundantNoArgConstructor", "DeprecatedIsStillUsed"})
-    @Deprecated
-    public LazyIcon() {
-    }
+  override fun retrieveIcon(): Icon = getOrComputeIcon()
 
-    @Override
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-      if (updateScaleContext(ScaleContext.create((Graphics2D)g))) {
-        myIcon = null;
-      }
-      final Icon icon = getOrComputeIcon();
-      icon.paintIcon(c, g, x, y);
-    }
+  override fun copy(): Icon = IconLoader.copy(icon = getOrComputeIcon(), ancestor = null, deepCopy = false)
+}
 
-    @Override
-    public int getIconWidth() {
-      final Icon icon = getOrComputeIcon();
-      return icon.getIconWidth();
-    }
-
-    @Override
-    public int getIconHeight() {
-      final Icon icon = getOrComputeIcon();
-      return icon.getIconHeight();
-    }
-
-    final synchronized @NotNull Icon getOrComputeIcon() {
-      Icon icon = myIcon;
-      int newTransformModCount = pathTransformGlobalModCount.get();
-      if (icon == null || !myWasComputed || myTransformModCount != newTransformModCount) {
-        myTransformModCount = newTransformModCount;
-        myWasComputed = true;
-        try {
-          icon = compute();
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.error("Cannot compute icon", e);
-          icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.Stub);
-        }
-
-        myIcon = icon;
-      }
-
-      return icon;
-    }
-
-    public final void load() {
-      getIconWidth();
-    }
-
-    protected abstract @NotNull Icon compute();
-
-    @Override
-    public @NotNull Icon retrieveIcon() {
-      return getOrComputeIcon();
-    }
-
-    @Override
-    public @NotNull Icon copy() {
-      return IconLoader.copy(getOrComputeIcon(), null, false);
-    }
+private fun findUrl(path: String, urlProvider: (String) -> URL?): URL? {
+  urlProvider(path)?.let {
+    return it
   }
 
-  private static @NotNull Icon getOrigin(@NotNull RetrievableIcon icon) {
-    final int maxDeep = 10;
-    Icon origin = icon.retrieveIcon();
-    int level = 0;
-    while (origin instanceof RetrievableIcon && level < maxDeep) {
-      ++level;
-      origin = ((RetrievableIcon)origin).retrieveIcon();
-    }
-    if (origin instanceof RetrievableIcon) {
-      LOG.error("can't calculate origin icon (too deep in hierarchy), src: " + icon);
-    }
-    return origin;
+  // Find either PNG or SVG icon.
+  // The icon will then be wrapped into CachedImageIcon,
+  // which will load a proper icon version depending on the context - UI theme, DPI.
+  // SVG version, when present, has more priority than PNG.
+  // See for details: com.intellij.util.ImageLoader.ImageDescList#create
+  var effectivePath = path
+  when {
+    effectivePath.endsWith(".png") -> effectivePath = effectivePath.substring(0, effectivePath.length - 4) + ".svg"
+    effectivePath.endsWith(".svg") -> effectivePath = effectivePath.substring(0, effectivePath.length - 4) + ".png"
+    else -> LOG.debug("unexpected path: ", effectivePath)
+  }
+  return urlProvider(effectivePath)
+}
+
+private class FinalImageDataLoader(private val path: String, classLoader: ClassLoader) : ImageDataLoader {
+  private val classLoaderRef: WeakReference<ClassLoader>
+
+  init {
+    classLoaderRef = WeakReference(classLoader)
   }
 
-  /**
-   * Returns {@link ScaleContextSupport} which best represents this icon taking into account its compound structure,
-   * or null when not applicable.
-   */
-  private static @Nullable ScaleContextSupport getScaleContextSupport(@NotNull Icon icon) {
-    if (icon instanceof ScaleContextSupport) {
-      return (ScaleContextSupport)icon;
+  override fun loadImage(parameters: LoadIconParameters): Image? {
+    // do not use cache
+    var flags = ImageLoader.ALLOW_FLOAT_SCALING
+    if (parameters.isDark) {
+      flags = flags or ImageLoader.USE_DARK
     }
-    else if (icon instanceof RetrievableIcon) {
-      return getScaleContextSupport(((RetrievableIcon)icon).retrieveIcon());
-    }
-    else if (icon instanceof CompositeIcon) {
-      CompositeIcon compositeIcon = (CompositeIcon)icon;
-      if (compositeIcon.getIconCount() == 0) {
-        return null;
-      }
-      Icon innerIcon = compositeIcon.getIcon(0);
-      return innerIcon == null ? null : getScaleContextSupport(innerIcon);
-    }
-    else {
-      return null;
-    }
+
+    val classLoader = classLoaderRef.get() ?: return null
+    return loadImage(path = path,
+                     parameters = parameters,
+                     resourceClass = null,
+                     classLoader = classLoader,
+                     flags = flags,
+                     isUpScaleNeeded = !path.endsWith(".svg"))
   }
+
+  override val url: URL?
+    get() = classLoaderRef.get()?.getResource(path)
+
+  // this resolver is already produced as a result of a patch
+  override fun patch(originalPath: String, transform: IconTransform): ImageDataLoader? = null
+
+  override fun isMyClassLoader(classLoader: ClassLoader): Boolean = classLoaderRef.get() === classLoader
+
+  override fun toString(): String = "FinalImageDataLoader(classLoader=${classLoaderRef.get()}, path='$path')"
 }

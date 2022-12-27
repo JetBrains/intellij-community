@@ -171,7 +171,8 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
 }
 
 private class IconWithToolTipImpl(originalPath: String,
-                                  resolver: ImageDataLoader) : CachedImageIcon(originalPath, resolver, null, null), IconWithToolTip {
+                                  resolver: ImageDataLoader) : CachedImageIcon(originalPath = originalPath,
+                                                                               resolver = resolver), IconWithToolTip {
   @NlsSafe
   private var result: String? = null
   private var isTooltipCalculated = false

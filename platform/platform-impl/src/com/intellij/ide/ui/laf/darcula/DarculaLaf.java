@@ -402,8 +402,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   @Override
   public Icon getDisabledIcon(JComponent component, Icon icon) {
-    if (icon == null) return null;
-    return IconLoader.getDisabledIcon(icon, component);
+    return icon == null ? null : IconLoader.getDisabledIcon(icon);
   }
 
   @Override

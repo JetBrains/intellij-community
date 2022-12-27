@@ -223,7 +223,7 @@ public abstract class UsefulTestCase extends TestCase {
     Disposer.setDebugMode(!isStressTest);
 
     if (isIconRequired()) {
-      // ensure that IconLoader will not use dummy empty icon
+      // ensure that IconLoader will not use fake empty icon
       try {
         IconManager.activate(new CoreIconManager());
       }
@@ -290,7 +290,7 @@ public abstract class UsefulTestCase extends TestCase {
       () -> {
         if (isIconRequired()) {
           IconManager.deactivate();
-          IconLoader.clearCacheInTests();
+          IconLoader.INSTANCE.clearCacheInTests();
         }
       },
       () -> disposeRootDisposable(),

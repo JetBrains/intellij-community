@@ -335,23 +335,6 @@ public final class IconUtil {
     return "toolbarDecorator/" + (SystemInfoRt.isMac ? "mac/" : "");
   }
 
-  /**
-   * Result icons look like original but have equal (maximum) size
-   */
-  public static Icon @NotNull [] getEqualSizedIcons(Icon @NotNull ... icons) {
-    Icon[] result = new Icon[icons.length];
-    int width = 0;
-    int height = 0;
-    for (Icon icon : icons) {
-      width = Math.max(width, icon.getIconWidth());
-      height = Math.max(height, icon.getIconHeight());
-    }
-    for (int i = 0; i < icons.length; i++) {
-      result[i] = new IconSizeWrapper(icons[i], width, height);
-    }
-    return result;
-  }
-
   public static @NotNull Icon toSize(@Nullable Icon icon, int width, int height) {
     return new IconSizeWrapper(icon, width, height);
   }
@@ -359,7 +342,8 @@ public final class IconUtil {
   public static void paintSelectionAwareIcon(@NotNull Icon icon, @Nullable JComponent component, @NotNull Graphics g, int x, int y, boolean selected) {
     if (selected) {
       SVGLoader.paintIconWithSelection(icon, component, g, x, y);
-    } else {
+    }
+    else {
       icon.paintIcon(component, g, x, y);
     }
   }
@@ -550,7 +534,7 @@ public final class IconUtil {
    * @see CopyableIcon
    */
   public static @NotNull Icon copy(@NotNull Icon icon, @Nullable Component ancestor) {
-    return IconLoader.copy(icon, ancestor, false);
+    return IconLoader.INSTANCE.copy(icon, ancestor, false);
   }
 
   /**
@@ -559,7 +543,7 @@ public final class IconUtil {
    * @see CopyableIcon
    */
   public static @NotNull Icon deepCopy(@NotNull Icon icon, @Nullable Component ancestor) {
-    return IconLoader.copy(icon, ancestor, true);
+    return IconLoader.INSTANCE.copy(icon, ancestor, true);
   }
 
   /**
@@ -679,7 +663,7 @@ public final class IconUtil {
       int newWidth = Math.round(scale * oldWidth);
       int newHeight = Math.round(scale * oldHeight);
       if (oldWidth == newWidth && oldHeight == newHeight) return icon;
-      Icon version = IconLoader.loadCustomVersion((IconLoader.CachedImageIcon)icon, newWidth, newHeight);
+      Icon version = IconLoader.INSTANCE.loadCustomVersion((IconLoader.CachedImageIcon)icon, newWidth, newHeight);
       if (version != null) return version;
     }
     if (icon instanceof ScalableIcon) {
@@ -913,10 +897,10 @@ public final class IconUtil {
   }
 
   /**
-   * Creates new icon with the filter applied.
+   * Creates a new icon with the filter applied.
    */
   public static @NotNull Icon filterIcon(@NotNull Icon icon, Supplier<? extends RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
-    return IconLoader.filterIcon(icon, filterSupplier, ancestor);
+    return IconLoader.INSTANCE.filterIcon(icon, filterSupplier::get);
   }
 
   /**
@@ -1018,7 +1002,7 @@ public final class IconUtil {
     SVGLoader.SvgElementColorPatcherProvider palettePatcher = getStrokePatcher(resultColor, strokeColors, backgroundColors);
     SVGLoader.SvgElementColorPatcherProvider strokeReplacer = getStrokePatcher(resultColor, List.of("white", "#ffffff"), List.of());
 
-    return IconLoader.replaceCachedImageIcons(original, (cachedImageIcon) -> {
+    return IconLoader.INSTANCE.replaceCachedImageIcons(original, (cachedImageIcon) -> {
       SVGLoader.SvgElementColorPatcherProvider patcher = palettePatcher;
       int flags = cachedImageIcon.getImageFlags();
       if ((flags & ImageDescriptor.HAS_STROKE) == ImageDescriptor.HAS_STROKE) {
@@ -1033,7 +1017,7 @@ public final class IconUtil {
           patcher = strokeReplacer;
         }
       }
-      return IconLoader.patchColorsInCacheImageIcon(cachedImageIcon, patcher, false);
+      return IconLoader.INSTANCE.patchColorsInCacheImageIcon(cachedImageIcon, patcher, false);
     });
   }
 }

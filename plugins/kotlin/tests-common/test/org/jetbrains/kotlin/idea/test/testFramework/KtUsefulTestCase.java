@@ -176,7 +176,7 @@ public abstract class KtUsefulTestCase extends TestCase {
         Disposer.setDebugMode(!isStressTest);
 
         if (isIconRequired()) {
-            // ensure that IconLoader will use dummy empty icon
+            // ensure that IconLoader will use fake empty icon
             IconLoader.deactivate();
             //IconManager.activate();
         }

@@ -12,7 +12,7 @@ import java.awt.*;
 import java.awt.image.RGBImageFilter;
 import java.util.function.Supplier;
 
-class FilteredIcon implements ReplaceableIcon {
+final class FilteredIcon implements ReplaceableIcon {
   private long modificationCount = -1;
 
   private @NotNull final Icon baseIcon;
@@ -29,7 +29,7 @@ class FilteredIcon implements ReplaceableIcon {
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    double scale = IconLoader.getScaleToRenderIcon(baseIcon, c);
+    double scale = IconLoader.INSTANCE.getScaleToRenderIcon(baseIcon, c);
     Icon toPaint = iconToPaint;
     if (toPaint == null || modificationCount != -1) {
       long currentModificationCount = calculateModificationCount();
@@ -42,14 +42,14 @@ class FilteredIcon implements ReplaceableIcon {
       toPaint = null;
     }
     if (toPaint == null) { // try to postpone rendering until it is really needed
-      toPaint = IconLoader.renderFilteredIcon(baseIcon, scale, filterSupplier, c);
+      toPaint = IconLoader.INSTANCE.renderFilteredIcon(baseIcon, scale, filterSupplier, c);
       currentScale = scale;
       iconToPaint = toPaint;
     }
     if (c != null) {
       new PaintNotifier(c, x, y).replaceIcon(baseIcon);
     }
-    toPaint.paintIcon(c != null ? c : IconLoader.fakeComponent, g, x, y);
+    toPaint.paintIcon(c != null ? c : IconLoaderKt.getFakeComponent(), g, x, y);
   }
 
   @Override
