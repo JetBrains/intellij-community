@@ -22,10 +22,10 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +41,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   private volatile @Nullable @Nls String myText;
   private volatile @Nullable @NlsContexts.Tooltip String myTooltip;
   private volatile @Nullable Icon myIcon;
+  private volatile @Nullable T myRepository;
   private final Alarm myUpdateBackgroundAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
   protected DvcsStatusWidget(@NotNull Project project, @NotNull @Nls String vcsName) {
@@ -78,7 +79,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   /**
    * @see DvcsUtil#guessWidgetRepository
    */
-  @CalledInAny
+  @RequiresBackgroundThread
   protected abstract @Nullable T guessCurrentRepository(@NotNull Project project, @Nullable VirtualFile selectedFile);
 
   protected abstract @Nls @NotNull String getFullBranchName(@NotNull T repository);
@@ -127,17 +128,18 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   @Override
   public @Nullable JBPopup getPopup() {
     if (isDisposed()) return null;
-    Project project = getProject();
-    T repository = guessCurrentRepository(project, DvcsUtil.getSelectedFile(project));
+
+    T repository = myRepository;
     if (repository == null) return null;
 
-    return getWidgetPopup(project, repository);
+    return getWidgetPopup(getProject(), repository);
   }
 
   private void clearStatus() {
     myText = null;
     myTooltip = null;
     myIcon = null;
+    myRepository = null;
   }
 
   protected void updateLater() {
@@ -187,6 +189,8 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     myText = DvcsBranchUtil.shortenBranchName(getFullBranchName(repository));
     myTooltip = getToolTip(repository);
     myIcon = getIcon(repository);
+    myRepository = repository;
+
     if (myStatusBar != null) {
       myStatusBar.updateWidget(ID());
     }
