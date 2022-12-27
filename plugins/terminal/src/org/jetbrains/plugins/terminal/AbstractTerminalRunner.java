@@ -120,20 +120,15 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   public @NotNull JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
                                                         @Nullable String currentWorkingDirectory,
                                                         boolean deferSessionStartUntilUiShown) {
-    TerminalWidget widget = createShellTerminalWidget(parent, currentWorkingDirectory, deferSessionStartUntilUiShown);
-    JBTerminalWidget jediTermWidget = JBTerminalWidget.asJediTermWidget(widget);
-    if (jediTermWidget == null) {
-      throw new IllegalStateException("Use AbstractTerminalRunner.createShellTerminalWidget instead");
-    }
-    return jediTermWidget;
+    JBTerminalWidget terminalWidget = new ShellTerminalWidget(myProject, mySettingsProvider, parent);
+    scheduleOpenSessionInDirectory(terminalWidget, currentWorkingDirectory, deferSessionStartUntilUiShown);
+    return terminalWidget;
   }
 
   public @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent,
                                                            @Nullable String currentWorkingDirectory,
                                                            boolean deferSessionStartUntilUiShown) {
-    TerminalWidget terminalWidget = new ShellTerminalWidget(myProject, mySettingsProvider, parent).asNewWidget();
-    scheduleOpenSessionInDirectory(terminalWidget, currentWorkingDirectory, deferSessionStartUntilUiShown);
-    return terminalWidget;
+    return createTerminalWidget(parent, currentWorkingDirectory, deferSessionStartUntilUiShown).asNewWidget();
   }
 
   /**
