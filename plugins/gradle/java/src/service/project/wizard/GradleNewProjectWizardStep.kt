@@ -6,9 +6,13 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logD
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.wizard.NewProjectWizardBaseData
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.externalSystem.model.project.ProjectData
+import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewProjectWizardStep
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
@@ -27,6 +31,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.lang.JavaVersion
 import icons.GradleIcons
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardData.GradleDsl
 import org.jetbrains.plugins.gradle.util.*
 import javax.swing.Icon
@@ -127,8 +132,36 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     }
   }
 
-  protected fun suggestGradleVersion(): GradleVersion {
+  private fun suggestGradleVersion(): GradleVersion {
     return getGradleVersion() ?: getPreferredGradleVersion()
+  }
+
+  protected fun linkGradleProject(
+    project: Project,
+    configureBuildScript: GradleBuildScriptBuilder<*>.() -> Unit
+  ) {
+    val builder = InternalGradleModuleBuilder()
+    builder.moduleJdk = sdk
+    builder.name = name
+    builder.contentEntryPath = "$path/$name"
+
+    builder.isCreatingNewProject = context.isCreatingNewProject
+
+    builder.parentProject = parentData
+    builder.projectId = ProjectId(groupId, artifactId, version)
+    builder.isInheritGroupId = parentData?.group == groupId
+    builder.isInheritVersion = parentData?.version == version
+
+    builder.isUseKotlinDsl = gradleDsl == GradleDsl.KOTLIN
+
+    builder.gradleVersion = suggestGradleVersion()
+
+    builder.configureBuildScript {
+      it.configureBuildScript()
+    }
+
+    ExternalProjectsManagerImpl.setupCreatedProject(project)
+    builder.commit(project)
   }
 
   class GradleDataView(override val data: ProjectData) : DataView<ProjectData>() {

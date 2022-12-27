@@ -9,14 +9,11 @@ import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.chain
-import com.intellij.openapi.externalSystem.model.project.ProjectId
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
@@ -24,7 +21,6 @@ import com.intellij.ui.dsl.builder.*
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.addSampleCode
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.gradleData
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.groupId
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardData.GradleDsl
 
 internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
@@ -68,16 +64,10 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     override fun setupProject(project: Project) {
       super.setupProject(project)
 
-      val builder = generateModuleBuilder()
-      builder.gradleVersion = suggestGradleVersion()
-
-      builder.configureBuildScript {
-        it.withJavaPlugin()
-        it.withJUnit()
+      linkGradleProject(project) {
+        withJavaPlugin()
+        withJUnit()
       }
-
-      ExternalProjectsManagerImpl.setupCreatedProject(project)
-      builder.commit(project)
     }
 
     init {
@@ -101,20 +91,4 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       }
     }
   }
-}
-
-fun <T> GradleNewProjectWizardStep<T>.generateModuleBuilder(): AbstractGradleModuleBuilder
-  where T : NewProjectWizardStep, T : NewProjectWizardBaseData = InternalGradleModuleBuilder().apply {
-  moduleJdk = sdk
-  name = parentStep.name
-  contentEntryPath = "${parentStep.path}/${parentStep.name}"
-
-  isCreatingNewProject = context.isCreatingNewProject
-
-  parentProject = parentData
-  projectId = ProjectId(groupId, artifactId, version)
-  isInheritGroupId = parentData?.group == groupId
-  isInheritVersion = parentData?.version == version
-
-  isUseKotlinDsl = gradleDsl == GradleDsl.KOTLIN
 }

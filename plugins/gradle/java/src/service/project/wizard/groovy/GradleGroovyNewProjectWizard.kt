@@ -10,7 +10,6 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.chain
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
@@ -18,7 +17,6 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardData.GradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
-import org.jetbrains.plugins.gradle.service.project.wizard.generateModuleBuilder
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.config.GroovyHomeKind
 import org.jetbrains.plugins.groovy.config.wizard.*
@@ -61,19 +59,16 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     override fun setupProject(project: Project) {
       super.setupProject(project)
 
-      val builder = generateModuleBuilder()
-      builder.gradleVersion = suggestGradleVersion()
-
-      builder.configureBuildScript {
+      linkGradleProject(project) {
         when (val groovySdk = groovySdk) {
-          null -> it.withPlugin("groovy")
-          is FrameworkLibraryDistributionInfo -> it.withGroovyPlugin(groovySdk.version.versionString)
+          null -> withPlugin("groovy")
+          is FrameworkLibraryDistributionInfo -> withGroovyPlugin(groovySdk.version.versionString)
           is LocalDistributionInfo -> {
-            it.withPlugin("groovy")
-            it.withMavenCentral()
+            withPlugin("groovy")
+            withMavenCentral()
             when (val groovySdkKind = GroovyHomeKind.fromString(groovySdk.path)) {
-              null -> it.addImplementationDependency(it.call("files", groovySdk.path))
-              else -> it.addImplementationDependency(it.call("fileTree", groovySdkKind.jarsPath) {
+              null -> addImplementationDependency(call("files", groovySdk.path))
+              else -> addImplementationDependency(call("fileTree", groovySdkKind.jarsPath) {
                 for (subdir in groovySdkKind.subPaths) {
                   call("include", subdir)
                 }
@@ -81,11 +76,8 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
             }
           }
         }
-        it.withJUnit()
+        withJUnit()
       }
-
-      ExternalProjectsManagerImpl.setupCreatedProject(project)
-      builder.commit(project)
     }
   }
 
