@@ -569,7 +569,7 @@ fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout:
   for (moduleName in modules) {
     val customLayouts = pluginLayoutsByMainModule.get(moduleName)
     if (customLayouts == null) {
-      check(moduleName == "kotlin-ultimate.kmm-plugin" || result.add(PluginLayout.simplePlugin(moduleName))) {
+      check(moduleName == "kotlin-ultimate.kmm-plugin" || result.add(PluginLayout.plugin(moduleName))) {
         "Plugin layout for module $moduleName is already added (duplicated module name?)"
       }
     }

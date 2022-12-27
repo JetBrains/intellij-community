@@ -167,7 +167,6 @@ abstract class BaseIdeaProperties : ProductProperties() {
       layout.withProjectLibrary("jetbrains-annotations", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
       // for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
       layout.withProjectLibrary("JUnit3", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
-      layout.withProjectLibrary("commons-net")
 
       layout.withoutProjectLibrary("Ant")
       // there is a patched version of the org.gradle.api.JavaVersion class placed into the Gradle plugin classpath as "rt" jar
@@ -175,7 +174,7 @@ abstract class BaseIdeaProperties : ProductProperties() {
       // TODO should be used as regular project library when the issue will be fixed at the Gradle tooling api side https://github.com/gradle/gradle/issues/8431 and the patched class will be removed
       layout.withoutProjectLibrary("Gradle")
 
-      // this library is placed into subdirectory of 'lib' directory in Android plugin layout, so we need to exclude it from the platform layout explicitly
+      // this library is placed into subdirectory of the 'lib' directory in Android plugin layout, so we need to exclude it from the platform layout explicitly
       layout.withoutProjectLibrary("layoutlib")
 
       layout.withoutProjectLibrary("qodana-sarif")
@@ -196,7 +195,7 @@ abstract class BaseIdeaProperties : ProductProperties() {
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
     val targetDir = Path.of(targetDirectory)
-    // for compatibility with users projects which refer to IDEA_HOME/lib/annotations.jar
+    // for compatibility with user projects which refer to IDEA_HOME/lib/annotations.jar
     Files.move(targetDir.resolve("lib/annotations-java5.jar"), targetDir.resolve("lib/annotations.jar"),
                StandardCopyOption.REPLACE_EXISTING)
   }

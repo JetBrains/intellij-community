@@ -55,7 +55,7 @@ private val PLATFORM_API_MODULES = persistentListOf(
 )
 
 /**
- * List of modules which are included into lib/app.jar in all IntelliJ based IDEs.
+ * List of modules which are included in lib/app.jar in all IntelliJ based IDEs.
  */
 private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.analysis.impl",
@@ -190,7 +190,7 @@ object PlatformModules {
     layout.withoutProjectLibrary("Eclipse")
     val layoutSpec = PlatformLayout.Spec(layout)
     for (platformLayoutSpec in productLayout.platformLayoutSpec) {
-      platformLayoutSpec.accept(layoutSpec, context)
+      platformLayoutSpec(layoutSpec, context)
     }
 
     val alreadyPackedModules = HashSet<String>()
@@ -248,7 +248,7 @@ object PlatformModules {
       "intellij.platform.extensions",
       "intellij.platform.tracing.rt",
       "intellij.platform.core",
-      // GeneralCommandLine is used by Scala in JPS plugin
+      // Scala uses GeneralCommandLine in JPS plugin
       "intellij.platform.ide.util.io",
       "intellij.platform.boot",
     ), productLayout, layout)

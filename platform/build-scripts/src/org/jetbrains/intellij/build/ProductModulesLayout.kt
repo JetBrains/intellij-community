@@ -95,7 +95,7 @@ class ProductModulesLayout {
   /**
    * Additional customizations of platform JARs. **This is a temporary property added to keep layout of some products.**
    */
-  internal var platformLayoutSpec = persistentListOf<BiConsumer<PlatformLayout.Spec, BuildContext>>()
+  internal var platformLayoutSpec = persistentListOf<(PlatformLayout.Spec, BuildContext) -> Unit>()
 
   @Deprecated("PlatformLayout should be immutable", replaceWith = ReplaceWith("addPlatformSpec"))
   fun addPlatformCustomizer(customizer: BiConsumer<PlatformLayout, BuildContext>) {
@@ -104,7 +104,7 @@ class ProductModulesLayout {
     }
   }
 
-  fun addPlatformSpec(customizer: BiConsumer<PlatformLayout.Spec, BuildContext>) {
+  fun addPlatformSpec(customizer: (PlatformLayout.Spec, BuildContext) -> Unit) {
     platformLayoutSpec = platformLayoutSpec.add(customizer)
   }
 
