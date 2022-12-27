@@ -75,11 +75,16 @@ abstract class AbstractIdeCompiledLightClassTest : KotlinDaemonAnalyzerTestCase(
             extraClasspath += TestKotlinArtifacts.kotlinScriptRuntime
         }
 
-        val extraOptions = KotlinTestUtils.parseDirectives(testFile.readText())[
-                CompilerTestDirectives.JVM_TARGET_DIRECTIVE.substringBefore(":")
-        ]?.let { jvmTarget ->
-            listOf("-jvm-target", jvmTarget)
-        } ?: emptyList()
+        val parsedDirectives = KotlinTestUtils.parseDirectives(testFile.readText())
+        val extraOptions = buildList {
+            parsedDirectives[CompilerTestDirectives.JVM_TARGET_DIRECTIVE.substringBefore(":")]?.let {
+                add("-jvm-target")
+                add(it)
+            }
+            parsedDirectives[CompilerTestDirectives.COMPILER_ARGUMENTS_DIRECTIVE.substringBefore(":")]?.let {
+                addAll(it.split(" "))
+            }
+        }
 
         val libraryJar = KotlinCompilerStandalone(
             listOf(testFile),
