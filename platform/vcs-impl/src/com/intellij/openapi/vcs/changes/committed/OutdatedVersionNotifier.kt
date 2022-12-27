@@ -19,16 +19,14 @@ import java.util.function.Function
 import javax.swing.JComponent
 
 class OutdatedVersionNotifier : EditorNotificationProvider {
-  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
-    return Function { createNotificationPanel(file, it, project) }
-  }
-
-  private fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     val cache = CommittedChangesCache.getInstanceIfCreated(project) ?: return null
     val (incomingChangeList, incomingChange) = cache.getIncomingChangeList(file) ?: return null
     if (!isIncomingChangesAvailable(incomingChangeList.vcs)) return null
 
-    return createOutdatedVersionPanel(incomingChangeList, incomingChange, fileEditor)
+    return Function {
+      createOutdatedVersionPanel(incomingChangeList, incomingChange, it)
+    }
   }
 
   class IncomingChangesListener(private val project: Project) : CommittedChangesListener {
