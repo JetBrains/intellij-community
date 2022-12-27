@@ -3,10 +3,12 @@
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
@@ -19,7 +21,9 @@ import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTargets
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -32,10 +36,7 @@ import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
-    KtExpression::class.java,
-    KotlinBundle.lazyMessage("replace.overloaded.operator.with.function.call"),
-) {
+class OperatorToFunctionIntention : AbstractKotlinApplicableIntention<KtExpression>(KtExpression::class) {
     companion object {
         fun replaceExplicitInvokeCallWithImplicit(qualifiedExpression: KtDotQualifiedExpression): KtExpression? {
             /*
@@ -66,10 +67,10 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
             }
         }
 
-        private fun isApplicableUnary(element: KtUnaryExpression, caretOffset: Int): Boolean {
+        context(KtAnalysisSession)
+        private fun isApplicableUnary(element: KtUnaryExpression): Boolean {
             if (element.baseExpression == null) return false
             val opRef = element.operationReference
-            if (!opRef.textRange.containsOffset(caretOffset)) return false
             return when (opRef.getReferencedNameElementType()) {
                 KtTokens.PLUS, KtTokens.MINUS, KtTokens.EXCL -> true
                 KtTokens.PLUSPLUS, KtTokens.MINUSMINUS -> !isUsedAsExpression(element)
@@ -78,25 +79,24 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
         }
 
         // TODO: replace to `element.isUsedAsExpression(element.analyze(BodyResolveMode.PARTIAL_WITH_CFA))` after fix KT-25682
+        context(KtAnalysisSession)
         private fun isUsedAsExpression(element: KtExpression): Boolean {
             val parent = element.parent
             return if (parent is KtBlockExpression) parent.lastBlockStatementOrThis() == element && parentIsUsedAsExpression(parent.parent)
             else parentIsUsedAsExpression(parent)
         }
 
-        @OptIn(KtAllowAnalysisOnEdt::class)
-        private fun parentIsUsedAsExpression(element: PsiElement): Boolean = allowAnalysisOnEdt {
+        context(KtAnalysisSession)
+        private fun parentIsUsedAsExpression(element: PsiElement): Boolean =
             when (val parent = element.parent) {
                 is KtLoopExpression, is KtFile -> false
-                is KtIfExpression, is KtWhenExpression -> analyze(parent as KtExpression) { parent.isUsedAsExpression() }
+                is KtIfExpression, is KtWhenExpression -> (parent as KtExpression).isUsedAsExpression()
                 else -> true
             }
-        }
 
-        private fun isApplicableBinary(element: KtBinaryExpression, caretOffset: Int): Boolean {
+        private fun isApplicableBinary(element: KtBinaryExpression): Boolean {
             if (element.left == null || element.right == null) return false
             val opRef = element.operationReference
-            if (!opRef.textRange.containsOffset(caretOffset)) return false
             return when (opRef.getReferencedNameElementType()) {
                 KtTokens.PLUS, KtTokens.MINUS, KtTokens.MUL, KtTokens.DIV, KtTokens.PERC, KtTokens.RANGE, KtTokens.RANGE_UNTIL,
                 KtTokens.IN_KEYWORD, KtTokens.NOT_IN, KtTokens.PLUSEQ, KtTokens.MINUSEQ, KtTokens.MULTEQ, KtTokens.DIVEQ, KtTokens.PERCEQ,
@@ -108,30 +108,19 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
             }
         }
 
-        private fun isApplicableArrayAccess(element: KtArrayAccessExpression, caretOffset: Int): Boolean {
-            val lbracket = element.leftBracket ?: return false
-            val rbracket = element.rightBracket ?: return false
-
+        private fun isApplicableArrayAccess(element: KtArrayAccessExpression): Boolean {
             val access = element.readWriteAccess(useResolveForReadWrite = true)
-            if (access == ReferenceAccess.READ_WRITE) return false // currently not supported
-
-            return lbracket.textRange.containsOffset(caretOffset) || rbracket.textRange.containsOffset(caretOffset)
+            return access != ReferenceAccess.READ_WRITE // currently not supported
         }
 
-        @OptIn(KtAllowAnalysisOnEdt::class)
-        private fun isImplicitInvokeFunctionCall(element: KtCallExpression): Boolean = allowAnalysisOnEdt {
-            analyze(element) {
-                val functionCall = element.resolveCall().singleFunctionCallOrNull()
-                functionCall is KtSimpleFunctionCall && functionCall.isImplicitInvoke
-            }
+        context(KtAnalysisSession)
+        private fun isImplicitInvokeFunctionCall(element: KtCallExpression): Boolean {
+            val functionCall = element.resolveCall().singleFunctionCallOrNull()
+            return functionCall is KtSimpleFunctionCall && functionCall.isImplicitInvoke
         }
 
-        private fun isApplicableCall(element: KtCallExpression, caretOffset: Int): Boolean {
-            val lbrace = (element.valueArgumentList?.leftParenthesis
-                ?: element.lambdaArguments.firstOrNull()?.getLambdaExpression()?.leftCurlyBrace
-                ?: return false) as PsiElement
-            if (!lbrace.textRange.containsOffset(caretOffset)) return false
-
+        context(KtAnalysisSession)
+        private fun isApplicableCall(element: KtCallExpression): Boolean {
             if (isImplicitInvokeFunctionCall(element)) {
                 return element.valueArgumentList != null || element.lambdaArguments.isNotEmpty()
             }
@@ -297,6 +286,11 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
             return elementToReplace.replace(transformed) as KtExpression
         }
 
+        /**
+         * Converts operator call to an explicit function call.
+         *
+         * N.B. Has to use some resolve inside, so resorts to [allowAnalysisOnEdt].
+         */
         fun convert(element: KtExpression): Pair<KtExpression, KtSimpleNameExpression> {
             var elementToBeReplaced = element
             if (element is KtArrayAccessExpression && isAssignmentLeftSide(element)) {
@@ -332,15 +326,50 @@ class OperatorToFunctionIntention : SelfTargetingIntention<KtExpression>(
         }
     }
 
-    override fun isApplicableTo(element: KtExpression, caretOffset: Int): Boolean = when (element) {
-        is KtUnaryExpression -> isApplicableUnary(element, caretOffset)
-        is KtBinaryExpression -> isApplicableBinary(element, caretOffset)
-        is KtArrayAccessExpression -> isApplicableArrayAccess(element, caretOffset)
-        is KtCallExpression -> isApplicableCall(element, caretOffset)
+    override fun getFamilyName(): String = KotlinBundle.message("replace.overloaded.operator.with.function.call")
+
+    override fun getActionName(element: KtExpression): String = familyName
+
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = applicabilityTargets { element ->
+        when (element) {
+            is KtUnaryExpression -> listOf(element.operationReference)
+
+            is KtBinaryExpression -> listOf(element.operationReference)
+
+            is KtArrayAccessExpression -> {
+                val lbrace = element.leftBracket
+                val rbrace = element.rightBracket
+
+                if (lbrace == null || rbrace == null) {
+                    emptyList()
+                } else {
+                    listOf(lbrace, rbrace)
+                }
+            }
+
+            is KtCallExpression -> {
+                val lbrace = element.valueArgumentList?.leftParenthesis
+                    ?: element.lambdaArguments.firstOrNull()?.getLambdaExpression()?.leftCurlyBrace
+
+                listOfNotNull(lbrace as PsiElement?)
+            }
+
+            else -> emptyList()
+        }
+    }
+
+    override fun isApplicableByPsi(element: KtExpression): Boolean = true
+
+    context(KtAnalysisSession)
+    override fun isApplicableByAnalyze(element: KtExpression): Boolean = when (element) {
+        is KtUnaryExpression -> isApplicableUnary(element)
+        is KtBinaryExpression -> isApplicableBinary(element)
+        is KtArrayAccessExpression -> isApplicableArrayAccess(element)
+        is KtCallExpression -> isApplicableCall(element)
         else -> false
     }
 
-    override fun applyTo(element: KtExpression, editor: Editor?) {
+    override fun apply(element: KtExpression, project: Project, editor: Editor?) {
         convert(element)
     }
 }
