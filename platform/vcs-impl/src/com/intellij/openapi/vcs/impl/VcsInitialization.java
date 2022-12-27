@@ -76,6 +76,7 @@ public final class VcsInitialization {
 
   void add(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {
     if (myProject.isDefault()) {
+      LOG.warn("ignoring initialization activity for default project", new Throwable());
       return;
     }
 
