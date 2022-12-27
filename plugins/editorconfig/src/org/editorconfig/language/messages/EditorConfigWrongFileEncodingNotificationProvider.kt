@@ -26,7 +26,7 @@ import java.util.function.Function
 import javax.swing.JComponent
 
 class EditorConfigWrongFileEncodingNotificationProvider : EditorNotificationProvider, DumbAware {
-  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     return Function { createNotificationPanel(file, it, project) }
   }
 
