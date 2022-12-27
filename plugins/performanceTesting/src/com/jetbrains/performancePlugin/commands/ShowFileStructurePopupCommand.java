@@ -21,11 +21,11 @@ import org.jetbrains.concurrency.Promises;
 
 import static com.intellij.ide.actions.ViewStructureAction.createPopup;
 
-public final class ShowFileStructurePopup extends AbstractCommand implements Disposable {
+public final class ShowFileStructurePopupCommand extends AbstractCommand implements Disposable {
   public static final String PREFIX = CMD_PREFIX + "showFileStructureDialog";
   public static final String SPAN_NAME = "FileStructurePopup";
 
-  public ShowFileStructurePopup(@NotNull String text, int line) {
+  public ShowFileStructurePopupCommand(@NotNull String text, int line) {
     super(text, line);
   }
 
