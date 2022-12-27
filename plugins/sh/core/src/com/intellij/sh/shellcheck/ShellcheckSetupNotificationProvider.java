@@ -28,29 +28,28 @@ public class ShellcheckSetupNotificationProvider implements EditorNotificationPr
   @Override
   public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                  @NotNull VirtualFile file) {
+    if (!(file.getFileType() instanceof ShFileType) || isValidPath(ShSettings.getShellcheckPath())) return null;
+
     return fileEditor -> {
-      if (file.getFileType() instanceof ShFileType && !isValidPath(ShSettings.getShellcheckPath())) {
-        EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info);
-        panel.setText(message("sh.shellcheck.install.question"));
-        Runnable onSuccess = () -> {
-          EditorNotifications.getInstance(project).updateAllNotifications();
-          PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-          if (psiFile != null) DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
-          Notifications.Bus.notify(new Notification(message("sh.shell.script"), message("sh.shell.script"), message("sh.shellcheck.success.install"),
-                                                    NotificationType.INFORMATION));
-        };
-        Runnable onFailure = () -> Notifications.Bus.notify(new Notification(message("sh.shell.script"), message("sh.shell.script"),
-                                                                             message("sh.shellcheck.cannot.download"),
-                                                                             NotificationType.ERROR));
-        panel.createActionLabel(message("sh.install"), () -> ShShellcheckUtil.download(null, onSuccess, onFailure));
-        //noinspection DialogTitleCapitalization
-        panel.createActionLabel(message("sh.no.thanks"), () -> {
-          ShSettings.setShellcheckPath(ShSettings.I_DO_MIND_SUPPLIER.get());
-          EditorNotifications.getInstance(project).updateAllNotifications();
-        });
-        return panel;
-      }
-      return null;
+      EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info);
+      panel.setText(message("sh.shellcheck.install.question"));
+      Runnable onSuccess = () -> {
+        EditorNotifications.getInstance(project).updateAllNotifications();
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+        if (psiFile != null) DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
+        Notifications.Bus.notify(new Notification(message("sh.shell.script"), message("sh.shell.script"), message("sh.shellcheck.success.install"),
+                                                  NotificationType.INFORMATION));
+      };
+      Runnable onFailure = () -> Notifications.Bus.notify(new Notification(message("sh.shell.script"), message("sh.shell.script"),
+                                                                           message("sh.shellcheck.cannot.download"),
+                                                                           NotificationType.ERROR));
+      panel.createActionLabel(message("sh.install"), () -> ShShellcheckUtil.download(null, onSuccess, onFailure));
+      //noinspection DialogTitleCapitalization
+      panel.createActionLabel(message("sh.no.thanks"), () -> {
+        ShSettings.setShellcheckPath(ShSettings.I_DO_MIND_SUPPLIER.get());
+        EditorNotifications.getInstance(project).updateAllNotifications();
+      });
+      return panel;
     };
   }
 }
