@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Editor;
@@ -71,6 +72,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.*;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
@@ -1284,27 +1286,36 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       if (!actionHandler.isValid()) {
         return;
       }
-      JComponent label = createHintComponent(
-        suggestSecondInvocation(hint, getSecondInvocationHint(actionHandler)),
-        isWarning,
-        createSettingsButton(
-          project,
-          ShowUsagesAction::hideHints,
-          showDialogAndRestartRunnable(parameters, actionHandler)
-        )
-      );
 
-      ShowUsagesActionState state = getState(project);
-      state.continuation = showUsagesInMaximalScopeRunnable(parameters, actionHandler);
-      Runnable clearContinuation = () -> state.continuation = null;
+      ReadAction.nonBlocking(
+        () -> suggestSecondInvocation(hint, getSecondInvocationHint(actionHandler))
+      ).finishOnUiThread(ModalityState.NON_MODAL, (@NlsContexts.HintText String secondInvocationHintHtml) -> {
+        if (!actionHandler.isValid()) {
+          return;
+        }
 
-      if (editor == null || editor.isDisposed() || !UIUtil.isShowing(editor.getContentComponent())) {
-        int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
-        HintManager.getInstance().showHint(label, parameters.popupPosition, flags, 0, clearContinuation);
-      }
-      else {
-        HintManager.getInstance().showInformationHint(editor, label, clearContinuation);
-      }
+        JComponent label = createHintComponent(
+          secondInvocationHintHtml,
+          isWarning,
+          createSettingsButton(
+            project,
+            ShowUsagesAction::hideHints,
+            showDialogAndRestartRunnable(parameters, actionHandler)
+          )
+        );
+
+        ShowUsagesActionState state = getState(project);
+        state.continuation = showUsagesInMaximalScopeRunnable(parameters, actionHandler);
+        Runnable clearContinuation = () -> state.continuation = null;
+
+        if (editor == null || editor.isDisposed() || !UIUtil.isShowing(editor.getContentComponent())) {
+          int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
+          HintManager.getInstance().showHint(label, parameters.popupPosition, flags, 0, clearContinuation);
+        }
+        else {
+          HintManager.getInstance().showInformationHint(editor, label, clearContinuation);
+        }
+      }).submit(AppExecutorUtil.getAppExecutorService());
     };
 
     if (editor == null) {
