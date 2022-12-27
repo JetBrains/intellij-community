@@ -57,6 +57,9 @@ object MppModuleConfigurator : ModuleConfigurator,
         module: Module,
         modulePath: Path,
     ): TaskResult<Unit> = compute {
+        GradlePlugin.gradleProperties.addValues("org.gradle.jvmargs" to
+                                                        "-Xmx2048M -Dfile.encoding=UTF-8 -Dkotlin.daemon.jvm.options\\=\"-Xmx2048M\"")
+        GradlePlugin.gradleProperties.addValues("kotlin.mpp.enableCInteropCommonization" to true)
         if (shouldApplyHmppGradleProperties(configurationData)) {
             GradlePlugin.gradleProperties.addValues("kotlin.mpp.enableGranularSourceSetsMetadata" to true)
             GradlePlugin.gradleProperties.addValues("kotlin.native.enableDependencyPropagation" to false)

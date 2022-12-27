@@ -45,7 +45,6 @@ object AndroidSinglePlatformModuleConfigurator :
     override fun createRootBuildFileIrs(configurationData: ModulesToIrConversionData): List<BuildSystemIR> = irsList {
         (listOf(
             DefaultRepository.GRADLE_PLUGIN_PORTAL,
-            DefaultRepository.JCENTER,
             DefaultRepository.GOOGLE,
         ) + configurationData.kotlinVersion.repositories).forEach { repository ->
             +BuildScriptRepositoryIR(RepositoryIR(repository))
@@ -61,7 +60,7 @@ object AndroidSinglePlatformModuleConfigurator :
 
     override fun createBuildFileIRs(reader: Reader, configurationData: ModulesToIrConversionData, module: Module) = irsList {
         +super<AndroidModuleConfigurator>.createBuildFileIRs(reader, configurationData, module)
-        +RepositoryIR((DefaultRepository.JCENTER))
+        +RepositoryIR((DefaultRepository.GOOGLE))
         +AndroidConfigIR(
             javaPackage = module.javaPackage(configurationData.pomIr),
             isApplication = true,
@@ -119,6 +118,7 @@ object AndroidSinglePlatformModuleConfigurator :
             )
         )
         GradlePlugin.gradleProperties.addValues("android.useAndroidX" to true)
+        GradlePlugin.gradleProperties.addValues("android.nonTransitiveRClass" to true)
     }
 
     override fun Reader.createAndroidPlugin(module: Module): AndroidGradlePlugin =

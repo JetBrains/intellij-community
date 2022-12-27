@@ -113,7 +113,6 @@ interface AndroidModuleConfigurator : ModuleConfigurator,
         fun createRepositories(kotlinVersion: WizardKotlinVersion) = buildList<Repository> {
             +DefaultRepository.GRADLE_PLUGIN_PORTAL
             +DefaultRepository.GOOGLE
-            +DefaultRepository.JCENTER
             +kotlinVersion.repositories
         }
     }

@@ -35,8 +35,6 @@ class MobileMppTemplate : Template() {
 
 
     override fun Writer.getIrsToAddToBuildFile(module: ModuleIR): List<BuildSystemIR> = irsList {
-        +RepositoryIR(DefaultRepository.JCENTER)
-
         val cocoaPods = module.originalModule.subModules.any {
             (it.configurator as? SimpleTargetConfigurator)?.moduleSubType == ModuleSubType.iosCocoaPods
         }

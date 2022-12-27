@@ -14,13 +14,6 @@ import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplateDescriptor
 import java.nio.file.Path
 
 object IOSSinglePlatformModuleConfigurator : IOSSinglePlatformModuleConfiguratorBase() {
-    override fun Writer.runArbitraryTask(
-        configurationData: ModulesToIrConversionData,
-        module: Module,
-        modulePath: Path
-    ): TaskResult<Unit> =
-        GradlePlugin.gradleProperties.addValues("xcodeproj" to "./${module.name}")
-
     override val moduleTemplatePath: String get() = "singleplatformProject"
 
     override fun ListBuilder<FileTemplate>.additionalTemplates(fileTemplate: (Path) -> FileTemplate) {
@@ -43,10 +36,8 @@ object IOSSinglePlatformCocoaPodsModuleConfigurator : IOSSinglePlatformModuleCon
         configurationData: ModulesToIrConversionData,
         module: Module,
         modulePath: Path
-    ): TaskResult<Unit> = compute {
-        GradlePlugin.gradleProperties.addValues("xcodeproj" to "./${module.name}")
+    ): TaskResult<Unit> =
         GradlePlugin.gradleProperties.addValues("kotlin.native.cocoapods.generate.wrapper" to true)
-    }
 
     override fun Reader.createTemplates(
         configurationData: ModulesToIrConversionData,
