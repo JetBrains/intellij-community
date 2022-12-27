@@ -268,8 +268,7 @@ public final class BackgroundTaskUtil {
   public static @NotNull BackgroundTask<?> submitTask(@NotNull Executor executor, @NotNull Disposable parent, @NotNull Runnable task) {
     ProgressIndicator indicator = new EmptyProgressIndicator();
     indicator.start();
-    CompletableFuture<?> future = CompletableFuture.runAsync(() -> ProgressManager.getInstance().runProcess(task, indicator),
-                                                             executor);
+    CompletableFuture<?> future = CompletableFuture.runAsync(() -> ProgressManager.getInstance().runProcess(task, indicator), executor);
     return createBackgroundTask(future, task.toString(), indicator, parent);
   }
 
@@ -284,11 +283,10 @@ public final class BackgroundTaskUtil {
     return createBackgroundTask(future, task.toString(), indicator, parent);
   }
 
-  @NotNull
-  private static <T> BackgroundTask<T> createBackgroundTask(@NotNull CompletableFuture<T> future,
-                                                            @NotNull String taskName,
-                                                            @NotNull ProgressIndicator indicator,
-                                                            @NotNull Disposable parent) {
+  private static @NotNull <T> BackgroundTask<T> createBackgroundTask(@NotNull CompletableFuture<T> future,
+                                                                     @NotNull String taskName,
+                                                                     @NotNull ProgressIndicator indicator,
+                                                                     @NotNull Disposable parent) {
     Disposable disposable = () -> {
       if (indicator.isRunning()) indicator.cancel();
       try {

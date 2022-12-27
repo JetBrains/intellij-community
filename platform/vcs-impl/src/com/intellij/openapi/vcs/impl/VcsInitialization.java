@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.diagnostic.Activity;
@@ -21,6 +21,7 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.QueueProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -74,10 +75,13 @@ public final class VcsInitialization {
   }
 
   void add(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {
-    if (myProject.isDefault()) return;
+    if (myProject.isDefault()) {
+      return;
+    }
+
     boolean wasScheduled = scheduleActivity(vcsInitObject, runnable);
     if (!wasScheduled) {
-      BackgroundTaskUtil.executeOnPooledThread(myProject, runnable);
+      BackgroundTaskUtil.submitTask(AppExecutorUtil.getAppExecutorService(), myProject, runnable);
     }
   }
 
