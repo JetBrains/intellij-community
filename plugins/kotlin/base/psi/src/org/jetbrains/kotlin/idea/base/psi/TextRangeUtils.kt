@@ -5,6 +5,11 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-fun PsiElement.textRangeIn(other: PsiElement): TextRange = textRange.shiftLeft(other.startOffset)
+fun PsiElement.textRangeIn(other: PsiElement): TextRange = when {
+    // small optimization for cases like `element.textRangeIn(element)`
+    other === this -> TextRange(0, other.textLength)
+
+    else -> textRange.shiftLeft(other.startOffset)
+}
 
 fun TextRange.relativeTo(element: PsiElement): TextRange = shiftLeft(element.startOffset)
