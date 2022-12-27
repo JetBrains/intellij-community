@@ -1,9 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
@@ -69,32 +66,11 @@ abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> e
     return filter == null ? null : getToolTip(filter);
   }
 
-  /**
-   * Returns the special action that indicates that no filtering is selected in this component.
-   */
-  @NotNull
-  protected AnAction createAllAction() {
-    return new AllAction();
-  }
-
   @Override
   protected Runnable createResetAction() {
     return () -> {
       myFilterModel.setFilter(null);
       VcsLogUsageTriggerCollector.triggerFilterReset(VcsLogUsageTriggerCollector.FilterResetType.CLOSE_BUTTON);
     };
-  }
-
-  private class AllAction extends DumbAwareAction {
-
-    AllAction() {
-      super(ALL_ACTION_TEXT);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      myFilterModel.setFilter(null);
-      VcsLogUsageTriggerCollector.triggerFilterReset(VcsLogUsageTriggerCollector.FilterResetType.ALL_OPTION);
-    }
   }
 }

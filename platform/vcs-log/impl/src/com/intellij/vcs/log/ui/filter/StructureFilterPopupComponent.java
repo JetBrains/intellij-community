@@ -211,7 +211,7 @@ public class StructureFilterPopupComponent
       structureActions.add(new SelectFromHistoryAction(filter));
     }
 
-    List<AnAction> actionsList = ContainerUtil.newArrayList(createAllAction(), new EditPathsAction(), new SelectPathsInTreeAction(),
+    List<AnAction> actionsList = ContainerUtil.newArrayList(new EditPathsAction(), new SelectPathsInTreeAction(),
                                                             new Separator(VcsLogBundle.messagePointer("vcs.log.filter.recent")),
                                                             new DefaultActionGroup(structureActions));
 
