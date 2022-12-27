@@ -137,7 +137,7 @@ object MergeConflictResolveUtil {
 
 
   class NotificationProvider : EditorNotificationProvider {
-    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
+    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
       return Function { createNotificationPanel(file) }
     }
 
