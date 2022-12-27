@@ -107,7 +107,7 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   @Nullable AsyncFileListener.ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
-    Collection<VirtualFile> files = ContainerUtil.map2Set(events, event -> {
+    Collection<VirtualFile> files = ContainerUtil.map2SetNotNull(events, event -> {
       if (event instanceof VFileContentChangeEvent) {
         VFileContentChangeEvent changeEvent = (VFileContentChangeEvent)event;
         VirtualFile file = changeEvent.getFile();
@@ -135,7 +135,6 @@ final class FileTypeDetectionService implements Disposable {
       }
       return filtered;
     });
-    files.remove(null);
     if (toLog()) {
       log("F: after() VFS events: " + events + "; files: " + files);
     }

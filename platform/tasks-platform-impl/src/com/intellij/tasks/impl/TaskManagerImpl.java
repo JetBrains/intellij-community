@@ -749,8 +749,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
     // search for active task
     LocalTask activeTask = null;
-    final List<LocalTask> tasks = getLocalTasks();
-    tasks.sort(TASK_UPDATE_COMPARATOR);
+    final List<LocalTask> tasks = ContainerUtil.sorted(getLocalTasks(), TASK_UPDATE_COMPARATOR);
     for (LocalTask task : tasks) {
       if (activeTask == null) {
         if (task.isActive()) {

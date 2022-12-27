@@ -85,7 +85,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     if (!notFound.isEmpty()) {
       checkoutAsNewBranch(branchName, notFound);
     }
-    repositories.removeAll(notFound);
+    repositories = new ArrayList<>(ContainerUtil.subtract(repositories, notFound));
     if (!repositories.isEmpty()) {
       checkout(branchName, repositories, invokeAfter);
       return true;

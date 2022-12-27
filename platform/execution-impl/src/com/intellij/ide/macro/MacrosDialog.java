@@ -139,9 +139,9 @@ public final class MacrosDialog extends DialogWrapper {
     setTitle(IdeCoreBundle.message("title.macros"));
     setOKButtonText(IdeCoreBundle.message("button.insert"));
 
-    List<Macro> macros = ContainerUtil.filter(MacroManager.getInstance().getMacros(),
-                                              macro -> MacroFilter.GLOBAL.accept(macro) && filter.test(macro));
-    macros.sort(new Comparator<>() {
+    List<Macro> macros = ContainerUtil.sorted(ContainerUtil.filter(MacroManager.getInstance().getMacros(),
+                                              macro -> MacroFilter.GLOBAL.accept(macro) && filter.test(macro)),
+    new Comparator<>() {
       @Override
       public int compare(Macro macro1, Macro macro2) {
         String name1 = macro1.getName();

@@ -55,11 +55,11 @@ public final class JpsFileTargetContextUtils {
       // if file is under sources root then src/resources directories at the top
       // if file is under test sources root then test/resources directories at the top
       if (projectFileIndex.isInTestSourceContent(file)) {
-        targetContextWrappers.sort(JpsFileTargetContextUtils::compareTargetsForTests);
+        targetContextWrappers = ContainerUtil.sorted(targetContextWrappers, JpsFileTargetContextUtils::compareTargetsForTests);
       }
       else {
         // it could be a file from web resource root, it is not in source content, thus we do not check isInSourceContent(file)
-        targetContextWrappers.sort(JpsFileTargetContextUtils::compareTargetsForProduction);
+        targetContextWrappers = ContainerUtil.sorted(targetContextWrappers, JpsFileTargetContextUtils::compareTargetsForProduction);
       }
     }
 

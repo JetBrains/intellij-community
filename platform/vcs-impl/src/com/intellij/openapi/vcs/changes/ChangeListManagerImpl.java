@@ -257,7 +257,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     if (config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.DO_NOTHING_SILENTLY ||
         config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.SHOW_CONFIRMATION &&
         ApplicationManager.getApplication().isUnitTestMode()) {
-      listsToBeDeleted.clear();
+      listsToBeDeleted = Collections.emptyList();
     }
 
     ChangeListRemoveConfirmation.deleteEmptyInactiveLists(myProject, listsToBeDeletedSilently, toAsk -> true);

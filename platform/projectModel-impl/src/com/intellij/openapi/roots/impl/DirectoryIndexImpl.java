@@ -139,8 +139,8 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
       return super.getDirectoriesByPackageName(packageName, scope);
     }
 
-    List<RootIndex> indices = ContainerUtil.map(branches, DirectoryIndexImpl::obtainBranchRootIndex);
-    indices.add(getRootIndex());
+    List<RootIndex> indices = ContainerUtil.append(ContainerUtil.map(branches, DirectoryIndexImpl::obtainBranchRootIndex),
+                                                   getRootIndex());
     return new CollectionQuery<>(indices)
       .flatMapping(i -> i.getDirectoriesByPackageName(packageName, true))
       .filtering(scope::contains);

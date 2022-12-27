@@ -1151,8 +1151,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private void showDiff() {
       if (ChangeListManager.getInstance(myProject).isFreezedWithNotification(null)) return;
       if (myPatches.isEmpty() || (!myContainBasedChanges)) return;
-      final List<AbstractFilePatchInProgress.PatchChange> changes = getAllChanges();
-      changes.sort(myMyChangeComparator);
+      final List<AbstractFilePatchInProgress.PatchChange> changes = ContainerUtil.sorted(getAllChanges(), myMyChangeComparator);
       List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
 
       if (changes.isEmpty()) return;
