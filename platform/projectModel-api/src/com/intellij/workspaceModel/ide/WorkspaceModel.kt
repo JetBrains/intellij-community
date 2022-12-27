@@ -86,3 +86,9 @@ interface WorkspaceModel {
     fun getInstance(project: Project): WorkspaceModel = project.service()
   }
 }
+
+/**
+ * Extension property for syntax sugar
+ */
+val Project.workspaceModel: WorkspaceModel
+  get() = WorkspaceModel.getInstance(this)
