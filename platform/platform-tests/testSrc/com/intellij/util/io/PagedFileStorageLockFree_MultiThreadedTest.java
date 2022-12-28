@@ -29,16 +29,12 @@ public class PagedFileStorageLockFree_MultiThreadedTest {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    //assumeTrue(
-    //  "LockFree FilePageCache must be enabled: see PageCacheUtils.LOCK_FREE_VFS_ENABLED",
-    //  PageCacheUtils.LOCK_FREE_VFS_ENABLED
-    //);
   }
 
 
   @Test
-  public void storageClosingSuccessfullyClosesPagesInTheMiddleOfInitialization() throws Exception {
-    final int tryes = 10_000;
+  public void closeOfStorageSuccessfullyClosesPagesInTheMiddleOfInitialization() throws Exception {
+    final int tryes = 100_000;
     final int threads = Runtime.getRuntime().availableProcessors();
     final ExecutorService threadPool = Executors.newFixedThreadPool(threads);
     final int cacheCapacityBytes = PAGE_SIZE * DEFAULT_PAGES_COUNT;

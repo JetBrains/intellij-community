@@ -41,6 +41,15 @@ public final class FilePageCacheLockFree implements AutoCloseable {
   /** Initial size of page table hashmap in {@linkplain PagesTable} */
   private static final int INITIAL_PAGES_TABLE_SIZE = 1 << 5;
 
+  /** Before housekeeper thread created */
+  private static final int STATE_NOT_STARTED = 0;
+  /** No storage yet registered -> housekeeper thread not yet started */
+  private static final int STATE_WAITING_FIRST_STORAGE_REGISTRATION = 1;
+  /** Housekeeper thread started, cache working */
+  private static final int STATE_WORKING = 2;
+  /** Housekeeper thread stopped, cache closed */
+  private static final int STATE_CLOSED = 3;
+
   /**
    * 'Tokens of usefulness' are added to the page each time page is acquired for use, and also
    * each time housekeeper thread finds page in use (per-use)
@@ -83,8 +92,8 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
   private final Thread housekeeperThread;
 
-  /** TODO unfinished work: PageCache lifecycle state */
-  private volatile int state = 0;
+  /** PageCache lifecycle state */
+  private volatile int state = STATE_NOT_STARTED;
 
   private final FilePageCacheStatistics statistics = new FilePageCacheStatistics();
 
@@ -107,6 +116,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
     housekeeperThread = maintenanceThreadFactory.newThread(this::cacheMaintenanceLoop);
     housekeeperThread.setDaemon(true);
+    state = STATE_WAITING_FIRST_STORAGE_REGISTRATION;
   }
 
   public long getCacheCapacityBytes() {
@@ -120,6 +130,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
    * and housekeeping.
    */
   public PagesTable registerStorage(final @NotNull PagedFileStorageLockFree storage) throws IOException {
+    checkCacheNotClosed();
     synchronized (pagesPerFile) {
       final Path absolutePath = storage.getFile().toAbsolutePath();
       if (pagesPerFile.containsKey(absolutePath)) {
@@ -131,12 +142,12 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       final PagesTable pages = new PagesTable(INITIAL_PAGES_TABLE_SIZE);
       pagesPerFile.put(absolutePath, pages);
 
-      if (firstStorageRegistered && state == 0) {
-        //don't start housekeeper thread before actual storage is registered: there are a lot of
-        // FPCaches created 'just in case', and not actually used.
+      if (firstStorageRegistered && state == STATE_WAITING_FIRST_STORAGE_REGISTRATION) {
+        //Don't start housekeeper thread before actual storage is registered: there are a lot of
+        // FPCaches created in static fields 'just in case', but not really used -- not worth to
+        // spent running threads for them.
         housekeeperThread.start();
-        state = 1;
-        //TODO RC: need .closed field?
+        state = STATE_WORKING;
       }
       return pages;
     }
@@ -144,6 +155,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
   protected Future<?> enqueueStoragePagesClosing(final @NotNull PagedFileStorageLockFree storage,
                                                  final @NotNull CompletableFuture<Object> finish) {
+    checkCacheNotClosed();
     final CloseStorageCommand task = new CloseStorageCommand(storage, finish);
     commandsQueue.add(task);
     return task.onFinish;
@@ -151,8 +163,13 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
   @Override
   public void close() throws InterruptedException {
-    housekeeperThread.interrupt();
-    housekeeperThread.join();
+    synchronized (this) { //avoid concurrent .close()
+      if (state != STATE_CLOSED) {
+        housekeeperThread.interrupt();
+        housekeeperThread.join();
+        state = STATE_CLOSED;
+      }
+    }
   }
 
   public FilePageCacheStatistics getStatistics() {
@@ -206,11 +223,14 @@ public final class FilePageCacheLockFree implements AutoCloseable {
   }
 
   //TODO RC:
-  //     1. Trace allocation pressure (pagesToReclaim - pagesToReclaimQueue.size), and use
+  //     1. Trace allocation pressure: (pagesToReclaim (before) - pagesToReclaimQueue.size), and use
   //        QuantilesEstimator(80-90%) to estimate percentage of pages to prepare to reclaim.
   //        Also use it to estimate how much 'eager flushes' needs to be done.
-  //     2. In .allocatePageBuffer(): trace counts of .flush() invoked, and heap buffers allocated
+  //     2. In .allocatePageBuffer(): trace counts of .flush() invoked
   //     3. If a lot of .flush() invoked -> increase probability of 'eager flushes' in (2)
+  //     4. 'Buffer bargaining': if in allocatePageBuffer() we reclaimed a page with
+  //         (buffer.capacity() == bufferSize) => use the buffer directly, instead of returning
+  //         it to the pool and than query it from there again.
 
 
   //================================================================================================
@@ -242,7 +262,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
   private void doCacheMaintenanceTurn() {
     //Closed storages are the easiest way to reclaim pages -- eat that low-hanging fruit first:
-    final int reclaimed = reclaimClosedStorages(/* max per turn: */ 1);
+    final int reclaimed = cleanClosedStoragesAndReclaimPages(/* max per turn: */ 1);
     statistics.closedStoragesReclaimed(reclaimed);
 
 
@@ -333,8 +353,8 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     }
   }
 
-  private int reclaimClosedStorages(final int maxStoragesToProcess) {
-    int successfullyReclaimed = 0;
+  private int cleanClosedStoragesAndReclaimPages(final int maxStoragesToProcess) {
+    int successfullyCleaned = 0;
     for (int i = 0; i < maxStoragesToProcess; i++) {
       final Command command = commandsQueue.poll();
       if (command == null) {
@@ -376,7 +396,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
             LOG.error("Can't close channel for " + file, t);
             futureToFinalize.completeExceptionally(t);
           }
-          successfullyReclaimed++;
+          successfullyCleaned++;
           synchronized (pagesPerFile) {
             final Path absolutePath = storage.getFile().toAbsolutePath();
             final PagesTable removed = pagesPerFile.remove(absolutePath);
@@ -391,7 +411,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       }
     }
 
-    return successfullyReclaimed;
+    return successfullyCleaned;
   }
 
   @NotNull
@@ -457,6 +477,9 @@ public final class FilePageCacheLockFree implements AutoCloseable {
                 if (page.data() != null) {
                   unmapPageAndReclaimBuffer(page);
                 }
+                else {
+                  page.entomb();
+                }
               }
             }
             finally {
@@ -521,6 +544,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
   @NotNull
   protected ByteBuffer allocatePageBuffer(final int bufferSize) {
+    checkCacheNotClosed();
     final boolean reclaimedSuccessfully = tryReclaimEnoughPages(bufferSize, MAX_PAGES_TO_RECLAIM_AT_ONCE);
     if (reclaimedSuccessfully) {
       final ByteBuffer buffer = DirectByteBufferAllocator.ALLOCATOR.allocate(bufferSize);
@@ -579,6 +603,12 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       }
     }
     return true;
+  }
+
+  private void checkCacheNotClosed() throws IllegalStateException {
+    if (state == STATE_CLOSED) {
+      throw new IllegalStateException("Cache is already closed");
+    }
   }
 
   /**

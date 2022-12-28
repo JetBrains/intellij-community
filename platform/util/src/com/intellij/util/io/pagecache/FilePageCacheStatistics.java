@@ -121,6 +121,49 @@ public class FilePageCacheStatistics {
     totalClosedStoragesReclaimed += reclaimed;
   }
 
+  //==================== getters:
+
+  public long totalNativeBytesAllocated() { return totalNativeBytesAllocated.get(); }
+
+  public long totalNativeBytesReclaimed() { return totalNativeBytesReclaimed.get(); }
+
+  public long totalHeapBytesAllocated() { return totalHeapBytesAllocated.get(); }
+
+  public long totalHeapBytesReclaimed() { return totalHeapBytesReclaimed.get(); }
+
+  public int totalPagesAllocated() { return totalPagesAllocated.get(); }
+
+  public int totalPagesReclaimed() { return totalPagesReclaimed.get(); }
+
+  public long totalBytesRead() { return totalBytesRead.get(); }
+
+  public long totalBytesWritten() { return totalBytesWritten.get(); }
+
+  public long totalPagesWritten() { return totalPagesWritten.get(); }
+
+  public long totalPagesRequested() { return totalPagesRequested.get(); }
+
+  public long totalBytesRequested() { return totalBytesRequested.get(); }
+
+  public long totalPagesRequestsNs() { return totalPagesRequestsNs.get(); }
+
+  public long totalPagesReadNs() { return totalPagesReadNs.get(); }
+
+  public long totalPagesWriteNs() { return totalPagesWriteNs.get(); }
+
+
+  public long housekeeperTurnDone() {
+    return housekeeperTurnDone;
+  }
+
+  public long housekeeperTurnSkipped() {
+    return housekeeperTurnSkipped;
+  }
+
+  public int totalClosedStoragesReclaimed() {
+    return totalClosedStoragesReclaimed;
+  }
+
 
   @Override
   public String toString() {
