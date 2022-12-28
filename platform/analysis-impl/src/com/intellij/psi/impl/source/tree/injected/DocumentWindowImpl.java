@@ -937,4 +937,9 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) {
     return myDelegate.processRangeMarkersOverlappingWith(start, end, processor);
   }
+
+  @Override
+  public String toString() {
+    return "DocumentWindow (delegate="+getDelegate()+")";
+  }
 }
