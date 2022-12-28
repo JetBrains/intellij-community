@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -77,18 +76,6 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public EncodingProjectManagerImpl(@NotNull Project project) {
     myProject = project;
     myIdeEncodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
-  }
-
-  static final class EncodingProjectManagerStartUpActivity implements StartupActivity.DumbAware {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      // do not try to init on EDT due to VFS usage in loadState
-      EncodingProjectManagerImpl service = (EncodingProjectManagerImpl)getInstance(project);
-
-      ApplicationManager.getApplication().invokeLater(() -> {
-        service.reloadAlreadyLoadedDocuments();
-      }, project.getDisposed());
-    }
   }
 
   @Override
@@ -167,7 +154,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     myModificationTracker.incModificationCount();
   }
 
-  private void reloadAlreadyLoadedDocuments() {
+  void reloadAlreadyLoadedDocuments() {
     if (myMapping.isEmpty()) {
       return;
     }
