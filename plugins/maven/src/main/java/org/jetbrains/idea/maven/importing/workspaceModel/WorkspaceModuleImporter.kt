@@ -210,7 +210,7 @@ internal class WorkspaceModuleImporter(
     val libPropertiesElement = serialize(ImportedLibraryProperties(MavenCoordinates(mavenArtifact.groupId,
                                                                                     mavenArtifact.artifactId,
                                                                                     mavenArtifact.version,
-                                                                                    mavenArtifact.extension,
+                                                                                    mavenArtifact.packaging,
                                                                                     mavenArtifact.classifier)).state) ?: return
     libPropertiesElement.name = JpsLibraryTableSerializer.PROPERTIES_TAG;
     val xmlTag = JDOMUtil.writeElement(libPropertiesElement)

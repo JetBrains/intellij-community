@@ -93,6 +93,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-tests.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-test-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-test-javadoc.jar!/");
+    assertProjectLibraryCoordinates("Maven: junit:junit:test-jar:tests:4.0", "junit", "junit", "tests", "jar", "4.0");
   }
 
   @Test
@@ -114,6 +115,8 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-bar.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
+    assertProjectLibraryCoordinates("Maven: junit:junit:bar:4.0", "junit", "junit", "bar", "jar", "4.0");
+
   }
 
   @Test
@@ -2054,6 +2057,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
 
     assertModules("project");
     assertModuleLibDeps("project", "Maven: foo:foo:ejb:1", "Maven: foo:bar:ejb-client:client:1");
+    assertProjectLibraryCoordinates("Maven: foo:foo:ejb:1", "foo", "foo", null, "ejb", "1");
+    assertProjectLibraryCoordinates("Maven: foo:bar:ejb-client:client:1", "foo", "bar", "client", "ejb", "1");
+
   }
 
   @Test

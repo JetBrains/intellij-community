@@ -56,6 +56,7 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.junit.Assume;
 
@@ -443,6 +444,17 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
                                               @Nullable String groupId,
                                               @Nullable String artifactId,
                                               @Nullable String version) {
+    assertProjectLibraryCoordinates(libraryName, groupId, artifactId, null, JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING, version);
+  }
+
+  public void assertProjectLibraryCoordinates(@NotNull String libraryName,
+                                              @Nullable String groupId,
+                                              @Nullable String artifactId,
+                                              @Nullable String classifier,
+                                              @Nullable String packaging,
+                                              @Nullable String version)
+
+  {
     Library lib = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libraryName);
     assertNotNull("Library [" + libraryName + "] not found", lib);
     LibraryProperties libraryProperties = ((LibraryEx)lib).getProperties();
@@ -451,6 +463,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     assertNotNull("Expected non-empty maven coordinates", coords);
     assertEquals("Unexpected groupId", groupId, coords.getGroupId());
     assertEquals("Unexpected artifactId", artifactId, coords.getArtifactId());
+    assertEquals("Unexpected classifier", classifier, coords.getClassifier());
+    assertEquals("Unexpected packaging", packaging, coords.getPackaging());
     assertEquals("Unexpected version", version, coords.getVersion());
   }
 
