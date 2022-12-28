@@ -50,6 +50,10 @@ public class SingleConfigurableEditor extends DialogWrapper {
     setTitle(title);
 
     myProject = project;
+    init(configurable);
+  }
+
+  protected void init(@NotNull Configurable configurable) {
     myConfigurable = configurable;
     init();
     myConfigurable.reset();
@@ -65,9 +69,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     myShowApplyButton = showApplyButton;
     setTitle(createTitleString(configurable));
 
-    myConfigurable = configurable;
-    init();
-    myConfigurable.reset();
+    init(configurable);
   }
 
   public SingleConfigurableEditor(@Nullable Project project, Configurable configurable, String dimensionKey, boolean showApplyButton) {
