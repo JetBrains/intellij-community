@@ -2,14 +2,15 @@
 
 package org.jetbrains.kotlin.idea.configuration.ui
 
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.TaskCancellation
+import com.intellij.openapi.progress.progressStep
+import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.startup.ProjectPostStartupActivity
@@ -34,57 +35,73 @@ private class KotlinConfigurationCheckerStartupActivity : ProjectPostStartupActi
 class KotlinConfigurationCheckerService(private val project: Project) {
     private val syncDepth = AtomicInteger()
 
-    fun performProjectPostOpenActions() {
-        val task = object : Task.Backgroundable(project, KotlinProjectConfigurationBundle.message("configure.kotlin.language.settings"), false) {
-            override fun run(indicator: ProgressIndicator) {
-                val kotlinLanguageVersionConfigured = runReadAction { isKotlinLanguageVersionConfigured(project) }
+    suspend fun performProjectPostOpenActions() {
+        withBackgroundProgress(
+            project,
+            KotlinProjectConfigurationBundle.message("configure.kotlin.language.settings"),
+            TaskCancellation.nonCancellable()
+        ) {
+            doPerformProjectPostOpenActions()
+        }
+    }
 
-                val ktModules = if (kotlinLanguageVersionConfigured) {
-                    // we already have `.idea/kotlinc` so it's ok to add the jps version there
-                    KotlinJpsPluginSettings.validateSettings(project)
+    fun performProjectPostOpenActionsInEdt() {
+        runBlockingModal(project, KotlinProjectConfigurationBundle.message("configure.kotlin.language.settings")) {
+            doPerformProjectPostOpenActions()
+        }
+    }
 
-                    // pick up modules with kotlin faces those use custom (non project) settings
-                    val modulesWithKotlinFacets = runReadAction { project.modules }
-                        .filter {
-                            val facetSettings = KotlinFacet.get(it)?.configuration?.settings ?: return@filter false
-                            // module uses custom (not a project-wide) kotlin facet settings and LV or ApiVersion is missed
-                            !facetSettings.useProjectSettings && (facetSettings.languageLevel == null || facetSettings.apiLevel == null)
-                        }
+    private suspend fun doPerformProjectPostOpenActions() {
+        val kotlinLanguageVersionConfigured = runReadAction { isKotlinLanguageVersionConfigured(project) }
 
-                    if (modulesWithKotlinFacets.isEmpty()) return
+        val ktModules = if (kotlinLanguageVersionConfigured) {
+            // we already have `.idea/kotlinc` so it's ok to add the jps version there
+            KotlinJpsPluginSettings.validateSettings(project)
 
-                    getModulesWithKotlinFiles(project, modulesWithKotlinFacets)
-                } else {
-                    getModulesWithKotlinFiles(project)
+            // pick up modules with kotlin faces those use custom (non project) settings
+            val modulesWithKotlinFacets = runReadAction { project.modules }
+                .filter {
+                    val facetSettings = KotlinFacet.get(it)?.configuration?.settings ?: return@filter false
+                    // module uses custom (not a project-wide) kotlin facet settings and LV or ApiVersion is missed
+                    !facetSettings.useProjectSettings && (facetSettings.languageLevel == null || facetSettings.apiLevel == null)
                 }
 
-                if (ktModules.isEmpty()) return
-                if (!kotlinLanguageVersionConfigured) {
-                    KotlinJpsPluginSettings.validateSettings(project)
-                }
+            if (modulesWithKotlinFacets.isEmpty()) {
+                return
+            }
 
-                indicator.isIndeterminate = false
-                val writeActionContinuations = mutableListOf<() -> Unit>()
-                for ((idx, module) in ktModules.withIndex()) {
-                    indicator.checkCanceled()
-                    if (project.isDisposed) return
-                    indicator.fraction = 1.0 * idx / ktModules.size
-                    runReadAction {
-                        if (module.isDisposed) return@runReadAction
-                        indicator.text2 = KotlinProjectConfigurationBundle.message("configure.kotlin.language.settings.0.module", module.name)
-                        getAndCacheLanguageLevelByDependencies(module, writeActionContinuations)
+            getModulesWithKotlinFiles(project, modulesWithKotlinFacets)
+        } else {
+            getModulesWithKotlinFiles(project)
+        }
+
+        if (ktModules.isEmpty()) {
+            return
+        }
+        if (!kotlinLanguageVersionConfigured) {
+            KotlinJpsPluginSettings.validateSettings(project)
+        }
+
+        val writeActionContinuations = mutableListOf<() -> Unit>()
+        for ((index, module) in ktModules.withIndex()) {
+            progressStep(
+                endFraction = (index + 1.0) / ktModules.size,
+                text = KotlinProjectConfigurationBundle.message("configure.kotlin.language.settings.0.module", module.name),
+            ) {
+                readAction {
+                    if (module.isDisposed) {
+                        return@readAction
                     }
-                }
-                if (writeActionContinuations.isNotEmpty()) {
-                    runInEdt {
-                        runWriteAction {
-                            writeActionContinuations.forEach { it.invoke() }
-                        }
-                    }
+                    getAndCacheLanguageLevelByDependencies(module, writeActionContinuations)
                 }
             }
         }
-        ProgressManager.getInstance().run(task)
+        if (writeActionContinuations.isNotEmpty()) {
+            writeAction {
+                writeActionContinuations.forEach { it.invoke() }
+            }
+        }
+        return
     }
 
     @IntellijInternalApi
