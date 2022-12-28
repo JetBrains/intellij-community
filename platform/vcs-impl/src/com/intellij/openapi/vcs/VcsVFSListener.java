@@ -224,7 +224,7 @@ public abstract class VcsVFSListener implements Disposable {
     @RequiresBackgroundThread
     private void processFileCreated(@NotNull VFileCreateEvent event) {
       if (LOG.isDebugEnabled()) LOG.debug("fileCreated: ", event.getFile());
-      if (isDirectoryVersioningSupported() || !event.isDirectory()) {
+      if (!event.isDirectory()) {
         VirtualFile file = event.getFile();
         if (file == null) return;
 
@@ -270,7 +270,7 @@ public abstract class VcsVFSListener implements Disposable {
     }
 
     private void processBeforeDeletedFile(@NotNull VirtualFile file) {
-      if (file.isDirectory() && file instanceof NewVirtualFile && !isDirectoryVersioningSupported() && !isRecursiveDeleteSupported()) {
+      if (file.isDirectory() && file instanceof NewVirtualFile && !isRecursiveDeleteSupported()) {
         for (VirtualFile child : ((NewVirtualFile)file).getCachedChildren()) {
           ProgressManager.checkCanceled();
           FileStatus status = myChangeListManager.getStatus(child);
@@ -349,7 +349,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     @RequiresEdt
     private void addFileToMove(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
-      if (file.isDirectory() && !file.is(VFileProperty.SYMLINK) && !isDirectoryVersioningSupported()) {
+      if (file.isDirectory() && !file.is(VFileProperty.SYMLINK)) {
         @SuppressWarnings("UnsafeVfsRecursion") VirtualFile[] children = file.getChildren();
         if (children != null) {
           for (VirtualFile child : children) {
@@ -681,8 +681,6 @@ public abstract class VcsVFSListener implements Disposable {
   protected abstract void performDeletion(@NotNull List<FilePath> filesToDelete);
 
   protected abstract void performMoveRename(@NotNull List<MovedFileInfo> movedFiles);
-
-  protected abstract boolean isDirectoryVersioningSupported();
 
   protected boolean isRecursiveDeleteSupported() {
     return false;

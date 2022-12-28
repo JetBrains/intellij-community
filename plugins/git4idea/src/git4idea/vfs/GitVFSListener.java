@@ -277,11 +277,6 @@ public final class GitVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected boolean isDirectoryVersioningSupported() {
-    return false;
-  }
-
-  @Override
   protected boolean isRecursiveDeleteSupported() {
     return true;
   }
