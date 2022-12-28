@@ -18,7 +18,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,6 +50,8 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.util.io.FileUtil.isAncestor;
+import static com.intellij.openapi.util.io.FileUtil.toCanonicalPath;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.EXTENSION;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION;
@@ -178,7 +179,7 @@ public final class GradleUtil {
       // So, just ignore it and assume that the user didn't define any custom build file name.
     }
     File rootProjectParent = new File(rootProjectPath);
-    StringBuilder buffer = new StringBuilder(FileUtil.toCanonicalPath(rootProjectParent.getAbsolutePath()));
+    StringBuilder buffer = new StringBuilder(toCanonicalPath(rootProjectParent.getAbsolutePath()));
     Stack<String> stack = new Stack<>();
     for (GradleProject p = subProject; p != null; p = p.getParent()) {
       stack.push(p.getName());
@@ -354,8 +355,7 @@ public final class GradleUtil {
   public static void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
     ContentRootData excludedContentRootData;
     DataNode<ContentRootData> contentRootDataDataNode = ExternalSystemApiUtil.find(ideModule, ProjectKeys.CONTENT_ROOT);
-    if (contentRootDataDataNode == null ||
-        !FileUtil.isAncestor(new File(contentRootDataDataNode.getData().getRootPath()), ideaOutDir, false)) {
+    if (contentRootDataDataNode == null || !isContentRootAncestor(contentRootDataDataNode.getData(), ideaOutDir)) {
       excludedContentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, ideaOutDir.getPath());
       ideModule.createChild(ProjectKeys.CONTENT_ROOT, excludedContentRootData);
     }
@@ -369,12 +369,17 @@ public final class GradleUtil {
   public static void unexcludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
     DataNode<ContentRootData> contentRootDataDataNode = ExternalSystemApiUtil.find(ideModule, ProjectKeys.CONTENT_ROOT);
 
-    if (contentRootDataDataNode != null &&
-        FileUtil.isAncestor(new File(contentRootDataDataNode.getData().getRootPath()), ideaOutDir, false)) {
+    if (contentRootDataDataNode != null && isContentRootAncestor(contentRootDataDataNode.getData(), ideaOutDir)) {
           ContentRootData excludedContentRootData;
           excludedContentRootData = contentRootDataDataNode.getData();
           excludedContentRootData.getPaths(ExternalSystemSourceType.EXCLUDED).removeIf(sourceRoot -> {
             return sourceRoot.getPath().equals(ideaOutDir.getPath()); });
         }
+  }
+
+  private static boolean isContentRootAncestor(@NotNull ContentRootData data, @NotNull File ideaOutDir) {
+    var canonicalIdeOutPath = toCanonicalPath(ideaOutDir.getPath());
+    var canonicalRootPath = data.getRootPath();
+    return isAncestor(canonicalRootPath, canonicalIdeOutPath, false);
   }
 }

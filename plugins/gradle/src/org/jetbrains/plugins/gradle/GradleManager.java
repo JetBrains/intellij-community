@@ -378,7 +378,7 @@ public final class GradleManager
                 for (DataNode<GradleSourceSetData> sourceSetDataNode : findAll(moduleDataNode, GradleSourceSetData.KEY)) {
                   sourceSetDataNode.getData().useExternalCompilerOutput(delegatedBuild);
                 }
-                toggleExcludeOutDir(moduleDataNode, delegatedBuild);
+                configureExcludeOutDir(moduleDataNode, delegatedBuild);
               }
               ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, project);
             });
@@ -402,7 +402,7 @@ public final class GradleManager
     patchAvailableProjects(adjustedPaths, localSettings);
   }
 
-  private static void toggleExcludeOutDir(DataNode<ModuleData> moduleDataNode, boolean delegatedBuild) {
+  private static void configureExcludeOutDir(DataNode<ModuleData> moduleDataNode, boolean delegatedBuild) {
     ModuleData module = moduleDataNode.getData();
     File ideaOutDir = new File(module.getLinkedExternalProjectPath(), "out");
     module.useExternalCompilerOutput(delegatedBuild);
