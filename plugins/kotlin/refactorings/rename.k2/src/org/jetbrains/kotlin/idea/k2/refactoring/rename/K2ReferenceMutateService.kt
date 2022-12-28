@@ -35,15 +35,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         operationNotSupportedInK2Error()
     }
 
-    override fun KtArrayAccessReference.renameTo(newElementName: String): KtExpression {
-        operationNotSupportedInK2Error()
-    }
-
     override fun KDocReference.renameTo(newElementName: String): PsiElement? {
-        operationNotSupportedInK2Error()
-    }
-
-    override fun KtInvokeFunctionReference.renameTo(newElementName: String): PsiElement {
         operationNotSupportedInK2Error()
     }
 
@@ -54,6 +46,9 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     override fun KtDefaultAnnotationArgumentReference.renameTo(newElementName: String): KtValueArgument {
         operationNotSupportedInK2Error()
     }
+
+    override fun replaceWithImplicitInvokeInvocation(newExpression: KtDotQualifiedExpression): KtExpression? =
+        OperatorToFunctionIntention.replaceExplicitInvokeCallWithImplicit(newExpression)
 
     private fun operationNotSupportedInK2Error(): Nothing {
         throw IncorrectOperationException("K2 plugin does not yet support this operation")
