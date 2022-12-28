@@ -46,6 +46,7 @@ class JsonReportGenerator(
       setPrettyPrinting()
       serializeNulls()
       disableHtmlEscaping()
+      serializeSpecialFloatingPointValues()
     }.create()
   }
 }
