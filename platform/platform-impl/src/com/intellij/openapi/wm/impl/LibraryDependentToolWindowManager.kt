@@ -1,131 +1,104 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.wm.impl
 
-import com.intellij.ProjectTopics;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.ext.LibraryDependentToolWindow;
-import com.intellij.openapi.wm.ext.LibrarySearchHelper;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.SimpleMessageBusConnection;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ProjectTopics
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener
+import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx
+import com.intellij.openapi.wm.ext.LibraryDependentToolWindow
+import com.intellij.util.concurrency.SequentialTaskExecutor
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.Executor;
-
-final class LibraryDependentToolWindowManager implements StartupActivity {
-  private static final Executor ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LibraryDependentToolWindowManager");
-
-  LibraryDependentToolWindowManager() {
-    Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-      throw ExtensionNotApplicableException.create();
+private class LibraryDependentToolWindowManager : StartupActivity {
+  init {
+    val app = ApplicationManager.getApplication()
+    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.create()
     }
   }
 
-  @Override
-  public void runActivity(@NotNull Project project) {
-    ModuleRootListener rootListener = new ModuleRootListener() {
-      @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        checkToolWindowStatuses(project);
+  override fun runActivity(project: Project) {
+    val rootListener = object : ModuleRootListener {
+      override fun rootsChanged(event: ModuleRootEvent) {
+        checkToolWindowStatuses(project)
       }
-    };
+    }
 
-    checkToolWindowStatuses(project);
-
-    SimpleMessageBusConnection connection = project.getMessageBus().simpleConnect();
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, rootListener);
-    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> checkToolWindowStatuses(project)));
-    LibraryDependentToolWindow.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
-      @Override
-      public void extensionAdded(@NotNull LibraryDependentToolWindow extension, @NotNull PluginDescriptor pluginDescriptor) {
-        checkToolWindowStatuses(project, extension.id);
+    checkToolWindowStatuses(project)
+    val connection = project.messageBus.simpleConnect()
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, rootListener)
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC,
+                         AdditionalLibraryRootsListener { _: String?, _: Collection<VirtualFile?>?, _: Collection<VirtualFile?>?, _: String? ->
+                           checkToolWindowStatuses(project)
+                         })
+    LibraryDependentToolWindow.EXTENSION_POINT_NAME.addExtensionPointListener(object : ExtensionPointListener<LibraryDependentToolWindow> {
+      override fun extensionAdded(extension: LibraryDependentToolWindow, pluginDescriptor: PluginDescriptor) {
+        checkToolWindowStatuses(project, extension.id)
       }
 
-      @Override
-      public void extensionRemoved(@NotNull LibraryDependentToolWindow extension, @NotNull PluginDescriptor pluginDescriptor) {
-        ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(extension.id);
-        if (window != null) {
-          window.remove();
-        }
+      override fun extensionRemoved(extension: LibraryDependentToolWindow, pluginDescriptor: PluginDescriptor) {
+        ToolWindowManager.getInstance(project).getToolWindow(extension.id)?.remove()
       }
-    }, project);
+    }, project)
   }
+}
 
-  private void checkToolWindowStatuses(@NotNull Project project) {
-    checkToolWindowStatuses(project, null);
+@JvmRecord
+private data class LibraryWindowsState(@JvmField val project: Project,
+                                       @JvmField val extensions: List<LibraryDependentToolWindow>,
+                                       @JvmField val existing: Set<LibraryDependentToolWindow>)
+
+private fun checkToolWindowStatuses(project: Project, extensionId: String? = null) {
+  val currentModalityState = ModalityState.current()
+  ReadAction.nonBlocking<LibraryWindowsState> {
+    var extensions = LibraryDependentToolWindow.EXTENSION_POINT_NAME.extensionList
+    if (extensionId != null) {
+      extensions = extensions.filter { it.id == extensionId }
+    }
+    val existing = extensions.filterTo(HashSet()) { toolWindow ->
+      val helper = toolWindow.librarySearchHelper
+      helper != null && helper.isLibraryExists(project)
+    }
+    LibraryWindowsState(project = project, extensions = extensions, existing = existing)
   }
+    .inSmartMode(project)
+    .coalesceBy(project)
+    .finishOnUiThread(currentModalityState, ::applyWindowsState)
+    .submit(ourExecutor)
+}
 
-  private void checkToolWindowStatuses(@NotNull Project project, @Nullable String extensionId) {
-    ModalityState currentModalityState = ModalityState.current();
-    ReadAction
-      .nonBlocking(() -> {
-        List<LibraryDependentToolWindow> extensions = LibraryDependentToolWindow.EXTENSION_POINT_NAME.getExtensionList();
-        if (extensionId != null) {
-          extensions = ContainerUtil.filter(extensions, ltw -> Objects.equals(ltw.id, extensionId));
-        }
+private val ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LibraryDependentToolWindowManager")
 
-        Set<LibraryDependentToolWindow> existing = new HashSet<>(ContainerUtil.findAll(extensions, ltw -> {
-          LibrarySearchHelper helper = ltw.getLibrarySearchHelper();
-          return helper != null && helper.isLibraryExists(project);
-        }));
-
-        return new LibraryWindowsState(project, extensions, existing);
-      })
-      .inSmartMode(project)
-      .coalesceBy(this, project)
-      .finishOnUiThread(currentModalityState, LibraryDependentToolWindowManager::applyWindowsState)
-      .submit(ourExecutor);
-  }
-
-  private static void applyWindowsState(LibraryWindowsState state) {
-    ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(state.project);
-    for (LibraryDependentToolWindow libraryToolWindow : state.extensions) {
-      ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(libraryToolWindow.id);
-      if (state.existing.contains(libraryToolWindow)) {
-        if (toolWindow == null) {
-          toolWindowManagerEx.initToolWindow(libraryToolWindow);
-
-          if (!libraryToolWindow.showOnStripeByDefault) {
-            toolWindow = toolWindowManagerEx.getToolWindow(libraryToolWindow.id);
-            if (toolWindow != null) {
-              WindowInfoImpl windowInfo = toolWindowManagerEx.getLayout().getInfo(libraryToolWindow.id);
-              if (windowInfo != null && !windowInfo.isFromPersistentSettings()) {
-                toolWindow.setShowStripeButton(false);
-              }
+private fun applyWindowsState(state: LibraryWindowsState) {
+  val toolWindowManager = ToolWindowManagerEx.getInstanceEx(state.project)
+  for (libraryToolWindow in state.extensions) {
+    var toolWindow = toolWindowManager.getToolWindow(libraryToolWindow.id)
+    if (state.existing.contains(libraryToolWindow)) {
+      if (toolWindow == null) {
+        toolWindowManager.initToolWindow(libraryToolWindow)
+        if (!libraryToolWindow.showOnStripeByDefault) {
+          toolWindow = toolWindowManager.getToolWindow(libraryToolWindow.id)
+          if (toolWindow != null) {
+            val windowInfo = toolWindowManager.getLayout().getInfo(libraryToolWindow.id)
+            if (windowInfo != null && !windowInfo.isFromPersistentSettings) {
+              toolWindow.isShowStripeButton = false
             }
           }
         }
       }
-      else {
-        if (toolWindow != null) {
-          toolWindow.remove();
-        }
-      }
     }
-  }
-
-  private record LibraryWindowsState(@NotNull Project project,
-                                     @NotNull List<LibraryDependentToolWindow> extensions,
-                                     @NotNull Set<LibraryDependentToolWindow> existing) {
+    else {
+      toolWindow?.remove()
+    }
   }
 }

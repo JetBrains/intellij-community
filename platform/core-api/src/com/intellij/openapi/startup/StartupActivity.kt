@@ -7,14 +7,12 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Runs an activity on project open.
- *
  * If activity implements [com.intellij.openapi.project.DumbAware], it is executed after a project is opened
  * on a background thread with no visible progress indicator. Otherwise, it is executed on EDT when indexes are ready.
  *
  * See [docs](https://youtrack.jetbrains.com/articles/IDEA-A-219/Startup-Activity#Post-Startup-Activity) for details.
  *
  * @see StartupManager
- *
  * @see com.intellij.ide.util.RunOnceUtil
  */
 interface StartupActivity {
@@ -39,7 +37,8 @@ interface StartupActivity {
 interface ProjectPostStartupActivity : StartupActivity {
   suspend fun execute(project: Project)
 
-  override fun runActivity(project: Project) = Unit
+  override fun runActivity(project: Project) {
+  }
 }
 
 /**

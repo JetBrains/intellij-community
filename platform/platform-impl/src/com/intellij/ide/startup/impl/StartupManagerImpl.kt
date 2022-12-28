@@ -21,7 +21,8 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.DumbService
@@ -56,7 +57,7 @@ private val LOG = logger<StartupManagerImpl>()
 private val tracer by lazy { TraceManager.getTracer("startupManager") }
 
 /**
- * Acts as [StartupActivity.POST_STARTUP_ACTIVITY], but executed with 5 seconds delay after project opening.
+ * Acts as [StartupActivity.POST_STARTUP_ACTIVITY], but executed with 5-seconds delay after project opening.
  */
 private val BACKGROUND_POST_STARTUP_ACTIVITY = ExtensionPointName<StartupActivity>("com.intellij.backgroundPostStartupActivity")
 private val EDT_WARN_THRESHOLD_IN_NANO = TimeUnit.MILLISECONDS.toNanos(100)
@@ -186,11 +187,12 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     runActivities(initProjectStartupActivities)
     val app = ApplicationManager.getApplication()
     val extensionPoint = (app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<InitProjectActivity>("com.intellij.startupActivity")
-    // do not create extension if not allow-listed
+    // do not create an extension if not allow-listed
     for (adapter in extensionPoint.sortedAdapters) {
       coroutineContext.ensureActive()
 
       val pluginId = adapter.pluginDescriptor.pluginId
+      @Suppress("SpellCheckingInspection")
       if (!isCorePlugin(adapter.pluginDescriptor) && pluginId.idString != "com.jetbrains.performancePlugin"
           && pluginId.idString != "com.intellij.clion-makefile"
           && pluginId.idString != "com.jetbrains.performancePlugin.yourkit"
@@ -218,7 +220,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     }
   }
 
-  // Must be executed in a pooled thread outside of project loading modal task. The only exclusion - test mode.
+  // Must be executed in a pooled thread outside a project loading modal task. The only exclusion - test mode.
   private suspend fun runPostStartupActivities(async: Boolean) {
     try {
       LOG.assertTrue(isInitProjectActivitiesPassed)
