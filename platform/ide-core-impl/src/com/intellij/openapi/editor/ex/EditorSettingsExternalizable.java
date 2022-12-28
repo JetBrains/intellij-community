@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.ide.GeneralSettings;
@@ -65,6 +65,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean ARE_LINE_NUMBERS_SHOWN = true;
     public boolean ARE_GUTTER_ICONS_SHOWN = true;
     public boolean IS_FOLDING_OUTLINE_SHOWN = true;
+    public boolean IS_FOLDING_ENDINGS_SHOWN = false; //is not used in old UI
     public boolean SHOW_BREADCRUMBS_ABOVE = false;
     public boolean SHOW_BREADCRUMBS = true;
     public boolean ENABLE_RENDERED_DOC = false;
@@ -267,6 +268,14 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setFoldingOutlineShown(boolean val) {
     myOptions.IS_FOLDING_OUTLINE_SHOWN = val;
+  }
+
+  public boolean isFoldingEndingsShown() {
+    return myOptions.IS_FOLDING_ENDINGS_SHOWN;
+  }
+
+  public void setFoldingEndingsShown(boolean val) {
+    myOptions.IS_FOLDING_ENDINGS_SHOWN = val;
   }
 
   /**

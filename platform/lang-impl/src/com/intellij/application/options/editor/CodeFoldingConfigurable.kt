@@ -14,9 +14,9 @@ import com.intellij.openapi.options.Configurable.WithEpDependencies
 import com.intellij.openapi.options.ConfigurableBuilder
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.*
 
 class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingOptionsProvider>(
   ApplicationBundle.message("group.code.folding"), "reference.settingsdialog.IDE.editor.code.folding"),
@@ -36,6 +36,7 @@ class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingOptionsPro
     }
   }
 
+  private lateinit var showGutterOutline: Cell<JBCheckBox>
 
   override fun createPanel(): DialogPanel {
     val settings = EditorSettingsExternalizable.getInstance()
@@ -43,13 +44,21 @@ class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingOptionsPro
 
     return panel {
       row {
-        checkBox(ApplicationBundle.message("checkbox.show.code.folding.outline"))
+         showGutterOutline = checkBox(ApplicationBundle.message("checkbox.show.code.folding.outline"))
           .bindSelected(settings::isFoldingOutlineShown, settings::setFoldingOutlineShown)
-      }.bottomGap(BottomGap.SMALL)
+      }
+
+      indent {
+        row {
+          checkBox(ApplicationBundle.message("checkbox.show.code.folding.endings"))
+            .bindSelected(settings::isFoldingEndingsShown, settings::setFoldingEndingsShown)
+        }.visible(ExperimentalUI.isNewUI())
+          .enabledIf(showGutterOutline.selected)
+      }
 
       row {
         label(ApplicationBundle.message("label.fold.by.default"))
-      }
+      }.topGap(TopGap.SMALL)
 
       indent {
         for (configurable in sortedConfigurables) {

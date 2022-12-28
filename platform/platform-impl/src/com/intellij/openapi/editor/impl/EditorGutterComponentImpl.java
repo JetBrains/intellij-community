@@ -1578,12 +1578,14 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     double[] dyPoints = {y + baseHeight, y, y, y + baseHeight, y + height + (height < 0 ? 1 : 0)};
 
     if (ExperimentalUI.isNewUI()) {
-      if (height > 0) {
-        myAlphaContext.paintWithComposite(g, () -> {
-          Icon icon = scaleIcon(ExperimentalUI.Icons.Gutter.Fold);
-          icon.paintIcon(this, g, getFoldingAreaOffset(), getFoldingIconY(visualLine, icon));
-        });
+      if (height <= 0 && !EditorSettingsExternalizable.getInstance().isFoldingEndingsShown()) {
+        //do not paint folding endings in new UI by default
+        return;
       }
+      myAlphaContext.paintWithComposite(g, () -> {
+        Icon icon = scaleIcon(height > 0 ? ExperimentalUI.Icons.Gutter.Fold : ExperimentalUI.Icons.Gutter.FoldBottom);
+        icon.paintIcon(this, g, getFoldingAreaOffset(), getFoldingIconY(visualLine, icon));
+      });
       return;
     }
 
