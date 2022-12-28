@@ -31,13 +31,12 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 
 public class PsiUtilCore {
@@ -427,12 +426,9 @@ public class PsiUtilCore {
   }
 
   @NotNull
-  public static <VF extends VirtualFile> List<PsiFile> toPsiFiles(@NotNull PsiManager psiManager,
-                                                                  @NotNull Collection<VF> virtualFiles) {
-    return virtualFiles.stream()
-      .map(psiManager::findFile)
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+  @Unmodifiable
+  public static List<PsiFile> toPsiFiles(@NotNull PsiManager psiManager, @NotNull Collection<? extends VirtualFile> virtualFiles) {
+    return ContainerUtil.mapNotNull(virtualFiles, psiManager::findFile);
   }
 
   /**

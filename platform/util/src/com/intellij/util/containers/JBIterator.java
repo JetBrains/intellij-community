@@ -21,6 +21,7 @@ import com.intellij.util.Function;
 import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -221,6 +222,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   }
 
   @NotNull
+  @Unmodifiable
   public final List<E> toList() {
     return Collections.unmodifiableList(ContainerUtil.newArrayList(JBIterable.once(this)));
   }

@@ -37,10 +37,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -726,6 +723,7 @@ public final class PsiImplUtil {
   }
 
   @NotNull
+  @Unmodifiable
   public static List<String> findAllEnclosingLabels(@NotNull PsiElement start) {
     List<String> result = new SmartList<>();
     for (PsiElement context = start; !isCodeBoundary(context); context = context.getContext()) {

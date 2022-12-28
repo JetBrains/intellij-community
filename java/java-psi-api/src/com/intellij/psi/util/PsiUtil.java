@@ -35,6 +35,7 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -351,7 +352,8 @@ public final class PsiUtil extends PsiUtilCore {
     return false;
   }
 
-  public static List<PsiExpression> getSwitchResultExpressions(PsiSwitchExpression switchExpression) {
+  @Unmodifiable
+  public static @NotNull List<PsiExpression> getSwitchResultExpressions(@NotNull PsiSwitchExpression switchExpression) {
     PsiCodeBlock body = switchExpression.getBody();
     if (body != null) {
       List<PsiExpression> result = new ArrayList<>();
@@ -875,6 +877,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @NotNull
+  @Unmodifiable
   public static List<PsiTypeElement> getParameterTypeElements(@NotNull PsiParameter parameter) {
     PsiTypeElement typeElement = parameter.getTypeElement();
     return typeElement != null && typeElement.getType() instanceof PsiDisjunctionType

@@ -45,6 +45,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -223,6 +224,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return ContainerUtil.map2Array(SharedImplUtil.getChildrenOfType(getNode(), elementType), arrayClass, s -> (T)s.getPsi());
   }
 
+  @Unmodifiable
   protected <T extends PsiElement> List<T> findChildrenByType(@NotNull TokenSet elementType) {
     List<T> result = EMPTY();
     ASTNode child = getNode().getFirstChildNode();
@@ -239,6 +241,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return result;
   }
 
+  @Unmodifiable
   protected <T extends PsiElement> List<T> findChildrenByType(@NotNull IElementType elementType) {
     List<T> result = EMPTY();
     ASTNode child = getNode().getFirstChildNode();
