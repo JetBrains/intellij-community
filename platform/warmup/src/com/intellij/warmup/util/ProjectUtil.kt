@@ -3,6 +3,7 @@ package com.intellij.warmup.util
 
 import com.intellij.conversion.ConversionListener
 import com.intellij.conversion.ConversionService
+import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.PatchProjectUtil
 import com.intellij.ide.impl.ProjectUtil
@@ -18,6 +19,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.warmup.impl.WarmupConfiguratorOfCLIConfigurator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
@@ -164,7 +166,7 @@ private suspend fun callProjectConfigurators(
 
   if (!projectArgs.configureProject) return
 
-  val activeConfigurators = WarmupConfigurator.EP_NAME.extensionList.filter {
+  val activeConfigurators = getAllConfigurators().filter {
     if (it.name in projectArgs.disabledConfigurators) {
       ConsoleLog.info("Configurator ${it.name} is disabled in the settings")
       false
@@ -186,4 +188,8 @@ private suspend fun callProjectConfigurators(
   }
 
   yieldThroughInvokeLater()
+}
+
+private fun getAllConfigurators() : List<WarmupConfigurator> {
+  return WarmupConfigurator.EP_NAME.extensionList + CommandLineInspectionProjectConfigurator.EP_NAME.extensionList.map(::WarmupConfiguratorOfCLIConfigurator)
 }

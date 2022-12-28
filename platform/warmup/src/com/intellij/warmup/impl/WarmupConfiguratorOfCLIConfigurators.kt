@@ -22,7 +22,7 @@ import kotlin.coroutines.coroutineContext
  */
 @ApiStatus.Internal
 @ApiStatus.Obsolete
-abstract class WarmupConfiguratorOfCLIConfigurator(val delegate: CommandLineInspectionProjectConfigurator) : WarmupConfigurator {
+class WarmupConfiguratorOfCLIConfigurator(val delegate: CommandLineInspectionProjectConfigurator) : WarmupConfigurator {
 
   override suspend fun prepareEnvironment(projectPath: Path) =
     withRawProgressReporter {
