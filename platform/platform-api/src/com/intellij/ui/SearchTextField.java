@@ -62,6 +62,10 @@ public class SearchTextField extends JPanel {
   }
 
   public SearchTextField(boolean historyPopupEnabled, @Nullable String historyPropertyName) {
+    this(historyPopupEnabled, true, historyPropertyName);
+  }
+
+  public SearchTextField(boolean historyPopupEnabled, boolean clearActionEnabled, @Nullable String historyPropertyName) {
     super(new BorderLayout());
     this.historyPopupEnabled = historyPopupEnabled;
 
@@ -160,12 +164,16 @@ public class SearchTextField extends JPanel {
       myTextField.getInputMap().put(SHOW_HISTORY_KEYSTROKE, "showNextHistoryItem");
     }
 
-    myTextField.putClientProperty("JTextField.variant", "search");
     myTextField.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(4));
     myTextField.putClientProperty("JTextField.Search.CancelAction", (ActionListener)e -> {
       myTextField.setText("");
       onFieldCleared();
     });
+    if (!clearActionEnabled) {
+      myTextField.putClientProperty("JTextField.Search.HideClearAction", true);
+    }
+    myTextField.putClientProperty("JTextField.variant", "search");
+
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, toGaps(myTextField.getInsets()));
     DumbAwareAction.create(event -> {

@@ -562,7 +562,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
           addExtension((Extension)extension);
         }
         addExtension(new SearchExtension());
-        addExtension(new ClearExtension());
+        if (getComponent().getClientProperty("JTextField.Search.HideClearAction") == null) {
+          addExtension(new ClearExtension());
+        }
       }
     }
     updateIconsLayout(new Rectangle(getComponent().getSize())); // Effectively update margins
