@@ -196,7 +196,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
       eps = new ArrayList<>(myExtensions.values());
     }
     List<VcsDescriptor> result = ContainerUtil.sorted(ContainerUtil.map(eps, ep -> ep.createDescriptor()),
-    Comparator.comparing(VcsDescriptor::getName, String::compareTo));
+                                                      Comparator.comparing(VcsDescriptor::getName, String::compareTo));
     return result.toArray(new VcsDescriptor[0]);
   }
 

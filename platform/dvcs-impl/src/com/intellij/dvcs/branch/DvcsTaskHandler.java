@@ -116,7 +116,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     }
     if (tasks.size() == 0) return new TaskInfo[0];
     if (isSyncEnabled()) {
-      return new TaskInfo[] { tasks.values().iterator().next() };
+      return new TaskInfo[]{tasks.values().iterator().next()};
     }
     else {
       return tasks.values().toArray(new TaskInfo[0]);

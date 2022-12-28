@@ -21,7 +21,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
@@ -134,7 +133,8 @@ public class GitBranchPopupActions {
       .toList();
     int topShownBranches = getNumOfTopShownBranches(localBranchActions);
     if (currentBranch != null) {
-      localBranchActions = ContainerUtil.prepend(localBranchActions,new CurrentBranchActions(myProject, repositoryList, currentBranch.getName(), myRepository));
+      localBranchActions = prepend(localBranchActions,
+                                   new CurrentBranchActions(myProject, repositoryList, currentBranch.getName(), myRepository));
       topShownBranches++;
     }
     // if there are only a few local favorites -> show all;  for remotes it's better to show only favorites;

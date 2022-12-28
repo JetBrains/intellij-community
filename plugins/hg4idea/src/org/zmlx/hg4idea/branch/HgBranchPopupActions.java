@@ -91,7 +91,8 @@ public class HgBranchPopupActions {
       .toList();
     int topShownBookmarks = getNumOfTopShownBranches(bookmarkActions);
     if (currentBookmark != null) {
-      bookmarkActions = ContainerUtil.prepend(bookmarkActions, new CurrentActiveBookmark(myProject, Collections.singletonList(myRepository), currentBookmark));
+      bookmarkActions = ContainerUtil.prepend(bookmarkActions, new CurrentActiveBookmark(myProject, Collections.singletonList(myRepository),
+                                                                                         currentBookmark));
       topShownBookmarks++;
     }
     wrapWithMoreActionIfNeeded(myProject, popupGroup, bookmarkActions, topShownBookmarks,
