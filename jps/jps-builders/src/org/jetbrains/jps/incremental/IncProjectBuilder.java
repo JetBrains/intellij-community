@@ -269,7 +269,10 @@ public final class IncProjectBuilder {
     final BuildTargetsState targetsState = myProjectDescriptor.getTargetsState();
     final long timeThreshold = targetsState.getLastSuccessfulRebuildDuration() * 95 / 100; // 95% of last registered clean rebuild time
     if (timeThreshold <= 0) {
-      return; // no stats available
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Rebuild heuristic: no stats available");
+      }
+      return;
     }
     // check that this is a whole-project incremental build
     // checking only JavaModuleBuildTargetType because these target types directly correspond to project modules

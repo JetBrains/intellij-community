@@ -11,6 +11,8 @@ import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
 class PortableCompilationCache(private val context: CompilationContext) {
   companion object {
@@ -37,9 +39,12 @@ class PortableCompilationCache(private val context: CompilationContext) {
     val dir: Path by lazy { context.compilationData.dataStorageRoot }
 
     val maybeAvailableLocally: Boolean by lazy {
-      val files = dir.toFile().list()
-      context.messages.info("$dir: ${files.joinToString()}")
-      Files.isDirectory(dir) && files != null && files.isNotEmpty()
+      if (dir.exists() && dir.isDirectory()) {
+        val files = Files.newDirectoryStream(dir).use { it.toList() }
+        context.messages.info("$dir: ${files.joinToString()}")
+        files.isNotEmpty()
+      }
+      else false
     }
   }
 

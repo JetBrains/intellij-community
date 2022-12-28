@@ -260,7 +260,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
                             "will be written to $buildLogFile")
     }
     catch (t: Throwable) {
-      context.messages.warning("Cannot setup additional logging to $buildLogFile.absolutePath: ${t.message}")
+      context.messages.warning("Cannot setup additional logging to $buildLogFile: ${t.message}")
     }
   }
 
@@ -275,7 +275,10 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     }
 
     Logger.setFactory(JpsLoggerFactory::class.java)
-    val forceBuild = !context.options.incrementalCompilation
+    val forceBuild = !context.options.incrementalCompilation ||
+                     !context.compilationData.dataStorageRoot.exists() ||
+                     !context.compilationData.dataStorageRoot.isDirectory() ||
+                     Files.newDirectoryStream(context.compilationData.dataStorageRoot).use { it.count() } == 0
     val scopes = ArrayList<TargetTypeBuildScope>()
     for (type in JavaModuleBuildTargetType.ALL_TYPES) {
       if (includeTests || !type.isTests) {
@@ -468,10 +471,12 @@ private class BackedLogger(category: String?, private val fileLogger: Logger?) :
   }
 
   override fun info(message: String?) {
+    messageHandler.processMessage(CompilerMessage(COMPILER_NAME, BuildMessage.Kind.INFO, message))
     fileLogger?.info(message)
   }
 
   override fun info(message: String?, t: Throwable?) {
+    messageHandler.processMessage(CompilerMessage(COMPILER_NAME, BuildMessage.Kind.INFO, message + (t?.message?.let { ": $it" } ?: "")))
     fileLogger?.info(message, t)
   }
 
