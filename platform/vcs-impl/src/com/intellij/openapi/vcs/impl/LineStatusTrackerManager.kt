@@ -36,7 +36,6 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
@@ -57,7 +56,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SlowOperations
 import com.intellij.util.childScope
@@ -312,9 +310,11 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   private fun registerTrackerInCLM(data: TrackerData) {
     val tracker = data.tracker
+    val virtualFile = tracker.virtualFile
     if (tracker !is ChangelistsLocalLineStatusTracker) return
 
-    val filePath = VcsUtil.getFilePath(tracker.virtualFile)
+    LOG.assertTrue(virtualFile.isInLocalFileSystem, virtualFile)
+    val filePath = VcsUtil.getFilePath(virtualFile)
     if (data.clmFilePath != null) {
       LOG.error("[registerTrackerInCLM] tracker already registered")
       return
@@ -326,8 +326,10 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   private fun unregisterTrackerInCLM(data: TrackerData, wasUnbound: Boolean = false) {
     val tracker = data.tracker
+    val virtualFile = tracker.virtualFile
     if (tracker !is ChangelistsLocalLineStatusTracker) return
 
+    LOG.assertTrue(virtualFile.isInLocalFileSystem, virtualFile)
     val filePath = data.clmFilePath
     if (filePath == null) {
       LOG.error("[unregisterTrackerInCLM] tracker is not registered")
@@ -337,7 +339,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     ChangeListManagerImpl.getInstanceImpl(project).unregisterChangeTracker(filePath, tracker)
     data.clmFilePath = null
 
-    val actualFilePath = VcsUtil.getFilePath(tracker.virtualFile)
+    val actualFilePath = VcsUtil.getFilePath(virtualFile)
     if (filePath != actualFilePath && !wasUnbound) {
       LOG.error("[unregisterTrackerInCLM] unexpected file path: expected: $filePath, actual: $actualFilePath")
     }
@@ -345,10 +347,12 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   private fun reregisterTrackerInCLM(data: TrackerData) {
     val tracker = data.tracker
+    val virtualFile = tracker.virtualFile
     if (tracker !is ChangelistsLocalLineStatusTracker) return
 
+    LOG.assertTrue(virtualFile.isInLocalFileSystem, virtualFile)
     val oldFilePath = data.clmFilePath
-    val newFilePath = VcsUtil.getFilePath(tracker.virtualFile)
+    val newFilePath = VcsUtil.getFilePath(virtualFile)
 
     if (oldFilePath == null) {
       LOG.error("[reregisterTrackerInCLM] tracker is not registered")
@@ -362,11 +366,13 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     }
   }
 
-  private fun canCreateTrackerFor(virtualFile: VirtualFile?): Boolean {
+  private fun canCreateTrackerFor(virtualFile: VirtualFile, document: Document): Boolean {
     if (isDisposed) return false
-    if (virtualFile == null || virtualFile is LightVirtualFile) return false
-    if (runReadAction { !virtualFile.isValid || virtualFile.fileType.isBinary || FileUtilRt.isTooLarge(virtualFile.length) }) return false
-    return true
+    return runReadAction {
+      virtualFile.isValid &&
+      !virtualFile.fileType.isBinary &&
+      !FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(document)
+    }
   }
 
   override fun arePartialChangelistsEnabled(): Boolean {
@@ -386,7 +392,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   private fun switchTracker(virtualFile: VirtualFile, document: Document,
                             refreshExisting: Boolean = false) {
-    val provider = getTrackerProvider(virtualFile)
+    val provider = getTrackerProvider(virtualFile, document)
 
     val oldTracker = trackers[document]?.tracker
     if (oldTracker != null && provider != null && provider.isMyTracker(oldTracker)) {
@@ -424,9 +430,9 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     return tracker
   }
 
-  private fun getTrackerProvider(virtualFile: VirtualFile): LocalLineStatusTrackerProvider? {
+  private fun getTrackerProvider(virtualFile: VirtualFile, document: Document): LocalLineStatusTrackerProvider? {
     SlowOperations.allowSlowOperations("LineStatusTracker.getTrackerProvider").use {
-      if (!canCreateTrackerFor(virtualFile)) {
+      if (!canCreateTrackerFor(virtualFile, document)) {
         return null
       }
 
@@ -502,7 +508,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
         return Result.Error()
       }
 
-      if (!canCreateTrackerFor(virtualFile) || !loader.isTrackedFile(project, virtualFile)) {
+      if (!canCreateTrackerFor(virtualFile, document) || !loader.isTrackedFile(project, virtualFile)) {
         log("Loading error: virtual file is not a tracked file", virtualFile)
         return Result.Error()
       }
@@ -768,7 +774,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
       if (getLineStatusTracker(document) != null) return
 
-      val provider = getTrackerProvider(virtualFile)
+      val provider = getTrackerProvider(virtualFile, document)
       if (provider != ChangelistsLocalStatusTrackerProvider) return
 
       val changeList = ChangeListManager.getInstance(project).getChangeList(virtualFile)
@@ -1003,7 +1009,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
           val virtualFile = state.virtualFile
           val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: continue
 
-          val provider = getTrackerProvider(virtualFile)
+          val provider = getTrackerProvider(virtualFile, document)
           if (provider != ChangelistsLocalStatusTrackerProvider) continue
 
           switchTracker(virtualFile, document)
