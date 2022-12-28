@@ -86,19 +86,17 @@ public final class FileChangedNotificationProvider implements EditorNotification
   @Override
   public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                  @NotNull VirtualFile file) {
-    return fileEditor -> {
-      if (!project.isDisposed() && !GeneralSettings.getInstance().isSyncOnFrameActivation()) {
-        VirtualFileSystem fs = file.getFileSystem();
-        if (fs instanceof LocalFileSystem) {
-          FileAttributes attributes = ((LocalFileSystem)fs).getAttributes(file);
-          if (attributes == null || file.getTimeStamp() != attributes.lastModified || file.getLength() != attributes.length) {
-            if (LOG.isDebugEnabled()) LOG.debug(String.format("%s: (%s,%s) -> %s", file, file.getTimeStamp(), file.getLength(), attributes));
-            return createPanel(file, fileEditor, project);
-          }
-        }
-      }
+    if (project.isDisposed() || GeneralSettings.getInstance().isSyncOnFrameActivation()) return null;
 
-      return null;
+    VirtualFileSystem fs = file.getFileSystem();
+    if (!(fs instanceof LocalFileSystem)) return null;
+
+    FileAttributes attributes = ((LocalFileSystem)fs).getAttributes(file);
+    if (attributes != null && file.getTimeStamp() == attributes.lastModified && file.getLength() == attributes.length) return null;
+
+    return fileEditor -> {
+      if (LOG.isDebugEnabled()) LOG.debug(String.format("%s: (%s,%s) -> %s", file, file.getTimeStamp(), file.getLength(), attributes));
+      return createPanel(file, fileEditor, project);
     };
   }
 
