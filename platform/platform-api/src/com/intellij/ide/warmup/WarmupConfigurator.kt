@@ -13,10 +13,10 @@ import java.nio.file.Path
  * Typical examples of the clients of this API are build systems (Maven, Gradle) and SDK detectors (Python SDK, JDK).
  */
 @ApiStatus.Experimental
-interface WarmupConfiguration {
+interface WarmupConfigurator {
 
   companion object {
-    val EP_NAME: ExtensionPointName<WarmupConfiguration> = ExtensionPointName("com.intellij.warmupConfiguration")
+    val EP_NAME: ExtensionPointName<WarmupConfigurator> = ExtensionPointName("com.intellij.warmupConfiguration")
   }
 
   /**

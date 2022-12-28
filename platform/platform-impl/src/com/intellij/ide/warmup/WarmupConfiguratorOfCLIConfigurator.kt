@@ -15,12 +15,12 @@ import java.util.function.Predicate
 import kotlin.coroutines.coroutineContext
 
 /**
- * This class is a temporary bridge between old [CommandLineInspectionProjectConfigurator] and new [WarmupConfiguration].
+ * This class is a temporary bridge between old [CommandLineInspectionProjectConfigurator] and new [WarmupConfigurator].
  * Please don't use it if you want to configure warmup.
  */
 @ApiStatus.Internal
 @ApiStatus.Obsolete
-abstract class WarmupConfigurationOfCLIConfigurator(val delegate: CommandLineInspectionProjectConfigurator) : WarmupConfiguration {
+abstract class WarmupConfiguratorOfCLIConfigurator(val delegate: CommandLineInspectionProjectConfigurator) : WarmupConfigurator {
 
   override suspend fun prepareEnvironment(projectPath: Path, logger: WarmupEventsLogger) =
     withRawProgressReporter {
@@ -92,4 +92,4 @@ abstract class WarmupConfigurationOfCLIConfigurator(val delegate: CommandLineIns
   }
 }
 
-private val LOG: Logger = logger<WarmupConfiguration>()
+private val LOG: Logger = logger<WarmupConfigurator>()

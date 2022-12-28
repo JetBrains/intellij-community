@@ -7,7 +7,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.PatchProjectUtil
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
-import com.intellij.ide.warmup.WarmupConfiguration
+import com.intellij.ide.warmup.WarmupConfigurator
 import com.intellij.ide.warmup.WarmupEventsLogger
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -167,12 +167,12 @@ private suspend fun callProjectConversion(projectArgs: OpenProjectArgs) {
 
 private suspend fun callProjectConfigurators(
   projectArgs: OpenProjectArgs,
-  action: suspend WarmupConfiguration.() -> Unit
+  action: suspend WarmupConfigurator.() -> Unit
 ) {
 
   if (!projectArgs.configureProject) return
 
-  val activeConfigurators = WarmupConfiguration.EP_NAME.extensionList.filter {
+  val activeConfigurators = WarmupConfigurator.EP_NAME.extensionList.filter {
     if (it.name in projectArgs.disabledConfigurators) {
       listener.logMessage(1, "Configurator ${it.name} is disabled in the settings")
       false
