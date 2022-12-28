@@ -2,10 +2,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.execution.CommandLineUtil;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.IllegalEnvVarException;
-import com.intellij.execution.Platform;
+import com.intellij.execution.*;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
@@ -369,7 +366,7 @@ public class GeneralCommandLine implements UserDataHolder {
     try {
       if (myWorkDirectory != null) {
         if (!myWorkDirectory.exists()) {
-          throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory));
+          throw new WorkingDirectoryNotFoundException(myWorkDirectory.toString());
         }
         if (!myWorkDirectory.isDirectory()) {
           throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.working.directory.not.directory", myWorkDirectory));
