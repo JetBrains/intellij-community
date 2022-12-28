@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.quickfixes
 
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
@@ -33,7 +33,6 @@ class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) 
 
   override fun getTitle(): ChoiceTitleIntentionAction = ChangeToTitleAction
 
-
   private inner class ChangeToVariantAction(
     override val index: Int
   ) : ChoiceVariantIntentionAction(), HighPriorityAction {
@@ -43,7 +42,7 @@ class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) 
 
     override fun getName(): String = suggestion ?: ""
 
-    override fun getTooltipText(): String = SpellCheckerBundle.message("change.to.tooltip", suggestion)
+    override fun getTooltipText(): String = SpellCheckerBundle.message("change.to.tooltip", name)
 
     override fun getFamilyName(): String = fixName
 

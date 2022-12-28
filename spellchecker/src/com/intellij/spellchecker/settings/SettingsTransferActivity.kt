@@ -3,7 +3,7 @@ package com.intellij.spellchecker.settings
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
-import com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel
+import com.intellij.spellchecker.DictionaryLevel
 import com.intellij.spellchecker.state.ProjectDictionaryState
 
 internal class SettingsTransferActivity : ProjectPostStartupActivity {

@@ -1,27 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.spellchecker.util;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.spellchecker.util
 
-import com.intellij.DynamicBundle;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
+import com.intellij.DynamicBundle
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.PropertyKey
 
-import java.util.function.Supplier;
+private const val BUNDLE: @NonNls String = "messages.SpellCheckerBundle"
 
-public final class SpellCheckerBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.SpellCheckerBundle";
-  private static final SpellCheckerBundle INSTANCE = new SpellCheckerBundle();
-
-  private SpellCheckerBundle() { super(BUNDLE); }
-
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getMessage(key, params);
+internal object SpellCheckerBundle : DynamicBundle(BUNDLE) {
+  @JvmStatic
+  fun message(key: @PropertyKey(resourceBundle = BUNDLE) String, vararg params: Any): @Nls String {
+    return getMessage(key, *params)
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getLazyMessage(key, params);
-  }
+  @JvmStatic
+  fun messagePointer(key: @PropertyKey(resourceBundle = BUNDLE) String, vararg params: Any): () -> String = { getMessage(key, *params) }
 }
