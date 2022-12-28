@@ -244,6 +244,11 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     }
   }
 
+  fun testMakeStaticWithQualifiedThis(){
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+    doTest()
+  }
+
   fun testMakeStaticWithStaticMembers(){
     runAndRevertSettings {
       JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
