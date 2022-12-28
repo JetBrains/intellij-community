@@ -21,14 +21,13 @@ class EditorConfigSpaceInHeaderInspection : LocalInspectionTool() {
       holder.registerProblem(
         header,
         message,
-        EditorConfigRemoveSpacesQuickFix(spaces)
+        EditorConfigRemoveSpacesQuickFix()
       )
     }
   }
 
-  companion object {
-    fun findSuspiciousSpaces(header: EditorConfigHeader) =
-      PsiTreeUtil.findChildrenOfType(header, PsiWhiteSpace::class.java)
-        .filter { it.parent !is EditorConfigPatternEnumeration }
-  }
 }
+
+internal fun findSuspiciousSpaces(header: EditorConfigHeader) =
+  PsiTreeUtil.findChildrenOfType(header, PsiWhiteSpace::class.java)
+    .filter { it.parent !is EditorConfigPatternEnumeration }
