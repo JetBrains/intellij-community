@@ -284,43 +284,6 @@ class ScriptWorkspaceModelRepresentationTest : HeavyPlatformTestCase() {
         )
     }
 
-    fun testThatFullLibsRemovalDoesntBreakModel() {
-        val environment = setUpEnvironment(
-            aKtsLibs = listOf(jetbrainsAnnotations, kotlinScriptingJvm, kotlinTestJs),
-            bKtsLibs = listOf(kotlinTestJs, jetbrainsAnnotations)
-        )
-
-        val scriptABefore = addAndLoadScript("script.a.kts")
-        val scriptBBefore = addAndLoadScript("script.b.kts")
-
-        environment.update(
-            aKtsLibs = listOf(),
-            bKtsLibs = listOf()
-        )
-
-        refreshDependencies(scriptABefore.path)
-        refreshDependencies(scriptBBefore.path)
-
-        val storage = WorkspaceModel.getInstance(project).entityStorage.current
-
-        val scriptEntities = storage.entities(KotlinScriptEntity::class.java).toList()
-        scriptEntities.assertContainsOnly(
-            "Libraries update (removal) breaks script entities",
-            mapOf(
-                "path" to scriptABefore.path,
-                "dependencies" to emptyList<Map<*, *>>()
-            ),
-            mapOf(
-                "path" to scriptBBefore.path,
-                "dependencies" to emptyList<Map<*, *>>()
-            )
-        )
-
-        val libraryEntities = storage.entities(KotlinScriptLibraryEntity::class.java).toList()
-        assertThat("Libraries update (removal) lead to library entities leakage", libraryEntities, empty())
-    }
-
-
     fun testThatScriptRemovalDoesntBreakModel() {
         setUpEnvironment(
             aKtsLibs = listOf(jetbrainsAnnotations, kotlinScriptingJvm, kotlinTestJs),

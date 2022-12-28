@@ -222,7 +222,7 @@ class ScriptClassRootsCache(
         override val oldSdkRoots: Collection<VirtualFile>,
         override val newSdkRoots: Collection<VirtualFile>,
         private val hasOldRoots: Boolean,
-        private val updatedScripts: Set<String>
+        val updatedScripts: Set<String>
     ) : Updates {
         override val hasUpdatedScripts: Boolean get() = updatedScripts.isNotEmpty()
         override fun isScriptChanged(scriptPath: String) = scriptPath in updatedScripts

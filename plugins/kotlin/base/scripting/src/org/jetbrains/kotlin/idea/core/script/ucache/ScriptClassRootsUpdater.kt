@@ -211,7 +211,12 @@ abstract class ScriptClassRootsUpdater(
 
             if (scriptsAsEntities) { // (updates.changed && !updates.hasNewRoots)
                 val manager = VirtualFileManager.getInstance()
-                updates.cache.scriptsPaths().takeUnless { it.isEmpty() }?.asSequence()
+                val updatedScriptPaths = when (updates) {
+                    is ScriptClassRootsCache.IncrementalUpdates -> updates.updatedScripts
+                    else -> updates.cache.scriptsPaths()
+                }
+
+                updatedScriptPaths.takeUnless { it.isEmpty() }?.asSequence()
                     ?.map {
                         val byNioPath = manager.findFileByNioPath(Paths.get(it))
                         if (byNioPath == null) { // e.g. jupyter notebooks have their .kts in memory only
@@ -221,12 +226,15 @@ abstract class ScriptClassRootsUpdater(
                             byNioPath
                         }
                     }
-                    ?.let {
+                    ?.let { updatedScriptFiles ->
+                        val actualScriptPaths = updates.cache.scriptsPaths()
+                        val (filesToAddOrUpdate, filesToRemove) = updatedScriptFiles.partition { actualScriptPaths.contains(it.path) }
+
                         // Here we're sometimes under read-lock, so there is no way to call syncScriptEntities() synchronously (dead lock)
                         runInEdt(ModalityState.NON_MODAL) {
                             runWriteAction {
                                 if (!project.isDisposed)
-                                    project.syncScriptEntities(it.toList())
+                                    project.syncScriptEntities(filesToAddOrUpdate, filesToRemove)
                             }
                         }
                     }

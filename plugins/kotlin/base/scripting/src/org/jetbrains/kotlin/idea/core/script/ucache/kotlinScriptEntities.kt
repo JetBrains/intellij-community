@@ -41,9 +41,9 @@ fun KotlinScriptEntity.listDependencies(project: Project, rootTypeId: KotlinScri
 
 
 @RequiresWriteLock
-internal fun Project.syncScriptEntities(actualScriptFiles: List<VirtualFile>) {
+internal fun Project.syncScriptEntities(scriptFilesToAddOrUpdate: List<VirtualFile>, scriptFilesToRemove: List<VirtualFile>) {
     WorkspaceModel.getInstance(this).updateProjectModel("Syncing scripts...") { builder ->
-        builder.syncScriptEntities(actualScriptFiles, this)
+        builder.syncScriptEntities(scriptFilesToAddOrUpdate, scriptFilesToRemove, this)
     }
 /*
     // Use these ancillary functions for troubleshooting, they allow seeing resulting scripts-to-libraries (and vice versa) relations.
@@ -109,23 +109,43 @@ private fun KotlinScriptEntity.debugInfo(storage: EntityStorage): String {
 }
 
 
-private fun MutableEntityStorage.syncScriptEntities(scriptFilesToAddOrUpdate: List<VirtualFile>, project: Project) {
-    removeOutdatedScriptsIfAny(scriptFilesToAddOrUpdate.map { it.path }.toSet())
+private fun MutableEntityStorage.syncScriptEntities(
+    scriptFilesToAddOrUpdate: List<VirtualFile>,
+    scriptFilesToRemove: List<VirtualFile>,
+    project: Project
+) {
+    if (scriptFilesToRemove.isNotEmpty()) {
+        removeOutdatedScripts(scriptFilesToRemove.map { it.path })
+    }
 
     scriptFilesToAddOrUpdate.forEach { scriptFile ->
-        val scriptEntity = resolve(KotlinScriptId(scriptFile.path))
-            ?: addNewScriptEntity(scriptFile, project)
-
         val actualLibraries = getActualScriptLibraries(scriptFile, project)
+        if (actualLibraries.isEmpty()) {
+            return@forEach
+        }
+
+        val actualLibRefs = actualLibraries.map { it.symbolicId }.toSet()
+        val scriptEntity = resolve(KotlinScriptId(scriptFile.path))
+            ?: addNewScriptEntity(scriptFile, actualLibRefs, project)
+
         removeOutdatedLibraries(scriptEntity, actualLibraries)
 
-        modifyEntity(scriptEntity) {
-            dependencies = actualLibraries.map { it.symbolicId }.toMutableSet()
+        val currentLibRefs = scriptEntity.dependencies
+        val refsToAdd = actualLibRefs - currentLibRefs
+        val refsToRemove = currentLibRefs - actualLibRefs
+
+        if (refsToAdd.isNotEmpty() || refsToRemove.isNotEmpty()) {
+            modifyEntity(scriptEntity) {
+                dependencies.removeAll(refsToRemove)
+                dependencies.addAll(refsToAdd)
+            }
         }
 
         actualLibraries.forEach {
-            modifyEntity(it) {
-                usedInScripts.add(scriptEntity.symbolicId)
+            if (!it.usedInScripts.contains(scriptEntity.symbolicId)) {
+                modifyEntity(it) {
+                    usedInScripts.add(scriptEntity.symbolicId)
+                }
             }
         }
     }
@@ -152,19 +172,23 @@ private fun MutableEntityStorage.removeOutdatedLibraries(
     }
 }
 
-private fun MutableEntityStorage.addNewScriptEntity(scriptFile: VirtualFile, project: Project): KotlinScriptEntity {
+private fun MutableEntityStorage.addNewScriptEntity(
+    scriptFile: VirtualFile,
+    libraryRefs: Set<KotlinScriptLibraryId>,
+    project: Project
+): KotlinScriptEntity {
     val fileUrlManager = VirtualFileUrlManager.getInstance(project)
     val scriptSource = KotlinScriptEntitySource(scriptFile.toVirtualFileUrl(fileUrlManager))
-    val scriptEntity = KotlinScriptEntity(scriptFile.path, emptySet(), scriptSource)
+    val scriptEntity = KotlinScriptEntity(scriptFile.path, libraryRefs, scriptSource)
     return addEntity(scriptEntity)
 }
 
-private fun MutableEntityStorage.removeOutdatedScriptsIfAny(actualPaths: Set<String>) {
-    entities(KotlinScriptEntity::class.java)
-        .filter { it.path !in actualPaths }
+private fun MutableEntityStorage.removeOutdatedScripts(removedScriptPaths: List<String>) {
+    removedScriptPaths
+        .mapNotNull { resolve(KotlinScriptId(it)) }
         .forEach { outdatedScript ->
-            entities(KotlinScriptLibraryEntity::class.java)
-                .filter { it.usedInScripts.contains(outdatedScript.symbolicId) }
+            outdatedScript.dependencies
+                .mapNotNull { it.resolve(this) }
                 .forEach {
                     if (it.usedInScripts.size == 1) {
                         removeEntity(it)
@@ -211,7 +235,7 @@ private fun MutableEntityStorage.getActualScriptLibraries(scriptFile: VirtualFil
 
     return mergedLibraries
         .map { library ->
-            val existingLibrary = entities(KotlinScriptLibraryEntity::class.java).find { it.name == library.name }
+            val existingLibrary = resolve(library.symbolicId)
             if (existingLibrary != null) {
                 if (!existingLibrary.hasSameRootsAs(library)) {
                     modifyEntity(existingLibrary) {
