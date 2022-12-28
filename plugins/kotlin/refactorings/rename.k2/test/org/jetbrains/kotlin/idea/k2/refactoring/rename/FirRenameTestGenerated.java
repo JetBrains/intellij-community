@@ -613,6 +613,16 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/renameFunctionTypeParameterRedeclaration/renameFunctionTypeParameterRedeclaration.test");
     }
 
+    @TestMetadata("renameGetToInvoke2/renameGetToInvoke.test")
+    public void testRenameGetToInvoke2_RenameGetToInvoke() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameGetToInvoke2/renameGetToInvoke.test");
+    }
+
+    @TestMetadata("renameGetToInvoke/renameGetToInvoke.test")
+    public void testRenameGetToInvoke_RenameGetToInvoke() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameGetToInvoke/renameGetToInvoke.test");
+    }
+
     @TestMetadata("renameGet/get.test")
     public void testRenameGet_Get() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/renameGet/get.test");
