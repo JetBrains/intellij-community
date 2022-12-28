@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.openapi.wm.impl.SquareStripeButton;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -179,6 +180,10 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
     }
 
     protected boolean isAllowed(Anchor anchor) {
+      if (ExperimentalUI.isNewUI()) {
+        return anchor != Anchor.TopLeft && anchor != Anchor.TopRight;
+      }
+
       return true;
     }
   }
