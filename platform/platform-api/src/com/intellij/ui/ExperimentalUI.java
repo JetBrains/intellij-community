@@ -170,6 +170,7 @@ public abstract class ExperimentalUI {
   public static final class Icons {
     public static class Gutter {
       public static final Icon Fold = loadIcon("expui/gutter/fold.svg");
+      public static final Icon FoldBottom = loadIcon("expui/gutter/foldBottom.svg");
       public static final Icon Unfold = loadIcon("expui/gutter/unfold.svg");
     }
 
