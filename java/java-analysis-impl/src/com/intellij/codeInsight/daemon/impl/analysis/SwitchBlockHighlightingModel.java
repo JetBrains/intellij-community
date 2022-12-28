@@ -21,6 +21,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
+import com.siyeh.ig.fixes.MakeDefaultLastCaseFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
@@ -501,7 +502,7 @@ public class SwitchBlockHighlightingModel {
       if (body == null) return;
       MultiMap<Object, PsiElement> elementsToCheckDuplicates = new MultiMap<>();
       List<List<PsiSwitchLabelStatementBase>> elementsToCheckFallThroughLegality = new SmartList<>();
-      List<PsiCaseLabelElement> elementsToCheckDominance = new ArrayList<>();
+      List<PsiElement> elementsToCheckDominance = new ArrayList<>();
       List<PsiCaseLabelElement> elementsToCheckCompleteness = new ArrayList<>();
       int switchBlockGroupCounter = 0;
       for (PsiStatement st : body.getStatements()) {
@@ -511,7 +512,9 @@ public class SwitchBlockHighlightingModel {
           switchBlockGroupCounter++;
         }
         if (labelStatement.isDefaultCase()) {
-          elementsToCheckDuplicates.putValue(myDefaultValue, ObjectUtils.notNull(labelStatement.getFirstChild(), labelStatement));
+          PsiElement defaultKeyword = Objects.requireNonNull(labelStatement.getFirstChild());
+          elementsToCheckDuplicates.putValue(myDefaultValue, defaultKeyword);
+          elementsToCheckDominance.add(defaultKeyword);
           continue;
         }
         PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
@@ -667,34 +670,54 @@ public class SwitchBlockHighlightingModel {
     }
 
     @NotNull
-    private Map<PsiCaseLabelElement, PsiCaseLabelElement> findDominatedLabels(@NotNull List<? extends PsiCaseLabelElement> switchLabels) {
-      Map<PsiCaseLabelElement, PsiCaseLabelElement> result = new HashMap<>();
+    private Map<PsiCaseLabelElement, PsiElement> findDominatedLabels(@NotNull List<? extends PsiElement> switchLabels) {
+      Map<PsiCaseLabelElement, PsiElement> result = new HashMap<>();
       for (int i = 0; i < switchLabels.size() - 1; i++) {
-        PsiCaseLabelElement current = switchLabels.get(i);
+        PsiElement current = switchLabels.get(i);
         if (result.containsKey(current)) continue;
         for (int j = i + 1; j < switchLabels.size(); j++) {
-          PsiCaseLabelElement next = switchLabels.get(j);
-          if (isConstantLabelElement(next)) {
-            PsiExpression constExpr = ObjectUtils.tryCast(next, PsiExpression.class);
-            assert constExpr != null;
-            if ((PsiUtil.getLanguageLevel(constExpr).isAtLeast(LanguageLevel.JDK_18_PREVIEW) ||
-                 JavaPsiPatternUtil.isTotalForType(current, mySelectorType)) &&
-                JavaPsiPatternUtil.dominates(current, constExpr.getType())) {
-              result.put(next, current);
+          PsiElement next = switchLabels.get(j);
+          if (!(next instanceof PsiCaseLabelElement nextElement)) continue;
+          if (PsiUtil.getLanguageLevel(current).isAtLeast(LanguageLevel.JDK_20_PREVIEW) &&
+              !JavaPsiPatternUtil.isTotalForType(nextElement, mySelectorType) &&
+              ((!(next instanceof PsiExpression expression) || ExpressionUtils.isNullLiteral(expression)) &&
+               current instanceof PsiKeyword &&
+               PsiKeyword.DEFAULT.equals(current.getText()) || isInCaseNullDefaultLabel(current))) {
+            // JEP 432
+            // A 'default' label dominates a case label with a case pattern,
+            // and it also dominates a case label with a null case constant.
+            // A 'case null, default' label dominates all other switch labels.
+            result.put(nextElement, current);
+          }
+          else if (current instanceof PsiCaseLabelElement currentElement) {
+            if (isConstantLabelElement(nextElement)) {
+              PsiExpression constExpr = ObjectUtils.tryCast(nextElement, PsiExpression.class);
+              assert constExpr != null;
+              if ((PsiUtil.getLanguageLevel(constExpr).isAtLeast(LanguageLevel.JDK_18_PREVIEW) ||
+                   JavaPsiPatternUtil.isTotalForType(currentElement, mySelectorType)) &&
+                  JavaPsiPatternUtil.dominates(currentElement, constExpr.getType())) {
+                result.put(nextElement, current);
+              }
             }
-            continue;
-          }
-          if (isNullType(next) && JavaPsiPatternUtil.isTotalForType(current, mySelectorType)
-              && PsiUtil.getLanguageLevel(next).isLessThan(LanguageLevel.JDK_19_PREVIEW)) {
-            result.put(next, current);
-            continue;
-          }
-          if (JavaPsiPatternUtil.dominates(current, next)) {
-            result.put(next, current);
+            else if (isNullType(nextElement) && JavaPsiPatternUtil.isTotalForType(currentElement, mySelectorType)
+                     && PsiUtil.getLanguageLevel(nextElement).isLessThan(LanguageLevel.JDK_19_PREVIEW)) {
+              result.put(nextElement, current);
+            }
+            else if (JavaPsiPatternUtil.dominates(currentElement, nextElement)) {
+              result.put(nextElement, current);
+            }
           }
         }
       }
       return result;
+    }
+
+    private static boolean isInCaseNullDefaultLabel(@NotNull PsiElement element) {
+      PsiCaseLabelElementList list = ObjectUtils.tryCast(element.getParent(), PsiCaseLabelElementList.class);
+      if (list == null || list.getElementCount() != 2) return false;
+      PsiCaseLabelElement[] elements = list.getElements();
+      return elements[0] instanceof PsiExpression expression && ExpressionUtils.isNullLiteral(expression) &&
+             elements[1] instanceof PsiDefaultCaseLabelElement;
     }
 
     @Override
@@ -832,18 +855,29 @@ public class SwitchBlockHighlightingModel {
      * @see JavaPsiPatternUtil#isTotalForType(PsiCaseLabelElement, PsiType)
      * @see JavaPsiPatternUtil#dominates(PsiCaseLabelElement, PsiCaseLabelElement)
      */
-    private void checkDominance(@NotNull List<? extends PsiCaseLabelElement> switchLabels, @NotNull HighlightInfoHolder results) {
-      Map<PsiCaseLabelElement, PsiCaseLabelElement> dominatedLabels = findDominatedLabels(switchLabels);
+    private void checkDominance(@NotNull List<? extends PsiElement> switchLabels, @NotNull HighlightInfoHolder results) {
+      Map<PsiCaseLabelElement, PsiElement> dominatedLabels = findDominatedLabels(switchLabels);
       dominatedLabels.forEach((overWhom, who) -> {
         HighlightInfo.Builder info = createError(overWhom, JavaErrorBundle.message("switch.dominance.of.preceding.label", who.getText()));
-        PsiPattern overWhomPattern = ObjectUtils.tryCast(overWhom, PsiPattern.class);
-        PsiPattern whoPattern = ObjectUtils.tryCast(who, PsiPattern.class);
-        if (whoPattern == null || !JavaPsiPatternUtil.dominates(overWhomPattern, whoPattern)) {
-          IntentionAction action = getFixFactory().createMoveSwitchBranchUpFix(who, overWhom);
+        if (PsiUtil.getLanguageLevel(who).isAtLeast(LanguageLevel.JDK_20_PREVIEW) &&
+            who instanceof PsiKeyword && PsiKeyword.DEFAULT.equals(who.getText()) ||
+            isInCaseNullDefaultLabel(who)) {
+          PsiSwitchLabelStatementBase labelStatementBase = PsiTreeUtil.getParentOfType(who, PsiSwitchLabelStatementBase.class);
+          if (labelStatementBase != null) {
+            IntentionAction action = new MakeDefaultLastCaseFix(labelStatementBase);
+            info.registerFix(action, null, null, null, null);
+          }
+        }
+        else if (who instanceof PsiCaseLabelElement whoElement) {
+          PsiPattern overWhomPattern = ObjectUtils.tryCast(overWhom, PsiPattern.class);
+          PsiPattern whoPattern = ObjectUtils.tryCast(who, PsiPattern.class);
+          if (whoPattern == null || !JavaPsiPatternUtil.dominates(overWhomPattern, whoPattern)) {
+            IntentionAction action = getFixFactory().createMoveSwitchBranchUpFix(whoElement, overWhom);
+            info.registerFix(action, null, null, null, null);
+          }
+          IntentionAction action = getFixFactory().createDeleteSwitchLabelFix(overWhom);
           info.registerFix(action, null, null, null, null);
         }
-        IntentionAction action = getFixFactory().createDeleteSwitchLabelFix(overWhom);
-        info.registerFix(action, null, null, null, null);
         results.add(info.create());
       });
     }
@@ -916,9 +950,22 @@ public class SwitchBlockHighlightingModel {
         elements.add(labelElement);
       }
       else if (labelElement instanceof PsiExpression) {
-        if (isNullType(labelElement) || isConstantLabelElement(labelElement)) {
+        boolean isNullType = isNullType(labelElement);
+        if (isNullType &&
+            PsiUtil.getLanguageLevel(labelElement).isAtLeast(LanguageLevel.JDK_20_PREVIEW) &&
+            isInCaseNullDefaultLabel(labelElement)) {
+          // JEP 432
+          // A 'case null, default' label dominates all other switch labels.
+          //
+          // In this case, only the 'default' case will be added to the elements checked for dominance
+          return;
+        }
+        if (isNullType || isConstantLabelElement(labelElement)) {
           elements.add(labelElement);
         }
+      }
+      else if (labelElement instanceof PsiDefaultCaseLabelElement) {
+        elements.add(labelElement);
       }
     }
 
@@ -1141,15 +1188,13 @@ public class SwitchBlockHighlightingModel {
       result.addAll(entry.getValue());
     }
 
-    PatternsInSwitchBlockHighlightingModel patternInSwitchModel = ObjectUtils.tryCast(switchModel, PatternsInSwitchBlockHighlightingModel.class);
+    PatternsInSwitchBlockHighlightingModel patternInSwitchModel =
+      ObjectUtils.tryCast(switchModel, PatternsInSwitchBlockHighlightingModel.class);
     if (patternInSwitchModel == null) return result;
     List<PsiCaseLabelElement> dominanceCheckingCandidates = new SmartList<>();
     labelElements.forEach(label -> PatternsInSwitchBlockHighlightingModel.fillElementsToCheckDominance(dominanceCheckingCandidates, label));
     if (dominanceCheckingCandidates.isEmpty()) return result;
-    Set<PsiCaseLabelElement> dominatedPatterns = StreamEx.ofKeys(
-      patternInSwitchModel.findDominatedLabels(dominanceCheckingCandidates), value -> value instanceof PsiPattern).toSet();
-    result.addAll(dominatedPatterns);
-
-    return result;
+    return StreamEx.ofKeys(patternInSwitchModel.findDominatedLabels(dominanceCheckingCandidates), value -> value instanceof PsiPattern)
+      .into(result);
   }
 }
