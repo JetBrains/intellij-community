@@ -337,9 +337,12 @@ public final class JavaPsiPatternUtil {
   }
 
   public static @Nullable PsiType getDeconstructedImplicitPatternVariableType(@NotNull PsiPatternVariable parameter) {
-    PsiRecordComponent recordComponent = getRecordComponentForPattern(parameter.getPattern());
+    return getDeconstructedImplicitPatternType(parameter.getPattern());
+  }
+
+  public static @Nullable PsiType getDeconstructedImplicitPatternType(@NotNull PsiPattern pattern) {
+    PsiRecordComponent recordComponent = getRecordComponentForPattern(pattern);
     if (recordComponent != null) {
-      PsiTypeTestPattern pattern = (PsiTypeTestPattern)parameter.getParent();
       PsiDeconstructionList deconstructionList = ObjectUtils.tryCast(pattern.getParent(), PsiDeconstructionList.class);
       if (deconstructionList == null) return null;
       PsiDeconstructionPattern deconstructionPattern = (PsiDeconstructionPattern)deconstructionList.getParent();

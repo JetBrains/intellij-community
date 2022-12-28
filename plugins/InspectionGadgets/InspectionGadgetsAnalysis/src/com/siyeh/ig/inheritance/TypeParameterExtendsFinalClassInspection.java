@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -180,7 +181,31 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection imp
     private static boolean isWildcardRequired(PsiTypeElement typeElement) {
       final PsiElement ancestor = PsiTreeUtil.skipParentsOfType(
         typeElement, PsiTypeElement.class, PsiJavaCodeReferenceElement.class, PsiReferenceParameterList.class);
-      if (ancestor instanceof PsiParameter) {
+      if (ancestor instanceof PsiDeconstructionPattern deconstructionPattern) {
+        PsiForeachStatement parentForEach = PsiTreeUtil.getParentOfType(deconstructionPattern, PsiForeachStatement.class);
+        if (parentForEach == null) {
+          return false;
+        }
+        if (!PsiTreeUtil.isAncestor(parentForEach.getIterationDeclaration(), deconstructionPattern, false)) {
+          return false;
+        }
+        if (ancestor.getParent() instanceof PsiForeachStatement foreachStatement) {
+          PsiExpression iteratedValue = foreachStatement.getIteratedValue();
+          if (iteratedValue == null) {
+            return false;
+          }
+          return isWildcardRequired(typeElement, deconstructionPattern.getTypeElement(),
+                                    JavaGenericsUtil.getCollectionItemType(iteratedValue));
+        }
+        else if (deconstructionPattern.getParent() instanceof PsiDeconstructionList) {
+          PsiType type = JavaPsiPatternUtil.getDeconstructedImplicitPatternType(deconstructionPattern);
+          if (type == null) {
+            return false;
+          }
+          return isWildcardRequired(typeElement, deconstructionPattern.getTypeElement(), type);
+        }
+      }
+      else if (ancestor instanceof PsiParameter) {
         final PsiParameter parameter = (PsiParameter)ancestor;
         final PsiElement scope = parameter.getDeclarationScope();
         if (scope instanceof PsiMethod method) {
@@ -196,10 +221,20 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection imp
           if (iteratedValue == null) {
             return true; // incomplete code
           }
-          final PsiParameter iterationParameter = foreachStatement.getIterationParameter();
-          final PsiTypeElement foreachTypeElement = iterationParameter.getTypeElement();
-          assert foreachTypeElement != null;
-          return isWildcardRequired(typeElement, foreachTypeElement, JavaGenericsUtil.getCollectionItemType(iteratedValue));
+          PsiForeachDeclarationElement declaration = foreachStatement.getIterationDeclaration();
+          //patterns check before
+          if (declaration instanceof PsiParameter iterationParameter) {
+            final PsiTypeElement foreachTypeElement = iterationParameter.getTypeElement();
+            assert foreachTypeElement != null;
+            return isWildcardRequired(typeElement, foreachTypeElement, JavaGenericsUtil.getCollectionItemType(iteratedValue));
+          }
+          else if (ancestor instanceof PsiPatternVariable patternVariable) {
+            PsiType type = JavaPsiPatternUtil.getDeconstructedImplicitPatternVariableType(patternVariable);
+            if (type == null) {
+              return true;
+            }
+            return isWildcardRequired(typeElement, patternVariable.getTypeElement(), type);
+          }
         }
       }
       else if (ancestor instanceof PsiLocalVariable localVariable) {
