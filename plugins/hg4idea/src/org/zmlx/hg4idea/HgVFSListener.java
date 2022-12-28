@@ -217,8 +217,8 @@ public final class HgVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected boolean shouldIgnoreDeletion(@NotNull final VirtualFile file) {
-    return ChangeListManager.getInstance(myProject).isUnversioned(file);
+  protected boolean shouldIgnoreDeletion(@NotNull FileStatus status) {
+    return status == FileStatus.UNKNOWN;
   }
 
   @Override

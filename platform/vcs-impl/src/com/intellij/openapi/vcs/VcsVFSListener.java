@@ -280,12 +280,10 @@ public abstract class VcsVFSListener implements Disposable {
         }
       }
       else {
-        if (shouldIgnoreDeletion(file)) return;
+        FileStatus status = myChangeListManager.getStatus(file);
+        if (filterOutByStatus(status) || shouldIgnoreDeletion(status)) return;
 
         FilePath filePath = VcsUtil.getFilePath(file);
-        FileStatus status = myChangeListManager.getStatus(filePath);
-        if (filterOutByStatus(status)) return;
-
         withLock(PROCESSING_LOCK.writeLock(), () -> {
           myDeletedFiles.add(filePath);
         });
@@ -652,7 +650,7 @@ public abstract class VcsVFSListener implements Disposable {
     return status == FileStatus.IGNORED || status == FileStatus.UNKNOWN;
   }
 
-  protected boolean shouldIgnoreDeletion(@NotNull VirtualFile file) {
+  protected boolean shouldIgnoreDeletion(@NotNull FileStatus status) {
     return false;
   }
 
