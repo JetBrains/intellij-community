@@ -13,6 +13,8 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.file.CanonicalPathUtil;
+import com.intellij.openapi.file.IoFileUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
@@ -354,8 +356,7 @@ public final class GradleUtil {
   public static void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
     ContentRootData excludedContentRootData;
     DataNode<ContentRootData> contentRootDataDataNode = ExternalSystemApiUtil.find(ideModule, ProjectKeys.CONTENT_ROOT);
-    if (contentRootDataDataNode == null ||
-        !FileUtil.isAncestor(new File(contentRootDataDataNode.getData().getRootPath()), ideaOutDir, false)) {
+    if (contentRootDataDataNode == null || !isAncestor(contentRootDataDataNode.getData(), ideaOutDir)) {
       excludedContentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, ideaOutDir.getPath());
       ideModule.createChild(ProjectKeys.CONTENT_ROOT, excludedContentRootData);
     }
@@ -369,12 +370,17 @@ public final class GradleUtil {
   public static void unexcludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
     DataNode<ContentRootData> contentRootDataDataNode = ExternalSystemApiUtil.find(ideModule, ProjectKeys.CONTENT_ROOT);
 
-    if (contentRootDataDataNode != null &&
-        FileUtil.isAncestor(new File(contentRootDataDataNode.getData().getRootPath()), ideaOutDir, false)) {
+    if (contentRootDataDataNode != null && isAncestor(contentRootDataDataNode.getData(), ideaOutDir)) {
           ContentRootData excludedContentRootData;
           excludedContentRootData = contentRootDataDataNode.getData();
           excludedContentRootData.getPaths(ExternalSystemSourceType.EXCLUDED).removeIf(sourceRoot -> {
             return sourceRoot.getPath().equals(ideaOutDir.getPath()); });
         }
+  }
+
+  private static boolean isAncestor(@NotNull ContentRootData data, @NotNull File ideaOutDir) {
+    var canonicalIdeOutPath = IoFileUtil.toCanonicalPath(ideaOutDir);
+    var canonicalRootPath = data.getRootPath();
+    return CanonicalPathUtil.isAncestor(canonicalRootPath, canonicalIdeOutPath, false);
   }
 }
