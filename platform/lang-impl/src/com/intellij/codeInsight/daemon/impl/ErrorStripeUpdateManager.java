@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
@@ -71,7 +72,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
       markupModelImpl.repaintTrafficLightIcon();
       if (tlr.isValid()) return;
     }
-
+    ModalityState modality = ModalityState.defaultModalityState();
     ProjectUtilKt.executeOnPooledThread(myProject, () -> {
       Editor editor = editorMarkupModel.getEditor();
       if (editor.isDisposed()) {
@@ -85,7 +86,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
           return;
         }
         editorMarkupModel.setErrorStripeRenderer(tlRenderer);
-      }, myProject.getDisposed());
+      }, modality, myProject.getDisposed());
     });
   }
 
