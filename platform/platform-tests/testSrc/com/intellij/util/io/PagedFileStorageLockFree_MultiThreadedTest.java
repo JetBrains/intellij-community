@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import com.intellij.util.io.FilePageCacheLockFree.Page;
-import com.intellij.util.io.FilePageCacheLockFree.PageToStorageHandle;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.io.pagecache.Page;
 import org.junit.Test;
 
 import org.junit.*;
@@ -11,11 +9,8 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertEquals;
@@ -39,7 +34,6 @@ public class PagedFileStorageLockFree_MultiThreadedTest {
     //  PageCacheUtils.LOCK_FREE_VFS_ENABLED
     //);
   }
-
 
 
   @Test
@@ -91,6 +85,4 @@ public class PagedFileStorageLockFree_MultiThreadedTest {
       }
     }
   }
-
-
 }

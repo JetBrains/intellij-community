@@ -8,6 +8,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.pagecache.PagedStorage;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ import java.util.List;
 
 import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
 
-public class PagedFileStorage implements Forceable {
+public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
   static final Logger LOG = Logger.getInstance(PagedFileStorage.class);
 
   private static final int DEFAULT_PAGE_SIZE = PageCacheUtils.DEFAULT_PAGE_SIZE;

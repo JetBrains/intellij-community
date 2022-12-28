@@ -3,6 +3,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.system.CpuArch;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -13,6 +14,7 @@ import static com.intellij.util.io.IOUtil.MiB;
 /**
  * Constants, params, static functions around file page caching
  */
+@ApiStatus.Internal
 public final class PageCacheUtils {
   private static final Logger LOG = Logger.getInstance(PageCacheUtils.class);
 

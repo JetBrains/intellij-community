@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import com.intellij.util.io.FilePageCacheLockFree.Page;
+import com.intellij.util.io.pagecache.Page;
 import org.assertj.core.description.TextDescription;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
@@ -306,7 +306,7 @@ public class PagedFileStorageLockFreeTest {
         );
       }
     }
-    
+
     try (final PagedFileStorageLockFree pagedStorage = openFile(file)) {
       //now try to read it back:
       boolean fail = false;

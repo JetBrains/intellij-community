@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.io.pagecache;
+package com.intellij.util.io.pagecache.impl;
 
 import org.junit.Test;
 
@@ -9,7 +9,9 @@ import java.util.stream.IntStream;
 import static org.junit.Assert.*;
 
 /**
- * Test is flaky: it is inherently probabilistic, so could fail sometimes just by chance.
+ * Test is flaky: it is inherently probabilistic, so could fail sometimes just by
+ * chance. But I run it ~10k times without failure, so, probably, this test is
+ * slightly less flaky than the average test in our testsuite.
  */
 public class FrugalQuantileEstimatorTest {
 
@@ -18,7 +20,7 @@ public class FrugalQuantileEstimatorTest {
   private final ThreadLocalRandom rnd = ThreadLocalRandom.current();
 
   @Test
-  public void estimatorIsGoodForUniform_0_100() {
+  public void estimatorIsGoodForUniformDistribution_0_100() {
     final int percentileToEstimate = 10;
     final double step = 0.5;
     final FrugalQuantileEstimator estimator = new FrugalQuantileEstimator(percentileToEstimate, step);
@@ -31,7 +33,7 @@ public class FrugalQuantileEstimatorTest {
   }
 
   @Test
-  public void estimatorIsGoodForUniform_400_1000() {
+  public void estimatorIsGoodForUniformDistribution_400_1000() {
     final int percentileToEstimate = 10;
     final double step = 0.5;
     final FrugalQuantileEstimator estimator = new FrugalQuantileEstimator(percentileToEstimate, step);
@@ -64,7 +66,7 @@ public class FrugalQuantileEstimatorTest {
 
   private static double expectedTolerance(final double step,
                                           final int sampleSize) {
-    //RC: This is just a random guess -- don't know how to calculate estimation error
+    //RC: This is just a guess -- don't know how to calculate estimation error
     return 3 * step;
   }
 

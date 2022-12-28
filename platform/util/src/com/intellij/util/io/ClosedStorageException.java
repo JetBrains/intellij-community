@@ -13,7 +13,7 @@ import java.io.IOException;
  */
 @ApiStatus.Internal
 public final class ClosedStorageException extends IOException {
-  ClosedStorageException(@NotNull String message) {
+  public ClosedStorageException(@NotNull String message) {
     super(message);
   }
 }

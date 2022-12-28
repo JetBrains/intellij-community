@@ -2,7 +2,6 @@
 package com.intellij.util.io.pagecache;
 
 import com.intellij.util.io.Bits;
-import com.intellij.util.io.FilePageCacheLockFree.Page;
 import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -152,6 +151,11 @@ public class PagedStorageWithPageUnalignedAccess implements PagedStorage {
     return alignedAccessStorage.length();
   }
 
+  @Override
+  public void clear() {
+    alignedAccessStorage.clear();
+  }
+
   public boolean isDirty() {
     return alignedAccessStorage.isDirty();
   }
@@ -159,6 +163,11 @@ public class PagedStorageWithPageUnalignedAccess implements PagedStorage {
   public Page pageByOffset(final long offsetInFile,
                            final boolean forModification) throws IOException {
     return alignedAccessStorage.pageByOffset(offsetInFile, forModification);
+  }
+
+  @Override
+  public int toOffsetInPage(final long offsetInFile) {
+    return alignedAccessStorage.toOffsetInPage(offsetInFile);
   }
 
   public boolean isClosed() {

@@ -10,7 +10,6 @@ import java.io.IOException;
 /**
  * Interface for enumerators that allow scanning through all their entries.
  */
-@ApiStatus.Experimental
 @ApiStatus.Internal
 public interface ScannableDataEnumeratorEx<Data> extends DataEnumeratorEx<Data> {
 

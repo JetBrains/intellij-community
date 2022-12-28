@@ -2,23 +2,20 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ThrowableNotNullFunction;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.pagecache.FilePageCacheStatistics;
+import com.intellij.util.io.pagecache.Page;
 import com.intellij.util.io.pagecache.PagedStorage;
+import com.intellij.util.io.pagecache.impl.PageImpl;
+import com.intellij.util.io.pagecache.impl.PageToStorageHandle;
+import com.intellij.util.io.pagecache.impl.PagesTable;
 import com.intellij.util.io.storage.AbstractStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -26,7 +23,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.intellij.util.io.FilePageCacheLockFree.*;
 import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
 
 public class PagedFileStorageLockFree implements PagedStorage {
@@ -278,6 +274,15 @@ public class PagedFileStorageLockFree implements PagedStorage {
   }
 
   @Override
+  public void clear() {
+    //TODO: how to implement this method?
+    //      1. truncate file
+    //      2. set actualSize=0
+    //      3. scan pages and invalidate(how?) those > actualSize
+    throw new UnsupportedOperationException("Method not implemented yet");
+  }
+
+  @Override
   public boolean isDirty() {
     return dirtyPagesCount.get() > 0;
   }
@@ -306,7 +311,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
       if (isClosed()) {
         throw new ClosedStorageException("Storage is already closed: " + file);
       }
-      final Page page = pages.lookupOrCreate(
+      final PageImpl page = pages.lookupOrCreate(
         pageIndex,
         this::createUninitializedPage,
         this::loadPageData
@@ -393,7 +398,13 @@ public class PagedFileStorageLockFree implements PagedStorage {
 
   @Override
   public String toString() {
-    return "PagedFileStorage[" + file + "]";
+    return "PagedFileStorage[" + file + "]" +
+           "{size: " + actualSize.get() + ", dirtyPages: " + dirtyPagesCount.get() + "}" +
+           "{pageSize: " + pageSize + ", "
+           + (isClosed() ? "closed " : " ")
+           + (isReadOnly() ? "readOnly " : " ")
+           + (isNativeBytesOrder() ? "nativeByteOrder " : " ")
+           + "}";
   }
 
   /* ==================== infrastructure: ============================================================ */
@@ -443,11 +454,11 @@ public class PagedFileStorageLockFree implements PagedStorage {
     }
   }
 
-  private Page createUninitializedPage(final int pageIndex) {
-    return Page.notReady(pageIndex, pageSize, pageToStorageHandle);
+  private PageImpl createUninitializedPage(final int pageIndex) {
+    return PageImpl.notReady(pageIndex, pageSize, pageToStorageHandle);
   }
 
-  private ByteBuffer loadPageData(final @NotNull Page pageToLoad) throws IOException {
+  private ByteBuffer loadPageData(final @NotNull PageImpl pageToLoad) throws IOException {
     //MAYBE RC: check pageToLoad.writeLock.isHoldByCurrentThread()
     if (isClosed()) {
       throw new ClosedStorageException("Storage is already closed");

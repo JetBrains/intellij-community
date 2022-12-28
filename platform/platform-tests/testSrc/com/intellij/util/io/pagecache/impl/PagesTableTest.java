@@ -1,8 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.io;
+package com.intellij.util.io.pagecache.impl;
 
-import com.intellij.util.io.FilePageCacheLockFree.Page;
-import com.intellij.util.io.FilePageCacheLockFree.PagesTable;
+import com.intellij.util.io.pagecache.Page;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -87,7 +86,7 @@ public class PagesTableTest {
 
     final Thread[] threads = new Thread[Runtime.getRuntime().availableProcessors()];
     final int pagesToCreate = 100_000;
-    final Page[][] pagesCreated = new Page[threads.length][pagesToCreate];
+    final PageImpl[][] pagesCreated = new PageImpl[threads.length][pagesToCreate];
 
     //RC: try to create a lot of concurrency around new page initialization, so bugs there have
     //    the best chance to show themselves -- i.e. I want all threads hit pages.lookupOrCreate(pageIndex)
@@ -158,7 +157,7 @@ public class PagesTableTest {
   public void entombedPagesAreNotReturnedByLookups() throws IOException {
     final PagesTable pages = new PagesTable(8);
     for (int pageIndex = 0; pageIndex < PAGES_TO_CREATE; pageIndex++) {
-      final Page page = pages.lookupOrCreate(
+      final PageImpl page = pages.lookupOrCreate(
         pageIndex,
         PagesTableTest::createBlankPage,
         PagesTableTest::allocateAndLoadPage
@@ -239,8 +238,8 @@ public class PagesTableTest {
 
   //=========== infrastructure:
 
-  private static Page createBlankPage(final int pageIndex) {
-    return Page.notReady(
+  private static PageImpl createBlankPage(final int pageIndex) {
+    return PageImpl.notReady(
       pageIndex,
       PAGE_SIZE,
       flusher
@@ -251,7 +250,7 @@ public class PagesTableTest {
     return ByteBuffer.allocate(0);
   }
 
-  private static final FilePageCacheLockFree.PageToStorageHandle flusher = new FilePageCacheLockFree.PageToStorageHandle() {
+  private static final PageToStorageHandle flusher = new PageToStorageHandle() {
     @Override
     public void pageBecomeDirty() {
       throw new UnsupportedOperationException("Not implemented in this test");
@@ -263,7 +262,8 @@ public class PagesTableTest {
     }
 
     @Override
-    public void modifiedRegionUpdated(long startOffsetInFile, int length) {
+    public void modifiedRegionUpdated(final long startOffsetInFile,
+                                      final int length) {
       throw new UnsupportedOperationException("Not implemented in this test");
     }
 

@@ -2,7 +2,6 @@
 package com.intellij.util.io.pagecache;
 
 import com.intellij.openapi.Forceable;
-import com.intellij.util.io.FilePageCacheLockFree.Page;
 import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,8 +49,12 @@ public interface PagedStorage extends Forceable, AutoCloseable {
 
   long length();
 
+  void clear();
+
   @NotNull Page pageByOffset(final long offsetInFile,
                              final boolean forModification) throws IOException;
+
+  int toOffsetInPage(final long offsetInFile);
 
   boolean isClosed();
 

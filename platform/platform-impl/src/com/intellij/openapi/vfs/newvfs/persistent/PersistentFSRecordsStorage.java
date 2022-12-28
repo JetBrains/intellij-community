@@ -17,10 +17,11 @@ abstract class PersistentFSRecordsStorage {
   enum RecordsStorageKind {
     REGULAR,
     LOCK_FREE,
-    IN_MEMORY
+    IN_MEMORY,
+
+    OVER_LOCK_FREE_FILE_CACHE
   }
 
-  //static final boolean useLockFreeRecordsStorage = SystemProperties.getBooleanProperty("idea.use.lock.free.record.storage.for.vfs", false);
   static final RecordsStorageKind
     RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(System.getProperty("idea.records-storage-kind", RecordsStorageKind.REGULAR.name()));
 
@@ -28,24 +29,25 @@ abstract class PersistentFSRecordsStorage {
     return switch (RECORDS_STORAGE_KIND) {
       case REGULAR, IN_MEMORY -> PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
       case LOCK_FREE -> PersistentFSLockFreeRecordsStorage.RECORD_SIZE;
+      case OVER_LOCK_FREE_FILE_CACHE -> PersistentFSRecordsOverLockFreePagedStorage.RECORD_SIZE_IN_BYTES;
     };
   }
 
-  static PersistentFSRecordsStorage createStorage(@NotNull Path file) throws IOException {
-    ResizeableMappedFile resizeableMappedFile = createFile(file, recordsLength());
-
-    //FSRecords.LOG.info("using " + (useLockFreeRecordsStorage ? "synchronized" : "lock-free") + " storage for VFS records");
+  static PersistentFSRecordsStorage createStorage(final @NotNull Path file) throws IOException {
     FSRecords.LOG.info("using " + RECORDS_STORAGE_KIND + " storage for VFS records");
 
     return switch (RECORDS_STORAGE_KIND) {
-      case REGULAR -> new PersistentFSSynchronizedRecordsStorage(resizeableMappedFile);
-      case LOCK_FREE -> new PersistentFSLockFreeRecordsStorage(resizeableMappedFile);
-      case IN_MEMORY -> new PersistentInMemoryFSRecordsStorage(file, 1 << 24);
+      case REGULAR -> new PersistentFSSynchronizedRecordsStorage(openRMappedFile(file, recordsLength()));
+      case LOCK_FREE -> new PersistentFSLockFreeRecordsStorage(openRMappedFile(file, recordsLength()));
+      case IN_MEMORY -> new PersistentInMemoryFSRecordsStorage(file, /*max size: */1 << 24);
+
+      case OVER_LOCK_FREE_FILE_CACHE -> createLockFreeStorage(file);
     };
   }
 
   @VisibleForTesting
-  static @NotNull ResizeableMappedFile createFile(@NotNull Path file, int recordLength) throws IOException {
+  static @NotNull ResizeableMappedFile openRMappedFile(final @NotNull Path file,
+                                                       final int recordLength) throws IOException {
     int pageSize = PageCacheUtils.DEFAULT_PAGE_SIZE * recordLength / PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
 
     boolean aligned = pageSize % recordLength == 0;
@@ -60,6 +62,32 @@ abstract class PersistentFSRecordsStorage {
                                     aligned,
                                     IOUtil.useNativeByteOrderForByteBuffers());
   }
+
+  @VisibleForTesting
+  static @NotNull PersistentFSRecordsOverLockFreePagedStorage createLockFreeStorage(final @NotNull Path file) throws IOException {
+    final int recordLength = PersistentFSRecordsOverLockFreePagedStorage.RECORD_SIZE_IN_BYTES;
+    final int pageSize = PageCacheUtils.DEFAULT_PAGE_SIZE;
+
+    if (!PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
+      throw new AssertionError(
+        "Bug: PageCacheUtils.LOCK_FREE_VFS_ENABLED=false " +
+        "=> can't create PersistentFSRecordsOverLockFreePagedStorage is FilePageCacheLockFree is disabled");
+    }
+
+    final boolean recordsArePageAligned = pageSize % recordLength == 0;
+    if (!recordsArePageAligned) {
+      throw new AssertionError("Bug: record length(=" + recordLength + ") is not aligned with page size(=" + pageSize + ")");
+    }
+
+    final PagedFileStorageLockFree storage = new PagedFileStorageLockFree(
+      file,
+      PERSISTENT_FS_STORAGE_CONTEXT_RW,
+      pageSize,
+      IOUtil.useNativeByteOrderForByteBuffers()
+    );
+    return new PersistentFSRecordsOverLockFreePagedStorage(storage);
+  }
+
 
   /**
    * @return id of newly allocated record
@@ -118,6 +146,7 @@ abstract class PersistentFSRecordsStorage {
 
   //TODO RC: what semantics is assumed for the method in concurrent context? If it is 'update atomically' than
   //         it makes it harder to implement a storage in a lock-free way
+
   /**
    * Fills all record fields in one shot
    */
