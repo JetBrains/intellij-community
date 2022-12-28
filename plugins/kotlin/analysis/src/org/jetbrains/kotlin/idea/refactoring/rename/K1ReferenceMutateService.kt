@@ -216,9 +216,6 @@ class K1ReferenceMutateService : KtReferenceMutateServiceBase() {
         return expression.replaced(newArgument)
     }
 
-    override fun convertOperatorToFunctionCall(opExpression: KtOperationExpression): Pair<KtExpression, KtSimpleNameExpression> =
-      OperatorToFunctionIntention.convert(opExpression)
-
     private fun KtExpression.createCall(
       psiFactory: KtPsiFactory,
       newName: String? = null,

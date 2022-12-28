@@ -100,5 +100,6 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
      *
      * @return A pair of resulting function call expression and a [KtSimpleNameExpression] pointing to the function name in that expression.
      */
-    protected abstract fun convertOperatorToFunctionCall(opExpression: KtOperationExpression): Pair<KtExpression, KtSimpleNameExpression>
+    private fun convertOperatorToFunctionCall(opExpression: KtOperationExpression): Pair<KtExpression, KtSimpleNameExpression> =
+        OperatorToFunctionIntention.convert(opExpression)
 }
