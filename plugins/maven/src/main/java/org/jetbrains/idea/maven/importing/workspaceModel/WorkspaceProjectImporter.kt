@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
@@ -177,7 +178,11 @@ internal class WorkspaceProjectImporter(
                              val modules: MutableList<ModuleWithTypeData<ModuleEntity>>)
 
     val projectToModulesData = mutableMapOf<MavenProject, PartialModulesData>()
+    val unloadedModuleNames = UnloadedModulesListStorage.getInstance(myProject).unloadedModuleNames.toSet()
+    
     for (importData in sortProjectsToImportByPrecedence(context)) {
+      if (importData.moduleData.moduleName in unloadedModuleNames) continue
+      
       val moduleEntity = WorkspaceModuleImporter(myProject,
                                                  importData,
                                                  virtualFileUrlManager,

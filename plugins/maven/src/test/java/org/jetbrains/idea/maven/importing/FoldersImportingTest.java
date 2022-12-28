@@ -19,6 +19,8 @@ import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +37,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -1184,6 +1187,41 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
     assertExcludes("project", "foo");
     assertProjectOutput("project");
+  }
+
+  @Test
+  public void testUnloadedModules() {
+    Assume.assumeTrue(isWorkspaceImport());
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>");
+
+    createModulePom("m2",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m2</artifactId>" +
+                    "<version>1</version>");
+    importProject();
+    assertModules("project", "m1", "m2");
+
+    ModuleManager.getInstance(myProject).setUnloadedModulesSync(List.of("m2"));
+    assertModules("project", "m1");
+
+    importProject();
+    assertModules("project", "m1");
+    UnloadedModuleDescription m2 = ModuleManager.getInstance(myProject).getUnloadedModuleDescription("m2");
+    assertNotNull(m2);
+    assertEquals("m2", m2.getName());
   }
 
   @Test
