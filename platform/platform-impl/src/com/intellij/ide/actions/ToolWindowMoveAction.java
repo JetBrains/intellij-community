@@ -187,11 +187,4 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
       return true;
     }
   }
-
-  public static final class GroupWithOutTop extends Group {
-    @Override
-    protected boolean isAllowed(Anchor anchor) {
-      return anchor != Anchor.TopLeft && anchor != Anchor.TopRight;
-    }
-  }
 }

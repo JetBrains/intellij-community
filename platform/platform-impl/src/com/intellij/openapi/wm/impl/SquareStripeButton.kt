@@ -28,7 +28,7 @@ import java.awt.event.MouseEvent
 internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
   ActionButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, { ActionToolbar.experimentalToolbarMinimumButtonSize() }) {
   companion object {
-    fun createMoveGroup(toolWindow: ToolWindow) = ToolWindowMoveAction.GroupWithOutTop()
+    fun createMoveGroup(toolWindow: ToolWindow) = ToolWindowMoveAction.Group()
   }
 
   init {
