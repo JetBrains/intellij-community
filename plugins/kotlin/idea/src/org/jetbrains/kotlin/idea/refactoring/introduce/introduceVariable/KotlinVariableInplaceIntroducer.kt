@@ -109,10 +109,10 @@ class KotlinVariableInplaceIntroducer(
     }
 
     override fun buildTemplateAndStart(
-        refs: Collection<PsiReference>,
-        stringUsages: Collection<Pair<PsiElement, TextRange>>,
-        scope: PsiElement,
-        containingFile: PsiFile
+      refs: Collection<PsiReference>,
+      stringUsages: Collection<Pair<PsiElement, TextRange>>,
+      scope: PsiElement,
+      containingFile: PsiFile
     ): Boolean {
         myNameSuggestions = myNameSuggestions.mapTo(LinkedHashSet(), String::quoteIfNeeded)
 

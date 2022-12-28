@@ -118,10 +118,10 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   @Override
-  protected boolean buildTemplateAndStart(final Collection<PsiReference> refs,
-                                          Collection<Pair<PsiElement, TextRange>> stringUsages,
-                                          final PsiElement scope,
-                                          final PsiFile containingFile) {
+  protected boolean buildTemplateAndStart(final @NotNull Collection<PsiReference> refs,
+                                          @NotNull Collection<Pair<PsiElement, TextRange>> stringUsages,
+                                          final @NotNull PsiElement scope,
+                                          final @NotNull PsiFile containingFile) {
     if (appendAdditionalElement(refs, stringUsages)) {
       return super.buildTemplateAndStart(refs, stringUsages, scope, containingFile);
     }
