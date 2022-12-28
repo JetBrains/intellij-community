@@ -97,7 +97,9 @@ public class ToolbarComboWidgetUI extends ComponentUI {
         doClip(paintRect, SEPARATOR_WIDTH + ELEMENTS_GAP);
       }
 
-      paintIcons(Collections.singletonList(EXPAND_ICON), combo, g2, paintRect, 0); // no gap for single icon
+      if (combo.isExpandable()) {
+        paintIcons(Collections.singletonList(EXPAND_ICON), combo, g2, paintRect, 0); // no gap for single icon
+      }
     }
     finally {
       g2.dispose();
@@ -167,8 +169,9 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     if (right > 0) right += ELEMENTS_GAP;
 
     int separator = isSeparatorShown(c) ? ELEMENTS_GAP + SEPARATOR_WIDTH : 0;
+    int expandButton = c.isExpandable() ? ELEMENTS_GAP + EXPAND_ICON.getIconWidth() : 0;
 
-    int otherElementsWidth = left + right + separator + ELEMENTS_GAP + EXPAND_ICON.getIconWidth();
+    int otherElementsWidth = left + right + separator + expandButton;
     return paintRect.width - otherElementsWidth;
   }
 
@@ -234,9 +237,11 @@ public class ToolbarComboWidgetUI extends ComponentUI {
       res.width += SEPARATOR_WIDTH;
     }
 
-    if (res.width > 0) res.width += ELEMENTS_GAP;
-    res.width += EXPAND_ICON.getIconWidth();
-    res.height = Math.max(res.height, EXPAND_ICON.getIconHeight());
+    if (combo.isExpandable()) {
+      if (res.width > 0) res.width += ELEMENTS_GAP;
+      res.width += EXPAND_ICON.getIconWidth();
+      res.height = Math.max(res.height, EXPAND_ICON.getIconHeight());
+    }
 
     Insets insets = c.getInsets();
     res.height += insets.top + insets.bottom;
@@ -246,11 +251,8 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   }
 
   private static boolean isSeparatorShown(ToolbarComboWidget widget) {
-    return !widget.getPressListeners().isEmpty();
+    return !widget.getPressListeners().isEmpty() && widget.isExpandable();
   }
-
-  //todo minimum size
-  //todo baseline
 
   private static abstract class MyMouseTracker extends MouseAdapter {
     protected ToolbarComboWidget comp;
@@ -316,6 +318,11 @@ public class ToolbarComboWidgetUI extends ComponentUI {
 
     @Override
     public void mouseClicked(MouseEvent e) {
+      if (!comp.isExpandable()) {
+        notifyPressListeners(e);
+        return;
+      }
+
       if (!isSeparatorShown(comp)) {
         comp.doExpand(e);
         return;
