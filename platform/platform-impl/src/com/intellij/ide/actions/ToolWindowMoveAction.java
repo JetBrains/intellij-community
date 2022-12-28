@@ -13,7 +13,6 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.openapi.wm.impl.SquareStripeButton;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -37,14 +36,14 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
       String bottom = UIBundle.message("tool.window.move.to.bottom.action.name");
       String right = UIBundle.message("tool.window.move.to.right.action.name");
       return switch (this) {
-        case LeftTop -> left + " " + top;
-        case BottomLeft -> ExperimentalUI.isNewUI() ? left + " " + bottom : bottom + " " + left;
-        case BottomRight -> ExperimentalUI.isNewUI() ? right + " " + bottom : bottom + " " + right;
-        case RightTop -> right + " " + top;
-        case LeftBottom -> ExperimentalUI.isNewUI() ? bottom + " " + left : left + " " + bottom;
-        case RightBottom -> ExperimentalUI.isNewUI() ? bottom + " " + right : right + " " + bottom;
-        case TopRight -> top + " " + right;
-        case TopLeft -> top + " " + left;
+        case LeftTop     -> left   + " " + top;
+        case BottomLeft  -> bottom + " " + left;
+        case BottomRight -> bottom + " " + right;
+        case RightTop    -> right  + " " + top;
+        case LeftBottom  -> left   + " " + bottom;
+        case RightBottom -> right  + " " + bottom;
+        case TopRight    -> top    + " " + right;
+        case TopLeft     -> top    + " " + left;
       };
     }
 
