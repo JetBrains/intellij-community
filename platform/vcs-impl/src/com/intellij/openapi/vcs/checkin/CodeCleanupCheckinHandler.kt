@@ -96,17 +96,17 @@ private class CodeCleanupCheckinHandler(private val project: Project) :
   }
 
   private suspend fun applyFixes(cleanupProblems: CleanupProblems) {
-    if (cleanupProblems.files.isEmpty()) return
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(cleanupProblems.files)) return
+    if (cleanupProblems.files().isEmpty()) return
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(cleanupProblems.files())) return
 
     val commandProcessor = CommandProcessor.getInstance() as CommandProcessorEx
     commandProcessor.executeCommand {
-      if (cleanupProblems.isGlobalScope) commandProcessor.markCurrentCommandAsGlobal(project)
+      if (cleanupProblems.isGlobalScope()) commandProcessor.markCurrentCommandAsGlobal(project)
 
       val sink = coroutineContext.progressSink
       val runner = SequentialModalProgressTask(project, "", true)
       runner.setMinIterationTime(200)
-      runner.setTask(ApplyFixesTask(project, cleanupProblems.problemDescriptors, sink))
+      runner.setTask(ApplyFixesTask(project, cleanupProblems.problemDescriptors(), sink))
 
       withContext(Dispatchers.IO + noTextSinkContext(sink)) {
         coroutineToIndicator {

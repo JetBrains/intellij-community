@@ -1066,7 +1066,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     boolean includeDoNotShow = includeDoNotShow(profile);
     List<ProblemDescriptor> descriptors = new ArrayList<>();
     Set<PsiFile> files = new HashSet<>();
-    ((RefManagerImpl)getRefManager()).runInsideInspectionReadAction(() -> {
+    ((RefManagerImpl)getRefManager()).runInsideInspectionReadAction(() ->
       scope.accept(new PsiElementVisitor() {
         private int myCount;
 
@@ -1093,77 +1093,84 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           }
 
           if (!lTools.isEmpty()) {
-            InspectionProfileWrapper.runWithCustomInspectionWrapper(file, p -> new InspectionProfileWrapper(profile,
-                                                                                                            ((InspectionProfileImpl)p).getProfileManager()),
-                                                                    () -> {
-                                                                      try {
-                                                                        TextRange restrictRange =
-                                                                          range == null ? file.getTextRange() : range;
-                                                                        ApplicationManager.getApplication().runReadAction(() -> {
-                                                                          Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-                                                                            InspectionEngine.inspectEx(lTools, file, restrictRange,
-                                                                                                       restrictRange, false, true, true,
-                                                                                                       myProgressIndicator,
-                                                                                                       (__, ___) -> true);
-                                                                          for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
-                                                                            LocalInspectionToolWrapper toolWrapper = entry.getKey();
-                                                                            List<ProblemDescriptor> descriptors = entry.getValue();
-                                                                            InspectionToolPresentation toolPresentation =
-                                                                              getPresentation(toolWrapper);
-                                                                            BatchModeDescriptorsUtil.addProblemDescriptors(descriptors,
-                                                                                                                           toolPresentation,
-                                                                                                                           true,
-                                                                                                                           GlobalInspectionContextImpl.this,
-                                                                                                                           toolWrapper.getTool());
-                                                                          }
-                                                                        });
-
-                                                                        Set<ProblemDescriptor> localDescriptors =
-                                                                          new TreeSet<>(CommonProblemDescriptor.DESCRIPTOR_COMPARATOR);
-                                                                        for (LocalInspectionToolWrapper tool : lTools) {
-                                                                          InspectionToolResultExporter toolPresentation =
-                                                                            getPresentation(tool);
-                                                                          for (CommonProblemDescriptor descriptor : toolPresentation.getProblemDescriptors()) {
-                                                                            if (descriptor instanceof ProblemDescriptor) {
-                                                                              localDescriptors.add((ProblemDescriptor)descriptor);
-                                                                            }
-                                                                          }
-                                                                        }
-
-                                                                        if (searchScope instanceof LocalSearchScope) {
-                                                                          for (Iterator<ProblemDescriptor> iterator =
-                                                                               localDescriptors.iterator(); iterator.hasNext(); ) {
-                                                                            ProblemDescriptor descriptor = iterator.next();
-                                                                            TextRange infoRange =
-                                                                              descriptor instanceof ProblemDescriptorBase
-                                                                              ? ((ProblemDescriptorBase)descriptor).getTextRange()
-                                                                              : null;
-                                                                            if (infoRange != null &&
-                                                                                !((LocalSearchScope)searchScope).containsRange(file,
-                                                                                                                               infoRange)) {
-                                                                              iterator.remove();
-                                                                            }
-                                                                          }
-                                                                        }
-                                                                        if (!localDescriptors.isEmpty()) {
-                                                                          for (ProblemDescriptor descriptor : localDescriptors) {
-                                                                            if (shouldApplyFix.test(descriptor)) {
-                                                                              descriptors.add(descriptor);
-                                                                            }
-                                                                          }
-                                                                          files.add(file);
-                                                                        }
-                                                                      }
-                                                                      finally {
-                                                                        myPresentationMap.clear();
-                                                                      }
-                                                                    });
+            InspectionProfileWrapper.runWithCustomInspectionWrapper(file,
+                p -> new InspectionProfileWrapper(profile, ((InspectionProfileImpl)p).getProfileManager()),
+                () -> findProblemsInFile(file, lTools, range, searchScope, descriptors, files, shouldApplyFix));
           }
         }
-      });
-    });
+      }));
 
     return new CleanupProblems(files, descriptors, searchScope instanceof GlobalSearchScope);
+  }
+
+  private void findProblemsInFile(@NotNull PsiFile file,
+                                  @NotNull List<? extends LocalInspectionToolWrapper> localTools,
+                                  @Nullable TextRange range,
+                                  @NotNull SearchScope searchScope,
+                                  @NotNull List<? super ProblemDescriptor> descriptorResults,
+                                  @NotNull Set<? super PsiFile> visitedFiles,
+                                  @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
+    try {
+      TextRange restrictRange =
+        range == null ? file.getTextRange() : range;
+      ApplicationManager.getApplication().runReadAction(() -> {
+        Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
+          InspectionEngine.inspectEx(localTools, file, restrictRange,
+                                     restrictRange, false, true, true,
+                                     myProgressIndicator,
+                                     (__, ___) -> true);
+        for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
+          LocalInspectionToolWrapper toolWrapper = entry.getKey();
+          List<ProblemDescriptor> descriptors = entry.getValue();
+          InspectionToolPresentation toolPresentation =
+            getPresentation(toolWrapper);
+          BatchModeDescriptorsUtil.addProblemDescriptors(descriptors,
+                                                         toolPresentation,
+                                                         true,
+                                                         GlobalInspectionContextImpl.this,
+                                                         toolWrapper.getTool());
+        }
+      });
+
+      Set<ProblemDescriptor> localDescriptors =
+        new TreeSet<>(CommonProblemDescriptor.DESCRIPTOR_COMPARATOR);
+      for (LocalInspectionToolWrapper tool : localTools) {
+        InspectionToolResultExporter toolPresentation =
+          getPresentation(tool);
+        for (CommonProblemDescriptor descriptor : toolPresentation.getProblemDescriptors()) {
+          if (descriptor instanceof ProblemDescriptor) {
+            localDescriptors.add((ProblemDescriptor)descriptor);
+          }
+        }
+      }
+
+      if (searchScope instanceof LocalSearchScope) {
+        for (Iterator<ProblemDescriptor> iterator =
+             localDescriptors.iterator(); iterator.hasNext(); ) {
+          ProblemDescriptor descriptor = iterator.next();
+          TextRange infoRange =
+            descriptor instanceof ProblemDescriptorBase
+            ? ((ProblemDescriptorBase)descriptor).getTextRange()
+            : null;
+          if (infoRange != null &&
+              !((LocalSearchScope)searchScope).containsRange(file,
+                                                             infoRange)) {
+            iterator.remove();
+          }
+        }
+      }
+      if (!localDescriptors.isEmpty()) {
+        for (ProblemDescriptor descriptor : localDescriptors) {
+          if (shouldApplyFix.test(descriptor)) {
+            descriptorResults.add(descriptor);
+          }
+        }
+        visitedFiles.add(file);
+      }
+    }
+    finally {
+      myPresentationMap.clear();
+    }
   }
 
   private void applyFixes(@NotNull AnalysisScope scope,
@@ -1173,7 +1180,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                           @NotNull InspectionProfile profile,
                           boolean modal,
                           @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
-    if (problems.getFiles().isEmpty()) {
+    if (problems.files().isEmpty()) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("No problems found during code inspection, nothing to cleanup");
       }
@@ -1199,9 +1206,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       LOG.debug("Applying fixes");
     }
 
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(problems.getFiles())) return;
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(problems.files())) return;
     CleanupInspectionUtil.getInstance().applyFixesNoSort(
-      getProject(), LangBundle.message("code.cleanup"), problems.getProblemDescriptors(), null, false, problems.isGlobalScope());
+      getProject(), LangBundle.message("code.cleanup"), problems.problemDescriptors(), null, false, problems.isGlobalScope());
     if (postRunnable != null) {
       postRunnable.run();
     }
