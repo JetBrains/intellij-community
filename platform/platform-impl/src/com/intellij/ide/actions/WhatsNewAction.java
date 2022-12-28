@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.idea.AppMode;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -64,7 +65,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
 
   @ApiStatus.Internal
   public static boolean isAvailable() {
-    return ApplicationInfoEx.getInstanceEx().isShowWhatsNewOnUpdate();
+    return ApplicationInfoEx.getInstanceEx().isShowWhatsNewOnUpdate() && !AppMode.isRemoteDevHost();
   }
 
   public static void openWhatsNewPage(@NotNull Project project, @NotNull String url) {
