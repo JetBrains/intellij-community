@@ -30,4 +30,3 @@ class EditorConfigSpaceInHeaderInspection : LocalInspectionTool() {
 
 internal fun findSuspiciousSpaces(header: EditorConfigHeader) =
   PsiTreeUtil.findChildrenOfType(header, PsiWhiteSpace::class.java)
-    .filter { it.parent !is EditorConfigPatternEnumeration }
