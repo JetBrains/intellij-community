@@ -16,18 +16,26 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.jetbr
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinScriptingCommon
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinScriptingJvm
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinTestJs
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryEntity
+import org.jetbrains.kotlin.idea.test.TestMetadataUtil.getTestRoot
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 
+@TestRoot("idea/tests")
 class ScriptWorkspaceModelRepresentationTest : HeavyPlatformTestCase() {
 
+    private val scriptDefinitionSourcePath: String
+
+    init {
+        val testRoot = getTestRoot(this::class.java) ?: error("@TestRoot annotation is missing")
+        scriptDefinitionSourcePath = File(testRoot, "testData/script/wsmodel/").absolutePath
+    }
 
     // ON FIRST IMPORT
-
     fun testThatRequiredEntitiesCreatedOnFirstSync() {
         setUpEnvironment(
             aKtsLibs = listOf(kotlinTestJs, jetbrainsAnnotations),
@@ -324,7 +332,7 @@ class ScriptWorkspaceModelRepresentationTest : HeavyPlatformTestCase() {
 
     private fun setUpEnvironment(aKtsLibs: List<File>, bKtsLibs: List<File>): TestEnvironment {
         return prepareScriptDefinitions(
-            project, getTestName(false), testRootDisposable,
+            project, getTestName(false), scriptDefinitionSourcePath, testRootDisposable,
             aKtsLibs, bKtsLibs
         )
     }

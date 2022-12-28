@@ -23,12 +23,13 @@ private val scripDefinitionCompilationClassPath = listOf(
 internal fun prepareScriptDefinitions(
     project: Project,
     testName: String,
+    scriptDefinitionSourcePath: String,
     testRootDisposable: Disposable,
     aKtsLibs: List<File>,
     bKtsLibs: List<File>
 ): TestEnvironment {
 
-    compileLibToDir(testName, File("test/org/jetbrains/kotlin/idea/script/definition"))
+    compileLibToDir(testName, File(scriptDefinitionSourcePath))
     return TestEnvironment(
         mutableMapOf(
             "lib-classes-A" to aKtsLibs,
