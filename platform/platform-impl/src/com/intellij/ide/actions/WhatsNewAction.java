@@ -64,7 +64,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
 
   @ApiStatus.Internal
   public static boolean isAvailable() {
-    return ApplicationInfoEx.getInstanceEx().isShowWhatsNewOnUpdate() || Boolean.getBoolean("whats.new.notification");
+    return ApplicationInfoEx.getInstanceEx().isShowWhatsNewOnUpdate();
   }
 
   public static void openWhatsNewPage(@NotNull Project project, @NotNull String url) {
