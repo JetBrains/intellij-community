@@ -95,6 +95,7 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.is
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static java.util.Arrays.asList;
 import static org.jetbrains.concurrency.Promises.cancelledPromise;
+import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 @State(
   name = "ChangesViewManager",
@@ -750,7 +751,7 @@ public class ChangesViewManager implements ChangesViewEx,
       return myBackgroundRefresher.requestRefresh(delayMillis, this::refreshView)
         .thenAsync(callback -> callback != null
                                ? AppUIExecutor.onUiThread(modalityState).submit(callback)
-                               : null)
+                               : rejectedPromise("no callback"))
         .onProcessed(__ -> setBusy(false));
     }
 
