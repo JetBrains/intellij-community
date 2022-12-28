@@ -168,4 +168,9 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
       return getPrototype().hashCode();
     }
   }
+
+  @Override
+  public String toString() {
+    return "LightRecordConstructorParameter(" + super.toString() + ")";
+  }
 }
