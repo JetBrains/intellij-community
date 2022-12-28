@@ -9,7 +9,9 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
-import kotlin.coroutines.*
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.resume
 
 internal class SuspendingLazyImpl<out T>(
   initCs: CoroutineScope,
@@ -56,6 +58,19 @@ internal class SuspendingLazyImpl<out T>(
   }
 
   override fun isInitialized(): Boolean = _state is Result<*>
+
+  override fun getInitialized(): T {
+    return when (val state = _state) {
+      is Result<*> -> {
+        @Suppress("UNCHECKED_CAST")
+        state.getOrThrow() as T
+      }
+      else -> error(
+        "SuspendingLazy(${_name ?: "unnamed"}) is not initialized yet. " +
+        "Check result of `isInitialized()` before calling this method"
+      )
+    }
+  }
 
   override suspend fun getValue(): T {
     (_state as? Result<*>)?.let {

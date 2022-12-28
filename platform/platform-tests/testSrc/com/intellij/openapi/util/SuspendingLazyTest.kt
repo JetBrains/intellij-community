@@ -30,17 +30,15 @@ class SuspendingLazyTest {
       result
     }
     val lazy = suspendingLazy(initializer = initializer)
-    assertFalse(lazy.isInitialized())
+    assertUninitialized(lazy)
     assertFalse(executed.get())
     assertReferenced(lazy, initializer)
 
-    assertSame(result, lazy.getValue())
-    assertTrue(lazy.isInitialized())
+    assertInitialized(lazy, result)
     assertTrue(executed.get())
     LeakHunter.checkLeak(lazy, initializer::class.java)
 
-    assertSame(result, lazy.getValue())
-    assertTrue(lazy.isInitialized())
+    assertInitialized(lazy, result)
     assertTrue(executed.get())
     LeakHunter.checkLeak(lazy, initializer::class.java)
   }
@@ -62,16 +60,15 @@ class SuspendingLazyTest {
       throw t
     }
     val lazy = suspendingLazy(initializer = initializer)
-    assertFalse(lazy.isInitialized())
+    assertUninitialized(lazy)
     assertFalse(executed.get())
     assertReferenced(lazy, initializer)
 
-    assertSame(t, assertThrows { lazy.getValue() })
-    assertTrue(lazy.isInitialized())
+    assertFailed(lazy, t)
     assertTrue(executed.get())
     LeakHunter.checkLeak(lazy, initializer::class.java)
 
-    assertSame(t, assertThrows { lazy.getValue() })
+    assertFailed(lazy, t)
   }
 
   @Test
@@ -119,11 +116,10 @@ class SuspendingLazyTest {
     firstTry.cancel()
     yield()
 
-    assertFalse(lazy.isInitialized())
+    assertUninitialized(lazy)
     assertEquals(1, executed.get())
 
-    assertSame(result, lazy.getValue())
-    assertTrue(lazy.isInitialized())
+    assertInitialized(lazy, result)
     assertEquals(2, executed.get())
   }
 
@@ -147,10 +143,9 @@ class SuspendingLazyTest {
         }
       }
     }
-    assertFalse(lazy.isInitialized())
+    assertUninitialized(lazy)
     canFinish.release()
-    assertSame(result, lazy.getValue())
-    assertTrue(lazy.isInitialized())
+    assertInitialized(lazy, result)
   }
 
   @Test
@@ -163,13 +158,12 @@ class SuspendingLazyTest {
     val t: Throwable = object : Throwable() {}
     cs.cancel("cc", t)
 
-    assertFalse(lazy.isInitialized())
+    assertUninitialized(lazy)
     assertReferenced(lazy, initializer)
-    testException(lazy, t)
+    assertCancelled(lazy, t)
 
-    assertTrue(lazy.isInitialized())
     LeakHunter.checkLeak(lazy, initializer::class.java)
-    testException(lazy, t)
+    assertCancelled(lazy, t)
   }
 
   @RepeatedTest(100)
@@ -180,21 +174,20 @@ class SuspendingLazyTest {
       assertFalse(executed.getAndSet(true))
       awaitCancellation()
     }
-    assertFalse(lazy.isInitialized())
+    assertUninitialized(lazy)
     assertFalse(executed.get())
 
     val t: Throwable = object : Throwable() {}
 
     launch(start = CoroutineStart.UNDISPATCHED) {
-      testException(lazy, t) // will suspend, and runBlocking will execute the cancelling coroutine
-      assertTrue(lazy.isInitialized())
+      assertCancelled(lazy, t) // will suspend, and runBlocking will execute the cancelling coroutine
       assertTrue(executed.get())
       assertFalse(cs.isActive)
-      testException(lazy, t) // will immediately resume with the same exception
+      assertCancelled(lazy, t) // will immediately resume with the same exception
     }
 
     launch { // cancelling coroutine
-      assertFalse(lazy.isInitialized())
+      assertUninitialized(lazy)
       assertTrue(executed.get())
       assertTrue(cs.isActive)
       cs.cancel("ce", t)
@@ -207,7 +200,7 @@ class SuspendingLazyTest {
     val lazy = cs.suspendingLazy {
       awaitCancellation()
     }
-    assertFalse(lazy.isInitialized())
+    assertUninitialized(lazy)
     val waiter = launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
       assertThrows<CancellationException> {
         lazy.getValue()
@@ -230,25 +223,16 @@ class SuspendingLazyTest {
       assertFalse(executed.getAndSet(true))
       result
     }
-    assertFalse(lazy.isInitialized())
+    assertUninitialized(lazy)
     assertFalse(executed.get())
 
-    assertSame(result, lazy.getValue())
-    assertTrue(lazy.isInitialized())
+    assertInitialized(lazy, result)
     assertTrue(executed.get())
 
     cs.cancel()
 
-    assertSame(result, lazy.getValue())
-    assertTrue(lazy.isInitialized())
+    assertInitialized(lazy, result)
     assertTrue(executed.get())
-  }
-
-  private suspend fun testException(lazy: SuspendingLazy<Unit>, t: Throwable) {
-    val thrown: CancellationException = assertThrows {
-      lazy.getValue()
-    }
-    assertSame(t, thrown.cause)
   }
 
   @RepeatedTest(100)
@@ -260,6 +244,7 @@ class SuspendingLazyTest {
       assertTrue(caught.message!!.contains("lazy2name"))
       assertTrue(caught.message!!.contains("lazy3name"))
       assertSame(caught, assertThrows<LazyRecursionPreventedException> { lazy.getValue() })
+      assertSame(caught, assertThrows<LazyRecursionPreventedException> { lazy.getInitialized() })
     }
 
     lateinit var lazy2: SuspendingLazy<Int>
@@ -304,4 +289,27 @@ class SuspendingLazyTest {
       }
     }
   }
+}
+
+private fun assertUninitialized(lazy: SuspendingLazy<*>) {
+  assertFalse(lazy.isInitialized())
+  assertThrows<IllegalStateException> { lazy.getInitialized() }
+}
+
+private suspend fun <T> assertInitialized(lazy: SuspendingLazy<T>, value: T) {
+  assertSame(value, lazy.getValue()) // may trigger computation
+  assertTrue(lazy.isInitialized())
+  assertSame(value, lazy.getInitialized())
+}
+
+private suspend fun assertFailed(lazy: SuspendingLazy<*>, t: Throwable) {
+  assertSame(t, assertThrows { lazy.getValue() }) // may trigger computation
+  assertTrue(lazy.isInitialized())
+  assertSame(t, assertThrows { lazy.getInitialized() })
+}
+
+private suspend fun assertCancelled(lazy: SuspendingLazy<*>, t: Throwable) {
+  assertSame(t, assertThrows<CancellationException> { lazy.getValue() }.cause) // may trigger computation
+  assertTrue(lazy.isInitialized())
+  assertSame(t, assertThrows<CancellationException> { lazy.getInitialized() }.cause)
 }

@@ -5,18 +5,34 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 
 /**
  * @see Lazy
+ * @see kotlinx.coroutines.Deferred
  */
 @Experimental
 interface SuspendingLazy<out T> {
 
   /**
-   * Returns already computed value, or computes the value and suspends until it is ready.
-   */
-  suspend fun getValue(): T
-
-  /**
    * Returns `true` if a value for this SuspendingLazy instance has been already initialized, otherwise `false`.
    * Once this function has returned `true` it stays `true` for the rest of lifetime of this instance.
+   *
+   * @see kotlinx.coroutines.Deferred.isCompleted
    */
   fun isInitialized(): Boolean
+
+  /**
+   * If [isInitialized], returns already computed value, or throws completion exception.
+   * Otherwise, throws [IllegalStateException].
+   *
+   * @see Lazy.value
+   * @see kotlinx.coroutines.Deferred.getCompleted
+   */
+  fun getInitialized(): T
+
+  /**
+   * If [isInitialized], returns already computed value, or throws completion exception.
+   * Otherwise, computes the value and suspends until it is ready.
+   *
+   * @see Lazy.value
+   * @see kotlinx.coroutines.Deferred.await
+   */
+  suspend fun getValue(): T
 }
