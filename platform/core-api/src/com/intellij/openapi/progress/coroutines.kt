@@ -5,6 +5,7 @@ package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.replaceThreadContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.diagnostic.Logger
@@ -54,6 +55,11 @@ suspend fun checkCancelled() {
  * - To invoke older code, which cannot be modified but relies on [ProgressManager.checkCanceled] or
  *   [Application.invokeAndWait][com.intellij.openapi.application.Application.invokeAndWait],
  *   use [blockingContext] to switch from a coroutine to the blocking context.
+ *
+ * ### EDT
+ *
+ * This method is **forbidden on EDT** because it does not pump the event queue.
+ * Switch to a BGT, or use [runBlockingModal][com.intellij.openapi.progress.runBlockingModal].
  *
  * ### Non-cancellable `runBlocking`
  *
@@ -113,6 +119,7 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend Cor
     @Suppress("DEPRECATION")
     return indicatorRunBlockingCancellable(indicator, action)
   }
+  assertBackgroundThreadOrWriteAction()
   return ensureCurrentJob(allowOrphan) { currentJob ->
     val context = currentThreadContext() +
                   currentJob +
@@ -145,6 +152,7 @@ fun <T> runBlockingMaybeCancellable(action: suspend CoroutineScope.() -> T): T {
 )
 @Internal
 fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
+  assertBackgroundThreadOrWriteAction()
   return ensureCurrentJob(indicator) { currentJob ->
     val context = currentThreadContext() +
                   currentJob +
@@ -327,6 +335,17 @@ fun <T> jobToIndicator(job: Job, indicator: ProgressIndicator, action: () -> T):
     @OptIn(InternalCoroutinesApi::class)
     throw job.getCancellationException()
   }
+}
+
+private fun assertBackgroundThreadOrWriteAction() {
+  val application = ApplicationManager.getApplication()
+  if (!application.isDispatchThread || application.isWriteAccessAllowed || application.isUnitTestMode) {
+    return // OK
+  }
+  LOG.error(IllegalStateException(
+    "This method is forbidden on EDT because it does not pump the event queue. " +
+    "Switch to a BGT, or use com.intellij.openapi.progress.TasksKt.runBlockingModal. "
+  ))
 }
 
 @Deprecated(

@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.timeoutRunBlocking
 import com.intellij.testFramework.LeakHunter
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.LazyRecursionPreventedException
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.suspendingLazy
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.EmptyCoroutineContext
 
+@TestApplication
 class SuspendingLazyTest {
 
   @Test
