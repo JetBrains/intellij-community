@@ -222,7 +222,6 @@ class CompilerArgumentsCachingTest {
         phasesToDumpBefore = generateRandomStringArray(20)
         phasesToDumpAfter = generateRandomStringArray(20)
         phasesToDump = generateRandomStringArray(20)
-        namesExcludedFromDumping = generateRandomStringArray(20)
         phasesToValidateBefore = generateRandomStringArray(20)
         phasesToValidateAfter = generateRandomStringArray(20)
         phasesToValidate = generateRandomStringArray(20)
@@ -493,7 +492,6 @@ class CompilerArgumentsCachingTest {
             "phasesToDumpBefore",
             "phasesToDumpAfter",
             "phasesToDump",
-            "namesExcludedFromDumping",
             "phasesToValidateBefore",
             "phasesToValidateAfter",
             "phasesToValidate"
