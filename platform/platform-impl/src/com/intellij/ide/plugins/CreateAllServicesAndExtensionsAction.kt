@@ -146,6 +146,8 @@ private fun checkContainer(container: ComponentManagerImpl, indicator: ProgressI
   container.extensionArea.processExtensionPoints { extensionPoint ->
     // requires a read action
     if (extensionPoint.name == "com.intellij.favoritesListProvider" ||
+        extensionPoint.name == "com.intellij.postStartupActivity" ||
+        extensionPoint.name == "com.intellij.backgroundPostStartupActivity" ||
         extensionPoint.name == "org.jetbrains.kotlin.defaultErrorMessages") {
       return@processExtensionPoints
     }

@@ -3,22 +3,17 @@ package com.intellij.openapi.startup
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.Obsolete
 
 /**
- * Runs an activity on project open.
- * If activity implements [com.intellij.openapi.project.DumbAware], it is executed after a project is opened
- * on a background thread with no visible progress indicator. Otherwise, it is executed on EDT when indexes are ready.
- *
- * See [docs](https://youtrack.jetbrains.com/articles/IDEA-A-219/Startup-Activity#Post-Startup-Activity) for details.
- *
- * @see StartupManager
- * @see com.intellij.ide.util.RunOnceUtil
+ * @deprecated Use ProjectPostStartupActivity
  */
+@Obsolete
 interface StartupActivity {
   companion object {
-    @JvmField
-    val POST_STARTUP_ACTIVITY = ExtensionPointName<StartupActivity>("com.intellij.postStartupActivity")
+    @Internal
+    val POST_STARTUP_ACTIVITY = ExtensionPointName<Any>("com.intellij.postStartupActivity")
   }
 
   fun runActivity(project: Project)
@@ -28,28 +23,33 @@ interface StartupActivity {
    */
   interface RequiredForSmartMode : StartupActivity
 
+  @Obsolete
   interface DumbAware : StartupActivity, com.intellij.openapi.project.DumbAware
 
+  @Obsolete
   interface Background : StartupActivity, com.intellij.openapi.project.DumbAware
 }
 
-@ApiStatus.Experimental
-interface ProjectPostStartupActivity : StartupActivity {
+/**
+ * Runs an activity on project open.
+ * See [docs](https://youtrack.jetbrains.com/articles/IJPL-A-34/Startup-Activity) for details.
+ *
+ * @see StartupManager
+ * @see com.intellij.ide.util.RunOnceUtil
+ */
+interface ProjectPostStartupActivity {
   suspend fun execute(project: Project)
-
-  override fun runActivity(project: Project) {
-  }
 }
 
 /**
  * `startupActivity` activity must be defined only by a core and requires approval by core team.
  */
-@ApiStatus.Internal
+@Internal
 interface InitProjectActivity {
   suspend fun run(project: Project)
 }
 
-@ApiStatus.Internal
+@Internal
 abstract class InitProjectActivityJavaShim : InitProjectActivity {
   abstract fun runActivity(project: Project)
 
