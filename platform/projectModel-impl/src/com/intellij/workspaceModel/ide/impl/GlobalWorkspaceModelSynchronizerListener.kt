@@ -7,7 +7,10 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
+import kotlin.reflect.KClass
 
 class GlobalWorkspaceModelSynchronizerListener(private val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
@@ -16,19 +19,20 @@ class GlobalWorkspaceModelSynchronizerListener(private val project: Project) : W
     // Avoid handling events if change was made by global workspace model
     if (globalWorkspaceModel.isFromGlobalWorkspaceModel) return
 
-    if (isContainingGlobalEntities(event)) {
+    if (isContainingGlobalEntities(event, LibraryEntity::class)
+        || isContainingGlobalEntities(event, LibraryPropertiesEntity::class)) {
       globalWorkspaceModel.syncEntitiesWithProject(project)
     }
   }
 
-  private fun isContainingGlobalEntities(event: VersionedStorageChange): Boolean {
-    return event.getChanges(LibraryEntity::class.java).any { change ->
-      val libraryEntity = when (change) {
+  private fun isContainingGlobalEntities(event: VersionedStorageChange, entityKClass: KClass<out WorkspaceEntity>): Boolean {
+    return event.getChanges(entityKClass.java).any { change ->
+      val entity = when (change) {
         is EntityChange.Added -> change.newEntity
         is EntityChange.Replaced -> change.newEntity
         is EntityChange.Removed -> change.oldEntity
       }
-      libraryEntity.entitySource is JpsFileEntitySource.ExactGlobalFile
+      entity.entitySource is JpsFileEntitySource.ExactGlobalFile
     }
   }
 }

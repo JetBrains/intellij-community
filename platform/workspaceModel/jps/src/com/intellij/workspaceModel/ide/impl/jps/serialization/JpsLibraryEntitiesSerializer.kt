@@ -72,7 +72,7 @@ internal class JpsGlobalLibrariesFileSerializer(entitySource: JpsFileEntitySourc
   override val isExternalStorage: Boolean
     get() = false
   override val entityFilter: (LibraryEntity) -> Boolean
-    get() = { it.tableId::class == LibraryTableId.GlobalLibraryTableId::class}
+    get() = { it.tableId is LibraryTableId.GlobalLibraryTableId}
 
   override fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter) {
     writer.saveComponent(fileUrl, LIBRARY_TABLE_COMPONENT_NAME, null)

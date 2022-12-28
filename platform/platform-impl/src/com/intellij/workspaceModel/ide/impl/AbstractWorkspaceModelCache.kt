@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.io.FileUtil
@@ -42,15 +43,12 @@ abstract class AbstractWorkspaceModelCache(cacheVersionsContributor: () -> Map<S
 
     val start = System.currentTimeMillis()
     val deserializationResult = file.inputStream().use { serializer.deserializeCache(it) }
-    if (LOG.isDebugEnabled) {
-      LOG.debug("Loaded cache from $file in ${System.currentTimeMillis() - start}ms")
-    }
+    LOG.debug { "Loaded cache from $file in ${System.currentTimeMillis() - start}ms" }
 
     return deserializationResult
       .onSuccess {
-        when {
-          it != null -> LOG.debug("Loaded cache from $file in ${System.currentTimeMillis() - start}ms")
-          else -> LOG.debug("Cannot load cache from $file in ${System.currentTimeMillis() - start}ms")
+        if (it != null) {
+          LOG.debug("Loaded cache from $file in ${System.currentTimeMillis() - start}ms")
         }
       }
       .onFailure {
@@ -61,7 +59,7 @@ abstract class AbstractWorkspaceModelCache(cacheVersionsContributor: () -> Map<S
 
   // Serialize and atomically replace cacheFile. Delete temporary file in any cache to avoid junk in cache folder
   internal fun saveCache(storage: EntityStorageSnapshot, file: Path) {
-    LOG.debug("Saving project model cache to $file")
+    LOG.debug("Saving Workspace model cache to $file")
     val tmpFile = FileUtil.createTempFile(file.parent.toFile(), "cache", ".tmp")
     try {
       val serializationResult = tmpFile.outputStream().use { serializer.serializeCache(it, cachePreProcess(storage)) }

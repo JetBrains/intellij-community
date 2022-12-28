@@ -162,7 +162,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
   }
 
   override fun createLibrary(name: String?): Library {
-    if (name == null) error("Creating unnamed project libraries is unsupported")
+    if (name == null) error("Creating unnamed global libraries is unsupported")
 
     if (getLibraryByName(name) != null) {
       error("Application library named $name already exists")

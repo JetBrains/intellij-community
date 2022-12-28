@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 @ApiStatus.Internal
 class GlobalWorkspaceModelCacheImpl : AbstractWorkspaceModelCache(), GlobalWorkspaceModelCache, Disposable {
   private val saveAlarm = SingleAlarm.pooledThreadSingleAlarm(1000, this) { this.doCacheSaving() }
-  private val cacheFile by lazy { PathManager.getConfigDir().resolve("$DATA_DIR_NAME/cache.data") }
+  private val cacheFile by lazy { PathManager.getSystemDir().resolve("$DATA_DIR_NAME/cache.data") }
 
   init {
     LOG.debug("Global Model Cache at $cacheFile")

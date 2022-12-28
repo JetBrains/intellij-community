@@ -41,13 +41,7 @@ internal class AppStorageContentWriter(private val session: SaveSessionProducerM
       val storageSpec = FileStorageAnnotation(PathUtil.getFileName(filePath), false, StateSplitterEx::class.java)
       @Suppress("UNCHECKED_CAST")
       val storage = ApplicationManager.getApplication().stateStore.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>
-      val producer = session.getProducer(storage)
-      if (producer is DirectoryBasedSaveSessionProducer) {
-        producer.setFileState(PathUtil.getFileName(filePath), componentName, componentTag?.children?.first())
-      }
-      else {
-        producer?.setState(null, componentName, componentTag)
-      }
+      session.getProducer(storage)?.setState(null, componentName, componentTag)
     }
   }
 
