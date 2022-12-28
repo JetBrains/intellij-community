@@ -15,7 +15,7 @@ import kotlinx.coroutines.withContext
 
 internal object AsyncUtils {
   fun isNonAsyncMode(): Boolean {
-    return ApplicationManager.getApplication().isUnitTestMode || ApplicationManager.getApplication().isHeadlessEnvironment
+    return ApplicationManager.getApplication().isUnitTestMode
   }
 
   fun restartInspection(application: Application) {
