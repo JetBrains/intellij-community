@@ -709,7 +709,7 @@ public abstract class VcsVFSListener implements Disposable {
   private ProjectConfigurationFilesProcessorImpl createProjectConfigurationFilesProcessor() {
     return new ProjectConfigurationFilesProcessorImpl(myProject,
                                                       this,
-                                                      myVcs.getDisplayName(),
+                                                      myVcs,
                                                       (files) -> {
                                                         performAdding((Collection<VirtualFile>)files, emptyMap());
                                                         return Unit.INSTANCE;
@@ -717,7 +717,7 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   private IgnoreFilesProcessorImpl createIgnoreFilesProcessor() {
-    return new IgnoreFilesProcessorImpl(myProject, myVcs, this);
+    return new IgnoreFilesProcessorImpl(myProject, this, myVcs);
   }
 
   private class MyAsyncVfsListener implements AsyncFileListener {

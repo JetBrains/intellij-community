@@ -30,7 +30,7 @@ private val LOG = logger<IgnoreFilesProcessorImpl>()
 /**
  * Automatically generate or update .ignore files basing on [IgnoredFileProvider] extension point.
  */
-class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, private val parentDisposable: Disposable)
+class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: Disposable, private val vcs: AbstractVcs)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), AsyncVfsEventsListener, ChangeListListener {
 
   private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
