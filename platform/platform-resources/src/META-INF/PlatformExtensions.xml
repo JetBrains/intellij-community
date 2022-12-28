@@ -1316,6 +1316,7 @@
     <notificationGroup id="Test Results" displayType="TOOL_WINDOW" toolWindowId="Run" isLogByDefault="false" hideFromSettings="true"/>
     <notificationGroup id="feedback.form" displayType="BALLOON" bundle="messages.ApplicationBundle" key="feedback.form.notification.group"/>
     <notificationGroup id="PerformanceWatcher" displayType="STICKY_BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.performance.watcher"/>
+    <notificationGroup id="WindowsDefender" displayType="BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.defender.config"/>
 
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
     <registryKey key="html.editor.timeout" defaultValue="15000" description="HTML editor content loading timeout, ms"/>
@@ -1425,13 +1426,16 @@
   </extensions>
 
   <applicationListeners>
-    <listener class="com.intellij.ide.plugins.DynamicPluginsFrameStateListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-    <listener class="com.intellij.openapi.updateSettings.impl.UpdateCheckerService$MyAppLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"/>
-    <listener class="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider$LifecycleListener" topic="com.intellij.ide.AppLifecycleListener"/>
-    <listener class="com.intellij.ui.mac.MergeAllWindowsAction$RecentProjectsFullScreenTabSupport" topic="com.intellij.ide.AppLifecycleListener"/>
-
-    <listener class="com.intellij.openapi.vcs.FileStatusFactoryImpl$PluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
-
+    <listener class="com.intellij.ide.plugins.DynamicPluginsFrameStateListener"
+              topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+    <listener class="com.intellij.openapi.updateSettings.impl.UpdateCheckerService$MyAppLifecycleListener"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+    <listener class="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider$LifecycleListener"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+    <listener class="com.intellij.ui.mac.MergeAllWindowsAction$RecentProjectsFullScreenTabSupport"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+    <listener class="com.intellij.openapi.vcs.FileStatusFactoryImpl$PluginListener"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener" activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.ide.ui.UISettingsListener"/>
     <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener" activeInHeadlessMode="false" activeInTestMode="false"
@@ -1443,47 +1447,37 @@
     <listener class="com.intellij.openapi.fileTypes.StdFileTypes$StdFileTypesUpdater" activeInHeadlessMode="true" activeInTestMode="false"
               topic="com.intellij.openapi.fileTypes.FileTypeListener"/>
     <listener class="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger$TypingEventsListener" activeInHeadlessMode="true"
-              activeInTestMode="false"
-              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
+              topic="com.intellij.openapi.actionSystem.ex.AnActionListener" activeInTestMode="false"/>
     <listener class="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger$TypingLatencyReporter"
-              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"
-              activeInTestMode="false"/>
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener" activeInTestMode="false"/>
     <listener class="com.intellij.featureStatistics.StatisticsStateCollectorsTrigger" activeInTestMode="false" activeInHeadlessMode="false"
               topic="com.intellij.ide.AppLifecycleListener"/>
-
-
-    <listener class="com.intellij.ide.plugins.CreateAllServicesAndExtensionsActivity" topic="com.intellij.ide.AppLifecycleListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
+    <listener class="com.intellij.ide.plugins.CreateAllServicesAndExtensionsActivity"
+              topic="com.intellij.ide.AppLifecycleListener" activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener"
               topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
     <listener class="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener$CurrentActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
     <listener class="com.intellij.ide.impl.UntrustedProjectNotificationProvider$TrustedListener"
-              topic="com.intellij.ide.impl.trustedProjects.TrustedProjectsListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
+              topic="com.intellij.ide.impl.trustedProjects.TrustedProjectsListener" activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="com.intellij.ide.impl.TrustStateListener$Bridge"
-              topic="com.intellij.ide.impl.trustedProjects.TrustedProjectsListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
-
+              topic="com.intellij.ide.impl.trustedProjects.TrustedProjectsListener" activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="com.intellij.openapi.util.registry.EarlyAccessRegistryManager$MyListener"
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
     <listener class="com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings$ToolbarRegistryListener"
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
     <listener class="com.intellij.ui.ExperimentalUI$NewUiRegistryListener"
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
-
-    <listener class="com.intellij.ide.FrameStateManagerAppListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-
-    <listener class="com.intellij.diagnostic.FusFreezeReporter" topic="com.intellij.diagnostic.IdePerformanceListener"/>
-
+    <listener class="com.intellij.ide.FrameStateManagerAppListener"
+              topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+    <listener class="com.intellij.diagnostic.FusFreezeReporter"
+              topic="com.intellij.diagnostic.IdePerformanceListener"/>
     <listener class="com.intellij.openapi.keymap.impl.KeymapFlagsStorageListener"
               topic="com.intellij.openapi.keymap.KeymapManagerListener"/>
-
     <listener class="com.intellij.ide.plugins.advertiser.OnDemandDependencyFeatureCollector"
-              topic="com.intellij.ide.AppLifecycleListener"
-              activeInHeadlessMode="false"
-              activeInTestMode="false"/>
+              topic="com.intellij.ide.AppLifecycleListener" activeInHeadlessMode="false" activeInTestMode="false"/>
   </applicationListeners>
+
   <projectListeners>
     <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener"
               activeInHeadlessMode="false"
