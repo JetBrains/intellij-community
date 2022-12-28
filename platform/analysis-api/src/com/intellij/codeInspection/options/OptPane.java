@@ -10,10 +10,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -86,6 +83,16 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
    */
   public @NotNull OptPane prefix(@NotNull String bindPrefix) {
     return new OptPane(ContainerUtil.map(components(), c -> c.prefix(bindPrefix)));
+  }
+
+  /**
+   * @param components to append
+   * @return a new OptPane containing all components from this pane and all the specified components
+   */
+  public @NotNull OptPane append(@NotNull OptRegularComponent @NotNull ... components) {
+    var newComponents = new ArrayList<>(components());
+    ContainerUtil.addAll(newComponents, components);
+    return new OptPane(newComponents);
   }
 
   /* DSL */
