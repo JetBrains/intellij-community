@@ -70,9 +70,9 @@ class SpellCheckerManager(val project: Project) : Disposable {
     projectDictionaryPath = if (projectStoreDir == null) "" else projectStoreDir.path + File.separator + PROJECT_DICTIONARY_PATH
     appDictionaryPath = PathManager.getOptionsPath() + File.separator + CACHED_DICTIONARY_FILE
     LocalFileSystem.getInstance().addVirtualFileListener(CustomDictFileListener(project = project, manager = this), this)
-    BUNDLED_EP_NAME.addChangeListener({ fillEngineDictionary() }, this)
-    RuntimeDictionaryProvider.EP_NAME.addChangeListener({ fillEngineDictionary() }, this)
-    CustomDictionaryProvider.EP_NAME.addChangeListener({ fillEngineDictionary() }, this)
+    BUNDLED_EP_NAME.addChangeListener({ fillEngineDictionary(spellChecker!!) }, this)
+    RuntimeDictionaryProvider.EP_NAME.addChangeListener({ fillEngineDictionary(spellChecker!!) }, this)
+    CustomDictionaryProvider.EP_NAME.addChangeListener({ fillEngineDictionary(spellChecker!!) }, this)
   }
 
   companion object {
@@ -108,9 +108,10 @@ class SpellCheckerManager(val project: Project) : Disposable {
   }
 
   fun fullConfigurationReload() {
-    spellChecker = GrazieSpellCheckerEngine(project)
-    suggestionProvider = GrazieSuggestionProvider(spellChecker!!)
-    fillEngineDictionary()
+    val spellChecker = GrazieSpellCheckerEngine(project)
+    this.spellChecker = spellChecker
+    suggestionProvider = GrazieSuggestionProvider(spellChecker)
+    fillEngineDictionary(spellChecker)
   }
 
   fun updateBundledDictionaries(removedDictionaries: List<String?>) {
@@ -132,7 +133,7 @@ class SpellCheckerManager(val project: Project) : Disposable {
           spellChecker.removeDictionary(dictionary.name)
         }
         else if (!dictionaryIsLoad && dictionaryShouldBeLoad) {
-          this.spellChecker!!.addDictionary(dictionary)
+          spellChecker.addDictionary(dictionary)
         }
       }
     }
@@ -157,8 +158,7 @@ class SpellCheckerManager(val project: Project) : Disposable {
   val userDictionaryWords: Set<String>
     get() = projectDictionary!!.editableWords + appDictionary!!.editableWords
 
-  private fun fillEngineDictionary() {
-    val spellChecker = spellChecker!!
+  private fun fillEngineDictionary(spellChecker: SpellCheckerEngine) {
     spellChecker.reset()
     val settings = SpellCheckerSettings.getInstance(project)
     loadBundledDictionaries(spellChecker)
@@ -176,22 +176,22 @@ class SpellCheckerManager(val project: Project) : Disposable {
     }
 
     // Load custom dictionaries
-    initUserDictionaries()
+    initUserDictionaries(spellChecker)
   }
 
-  private fun initUserDictionaries() {
+  private fun initUserDictionaries(spellChecker: SpellCheckerEngine) {
     val appDictionaryState = AppDictionaryState.getInstance()
     appDictionaryState.addAppDictListener({ restartInspections() }, this)
     if (appDictionaryState.dictionary == null) {
       appDictionaryState.dictionary = UserDictionary(AppDictionaryState.DEFAULT_NAME)
     }
     appDictionary = appDictionaryState.dictionary
-    spellChecker!!.addModifiableDictionary(appDictionary!!)
+    spellChecker.addModifiableDictionary(appDictionary!!)
     val dictionaryState = project.service<ProjectDictionaryState>()
     dictionaryState.addProjectDictListener { restartInspections() }
     projectDictionary = dictionaryState.projectDictionary
     projectDictionary!!.setActiveName(System.getProperty("user.name"))
-    spellChecker!!.addModifiableDictionary(projectDictionary!!)
+    spellChecker.addModifiableDictionary(projectDictionary!!)
   }
 
   internal fun loadDictionary(path: String) {

@@ -31,14 +31,10 @@ internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
   override fun getTransformation(): Transformation = Transformation()
 
   private val loader = WordListLoader(project)
-
   private val adapter = WordListAdapter()
 
-  private val speller: GrazieAsyncSpeller = GrazieAsyncSpeller(project) {
-    GrazieSplittingSpeller(
-      GrazieSpeller(createSpellerConfig()),
-      GrazieSplittingSpeller.UserConfig()
-    )
+  private val speller = GrazieAsyncSpeller(project) {
+    GrazieSplittingSpeller(speller = GrazieSpeller(createSpellerConfig()), config = GrazieSplittingSpeller.UserConfig())
   }
 
   private suspend fun createSpellerConfig(): GrazieSpeller.UserConfig {
