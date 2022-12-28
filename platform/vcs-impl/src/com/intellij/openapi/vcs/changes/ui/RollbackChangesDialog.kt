@@ -75,6 +75,8 @@ class RollbackChangesDialog private constructor(private val project: Project,
 
     val hasNewFiles = includedChanges.any { change -> change.type == Change.Type.NEW }
     deleteLocallyAddedFilesCheckBox.isEnabled = hasNewFiles
+
+    okAction.isEnabled = includedChanges.isNotEmpty()
   }
 
   override fun doOKAction() {
