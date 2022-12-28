@@ -195,8 +195,8 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       var replacements = fString2Replacements.get(fString);
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(fString.getProject());
 
-      var replacementsSegments = ContainerUtil.map(replacements, it -> Pair.create(it.first.getTextRangeInParent(), it.second));
-      replacementsSegments.sort(Comparator.comparingInt(it -> -it.first.getStartOffset()));
+      var replacementsSegments = ContainerUtil.sorted(ContainerUtil.map(replacements, it -> Pair.create(it.first.getTextRangeInParent(), it.second)),
+      Comparator.comparingInt(it -> -it.first.getStartOffset()));
 
       StringBuilder elementStringBuilder = new StringBuilder(fString.getText());
       for (var segment : replacementsSegments) {

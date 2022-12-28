@@ -91,7 +91,7 @@ public class HgBranchPopupActions {
       .toList();
     int topShownBookmarks = getNumOfTopShownBranches(bookmarkActions);
     if (currentBookmark != null) {
-      bookmarkActions.add(0, new CurrentActiveBookmark(myProject, Collections.singletonList(myRepository), currentBookmark));
+      bookmarkActions = ContainerUtil.prepend(bookmarkActions, new CurrentActiveBookmark(myProject, Collections.singletonList(myRepository), currentBookmark));
       topShownBookmarks++;
     }
     wrapWithMoreActionIfNeeded(myProject, popupGroup, bookmarkActions, topShownBookmarks,
@@ -107,8 +107,8 @@ public class HgBranchPopupActions {
       .filter(b -> !b.equals(myRepository.getCurrentBranch()))
       .map(b -> new BranchActions(myProject, Collections.singletonList(myRepository), b))
       .sorted(FAVORITE_BRANCH_COMPARATOR)
+      .prepend(new CurrentBranch(myProject, Collections.singletonList(myRepository), myRepository.getCurrentBranch()))
       .toList();
-    branchActions.add(0, new CurrentBranch(myProject, Collections.singletonList(myRepository), myRepository.getCurrentBranch()));
     wrapWithMoreActionIfNeeded(myProject, popupGroup, branchActions, getNumOfTopShownBranches(branchActions) + 1,
                                firstLevelGroup ? HgBranchPopup.SHOW_ALL_BRANCHES_KEY : null, firstLevelGroup);
     return popupGroup;

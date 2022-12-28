@@ -833,9 +833,10 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
             myFilesToRefresh.add(parent.getVirtualFile());
           }
         }
-        deletedFilesFiles.removeAll(filesToProcess);
         for (FilePath file : deletedFilesFiles) {
-          FileUtil.delete(file.getIOFile());
+          if (!filesToProcess.contains(file)) {
+            FileUtil.delete(file.getIOFile());
+          }
         }
       }
     }
