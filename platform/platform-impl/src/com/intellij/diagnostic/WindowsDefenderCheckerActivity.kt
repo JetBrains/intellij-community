@@ -10,25 +10,23 @@ import com.intellij.notification.NotificationAction.createSimpleExpiring
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.NlsContexts
-import kotlinx.coroutines.launch
 import java.nio.file.Path
 
 private val LOG = logger<WindowsDefenderCheckerActivity>()
 
 internal class WindowsDefenderCheckerActivity : ProjectPostStartupActivity {
-  // is called directly from `ResetWindowsDefenderNotification`
-  override fun runActivity(project: Project) {
-    @Suppress("DEPRECATION")
-    project.coroutineScope.launch { execute(project) }
+  init {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      throw ExtensionNotApplicableException.create()
+    }
   }
 
   override suspend fun execute(project: Project) {
-    if (ApplicationManager.getApplication().isUnitTestMode) return
-
     val checker = WindowsDefenderChecker.getInstance()
     if (checker.isStatusCheckIgnored(project)) {
       LOG.info("status check is disabled")

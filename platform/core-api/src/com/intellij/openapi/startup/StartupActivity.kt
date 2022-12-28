@@ -26,7 +26,7 @@ interface StartupActivity {
   @Obsolete
   interface DumbAware : StartupActivity, com.intellij.openapi.project.DumbAware
 
-  @Obsolete
+  @Deprecated("Use ProjectPostStartupActivity")
   interface Background : StartupActivity, com.intellij.openapi.project.DumbAware
 }
 

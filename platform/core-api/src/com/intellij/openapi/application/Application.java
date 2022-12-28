@@ -52,13 +52,7 @@ import java.util.concurrent.Future;
  * See also <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>.
  */
 public interface Application extends ComponentManager {
-  /**
-   * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
-   * with {@link ModalityState#defaultModalityState()} modality state.
-   *
-   * @param action the runnable to execute.
-   */
-  @ApiStatus.Experimental
+  @ApiStatus.Obsolete
   void invokeLaterOnWriteThread(@NotNull Runnable action);
 
   /**
@@ -68,7 +62,7 @@ public interface Application extends ComponentManager {
    * @param action the runnable to execute.
    * @param modal  the state in which action will be executed
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Obsolete
   void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal);
 
   /**
@@ -80,7 +74,7 @@ public interface Application extends ComponentManager {
    * @param modal   the state in which action will be executed
    * @param expired condition to check before execution.
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Obsolete
   void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired);
 
   /**

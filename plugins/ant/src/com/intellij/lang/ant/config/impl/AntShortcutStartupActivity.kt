@@ -1,44 +1,47 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.lang.ant.config.impl;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.lang.ant.config.impl
 
-import com.intellij.lang.ant.AntDisposable;
-import com.intellij.lang.ant.config.AntConfiguration;
-import com.intellij.lang.ant.config.actions.TargetActionStub;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.extensions.ExtensionPointUtil;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.lang.ant.AntDisposable
+import com.intellij.lang.ant.config.AntConfiguration
+import com.intellij.lang.ant.config.actions.TargetActionStub
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.keymap.ex.KeymapManagerEx
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.util.Disposer
 
-final class AntShortcutStartupActivity implements StartupActivity {
-  @Override
-  public void runActivity(@NotNull Project project) {
-    Disposable activityDisposable = ExtensionPointUtil.createExtensionDisposable(this, StartupActivity.POST_STARTUP_ACTIVITY);
-    Disposer.register(AntDisposable.getInstance(project), activityDisposable);
+private class AntShortcutStartupActivity : ProjectPostStartupActivity {
+  init {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
 
-    final String prefix = AntConfiguration.getActionIdPrefix(project);
-    final ActionManager actionManager = ActionManager.getInstance();
-
-    for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
-      for (String id : keymap.getActionIdList()) {
+  override suspend fun execute(project: Project) {
+    val prefix = AntConfiguration.getActionIdPrefix(project)
+    val actionManager = ApplicationManager.getApplication().serviceAsync<ActionManager>().await()
+    for (keymap in KeymapManagerEx.getInstanceEx().allKeymaps) {
+      for (id in keymap.actionIdList) {
         if (id.startsWith(prefix) && actionManager.getAction(id) == null) {
-          actionManager.registerAction(id, new TargetActionStub(id, project));
+          actionManager.registerAction(id, TargetActionStub(id, project))
         }
       }
     }
 
-    Disposer.register(activityDisposable, () -> unregisterAction(project));
+    Disposer.register(AntDisposable.getInstance(project), Disposable {
+      unregisterAction(project)
+    })
   }
+}
 
-  private static void unregisterAction(@NotNull Project project) {
-    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    for (String oldId : actionManager.getActionIdList(AntConfiguration.getActionIdPrefix(project))) {
-      actionManager.unregisterAction(oldId);
-    }
+private fun unregisterAction(project: Project) {
+  val actionManager = ActionManagerEx.getInstanceEx()
+  for (oldId in actionManager.getActionIdList(AntConfiguration.getActionIdPrefix(project))) {
+    actionManager.unregisterAction(oldId)
   }
 }

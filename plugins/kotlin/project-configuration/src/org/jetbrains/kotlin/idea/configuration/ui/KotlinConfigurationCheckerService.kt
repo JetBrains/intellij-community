@@ -12,26 +12,26 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.isKotlinLanguageVersionConfigured
 import org.jetbrains.kotlin.idea.configuration.getModulesWithKotlinFiles
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.getLibraryLanguageLevel
+import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.platform.idePlatformKind
 import java.util.concurrent.atomic.AtomicInteger
 
-class KotlinConfigurationCheckerStartupActivity : StartupActivity.Background {
-    override fun runActivity(project: Project) {
+private class KotlinConfigurationCheckerStartupActivity : ProjectPostStartupActivity {
+    override suspend fun execute(project: Project) {
         KotlinConfigurationCheckerService.getInstance(project).performProjectPostOpenActions()
     }
 }
 
-class KotlinConfigurationCheckerService(val project: Project) {
+class KotlinConfigurationCheckerService(private val project: Project) {
     private val syncDepth = AtomicInteger()
 
     fun performProjectPostOpenActions() {

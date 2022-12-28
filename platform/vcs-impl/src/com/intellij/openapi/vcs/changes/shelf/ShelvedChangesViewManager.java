@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -1136,10 +1137,10 @@ public class ShelvedChangesViewManager implements Disposable {
   }
 
   /**
-   * @deprecated Implement {@link StartupActivity.Background} directly.
+   * @deprecated Implement {@link com.intellij.openapi.startup.ProjectPostStartupActivity} directly.
    */
   @Deprecated
-  public static class PostStartupActivity implements StartupActivity.Background {
+  public static class PostStartupActivity implements StartupActivity, DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
       throw new UnsupportedOperationException();
