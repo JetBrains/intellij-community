@@ -162,12 +162,11 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
   private class UnusedVariablesGraphAnnotator extends RefGraphAnnotator {
     private final InspectionManager myInspectionManager;
     private final GlobalInspectionContextImpl myContext;
-    private final Tools myTools;
+    private Tools myTools;
 
     UnusedVariablesGraphAnnotator(InspectionManager inspectionManager, RefManager refManager) {
       myInspectionManager = inspectionManager;
       myContext = (GlobalInspectionContextImpl)((RefManagerImpl)refManager).getContext();
-      myTools = myContext.getTools().get(getShortName());
     }
 
     @Override
@@ -202,8 +201,12 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
       if (body == null) return;
       PsiElement psiBody = body.getSourcePsi();
       if (psiBody == null) return;
-      if (!myTools.isEnabled(psiBody)) return;
-      InspectionToolWrapper toolWrapper = myTools.getInspectionTool(psiBody);
+      Tools tools = myTools;
+      if (tools == null) {
+        myTools = tools = myContext.getTools().get(getShortName());
+      }
+      if (!tools.isEnabled(psiBody)) return;
+      InspectionToolWrapper<?,?> toolWrapper = tools.getInspectionTool(psiBody);
       InspectionToolPresentation presentation = myContext.getPresentation(toolWrapper);
       if (((UnusedDeclarationInspection)toolWrapper.getTool()).getSharedLocalInspectionTool().LOCAL_VARIABLE) {
         List<CommonProblemDescriptor> descriptors = new ArrayList<>();
@@ -214,7 +217,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
       }
     }
 
-    private void findUnusedLocalVariablesInElement(@NotNull PsiElement element, @NotNull List<CommonProblemDescriptor> descriptors) {
+    private void findUnusedLocalVariablesInElement(@NotNull PsiElement element, @NotNull List<? super CommonProblemDescriptor> descriptors) {
       Set<PsiVariable> usedVariables = new HashSet<>();
       List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(element, usedVariables);
       if (unusedDefs != null && !unusedDefs.isEmpty()) {
