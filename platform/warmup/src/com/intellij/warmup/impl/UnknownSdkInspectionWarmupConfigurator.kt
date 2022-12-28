@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.projectRoots.impl
+package com.intellij.warmup.impl
 
-import com.intellij.ide.warmup.WarmupConfiguratorOfCLIConfigurator
+import com.intellij.openapi.projectRoots.impl.UnknownSdkInspectionCommandLineConfigurator
 
 class UnknownSdkInspectionWarmupConfigurator : WarmupConfiguratorOfCLIConfigurator(UnknownSdkInspectionCommandLineConfigurator())

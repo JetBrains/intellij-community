@@ -1,14 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.warmup
+package com.intellij.warmup.impl
 
 import com.intellij.ide.CommandLineInspectionProgressReporter
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
+import com.intellij.ide.warmup.WarmupConfigurator
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.warmup.util.ConsoleLog
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.function.Predicate
@@ -22,17 +24,17 @@ import kotlin.coroutines.coroutineContext
 @ApiStatus.Obsolete
 abstract class WarmupConfiguratorOfCLIConfigurator(val delegate: CommandLineInspectionProjectConfigurator) : WarmupConfigurator {
 
-  override suspend fun prepareEnvironment(projectPath: Path, logger: WarmupEventsLogger) =
+  override suspend fun prepareEnvironment(projectPath: Path) =
     withRawProgressReporter {
-      val context = produceConfigurationContext(projectPath, logger)
+      val context = produceConfigurationContext(projectPath)
       blockingContext {
         delegate.configureEnvironment(context)
       }
     }
 
-  override suspend fun runWarmup(project: Project, logger: WarmupEventsLogger): Boolean =
+  override suspend fun runWarmup(project: Project): Boolean =
     withRawProgressReporter {
-      val context = produceConfigurationContext(project.guessProjectDir()?.path?.let(Path::of), logger)
+      val context = produceConfigurationContext(project.guessProjectDir()?.path?.let(Path::of))
       blockingContext {
         delegate.configureProject(project, context)
         false
@@ -42,8 +44,7 @@ abstract class WarmupConfiguratorOfCLIConfigurator(val delegate: CommandLineInsp
   override val name: String
     get() = delegate.name
 
-  private suspend fun produceConfigurationContext(projectDir: Path?,
-                                                  logger: WarmupEventsLogger): CommandLineInspectionProjectConfigurator.ConfiguratorContext {
+  private suspend fun produceConfigurationContext(projectDir: Path?): CommandLineInspectionProjectConfigurator.ConfiguratorContext {
     val reporter = coroutineContext.rawProgressReporter
     if (reporter == null) {
       LOG.warn("No ProgressReporter installed to the coroutine context. Message reporting is disabled")
@@ -51,9 +52,9 @@ abstract class WarmupConfiguratorOfCLIConfigurator(val delegate: CommandLineInsp
     return object : CommandLineInspectionProjectConfigurator.ConfiguratorContext {
 
       override fun getLogger(): CommandLineInspectionProgressReporter = object : CommandLineInspectionProgressReporter {
-        override fun reportError(message: String?) = message?.let(logger::logError) ?: Unit
+        override fun reportError(message: String?) = message?.let { ConsoleLog.warn("PROGRESS: $it") } ?: Unit
 
-        override fun reportMessage(minVerboseLevel: Int, message: String?) = message?.let { logger.logMessage(minVerboseLevel, it) } ?: Unit
+        override fun reportMessage(minVerboseLevel: Int, message: String?) = message?.let { ConsoleLog.info("PROGRESS: $it") } ?: Unit
       }
 
       /**

@@ -8,7 +8,6 @@ import com.intellij.ide.impl.PatchProjectUtil
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.warmup.WarmupConfigurator
-import com.intellij.ide.warmup.WarmupEventsLogger
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressIndicator
@@ -57,7 +56,7 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
   callProjectConversion(args)
 
   callProjectConfigurators(args) {
-    this.prepareEnvironment(args.projectDir, listener)
+    this.prepareEnvironment(args.projectDir)
   }
 
   val project = runTaskAndLogTime("open project") {
@@ -75,7 +74,7 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
   yieldAndWaitForDumbModeEnd(project)
 
   callProjectConfigurators(args) {
-    this.runWarmup(project, listener)
+    this.runWarmup(project)
 
     //the configuration may add more dumb tasks to complete
     //we flush the queue to avoid a deadlock between a modal progress & invokeLater
@@ -115,14 +114,7 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
   return project
 }
 
-private val listener = object : ConversionListener, WarmupEventsLogger {
-  override fun logError(message: String) {
-    LOG.warn("PROGRESS: $message")
-  }
-
-  override fun logMessage(verbosityLevel: Int, message: String) {
-    LOG.info("PROGRESS: $message")
-  }
+private val listener = object : ConversionListener {
 
   override fun error(message: String) {
     LOG.warn("PROGRESS: $message")
@@ -174,7 +166,7 @@ private suspend fun callProjectConfigurators(
 
   val activeConfigurators = WarmupConfigurator.EP_NAME.extensionList.filter {
     if (it.name in projectArgs.disabledConfigurators) {
-      listener.logMessage(1, "Configurator ${it.name} is disabled in the settings")
+      ConsoleLog.info("Configurator ${it.name} is disabled in the settings")
       false
     } else {
       true

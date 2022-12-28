@@ -16,7 +16,7 @@ import java.nio.file.Path
 interface WarmupConfigurator {
 
   companion object {
-    val EP_NAME: ExtensionPointName<WarmupConfigurator> = ExtensionPointName("com.intellij.warmupConfiguration")
+    val EP_NAME: ExtensionPointName<WarmupConfigurator> = ExtensionPointName("com.intellij.warmupConfigurator")
   }
 
   /**
@@ -29,11 +29,11 @@ interface WarmupConfigurator {
    * Called **before** opening the project.
    *
    * This method helps to configure the behavior of some startup activities,
-   * i.e. disable auto import of build systems or specify the needed system properties.
+   * i.e. specifying the needed system properties.
    *
    * @param projectPath a path to the directory passed to warm-up process.
    */
-  suspend fun prepareEnvironment(projectPath: Path, logger: WarmupEventsLogger) {}
+  suspend fun prepareEnvironment(projectPath: Path) {}
 
   /**
    * Called **after** opening the project.
@@ -43,5 +43,5 @@ interface WarmupConfigurator {
    * @return `true` if some globally visible changes to the project have been performed
    * or `false` otherwise
    */
-  suspend fun runWarmup(project: Project, logger: WarmupEventsLogger): Boolean
+  suspend fun runWarmup(project: Project): Boolean
 }
