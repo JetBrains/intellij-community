@@ -3,6 +3,7 @@ package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.resources.ImplicitResourceCloser;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
@@ -83,6 +84,12 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
       .add("java.io.PrintWriter", "printf")
       .add("java.io.PrintStream", "printf")
       .finishDefault();
+  }
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    // To temporarily salvage createOptionsPanel() until we support tables
+    return OptPane.EMPTY;
   }
 
   /**

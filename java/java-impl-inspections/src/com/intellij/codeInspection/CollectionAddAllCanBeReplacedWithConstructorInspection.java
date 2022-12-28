@@ -6,6 +6,8 @@ import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.TextRange;
@@ -25,7 +27,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
@@ -47,10 +48,14 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
     mySettings.writeSettings(node);
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return mySettings.createOptionsPanel();
+  public @NotNull OptPane getOptionsPane() {
+    return mySettings.getOptionPane();
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return mySettings.getOptionController();
   }
 
   @Override

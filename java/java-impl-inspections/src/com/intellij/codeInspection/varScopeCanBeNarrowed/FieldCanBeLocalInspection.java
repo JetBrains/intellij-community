@@ -6,10 +6,10 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
@@ -36,8 +36,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "FieldCanBeLocal";
@@ -107,16 +108,13 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     }
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JPanel listPanel = SpecialAnnotationsUtil
-      .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, JavaBundle.message("special.annotations.annotations.list"));
-
-    panel.addCheckbox(JavaBundle.message("checkbox.ignore.fields.used.in.multiple.methods"), "IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS");
-    panel.addGrowing(listPanel);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringSet("EXCLUDE_ANNOS", JavaBundle.message("special.annotations.annotations.list"),
+                new JavaClassValidator().annotationsOnly()),
+      checkbox("IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS", JavaBundle.message("checkbox.ignore.fields.used.in.multiple.methods"))
+    );
   }
 
   private static @NotNull PsiClass findVariableScope(@NotNull PsiClass containingClass) {

@@ -17,6 +17,8 @@ package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -28,23 +30,24 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IgnoreClassFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringSet;
 
 public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public OrderedSet<String> ignoredClasses = new OrderedSet<>();
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return UiUtils.createTreeClassChooserList(ignoredClasses,
-                                              InspectionGadgetsBundle.message("options.label.ignored.classes"),
-                                              InspectionGadgetsBundle.message("choose.class.type.to.ignore"));
+  public @NotNull OptPane getOptionsPane() {
+    return pane(stringSet(
+      "ignoredClasses", InspectionGadgetsBundle.message("options.label.ignored.classes"), 
+      new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.class.type.to.ignore"))
+    ));
   }
 
   @Nullable

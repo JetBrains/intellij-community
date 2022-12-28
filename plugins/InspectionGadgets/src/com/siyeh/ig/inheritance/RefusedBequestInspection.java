@@ -2,9 +2,9 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * @author Bas Leijdekkers
@@ -38,16 +38,13 @@ public class RefusedBequestInspection extends BaseInspection {
   @SuppressWarnings("PublicField") public boolean onlyReportWhenAnnotated = true;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(annotations, null);
-
-    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.refused.bequest.super.annotated.option"), "onlyReportWhenAnnotated");
-    panel.addGrowing(annotationsListControl);
-    panel.addCheckbox(InspectionGadgetsBundle.message("refused.bequest.ignore.empty.super.methods.option"), "ignoreEmptySuperMethods");
-    panel.addCheckbox(InspectionGadgetsBundle.message("refused.bequest.ignore.default.super.methods.option"), "ignoreDefaultSuperMethods");
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyReportWhenAnnotated", InspectionGadgetsBundle.message("inspection.refused.bequest.super.annotated.option"),
+               stringSet("annotations", "", new JavaClassValidator().annotationsOnly())),
+      checkbox("ignoreEmptySuperMethods", InspectionGadgetsBundle.message("refused.bequest.ignore.empty.super.methods.option")),
+      checkbox("ignoreDefaultSuperMethods", InspectionGadgetsBundle.message("refused.bequest.ignore.default.super.methods.option"))
+    );
   }
 
   @Nullable

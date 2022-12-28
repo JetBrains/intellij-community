@@ -16,9 +16,9 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
@@ -44,6 +44,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
@@ -52,14 +54,12 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
   public boolean ignoreClassesWithOnlyMain = false;
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JPanel annotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-    panel.addGrowing(annotationsPanel);
-    panel.addCheckbox(InspectionGadgetsBundle.message("utility.class.without.private.constructor.option"), "ignoreClassesWithOnlyMain");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringSet("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                new JavaClassValidator().annotationsOnly()),
+      checkbox("ignoreClassesWithOnlyMain", InspectionGadgetsBundle.message("utility.class.without.private.constructor.option"))
+    );
   }
 
   @Override

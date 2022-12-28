@@ -55,7 +55,8 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
   public @NotNull OptPane getOptionsPane() {
     return pane(
       stringSet("loggerNames", InspectionGadgetsBundle.message("logger.class.name"),
-                        new JavaClassValidator(null, false))
+                        new JavaClassValidator()
+                          .withTitle(InspectionGadgetsBundle.message("choose.logger.class")))
     );
   }
 

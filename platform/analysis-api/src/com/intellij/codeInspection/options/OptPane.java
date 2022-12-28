@@ -86,8 +86,18 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
   }
 
   /**
+   * @param components to prepend
+   * @return a new OptPane containing all the specified components, then the components from this pane
+   */
+  public @NotNull OptPane prepend(@NotNull OptRegularComponent @NotNull ... components) {
+    var newComponents = new ArrayList<>(Arrays.asList(components));
+    newComponents.addAll(components());
+    return new OptPane(newComponents);
+  }
+
+  /**
    * @param components to append
-   * @return a new OptPane containing all components from this pane and all the specified components
+   * @return a new OptPane containing all components from this pane, then all the specified components
    */
   public @NotNull OptPane append(@NotNull OptRegularComponent @NotNull ... components) {
     var newComponents = new ArrayList<>(components());
