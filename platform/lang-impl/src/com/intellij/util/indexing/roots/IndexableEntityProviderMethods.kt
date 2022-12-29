@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.application.runReadAction
@@ -24,17 +24,13 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 object IndexableEntityProviderMethods {
   fun createIterators(entity: ModuleEntity,
                       roots: List<VirtualFile>,
-                      storage: EntityStorage,
-                      project: Project): Collection<IndexableFilesIterator> {
+                      storage: EntityStorage): Collection<IndexableFilesIterator> {
     if (roots.isEmpty()) return emptyList()
     val module = entity.findModule(storage) ?: return emptyList()
-    return createIterators(module, roots, project)
+    return createIterators(module, roots)
   }
 
-  fun createIterators(module: Module, roots: List<VirtualFile>, project: Project): Collection<IndexableFilesIterator> {
-    if (IndexableFilesIndex.isIntegrationFullyEnabled()) {
-      return IndexableFilesIndex.getInstance(project).getModuleIterators(module, roots)
-    }
+  fun createIterators(module: Module, roots: List<VirtualFile>): Collection<IndexableFilesIterator> {
     return setOf(ModuleIndexableFilesIteratorImpl(module, roots, true))
   }
 

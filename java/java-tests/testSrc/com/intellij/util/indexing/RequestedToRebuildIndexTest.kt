@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.ide.startup.ServiceNotReadyException
@@ -38,7 +38,7 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
     val moduleEntity = storage.entities(ModuleEntity::class.java).iterator().next()
     assertNotNull(moduleEntity)
-    val iterators = createIterators(moduleEntity, listOf(fileA), storage, project)
+    val iterators = createIterators(moduleEntity, listOf(fileA), storage)
     UnindexedFilesUpdater(myFixture.project, ArrayList(iterators), null,
                           "Partial reindex of one of two indexable files").queue()
   }

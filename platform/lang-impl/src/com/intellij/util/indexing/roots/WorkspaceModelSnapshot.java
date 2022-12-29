@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.google.common.collect.ImmutableList;
@@ -302,28 +302,6 @@ record WorkspaceModelSnapshot(@NotNull ActualEntitiesSnapshot actualEntities,
   @NotNull
   public IndexableSetIterableOrigin getSdkOrigin(@NotNull Sdk sdk) {
     return sdkSnapshot.getSdkOrigin(sdk);
-  }
-
-  @NotNull
-  static Collection<IndexableFilesIterator> createModuleIterators(@NotNull Iterable<IndexableSetIterableOrigin> origins,
-                                                                  @NotNull Module module,
-                                                                  @Nullable Collection<? extends VirtualFile> filter) {
-    List<IndexableFilesIterator> result = new ArrayList<>();
-    for (IndexableSetIterableOrigin origin : origins) {
-      if (!(origin instanceof ModuleRootOrigin) || !module.equals(((ModuleRootOrigin)origin).getModule())) {
-        continue;
-      }
-      if (filter == null) {
-        result.add(origin.createIterator());
-      }
-      else {
-        ModuleRootIterableOriginImpl copy = ((ModuleRootIterableOriginImpl)origin).copyWithFilteredRoots(filter);
-        if (copy != null) {
-          result.add(copy.createIterator());
-        }
-      }
-    }
-    return result;
   }
 
   private record ModifiableLibrariesSnapshot(MultiMap<LibraryId, EntityReference<ModuleEntity>> dependencies,

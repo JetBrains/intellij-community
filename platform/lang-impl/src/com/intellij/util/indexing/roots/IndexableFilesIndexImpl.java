@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.google.common.collect.ImmutableSet;
@@ -7,7 +7,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.RootsChangeRescanningInfo;
@@ -154,12 +153,6 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       }
       return null;
     });
-  }
-
-  @NotNull
-  @Override
-  public Collection<IndexableFilesIterator> getModuleIterators(@NotNull Module module, @NotNull List<? extends VirtualFile> rootsToFilter) {
-    return snapshotHandler.createModuleIterator(module, rootsToFilter);
   }
 
   private static class ResultingSnapshot {
@@ -483,11 +476,6 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     @NotNull
     public ModuleDependencyListener createModuleDependencyListener() {
       return new MyModuleDependencyListener();
-    }
-
-    @NotNull
-    public Collection<IndexableFilesIterator> createModuleIterator(Module module, Collection<? extends VirtualFile> rootsToFilter) {
-      return WorkspaceModelSnapshot.createModuleIterators(getResultingSnapshot(module.getProject()).origins, module, rootsToFilter);
     }
 
     private class MyModuleDependencyListener implements ModuleDependencyListener {
