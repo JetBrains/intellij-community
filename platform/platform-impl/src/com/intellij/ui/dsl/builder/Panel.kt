@@ -157,6 +157,12 @@ interface Panel : CellBase<Panel> {
   fun buttonsGroup(@NlsContexts.BorderTitle title: String? = null, indent: Boolean = title != null, init: Panel.() -> Unit): ButtonsGroup
 
   /**
+   * Creates [Placeholder] and [K] identified components for it.
+   * These components can be switched using [PlaceholderGroup].
+   */
+  fun <K> placeholderGroup(init: PlaceholderGroup<K>.() -> Unit): PlaceholderGroup<K>
+
+  /**
    * Registers [callback] that will be called from [DialogPanel.apply] method
    */
   fun onApply(callback: () -> Unit): Panel
