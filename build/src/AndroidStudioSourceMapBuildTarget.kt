@@ -1,0 +1,27 @@
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.AndroidStudioProperties
+import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
+import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.generateProjectStructureMapping
+import java.nio.file.Paths
+
+/**
+ * Generates a JSON file which maps IDE distribution jars to their corresponding JPS modules/libraries.
+ * Example usage:
+ *
+ *   ./platform/jps-bootstrap/jps-bootstrap.sh "$PWD" intellij.idea.community.build AndroidStudioSourceMapBuildTarget /path/to/outfile.json
+ */
+object AndroidStudioSourceMapBuildTarget {
+  @JvmStatic
+  fun main(args: Array<String>) {
+    runBlocking {
+      val outfile = args.singleOrNull()
+        ?: error("Expected a single argument specifying the output file path")
+      val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
+      val communityRoot = communityHome.communityRoot
+      val ideProperties = AndroidStudioProperties(communityRoot)
+      val buildContext = BuildContextImpl.createContext(communityHome, communityRoot, ideProperties)
+      generateProjectStructureMapping(Paths.get(outfile), buildContext)
+    }
+  }
+}
