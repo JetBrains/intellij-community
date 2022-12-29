@@ -75,7 +75,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -1032,6 +1031,15 @@ public final class ExternalSystemUtil {
 
   public static @Nullable String getRunnerId(@NotNull String executorId) {
     return RUNNER_IDS.get(executorId);
+  }
+
+  @SuppressWarnings("unused")
+  public static void registerRunnerId(@NotNull String executorId, @NotNull String externalSystemRunnerId)  {
+    if (!RUNNER_IDS.containsKey(executorId)) {
+      RUNNER_IDS.put(executorId, externalSystemRunnerId);
+    } else {
+      throw new ExternalSystemException("Executor with ID " + executorId + " is already registered");
+    }
   }
 
   /**
