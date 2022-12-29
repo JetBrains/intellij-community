@@ -53,8 +53,8 @@ class DescriptorStorageImpl(
       VfsOperationTag.REC_SET_VERSION -> VfsOperation.RecordsOperation.SetVersion.VALUE_SIZE_BYTES
 
       VfsOperationTag.ATTR_WRITE_ATTR -> VfsOperation.AttributesOperation.WriteAttribute.VALUE_SIZE_BYTES
-      VfsOperationTag.ATTR_DELETE_ATTRS -> TODO()
-      VfsOperationTag.ATTR_SET_VERSION -> TODO()
+      VfsOperationTag.ATTR_DELETE_ATTRS -> VfsOperation.AttributesOperation.DeleteAttributes.VALUE_SIZE_BYTES
+      VfsOperationTag.ATTR_SET_VERSION -> VfsOperation.AttributesOperation.SetVersion.VALUE_SIZE_BYTES
 
       VfsOperationTag.CONTENT_WRITE_BYTES -> VfsOperation.ContentsOperation.WriteBytes.VALUE_SIZE_BYTES
       VfsOperationTag.CONTENT_WRITE_STREAM -> TODO()

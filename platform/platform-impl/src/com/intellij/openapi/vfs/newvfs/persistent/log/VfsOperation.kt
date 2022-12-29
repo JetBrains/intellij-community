@@ -302,7 +302,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           DataInputStream(ByteArrayInputStream(data)).run {
             val version = readInt()
             val result = readResult<Unit>(enumerator)
-            SetVersion(version, result)
+            RecordsOperation.SetVersion(version, result)
           }
       }
 
@@ -314,15 +314,6 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           }
           toByteArray()
         }
-    }
-  }
-
-  sealed class ContentsOperation<T : Any>(tag: VfsOperationTag, result: OperationResult<T>) : VfsOperation<T>(tag, result) {
-    class WriteBytes(val recordId: Int, val fixedSize: Boolean, val dataPayloadRef: PayloadRef, result: OperationResult<Unit>)
-      : ContentsOperation<Unit>(VfsOperationTag.CONTENT_WRITE_BYTES, result) {
-      companion object {
-        const val VALUE_SIZE_BYTES = Int.SIZE_BYTES * 2 + 1 + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
-      }
     }
   }
 
@@ -355,6 +346,61 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           toByteArray()
         }
     }
+
+    class DeleteAttributes(val fileId: Int, result: OperationResult<Unit>)
+      : RecordsOperation<Unit>(VfsOperationTag.ATTR_DELETE_ATTRS, result) {
+      companion object {
+        const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + OperationResult.SIZE_BYTES
+
+        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+          DataInputStream(ByteArrayInputStream(data)).run {
+            val fileId = readInt()
+            val result = readResult<Unit>(enumerator)
+            DeleteAttributes(fileId, result)
+          }
+      }
+
+      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+        ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
+          DataOutputStream(this).run {
+            writeInt(fileId)
+            writeInt(result.serialize(enumerator))
+          }
+          toByteArray()
+        }
+    }
+
+    class SetVersion(val version: Int, result: OperationResult<Unit>)
+      : RecordsOperation<Unit>(VfsOperationTag.ATTR_SET_VERSION, result) {
+      companion object {
+        const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + OperationResult.SIZE_BYTES
+
+        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+          DataInputStream(ByteArrayInputStream(data)).run {
+            val version = readInt()
+            val result = readResult<Unit>(enumerator)
+            AttributesOperation.SetVersion(version, result)
+          }
+      }
+
+      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+        ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
+          DataOutputStream(this).run {
+            writeInt(version)
+            writeInt(result.serialize(enumerator))
+          }
+          toByteArray()
+        }
+    }
+  }
+
+  sealed class ContentsOperation<T : Any>(tag: VfsOperationTag, result: OperationResult<T>) : VfsOperation<T>(tag, result) {
+    class WriteBytes(val recordId: Int, val fixedSize: Boolean, val dataPayloadRef: PayloadRef, result: OperationResult<Unit>)
+      : ContentsOperation<Unit>(VfsOperationTag.CONTENT_WRITE_BYTES, result) {
+      companion object {
+        const val VALUE_SIZE_BYTES = Int.SIZE_BYTES * 2 + 1 + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
+      }
+    }
   }
 
   companion object {
@@ -377,8 +423,8 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         VfsOperationTag.REC_SET_VERSION -> RecordsOperation.SetVersion.deserializeValue(data, enumerator) as T
 
         VfsOperationTag.ATTR_WRITE_ATTR -> AttributesOperation.WriteAttribute.deserializeValue(data, enumerator) as T
-        VfsOperationTag.ATTR_DELETE_ATTRS -> TODO()
-        VfsOperationTag.ATTR_SET_VERSION -> TODO()
+        VfsOperationTag.ATTR_DELETE_ATTRS -> AttributesOperation.DeleteAttributes.deserializeValue(data, enumerator) as T
+        VfsOperationTag.ATTR_SET_VERSION -> AttributesOperation.SetVersion.deserializeValue(data, enumerator) as T
 
         VfsOperationTag.CONTENT_WRITE_BYTES -> TODO()
         VfsOperationTag.CONTENT_WRITE_STREAM -> TODO()

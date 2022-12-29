@@ -123,6 +123,6 @@ class VfsLog(
   companion object {
     private val LOG = Logger.getInstance(VfsLog::class.java)
 
-    const val VERSION = -36
+    const val VERSION = -38
   }
 }

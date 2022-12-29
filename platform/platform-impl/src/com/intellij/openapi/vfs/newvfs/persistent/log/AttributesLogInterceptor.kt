@@ -41,4 +41,26 @@ class AttributesLogInterceptor(
         }
       }
     }
+
+  override fun onDeleteAttributes(underlying: (connection: PersistentFSConnection, fileId: Int) -> Unit): (connection: PersistentFSConnection, fileId: Int) -> Unit =
+    { connection, fileId ->
+      { underlying(connection, fileId) } catchResult { result ->
+        processor.enqueue {
+          descriptorStorage.writeDescriptor(VfsOperationTag.ATTR_DELETE_ATTRS) {
+            VfsOperation.AttributesOperation.DeleteAttributes(fileId, result)
+          }
+        }
+      }
+    }
+
+  override fun onSetVersion(underlying: (version: Int) -> Unit): (version: Int) -> Unit =
+    { version ->
+      { underlying(version) } catchResult { result ->
+        processor.enqueue {
+          descriptorStorage.writeDescriptor(VfsOperationTag.ATTR_SET_VERSION) {
+            VfsOperation.AttributesOperation.SetVersion(version, result)
+          }
+        }
+      }
+    }
 }
