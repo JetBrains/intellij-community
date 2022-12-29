@@ -369,7 +369,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
     }
 
     private void addStringVariant(String defaultValueString) {
-      if (!StringUtil.isEmpty(defaultValueString)) {
+      if (defaultValueString != null) {
         String normalizedValue = defaultValueString;
         boolean shouldQuote = myWalker.requiresValueQuotes();
         boolean isQuoted = StringUtil.isQuotedString(normalizedValue);
