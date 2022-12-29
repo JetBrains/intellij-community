@@ -117,13 +117,13 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
   @NotNull
   @Override
   public VisualPosition getSelectionStartPosition() {
-    throw notImplemented();
+    return getEditor().offsetToVisualPosition(myStart);
   }
 
   @NotNull
   @Override
   public VisualPosition getSelectionEndPosition() {
-    throw notImplemented();
+    return getEditor().offsetToVisualPosition(myEnd);
   }
 
   @Nullable
