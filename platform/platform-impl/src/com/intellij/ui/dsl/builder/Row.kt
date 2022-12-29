@@ -377,6 +377,8 @@ interface Row {
 
   fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
 
+  fun <T> comboBox(items: Collection<T>, renderer: (T) -> @Nls String): Cell<ComboBox<T>>
+
   @Deprecated("Use overloaded comboBox(...) with Collection")
   @ApiStatus.ScheduledForRemoval
   fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
