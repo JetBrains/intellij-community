@@ -51,5 +51,17 @@ abstract class PersistentVar<T>(
 
       override fun DataOutput.writeValue(value: Int) = writeInt(value)
     }
+
+    fun long(path: Path) = object : PersistentVar<Long>(path) {
+      override fun DataInput.readValue(): Long? =
+        try {
+          readLong()
+        }
+        catch (e: EOFException) {
+          null
+        }
+
+      override fun DataOutput.writeValue(value: Long) = writeLong(value)
+    }
   }
 }
