@@ -344,7 +344,7 @@ public final class JBCefApp {
       String name = JCefAppConfig.class.getName().replace('.', '/');
       boolean isJbrModule = path != null && path.contains("/jcef/" + name);
       if (!isJbrModule) {
-        return unsupported.apply("JCEF runtime library is not a JBR module");
+        LOG.warn("JCefAppConfig is not from a JBR module, path: " + path);
       }
       ourSupported = new AtomicBoolean(true);
       return true;
