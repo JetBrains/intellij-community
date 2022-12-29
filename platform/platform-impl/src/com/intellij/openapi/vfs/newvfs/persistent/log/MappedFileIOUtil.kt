@@ -63,7 +63,7 @@ class MappedFileIOUtil(
       val toProcessRange = targetRange.cap(pieceRange)
       if (toProcessRange == null) return
       val len = (toProcessRange.last - toProcessRange.first + 1).toInt()
-      body(piece, (toProcessRange.first % PIECE_SIZE).toInt(), len, processed)
+      body(processed, piece, (toProcessRange.first % PIECE_SIZE).toInt(), len)
       processed += len
       piece++
     }

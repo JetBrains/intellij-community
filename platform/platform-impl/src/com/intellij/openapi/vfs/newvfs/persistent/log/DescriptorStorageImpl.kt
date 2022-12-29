@@ -5,6 +5,7 @@ import com.intellij.util.io.UnInterruptibleFileChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.atomic.AtomicLong
@@ -15,7 +16,7 @@ class DescriptorStorageImpl(
 ) : DescriptorStorage {
   private val fileChannel = UnInterruptibleFileChannel(storagePath,
                                                        StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
-  //private val io = MappedFileIOUtil(fileChannel, FileChannel.MapMode.READ_WRITE)
+  private val mmapIO = MappedFileIOUtil(fileChannel, FileChannel.MapMode.READ_WRITE)
   private val position = AtomicLong(fileChannel.size())
 
   override fun bytesForDescriptor(tag: VfsOperationTag): Int =
@@ -76,11 +77,8 @@ class DescriptorStorageImpl(
   }
 
   override suspend fun readAt(position: Long, action: suspend (VfsOperation<*>?) -> Unit) {
-    val buf = ByteBuffer.allocate(VfsOperationTag.SIZE_BYTES)
-    if (fileChannel.read(buf, position) < VfsOperationTag.SIZE_BYTES) {
-      action(null)
-      return
-    }
+    val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
+    mmapIO.read(position, buf)
     validateTagByte(buf[0]) {
       action(null)
       return
@@ -88,11 +86,7 @@ class DescriptorStorageImpl(
     val tag = VfsOperationTag.values()[buf[0].toInt()]
     // check right bound
     val descrSize = bytesForDescriptor(tag)
-    buf.clear()
-    if (fileChannel.read(buf, position + descrSize - VfsOperationTag.SIZE_BYTES) < VfsOperationTag.SIZE_BYTES) {
-      action(null)
-      return
-    }
+    mmapIO.read(position + descrSize - VfsOperationTag.SIZE_BYTES, buf)
     validateTagByte(buf[0]) {
       action(null)
       return
@@ -104,10 +98,7 @@ class DescriptorStorageImpl(
     }
     val bytesToRead = sizeOfValueInDescriptor(bytesForDescriptor(tag))
     val data = ByteArray(bytesToRead)
-    if (fileChannel.read(ByteBuffer.wrap(data), position + VfsOperationTag.SIZE_BYTES) != bytesToRead) {
-      action(null)
-      return
-    }
+    mmapIO.read(position + VfsOperationTag.SIZE_BYTES, data)
     val descr = deserialize<VfsOperation<*>>(tag, data)
     action(descr)
   }
@@ -136,7 +127,8 @@ class DescriptorStorageImpl(
     var pos = 0L
     var cont = true
     coroutineScope {
-      while (cont) {
+      val size = size()
+      while (cont && pos < size) {
         readAt(pos) {
           if (it == null) {
             cont = false
