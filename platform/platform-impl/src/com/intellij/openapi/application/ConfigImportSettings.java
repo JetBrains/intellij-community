@@ -56,7 +56,7 @@ public interface ConfigImportSettings {
   /**
    * Whether a file should be skipped during configuration import.
    */
-  default boolean shouldSkipFile(@NotNull Path path) {
+  default boolean shouldSkipPath(@NotNull Path path) {
     return false;
   }
 }

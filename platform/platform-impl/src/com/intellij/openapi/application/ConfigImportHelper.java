@@ -1162,6 +1162,9 @@ public final class ConfigImportHelper {
              Files.exists(newConfig.resolve(fileName)) ||
              path.startsWith(oldPluginsDir);
     }
+    if (settings != null && settings.shouldSkipPath(path)) {
+      return true; // this check needs to repeat even for non-root paths
+    }
     return false;
   }
 
@@ -1171,7 +1174,7 @@ public final class ConfigImportHelper {
            fileName.equals(ExpiredPluginsState.EXPIRED_PLUGINS_FILENAME) ||
            fileName.startsWith(CHROME_USER_DATA) ||
            fileName.endsWith(".jdk") && fileName.startsWith(String.valueOf(ApplicationNamesInfo.getInstance().getScriptName())) ||
-           (settings != null && settings.shouldSkipFile(path));
+           (settings != null && settings.shouldSkipPath(path));
   }
 
   private static String defaultConfigPath(String selector) {
