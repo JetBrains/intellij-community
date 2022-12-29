@@ -176,7 +176,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     // EnvironmentUtil wants logger
     logDeferred.join()
     runActivity("environment loading") {
-      EnvironmentUtil.loadEnvironment()
+      EnvironmentUtil.loadEnvironment(coroutineContext.job)
     }
   }
 

@@ -9,6 +9,10 @@ import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.containers.CollectionFactory;
+import kotlinx.coroutines.CompletableDeferred;
+import kotlinx.coroutines.CompletableDeferredKt;
+import kotlinx.coroutines.Job;
+import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
@@ -19,7 +23,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -55,7 +58,7 @@ public final class EnvironmentUtil {
    */
   private static final String SHLVL = "SHLVL";
 
-  private static final AtomicReference<CompletableFuture<Map<String, String>>> ourEnvGetter = new AtomicReference<>();
+  private static final AtomicReference<CompletableDeferred<Map<String, String>>> ourEnvGetter = new AtomicReference<>();
 
   private EnvironmentUtil() { }
 
@@ -78,15 +81,15 @@ public final class EnvironmentUtil {
    * @return unmodifiable map of the process environment.
    */
   public static @NotNull Map<String, String> getEnvironmentMap() {
-    CompletableFuture<Map<String, String>> getter = ourEnvGetter.get();
+    CompletableDeferred<Map<String, String>> getter = ourEnvGetter.get();
     if (getter == null) {
-      getter = CompletableFuture.completedFuture(getSystemEnv());
+      getter = CompletableDeferredKt.CompletableDeferred(getSystemEnv());
       if (!ourEnvGetter.compareAndSet(null, getter)) {
         getter = ourEnvGetter.get();
       }
     }
     try {
-      return getter.join();
+      return FutureKt.asCompletableFuture(getter).join();
     }
     catch (Throwable t) {
       // unknown state; is not expected to happen
@@ -95,13 +98,13 @@ public final class EnvironmentUtil {
   }
 
   @ApiStatus.Internal
-  public static @Nullable Boolean loadEnvironment() {
+  public static @Nullable Boolean loadEnvironment(@NotNull Job parentJob) {
     if (!shouldLoadShellEnv()) {
-      ourEnvGetter.set(CompletableFuture.completedFuture(getSystemEnv()));
+      ourEnvGetter.set(CompletableDeferredKt.CompletableDeferred(getSystemEnv()));
       return null;
     }
 
-    CompletableFuture<Map<String, String>> envFuture = new CompletableFuture<>();
+    CompletableDeferred<Map<String, String>> envFuture = CompletableDeferredKt.CompletableDeferred(parentJob);
     ourEnvGetter.set(envFuture);
     Boolean result = Boolean.TRUE;
     try {
