@@ -177,7 +177,7 @@ private suspend fun preloadServicesAndCallAppInitializedListeners(app: Applicati
         loadComponentInEdtTask()
       }
     }
-    app.loadComponents()
+    app.loadAppComponents()
   }
 
   coroutineScope {

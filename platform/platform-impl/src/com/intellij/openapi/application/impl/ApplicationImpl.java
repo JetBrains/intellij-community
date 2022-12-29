@@ -340,11 +340,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     LaterInvocator.invokeLater(state, expired, wrapWithRunIntendedWriteAction(r));
   }
 
-  public final void loadComponents() {
-    createComponents();
-    StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED);
-  }
-
   @Override
   public void dispose() {
     //noinspection deprecation

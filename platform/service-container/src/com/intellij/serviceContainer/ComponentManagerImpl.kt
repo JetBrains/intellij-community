@@ -2,10 +2,13 @@
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment", "OVERRIDE_DEPRECATION")
 package com.intellij.serviceContainer
 
-import com.intellij.diagnostic.*
+import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.idea.AppMode.*
+import com.intellij.idea.AppMode.isLightEdit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
@@ -39,8 +42,9 @@ import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
 import java.util.*
-import java.util.concurrent.*
 import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
 
 internal val LOG = logger<ComponentManagerImpl>()
@@ -397,8 +401,15 @@ abstract class ComponentManagerImpl(
     }
   }
 
+  // we cannot convert ApplicationImpl to kotlin yet
+  @TestOnly
+  suspend fun loadAppComponents() {
+    createComponentsNonBlocking()
+    StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED)
+  }
+
   @Suppress("DuplicatedCode")
-  @Deprecated(message = "Use createComponents")
+  @Deprecated(message = "Use createComponentsNonBlocking")
   protected fun createComponents() {
     LOG.assertTrue(containerState.get() == ContainerState.PRE_INIT)
 
