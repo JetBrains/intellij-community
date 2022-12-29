@@ -53,18 +53,20 @@ abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node) {
       }, PsiModificationTracker.MODIFICATION_COUNT)
   })
 
+  private val cachedValuesManager: CachedValuesManager? = if (super.isValid()) CachedValuesManager.getManager(project) else null
+
   override fun getText(): String {
     // it is a memory optimisation
-    return CachedValuesManager.getCachedValue(this, CachedValueProvider {
+    return cachedValuesManager?.getCachedValue(this, CachedValueProvider {
       CachedValueProvider.Result.create(super.getText(), PsiModificationTracker.MODIFICATION_COUNT)
-    })
+    }) ?: super.getText()
   }
 
   override fun isValid(): Boolean {
     // mb read-action-context-cache?
-    return CachedValuesManager.getCachedValue(this, CachedValueProvider {
+    return cachedValuesManager?.getCachedValue(this, CachedValueProvider {
       CachedValueProvider.Result.create(super.isValid(), PsiModificationTracker.MODIFICATION_COUNT)
-    })
+    }) ?: super.isValid()
   }
 
   protected open val includeFirstLineInContent: Boolean get() = false
@@ -138,7 +140,7 @@ abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node) {
       }
       return result
     }
-  
+
   // YAML 1.2 standard does not allow more then 1 symbol in indentation number
   private val explicitIndent: Int
     get() {
@@ -162,7 +164,7 @@ abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node) {
       }
       return IMPLICIT_INDENT
     }
-  
+
 }
 
 const val DEFAULT_CONTENT_INDENT = 2
