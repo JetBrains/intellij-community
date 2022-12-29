@@ -81,18 +81,7 @@ val mermaidExtensionBinariesSourceMaps by tasks.registering(Copy::class) {
 
 val mermaidExtensionBuildResults by tasks.registering {
     dependsOn(mermaidExtensionBinaries)
-    if (shouldBundleSourceMaps && !isAutomatedProductionBuild) {
-        dependsOn(mermaidExtensionBinariesSourceMaps)
-    }
-}
-
-val ensureThereAreNoSourceMapsAmongResources by tasks.registering {
-    mustRunAfter(mermaidExtensionBuildResults)
-    doLast {
-        val files = mermaidExtensionResourcePath.walkTopDown()
-        val sourceMaps = files.filter { it.isSourceMap() }
-        check(sourceMaps.toList().isEmpty()) { "Plugin resource directory contains source maps" }
-    }
+    dependsOn(mermaidExtensionBinariesSourceMaps)
 }
 
 tasks {
@@ -114,9 +103,6 @@ tasks {
 
     processResources {
         dependsOn(mermaidExtensionBuildResults)
-        if (isAutomatedProductionBuild) {
-            dependsOn(ensureThereAreNoSourceMapsAmongResources)
-        }
         inputs.files(mermaidExtensionBuildResults.map { it.outputs })
     }
 

@@ -1,5 +1,6 @@
 import com.intellij.mermaid.build.isSourceMap
-import com.intellij.mermaid.build.shouldBundleSourceMaps
+import com.intellij.mermaid.build.shouldBundleFullSourceMaps
+import org.jetbrains.kotlin.gradle.targets.js.webpack.WebpackDevtool
 
 plugins {
     `javascript-binaries`
@@ -11,6 +12,7 @@ dependencies {
     implementation(project(":browser:mermaid-api"))
     implementation("org.jetbrains:annotations:23.1.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    implementation(devNpm("terser-webpack-plugin", "5.3.6"))
 }
 
 kotlin {
@@ -20,7 +22,12 @@ kotlin {
             commonWebpackConfig {
                 showProgress = true
                 outputFileName = "mermaid.js"
-                sourceMaps = shouldBundleSourceMaps
+                sourceMaps = true
+                devtool = when {
+                    shouldBundleFullSourceMaps -> WebpackDevtool.SOURCE_MAP
+                    // Will only include names of classes and methods
+                    else -> WebpackDevtool.NOSOURCES_SOURCE_MAP
+                }
             }
         }
         binaries.executable()
