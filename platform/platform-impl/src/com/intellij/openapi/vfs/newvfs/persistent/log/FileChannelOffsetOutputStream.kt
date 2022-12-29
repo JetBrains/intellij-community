@@ -12,8 +12,7 @@ class FileChannelOffsetOutputStream(
 ) : OutputStream() {
   private var position = AtomicLong(startOffset)
   override fun write(b: Int) {
-    val pos = position.getAndAdd(1)
-    fileChannel.write(ByteBuffer.wrap(byteArrayOf(b.toByte())), )
+    fileChannel.write(ByteBuffer.wrap(byteArrayOf(b.toByte())), position.getAndAdd(1))
   }
 
   override fun write(b: ByteArray, off: Int, len: Int) {
