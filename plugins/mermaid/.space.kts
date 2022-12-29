@@ -7,6 +7,14 @@ fun Container.platformVersion(version: String) {
 }
 
 job("Mermaid / Build for 231") {
+  startOn {
+    gitPush {
+      enabled = true
+    }
+    schedule {
+      cron("0 0 6 * * ?")
+    }
+  }
   container("openjdk:17") {
     productionBuild()
     platformVersion("231-SNAPSHOT")
