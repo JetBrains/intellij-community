@@ -294,7 +294,7 @@ internal class CellImpl<T : JComponent>(
 
         val property = property
         val requestor = when {
-          property != null -> AFTER_PROPERTY_CHANGE(property)
+          property != null -> WHEN_PROPERTY_CHANGED(property)
           origin is JTextComponent -> WHEN_TEXT_CHANGED(origin)
           origin is ItemSelectable -> WHEN_STATE_CHANGED(origin)
           origin is EditorTextField -> WHEN_TEXT_FIELD_TEXT_CHANGED(origin)

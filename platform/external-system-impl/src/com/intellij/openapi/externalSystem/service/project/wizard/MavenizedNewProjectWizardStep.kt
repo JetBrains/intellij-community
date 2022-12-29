@@ -87,7 +87,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
         .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_GROUP_ID)
         .validation { validateGroupId() }
         .whenTextChangedFromUi { logGroupIdChanged() }
-    }.bottomGap(BottomGap.SMALL)
+    }
   }
 
   protected fun setupArtifactIdUI(builder: Panel) {
@@ -97,10 +97,10 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
         .columns(COLUMNS_MEDIUM)
         .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_ARTIFACT_ID)
         .validation { validateArtifactId() }
-        .validationRequestor(AFTER_PROPERTY_CHANGE(artifactIdProperty))
-        .validationRequestor(AFTER_PROPERTY_CHANGE(nameProperty))
+        .validationRequestor(WHEN_PROPERTY_CHANGED(artifactIdProperty))
+        .validationRequestor(WHEN_PROPERTY_CHANGED(nameProperty))
         .whenTextChangedFromUi { logArtifactIdChanged() }
-    }.bottomGap(BottomGap.SMALL)
+    }
   }
 
   protected fun setupVersionUI(builder: Panel) {
@@ -110,7 +110,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
         .columns(COLUMNS_MEDIUM)
         .trimmedTextValidation(CHECK_NON_EMPTY)
         .whenTextChangedFromUi { logVersionChanged() }
-    }.bottomGap(BottomGap.SMALL)
+    }
   }
 
   protected abstract fun setupSettingsUI(builder: Panel)

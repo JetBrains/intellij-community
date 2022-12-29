@@ -91,7 +91,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
         textField()
           .bindText(nameProperty.trim())
           .columns(COLUMNS_MEDIUM)
-          .validationRequestor(AFTER_GRAPH_PROPAGATION(propertyGraph))
+          .validationRequestor(WHEN_GRAPH_PROPAGATION_FINISHED(propertyGraph))
           .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_MODULE_NAME(context.project))
           .applyIf(context.isCreatingNewProject) { validation(CHECK_PROJECT_PATH(context.project, locationProperty)) }
           .applyIf(!context.isCreatingNewProject) { validation(CHECK_MODULE_PATH(context.project, locationProperty)) }
