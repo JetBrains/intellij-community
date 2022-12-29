@@ -410,8 +410,8 @@ object LightTheme : Theme {
             text = Grey1,
             startBackground = Grey13,
             endBackground = Grey13,
-            startBorderColor = Grey8,
-            endBorderColor = Grey8
+            startBorderColor = Grey9,
+            endBorderColor = Grey9
         ),
         focusAreaColors = FocusAreaColors.copy(
             text = Grey1,

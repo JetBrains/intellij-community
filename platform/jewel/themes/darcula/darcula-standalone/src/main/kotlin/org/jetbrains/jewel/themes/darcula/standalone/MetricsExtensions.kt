@@ -9,8 +9,8 @@ import org.jetbrains.jewel.util.isMacOs
 
 val IntelliJMetrics.Button.Companion.default
     get() = IntelliJMetrics.Button(
-        strokeWidth = Dp.Hairline,
-        arc = CornerSize(3.dp),
+        strokeWidth = 1.dp,
+        arc = CornerSize(2.5.dp),
         padding = PaddingValues(horizontal = 14.dp, vertical = 4.dp)
     )
 
@@ -18,7 +18,7 @@ val IntelliJMetrics.Companion.default
     get() = IntelliJMetrics(
         singlePadding = 8.dp,
         controlFocusHaloWidth = 2.dp,
-        controlFocusHaloArc = Dp.Hairline,
+        controlFocusHaloArc = 4.dp,
         controlArc = 3.dp,
         button = IntelliJMetrics.Button.default,
         separator = IntelliJMetrics.Separator.default,

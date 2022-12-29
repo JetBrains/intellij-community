@@ -86,12 +86,17 @@ fun ButtonStyle(
         minWidth = minSize.width,
         minHeight = minSize.height,
         shapeStroke = ShapeStroke.Brush(metrics.button.strokeWidth, palette.button.stroke, Insets(metrics.button.strokeWidth)),
-        haloStroke = null
+        haloStroke = null,
+        haloShape = RoundedCornerShape(metrics.controlFocusHaloArc)
     )
 
     default {
         for (focused in listOf(false, true)) {
-            val appearance = defaultAppearance.copy(haloStroke = if (focused) focusHaloStroke else null)
+            val strokeBrush = if (focused) palette.button.strokeFocused.toBrush() else palette.button.stroke
+            val appearance = defaultAppearance.copy(
+                shapeStroke = ShapeStroke.Brush(metrics.button.strokeWidth, strokeBrush, Insets(metrics.button.strokeWidth)),
+                haloStroke = if (focused) focusHaloStroke else null
+            )
 
             populateStates(appearance, focused, focusHaloStroke, controlTextStyle, palette, metrics)
         }
@@ -121,7 +126,7 @@ private fun ControlStyle.ControlVariationBuilder<ButtonAppearance, ButtonState>.
     metrics: IntelliJMetrics
 ) {
     state(ButtonState(focused = focused), appearance)
-    state(ButtonState(ButtonMouseState.Pressed, focused = focused), appearance.copy(haloStroke = focusHaloStroke))
+    state(ButtonState(ButtonMouseState.Pressed, focused = focused), appearance)
     state(ButtonState(ButtonMouseState.Hovered, focused = focused), appearance)
     state(
         ButtonState(enabled = false, focused = focused),
