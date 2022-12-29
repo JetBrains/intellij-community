@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,8 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 public final class FormattingProgressTask extends SequentialModalProgressTask implements FormattingProgressCallback {
   public static final ThreadLocal<Boolean> FORMATTING_CANCELLED_FLAG = ThreadLocal.withInitial(() -> false);
@@ -30,8 +27,6 @@ public final class FormattingProgressTask extends SequentialModalProgressTask im
   private static final double MAX_PROGRESS_VALUE = 1;
   private static final double TOTAL_WEIGHT =
     Arrays.stream(FormattingStateId.values()).mapToDouble(FormattingStateId::getProgressWeight).sum();
-
-  private final ConcurrentMap<EventType, Collection<Runnable>> myCallbacks = new ConcurrentHashMap<>();
 
   private final WeakReference<VirtualFile> myFile;
   private final WeakReference<Document>    myDocument;
@@ -48,7 +43,6 @@ public final class FormattingProgressTask extends SequentialModalProgressTask im
     myFile = new WeakReference<>(file.getVirtualFile());
     myDocument = new WeakReference<>(document);
     myFileTextLength = file.getTextLength();
-    addCallback(EventType.CANCEL, new MyCancelCallback());
   }
 
   private static @NotNull @NlsContexts.DialogTitle String getTitle(@NotNull PsiFile file) {
@@ -73,41 +67,14 @@ public final class FormattingProgressTask extends SequentialModalProgressTask im
   }
 
   @Override
-  public boolean addCallback(@NotNull EventType eventType, @NotNull Runnable callback) {
-    return getCallbacks(eventType).add(callback);
-  }
-
-  @Override
-  public void onSuccess() {
-    for (Runnable callback : getCallbacks(EventType.SUCCESS)) {
-      callback.run();
-    }
-  }
-
-  @Override
   public void onCancel() {
-    for (Runnable callback : getCallbacks(EventType.CANCEL)) {
-      callback.run();
-    }
+    cancelled();
   }
 
   @Override
   public void onThrowable(@NotNull Throwable error) {
     super.onThrowable(error);
-    for (Runnable callback : getCallbacks(EventType.CANCEL)) {
-      callback.run();
-    }
-  }
-
-  private Collection<Runnable> getCallbacks(@NotNull EventType eventType) {
-    Collection<Runnable> result = myCallbacks.get(eventType);
-    if (result == null) {
-      Collection<Runnable> candidate = myCallbacks.putIfAbsent(eventType, result = ContainerUtil.newConcurrentSet());
-      if (candidate != null) {
-        result = candidate;
-      }
-    }
-    return result;
+    cancelled();
   }
 
   @Override
@@ -166,21 +133,19 @@ public final class FormattingProgressTask extends SequentialModalProgressTask im
     }
   }
 
-  private final class MyCancelCallback implements Runnable {
-    @Override
-    public void run() {
-      FORMATTING_CANCELLED_FLAG.set(true);
-      VirtualFile file = myFile.get();
-      Document document = myDocument.get();
-      if (file == null || document == null || myDocumentModificationStampBefore < 0) {
-        return;
-      }
-      FileEditor editor = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
-      if (editor == null) {
-        return;
-      }
-
-      EditorFacade.getInstance().undo(myProject, editor, document, myDocumentModificationStampBefore);
+  @Override
+  public void cancelled() {
+    FORMATTING_CANCELLED_FLAG.set(true);
+    VirtualFile file = myFile.get();
+    Document document = myDocument.get();
+    if (file == null || document == null || myDocumentModificationStampBefore < 0) {
+      return;
     }
+    FileEditor editor = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
+    if (editor == null) {
+      return;
+    }
+
+    EditorFacade.getInstance().undo(myProject, editor, document, myDocumentModificationStampBefore);
   }
 }
