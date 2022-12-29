@@ -14,7 +14,6 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.actions.MaximizeEditorInSplitAction.Companion.getSplittersToMaximize
 import com.intellij.ide.actions.SplitAction
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEdit
@@ -34,11 +33,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
-import com.intellij.openapi.editor.event.EditorFactoryEvent
-import com.intellij.openapi.editor.event.EditorFactoryListener
-import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.ex.FocusChangeListener
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -62,7 +56,6 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
-import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -122,7 +115,6 @@ import javax.swing.JComponent
 import javax.swing.JTabbedPane
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
-import kotlin.collections.LinkedHashSet
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -2045,63 +2037,6 @@ private class SelectionHistory {
     history.addAll(copy)
     return copy
   }
-}
-
-private class MyEditorFactoryListener : EditorFactoryListener {
-  init {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
-      throw ExtensionNotApplicableException.create()
-    }
-  }
-
-  override fun editorCreated(event: EditorFactoryEvent) {
-    val editor = event.editor as? EditorEx ?: return
-    val project = editor.project
-    if (project == null || project.isDisposed) {
-      return
-    }
-    registerEditor(editor, project)
-  }
-}
-
-private fun registerEditor(editor: EditorEx, project: Project) {
-  editor.addFocusListener(object : FocusChangeListener {
-    private var managerRef: WeakReference<FileEditorManagerImpl?>? = null
-
-    override fun focusGained(editor1: Editor) {
-      if (!Registry.`is`("editor.maximize.on.focus.gained.if.collapsed.in.split", false)) {
-        return
-      }
-      var manager = if (managerRef == null) null else managerRef!!.get()
-      if (manager == null) {
-        val fileEditorManager = FileEditorManager.getInstance(project)
-        if (fileEditorManager is FileEditorManagerImpl) {
-          manager = fileEditorManager
-          managerRef = WeakReference(manager)
-        }
-        else {
-          return
-        }
-      }
-      var component: Component? = editor1.component
-      while (component != null && component !== manager.mainSplitters) {
-        val parent: Component = component.parent
-        if (parent is Splitter) {
-          if (parent.firstComponent === component &&
-              (parent.proportion == parent.getMinProportion(true) ||
-               parent.proportion == parent.minimumProportion) || parent.proportion == parent.getMinProportion(false) ||
-              parent.proportion == parent.maximumProportion) {
-            val pairs = getSplittersToMaximize(project, editor1.component)
-            for ((s, second) in pairs) {
-              s.proportion = if (second) s.maximumProportion else s.minimumProportion
-            }
-            break
-          }
-        }
-        component = parent
-      }
-    }
-  }, project)
 }
 
 private class SelectionState(@JvmField val composite: EditorComposite, @JvmField val fileEditorProvider: FileEditorWithProvider)
