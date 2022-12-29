@@ -53,7 +53,13 @@ class VfsLog(
     override val descriptorStorage = DescriptorStorageImpl(storagePath / "events", stringEnumerator)
     override val payloadStorage = PayloadStorageImpl(storagePath / "data")
 
+    fun flush() {
+      payloadStorage.flush()
+      descriptorStorage.flush()
+    }
+
     fun dispose() {
+      flush()
       descriptorStorage.dispose()
       payloadStorage.dispose()
     }
@@ -61,8 +67,7 @@ class VfsLog(
     suspend fun flusher() {
       while (true) {
         delay(5000)
-        payloadStorage.flush()
-        descriptorStorage.flush()
+        flush()
         LOG.warn("#jobs: ${coroutineScope.coroutineContext.job.children.count { it.isActive }}")
       }
     }
@@ -118,6 +123,6 @@ class VfsLog(
   companion object {
     private val LOG = Logger.getInstance(VfsLog::class.java)
 
-    const val VERSION = -32
+    const val VERSION = -34
   }
 }
