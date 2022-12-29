@@ -95,7 +95,7 @@ public final class BuildDependenciesUtil {
     }
   }
 
-  public static Element getSingleChildElement(Element parent, String tagName) {
+  private static List<Element> getChildElements(Element parent, String tagName) {
     NodeList childNodes = parent.getChildNodes();
 
     ArrayList<Element> result = new ArrayList<>();
@@ -109,11 +109,27 @@ public final class BuildDependenciesUtil {
       }
     }
 
+    return result;
+  }
+
+  public static Element getSingleChildElement(Element parent, String tagName) {
+    List<Element> result = getChildElements(parent, tagName);
+
     if (result.size() != 1) {
       throw new IllegalStateException("Expected one and only one element by tag '" + tagName + "'");
     }
 
     return result.get(0);
+  }
+
+  public static Element tryGetSingleChildElement(Element parent, String tagName) {
+    List<Element> result = getChildElements(parent, tagName);
+
+    if (result.size() == 1) {
+      return result.get(0);
+    }
+
+    return null;
   }
 
   public static String getLibraryMavenId(Path libraryXml) {

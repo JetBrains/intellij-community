@@ -12,9 +12,9 @@ import java.io.StringWriter;
 import java.nio.file.Path;
 
 import static org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.error;
-import static org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.createDocumentBuilder;
-import static org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getSingleChildElement;
+import static org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.*;
 
+@SuppressWarnings("unused")
 public class DotNetPackagesCredentials {
   public static boolean setupSystemCredentials() {
     try {
@@ -57,7 +57,7 @@ public class DotNetPackagesCredentials {
 
   private static boolean loadFromNuGetConfig() throws IOException, SAXException {
     File nuGetConfig;
-    if (BuildDependenciesUtil.isWindows) {
+    if (isWindows) {
       nuGetConfig = Path.of(System.getenv("APPDATA"), "NuGet", "NuGet.Config").toFile();
     }
     else {
@@ -68,11 +68,11 @@ public class DotNetPackagesCredentials {
     }
     DocumentBuilder documentBuilder = createDocumentBuilder();
     Document document = documentBuilder.parse(nuGetConfig);
-    Element packageSourceCredentialsElement = getSingleChildElement(document.getDocumentElement(), "packageSourceCredentials");
+    Element packageSourceCredentialsElement = tryGetSingleChildElement(document.getDocumentElement(), "packageSourceCredentials");
     if (packageSourceCredentialsElement == null) {
       return false;
     }
-    Element dotNetSpaceBuild = getSingleChildElement(packageSourceCredentialsElement, "dotnet_build_space");
+    Element dotNetSpaceBuild = tryGetSingleChildElement(packageSourceCredentialsElement, "dotnet_build_space");
     if (dotNetSpaceBuild == null) {
       return false;
     }
