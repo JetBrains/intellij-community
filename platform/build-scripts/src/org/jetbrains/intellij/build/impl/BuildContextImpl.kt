@@ -141,13 +141,15 @@ class BuildContextImpl private constructor(
   }
 
   override fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile> {
-    if (os == null && arch == null) {
-      return java.util.List.copyOf(distFiles)
-    }
-
-    return distFiles.filter {
-       (os == null || it.os == null || it.os == os) && (arch == null || it.arch == null || it.arch == arch)
-    }
+    return distFiles.asSequence().filter {
+      (os == null && arch == null) ||
+      (os == null || it.os == null || it.os == os) &&
+      (arch == null || it.arch == null || it.arch == arch)
+    }.sortedWith(
+      compareBy<DistFile> { it.relativePath }
+        .thenBy { it.os }
+        .thenBy { it.arch }
+    ).toList()
   }
 
   override fun findApplicationInfoModule(): JpsModule {

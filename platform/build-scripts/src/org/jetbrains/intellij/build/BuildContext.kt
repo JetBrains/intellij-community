@@ -61,6 +61,9 @@ interface BuildContext : CompilationContext {
    */
   fun addDistFile(file: DistFile)
 
+  /**
+   * @return sorted [DistFile] collection
+   */
   fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile>
 
   fun includeBreakGenLibraries(): Boolean

@@ -38,6 +38,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.IntConsumer
+import kotlin.io.path.name
 
 private val JAR_NAME_WITH_VERSION_PATTERN = "(.*)-\\d+(?:\\.\\d+)*\\.jar*".toPattern()
 
@@ -242,10 +243,10 @@ class JarPackager private constructor(private val context: BuildContext) {
       val targetFile = outputDir.resolve("3rd-party-native.jar")
       val sources = mutableListOf<Source>()
       coroutineScope {
-        for (source in nativeFiles.keys.sortedBy { it.file.fileName.toString() }) {
-          val paths = nativeFiles.get(source)!!
+        for (source in nativeFiles.keys.sortedBy { it.file.name }) {
+          val paths = nativeFiles.getValue(source)
           val sourceFile = source.file
-          val fileName = sourceFile.fileName.toString()
+          val fileName = sourceFile.name
           if (fileName.startsWith("jna-") || fileName.startsWith("pty4j-") || fileName.startsWith("native-")) {
             async(Dispatchers.IO) {
               unpackNativeLibraries(sourceFile = sourceFile, paths = paths, context = packager.context)
