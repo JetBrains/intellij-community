@@ -597,8 +597,10 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static boolean isPrintableUnicode(char c) {
     int t = Character.getType(c);
+    Character.UnicodeBlock block = Character.UnicodeBlock.of(c);
     return t != Character.UNASSIGNED && t != Character.LINE_SEPARATOR && t != Character.PARAGRAPH_SEPARATOR &&
-           t != Character.CONTROL && t != Character.FORMAT && t != Character.PRIVATE_USE && t != Character.SURROGATE;
+           t != Character.CONTROL && t != Character.FORMAT && t != Character.PRIVATE_USE && t != Character.SURROGATE &&
+           block != Character.UnicodeBlock.VARIATION_SELECTORS && block != Character.UnicodeBlock.VARIATION_SELECTORS_SUPPLEMENT;
   }
 
   @Contract(pure = true)
