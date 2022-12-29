@@ -17,7 +17,7 @@ import javax.swing.text.BadLocationException
 
 abstract class TextCompletionField<T>(private val project: Project?) : ExtendableTextField() {
 
-  var renderer: TextCompletionRenderer<T> = DefaultTextCompletionRenderer()
+  var renderer: TextCompletionRenderer<T> = TextCompletionRenderer.Default()
 
   var completionType: CompletionType = CompletionType.REPLACE_TEXT
 
