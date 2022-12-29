@@ -565,7 +565,7 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
     if (currentTask instanceof ReformatWithHeadingWhitespaceTask && currentTask.getStartOffset() == currentTask.getEndOffset()) {
       return false;
     }
-    // reindent actions can't be be stuck at all
+    // reindent actions can't be stuck at all
     return !(currentTask instanceof ReindentTask);
   }
 
