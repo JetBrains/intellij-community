@@ -25,18 +25,21 @@ import javax.swing.ImageIcon
 
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
-open class CachedImageIcon protected constructor(val originalPath: String?,
-                                               @field:Volatile var resolver: ImageDataLoader?,
-                                               private val isDarkOverridden: Boolean?,
-                                               private val localFilterSupplier: (() -> RGBImageFilter)? = null,
-                                               private val colorPatcher: SVGLoader.SvgElementColorPatcherProvider? = null,
-                                               private val useStroke: Boolean = false) : ScaleContextSupport(), CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider {
+open class CachedImageIcon protected constructor(
+  val originalPath: String?,
+  @field:Volatile var resolver: ImageDataLoader?,
+  private val isDarkOverridden: Boolean?,
+  private val localFilterSupplier: (() -> RGBImageFilter)? = null,
+  private val colorPatcher: SVGLoader.SvgElementColorPatcherProvider? = null,
+  private val useStroke: Boolean = false,
+) : ScaleContextSupport(), CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider {
   companion object {
     @JvmField
     internal var isActivated = !GraphicsEnvironment.isHeadless()
 
     @JvmField
     internal val pathTransformGlobalModCount = AtomicInteger()
+
     @JvmField
     internal val pathTransform = AtomicReference(
       IconTransform(StartupUiUtil.isUnderDarcula(), arrayOf<IconPathPatcher>(DeprecatedDuplicatesIconPathPatcher()), null)
@@ -58,6 +61,7 @@ open class CachedImageIcon protected constructor(val originalPath: String?,
 
   private val originalResolver = resolver
   private var pathTransformModCount = -1
+
   @Suppress("LeakingThis")
   private val scaledIconCache = ScaledIconCache(this)
 
@@ -85,7 +89,9 @@ open class CachedImageIcon protected constructor(val originalPath: String?,
 
   init {
     // for instance, ShadowPainter updates the context from and outside
-    scaleContext.addUpdateListener { realIcon = null }
+    scaleContext.addUpdateListener {
+      realIcon = null
+    }
   }
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
@@ -99,12 +105,12 @@ open class CachedImageIcon protected constructor(val originalPath: String?,
   override fun getScale(): Float = 1.0f
 
   @ApiStatus.Internal
-  fun getRealIcon(): ImageIcon = getRealIcon(null)
+  fun getRealIcon(): ImageIcon = getRealIcon(scaleContext = null)
 
   @TestOnly
   fun doGetRealIcon(): ImageIcon? = unwrapIcon(realIcon)
 
-  fun getRealIcon(context: ScaleContext?): ImageIcon {
+  internal fun getRealIcon(scaleContext: ScaleContext?): ImageIcon {
     if (resolver == null || !isActivated) {
       return EMPTY_ICON
     }
@@ -136,7 +142,7 @@ open class CachedImageIcon protected constructor(val originalPath: String?,
 
     synchronized(lock) {
       // try returning the current icon as the context is up-to-date
-      if (!updateScaleContext(context) && realIcon != null) {
+      if (!updateScaleContext(scaleContext) && realIcon != null) {
         unwrapIcon(realIcon)?.let {
           return it
         }
@@ -150,9 +156,7 @@ open class CachedImageIcon protected constructor(val originalPath: String?,
     return EMPTY_ICON
   }
 
-  override fun toString(): String {
-    return resolver?.toString() ?: (originalPath ?: "unknown path")
-  }
+  override fun toString(): String = resolver?.toString() ?: (originalPath ?: "unknown path")
 
   override fun scale(scale: Float): Icon {
     if (scale == 1.0f) {
@@ -161,19 +165,27 @@ open class CachedImageIcon protected constructor(val originalPath: String?,
 
     // force state update & cache reset
     getRealIcon()
-    val icon: Icon? = scaledIconCache.getOrScaleIcon(scale)
-    return icon ?: this
+    return scaledIconCache.getOrScaleIcon(scale) ?: this
   }
 
   override fun getDarkIcon(isDark: Boolean): Icon {
-    val resolver = resolver ?: return EMPTY_ICON
     var result = if (isDark) darkVariant else null
     if (result == null) {
       synchronized(lock) {
-        if (isDark) result = darkVariant
+        if (isDark) {
+          result = darkVariant
+        }
+
         if (result == null) {
-          result = CachedImageIcon(originalPath, resolver, isDark, localFilterSupplier, colorPatcher, useStroke)
-          if (isDark) darkVariant = result
+          result = CachedImageIcon(originalPath = originalPath,
+                                   resolver = resolver ?: return EMPTY_ICON,
+                                   isDarkOverridden = isDark,
+                                   localFilterSupplier = localFilterSupplier,
+                                   colorPatcher = colorPatcher,
+                                   useStroke = useStroke)
+          if (isDark) {
+            darkVariant = result
+          }
         }
       }
     }
@@ -188,7 +200,7 @@ open class CachedImageIcon protected constructor(val originalPath: String?,
     if (useMRI) {
       img = MultiResolutionImageProvider.convertFromJBImage(img)
     }
-    return if (img == null) this else ImageIcon(img)
+    return ImageIcon(img ?: return this)
   }
 
   override fun copy(): CachedImageIcon {
@@ -212,7 +224,7 @@ open class CachedImageIcon protected constructor(val originalPath: String?,
                            useStroke = useStroke)
   }
 
-  fun createWithPatcher(colorPatcher: SVGLoader.SvgElementColorPatcherProvider): Icon {
+  internal fun createWithPatcher(colorPatcher: SVGLoader.SvgElementColorPatcherProvider): Icon {
     val resolver = resolver ?: return EMPTY_ICON
     return CachedImageIcon(originalPath = originalPath,
                            resolver = resolver,
@@ -222,7 +234,7 @@ open class CachedImageIcon protected constructor(val originalPath: String?,
                            useStroke = useStroke)
   }
 
-  fun createStrokeIcon(): Icon {
+  internal fun createStrokeIcon(): Icon {
     val resolver = resolver ?: return EMPTY_ICON
     return CachedImageIcon(originalPath = originalPath,
                            resolver = resolver,
@@ -235,25 +247,24 @@ open class CachedImageIcon protected constructor(val originalPath: String?,
   val isDark: Boolean
     get() = isDarkOverridden ?: pathTransform.get().isDark
 
-  private val filters: List<ImageFilter>
-    get() {
-      val global = pathTransform.get().filter
-      val local = localFilterSupplier?.invoke()
-      return when {
-        global != null && local != null -> listOf(global, local)
-        global != null -> listOf(global)
-        else -> listOfNotNull(local)
-      }
+  private fun getFilters(): List<ImageFilter> {
+    val global = pathTransform.get().filter
+    val local = localFilterSupplier?.invoke()
+    return when {
+      global != null && local != null -> listOf(global, local)
+      global != null -> listOf(global)
+      else -> listOfNotNull(local)
     }
+  }
 
   val url: URL?
     get() = this.resolver?.url
 
-  fun loadImage(scaleContext: ScaleContext, isDark: Boolean): Image? {
+  internal fun loadImage(scaleContext: ScaleContext, isDark: Boolean): Image? {
     val start = StartUpMeasurer.getCurrentTimeIfEnabled()
     val resolver = resolver ?: return null
     val colorPatcher = colorPatcher ?: SVGLoader.colorPatcherProvider
-    val image = resolver.loadImage(LoadIconParameters(filters = filters,
+    val image = resolver.loadImage(LoadIconParameters(filters = getFilters(),
                                                       scaleContext = scaleContext,
                                                       isDark = isDark,
                                                       colorPatcher = colorPatcher,
@@ -264,7 +275,7 @@ open class CachedImageIcon protected constructor(val originalPath: String?,
     return image
   }
 
-  fun detachClassLoader(loader: ClassLoader): Boolean {
+  internal fun detachClassLoader(loader: ClassLoader): Boolean {
     if (resolver == null) {
       return true
     }
@@ -286,7 +297,7 @@ open class CachedImageIcon protected constructor(val originalPath: String?,
     }
   }
 
-  val imageFlags: Int
+  internal val imageFlags: Int
     get() {
       return (this.resolver ?: return 0).flags
     }

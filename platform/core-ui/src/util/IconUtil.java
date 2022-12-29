@@ -1004,9 +1004,9 @@ public final class IconUtil {
 
     return IconLoader.INSTANCE.replaceCachedImageIcons(original, (cachedImageIcon) -> {
       SVGLoader.SvgElementColorPatcherProvider patcher = palettePatcher;
-      int flags = cachedImageIcon.getImageFlags();
+      int flags = cachedImageIcon.getImageFlags$intellij_platform_util_ui();
       if ((flags & ImageDescriptor.HAS_STROKE) == ImageDescriptor.HAS_STROKE) {
-        Icon strokeIcon = cachedImageIcon.createStrokeIcon();
+        Icon strokeIcon = cachedImageIcon.createStrokeIcon$intellij_platform_util_ui();
         //noinspection UseJBColor
         if (Color.WHITE.equals(resultColor)) {
           // will be nothing to patch actually
