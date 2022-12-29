@@ -22,7 +22,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.xmlb.XmlSerializer
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.workspaceModel
 import com.intellij.workspaceModel.storage.*
@@ -121,7 +120,11 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
   override fun createModifiableModel(): ModifiableArtifactModel {
     val storage = project.workspaceModel.entityStorage.current
-    return ArtifactModifiableModelBridge(project, MutableEntityStorage.from(storage), this)
+    return createModifiableModel(MutableEntityStorage.from(storage))
+  }
+
+  override fun createModifiableModel(mutableEntityStorage: MutableEntityStorage): ModifiableArtifactModel {
+    return ArtifactModifiableModelBridge(project, mutableEntityStorage, this)
   }
 
   override fun getResolvingContext(): PackagingElementResolvingContext = resolvingContext
