@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionAction {
+public final class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionAction {
   private final PsiElement myErrorElement;
 
   public AddExceptionToExistingCatchFix(PsiElement errorElement) {myErrorElement = errorElement;}

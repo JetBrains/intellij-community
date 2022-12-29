@@ -49,6 +49,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 
 public class StructureFilterPopupComponent
   extends FilterPopupComponent<FilterPair<VcsLogStructureFilter, VcsLogRootFilter>, VcsLogClassicFilterUi.FileFilterModel> {
@@ -184,12 +185,12 @@ public class StructureFilterPopupComponent
   @NlsContexts.Tooltip
   private static <F> HtmlChunk getTooltipTextForFiles(@NotNull Collection<? extends F> files,
                                                       @NotNull Comparator<? super F> comparator,
-                                                      @NotNull NotNullFunction<? super F, @Nls String> getText,
+                                                      @NotNull Function<? super F, @NotNull @Nls String> getText,
                                                       @NotNull HtmlChunk separator) {
     List<F> filesToDisplay = ContainerUtil.sorted(files, comparator);
     filesToDisplay = ContainerUtil.getFirstItems(filesToDisplay, 10);
     HtmlBuilder tooltip = new HtmlBuilder().appendWithSeparators(separator,
-                                                                 ContainerUtil.map(filesToDisplay, f -> HtmlChunk.text(getText.fun(f))));
+                                                                 ContainerUtil.map(filesToDisplay, f -> HtmlChunk.text(getText.apply(f))));
     if (files.size() > 10) {
       tooltip.append(separator).append("...");
     }

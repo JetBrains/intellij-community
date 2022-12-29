@@ -493,7 +493,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return JavaCodeStyleManager.getInstance(getProject()).addImport(this, aClass);
   }
 
-  private static final NotNullLazyKey<LanguageLevel, PsiJavaFileBaseImpl> LANGUAGE_LEVEL_KEY = NotNullLazyKey.create("LANGUAGE_LEVEL",
+  private static final NotNullLazyKey<LanguageLevel, PsiJavaFileBaseImpl> LANGUAGE_LEVEL_KEY = NotNullLazyKey.createLazyKey("LANGUAGE_LEVEL",
                                                                                                                      file -> file.getLanguageLevelInner());
 
   @Override

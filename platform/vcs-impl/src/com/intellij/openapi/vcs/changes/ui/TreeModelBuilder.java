@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,7 +39,7 @@ import static java.util.Comparator.comparingInt;
 public class TreeModelBuilder implements ChangesViewModelBuilder {
   public static final Key<Function<StaticFilePath, ChangesBrowserNode<?>>> PATH_NODE_BUILDER = Key.create("ChangesTree.PathNodeBuilder");
   public static final NotNullLazyKey<Map<String, ChangesBrowserNode<?>>, ChangesBrowserNode<?>> DIRECTORY_CACHE =
-    NotNullLazyKey.create("ChangesTree.DirectoryCache", node -> new HashMap<>());
+    NotNullLazyKey.createLazyKey("ChangesTree.DirectoryCache", node -> new HashMap<>());
   private static final Key<ChangesGroupingPolicy> GROUPING_POLICY = Key.create("ChangesTree.GroupingPolicy");
   // This is used in particular for the case when module contains files from different repositories. So there could be several nodes for
   // the same module in one subtree (for change list), but under different repository nodes. And we should perform node caching not just
