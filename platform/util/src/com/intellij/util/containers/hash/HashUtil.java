@@ -1,11 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers.hash;
 
-
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-
 
 final class HashUtil {
   static final int MIN_CAPACITY = 5;
@@ -14,9 +12,7 @@ final class HashUtil {
 
   static final float CAPACITY_MULTIPLE = 1.618033989f;
 
-
   public static int hash(Object key) {
-
     return key == null ? 0 : key.hashCode() & 0x7fffffff;
   }
 
@@ -24,23 +20,16 @@ final class HashUtil {
     return key == null ? 0 : hashingStrategy.getHashCode(key) & 0x7fffffff;
   }
 
-
   static int adjustTableSize(int size) {
-
     int i = Arrays.binarySearch(tableSizes, size);
-
     if (i < 0) {
-
       i = ~i;
     }
 
     return tableSizes[i];
   }
 
-
   private static final int[] tableSizes = {
-
-
     // include all odd primes under 1000
 
     3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67,
@@ -100,7 +89,6 @@ final class HashUtil {
 
     1993, 3989, 7993, 15991, 31991, 63997, 127997, 256019, 512047, 1024099, 2048203, 4096427, 8192867,
 
-
     26339969, 52679969, 105359939, 210719881, 421439783, 842879579, 1685759167,
 
     28977863, 57955739, 115911563, 231823147, 463646329, 927292699, 1854585413,
@@ -121,12 +109,10 @@ final class HashUtil {
 
     25002389, 50004791, 100009607, 200019221, 400038451, 800076929, 1600153859,
 
-
     Integer.MAX_VALUE,
   };
 
   static {
-
     Arrays.sort(tableSizes);
   }
 }
