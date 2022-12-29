@@ -1,567 +1,399 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util;
+@file:Suppress("UndesirableClassUsage", "UseJBColor")
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.FileIconPatcher;
-import com.intellij.ide.FileIconProvider;
-import com.intellij.ide.TypePresentationService;
-import com.intellij.openapi.fileTypes.DirectoryFileType;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.WritingAccessProvider;
-import com.intellij.ui.*;
-import com.intellij.ui.icons.CompositeIcon;
-import com.intellij.ui.icons.CopyableIcon;
-import com.intellij.ui.icons.ImageDescriptor;
-import com.intellij.ui.paint.PaintUtilKt;
-import com.intellij.ui.scale.*;
-import com.intellij.util.ui.*;
-import org.jetbrains.annotations.*;
+package com.intellij.util
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.RGBImageFilter;
-import java.lang.ref.WeakReference;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.function.ToIntFunction;
+import com.intellij.icons.AllIcons
+import com.intellij.ide.FileIconPatcher
+import com.intellij.ide.FileIconProvider
+import com.intellij.ide.TypePresentationService
+import com.intellij.openapi.fileTypes.DirectoryFileType
+import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.*
+import com.intellij.openapi.util.IconLoader.copy
+import com.intellij.openapi.util.IconLoader.filterIcon
+import com.intellij.openapi.util.IconLoader.getIcon
+import com.intellij.openapi.util.IconLoader.loadCustomVersion
+import com.intellij.openapi.util.IconLoader.patchColorsInCacheImageIcon
+import com.intellij.openapi.util.IconLoader.replaceCachedImageIcons
+import com.intellij.openapi.util.Iconable.IconFlags
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VFileProperty
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.WritingAccessProvider
+import com.intellij.ui.*
+import com.intellij.ui.icons.CompositeIcon
+import com.intellij.ui.icons.CopyableIcon
+import com.intellij.ui.icons.ImageDescriptor
+import com.intellij.ui.paint.alignToInt
+import com.intellij.ui.scale.*
+import com.intellij.ui.scale.JBUIScale.getFontScale
+import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.ui.scale.JBUIScale.sysScale
+import com.intellij.util.IconUtil.ICON_FLAG_IGNORE_MASK
+import com.intellij.util.SVGLoader.getStrokePatcher
+import com.intellij.util.SVGLoader.paintIconWithSelection
+import com.intellij.util.ui.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.NonNls
+import java.awt.*
+import java.awt.geom.AffineTransform
+import java.awt.geom.Rectangle2D
+import java.awt.image.BufferedImage
+import java.awt.image.RGBImageFilter
+import java.lang.ref.WeakReference
+import java.util.*
+import java.util.function.Supplier
+import java.util.function.ToIntFunction
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.SwingConstants
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
-import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
-import static com.intellij.ui.scale.ScaleType.USR_SCALE;
-import static com.intellij.util.SVGLoader.getStrokePatcher;
+private val PROJECT_WAS_EVER_INITIALIZED = Key.create<Boolean>("iconDeferrer:projectWasEverInitialized")
 
-/**
- * @author Konstantin Bulenkov
- */
-public final class IconUtil {
-  public static final Key<Integer> ICON_FLAG_IGNORE_MASK = new Key<>("ICON_FLAG_IGNORE_MASK");
-  private static final Key<Boolean> PROJECT_WAS_EVER_INITIALIZED = Key.create("iconDeferrer:projectWasEverInitialized");
+private fun wasEverInitialized(project: Project): Boolean {
+  var was = project.getUserData(PROJECT_WAS_EVER_INITIALIZED)
+  if (was == null) {
+    if (project.isInitialized) {
+      was = true
+      project.putUserData(PROJECT_WAS_EVER_INITIALIZED, true)
+    }
+    else {
+      was = false
+    }
+  }
+  return was
+}
 
-  private static boolean wasEverInitialized(@NotNull Project project) {
-    Boolean was = project.getUserData(PROJECT_WAS_EVER_INITIALIZED);
-    if (was == null) {
-      if (project.isInitialized()) {
-        was = true;
-        project.putUserData(PROJECT_WAS_EVER_INITIALIZED, true);
-      }
-      else {
-        was = false;
+private val ICON_NULLABLE_FUNCTION = java.util.function.Function { key: FileIconKey ->
+  IconUtil.computeFileIcon(file = key.file, flags = key.flags, project = key.project)
+}
+
+private val toolbarDecoratorIconsFolder: @NonNls String
+  get() = "toolbarDecorator/${if (SystemInfoRt.isMac) "mac/" else ""}"
+
+object IconUtil {
+  val ICON_FLAG_IGNORE_MASK = Key<Int>("ICON_FLAG_IGNORE_MASK")
+
+  @JvmStatic
+  fun cropIcon(icon: Icon, maxWidth: Int, maxHeight: Int): Icon {
+    var maxWidth = maxWidth
+    var maxHeight = maxHeight
+    if (icon.iconHeight <= maxHeight && icon.iconWidth <= maxWidth) {
+      return icon
+    }
+    var image = IconLoader.toImage(icon, null) ?: return icon
+    var scale = 1.0
+    if (image is JBHiDPIScaledImage) {
+      val hdpi = image
+      scale = hdpi.scale
+      if (hdpi.delegate != null) image = hdpi.delegate
+    }
+    val bi = ImageUtil.toBufferedImage(Objects.requireNonNull(image))
+    val g = bi.createGraphics()
+    val imageWidth = ImageUtil.getRealWidth(image)
+    val imageHeight = ImageUtil.getRealHeight(image)
+    maxWidth = if (maxWidth == Int.MAX_VALUE) Int.MAX_VALUE else (maxWidth * scale).roundToLong().toInt()
+    maxHeight = if (maxHeight == Int.MAX_VALUE) Int.MAX_VALUE else (maxHeight * scale).roundToLong().toInt()
+    val w = min(imageWidth, maxWidth)
+    val h = min(imageHeight, maxHeight)
+    val img = ImageUtil.createImage(g, w, h, Transparency.TRANSLUCENT)
+    val offX = if (imageWidth > maxWidth) (imageWidth - maxWidth) / 2 else 0
+    val offY = if (imageHeight > maxHeight) (imageHeight - maxHeight) / 2 else 0
+    for (col in 0 until w) {
+      for (row in 0 until h) {
+        img.setRGB(col, row, bi.getRGB(col + offX, row + offY))
       }
     }
-
-    return was.booleanValue();
+    g.dispose()
+    return JBImageIcon(RetinaImage.createFrom(img, scale, null))
   }
 
-  public static @NotNull Icon cropIcon(@NotNull Icon icon, int maxWidth, int maxHeight) {
-    if (icon.getIconHeight() <= maxHeight && icon.getIconWidth() <= maxWidth) {
-      return icon;
-    }
-
-    Image image = IconLoader.toImage(icon, null);
-    if (image == null) {
-      return icon;
-    }
-
-    double scale = 1.0f;
-    if (image instanceof JBHiDPIScaledImage) {
-      JBHiDPIScaledImage hdpi = ((JBHiDPIScaledImage)image);
-      scale = hdpi.getScale();
-      if (hdpi.getDelegate() != null)
-        image = hdpi.getDelegate();
-    }
-
-    BufferedImage bi = ImageUtil.toBufferedImage(Objects.requireNonNull(image));
-    Graphics2D g = bi.createGraphics();
-
-    int imageWidth = ImageUtil.getRealWidth(image);
-    int imageHeight = ImageUtil.getRealHeight(image);
-
-    maxWidth = maxWidth == Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)Math.round(maxWidth * scale);
-    maxHeight = maxHeight == Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)Math.round(maxHeight * scale);
-    final int w = Math.min(imageWidth, maxWidth);
-    final int h = Math.min(imageHeight, maxHeight);
-
-    final BufferedImage img = ImageUtil.createImage(g, w, h, Transparency.TRANSLUCENT);
-    final int offX = imageWidth > maxWidth ? (imageWidth - maxWidth) / 2 : 0;
-    final int offY = imageHeight > maxHeight ? (imageHeight - maxHeight) / 2 : 0;
-    for (int col = 0; col < w; col++) {
-      for (int row = 0; row < h; row++) {
-        img.setRGB(col, row, bi.getRGB(col + offX, row + offY));
-      }
-    }
-    g.dispose();
-    return new JBImageIcon(RetinaImage.createFrom(img, scale, null));
+  @JvmStatic
+  fun cropIcon(icon: Icon, area: Rectangle): Icon {
+    return if (!Rectangle(icon.iconWidth, icon.iconHeight).contains(area)) icon else CropIcon(icon, area)
   }
 
-  public static @NotNull Icon cropIcon(@NotNull Icon icon, @NotNull Rectangle area) {
-    if (!new Rectangle(icon.getIconWidth(), icon.getIconHeight()).contains(area)) {
-      return icon;
-    }
-    return new CropIcon(icon, area);
-  }
-
-  public static @NotNull Icon flip(final @NotNull Icon icon, final boolean horizontal) {
-    return new Icon() {
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        Graphics2D g2d = (Graphics2D)g.create();
+  @JvmStatic
+  fun flip(icon: Icon, horizontal: Boolean): Icon {
+    return object : Icon {
+      override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+        val g2d = g.create() as Graphics2D
         try {
-          AffineTransform transform =
-            AffineTransform.getTranslateInstance(horizontal ? x + getIconWidth() : x, horizontal ? y : y + getIconHeight());
-          transform.concatenate(AffineTransform.getScaleInstance(horizontal ? -1 : 1, horizontal ? 1 : -1));
-          transform.preConcatenate(g2d.getTransform());
-          g2d.setTransform(transform);
-          icon.paintIcon(c, g2d, 0, 0);
+          val transform = AffineTransform.getTranslateInstance((if (horizontal) x + iconWidth else x).toDouble(),
+                                                               (if (horizontal) y else y + iconHeight).toDouble())
+          transform.concatenate(AffineTransform.getScaleInstance((if (horizontal) -1 else 1).toDouble(), (if (horizontal) 1 else -1).toDouble()))
+          transform.preConcatenate(g2d.transform)
+          g2d.transform = transform
+          icon.paintIcon(c, g2d, 0, 0)
         }
         finally {
-          g2d.dispose();
+          g2d.dispose()
         }
       }
 
-      @Override
-      public int getIconWidth() {
-        return icon.getIconWidth();
-      }
+      override fun getIconWidth(): Int = icon.iconWidth
 
-      @Override
-      public int getIconHeight() {
-        return icon.getIconHeight();
-      }
-    };
+      override fun getIconHeight(): Int = icon.iconHeight
+    }
   }
 
-  private static final Function<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = key -> computeFileIcon(key.getFile(), key.getFlags(), key.getProject());
-
   /**
-   * @return a deferred icon for the file, taking into account {@link FileIconProvider} and {@link FileIconPatcher} extensions.
+   * @return a deferred icon for the file, taking into account [FileIconProvider] and [FileIconPatcher] extensions.
    */
-  public static @NotNull Icon computeFileIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
-    if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) {
-      return AllIcons.FileTypes.Unknown;
+  @JvmStatic
+  fun computeFileIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon {
+    var flags = flags
+    if (!file.isValid || project != null && (project.isDisposed || !wasEverInitialized(project))) {
+      return AllIcons.FileTypes.Unknown
     }
 
-    flags = filterFileIconFlags(file, flags);
-
-    Icon providersIcon = getProvidersIcon(file, flags, project);
-    Icon icon = providersIcon != null ? providersIcon : computeFileTypeIcon(file, false);
-
-    boolean dumb = project != null && DumbService.getInstance(project).isDumb();
-    for (FileIconPatcher patcher : FileIconPatcher.EP_NAME.getExtensionList()) {
+    flags = filterFileIconFlags(file, flags)
+    val providersIcon = getProvidersIcon(file, flags, project)
+    var icon = providersIcon ?: computeFileTypeIcon(file, false)
+    val dumb = project != null && DumbService.getInstance(project).isDumb
+    for (patcher in FileIconPatcher.EP_NAME.extensionList) {
       if (dumb && !DumbService.isDumbAware(patcher)) {
-        continue;
+        continue
       }
 
       // render without locked icon patch since we are going to apply it later anyway
-      icon = patcher.patchIcon(icon, file, flags & ~Iconable.ICON_FLAG_READ_STATUS, project);
+      icon = patcher.patchIcon(icon, file, flags and Iconable.ICON_FLAG_READ_STATUS.inv(), project)
     }
-
-    if (file.is(VFileProperty.SYMLINK)) {
-      icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
+    if (file.`is`(VFileProperty.SYMLINK)) {
+      icon = LayeredIcon(icon, PlatformIcons.SYMLINK_ICON)
     }
     if (BitUtil.isSet(flags, Iconable.ICON_FLAG_READ_STATUS) &&
-        Registry.is("ide.locked.icon.enabled", false) &&
-        (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
-      icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
+        Registry.`is`("ide.locked.icon.enabled", false) &&
+        (!file.isWritable || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
+      icon = LayeredIcon(icon, PlatformIcons.LOCKED_ICON)
     }
-
-    LastComputedIconCache.put(file, icon, flags);
-
-    return icon;
-  }
-
-  @Iconable.IconFlags
-  private static int filterFileIconFlags(@NotNull VirtualFile file, @Iconable.IconFlags int flags) {
-    UserDataHolder fileTypeDataHolder = ObjectUtils.tryCast(file.getFileType(), UserDataHolder.class);
-    int fileTypeFlagIgnoreMask = ICON_FLAG_IGNORE_MASK.get(fileTypeDataHolder, 0);
-    int flagIgnoreMask = ICON_FLAG_IGNORE_MASK.get(file, fileTypeFlagIgnoreMask);
-    //noinspection MagicConstant
-    return flags & ~flagIgnoreMask;
+    LastComputedIconCache.put(file, icon, flags)
+    return icon
   }
 
   /**
-   * @return a deferred icon for the file, taking into account {@link FileIconProvider} and {@link FileIconPatcher} extensions.
-   * Use {@link #computeFileIcon} where possible (e.g. in background threads) to get a non-deferred icon.
+   * @return a deferred icon for the file, taking into account [FileIconProvider] and [FileIconPatcher] extensions.
+   * Use [.computeFileIcon] where possible (e.g. in background threads) to get a non-deferred icon.
    */
-  public static @NotNull Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
-    Icon lastIcon = LastComputedIconCache.get(file, flags);
-    Icon base = lastIcon != null ? lastIcon : computeBaseFileIcon(file);
-    return IconManager.getInstance().createDeferredIcon(base, new FileIconKey(file, project, flags), ICON_NULLABLE_FUNCTION);
+  @JvmStatic
+  fun getIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon {
+    val lastIcon = LastComputedIconCache.get(file, flags)
+    val base = lastIcon ?: computeBaseFileIcon(file)
+    return IconManager.getInstance().createDeferredIcon(base, FileIconKey(file, project, flags), ICON_NULLABLE_FUNCTION)
   }
 
   /**
    * @return an icon for a file that's quick to calculate, most likely based on the file type
-   * @see #computeFileIcon(VirtualFile, int, Project)
-   * @see FileType#getIcon()
+   * @see .computeFileIcon
+   * @see FileType.getIcon
    */
-  public static @NotNull Icon computeBaseFileIcon(@NotNull VirtualFile vFile) {
-    return computeFileTypeIcon(vFile, true);
+  @JvmStatic
+  fun computeBaseFileIcon(vFile: VirtualFile): Icon {
+    return computeFileTypeIcon(vFile, true)
   }
 
-  private static @NotNull Icon computeFileTypeIcon(@NotNull VirtualFile vFile, boolean onlyFastChecks) {
-    Icon icon = TypePresentationService.getService().getIcon(vFile);
+  private fun computeFileTypeIcon(vFile: VirtualFile, onlyFastChecks: Boolean): Icon {
+    var icon = TypePresentationService.getService().getIcon(vFile)
     if (icon != null) {
-      return icon;
+      return icon
     }
-    FileType fileType = onlyFastChecks ? FileTypeRegistry.getInstance().getFileTypeByFileName(vFile.getName())
-                                       : vFile.getFileType();
-    if (vFile.isDirectory() && !(fileType instanceof DirectoryFileType)) {
-      return IconManager.getInstance().tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON);
+    val fileType = if (onlyFastChecks) FileTypeRegistry.getInstance().getFileTypeByFileName(vFile.name) else vFile.fileType
+    if (vFile.isDirectory && fileType !is DirectoryFileType) {
+      return IconManager.getInstance().tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON)
     }
-    icon = fileType.getIcon();
-    return icon != null ? icon : getEmptyIcon(false);
+    icon = fileType.icon
+    return icon ?: getEmptyIcon(false)
   }
 
-  private static @Nullable Icon getProvidersIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, Project project) {
-    for (FileIconProvider provider : FileIconProvider.EP_NAME.getExtensionList()) {
-      final Icon icon = provider.getIcon(file, flags, project);
-      if (icon != null) return icon;
+  private fun getProvidersIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon? {
+    for (provider in FileIconProvider.EP_NAME.extensionList) {
+      val icon = provider.getIcon(file, flags, project)
+      if (icon != null) return icon
     }
-    return null;
+    return null
   }
 
-  public static @NotNull Icon getEmptyIcon(boolean showVisibility) {
-    com.intellij.ui.icons.RowIcon baseIcon = new RowIcon(2);
-    baseIcon.setIcon(EmptyIcon.create(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class)), 0);
+  @JvmStatic
+  fun getEmptyIcon(showVisibility: Boolean): Icon {
+    val baseIcon = RowIcon(2)
+    baseIcon.setIcon(EmptyIcon.create(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class)), 0)
     if (showVisibility) {
-      baseIcon.setIcon(EmptyIcon.create(PlatformIcons.PUBLIC_ICON), 1);
+      baseIcon.setIcon(EmptyIcon.create(PlatformIcons.PUBLIC_ICON), 1)
     }
-    return baseIcon;
+    return baseIcon
   }
 
-  public static @NotNull Image toImage(@NotNull Icon icon) {
-    return toImage(icon, null);
+  @JvmOverloads
+  @JvmStatic
+  fun toImage(icon: Icon, context: ScaleContext? = null): Image {
+    return IconLoader.toImage(icon = icon, ctx = context) ?: BufferedImage(1, 0, BufferedImage.TYPE_INT_ARGB)
   }
 
-  public static @NotNull Image toImage(@NotNull Icon icon, @Nullable ScaleContext context) {
-    Image image = IconLoader.toImage(icon, context);
+  @JvmOverloads
+  @JvmStatic
+  fun toBufferedImage(icon: Icon, inUserScale: Boolean = false): BufferedImage {
+    return toBufferedImage(icon, null, inUserScale)
+  }
+
+  @JvmStatic
+  fun toBufferedImage(icon: Icon, context: ScaleContext?, inUserScale: Boolean): BufferedImage {
+    var image = IconLoader.toImage(icon, context)
     if (image == null) {
-      //noinspection UndesirableClassUsage
-      image = new BufferedImage(1, 0, BufferedImage.TYPE_INT_ARGB);
+      image = BufferedImage(1, 0, BufferedImage.TYPE_INT_ARGB)
     }
-    return image;
+    return ImageUtil.toBufferedImage(image, inUserScale)
   }
 
-  public static @NotNull BufferedImage toBufferedImage(@NotNull Icon icon) {
-    return toBufferedImage(icon, false);
+  @JvmStatic
+  val addIcon: Icon
+    get() = AllIcons.General.Add
+  @JvmStatic
+  val removeIcon: Icon
+    get() = AllIcons.General.Remove
+
+  @JvmStatic
+  val moveUpIcon: Icon
+    get() = AllIcons.Actions.MoveUp
+  @JvmStatic
+  val moveDownIcon: Icon
+    get() = AllIcons.Actions.MoveDown
+  @JvmStatic
+  val editIcon: Icon
+    get() = AllIcons.Actions.Edit
+  @JvmStatic
+  val addClassIcon: Icon
+    get() = AllIcons.ToolbarDecorator.AddClass
+  @JvmStatic
+  val addPatternIcon: Icon
+    get() = AllIcons.ToolbarDecorator.AddPattern
+
+  @Suppress("unused")
+  @JvmStatic
+  val addBlankLineIcon: Icon
+    get() = AllIcons.ToolbarDecorator.AddBlankLine
+  @Suppress("unused")
+  @JvmStatic
+  val addPackageIcon: Icon
+    get() = AllIcons.ToolbarDecorator.AddFolder
+  @JvmStatic
+  val addLinkIcon: Icon
+    get() = AllIcons.ToolbarDecorator.AddLink
+
+  @Suppress("unused")
+  @JvmStatic
+  @get:Deprecated("This icon is not used by platform anymore.")
+  val analyzeIcon: Icon
+    get() = getIcon(toolbarDecoratorIconsFolder + "analyze.png", IconUtil::class.java.classLoader)
+
+  @JvmStatic
+  @Suppress("unused")
+  fun paintInCenterOf(c: Component, g: Graphics, icon: Icon) {
+    val x = (c.width - icon.iconWidth) / 2
+    val y = (c.height - icon.iconHeight) / 2
+    icon.paintIcon(c, g, x, y)
   }
 
-  public static @NotNull BufferedImage toBufferedImage(@NotNull Icon icon, boolean inUserScale) {
-    return toBufferedImage(icon, null, inUserScale);
-  }
+  @JvmStatic
+  fun toSize(icon: Icon?, width: Int, height: Int): Icon = IconSizeWrapper(icon, width, height)
 
-  public static @NotNull BufferedImage toBufferedImage(@NotNull Icon icon, @Nullable ScaleContext context, boolean inUserScale) {
-    Image image = IconLoader.toImage(icon, context);
-    if (image == null) {
-      //noinspection UndesirableClassUsage
-      image = new BufferedImage(1, 0, BufferedImage.TYPE_INT_ARGB);
-    }
-    return ImageUtil.toBufferedImage(image, inUserScale);
-  }
-
-  public static @NotNull Icon getAddIcon() {
-    return AllIcons.General.Add;
-  }
-
-  public static @NotNull Icon getRemoveIcon() {
-    return AllIcons.General.Remove;
-  }
-
-  public static @NotNull Icon getMoveUpIcon() {
-    return AllIcons.Actions.MoveUp;
-  }
-
-  public static @NotNull Icon getMoveDownIcon() {
-    return AllIcons.Actions.MoveDown;
-  }
-
-  public static @NotNull Icon getEditIcon() {
-    return AllIcons.Actions.Edit;
-  }
-
-  public static @NotNull Icon getAddClassIcon() {
-    return AllIcons.ToolbarDecorator.AddClass;
-  }
-
-  public static @NotNull Icon getAddPatternIcon() {
-    return AllIcons.ToolbarDecorator.AddPattern;
-  }
-
-  public static @NotNull Icon getAddJiraPatternIcon() {
-    return AllIcons.ToolbarDecorator.AddJira;
-  }
-
-  public static @NotNull Icon getAddYouTrackPatternIcon() {
-    return AllIcons.ToolbarDecorator.AddYouTrack;
-  }
-
-  public static @NotNull Icon getAddBlankLineIcon() {
-    return AllIcons.ToolbarDecorator.AddBlankLine;
-  }
-
-  public static @NotNull Icon getAddPackageIcon() {
-    return AllIcons.ToolbarDecorator.AddFolder;
-  }
-
-  public static @NotNull Icon getAddLinkIcon() {
-    return AllIcons.ToolbarDecorator.AddLink;
-  }
-
-  /**
-   * @deprecated This icon is not used by platform anymore.
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull Icon getAnalyzeIcon() {
-    return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + "analyze.png", IconUtil.class.getClassLoader());
-  }
-
-  public static void paintInCenterOf(@NotNull Component c, @NotNull Graphics g, @NotNull Icon icon) {
-    final int x = (c.getWidth() - icon.getIconWidth()) / 2;
-    final int y = (c.getHeight() - icon.getIconHeight()) / 2;
-    icon.paintIcon(c, g, x, y);
-  }
-
-  private static @NotNull @NonNls String getToolbarDecoratorIconsFolder() {
-    return "toolbarDecorator/" + (SystemInfoRt.isMac ? "mac/" : "");
-  }
-
-  public static @NotNull Icon toSize(@Nullable Icon icon, int width, int height) {
-    return new IconSizeWrapper(icon, width, height);
-  }
-
-  public static void paintSelectionAwareIcon(@NotNull Icon icon, @Nullable JComponent component, @NotNull Graphics g, int x, int y, boolean selected) {
+  @JvmStatic
+  fun paintSelectionAwareIcon(icon: Icon, component: JComponent?, g: Graphics, x: Int, y: Int, selected: Boolean) {
     if (selected) {
-      SVGLoader.paintIconWithSelection(icon, component, g, x, y);
+      paintIconWithSelection(icon = icon, c = component, g = g, x = x, y = y)
     }
     else {
-      icon.paintIcon(component, g, x, y);
+      icon.paintIcon(component, g, x, y)
     }
   }
 
   /**
-   * Use only for icons under selection
+   * Use it only for icons under selection.
    */
   @ApiStatus.Internal
   @Contract("null -> null; !null -> !null")
-  public static @Nullable Icon wrapToSelectionAwareIcon(@Nullable Icon iconUnderSelection) {
-    if (iconUnderSelection == null) return null;
-    return new Icon() {
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        SVGLoader.paintIconWithSelection(iconUnderSelection, c, g, x, y);
+  @JvmStatic
+  fun wrapToSelectionAwareIcon(iconUnderSelection: Icon?): Icon? {
+    return if (iconUnderSelection == null) null
+    else object : Icon {
+      override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+        paintIconWithSelection(icon = iconUnderSelection, c = c, g = g, x = x, y = y)
       }
 
-      @Override
-      public int getIconWidth() {
-        return iconUnderSelection.getIconWidth();
-      }
+      override fun getIconWidth(): Int = iconUnderSelection.iconWidth
 
-      @Override
-      public int getIconHeight() {
-        return iconUnderSelection.getIconHeight();
-      }
-    };
-  }
-
-  public static class IconSizeWrapper implements Icon {
-    private final Icon myIcon;
-    private final int myWidth;
-    private final int myHeight;
-
-    protected IconSizeWrapper(@Nullable Icon icon, int width, int height) {
-      myIcon = icon;
-      myWidth = width;
-      myHeight = height;
-    }
-
-    @Override
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-      paintIcon(myIcon, c, g, x, y);
-    }
-
-    protected void paintIcon(@Nullable Icon icon, Component c, Graphics g, int x, int y) {
-      if (icon == null) return;
-      x += (myWidth - icon.getIconWidth()) / 2;
-      y += (myHeight - icon.getIconHeight()) / 2;
-      icon.paintIcon(c, g, x, y);
-    }
-
-    @Override
-    public int getIconWidth() {
-      return myWidth;
-    }
-
-    @Override
-    public int getIconHeight() {
-      return myHeight;
+      override fun getIconHeight(): Int = iconUnderSelection.iconHeight
     }
   }
 
-  private static final class CropIcon implements Icon {
-    private final Icon mySrc;
-    private final Rectangle myCrop;
-
-    private CropIcon(@NotNull Icon src, @NotNull Rectangle crop) {
-      mySrc = src;
-      myCrop = crop;
-    }
-
-    @Override
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-      g = g.create();
-      try {
-        Rectangle iconClip = new Rectangle(x, y, myCrop.width, myCrop.height);
-        Rectangle gClip = g.getClipBounds();
-        if (gClip != null) {
-          Rectangle2D.intersect(iconClip, gClip, iconClip);
-        }
-        g.setClip(iconClip);
-        mySrc.paintIcon(c, g, x - myCrop.x, y - myCrop.y);
+  @Deprecated("use {@link #scale(Icon, Component, float)}")
+  @JvmStatic
+  fun scale(source: Icon, scale: Double): Icon {
+    val clampedScale = clampScale(scale)
+    return object : Icon {
+      override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+        paintScaled(c = c, g = g, x = x, y = y, scale = clampedScale, source = source)
       }
-      finally {
-        g.dispose();
+
+      override fun getIconWidth(): Int = (source.iconWidth * clampedScale).toInt()
+
+      override fun getIconHeight(): Int = (source.iconHeight * clampedScale).toInt()
+    }
+  }
+
+  @JvmStatic
+  fun resizeSquared(source: Icon, size: Int): Icon {
+    val sizeValue = JBUI.uiIntValue("ResizedIcon", size)
+    return object : Icon {
+      override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+        val scale = clampScale(sizeValue.get().toDouble() / source.iconWidth.toDouble())
+        paintScaled(c = c, g = g, x = x, y = y, scale = scale, source = source)
       }
-    }
 
-    @Override
-    public String toString() {
-      return getClass().getSimpleName() + " (" + mySrc + " -> " + myCrop + ")";
-    }
+      override fun getIconWidth(): Int = sizeValue.get()
 
-    @Override
-    public int getIconWidth() {
-      return myCrop.width;
-    }
-
-    @Override
-    public int getIconHeight() {
-      return myCrop.height;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof CropIcon)) return false;
-      CropIcon icon = (CropIcon)o;
-      return mySrc.equals(icon.mySrc) &&
-             myCrop.equals(icon.myCrop);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(mySrc, myCrop);
+      override fun getIconHeight(): Int = sizeValue.get()
     }
   }
 
   /**
-   * @deprecated use {@link #scale(Icon, Component, float)}
-   */
-  @Deprecated
-  public static @NotNull Icon scale(final @NotNull Icon source, double _scale) {
-    final double scale = clampScale(_scale);
-    return new Icon() {
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        paintScaled(c, g, x, y, scale, source);
-      }
-
-      @Override
-      public int getIconWidth() {
-        return (int)(source.getIconWidth() * scale);
-      }
-
-      @Override
-      public int getIconHeight() {
-        return (int)(source.getIconHeight() * scale);
-      }
-    };
-  }
-
-  private static double clampScale(double _scale) {
-    return MathUtil.clamp(_scale, 0.1, 32);
-  }
-
-  private static void paintScaled(@Nullable Component c, @NotNull Graphics g, int x, int y, double scale, @NotNull Icon source) {
-    Graphics2D g2d = (Graphics2D)g.create();
-    try {
-      g2d.translate(x, y);
-      AffineTransform transform = AffineTransform.getScaleInstance(scale, scale);
-      transform.preConcatenate(g2d.getTransform());
-      g2d.setTransform(transform);
-      g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-      source.paintIcon(c, g2d, 0, 0);
-    }
-    finally {
-      g2d.dispose();
-    }
-  }
-
-
-  public static @NotNull Icon resizeSquared(@NotNull Icon source, int size) {
-    JBValue sizeValue = JBUI.uiIntValue("ResizedIcon", size);
-    return new Icon() {
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        double scale = clampScale((double)sizeValue.get() / (double)source.getIconWidth());
-        paintScaled(c, g, x, y, scale, source);
-      }
-
-      @Override
-      public int getIconWidth() {
-        return sizeValue.get();
-      }
-
-      @Override
-      public int getIconHeight() {
-        return sizeValue.get();
-      }
-    };
-  }
-
-  /**
-   * Returns a copy of the provided {@code icon}.
-   *
+   * Returns a copy of the provided `icon`.
    * @see CopyableIcon
    */
-  public static @NotNull Icon copy(@NotNull Icon icon, @Nullable Component ancestor) {
-    return IconLoader.INSTANCE.copy(icon, ancestor, false);
-  }
+  @JvmStatic
+  fun copy(icon: Icon, ancestor: Component?): Icon = copy(icon = icon, ancestor = ancestor, deepCopy = false)
 
   /**
-   * Returns a deep copy of the provided {@code icon}.
-   *
+   * Returns a deep copy of the provided `icon`.
    * @see CopyableIcon
    */
-  public static @NotNull Icon deepCopy(@NotNull Icon icon, @Nullable Component ancestor) {
-    return IconLoader.INSTANCE.copy(icon, ancestor, true);
-  }
+  @JvmStatic
+  fun deepCopy(icon: Icon, ancestor: Component?): Icon = copy(icon = icon, ancestor = ancestor, deepCopy = true)
 
   /**
    * Returns a scaled icon instance.
-   * <p>
-   * The method delegates to {@link ScalableIcon#scale(float)} when applicable,
-   * otherwise defaults to {@link #scale(Icon, double)}
-   * <p>
+   *
+   * The method delegates to [ScalableIcon.scale] when applicable,
+   * otherwise defaults to [.scale]
+   *
    * In the following example:
    * <pre>
    * Icon myIcon = new MyIcon();
    * Icon scaledIcon = IconUtil.scale(myIcon, myComp, 2f);
    * Icon anotherScaledIcon = IconUtil.scale(scaledIcon, myComp, 2f);
    * assert(scaledIcon.getIconWidth() == anotherScaledIcon.getIconWidth()); // compare the scale of the icons
-   * </pre>
-   * The result of the assertion depends on {@code MyIcon} implementation. When {@code scaledIcon} is an instance of {@link ScalableIcon},
-   * then {@code anotherScaledIcon} should be scaled according to the {@link ScalableIcon} javadoc, and the assertion should pass.
-   * Otherwise, {@code anotherScaledIcon} should be 2 times bigger than {@code scaledIcon}, and 4 times bigger than {@code myIcon}.
+  </pre> *
+   * The result of the assertion depends on `MyIcon` implementation. When `scaledIcon` is an instance of [ScalableIcon],
+   * then `anotherScaledIcon` should be scaled according to the [ScalableIcon] javadoc, and the assertion should pass.
+   * Otherwise, `anotherScaledIcon` should be 2 times bigger than `scaledIcon`, and 4 times bigger than `myIcon`.
    * So, prior to scale the icon recursively, the returned icon should be inspected for its type to understand the result.
    * But recursive scale should better be avoided.
    *
@@ -570,84 +402,79 @@ public final class IconUtil {
    * @param scale the scale factor
    * @return the scaled icon
    */
-  public static @NotNull Icon scale(@NotNull Icon icon, @Nullable Component ancestor, float scale) {
-    ScaleContext ctx;
-    if (ancestor == null && icon instanceof ScaleContextAware) {
-      // In this case the icon's context should be preserved, except the OBJ_SCALE.
-      UserScaleContext usrCtx = ((ScaleContextAware)icon).getScaleContext();
-      ctx = ScaleContext.create(usrCtx);
-    } else {
-      ctx = ScaleContext.create(ancestor);
+  @JvmStatic
+  fun scale(icon: Icon, ancestor: Component?, scale: Float): Icon {
+    val ctx = if (ancestor == null && icon is ScaleContextAware) {
+      // In this case, the icon's context should be preserved, except the OBJ_SCALE.
+      val usrCtx = icon.scaleContext
+      ScaleContext.create(usrCtx)
     }
-    ctx.setScale(OBJ_SCALE.of(scale));
-    return scale(icon, ctx);
+    else {
+      ScaleContext.create(ancestor)
+    }
+    ctx.setScale(ScaleType.OBJ_SCALE.of(scale.toDouble()))
+    return scale(icon = icon, ctx = ctx)
   }
 
   /**
    * Returns a scaled icon instance.
-   * <p>
-   * The passed {@code ctx} is applied to the icon and the {@link ScaleType#OBJ_SCALE} is used to scale it.
    *
-   * @see #scale(Icon, Component, float)
+   * The passed `ctx` is applied to the icon and the [ScaleType.OBJ_SCALE] is used to scale it.
+   *
+   * @see .scale
    * @param icon the icon to scale
    * @param ctx the scale context to apply
    * @return the scaled icon
    */
-  public static @NotNull Icon scale(@NotNull Icon icon, @NotNull ScaleContext ctx) {
-    double scale = ctx.getScale(OBJ_SCALE);
-    if (icon instanceof CopyableIcon) {
-      icon = ((CopyableIcon)icon).deepCopy();
-      if (icon instanceof ScalableIcon) {
-        if (icon instanceof ScaleContextAware) {
-          ctx = ctx.copy();
+  @JvmStatic
+  fun scale(icon: Icon, ctx: ScaleContext): Icon {
+    var icon = icon
+    var scaleContext = ctx
+    val scale = scaleContext.getScale(ScaleType.OBJ_SCALE)
+    if (icon is CopyableIcon) {
+      icon = icon.deepCopy()
+      if (icon is ScalableIcon) {
+        if (icon is ScaleContextAware) {
+          scaleContext = scaleContext.copy()
           // Reset OBJ_SCALE in the context to preserve ScalableIcon.scale(float) implementation
           // from accumulation of the scales: OBJ_SCALE * scale.
-          ctx.setScale(OBJ_SCALE.of(1.0));
-          ((ScaleContextAware)icon).updateScaleContext(ctx);
+          scaleContext.setScale(ScaleType.OBJ_SCALE.of(1.0))
+          icon.updateScaleContext(scaleContext)
         }
-        return ((ScalableIcon)icon).scale((float)scale);
+        return icon.scale(scale.toFloat())
       }
     }
-    return scale(icon, scale);
+    return scale(source = icon, scale = scale)
   }
 
   /**
-   * Returns a scaled icon instance, in scale of the provided font size.
-   * <p>
-   * The method delegates to {@link ScalableIcon#scale(float)} when applicable,
-   * otherwise defaults to {@link #scale(Icon, double)}
-   * <p>
-   * Refer to {@link #scale(Icon, Component, float)} for more details.
+   * Returns a scaled icon instance, in a scale of the provided font size.
+   *
+   * The method delegates to [ScalableIcon.scale] when applicable,
+   * otherwise defaults to [.scale]
+   *
+   * Refer to [.scale] for more details.
    *
    * @param icon the icon to scale
    * @param ancestor the component (or its ancestor) painting the icon, or null when not available
    * @param fontSize the reference font size
    * @return the scaled icon
    */
-  public static @NotNull Icon scaleByFont(@NotNull Icon icon, @Nullable Component ancestor, float fontSize) {
-    float scale = JBUIScale.getFontScale(fontSize);
-    if (icon instanceof ScaleContextAware) {
-      ScaleContextAware ctxIcon = (ScaleContextAware)icon;
+  @JvmStatic
+  fun scaleByFont(icon: Icon, ancestor: Component?, fontSize: Float): Icon {
+    var scale = getFontScale(fontSize)
+    if (icon is ScaleContextAware) {
+      val ctxIcon = icon as ScaleContextAware
       // take into account the user scale of the icon
-      double usrScale = ctxIcon.getScaleContext().getScale(USR_SCALE);
-      scale /= usrScale;
+      val usrScale = ctxIcon.scaleContext.getScale(ScaleType.USR_SCALE)
+      scale /= usrScale.toFloat()
     }
-    return scale(icon, ancestor, scale);
+    return scale(icon = icon, ancestor = ancestor, scale = scale)
   }
 
-  public static Icon scaleByIconWidth(@Nullable Icon icon, @Nullable Component ancestor, @NotNull Icon defaultIcon) {
-    return scaleByIcon(icon, ancestor, defaultIcon, Icon::getIconWidth);
-  }
-
-  public static Icon scaleByIconHeight(@Nullable Icon icon, @Nullable Component ancestor, @NotNull Icon defaultIcon) {
-    return scaleByIcon(icon, ancestor, defaultIcon, Icon::getIconHeight);
-  }
-
-  private static Icon scaleByIcon(@Nullable Icon icon, Component ancestor, @NotNull Icon defaultIcon, @NotNull ToIntFunction<? super Icon> size) {
-    if (icon == null || icon == defaultIcon) return defaultIcon;
-    int actual = size.applyAsInt(icon);
-    int expected = size.applyAsInt(defaultIcon);
-    return expected == actual ? icon : scale(icon, ancestor, (float)expected / actual);
+  @JvmStatic
+  fun scaleByIconWidth(icon: Icon?, ancestor: Component?, defaultIcon: Icon): Icon {
+    return scaleByIcon(icon, ancestor, defaultIcon) { it.iconWidth }
   }
 
   /**
@@ -656,251 +483,95 @@ public final class IconUtil {
    * @return the scaled icon
    */
   @ApiStatus.Internal
-  public static @NotNull Icon scaleOrLoadCustomVersion(@NotNull Icon icon, float scale) {
-    if (icon instanceof CachedImageIcon) {
-      int oldWidth = icon.getIconWidth();
-      int oldHeight = icon.getIconHeight();
-      int newWidth = Math.round(scale * oldWidth);
-      int newHeight = Math.round(scale * oldHeight);
-      if (oldWidth == newWidth && oldHeight == newHeight) return icon;
-      Icon version = IconLoader.INSTANCE.loadCustomVersion((CachedImageIcon)icon, newWidth, newHeight);
-      if (version != null) return version;
+  fun scaleOrLoadCustomVersion(icon: Icon, scale: Float): Icon {
+    if (icon is CachedImageIcon) {
+      val oldWidth = icon.getIconWidth()
+      val oldHeight = icon.getIconHeight()
+      val newWidth = (scale * oldWidth).roundToInt()
+      val newHeight = (scale * oldHeight).roundToInt()
+      if (oldWidth == newWidth && oldHeight == newHeight) {
+        return icon
+      }
+
+      val version = loadCustomVersion(icon = icon, width = newWidth, height = newHeight)
+      if (version != null) {
+        return version
+      }
     }
-    if (icon instanceof ScalableIcon) {
-      return ((ScalableIcon)icon).scale(scale);
-    }
-    return scale(icon, null, scale);
+
+    return if (icon is ScalableIcon) icon.scale(scale) else scale(icon = icon, ancestor = null, scale = scale)
   }
 
   /**
    * Overrides the provided scale in the icon's scale context and in the composited icon's scale contexts (when applicable).
    *
-   * @see UserScaleContext#overrideScale(Scale)
+   * @see UserScaleContext.overrideScale
    */
-  public static @NotNull Icon overrideScale(@NotNull Icon icon, Scale scale) {
-    if (icon instanceof CompositeIcon) {
-      CompositeIcon compositeIcon = (CompositeIcon)icon;
-      for (int i = 0; i < compositeIcon.getIconCount(); i++) {
-        Icon subIcon = compositeIcon.getIcon(i);
-        if (subIcon != null) overrideScale(subIcon, scale);
-      }
-    }
-    if (icon instanceof ScaleContextAware) {
-      ((ScaleContextAware)icon).getScaleContext().overrideScale(scale);
-    }
-    return icon;
-  }
-
-  public static @NotNull Icon colorize(@NotNull Icon source, @NotNull Color color) {
-    return colorize(source, color, false);
-  }
-
-  public static @NotNull Icon colorize(Graphics2D g, @NotNull Icon source, @NotNull Color color) {
-    return colorize(g, source, color, false);
-  }
-
-  public static @NotNull Icon colorize(@NotNull Icon source, @NotNull Color color, boolean keepGray) {
-    return filterIcon(source, () -> new ColorFilter(color, keepGray), null);
-  }
-
-  public static @NotNull Icon colorize(Graphics2D g, @NotNull Icon source, @NotNull Color color, boolean keepGray) {
-    return filterIcon(g, source, new ColorFilter(color, keepGray));
-  }
-
-  public static @NotNull Icon desaturate(@NotNull Icon source) {
-    return filterIcon(source, () -> new DesaturationFilter(), null);
-  }
-
-  public static @NotNull Icon brighter(@NotNull Icon source, int tones) {
-    return filterIcon(source, () -> new BrighterFilter(tones), null);
-  }
-
-  public static @NotNull Icon darker(@NotNull Icon source, int tones) {
-    return filterIcon(source, () -> new DarkerFilter(tones), null);
-  }
-
-  private static @NotNull Icon filterIcon(Graphics2D g, @NotNull Icon source, @NotNull ColorFilter filter) {
-    BufferedImage src = g != null ? ImageUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
-                        ImageUtil.createImage(source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-    Graphics2D g2d = src.createGraphics();
-    source.paintIcon(null, g2d, 0, 0);
-    g2d.dispose();
-    BufferedImage img = g != null ? ImageUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
-                        ImageUtil.createImage(source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-    int rgba;
-    for (int y = 0; y < src.getRaster().getHeight(); y++) {
-      for (int x = 0; x < src.getRaster().getWidth(); x++) {
-        rgba = src.getRGB(x, y);
-        if ((rgba & 0xff000000) != 0) {
-          img.setRGB(x, y, filter.filterRGB(x, y, rgba));
+  @JvmStatic
+  fun overrideScale(icon: Icon, scale: Scale?): Icon {
+    if (icon is CompositeIcon) {
+      for (i in 0 until icon.iconCount) {
+        val subIcon = icon.getIcon(i)
+        if (subIcon != null) {
+          overrideScale(icon = subIcon, scale = scale)
         }
       }
     }
-    return createImageIcon((Image)img);
+    if (icon is ScaleContextAware) {
+      icon.scaleContext.overrideScale(scale!!)
+    }
+    return icon
   }
 
-  private static final class ColorFilter extends RGBImageFilter {
-    private final float[] myBase;
-    private final boolean myKeepGray;
-
-    private ColorFilter(@NotNull Color color, boolean keepGray) {
-      myKeepGray = keepGray;
-      myBase = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
-    }
-
-    @Override
-    public int filterRGB(int x, int y, int rgba) {
-      int r = rgba >> 16 & 0xff;
-      int g = rgba >> 8 & 0xff;
-      int b = rgba & 0xff;
-      float[] hsb = new float[3];
-      Color.RGBtoHSB(r, g, b, hsb);
-      int rgb = Color.HSBtoRGB(myBase[0], myBase[1] * (myKeepGray ? hsb[1] : 1.0f), myBase[2] * hsb[2]);
-      return (rgba & 0xff000000) | (rgb & 0xffffff);
-    }
+  @JvmOverloads
+  @JvmStatic
+  fun colorize(source: Icon, color: Color, keepGray: Boolean = false): Icon {
+    return filterIcon(icon = source, filterSupplier = { ColorFilter(color, keepGray) })
   }
 
-  private static class DesaturationFilter extends RGBImageFilter {
-    @Override
-    public int filterRGB(int x, int y, int rgba) {
-      int r = rgba >> 16 & 0xff;
-      int g = rgba >> 8 & 0xff;
-      int b = rgba & 0xff;
-      int min = Math.min(Math.min(r, g), b);
-      int max = Math.max(Math.max(r, g), b);
-      int grey = (max + min) / 2;
-      return (rgba & 0xff000000) | (grey << 16) | (grey << 8) | grey;
-    }
+  @JvmOverloads
+  @JvmStatic
+  fun colorize(g: Graphics2D?, source: Icon, color: Color, keepGray: Boolean = false): Icon {
+    return filterIcon(g = g, source = source, filter = ColorFilter(color, keepGray))
   }
 
-  private static class BrighterFilter extends RGBImageFilter {
-    private final int myTones;
+  @JvmStatic
+  fun desaturate(source: Icon): Icon {
+    return filterIcon(icon = source, filterSupplier = { DesaturationFilter() })
+  }
 
-    BrighterFilter(int tones) {
-      myTones = tones;
-    }
+  @JvmStatic
+  fun brighter(source: Icon, tones: Int): Icon = filterIcon(icon = source, filterSupplier = { BrighterFilter(tones) })
 
-    @SuppressWarnings("UseJBColor")
-    @Override
-    public int filterRGB(int x, int y, int rgb) {
-      Color originalColor = new Color(rgb, true);
-      Color filteredColor = ColorUtil.toAlpha(ColorUtil.brighter(originalColor, myTones), originalColor.getAlpha());
-      return filteredColor.getRGB();
+  @JvmStatic
+  fun darker(source: Icon, tones: Int): Icon = filterIcon(icon = source, filterSupplier = { DarkerFilter(tones) })
+
+  @JvmStatic
+  fun createImageIcon(img: Image): JBImageIcon {
+    return object : JBImageIcon(img) {
+      override fun getIconWidth(): Int = ImageUtil.getUserWidth(image)
+
+      override fun getIconHeight(): Int = ImageUtil.getUserHeight(image)
     }
   }
 
-  private static class DarkerFilter extends RGBImageFilter {
-    private final int myTones;
+  @JvmStatic
+  fun textToIcon(text: String, component: Component, fontSize: Float): Icon = TextIcon(text, component, fontSize)
 
-    DarkerFilter(int tones) {
-      myTones = tones;
-    }
-
-    @SuppressWarnings("UseJBColor")
-    @Override
-    public int filterRGB(int x, int y, int rgb) {
-      Color originalColor = new Color(rgb, true);
-      Color filteredColor = ColorUtil.toAlpha(ColorUtil.darker(originalColor, myTones), originalColor.getAlpha());
-      return filteredColor.getRGB();
-    }
-  }
-
-  /**
-   * @deprecated Use {@link #createImageIcon(Image)}
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull JBImageIcon createImageIcon(final @NotNull BufferedImage img) {
-    return createImageIcon((Image)img);
-  }
-
-  public static @NotNull JBImageIcon createImageIcon(final @NotNull Image img) {
-    return new JBImageIcon(img) {
-      @Override
-      public int getIconWidth() {
-        return ImageUtil.getUserWidth(getImage());
-      }
-
-      @Override
-      public int getIconHeight() {
-        return ImageUtil.getUserHeight(getImage());
-      }
-    };
-  }
-
-  public static @NotNull Icon textToIcon(final @NotNull String text, final @NotNull Component component, final float fontSize) {
-    final class MyIcon extends JBScalableIcon {
-      private final @NotNull String myText;
-      private Font myFont;
-      private FontMetrics myMetrics;
-      private final WeakReference<Component> myCompRef = new WeakReference<>(component);
-
-      private MyIcon(final @NotNull String text) {
-        myText = text;
-        setIconPreScaled(false);
-        getScaleContext().addUpdateListener(() -> update());
-        update();
-      }
-
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) { // x,y is in USR_SCALE
-        g = g.create();
-        try {
-          GraphicsUtil.setupAntialiasing(g);
-          g.setFont(myFont);
-          UIUtil.drawStringWithHighlighting(g, myText,
-                                            (int)scaleVal(x, OBJ_SCALE) + (int)scaleVal(2),
-                                            (int)scaleVal(y, OBJ_SCALE) + getIconHeight() - (int)scaleVal(1),
-                                            JBColor.foreground(), JBColor.background());
-        }
-        finally {
-          g.dispose();
-        }
-      }
-
-      @Override
-      public int getIconWidth() {
-        return myMetrics.stringWidth(myText) + (int)scaleVal(4);
-      }
-
-      @Override
-      public int getIconHeight() {
-        return myMetrics.getHeight();
-      }
-
-      private void update() {
-        myFont = JBFont.create(JBFont.label().deriveFont((float)scaleVal(fontSize, OBJ_SCALE))); // fontSize is in USR_SCALE
-        Component comp = myCompRef.get();
-        if (comp == null) comp = new Component() {};
-        myMetrics = comp.getFontMetrics(myFont);
-      }
-
-      @Override
-      public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof MyIcon)) return false;
-        final MyIcon icon = (MyIcon)o;
-
-        if (!Objects.equals(myText, icon.myText)) return false;
-        if (!Objects.equals(myFont, icon.myFont)) return false;
-        return true;
-      }
-    }
-
-    return new MyIcon(text);
-  }
-
-  public static @NotNull Icon addText(@NotNull Icon base, @NotNull String text) {
-    LayeredIcon icon = new LayeredIcon(2);
-    icon.setIcon(base, 0);
-    icon.setIcon(textToIcon(text, new JLabel(), JBUIScale.scale(6.0f)), 1, SwingConstants.SOUTH_EAST);
-    return icon;
+  @JvmStatic
+  fun addText(base: Icon, text: String): Icon {
+    val icon = LayeredIcon(2)
+    icon.setIcon(base, 0)
+    icon.setIcon(textToIcon(text, JLabel(), scale(6.0f)), 1, SwingConstants.SOUTH_EAST)
+    return icon
   }
 
   /**
    * Creates a new icon with the filter applied.
    */
-  public static @NotNull Icon filterIcon(@NotNull Icon icon, Supplier<? extends RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
-    return IconLoader.INSTANCE.filterIcon(icon, filterSupplier::get);
+  @JvmStatic
+  fun filterIcon(icon: Icon, filterSupplier: Supplier<out RGBImageFilter>, ancestor: Component?): Icon {
+    return filterIcon(icon = icon, filterSupplier = filterSupplier::get)
   }
 
   /**
@@ -908,116 +579,317 @@ public final class IconUtil {
    * and replaces its inner 'simple' icon with another one recursively
    * @return original icon with modified inner state
    */
-  public static Icon replaceInnerIcon(@Nullable Icon icon, @NotNull Icon toCheck, @NotNull Icon toReplace) {
-    if (icon  instanceof LayeredIcon) {
-      Icon[] layers = ((LayeredIcon)icon).getAllLayers();
-      for (int i = 0; i < layers.length; i++) {
-        Icon layer = layers[i];
-        if (layer == toCheck) {
-          layers[i] = toReplace;
-        } else {
-          replaceInnerIcon(layer, toCheck, toReplace);
-        }
-      }
-    }
-    else if (icon instanceof RowIcon) {
-      Icon[] allIcons = ((RowIcon)icon).getAllIcons();
-      for (int i = 0; i < allIcons.length; i++) {
-        Icon anIcon = allIcons[i];
-        if (anIcon == toCheck) {
-          ((RowIcon)icon).setIcon(toReplace, i);
+  @JvmStatic
+  fun replaceInnerIcon(icon: Icon?, toCheck: Icon, toReplace: Icon): Icon? {
+    if (icon is LayeredIcon) {
+      val layers = icon.allLayers
+      for (i in layers.indices) {
+        val layer = layers[i]
+        if (layer === toCheck) {
+          layers[i] = toReplace
         }
         else {
-          replaceInnerIcon(anIcon, toCheck, toReplace);
+          replaceInnerIcon(icon = layer, toCheck = toCheck, toReplace = toReplace)
         }
       }
     }
-    return icon;
+    else if (icon is RowIcon) {
+      val allIcons = icon.allIcons
+      for ((i, anIcon) in allIcons.withIndex()) {
+        if (anIcon === toCheck) {
+          icon.setIcon(toReplace, i)
+        }
+        else {
+          replaceInnerIcon(icon = anIcon, toCheck = toCheck, toReplace = toReplace)
+        }
+      }
+    }
+    return icon
   }
 
-  public static @Nullable Icon rowIcon(@Nullable Icon left, @Nullable Icon right) {
-    if (left != null && right != null) {
-      return new RowIcon(left, right);
-    }
-    else if (left != null) {
-      return left;
-    }
-    else {
-      return right;
-    }
+  @JvmStatic
+  fun rowIcon(left: Icon?, right: Icon?): Icon? {
+    return if (left != null && right != null) RowIcon(left, right) else left ?: right
   }
 
   @ApiStatus.Internal
-  public static Icon toRetinaAwareIcon(BufferedImage image) {
-    return toRetinaAwareIcon(image, JBUIScale.sysScale());
-  }
+  @JvmStatic
+  fun toRetinaAwareIcon(image: BufferedImage): Icon = toRetinaAwareIcon(image, sysScale())
 
   @ApiStatus.Internal
-  public static Icon toRetinaAwareIcon(BufferedImage image, float sysScale) {
-    return new Icon() {
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        if (isJreHiDPI()) {
-          Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
-          PaintUtilKt.alignToInt(newG);
-          newG.scale(1.0 / sysScale, 1.0 / sysScale);
-          newG.drawImage(image, 0, 0, null);
-          newG.dispose();
+  fun toRetinaAwareIcon(image: BufferedImage, sysScale: Float): Icon {
+    return object : Icon {
+      override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+        if (isJreHiDPI) {
+          val newG = g.create(x, y, image.width, image.height) as Graphics2D
+          alignToInt(newG)
+          newG.scale(1.0 / sysScale, 1.0 / sysScale)
+          newG.drawImage(image, 0, 0, null)
+          newG.dispose()
         }
         else {
-          g.drawImage(image, x, y, null);
+          g.drawImage(image, x, y, null)
         }
       }
 
-      @Override
-      public int getIconWidth() {
-        return isJreHiDPI() ? (int)(image.getWidth() / sysScale) : image.getWidth();
-      }
+      override fun getIconWidth(): Int = if (isJreHiDPI) (image.width / sysScale).toInt() else image.width
 
-      @Override
-      public int getIconHeight() {
-        return isJreHiDPI() ? (int)(image.getHeight() / sysScale) : image.getHeight();
-      }
+      override fun getIconHeight(): Int = if (isJreHiDPI) (image.height / sysScale).toInt() else image.height
 
-      private boolean isJreHiDPI() {
-        return JreHiDpiUtil.isJreHiDPI(sysScale);
-      }
-    };
+      private val isJreHiDPI: Boolean
+        get() = JreHiDpiUtil.isJreHiDPI(sysScale)
+    }
   }
 
-  public static @NotNull Icon toStrokeIcon(@NotNull Icon original, @NotNull Color resultColor) {
-    List<String> strokeColors = List.of("black", "#000000",
-                                        "white", "#ffffff",
-                                        "#818594",
-                                        "#6c707e",
-                                        "#3574f0",
-                                        "#5fb865",
-                                        "#e35252",
-                                        "#eb7171",
-                                        "#e3ae4d",
-                                        "#fcc75b",
-                                        "#f28c35",
-                                        "#955ae0");
-    List<String> backgroundColors = List.of("#ebecf0", "#e7effd", "#dff2e0", "#f2fcf3", "#ffe8e8", "#fff5f5", "#fff8e3", "#fff4eb", "#eee0ff");
-    SVGLoader.SvgElementColorPatcherProvider palettePatcher = getStrokePatcher(resultColor, strokeColors, backgroundColors);
-    SVGLoader.SvgElementColorPatcherProvider strokeReplacer = getStrokePatcher(resultColor, List.of("white", "#ffffff"), List.of());
-
-    return IconLoader.INSTANCE.replaceCachedImageIcons(original, (cachedImageIcon) -> {
-      SVGLoader.SvgElementColorPatcherProvider patcher = palettePatcher;
-      int flags = cachedImageIcon.getImageFlags$intellij_platform_util_ui();
-      if ((flags & ImageDescriptor.HAS_STROKE) == ImageDescriptor.HAS_STROKE) {
-        Icon strokeIcon = cachedImageIcon.createStrokeIcon$intellij_platform_util_ui();
-        //noinspection UseJBColor
-        if (Color.WHITE.equals(resultColor)) {
+  fun toStrokeIcon(original: Icon, resultColor: Color): Icon {
+    val palettePatcher = getStrokePatcher(resultColor, strokeColors, backgroundColors)
+    val strokeReplacer = getStrokePatcher(resultColor = resultColor, strokeColors = listOf("white", "#ffffff"), backgroundColors = listOf())
+    return replaceCachedImageIcons(icon = original) { cachedImageIcon ->
+      var icon = cachedImageIcon
+      var patcher = palettePatcher
+      val flags = icon.imageFlags
+      if (flags and ImageDescriptor.HAS_STROKE == ImageDescriptor.HAS_STROKE) {
+        val strokeIcon = icon.createStrokeIcon()
+        if (resultColor == Color.WHITE) {
           // will be nothing to patch actually
-          return strokeIcon;
+          return@replaceCachedImageIcons strokeIcon
         }
-        if (strokeIcon instanceof CachedImageIcon) {
-          cachedImageIcon = (CachedImageIcon) strokeIcon;
-          patcher = strokeReplacer;
+
+        if (strokeIcon is CachedImageIcon) {
+          icon = strokeIcon
+          patcher = strokeReplacer
         }
       }
-      return IconLoader.INSTANCE.patchColorsInCacheImageIcon(cachedImageIcon, patcher, false);
-    });
+      patchColorsInCacheImageIcon(imageIcon = icon, colorPatcher = patcher, isDark = false)
+    }!!
   }
+}
+
+private val backgroundColors = listOf("#ebecf0", "#e7effd", "#dff2e0", "#f2fcf3", "#ffe8e8", "#fff5f5", "#fff8e3", "#fff4eb", "#eee0ff")
+private val strokeColors = listOf("black", "#000000",
+                                  "white", "#ffffff",
+                                  "#818594",
+                                  "#6c707e",
+                                  "#3574f0",
+                                  "#5fb865",
+                                  "#e35252",
+                                  "#eb7171",
+                                  "#e3ae4d",
+                                  "#fcc75b",
+                                  "#f28c35",
+                                  "#955ae0")
+
+private class IconSizeWrapper(private val icon: Icon?, private val width: Int, private val height: Int) : Icon {
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+    paintIcon(icon = icon, c = c, g = g, x = x, y = y)
+  }
+
+  private fun paintIcon(icon: Icon?, c: Component?, g: Graphics?, x: Int, y: Int) {
+    if (icon == null) {
+      return
+    }
+
+    icon.paintIcon(c, g, x + (width - icon.iconWidth) / 2, y + (height - icon.iconHeight) / 2)
+  }
+
+  override fun getIconWidth(): Int = width
+
+  override fun getIconHeight(): Int = height
+}
+
+private class CropIcon(private val mySrc: Icon, private val crop: Rectangle) : Icon {
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+    var customG = g
+    customG = customG.create()
+    try {
+      val iconClip = Rectangle(x, y, crop.width, crop.height)
+      val gClip = customG.clipBounds
+      if (gClip != null) {
+        Rectangle2D.intersect(iconClip, gClip, iconClip)
+      }
+      customG.clip = iconClip
+      mySrc.paintIcon(c, customG, x - crop.x, y - crop.y)
+    }
+    finally {
+      customG.dispose()
+    }
+  }
+
+  override fun toString(): String = "${javaClass.simpleName} ($mySrc -> $crop)"
+
+  override fun getIconWidth(): Int = crop.width
+
+  override fun getIconHeight(): Int = crop.height
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is CropIcon) return false
+    return mySrc == other.mySrc && crop == other.crop
+  }
+
+  override fun hashCode(): Int = Objects.hash(mySrc, crop)
+}
+
+private class ColorFilter(color: Color, private val keepGray: Boolean) : RGBImageFilter() {
+  private val base = Color.RGBtoHSB(color.red, color.green, color.blue, null)
+
+  override fun filterRGB(x: Int, y: Int, rgba: Int): Int {
+    val r = rgba shr 16 and 0xff
+    val g = rgba shr 8 and 0xff
+    val b = rgba and 0xff
+    val hsb = FloatArray(3)
+    Color.RGBtoHSB(r, g, b, hsb)
+    val rgb = Color.HSBtoRGB(base[0], base[1] * if (keepGray) hsb[1] else 1.0f, base[2] * hsb[2])
+    return rgba and -0x1000000 or (rgb and 0xffffff)
+  }
+}
+
+private class DesaturationFilter : RGBImageFilter() {
+  override fun filterRGB(x: Int, y: Int, rgba: Int): Int {
+    val r = rgba shr 16 and 0xff
+    val g = rgba shr 8 and 0xff
+    val b = rgba and 0xff
+    val min = min(min(r, g), b)
+    val max = max(r.coerceAtLeast(g), b)
+    val grey = (max + min) / 2
+    return rgba and -0x1000000 or (grey shl 16) or (grey shl 8) or grey
+  }
+}
+
+private class BrighterFilter(private val tones: Int) : RGBImageFilter() {
+  override fun filterRGB(x: Int, y: Int, rgb: Int): Int {
+    val originalColor = Color(rgb, true)
+    return ColorUtil.toAlpha(ColorUtil.brighter(originalColor, tones), originalColor.alpha).rgb
+  }
+}
+
+private class DarkerFilter(private val tones: Int) : RGBImageFilter() {
+  override fun filterRGB(x: Int, y: Int, rgb: Int): Int {
+    val originalColor = Color(rgb, true)
+    return ColorUtil.toAlpha(ColorUtil.darker(originalColor, tones), originalColor.alpha).rgb
+  }
+}
+
+@IconFlags
+private fun filterFileIconFlags(file: VirtualFile, @IconFlags flags: Int): Int {
+  val fileTypeDataHolder = file.fileType as? UserDataHolder
+  val fileTypeFlagIgnoreMask = ICON_FLAG_IGNORE_MASK.get(fileTypeDataHolder, 0)
+  val flagIgnoreMask = ICON_FLAG_IGNORE_MASK.get(file, fileTypeFlagIgnoreMask)
+  return flags and flagIgnoreMask.inv()
+}
+
+private class TextIcon(private val text: String, component: Component, private val fontSize: Float) : JBScalableIcon() {
+  private var font: Font? = null
+  private var metrics: FontMetrics? = null
+  private val componentRef = WeakReference(component)
+
+  init {
+    isIconPreScaled = false
+    scaleContext.addUpdateListener { update() }
+    update()
+  }
+
+  // x,y is in USR_SCALE
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+    val customG = g.create()
+    try {
+      GraphicsUtil.setupAntialiasing(customG)
+      customG.font = font
+      UIUtil.drawStringWithHighlighting(customG,
+                                        this.text,
+                                        scaleVal(x.toDouble(), ScaleType.OBJ_SCALE).toInt() + scaleVal(2.0).toInt(),
+                                        scaleVal(y.toDouble(), ScaleType.OBJ_SCALE).toInt() + iconHeight - scaleVal(1.0).toInt(),
+                                        JBColor.foreground(),
+                                        JBColor.background())
+    }
+    finally {
+      customG.dispose()
+    }
+  }
+
+  override fun getIconWidth(): Int = metrics!!.stringWidth(this.text) + scaleVal(4.0).toInt()
+
+  override fun getIconHeight(): Int = metrics!!.height
+
+  private fun update() {
+    // fontSize is in USR_SCALE
+    font = JBFont.create(JBFont.label().deriveFont(scaleVal(fontSize.toDouble(), ScaleType.OBJ_SCALE).toFloat()))
+    metrics = (componentRef.get() ?: object : Component() {}).getFontMetrics(font)
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is TextIcon) return false
+    if (this.text != other.text) return false
+    return font == other.font
+  }
+
+  override fun hashCode(): Int {
+    var result = text.hashCode()
+    result = 31 * result + fontSize.hashCode()
+    result = 31 * result + (font?.hashCode() ?: 0)
+    result = 31 * result + (metrics?.hashCode() ?: 0)
+    result = 31 * result + componentRef.hashCode()
+    return result
+  }
+}
+
+private fun clampScale(scale: Double): Double = scale.coerceIn(0.1, 32.0)
+
+private fun paintScaled(c: Component?, g: Graphics, x: Int, y: Int, scale: Double, source: Icon) {
+  val g2d = g.create() as Graphics2D
+  try {
+    g2d.translate(x, y)
+    val transform = AffineTransform.getScaleInstance(scale, scale)
+    transform.preConcatenate(g2d.transform)
+    g2d.transform = transform
+    g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC)
+    source.paintIcon(c, g2d, 0, 0)
+  }
+  finally {
+    g2d.dispose()
+  }
+}
+
+private fun scaleByIcon(icon: Icon?, ancestor: Component?, defaultIcon: Icon, size: ToIntFunction<in Icon>): Icon {
+  if (icon == null || icon === defaultIcon) {
+    return defaultIcon
+  }
+
+  val actual = size.applyAsInt(icon)
+  val expected = size.applyAsInt(defaultIcon)
+  return if (expected == actual) {
+    icon
+  }
+  else {
+    IconUtil.scale(icon = icon, ancestor = ancestor, scale = expected.toFloat() / actual)
+  }
+}
+
+private fun filterIcon(g: Graphics2D?, source: Icon, filter: ColorFilter): Icon {
+  val src = if (g == null) {
+    ImageUtil.createImage(source.iconWidth, source.iconHeight, BufferedImage.TYPE_INT_ARGB)
+  }
+  else {
+    ImageUtil.createImage(g, source.iconWidth, source.iconHeight, BufferedImage.TYPE_INT_ARGB)
+  }
+  val g2d = src.createGraphics()
+  source.paintIcon(null, g2d, 0, 0)
+  g2d.dispose()
+  val image = if (g != null) {
+    ImageUtil.createImage(g, source.iconWidth, source.iconHeight, BufferedImage.TYPE_INT_ARGB)
+  }
+  else {
+    ImageUtil.createImage(source.iconWidth, source.iconHeight, BufferedImage.TYPE_INT_ARGB)
+  }
+  var rgba: Int
+  for (y in 0 until src.raster.height) {
+    for (x in 0 until src.raster.width) {
+      rgba = src.getRGB(x, y)
+      if (rgba and -0x1000000 != 0) {
+        image.setRGB(x, y, filter.filterRGB(x, y, rgba))
+      }
+    }
+  }
+  return IconUtil.createImageIcon(image as Image)
 }

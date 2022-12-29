@@ -424,7 +424,7 @@ object IconLoader {
    * Creates a new icon with the color patching applied.
    */
   fun colorPatchedIcon(icon: Icon, colorPatcher: SvgElementColorPatcherProvider): Icon {
-    return replaceCachedImageIcons(icon) { patchColorsInCacheImageIcon(imageIcon = it!!, colorPatcher = colorPatcher, isDark = null) }!!
+    return replaceCachedImageIcons(icon) { patchColorsInCacheImageIcon(imageIcon = it, colorPatcher = colorPatcher, isDark = null) }!!
   }
 
   @ApiStatus.Internal
@@ -443,7 +443,7 @@ object IconLoader {
    * Creates a new icon with the low-level CachedImageIcon changing
    */
   @ApiStatus.Internal
-  fun replaceCachedImageIcons(icon: Icon, cachedImageIconReplacer: (com.intellij.openapi.util.CachedImageIcon?) -> Icon): Icon? {
+  fun replaceCachedImageIcons(icon: Icon, cachedImageIconReplacer: (com.intellij.openapi.util.CachedImageIcon) -> Icon): Icon? {
     val replacer: IconReplacer = object : IconReplacer {
       override fun replaceIcon(icon: Icon?): Icon? {
         return when {

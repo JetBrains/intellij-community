@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -168,7 +168,7 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
 
   /**
    *
-   * @param constraint is expected to be one of compass-directions or CENTER
+   * @param constraint is expected to be one of the compass-directions or CENTER
    */
   public void setIcon(Icon icon, int layer, @MagicConstant(valuesFromClass = SwingConstants.class) int constraint) {
     int width = getIconWidth();
@@ -356,7 +356,7 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
 
   private static void buildCompositeTooltip(Icon[] icons, StringBuilder result, Set<? super String> seenTooltips) {
     for (int i = 0; i < icons.length; i++) {
-      // first layer is the actual object (noun), other layers are modifiers (adjectives), so put first object in last position
+      // the first layer is the actual object (noun), other layers are modifiers (adjectives), so put a first object in the last position
       Icon icon = i == icons.length - 1 ? icons[0] : icons[i + 1];
       if (icon instanceof LayeredIcon) {
         buildCompositeTooltip(((LayeredIcon) icon).myIcons, result, seenTooltips);

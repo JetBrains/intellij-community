@@ -231,7 +231,6 @@ object SVGLoader {
     colorPatcherProvider = provider
   }
 
-  @JvmStatic
   @ApiStatus.Internal
   fun getStrokePatcher(resultColor: Color,
                        strokeColors: List<String>,

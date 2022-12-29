@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
@@ -29,19 +30,19 @@ public final class CommonActionsPanel extends JPanel {
   private final ActionToolbar myToolbar;
 
   public enum Buttons {
-    ADD(IconUtil.getAddIcon(), UIBundle.messagePointer("button.text.add")) {
+    ADD(AllIcons.General.Add, UIBundle.messagePointer("button.text.add")) {
       @Override
       @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
         return new AddButton(listener, name == null ? getText() : name, icon);
       }
     },
-    REMOVE(IconUtil.getRemoveIcon(), UIBundle.messagePointer("button.text.remove")) {
+    REMOVE(AllIcons.General.Remove, UIBundle.messagePointer("button.text.remove")) {
       @Override
       @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
         return new RemoveButton(listener, name == null ? getText() : name, icon);
       }
     },
-    EDIT(IconUtil.getEditIcon(), UIBundle.messagePointer("button.text.edit")) {
+    EDIT(AllIcons.Actions.Edit, UIBundle.messagePointer("button.text.edit")) {
       @Override
       @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
         return new EditButton(listener, name == null ? getText() : name, icon);

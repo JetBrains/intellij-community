@@ -234,7 +234,7 @@ open class CachedImageIcon protected constructor(
                            useStroke = useStroke)
   }
 
-  internal fun createStrokeIcon(): Icon {
+  fun createStrokeIcon(): Icon {
     val resolver = resolver ?: return EMPTY_ICON
     return CachedImageIcon(originalPath = originalPath,
                            resolver = resolver,
@@ -297,7 +297,7 @@ open class CachedImageIcon protected constructor(
     }
   }
 
-  internal val imageFlags: Int
+  val imageFlags: Int
     get() {
       return (this.resolver ?: return 0).flags
     }

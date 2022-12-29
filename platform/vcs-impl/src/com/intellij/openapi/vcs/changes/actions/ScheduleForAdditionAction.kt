@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -21,7 +22,6 @@ import com.intellij.openapi.vcs.changes.ui.CommitDialogChangesBrowser
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.Consumer
-import com.intellij.util.IconUtil
 import com.intellij.util.PairConsumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.JBIterable
@@ -37,7 +37,7 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
       e.presentation.isVisible = enabled
     }
     if (e.isFromActionToolbar && e.presentation.icon == null) {
-      e.presentation.icon = IconUtil.getAddIcon()
+      e.presentation.icon = AllIcons.General.Add
     }
   }
 

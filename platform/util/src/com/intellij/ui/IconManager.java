@@ -255,14 +255,14 @@ final class DummyIconManager implements IconManager {
     }
 
     @Override
-    public Icon @NotNull [] getAllIcons() {
+    public @NotNull List<Icon> getAllIcons() {
       List<Icon> list = new ArrayList<>();
       for (Icon element : icons) {
         if (element != null) {
           list.add(element);
         }
       }
-      return list.toArray(new Icon[0]);
+      return list;
     }
 
     @Override
