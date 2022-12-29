@@ -25,9 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -1133,17 +1131,6 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public boolean canEat(Update update) {
       return true;
-    }
-  }
-
-  /**
-   * @deprecated Implement {@link com.intellij.openapi.startup.ProjectPostStartupActivity} directly.
-   */
-  @Deprecated
-  public static class PostStartupActivity implements StartupActivity, DumbAware {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      throw new UnsupportedOperationException();
     }
   }
 
