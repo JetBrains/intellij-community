@@ -3,29 +3,35 @@
 
 package org.jetbrains.plugins.gradle.util
 
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 
 
 fun isSupported(gradleVersion: GradleVersion, javaVersion: JavaVersion): Boolean {
-  return GradleJvmSupportMatrix.INSTANCE.isSupported(gradleVersion, javaVersion)
-
+  return GradleJvmSupportMatrix.getInstance().isSupported(gradleVersion, javaVersion)
 }
+
+fun getSupportedGradleVersions(javaVersion: JavaVersion): List<GradleVersion> {
+  return GradleJvmSupportMatrix.getInstance().getSupportedGradleVersions(javaVersion)
+}
+
+fun getSupportedJavaVersions(gradleVersion: GradleVersion): List<JavaVersion> {
+  return GradleJvmSupportMatrix.getInstance().getSupportedJavaVersions(gradleVersion)
+}
+
 fun suggestGradleVersion(javaVersion: JavaVersion): GradleVersion? {
-  return GradleJvmSupportMatrix.INSTANCE.suggestGradleVersion(javaVersion)
+  return GradleJvmSupportMatrix.getInstance().suggestGradleVersion(javaVersion)
 }
 
 fun suggestJavaVersion(gradleVersion: GradleVersion): JavaVersion? {
-  return GradleJvmSupportMatrix.INSTANCE.suggestJavaVersion(gradleVersion)
+  return GradleJvmSupportMatrix.getInstance().suggestJavaVersion(gradleVersion)
 }
 
 fun suggestOldestCompatibleGradleVersion(javaVersion: JavaVersion): GradleVersion? {
-  return GradleJvmSupportMatrix.INSTANCE.suggestOldestCompatibleGradleVersion(javaVersion)
+  return GradleJvmSupportMatrix.getInstance().suggestOldestCompatibleGradleVersion(javaVersion)
 }
 
 fun suggestOldestCompatibleJavaVersion(gradleVersion: GradleVersion): JavaVersion? {
-  return GradleJvmSupportMatrix.INSTANCE.suggestOldestCompatibleJavaVersion(gradleVersion)
+  return GradleJvmSupportMatrix.getInstance().suggestOldestCompatibleJavaVersion(gradleVersion)
 }

@@ -40,13 +40,13 @@ class GradleJvmUpdateMatricesTest : LightIdeaTestCase() {
     }
 
     myUrl = "http://${LOCALHOST}:${myServer.address?.port}${endpoint}"
-    updateTime = GradleJvmSupportMatrix.INSTANCE.state?.lastUpdateTime ?: 0
+    updateTime = GradleJvmSupportMatrix.getInstance().state?.lastUpdateTime ?: 0
   }
 
   override fun tearDown() {
     try {
       myServer.stop(0)
-      GradleJvmSupportMatrix.INSTANCE.loadState(JvmCompatibilityState().apply { isDefault = true })
+      GradleJvmSupportMatrix.getInstance().loadState(JvmCompatibilityState().apply { isDefault = true })
     }
     catch (e: Throwable) {
       addSuppressedException(e)
@@ -92,24 +92,24 @@ class GradleJvmUpdateMatricesTest : LightIdeaTestCase() {
     withResponse { byFile("newConfig.json") }
     PlatformTestUtil.waitForFuture(CompatibilitySupportUpdater.getInstance().checkForUpdates(), 2000)
     TestCase.assertEquals(1, requests)
-    UsefulTestCase.assertSameElements(GradleJvmSupportMatrix.INSTANCE.state?.data?.supportedGradleVersions!!, "1.0", "2.0")
-    UsefulTestCase.assertSameElements(GradleJvmSupportMatrix.INSTANCE.state?.data?.supportedJavaVersions!!, "5", "6")
-    assertFalse(updateTime == GradleJvmSupportMatrix.INSTANCE.state?.lastUpdateTime)
+    UsefulTestCase.assertSameElements(GradleJvmSupportMatrix.getInstance().state?.data?.supportedGradleVersions!!, "1.0", "2.0")
+    UsefulTestCase.assertSameElements(GradleJvmSupportMatrix.getInstance().state?.data?.supportedJavaVersions!!, "5", "6")
+    assertFalse(updateTime == GradleJvmSupportMatrix.getInstance().state?.lastUpdateTime)
   }
 
   fun `test update configuration for appropriate idea version`() {
     withResponse { byFile("newConfigWithDifferentIdea.json") }
     PlatformTestUtil.waitForFuture(CompatibilitySupportUpdater.getInstance().checkForUpdates(), 2000)
     TestCase.assertEquals(1, requests)
-    UsefulTestCase.assertSameElements(GradleJvmSupportMatrix.INSTANCE.state?.data?.supportedGradleVersions!!, "42.0", "43.0")
-    UsefulTestCase.assertSameElements(GradleJvmSupportMatrix.INSTANCE.state?.data?.supportedJavaVersions!!, "7", "8")
-    assertFalse(updateTime == GradleJvmSupportMatrix.INSTANCE.state?.lastUpdateTime)
+    UsefulTestCase.assertSameElements(GradleJvmSupportMatrix.getInstance().state?.data?.supportedGradleVersions!!, "42.0", "43.0")
+    UsefulTestCase.assertSameElements(GradleJvmSupportMatrix.getInstance().state?.data?.supportedJavaVersions!!, "7", "8")
+    assertFalse(updateTime == GradleJvmSupportMatrix.getInstance().state?.lastUpdateTime)
   }
 
   fun `test should not update configuration if error thrown`() {
     withResponse { throw Exception() }
     PlatformTestUtil.waitForFuture(CompatibilitySupportUpdater.getInstance().checkForUpdates(), 2000)
-    TestCase.assertNull(GradleJvmSupportMatrix.INSTANCE.state)
+    TestCase.assertNull(GradleJvmSupportMatrix.getInstance().state)
   }
 
   fun `test should not update configuration if update interval set to 0`() {
@@ -121,6 +121,6 @@ class GradleJvmUpdateMatricesTest : LightIdeaTestCase() {
     }
     PlatformTestUtil.waitForFuture(CompatibilitySupportUpdater.getInstance().checkForUpdates(), 2000)
     TestCase.assertEquals(0, requests)
-    TestCase.assertNull(GradleJvmSupportMatrix.INSTANCE.state)
+    TestCase.assertNull(GradleJvmSupportMatrix.getInstance().state)
   }
 }

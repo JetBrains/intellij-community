@@ -2,11 +2,7 @@
 package org.jetbrains.plugins.gradle.jvmcompat
 
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.util.*
@@ -41,6 +37,14 @@ class GradleJvmSupportMatrix : PersistentStateComponent<JvmCompatibilityState?> 
     parseMyState()
   }
 
+  fun getSupportedGradleVersions(javaVersion: JavaVersion): List<GradleVersion> {
+    return mySupportedGradleVersions.filter { isSupported(it, javaVersion) }
+  }
+
+  fun getSupportedJavaVersions(gradleVersion: GradleVersion): List<JavaVersion> {
+    return mySupportedJavaVersions.filter { isSupported(gradleVersion, it) }
+  }
+
   fun isSupported(gradleVersion: GradleVersion, javaVersion: JavaVersion): Boolean {
     return myCompatibility.any { (javaVersions, gradleVersions) ->
       javaVersion in javaVersions && gradleVersion in gradleVersions
@@ -52,27 +56,19 @@ class GradleJvmSupportMatrix : PersistentStateComponent<JvmCompatibilityState?> 
     if (isSupported(gradleVersion, javaVersion)) {
       return gradleVersion
     }
-    return mySupportedGradleVersions.reversed().find { isSupported(it, javaVersion) }
+    return getSupportedGradleVersions(javaVersion).lastOrNull()
   }
 
   fun suggestJavaVersion(gradleVersion: GradleVersion): JavaVersion? {
-    return mySupportedJavaVersions.reversed().find { isSupported(gradleVersion, it) }
+    return getSupportedJavaVersions(gradleVersion).lastOrNull()
   }
 
   fun suggestOldestCompatibleGradleVersion(javaVersion: JavaVersion): GradleVersion? {
-    return mySupportedGradleVersions.find { isSupported(it, javaVersion) }
+    return getSupportedGradleVersions(javaVersion).firstOrNull()
   }
 
   fun suggestOldestCompatibleJavaVersion(gradleVersion: GradleVersion): JavaVersion? {
-    return mySupportedJavaVersions.find { isSupported(gradleVersion, it) }
-  }
-
-  fun minSupportedJava(): JavaVersion {
-    return mySupportedJavaVersions.first()
-  }
-
-  fun maxSupportedJava(): JavaVersion {
-    return mySupportedJavaVersions.last()
+    return getSupportedJavaVersions(gradleVersion).firstOrNull()
   }
 
   fun setStateAsString(json: String) {
@@ -92,8 +88,8 @@ class GradleJvmSupportMatrix : PersistentStateComponent<JvmCompatibilityState?> 
 
   companion object {
     @JvmStatic
-    @get:JvmName("getInstance")
-    val INSTANCE: GradleJvmSupportMatrix
-      get() = ApplicationManager.getApplication().getService(GradleJvmSupportMatrix::class.java)
+    fun getInstance(): GradleJvmSupportMatrix {
+      return service<GradleJvmSupportMatrix>()
+    }
   }
 }
