@@ -108,7 +108,7 @@ class SpellCheckerManager(val project: Project) : Disposable {
   }
 
   fun fullConfigurationReload() {
-    val spellChecker = GrazieSpellCheckerEngine(project)
+    val spellChecker = project.service<GrazieSpellCheckerEngine>()
     this.spellChecker = spellChecker
     suggestionProvider = GrazieSuggestionProvider(spellChecker)
     fillEngineDictionary(spellChecker)
