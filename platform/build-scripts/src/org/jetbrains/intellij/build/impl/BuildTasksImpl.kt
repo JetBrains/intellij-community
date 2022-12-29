@@ -36,7 +36,9 @@ import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.logFreeDiskSpace
 import org.jetbrains.intellij.build.io.writeNewFile
 import org.jetbrains.intellij.build.io.zipWithCompression
-import org.jetbrains.intellij.build.tasks.*
+import org.jetbrains.intellij.build.tasks.DirSource
+import org.jetbrains.intellij.build.tasks.ZipSource
+import org.jetbrains.intellij.build.tasks.buildJar
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.artifact.JpsArtifactService
@@ -1176,11 +1178,13 @@ private suspend fun buildInspectopediaArtifacts(builder: DistributionJARsBuilder
 }
 
 internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext) {
-  withContext(Dispatchers.IO) {
-    Files.walk(directory).use { tree ->
-      val fileTime = FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS)
-      tree.forEach {
-        it.setLastModifiedTime(fileTime)
+  spanBuilder("Updating last modified time").setAttribute("dir", "$directory").useWithScope2 {
+    withContext(Dispatchers.IO) {
+      Files.walk(directory).use { tree ->
+        val fileTime = FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS)
+        tree.forEach {
+          it.setLastModifiedTime(fileTime)
+        }
       }
     }
   }
