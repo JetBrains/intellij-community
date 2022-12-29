@@ -1,9 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
-import com.intellij.openapi.vfs.newvfs.persistent.intercept.RecordsInterceptor
+import kotlinx.coroutines.Job
 
-class RecordsLogInterceptor(
-  private val processor: OperationProcessor
-): RecordsInterceptor {
+interface OperationProcessor {
+  fun enqueue(action: suspend VfsLog.Context.() -> Unit): Job
 }

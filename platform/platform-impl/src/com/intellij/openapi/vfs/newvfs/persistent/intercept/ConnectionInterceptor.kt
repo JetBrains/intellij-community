@@ -25,13 +25,13 @@ interface ContentsInterceptor : ConnectionInterceptor {
 interface RecordsInterceptor : ConnectionInterceptor {
   fun onAllocateRecord(underlying: () -> Int) = underlying
   fun onSetAttributeRecordId(underlying: (fileId: Int, recordId: Int) -> Unit) = underlying
+  fun onSetContentRecordId(underlying: (fileId: Int, recordId: Int) -> Boolean) = underlying
   fun onSetParent(underlying: (fileId: Int, parentId: Int) -> Unit) = underlying
   fun onSetNameId(underlying: (fileId: Int, nameId: Int) -> Unit) = underlying
   fun onSetFlags(underlying: (fileId: Int, flags: Int) -> Boolean) = underlying
   fun onSetLength(underlying: (fileId: Int, length: Long) -> Boolean) = underlying
   fun onSetTimestamp(underlying: (fileId: Int, timestamp: Long) -> Boolean) = underlying
   fun onMarkRecordAsModified(underlying: (fileId: Int) -> Unit) = underlying
-  fun onSetContentRecordId(underlying: (fileId: Int, recordId: Int) -> Boolean) = underlying
   fun onFillRecord(underlying: (fileId: Int, timestamp: Long, length: Long, flags: Int,
                                 nameId: Int, parentId: Int, overwriteAttrRef: Boolean) -> Unit) = underlying
   fun onCleanRecord(underlying: (fileId: Int) -> Unit) = underlying

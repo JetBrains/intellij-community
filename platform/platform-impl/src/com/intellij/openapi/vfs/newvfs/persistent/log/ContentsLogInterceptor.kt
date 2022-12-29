@@ -2,18 +2,11 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.util.io.ByteArraySequence
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ContentsInterceptor
-import java.nio.file.Path
 
 class ContentsLogInterceptor(
-  private val contentsStoragePath: Path
+  private val processor: OperationProcessor
 ) : ContentsInterceptor {
-
-  init {
-    //LOG.warn(contentsStoragePath.absolutePathString())
-    FileUtil.createIfNotExists(contentsStoragePath.toFile())
-  }
 
   override fun onWriteBytes(underlying: (record: Int, bytes: ByteArraySequence, fixedSize: Boolean) -> Unit) =
     { record: Int, bytes: ByteArraySequence, fixedSize: Boolean ->
