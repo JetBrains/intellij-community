@@ -33,6 +33,11 @@ object ProjectFileIndexScopes {
     assertScope(file, scope, null, null)
   }
   
+  fun ProjectFileIndex.assertInUnloadedModule(file: VirtualFile, moduleName: String, contentRoot: VirtualFile) {
+    assertScope(file, EXCLUDED, null, contentRoot)
+    assertEquals(moduleName, getUnloadedModuleNameForFile(file))
+  }
+  
   private fun ProjectFileIndex.assertScope(file: VirtualFile, @MagicConstant(flagsFromClass = ProjectFileIndexPerformanceTest::class) scope: Int = IN_CONTENT,
                                            module: Module?, contentRoot: VirtualFile?) {
     val inContent = scope and IN_CONTENT != 0

@@ -5,18 +5,16 @@ import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.EXCLUDED
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_LIBRARY
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.NOT_IN_PROJECT
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertInModule
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertInUnloadedModule
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -45,8 +43,8 @@ class UnloadedModulesInProjectFileIndexTest {
 
     projectModel.setUnloadedModules("unloaded")
     
-    assertFromUnloadedModule(file, "unloaded")
-    assertFromUnloadedModule(contentRoot, "unloaded")
+    fileIndex.assertInUnloadedModule(file, "unloaded", contentRoot)
+    fileIndex.assertInUnloadedModule(contentRoot, "unloaded", contentRoot)
 
     projectModel.setUnloadedModules()
     fileIndex.assertInModule(file, projectModel.moduleManager.findModuleByName("unloaded")!!, contentRoot)
@@ -104,10 +102,5 @@ class UnloadedModulesInProjectFileIndexTest {
     
     projectModel.setUnloadedModules()
     fileIndex.assertScope(libraryRoot, IN_LIBRARY)
-  }
-
-  private fun assertFromUnloadedModule(file: VirtualFile, moduleName: String) {
-    fileIndex.assertScope(file, EXCLUDED)
-    assertEquals(moduleName, fileIndex.getUnloadedModuleNameForFile(file))
   }
 }
