@@ -1,23 +1,39 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.UnInterruptibleFileChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.concurrent.atomic.AtomicLong
+import kotlin.io.path.div
 
 class DescriptorStorageImpl(
-  private val storagePath: Path,
+  storagePath: Path,
   private val stringEnumerator: SuspendDataEnumerator<String>
 ) : DescriptorStorage {
-  private val fileChannel = UnInterruptibleFileChannel(storagePath,
-                                                       StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
-  private val mmapIO = MappedFileIOUtil(fileChannel, FileChannel.MapMode.READ_WRITE)
-  private val position = AtomicLong(fileChannel.size())
+  private val mmapIO: MappedFileIOUtil
+  private var lastSafeSize by PersistentVar.long(storagePath / "size")
+  private val position: AdvancingPositionTracker
+
+  init {
+    FileUtil.ensureExists(storagePath.toFile())
+
+    val fileChannel = UnInterruptibleFileChannel(storagePath / "descriptors",
+                                                 StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
+    mmapIO = MappedFileIOUtil(fileChannel, FileChannel.MapMode.READ_WRITE)
+
+    lastSafeSize.let {
+      if (it != null) {
+        position = AdvancingPositionTracker(it)
+      }
+      else {
+        position = AdvancingPositionTracker(0L)
+      }
+    }
+  }
 
   override fun bytesForDescriptor(tag: VfsOperationTag): Int =
     when (tag) {
@@ -60,20 +76,16 @@ class DescriptorStorageImpl(
    */
   override suspend fun writeDescriptor(tag: VfsOperationTag, compute: suspend () -> VfsOperation<*>) {
     val descrSize = bytesForDescriptor(tag)
-    val descrPos = position.getAndAdd(descrSize.toLong())
-
-    fileChannel.write(ByteBuffer.wrap(byteArrayOf((-tag.ordinal).toByte())), descrPos)
-    //io.write(descrPos, byteArrayOf((-tag.ordinal).toByte()))
-    fileChannel.write(ByteBuffer.wrap(byteArrayOf(tag.ordinal.toByte())), descrPos + descrSize - VfsOperationTag.SIZE_BYTES)
-    //io.write(descrPos + descrSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
-    val op = compute()
-    assert(tag == op.tag)
-    val data = serialize(op)
-    assert(data.size == sizeOfValueInDescriptor(descrSize))
-    fileChannel.write(ByteBuffer.wrap(data), descrPos + VfsOperationTag.SIZE_BYTES)
-    //io.write(descrPos + VfsOperationTag.SIZE_BYTES, data)
-    fileChannel.write(ByteBuffer.wrap(byteArrayOf(tag.ordinal.toByte())), descrPos)
-    //io.write(descrPos, byteArrayOf(tag.ordinal.toByte()))
+    position.track(descrSize.toLong()) { descrPos ->
+      mmapIO.write(descrPos, byteArrayOf((-tag.ordinal).toByte()))
+      mmapIO.write(descrPos + descrSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
+      val op = compute()
+      assert(tag == op.tag)
+      val data = serialize(op)
+      assert(data.size == sizeOfValueInDescriptor(descrSize))
+      mmapIO.write(descrPos + VfsOperationTag.SIZE_BYTES, data)
+      mmapIO.write(descrPos, byteArrayOf(tag.ordinal.toByte()))
+    }
   }
 
   override suspend fun readAt(position: Long, action: suspend (VfsOperation<*>?) -> Unit) {
@@ -146,15 +158,19 @@ class DescriptorStorageImpl(
   }
 
   override suspend fun serialize(operation: VfsOperation<*>): ByteArray = operation.serializeValue(stringEnumerator)
-  override suspend fun <T: VfsOperation<*>> deserialize(tag: VfsOperationTag, data: ByteArray): T = VfsOperation.deserialize(tag, data, stringEnumerator)
+  override suspend fun <T : VfsOperation<*>> deserialize(tag: VfsOperationTag, data: ByteArray): T = VfsOperation.deserialize(tag, data,
+                                                                                                                              stringEnumerator)
 
-  override fun size(): Long = fileChannel.size()
+  override fun size(): Long = lastSafeSize ?: 0L
 
   override fun flush() {
-    fileChannel.force(false)
+    val safePos = position.getMinInflightPosition()
+    mmapIO.flush()
+    lastSafeSize = safePos
   }
 
   override fun dispose() {
-    fileChannel.close()
+    flush()
+    mmapIO.close()
   }
 }

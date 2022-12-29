@@ -86,7 +86,7 @@ class MappedFileIOUtil(
   private fun readPieceConfined(piece: Int, pieceOffset: Int, buf: ByteArray, offset: Int, length: Int) {
     assert(0 <= pieceOffset && pieceOffset + length <= PIECE_SIZE)
     val p = getPiece(piece)
-    p.get(pieceOffset, buf, offset, length) // TODO: do we need to return anything?
+    p.get(pieceOffset, buf, offset, length)
   }
 
   fun read(position: Long, buf: ByteArray, offset: Int, length: Int) {
@@ -117,8 +117,23 @@ class MappedFileIOUtil(
     return max(first, other.first)..min(last, other.last)
   }
 
+  fun flush() {
+    synchronized(pieces) {
+      pieces.forEach {
+        it?.force()
+      }
+    }
+  }
+
+  fun close() {
+    synchronized(pieces) {
+      pieces.clear()
+      fileChannel.close()
+    }
+  }
+
   companion object {
-    private const val PIECE_SIZE = 1024 * 1024 * 1024L // 1 GB
+    private const val PIECE_SIZE = 1024 * 1024 * 128L // 128 MiB
     private const val MAX_PIECES = 1024 * 1024
   }
 }

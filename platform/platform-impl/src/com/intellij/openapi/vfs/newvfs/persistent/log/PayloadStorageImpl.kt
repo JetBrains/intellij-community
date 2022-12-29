@@ -2,25 +2,42 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.UnInterruptibleFileChannel
-import com.intellij.util.io.toByteArray
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.io.EOFException
 import java.io.OutputStream
-import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.concurrent.atomic.AtomicLong
+import kotlin.io.path.div
 
 class PayloadStorageImpl(
-  private val storagePath: Path,
+  storagePath: Path,
 ) : PayloadStorage {
-  private val fileChannel = UnInterruptibleFileChannel(storagePath,
-                                                       StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
-  private val position = AtomicLong(fileChannel.size())
+  private val mmapIO: MappedFileIOUtil
+  private var lastSafeSize by PersistentVar.long(storagePath / "size")
+  private val position: AdvancingPositionTracker
+
+  init {
+    FileUtil.ensureExists(storagePath.toFile())
+
+    val fileChannel = UnInterruptibleFileChannel(storagePath / "payload",
+                                                 StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
+    mmapIO = MappedFileIOUtil(fileChannel, FileChannel.MapMode.READ_WRITE)
+
+    lastSafeSize.let {
+      if (it != null) {
+        position = AdvancingPositionTracker(it)
+      }
+      else {
+        position = AdvancingPositionTracker(0L)
+      }
+    }
+  }
 
   override suspend fun writePayload(sizeBytes: Long, body: suspend OutputStream.() -> Unit): PayloadRef {
     assert(sizeBytes >= 0)
@@ -36,49 +53,48 @@ class PayloadStorageImpl(
     DataInputOutputUtil.writeLONG(out, sizeBytes)
 
     val fullSize = out.writtenBytesCount.toLong() + sizeBytes
-    val payloadPos = position.getAndAdd(fullSize)
-
-    fileChannel.write(ByteBuffer.wrap(buf.internalBuffer, 0, out.writtenBytesCount), payloadPos)
-    FileChannelOffsetOutputStream(fileChannel, payloadPos + out.writtenBytesCount).run {
-      body()
-      validateWrittenBytesCount(sizeBytes)
+    return position.track(fullSize) { payloadPos ->
+      mmapIO.write(payloadPos, buf.internalBuffer, 0, out.writtenBytesCount)
+      MMapIOOffsetOutputStream(mmapIO, payloadPos + out.writtenBytesCount).run {
+        body()
+        validateWrittenBytesCount(sizeBytes)
+      }
+      PayloadRef(payloadPos)
     }
-    return PayloadRef(payloadPos)
   }
 
   override suspend fun readAt(ref: PayloadRef): ByteArray? {
     if (ref == PayloadRef.ZERO_SIZE) return ByteArray(0)
     // TODO: revisit unexpected value cases
-    val buf = ByteBuffer.allocate(10) // 1 + (64 - 6) / 7 < 10
-    if (fileChannel.read(buf, ref.offset) < 1) {
-      return null
-    }
-    val inp = ByteArrayInputStream(buf.toByteArray())
+    val buf = ByteArray(10) // 1 + (64 - 6) / 7 < 10
+    mmapIO.read(ref.offset, buf)
+    val inp = ByteArrayInputStream(buf)
     val sizeBytes = try {
       DataInputOutputUtil.readLONG(DataInputStream(inp))
     }
     catch (e: EOFException) {
       return null
     }
-    // dirty hack: inp.available() = count - pos, so pos = count - inp.available() = buf.position() - inp.available()
-    val dataOffset = buf.position() - inp.available()
+    // dirty hack: inp.available() = count - pos, so pos = count - inp.available() = buf.size - inp.available()
+    val dataOffset = buf.size - inp.available()
     if (sizeBytes < 0) {
       return null
     }
     val data = ByteArray(sizeBytes.toInt())
-    if (fileChannel.read(ByteBuffer.wrap(data), ref.offset + dataOffset) != sizeBytes.toInt()) {
-      return null
-    }
+    mmapIO.read(ref.offset + dataOffset, data)
     return data
   }
 
-  override fun size(): Long = fileChannel.size()
+  override fun size(): Long = lastSafeSize ?: 0L
 
   override fun flush() {
-    fileChannel.force(false)
+    val safeSize = position.getMinInflightPosition()
+    mmapIO.flush()
+    lastSafeSize = safeSize
   }
 
   override fun dispose() {
-    fileChannel.close()
+    flush()
+    mmapIO.close()
   }
 }

@@ -68,9 +68,6 @@ fun main(args: Array<String>) {
                 stats.payloadSizeHist.add(data.size)
               }
               if (!it.result.hasValue) stats.exceptionResultCount.incrementAndGet()
-              if (descCount % 100000 == 0) {
-                print("\r${(it.attrDataPayloadRef.offset.toDouble() / payloadStorage.size() * 100.0).format("%.2f")}%")
-              }
             }
             else -> {
               // TODO
