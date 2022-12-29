@@ -41,7 +41,7 @@ import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectW
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.groupId
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.parentData
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.version
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardData
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.GradleDsl
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -155,8 +155,8 @@ abstract class GradleCreateProjectTestCase : UsefulTestCase() {
     step.language = "Java"
     step.buildSystem = "Gradle"
     step.gradleDsl = when (moduleInfo.useKotlinDsl) {
-      true -> GradleNewProjectWizardData.GradleDsl.KOTLIN
-      else -> GradleNewProjectWizardData.GradleDsl.GROOVY
+      true -> GradleDsl.KOTLIN
+      else -> GradleDsl.GROOVY
     }
     step.parentData = parentData
     moduleInfo.groupId?.let { step.groupId = it }

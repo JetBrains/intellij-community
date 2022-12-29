@@ -168,4 +168,9 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     override val groupId: String = data.group ?: ""
     override val version: String = data.version ?: ""
   }
+
+  enum class GradleDsl(val text: @Nls String) {
+    KOTLIN(GradleBundle.message("gradle.dsl.new.project.wizard.kotlin")),
+    GROOVY(GradleBundle.message("gradle.dsl.new.project.wizard.groovy"))
+  }
 }
