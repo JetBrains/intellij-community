@@ -268,4 +268,31 @@ public class GradleProjectSettings extends ExternalProjectSettings {
       return result;
     }
   }
+
+  public static class GradleDistributionInfo {
+
+    private final @NotNull DistributionType type;
+
+    private final @NotNull GradleVersion gradleVersion;
+
+    private final @Nullable String gradleHome;
+
+    public GradleDistributionInfo(@NotNull DistributionType type, @NotNull GradleVersion gradleVersion, @Nullable String gradleHome) {
+      this.type = type;
+      this.gradleVersion = gradleVersion;
+      this.gradleHome = gradleHome;
+    }
+
+    public @NotNull DistributionType getType() {
+      return type;
+    }
+
+    public @NotNull GradleVersion getGradleVersion() {
+      return gradleVersion;
+    }
+
+    public @Nullable String getGradleHome() {
+      return gradleHome;
+    }
+  }
 }

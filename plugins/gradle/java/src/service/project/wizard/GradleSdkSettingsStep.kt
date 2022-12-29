@@ -6,7 +6,6 @@ import com.intellij.ide.util.projectWizard.SettingsStep
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.service.project.open.GradleDistributionInfo
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.util.*
 
@@ -51,9 +50,11 @@ class GradleSdkSettingsStep(
 
   override fun updateDataModel() {
     super.updateDataModel()
-    builder.gradleVersion = suggestGradleVersion {
+    builder.setGradleVersion(suggestGradleVersion {
       withProject(context.project)
       withJavaVersionFilter(javaVersion)
-    } ?: GradleVersion.current()
+    } ?: GradleVersion.current())
+    builder.setGradleDistributionType(DistributionType.DEFAULT_WRAPPED)
+    builder.setGradleHome(null)
   }
 }

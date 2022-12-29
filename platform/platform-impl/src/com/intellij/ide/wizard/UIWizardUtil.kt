@@ -95,7 +95,7 @@ private fun isRowLabel(label: JLabel): Boolean {
   return label.getClientProperty(DslComponentProperty.ROW_LABEL) == true && constraints != null && constraints.gaps.left == 0
 }
 
-private fun JComponent.setMinimumWidth(width: Int) {
+fun JComponent.setMinimumWidth(width: Int) {
   minimumSize = minimumSize.apply { this.width = width }
 }
 

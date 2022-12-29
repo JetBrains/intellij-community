@@ -27,6 +27,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.file.NioPathUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.module.Module;
@@ -62,7 +63,6 @@ import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradle
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.KotlinDslGradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionUtil;
-import org.jetbrains.plugins.gradle.service.project.open.GradleProjectImportUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -117,6 +117,8 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   private boolean myUseKotlinDSL;
   private boolean isCreatingNewProject;
   private GradleVersion gradleVersion;
+  private DistributionType gradleDistributionType;
+  private @Nullable String gradleHome;
 
   private VirtualFile buildScriptFile;
   private GradleBuildScriptBuilder<?> buildScriptBuilder;
@@ -205,8 +207,9 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     GradleProjectSettings projectSettings = getExternalProjectSettings();
 
     if (isCreatingNewLinkedProject()) {
-      GradleProjectImportUtil.setupGradleSettings(settings);
-      GradleProjectImportUtil.setupGradleProjectSettings(projectSettings, project, rootProjectPath);
+      projectSettings.setExternalProjectPath(NioPathUtil.toCanonicalPath(rootProjectPath));
+      projectSettings.setDistributionType(gradleDistributionType);
+      projectSettings.setGradleHome(gradleHome);
       GradleJvmResolutionUtil.setupGradleJvm(project, projectSettings, gradleVersion);
       GradleJvmValidationUtil.validateJavaHome(project, rootProjectPath, gradleVersion);
 
@@ -225,7 +228,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
         loadPreviewProject(project);
       }
       openBuildScriptFile(project, buildScriptFile);
-      if (isCreatingNewLinkedProject()) {
+      if (isCreatingNewLinkedProject() && gradleDistributionType.isWrapped()) {
         createWrapper(project, () -> {
           reloadProject(project);
         });
@@ -513,12 +516,16 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     isCreatingNewProject = creatingNewProject;
   }
 
-  public void setGradleVersion(@NotNull GradleVersion gradleVersion) {
-    this.gradleVersion = gradleVersion;
+  public void setGradleVersion(@NotNull GradleVersion version) {
+    gradleVersion = version;
   }
 
-  public @NotNull GradleVersion getGradleVersion() {
-    return this.gradleVersion;
+  public void setGradleDistributionType(@NotNull DistributionType distributionType) {
+    gradleDistributionType = distributionType;
+  }
+
+  public void setGradleHome(@Nullable String path) {
+    gradleHome = path;
   }
 
   @Override

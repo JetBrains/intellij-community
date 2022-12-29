@@ -18,6 +18,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.ui.ComponentWithEmptyText
+import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
@@ -143,14 +144,25 @@ fun TreeModel.getTreePath(userObject: Any?): TreePath? =
     .firstOrNull()
     ?.let { TreePath(it.path) }
 
-val TextFieldWithBrowseButton.emptyText
-  get() = (textField as JBTextField).emptyText
+val TextFieldWithBrowseButton.jbTextField: JBTextField
+  get() = textField as JBTextField
+
+val TextFieldWithBrowseButton.emptyText: StatusText
+  get() = jbTextField.emptyText
+
+fun <C : TextFieldWithBrowseButton> C.setEmptyState(
+  text: @NlsContexts.StatusText String
+): C {
+  jbTextField.setEmptyState(text)
+  return this
+}
 
 fun <C> C.setEmptyState(
   text: @NlsContexts.StatusText String
-): C where C : Component, C : ComponentWithEmptyText = apply {
-  getAccessibleContext().accessibleName = text
+): C where C : Component, C : ComponentWithEmptyText {
+  accessibleContext.accessibleName = text
   emptyText.text = text
+  return this
 }
 
 val <E> ComboBox<E>.collectionModel: CollectionComboBoxModel<E>

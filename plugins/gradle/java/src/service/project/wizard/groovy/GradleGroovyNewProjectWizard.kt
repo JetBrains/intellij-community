@@ -58,6 +58,7 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     }
 
     override fun setupAdvancedSettingsUI(builder: Panel) {
+      setupGradleDistributionUI(builder)
       setupGroupIdUI(builder)
       setupArtifactIdUI(builder)
     }
