@@ -16,9 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardData.GradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
-import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.config.GroovyHomeKind
 import org.jetbrains.plugins.groovy.config.wizard.*
 
@@ -41,12 +39,6 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
     init {
       gradleDsl = GradleDsl.GROOVY
-    }
-
-    private fun setupGroovySdkUI(builder: Panel) {
-      builder.row(GroovyBundle.message("label.groovy.sdk")) {
-        groovySdkComboBox(context, groovySdkProperty)
-      }.bottomGap(BottomGap.SMALL)
     }
 
     private fun setupSampleCodeUI(builder: Panel) {

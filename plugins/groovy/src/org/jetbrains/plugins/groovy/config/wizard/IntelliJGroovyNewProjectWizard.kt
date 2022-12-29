@@ -49,12 +49,6 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     IntelliJNewProjectWizardStep<GroovyNewProjectWizard.Step>(parent),
     BuildSystemGroovyNewProjectWizardData by parent {
 
-    private fun setupGroovySdkUI(builder: Panel) {
-      builder.row(GroovyBundle.message("label.groovy.sdk")) {
-        groovySdkComboBox(context, groovySdkProperty)
-      }.bottomGap(BottomGap.SMALL)
-    }
-
     override fun setupSettingsUI(builder: Panel) {
       setupJavaSdkUI(builder)
       setupGroovySdkUI(builder)

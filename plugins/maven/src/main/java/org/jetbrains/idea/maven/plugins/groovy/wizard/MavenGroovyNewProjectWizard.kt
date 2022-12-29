@@ -55,7 +55,11 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
     private fun setupGroovySdkUI(builder: Panel) {
       builder.row(GroovyBundle.message("label.groovy.sdk")) {
-        mavenGroovySdkComboBox(groovySdkProperty)
+        comboBox(getInitializedModel(), fallbackAwareRenderer)
+          .columns(COLUMNS_MEDIUM)
+          .bindItem(groovySdkProperty)
+          .validationOnInput { validateGroovySdk(groovySdk) }
+          .whenItemSelectedFromUi { logGroovySdkChanged(groovySdk) }
       }.bottomGap(BottomGap.SMALL)
     }
 
@@ -97,14 +101,6 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
       project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
       builder.commit(project)
-    }
-
-    private fun Row.mavenGroovySdkComboBox(property: ObservableMutableProperty<DistributionInfo?>) {
-      comboBox(getInitializedModel(), fallbackAwareRenderer)
-        .columns(COLUMNS_MEDIUM)
-        .bindItem(property)
-        .validationOnInput { validateGroovySdk(property.get()) }
-        .whenItemSelectedFromUi { logGroovySdkChanged(context, property.get()) }
     }
 
     private fun ValidationInfoBuilder.validateGroovySdk(sdk: DistributionInfo?): ValidationInfo? {

@@ -117,7 +117,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
         .validationOnInput { validateModuleName() }
         .validationOnApply { validateModuleName() }
         .whenTextChangedFromUi { logModuleNameChanged() }
-    }.bottomGap(BottomGap.SMALL)
+    }
   }
 
   protected fun setupModuleContentRootUI(builder: Panel) {
@@ -132,7 +132,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
         .validationOnApply { validateContentRoot() }
         .whenTextChangedFromUi { userDefinedContentRoot = true }
         .whenTextChangedFromUi { logContentRootChanged() }
-    }.bottomGap(BottomGap.SMALL)
+    }
   }
 
   protected fun setupModuleFileLocationUI(builder: Panel) {
@@ -147,7 +147,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
         .validationOnApply { validateModuleFileLocation() }
         .whenTextChangedFromUi { userDefinedModuleFileLocation = true }
         .whenTextChangedFromUi { logModuleFileLocationChanged() }
-    }.bottomGap(BottomGap.SMALL)
+    }
   }
 
   protected open fun setupSettingsUI(builder: Panel) {
