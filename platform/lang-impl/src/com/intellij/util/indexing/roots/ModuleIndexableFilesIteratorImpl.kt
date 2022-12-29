@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.ModuleFileIndexImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.util.indexing.IndexableFilesIndex
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
 import com.intellij.util.indexing.roots.origin.ModuleRootOriginImpl
@@ -31,7 +30,6 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
                                                 private val printRootsInDebugName: Boolean) : ModuleIndexableFilesIterator {
   init {
     assert(roots.isNotEmpty())
-    assert(!IndexableFilesIndex.isIntegrationFullyEnabled()){"Shouldn't be created with IndexableFilesIndex enabled"}
   }
 
   companion object {

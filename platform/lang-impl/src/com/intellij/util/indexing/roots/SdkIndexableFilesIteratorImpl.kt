@@ -9,7 +9,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.util.indexing.IndexableFilesIndex
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.origin.SdkOriginImpl
@@ -19,9 +18,6 @@ import java.util.*
 @ApiStatus.Internal
 class SdkIndexableFilesIteratorImpl private constructor(private val sdk: Sdk,
                                                         private val rootsToIndex: Collection<VirtualFile>) : IndexableFilesIterator {
-  init {
-    assert(!IndexableFilesIndex.isIntegrationFullyEnabled()) { "Shouldn't be created with IndexableFilesIndex enabled" }
-  }
 
   override fun getDebugName() = "$sdkPresentableName ${sdk.name} ${sdk.homePath}"
 
