@@ -73,7 +73,8 @@ fun runTestBuild(
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   communityHomePath: BuildDependenciesCommunityRoot = BuildDependenciesCommunityRoot(homePath.resolve("community")),
   traceSpanName: String? = null,
-  onFinish: suspend (context: BuildContext) -> Unit = {},
+  build: suspend (context: BuildContext) -> Unit = { buildDistributions(it) },
+  onSuccess: suspend (context: BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
 ) {
   runBlocking(Dispatchers.Default) {
@@ -93,9 +94,10 @@ fun runTestBuild(
               },
             ),
             traceSpanName = "#$iterationNumber",
-            onFinish = { build  ->
-              onFinish(build)
-              reproducibilityTest.iterationFinished(iterationNumber, build)
+            build = { context ->
+              build(context)
+              onSuccess(context)
+              reproducibilityTest.iterationFinished(iterationNumber, context)
             }
           )
         }
@@ -105,7 +107,11 @@ fun runTestBuild(
 }
 
 // FIXME: test reproducibility
-suspend fun runTestBuild(context: BuildContext, traceSpanName: String? = null, onFinish: suspend (context: BuildContext) -> Unit = {}) {
+suspend fun runTestBuild(
+  context: BuildContext,
+  traceSpanName: String? = null,
+  build: suspend (context: BuildContext) -> Unit = { buildDistributions(it) }
+) {
   asSingleTraceFile(context.productProperties.baseFileName + (traceSpanName?.let { "-$it" } ?: "")) {
     doRunTestBuild(context, traceSpanName, build)
   }
@@ -119,8 +125,7 @@ private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String?
       .setAttribute("outDir", outDir.toString())
       .useWithScope2 { span ->
         try {
-          buildDistributions(context)
-          onFinish(context)
+          build(context)
         }
         catch (e: CancellationException) {
           throw e

@@ -15,7 +15,7 @@ import kotlin.io.path.extension
 import kotlin.io.path.name
 import kotlin.io.path.writeText
 
-class BuildArtifactsReproducibilityTest {
+internal class BuildArtifactsReproducibilityTest {
   private val buildDateInSeconds = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS)?.toLongOrNull()
   private val randomSeedNumber = Random().nextLong()
   private val iterationsChannel = Channel<BuildContext>()
