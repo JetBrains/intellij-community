@@ -299,6 +299,7 @@ abstract class Cell : BaseBuilder {
     return component(button)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   inline fun checkBox(@Checkbox text: String,
                       isSelected: Boolean = false,
                       @DetailedDescription comment: String? = null,
