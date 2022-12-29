@@ -2,8 +2,8 @@
 package com.intellij.openapi.ui
 
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.openapi.util.CachedImageIcon
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.IconLoader.CachedImageIcon
 import com.intellij.openapi.util.ImageDataByUrlLoader
 import com.intellij.openapi.util.Pair
 import com.intellij.ui.icons.IconLoadMeasurer

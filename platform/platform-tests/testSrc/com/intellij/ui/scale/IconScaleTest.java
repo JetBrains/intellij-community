@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scale;
 
+import com.intellij.openapi.util.CachedImageIcon;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.IconLoader.CachedImageIcon;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -44,7 +44,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
   private static final float ICON_OBJ_SCALE = 1.75f;
   private static final float ICON_OVER_USR_SCALE = 1.0f;
 
-  // 0.75 is impractical system scale factor, however it's used to stress-test the scale subsystem
+  // 0.75 is an impractical system scale factor, however, it's used to stress-test the scale subsystem
   private static final float[] SCALES = {0.75f, 1, 2, 2.5f};
 
   @ClassRule
@@ -125,7 +125,9 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     /*
      * (B) override scale
      */
-    if (!(icon instanceof RetrievableIcon)) { // RetrievableIcon may return a copy of its wrapped icon and we may fail to override scale in the origin.
+    // RetrievableIcon may return a copy of its wrapped icon,
+    // and we may fail to override a scale in the origin.
+    if (!(icon instanceof RetrievableIcon)) {
       Icon iconB = IconUtil.overrideScale(IconLoader.INSTANCE.copy(icon, null, true), USR_SCALE.of(ICON_OVER_USR_SCALE));
 
       usrSize2D = ICON_BASE_SIZE * ICON_OVER_USR_SCALE * iconContext.getScale(OBJ_SCALE);
@@ -156,7 +158,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
 
     assertIcon(iconC, contextC, scales.first, scales.second, "Test (C) scale icon");
 
-    // Additionally check that the original image hasn't changed after scaling
+    // Additionally, check that the original image hasn't changed after scaling
     Pair<BufferedImage, Graphics2D> pair = createImageAndGraphics(iconContext.getScale(DEV_SCALE), icon.getIconWidth(), icon.getIconHeight());
     BufferedImage iconImage = pair.first;
     Graphics2D g2d = pair.second;

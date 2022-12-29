@@ -657,13 +657,13 @@ public final class IconUtil {
    */
   @ApiStatus.Internal
   public static @NotNull Icon scaleOrLoadCustomVersion(@NotNull Icon icon, float scale) {
-    if (icon instanceof IconLoader.CachedImageIcon) {
+    if (icon instanceof CachedImageIcon) {
       int oldWidth = icon.getIconWidth();
       int oldHeight = icon.getIconHeight();
       int newWidth = Math.round(scale * oldWidth);
       int newHeight = Math.round(scale * oldHeight);
       if (oldWidth == newWidth && oldHeight == newHeight) return icon;
-      Icon version = IconLoader.INSTANCE.loadCustomVersion((IconLoader.CachedImageIcon)icon, newWidth, newHeight);
+      Icon version = IconLoader.INSTANCE.loadCustomVersion((CachedImageIcon)icon, newWidth, newHeight);
       if (version != null) return version;
     }
     if (icon instanceof ScalableIcon) {
@@ -1012,8 +1012,8 @@ public final class IconUtil {
           // will be nothing to patch actually
           return strokeIcon;
         }
-        if (strokeIcon instanceof IconLoader.CachedImageIcon) {
-          cachedImageIcon = (IconLoader.CachedImageIcon) strokeIcon;
+        if (strokeIcon instanceof CachedImageIcon) {
+          cachedImageIcon = (CachedImageIcon) strokeIcon;
           patcher = strokeReplacer;
         }
       }

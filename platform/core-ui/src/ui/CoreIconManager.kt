@@ -9,7 +9,6 @@ import com.intellij.ide.IconLayerProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.IconLoader.CachedImageIcon
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.icons.IconLoadMeasurer

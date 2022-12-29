@@ -10,7 +10,7 @@ import com.intellij.ide.ui.UIThemeProvider;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.CachedImageIcon;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -122,7 +122,7 @@ public final class PluginLogo {
   }
 
   public static @NotNull Icon reloadIcon(@NotNull Icon icon, int width, int height, @Nullable Logger logger) {
-    URL url = icon instanceof IconLoader.CachedImageIcon ? ((IconLoader.CachedImageIcon)icon).getUrl() : null;
+    URL url = icon instanceof CachedImageIcon ? ((CachedImageIcon)icon).getUrl() : null;
     if (url == null) {
       return icon;
     }

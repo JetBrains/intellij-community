@@ -18,7 +18,7 @@ import java.util.*
 import javax.swing.Icon
 import javax.swing.ImageIcon
 
-internal class ScaledIconCache(private val host: IconLoader.CachedImageIcon) {
+internal class ScaledIconCache(private val host: CachedImageIcon) {
   companion object {
     private const val SCALED_ICONS_CACHE_LIMIT = 5
 
@@ -59,7 +59,7 @@ internal class ScaledIconCache(private val host: IconLoader.CachedImageIcon) {
 }
 
 private class ScaledResultIcon(image: Image,
-                               private val original: IconLoader.CachedImageIcon,
+                               private val original: CachedImageIcon,
                                private val scale: Float) : JBImageIcon(image), ReplaceableIcon {
   override fun replaceBy(replacer: IconReplacer): Icon {
     val originalReplaced = replacer.replaceIcon(original)
@@ -73,7 +73,7 @@ private class ScaledResultIcon(image: Image,
   }
 }
 
-private fun createScaledIcon(image: Image, cii: IconLoader.CachedImageIcon, scale: Float): ImageIcon? {
+private fun createScaledIcon(image: Image, cii: CachedImageIcon, scale: Float): ImageIcon? {
   // image wasn't loaded or broken
   if (image.getHeight(null) < 1) {
     return null
@@ -83,7 +83,7 @@ private fun createScaledIcon(image: Image, cii: IconLoader.CachedImageIcon, scal
   if (!IconLoader.isGoodSize(icon)) {
     // # 22481
     logger<ScaledResultIcon>().error("Invalid icon: $cii")
-    return IconLoader.CachedImageIcon.EMPTY_ICON
+    return CachedImageIcon.EMPTY_ICON
   }
   return icon
 }

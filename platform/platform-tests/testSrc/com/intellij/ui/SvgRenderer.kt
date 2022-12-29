@@ -3,6 +3,7 @@ package com.intellij.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.util.CachedImageIcon
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
@@ -49,7 +50,7 @@ internal class SvgRenderer(val svgFileDir: Path) {
             return false
           }
 
-          val thatImage = (iconWrapper as IconLoader.CachedImageIcon).doGetRealIcon()?.image
+          val thatImage = (iconWrapper as CachedImageIcon).doGetRealIcon()?.image
           return thatImage === image
         }
 
@@ -116,7 +117,6 @@ internal class SvgRenderer(val svgFileDir: Path) {
     writer.use {
       val root = svgGenerator.root
       root.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns", SVGSyntax.SVG_NAMESPACE_URI)
-      @Suppress("SpellCheckingInspection")
       root.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink")
 
       root.setAttributeNS(null, "viewBox", "0 0 ${component.width} ${component.height}")
@@ -140,8 +140,7 @@ internal class SvgRenderer(val svgFileDir: Path) {
 }
 
 private class SvgGraphics2dWithDeviceConfiguration : SVGGraphics2D {
-  constructor(context: SVGGeneratorContext) : super(context, false) {
-  }
+  constructor(context: SVGGeneratorContext) : super(context, false)
 
   private constructor(g: SvgGraphics2dWithDeviceConfiguration): super(g)
 

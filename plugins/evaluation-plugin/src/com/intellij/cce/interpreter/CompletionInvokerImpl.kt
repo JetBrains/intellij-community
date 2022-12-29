@@ -27,7 +27,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.CachedImageIcon
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -288,7 +288,7 @@ class CompletionInvokerImpl(private val project: Project,
     val typeText = presentation.typeText
 
     return when {
-      icon is IconLoader.CachedImageIcon && icon.originalPath == "/icons/codota-color-icon.png" -> SuggestionSource.CODOTA
+      icon is CachedImageIcon && icon.originalPath == "/icons/codota-color-icon.png" -> SuggestionSource.CODOTA
       typeText == "@tab-nine" -> SuggestionSource.TAB_NINE
       typeText == "full-line" -> SuggestionSource.INTELLIJ
       else -> SuggestionSource.STANDARD

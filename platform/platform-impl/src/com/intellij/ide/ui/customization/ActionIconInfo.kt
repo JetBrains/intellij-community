@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionStubBase
+import com.intellij.openapi.util.CachedImageIcon
 import com.intellij.openapi.util.IconLoader
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.Nls
@@ -48,7 +49,7 @@ internal fun getDefaultIcons(): List<ActionIconInfo> {
 }
 
 private fun getIconInfo(icon: Icon, @Nls text: String): ActionIconInfo? {
-  val iconUrl = (icon as? IconLoader.CachedImageIcon)?.url
+  val iconUrl = (icon as? CachedImageIcon)?.url
   return iconUrl?.let { ActionIconInfo(icon = icon, text = text, actionId = null, iconPath = it.toString()) }
 }
 

@@ -17,8 +17,8 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.StripeTable;
+import com.intellij.openapi.util.CachedImageIcon;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -428,9 +428,9 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
             }
           }
         }
-        else if (value instanceof IconLoader.CachedImageIcon) {
+        else if (value instanceof CachedImageIcon) {
           myPreviewComponent.print("Icon path: ", NORMAL_OUTPUT);
-          printIconPath(myPreviewComponent, (IconLoader.CachedImageIcon)value);
+          printIconPath(myPreviewComponent, (CachedImageIcon)value);
         }
         else {
           String renderedValue = getCellTextValue(row, column);
@@ -498,7 +498,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
       consoleView.print("]", NORMAL_OUTPUT);
     }
 
-    private void printIconPath(ConsoleView consoleView, IconLoader.CachedImageIcon icon) {
+    private void printIconPath(ConsoleView consoleView, CachedImageIcon icon) {
       URL iconUrl = icon.getUrl();
       if (iconUrl != null) {
         VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(iconUrl.getPath());
