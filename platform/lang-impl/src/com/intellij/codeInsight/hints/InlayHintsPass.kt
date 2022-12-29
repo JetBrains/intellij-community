@@ -223,10 +223,9 @@ class InlayHintsPass(
       if (!isAcceptablePlacement(placement)) {
         throw IllegalArgumentException()
       }
-      SlowOperations.allowSlowOperations<Exception> {
-        @Suppress("UNCHECKED_CAST")
-        addOrUpdate(new as List<ConstrainedPresentation<*, Constraints>>, editor, factory)
-      }
+
+      @Suppress("UNCHECKED_CAST")
+      addOrUpdate(new as List<ConstrainedPresentation<*, Constraints>>, editor, factory)
     }
   }
 }
