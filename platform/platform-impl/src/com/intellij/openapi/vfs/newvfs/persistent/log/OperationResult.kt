@@ -12,7 +12,7 @@ class OperationResult<out T : Any> private constructor(
   val hasValue get() = valueNullable != null
   val value get() = valueNullable!!
 
-  infix fun <R: Any> fmap(action: (T) -> R): OperationResult<R> {
+  infix fun <R : Any> fmap(action: (T) -> R): OperationResult<R> {
     if (hasValue) return fromValue(action(value))
     return fromException(exceptionClass)
   }
@@ -31,7 +31,7 @@ class OperationResult<out T : Any> private constructor(
      */
     const val SIZE_BYTES = Int.SIZE_BYTES
 
-    inline fun <reified T: Any> OperationResult<T>.serialize(enumerator: (String) -> Int): Int {
+    inline fun <reified T : Any> OperationResult<T>.serialize(enumerator: (String) -> Int): Int {
       if (!hasValue) {
         val enum = enumerator(exceptionClass)
         assert(enum >= 0)
@@ -51,7 +51,7 @@ class OperationResult<out T : Any> private constructor(
     }
 
     @Suppress("UNCHECKED_CAST")
-    inline fun <reified T: Any> deserialize(data: Int, deenumerator: (Int) -> String): OperationResult<T> {
+    inline fun <reified T : Any> deserialize(data: Int, deenumerator: (Int) -> String): OperationResult<T> {
       if (data < 0) {
         val enumVal = -(data + 1)
         val exceptionClass = deenumerator(enumVal)
@@ -73,7 +73,7 @@ class OperationResult<out T : Any> private constructor(
 }
 
 @OptIn(ExperimentalContracts::class)
-inline fun <R : Any> catchResult(processor: (OperationResult<R>) -> Unit, body: () -> R): R {
+internal inline fun <R : Any> catchResult(processor: (result: OperationResult<R>) -> Unit, body: () -> R): R {
   contract {
     callsInPlace(processor, InvocationKind.EXACTLY_ONCE)
     callsInPlace(body, InvocationKind.EXACTLY_ONCE)
@@ -88,3 +88,5 @@ inline fun <R : Any> catchResult(processor: (OperationResult<R>) -> Unit, body: 
     throw e
   }
 }
+
+internal inline infix fun <R : Any> (() -> R).catchResult(processor: (result: OperationResult<R>) -> Unit) = catchResult(processor, this)

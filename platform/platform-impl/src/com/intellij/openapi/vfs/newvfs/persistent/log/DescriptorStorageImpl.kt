@@ -39,9 +39,9 @@ class DescriptorStorageImpl(
     when (tag) {
       VfsOperationTag.NULL -> throw IllegalArgumentException("NULL descriptors are not expected in storage")
 
-      VfsOperationTag.REC_ALLOC -> TODO()
-      VfsOperationTag.REC_SET_ATTR_REC_ID -> TODO()
-      VfsOperationTag.REC_SET_CONTENT_RECORD_ID -> TODO()
+      VfsOperationTag.REC_ALLOC -> VfsOperation.RecordsOperation.AllocateRecord.VALUE_SIZE_BYTES
+      VfsOperationTag.REC_SET_ATTR_REC_ID -> VfsOperation.RecordsOperation.SetAttributeRecordId.VALUE_SIZE_BYTES
+      VfsOperationTag.REC_SET_CONTENT_RECORD_ID -> VfsOperation.RecordsOperation.SetContentRecordId.VALUE_SIZE_BYTES
       VfsOperationTag.REC_SET_PARENT -> TODO()
       VfsOperationTag.REC_SET_NAME_ID -> TODO()
       VfsOperationTag.REC_SET_FLAGS -> TODO()
@@ -158,8 +158,8 @@ class DescriptorStorageImpl(
   }
 
   override suspend fun serialize(operation: VfsOperation<*>): ByteArray = operation.serializeValue(stringEnumerator)
-  override suspend fun <T : VfsOperation<*>> deserialize(tag: VfsOperationTag, data: ByteArray): T = VfsOperation.deserialize(tag, data,
-                                                                                                                              stringEnumerator)
+  override suspend fun <T : VfsOperation<*>> deserialize(tag: VfsOperationTag, data: ByteArray): T
+    = VfsOperation.deserialize(tag, data, stringEnumerator)
 
   override fun size(): Long = lastSafeSize ?: 0L
 

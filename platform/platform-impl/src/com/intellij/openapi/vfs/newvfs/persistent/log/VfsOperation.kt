@@ -16,18 +16,75 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
   open suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray = TODO() // make abstract
 
   sealed class RecordsOperation<T : Any>(tag: VfsOperationTag, result: OperationResult<T>) : VfsOperation<T>(tag, result) {
-    class AllocateRecord(result: OperationResult<Int>)
-      : RecordsOperation<Int>(VfsOperationTag.REC_ALLOC, result) {
+    class AllocateRecord(result: OperationResult<Int>) : RecordsOperation<Int>(VfsOperationTag.REC_ALLOC, result) {
       companion object {
-        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>): AllocateRecord = TODO()
+        const val VALUE_SIZE_BYTES = OperationResult.SIZE_BYTES
+
+        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>): AllocateRecord =
+          DataInputStream(ByteArrayInputStream(data)).run {
+            val result = readResult<Int>(enumerator)
+            AllocateRecord(result)
+          }
       }
+
+      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+        ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
+          DataOutputStream(this).run {
+            writeInt(result.serialize(enumerator))
+          }
+          toByteArray()
+        }
     }
 
     class SetAttributeRecordId(val fileId: Int, val recordId: Int, result: OperationResult<Unit>)
-      : RecordsOperation<Unit>(VfsOperationTag.REC_SET_ATTR_REC_ID, result)
+      : RecordsOperation<Unit>(VfsOperationTag.REC_SET_ATTR_REC_ID, result) {
+      companion object {
+        const val VALUE_SIZE_BYTES = Int.SIZE_BYTES * 2 + OperationResult.SIZE_BYTES
+
+        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>): SetAttributeRecordId =
+          DataInputStream(ByteArrayInputStream(data)).run {
+            val fileId = readInt()
+            val recordId = readInt()
+            val result = readResult<Unit>(enumerator)
+            SetAttributeRecordId(fileId, recordId, result)
+          }
+      }
+
+      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+        ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
+          DataOutputStream(this).run {
+            writeInt(fileId)
+            writeInt(recordId)
+            writeInt(result.serialize(enumerator))
+          }
+          toByteArray()
+        }
+    }
 
     class SetContentRecordId(val fileId: Int, val recordId: Int, result: OperationResult<Boolean>)
-      : RecordsOperation<Boolean>(VfsOperationTag.REC_SET_CONTENT_RECORD_ID, result)
+      : RecordsOperation<Boolean>(VfsOperationTag.REC_SET_CONTENT_RECORD_ID, result) {
+      companion object {
+        const val VALUE_SIZE_BYTES = Int.SIZE_BYTES * 2 + OperationResult.SIZE_BYTES
+
+        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>): SetContentRecordId =
+          DataInputStream(ByteArrayInputStream(data)).run {
+            val fileId = readInt()
+            val recordId = readInt()
+            val result = readResult<Boolean>(enumerator)
+            SetContentRecordId(fileId, recordId, result)
+          }
+      }
+
+      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+        ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
+          DataOutputStream(this).run {
+            writeInt(fileId)
+            writeInt(recordId)
+            writeInt(result.serialize(enumerator))
+          }
+          toByteArray()
+        }
+    }
   }
 
   sealed class ContentsOperation<T : Any>(tag: VfsOperationTag, result: OperationResult<T>) : VfsOperation<T>(tag, result) {
@@ -76,9 +133,9 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       when (tag) {
         VfsOperationTag.NULL -> throw IllegalArgumentException("NULL descriptor is unexpected")
 
-        VfsOperationTag.REC_ALLOC -> TODO()
-        VfsOperationTag.REC_SET_ATTR_REC_ID -> TODO()
-        VfsOperationTag.REC_SET_CONTENT_RECORD_ID -> TODO()
+        VfsOperationTag.REC_ALLOC -> RecordsOperation.AllocateRecord.deserializeValue(data, enumerator) as T
+        VfsOperationTag.REC_SET_ATTR_REC_ID -> RecordsOperation.SetAttributeRecordId.deserializeValue(data, enumerator) as T
+        VfsOperationTag.REC_SET_CONTENT_RECORD_ID -> RecordsOperation.SetContentRecordId.deserializeValue(data, enumerator) as T
         VfsOperationTag.REC_SET_PARENT -> TODO()
         VfsOperationTag.REC_SET_NAME_ID -> TODO()
         VfsOperationTag.REC_SET_FLAGS -> TODO()
@@ -102,6 +159,14 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         VfsOperationTag.CONTENT_RELEASE_RECORD -> TODO()
         VfsOperationTag.CONTENT_SET_VERSION -> TODO()
       }
+
+    private suspend inline fun <reified T : Any> DataInputStream.readResult(enumerator: SuspendDataEnumerator<String>) =
+      OperationResult.deserialize<T>(readInt()) {
+        enumerator.valueOf(it) ?: throw IllegalStateException("corrupted enumerator storage")
+      }
+
+    private suspend inline fun <reified T : Any> OperationResult<T>.serialize(enumerator: SuspendDataEnumerator<String>): Int =
+      serialize { enumerator.enumerate(it) }
   }
 }
 

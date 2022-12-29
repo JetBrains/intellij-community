@@ -19,9 +19,7 @@ class AttributesLogInterceptor(
         override fun writeEnumeratedString(str: String?) = aos.writeEnumeratedString(str)
 
         override fun close() {
-          catchResult(::interceptClose) {
-            super.close()
-          }
+          { super.close() } catchResult ::interceptClose
         }
 
         private fun interceptClose(result: OperationResult<Unit>) {
@@ -41,15 +39,6 @@ class AttributesLogInterceptor(
             }
           }
         }
-      }
-    }
-
-  override fun onDeleteAttributes(underlying: (connection: PersistentFSConnection, fileId: Int) -> Unit): (connection: PersistentFSConnection, fileId: Int) -> Unit =
-    { connection, fileId ->
-      catchResult({
-
-      }) {
-        underlying(connection, fileId)
       }
     }
 }
