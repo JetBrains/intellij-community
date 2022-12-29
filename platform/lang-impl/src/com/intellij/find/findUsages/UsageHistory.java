@@ -2,23 +2,14 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.usages.ConfigurableUsageTarget;
-import com.intellij.util.containers.hash.EqualityPolicy;
-import com.intellij.util.containers.hash.LinkedHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public final class UsageHistory {
   // the last element is the most recent
-  @SuppressWarnings("unchecked")
-  private final Map<ConfigurableUsageTarget, String> myHistory =
-    new LinkedHashMap<>((EqualityPolicy<ConfigurableUsageTarget>)EqualityPolicy.IDENTITY) {
-      @Override
-      protected boolean removeEldestEntry(Map.Entry<ConfigurableUsageTarget, String> eldest) {
-        // todo configure history depth limit
-        return size() > 15;
-      }
-    };
+  private final Reference2ObjectLinkedOpenHashMap<ConfigurableUsageTarget, String> myHistory = new Reference2ObjectLinkedOpenHashMap<>();
 
   public void add(@NotNull ConfigurableUsageTarget usageTarget) {
     final String descriptiveName = usageTarget.getLongDescriptiveName();
@@ -26,11 +17,13 @@ public final class UsageHistory {
       final Set<Map.Entry<ConfigurableUsageTarget, String>> entries = myHistory.entrySet();
       entries.removeIf(entry -> entry.getValue().equals(descriptiveName));
       myHistory.put(usageTarget, descriptiveName);
+      if (myHistory.size() > 15) {
+        myHistory.removeFirst();
+      }
     }
   }
 
-  @NotNull
-  public List<ConfigurableUsageTarget> getAll() {
+  public @NotNull List<ConfigurableUsageTarget> getAll() {
     synchronized (myHistory) {
       List<ConfigurableUsageTarget> result = new ArrayList<>();
       final Set<ConfigurableUsageTarget> entries = myHistory.keySet();
@@ -38,7 +31,8 @@ public final class UsageHistory {
         final ConfigurableUsageTarget target = iterator.next();
         if (!target.isValid()) {
           iterator.remove();
-        } else {
+        }
+        else {
           result.add(target);
         }
       }

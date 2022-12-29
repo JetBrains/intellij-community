@@ -4,7 +4,7 @@ package com.intellij.vcs.log.graph;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.containers.FixedHashMap;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
@@ -54,12 +54,7 @@ public final class GraphColorManagerImpl implements GraphColorManager<Integer> {
     @NotNull private final Map<VirtualFile, VcsLogRefManager> myRefManagers;
     @NotNull private final Function<? super Integer, ? extends Hash> myHashGetter;
 
-    @NotNull private final LinkedHashMap<Integer, Integer> myErrorWasReported = new LinkedHashMap<>(10) {
-      @Override
-      protected boolean removeEldestEntry(Map.Entry<Integer, Integer> eldest) {
-        return size() > 100;
-      }
-    };
+    @NotNull private final Map<Integer, Integer> myErrorWasReported = new FixedHashMap<>(100);
 
     public HeadsComparator(@NotNull RefsModel refsModel,
                            @NotNull Map<VirtualFile, VcsLogRefManager> refManagers,

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
@@ -22,11 +22,12 @@ import com.intellij.psi.impl.source.tree.injected.changesHandler.BaseInjectedFil
 import com.intellij.psi.javadoc.PsiSnippetDocTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class JavaInjectedFileChangesHandlerProvider implements InjectedFileChangesHandlerProvider {
 
@@ -89,7 +90,7 @@ class OldJavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
     final PsiFile origPsiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myHostDocument);
     String newText = myFragmentDocument.getText();
     // prepare guarded blocks
-    LinkedHashMap<String, String> replacementMap = new LinkedHashMap<>();
+    Map<String, String> replacementMap = new LinkedHashMap<>();
     int count = 0;
     for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myFragmentDocument).getGuardedBlocks())) {
       String replacement = o.getUserData(QuickEditHandler.REPLACEMENT_KEY);

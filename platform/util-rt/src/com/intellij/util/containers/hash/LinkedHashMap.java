@@ -1,13 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers.hash;
 
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-
+@Deprecated
 public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   private Entry<K, V>[] table;
   private Entry<K, V> top;

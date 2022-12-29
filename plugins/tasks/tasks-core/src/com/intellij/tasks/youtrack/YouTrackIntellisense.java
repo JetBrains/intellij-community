@@ -10,7 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonSingleObjectDeserializer;
-import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.containers.FixedHashMap;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
@@ -48,22 +48,8 @@ public final class YouTrackIntellisense {
   private static final Map<String, TextAttributes> TEXT_ATTRIBUTES = Map.of("field-value", CONSTANT.getDefaultAttributes(), "field-name", KEYWORD.getDefaultAttributes(), "text", STRING.getDefaultAttributes(), "error", BAD_CHARACTER.getDefaultAttributes());
   private static final int CACHE_SIZE = 30;
 
-  private static final class SizeLimitedCache<K, V> extends LinkedHashMap<K, V> {
-    private final int myMaxSize;
-
-    private SizeLimitedCache(int max) {
-      super((int)(max / 0.75) + 1, true);
-      myMaxSize = max;
-    }
-
-    @Override
-    protected boolean removeEldestEntry(Map.Entry<K, V> eldest, K key, V value) {
-      return size() > myMaxSize;
-    }
-  }
-
   private static final Map<Pair<String, Integer>, Response> ourCache =
-    Collections.synchronizedMap(new SizeLimitedCache<>(CACHE_SIZE));
+    Collections.synchronizedMap(new FixedHashMap<>(CACHE_SIZE));
 
   @NotNull
   private static TextAttributes getAttributeByStyleClass(@NotNull String styleClass) {
