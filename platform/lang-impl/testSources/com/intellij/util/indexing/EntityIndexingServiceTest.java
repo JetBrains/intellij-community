@@ -136,7 +136,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
   }
 
   public void testIndexingSdk() throws Exception {
-    doTest(this::createSdk, this::removeSdk, sdk -> IndexableEntityProviderMethods.INSTANCE.createIterators(sdk, getProject()));
+    doTest(this::createSdk, this::removeSdk, sdk -> IndexableEntityProviderMethods.INSTANCE.createIterators(sdk));
   }
 
   @NotNull

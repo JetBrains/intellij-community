@@ -49,10 +49,7 @@ class SdkIndexableFilesIteratorImpl private constructor(private val sdk: Sdk,
   }
 
   companion object {
-    fun createIterator(sdk: Sdk, project: Project): IndexableFilesIterator {
-      if (IndexableFilesIndex.isIntegrationFullyEnabled()) {
-        return IndexableFilesIndex.getInstance(project).getSdkIterator(sdk, null)!!
-      }
+    fun createIterator(sdk: Sdk): IndexableFilesIterator {
       return SdkIndexableFilesIteratorImpl(sdk, getRootsToIndex(sdk))
     }
 
@@ -61,16 +58,7 @@ class SdkIndexableFilesIteratorImpl private constructor(private val sdk: Sdk,
       return rootProvider.getFiles(OrderRootType.SOURCES).toList() + rootProvider.getFiles(OrderRootType.CLASSES)
     }
 
-    fun createIterators(sdk: Sdk, listOfRootsToFilter: List<VirtualFile>, project: Project): Collection<IndexableFilesIterator> {
-      if (IndexableFilesIndex.isIntegrationFullyEnabled()) {
-        val sdkIterator = IndexableFilesIndex.getInstance(project).getSdkIterator(sdk, listOfRootsToFilter)
-        return if (sdkIterator == null) {
-          emptyList()
-        }
-        else {
-          listOf(sdkIterator)
-        }
-      }
+    fun createIterators(sdk: Sdk, listOfRootsToFilter: List<VirtualFile>): Collection<IndexableFilesIterator> {
       val sdkRoots = getRootsToIndex(sdk).toMutableList()
       val rootsToIndex = filterRootsToIterate(sdkRoots, listOfRootsToFilter)
 

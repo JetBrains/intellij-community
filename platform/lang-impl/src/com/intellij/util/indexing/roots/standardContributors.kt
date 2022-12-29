@@ -60,7 +60,7 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
             is JdkOrderEntry -> {
               val sdk = orderEntry.jdk
               if (sdk != null && seenSdks.add(sdk)) {
-                providersCollection.add(SdkIndexableFilesIteratorImpl.createIterator(sdk, project))
+                providersCollection.add(SdkIndexableFilesIteratorImpl.createIterator(sdk))
               }
             }
           }

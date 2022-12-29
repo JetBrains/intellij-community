@@ -156,12 +156,6 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     });
   }
 
-  @Override
-  @Nullable
-  public IndexableFilesIterator getSdkIterator(@NotNull Sdk sdk, @Nullable Collection<VirtualFile> rootsToFilter) {
-    return snapshotHandler.createSdkIterator(sdk, rootsToFilter, project);
-  }
-
   @NotNull
   @Override
   public Collection<IndexableFilesIterator> getModuleIterators(@NotNull Module module, @NotNull List<? extends VirtualFile> rootsToFilter) {
@@ -489,23 +483,6 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     @NotNull
     public ModuleDependencyListener createModuleDependencyListener() {
       return new MyModuleDependencyListener();
-    }
-
-    @Nullable
-    public IndexableFilesIterator createSdkIterator(@NotNull Sdk sdk, @Nullable Collection<VirtualFile> rootsToFilter,
-                                                    @NotNull Project project) {
-      Snapshots snapshots = getSnapshotsWithInitializedNonWorkspaceSnapshot(project);
-      IndexableSetIterableOrigin sdkOrigin = snapshots.workspaceModelSnapshot.getSdkOrigin(sdk);
-      Set<VirtualFile> excludedFilesFromPolicies =
-        getExcludedFilesFromPolicies(snapshots.workspaceModelSnapshot, Objects.requireNonNull(snapshots.nonWorkspaceModelSnapshot));
-      Collection<VirtualFile> excludedFromModulesFiles = getExcludedFromModulesFiles(snapshots.nonWorkspaceModelSnapshot);
-      sdkOrigin = ResultingSnapshot.getPatchedOriginIfNeeded(sdkOrigin, snapshots.nonWorkspaceModelSnapshot,
-                                                             excludedFilesFromPolicies, excludedFromModulesFiles);
-      if (rootsToFilter == null) {
-        return sdkOrigin.createIterator();
-      }
-      SdkIterableOriginImpl filteredOrigin = ((SdkIterableOriginImpl)sdkOrigin).copyWithFilteredRoots(rootsToFilter);
-      return filteredOrigin == null ? null : filteredOrigin.createIterator();
     }
 
     @NotNull

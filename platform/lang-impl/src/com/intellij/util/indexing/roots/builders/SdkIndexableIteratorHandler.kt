@@ -62,7 +62,7 @@ class SdkIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   private object AllRoots : Roots {
     override fun merge(newRoot: Roots): Roots = this
     override fun createIterator(sdk: Sdk, project: Project): Collection<IndexableFilesIterator> =
-      IndexableEntityProviderMethods.createIterators(sdk, project)
+      IndexableEntityProviderMethods.createIterators(sdk)
   }
 
   private class ListOfRoots() : ArrayList<VirtualFile>(), Roots {
@@ -81,6 +81,6 @@ class SdkIndexableIteratorHandler : IndexableIteratorBuilderHandler {
     }
 
     override fun createIterator(sdk: Sdk, project: Project): Collection<IndexableFilesIterator> =
-      SdkIndexableFilesIteratorImpl.createIterators(sdk, this, project)
+      SdkIndexableFilesIteratorImpl.createIterators(sdk, this)
   }
 }
