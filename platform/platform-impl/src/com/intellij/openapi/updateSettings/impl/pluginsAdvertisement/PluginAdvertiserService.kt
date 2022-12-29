@@ -59,7 +59,6 @@ sealed interface PluginAdvertiserService {
       "GO" to SuggestedIde("GoLand", "https://www.jetbrains.com/go/download/"),
       "CL" to SuggestedIde("CLion", "https://www.jetbrains.com/clion/download/"),
       "RD" to SuggestedIde("Rider", "https://www.jetbrains.com/rider/download/"),
-      "OC" to SuggestedIde("AppCode", "https://www.jetbrains.com/objc/download/"),
       "IU" to ideaUltimate
     )
 
