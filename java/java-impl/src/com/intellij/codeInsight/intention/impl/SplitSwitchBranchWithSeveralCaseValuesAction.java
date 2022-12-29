@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -56,10 +56,10 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
         }
       }
     }
-    else if (labelStatement instanceof PsiSwitchLabeledRuleStatement) {
+    else if (labelStatement instanceof PsiSwitchLabeledRuleStatement ruleStatement) {
       // enhanced syntax "case 1, 2 -> some code"
       if (isMultiValueCase(labelStatement)) {
-        PsiStatement body = ((PsiSwitchLabeledRuleStatement)labelStatement).getBody();
+        PsiStatement body = ruleStatement.getBody();
         if (body != null && element.getTextOffset() < body.getTextOffset()) {
           setText(JavaBundle.message("intention.split.switch.branch.with.several.case.values.split.text"));
           return true;
@@ -104,8 +104,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
     PsiSwitchLabelStatementBase statement = findLabelStatement(editor, element);
 
     PsiElement result = null;
-    if (statement instanceof PsiSwitchLabelStatement) {
-      PsiSwitchLabelStatement labelStatement = (PsiSwitchLabelStatement)statement;
+    if (statement instanceof PsiSwitchLabelStatement labelStatement) {
       PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
       if (labelElementList != null && labelElementList.getElementCount() > 1) {
         PsiCaseLabelElement labelElement = findLabelElement(element, labelElementList, editor);
@@ -126,14 +125,13 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
         }
         else {
           PsiStatement previousSibling = getPrevSiblingOfType(statement, PsiStatement.class);
-          if (previousSibling instanceof PsiSwitchLabelStatement) {
-            result = copyLabelTo(labelStatement, (PsiSwitchLabelStatement)previousSibling);
+          if (previousSibling instanceof PsiSwitchLabelStatement previousLabelStatement) {
+            result = copyLabelTo(labelStatement, previousLabelStatement);
           }
         }
       }
     }
-    else if (statement instanceof PsiSwitchLabeledRuleStatement) {
-      PsiSwitchLabeledRuleStatement labeledRule = (PsiSwitchLabeledRuleStatement)statement;
+    else if (statement instanceof PsiSwitchLabeledRuleStatement labeledRule) {
       PsiCaseLabelElementList labelElementList = labeledRule.getCaseLabelElementList();
       if (labelElementList != null) {
         PsiCaseLabelElement labelElement = findLabelElement(element, labelElementList, editor);
@@ -182,8 +180,8 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
                                                                 @NotNull PsiElement element) {
     // Can't use BaseElementAtCaretIntentionAction, because there's ambiguity when the caret is after the list of case values before the arrow
     PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
-    if (statement instanceof PsiSwitchLabelStatementBase) {
-      return (PsiSwitchLabelStatementBase)statement;
+    if (statement instanceof PsiSwitchLabelStatementBase labelStatement) {
+      return labelStatement;
     }
     PsiElement previousElement = getPreviousElement(editor, element);
     statement = PsiTreeUtil.getParentOfType(previousElement, PsiStatement.class);
@@ -320,8 +318,8 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
         return null;
       }
 
-      PsiStatement firstStatement = firstElement instanceof PsiStatement
-                                    ? (PsiStatement)firstElement
+      PsiStatement firstStatement = firstElement instanceof PsiStatement statement
+                                    ? statement
                                     : getNextSiblingOfType(firstElement, PsiStatement.class);
       PsiStatement lastStatement = null;
       for (PsiStatement next = firstStatement;
