@@ -12,7 +12,7 @@ job("Mermaid / Build for 231") {
       enabled = true
     }
     schedule {
-      cron("0 0 6 * * ?")
+      cron("0 6 * * *")
     }
   }
   container("openjdk:17") {
