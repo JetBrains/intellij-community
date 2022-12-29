@@ -157,7 +157,9 @@ public class ID<K, V> extends IndexId<K,V> {
 
   @ApiStatus.Internal
   public static Collection<ID<?, ?>> getRegisteredIds() {
-    return Collections.unmodifiableSet(new HashSet<>(ourIdToPluginId.keySet()));
+    synchronized (ourIdToPluginId) {
+      return Collections.unmodifiableSet(new HashSet<>(ourIdToPluginId.keySet()));
+    }
   }
 
   @ApiStatus.Internal
