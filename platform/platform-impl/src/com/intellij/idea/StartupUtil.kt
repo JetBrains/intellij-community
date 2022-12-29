@@ -172,8 +172,12 @@ fun CoroutineScope.startApplication(args: List<String>,
   // log initialization must happen only after locking the system directory
   val logDeferred = setupLogger(consoleLoggerJob, checkSystemDirJob)
 
-  shellEnvDeferred = async(CoroutineName("environment loading") + Dispatchers.IO) {
-    EnvironmentUtil.loadEnvironment()
+  shellEnvDeferred = async(Dispatchers.IO) {
+    // EnvironmentUtil wants logger
+    logDeferred.join()
+    runActivity("environment loading") {
+      EnvironmentUtil.loadEnvironment()
+    }
   }
 
   if (!isHeadless) {
