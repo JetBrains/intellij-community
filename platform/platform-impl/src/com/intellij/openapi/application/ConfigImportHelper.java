@@ -131,13 +131,13 @@ public final class ConfigImportHelper {
         vmOptionFileChanged = doesVmOptionsFileExist(newConfigDir);
         try {
           if (customMigrationOption instanceof CustomConfigMigrationOption.MigrateFromCustomPlace) {
-            tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log, false);
+            tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log, false, settings);
             Path location = ((CustomConfigMigrationOption.MigrateFromCustomPlace)customMigrationOption).getLocation();
             oldConfigDirAndOldIdePath = findConfigDirectoryByPath(location);
             importScenarioStatistics = IMPORT_SETTINGS_ACTION;
           }
           else {
-            tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log, true);
+            tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log, true, settings);
             importScenarioStatistics = RESTORE_DEFAULT_ACTION;
           }
         }
@@ -284,11 +284,11 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static File backupCurrentConfigToTempAndDelete(Path currentConfig, Logger log, boolean smartDelete) throws IOException {
+  private static File backupCurrentConfigToTempAndDelete(Path currentConfig, Logger log, boolean smartDelete, @Nullable ConfigImportSettings settings) throws IOException {
     Path configDir = PathManager.getConfigDir();
     File tempBackupDir = FileUtil.createTempDirectory(configDir.getFileName().toString(), "-backup-" + UUID.randomUUID());
     log.info("Backup config from " + currentConfig + " to " + tempBackupDir);
-    FileUtil.copyDir(configDir.toFile(), tempBackupDir, file -> !shouldSkipFileDuringImport(file.getName()));
+    FileUtil.copyDir(configDir.toFile(), tempBackupDir, file -> !shouldSkipFileDuringImport(file.toPath(), settings));
 
     deleteCurrentConfigDir(currentConfig, log, smartDelete);
 
@@ -773,12 +773,12 @@ public final class ConfigImportHelper {
     Files.walkFileTree(oldConfigDir, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-        return blockImport(dir, oldConfigDir, newConfigDir, oldPluginsDir) ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
+        return blockImport(dir, oldConfigDir, newConfigDir, oldPluginsDir, options.importSettings) ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
       }
 
       @Override
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-        if (!blockImport(file, oldConfigDir, newConfigDir, oldPluginsDir)) {
+        if (!blockImport(file, oldConfigDir, newConfigDir, oldPluginsDir, options.importSettings)) {
           Path target = newConfigDir.resolve(oldConfigDir.relativize(file));
           NioFiles.createDirectories(target.getParent());
           Files.copy(file, target, LinkOption.NOFOLLOW_LINKS);
@@ -1150,21 +1150,28 @@ public final class ConfigImportHelper {
     return false;
   }
 
-  private static boolean blockImport(Path path, Path oldConfig, Path newConfig, Path oldPluginsDir) {
+  private static boolean blockImport(
+    Path path,
+    Path oldConfig,
+    Path newConfig,
+    Path oldPluginsDir,
+    @Nullable ConfigImportSettings settings) {
     if (oldConfig.equals(path.getParent())) {
       Path fileName = path.getFileName();
-      return shouldSkipFileDuringImport(fileName.toString()) ||
+      return shouldSkipFileDuringImport(path, settings) ||
              Files.exists(newConfig.resolve(fileName)) ||
              path.startsWith(oldPluginsDir);
     }
     return false;
   }
 
-  private static boolean shouldSkipFileDuringImport(String fileName) {
+  private static boolean shouldSkipFileDuringImport(Path path, @Nullable ConfigImportSettings settings) {
+    String fileName = path.getFileName().toString();
     return SESSION_FILES.contains(fileName) ||
            fileName.equals(ExpiredPluginsState.EXPIRED_PLUGINS_FILENAME) ||
            fileName.startsWith(CHROME_USER_DATA) ||
-           fileName.endsWith(".jdk") && fileName.startsWith(String.valueOf(ApplicationNamesInfo.getInstance().getScriptName()));
+           fileName.endsWith(".jdk") && fileName.startsWith(String.valueOf(ApplicationNamesInfo.getInstance().getScriptName())) ||
+           (settings != null && settings.shouldSkipFile(path));
   }
 
   private static String defaultConfigPath(String selector) {
