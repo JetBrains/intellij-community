@@ -4,7 +4,7 @@ package com.intellij.util;
 import com.intellij.ReviseWhenPortedToJDK;
 import org.jetbrains.annotations.NotNull;
 
-public class ObjectUtilsRt {
+public final class ObjectUtilsRt {
   /**
    * They promised in <a href="http://mail.openjdk.org/pipermail/core-libs-dev/2018-February/051312.html">core-dev mailing list</a> that
    * the object reference won't be removed by JIT and GC-ed until this method execution is finished.
