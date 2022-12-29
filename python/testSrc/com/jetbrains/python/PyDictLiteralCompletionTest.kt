@@ -2,13 +2,11 @@
 package com.jetbrains.python
 
 import com.jetbrains.python.fixtures.PyTestCase
-import org.junit.Assert
-import java.util.*
 
 
 class PyDictLiteralCompletionTest : PyTestCase() {
   fun testEmptyLiteralsInCallExpressions() {
-    assertCompletionContains("'x'", "'y'")
+    assertCompletionContains("\"x\"", "\"y\"")
   }
 
   fun testEmptyLiteralsInCallExpressionsWithQuotes() {
@@ -24,7 +22,7 @@ class PyDictLiteralCompletionTest : PyTestCase() {
   }
 
   fun testEmptyLiteralsInAssignments() {
-    assertCompletionContains("'x'", "'y'")
+    assertCompletionContains("\"x\"", "\"y\"")
   }
 
   fun testEmptyLiteralsInAssignmentsWithQuotes() {
@@ -32,7 +30,7 @@ class PyDictLiteralCompletionTest : PyTestCase() {
   }
 
   fun testNotEmptyLiteralsInAssignments() {
-    assertCompletionContains("'y'")
+    assertCompletionContains("\"y\"")
   }
 
   fun testNotEmptyLiteralsInAssignmentsWithQuotes() {
@@ -40,7 +38,7 @@ class PyDictLiteralCompletionTest : PyTestCase() {
   }
 
   fun testEmptyLiteralsInReturnStatements() {
-    assertCompletionContains("'x'", "'y'")
+    assertCompletionContains("\"x\"", "\"y\"")
   }
 
   fun testEmptyLiteralsInReturnStatementsWithQuotes() {
@@ -57,6 +55,16 @@ class PyDictLiteralCompletionTest : PyTestCase() {
 
   fun testNotEmptyLiteralsInAssignmentsWithMultipleTargets() {
     assertCompletionContains("b")
+  }
+
+  // PY-42637
+  fun testNotEmptyLiteralsInReturnStatementsWithSeveralTypesOfQuotes() {
+    assertCompletionContains("\"x\"")
+  }
+
+  // PY-42637
+  fun testNotEmptyLiteralsInReturnStatementsWithOnlySingleQuotes() {
+    assertCompletionContains("'x'")
   }
 
   private fun assertCompletionContains(vararg expected: String) {
