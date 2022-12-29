@@ -1,10 +1,25 @@
-fun Container.setProductionBuild() {
+fun Container.productionBuild() {
   env["AUTOMATED_PRODUCTION_BUILD"] = "true"
 }
 
-job("Mermaid / Build") {
+fun Container.platformVersion(version: String) {
+  env["PLATFORM_VERSION"] = version
+}
+
+job("Mermaid / Build for 231") {
   container("openjdk:17") {
-    setProductionBuild()
+    productionBuild()
+    platformVersion("231-SNAPSHOT")
+    shellScript {
+      content = "./gradlew build"
+    }
+  }
+}
+
+job("Mermaid / Build for 223") {
+  container("openjdk:17") {
+    productionBuild()
+    platformVersion("223-EAP-SNAPSHOT")
     shellScript {
       content = "./gradlew build"
     }
@@ -13,7 +28,7 @@ job("Mermaid / Build") {
 
 job("Mermaid / Plugin Verifier") {
   container("openjdk:17") {
-    setProductionBuild()
+    productionBuild()
     shellScript {
       content = "./gradlew runPluginVerifier"
     }
@@ -30,7 +45,7 @@ job("Mermaid / Release / Stable") {
     }
   }
   container("openjdk:17") {
-    setProductionBuild()
+    productionBuild()
     env["MARKETPLACE_TOKEN"] = marketplaceToken
     shellScript {
       content = "./gradlew test publishPlugin"
@@ -45,7 +60,7 @@ job("Mermaid / Release / Nightly") {
     }
   }
   container("openjdk:17") {
-    setProductionBuild()
+    productionBuild()
     env["MARKETPLACE_TOKEN"] = marketplaceToken
     env["MARKETPLACE_CHANNEL"] = "Nightly"
     shellScript {

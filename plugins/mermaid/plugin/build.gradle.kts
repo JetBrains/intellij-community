@@ -33,7 +33,8 @@ sourceSets {
 
 intellij {
     pluginName.set(properties("pluginName"))
-    version.set(properties("platformVersion"))
+    val platformVersion = System.getenv("PLATFORM_VERSION") ?: properties("platformVersion")
+    version.set(platformVersion)
     type.set(properties("platformType"))
     plugins.set(properties("platformPlugins").split(',').map(String::trim).filter(String::isNotEmpty))
 }
