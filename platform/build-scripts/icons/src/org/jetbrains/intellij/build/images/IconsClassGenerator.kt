@@ -681,7 +681,11 @@ private fun getPluginPackageIfPossible(module: JpsModule): String? {
     var pluginXml = root.resolve("META-INF/plugin.xml")
     if (!Files.exists(pluginXml)) {
       // ok, any xml file
-      pluginXml = Files.newDirectoryStream(root).use { files -> files.find { it.toString().endsWith(".xml") } } ?: break
+      try {
+        pluginXml = Files.newDirectoryStream(root).use { files -> files.find { it.toString().endsWith(".xml") } } ?: break
+      } catch(e: NoSuchFileException) {
+        println("Directory attempted to be used but did not exist ${e.message}")
+      }
     }
 
     try {
