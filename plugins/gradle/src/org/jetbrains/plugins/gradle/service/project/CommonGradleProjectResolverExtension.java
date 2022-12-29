@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
@@ -14,6 +15,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
@@ -24,6 +26,8 @@ import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision;
 import com.intellij.openapi.roots.ui.configuration.SdkLookupUtil;
@@ -116,8 +120,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     if (versionCatalogsModel != null) {
       ideProject.createChild(BuildScriptClasspathData.VERSION_CATALOGS, versionCatalogsModel);
     }
-
-    populateProjectSdkModel(gradleProject, ideProject);
   }
 
   @NotNull
@@ -187,8 +189,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
           projectDataNode.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS);
         assert sourceSetMap != null;
         sourceSetMap.put(moduleId, Pair.create(sourceSetDataNode, sourceSet));
-
-        populateModuleSdkModel(gradleModule, sourceSetDataNode);
       }
     }
     else {
@@ -210,8 +210,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       }
     }
 
-    populateModuleSdkModel(gradleModule, mainModuleNode);
-
     final ProjectData projectData = projectDataNode.getData();
     if (StringUtil.equals(mainModuleData.getLinkedExternalProjectPath(), projectData.getLinkedExternalProjectPath())) {
       projectData.setGroup(mainModuleData.getGroup());
@@ -230,78 +228,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     }
     catch (UnsupportedMethodException ignore) {
     }
-  }
-
-  private void populateProjectSdkModel(@NotNull IdeaProject ideaProject, @NotNull DataNode<? extends ProjectData> projectNode) {
-    String jdkName = ideaProject.getJdkName();
-    String sdkName = resolveSdkName(jdkName);
-    ProjectSdkData projectSdkData = new ProjectSdkData(sdkName);
-    projectNode.createChild(ProjectSdkData.KEY, projectSdkData);
-  }
-
-  private void populateModuleSdkModel(@NotNull IdeaModule ideaModule, @NotNull DataNode<? extends ModuleData> moduleNode) {
-    try {
-      String jdkName = ideaModule.getJdkName();
-      String sdkName = resolveSdkName(jdkName);
-      ModuleSdkData moduleSdkData = new ModuleSdkData(sdkName);
-      moduleNode.createChild(ModuleSdkData.KEY, moduleSdkData);
-    }
-    // todo[Vlad] the catch can be omitted when the support of the Gradle < 3.0 will be dropped
-    catch (UnsupportedMethodException ignore) {
-    }
-  }
-
-  private @Nullable String resolveSdkName(@Nullable String sdkName) {
-    var gradleJvm = lookupGradleJvm(sdkName);
-    if (gradleJvm != null) {
-      return gradleJvm;
-    }
-    return lookupSdk(sdkName);
-  }
-
-  private @Nullable String lookupGradleJvm(@Nullable String sdkName) {
-    var version = JavaVersion.tryParse(sdkName);
-    if (version != null) {
-      var gradleJvm = getGradleJvm();
-      if (gradleJvm != null) {
-        var table = ProjectJdkTable.getInstance();
-        var sdk = ReadAction.compute(() -> table.findJdk(gradleJvm));
-        if (sdk != null) {
-          var sdkVersion = JavaVersion.tryParse(sdk.getVersionString());
-          if (sdkVersion != null && sdkVersion.feature == version.feature) {
-            return sdk.getName();
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  private static @Nullable String lookupSdk(@Nullable String sdkName) {
-    if (sdkName != null) {
-      var sdk = SdkLookupUtil.lookupSdk(builder -> builder
-        .withSdkName(sdkName)
-        .withSdkType(ExternalSystemJdkUtil.getJavaSdkType())
-        .onDownloadableSdkSuggested(__ -> SdkLookupDecision.STOP)
-      );
-      return sdk == null ? null : sdk.getName();
-    }
-    return null;
-  }
-
-  private @Nullable GradleProjectSettings getProjectSettings() {
-    var project = resolverCtx.getExternalSystemTaskId().findProject();
-    if (project != null) {
-      var settings = GradleSettings.getInstance(project);
-      var linkedProjectPath = resolverCtx.getProjectPath();
-      return settings.getLinkedProjectSettings(linkedProjectPath);
-    }
-    return null;
-  }
-
-  private @Nullable String getGradleJvm() {
-    var settings = getProjectSettings();
-    return settings == null ? null : settings.getGradleJvm();
   }
 
   private static String @NotNull [] getIdeModuleGroup(String moduleName, IdeaModule gradleModule) {
