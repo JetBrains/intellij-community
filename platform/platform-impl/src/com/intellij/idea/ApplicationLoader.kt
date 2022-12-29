@@ -83,36 +83,27 @@ private suspend fun doInitApplication(rawArgs: List<String>,
     appDeferred.await() as ApplicationImpl
   }
 
-  val loadIconMapping: Job? = coroutineScope {
-    initAppActivity.runChild("app component registration") {
-      app.registerComponents(modules = pluginSet.getEnabledModules(),
-                             app = app,
-                             precomputedExtensionModel = null,
-                             listenerCallbacks = null)
-    }
+  initAppActivity.runChild("app component registration") {
+    app.registerComponents(modules = pluginSet.getEnabledModules(),
+                           app = app,
+                           precomputedExtensionModel = null,
+                           listenerCallbacks = null)
+  }
 
-    val loadIconMapping = if (app.isHeadlessEnvironment) {
-      null
+  val loadIconMapping = if (app.isHeadlessEnvironment) null else app.coroutineScope.launchAndMeasure("icon mapping loading") {
+    try {
+      service<IconMapLoader>().preloadIconMapping()
     }
-    else {
-      app.coroutineScope.launchAndMeasure("icon mapping loading") {
-        try {
-          service<IconMapLoader>().preloadIconMapping()
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
-        }
-      }
+    catch (e: CancellationException) {
+      throw e
     }
+    catch (e: Throwable) {
+      LOG.error(e)
+    }
+  }
 
-    withContext(Dispatchers.IO) {
-      initConfigurationStore(app)
-    }
-
-    loadIconMapping
+  withContext(Dispatchers.IO) {
+    initConfigurationStore(app)
   }
 
   coroutineScope {

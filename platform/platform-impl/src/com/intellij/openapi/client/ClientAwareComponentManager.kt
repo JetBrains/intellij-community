@@ -43,11 +43,16 @@ abstract class ClientAwareComponentManager constructor(
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   listenerCallbacks: MutableList<in Runnable>?) {
-    super.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
+    super.registerComponents(modules = modules,
+                             app = app,
+                             precomputedExtensionModel = precomputedExtensionModel,
+                             listenerCallbacks = listenerCallbacks)
 
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
     for (session in sessionsManager.getSessions(ClientKind.ALL)) {
-      (session as? ClientSessionImpl)?.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
+      (session as? ClientSessionImpl)?.registerComponents(modules = modules, app = app,
+                                                          precomputedExtensionModel = precomputedExtensionModel,
+                                                          listenerCallbacks = listenerCallbacks)
     }
   }
 
