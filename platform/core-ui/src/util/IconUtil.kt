@@ -778,7 +778,7 @@ private fun filterFileIconFlags(file: VirtualFile, @IconFlags flags: Int): Int {
   return flags and flagIgnoreMask.inv()
 }
 
-private class TextIcon(private val text: String, component: Component, private val fontSize: Float) : JBScalableIcon() {
+class TextIcon(val text: String, component: Component, val fontSize: Float) : JBScalableIcon() {
   private var font: Font? = null
   private var metrics: FontMetrics? = null
   private val componentRef = WeakReference(component)
