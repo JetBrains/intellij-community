@@ -85,6 +85,236 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           toByteArray()
         }
     }
+
+    class SetParent(val fileId: Int, val parentId: Int, result: OperationResult<Unit>)
+      : RecordsOperation<Unit>(VfsOperationTag.REC_SET_PARENT, result) {
+      companion object {
+        const val VALUE_SIZE_BYTES = Int.SIZE_BYTES * 2 + OperationResult.SIZE_BYTES
+
+        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>): SetParent =
+          DataInputStream(ByteArrayInputStream(data)).run {
+            val fileId = readInt()
+            val parentId = readInt()
+            val result = readResult<Unit>(enumerator)
+            SetParent(fileId, parentId, result)
+          }
+      }
+
+      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+        ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
+          DataOutputStream(this).run {
+            writeInt(fileId)
+            writeInt(parentId)
+            writeInt(result.serialize(enumerator))
+          }
+          toByteArray()
+        }
+    }
+
+    class SetNameId(val fileId: Int, val nameId: Int, result: OperationResult<Unit>)
+      : RecordsOperation<Unit>(VfsOperationTag.REC_SET_NAME_ID, result) {
+      companion object {
+        const val VALUE_SIZE_BYTES = Int.SIZE_BYTES * 2 + OperationResult.SIZE_BYTES
+
+        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+          DataInputStream(ByteArrayInputStream(data)).run {
+            val fileId = readInt()
+            val nameId = readInt()
+            val result = readResult<Unit>(enumerator)
+            SetNameId(fileId, nameId, result)
+          }
+      }
+
+      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+        ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
+          DataOutputStream(this).run {
+            writeInt(fileId)
+            writeInt(nameId)
+            writeInt(result.serialize(enumerator))
+          }
+          toByteArray()
+        }
+    }
+
+    class SetFlags(val fileId: Int, val flags: Int, result: OperationResult<Boolean>)
+      : RecordsOperation<Boolean>(VfsOperationTag.REC_SET_FLAGS, result) {
+      companion object {
+        const val VALUE_SIZE_BYTES = Int.SIZE_BYTES * 2 + OperationResult.SIZE_BYTES
+
+        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+          DataInputStream(ByteArrayInputStream(data)).run {
+            val fileId = readInt()
+            val flags = readInt()
+            val result = readResult<Boolean>(enumerator)
+            SetFlags(fileId, flags, result)
+          }
+      }
+
+      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+        ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
+          DataOutputStream(this).run {
+            writeInt(fileId)
+            writeInt(flags)
+            writeInt(result.serialize(enumerator))
+          }
+          toByteArray()
+        }
+    }
+
+    class PutLength(val fileId: Int, val length: Long, result: OperationResult<Boolean>)
+      : RecordsOperation<Boolean>(VfsOperationTag.REC_PUT_LENGTH, result) {
+      companion object {
+        const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + Long.SIZE_BYTES + OperationResult.SIZE_BYTES
+
+        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+          DataInputStream(ByteArrayInputStream(data)).run {
+            val fileId = readInt()
+            val length = readLong()
+            val result = readResult<Boolean>(enumerator)
+            PutLength(fileId, length, result)
+          }
+      }
+
+      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+        ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
+          DataOutputStream(this).run {
+            writeInt(fileId)
+            writeLong(length)
+            writeInt(result.serialize(enumerator))
+          }
+          toByteArray()
+        }
+    }
+
+    class PutTimestamp(val fileId: Int, val timestamp: Long, result: OperationResult<Boolean>)
+      : RecordsOperation<Boolean>(VfsOperationTag.REC_PUT_TIMESTAMP, result) {
+      companion object {
+        const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + Long.SIZE_BYTES + OperationResult.SIZE_BYTES
+
+        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+          DataInputStream(ByteArrayInputStream(data)).run {
+            val fileId = readInt()
+            val timestamp = readLong()
+            val result = readResult<Boolean>(enumerator)
+            PutTimestamp(fileId, timestamp, result)
+          }
+      }
+
+      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+        ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
+          DataOutputStream(this).run {
+            writeInt(fileId)
+            writeLong(timestamp)
+            writeInt(result.serialize(enumerator))
+          }
+          toByteArray()
+        }
+    }
+
+    class MarkRecordAsModified(val fileId: Int, result: OperationResult<Unit>)
+      : RecordsOperation<Unit>(VfsOperationTag.REC_MARK_RECORD_AS_MODIFIED, result) {
+      companion object {
+        const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + OperationResult.SIZE_BYTES
+
+        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+          DataInputStream(ByteArrayInputStream(data)).run {
+            val fileId = readInt()
+            val result = readResult<Unit>(enumerator)
+            MarkRecordAsModified(fileId, result)
+          }
+      }
+
+      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+        ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
+          DataOutputStream(this).run {
+            writeInt(fileId)
+            writeInt(result.serialize(enumerator))
+          }
+          toByteArray()
+        }
+    }
+
+    class FillRecord(val fileId: Int, val timestamp: Long, val length: Long, val flags: Int,
+                     val nameId: Int, val parentId: Int, val overwriteAttrRef: Boolean, result: OperationResult<Unit>)
+      : RecordsOperation<Unit>(VfsOperationTag.REC_FILL_RECORD, result) {
+      companion object {
+        const val VALUE_SIZE_BYTES = Int.SIZE_BYTES * 4 + Long.SIZE_BYTES * 2 + 1 + OperationResult.SIZE_BYTES
+
+        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+          DataInputStream(ByteArrayInputStream(data)).run {
+            val fileId = readInt()
+            val timestamp = readLong()
+            val length = readLong()
+            val flags = readInt()
+            val nameId = readInt()
+            val parent = readInt()
+            val overwriteAttrRef = readByte() == 1.toByte()
+            val result = readResult<Unit>(enumerator)
+            FillRecord(fileId, timestamp, length, flags, nameId, parent, overwriteAttrRef, result)
+          }
+      }
+
+      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+        ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
+          DataOutputStream(this).run {
+            writeInt(fileId)
+            writeLong(timestamp)
+            writeLong(length)
+            writeInt(flags)
+            writeInt(nameId)
+            writeInt(parentId)
+            writeByte(if (overwriteAttrRef) { 1 } else { 0 })
+            writeInt(result.serialize(enumerator))
+          }
+          toByteArray()
+        }
+    }
+
+    class CleanRecord(val fileId: Int, result: OperationResult<Unit>)
+      : RecordsOperation<Unit>(VfsOperationTag.REC_CLEAN_RECORD, result) {
+      companion object {
+        const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + OperationResult.SIZE_BYTES
+
+        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+          DataInputStream(ByteArrayInputStream(data)).run {
+            val fileId = readInt()
+            val result = readResult<Unit>(enumerator)
+            CleanRecord(fileId, result)
+          }
+      }
+
+      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+        ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
+          DataOutputStream(this).run {
+            writeInt(fileId)
+            writeInt(result.serialize(enumerator))
+          }
+          toByteArray()
+        }
+    }
+
+    class SetVersion(val version: Int, result: OperationResult<Unit>)
+      : RecordsOperation<Unit>(VfsOperationTag.REC_SET_VERSION, result) {
+      companion object {
+        const val VALUE_SIZE_BYTES = Int.SIZE_BYTES + OperationResult.SIZE_BYTES
+
+        suspend fun deserializeValue(data: ByteArray, enumerator: SuspendDataEnumerator<String>) =
+          DataInputStream(ByteArrayInputStream(data)).run {
+            val version = readInt()
+            val result = readResult<Unit>(enumerator)
+            SetVersion(version, result)
+          }
+      }
+
+      override suspend fun serializeValue(enumerator: SuspendDataEnumerator<String>): ByteArray =
+        ByteArrayOutputStream(VALUE_SIZE_BYTES).run {
+          DataOutputStream(this).run {
+            writeInt(version)
+            writeInt(result.serialize(enumerator))
+          }
+          toByteArray()
+        }
+    }
   }
 
   sealed class ContentsOperation<T : Any>(tag: VfsOperationTag, result: OperationResult<T>) : VfsOperation<T>(tag, result) {
@@ -136,15 +366,15 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         VfsOperationTag.REC_ALLOC -> RecordsOperation.AllocateRecord.deserializeValue(data, enumerator) as T
         VfsOperationTag.REC_SET_ATTR_REC_ID -> RecordsOperation.SetAttributeRecordId.deserializeValue(data, enumerator) as T
         VfsOperationTag.REC_SET_CONTENT_RECORD_ID -> RecordsOperation.SetContentRecordId.deserializeValue(data, enumerator) as T
-        VfsOperationTag.REC_SET_PARENT -> TODO()
-        VfsOperationTag.REC_SET_NAME_ID -> TODO()
-        VfsOperationTag.REC_SET_FLAGS -> TODO()
-        VfsOperationTag.REC_PUT_LENGTH -> TODO()
-        VfsOperationTag.REC_PUT_TIMESTAMP -> TODO()
-        VfsOperationTag.REC_MARK_RECORD_AS_MODIFIED -> TODO()
-        VfsOperationTag.REC_FILL_RECORD -> TODO()
-        VfsOperationTag.REC_CLEAN_RECORD -> TODO()
-        VfsOperationTag.REC_SET_VERSION -> TODO()
+        VfsOperationTag.REC_SET_PARENT -> RecordsOperation.SetParent.deserializeValue(data, enumerator) as T
+        VfsOperationTag.REC_SET_NAME_ID -> RecordsOperation.SetNameId.deserializeValue(data, enumerator) as T
+        VfsOperationTag.REC_SET_FLAGS -> RecordsOperation.SetFlags.deserializeValue(data, enumerator) as T
+        VfsOperationTag.REC_PUT_LENGTH -> RecordsOperation.PutLength.deserializeValue(data, enumerator) as T
+        VfsOperationTag.REC_PUT_TIMESTAMP -> RecordsOperation.PutTimestamp.deserializeValue(data, enumerator) as T
+        VfsOperationTag.REC_MARK_RECORD_AS_MODIFIED -> RecordsOperation.MarkRecordAsModified.deserializeValue(data, enumerator) as T
+        VfsOperationTag.REC_FILL_RECORD -> RecordsOperation.FillRecord.deserializeValue(data, enumerator) as T
+        VfsOperationTag.REC_CLEAN_RECORD -> RecordsOperation.CleanRecord.deserializeValue(data, enumerator) as T
+        VfsOperationTag.REC_SET_VERSION -> RecordsOperation.SetVersion.deserializeValue(data, enumerator) as T
 
         VfsOperationTag.ATTR_WRITE_ATTR -> AttributesOperation.WriteAttribute.deserializeValue(data, enumerator) as T
         VfsOperationTag.ATTR_DELETE_ATTRS -> TODO()

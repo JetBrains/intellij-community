@@ -38,4 +38,107 @@ class RecordsLogInterceptor(
         }
       }
     }
+
+  override fun onSetParent(underlying: (fileId: Int, parentId: Int) -> Unit): (fileId: Int, parentId: Int) -> Unit =
+    { fileId, parentId ->
+      { underlying(fileId, parentId) } catchResult { result ->
+        processor.enqueue {
+          descriptorStorage.writeDescriptor(VfsOperationTag.REC_SET_PARENT) {
+            VfsOperation.RecordsOperation.SetParent(fileId, parentId, result)
+          }
+        }
+      }
+    }
+
+  override fun onSetNameId(underlying: (fileId: Int, nameId: Int) -> Unit): (fileId: Int, nameId: Int) -> Unit =
+    { fileId, nameId ->
+      { underlying(fileId, nameId) } catchResult { result ->
+        processor.enqueue {
+          descriptorStorage.writeDescriptor(VfsOperationTag.REC_SET_NAME_ID) {
+            VfsOperation.RecordsOperation.SetParent(fileId, nameId, result)
+          }
+        }
+      }
+    }
+
+  override fun onSetFlags(underlying: (fileId: Int, flags: Int) -> Boolean): (fileId: Int, flags: Int) -> Boolean =
+    { fileId, flags ->
+      { underlying(fileId, flags) } catchResult { result ->
+        processor.enqueue {
+          descriptorStorage.writeDescriptor(VfsOperationTag.REC_SET_FLAGS) {
+            VfsOperation.RecordsOperation.SetFlags(fileId, flags, result)
+          }
+        }
+      }
+    }
+
+  override fun onPutLength(underlying: (fileId: Int, length: Long) -> Boolean): (fileId: Int, length: Long) -> Boolean =
+    { fileId, length ->
+      { underlying(fileId, length) } catchResult { result ->
+        processor.enqueue {
+          descriptorStorage.writeDescriptor(VfsOperationTag.REC_PUT_LENGTH) {
+            VfsOperation.RecordsOperation.PutLength(fileId, length, result)
+          }
+        }
+      }
+    }
+
+  override fun onPutTimestamp(underlying: (fileId: Int, timestamp: Long) -> Boolean): (fileId: Int, timestamp: Long) -> Boolean =
+    { fileId, timestamp ->
+      { underlying(fileId, timestamp) } catchResult { result ->
+        processor.enqueue {
+          descriptorStorage.writeDescriptor(VfsOperationTag.REC_PUT_TIMESTAMP) {
+            VfsOperation.RecordsOperation.PutTimestamp(fileId, timestamp, result)
+          }
+        }
+      }
+    }
+
+  override fun onMarkRecordAsModified(underlying: (fileId: Int) -> Unit): (fileId: Int) -> Unit =
+    { fileId ->
+      { underlying(fileId) } catchResult { result ->
+        processor.enqueue {
+          descriptorStorage.writeDescriptor(VfsOperationTag.REC_MARK_RECORD_AS_MODIFIED) {
+            VfsOperation.RecordsOperation.MarkRecordAsModified(fileId, result)
+          }
+        }
+      }
+    }
+
+  override fun onFillRecord(underlying: (fileId: Int, timestamp: Long, length: Long, flags: Int,
+                                         nameId: Int, parentId: Int, overwriteAttrRef: Boolean) -> Unit):
+    (fileId: Int, timestamp: Long, length: Long, flags: Int,
+     nameId: Int, parentId: Int, overwriteAttrRef: Boolean) -> Unit =
+    { fileId, timestamp, length, flags, nameId, parentId, overwriteAttrRef ->
+      { underlying(fileId, timestamp, length, flags, nameId, parentId, overwriteAttrRef) } catchResult { result ->
+        processor.enqueue {
+          descriptorStorage.writeDescriptor(VfsOperationTag.REC_FILL_RECORD) {
+            VfsOperation.RecordsOperation.FillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteAttrRef, result)
+          }
+        }
+      }
+    }
+
+
+  override fun onCleanRecord(underlying: (fileId: Int) -> Unit): (fileId: Int) -> Unit =
+    { fileId ->
+      { underlying(fileId) } catchResult { result ->
+        processor.enqueue {
+          descriptorStorage.writeDescriptor(VfsOperationTag.REC_CLEAN_RECORD) {
+            VfsOperation.RecordsOperation.CleanRecord(fileId, result)
+          }
+        }
+      }
+    }
+
+  override fun onSetVersion(underlying: (version: Int) -> Unit): (version: Int) -> Unit =
+    { version ->
+      { underlying(version) } catchResult { result ->
+        processor.enqueue {
+          descriptorStorage.writeDescriptor(VfsOperationTag.REC_SET_VERSION) {
+            VfsOperation.RecordsOperation.SetVersion(version, result)
+          }
+        }
+      }
+    }
 }
