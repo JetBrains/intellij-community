@@ -2,15 +2,12 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.util.io.UnInterruptibleFileChannel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.coroutines.coroutineContext
 
 class DescriptorStorageImpl(
   private val storagePath: Path,
@@ -64,54 +61,54 @@ class DescriptorStorageImpl(
     val descrSize = bytesForDescriptor(tag)
     val descrPos = position.getAndAdd(descrSize.toLong())
 
-    withContext(Dispatchers.IO) {
-      fileChannel.write(ByteBuffer.wrap(byteArrayOf((-tag.ordinal).toByte())), descrPos)
-      //io.write(descrPos, byteArrayOf((-tag.ordinal).toByte()))
-      fileChannel.write(ByteBuffer.wrap(byteArrayOf(tag.ordinal.toByte())), descrPos + descrSize - VfsOperationTag.SIZE_BYTES)
-      //io.write(descrPos + descrSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
-    }
+    fileChannel.write(ByteBuffer.wrap(byteArrayOf((-tag.ordinal).toByte())), descrPos)
+    //io.write(descrPos, byteArrayOf((-tag.ordinal).toByte()))
+    fileChannel.write(ByteBuffer.wrap(byteArrayOf(tag.ordinal.toByte())), descrPos + descrSize - VfsOperationTag.SIZE_BYTES)
+    //io.write(descrPos + descrSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
     val op = compute()
     assert(tag == op.tag)
     val data = serialize(op)
     assert(data.size == sizeOfValueInDescriptor(descrSize))
-    withContext(Dispatchers.IO) {
-      fileChannel.write(ByteBuffer.wrap(data), descrPos + VfsOperationTag.SIZE_BYTES)
-      //io.write(descrPos + VfsOperationTag.SIZE_BYTES, data)
-      fileChannel.write(ByteBuffer.wrap(byteArrayOf(tag.ordinal.toByte())), descrPos)
-      //io.write(descrPos, byteArrayOf(tag.ordinal.toByte()))
-    }
+    fileChannel.write(ByteBuffer.wrap(data), descrPos + VfsOperationTag.SIZE_BYTES)
+    //io.write(descrPos + VfsOperationTag.SIZE_BYTES, data)
+    fileChannel.write(ByteBuffer.wrap(byteArrayOf(tag.ordinal.toByte())), descrPos)
+    //io.write(descrPos, byteArrayOf(tag.ordinal.toByte()))
   }
 
   override suspend fun readAt(position: Long, action: suspend (VfsOperation<*>?) -> Unit) {
-    val descr = withContext(coroutineContext) {
-      val buf = ByteBuffer.allocate(VfsOperationTag.SIZE_BYTES)
-      if (fileChannel.read(buf, position) < VfsOperationTag.SIZE_BYTES) {
-        return@withContext null
-      }
-      validateTagByte(buf[0]) {
-        return@withContext null
-      }
-      val tag = VfsOperationTag.values()[buf[0].toInt()]
-      // check right bound
-      val descrSize = bytesForDescriptor(tag)
-      buf.clear()
-      if (fileChannel.read(buf, position + descrSize - VfsOperationTag.SIZE_BYTES) < VfsOperationTag.SIZE_BYTES) {
-        return@withContext null
-      }
-      validateTagByte(buf[0]) {
-        return@withContext null
-      }
-      if (tag.ordinal.toByte() != buf[0]) {
-        // not matching bounding tags
-        return@withContext null
-      }
-      val bytesToRead = sizeOfValueInDescriptor(bytesForDescriptor(tag))
-      val data = ByteArray(bytesToRead)
-      if (fileChannel.read(ByteBuffer.wrap(data), position + VfsOperationTag.SIZE_BYTES) != bytesToRead) {
-        return@withContext null
-      }
-      deserialize<VfsOperation<*>>(tag, data)
+    val buf = ByteBuffer.allocate(VfsOperationTag.SIZE_BYTES)
+    if (fileChannel.read(buf, position) < VfsOperationTag.SIZE_BYTES) {
+      action(null)
+      return
     }
+    validateTagByte(buf[0]) {
+      action(null)
+      return
+    }
+    val tag = VfsOperationTag.values()[buf[0].toInt()]
+    // check right bound
+    val descrSize = bytesForDescriptor(tag)
+    buf.clear()
+    if (fileChannel.read(buf, position + descrSize - VfsOperationTag.SIZE_BYTES) < VfsOperationTag.SIZE_BYTES) {
+      action(null)
+      return
+    }
+    validateTagByte(buf[0]) {
+      action(null)
+      return
+    }
+    if (tag.ordinal.toByte() != buf[0]) {
+      // not matching bounding tags
+      action(null)
+      return
+    }
+    val bytesToRead = sizeOfValueInDescriptor(bytesForDescriptor(tag))
+    val data = ByteArray(bytesToRead)
+    if (fileChannel.read(ByteBuffer.wrap(data), position + VfsOperationTag.SIZE_BYTES) != bytesToRead) {
+      action(null)
+      return
+    }
+    val descr = deserialize<VfsOperation<*>>(tag, data)
     action(descr)
   }
 

@@ -6,8 +6,6 @@ import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.UnInterruptibleFileChannel
 import com.intellij.util.io.toByteArray
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.io.EOFException
@@ -40,12 +38,10 @@ class PayloadStorageImpl(
     val fullSize = out.writtenBytesCount.toLong() + sizeBytes
     val payloadPos = position.getAndAdd(fullSize)
 
-    withContext(Dispatchers.IO) {
-      fileChannel.write(ByteBuffer.wrap(buf.internalBuffer, 0, out.writtenBytesCount), payloadPos)
-      FileChannelOffsetOutputStream(fileChannel, payloadPos + out.writtenBytesCount).run {
-        body();
-        validateWrittenBytesCount(sizeBytes)
-      }
+    fileChannel.write(ByteBuffer.wrap(buf.internalBuffer, 0, out.writtenBytesCount), payloadPos)
+    FileChannelOffsetOutputStream(fileChannel, payloadPos + out.writtenBytesCount).run {
+      body()
+      validateWrittenBytesCount(sizeBytes)
     }
     return PayloadRef(payloadPos)
   }
@@ -53,29 +49,27 @@ class PayloadStorageImpl(
   override suspend fun readAt(ref: PayloadRef): ByteArray? {
     if (ref == PayloadRef.ZERO_SIZE) return ByteArray(0)
     // TODO: revisit unexpected value cases
-    return withContext(Dispatchers.IO) {
-      val buf = ByteBuffer.allocate(10) // 1 + (64 - 6) / 7 < 10
-      if (fileChannel.read(buf, ref.offset) < 1) {
-        return@withContext null
-      }
-      val inp = ByteArrayInputStream(buf.toByteArray())
-      val sizeBytes = try {
-        DataInputOutputUtil.readLONG(DataInputStream(inp))
-      }
-      catch (e: EOFException) {
-        return@withContext null
-      }
-      // dirty hack: inp.available() = count - pos, so pos = count - inp.available() = buf.position() - inp.available()
-      val dataOffset = buf.position() - inp.available()
-      if (sizeBytes < 0) {
-        return@withContext null
-      }
-      val data = ByteArray(sizeBytes.toInt())
-      if (fileChannel.read(ByteBuffer.wrap(data), ref.offset + dataOffset) != sizeBytes.toInt()) {
-        return@withContext null
-      }
-      data
+    val buf = ByteBuffer.allocate(10) // 1 + (64 - 6) / 7 < 10
+    if (fileChannel.read(buf, ref.offset) < 1) {
+      return null
     }
+    val inp = ByteArrayInputStream(buf.toByteArray())
+    val sizeBytes = try {
+      DataInputOutputUtil.readLONG(DataInputStream(inp))
+    }
+    catch (e: EOFException) {
+      return null
+    }
+    // dirty hack: inp.available() = count - pos, so pos = count - inp.available() = buf.position() - inp.available()
+    val dataOffset = buf.position() - inp.available()
+    if (sizeBytes < 0) {
+      return null
+    }
+    val data = ByteArray(sizeBytes.toInt())
+    if (fileChannel.read(ByteBuffer.wrap(data), ref.offset + dataOffset) != sizeBytes.toInt()) {
+      return null
+    }
+    return data
   }
 
   override fun size(): Long = fileChannel.size()

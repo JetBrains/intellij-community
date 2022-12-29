@@ -45,15 +45,10 @@ class VfsLog(
   private val context = object : Context {
     override val stringEnumerator = object : SuspendDataEnumerator<String> {
       private val base = SimpleStringPersistentEnumerator(storagePath / "stringsEnum")
-      override suspend fun enumerate(value: String?): Int =
-        withContext(Dispatchers.IO) {
-          base.enumerate(value)
-        }
 
-      override suspend fun valueOf(ordinal: Int): String? =
-        withContext(Dispatchers.IO) {
-          base.valueOf(ordinal)
-        }
+      override suspend fun enumerate(value: String?): Int = base.enumerate(value)
+
+      override suspend fun valueOf(ordinal: Int): String? = base.valueOf(ordinal)
     }
     override val descriptorStorage = DescriptorStorageImpl(storagePath / "events", stringEnumerator)
     override val payloadStorage = PayloadStorageImpl(storagePath / "data")
@@ -123,6 +118,6 @@ class VfsLog(
   companion object {
     private val LOG = Logger.getInstance(VfsLog::class.java)
 
-    const val VERSION = -25
+    const val VERSION = -26
   }
 }
