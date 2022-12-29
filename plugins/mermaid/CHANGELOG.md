@@ -1,6 +1,11 @@
 # Mermaid Changelog
 
 ## [Unreleased]
+- Add support for mind map diagrams
+- Add partial support for Mermaid.js `9.3.0`
+- [IDEA-306720](https://youtrack.jetbrains.com/issue/IDEA-306720) Fixed incorrect caret position after pressing enter in class diagrams
+- [IDEA-307784](https://youtrack.jetbrains.com/issue/IDEA-307784) Support graph keyword for flowcharts
+- [IDEA-307891](https://youtrack.jetbrains.com/issue/IDEA-307891) Fixed parsing of object arrays in class diagrams
 
 ## 0.0.5
 - [IDEA-306721](https://youtrack.jetbrains.com/issue/IDEA-306721) Fixed lexer non-progressing in some cases
