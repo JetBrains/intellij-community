@@ -53,6 +53,20 @@ abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node) {
       }, PsiModificationTracker.MODIFICATION_COUNT)
   })
 
+  override fun getText(): String {
+    // it is a memory optimisation
+    return CachedValuesManager.getCachedValue(this, CachedValueProvider {
+      CachedValueProvider.Result.create(super.getText(), PsiModificationTracker.MODIFICATION_COUNT)
+    })
+  }
+
+  override fun isValid(): Boolean {
+    // mb read-action-context-cache?
+    return CachedValuesManager.getCachedValue(this, CachedValueProvider {
+      CachedValueProvider.Result.create(super.isValid(), PsiModificationTracker.MODIFICATION_COUNT)
+    })
+  }
+
   protected open val includeFirstLineInContent: Boolean get() = false
 
   fun hasExplicitIndent(): Boolean = explicitIndent != IMPLICIT_INDENT
