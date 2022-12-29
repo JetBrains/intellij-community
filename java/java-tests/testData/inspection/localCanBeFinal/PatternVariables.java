@@ -45,4 +45,17 @@ class Main {
       x1 = 42;
     }
   }
+
+  void test7(final Object obj) {
+    switch (obj) {
+      case Point point:
+        point = new Point(0, 0);
+        break;
+      case Rect <warning descr="Parameter 'rect' can have 'final' modifier">rect</warning>:
+        System.out.println("rectangle");
+        break;
+      default:
+        System.out.println("default");
+    }
+  }
 }

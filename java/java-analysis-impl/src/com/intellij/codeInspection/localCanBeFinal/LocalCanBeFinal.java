@@ -235,11 +235,11 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
               from = flow.getStartOffset(guardingExpression);
             }
             else {
-              from = flow.getEndOffset(list);
+              from = flow.getEndOffset(list.getParent());
             }
           }
           else {
-            from = flow.getEndOffset(list);
+            from = flow.getEndOffset(list.getParent());
           }
           end = flow.getEndOffset(body);
         }
