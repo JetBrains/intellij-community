@@ -15,11 +15,10 @@
  */
 package com.intellij.util.lang;
 
+// we don't use mix - not required as a key it is a XXH3 hash
 final class Hash {
   static final float FAST_LOAD_FACTOR = .5f;
   static final int DEFAULT_INITIAL_SIZE = 16;
-
-  private static final long LONG_PHI = 0x9E3779B97F4A7C15L;
 
   static int arraySize(final int expected, final float f) {
     final long s = Math.max(2, nextPowerOfTwo((long)Math.ceil(expected / f)));
@@ -37,11 +36,5 @@ final class Hash {
     /* We must guarantee that there is always at least
      * one free entry (even with pathological load factors). */
     return Math.min((int)Math.ceil(n * f), n - 1);
-  }
-
-  static long mix(long x) {
-    long h = x * LONG_PHI;
-    h ^= h >>> 32;
-    return h ^ (h >>> 16);
   }
 }

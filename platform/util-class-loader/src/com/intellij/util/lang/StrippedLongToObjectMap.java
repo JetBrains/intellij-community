@@ -89,7 +89,7 @@ final class StrippedLongToObjectMap<V> implements LongFunction<V> {
     long[] keys = this.keys;
     int index;
     // the starting point
-    if ((current = keys[index = (int)Hash.mix(key) & mask]) == 0) {
+    if ((current = keys[index = (int)key & mask]) == 0) {
       return -(index + 1);
     }
     if (key == current) {
@@ -135,7 +135,7 @@ final class StrippedLongToObjectMap<V> implements LongFunction<V> {
     final long[] key = this.keys;
     int pos;
     // The starting point.
-    if ((curr = key[pos = (int)Hash.mix(k) & mask]) == 0) {
+    if ((curr = key[pos = (int)k & mask]) == 0) {
       return null;
     }
     if (k == curr) {
@@ -183,7 +183,7 @@ final class StrippedLongToObjectMap<V> implements LongFunction<V> {
     for (int j = realSize(); j-- != 0; ) {
       //noinspection StatementWithEmptyBody
       while (keys[--i] == 0) ;
-      if (!(newKey[pos = (int)Hash.mix(keys[i]) & mask] == 0)) {
+      if (!(newKey[pos = (int)keys[i] & mask] == 0)) {
         //noinspection StatementWithEmptyBody
         while (!(newKey[pos = pos + 1 & mask] == 0)) ;
       }
