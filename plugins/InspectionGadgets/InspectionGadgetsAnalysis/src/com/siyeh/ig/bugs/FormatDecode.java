@@ -105,7 +105,7 @@ public final class FormatDecode {
     }
   }
 
-  static Validator[] decodePrefix(String prefix, int argumentCount) {
+  public static Validator[] decodePrefix(String prefix, int argumentCount) {
     return decode(prefix, argumentCount, true);
   }
 

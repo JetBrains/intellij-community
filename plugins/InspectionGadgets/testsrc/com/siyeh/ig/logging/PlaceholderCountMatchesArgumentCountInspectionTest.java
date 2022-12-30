@@ -420,4 +420,102 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
                }
              }""");
   }
+
+  public void testSlf4JPartial() {
+    doTest("""
+             import org.slf4j.*;
+             class X {
+              Logger logger = LoggerFactory.getLogger(X.class);
+              
+              private static final String logText = "{} {}" + getSomething();
+              private static final String logText2 = "{} {}" + 1 + "{}" + getSomething();
+              private static final String logText3 = "{} {}" + 1 + "{}";
+          
+              private static String getSomething() {
+                  return "";
+              }
+              
+              void m(String t) {
+               logger.info("{} {}", 1, 2);
+               logger.info(/*Fewer arguments provided (0) than placeholders specified (at least 2)*/"{}" + t + 1 + "{}"/**/);
+               logger.info(/*Fewer arguments provided (0) than placeholders specified (at least 1)*/"{}" + t + 1/**/);
+               logger.info(/*Fewer arguments provided (0) than placeholders specified (at least 1)*/"{}" + t + "{}"/**/);
+               logger.info("{}" + t + "{}", 1, 2);
+               logger.info("{}" + t + "{}", 1, 2, 3);
+               String temp = "{} {}" + t;
+               logger.info(/*Fewer arguments provided (1) than placeholders specified (at least 2)*/temp/**/, 1);
+               logger.info(temp, 1, 2, 3);
+               logger.info(logText, 1, 2, 3);
+               logger.info(/*Fewer arguments provided (1) than placeholders specified (at least 2)*/logText/**/, 1);
+               logger.info(/*Fewer arguments provided (1) than placeholders specified (at least 3)*/logText2/**/, 1);
+               logger.info(/*Fewer arguments provided (1) than placeholders specified (3)*/logText3/**/, 1);
+               temp = "{}" + t;
+               logger.info(temp , 1);
+              }
+                         
+              void m(int i, String s) {
+               logger.info(/*Fewer arguments provided (0) than placeholders specified (1)*/"abc {}"/**/);
+               logger.info(/*Fewer arguments provided (0) than placeholders specified (at least 1)*/"abc {}" + s/**/);
+               logger.info(/*Fewer arguments provided (0) than placeholders specified (1)*/"abc {}" + i/**/);
+              }
+             }""");
+  }
+  public void testLog4jBuilderPartial() {
+    doTest("""
+             import org.apache.logging.log4j.*;
+             class Logging {
+              private static final Logger LOG = LogManager.getLogger();
+              private static final String logText = "{} {}" + getSomething();
+              private static final String logText2 = "{} {}" + 1 + "{}" + getSomething();
+              private static final String logText3 = "{} {}" + 1 + "{}";
+              private static String getSomething() {
+                  return "";
+              }
+              public static void test(String t) {
+               LogBuilder logger = LOG.atError();
+               logger.log("{} {}", 1, 2);
+               logger.log(/*Fewer arguments provided (0) than placeholders specified (at least 2)*/"{}" + t + 1 + "{}"/**/);
+               logger.log(/*Fewer arguments provided (0) than placeholders specified (at least 1)*/"{}" + t + 1/**/);
+               logger.log(/*Fewer arguments provided (0) than placeholders specified (at least 1)*/"{}" + t + "{}"/**/);
+               logger.log("{}" + t + "{}", 1, 2);
+               logger.log("{}" + t + "{}", 1, 2, 3);
+               String temp = "{} {}" + t;
+               logger.log(/*Fewer arguments provided (1) than placeholders specified (at least 2)*/temp/**/, 1);
+               logger.log(temp, 1, 2, 3);
+               logger.log(logText, 1, 2, 3);
+               logger.log(/*Fewer arguments provided (1) than placeholders specified (at least 2)*/logText/**/, 1);
+               logger.log(/*Fewer arguments provided (1) than placeholders specified (at least 3)*/logText2/**/, 1);
+               logger.log(/*Fewer arguments provided (1) than placeholders specified (3)*/logText3/**/, 1);
+               temp = "{}" + t;
+               logger.log(temp , 1);
+              }
+             }""");
+  }
+  public void testFormatterLog4jPartial() {
+    doTest("""
+             import org.apache.logging.log4j.*;
+             class Logging {
+              private static final Logger logger = LogManager.getFormatterLogger();
+              public static void test(String t) {
+               logger.info(/*Fewer arguments provided (0) than placeholders specified (at least 1)*/"%s" + t + 1 + "%s "/**/);
+               logger.info(/*Fewer arguments provided (0) than placeholders specified (at least 2)*/"%s %s" + t + 1/**/);
+               logger.info("%s" + t + "%s", 1);
+              }
+             }""");
+  }
+
+  public void testLog4jPartial() {
+    doTest("""
+             import org.apache.logging.log4j.*;
+             class Logging {
+              private static final Logger logger = LogManager.getLogger();
+              public static void test(String t) {
+                logger.info(/*Fewer arguments provided (0) than placeholders specified (at least 2)*/"{}" + t + 1 + "{}"/**/);
+                logger.info(/*Fewer arguments provided (0) than placeholders specified (at least 2)*/"{}" + t + 1 + "{}"/**/, new RuntimeException());
+                logger.info(/*Fewer arguments provided (1) than placeholders specified (at least 3)*/"{} {}" + t + 1 + "{}"/**/, 1, new RuntimeException());
+                logger.info("{}" + t + 1 + "{}", 1, new RuntimeException());
+                logger.info("{}" + t + 1 + "{}", 1, 1);
+              }
+             }""");
+  }
 }

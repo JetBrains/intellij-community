@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -13,15 +14,18 @@ import com.siyeh.ig.bugs.FormatDecode;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.siyeh.ig.callMatcher.CallMatcher.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
+import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
 /**
  * @author Bas Leijdekkers
@@ -31,7 +35,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
   private static final CallMatcher FORMATTED_LOG4J =
     staticCall("org.apache.logging.log4j.LogManager", "getFormatterLogger");
   private static final CallMatcher SLF4J_BUILDER = instanceCall("org.slf4j.Logger", "atError", "atDebug",
-                                                              "atInfo", "atLevel", "atWarn", "atTrace");
+                                                                "atInfo", "atLevel", "atWarn", "atTrace");
 
   private static final LoggerTypeSearcher SLF4J_HOLDER = new LoggerTypeSearcher() {
 
@@ -53,7 +57,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
         return LoggerType.EQUAL_PLACEHOLDERS;
       }
       PsiExpression qualifierExpression = expression.getMethodExpression().getQualifierExpression();
-      if(SLF4J_BUILDER.matches(qualifierExpression)){
+      if (SLF4J_BUILDER.matches(qualifierExpression)) {
         return LoggerType.SLF4J;
       }
       //otherwise it is too flexible to solve
@@ -109,6 +113,10 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
     if (result.result == ResultType.INCORRECT_STRING) {
       return InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.incorrect.problem.descriptor");
     }
+    if (result.result == ResultType.PARTIAL_PLACE_HOLDER_MISMATCH) {
+      return InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.fewer.problem.partial.descriptor",
+                                             result.argumentCount(), result.placeholderCount());
+    }
     return (result.argumentCount() > result.placeholderCount())
            ? InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.more.problem.descriptor",
                                              result.argumentCount(), result.placeholderCount())
@@ -160,7 +168,8 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
       int argumentCount = arguments.length - index;
       boolean lastArgumentIsException = hasThrowableType(arguments[arguments.length - 1]);
-      boolean lastArgumentIsSupplier = couldBeThrowableSupplier(loggerType, parameters[parameters.length - 1], arguments[arguments.length - 1]);
+      boolean lastArgumentIsSupplier =
+        couldBeThrowableSupplier(loggerType, parameters[parameters.length - 1], arguments[arguments.length - 1]);
       if (argumentCount == 1) {
         final PsiExpression argument = arguments[index];
         final PsiType argumentType = argument.getType();
@@ -172,7 +181,8 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
               argumentCount = initializers.length;
               lastArgumentIsException = initializers.length > 0 && hasThrowableType(initializers[initializers.length - 1]);
               lastArgumentIsSupplier = initializers.length > 0 &&
-                                       couldBeThrowableSupplier(loggerType, parameters[parameters.length - 1], initializers[initializers.length - 1]);
+                                       couldBeThrowableSupplier(loggerType, parameters[parameters.length - 1],
+                                                                initializers[initializers.length - 1]);
             }
             else {
               return;
@@ -184,11 +194,14 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
         }
       }
       final PsiExpression logStringArgument = arguments[index - 1];
-      String text = buildString(logStringArgument);
-      if (text == null) return;
+      List<PartHolder> parts = buildString(logStringArgument);
+      if (parts == null) return;
 
-      Integer placeholderCount = solvePlaceholderCount(loggerType, argumentCount, text);
-      if (placeholderCount == null) {
+      PlaceholderCountResult placeholderCountHolder = solvePlaceholderCount(loggerType, argumentCount, parts);
+      if (placeholderCountHolder.status == PlaceholderStatus.EMPTY) {
+        return;
+      }
+      if (placeholderCountHolder.status == PlaceholderStatus.ERROR_TO_PARSE_STRING) {
         registerError(logStringArgument, new Result(argumentCount, 0, ResultType.INCORRECT_STRING));
         return;
       }
@@ -197,18 +210,38 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
         case SLF4J -> {
           //according to the reference an exception should not have a placeholder
           argumentCount = lastArgumentIsException ? argumentCount - 1 : argumentCount;
-          yield (placeholderCount == argumentCount) ? ResultType.SUCCESS : ResultType.PLACE_HOLDER_MISMATCH;
+          if (placeholderCountHolder.status == PlaceholderStatus.PARTIAL) {
+            yield (placeholderCountHolder.count <= argumentCount) ? ResultType.SUCCESS : ResultType.PARTIAL_PLACE_HOLDER_MISMATCH;
+          }
+          yield (placeholderCountHolder.count == argumentCount) ? ResultType.SUCCESS : ResultType.PLACE_HOLDER_MISMATCH;
         }
-        case EQUAL_PLACEHOLDERS -> placeholderCount == argumentCount ? ResultType.SUCCESS : ResultType.PLACE_HOLDER_MISMATCH;
+        case EQUAL_PLACEHOLDERS -> {
+          if (placeholderCountHolder.status == PlaceholderStatus.PARTIAL) {
+            yield placeholderCountHolder.count <= argumentCount ? ResultType.SUCCESS : ResultType.PARTIAL_PLACE_HOLDER_MISMATCH;
+          }
+          yield placeholderCountHolder.count == argumentCount ? ResultType.SUCCESS : ResultType.PLACE_HOLDER_MISMATCH;
+        }
         case LOG4J_OLD_STYLE, LOG4J_FORMATTED_STYLE -> {
           // if there is more than one argument and the last argument is an exception, but there is a placeholder for
           // the exception, then the stack trace won't be logged.
-          ResultType type =
-            ((placeholderCount == argumentCount && (!lastArgumentIsException || argumentCount > 1)) ||
-             (lastArgumentIsException && placeholderCount == argumentCount - 1) ||
-            //consider the most general case
-             (lastArgumentIsSupplier && (placeholderCount == argumentCount || placeholderCount == argumentCount - 1))) ?
-            ResultType.SUCCESS : ResultType.PLACE_HOLDER_MISMATCH;
+          ResultType type;
+          if (placeholderCountHolder.status == PlaceholderStatus.PARTIAL) {
+            type =
+              ((placeholderCountHolder.count <= argumentCount && (!lastArgumentIsException || argumentCount > 1)) ||
+               (lastArgumentIsException && placeholderCountHolder.count <= argumentCount - 1) ||
+               //consider the most general case
+               (lastArgumentIsSupplier && (placeholderCountHolder.count <= argumentCount))) ?
+              ResultType.SUCCESS : ResultType.PARTIAL_PLACE_HOLDER_MISMATCH;
+          }
+          else {
+            type =
+              ((placeholderCountHolder.count == argumentCount && (!lastArgumentIsException || argumentCount > 1)) ||
+               (lastArgumentIsException && placeholderCountHolder.count == argumentCount - 1) ||
+               //consider the most general case
+               (lastArgumentIsSupplier &&
+                (placeholderCountHolder.count == argumentCount || placeholderCountHolder.count == argumentCount - 1))) ?
+              ResultType.SUCCESS : ResultType.PLACE_HOLDER_MISMATCH;
+          }
           argumentCount = lastArgumentIsException ? argumentCount - 1 : argumentCount;
           yield type;
         }
@@ -218,26 +251,43 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
         return;
       }
 
-      registerError(logStringArgument, new Result(argumentCount, placeholderCount, resultType));
+      registerError(logStringArgument, new Result(argumentCount, placeholderCountHolder.count, resultType));
     }
 
-    @Nullable
-    private static Integer solvePlaceholderCount(LoggerType loggerType, int argumentCount, String text) {
-      int placeholderCount;
+    @NotNull
+    private static PlaceholderCountResult solvePlaceholderCount(LoggerType loggerType, int argumentCount, List<PartHolder> holders) {
       if (loggerType == LoggerType.LOG4J_FORMATTED_STYLE) {
+        StringBuilder prefix = new StringBuilder();
+        boolean full = true;
+        for (PartHolder holder : holders) {
+          if (holder.complete && holder.text != null) {
+            prefix.append(holder.text);
+          }
+          else {
+            full = false;
+            break;
+          }
+        }
+        if (prefix.isEmpty()) {
+          return new PlaceholderCountResult(0, PlaceholderStatus.EMPTY);
+        }
         FormatDecode.Validator[] validators;
         try {
-          validators = FormatDecode.decode(text, argumentCount);
+          if (full) {
+            validators = FormatDecode.decode(prefix.toString(), argumentCount);
+          }
+          else {
+            validators = FormatDecode.decodePrefix(prefix.toString(), argumentCount);
+          }
         }
         catch (FormatDecode.IllegalFormatException e) {
-          return null;
+          return new PlaceholderCountResult(0, PlaceholderStatus.ERROR_TO_PARSE_STRING);
         }
-        placeholderCount = validators.length;
+        return new PlaceholderCountResult(validators.length, full ? PlaceholderStatus.EXACTLY : PlaceholderStatus.PARTIAL);
       }
       else {
-        placeholderCount = countPlaceholders(text);
+        return countPlaceholders(holders);
       }
-      return placeholderCount;
     }
 
     private static boolean hasThrowableType(PsiExpression lastArgument) {
@@ -292,8 +342,11 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
     }
 
     @Nullable
-    public static String buildString(@Nullable PsiExpression expression) {
+    public static List<PartHolder> buildString(@Nullable PsiExpression expression) {
       if (expression == null) {
+        return null;
+      }
+      if (expression.getType() == null || !expression.getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return null;
       }
       CommonDataflow.DataflowResult dataflowResult = CommonDataflow.getDataflowResult(expression);
@@ -301,42 +354,119 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       Set<Object> values = dataflowResult.getExpressionValues(expression);
       if (values.size() == 1) {
         if (values.iterator().next() instanceof String str) {
-          return str;
+          return List.of(new PartHolder(str, true));
+        }
+      }
+
+      ArrayList<PartHolder> holders = new ArrayList<>();
+      PsiExpression current = expression;
+      if (current instanceof PsiReferenceExpression referenceExpression) {
+        PsiElement resolved = referenceExpression.resolve();
+        if (!(resolved instanceof PsiVariable variable)) {
+          return null;
+        }
+        if (variable.hasModifierProperty(PsiModifier.FINAL)) {
+          current = variable.getInitializer();
+        }
+        else if (variable instanceof PsiLocalVariable localVariable) {
+          current = localVariable.getInitializer();
+          if (VariableAccessUtils.variableIsAssignedAtPoint(localVariable, PsiTreeUtil.findCommonParent(localVariable, referenceExpression),
+                                                            referenceExpression)) {
+            return null;
+          }
+        }
+      }
+      if (current instanceof PsiPolyadicExpression polyadicExpression) {
+        for (PsiExpression operand : polyadicExpression.getOperands()) {
+          if (operand instanceof PsiLiteralExpression literalExpression) {
+            Object value = literalExpression.getValue();
+            if (value instanceof String || value instanceof Character) {
+              holders.add(new PartHolder(literalExpression.getValue().toString(), true));
+              continue;
+            }
+            else if (value != null) {
+              holders.add(new PartHolder(null, true));
+              continue;
+            }
+          }
+          Set<Object> objects = dataflowResult.getExpressionValues(operand);
+          if (objects.size() == 1) {
+            Object next = objects.iterator().next();
+            if (next instanceof String str) {
+              holders.add(new PartHolder(str, true));
+            }
+            else if (next instanceof Character character) {
+              holders.add(new PartHolder(character.toString(), true));
+            }
+            else {
+              holders.add(new PartHolder(null, true));
+            }
+          }
+          else {
+            if (operand.getType() == null ||
+                operand.getType().equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
+                 operand.getType().equalsToText(CommonClassNames.JAVA_LANG_CHARACTER)) {
+              holders.add(new PartHolder(null, false));
+            }else{
+              holders.add(new PartHolder(null, true));
+            }
+          }
+        }
+      }
+
+      for (PartHolder holder : holders) {
+        if (holder.complete && holder.text != null) {
+          return holders;
         }
       }
       return null;
     }
 
-    private static int countPlaceholders(String string) {
+    private static PlaceholderCountResult countPlaceholders(List<PartHolder> holders) {
       int count = 0;
-      final int length = string.length();
-      boolean escaped = false;
-      boolean placeholder = false;
-      for (int i = 0; i < length; i++) {
-        final char c = string.charAt(i);
-        if (c == '\\') {
-          escaped = !escaped;
+      boolean full = true;
+      for (int j = 0; j < holders.size(); j++) {
+        PartHolder partHolder = holders.get(j);
+        if (!partHolder.complete) {
+          full = false;
+          continue;
         }
-        else if (c == '{') {
-          if (!escaped) placeholder = true;
+        String string = partHolder.text;
+        if (string == null) {
+          continue;
         }
-        else if (c == '}') {
-          if (placeholder) {
-            count++;
+        final int length = string.length();
+        boolean escaped = false;
+        boolean placeholder = false;
+        for (int i = 0; i < length; i++) {
+          final char c = string.charAt(i);
+          if (c == '\\') {
+            escaped = !escaped;
+          }
+          else if (c == '{') {
+            if (j != 0 && i == 0 && !holders.get(j - 1).complete) {
+              continue;
+            }
+            if (!escaped) placeholder = true;
+          }
+          else if (c == '}') {
+            if (placeholder) {
+              count++;
+              placeholder = false;
+            }
+          }
+          else {
+            escaped = false;
             placeholder = false;
           }
         }
-        else {
-          escaped = false;
-          placeholder = false;
-        }
       }
-      return count;
+      return new PlaceholderCountResult(count, full ? PlaceholderStatus.EXACTLY : PlaceholderStatus.PARTIAL);
     }
   }
 
   private enum ResultType {
-    PLACE_HOLDER_MISMATCH, INCORRECT_STRING, SUCCESS
+    PARTIAL_PLACE_HOLDER_MISMATCH, PLACE_HOLDER_MISMATCH, INCORRECT_STRING, SUCCESS
   }
 
   private enum LoggerType {
@@ -351,5 +481,19 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
   }
 
   private record Result(int argumentCount, int placeholderCount, ResultType result) {
+  }
+
+  private record PlaceholderCountResult(int count, PlaceholderStatus status) {
+  }
+
+  private enum PlaceholderStatus {
+    EXACTLY, PARTIAL, ERROR_TO_PARSE_STRING, EMPTY
+  }
+
+  /**
+   * @param text     - null if it is a literal, which is not String or Character
+   * @param complete - it is a constant
+   */
+  private record PartHolder(@Nullable String text, boolean complete) {
   }
 }
