@@ -472,7 +472,7 @@ public class EditorSearchSession implements SearchSession,
     if (myFindModel.isGlobal()) {
       SmartList<String> chosenOptions = new SmartList<>();
       checkOption(chosenOptions, myFindModel.isCaseSensitive(), "find.case.sensitive");
-      checkOption(chosenOptions, myFindModel.isWholeWordsOnly() && !myFindModel.isRegularExpressions(), "find.whole.words");
+      checkOption(chosenOptions, myFindModel.isWholeWordsOnly(), "find.whole.words");
       checkOption(chosenOptions, myFindModel.isRegularExpressions(), "find.regex");
       if (chosenOptions.isEmpty()) {
         return ExperimentalUI.isNewUI() ? ApplicationBundle.message("editorsearch.search.hint") : "";

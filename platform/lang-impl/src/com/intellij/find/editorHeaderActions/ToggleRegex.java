@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.FindBundle;
@@ -36,9 +36,6 @@ public class ToggleRegex extends EditorHeaderToggleAction implements Embeddable,
   protected void setSelected(@NotNull SearchSession session, boolean selected) {
     FindModel findModel = session.getFindModel();
     findModel.setRegularExpressions(selected);
-    if (selected) {
-      findModel.setWholeWordsOnly(false);
-    }
     FindSettings.getInstance().setLocalRegularExpressions(selected);
   }
 }

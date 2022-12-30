@@ -580,7 +580,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     myWholeWordsAction =
       new MySwitchStateToggleAction("find.whole.words", ToggleOptionName.WholeWords,
                                     AllIcons.Actions.Words, AllIcons.Actions.WordsHovered, AllIcons.Actions.WordsSelected,
-                                    myWholeWordsState, () -> !myRegexState.get());
+                                    myWholeWordsState, () -> true);
     myRegexAction =
       new MySwitchStateToggleAction("find.regex", ToggleOptionName.Regex,
                                     AllIcons.Actions.Regex, AllIcons.Actions.RegexHovered, AllIcons.Actions.RegexSelected,
@@ -1813,7 +1813,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       myState.set(selected);
       if (myState == myRegexState) {
         mySuggestRegexHintForEmptyResults = false;
-        if (selected) myWholeWordsState.set(false);
       }
       scheduleResultsUpdate();
     }
