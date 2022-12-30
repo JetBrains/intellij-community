@@ -8,15 +8,20 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
+import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.BasicFileAttributes
 import java.util.function.*
+
+typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
 
 /**
  * Describes layout of a plugin in the product distribution
@@ -47,8 +52,11 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
   var zkmScriptStub: String? = null
   var pluginCompatibilityExactVersion = false
   var retainProductDescriptorForBundledPlugin = false
+  var enableSymlinksAndExecutableResources = false
 
-  internal val resourceGenerators: MutableList<BiFunction<Path, BuildContext, Path?>> = mutableListOf()
+  internal var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
+    private set
+
   internal var patchers: PersistentList<suspend (ModuleOutputPatcher, BuildContext) -> Unit> = persistentListOf()
 
   fun getMainJarName() = mainJarName
@@ -60,7 +68,9 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
      * placed under 'lib' directory in a directory with name {@code mainModuleName}.
      * If you need to include additional resources or modules into the plugin layout specify them in
      * {@code body} parameter. If you don't need to change the default layout there is no need to call this method at all, it's enough to
-     * specify the plugin module in {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules bundledPluginModules/pluginModulesToPublish} list.
+     * specify the plugin module in [org.jetbrains.intellij.build.ProductModulesLayout.bundledPluginModules],
+     * [org.jetbrains.intellij.build.ProductModulesLayout.bundledPluginModules],
+     * [org.jetbrains.intellij.build.ProductModulesLayout.pluginModulesToPublish] list.
      *
      * <p>Note that project-level libraries on which the plugin modules depend, are automatically put to 'IDE_HOME/lib' directory for all IDEs
      * which are compatible with the plugin. If this isn't desired (e.g. a library is used in a single plugin only, or if plugins where
@@ -86,6 +96,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
       return layout
     }
 
+    @JvmStatic
     fun plugin(modules: List<String>, builder: Consumer<PluginLayoutBuilder>): PluginLayout {
       val layout = plugin(modules)
       builder.accept(PluginLayoutSpec(layout))
@@ -119,13 +130,6 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     }
   }
 
-  private fun withGeneratedResources(generator: BiConsumer<Path, BuildContext>) {
-    resourceGenerators.add(BiFunction<Path, BuildContext, Path?> { targetDir, context ->
-      generator.accept(targetDir, context)
-      null
-    })
-  }
-
   open class PluginLayoutBuilder(@JvmField protected val layout: PluginLayout) : BaseLayoutSpec(layout) {
     /**
      * @param resourcePath path to resource file or directory relative to the plugin's main module content root
@@ -136,7 +140,25 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     }
 
     fun withGeneratedResources(generator: BiConsumer<Path, BuildContext>) {
-      layout.withGeneratedResources(generator)
+      layout.resourceGenerators += { path, context ->
+        generator.accept(path, context)
+      }
+    }
+
+    fun withGeneratedResources(generator: ResourceGenerator) {
+      layout.resourceGenerators += generator
+    }
+
+    /**
+     * @param resourcePath path to resource file or directory relative to {@code moduleName} module content root
+     * @param relativeOutputPath target path relative to the plugin root directory
+     */
+    fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
+      layout.withResourceFromModule(moduleName, resourcePath, relativeOutputPath)
+    }
+
+    fun withPatch(patcher: BiConsumer<ModuleOutputPatcher, BuildContext>) {
+      layout.patchers = layout.patchers.add(patcher::accept)
     }
   }
 
@@ -203,30 +225,25 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
      */
     @JvmOverloads
     fun withBin(binPathRelativeToCommunity: String, outputPath: String, skipIfDoesntExist: Boolean = false) {
-      withGeneratedResources(BiConsumer { targetDir, context ->
-        val source = context.paths.communityHomeDir.communityRoot.resolve(binPathRelativeToCommunity).normalize()
-        if (Files.notExists(source)) {
+      withGeneratedResources { targetDir, context ->
+        val source = context.paths.communityHomeDir.resolve(binPathRelativeToCommunity).normalize()
+        val attributes = try {
+          Files.readAttributes(source, BasicFileAttributes::class.java)
+        }
+        catch (ignored: FileSystemException) {
           if (skipIfDoesntExist) {
-            return@BiConsumer
+            return@withGeneratedResources
           }
-          error("'$source' doesn't exist")
+          error("$source doesn't exist")
         }
 
-        if (Files.isRegularFile(source)) {
+        if (attributes.isRegularFile) {
           copyFileToDir(source, targetDir.resolve(outputPath))
         }
         else {
           copyDir(source, targetDir.resolve(outputPath))
         }
-      })
-    }
-
-    /**
-     * @param resourcePath path to resource file or directory relative to {@code moduleName} module content root
-     * @param relativeOutputPath target path relative to the plugin root directory
-     */
-    fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
-      layout.withResourceFromModule(moduleName, resourcePath, relativeOutputPath)
+      }
     }
 
     /**
@@ -246,10 +263,6 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
                                                                          resourcePath = resourcePath,
                                                                          relativeOutputPath = relativeOutputFile,
                                                                          packToZip = true))
-    }
-
-    fun withPatch(patcher: BiConsumer<ModuleOutputPatcher, BuildContext>) {
-      layout.patchers = layout.patchers.add(patcher::accept)
     }
 
     /**
@@ -371,6 +384,13 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
                                     content = content)
         }
       }
+    }
+
+    /**
+     * Enables support for symlinks and files with posix executable bit set, such as required by macOS.
+     */
+    fun enableSymlinksAndExecutableResources() {
+      layout.enableSymlinksAndExecutableResources = true
     }
   }
 

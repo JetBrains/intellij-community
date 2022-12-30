@@ -26,6 +26,7 @@ import org.jetbrains.jps.model.serialization.facet.FacetState
  * **N.B. Most of the time you need to implement them all to have a correct support all functionality relying on Facets.**
  */
 @ApiStatus.Internal
+@ApiStatus.OverrideOnly
 interface CustomFacetRelatedEntitySerializer<T: WorkspaceEntity> {
   /**
    * Declare class for the main entity associated with [com.intellij.facet.Facet].
@@ -33,8 +34,8 @@ interface CustomFacetRelatedEntitySerializer<T: WorkspaceEntity> {
   val rootEntityType: Class<T>
 
   /**
-   * Facet type this extension point can serialization/deserialization. The result of deserialization, entities of the type declared
-   * at [rootEntityType] in the [com.intellij.workspaceModel.storage.EntitySource]
+   * Facet type [com.intellij.facet.FacetType.getStringId] this extension point can serialization/deserialization.
+   * The result of deserialization, entities of the type declared at [rootEntityType] in the [com.intellij.workspaceModel.storage.EntityStorage]
    */
   val supportedFacetType: String
 

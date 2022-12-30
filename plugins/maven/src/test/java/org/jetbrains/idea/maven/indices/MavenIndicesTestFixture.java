@@ -76,6 +76,10 @@ public class MavenIndicesTestFixture {
     return MavenIndicesManager.getInstance(myProject);
   }
 
+  public MavenArchetypeManager getArchetypeManager() {
+    return MavenArchetypeManager.getInstance(myProject);
+  }
+
   public MavenCustomRepositoryHelper getRepositoryHelper() {
     return myRepositoryHelper;
   }

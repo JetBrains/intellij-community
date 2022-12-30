@@ -116,6 +116,7 @@ public final class ImageLoader {
   // @2x is used even for SVG icons by intention
   private static void addFileNameVariant(boolean retina,
                                          boolean isDark,
+                                         boolean isStroke,
                                          boolean isSvg,
                                          String name,
                                          String ext,
@@ -124,13 +125,16 @@ public final class ImageLoader {
     String _ext = isSvg ? "svg" : ext;
     float _scale = isSvg ? scale : retina ? 2 : 1;
 
-    if (retina && isDark) {
-      list.add(new ImageDescriptor(name + "@2x_dark." + _ext, _scale, isSvg, true));
+    if (isStroke) {
+      list.add(new ImageDescriptor(name + "_stroke." + _ext, _scale, isSvg, false, true));
     }
-    list.add(new ImageDescriptor(name + (isDark ? "_dark" : "") + (retina ? "@2x" : "") + "." + _ext, _scale, isSvg, isDark));
+    if (retina && isDark) {
+      list.add(new ImageDescriptor(name + "@2x_dark." + _ext, _scale, isSvg, true, false));
+    }
+    list.add(new ImageDescriptor(name + (isDark ? "_dark" : "") + (retina ? "@2x" : "") + "." + _ext, _scale, isSvg, isDark, false));
     if (retina) {
       // a fallback to 1x icon
-      list.add(new ImageDescriptor(name + (isDark ? "_dark" : "") + "." + _ext, isSvg ? scale : 1, isSvg, isDark));
+      list.add(new ImageDescriptor(name + (isDark ? "_dark" : "") + "." + _ext, isSvg ? scale : 1, isSvg, isDark, false));
     }
   }
 
@@ -348,7 +352,7 @@ public final class ImageLoader {
                                               @MagicConstant(flags = {USE_DARK, USE_SVG}) int flags) throws IOException {
     try (stream) {
       if ((flags & USE_SVG) == USE_SVG) {
-        SvgCacheMapper mapper = new SvgCacheMapper(scale, (flags & USE_DARK) == USE_DARK);
+        SvgCacheMapper mapper = new SvgCacheMapper(scale, (flags & USE_DARK) == USE_DARK, false);
         return SVGLoader.load(path, stream, mapper, null, originalUserSize);
       }
       else {
@@ -438,7 +442,7 @@ public final class ImageLoader {
     if (!path.startsWith("file:") && path.contains("://")) {
       int qI = path.lastIndexOf('?');
       boolean isSvg = StringUtilRt.endsWithIgnoreCase(qI == -1 ? path : path.substring(0, qI), ".svg");
-      list = Collections.singletonList(new ImageDescriptor(name + "." + ext, 1f, isSvg, true));
+      list = Collections.singletonList(new ImageDescriptor(name + "." + ext, 1f, isSvg, true, false));
     }
     else {
       boolean isSvg = "svg".equalsIgnoreCase(ext);
@@ -447,14 +451,14 @@ public final class ImageLoader {
 
       list = new ArrayList<>();
       if (!isSvg && (flags & USE_SVG) == USE_SVG) {
-        addFileNameVariant(retina, isDark, true, name, ext, scale, list);
+        addFileNameVariant(retina, isDark, true, false, name, ext, scale, list);
       }
-      addFileNameVariant(retina, isDark, isSvg, name, ext, scale, list);
+      addFileNameVariant(retina, isDark, false, isSvg, name, ext, scale, list);
       if (isDark) {
         // fallback to non-dark
-        addFileNameVariant(retina, false, isSvg, name, ext, scale, list);
+        addFileNameVariant(retina, false, false, isSvg, name, ext, scale, list);
         if (!isSvg && (flags & USE_SVG) == USE_SVG) {
-          addFileNameVariant(false, false, true, name, ext, scale, list);
+          addFileNameVariant(false, false, false, true, name, ext, scale, list);
         }
       }
     }
@@ -484,7 +488,7 @@ public final class ImageLoader {
                                             @NotNull ScaleContext scaleContext) {
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
     // In IDE-managed HiDPI mode with scale > 1.0 we scale images manually - pass isUpScaleNeeded = true
-    LoadIconParameters parameters = new LoadIconParameters(Collections.emptyList(), scaleContext, (flags & USE_DARK) == USE_DARK, null);
+    LoadIconParameters parameters = new LoadIconParameters(Collections.emptyList(), scaleContext, (flags & USE_DARK) == USE_DARK, null, false);
     return loadImage(path, parameters, aClass, null, flags, !path.endsWith(".svg"));
   }
 
@@ -588,7 +592,7 @@ public final class ImageLoader {
     ScaleContext scaleContext = ScaleContext.create();
     // probably, need implement naming conventions: filename ends with @2x => HiDPI (scale=2)
     float scale = (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE);
-    ImageDescriptor imageDescriptor = new ImageDescriptor(iconPath, scale, StringUtilRt.endsWithIgnoreCase(iconPath, ".svg"), iconPath.contains("_dark."));
+    ImageDescriptor imageDescriptor = new ImageDescriptor(iconPath, scale, StringUtilRt.endsWithIgnoreCase(iconPath, ".svg"), iconPath.contains("_dark."), iconPath.contains("_stroke."));
     Image icon = ImageUtil.ensureHiDPI(
       loadByDescriptor(imageDescriptor, USE_CACHE, null, null, null, ImageCache.INSTANCE, null, null),
       scaleContext);

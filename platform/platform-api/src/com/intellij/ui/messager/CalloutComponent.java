@@ -63,22 +63,22 @@ public class CalloutComponent {
     Point framePoint = new Point();
 
     switch (location) {
-      case Callout.NORTH_WEST:
+      case Callout.NORTH_WEST -> {
         framePoint.x = targetScreenPoint.x - frameSize.width - getPointerShift();
         framePoint.y = targetScreenPoint.y - frameSize.height - getPointerShift();
-        break;
-      case Callout.NORTH_EAST:
+      }
+      case Callout.NORTH_EAST -> {
         framePoint.x = targetScreenPoint.x + getPointerShift();
         framePoint.y = targetScreenPoint.y - frameSize.height - getPointerShift();
-        break;
-      case Callout.SOUTH_EAST:
+      }
+      case Callout.SOUTH_EAST -> {
         framePoint.x = targetScreenPoint.x + getPointerShift();
         framePoint.y = targetScreenPoint.y + getPointerShift();
-        break;
-      case Callout.SOUTH_WEST:
+      }
+      case Callout.SOUTH_WEST -> {
         framePoint.x = targetScreenPoint.x - frameSize.width - getPointerShift();
         framePoint.y = targetScreenPoint.y + getPointerShift();
-        break;
+      }
     }
 
     myPointerComponent = new Pointer(location);
@@ -98,38 +98,38 @@ public class CalloutComponent {
       boolean y = outside[1];
 
       switch (location) {
-        case Callout.NORTH_WEST:
+        case Callout.NORTH_WEST -> {
           if (x) {
             frameBounds.x = layeredBounds.x - frameBounds.width;
           }
           if (y) {
             frameBounds.y = layeredBounds.y - frameBounds.height;
           }
-          break;
-        case Callout.NORTH_EAST:
-          if (x) {
-            frameBounds.x = (int) layeredBounds.getMaxX();
-          }
-          if (y) {
-            frameBounds.y = layeredBounds.y - frameBounds.height;
-          }
-          break;
-        case Callout.SOUTH_EAST:
+        }
+        case Callout.NORTH_EAST -> {
           if (x) {
             frameBounds.x = (int)layeredBounds.getMaxX();
           }
           if (y) {
-            frameBounds.y = (int) layeredBounds.getMaxY();
+            frameBounds.y = layeredBounds.y - frameBounds.height;
           }
-          break;
-        case Callout.SOUTH_WEST:
+        }
+        case Callout.SOUTH_EAST -> {
+          if (x) {
+            frameBounds.x = (int)layeredBounds.getMaxX();
+          }
+          if (y) {
+            frameBounds.y = (int)layeredBounds.getMaxY();
+          }
+        }
+        case Callout.SOUTH_WEST -> {
           if (x) {
             frameBounds.x = layeredBounds.x - frameBounds.width;
           }
           if (y) {
-            frameBounds.y = (int) layeredBounds.getMaxY();
+            frameBounds.y = (int)layeredBounds.getMaxY();
           }
-          break;
+        }
       }
     }
 
@@ -140,30 +140,30 @@ public class CalloutComponent {
     Rectangle pointerBounds = new Rectangle();
     final int extraPoint = 1;
     switch (location) {
-      case Callout.NORTH_WEST:
-        pointerBounds.x = (int) frameLayeredBounds.getMaxX() - extraPoint;
-        pointerBounds.y = (int) frameLayeredBounds.getMaxY() - extraPoint;
+      case Callout.NORTH_WEST -> {
+        pointerBounds.x = (int)frameLayeredBounds.getMaxX() - extraPoint;
+        pointerBounds.y = (int)frameLayeredBounds.getMaxY() - extraPoint;
         pointerBounds.width = targetLayeredPoint.x - pointerBounds.x;
         pointerBounds.height = targetLayeredPoint.y - pointerBounds.y;
-        break;
-      case Callout.NORTH_EAST:
+      }
+      case Callout.NORTH_EAST -> {
         pointerBounds.x = targetLayeredPoint.x;
-        pointerBounds.y = (int) frameLayeredBounds.getMaxY() - extraPoint;
+        pointerBounds.y = (int)frameLayeredBounds.getMaxY() - extraPoint;
         pointerBounds.width = frameLayeredBounds.x + extraPoint - targetLayeredPoint.x;
         pointerBounds.height = targetLayeredPoint.y - pointerBounds.y;
-        break;
-      case Callout.SOUTH_EAST:
+      }
+      case Callout.SOUTH_EAST -> {
         pointerBounds.x = targetLayeredPoint.x;
         pointerBounds.y = targetLayeredPoint.y;
         pointerBounds.width = frameLayeredBounds.x + extraPoint - targetLayeredPoint.x;
         pointerBounds.height = (int)frameLayeredBounds.getMaxY() + extraPoint - targetLayeredPoint.y - frameLayeredBounds.height;
-        break;
-      case Callout.SOUTH_WEST:
-        pointerBounds.x = (int) frameLayeredBounds.getMaxX() - extraPoint;
+      }
+      case Callout.SOUTH_WEST -> {
+        pointerBounds.x = (int)frameLayeredBounds.getMaxX() - extraPoint;
         pointerBounds.y = targetLayeredPoint.y;
         pointerBounds.width = targetLayeredPoint.x - pointerBounds.x;
         pointerBounds.height = frameLayeredBounds.y + extraPoint - targetLayeredPoint.y;
-        break;
+      }
     }
 
     layered.add(myPointerComponent, JLayeredPane.POPUP_LAYER);
@@ -353,18 +353,10 @@ public class CalloutComponent {
 
       Line2D line = new Line2D.Double();
       switch (myOrientation) {
-        case Callout.NORTH_WEST:
-          line.setLine(0, 0, getWidth() - 1, getHeight() - 1);
-          break;
-        case Callout.NORTH_EAST:
-          line.setLine(getWidth() - 1, 0, 0, getHeight() -1);
-          break;
-        case Callout.SOUTH_EAST:
-          line.setLine(getWidth() - 1, getHeight() - 1, 0, 0);
-          break;
-        case Callout.SOUTH_WEST:
-          line.setLine(0, getHeight() - 1, getWidth() - 1, 0);
-          break;
+        case Callout.NORTH_WEST -> line.setLine(0, 0, getWidth() - 1, getHeight() - 1);
+        case Callout.NORTH_EAST -> line.setLine(getWidth() - 1, 0, 0, getHeight() - 1);
+        case Callout.SOUTH_EAST -> line.setLine(getWidth() - 1, getHeight() - 1, 0, 0);
+        case Callout.SOUTH_WEST -> line.setLine(0, getHeight() - 1, getWidth() - 1, 0);
       }
 
       LinePainter2D.paint(g2, (int)line.getX1(), (int)line.getY1(), (int)line.getX2(), (int)line.getY2());

@@ -93,121 +93,137 @@ public class XmlBuilderTest extends LightJavaCodeInsightTestCase {
   }
   
   public void testEmptyXml() {
-    doTest("<root/>", "TAG: name='root' namespace=''\n" +
-                      "ENDTAG: name='root' namespace=''\n", XmlBuilder.ProcessingOrder.TAGS_AND_ATTRIBUTES);
+    doTest("<root/>", """
+      TAG: name='root' namespace=''
+      ENDTAG: name='root' namespace=''
+      """, XmlBuilder.ProcessingOrder.TAGS_AND_ATTRIBUTES);
   }
 
   public void testRealJspx() {
     doTest(
       /* Test: */
-      "<jsp:root xmlns:jsp=\"http://java.sun.com/JSP/Page\" xmlns=\"http://www.w3.org/1999/xhtml\" version=\"2.0\"\n" +
-      "          xmlns:spring=\"http://www.springframework.org/tags\" xmlns:c=\"http://java.sun.com/jsp/jstl/core\">\n" +
-      "<html>\n" +
-      "  <c:set var=\"foo\" value=\"${1}\"/>\n" +
-      "  <c:set var=\"foobar\" value=\"${2}\"/>\n" +
-      "  <spring:bind path=\"test.fieldName\">\n" +
-      "    <jsp:scriptlet></jsp:scriptlet>\n" +
-      "    </spring:bind>\n" +
-      "</html>\n" +
-      "</jsp:root>",
+      """
+        <jsp:root xmlns:jsp="http://java.sun.com/JSP/Page" xmlns="http://www.w3.org/1999/xhtml" version="2.0"
+                  xmlns:spring="http://www.springframework.org/tags" xmlns:c="http://java.sun.com/jsp/jstl/core">
+        <html>
+          <c:set var="foo" value="${1}"/>
+          <c:set var="foobar" value="${2}"/>
+          <spring:bind path="test.fieldName">
+            <jsp:scriptlet></jsp:scriptlet>
+            </spring:bind>
+        </html>
+        </jsp:root>""",
 
       /* Expected result: */
-      "TAG: name='root' namespace='http://java.sun.com/JSP/Page'\n" +
-      "ATT: name='xmlns:jsp' value='http://java.sun.com/JSP/Page'\n" +
-      "ATT: name='xmlns' value='http://www.w3.org/1999/xhtml'\n" +
-      "ATT: name='version' value='2.0'\n" +
-      "ATT: name='xmlns:spring' value='http://www.springframework.org/tags'\n" +
-      "ATT: name='xmlns:c' value='http://java.sun.com/jsp/jstl/core'\n" +
-      "TAG: name='html' namespace='http://www.w3.org/1999/xhtml'\n" +
-      "TAG: name='set' namespace='http://java.sun.com/jsp/jstl/core'\n" +
-      "ATT: name='var' value='foo'\n" +
-      "ATT: name='value' value='${1}'\n" +
-      "ENDTAG: name='set' namespace='http://java.sun.com/jsp/jstl/core'\n" +
-      "TAG: name='set' namespace='http://java.sun.com/jsp/jstl/core'\n" +
-      "ATT: name='var' value='foobar'\n" +
-      "ATT: name='value' value='${2}'\n" +
-      "ENDTAG: name='set' namespace='http://java.sun.com/jsp/jstl/core'\n" +
-      "TAG: name='bind' namespace='http://www.springframework.org/tags'\n" +
-      "ATT: name='path' value='test.fieldName'\n" +
-      "TAG: name='scriptlet' namespace='http://java.sun.com/JSP/Page'\n" +
-      "ENDTAG: name='scriptlet' namespace='http://java.sun.com/JSP/Page'\n" +
-      "ENDTAG: name='bind' namespace='http://www.springframework.org/tags'\n" +
-      "ENDTAG: name='html' namespace='http://www.w3.org/1999/xhtml'\n" +
-      "ENDTAG: name='root' namespace='http://java.sun.com/JSP/Page'\n",
+      """
+        TAG: name='root' namespace='http://java.sun.com/JSP/Page'
+        ATT: name='xmlns:jsp' value='http://java.sun.com/JSP/Page'
+        ATT: name='xmlns' value='http://www.w3.org/1999/xhtml'
+        ATT: name='version' value='2.0'
+        ATT: name='xmlns:spring' value='http://www.springframework.org/tags'
+        ATT: name='xmlns:c' value='http://java.sun.com/jsp/jstl/core'
+        TAG: name='html' namespace='http://www.w3.org/1999/xhtml'
+        TAG: name='set' namespace='http://java.sun.com/jsp/jstl/core'
+        ATT: name='var' value='foo'
+        ATT: name='value' value='${1}'
+        ENDTAG: name='set' namespace='http://java.sun.com/jsp/jstl/core'
+        TAG: name='set' namespace='http://java.sun.com/jsp/jstl/core'
+        ATT: name='var' value='foobar'
+        ATT: name='value' value='${2}'
+        ENDTAG: name='set' namespace='http://java.sun.com/jsp/jstl/core'
+        TAG: name='bind' namespace='http://www.springframework.org/tags'
+        ATT: name='path' value='test.fieldName'
+        TAG: name='scriptlet' namespace='http://java.sun.com/JSP/Page'
+        ENDTAG: name='scriptlet' namespace='http://java.sun.com/JSP/Page'
+        ENDTAG: name='bind' namespace='http://www.springframework.org/tags'
+        ENDTAG: name='html' namespace='http://www.w3.org/1999/xhtml'
+        ENDTAG: name='root' namespace='http://java.sun.com/JSP/Page'
+        """,
       XmlBuilder.ProcessingOrder.TAGS_AND_ATTRIBUTES);
   }
 
   public void testRealJspxNoAttributes() {
     doTest(
       /* Test: */
-      "<jsp:root xmlns:jsp=\"http://java.sun.com/JSP/Page\" xmlns=\"http://www.w3.org/1999/xhtml\" version=\"2.0\"\n" +
-      "          xmlns:spring=\"http://www.springframework.org/tags\" xmlns:c=\"http://java.sun.com/jsp/jstl/core\">\n" +
-      "<html>\n" +
-      "  <c:set var=\"foo\" value=\"${1}\"/>\n" +
-      "  <c:set var=\"foobar\" value=\"${2}\"/>\n" +
-      "  <spring:bind path=\"test.fieldName\">\n" +
-      "    <jsp:scriptlet></jsp:scriptlet>\n" +
-      "    </spring:bind>\n" +
-      "</html>\n" +
-      "</jsp:root>",
+      """
+        <jsp:root xmlns:jsp="http://java.sun.com/JSP/Page" xmlns="http://www.w3.org/1999/xhtml" version="2.0"
+                  xmlns:spring="http://www.springframework.org/tags" xmlns:c="http://java.sun.com/jsp/jstl/core">
+        <html>
+          <c:set var="foo" value="${1}"/>
+          <c:set var="foobar" value="${2}"/>
+          <spring:bind path="test.fieldName">
+            <jsp:scriptlet></jsp:scriptlet>
+            </spring:bind>
+        </html>
+        </jsp:root>""",
 
       /* Expected result: */
-      "TAG: name='root' namespace='http://java.sun.com/JSP/Page'\n" +
-      "TAG: name='html' namespace='http://www.w3.org/1999/xhtml'\n" +
-      "TAG: name='set' namespace='http://java.sun.com/jsp/jstl/core'\n" +
-      "ENDTAG: name='set' namespace='http://java.sun.com/jsp/jstl/core'\n" +
-      "TAG: name='set' namespace='http://java.sun.com/jsp/jstl/core'\n" +
-      "ENDTAG: name='set' namespace='http://java.sun.com/jsp/jstl/core'\n" +
-      "TAG: name='bind' namespace='http://www.springframework.org/tags'\n" +
-      "TAG: name='scriptlet' namespace='http://java.sun.com/JSP/Page'\n" +
-      "ENDTAG: name='scriptlet' namespace='http://java.sun.com/JSP/Page'\n" +
-      "ENDTAG: name='bind' namespace='http://www.springframework.org/tags'\n" +
-      "ENDTAG: name='html' namespace='http://www.w3.org/1999/xhtml'\n" +
-      "ENDTAG: name='root' namespace='http://java.sun.com/JSP/Page'\n",
+      """
+        TAG: name='root' namespace='http://java.sun.com/JSP/Page'
+        TAG: name='html' namespace='http://www.w3.org/1999/xhtml'
+        TAG: name='set' namespace='http://java.sun.com/jsp/jstl/core'
+        ENDTAG: name='set' namespace='http://java.sun.com/jsp/jstl/core'
+        TAG: name='set' namespace='http://java.sun.com/jsp/jstl/core'
+        ENDTAG: name='set' namespace='http://java.sun.com/jsp/jstl/core'
+        TAG: name='bind' namespace='http://www.springframework.org/tags'
+        TAG: name='scriptlet' namespace='http://java.sun.com/JSP/Page'
+        ENDTAG: name='scriptlet' namespace='http://java.sun.com/JSP/Page'
+        ENDTAG: name='bind' namespace='http://www.springframework.org/tags'
+        ENDTAG: name='html' namespace='http://www.w3.org/1999/xhtml'
+        ENDTAG: name='root' namespace='http://java.sun.com/JSP/Page'
+        """,
       XmlBuilder.ProcessingOrder.TAGS);
   }
 
 
   public void testNamespaceOverride() {
     doTest(
-      "<c:x xmlns:c=\"ns1\">\n" +
-      "  <c:y/>\n" +
-      "  <c:x xmlns:c=\"ns2\">\n" +
-      "    <c:y/>\n" +
-      "  </c:x>\n" +
-      "  <c:y/>\n" +
-      "</c:x>\n",
+      """
+        <c:x xmlns:c="ns1">
+          <c:y/>
+          <c:x xmlns:c="ns2">
+            <c:y/>
+          </c:x>
+          <c:y/>
+        </c:x>
+        """,
 
-      "TAG: name='x' namespace='ns1'\n" +
-      "ATT: name='xmlns:c' value='ns1'\n" +
-      "TAG: name='y' namespace='ns1'\n" +
-      "ENDTAG: name='y' namespace='ns1'\n" +
-      "TAG: name='x' namespace='ns2'\n" +
-      "ATT: name='xmlns:c' value='ns2'\n" +
-      "TAG: name='y' namespace='ns2'\n" +
-      "ENDTAG: name='y' namespace='ns2'\n" +
-      "ENDTAG: name='x' namespace='ns2'\n" +
-      "TAG: name='y' namespace='ns1'\n" +
-      "ENDTAG: name='y' namespace='ns1'\n" +
-      "ENDTAG: name='x' namespace='ns1'\n",
+      """
+        TAG: name='x' namespace='ns1'
+        ATT: name='xmlns:c' value='ns1'
+        TAG: name='y' namespace='ns1'
+        ENDTAG: name='y' namespace='ns1'
+        TAG: name='x' namespace='ns2'
+        ATT: name='xmlns:c' value='ns2'
+        TAG: name='y' namespace='ns2'
+        ENDTAG: name='y' namespace='ns2'
+        ENDTAG: name='x' namespace='ns2'
+        TAG: name='y' namespace='ns1'
+        ENDTAG: name='y' namespace='ns1'
+        ENDTAG: name='x' namespace='ns1'
+        """,
       XmlBuilder.ProcessingOrder.TAGS_AND_ATTRIBUTES);
   }
 
   public void testSimpleEntityResolution() {
     doTest(
       "<root>&lt;</root>",
-      "TAG: name='root' namespace=''\n" +
-      "TEXT: '&lt;' DISPLAY: '<'\n" +
-      "ENDTAG: name='root' namespace=''\n",
+      """
+        TAG: name='root' namespace=''
+        TEXT: '&lt;' DISPLAY: '<'
+        ENDTAG: name='root' namespace=''
+        """,
       XmlBuilder.ProcessingOrder.TAGS_AND_TEXTS);
   }
 
   public void testCDATA() {
     doTest(
       "<root><![CDATA[<asis/>]]></root>",
-      "TAG: name='root' namespace=''\n" +
-      "TEXT: '<![CDATA[<asis/>]]>' DISPLAY: '<asis/>'\n" +
-      "ENDTAG: name='root' namespace=''\n",
+      """
+        TAG: name='root' namespace=''
+        TEXT: '<![CDATA[<asis/>]]>' DISPLAY: '<asis/>'
+        ENDTAG: name='root' namespace=''
+        """,
       XmlBuilder.ProcessingOrder.TAGS_AND_TEXTS
     );
   }
@@ -219,49 +235,53 @@ public class XmlBuilderTest extends LightJavaCodeInsightTestCase {
       "<bar" +
       "<" +
       "</root>",
-      "TAG: name='root' namespace=''\n" +
-      "TAG: name='foo' namespace=''\n" +
-      "ERROR: 'Element foo is not closed'\n" +
-      "ENDTAG: name='foo' namespace=''\n" +
-      "TAG: name='bar' namespace=''\n" +
-      "ERROR: 'Tag start is not closed'\n" +
-      "ENDTAG: name='bar' namespace=''\n" +
-      "TAG: name='' namespace=''\n" +
-      "ERROR: 'Tag name expected'\n" +
-      "ENDTAG: name='' namespace=''\n" +
-      "ENDTAG: name='root' namespace=''\n",
+      """
+        TAG: name='root' namespace=''
+        TAG: name='foo' namespace=''
+        ERROR: 'Element foo is not closed'
+        ENDTAG: name='foo' namespace=''
+        TAG: name='bar' namespace=''
+        ERROR: 'Tag start is not closed'
+        ENDTAG: name='bar' namespace=''
+        TAG: name='' namespace=''
+        ERROR: 'Tag name expected'
+        ENDTAG: name='' namespace=''
+        ENDTAG: name='root' namespace=''
+        """,
       XmlBuilder.ProcessingOrder.TAGS_AND_TEXTS
     );
   }
 
   public void testComments() {
     doTest(
-      "<root>" +
-      "<foo>" +
-      "<!--aa-->" +
-      "</foo>" +
-      "<foo>" +
-      "<!---->" +
-      "</foo>" +
-      "<foo>" +
-      "aaa<!--aa-->aaa" +
-      "</foo>" +
-      "<foo>" +
-      "\naaa\n<!--aa-->\naaa\n" +
-      "</foo>" +
-      "</root>",
-      "TAG: name='root' namespace=''\n" +
-      "TAG: name='foo' namespace=''\n" +
-      "ENDTAG: name='foo' namespace=''\n" +
-      "TAG: name='foo' namespace=''\n" +
-      "ENDTAG: name='foo' namespace=''\n" +
-      "TAG: name='foo' namespace=''\n" +
-      "TEXT: 'aaaaaa' DISPLAY: 'aaaaaa'\n" +
-      "ENDTAG: name='foo' namespace=''\n" +
-      "TAG: name='foo' namespace=''\n" +
-      "TEXT: '\naaa\n\naaa\n' DISPLAY: '\naaa\n\naaa\n'\n" +
-      "ENDTAG: name='foo' namespace=''\n" +
-      "ENDTAG: name='root' namespace=''\n",
+      """
+        <root><foo><!--aa--></foo><foo><!----></foo><foo>aaa<!--aa-->aaa</foo><foo>
+        aaa
+        <!--aa-->
+        aaa
+        </foo></root>""",
+      """
+        TAG: name='root' namespace=''
+        TAG: name='foo' namespace=''
+        ENDTAG: name='foo' namespace=''
+        TAG: name='foo' namespace=''
+        ENDTAG: name='foo' namespace=''
+        TAG: name='foo' namespace=''
+        TEXT: 'aaaaaa' DISPLAY: 'aaaaaa'
+        ENDTAG: name='foo' namespace=''
+        TAG: name='foo' namespace=''
+        TEXT: '
+        aaa
+
+        aaa
+        ' DISPLAY: '
+        aaa
+
+        aaa
+        '
+        ENDTAG: name='foo' namespace=''
+        ENDTAG: name='root' namespace=''
+        """,
       XmlBuilder.ProcessingOrder.TAGS_AND_TEXTS
     );
   }

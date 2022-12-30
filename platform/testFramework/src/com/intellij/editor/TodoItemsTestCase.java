@@ -168,8 +168,10 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
     type("// TODO second");
     assertTrue("unsaved doc expected", documentManager.isDocumentUnsaved(document));
     assertEquals(2, todoSearchHelper.getTodoItemsCount(getFile()));
-    checkTodos("// [TODO first]\nwords\n" +
-               "// [TODO second]");
+    checkTodos("""
+                 // [TODO first]
+                 words
+                 // [TODO second]""");
     assertSameTodoCountInIndexAndHighlighting();
     assertTodoCountInIndexStorage(1);
   }
@@ -204,9 +206,10 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
 
   public void testContinuationInBlockCommentWithStars() {
     if (!supportsCStyleMultiLineComments()) return;
-    testTodos("/*\n" +
-              " * [TODO first line]\n" +
-              " *  [second line]\n" +
-              " */");
+    testTodos("""
+                /*
+                 * [TODO first line]
+                 *  [second line]
+                 */""");
   }
 }

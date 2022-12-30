@@ -228,11 +228,12 @@ public class PythonInspectionsTest extends PyTestCase {
 
     runWithAdditionalFileInLibDir(
       PyBuiltinCache.getBuiltinsFileName(languageLevel),
-      "class property(object):\n" +
-      "  def __init__(self, fget=None, fset=None, fdel=None, doc=None):\n" +
-      "    pass\n" +
-      "def open(file, mode='r', buffering=None, encoding=None, errors=None, newline=None, closefd=True):\n" +
-      "  pass",
+      """
+        class property(object):
+          def __init__(self, fget=None, fset=None, fdel=None, doc=None):
+            pass
+        def open(file, mode='r', buffering=None, encoding=None, errors=None, newline=None, closefd=True):
+          pass""",
       (__) -> doHighlightingTest(PyArgumentEqualDefaultInspection.class)
     );
   }

@@ -51,25 +51,6 @@ public class LauncherGeneratorMain {
     }
 
     Element appInfoRoot = appInfo.getRootElement();
-    String splashUrl = getChild(appInfoRoot, "logo").getAttributeValue("url");
-    if (splashUrl.startsWith("/")) {
-      splashUrl = splashUrl.substring(1);
-    }
-    InputStream splashStream = LauncherGeneratorMain.class.getClassLoader().getResourceAsStream(splashUrl);
-    if (splashStream == null) {
-      System.err.println("Splash screen image file file " + splashUrl + " not found");
-      System.exit(5);
-    }
-
-    ByteArrayOutputStream splashBmpStream = new ByteArrayOutputStream();
-    try {
-      BufferedImage bufferedImage = Imaging.getBufferedImage(splashStream);
-      Imaging.writeImage(bufferedImage, splashBmpStream, ImageFormats.BMP, new HashMap());
-    }
-    catch (Exception e) {
-      System.err.println("Error converting splash screen to BMP: " + e.getMessage());
-      System.exit(6);
-    }
 
     String icoUrl = args[4];
     if (icoUrl == null || icoUrl.isBlank()) {
@@ -143,7 +124,6 @@ public class LauncherGeneratorMain {
         generator.setResourceString(id, (String) pair.getValue());
       }
 
-      generator.injectBitmap(resourceIDs.get("IDB_SPLASH"), splashBmpStream.toByteArray());
       generator.injectIcon(resourceIDs.get("IDI_WINLAUNCHER"), iconStream);
 
       generator.setVersionInfoString("LegalCopyright", "Copyright (C) 2000-" + year + " " + companyName);

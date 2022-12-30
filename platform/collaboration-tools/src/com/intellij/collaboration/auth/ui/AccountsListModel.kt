@@ -2,9 +2,6 @@
 package com.intellij.collaboration.auth.ui
 
 import com.intellij.collaboration.auth.Account
-import com.intellij.collaboration.ui.SingleValueModel
-import com.intellij.ui.awt.RelativePoint
-import javax.swing.JComponent
 import javax.swing.ListModel
 
 interface AccountsListModel<A: Account, Cred> {
@@ -14,8 +11,6 @@ interface AccountsListModel<A: Account, Cred> {
 
   val accountsListModel: ListModel<A>
 
-  fun addAccount(parentComponent: JComponent, point: RelativePoint? = null)
-  fun editAccount(parentComponent: JComponent, account: A)
   fun clearNewCredentials()
 
   interface WithDefault<A: Account, Cred>: AccountsListModel<A, Cred> {

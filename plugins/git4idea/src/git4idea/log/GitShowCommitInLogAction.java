@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import git4idea.GitVcs;
@@ -100,7 +101,7 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
   private static void jumpToRevisionUnderProgress(@NotNull Project project,
                                                   @NotNull VcsLogUiEx logUi,
                                                   @NotNull Hash hash) {
-    Future<Boolean> future = logUi.getVcsLog().jumpToReference(hash.asString());
+    Future<Boolean> future = VcsLogNavigationUtil.jumpToHash(logUi, hash.asString(), false, true);
     if (!future.isDone()) {
       ProgressManager.getInstance().run(new Task.Backgroundable(project,
                                                                 GitBundle.message("git.log.show.commit.in.log.process", hash.asString()),

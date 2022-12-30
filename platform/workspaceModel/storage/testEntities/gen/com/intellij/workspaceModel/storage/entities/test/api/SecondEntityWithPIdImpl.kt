@@ -37,7 +37,7 @@ open class SecondEntityWithPIdImpl(val dataSource: SecondEntityWithPIdData) : Se
     return connections
   }
 
-  class Builder(val result: SecondEntityWithPIdData?) : ModifiableWorkspaceEntityBase<SecondEntityWithPId>(), SecondEntityWithPId.Builder {
+  class Builder(var result: SecondEntityWithPIdData?) : ModifiableWorkspaceEntityBase<SecondEntityWithPId>(), SecondEntityWithPId.Builder {
     constructor() : this(SecondEntityWithPIdData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -55,6 +55,9 @@ open class SecondEntityWithPIdImpl(val dataSource: SecondEntityWithPIdData) : Se
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -78,8 +81,8 @@ open class SecondEntityWithPIdImpl(val dataSource: SecondEntityWithPIdData) : Se
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SecondEntityWithPId
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
       if (parents != null) {
       }
     }
@@ -160,7 +163,7 @@ class SecondEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<S
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SecondEntityWithPIdData
 
@@ -171,7 +174,7 @@ class SecondEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<S
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SecondEntityWithPIdData
 

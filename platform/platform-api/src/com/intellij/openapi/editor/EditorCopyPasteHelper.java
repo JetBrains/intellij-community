@@ -51,7 +51,7 @@ public abstract class EditorCopyPasteHelper {
    */
   public abstract TextRange @Nullable [] pasteTransferable(@NotNull Editor editor, @NotNull Transferable content) throws TooLargeContentException;
 
-  public record CopyPasteOptions(boolean isEntireLineFromEmptySelection) implements Serializable {
+  public record CopyPasteOptions(boolean isCopiedFromEmptySelection) implements Serializable {
     public static final @NotNull CopyPasteOptions DEFAULT = new CopyPasteOptions(false);
   }
 

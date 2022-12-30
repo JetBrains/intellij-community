@@ -11,9 +11,14 @@
                     dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
+    <additionalTextAttributes scheme="IntelliJ Light" file="colorSchemes/XmlIntelliJLight.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/XmlDarcula.xml"/>
+    <additionalTextAttributes scheme="High contrast" file="colorSchemes/XmlHighContrast.xml"/>
+
+
     <gotoTargetRendererProvider implementation="com.intellij.xml.impl.schema.GotoXmlSchemaTypeRendererProvider"/>
     <definitionsSearch implementation="com.intellij.xml.impl.schema.SchemaDefinitionsSearch"/>
-    <listSplitJoinContext language="XML" implementationClass="com.intellij.codeInsight.intentions.XmlAttributesSplitJoinContext" />
+    <listSplitJoinContext language="XML" implementationClass="com.intellij.codeInsight.intentions.XmlAttributesSplitJoinContext"/>
     <projectConfigurable groupId="language"
                          groupWeight="110"
                          instance="com.intellij.javaee.ExternalResourceConfigurable"
@@ -33,7 +38,7 @@
 
     <metaLanguage implementation="com.intellij.lang.html.HtmlCompatibleMetaLanguage"/>
     <html.compatibleLanguage language="HTML"/>
-    <completion.htmlInTextCompletionEnabler implementation="com.intellij.codeInsight.completion.HtmlNoBracketCompletionEnablerImpl" />
+    <completion.htmlInTextCompletionEnabler implementation="com.intellij.codeInsight.completion.HtmlNoBracketCompletionEnablerImpl"/>
     <newProjectWizard.language id="html" order="last" implementation="com.intellij.ide.wizard.HTMLNewProjectWizard"/>
   </extensions>
 </idea-plugin>

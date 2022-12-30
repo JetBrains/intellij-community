@@ -32,54 +32,56 @@ import static com.intellij.tasks.TaskTestUtil.assertTasksEqual;
  * @author Mikhail Golubev
  */
 public class AsanaIntegrationTest extends GenericSubtypeTestCase {
-  private static final String TASK_LIST_RESPONSE = "{\n" +
-                                                   "  \"data\": [\n" +
-                                                   "    {\n" +
-                                                   "      \"id\": 5479650606120,\n" +
-                                                   "      \"name\": \"Task #1\"\n" +
-                                                   "    },\n" +
-                                                   "    {\n" +
-                                                   "      \"id\": 5202014833559,\n" +
-                                                   "      \"name\": \"Task #2\"\n" +
-                                                   "    }\n" +
-                                                   "  ]\n" +
-                                                   "}";
+  private static final String TASK_LIST_RESPONSE = """
+    {
+      "data": [
+        {
+          "id": 5479650606120,
+          "name": "Task #1"
+        },
+        {
+          "id": 5202014833559,
+          "name": "Task #2"
+        }
+      ]
+    }""";
 
-  private static final String SINGLE_TASK_RESPONSE = "{\n" +
-                                                     "  \"data\": {\n" +
-                                                     "    \"id\": 7119324862208,\n" +
-                                                     "    \"created_at\": \"2013-08-02T12:13:20.372Z\",\n" +
-                                                     "    \"modified_at\": \"2013-08-21T16:36:36.290Z\",\n" +
-                                                     "    \"name\": \"Task #2\",\n" +
-                                                     "    \"notes\": \"This is task #2 description\",\n" +
-                                                     "    \"assignee\": {\n" +
-                                                     "      \"id\": 5202009297038,\n" +
-                                                     "      \"name\": \"someuser\"\n" +
-                                                     "    },\n" +
-                                                     "    \"completed\": true,\n" +
-                                                     "    \"assignee_status\": \"inbox\",\n" +
-                                                     "    \"completed_at\": \"2013-08-21T16:36:35.574Z\",\n" +
-                                                     "    \"due_on\": null,\n" +
-                                                     "    \"projects\": [\n" +
-                                                     "      {\n" +
-                                                     "        \"id\": 7119324862204,\n" +
-                                                     "        \"name\": \"someproject\"\n" +
-                                                     "      }\n" +
-                                                     "    ],\n" +
-                                                     "    \"tags\": [],\n" +
-                                                     "    \"workspace\": {\n" +
-                                                     "      \"id\": 5202014679955,\n" +
-                                                     "      \"name\": \"someworkspace\"\n" +
-                                                     "    },\n" +
-                                                     "    \"parent\": null,\n" +
-                                                     "    \"followers\": [\n" +
-                                                     "      {\n" +
-                                                     "        \"id\": 5202009297038,\n" +
-                                                     "        \"name\": \"someuser\"\n" +
-                                                     "      }\n" +
-                                                     "    ]\n" +
-                                                     "  }\n" +
-                                                     "}";
+  private static final String SINGLE_TASK_RESPONSE = """
+    {
+      "data": {
+        "id": 7119324862208,
+        "created_at": "2013-08-02T12:13:20.372Z",
+        "modified_at": "2013-08-21T16:36:36.290Z",
+        "name": "Task #2",
+        "notes": "This is task #2 description",
+        "assignee": {
+          "id": 5202009297038,
+          "name": "someuser"
+        },
+        "completed": true,
+        "assignee_status": "inbox",
+        "completed_at": "2013-08-21T16:36:35.574Z",
+        "due_on": null,
+        "projects": [
+          {
+            "id": 7119324862204,
+            "name": "someproject"
+          }
+        ],
+        "tags": [],
+        "workspace": {
+          "id": 5202014679955,
+          "name": "someworkspace"
+        },
+        "parent": null,
+        "followers": [
+          {
+            "id": 5202009297038,
+            "name": "someuser"
+          }
+        ]
+      }
+    }""";
 
   @NotNull
   @Override

@@ -1,7 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.impl.ProgressSuspender
+import com.intellij.openapi.progress.impl.ProgressSuspender.SuspenderListener
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
@@ -136,6 +139,19 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
   fun stopSuspendingStages() {
     synchronized(events) {
       events.add(Event.SuspensionEvent(false))
+    }
+  }
+
+  fun getSuspendListener(suspender: ProgressSuspender): SuspenderListener = object : SuspenderListener {
+    override fun suspendedStatusChanged(changedSuspender: ProgressSuspender) {
+      if (suspender == changedSuspender) {
+        if (suspender.isSuspended) {
+          suspendStages()
+        }
+        else {
+          stopSuspendingStages()
+        }
+      }
     }
   }
 

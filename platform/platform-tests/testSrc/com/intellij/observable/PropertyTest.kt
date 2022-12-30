@@ -168,7 +168,7 @@ class PropertyTest : PropertyTestCase() {
 
     producers.zip(consumers).forEach { (producer, consumer) ->
       consumer.dependsOn(producer) { producer.get() }
-      accumulator.dependsOn(producer) { producers.sumBy { it.get() } }
+      accumulator.dependsOn(producer) { producers.sumOf { it.get() } }
     }
 
     val startLatch = CountDownLatch(1)
@@ -186,8 +186,8 @@ class PropertyTest : PropertyTestCase() {
     startLatch.countDown()
     finishLatch.await()
 
-    assertEquals(numProperties * numCounts, producers.sumBy { it.get() })
-    assertEquals(numProperties * numCounts, consumers.sumBy { it.get() })
+    assertEquals(numProperties * numCounts, producers.sumOf { it.get() })
+    assertEquals(numProperties * numCounts, consumers.sumOf { it.get() })
     assertEquals(numProperties * numCounts, accumulator.get())
   }
 

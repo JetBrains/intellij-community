@@ -39,6 +39,7 @@ import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,7 +130,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     var scrollPane = ScrollPaneFactory.createScrollPane(myList);
     var pathInsets = myPath.getInsets();
     @SuppressWarnings("UseDPIAwareInsets") var scrollInsets = new Insets(JBUI.scale(5) - pathInsets.bottom, pathInsets.left, 0, pathInsets.right);
-    scrollPane.setBorder(BorderFactory.createLineBorder(UIUtil.getBoundsColor()));
+    scrollPane.setBorder(BorderFactory.createLineBorder(NamedColorUtil.getBoundsColor()));
 
     add(label, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.01, CENTER, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
     add(toolBar.getComponent(), new GridBagConstraints(0, 1, 1, 1, 1.0, 0.01, CENTER, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
@@ -790,7 +791,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       setBorder(myPadding);
       setIcon(value.icon);
       setText(value.name);
-      setForeground(selected ? UIUtil.getListSelectionForeground(true) : UIUtil.getListForeground());
+      setForeground(selected ? NamedColorUtil.getListSelectionForeground(true) : UIUtil.getListForeground());
       setEnabled(value.selectable || FsItem.UPLINK.equals(value.name));
     }
   }

@@ -29,6 +29,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -265,14 +266,11 @@ public class RegistryUi implements Disposable {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       RegistryValue value = getRegistryValue(rowIndex);
-      switch (columnIndex) {
-        case 0:
-          return value.getKey();
-        case 1:
-          return value.asString();
-        default:
-          return value;
-      }
+      return switch (columnIndex) {
+        case 0 -> value.getKey();
+        case 1 -> value.asString();
+        default -> value;
+      };
     }
 
     private RegistryValue getRegistryValue(final int rowIndex) {
@@ -449,7 +447,7 @@ public class RegistryUi implements Disposable {
 
       if (v != null) {
         switch (column) {
-          case 0:
+          case 0 -> {
             myComponent.clear();
             myComponent.append(v.getKey(), getAttributes(v, isSelected));
             myComponent.setBackground(bg);
@@ -463,7 +461,8 @@ public class RegistryUi implements Disposable {
 
             SpeedSearchUtil.applySpeedSearchHighlighting(table, myComponent, true, hasFocus);
             return myComponent;
-          case 1:
+          }
+          case 1 -> {
             if (v.asColor(null) != null) {
               myLabel.setText(null);
               myLabel.setToolTipText(v.asString());
@@ -493,6 +492,7 @@ public class RegistryUi implements Disposable {
               SpeedSearchUtil.applySpeedSearchHighlighting(table, myComponent, true, hasFocus);
               return myComponent;
             }
+          }
         }
 
         myLabel.setOpaque(true);
@@ -507,7 +507,7 @@ public class RegistryUi implements Disposable {
       boolean changedFromDefault = value.isChangedFromDefault();
       if (isSelected) {
         return new SimpleTextAttributes(changedFromDefault ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN,
-                                        UIUtil.getListSelectionForeground(true));
+                                        NamedColorUtil.getListSelectionForeground(true));
       }
 
       if (changedFromDefault) {

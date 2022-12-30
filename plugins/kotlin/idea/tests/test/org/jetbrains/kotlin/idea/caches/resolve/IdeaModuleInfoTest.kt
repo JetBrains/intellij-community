@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.module.Module
@@ -12,6 +13,8 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -25,21 +28,20 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.platform
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.getDependentModules
 import org.jetbrains.kotlin.idea.caches.project.getIdeaModelInfosCache
+import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.util.application.executeOnPooledThread
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.konan.target.KonanTarget
@@ -54,13 +56,234 @@ import org.jetbrains.kotlin.test.util.projectLibrary
 import org.jetbrains.kotlin.types.typeUtil.closure
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import org.junit.Assert
+import org.junit.Assert.assertNotEquals
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.concurrent.TimeUnit
+import kotlin.test.assertContains
 
 @RunWith(JUnit38ClassRunner::class)
 class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     private var vfsDisposable: Ref<Disposable>? = null
+
+    fun testAllModulesCache() {
+        val stdlib = stdlibJvm()
+        module.addDependency(stdlib)
+
+        val daemon = projectLibrary("daemon", TestKotlinArtifacts.kotlinDaemon.jarRoot)
+        assertEquals(2 /* sdk + stdlib */, getModuleInfosFromIdeaModel(project).size)
+
+        module.addDependency(daemon)
+        assertEquals(3 /* sdk + stdlib + daemon */, getModuleInfosFromIdeaModel(project).size)
+
+        val fakeLib = projectLibraryWithFakeRoot("f")
+        fakeLib.toLibraryInfo()
+
+        assertEquals(3 /* sdk + stdlib + daemon */, getModuleInfosFromIdeaModel(project).size)
+
+        module.addDependency(fakeLib)
+        assertEquals(4 /* sdk + stdlib + daemon + fakeLib */, getModuleInfosFromIdeaModel(project).size)
+
+        module("a", hasProductionRoot = true, hasTestRoot = true)
+        assertEquals(6 /* sdk + stdlib + daemon + fakeLib + 2 roots of a */, getModuleInfosFromIdeaModel(project).size)
+
+        ModuleRootModificationUtil.removeDependency(module, fakeLib)
+        assertEquals(5 /* sdk + stdlib + daemon + 2 roots of a */, getModuleInfosFromIdeaModel(project).size)
+
+        runWriteAction {
+            LibraryTablesRegistrar.getInstance().getLibraryTable(project).removeLibrary(daemon)
+        }
+
+        assertEquals(4 /* sdk + stdlib + 2 roots of a */, getModuleInfosFromIdeaModel(project).size)
+    }
+
+    fun testLowMemory() {
+        val moduleA = module("a")
+        val stdlib = stdlibJvm()
+        moduleA.addDependency(stdlib)
+
+        val modelBefore = getModuleInfosFromIdeaModel(project)
+        modelBefore.forEach(IdeaModuleInfo::checkValidity)
+
+        val stdlibInfoBefore = stdlib.toLibraryInfo()
+
+        assertContains(modelBefore, stdlibInfoBefore)
+
+        LowMemoryWatcher.onLowMemorySignalReceived(true)
+
+        val modelAfter = getModuleInfosFromIdeaModel(project)
+        modelAfter.forEach(IdeaModuleInfo::checkValidity)
+
+        val stdlibInfoAfter = stdlib.toLibraryInfo()
+
+        assertContains(modelAfter, stdlibInfoAfter)
+    }
+
+    fun testLowMemoryLibraryDependenciesCache() {
+        val moduleA = module("a")
+        val daemon = projectLibrary("kotlin-stdlib", TestKotlinArtifacts.kotlinDaemon.jarRoot)
+        val myLib = projectLibraryWithFakeRoot("myLib")
+        moduleA.addDependency(daemon)
+        moduleA.addDependency(myLib)
+
+        val moduleB = module("b")
+        val daemonCopy = projectLibrary("kotlin-stdlib-copy", TestKotlinArtifacts.kotlinDaemon.jarRoot)
+        moduleB.addDependency(daemonCopy)
+
+        val daemonInfo = daemon.toLibraryInfo()
+        val daemonCopyInfo = daemonCopy.toLibraryInfo()
+        assertEquals(daemon, daemonInfo.library)
+        assertNotEquals(daemonCopy, daemonCopyInfo.library)
+        assertEquals(daemonInfo, daemonCopyInfo)
+
+        val dependenciesCache = LibraryDependenciesCache.getInstance(project)
+        val dependenciesBefore = dependenciesCache.getLibraryDependencies(daemonInfo)
+        assertEquals(dependenciesBefore.libraries, listOf(daemonInfo, myLib.toLibraryInfo()))
+
+        LowMemoryWatcher.onLowMemorySignalReceived(true)
+
+        val daemonCopyInfoAfter = daemonCopy.toLibraryInfo()
+        val dependenciesAfter = dependenciesCache.getLibraryDependencies(daemonCopyInfoAfter)
+        assertEquals(dependenciesAfter.libraries, listOf(daemonCopyInfoAfter, myLib.toLibraryInfo()))
+    }
+
+    fun testStdlibDependencies() {
+        val moduleA = module("a")
+        val stdlib = projectLibrary("kotlin-stdlib", TestKotlinArtifacts.kotlinStdlib.jarRoot)
+        val myLib = projectLibraryWithFakeRoot("myLib")
+        moduleA.addDependency(stdlib)
+        moduleA.addDependency(myLib)
+
+        val moduleB = module("b")
+        val stdlibCopy = projectLibrary("kotlin-stdlib-copy", TestKotlinArtifacts.kotlinStdlib.jarRoot)
+        moduleB.addDependency(stdlibCopy)
+
+        val stdlibInfo = stdlib.toLibraryInfo()
+        val stdlibCopyInfo = stdlibCopy.toLibraryInfo()
+        assertEquals(stdlib, stdlibInfo.library)
+        assertNotEquals(stdlibCopy, stdlibCopyInfo.library)
+        assertEquals(stdlibInfo, stdlibCopyInfo)
+
+        val myLibInfo = myLib.toLibraryInfo()
+        val dependenciesCache = LibraryDependenciesCache.getInstance(project)
+        val dependenciesBefore = dependenciesCache.getLibraryDependencies(stdlibInfo)
+        // to check org.jetbrains.kotlin.idea.base.analysis.LibraryDependenciesCacheImpl#filterForBuiltins
+        assertEquals(dependenciesBefore.libraries, listOf(stdlibInfo))
+        assertDoesntContain(dependenciesBefore.libraries, myLibInfo)
+    }
+
+    fun testLibraryCacheRace() {
+        val moduleA = module("a")
+        val stdlib = projectLibrary("kotlin-stdlib", TestKotlinArtifacts.kotlinStdlib.jarRoot)
+        moduleA.addDependency(stdlib)
+
+        val moduleB = module("b")
+        val stdlibCopy = projectLibrary("kotlin-stdlib-copy", TestKotlinArtifacts.kotlinStdlib.jarRoot)
+        moduleB.addDependency(stdlibCopy)
+
+        val modelBefore = getModuleInfosFromIdeaModel(project)
+        modelBefore.forEach(IdeaModuleInfo::checkValidity)
+
+        val stdlibCopyInfoBefore = stdlibCopy.toLibraryInfo()
+
+        assertContains(modelBefore, stdlibCopyInfoBefore)
+
+        val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+        runWriteAction {
+            libraryTable.removeLibrary(stdlib)
+        }
+
+        val modelAfter = getModuleInfosFromIdeaModel(project)
+        modelAfter.forEach(IdeaModuleInfo::checkValidity)
+
+        val stdlibCopyInfoAfter = stdlibCopy.toLibraryInfo()
+        assertNotEquals(stdlibCopyInfoBefore, stdlibCopyInfoAfter)
+
+        assertDoesntContain(modelAfter, stdlibCopyInfoBefore)
+        assertContains(modelAfter, stdlibCopyInfoAfter)
+    }
+
+    fun testCacheRace() {
+        val cache = LibraryInfoCache.getInstance(project)
+        val resultSet: MutableSet<List<LibraryInfo>> = ConcurrentCollectionFactory.createConcurrentIdentitySet<List<LibraryInfo>>()
+        val libraries = List(50) { index -> projectLibrary("kotlin-stdlib-$index", TestKotlinArtifacts.kotlinStdlib.jarRoot) }
+        val features = libraries.map {
+            executeOnPooledThread {
+                val value: List<LibraryInfo> = cache[it]
+                resultSet.add(value)
+            }
+        }
+
+        features.forEach { it.get(60, TimeUnit.SECONDS) }
+        assertEquals(/* expected = */ 1, /* actual = */ resultSet.size)
+    }
+
+    fun testDependenciesFromDuplicatedLibraries() {
+        val (a, b, c) = modules()
+
+        val daemonLibrary1 = projectLibrary("daemon-1", TestKotlinArtifacts.kotlinDaemon.jarRoot)
+        a.addDependency(daemonLibrary1)
+
+        val stdlib = stdlibJvm()
+        val daemonLibrary2 = projectLibrary("daemon-2", TestKotlinArtifacts.kotlinDaemon.jarRoot)
+        b.addDependency(daemonLibrary2)
+        b.addDependency(stdlib)
+
+        val fakeLib = projectLibraryWithFakeRoot("fake")
+        c.addDependency(fakeLib)
+
+        val daemonLibraryInfo = daemonLibrary1.toLibraryInfo()
+        val stdlibInfo = stdlib.toLibraryInfo()
+
+        val dependenciesCache = LibraryDependenciesCache.getInstance(project)
+        val dependencies = dependenciesCache.getLibraryDependencies(daemonLibraryInfo)
+        assertEquals(listOf(daemonLibraryInfo, stdlibInfo), dependencies.libraries)
+    }
+
+    fun testCacheDeduplication() {
+        val stdlib = stdlibJvm()
+        val stdlibCopy = projectLibrary("kotlin-stdlib-copy", TestKotlinArtifacts.kotlinStdlib.jarRoot)
+        val myLib = projectLibraryWithFakeRoot("myLib")
+
+        assertNotEquals(stdlib, stdlibCopy)
+        assertNotEquals(stdlib, myLib)
+        assertNotEquals(stdlibCopy, myLib)
+
+        val stdlibInfo = stdlib.toLibraryInfo().also(LibraryInfo::checkValidity)
+        val stdlibCopyInfo = stdlibCopy.toLibraryInfo().also(LibraryInfo::checkValidity)
+        val myLibInfo = myLib.toLibraryInfo().also(LibraryInfo::checkValidity)
+
+        assertEquals(stdlibInfo, stdlibCopyInfo)
+        assertNotEquals(stdlibInfo, myLibInfo)
+        assertNotEquals(stdlibCopyInfo, myLibInfo)
+
+        val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+        runWriteAction { libraryTable.removeLibrary(stdlib) }
+
+        assertTrue(stdlib.isDisposed)
+        assertTrue(stdlibInfo.isDisposed)
+
+        assertFalse(stdlibCopy.isDisposed)
+        assertTrue(stdlibCopyInfo.isDisposed)
+
+        assertFalse(myLib.isDisposed)
+        assertFalse(myLibInfo.isDisposed)
+
+        val newStdlibCopyInfo = stdlibCopy.toLibraryInfo().also(LibraryInfo::checkValidity)
+        assertNotEquals(stdlibCopyInfo, newStdlibCopyInfo)
+
+        val newStdlib = stdlibJvm()
+        val newStdlibInfo = newStdlib.toLibraryInfo().also(LibraryInfo::checkValidity)
+        assertEquals(newStdlibInfo, newStdlibCopyInfo)
+
+        runWriteAction { libraryTable.removeLibrary(newStdlib) }
+        assertTrue(newStdlib.isDisposed)
+        assertFalse(newStdlibInfo.isDisposed)
+
+        val updatedStdlibCopyInfo = stdlibCopy.toLibraryInfo().also(LibraryInfo::checkValidity)
+        assertEquals(newStdlibCopyInfo, updatedStdlibCopyInfo)
+    }
 
     fun testSimpleModuleDependency() {
         val (a, b) = modules()
@@ -120,7 +343,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         val lib = projectLibrary()
         a.addDependency(lib)
 
-        a.production.assertDependenciesEqual(a.production, lib.classes)
+        a.production.assertDependenciesEqual(a.production, lib.toLibraryInfo())
     }
 
     fun testCircularExportedDependencyWithLib() {
@@ -137,9 +360,9 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         b.addDependency(lib)
         c.addDependency(lib)
 
-        a.production.assertDependenciesEqual(a.production, lib.classes, c.production, b.production)
-        b.production.assertDependenciesEqual(b.production, a.production, c.production, lib.classes)
-        c.production.assertDependenciesEqual(c.production, b.production, a.production, lib.classes)
+        a.production.assertDependenciesEqual(a.production, lib.toLibraryInfo(), c.production, b.production)
+        b.production.assertDependenciesEqual(b.production, a.production, c.production, lib.toLibraryInfo())
+        c.production.assertDependenciesEqual(c.production, b.production, a.production, lib.toLibraryInfo())
     }
 
     fun testSeveralModulesExportLibs() {
@@ -153,7 +376,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         c.addDependency(a)
         c.addDependency(b)
 
-        c.production.assertDependenciesEqual(c.production, a.production, lib1.classes, b.production, lib2.classes)
+        c.production.assertDependenciesEqual(c.production, a.production, lib1.toLibraryInfo(), b.production, lib2.toLibraryInfo())
     }
 
     fun testSeveralModulesExportSameLib() {
@@ -166,7 +389,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         c.addDependency(a)
         c.addDependency(b)
 
-        c.production.assertDependenciesEqual(c.production, a.production, lib.classes, b.production)
+        c.production.assertDependenciesEqual(c.production, a.production, lib.toLibraryInfo(), b.production)
     }
 
     fun testRuntimeDependency() {
@@ -185,7 +408,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         b.addDependency(a, dependencyScope = DependencyScope.PROVIDED)
         b.addDependency(lib, dependencyScope = DependencyScope.PROVIDED)
 
-        b.production.assertDependenciesEqual(b.production, a.production, lib.classes)
+        b.production.assertDependenciesEqual(b.production, a.production, lib.toLibraryInfo())
     }
 
     fun testSimpleTestDependency() {
@@ -204,7 +427,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         a.addDependency(lib, dependencyScope = DependencyScope.TEST)
 
         a.production.assertDependenciesEqual(a.production)
-        a.test.assertDependenciesEqual(a.test, a.production, lib.classes)
+        a.test.assertDependenciesEqual(a.test, a.production, lib.toLibraryInfo())
     }
 
     fun testExportedTestDependency() {
@@ -261,8 +484,8 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         module.addDependency(lib1)
         module.addDependency(lib2)
 
-        lib1.classes.assertAdditionalLibraryDependencies(lib2.classes)
-        lib2.classes.assertAdditionalLibraryDependencies(lib1.classes)
+        lib1.toLibraryInfo().assertAdditionalLibraryDependencies(lib2.toLibraryInfo())
+        lib2.toLibraryInfo().assertAdditionalLibraryDependencies(lib1.toLibraryInfo())
     }
 
     fun testLibraryDependency2() {
@@ -278,9 +501,9 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         c.addDependency(a)
         c.addDependency(b)
 
-        lib1.classes.assertAdditionalLibraryDependencies()
-        lib2.classes.assertAdditionalLibraryDependencies()
-        lib3.classes.assertAdditionalLibraryDependencies(lib1.classes, lib2.classes)
+        lib1.toLibraryInfo().assertAdditionalLibraryDependencies()
+        lib2.toLibraryInfo().assertAdditionalLibraryDependencies()
+        lib3.toLibraryInfo().assertAdditionalLibraryDependencies(lib1.toLibraryInfo(), lib2.toLibraryInfo())
     }
 
     fun testLibraryDependency3() {
@@ -295,9 +518,9 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         a.addDependency(lib3)
         b.addDependency(lib3)
 
-        lib1.classes.assertAdditionalLibraryDependencies(lib3.classes)
-        lib2.classes.assertAdditionalLibraryDependencies(lib3.classes)
-        lib3.classes.assertAdditionalLibraryDependencies(lib1.classes, lib2.classes)
+        lib1.toLibraryInfo().assertAdditionalLibraryDependencies(lib3.toLibraryInfo())
+        lib2.toLibraryInfo().assertAdditionalLibraryDependencies(lib3.toLibraryInfo())
+        lib3.toLibraryInfo().assertAdditionalLibraryDependencies(lib1.toLibraryInfo(), lib2.toLibraryInfo())
     }
 
     fun testRoots() {
@@ -341,9 +564,9 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         b.addDependency(stdlibCommon)
         b.addDependency(stdlibJs)
 
-        stdlibCommon.classes.assertAdditionalLibraryDependencies()
-        stdlibJvm.classes.assertAdditionalLibraryDependencies(stdlibCommon.classes)
-        stdlibJs.classes.assertAdditionalLibraryDependencies(stdlibCommon.classes)
+        stdlibCommon.toLibraryInfo().assertAdditionalLibraryDependencies()
+        stdlibJvm.toLibraryInfo().assertAdditionalLibraryDependencies(stdlibCommon.toLibraryInfo())
+        stdlibJs.toLibraryInfo().assertAdditionalLibraryDependencies(stdlibCommon.toLibraryInfo())
     }
 
     fun testScriptDependenciesForModule() {
@@ -446,15 +669,15 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             libraryName = "#1",
             classesRoot = classRoot,
         )
-        Assert.assertEquals("Library infos for the module libraries with equal roots are not equal", l1.classes, l2.classes)
+        Assert.assertEquals("Library infos for the module libraries with equal roots are not equal", l1.toLibraryInfo(), l2.toLibraryInfo())
 
-        a.production.assertDependenciesEqual(a.production, projectLibrary.classes, l1.classes)
-        b.production.assertDependenciesEqual(b.production, l2.classes)
-        projectLibrary.classes.assertAdditionalLibraryDependencies(l1.classes)
+        a.production.assertDependenciesEqual(a.production, projectLibrary.toLibraryInfo(), l1.toLibraryInfo())
+        b.production.assertDependenciesEqual(b.production, l2.toLibraryInfo())
+        projectLibrary.toLibraryInfo().assertAdditionalLibraryDependencies(l1.toLibraryInfo())
 
         Assert.assertTrue(
             "Missing transitive dependency on the project library",
-            projectLibrary.classes in b.production.dependencies().closure { it.dependencies() }
+            projectLibrary.toLibraryInfo() in b.production.dependencies().closure { it.dependencies() }
         )
     }
 
@@ -754,11 +977,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     private val Module.test: ModuleTestSourceInfo
         get() = testSourceInfo!!
 
-    private val LibraryEx.classes: LibraryInfo
-        get() = object : LibraryInfo(project!!, this) {
-            override val platform: TargetPlatform
-                get() = kind.platform
-        }
+    private fun LibraryEx.toLibraryInfo(): LibraryInfo = LibraryInfoCache.getInstance(project)[this].first()
 
     private fun module(name: String, hasProductionRoot: Boolean = true, hasTestRoot: Boolean = true): Module {
         return createModuleFromTestData(createTempDirectory().absolutePath, name, StdModuleTypes.JAVA, false).apply {

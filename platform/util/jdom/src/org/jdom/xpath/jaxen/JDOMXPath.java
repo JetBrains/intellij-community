@@ -130,7 +130,7 @@ public class JDOMXPath extends org.jdom.xpath.XPath {
 	 *         the wrapped Namespace instances.
 	 */
 	private static List<Object> unWrap(List<?> results) {
-		final ArrayList<Object> ret = new ArrayList<Object>(results.size());
+		final ArrayList<Object> ret = new ArrayList<>(results.size());
     for (Object result : results) {
       ret.add(unWrapNS(result));
     }

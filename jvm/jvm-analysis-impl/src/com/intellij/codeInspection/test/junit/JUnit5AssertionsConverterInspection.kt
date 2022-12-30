@@ -4,13 +4,14 @@ package com.intellij.codeInspection.test.junit
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.TestFrameworks
 import com.intellij.codeInspection.*
-import com.intellij.codeInspection.test.junit.HamcrestCommonClassNames.*
+import com.intellij.codeInspection.test.junit.HamcrestCommonClassNames.ORG_HAMCREST_MATCHER_ASSERT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaVersionService
 import com.intellij.psi.*
 import com.intellij.uast.UastHintedVisitorAdapter
-import com.siyeh.ig.junit.JUnitCommonClassNames.*
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSUMPTIONS
 import com.siyeh.ig.testFrameworks.AbstractAssertHint
 import com.siyeh.ig.testFrameworks.UAssertHint
 import org.jetbrains.annotations.NonNls
@@ -20,15 +21,10 @@ import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class JUnit5AssertionsConverterInspection(val frameworkName: @NonNls String = "JUnit5") : AbstractBaseUastLocalInspectionTool() {
-  private fun shouldInspect(file: PsiFile): Boolean {
-    if (!JavaVersionService.getInstance().isAtLeast(file, JavaSdkVersion.JDK_1_8)) return false
-    if (JavaPsiFacade.getInstance(file.project).findClass(ORG_JUNIT_ASSERT, file.resolveScope) == null) return false
-    if (JavaPsiFacade.getInstance(file.project)
-        .findClass(ORG_JUNIT_JUPITER_API_ASSERTIONS, file.resolveScope) == null) return false
-    if (file !is PsiClassOwner) return false
-    if (file.classes.all {  TestFrameworks.detectFramework(it)?.name != frameworkName }) return false
-    return true
-  }
+  private fun shouldInspect(file: PsiFile): Boolean =
+    JavaVersionService.getInstance().isAtLeast(file, JavaSdkVersion.JDK_1_8)
+    && isJUnit4InScope(file) && isJUnit5InScope(file)
+    && (file as? PsiClassOwner)?.classes?.all {  TestFrameworks.detectFramework(it)?.name != frameworkName } == false
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (!shouldInspect(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
@@ -102,7 +98,7 @@ class JUnit5AssertionsConverterInspection(val frameworkName: @NonNls String = "J
     }
   }
 
-  inner class ReplaceObsoleteAssertsFix(val baseClassName: String) : LocalQuickFix {
+  inner class ReplaceObsoleteAssertsFix(private val baseClassName: String) : LocalQuickFix {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val element = descriptor.psiElement
       when (val uElement = element.toUElement()) {

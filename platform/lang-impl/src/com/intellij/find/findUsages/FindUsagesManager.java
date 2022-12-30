@@ -595,19 +595,18 @@ public final class FindUsagesManager {
       usagesWereFound.set(true);
       int usageOffset = usage instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)usage).getNavigationRange().getStartOffset() : 0;
       switch (direction) {
-        case FROM_START:
+        case FROM_START -> {
           foundUsage.compareAndSet(null, usage);
           return false;
-        case FROM_END:
-          foundUsage.set(usage);
-          break;
-        case AFTER_CARET:
+        }
+        case FROM_END -> foundUsage.set(usage);
+        case AFTER_CARET -> {
           if (usageOffset > startOffset) {
             foundUsage.set(usage);
             return false;
           }
-          break;
-        case BEFORE_CARET:
+        }
+        case BEFORE_CARET -> {
           if (usageOffset >= startOffset) {
             return false;
           }
@@ -617,11 +616,12 @@ public final class FindUsagesManager {
               if (foundUsage.compareAndSet(null, usage)) break;
             }
             else {
-              int foundOffset = found instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)found).getNavigationRange().getStartOffset() : 0;
+              int foundOffset =
+                found instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)found).getNavigationRange().getStartOffset() : 0;
               if (foundOffset < usageOffset && foundUsage.compareAndSet(found, usage)) break;
             }
           }
-          break;
+        }
       }
 
       return true;

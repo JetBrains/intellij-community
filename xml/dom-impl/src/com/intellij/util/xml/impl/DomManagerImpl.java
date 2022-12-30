@@ -435,15 +435,9 @@ public final class DomManagerImpl extends DomManager implements Disposable {
 
   @TestOnly
   public <T extends DomElement> void registerFileDescription(final DomFileDescription<T> description, Disposable parentDisposable) {
-    registerFileDescription(description);
-    Disposer.register(parentDisposable, () -> myApplicationComponent.removeDescription(description));
-  }
-
-  @Override
-  public void registerFileDescription(DomFileDescription<?> description) {
     clearCache();
-
     myApplicationComponent.registerFileDescription(description);
+    Disposer.register(parentDisposable, () -> myApplicationComponent.removeDescription(description));
   }
 
   @Override

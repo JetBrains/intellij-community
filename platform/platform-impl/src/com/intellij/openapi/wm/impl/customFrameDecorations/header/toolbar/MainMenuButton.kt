@@ -4,30 +4,118 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.keymap.Keymap
+import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.IconManager
+import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.ui.popup.list.ListPopupImpl
+import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
+import java.awt.event.HierarchyEvent
+import java.awt.event.KeyEvent
 import javax.swing.JComponent
+import javax.swing.KeyStroke
+import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 internal class MainMenuButton {
 
   private val menuAction = ShowMenuAction()
+  private var disposable: Disposable? = null
+  private var shortcutsChangeConnection: MessageBusConnection? = null
 
   val button: ActionButton = createMenuButton(menuAction)
-  val menuShortcutHandler = MainMenuMnemonicHandler(menuAction)
+  var rootPane: JComponent? = null
+    set(value) {
+      if (field !== value) {
+        uninstall()
+        field = value
+        if (button.isShowing) {
+          install()
+        }
+      }
+    }
+
+  init {
+    button.addHierarchyListener { e ->
+      if (e!!.changeFlags.toInt() and HierarchyEvent.SHOWING_CHANGED != 0) {
+        if (button.isShowing) {
+          install()
+        }
+        else {
+          uninstall()
+        }
+      }
+    }
+  }
+
+  private fun initShortcutsChangeConnection() {
+    shortcutsChangeConnection = ApplicationManager.getApplication().messageBus.connect()
+      .apply {
+        subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
+          override fun activeKeymapChanged(keymap: Keymap?) {
+            button.update()
+          }
+        })
+      }
+  }
+
+  private fun install() {
+    val rootPaneCopy = rootPane
+    if (rootPaneCopy == null) {
+      thisLogger().warn("rootPane is not set, MainMenu button listeners are not installed")
+      return
+    }
+
+    if (disposable == null) {
+      disposable = Disposer.newDisposable()
+
+      registerMenuButtonShortcut(rootPaneCopy)
+      registerSubMenuShortcuts(rootPaneCopy)
+      initShortcutsChangeConnection()
+    }
+  }
+
+  private fun uninstall() {
+    disposable?.let { Disposer.dispose(it) }
+    disposable = null
+    shortcutsChangeConnection?.let { Disposer.dispose(it) }
+    shortcutsChangeConnection = null
+  }
+
+  private fun registerMenuButtonShortcut(component: JComponent) {
+    val showMenuAction = ActionManager.getInstance().getAction(MAIN_MENU_ACTION_ID)
+    if (showMenuAction == null) {
+      logger<MainMenuButton>().warn("Cannot find action by id $MAIN_MENU_ACTION_ID")
+      return
+    }
+    menuAction.registerCustomShortcutSet(showMenuAction.shortcutSet, component, disposable)
+    button.update() // Update shortcut in tooltip
+  }
+
+  private fun registerSubMenuShortcuts(component: JComponent) {
+    val mainMenu = getMainMenuGroup()
+    for (action in mainMenu.getChildren(null)) {
+      val mnemonic = action.templatePresentation.mnemonic
+      if (mnemonic > 0) {
+        ShowSubMenu(action).registerCustomShortcutSet(CustomShortcutSet(KeyStroke.getKeyStroke(mnemonic, KeyEvent.ALT_DOWN_MASK)),
+                                                      component, disposable)
+      }
+    }
+  }
 
   private inner class ShowMenuAction : DumbAwareAction() {
 
@@ -42,18 +130,40 @@ internal class MainMenuButton {
       return ActionUpdateThread.BGT
     }
 
-    override fun actionPerformed(e: AnActionEvent) = createPopup(e.dataContext).showUnderneathOf(button)
+    override fun actionPerformed(e: AnActionEvent) = showPopup(e.dataContext)
 
-    private fun createPopup(context: DataContext): JBPopup {
-      val mainMenu = ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup
-      return JBPopupFactory.getInstance()
+    fun showPopup(context: DataContext, actionToShow: AnAction? = null) {
+      val mainMenu = getMainMenuGroup()
+      val popup = JBPopupFactory.getInstance()
         .createActionGroupPopup(null, mainMenu, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
                                 ActionPlaces.MAIN_MENU_IN_POPUP)
         .apply { setShowSubmenuOnHover(true) }
         .apply { setMinimumSize(Dimension(JBUI.CurrentTheme.CustomFrameDecorations.menuPopupMinWidth(), 0)) }
+        as ListPopupImpl
+      popup.showUnderneathOf(button)
+
+      if (actionToShow != null) {
+        for (listStep in popup.listStep.values) {
+          listStep as PopupFactoryImpl.ActionItem
+          if (listStep.action === actionToShow) {
+            SwingUtilities.invokeLater {
+              // Wait popup showing
+              popup.selectAndExpandValue(listStep)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private inner class ShowSubMenu(private val actionToShow: AnAction) : AnAction() {
+
+    override fun actionPerformed(e: AnActionEvent) {
+      menuAction.showPopup(e.dataContext, actionToShow)
     }
   }
 }
+
 
 private fun createMenuButton(action: AnAction): ActionButton {
   val button = object : ActionButton(action, PresentationFactory().getPresentation(action),
@@ -62,35 +172,13 @@ private fun createMenuButton(action: AnAction): ActionButton {
       return DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200) ?: super.getDataContext()
     }
   }
+
   button.setLook(HeaderToolbarButtonLook())
   return button
 }
 
-class MainMenuMnemonicHandler(private val action: AnAction) : Disposable {
-  private var disposable: CheckedDisposable? = null
+private fun getMainMenuGroup() =
+  CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup
 
-  fun registerShortcuts(component: JComponent) {
-    if (disposable?.isDisposed != false) {
-      disposable = Disposer.newCheckedDisposable()
-    }
+const val MAIN_MENU_ACTION_ID = "MainMenuButton.ShowMenu"
 
-    ActionManagerEx.withLazyActionManager(null) { actionManager ->
-      if (disposable?.isDisposed != false) {
-        return@withLazyActionManager
-      }
-
-      val showMenuAction = actionManager.getAction("MainMenuButton.ShowMenu")
-      if (showMenuAction == null) {
-        thisLogger().warn("Cannot find action by id ${"MainMenuButton.ShowMenu"}")
-      }
-      val shortcutSet = showMenuAction?.shortcutSet ?: CustomShortcutSet.EMPTY
-      action.registerCustomShortcutSet(shortcutSet, component, disposable)
-    }
-  }
-
-  fun unregisterShortcuts() {
-    disposable?.let { Disposer.dispose(it) }
-  }
-
-  override fun dispose() = unregisterShortcuts()
-}

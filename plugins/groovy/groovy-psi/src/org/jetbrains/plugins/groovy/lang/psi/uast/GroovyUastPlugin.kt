@@ -71,7 +71,7 @@ class GroovyUastPlugin : UastLanguagePlugin {
     classSetOf(GroovyPsiElement::class.java)
 }
 
-class GrULiteral(val grElement: GrLiteral, val parentProvider: () -> UElement?) : ULiteralExpression, UInjectionHost {
+class GrULiteral(private val grElement: GrLiteral, private val parentProvider: () -> UElement?) : ULiteralExpression, UInjectionHost {
   override val value: Any? get() = grElement.value
   override fun evaluate(): Any? = value
   override val uastParent: UElement? by lazy(parentProvider)
@@ -83,7 +83,7 @@ class GrULiteral(val grElement: GrLiteral, val parentProvider: () -> UElement?) 
     get() = grElement
 }
 
-class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, val parentProvider: () -> UElement?) : UNamedExpression {
+class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, private val parentProvider: () -> UElement?) : UNamedExpression {
   override val name: String?
     get() = grElement.name
   override val expression: UExpression
@@ -102,8 +102,8 @@ class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, val parentPro
   override fun hashCode(): Int = grElement.hashCode()
 }
 
-class GrUAnnotation(val grElement: GrAnnotation,
-                    val parentProvider: () -> UElement?) : UAnnotationEx, UAnchorOwner, UMultiResolvable {
+class GrUAnnotation(private val grElement: GrAnnotation,
+                    private val parentProvider: () -> UElement?) : UAnnotationEx, UAnchorOwner, UMultiResolvable {
 
   override val javaPsi: PsiAnnotation = grElement
 

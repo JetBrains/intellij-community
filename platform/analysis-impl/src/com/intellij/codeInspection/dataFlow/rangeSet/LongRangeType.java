@@ -49,14 +49,10 @@ public enum LongRangeType {
   }
   
   public long cast(long value) {
-    switch (this) {
-      case INT32:
-        return (int) value;
-      case INT64:
-        return value;
-      default:
-        throw new IllegalStateException("Unexpected value: " + this);
-    }
+    return switch (this) {
+      case INT32 -> (int)value;
+      case INT64 -> value;
+    };
   }
   
   public boolean subtractionMayOverflow(long a, long b) {

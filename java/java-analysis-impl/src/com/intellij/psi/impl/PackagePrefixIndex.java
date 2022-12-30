@@ -36,7 +36,7 @@ public class PackagePrefixIndex {
 
   public PackagePrefixIndex(Project project) {
     myProject = project;
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(project.getMessageBus().connect(), new WorkspaceModelChangeListener() {
+    project.getMessageBus().connect().subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceModelChangeListener() {
       @Override
       public void changed(@NotNull VersionedStorageChange event) {
         MultiMap<String, Module> map;

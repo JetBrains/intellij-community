@@ -22,7 +22,10 @@ fun PsiFile.getRangeOfLine(line: Int): TextRange? {
     }
     val startOffset = getLineStartOffset(line) ?: return null
     val endOffset = getLineEndOffset(line) ?: return null
-    return TextRange(startOffset, endOffset)
+    if (TextRange.isProperRange(startOffset, endOffset)) {
+        return TextRange(startOffset, endOffset)
+    }
+    return null
 }
 
 inline fun <reified T : PsiElement> PsiFile.findElementsOfTypeInRange(range: TextRange): List<T> {

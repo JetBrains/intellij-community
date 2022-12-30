@@ -79,7 +79,7 @@ internal class CollapsingComponent(
   }
 
   val mainComponent: JComponent get() = getComponent(0) as JComponent
-  val stubComponent: JComponent get() = getComponent(1) as JComponent
+  private val stubComponent: JComponent get() = getComponent(1) as JComponent
 
   val isWorthCollapsing: Boolean get() = !isSeen || mainComponent.height >= MIN_HEIGHT_TO_COLLAPSE
 

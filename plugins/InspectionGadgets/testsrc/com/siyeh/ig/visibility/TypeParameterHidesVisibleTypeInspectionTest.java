@@ -24,46 +24,52 @@ import com.siyeh.ig.LightJavaInspectionTestCase;
 public class TypeParameterHidesVisibleTypeInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
-    doTest("import java.util.*;\n" +
-           "abstract class TypeParameterHidesVisibleTypeInspection<List> {\n" +
-           "    private Map map = new HashMap();\n" +
-           "    public abstract List foo();\n" +
-           "    public abstract </*Type parameter 'Set' hides visible type 'java.util.Set'*/Set/**/> Set bar();\n" +
-           "    public abstract </*Type parameter 'TypeParameterHidesVisibleTypeInspection' hides visible type 'TypeParameterHidesVisibleTypeInspection'*/TypeParameterHidesVisibleTypeInspection/**/> TypeParameterHidesVisibleTypeInspection baz();\n" +
-           "    public abstract <InputStream> InputStream baz3();\n" +
-           "    public abstract <A> A baz2();\n" +
-           "}\n");
+    doTest("""
+             import java.util.*;
+             abstract class TypeParameterHidesVisibleTypeInspection<List> {
+                 private Map map = new HashMap();
+                 public abstract List foo();
+                 public abstract </*Type parameter 'Set' hides visible type 'java.util.Set'*/Set/**/> Set bar();
+                 public abstract </*Type parameter 'TypeParameterHidesVisibleTypeInspection' hides visible type 'TypeParameterHidesVisibleTypeInspection'*/TypeParameterHidesVisibleTypeInspection/**/> TypeParameterHidesVisibleTypeInspection baz();
+                 public abstract <InputStream> InputStream baz3();
+                 public abstract <A> A baz2();
+             }
+             """);
   }
 
   public void testHiddenTypeParameter() {
-    doTest("import java.util.*;\n" +
-           " abstract class MyList<T> extends AbstractList<T> {\n" +
-           "    private List<T> elements;\n" +
-           "    public </*Type parameter 'T' hides type parameter 'T'*/T/**/> T[] toArray( T[] array ) {\n" +
-           "        return elements.toArray( array );\n" +
-           "    }\n" +
-           "}\n");
+    doTest("""
+             import java.util.*;
+              abstract class MyList<T> extends AbstractList<T> {
+                 private List<T> elements;
+                 public </*Type parameter 'T' hides type parameter 'T'*/T/**/> T[] toArray( T[] array ) {
+                     return elements.toArray( array );
+                 }
+             }
+             """);
   }
 
   public void testCanNotHideFromStaticContext() {
-    doTest("class Y<T> {\n" +
-           "    static class X<T> {\n" +
-           "        T t;\n" +
-           "    }\n" +
-           "    static <T>  T go() {\n" +
-           "        return null;\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             class Y<T> {
+                 static class X<T> {
+                     T t;
+                 }
+                 static <T>  T go() {
+                     return null;
+                 }
+             }""");
   }
 
   public void testCannotHideFromImplicitStaticContext() {
-    doTest("interface G<T> {\n" +
-           "    class I {\n" +
-           "        class H<T>  {\n" +
-           "             T t;\n" +
-           "        }\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             interface G<T> {
+                 class I {
+                     class H<T>  {
+                          T t;
+                     }
+                 }
+             }""");
   }
 
   @Override

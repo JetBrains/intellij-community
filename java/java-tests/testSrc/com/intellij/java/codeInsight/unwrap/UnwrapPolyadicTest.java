@@ -5,23 +5,31 @@ import com.intellij.codeInsight.unwrap.UnwrapTestCase;
 
 public class UnwrapPolyadicTest extends UnwrapTestCase {
   public void testUnwrapInVariable() {
-    assertUnwrapped("{\n" +
-                    "String s = \"a\" + \"<caret>b\" + \"c\";\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                      String s = "a" + "<caret>b" + "c";
+                      }
+                      """,
 
-                    "{\n" +
-                    "String s = \"<caret>b\";\n" +
-                    "}\n");
+                    """
+                      {
+                      String s = "<caret>b";
+                      }
+                      """);
   }
 
   public void testUnwrapCall() {
-    assertUnwrapped("{\n" +
-                    " foo(\"a\" + \"<caret>b\" + \"c\");\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                       foo("a" + "<caret>b" + "c");
+                      }
+                      """,
 
-                    "{\n" +
-                    " foo(\"<caret>b\");\n" +
-                    "}\n");
+                    """
+                      {
+                       foo("<caret>b");
+                      }
+                      """);
   }
   
 }

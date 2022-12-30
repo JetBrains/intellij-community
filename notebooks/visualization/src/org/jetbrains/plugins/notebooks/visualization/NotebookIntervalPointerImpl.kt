@@ -102,6 +102,10 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
       }
       changeListeners.multicaster.onUpdated(pointersEvent)
     }
+    catch (ex: Exception) {
+      thisLogger().error(ex)
+      // DS-3893 consume exception and log it, actions changing document should work as usual
+    }
     finally {
       changesContext = null
     }
@@ -110,15 +114,19 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
   override fun beforeDocumentChange(event: NotebookCellLinesEventBeforeChange) {
     if (undoManager == null || undoManager.isUndoOrRedoInProgress) return
     val context = DocumentChangedContext()
-    changesContext = context
+    try {
+      undoManager.undoableActionPerformed(object : BasicUndoableAction() {
+        override fun undo() {}
 
-    undoManager.undoableActionPerformed(object : BasicUndoableAction() {
-      override fun undo() {}
-
-      override fun redo() {
-        changesContext = context.redoContext
-      }
-    })
+        override fun redo() {
+          changesContext = context.redoContext
+        }
+      })
+      changesContext = context
+    } catch (ex: Exception) {
+      thisLogger().error(ex)
+      // DS-3893 consume exception, don't prevent document updating
+    }
   }
 
   private fun documentChangedByAction(event: NotebookCellLinesEvent,

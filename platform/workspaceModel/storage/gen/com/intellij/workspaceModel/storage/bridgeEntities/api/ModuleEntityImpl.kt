@@ -93,7 +93,7 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
     return connections
   }
 
-  class Builder(val result: ModuleEntityData?) : ModifiableWorkspaceEntityBase<ModuleEntity>(), ModuleEntity.Builder {
+  class Builder(var result: ModuleEntityData?) : ModifiableWorkspaceEntityBase<ModuleEntity>(), ModuleEntity.Builder {
     constructor() : this(ModuleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -111,6 +111,9 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -156,13 +159,20 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
       return connections
     }
 
+    override fun afterModification() {
+      val collection_dependencies = getEntityData().dependencies
+      if (collection_dependencies is MutableWorkspaceList<*>) {
+        collection_dependencies.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleEntity
-      this.entitySource = dataSource.entitySource
-      this.name = dataSource.name
-      this.type = dataSource.type
-      this.dependencies = dataSource.dependencies.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.name != dataSource.name) this.name = dataSource.name
+      if (this.type != dataSource?.type) this.type = dataSource.type
+      if (this.dependencies != dataSource.dependencies) this.dependencies = dataSource.dependencies.toMutableList()
       if (parents != null) {
       }
     }
@@ -201,7 +211,12 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
       get() {
         val collection_dependencies = getEntityData().dependencies
         if (collection_dependencies !is MutableWorkspaceList) return collection_dependencies
-        collection_dependencies.setModificationUpdateAction(dependenciesUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_dependencies.setModificationUpdateAction(dependenciesUpdater)
+        }
+        else {
+          collection_dependencies.cleanModificationUpdateAction()
+        }
         return collection_dependencies
       }
       set(value) {
@@ -231,6 +246,12 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+              // Backref setup before adding to store
+              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+                item_value.entityLinks[EntityLink(false, CONTENTROOTS_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
+
               _diff.addEntity(item_value)
             }
           }
@@ -411,6 +432,12 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+              // Backref setup before adding to store
+              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+                item_value.entityLinks[EntityLink(false, FACETS_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
+
               _diff.addEntity(item_value)
             }
           }
@@ -642,7 +669,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ModuleEntityData
 
@@ -655,7 +682,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ModuleEntityData
 

@@ -17,9 +17,9 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 open class DialogWithEditor(
-    val project: Project,
-    @NlsContexts.DialogTitle title: String,
-    val initialText: String
+  val project: Project,
+  @NlsContexts.DialogTitle title: String,
+  private val initialText: String
 ) : DialogWrapper(project, true) {
     val editor: Editor = createEditor()
 

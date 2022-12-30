@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.CollectionFactory;
@@ -511,7 +512,9 @@ final class PassExecutorService implements Disposable {
 
   private void repaintErrorStripeAndIcon(@NotNull FileEditor fileEditor) {
     if (fileEditor instanceof TextEditor) {
-      DefaultHighlightInfoProcessor.repaintErrorStripeAndIcon(((TextEditor)fileEditor).getEditor(), myProject);
+      Editor editor = ((TextEditor)fileEditor).getEditor();
+      DefaultHighlightInfoProcessor.repaintErrorStripeAndIcon(editor, myProject,
+                                                              PsiDocumentManager.getInstance(myProject).getCachedPsiFile(editor.getDocument()));
     }
   }
 
@@ -521,13 +524,8 @@ final class PassExecutorService implements Disposable {
 
   @NotNull
   List<HighlightingPass> getAllSubmittedPasses() {
-    List<HighlightingPass> result = new ArrayList<>(mySubmittedPasses.size());
-    for (ScheduledPass scheduledPass : mySubmittedPasses.keySet()) {
-      if (!scheduledPass.myUpdateProgress.isCanceled()) {
-        result.add(scheduledPass.myPass);
-      }
-    }
-    return result;
+    return ContainerUtil.mapNotNull(mySubmittedPasses.keySet(),
+                                    scheduledPass -> scheduledPass.myUpdateProgress.isCanceled() ? null : scheduledPass.myPass);
   }
 
   private static void sortById(@NotNull List<? extends TextEditorHighlightingPass> result) {

@@ -1,16 +1,13 @@
 from __future__ import print_function, unicode_literals
 
-import collections
 import errno
 import os
-import subprocess
 import sys
 import textwrap
 import unittest
 
 import generator3.core
 import json
-import six
 from generator3.constants import (
     CACHE_DIR_NAME,
     ENV_REQUIRED_GEN_VERSION_FILE,
@@ -25,8 +22,6 @@ from generator3_tests import GeneratorTestCase, python2_only, python3_only, test
 TEST_GENERATOR_VERSION = '1000.0'
 ARGPARSE_ERROR_CODE = 2
 _helpers_root = os.path.dirname(os.path.dirname(os.path.abspath(generator3.__file__)))
-
-ProcessResult = collections.namedtuple('GeneratorResults', ('exit_code', 'stdout', 'stderr'))
 
 
 class GeneratorResult(object):
@@ -74,16 +69,6 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
     def temp_cache_dir(self):
         return os.path.join(self.temp_python_stubs_root, CACHE_DIR_NAME)
 
-    def setUp(self):
-        super(FunctionalGeneratorTestCase, self).setUp()
-        self.process_stdout = six.StringIO()
-        self.process_stderr = six.StringIO()
-
-    def tearDown(self):
-        super(FunctionalGeneratorTestCase, self).tearDown()
-        self.process_stdout.close()
-        self.process_stderr.close()
-
     def tearDownForFailedTest(self):
         print("\nLaunched processes stdout:\n" + self.process_stdout.getvalue() + '-' * 80)
         print("\nLaunched processes stderr:\n" + self.process_stderr.getvalue() + '-' * 80)
@@ -113,14 +98,11 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
         if mod_path and not os.path.isabs(mod_path):
             mod_path = os.path.join(extra_syspath[0], mod_path)
 
-        # On Windows we have to propagate entire parent environment explicitly to a subprocess
-        # see https://www.scivision.dev/python-calling-python-subprocess/
-        env = dict(os.environ)
-        env.update({
+        env = {
             ENV_TEST_MODE_FLAG: 'True',
             ENV_VERSION: gen_version or TEST_GENERATOR_VERSION,
             'PYTHONPATH': _helpers_root,
-        })
+        }
         if required_gen_version_file_path:
             env[ENV_REQUIRED_GEN_VERSION_FILE] = required_gen_version_file_path
 
@@ -149,28 +131,6 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
         self.log.info('Launching generator3 as: ' + ' '.join(args))
         result = self.run_process(args, input=input, env=env)
         return GeneratorResult(result, skeletons_dir=output_dir)
-
-    def run_process(self, args, input=None, env=None):
-        # Remove possible (NAME: None) pairs and make sure that environment content is
-        # all str (critical for Python 2.x on Windows)
-        def as_str(s):
-            if isinstance(s, str):
-                return s
-            elif six.PY2:
-                return s.encode(encoding='latin-1')
-            else:
-                return s.decode(encoding='latin-1')
-        env = {as_str(k): as_str(v) for k, v in env.items() if v is not None}
-        process = subprocess.Popen(args,
-                                   env=env,
-                                   stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE,
-                                   universal_newlines=True)
-        stdout, stderr = process.communicate(input)
-        self.process_stdout.write(stdout)
-        self.process_stderr.write(stderr)
-        return ProcessResult(process.returncode, stdout, stderr)
 
     def check_generator_output(self, mod_name=None, mod_path=None, custom_required_gen=False, success=True, **kwargs):
         if custom_required_gen:

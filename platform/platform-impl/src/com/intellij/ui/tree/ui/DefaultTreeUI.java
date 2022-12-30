@@ -52,9 +52,7 @@ import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 public class DefaultTreeUI extends BasicTreeUI {
   @ApiStatus.Internal
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
-  @ApiStatus.Internal
   public static final Key<Boolean> AUTO_EXPAND_ALLOWED = Key.create("allows to expand a single child node automatically in tests");
-  @ApiStatus.Internal
   public static final Key<Function<Object, Boolean>> AUTO_EXPAND_FILTER = Key.create("allows to filter single child nodes which should not be auto-expanded");
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
   private static final Collection<Class<?>> SUSPICIOUS = createWeakSet();

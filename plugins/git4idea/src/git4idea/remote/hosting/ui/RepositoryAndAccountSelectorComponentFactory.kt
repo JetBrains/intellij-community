@@ -3,18 +3,14 @@ package git4idea.remote.hosting.ui
 
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.auth.ServerAccount
-import com.intellij.collaboration.auth.ui.AccountsDetailsLoader
-import com.intellij.collaboration.auth.ui.LoadingAvatarIconsProvider
+import com.intellij.collaboration.auth.ui.LoadingAccountsDetailsProvider
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.AccountSelectorComponentFactory
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.SimpleComboboxWithActionsFactory
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.ide.plugins.newui.HorizontalLayout
-import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import git4idea.remote.hosting.HostedGitRepositoryMapping
 import kotlinx.coroutines.CoroutineScope
 import net.miginfocom.layout.CC
@@ -22,7 +18,6 @@ import net.miginfocom.layout.LC
 import net.miginfocom.layout.PlatformDefaults
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
-import java.util.concurrent.CompletableFuture
 import javax.swing.*
 
 private const val AVATAR_SIZE = 20
@@ -35,7 +30,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
   fun create(
     scope: CoroutineScope,
     repoNamer: (M) -> @Nls String,
-    detailsLoader: AccountsDetailsLoader<A, *>, //TODO: move to VM
+    detailsProvider: LoadingAccountsDetailsProvider<A, *>,
     accountsPopupActionsSupplier: (M) -> List<Action>,
     credsMissingText: @Nls String,
     submitActionText: @Nls String,
@@ -51,15 +46,9 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
       putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, insets)
     }
 
-    val detailsMap = mutableMapOf<A, CompletableFuture<AccountsDetailsLoader.Result<*>>>()
-    val avatarIconsProvider = LoadingAvatarIconsProvider(detailsLoader, EmptyIcon.ICON_16) { account: A ->
-      val result = detailsMap[account]?.getNow(null) as? AccountsDetailsLoader.Result.Success
-      result?.details?.avatarUrl
-    }
-
     val accountCombo = AccountSelectorComponentFactory(vm.accountsState, vm.accountSelectionState).create(
       scope,
-      avatarIconsProvider,
+      detailsProvider,
       AVATAR_SIZE,
       AVATAR_SIZE_POPUP,
       CollaborationToolsBundle.message("account.choose.link"),
@@ -80,7 +69,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
     }
 
     val credsMissingLabel = JLabel(credsMissingText).apply {
-      foreground = UIUtil.getErrorForeground()
+      foreground = NamedColorUtil.getErrorForeground()
       isVisible = false
       bindVisibility(scope, vm.missingCredentialsState)
     }

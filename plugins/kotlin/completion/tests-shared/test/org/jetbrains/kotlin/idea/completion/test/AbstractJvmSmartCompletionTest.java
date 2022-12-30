@@ -13,7 +13,7 @@ public abstract class AbstractJvmSmartCompletionTest extends KotlinFixtureComple
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE;
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance();
     }
 
     @NotNull

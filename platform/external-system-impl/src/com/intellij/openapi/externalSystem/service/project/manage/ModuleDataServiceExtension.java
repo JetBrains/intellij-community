@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated useless
  */
-@Deprecated(forRemoval = true)
+@Deprecated
 public interface ModuleDataServiceExtension {
   void importModule(@NotNull IdeModifiableModelsProvider modelsProvider, @NotNull Module module, @NotNull ModuleData data);
 }

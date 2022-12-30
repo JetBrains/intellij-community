@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 /**
@@ -136,28 +137,61 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
     try {
       var pushRequestMode: PushRequestMode = PUSH_IF_NEEDED
+      var mergeAndPushAfterProcessingEvents = true
       while (pendingEvents.isNotEmpty()) {
         val event = pendingEvents.removeAt(0)
         LOG.debug("Processing event $event")
-        if (event is SyncSettingsEvent.IdeChange) {
-          settingsLog.applyIdeState(event.snapshot, "Local changes made in the IDE")
-        }
-        else if (event is SyncSettingsEvent.CloudChange) {
-          settingsLog.applyCloudState(event.snapshot, "Remote changes")
-          SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = event.serverVersionId
-        }
-        else if (event is SyncSettingsEvent.LogCurrentSettings) {
-          settingsLog.logExistingSettings()
-        }
-        else if (event is SyncSettingsEvent.MustPushRequest) {
-          pushRequestMode = MUST_PUSH
+        when (event) {
+          is SyncSettingsEvent.IdeChange -> {
+            settingsLog.applyIdeState(event.snapshot, "Local changes made in the IDE")
+          }
+          is SyncSettingsEvent.CloudChange -> {
+            settingsLog.applyCloudState(event.snapshot, "Remote changes")
+            SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = event.serverVersionId
+          }
+          is SyncSettingsEvent.LogCurrentSettings -> {
+            settingsLog.logExistingSettings()
+          }
+          is SyncSettingsEvent.MustPushRequest -> {
+            pushRequestMode = MUST_PUSH
+          }
+          is SyncSettingsEvent.DeleteServerData -> {
+            mergeAndPushAfterProcessingEvents = false
+            stopSyncingAndRollback(previousState)
+            deleteServerData(event.afterDeleting)
+          }
+          SyncSettingsEvent.DeletedOnCloud -> {
+            mergeAndPushAfterProcessingEvents = false
+            stopSyncingAndRollback(previousState)
+          }
+          SyncSettingsEvent.PingRequest -> {}
         }
       }
 
-      mergeAndPush(previousState.idePosition, previousState.cloudPosition, pushRequestMode)
+      if (mergeAndPushAfterProcessingEvents) {
+        mergeAndPush(previousState.idePosition, previousState.cloudPosition, pushRequestMode)
+      }
     }
     catch (exception: Throwable) {
       stopSyncingAndRollback(previousState, exception)
+    }
+  }
+
+  private fun deleteServerData(afterDeleting: (DeleteServerDataResult) -> Unit) {
+    val deletionSnapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true),
+                                            emptySet(), null)
+    val pushResult = pushToCloud(deletionSnapshot, force = true)
+    LOG.info("Deleting server data. Result: $pushResult")
+    when (pushResult) {
+      is SettingsSyncPushResult.Success -> {
+        afterDeleting(DeleteServerDataResult.Success)
+      }
+      is SettingsSyncPushResult.Error -> {
+        afterDeleting(DeleteServerDataResult.Error(pushResult.message))
+      }
+      SettingsSyncPushResult.Rejected -> {
+        afterDeleting(DeleteServerDataResult.Error("Deletion rejected by server"))
+      }
     }
   }
 
@@ -173,10 +207,17 @@ class SettingsSyncBridge(parentDisposable: Disposable,
                                                                  settingsLog.getCloudPosition(),
                                                                  SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId)
 
-  private fun stopSyncingAndRollback(previousState: CurrentState, exception: Throwable) {
-    LOG.error("Couldn't apply settings. Disabling sync and rolling back.", exception)
+  private fun stopSyncingAndRollback(previousState: CurrentState, exception: Throwable? = null) {
+    if (exception != null) {
+      LOG.error("Couldn't apply settings. Disabling sync and rolling back.", exception)
+    }
+    else {
+      LOG.info("Settings Sync is switched off. Rolling back.")
+    }
     SettingsSyncSettings.getInstance().syncEnabled = false
-    SettingsSyncStatusTracker.getInstance().updateOnError(exception.localizedMessage)
+    if (exception != null) {
+      SettingsSyncStatusTracker.getInstance().updateOnError(exception.localizedMessage)
+    }
 
     ideMediator.removeStreamProvider()
     SettingsSyncEvents.getInstance().removeSettingsChangedListener(settingsChangeListener)

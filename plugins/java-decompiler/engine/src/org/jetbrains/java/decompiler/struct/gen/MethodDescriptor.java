@@ -31,20 +31,21 @@ public final class MethodDescriptor {
       int indexFrom = -1, ind, len = parameters.length(), index = 0;
       while (index < len) {
         switch (parameters.charAt(index)) {
-          case '[':
+          case '[' -> {
             if (indexFrom < 0) {
               indexFrom = index;
             }
-            break;
-          case 'L':
+          }
+          case 'L' -> {
             ind = parameters.indexOf(";", index);
             lst.add(parameters.substring(indexFrom < 0 ? index : indexFrom, ind + 1));
             index = ind;
             indexFrom = -1;
-            break;
-          default:
+          }
+          default -> {
             lst.add(parameters.substring(indexFrom < 0 ? index : indexFrom, index + 1));
             indexFrom = -1;
+          }
         }
         index++;
       }

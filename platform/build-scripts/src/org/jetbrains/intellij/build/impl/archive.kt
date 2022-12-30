@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ConstPropertyName")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtilRt
@@ -7,19 +9,16 @@ import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.io.FileExistsException
-import org.apache.commons.io.IOUtils
 import org.jetbrains.intellij.build.io.readZipFile
+import org.jetbrains.intellij.build.io.unmapBuffer
+import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
-import java.nio.file.Files
-import java.nio.file.LinkOption
-import java.nio.file.NoSuchFileException
-import java.nio.file.Path
+import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.*
 import java.util.function.BiConsumer
 import java.util.zip.ZipEntry
-import kotlin.io.path.inputStream
 import kotlin.io.path.readText
 
 private const val fileFlag = 32768  // 0100000
@@ -27,21 +26,45 @@ private const val fileFlag = 32768  // 0100000
 const val executableFileUnixMode = fileFlag or 493  // 0755
 
 fun filterFileIfAlreadyInZip(relativePath: String, file: Path, zipFiles: MutableMap<String, Path>): Boolean {
-  val found = zipFiles.put(relativePath, file) ?: return true
-
-  if (IOUtils.contentEquals(file.inputStream(), found.inputStream())) {
+  val old = zipFiles.putIfAbsent(relativePath, file) ?: return true
+  if (compareByMemoryMappedFiles(file, old)) {
     return false
   }
 
   val file1Text = file.readText()
-  val file2Text = found.readText()
+  val file2Text = old.readText()
   val isAsciiText: (Char) -> Boolean = { it == '\t' || it == '\n' || it == '\r' || it.code in 32..126 }
-  val message = "Two files '${found}' and '${file}' with the same target path '${relativePath}' have different content"
+  val message = "Two files '${old}' and '${file}' with the same target path '${relativePath}' have different content"
   if (file1Text.take(1024).all(isAsciiText) && file2Text.take(1024).all(isAsciiText)) {
     throw RuntimeException("$message\n\nFile 1: ${"-".repeat(80)}\n$file1Text\n\nFile 2 ${"-".repeat(80)}\n$file2Text")
   }
   else {
     throw RuntimeException(message)
+  }
+}
+
+private fun compareByMemoryMappedFiles(path1: Path, path2: Path): Boolean {
+  FileChannel.open(path1, StandardOpenOption.READ).use { channel1 ->
+    FileChannel.open(path2, StandardOpenOption.READ).use { channel2 ->
+      val size = channel1.size()
+      if (size != channel2.size()) {
+        return false
+      }
+
+      val m1 = channel1.map(FileChannel.MapMode.READ_ONLY, 0, size)
+      try {
+        val m2 = channel2.map(FileChannel.MapMode.READ_ONLY, 0, size)
+        try {
+          return m1 == m2
+        }
+        finally {
+          unmapBuffer(m2)
+        }
+      }
+      finally {
+        unmapBuffer(m1)
+      }
+    }
   }
 }
 
@@ -179,8 +202,14 @@ private class ZipArchiveEntryAssertName(name: String): ZipArchiveEntry(name) {
   }
 }
 
-internal class NoDuplicateZipArchiveOutputStream(channel: SeekableByteChannel) : ZipArchiveOutputStream(channel) {
+internal class NoDuplicateZipArchiveOutputStream(channel: SeekableByteChannel, compress: Boolean) : ZipArchiveOutputStream(channel) {
   private val entries = HashSet<String>()
+
+  init {
+    if (!compress) {
+      setMethod(ZipEntry.STORED)
+    }
+  }
 
   override fun putArchiveEntry(archiveEntry: ArchiveEntry) {
     val entryName = archiveEntry.name

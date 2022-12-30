@@ -6,11 +6,11 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.NotNullFunction;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
 import org.jetbrains.annotations.NotNull;
@@ -190,7 +190,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
 
   private void init() {
     setSelectionBackground(UIUtil.getListSelectionBackground(true));
-    setSelectionForeground(UIUtil.getListSelectionForeground(true));
+    setSelectionForeground(NamedColorUtil.getListSelectionForeground(true));
     installDefaultCopyAction();
 
     myEmptyText = new StatusText(this) {

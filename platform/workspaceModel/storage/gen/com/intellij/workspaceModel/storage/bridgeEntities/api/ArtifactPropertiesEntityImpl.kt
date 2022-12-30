@@ -52,7 +52,7 @@ open class ArtifactPropertiesEntityImpl(val dataSource: ArtifactPropertiesEntity
     return connections
   }
 
-  class Builder(val result: ArtifactPropertiesEntityData?) : ModifiableWorkspaceEntityBase<ArtifactPropertiesEntity>(), ArtifactPropertiesEntity.Builder {
+  class Builder(var result: ArtifactPropertiesEntityData?) : ModifiableWorkspaceEntityBase<ArtifactPropertiesEntity>(), ArtifactPropertiesEntity.Builder {
     constructor() : this(ArtifactPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -70,6 +70,9 @@ open class ArtifactPropertiesEntityImpl(val dataSource: ArtifactPropertiesEntity
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -103,11 +106,14 @@ open class ArtifactPropertiesEntityImpl(val dataSource: ArtifactPropertiesEntity
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ArtifactPropertiesEntity
-      this.entitySource = dataSource.entitySource
-      this.providerType = dataSource.providerType
-      this.propertiesXmlTag = dataSource.propertiesXmlTag
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.providerType != dataSource.providerType) this.providerType = dataSource.providerType
+      if (this.propertiesXmlTag != dataSource?.propertiesXmlTag) this.propertiesXmlTag = dataSource.propertiesXmlTag
       if (parents != null) {
-        this.artifact = parents.filterIsInstance<ArtifactEntity>().single()
+        val artifactNew = parents.filterIsInstance<ArtifactEntity>().single()
+        if ((this.artifact as WorkspaceEntityBase).id != (artifactNew as WorkspaceEntityBase).id) {
+          this.artifact = artifactNew
+        }
       }
     }
 
@@ -234,7 +240,7 @@ class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntit
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ArtifactPropertiesEntityData
 
@@ -246,7 +252,7 @@ class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntit
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ArtifactPropertiesEntityData
 

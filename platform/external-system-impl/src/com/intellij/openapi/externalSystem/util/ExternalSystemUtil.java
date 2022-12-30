@@ -591,10 +591,8 @@ public final class ExternalSystemUtil {
 
     final String title;
     switch (progressExecutionMode) {
-      case NO_PROGRESS_SYNC:
-      case NO_PROGRESS_ASYNC:
-        throw new ExternalSystemException("Please, use progress for the project import!");
-      case MODAL_SYNC:
+      case NO_PROGRESS_SYNC, NO_PROGRESS_ASYNC -> throw new ExternalSystemException("Please, use progress for the project import!");
+      case MODAL_SYNC -> {
         title = ExternalSystemBundle.message("progress.import.text", projectName, externalSystemId.getReadableName());
         new Task.Modal(project, title, true) {
           @Override
@@ -607,8 +605,8 @@ public final class ExternalSystemUtil {
             refreshProjectStructureTask.execute(indicator);
           }
         }.queue();
-        break;
-      case IN_BACKGROUND_ASYNC:
+      }
+      case IN_BACKGROUND_ASYNC -> {
         title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
         new Task.Backgroundable(project, title) {
           @Override
@@ -621,8 +619,8 @@ public final class ExternalSystemUtil {
             refreshProjectStructureTask.execute(indicator);
           }
         }.queue();
-        break;
-      case START_IN_FOREGROUND_ASYNC:
+      }
+      case START_IN_FOREGROUND_ASYNC -> {
         title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
         new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
           @Override
@@ -635,6 +633,7 @@ public final class ExternalSystemUtil {
             refreshProjectStructureTask.execute(indicator);
           }
         }.queue();
+      }
     }
   }
 
@@ -950,35 +949,26 @@ public final class ExternalSystemUtil {
 
     final String title = AbstractExternalSystemTaskConfigurationType.generateName(project, taskSettings);
     switch (progressExecutionMode) {
-      case NO_PROGRESS_SYNC:
-        task.execute(new EmptyProgressIndicator());
-        break;
-      case MODAL_SYNC:
-        new Task.Modal(project, title, true) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            task.execute(indicator);
-          }
-        }.queue();
-        break;
-      case NO_PROGRESS_ASYNC:
-        ApplicationManager.getApplication().executeOnPooledThread(() -> task.execute(new EmptyProgressIndicator()));
-        break;
-      case IN_BACKGROUND_ASYNC:
-        new Task.Backgroundable(project, title) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            task.execute(indicator);
-          }
-        }.queue();
-        break;
-      case START_IN_FOREGROUND_ASYNC:
-        new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            task.execute(indicator);
-          }
-        }.queue();
+      case NO_PROGRESS_SYNC -> task.execute(new EmptyProgressIndicator());
+      case MODAL_SYNC -> new Task.Modal(project, title, true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          task.execute(indicator);
+        }
+      }.queue();
+      case NO_PROGRESS_ASYNC -> ApplicationManager.getApplication().executeOnPooledThread(() -> task.execute(new EmptyProgressIndicator()));
+      case IN_BACKGROUND_ASYNC -> new Task.Backgroundable(project, title) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          task.execute(indicator);
+        }
+      }.queue();
+      case START_IN_FOREGROUND_ASYNC -> new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          task.execute(indicator);
+        }
+      }.queue();
     }
   }
 

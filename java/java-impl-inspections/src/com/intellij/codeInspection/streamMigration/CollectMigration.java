@@ -639,24 +639,19 @@ class CollectMigration extends BaseStreamApiMigration {
       String methodName = myMapUpdateCall.getMethodExpression().getReferenceName();
       LOG.assertTrue(methodName != null);
       Project project = myMapUpdateCall.getProject();
-      String merger;
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       String aVar = codeStyleManager.suggestUniqueVariableName("a", myMapUpdateCall, true);
       String bVar = codeStyleManager.suggestUniqueVariableName("b", myMapUpdateCall, true);
-      switch (methodName) {
-        case "put":
-          merger = "(" + aVar + "," + bVar + ")->" + bVar;
-          break;
-        case "putIfAbsent":
-          merger = "(" + aVar + "," + bVar + ")->" + aVar;
-          break;
-        case "merge":
+      String merger = switch (methodName) {
+        case "put" -> "(" + aVar + "," + bVar + ")->" + bVar;
+        case "putIfAbsent" -> "(" + aVar + "," + bVar + ")->" + aVar;
+        case "merge" -> {
           LOG.assertTrue(args.length == 3);
-          merger = ct.text(args[2]);
-          break;
-        default:
-          return null;
-      }
+          yield ct.text(args[2]);
+        }
+        default -> null;
+      };
+      if (merger == null) return null;
       StringBuilder collector = new StringBuilder(".collect(" + JAVA_UTIL_STREAM_COLLECTORS + "." + collectorName + "(");
       collector.append(ct.lambdaText(myElementVariable, args[0])).append(',')
         .append(ct.lambdaText(myElementVariable, args[1])).append(',')

@@ -451,17 +451,13 @@ class CompoundRendererConfigurable extends JPanel {
 
     @NotNull
     @Override
-    public Class getColumnClass(int columnIndex) {
-      switch (columnIndex) {
-        case NAME_TABLE_COLUMN:
-          return String.class;
-        case EXPRESSION_TABLE_COLUMN:
-          return TextWithImports.class;
-        case ONDEMAND_TABLE_COLUMN:
-          return Boolean.class;
-        default:
-          return super.getColumnClass(columnIndex);
-      }
+    public Class<?> getColumnClass(int columnIndex) {
+      return switch (columnIndex) {
+        case NAME_TABLE_COLUMN -> String.class;
+        case EXPRESSION_TABLE_COLUMN -> TextWithImports.class;
+        case ONDEMAND_TABLE_COLUMN -> Boolean.class;
+        default -> super.getColumnClass(columnIndex);
+      };
     }
 
     @Override
@@ -470,16 +466,12 @@ class CompoundRendererConfigurable extends JPanel {
         return null;
       }
       final EnumerationChildrenRenderer.ChildInfo row = myData.get(rowIndex);
-      switch (columnIndex) {
-        case NAME_TABLE_COLUMN:
-          return row.myName;
-        case EXPRESSION_TABLE_COLUMN:
-          return row.myExpression;
-        case ONDEMAND_TABLE_COLUMN:
-          return row.myOnDemand;
-        default:
-          return null;
-      }
+      return switch (columnIndex) {
+        case NAME_TABLE_COLUMN -> row.myName;
+        case EXPRESSION_TABLE_COLUMN -> row.myExpression;
+        case ONDEMAND_TABLE_COLUMN -> row.myOnDemand;
+        default -> null;
+      };
     }
 
     @Override
@@ -489,31 +481,21 @@ class CompoundRendererConfigurable extends JPanel {
       }
       final EnumerationChildrenRenderer.ChildInfo row = myData.get(rowIndex);
       switch (columnIndex) {
-        case NAME_TABLE_COLUMN:
-          row.myName = (String)aValue;
-          break;
-        case EXPRESSION_TABLE_COLUMN:
-          row.myExpression = (TextWithImports)aValue;
-          break;
-        case ONDEMAND_TABLE_COLUMN:
-          row.myOnDemand = (Boolean)aValue;
-          break;
+        case NAME_TABLE_COLUMN -> row.myName = (String)aValue;
+        case EXPRESSION_TABLE_COLUMN -> row.myExpression = (TextWithImports)aValue;
+        case ONDEMAND_TABLE_COLUMN -> row.myOnDemand = (Boolean)aValue;
       }
     }
 
     @NotNull
     @Override
     public String getColumnName(int columnIndex) {
-      switch (columnIndex) {
-        case NAME_TABLE_COLUMN:
-          return JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.name");
-        case EXPRESSION_TABLE_COLUMN:
-          return JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.expression");
-        case ONDEMAND_TABLE_COLUMN:
-          return JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.ondemand");
-        default:
-          return "";
-      }
+      return switch (columnIndex) {
+        case NAME_TABLE_COLUMN -> JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.name");
+        case EXPRESSION_TABLE_COLUMN -> JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.expression");
+        case ONDEMAND_TABLE_COLUMN -> JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.ondemand");
+        default -> "";
+      };
     }
 
     public void addRow(final String name, final TextWithImports expressionWithImports) {

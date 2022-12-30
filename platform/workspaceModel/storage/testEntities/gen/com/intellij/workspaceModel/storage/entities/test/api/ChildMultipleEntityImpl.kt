@@ -45,7 +45,7 @@ open class ChildMultipleEntityImpl(val dataSource: ChildMultipleEntityData) : Ch
     return connections
   }
 
-  class Builder(val result: ChildMultipleEntityData?) : ModifiableWorkspaceEntityBase<ChildMultipleEntity>(), ChildMultipleEntity.Builder {
+  class Builder(var result: ChildMultipleEntityData?) : ModifiableWorkspaceEntityBase<ChildMultipleEntity>(), ChildMultipleEntity.Builder {
     constructor() : this(ChildMultipleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -63,6 +63,9 @@ open class ChildMultipleEntityImpl(val dataSource: ChildMultipleEntityData) : Ch
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -96,10 +99,13 @@ open class ChildMultipleEntityImpl(val dataSource: ChildMultipleEntityData) : Ch
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ChildMultipleEntity
-      this.entitySource = dataSource.entitySource
-      this.childData = dataSource.childData
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.childData != dataSource.childData) this.childData = dataSource.childData
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<ParentMultipleEntity>().single()
+        val parentEntityNew = parents.filterIsInstance<ParentMultipleEntity>().single()
+        if ((this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 
@@ -216,7 +222,7 @@ class ChildMultipleEntityData : WorkspaceEntityData<ChildMultipleEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ChildMultipleEntityData
 
@@ -227,7 +233,7 @@ class ChildMultipleEntityData : WorkspaceEntityData<ChildMultipleEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ChildMultipleEntityData
 

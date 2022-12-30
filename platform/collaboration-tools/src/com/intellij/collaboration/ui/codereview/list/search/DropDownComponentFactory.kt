@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.list.search
 
+import com.intellij.openapi.ui.addKeyboardAction
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.awt.RelativePoint
@@ -14,8 +15,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import java.awt.Point
+import java.awt.event.KeyEvent
 import java.util.function.Supplier
 import javax.swing.JComponent
+import javax.swing.KeyStroke
 
 class DropDownComponentFactory<T : Any>(private val state: MutableStateFlow<T?>) {
 
@@ -55,6 +58,10 @@ class DropDownComponentFactory<T : Any>(private val state: MutableStateFlow<T?>)
           val newValue = chooseValue(point, popupState)
           state.update { newValue }
         }
+      }
+
+      addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0)) {
+        state.value = null
       }
     }.initUi()
   }

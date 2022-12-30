@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil.createAndAddSDK;
 
@@ -33,17 +34,18 @@ public class ExistingJdkConfigurationActivity extends PreloadingActivity {
   public void preload() {
     if (!Registry.is("jdk.configure.existing", false)) return;
 
-    var registeredJdks = ProjectJdkTable.getInstance().getAllJdks();
+    final var javaSdk = JavaSdk.getInstance();
+    final List<Sdk> registeredJdks = ProjectJdkTable.getInstance().getSdksOfType(javaSdk);
+    if (!registeredJdks.isEmpty()) return;
+
     final ArrayList<String> jdkPathsToAdd = new ArrayList<>();
 
     // Collect JDKs to register
-    if (registeredJdks.length == 0) {
-      JdkFinder.getInstance().suggestHomePaths().forEach(homePath -> {
-        if (JavaSdk.getInstance().isValidSdkHome(homePath)) {
-          jdkPathsToAdd.add(homePath);
-        }
-      });
-    }
+    JdkFinder.getInstance().suggestHomePaths().forEach(homePath -> {
+      if (javaSdk.isValidSdkHome(homePath)) {
+        jdkPathsToAdd.add(homePath);
+      }
+    });
 
     ApplicationManager.getApplication().invokeLater(() -> {
       Sdk added = null;
@@ -51,7 +53,7 @@ public class ExistingJdkConfigurationActivity extends PreloadingActivity {
       // Register collected JDKs
       for (String path : jdkPathsToAdd) {
         final Sdk newSdk = ApplicationManager.getApplication().runWriteAction(
-          (Computable<Sdk>)() -> createAndAddSDK(path, JavaSdk.getInstance())
+          (Computable<Sdk>)() -> createAndAddSDK(path, javaSdk)
         );
         if (added == null) added = newSdk;
       }

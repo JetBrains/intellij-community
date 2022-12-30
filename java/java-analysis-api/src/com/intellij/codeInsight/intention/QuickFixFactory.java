@@ -388,7 +388,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createCreateAnnotationMethodFromUsageFix(@NotNull PsiNameValuePair pair);
 
   @NotNull
-  public abstract IntentionAction createOptimizeImportsFix(boolean onTheFly);
+  public abstract IntentionAction createOptimizeImportsFix(boolean onTheFly, boolean isInContent);
 
   @NotNull
   public abstract IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter, boolean excludingHierarchy);

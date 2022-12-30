@@ -97,7 +97,7 @@ object DependsOnGraphHelper {
         return this.module.predecessorsInDependsOnGraph().mapNotNull { it.getModuleInfo(sourceRootType) }
     }
 
-    fun Module.predecessorsInDependsOnGraph(): List<Module> {
+    private fun Module.predecessorsInDependsOnGraph(): List<Module> {
         return implementingModules
     }
 
@@ -115,7 +115,7 @@ object DependsOnGraphHelper {
         }
     }
 
-    fun Module.successorsInDependsOnGraph(): List<Module> {
+    private fun Module.successorsInDependsOnGraph(): List<Module> {
         return implementedModules
     }
 }

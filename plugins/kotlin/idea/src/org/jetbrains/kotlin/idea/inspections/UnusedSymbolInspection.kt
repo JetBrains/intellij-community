@@ -186,7 +186,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                 else -> emptyList()
             }
 
-        fun listOfParameterAccessorNames(parameter: KtParameter): List<String> {
+        private fun listOfParameterAccessorNames(parameter: KtParameter): List<String> {
             val accessors = mutableListOf<String>()
             if (parameter.hasValOrVar()) {
                 parameter.name?.let {
@@ -198,7 +198,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
             return accessors
         }
 
-        fun listOfPropertyAccessorNames(property: KtProperty): List<String> {
+        private fun listOfPropertyAccessorNames(property: KtProperty): List<String> {
             val accessors = mutableListOf<String>()
             val propertyName = property.name ?: return accessors
             accessors.add(property.getter?.let { getCustomAccessorName(it) } ?: JvmAbi.getterName(propertyName))

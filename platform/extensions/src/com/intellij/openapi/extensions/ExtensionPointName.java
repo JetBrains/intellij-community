@@ -116,6 +116,11 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
     return getPointImpl(null).findExtension(instanceOf, false, ThreeState.UNSURE);
   }
 
+  @ApiStatus.Internal
+  public <V> @NotNull List<@NotNull T> findExtensions(@NotNull Class<V> instanceOf) {
+    return getPointImpl(null).findExtensions(instanceOf);
+  }
+
   public @NotNull <V extends T> V findExtensionOrFail(@NotNull Class<V> exactClass) {
     //noinspection ConstantConditions
     return getPointImpl(null).findExtension(exactClass, true, ThreeState.UNSURE);
@@ -178,7 +183,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
    * JLS doesn't specify whether a new instance is produced or some common instance is reused for lambda expressions (see 15.27.4).
    */
   @ApiStatus.Experimental
-  public <K> @NotNull List<T> getByGroupingKey(@NotNull K key, @NotNull Class<?> cacheId, @NotNull Function<? super @NotNull T, ? extends @Nullable K> keyMapper) {
+  public <K extends @NotNull Object> @NotNull List<T> getByGroupingKey(@NotNull K key, @NotNull Class<?> cacheId, @NotNull Function<? super @NotNull T, ? extends @Nullable K> keyMapper) {
     return ExtensionProcessingHelper.getByGroupingKey(getPointImpl(null), cacheId, key, keyMapper);
   }
 
@@ -188,7 +193,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
    * To exclude extension from cache, return null key.
    */
   @ApiStatus.Experimental
-  public <K> @Nullable T getByKey(@NotNull K key, @NotNull Class<?> cacheId, @NotNull Function<? super @NotNull T, ? extends @Nullable K> keyMapper) {
+  public <K extends @NotNull Object> @Nullable T getByKey(@NotNull K key, @NotNull Class<?> cacheId, @NotNull Function<? super @NotNull T, ? extends @Nullable K> keyMapper) {
     return ExtensionProcessingHelper.getByKey(getPointImpl(null), key, cacheId, keyMapper);
   }
 
@@ -198,7 +203,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
    * To exclude extension from cache, return null key.
    */
   @ApiStatus.Experimental
-  public <K, V> @Nullable V getByKey(@NotNull K key,
+  public <K extends @NotNull Object, V extends @NotNull Object> @Nullable V getByKey(@NotNull K key,
                                      @NotNull Class<?> cacheId,
                                      @NotNull Function<? super @NotNull T, ? extends @Nullable K> keyMapper,
                                      @NotNull Function<? super @NotNull T, ? extends @Nullable V> valueMapper) {
@@ -206,7 +211,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   }
 
   @ApiStatus.Experimental
-  public <K, V> @NotNull V computeIfAbsent(@NotNull K key,
+  public <K extends @NotNull Object, V extends @NotNull Object> @NotNull V computeIfAbsent(@NotNull K key,
                                            @NotNull Class<?> cacheId,
                                            @NotNull Function<? super @NotNull K, ? extends @NotNull V> valueMapper) {
     return ExtensionProcessingHelper.computeIfAbsent(getPointImpl(null), key, cacheId, valueMapper);
@@ -216,7 +221,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
    * Cache some value per extension point.
    */
   @ApiStatus.Experimental
-  public <V> @NotNull V computeIfAbsent(@NotNull Class<?> cacheId, @NotNull Supplier<? extends @NotNull V> valueMapper) {
+  public <V extends @NotNull Object> @NotNull V computeIfAbsent(@NotNull Class<?> cacheId, @NotNull Supplier<? extends @NotNull V> valueMapper) {
     return ExtensionProcessingHelper.computeIfAbsent(getPointImpl(null), cacheId, valueMapper);
   }
 }

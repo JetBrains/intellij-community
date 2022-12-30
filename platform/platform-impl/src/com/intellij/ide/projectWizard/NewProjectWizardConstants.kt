@@ -22,7 +22,7 @@ object NewProjectWizardConstants {
     const val INTELLIJ = "IntelliJ"
     const val GRADLE = "Gradle"
     const val MAVEN = "Maven"
-    const val SBT = "SBT"
+    private const val SBT = "SBT"
 
     val ALL = arrayOf(INTELLIJ, GRADLE, MAVEN, SBT)
   }

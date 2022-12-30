@@ -22,14 +22,14 @@ data class LibrarySourceInfo(override val project: Project, val library: Library
     override val name: Name = Name.special("<sources for library ${library.name}>")
 
     override val displayedName: String
-        get() = KotlinBaseProjectStructureBundle.message("sources.for.library.0", library.name.toString())
+        get() = KotlinBaseProjectStructureBundle.message("sources.for.library.0", library.presentableName)
 
     override fun sourceScope(): GlobalSearchScope {
         return KotlinSourceFilterScope.librarySources(LibrarySourceScope(project, library), project)
     }
 
     override fun modulesWhoseInternalsAreVisible(): Collection<ModuleInfo> {
-        return LibraryInfoCache.getInstance(project).get(library)
+        return LibraryInfoCache.getInstance(project)[library]
     }
 
     override val platform: TargetPlatform

@@ -58,4 +58,9 @@ public class FairBucketingTest {
     fairBucketingWorks();
     fairBucketingWorks();
   }
+
+  @Test
+  public void initTestBucketsDoesNotThrow() {
+    TestCaseLoader.initFairBuckets();
+  }
 }

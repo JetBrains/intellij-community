@@ -19,10 +19,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 // TODO: Use new annotation-based API to save data instead of legacy manual save
 public class PythonSdkAdditionalData implements SdkAdditionalData {
@@ -33,10 +30,14 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   @NonNls private static final String PATHS_TO_TRANSFER_ROOT = "PATHS_TO_TRANSFER_ROOT";
   @NonNls private static final String PATH_TO_TRANSFER = "PATH_TO_TRANSFER";
   @NonNls private static final String ASSOCIATED_PROJECT_PATH = "ASSOCIATED_PROJECT_PATH";
+  @NonNls
+  private static final String SDK_UUID_FIELD_NAME = "SDK_UUID";
 
   private final VirtualFilePointerContainer myAddedPaths;
   private final VirtualFilePointerContainer myExcludedPaths;
   private final VirtualFilePointerContainer myPathsToTransfer;
+  @NotNull
+  private UUID myUUID = UUID.randomUUID();
 
   private final PythonSdkFlavor myFlavor;
   private String myAssociatedModulePath;
@@ -54,6 +55,14 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     myExcludedPaths = from.myExcludedPaths.clone(PythonPluginDisposable.getInstance());
     myPathsToTransfer = from.myPathsToTransfer.clone(PythonPluginDisposable.getInstance());
     myAssociatedModulePath = from.myAssociatedModulePath;
+  }
+
+  /**
+   * Persistent UUID of SDK.  Could be used to point to "this particular" SDK.
+   */
+  @NotNull
+  public final UUID getUUID() {
+    return myUUID;
   }
 
   @NotNull
@@ -113,6 +122,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     if (myAssociatedModulePath != null) {
       rootElement.setAttribute(ASSOCIATED_PROJECT_PATH, myAssociatedModulePath);
     }
+    rootElement.setAttribute(SDK_UUID_FIELD_NAME, myUUID.toString());
   }
 
   private static void savePaths(Element rootElement, VirtualFilePointerContainer paths, String root, String element) {
@@ -141,6 +151,10 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_TO_TRANSFER_ROOT, PATH_TO_TRANSFER), myPathsToTransfer);
     if (element != null) {
       setAssociatedModulePath(element.getAttributeValue(ASSOCIATED_PROJECT_PATH));
+      var uuidStr = element.getAttributeValue(SDK_UUID_FIELD_NAME);
+      if (uuidStr != null) {
+        myUUID = UUID.fromString(uuidStr);
+      }
     }
   }
 

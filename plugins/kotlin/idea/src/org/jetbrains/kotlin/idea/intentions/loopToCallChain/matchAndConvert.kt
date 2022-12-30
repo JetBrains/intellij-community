@@ -95,9 +95,9 @@ fun match(loop: KtForExpression, useLazySequence: Boolean, reformat: Boolean): M
                         }
 
                         if (restContainsEmbeddedBreakOrContinue && !matcher.embeddedBreakOrContinuePossible) {
-                            val countBefore = state.statements.sumBy { it.countEmbeddedBreaksAndContinues() }
-                            val countAfter = newState.statements.sumBy { it.countEmbeddedBreaksAndContinues() }
-                            if (countAfter != countBefore) continue@MatchersLoop // some embedded break or continue in the matched part
+                          val countBefore = state.statements.sumOf { it.countEmbeddedBreaksAndContinues() }
+                          val countAfter = newState.statements.sumOf { it.countEmbeddedBreaksAndContinues() }
+                          if (countAfter != countBefore) continue@MatchersLoop // some embedded break or continue in the matched part
                         }
 
                         state.previousTransformations += match.sequenceTransformations
@@ -312,7 +312,7 @@ private fun MatchResult.generateCallChain(loop: KtForExpression, reformat: Boole
         sequenceTransformations = sequenceTransformations.dropLast(1)
     }
 
-    val chainCallCount = sequenceTransformations.sumBy { it.chainCallCount } + resultTransformation.chainCallCount
+    val chainCallCount = sequenceTransformations.sumOf { it.chainCallCount } + resultTransformation.chainCallCount
     val lineBreak = if (chainCallCount > 1) "\n" else ""
 
     var callChain = sequenceExpression

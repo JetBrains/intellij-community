@@ -10,7 +10,7 @@ import com.intellij.ide.plugins.auth.PluginRepositoryAuthService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -59,7 +59,15 @@ class MarketplaceRequests : PluginInfoProvider {
     fun parsePluginList(input: InputStream): List<PluginNode> {
       try {
         val handler = RepositoryContentHandler()
-        SAXParserFactory.newDefaultInstance().newSAXParser().parse(InputSource(input), handler)
+
+        val spf = SAXParserFactory.newDefaultInstance()
+        spf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        spf.setFeature("http://xml.org/sax/features/external-general-entities", false)
+        spf.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
+
+        val parser = spf.newSAXParser()
+
+        parser.parse(InputSource(input), handler)
         return handler.pluginsList
       }
       catch (e: Exception) {
@@ -152,11 +160,9 @@ class MarketplaceRequests : PluginInfoProvider {
           if (eTag != null) {
             connection.setRequestProperty("If-None-Match", eTag)
           }
-          if (ApplicationManager.getApplication() != null) {
-            serviceOrNull<PluginRepositoryAuthService>()
-              ?.connectionTuner
-              ?.tune(connection)
-          }
+          serviceIfCreated<PluginRepositoryAuthService>()
+            ?.connectionTuner
+            ?.tune(connection)
         }
         .productNameAsUserAgent()
         .connect { request ->
@@ -413,16 +419,24 @@ class MarketplaceRequests : PluginInfoProvider {
     }
   }
 
-  @Deprecated("Please use `PluginId`", replaceWith = ReplaceWith("getLastCompatiblePluginUpdate(PluginId.get(id), buildNumber, indicator)"))
-  @ApiStatus.ScheduledForRemoval
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  @JvmOverloads
-  fun getLastCompatiblePluginUpdate(
-    id: String,
-    buildNumber: BuildNumber? = null,
-    indicator: ProgressIndicator? = null,
-  ): PluginNode? = getLastCompatiblePluginUpdate(PluginId.getId(id), buildNumber, indicator)
+  fun loadPluginMetadata(pluginNode: PluginNode): IntellijPluginMetadata? {
+    val externalPluginId = pluginNode.externalPluginId ?: return null
+
+    try {
+      return readOrUpdateFile(
+        Paths.get(PathManager.getPluginTempPath(), "${externalPluginId}-meta.json"),
+        "${pluginManagerUrl}/files/${externalPluginId}/meta.json",
+        null,
+        ""
+      ) { objectMapper.readValue(it, object : TypeReference<IntellijPluginMetadata>() {}) }
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+      return null
+    }
+  }
 
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
@@ -520,6 +534,27 @@ class MarketplaceRequests : PluginInfoProvider {
   }
 
   private fun parseXmlIds(input: InputStream) = objectMapper.readValue(input, object : TypeReference<Set<PluginId>>() {})
+
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
+  fun loadPluginReviews(pluginNode: PluginNode, page: Int): List<PluginReviewComment>? {
+    try {
+      val pluginId = URLUtil.encodeURIComponent(pluginNode.pluginId.idString)
+      val pageValue = if (page == 1) "" else "?page=$page"
+      return HttpRequests
+        .request(Urls.newFromEncoded("${pluginManagerUrl}/api/products/intellij/plugins/${pluginId}/comments${pageValue}"))
+        .setHeadersViaTuner()
+        .productNameAsUserAgent()
+        .throwStatusCodeException(false)
+        .connect {
+          objectMapper.readValue(it.inputStream, object : TypeReference<List<PluginReviewComment>>() {})
+        }
+    }
+    catch (e: IOException) {
+      LOG.error(e)
+      return null
+    }
+  }
 }
 
 /**

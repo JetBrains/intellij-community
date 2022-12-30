@@ -39,23 +39,26 @@ public class JUnitExpectedPatternsTest {
 
   @Test
   public void testHamcrestAssertThatWithReason() {
-    Assert.assertNotNull(createNotification("reason\n" +
-                                            "Expected: is \"aaa\\naa\"\n" +
-                                            "     but:    was \"bbb\\nbb\""));
+    Assert.assertNotNull(createNotification("""
+                                              reason
+                                              Expected: is "aaa\\naa"
+                                                   but:    was "bbb\\nbb\""""));
   }
 
   @Test
   public void testHamcrestAssertThatEqWithReason() {
-    Assert.assertNotNull(createNotification("reason\n" +
-                                            "Expected: \"aaa\\naa\"\n" +
-                                            "     got: \"bbb\\nbb\""));
+    Assert.assertNotNull(createNotification("""
+                                              reason
+                                              Expected: "aaa\\naa"
+                                                   got: "bbb\\nbb\""""));
   }
 
   @Test
   public void testHamcrestAssertThatEqWithReasonTrim() {
-    ComparisonFailureData notification = createNotification("\n" +
-                                                            "Expected: is <2>\n" +
-                                                            "     but: was <1>");
+    ComparisonFailureData notification = createNotification("""
+
+                                                              Expected: is <2>
+                                                                   but: was <1>""");
     Assert.assertNotNull(notification);
     Assert.assertEquals("is <2>", notification.getExpected());
   }

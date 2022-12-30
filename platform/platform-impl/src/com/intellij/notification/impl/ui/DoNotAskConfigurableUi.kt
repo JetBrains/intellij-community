@@ -30,7 +30,7 @@ internal class DoNotAskConfigurableUi {
     return result
   }
 
-  fun getDoNotAskValues(): List<DoNotAskInfo> {
+  private fun getDoNotAskValues(): List<DoNotAskInfo> {
     val list = ArrayList<DoNotAskInfo>()
 
     getValues(PropertiesComponent.getInstance(), list, false)

@@ -37,7 +37,7 @@ open class ParentWithNullsOppositeMultipleImpl(val dataSource: ParentWithNullsOp
     return connections
   }
 
-  class Builder(val result: ParentWithNullsOppositeMultipleData?) : ModifiableWorkspaceEntityBase<ParentWithNullsOppositeMultiple>(), ParentWithNullsOppositeMultiple.Builder {
+  class Builder(var result: ParentWithNullsOppositeMultipleData?) : ModifiableWorkspaceEntityBase<ParentWithNullsOppositeMultiple>(), ParentWithNullsOppositeMultiple.Builder {
     constructor() : this(ParentWithNullsOppositeMultipleData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -55,6 +55,9 @@ open class ParentWithNullsOppositeMultipleImpl(val dataSource: ParentWithNullsOp
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -78,8 +81,8 @@ open class ParentWithNullsOppositeMultipleImpl(val dataSource: ParentWithNullsOp
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ParentWithNullsOppositeMultiple
-      this.entitySource = dataSource.entitySource
-      this.parentData = dataSource.parentData
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.parentData != dataSource.parentData) this.parentData = dataSource.parentData
       if (parents != null) {
       }
     }
@@ -158,7 +161,7 @@ class ParentWithNullsOppositeMultipleData : WorkspaceEntityData<ParentWithNullsO
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ParentWithNullsOppositeMultipleData
 
@@ -169,7 +172,7 @@ class ParentWithNullsOppositeMultipleData : WorkspaceEntityData<ParentWithNullsO
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ParentWithNullsOppositeMultipleData
 

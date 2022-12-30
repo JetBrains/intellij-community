@@ -1,40 +1,85 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui
 
-import com.intellij.openapi.util.Couple
 import com.intellij.ui.JBColor
-import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.paint.withTxAndClipAligned
+import com.intellij.util.ui.AvatarUtils.generateColoredAvatar
 import com.intellij.util.ui.ImageUtil.applyQualityRenderingHints
-import java.awt.Color
-import java.awt.Font
-import java.awt.GradientPaint
-import java.awt.Rectangle
+import java.awt.*
+import java.awt.geom.Area
+import java.awt.geom.RoundRectangle2D
 import java.awt.image.BufferedImage
-import javax.swing.ImageIcon
 import kotlin.math.abs
-import kotlin.math.min
 
-object AvatarUtils {
-  fun createRoundRectIcon(image: BufferedImage, targetSize: Int): ImageIcon {
-    val size: Int = min(image.width, image.height)
-    val baseArcSize = 6.0 * size / targetSize
+class AvatarIcon(private val targetSize: Int,
+                 private val arcRatio: Double,
+                 private val gradientSeed: String,
+                 private val avatarName: String,
+                 private val palette: ColorPalette = AvatarPalette) : JBCachingScalableIcon<AvatarIcon>() {
+  private var myCachedImage: BufferedImage? = null
+  private var myCachedImageScale: Double? = null
 
-    val rounded = ImageUtil.createRoundedImage(image, baseArcSize)
-    val hiDpi = ImageUtil.ensureHiDPI(rounded, ScaleContext.create())
-    return JBImageIcon(ImageUtil.scaleImage(hiDpi, targetSize, targetSize))
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+    g as Graphics2D
+    val iconSize = getIconSize()
+    val scale = g.transform.scaleX
+
+    if (scale != myCachedImageScale) {
+      myCachedImage = null
+    }
+
+    var cachedImage = myCachedImage
+    if (cachedImage == null) {
+      cachedImage = generateColoredAvatar(g.deviceConfiguration, iconSize, arcRatio, gradientSeed, avatarName, palette)
+      myCachedImage = cachedImage
+      myCachedImageScale = scale
+    }
+
+    withTxAndClipAligned(g, x, y, cachedImage.width, cachedImage.height) { gg ->
+      UIUtil.drawImage(gg, cachedImage, 0, 0, null)
+    }
   }
 
-  fun generateColoredAvatar(gradientSeed: String, name: String, palette: ColorPalette = AvatarPalette): BufferedImage {
+  private fun getIconSize() = scaleVal(targetSize.toDouble()).toInt()
+
+  override fun getIconWidth(): Int = getIconSize()
+
+  override fun getIconHeight(): Int = getIconSize()
+
+  override fun copy(): AvatarIcon {
+    return AvatarIcon(targetSize, arcRatio, gradientSeed, avatarName, palette)
+  }
+}
+
+object AvatarUtils {
+  fun generateColoredAvatar(gradientSeed: String,
+                            name: String,
+                            size: Int = 64,
+                            arcRatio: Double = 0.0,
+                            palette: ColorPalette = AvatarPalette): BufferedImage =
+    generateColoredAvatar(null, size, arcRatio, gradientSeed, name, palette)
+
+  internal fun generateColoredAvatar(gc: GraphicsConfiguration?,
+                                     size: Int,
+                                     arcRatio: Double,
+                                     gradientSeed: String,
+                                     name: String,
+                                     palette: ColorPalette = AvatarPalette): BufferedImage {
     val (color1, color2) = palette.gradient(gradientSeed)
 
     val shortName = Avatars.initials(name)
-    val size = 64
-    val image = ImageUtil.createImage(size, size, BufferedImage.TYPE_INT_ARGB)
+    val image = ImageUtil.createImage(gc, size, size, BufferedImage.TYPE_INT_ARGB)
     val g2 = image.createGraphics()
     applyQualityRenderingHints(g2)
     g2.paint = GradientPaint(0.0f, 0.0f, color2,
                              size.toFloat(), size.toFloat(), color1)
-    g2.fillRect(0, 0, size, size)
+
+    val arcSize = arcRatio * size
+    val avatarOvalArea = Area(RoundRectangle2D.Double(0.0, 0.0,
+                                                      size.toDouble(), size.toDouble(),
+                                                      arcSize, arcSize))
+    g2.fill(avatarOvalArea)
+
     g2.paint = JBColor.WHITE
     g2.font = JBFont.create(Font("Segoe UI", Font.PLAIN, (size / 2.2).toInt()))
     UIUtil.drawCenteredString(g2, Rectangle(0, 0, size, size), shortName)
@@ -59,10 +104,13 @@ internal object Avatars {
       return generateFromCamelCase(words.first())
     }
     return words.map { it.first() }
-      .joinToString("").toUpperCase()
+        .joinToString("").uppercase()
   }
 
-  private fun generateFromCamelCase(text: String) = text.filterIndexed { index, c -> index == 0 || c.isUpperCase() }.take(2).toUpperCase()
+  private fun generateFromCamelCase(text: String) =
+    text.filterIndexed { index, c -> index == 0 || c.isUpperCase() }
+      .take(2)
+      .uppercase()
 
   fun initials(firstName: String, lastName: String): String {
     return listOf(firstName, lastName).joinToString("") { it.first().toString() }
@@ -73,7 +121,7 @@ abstract class ColorPalette {
 
   abstract val gradients: Array<Pair<Color, Color>>
 
-  public fun gradient(seed: String? = null): Pair<Color, Color> {
+  fun gradient(seed: String? = null): Pair<Color, Color> {
     val keyCode = if (seed != null) {
       abs(seed.hashCode()) % gradients.size
     }

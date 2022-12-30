@@ -46,7 +46,7 @@ open class ChildWithNullsOppositeMultipleImpl(val dataSource: ChildWithNullsOppo
     return connections
   }
 
-  class Builder(val result: ChildWithNullsOppositeMultipleData?) : ModifiableWorkspaceEntityBase<ChildWithNullsOppositeMultiple>(), ChildWithNullsOppositeMultiple.Builder {
+  class Builder(var result: ChildWithNullsOppositeMultipleData?) : ModifiableWorkspaceEntityBase<ChildWithNullsOppositeMultiple>(), ChildWithNullsOppositeMultiple.Builder {
     constructor() : this(ChildWithNullsOppositeMultipleData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -64,6 +64,9 @@ open class ChildWithNullsOppositeMultipleImpl(val dataSource: ChildWithNullsOppo
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -87,10 +90,13 @@ open class ChildWithNullsOppositeMultipleImpl(val dataSource: ChildWithNullsOppo
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ChildWithNullsOppositeMultiple
-      this.entitySource = dataSource.entitySource
-      this.childData = dataSource.childData
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.childData != dataSource.childData) this.childData = dataSource.childData
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<ParentWithNullsOppositeMultiple>().singleOrNull()
+        val parentEntityNew = parents.filterIsInstance<ParentWithNullsOppositeMultiple?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 
@@ -206,7 +212,7 @@ class ChildWithNullsOppositeMultipleData : WorkspaceEntityData<ChildWithNullsOpp
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ChildWithNullsOppositeMultipleData
 
@@ -217,7 +223,7 @@ class ChildWithNullsOppositeMultipleData : WorkspaceEntityData<ChildWithNullsOpp
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ChildWithNullsOppositeMultipleData
 

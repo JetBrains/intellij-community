@@ -15,14 +15,15 @@ public class AssignmentOrReturnOfFieldWithMutableTypeInspectionTest extends Ligh
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "package com.google.common.collect;\n" +
-      "\n" +
-      "import java.util.List;\n" +
-      "\n" +
-      "public class ImmutableList<E> implements List<E> {\n" +
-      "  public static ImmutableList<?> of() {return new ImmutableList<>();}\n" +
-      "  public static <T> ImmutableList<T> copyOf(List<T> list) {return new ImmutableList<>();}\n" +
-      "}"
+      """
+package com.google.common.collect;
+
+import java.util.List;
+
+public class ImmutableList<E> implements List<E> {
+  public static ImmutableList<?> of() {return new ImmutableList<>();}
+  public static <T> ImmutableList<T> copyOf(List<T> list) {return new ImmutableList<>();}
+}"""
     };
   }
 

@@ -5,11 +5,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiImportStatementBase
 import com.intellij.psi.PsiJavaFile
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 
 internal class JavaLibraryUsageImportProcessor : LibraryUsageImportProcessor<PsiImportStatementBase> {
   override fun imports(file: PsiFile): List<PsiImportStatementBase> {
-    return file.castSafelyTo<PsiJavaFile>()
+    return file.asSafely<PsiJavaFile>()
       ?.importList
       ?.allImportStatements
       ?.toList()

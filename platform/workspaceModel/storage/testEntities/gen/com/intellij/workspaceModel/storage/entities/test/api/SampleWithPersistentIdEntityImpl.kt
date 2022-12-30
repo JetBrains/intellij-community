@@ -63,7 +63,7 @@ open class SampleWithPersistentIdEntityImpl(val dataSource: SampleWithPersistent
     return connections
   }
 
-  class Builder(val result: SampleWithPersistentIdEntityData?) : ModifiableWorkspaceEntityBase<SampleWithPersistentIdEntity>(), SampleWithPersistentIdEntity.Builder {
+  class Builder(var result: SampleWithPersistentIdEntityData?) : ModifiableWorkspaceEntityBase<SampleWithPersistentIdEntity>(), SampleWithPersistentIdEntity.Builder {
     constructor() : this(SampleWithPersistentIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -81,6 +81,9 @@ open class SampleWithPersistentIdEntityImpl(val dataSource: SampleWithPersistent
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "fileProperty", this.fileProperty)
       // Process linked entities that are connected without a builder
@@ -122,16 +125,23 @@ open class SampleWithPersistentIdEntityImpl(val dataSource: SampleWithPersistent
       return connections
     }
 
+    override fun afterModification() {
+      val collection_stringListProperty = getEntityData().stringListProperty
+      if (collection_stringListProperty is MutableWorkspaceList<*>) {
+        collection_stringListProperty.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SampleWithPersistentIdEntity
-      this.entitySource = dataSource.entitySource
-      this.booleanProperty = dataSource.booleanProperty
-      this.stringProperty = dataSource.stringProperty
-      this.stringListProperty = dataSource.stringListProperty.toMutableList()
-      this.stringMapProperty = dataSource.stringMapProperty.toMutableMap()
-      this.fileProperty = dataSource.fileProperty
-      this.nullableData = dataSource.nullableData
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.booleanProperty != dataSource.booleanProperty) this.booleanProperty = dataSource.booleanProperty
+      if (this.stringProperty != dataSource.stringProperty) this.stringProperty = dataSource.stringProperty
+      if (this.stringListProperty != dataSource.stringListProperty) this.stringListProperty = dataSource.stringListProperty.toMutableList()
+      if (this.stringMapProperty != dataSource.stringMapProperty) this.stringMapProperty = dataSource.stringMapProperty.toMutableMap()
+      if (this.fileProperty != dataSource.fileProperty) this.fileProperty = dataSource.fileProperty
+      if (this.nullableData != dataSource?.nullableData) this.nullableData = dataSource.nullableData
       if (parents != null) {
       }
     }
@@ -170,7 +180,12 @@ open class SampleWithPersistentIdEntityImpl(val dataSource: SampleWithPersistent
       get() {
         val collection_stringListProperty = getEntityData().stringListProperty
         if (collection_stringListProperty !is MutableWorkspaceList) return collection_stringListProperty
-        collection_stringListProperty.setModificationUpdateAction(stringListPropertyUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_stringListProperty.setModificationUpdateAction(stringListPropertyUpdater)
+        }
+        else {
+          collection_stringListProperty.cleanModificationUpdateAction()
+        }
         return collection_stringListProperty
       }
       set(value) {
@@ -218,6 +233,12 @@ open class SampleWithPersistentIdEntityImpl(val dataSource: SampleWithPersistent
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+              // Backref setup before adding to store
+              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
+
               _diff.addEntity(item_value)
             }
           }
@@ -320,7 +341,7 @@ class SampleWithPersistentIdEntityData : WorkspaceEntityData.WithCalculablePersi
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SampleWithPersistentIdEntityData
 
@@ -336,7 +357,7 @@ class SampleWithPersistentIdEntityData : WorkspaceEntityData.WithCalculablePersi
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SampleWithPersistentIdEntityData
 

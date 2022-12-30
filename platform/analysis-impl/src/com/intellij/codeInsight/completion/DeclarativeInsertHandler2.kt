@@ -32,8 +32,8 @@ open class CompositeDeclarativeInsertHandler(val handlers: Map<String, Lazy<Decl
   }
 
   companion object {
-    fun withUniversalHandler(completionChars: String,
-                             handler: Lazy<DeclarativeInsertHandler2>): CompositeDeclarativeInsertHandler {
+    private fun withUniversalHandler(completionChars: String,
+                                     handler: Lazy<DeclarativeInsertHandler2>): CompositeDeclarativeInsertHandler {
       val handlersMap = mapOf(completionChars to handler)
       // it's important not to provide a fallbackInsertHandler
       return CompositeDeclarativeInsertHandler(handlersMap, null)

@@ -40,14 +40,6 @@ public abstract class JBEditorTabsPainter {
                        boolean vertical);
 
   public abstract void doPaintBackground(Graphics2D g, Rectangle clip, boolean vertical, Rectangle rectangle);
-  public abstract void fillSelectionAndBorder(Graphics2D g, JBTabsImpl.ShapeInfo selectedShape, Color tabColor, int x, int y, int height);
-
-  public void paintSelectionAndBorder(Graphics2D g2d,
-                                      Rectangle rect,
-                                      JBTabsImpl.ShapeInfo selectedShape,
-                                      Insets insets,
-                                      Color tabColor) {
-  }
 
 
   public abstract Color getBackgroundColor();

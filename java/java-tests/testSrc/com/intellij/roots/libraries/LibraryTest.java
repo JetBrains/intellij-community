@@ -55,15 +55,16 @@ public class LibraryTest extends ModuleRootManagerTestCase {
 
     assertThat(ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests()).isGreaterThan(moduleModificationCount);
     assertThat(serializeLibraries(myProject)).isEqualTo(
-      "<library name=\"junit\">\n" +
-      "  <CLASSES>\n" +
-      "    <root url=\"file://$PROJECT_DIR$/lib.jar\" />\n" +
-      "  </CLASSES>\n" +
-      "  <JAVADOC />\n" +
-      "  <SOURCES>\n" +
-      "    <root url=\"file://$PROJECT_DIR$/lib-sources.zip\" />\n" +
-      "  </SOURCES>\n" +
-      "</library>"
+      """
+        <library name="junit">
+          <CLASSES>
+            <root url="file://$PROJECT_DIR$/lib.jar" />
+          </CLASSES>
+          <JAVADOC />
+          <SOURCES>
+            <root url="file://$PROJECT_DIR$/lib-sources.zip" />
+          </SOURCES>
+        </library>"""
     );
   }
 
@@ -91,14 +92,15 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     commit(model);
 
     assertThat(serializeLibraries(myProject)).isEqualTo(
-      "<library name=\"native\">\n" +
-      "  <CLASSES />\n" +
-      "  <JAVADOC />\n" +
-      "  <NATIVE>\n" +
-      "    <root url=\"file://native-lib-root\" />\n" +
-      "  </NATIVE>\n" +
-      "  <SOURCES />\n" +
-      "</library>"
+      """
+        <library name="native">
+          <CLASSES />
+          <JAVADOC />
+          <NATIVE>
+            <root url="file://native-lib-root" />
+          </NATIVE>
+          <SOURCES />
+        </library>"""
     );
   }
 

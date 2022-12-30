@@ -47,7 +47,7 @@ internal class AnActionOptionButton(
     action = AnActionWrapper(this@AnActionOptionButton.action, this)
     setOptions(this@AnActionOptionButton.options)
     adjustForToolbar()
-    mnemonic = this@AnActionOptionButton.action.templatePresentation.text.first().toInt()
+    mnemonic = this@AnActionOptionButton.action.templatePresentation.text.first().code
   }
 
   private val optionButtonPanel = optionButton.withLeftToolbarBorder()

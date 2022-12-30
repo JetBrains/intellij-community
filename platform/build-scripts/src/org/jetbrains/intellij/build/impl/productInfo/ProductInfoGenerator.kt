@@ -70,6 +70,7 @@ data class ProductInfoData(
 @Serializable
 data class ProductInfoLaunchData(
   val os: String,
+  val arch: String,
   val launcherPath: String,
   val javaExecutablePath: String?,
   val vmOptionsFilePath: String,

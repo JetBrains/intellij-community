@@ -109,12 +109,12 @@ class JKLiteralExpression(
             LiteralType.FLOAT -> typeFactory.types.float
             LiteralType.DOUBLE -> typeFactory.types.double
             LiteralType.NULL -> typeFactory.types.nullableAny
-            LiteralType.STRING -> typeFactory.types.string
+            LiteralType.STRING, LiteralType.TEXT_BLOCK -> typeFactory.types.string
         }
     }
 
     enum class LiteralType {
-        STRING, CHAR, BOOLEAN, NULL, INT, LONG, FLOAT, DOUBLE
+        STRING, TEXT_BLOCK, CHAR, BOOLEAN, NULL, INT, LONG, FLOAT, DOUBLE
     }
 }
 
@@ -188,7 +188,7 @@ class JKDelegationConstructorCall(
 
 class JKCallExpressionImpl(
     override val identifier: JKMethodSymbol,
-    arguments: JKArgumentList,
+    arguments: JKArgumentList = JKArgumentList(),
     typeArgumentList: JKTypeArgumentList = JKTypeArgumentList(),
     override val expressionType: JKType? = null,
 ) : JKCallExpression() {

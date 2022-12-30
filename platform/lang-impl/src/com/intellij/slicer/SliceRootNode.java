@@ -9,10 +9,7 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public final class SliceRootNode extends SliceNode {
   private final SliceUsage myRootUsage;
@@ -33,7 +30,7 @@ public final class SliceRootNode extends SliceNode {
     else {
       file = element.getContainingFile();
     }
-    return LanguageSlicing.getProvider(file).createRootUsage(file, usage.params);
+    return LanguageSlicing.getProvider(Objects.requireNonNull(file)).createRootUsage(file, usage.params);
   }
 
   private void switchToAllLeavesTogether(SliceUsage rootUsage) {
@@ -44,7 +41,7 @@ public final class SliceRootNode extends SliceNode {
   @NotNull
   @Override
   public SliceRootNode copy() {
-    SliceUsage newUsage = getValue().copy();
+    SliceUsage newUsage = Objects.requireNonNull(getValue()).copy();
     SliceRootNode newNode = new SliceRootNode(getProject(), new DuplicateMap(), newUsage);
     newNode.dupNodeCalculated = dupNodeCalculated;
     newNode.duplicate = duplicate;

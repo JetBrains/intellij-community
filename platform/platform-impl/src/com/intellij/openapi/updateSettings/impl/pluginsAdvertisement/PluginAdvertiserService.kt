@@ -270,7 +270,9 @@ open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdv
     val ids = plugins.mapTo(LinkedHashSet()) { it.id } +
               disabledPlugins.map { it.pluginId }
 
-    val pluginNames = plugins.joinToString { it.pluginName } + disabledPlugins.joinToString { it.name }
+    val pluginNames = (plugins.map { it.pluginName } + disabledPlugins.map { it.name })
+      .sorted()
+      .joinToString(", ")
 
     val addressedFeatures = collectFeaturesByName(ids, features)
 

@@ -351,7 +351,7 @@ public final class ConstructorInsertHandler implements InsertHandler<LookupEleme
 
   @Contract("null -> false")
   private static boolean shouldStartTypeTemplate(PsiTypeElement[] parameters) {
-    if (parameters != null && parameters.length > 0) {
+    if (parameters != null) {
       for (PsiTypeElement parameter : parameters) {
         if (parameter.getType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
           return true;

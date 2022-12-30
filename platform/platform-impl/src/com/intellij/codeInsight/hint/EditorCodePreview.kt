@@ -40,7 +40,7 @@ interface EditorCodePreview: Disposable {
       return codePreview
     }
 
-    fun getActivePreview(editor: Editor): EditorCodePreview? {
+    private fun getActivePreview(editor: Editor): EditorCodePreview? {
       return editor.getUserData(EDITOR_PREVIEW_KEY)
     }
   }

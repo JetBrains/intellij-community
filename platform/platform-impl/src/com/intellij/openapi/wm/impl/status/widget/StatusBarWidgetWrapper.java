@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl.status.widget;
 import com.intellij.ide.HelpTooltipManager;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -66,7 +65,7 @@ public interface StatusBarWidgetWrapper {
         @Override
         public boolean onClick(@NotNull MouseEvent e, int clickCount) {
           if (myPopupState.isRecentlyHidden()) return false; // do not show new popup
-          final ListPopup popup = myPresentation.getPopupStep();
+          JBPopup popup = myPresentation.getPopup();
           if (popup == null) return false;
           UIEventLogger.StatusBarPopupShown.log(myPresentation.getClass());
           final Dimension dimension = getSizeFor(popup);
@@ -76,7 +75,7 @@ public interface StatusBarWidgetWrapper {
           return true;
         }
 
-        private Dimension getSizeFor(ListPopup popup) {
+        private static @NotNull Dimension getSizeFor(@NotNull JBPopup popup) {
           if (popup instanceof AbstractPopup) {
             return ((AbstractPopup)popup).getSizeForPositioning();
           }

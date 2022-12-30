@@ -625,6 +625,11 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
      * N.b. IDEA's build process does not ensure deletion of cached information upon deletion of some file under a local root,
      * but false positives are not a logical error, since code is prepared for that and disk access is performed upon class/resource loading.
      */
+    public @NotNull UrlClassLoader.Builder usePersistentClasspathIndexForLocalClassDirectories(boolean value) {
+      this.isClassPathIndexEnabled = value;
+      return this;
+    }
+
     public @NotNull UrlClassLoader.Builder usePersistentClasspathIndexForLocalClassDirectories() {
       this.isClassPathIndexEnabled = isClassPathIndexEnabledGlobalValue;
       return this;

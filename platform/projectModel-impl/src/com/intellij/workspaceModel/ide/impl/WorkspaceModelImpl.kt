@@ -4,12 +4,17 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
@@ -21,7 +26,7 @@ import kotlin.system.measureTimeMillis
 open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
   @Volatile
   var loadedFromCache = false
-    private set
+    protected set
 
   final override val entityStorage: VersionedEntityStorageImpl
 
@@ -89,7 +94,10 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     val builder = MutableEntityStorage.from(before)
     val result = updater(builder)
     startPreUpdateHandlers(before, builder)
+
     val changes = builder.collectChanges(before)
+    this.initializeBridges(changes, builder)
+
     val newStorage = builder.toSnapshot()
     if (Registry.`is`("ide.workspace.model.assertions.on.update", false)) {
       before.assertConsistency()
@@ -99,11 +107,15 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     return result
   }
 
+  /**
+   * Update project model without the notification to message bus and without resetting accumulated changes.
+   *
+   * This method doesn't require write action.
+   */
+  @Synchronized
   final override fun <R> updateProjectModelSilent(updater: (MutableEntityStorage) -> R): R {
     if (!projectModelUpdating.compareAndSet(false, true)) {
-      //throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
-      // Need to fix all cases and change to the runtime exception
-      log.warn("Recursive call to `updateProjectModel` is not allowed")
+      throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
     }
     val before = entityStorage.current
     val builder = MutableEntityStorage.from(entityStorage.current)
@@ -128,44 +140,44 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
 
     if (entityStorage.version != replacement.version) return false
 
-    entityStorage.replace(replacement.snapshot, replacement.changes, this::onBeforeChanged, this::onChanged, null)
+    val builder = replacement.builder
+    this.initializeBridges(replacement.changes, builder)
+    entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged, null)
 
     return true
   }
 
   final override fun dispose() = Unit
 
+  private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    if (project.isDisposed) return
+    logErrorOnEventHandling {
+      (project.serviceOrNull<ProjectLibraryTable>() as? ProjectLibraryTableBridgeImpl)?.initializeLibraryBridges(change, builder)
+    }
+    logErrorOnEventHandling {
+      (project.serviceOrNull<ModuleManager>() as? ModuleManagerBridgeImpl)?.initializeBridges(change, builder)
+    }
+  }
+
+  /**
+   * Order of events: initialize project libraries, initialize module bridge + module friends, all other listeners
+   */
   private fun onBeforeChanged(change: VersionedStorageChange) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
-    /**
-     * Order of events: initialize project libraries, initialize module bridge + module friends, all other listeners
-     */
 
-    val workspaceModelTopics = WorkspaceModelTopics.getInstance(project)
     logErrorOnEventHandling {
-      workspaceModelTopics.syncProjectLibs(project.messageBus).beforeChanged(change)
-    }
-    logErrorOnEventHandling {
-      workspaceModelTopics.syncModuleBridge(project.messageBus).beforeChanged(change)
-    }
-    logErrorOnEventHandling {
-      workspaceModelTopics.syncPublisher(project.messageBus).beforeChanged(change)
+      project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).beforeChanged(change)
     }
   }
 
   private fun onChanged(change: VersionedStorageChange) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
-    val workspaceModelTopics = WorkspaceModelTopics.getInstance(project)
+
     logErrorOnEventHandling {
-      workspaceModelTopics.syncProjectLibs(project.messageBus).changed(change)
-    }
-    logErrorOnEventHandling {
-      workspaceModelTopics.syncModuleBridge(project.messageBus).changed(change)
-    }
-    logErrorOnEventHandling {
-      workspaceModelTopics.syncPublisher(project.messageBus).changed(change)
+      project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).changed(change)
     }
   }
 

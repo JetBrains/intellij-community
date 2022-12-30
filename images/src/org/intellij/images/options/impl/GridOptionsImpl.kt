@@ -52,7 +52,7 @@ internal class GridOptionsImpl(private val propertyChangeSupport: PropertyChange
            EditorColorsManager.getInstance().globalScheme.getColor(GRID_LINE_COLOR_KEY) ?: JBColor.DARK_GRAY
   }
 
-  fun setLineMinZoomFactor(lineMinZoomFactor: Int) {
+  private fun setLineMinZoomFactor(lineMinZoomFactor: Int) {
     val oldValue = this.lineMinZoomFactor
     if (oldValue != lineMinZoomFactor) {
       this.lineMinZoomFactor = lineMinZoomFactor
@@ -60,7 +60,7 @@ internal class GridOptionsImpl(private val propertyChangeSupport: PropertyChange
     }
   }
 
-  fun setLineSpan(lineSpan: Int) {
+  private fun setLineSpan(lineSpan: Int) {
     val oldValue = this.lineSpan
     if (oldValue != lineSpan) {
       this.lineSpan = lineSpan

@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.initialization;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightJavaInspectionTestCase;
@@ -13,7 +14,23 @@ public class OverridableMethodCallDuringObjectConstructionInspectionTest extends
 
   public void testOverridableMethodCallDuringObjectConstruction() {
     doTest();
-    checkQuickFix(InspectionGadgetsBundle.message("make.method.final.fix.name", "a"));
+    final IntentionAction intention = myFixture.getAvailableIntention(InspectionGadgetsBundle.message("make.method.final.fix.name", "a"));
+    assertNotNull(intention);
+    myFixture.checkPreviewAndLaunchAction(intention);
+    myFixture.checkResultByFile(getTestName(false) + ".after.java");
+  }
+
+  public void testIntentionPreviewWhenMethodIsInAnotherFile() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.addClass("""
+                         class One { 
+                           public void a() {}
+                         }
+                         """);
+    final IntentionAction intention = myFixture.getAvailableIntention(InspectionGadgetsBundle.message("make.method.final.fix.name", "a"));
+    assertNotNull(intention);
+    String customPreviewText = myFixture.getIntentionPreviewText(intention);
+    assertEquals("public final void a() {}", customPreviewText);
   }
 
   public void testNoQuickFixes() {

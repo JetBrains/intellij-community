@@ -41,7 +41,7 @@ open class SampleEntity2Impl(val dataSource: SampleEntity2Data) : SampleEntity2,
     return connections
   }
 
-  class Builder(val result: SampleEntity2Data?) : ModifiableWorkspaceEntityBase<SampleEntity2>(), SampleEntity2.Builder {
+  class Builder(var result: SampleEntity2Data?) : ModifiableWorkspaceEntityBase<SampleEntity2>(), SampleEntity2.Builder {
     constructor() : this(SampleEntity2Data())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -59,6 +59,9 @@ open class SampleEntity2Impl(val dataSource: SampleEntity2Data) : SampleEntity2,
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -82,10 +85,10 @@ open class SampleEntity2Impl(val dataSource: SampleEntity2Data) : SampleEntity2,
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SampleEntity2
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
-      this.boolData = dataSource.boolData
-      this.optionalData = dataSource.optionalData
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.boolData != dataSource.boolData) this.boolData = dataSource.boolData
+      if (this.optionalData != dataSource?.optionalData) this.optionalData = dataSource.optionalData
       if (parents != null) {
       }
     }
@@ -182,7 +185,7 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SampleEntity2Data
 
@@ -195,7 +198,7 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SampleEntity2Data
 

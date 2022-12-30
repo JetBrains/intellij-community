@@ -55,7 +55,7 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
   @XCollection(propertyElementName = "explicitly-accepted", elementName = "name", valueAttributeName = "")
   public List<String> acceptedNames = new ArrayList<>();
 
-  static final class AcceptedLanguageLevelsSettingsStartupActivity implements StartupActivity.DumbAware {
+  private static final class AcceptedLanguageLevelsSettingsStartupActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
       DumbService.getInstance(project).smartInvokeLater(() -> projectOpened(project));

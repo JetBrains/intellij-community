@@ -7,7 +7,6 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
-import kotlin.collections.HashMap
 
 fun MutableEntityStorage.addModuleEntity(name: String,
                                          dependencies: List<ModuleDependencyItem>,
@@ -107,31 +106,37 @@ fun MutableEntityStorage.addCustomSourceRootPropertiesEntity(sourceRoot: SourceR
 fun MutableEntityStorage.addContentRootEntity(url: VirtualFileUrl,
                                               excludedUrls: List<VirtualFileUrl>,
                                               excludedPatterns: List<String>,
-                                              module: ModuleEntity): ContentRootEntity {
-  return addContentRootEntityWithCustomEntitySource(url, excludedUrls, excludedPatterns, module, module.entitySource)
+                                              module: ModuleEntity,
+                                              source: EntitySource = module.entitySource): ContentRootEntity {
+  val excludes = excludedUrls.map { this addEntity ExcludeUrlEntity(it, source) }
+  return this addEntity ContentRootEntity(url, excludedPatterns, source) {
+    this.excludedUrls = excludes
+    this.module = module
+  }
 }
 
-/**
- * Entity source of content root is *almost* the same as the entity source of the corresponding module.
- * Please update assertConsistency in [ContentRootEntityData] if you're using this method.
- */
+@Deprecated(replaceWith = ReplaceWith("addContentRootEntity(url, excludedUrls, excludedPatterns, module, source)"),
+            message = "Zhenja please use addContentRootEntity method")
 fun MutableEntityStorage.addContentRootEntityWithCustomEntitySource(url: VirtualFileUrl,
                                                                     excludedUrls: List<VirtualFileUrl>,
                                                                     excludedPatterns: List<String>,
                                                                     module: ModuleEntity,
                                                                     source: EntitySource): ContentRootEntity {
-  val entity = ContentRootEntity(url, excludedUrls, excludedPatterns, source) {
-    this.module = module
-  }
-  this.addEntity(entity)
-  return entity
+  return addContentRootEntity(url, excludedUrls, excludedPatterns, module, source)
 }
+
 
 fun MutableEntityStorage.addLibraryEntity(name: String, tableId: LibraryTableId, roots: List<LibraryRoot>,
                                           excludedRoots: List<VirtualFileUrl>, source: EntitySource): LibraryEntity {
-  val entity = LibraryEntity(name, tableId, roots, excludedRoots, source)
-  this.addEntity(entity)
-  return entity
+  val excludes = excludedRoots.map { this addEntity ExcludeUrlEntity(it, source) }
+  return addLibraryEntityWithExcludes(name, tableId, roots, excludes, source)
+}
+
+fun MutableEntityStorage.addLibraryEntityWithExcludes(name: String, tableId: LibraryTableId, roots: List<LibraryRoot>,
+                                                      excludedRoots: List<ExcludeUrlEntity>, source: EntitySource): LibraryEntity {
+  return this addEntity LibraryEntity(name, tableId, roots, source) {
+    this.excludedRoots = excludedRoots
+  }
 }
 
 /**
@@ -404,7 +409,7 @@ fun ModuleDependencyItem.equalsAsOrderEntry(other: ModuleDependencyItem,
             else {
               val beforeLibrary = thisStore.resolve(library)!!
               val afterLibrary = otherStore.resolve(other.library)!!
-              if (beforeLibrary.excludedRoots != afterLibrary.excludedRoots) false
+              if (beforeLibrary.excludedRoots.map { it.url } != afterLibrary.excludedRoots.map { it.url }) false
               else {
                 val beforeLibraryKind = beforeLibrary.libraryProperties?.libraryType
                 val afterLibraryKind = afterLibrary.libraryProperties?.libraryType

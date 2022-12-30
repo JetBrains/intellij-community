@@ -25,7 +25,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.ClientProperty;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
@@ -198,8 +197,8 @@ public final class ActionUtil {
     return false;
   }
 
-  static void assertDeprecatedActionGroupFlagsNotChanged(@NotNull ActionGroup group, @NotNull AnActionEvent event,
-                                                         boolean wasPopup, boolean wasHideIfEmpty, boolean wasDisableIfEmpty) {
+  private static void assertDeprecatedActionGroupFlagsNotChanged(@NotNull ActionGroup group, @NotNull AnActionEvent event,
+                                                                 boolean wasPopup, boolean wasHideIfEmpty, boolean wasDisableIfEmpty) {
     boolean warnPopup = wasPopup != group.isPopup(event.getPlace());
     boolean warnHide = wasHideIfEmpty != group.hideIfNoVisibleChildren();
     boolean warnDisable = wasDisableIfEmpty != group.disableIfNoVisibleChildren();
@@ -410,11 +409,11 @@ public final class ActionUtil {
   }
 
   public static @NotNull List<AnAction> getActions(@NotNull JComponent component) {
-    return ContainerUtil.notNullize(ComponentUtil.getClientProperty(component, AnAction.ACTIONS_KEY));
+    return ContainerUtil.notNullize(ClientProperty.get(component, AnAction.ACTIONS_KEY));
   }
 
   public static void clearActions(@NotNull JComponent component) {
-    ComponentUtil.putClientProperty(component, AnAction.ACTIONS_KEY, null);
+    ClientProperty.put(component, AnAction.ACTIONS_KEY, null);
   }
 
   public static void copyRegisteredShortcuts(@NotNull JComponent to, @NotNull JComponent from) {

@@ -12,8 +12,8 @@ import kotlin.math.sqrt
  * @author Konstantin Bulenkov
  */
 class UIMouseTracker : IdeEventQueue.EventDispatcher {
-  var mouseCoordinates = MouseInfo.getPointerInfo().location ?: Point(0,0)
-  var totalMouseTrack = 0f
+  private var mouseCoordinates = MouseInfo.getPointerInfo().location ?: Point(0, 0)
+  private var totalMouseTrack = 0f
 
   override fun dispatch(e: AWTEvent): Boolean {
     if (e is MouseEvent) {

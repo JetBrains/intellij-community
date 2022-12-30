@@ -44,7 +44,7 @@ open class AttachedEntityImpl(val dataSource: AttachedEntityData) : AttachedEnti
     return connections
   }
 
-  class Builder(val result: AttachedEntityData?) : ModifiableWorkspaceEntityBase<AttachedEntity>(), AttachedEntity.Builder {
+  class Builder(var result: AttachedEntityData?) : ModifiableWorkspaceEntityBase<AttachedEntity>(), AttachedEntity.Builder {
     constructor() : this(AttachedEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -62,6 +62,9 @@ open class AttachedEntityImpl(val dataSource: AttachedEntityData) : AttachedEnti
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -95,10 +98,13 @@ open class AttachedEntityImpl(val dataSource: AttachedEntityData) : AttachedEnti
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as AttachedEntity
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
       if (parents != null) {
-        this.ref = parents.filterIsInstance<MainEntity>().single()
+        val refNew = parents.filterIsInstance<MainEntity>().single()
+        if ((this.ref as WorkspaceEntityBase).id != (refNew as WorkspaceEntityBase).id) {
+          this.ref = refNew
+        }
       }
     }
 
@@ -210,7 +216,7 @@ class AttachedEntityData : WorkspaceEntityData<AttachedEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as AttachedEntityData
 
@@ -221,7 +227,7 @@ class AttachedEntityData : WorkspaceEntityData<AttachedEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as AttachedEntityData
 

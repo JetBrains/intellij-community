@@ -137,14 +137,11 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
     int _y = y;
     for (Icon icon : myScaledIcons()) {
       if (icon == null) continue;
-      switch (myAlignment) {
-        case TOP: _y = y;
-          break;
-        case CENTER: _y = y + (myHeight - icon.getIconHeight())/2;
-          break;
-        case BOTTOM: _y = y + (myHeight - icon.getIconHeight());
-          break;
-      }
+      _y = switch (myAlignment) {
+        case TOP -> y;
+        case CENTER -> y + (myHeight - icon.getIconHeight()) / 2;
+        case BOTTOM -> y + (myHeight - icon.getIconHeight());
+      };
       icon.paintIcon(c, g, _x, _y);
       _x += icon.getIconWidth();
       //_y += icon.getIconHeight();

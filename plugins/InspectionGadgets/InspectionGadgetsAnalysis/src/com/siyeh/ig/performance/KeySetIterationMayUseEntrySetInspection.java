@@ -11,6 +11,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -18,14 +19,12 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -206,7 +205,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
           String keyVariableText = keyParameterText + "=" + replacement + ".getKey();";
           PsiStatement keyDeclaration = JavaPsiFacade.getElementFactory(project).createStatementFromText(keyVariableText, body);
           codeBlock.addAfter(keyDeclaration, brace);
-          accesses = StreamEx.of(accesses).select(PsiMethodCallExpression.class).collect(Collectors.toList());
+          accesses = ContainerUtil.filterIsInstance(accesses, PsiMethodCallExpression.class);
         }
       }
       replaceParameterAccess(accesses, keyTypeText, replacement, mode);

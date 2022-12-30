@@ -45,7 +45,7 @@ open class SoftLinkReferencedChildImpl(val dataSource: SoftLinkReferencedChildDa
     return connections
   }
 
-  class Builder(val result: SoftLinkReferencedChildData?) : ModifiableWorkspaceEntityBase<SoftLinkReferencedChild>(), SoftLinkReferencedChild.Builder {
+  class Builder(var result: SoftLinkReferencedChildData?) : ModifiableWorkspaceEntityBase<SoftLinkReferencedChild>(), SoftLinkReferencedChild.Builder {
     constructor() : this(SoftLinkReferencedChildData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -63,6 +63,9 @@ open class SoftLinkReferencedChildImpl(val dataSource: SoftLinkReferencedChildDa
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -93,9 +96,12 @@ open class SoftLinkReferencedChildImpl(val dataSource: SoftLinkReferencedChildDa
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SoftLinkReferencedChild
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<EntityWithSoftLinks>().single()
+        val parentEntityNew = parents.filterIsInstance<EntityWithSoftLinks>().single()
+        if ((this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 
@@ -202,7 +208,7 @@ class SoftLinkReferencedChildData : WorkspaceEntityData<SoftLinkReferencedChild>
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SoftLinkReferencedChildData
 
@@ -212,7 +218,7 @@ class SoftLinkReferencedChildData : WorkspaceEntityData<SoftLinkReferencedChild>
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SoftLinkReferencedChildData
 

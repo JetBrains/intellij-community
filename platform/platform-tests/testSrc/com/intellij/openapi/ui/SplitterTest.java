@@ -127,16 +127,14 @@ public class SplitterTest extends TestCase{
       Dimension firstMinimum = splitter.getFirstComponent().getMinimumSize();
       Dimension secondMinimum = splitter.getSecondComponent().getMinimumSize();
       switch (splitter.getLackOfSpaceStrategy()) {
-        case SIMPLE_RATIO:
+        case SIMPLE_RATIO -> {
           assertEquals(firstSize.width < firstMinimum.width, secondSize.width < secondMinimum.width);
           assertEquals(firstSize.height < firstMinimum.height, secondSize.height < secondMinimum.height);
-          break;
-        case HONOR_THE_FIRST_MIN_SIZE:
+        }
+        case HONOR_THE_FIRST_MIN_SIZE ->
           assertTrue(splitter.getOrientation() ? firstSize.height >= firstMinimum.height : firstSize.width >= firstMinimum.width);
-          break;
-        case HONOR_THE_SECOND_MIN_SIZE:
+        case HONOR_THE_SECOND_MIN_SIZE ->
           assertTrue(splitter.getOrientation() ? secondSize.height >= secondMinimum.height : secondSize.width >= secondMinimum.width);
-          break;
       }
     }
   }

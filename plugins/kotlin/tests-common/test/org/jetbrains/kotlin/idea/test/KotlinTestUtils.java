@@ -24,6 +24,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.PathUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import junit.framework.TestCase;
 import kotlin.collections.CollectionsKt;
 import kotlin.io.path.PathsKt;
@@ -514,7 +515,12 @@ public class KotlinTestUtils {
 
     private static boolean compileJavaFiles(@NotNull Collection<File> files, List<String> options, @Nullable File javaErrorFile)
             throws IOException {
-        JavaCompiler javaCompiler = ToolProvider.getSystemJavaCompiler();
+
+        JavaCompiler javaCompiler = ServiceLoader.load(
+                JavaCompiler.class,
+                UrlClassLoader.build().parent(ClassLoader.getSystemClassLoader()
+                ).get()).findFirst().get();
+
         DiagnosticCollector<JavaFileObject> diagnosticCollector = new DiagnosticCollector<>();
         try (StandardJavaFileManager fileManager =
                      javaCompiler.getStandardFileManager(diagnosticCollector, Locale.ENGLISH, StandardCharsets.UTF_8)) {

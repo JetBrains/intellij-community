@@ -1,6 +1,6 @@
-@interface NonNls {}
+@interface Ann {}
 
 @interface Foo {
-    @NonNls String value();
-    @NonNls String value2() default "test";
+    @Ann String value();
+    @Ann String value2() default "test";
 }

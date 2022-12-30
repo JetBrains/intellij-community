@@ -24,9 +24,9 @@ object PsiPrecedences {
         precedence = builder
     }
 
-    val PRECEDENCE_OF_ATOMIC_EXPRESSION: Int = -1
-    val PRECEDENCE_OF_PREFIX_EXPRESSION: Int = PREFIX.ordinal
-    val PRECEDENCE_OF_POSTFIX_EXPRESSION: Int = POSTFIX.ordinal
+    private val PRECEDENCE_OF_ATOMIC_EXPRESSION: Int = -1
+    private val PRECEDENCE_OF_PREFIX_EXPRESSION: Int = PREFIX.ordinal
+    private val PRECEDENCE_OF_POSTFIX_EXPRESSION: Int = POSTFIX.ordinal
 
     fun getPrecedence(expression: KtExpression): Int {
         return when (expression) {

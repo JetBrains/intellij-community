@@ -1,23 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.dvcs.DvcsRememberedInputs;
-import com.intellij.dvcs.DvcsUtil;
-import com.intellij.dvcs.hosting.RepositoryHostingService;
-import com.intellij.dvcs.hosting.RepositoryListLoader;
-import com.intellij.dvcs.hosting.RepositoryListLoadingException;
 import com.intellij.dvcs.repo.ClonePathProvider;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -28,13 +17,10 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBOptionButton;
-import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.progress.ComponentVisibilityProgressManager;
 import com.intellij.util.ui.JBDimension;
@@ -49,14 +35,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
 
 import static com.intellij.util.ui.UI.PanelFactory;
 
@@ -73,7 +57,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   private ComponentVisibilityProgressManager mySpinnerProgressManager;
   private JButton myTestButton; // test repository
   private MyTextFieldWithBrowseButton myDirectoryField;
-  private LoginButtonComponent myLoginButtonComponent;
 
   protected final @NotNull Project myProject;
   protected final @NotNull String myVcsDirectoryName;
@@ -81,11 +64,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   private @Nullable ValidationInfo myCreateDirectoryValidationInfo;
   private @Nullable ValidationInfo myRepositoryTestValidationInfo;
   private @Nullable ProgressIndicator myRepositoryTestProgressIndicator;
-
-  private final @NotNull List<String> myLoadedRepositoryHostingServicesNames;
-  private @Nullable Alarm myRepositoryUrlAutoCompletionTooltipAlarm;
-  private final @NotNull Set<String> myUniqueAvailableRepositories;
-  private final @NotNull List<ValidationInfo> myRepositoryListLoadingErrors = new ArrayList<>();
 
   public CloneDvcsDialog(@NotNull Project project, @NotNull @Nls String displayName, @NotNull String vcsDirectoryName) {
     this(project, displayName, vcsDirectoryName, null);
@@ -98,15 +76,11 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     myVcsDirectoryName = vcsDirectoryName;
-    myLoadedRepositoryHostingServicesNames = new ArrayList<>();
-    myUniqueAvailableRepositories = new HashSet<>();
 
     initComponents(defaultUrl);
-    Map<String, RepositoryListLoader> loadersToSchedule = initUrlAutocomplete();
     setTitle(DvcsBundle.message("clone.title"));
     setOKButtonText(DvcsBundle.message("clone.button"));
     init();
-    scheduleLater(loadersToSchedule);
   }
 
   @Override
@@ -197,125 +171,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     }
   }
 
-  /**
-   * Initializes component structure for repository list loading
-   *
-   * @return already enabled loaders for pre-scheduling
-   */
-  private Map<String, RepositoryListLoader> initUrlAutocomplete() {
-    Collection<? extends RepositoryHostingService> repositoryHostingServices = getRepositoryHostingServices();
-    if (repositoryHostingServices.size() > 1) {
-      myRepositoryUrlAutoCompletionTooltipAlarm = new Alarm(myRepositoryUrlCombobox, getDisposable());
-    }
-
-    List<Action> loginActions = new ArrayList<>();
-    Map<String, RepositoryListLoader> enabledLoaders = new HashMap<>();
-    for (RepositoryHostingService service : repositoryHostingServices) {
-      String serviceDisplayName = service.getServiceDisplayName();
-      RepositoryListLoader loader = service.getRepositoryListLoader(myProject);
-      if (loader == null) continue;
-      if (loader.isEnabled()) {
-        enabledLoaders.put(serviceDisplayName, loader);
-      }
-      else {
-        loginActions.add(new AbstractAction(DvcsBundle.message("clone.repository.url.autocomplete.login.text", serviceDisplayName)) {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            if (loader.enable(myLoginButtonComponent.getPanel())) {
-              myLoginButtonComponent.removeAction(this);
-              schedule(serviceDisplayName, loader);
-            }
-          }
-        });
-      }
-    }
-
-    myRepositoryUrlField.addFocusListener(new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        showRepositoryUrlAutoCompletionTooltip();
-      }
-    });
-
-    myLoginButtonComponent = new LoginButtonComponent(loginActions);
-    return enabledLoaders;
-  }
-
-  protected @NotNull Collection<? extends RepositoryHostingService> getRepositoryHostingServices() {
-    return Collections.emptyList();
-  }
-
-  private void scheduleLater(@NotNull Map<String, RepositoryListLoader> loaders) {
-    ApplicationManager.getApplication().invokeLater(() -> loaders.forEach(this::schedule), ModalityState.stateForComponent(getRootPane()));
-  }
-
-  private void schedule(@NotNull String serviceDisplayName, @NotNull RepositoryListLoader loader) {
-    mySpinnerProgressManager.run(new Task.Backgroundable(myProject, DvcsBundle.message("progress.title.visible")) {
-      private final List<String> myNewRepositories = new ArrayList<>();
-      private final List<RepositoryListLoadingException> myErrors = new ArrayList<>();
-
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        RepositoryListLoader.Result loadingResult =
-          loader.getAvailableRepositoriesFromMultipleSources(indicator);
-        for (String repository : loadingResult.getUrls()) {
-          if (myUniqueAvailableRepositories.add(repository)) {
-            myNewRepositories.add(repository);
-          }
-        }
-        myErrors.addAll(loadingResult.getErrors());
-      }
-
-      @Override
-      public void onSuccess() {
-        if (mySpinnerProgressManager.getDisposed()) return;
-        if (!myNewRepositories.isEmpty()) {
-          // otherwise editor content will be reset
-          @NlsSafe String text = myRepositoryUrlField.getText();
-          myRepositoryUrlCombobox.setSelectedItem(text);
-          myRepositoryUrlComboboxModel.addAll(myRepositoryUrlComboboxModel.getSize(), myNewRepositories);
-          myRepositoryUrlField.setVariants(myRepositoryUrlComboboxModel.getItems());
-        }
-        myLoadedRepositoryHostingServicesNames.add(serviceDisplayName);
-        showRepositoryUrlAutoCompletionTooltip();
-        if (!myErrors.isEmpty()) {
-          for (RepositoryListLoadingException error : myErrors) {
-            @Nls StringBuilder errorMessageBuilder = new StringBuilder();
-            errorMessageBuilder.append(error.getMessage());
-            Throwable cause = error.getCause();
-            if (cause != null) errorMessageBuilder.append(": ").append(cause.getMessage());
-            @Nls String message = errorMessageBuilder.toString();
-            myRepositoryListLoadingErrors.add(new ValidationInfo(message).asWarning().withOKEnabled());
-          }
-          startTrackingValidation();
-        }
-      }
-    });
-  }
-
-  private void showRepositoryUrlAutoCompletionTooltip() {
-    if (myRepositoryUrlAutoCompletionTooltipAlarm == null) {
-      showRepositoryUrlAutoCompletionTooltipNow();
-    }
-    else {
-      myRepositoryUrlAutoCompletionTooltipAlarm.cancelAllRequests();
-      myRepositoryUrlAutoCompletionTooltipAlarm.addComponentRequest(this::showRepositoryUrlAutoCompletionTooltipNow, 1);
-    }
-  }
-
-  private void showRepositoryUrlAutoCompletionTooltipNow() {
-    if (!hasErrors(myRepositoryUrlCombobox) && !myLoadedRepositoryHostingServicesNames.isEmpty()) {
-      Editor editor = myRepositoryUrlField.getEditor();
-      if (editor == null) return;
-      String completionShortcutText =
-        KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
-      HintManager.getInstance().showInformationHint(editor,
-                                                    DvcsBundle.message("clone.repository.url.autocomplete.hint",
-                                                                       DvcsUtil.joinWithAnd(myLoadedRepositoryHostingServicesNames, 0),
-                                                                       completionShortcutText));
-    }
-  }
-
   private void test() {
     String testUrl = getCurrentUrlText();
     if (myRepositoryTestProgressIndicator != null) {
@@ -375,7 +230,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     ContainerUtil.addIfNotNull(infoList, myCreateDirectoryValidationInfo);
     ContainerUtil.addIfNotNull(infoList, urlValidation);
     ContainerUtil.addIfNotNull(infoList, directoryValidation);
-    infoList.addAll(myRepositoryListLoadingErrors);
     return infoList;
   }
 
@@ -410,11 +264,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   @Override
   public @Nullable JComponent getPreferredFocusedComponent() {
     return myRepositoryUrlField;
-  }
-
-  @Override
-  protected @NotNull JPanel createSouthAdditionalPanel() {
-    return myLoginButtonComponent.getPanel();
   }
 
   @Override
@@ -474,49 +323,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
           myModifiedByUser = false;
         }
       }
-    }
-  }
-
-  private static class LoginButtonComponent {
-    private final @NotNull JBOptionButton myButton;
-    private final @NotNull JPanel myPanel;
-    private final @NotNull List<Action> myActions;
-
-    LoginButtonComponent(@NotNull List<Action> actions) {
-      myButton = new JBOptionButton(ContainerUtil.getFirstItem(actions), getActionsAfterFirst(actions));
-      myPanel = PanelFactory.panel(myButton)
-        .withTooltip(DvcsBundle.message("clone.repository.url.autocomplete.login.tooltip"))
-        .createPanel();
-      myPanel.setVisible(!actions.isEmpty());
-      myPanel.setBorder(JBUI.Borders.emptyRight(16));
-      myActions = new ArrayList<>(actions);
-    }
-
-    void removeAction(@NotNull Action action) {
-      if (myActions.remove(action)) {
-        if (!myActions.isEmpty()) {
-          myButton.setAction(ContainerUtil.getFirstItem(myActions));
-          myButton.setOptions(getActionsAfterFirst(myActions));
-        }
-        else {
-          myButton.setAction(null);
-          myButton.setOptions((Action[])null);
-          myPanel.setVisible(false);
-        }
-      }
-    }
-
-    private static Action @NotNull [] getActionsAfterFirst(@NotNull List<Action> actions) {
-      if (actions.size() <= 1) {
-        return new Action[0];
-      }
-      else {
-        return actions.subList(1, actions.size()).toArray(new Action[actions.size() - 1]);
-      }
-    }
-
-    public @NotNull JPanel getPanel() {
-      return myPanel;
     }
   }
 }

@@ -11,7 +11,7 @@ import com.intellij.psi.util.findParentOfType
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlElement
 import com.intellij.psi.xml.XmlTag
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.xml.util.HtmlUtil
 import com.intellij.xml.util.XmlUtil
 import org.jetbrains.annotations.Nls
@@ -54,7 +54,7 @@ class XmlMdnDocumentationProvider : DocumentationProvider {
           val targetNamespace =
             schemaElement
               .findParentInFile { it is XmlTag && it.localName == "schema" }
-              ?.castSafelyTo<XmlTag>()
+              ?.asSafely<XmlTag>()
               ?.getAttributeValue("targetNamespace")
               ?.let {
                 when (it) {

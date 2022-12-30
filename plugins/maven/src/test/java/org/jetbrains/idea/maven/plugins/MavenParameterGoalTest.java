@@ -38,29 +38,31 @@ public class MavenParameterGoalTest extends LightJavaCodeInsightFixtureTestCase 
 
   @Test
   public void testCompletion() {
-    myFixture.configureByText("pom.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                                         "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
-                                         "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                                         "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-                                         "  <modelVersion>4.0.0</modelVersion>\n" +
-                                         "\n" +
-                                         "  <groupId>simpleMaven</groupId>\n" +
-                                         "  <artifactId>simpleMaven</artifactId>\n" +
-                                         "  <version>1.0</version>\n" +
-                                         "\n" +
-                                         "  <build>\n" +
-                                         "    <plugins>\n" +
-                                         "      <plugin>\n" +
-                                         "        <groupId>org.apache.maven.plugins</groupId>\n" +
-                                         "        <artifactId>maven-changelog-plugin</artifactId>\n" +
-                                         "        <configuration>\n" +
-                                         "          <goal><caret></goal>\n" +
-                                         "        </configuration>\n" +
-                                         "      </plugin>\n" +
-                                         "    </plugins>\n" +
-                                         "  </build>\n" +
-                                         "\n" +
-                                         "</project>\n");
+    myFixture.configureByText("pom.xml", """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <project xmlns="http://maven.apache.org/POM/4.0.0"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+        <modelVersion>4.0.0</modelVersion>
+
+        <groupId>simpleMaven</groupId>
+        <artifactId>simpleMaven</artifactId>
+        <version>1.0</version>
+
+        <build>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-changelog-plugin</artifactId>
+              <configuration>
+                <goal><caret></goal>
+              </configuration>
+            </plugin>
+          </plugins>
+        </build>
+
+      </project>
+      """);
 
     myFixture.completeBasic();
 

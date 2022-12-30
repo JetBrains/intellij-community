@@ -48,7 +48,7 @@ public abstract class AbstractTestEvent implements TestEvent {
   protected String findLocationUrl(@Nullable String name, @NotNull String fqClassName) {
     return name == null
            ? JavaTestLocator.TEST_PROTOCOL + SCHEME_SEPARATOR + fqClassName
-           : JavaTestLocator.TEST_PROTOCOL + SCHEME_SEPARATOR + StringUtil.getQualifiedName(fqClassName, StringUtil.trimEnd(name, "()"));
+           : JavaTestLocator.TEST_PROTOCOL + SCHEME_SEPARATOR + fqClassName + "/" + StringUtil.trimEnd(name, "()");
   }
 
   @Nullable

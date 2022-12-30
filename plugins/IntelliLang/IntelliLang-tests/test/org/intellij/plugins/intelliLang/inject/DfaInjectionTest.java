@@ -6,30 +6,32 @@ import org.intellij.plugins.intelliLang.Configuration;
 
 public class DfaInjectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testSimple() {
-    highlightTest("import org.intellij.lang.annotations.Language;\n" +
-                  "\n" +
-                  "class X {\n" +
-                  "  void test() {\n" +
-                  "    String javaCode = \"class X {<error descr=\"'}' expected\">\"</error>;\n" +
-                  "    foo(javaCode);\n" +
-                  "  }\n" +
-                  "  \n" +
-                  "  native void foo(@Language(\"JAVA\") String str);\n" +
-                  "}");
+    highlightTest("""
+                    import org.intellij.lang.annotations.Language;
+
+                    class X {
+                      void test() {
+                        String javaCode = "class X {<error descr="'}' expected">"</error>;
+                        foo(javaCode);
+                      }
+                     \s
+                      native void foo(@Language("JAVA") String str);
+                    }""");
   }
   
   public void testConcatenation() {
-    highlightTest("import org.intellij.lang.annotations.Language;\n" +
-                  "\n" +
-                  "class X {\n" +
-                  "  void test() {\n" +
-                  "    String content = \"void test() {\";\n" +
-                  "    content += \"}}\";\n" +
-                  "    foo(\"class X {\"+content+\"<error descr=\"'class' or 'interface' expected\">}</error>\");\n" +
-                  "  }\n" +
-                  "\n" +
-                  "  native void foo(@Language(\"JAVA\") String str);\n" +
-                  "}");
+    highlightTest("""
+                    import org.intellij.lang.annotations.Language;
+
+                    class X {
+                      void test() {
+                        String content = "void test() {";
+                        content += "}}";
+                        foo("class X {"+content+"<error descr="'class' or 'interface' expected">}</error>");
+                      }
+
+                      native void foo(@Language("JAVA") String str);
+                    }""");
   }
 
   public void highlightTest(String text) {

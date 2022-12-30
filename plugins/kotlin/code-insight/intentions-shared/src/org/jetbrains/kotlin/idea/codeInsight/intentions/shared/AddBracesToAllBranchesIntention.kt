@@ -3,10 +3,17 @@
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.elementType
+import com.intellij.refactoring.suggested.endOffset
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.siblings
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class AddBracesToAllBranchesIntention : SelfTargetingIntention<KtExpression>(
     KtExpression::class.java,
@@ -14,7 +21,11 @@ internal class AddBracesToAllBranchesIntention : SelfTargetingIntention<KtExpres
 ) {
     override fun isApplicableTo(element: KtExpression, caretOffset: Int): Boolean {
         val targetIfOrWhenExpression = targetIfOrWhenExpression(element) ?: return false
-        if (targetIfOrWhenExpression.targetBranchExpressions().isEmpty()) return false
+
+        val targetBranchExpressions = targetIfOrWhenExpression.targetBranchExpressions()
+        if (targetBranchExpressions.isEmpty()) return false
+        if (caretIsOnSingleTargetBranch(targetIfOrWhenExpression, targetBranchExpressions, caretOffset)) return false
+
         when (targetIfOrWhenExpression) {
             is KtIfExpression -> setTextGetter(KotlinBundle.lazyMessage("add.braces.to.if.all.statements"))
             is KtWhenExpression -> setTextGetter(KotlinBundle.lazyMessage("add.braces.to.when.all.entries"))
@@ -33,6 +44,29 @@ internal class AddBracesToAllBranchesIntention : SelfTargetingIntention<KtExpres
         val branchExpressions = allBranchExpressions()
         if (branchExpressions.size <= 1) return emptyList()
         return branchExpressions.filter { it !is KtBlockExpression }
+    }
+
+    private fun caretIsOnSingleTargetBranch(
+        targetIfOrWhenExpression: KtExpression,
+        targetBranchExpressions: List<KtExpression>,
+        caretOffset: Int,
+    ): Boolean {
+        val singleBranchExpression = targetBranchExpressions.singleOrNull() ?: return false
+        val startOffset = when (targetIfOrWhenExpression) {
+            is KtIfExpression -> singleBranchExpression.prevIfOrElseKeyword()
+            is KtWhenExpression -> singleBranchExpression.getStrictParentOfType<KtWhenEntry>()
+            else -> null
+        }?.startOffset ?: return false
+        return caretOffset in startOffset..singleBranchExpression.endOffset
+    }
+
+    private fun KtExpression.prevIfOrElseKeyword(): PsiElement? {
+        return getStrictParentOfType<KtContainerNodeForControlStructureBody>()
+            ?.siblings(forward = false)
+            ?.firstOrNull {
+                val elementType = it.elementType
+                elementType == KtTokens.IF_KEYWORD || elementType == KtTokens.ELSE_KEYWORD
+            }
     }
 
     companion object {

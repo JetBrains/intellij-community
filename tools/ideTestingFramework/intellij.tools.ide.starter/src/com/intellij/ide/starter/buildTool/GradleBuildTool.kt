@@ -15,7 +15,7 @@ import javax.xml.transform.stream.StreamResult
 import kotlin.io.path.*
 
 open class GradleBuildTool(testContext: IDETestContext) : BuildTool(BuildToolType.GRADLE, testContext) {
-  val localGradleRepo: Path
+  private val localGradleRepo: Path
     get() = testContext.paths.tempDir.resolve("gradle")
 
   fun useNewGradleLocalCache(): GradleBuildTool {

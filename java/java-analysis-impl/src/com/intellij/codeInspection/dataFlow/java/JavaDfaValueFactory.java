@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
@@ -202,6 +203,8 @@ public class JavaDfaValueFactory {
     }
     if (target instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)target;
+      // Assume that methods returning stream always return a new one
+      if (InheritanceUtil.isInheritor(method.getReturnType(), JAVA_UTIL_STREAM_BASE_STREAM)) return null;
       if (method.getParameterList().isEmpty() &&
           (PropertyUtilBase.isSimplePropertyGetter(method) || JavaMethodContractUtil.isPure(method) || isClassAnnotatedImmutable(method)) &&
           isContractAllowedForGetter(method)) {

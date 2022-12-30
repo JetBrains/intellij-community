@@ -82,5 +82,5 @@ abstract class PersistentContentCustomLayoutOption(private val options: Persiste
 
   abstract fun getOptionKey(): @NlsSafe String
 
-  protected fun isThisOptionSelected(): Boolean = this == options.getCurrentOption()
+  private fun isThisOptionSelected(): Boolean = this == options.getCurrentOption()
 }

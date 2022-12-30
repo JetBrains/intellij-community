@@ -271,23 +271,19 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       final M memberInfo = myTable.myMemberInfos.get(rowIndex);
-      switch (columnIndex) {
-        case CHECKED_COLUMN:
+      return switch (columnIndex) {
+        case CHECKED_COLUMN -> {
           if (myTable.myMemberInfoModel.isMemberEnabled(memberInfo)) {
-            return memberInfo.isChecked();
+            yield memberInfo.isChecked();
           }
           else {
-            return myTable.myMemberInfoModel.isCheckedWhenDisabled(memberInfo);
+            yield myTable.myMemberInfoModel.isCheckedWhenDisabled(memberInfo);
           }
-        case ABSTRACT_COLUMN:
-          {
-            return myTable.getAbstractColumnValue(memberInfo);
-          }
-        case DISPLAY_NAME_COLUMN:
-          return memberInfo.getDisplayName();
-        default:
-          throw new RuntimeException("Incorrect column index");
-      }
+        }
+        case ABSTRACT_COLUMN -> myTable.getAbstractColumnValue(memberInfo);
+        case DISPLAY_NAME_COLUMN -> memberInfo.getDisplayName();
+        default -> throw new RuntimeException("Incorrect column index");
+      };
     }
 
     @Override

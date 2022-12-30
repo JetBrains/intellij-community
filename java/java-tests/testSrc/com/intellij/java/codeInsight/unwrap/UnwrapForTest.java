@@ -7,17 +7,23 @@ public class UnwrapForTest extends UnwrapTestCase {
   public void testForWithStatement() {
     assertUnwrapped("for(int i = 0; i < 10; i++) Sys<caret>tem.gc();\n",
 
-                    "int i = 0;\n" +
-                    "Sys<caret>tem.gc();\n");
+                    """
+                      int i = 0;
+                      Sys<caret>tem.gc();
+                      """);
   }
 
   public void testForWithBlock() {
-    assertUnwrapped("for(int i = 0; i < 10; i++) {\n" +
-                    "    Sys<caret>tem.gc();\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      for(int i = 0; i < 10; i++) {
+                          Sys<caret>tem.gc();
+                      }
+                      """,
 
-                    "int i = 0;\n" +
-                    "Sys<caret>tem.gc();\n");
+                    """
+                      int i = 0;
+                      Sys<caret>tem.gc();
+                      """);
   }
 
   public void testEmptyFor() {
@@ -33,9 +39,11 @@ public class UnwrapForTest extends UnwrapTestCase {
   }
   
   public void testForEachWithBlock() {
-    assertUnwrapped("for(String s : strings) {\n" +
-                    "    Sys<caret>tem.gc();\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      for(String s : strings) {
+                          Sys<caret>tem.gc();
+                      }
+                      """,
 
                     "Sys<caret>tem.gc();\n");
   }

@@ -25,7 +25,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -128,7 +128,7 @@ public class GradleConsoleFilter implements Filter {
     }
     TextAttributes attributes = HYPERLINK_ATTRIBUTES.clone();
     if (myProject != null && !ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file)) {
-      Color color = UIUtil.getInactiveTextColor();
+      Color color = NamedColorUtil.getInactiveTextColor();
       attributes.setForegroundColor(color);
       attributes.setEffectColor(color);
     }

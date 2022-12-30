@@ -188,63 +188,42 @@ public final class HtmlSyntaxInfoUtil {
     if (backgroundColor != null) appendProperty(style, "background-color", ColorUtil.toHtmlColor(backgroundColor));
 
     switch (attributes.getFontType()) {
-      case Font.BOLD:
-        appendProperty(style, "font-weight", "bold");
-        break;
-      case Font.ITALIC:
-        appendProperty(style, "font-style", "italic");
-        break;
+      case Font.BOLD -> appendProperty(style, "font-weight", "bold");
+      case Font.ITALIC -> appendProperty(style, "font-style", "italic");
     }
 
     EffectType effectType = attributes.getEffectType();
     if (attributes.hasEffects() && effectType != null) {
       switch (effectType) {
-        case LINE_UNDERSCORE:
-          appendProperty(style, "text-decoration-line", "underline");
-          break;
-        case WAVE_UNDERSCORE:
+        case LINE_UNDERSCORE -> appendProperty(style, "text-decoration-line", "underline");
+        case WAVE_UNDERSCORE -> {
           appendProperty(style, "text-decoration-line", "underline");
           appendProperty(style, "text-decoration-style", "wavy");
-          break;
-        case BOLD_LINE_UNDERSCORE:
+        }
+        case BOLD_LINE_UNDERSCORE -> {
           appendProperty(style, "text-decoration-line", "underline");
           appendProperty(style, "text-decoration-thickness", "2px");
-          break;
-        case BOLD_DOTTED_LINE:
+        }
+        case BOLD_DOTTED_LINE -> {
           appendProperty(style, "text-decoration-line", "underline");
           appendProperty(style, "text-decoration-thickness", "2px");
           appendProperty(style, "text-decoration-style", "dotted");
-          break;
-        case STRIKEOUT:
-          appendProperty(style, "text-decoration-line", "line-through");
-          break;
-        case BOXED:
-        case SLIGHTLY_WIDER_BOX:
-        case SEARCH_MATCH:
-          appendProperty(style, "border", "1px solid");
-          break;
-        case ROUNDED_BOX:
+        }
+        case STRIKEOUT -> appendProperty(style, "text-decoration-line", "line-through");
+        case BOXED, SLIGHTLY_WIDER_BOX, SEARCH_MATCH -> appendProperty(style, "border", "1px solid");
+        case ROUNDED_BOX -> {
           appendProperty(style, "border", "1px solid");
           appendProperty(style, "border-radius", "2px");
-          break;
+        }
       }
     }
 
     if (attributes.hasEffects() && effectType != null && effectTypeColor != null) {
       switch (effectType) {
-        case LINE_UNDERSCORE:
-        case WAVE_UNDERSCORE:
-        case BOLD_LINE_UNDERSCORE:
-        case BOLD_DOTTED_LINE:
-        case STRIKEOUT:
+        case LINE_UNDERSCORE, WAVE_UNDERSCORE, BOLD_LINE_UNDERSCORE, BOLD_DOTTED_LINE, STRIKEOUT ->
           appendProperty(style, "text-decoration-color", ColorUtil.toHtmlColor(effectTypeColor));
-          break;
-        case BOXED:
-        case ROUNDED_BOX:
-        case SEARCH_MATCH:
-        case SLIGHTLY_WIDER_BOX:
+        case BOXED, ROUNDED_BOX, SEARCH_MATCH, SLIGHTLY_WIDER_BOX ->
           appendProperty(style, "border-color", ColorUtil.toHtmlColor(effectTypeColor));
-          break;
       }
     }
 

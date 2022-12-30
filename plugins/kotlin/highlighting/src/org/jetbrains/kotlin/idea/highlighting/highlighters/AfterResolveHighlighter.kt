@@ -19,7 +19,7 @@ internal abstract class AfterResolveHighlighter(
     context(KtAnalysisSession)
     abstract fun highlight(element: KtElement)
 
-    protected fun createInfoAnnotation(textRange: TextRange, message: String?, textAttributes: TextAttributesKey?) {
+    private fun createInfoAnnotation(textRange: TextRange, message: String?, textAttributes: TextAttributesKey?) {
         HiglightingFactory.createInfoAnnotation(holder, textRange, message, textAttributes)
     }
 

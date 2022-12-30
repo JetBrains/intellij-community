@@ -26,10 +26,10 @@ import java.nio.file.Paths
 class HelpSearch {
 
   companion object {
-    val resources = arrayOf("_0.cfe", "_0.cfs", "_0.si", "segments_1")
+    private val resources = arrayOf("_0.cfe", "_0.cfs", "_0.si", "segments_1")
     @NonNls
     val PREFIX = "/search/"
-    val NOT_FOUND = "[]"
+    private val NOT_FOUND = "[]"
 
     private val analyzer: StandardAnalyzer = StandardAnalyzer()
 

@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 class RemoveValVarFromParameterFix(element: KtValVarKeywordOwner) : KotlinPsiOnlyQuickFixAction<KtValVarKeywordOwner>(element) {
-    override fun getFamilyName() = KotlinBundle.message("remove.val.var.from.parameter")
+    override fun getFamilyName() = KotlinBundle.message("remove.val.or.var.from.parameter")
 
     override fun getText(): String {
         val varOrVal = element?.valOrVarKeyword?.text ?: return familyName

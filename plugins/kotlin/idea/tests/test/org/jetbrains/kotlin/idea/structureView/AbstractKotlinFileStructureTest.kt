@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import java.io.File
 
 abstract class AbstractKotlinFileStructureTest : KotlinFileStructureTestBase() {
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     override val fileExtension = "kt"
     override val treeFileName: String get() = getFileName("after")

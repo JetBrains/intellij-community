@@ -68,7 +68,7 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
     return connections
   }
 
-  class Builder(val result: ArchivePackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ArchivePackagingElementEntity>(), ArchivePackagingElementEntity.Builder {
+  class Builder(var result: ArchivePackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ArchivePackagingElementEntity>(), ArchivePackagingElementEntity.Builder {
     constructor() : this(ArchivePackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -86,6 +86,9 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -120,11 +123,17 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ArchivePackagingElementEntity
-      this.entitySource = dataSource.entitySource
-      this.fileName = dataSource.fileName
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.fileName != dataSource.fileName) this.fileName = dataSource.fileName
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
-        this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
+        val parentEntityNew = parents.filterIsInstance<CompositePackagingElementEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
+        val artifactNew = parents.filterIsInstance<ArtifactEntity?>().singleOrNull()
+        if ((artifactNew == null && this.artifact != null) || (artifactNew != null && this.artifact == null) || (artifactNew != null && this.artifact != null && (this.artifact as WorkspaceEntityBase).id != (artifactNew as WorkspaceEntityBase).id)) {
+          this.artifact = artifactNew
+        }
       }
     }
 
@@ -226,11 +235,17 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
         }
       }
       set(value) {
+        // Set list of ref types for abstract entities
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+              // Backref setup before adding to store an abstract entity
+              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
               _diff.addEntity(item_value)
             }
           }
@@ -313,7 +328,7 @@ class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingEl
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ArchivePackagingElementEntityData
 
@@ -324,7 +339,7 @@ class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingEl
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ArchivePackagingElementEntityData
 

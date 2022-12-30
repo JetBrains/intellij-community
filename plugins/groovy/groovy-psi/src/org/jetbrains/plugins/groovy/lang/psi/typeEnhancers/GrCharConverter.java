@@ -57,13 +57,10 @@ public class GrCharConverter extends GrTypeConverter {
     }
 
     if (PsiType.BOOLEAN.equals(TypesUtil.unboxPrimitiveTypeWrapper(rType))) {
-      switch (position) {
-        case ASSIGNMENT:
-        case RETURN_VALUE:
-          return ConversionResult.WARNING;
-        default:
-          return null;
-      }
+      return switch (position) {
+        case ASSIGNMENT, RETURN_VALUE -> ConversionResult.WARNING;
+        default -> null;
+      };
     }
 
     // one-symbol string-to-char conversion doesn't work with return value

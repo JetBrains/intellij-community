@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.script
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -53,18 +52,14 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
         }
 
     init {
-        val connection = project.messageBus.connect()
-        connection.subscribe(
-            ProjectTopics.PROJECT_ROOTS,
-            object : ModuleRootListener {
-                override fun rootsChanged(event: ModuleRootEvent) {
-                    if (project.isInitialized) {
-                        forceStartUpdate = true
-                        asyncRunUpdateScriptTemplates()
-                    }
-                }
-            },
-        )
+        val disposable = KotlinPluginDisposable.getInstance(project)
+        val connection = project.messageBus.connect(disposable)
+        connection.subscribe(FileTypeIndex.INDEX_CHANGE_TOPIC, FileTypeIndex.IndexChangeListener { fileType ->
+            if (fileType == ScriptDefinitionMarkerFileType && project.isInitialized) {
+                forceStartUpdate = true
+                asyncRunUpdateScriptTemplates()
+            }
+        })
     }
 
     private fun asyncRunUpdateScriptTemplates() {
@@ -110,15 +105,8 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
                 val pluginDisposable = KotlinPluginDisposable.getInstance(project)
                 val (templates, classpath) =
                     ReadAction.nonBlocking(Callable {
-                        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
-                            val files = mutableSetOf<VirtualFile>()
-                            FileTypeIndex.processFiles(ScriptDefinitionMarkerFileType, {
-                                indicator.checkCanceled()
-                                files.add(it)
-                                true
-                            }, project.allScope())
-                            getTemplateClassPath(files, indicator)
-                        })
+                        val files = FileTypeIndex.getFiles(ScriptDefinitionMarkerFileType, project.allScope())
+                        getTemplateClassPath(files, indicator)
                     })
                         .expireWith(pluginDisposable)
                         .wrapProgress(indicator)
@@ -189,6 +177,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
     fun getTemplateClassPath(files: Collection<VirtualFile>, indicator: ProgressIndicator): Pair<Collection<String>, Collection<Path>> {
         val rootDirToTemplates: MutableMap<VirtualFile, MutableList<VirtualFile>> = hashMapOf()
         for (file in files) {
+            // parent of SCRIPT_DEFINITION_MARKERS_PATH, i.e. of `META-INF/kotlin/script/templates/`
             val dir = file.parent?.parent?.parent?.parent?.parent ?: continue
             rootDirToTemplates.getOrPut(dir) { arrayListOf() }.add(file)
         }

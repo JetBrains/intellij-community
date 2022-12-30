@@ -540,7 +540,6 @@ public class PsiUtilCore {
    * @deprecated use CompletionUtil#getOriginalElement where appropriate instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
   @Nullable
   public static <T extends PsiElement> T getOriginalElement(@NotNull T psiElement, @NotNull Class<? extends T> elementClass) {
     final PsiFile psiFile = psiElement.getContainingFile();

@@ -139,25 +139,19 @@ public final class GitPushRepoResult {
 
   @NotNull
   private static Type convertType(@NotNull GitPushNativeResult nativeResult) {
-    switch (nativeResult.getType()) {
-      case SUCCESS:
-        return Type.SUCCESS;
-      case FORCED_UPDATE:
-        return Type.FORCED;
-      case NEW_REF:
-        return Type.NEW_BRANCH;
-      case REJECTED:
-        if (nativeResult.isNonFFUpdate()) return Type.REJECTED_NO_FF;
-        if (nativeResult.isStaleInfo()) return Type.REJECTED_STALE_INFO;
-        return Type.REJECTED_OTHER;
-      case UP_TO_DATE:
-        return Type.UP_TO_DATE;
-      case ERROR:
-        return Type.ERROR;
-      case DELETED:
-      default:
-        throw new IllegalArgumentException("Conversion is not supported: " + nativeResult.getType());
-    }
+    return switch (nativeResult.getType()) {
+      case SUCCESS -> Type.SUCCESS;
+      case FORCED_UPDATE -> Type.FORCED;
+      case NEW_REF -> Type.NEW_BRANCH;
+      case REJECTED -> {
+        if (nativeResult.isNonFFUpdate()) yield Type.REJECTED_NO_FF;
+        if (nativeResult.isStaleInfo()) yield Type.REJECTED_STALE_INFO;
+        yield Type.REJECTED_OTHER;
+      }
+      case UP_TO_DATE -> Type.UP_TO_DATE;
+      case ERROR -> Type.ERROR;
+      case DELETED -> throw new IllegalArgumentException("Conversion is not supported: " + nativeResult.getType());
+    };
   }
 
   @NonNls

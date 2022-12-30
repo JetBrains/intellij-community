@@ -18,7 +18,10 @@ import java.util.List;
  * <p>
  * Implement either {@link #getAvailableRepositories(ProgressIndicator)} to load everything in a single request
  * or {@link #getAvailableRepositoriesFromMultipleSources(ProgressIndicator)} to load in several requests
+ *
+ * @deprecated deprecated with the removal of completion from an old clone dialog
  */
+@Deprecated
 public interface RepositoryListLoader {
   /**
    * Check if this loader is configured (e.g. has necessary authentication data)

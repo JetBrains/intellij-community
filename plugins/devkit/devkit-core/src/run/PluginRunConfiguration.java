@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.SlowOperations;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -196,6 +197,10 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
               vm.defineProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
             }
           }
+        }
+
+        if (!vm.hasProperty(SlowOperations.IDEA_PLUGIN_SANDBOX_MODE)) {
+          vm.defineProperty(SlowOperations.IDEA_PLUGIN_SANDBOX_MODE, "true");
         }
 
         params.setWorkingDirectory(ideaJdkHome + File.separator + "bin" + File.separator);

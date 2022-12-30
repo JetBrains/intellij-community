@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.j2k.ast.*
 import java.io.PrintStream
 import java.util.*
 
-enum class SpecialMethod(val qualifiedClassName: String?, val methodName: String, val parameterCount: Int?) {
+enum class SpecialMethod(private val qualifiedClassName: String?, val methodName: String, val parameterCount: Int?) {
     CHAR_SEQUENCE_LENGTH(CharSequence::class.java.name, "length", 0) {
         override fun ConvertCallData.convertCall() = convertMethodCallToPropertyUse()
     },

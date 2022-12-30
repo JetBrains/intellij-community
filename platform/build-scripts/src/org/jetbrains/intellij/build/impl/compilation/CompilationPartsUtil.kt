@@ -19,7 +19,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.httpClient
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.deleteDir
 import org.jetbrains.intellij.build.io.zip
@@ -108,7 +107,7 @@ fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntri
   val items = ArrayList<PackAndUploadItem>(2048)
   spanBuilder("compute module list to pack").use { span ->
     // production, test
-    for (subRoot in Files.newDirectoryStream(context.projectOutputDirectory).use(DirectoryStream<Path>::toList)) {
+    for (subRoot in Files.newDirectoryStream(context.classesOutputDirectory).use(DirectoryStream<Path>::toList)) {
       if (!Files.isDirectory(subRoot)) {
         continue
       }
@@ -154,7 +153,6 @@ fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntri
           zip(
             targetFile = item.archive,
             dirs = mapOf(item.output to ""),
-            compress = false,
             overwrite = true,
             fileFilter = { it != "classpath.index" && it != ".unmodified" && it != ".DS_Store" },
             addDirEntriesMode = addDirEntriesMode

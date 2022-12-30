@@ -134,7 +134,7 @@ public class MavenGeneralSettings implements Cloneable {
    */
   @Transient
   @NotNull
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public MavenExecutionOptions.LoggingLevel getLoggingLevel() {
     return getOutputLevel();
   }
@@ -213,20 +213,20 @@ public class MavenGeneralSettings implements Cloneable {
     return MavenWslUtil.getUserSettings(myProject, getUserSettingsFile(), getMavenConfig());
   }
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public @Nullable File getEffectiveGlobalSettingsIoFile() {
     return MavenWslUtil.getGlobalSettings(myProject, getMavenHome(), getMavenConfig());
   }
 
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public @Nullable VirtualFile getEffectiveUserSettingsFile() {
     File file = getEffectiveUserSettingsIoFile();
     return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
   }
 
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public List<VirtualFile> getEffectiveSettingsFiles() {
     List<VirtualFile> result = new ArrayList<>(2);
     VirtualFile file = getEffectiveUserSettingsFile();
@@ -237,7 +237,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public @Nullable VirtualFile getEffectiveGlobalSettingsFile() {
     File file = getEffectiveGlobalSettingsIoFile();
     return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
@@ -272,7 +272,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public @Nullable VirtualFile getEffectiveSuperPom() {
     VirtualFile result = myEffectiveSuperPomCache;
     if (result != null && result.isValid()) {

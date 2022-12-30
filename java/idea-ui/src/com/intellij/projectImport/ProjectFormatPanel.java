@@ -89,12 +89,10 @@ public class ProjectFormatPanel {
     }
 
     private static @NotNull StorageFormat of(@NotNull final StorageScheme id) {
-      switch (id) {
-        case DIRECTORY_BASED: return DIR_BASED;
-        case DEFAULT: return FILE_BASED;
-        default:
-          throw new IllegalStateException("Unexpected value: " + id);
-      }
+      return switch (id) {
+        case DIRECTORY_BASED -> DIR_BASED;
+        case DEFAULT -> FILE_BASED;
+      };
     }
 
     public static boolean isDefault(StorageFormat storageFormat) {

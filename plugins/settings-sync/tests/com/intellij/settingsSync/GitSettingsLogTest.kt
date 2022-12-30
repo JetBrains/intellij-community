@@ -183,6 +183,30 @@ internal class GitSettingsLogTest {
   }
 
   @Test
+  fun `do not fail if commit signature is requested in global config`() {
+    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = initializeGitSettingsLog(editorXml)
+
+    (settingsSyncStorage / ".git" / "config").writeText("""
+      [commit]
+          gpgsign = true
+      [user]
+          signingkey = KEYHERE
+      [gpg]
+        program = /opt/homebrew/bin/gpg""".trimIndent())
+
+    settingsLog.forceWriteToMaster(
+      settingsSnapshot {
+        fileState("options/editor.xml", "ideEditorContent")
+      }, "Local changes"
+    )
+    settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
+      fileState("options/editor.xml", "ideEditorContent")
+    }
+  }
+
+  @Test
   fun `plugins state is written to the settings log`() {
     val editorXml = (configDir / "options" / "editor.xml").createFile()
     editorXml.writeText("editorContent")

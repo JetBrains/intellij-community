@@ -21,7 +21,7 @@ open class TextCompletionComboBox<T>(
 
   val collectionModel = CollectionComboBoxModel<T>()
 
-  val selectedItemProperty = AtomicProperty(converter.getItem(""))
+  private val selectedItemProperty = AtomicProperty(converter.getItem(""))
   var selectedItem by selectedItemProperty
 
   override fun getCompletionVariants(): List<T> {

@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -114,7 +113,8 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider implem
 
   protected void suppress(PsiFile file, final PsiElement suppressionElement, String inspectionId, final int offset) {
     final Project project = file.getProject();
-    final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
+    //final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
+    final Document doc = file.getViewProvider().getDocument();
     assert doc != null;
 
     if (suppressionElement != null) {

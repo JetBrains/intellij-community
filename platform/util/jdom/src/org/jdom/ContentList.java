@@ -55,6 +55,7 @@
 package org.jdom;
 
 import org.jdom.filter2.Filter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -251,7 +252,7 @@ final class ContentList extends AbstractList<Content> implements RandomAccess {
    * add.
    */
   @Override
-  public boolean addAll(final Collection<? extends Content> collection) {
+  public boolean addAll(final @NotNull Collection<? extends Content> collection) {
     return addAll(size, collection);
   }
 
@@ -427,7 +428,7 @@ final class ContentList extends AbstractList<Content> implements RandomAccess {
    * @return a list representing the rules of the <code>Filter</code>.
    */
   <E extends Content> List<E> getView(Filter<E> filter) {
-    return new FilterList<E>(filter);
+    return new FilterList<>(filter);
   }
 
   public Stream<Content> content() {
@@ -537,17 +538,17 @@ final class ContentList extends AbstractList<Content> implements RandomAccess {
   }
 
   @Override
-  public Iterator<Content> iterator() {
+  public @NotNull Iterator<Content> iterator() {
     return new CLIterator();
   }
 
   @Override
-  public ListIterator<Content> listIterator() {
+  public @NotNull ListIterator<Content> listIterator() {
     return new CLListIterator(0);
   }
 
   @Override
-  public ListIterator<Content> listIterator(final int start) {
+  public @NotNull ListIterator<Content> listIterator(final int start) {
     return new CLListIterator(start);
   }
 
@@ -1123,18 +1124,18 @@ final class ContentList extends AbstractList<Content> implements RandomAccess {
     }
 
     @Override
-    public Iterator<F> iterator() {
-      return new FilterListIterator<F>(this, 0);
+    public @NotNull Iterator<F> iterator() {
+      return new FilterListIterator<>(this, 0);
     }
 
     @Override
-    public ListIterator<F> listIterator() {
-      return new FilterListIterator<F>(this, 0);
+    public @NotNull ListIterator<F> listIterator() {
+      return new FilterListIterator<>(this, 0);
     }
 
     @Override
-    public ListIterator<F> listIterator(final int index) {
-      return new FilterListIterator<F>(this, index);
+    public @NotNull ListIterator<F> listIterator(final int index) {
+      return new FilterListIterator<>(this, index);
     }
 
     /**

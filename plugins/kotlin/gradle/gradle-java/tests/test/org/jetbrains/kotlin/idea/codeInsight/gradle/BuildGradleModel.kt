@@ -11,6 +11,7 @@ import org.gradle.tooling.model.idea.IdeaProject
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.model.ClassSetImportModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportAction
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
@@ -42,8 +43,14 @@ class BuiltGradleModel<T : Any>(val modules: Map<IdeaModule, T?>) {
     }
 }
 
+data class BuildGradleModelDebuggerOptions(
+    val suspend: Boolean = true,
+    val port: Int = 5005
+)
+
 fun <T : Any> buildGradleModel(
-    projectPath: File, gradleVersion: GradleVersion, javaHomePath: String, clazz: KClass<T>
+    projectPath: File, gradleVersion: GradleVersion, javaHomePath: String, clazz: KClass<T>,
+    debuggerOptions: BuildGradleModelDebuggerOptions? = null
 ): BuiltGradleModel<T> {
     val connector = GradleConnector.newConnector()
     connector.useDistribution(AbstractModelBuilderTest.DistributionLocator().getDistributionFor(gradleVersion))
@@ -78,6 +85,9 @@ fun <T : Any> buildGradleModel(
                         /* Representative of the `kotlin.project-module` module */
                         KotlinCompilation::class.java,
 
+                        /* Representative of the `kotlin-tooling-core` library */
+                        KotlinToolingVersion::class.java,
+
                         /* Representative of the kotlin stdlib */
                         Unit::class.java
                     )
@@ -89,9 +99,10 @@ fun <T : Any> buildGradleModel(
         buildActionExecutor.withArguments(executionSettings.arguments)
 
         buildActionExecutor.setJavaHome(File(javaHomePath))
-        buildActionExecutor.setJvmArguments("-Xmx512m")
         buildActionExecutor.setStandardOutput(System.out)
-        buildActionExecutor.setStandardError(System.err)
+        buildActionExecutor.setStandardError(System.out)
+        buildActionExecutor.setJvmArguments(listOfNotNull("-Xmx512m", debuggerOptions?.toJvmArgumentString()))
+
 
         val allModels = runBlocking {
             suspendCoroutine<ProjectImportAction.AllModels> { continuation ->
@@ -112,4 +123,8 @@ fun <T : Any> buildGradleModel(
         val ideaProject = allModels.getModel(IdeaProject::class.java) ?: fail("Missing '${IdeaProject::class.simpleName}' model")
         return BuiltGradleModel(ideaProject.modules.associateWith { module -> allModels.getModel(module, clazz.java) })
     }
+}
+
+private fun BuildGradleModelDebuggerOptions.toJvmArgumentString(): String {
+    return "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${if (suspend) "y" else "n"},address=${port}"
 }

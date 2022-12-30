@@ -11,7 +11,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.uast.UastHintedVisitorAdapter
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import com.siyeh.ig.psiutils.MethodUtils
 import com.siyeh.ig.psiutils.TestUtils
@@ -31,7 +31,7 @@ class TestCaseWithConstructorInspection : AbstractBaseUastLocalInspectionTool() 
 private class TestCaseWithConstructorVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
   override fun visitInitializer(node: UClassInitializer): Boolean {
     if (node.isStatic) return true
-    val containingClass = node.castSafelyTo<UClassInitializerEx>()?.javaPsi?.containingClass ?: return true
+    val containingClass = node.asSafely<UClassInitializerEx>()?.javaPsi?.containingClass ?: return true
     if (!TestFrameworks.getInstance().isTestClass(containingClass)) return true
     if (MethodUtils.isTrivial(node)) return true
     val message = JvmAnalysisBundle.message("jvm.inspections.test.case.with.constructor.problem.descriptor.initializer")
@@ -53,9 +53,9 @@ private class TestCaseWithConstructorVisitor(private val holder: ProblemsHolder)
   }
 
   private fun isAssignmentToFinalField(expression: UExpression): Boolean {
-    val assignmentExpression = expression.castSafelyTo<UBinaryExpression>() ?: return false
+    val assignmentExpression = expression.asSafely<UBinaryExpression>() ?: return false
     if (assignmentExpression.operator != UastBinaryOperator.EQUALS) return false
-    val lhs = assignmentExpression.leftOperand.skipParenthesizedExprDown().castSafelyTo<UReferenceExpression>() ?: return false
+    val lhs = assignmentExpression.leftOperand.skipParenthesizedExprDown().asSafely<UReferenceExpression>() ?: return false
     val target = lhs.resolveToUElement()
     return target is UFieldEx && target.javaPsi.hasModifier(JvmModifier.FINAL)
   }

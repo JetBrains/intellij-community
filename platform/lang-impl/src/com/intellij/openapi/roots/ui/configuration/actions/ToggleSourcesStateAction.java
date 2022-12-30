@@ -59,11 +59,6 @@ public class ToggleSourcesStateAction<P extends JpsElement> extends ContentEntry
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
-  }
-
-  @Override
   public void setSelected(@NotNull final AnActionEvent e, final boolean isSelected) {
     final VirtualFile[] selectedFiles = getSelectedFiles();
     assert selectedFiles.length != 0;

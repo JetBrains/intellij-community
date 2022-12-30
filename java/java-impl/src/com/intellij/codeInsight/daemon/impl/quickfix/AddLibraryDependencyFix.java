@@ -115,8 +115,8 @@ class AddLibraryDependencyFix extends OrderEntryFix {
     return new IntentionPreviewInfo.Html(
       HtmlChunk.text(JavaBundle.message("adds.library.preview",
                                          myLibraries.size(),
-                                         firstItem.getName(),
-                                         NlsMessages.formatAndList(ContainerUtil.map2List(myLibraries.keySet(), library -> "'" + library.getName() + "'")),
+                                         firstItem.getPresentableName(),
+                                         NlsMessages.formatAndList(ContainerUtil.map2List(myLibraries.keySet(), library -> "'" + library.getPresentableName() + "'")),
                                          myCurrentModule.getName(),
                                          refName)));
   }

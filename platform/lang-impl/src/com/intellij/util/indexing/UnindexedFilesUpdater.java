@@ -75,8 +75,7 @@ public class UnindexedFilesUpdater {
          predefinedIndexableFilesIterators == null ? ScanningType.FULL : ScanningType.PARTIAL);
   }
 
-  public void queue(Project project) {
-    LOG.assertTrue(project == myProject, "Project has changed");
+  public void queue() {
     new UnindexedFilesScanner(myProject, myStartSuspended, myOnProjectOpen, myPredefinedIndexableFilesIterators, myMark, myIndexingReason,
                               myScanningType)
       .queue(myProject);

@@ -356,7 +356,7 @@ class KotlinNameSuggester(
          * Returns a name sequence from given names, appending numeric suffixes.
          * Example: [foo, bar] -> [foo, bar, foo2, bar2, ...]
          */
-        fun enumerate(names: List<String>): Sequence<String> {
+        private fun enumerate(names: List<String>): Sequence<String> {
             return sequence {
                 yieldAll(names)
 

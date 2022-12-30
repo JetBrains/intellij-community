@@ -19,12 +19,12 @@ public class ShowImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testMultipleImplsFromAbstractCall() {
-    PsiFile file = myFixture.addFileToProject("Foo.java", "public abstract class Hello {" +
-                                                          "    {" +
-                                                          "        Runnable r = () <caret>-> {};\n" +
-                                                          "    }\n" +
-                                                          "}\n" +
-                                                          "\n");
+    PsiFile file = myFixture.addFileToProject("Foo.java", """
+      public abstract class Hello {    {        Runnable r = () <caret>-> {};
+          }
+      }
+
+      """);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
     final PsiElement element =
@@ -35,12 +35,12 @@ public class ShowImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testDisableFunctionalInterfaceReferenceOnWhitespacesInside() {
-    PsiFile file = myFixture.addFileToProject("Foo.java", "public abstract class Hello {" +
-                                                          "    {" +
-                                                          "        Runnable r = ()<caret> -> {};\n" +
-                                                          "    }\n" +
-                                                          "}\n" +
-                                                          "\n");
+    PsiFile file = myFixture.addFileToProject("Foo.java", """
+      public abstract class Hello {    {        Runnable r = ()<caret> -> {};
+          }
+      }
+
+      """);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
     final PsiElement element =
@@ -51,12 +51,12 @@ public class ShowImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   public void testFunctionExpressionsOnReference() {
     myFixture.addClass("public interface I {void m();}");
     myFixture.addClass("public class Usage {{I i = () -> {};}}");
-    PsiFile file = myFixture.addFileToProject("Foo.java", "public abstract class Hello {" +
-                                                          "    void foo(I i) {" +
-                                                          "        i.<caret>m();\n" +
-                                                          "    }\n" +
-                                                          "}\n" +
-                                                          "\n");
+    PsiFile file = myFixture.addFileToProject("Foo.java", """
+      public abstract class Hello {    void foo(I i) {        i.<caret>m();
+          }
+      }
+
+      """);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
     final PsiElement[] implementations = ShowImplementationsTestUtil.getImplementations();

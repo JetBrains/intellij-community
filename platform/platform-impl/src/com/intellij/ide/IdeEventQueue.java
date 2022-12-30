@@ -193,14 +193,7 @@ public final class IdeEventQueue extends EventQueue {
 
     EDT.updateEdt();
 
-    KeyboardFocusManager keyboardFocusManager = IdeKeyboardFocusManager.replaceDefault();
-    keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", e -> {
-      Application app = ApplicationManager.getApplication();
-      // we can get focus event before application is initialized
-      if (app != null) {
-        app.assertIsDispatchThread();
-      }
-    });
+    IdeKeyboardFocusManager.replaceDefault();
 
     addDispatcher(new WindowsAltSuppressor(), null);
     if (SystemInfoRt.isWindows && Boolean.parseBoolean(System.getProperty("keymap.windows.up.to.maximize.dialogs", "true"))) {
@@ -225,15 +218,13 @@ public final class IdeEventQueue extends EventQueue {
     // All default and simple renderers do not post specified events,
     // but panel-based renderers have to post events by contract.
     switch (event.getID()) {
-      case ComponentEvent.COMPONENT_MOVED:
-      case ComponentEvent.COMPONENT_RESIZED:
-      case HierarchyEvent.ANCESTOR_MOVED:
-      case HierarchyEvent.ANCESTOR_RESIZED:
+      case ComponentEvent.COMPONENT_MOVED, ComponentEvent.COMPONENT_RESIZED, HierarchyEvent.ANCESTOR_MOVED, HierarchyEvent.ANCESTOR_RESIZED -> {
         Object source = event.getSource();
         if (source instanceof Component &&
             ComponentUtil.getParentOfType(CellRendererPane.class, (Component)source) != null) {
           return true;
         }
+      }
     }
     return false;
   }
@@ -720,10 +711,6 @@ public final class IdeEventQueue extends EventQueue {
       return;
     }
 
-    if (e instanceof WindowEvent || e instanceof FocusEvent || e instanceof InputEvent) {
-      processIdleActivityListeners(e);
-    }
-
     if (myPopupManager.isPopupActive() && myPopupManager.dispatch(e)) {
       if (myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
         myKeyEventDispatcher.setState(KeyState.STATE_INIT);
@@ -761,6 +748,12 @@ public final class IdeEventQueue extends EventQueue {
     }
     else {
       defaultDispatchEvent(e);
+    }
+
+    myEventCount++;
+
+    if (e instanceof WindowEvent || e instanceof FocusEvent || e instanceof InputEvent) {
+      processIdleActivityListeners(e);
     }
   }
 

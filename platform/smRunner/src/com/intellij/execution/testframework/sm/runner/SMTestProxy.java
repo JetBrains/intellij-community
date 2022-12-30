@@ -423,22 +423,14 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   @Nullable
   @Override
   public String getDurationString(TestConsoleProperties consoleProperties) {
-    switch (getMagnitudeInfo()) {
-      case PASSED_INDEX:
-        return !isSubjectToHide(consoleProperties) ? getDurationString() : null;
-      case RUNNING_INDEX:
+    return switch (getMagnitudeInfo()) {
+      case PASSED_INDEX -> !isSubjectToHide(consoleProperties) ? getDurationString() : null;
+      case RUNNING_INDEX ->
         // pad duration with zeros, like "1m 02 s 003 ms" to avoid annoying flickering
-        return !isSubjectToHide(consoleProperties) ? getDurationPaddedString() : null;
-      case COMPLETE_INDEX:
-      case FAILED_INDEX:
-      case ERROR_INDEX:
-      case IGNORED_INDEX:
-      case SKIPPED_INDEX:
-      case TERMINATED_INDEX:
-        return getDurationString();
-      default:
-        return null;
-    }
+        !isSubjectToHide(consoleProperties) ? getDurationPaddedString() : null;
+      case COMPLETE_INDEX, FAILED_INDEX, ERROR_INDEX, IGNORED_INDEX, SKIPPED_INDEX, TERMINATED_INDEX -> getDurationString();
+      default -> null;
+    };
   }
 
   private boolean isSubjectToHide(TestConsoleProperties consoleProperties) {
@@ -557,11 +549,11 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
                                       @NotNull final String actualText,
                                       @NotNull final String expectedText,
                                       @NotNull final TestFailedEvent event) {
-    TestComparisionFailedState comparisionFailedState =
+    TestComparisionFailedState comparisonFailedState =
       setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, event.getExpectedFilePath(), event.getActualFilePath(),
                               event.shouldPrintExpectedAndActualValues());
-    comparisionFailedState.setToDeleteExpectedFile(event.isExpectedFileTemp());
-    comparisionFailedState.setToDeleteActualFile(event.isActualFileTemp());
+    comparisonFailedState.setToDeleteExpectedFile(event.isExpectedFileTemp());
+    comparisonFailedState.setToDeleteActualFile(event.isActualFileTemp());
   }
 
   public TestComparisionFailedState setTestComparisonFailed(@NotNull final String localizedMessage,

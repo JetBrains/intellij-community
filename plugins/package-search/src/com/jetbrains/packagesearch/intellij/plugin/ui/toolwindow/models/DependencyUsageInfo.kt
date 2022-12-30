@@ -29,5 +29,5 @@ internal data class DependencyUsageInfo(
     val declarationIndexInBuildFile: DependencyDeclarationIndexes?
 ) {
 
-    fun getResolvedVersionOrFallback() = if (resolvedVersion !is Missing) resolvedVersion else declaredVersion
+    fun getDeclaredVersionOrFallback() = if (declaredVersion !is Missing) declaredVersion else resolvedVersion
 }

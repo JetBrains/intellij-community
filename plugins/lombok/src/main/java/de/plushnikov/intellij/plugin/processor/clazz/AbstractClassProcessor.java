@@ -122,7 +122,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
 
   protected abstract void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target);
 
-  void validateOfParam(PsiClass psiClass, ProblemBuilder builder, PsiAnnotation psiAnnotation, Collection<String> ofProperty) {
+  static void validateOfParam(PsiClass psiClass, ProblemBuilder builder, PsiAnnotation psiAnnotation, Collection<String> ofProperty) {
     for (String fieldName : ofProperty) {
       if (!StringUtil.isEmptyOrSpaces(fieldName)) {
         PsiField fieldByName = psiClass.findFieldByName(fieldName, false);
@@ -135,7 +135,10 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     }
   }
 
-  void validateExcludeParam(PsiClass psiClass, ProblemBuilder builder, PsiAnnotation psiAnnotation, Collection<String> excludeProperty) {
+  static void validateExcludeParam(PsiClass psiClass,
+                                   ProblemBuilder builder,
+                                   PsiAnnotation psiAnnotation,
+                                   Collection<String> excludeProperty) {
     for (String fieldName : excludeProperty) {
       if (!StringUtil.isEmptyOrSpaces(fieldName)) {
         PsiField fieldByName = psiClass.findFieldByName(fieldName, false);
@@ -154,7 +157,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     }
   }
 
-  private String calcNewPropertyValue(Collection<String> allProperties, String fieldName) {
+  private static String calcNewPropertyValue(Collection<String> allProperties, String fieldName) {
     String result = null;
     if (!allProperties.isEmpty() && (allProperties.size() > 1 || !allProperties.contains(fieldName))) {
       result = allProperties.stream().filter(((Predicate<String>) fieldName::equals).negate())

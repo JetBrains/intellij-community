@@ -47,7 +47,7 @@ open class OoChildWithPidEntityImpl(val dataSource: OoChildWithPidEntityData) : 
     return connections
   }
 
-  class Builder(val result: OoChildWithPidEntityData?) : ModifiableWorkspaceEntityBase<OoChildWithPidEntity>(), OoChildWithPidEntity.Builder {
+  class Builder(var result: OoChildWithPidEntityData?) : ModifiableWorkspaceEntityBase<OoChildWithPidEntity>(), OoChildWithPidEntity.Builder {
     constructor() : this(OoChildWithPidEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -65,6 +65,9 @@ open class OoChildWithPidEntityImpl(val dataSource: OoChildWithPidEntityData) : 
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -98,10 +101,13 @@ open class OoChildWithPidEntityImpl(val dataSource: OoChildWithPidEntityData) : 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as OoChildWithPidEntity
-      this.entitySource = dataSource.entitySource
-      this.childProperty = dataSource.childProperty
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.childProperty != dataSource.childProperty) this.childProperty = dataSource.childProperty
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<OoParentWithoutPidEntity>().single()
+        val parentEntityNew = parents.filterIsInstance<OoParentWithoutPidEntity>().single()
+        if ((this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 
@@ -218,7 +224,7 @@ class OoChildWithPidEntityData : WorkspaceEntityData.WithCalculablePersistentId<
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as OoChildWithPidEntityData
 
@@ -229,7 +235,7 @@ class OoChildWithPidEntityData : WorkspaceEntityData.WithCalculablePersistentId<
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as OoChildWithPidEntityData
 

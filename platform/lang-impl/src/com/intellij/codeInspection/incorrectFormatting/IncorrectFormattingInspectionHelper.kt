@@ -14,7 +14,7 @@ import kotlin.math.abs
 
 
 internal class IncorrectFormattingInspectionHelper(
-  val formattingChanges: FormattingChanges,
+  private val formattingChanges: FormattingChanges,
   val file: PsiFile,
   val document: Document,
   val manager: InspectionManager,

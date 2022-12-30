@@ -7,7 +7,6 @@ import com.intellij.credentialStore.*
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.credentialStore.keePass.*
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -17,10 +16,12 @@ import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import org.jetbrains.annotations.ApiStatus
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.runAsync
+import org.jetbrains.concurrency.asPromise
 import java.io.Closeable
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -75,7 +76,7 @@ open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSaf
     }
 
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
-  protected val memoryHelperProvider: Lazy<CredentialStore> = lazy { InMemoryCredentialStore() }
+  private val memoryHelperProvider: Lazy<CredentialStore> = lazy { InMemoryCredentialStore() }
 
   override val isMemoryOnly: Boolean
     get() = settings.providerType == ProviderType.MEMORY_ONLY
@@ -119,8 +120,12 @@ open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSaf
     }
   }
 
-  // maybe in the future we will use native async, so, this method added here instead "if need, just use runAsync in your code"
-  override fun getAsync(attributes: CredentialAttributes): Promise<Credentials?> = runAsync { get(attributes) }
+  // maybe in the future we will use native async, so, this method added here instead "if needed, just use runAsync in your code"
+  override fun getAsync(attributes: CredentialAttributes): Promise<Credentials?> {
+    return ApplicationManager.getApplication().coroutineScope.async(Dispatchers.IO) {
+      get(attributes)
+    }.asCompletableFuture().asPromise()
+  }
 
   open suspend fun save() {
     val keePassCredentialStore = currentProviderIfComputed as? KeePassCredentialStore ?: return
@@ -157,16 +162,9 @@ class PasswordSafeImpl : BasePasswordSafe(), SettingsSavingComponent {
       saveAlarm.request()
     }
   }
-
-  @Suppress("unused", "DeprecatedCallableAddReplaceWith")
-  @get:Deprecated("Do not use it")
-  @get:ApiStatus.ScheduledForRemoval
-  // public - backward compatibility
-  val memoryProvider: PasswordStorage
-    get() = memoryHelperProvider.value as PasswordStorage
 }
 
-fun getDefaultKeePassDbFile() = getDefaultKeePassBaseDirectory().resolve(DB_FILE_NAME)
+fun getDefaultKeePassDbFile(): Path = getDefaultKeePassBaseDirectory().resolve(DB_FILE_NAME)
 
 private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
@@ -174,10 +172,14 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   }
 
   fun showError(@NlsContexts.NotificationTitle title: String) {
-    CredentialStoreUiService.getInstance().notify(title,
-                                                  CredentialStoreBundle.message("notification.content.in.memory.storage"), null,
-                                                  NotificationAction.createExpiring(CredentialStoreBundle.message("notification.content.password.settings.action"))
-                                                  { e, _ -> CredentialStoreUiService.getInstance().openSettings(e.project) })
+    @Suppress("HardCodedStringLiteral")
+    CredentialStoreUiService.getInstance().notify(
+      title = title,
+      content = CredentialStoreBundle.message("notification.content.in.memory.storage"),
+      project = null,
+      action = NotificationAction.createExpiring(CredentialStoreBundle.message("notification.content.password.settings.action"))
+      { e, _ -> CredentialStoreUiService.getInstance().openSettings(e.project) }
+    )
   }
 
   if (CredentialStoreManager.getInstance().isSupported(settings.providerType)) {

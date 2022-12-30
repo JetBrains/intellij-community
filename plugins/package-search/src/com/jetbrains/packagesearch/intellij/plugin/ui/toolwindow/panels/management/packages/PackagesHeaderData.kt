@@ -24,5 +24,5 @@ internal data class PackagesHeaderData(
     @Nls val labelText: String,
     val count: Int,
     val availableUpdatesCount: Int,
-    val updateOperations: Deferred<List<PackageSearchOperation<*>>>
+    val updateOperations: List<PackageSearchOperation<*>>
 )

@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.fir.testGenerator.codeinsight.generateK2CodeInsightT
 import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractIdeKotlinAnnotationsResolverTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractSessionsInvalidationTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
-import org.jetbrains.kotlin.idea.fir.codeInsight.handlers.AbstractHLGotoSuperActionHandlerTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractFirKeywordCompletionTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelJvmBasicCompletionTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelMultiFileJvmBasicCompletionTest
@@ -52,6 +51,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     generateK2NavigationTests()
     generateK2DebuggerTests()
     generateK2HighlighterTests()
+    generateK2RefactoringsTests()
 
     testGroup("base/fir/analysis-api-providers") {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
@@ -201,10 +201,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     }
 
     testGroup("fir") {
-        testClass<AbstractHLGotoSuperActionHandlerTest> {
-            model("codeInsight/handlers/gotoSuperActionHandler", pattern = KT_WITHOUT_DOTS)
-        }
-
         testClass<AbstractHLImplementationSearcherTest> {
             model("search/implementations", pattern = KT_WITHOUT_DOTS)
         }

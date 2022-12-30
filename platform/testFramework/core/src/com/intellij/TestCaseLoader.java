@@ -28,7 +28,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToIntFunction;
 
@@ -41,28 +40,24 @@ public class TestCaseLoader {
   public static final String TEST_RUNNERS_COUNT_FLAG = "idea.test.runners.count";
   public static final String TEST_RUNNER_INDEX_FLAG = "idea.test.runner.index";
   public static final String HARDWARE_AGENT_REQUIRED_FLAG = "idea.hardware.agent.required";
-
   public static final String FAIR_BUCKETING_FLAG = "idea.fair.bucketing";
 
-  private static final boolean PERFORMANCE_TESTS_ONLY = "true".equals(System.getProperty(PERFORMANCE_TESTS_ONLY_FLAG));
-  private static final boolean INCLUDE_PERFORMANCE_TESTS = "true".equals(System.getProperty(INCLUDE_PERFORMANCE_TESTS_FLAG));
-  private static final boolean INCLUDE_UNCONVENTIONALLY_NAMED_TESTS =
-    "true".equals(System.getProperty(INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG));
-  private static final boolean RUN_ONLY_AFFECTED_TESTS = "true".equals(System.getProperty(RUN_ONLY_AFFECTED_TEST_FLAG));
+  private static final boolean PERFORMANCE_TESTS_ONLY = Boolean.getBoolean(PERFORMANCE_TESTS_ONLY_FLAG);
+  private static final boolean INCLUDE_PERFORMANCE_TESTS = Boolean.getBoolean(INCLUDE_PERFORMANCE_TESTS_FLAG);
+  private static final boolean INCLUDE_UNCONVENTIONALLY_NAMED_TESTS = Boolean.getBoolean(INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG);
+  private static final boolean RUN_ONLY_AFFECTED_TESTS = Boolean.getBoolean(RUN_ONLY_AFFECTED_TEST_FLAG);
   private static final boolean RUN_WITH_TEST_DISCOVERY = System.getProperty("test.discovery.listener") != null;
-  private static final boolean HARDWARE_AGENT_REQUIRED = "true".equals(System.getProperty(HARDWARE_AGENT_REQUIRED_FLAG));
+  private static final boolean HARDWARE_AGENT_REQUIRED = Boolean.getBoolean(HARDWARE_AGENT_REQUIRED_FLAG);
 
   private static final int TEST_RUNNERS_COUNT = Integer.parseInt(System.getProperty(TEST_RUNNERS_COUNT_FLAG, "1"));
   private static final int TEST_RUNNER_INDEX = Integer.parseInt(System.getProperty(TEST_RUNNER_INDEX_FLAG, "0"));
 
-
   private static final AtomicInteger CYCLIC_BUCKET_COUNTER = new AtomicInteger(0);
-  private static final ConcurrentHashMap<String, Integer> BUCKETS = new ConcurrentHashMap<>();
-
+  private static final HashMap<String, Integer> BUCKETS = new HashMap<>();
   /**
-   * Split tests into buckets equally across all the buckets
+   * Distribute tests equally among the buckets
    */
-  private static final boolean IS_FAIR_BUCKETING = "true".equals(System.getProperty(FAIR_BUCKETING_FLAG));
+  private static final boolean IS_FAIR_BUCKETING = Boolean.getBoolean(FAIR_BUCKETING_FLAG);
 
   /**
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.
@@ -70,19 +65,24 @@ public class TestCaseLoader {
   private static final String ALL_TESTS_GROUP = "ALL";
 
   /**
-   * By default, test classes run in alphabetical order. Pass {@code "reversed"} to this property to run test classes in reversed alphabetical order.
-   * This help to find problems when test A modifies global state causing test B to fail if it runs after A.
+   * By default, test classes run in alphabetical order.
+   * Pass {@code "reversed"} to this property to run test classes in reversed alphabetical order.
+   * This helps to find problems when test A modifies the global state, causing test B to fail if it runs after A.
    */
   private static final boolean REVERSE_ORDER = SystemProperties.getBooleanProperty("intellij.build.test.reverse.order", false);
 
   private static final String PLATFORM_LITE_FIXTURE_NAME = "com.intellij.testFramework.PlatformLiteFixture";
 
-  private final List<Class<?>> myClassList = new ArrayList<>();
+  private final HashSet<Class<?>> myClassSet = new HashSet<>();
   private final List<Throwable> myClassLoadingErrors = new ArrayList<>();
   private Class<?> myFirstTestClass;
   private Class<?> myLastTestClass;
   private final TestClassesFilter myTestClassesFilter;
   private final boolean myForceLoadPerformanceTests;
+
+  static {
+    initFairBuckets();
+  }
 
   public TestCaseLoader(String classFilterName) {
     this(classFilterName, false);
@@ -173,15 +173,21 @@ public class TestCaseLoader {
     return StringUtil.split(System.getProperty("intellij.build.test.groups", System.getProperty("idea.test.group", "")).trim(), ";");
   }
 
-  void addClassIfTestCase(Class<?> testCaseClass, String moduleName) {
+  private boolean isClassTestCase(Class<?> testCaseClass, String moduleName) {
     if (shouldAddTestCase(testCaseClass, moduleName, true) &&
-        testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass &&
+        testCaseClass != myFirstTestClass &&
+        testCaseClass != myLastTestClass &&
         TestFrameworkUtil.canRunTest(testCaseClass)) {
 
+      // fair bucketing initialization
+      if (IS_FAIR_BUCKETING && BUCKETS.isEmpty()) return true;
+
       if (SelfSeedingTestCase.class.isAssignableFrom(testCaseClass) || matchesCurrentBucket(testCaseClass.getName())) {
-        myClassList.add(testCaseClass);
+        return true;
       }
     }
+
+    return false;
   }
 
   /**
@@ -196,21 +202,52 @@ public class TestCaseLoader {
       return MathUtil.nonNegativeAbs(testIdentifier.hashCode()) % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX;
     }
 
+    initFairBuckets();
+
     return matchesCurrentBucketFair(testIdentifier, TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX);
   }
 
-  public static boolean matchesCurrentBucketFair(@NotNull String testIdentifier,
-                                                 int testRunnerCount,
-                                                 int testRunnerIndex) {
-    // TODO: if (BUCKETS.isEmpty()) sort filtered test classes and populate buckets
+  /**
+   * Init fair buckets for all test classes
+   */
+  public static synchronized void initFairBuckets() {
+    if (!IS_FAIR_BUCKETING || !BUCKETS.isEmpty()) return;
 
+    System.out.println("Fair bucketing initialization started ...");
+
+    var groupsTestCaseLoader = new TestCaseLoader("tests/testGroups.properties");
+
+    for (Path classesRoot : TestAll.getClassRoots()) {
+      ClassFinder classFinder = new ClassFinder(classesRoot.toFile(), "", INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
+
+      Collection<String> foundTestClasses = classFinder.getClasses();
+      groupsTestCaseLoader.loadTestCases(classesRoot.getFileName().toString(), foundTestClasses);
+    }
+
+    var testCaseClasses = groupsTestCaseLoader.getClasses();
+
+    System.out.printf("Fair bucketing initialization. Found %s classes to sieve%n", testCaseClasses.size());
+    if (testCaseClasses.isEmpty()) {
+      throw new IllegalStateException("Fair bucketing is enabled, but 0 test classes were found to sieve");
+    }
+
+    testCaseClasses.forEach(testCaseClass -> matchesCurrentBucketFair(testCaseClass.getName(), TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX));
+  }
+
+  public static boolean matchesCurrentBucketFair(@NotNull String testIdentifier, int testRunnerCount, int testRunnerIndex) {
+    if (!IS_FAIR_BUCKETING) {
+      System.err.printf(
+        "Unexpected fair bucketing method call. Either property '%s' should be set, or invoking this method must not be performed%n",
+        FAIR_BUCKETING_FLAG
+      );
+    }
     var value = BUCKETS.get(testIdentifier);
 
     if (value != null) {
       var isMatchedBucket = value == testRunnerIndex;
 
       System.out.printf(
-        "Fair bucket matching: test identifier `%s`, runner count %s, runner index %s, is matching bucket %s" + System.lineSeparator(),
+        "Fair bucket match: test identifier `%s` (already sieved to buckets), runner count %s, runner index %s, is matching bucket %s%n",
         testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
 
       return isMatchedBucket;
@@ -223,9 +260,8 @@ public class TestCaseLoader {
 
     var isMatchedBucket = BUCKETS.get(testIdentifier) == testRunnerIndex;
 
-    System.out.printf(
-      "Fair bucket matching: test identifier `%s`, runner count %s, runner index %s, is matching bucket %s" + System.lineSeparator(),
-      testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
+    System.out.printf("Fair bucket match: test identifier `%s`, runner count %s, runner index %s, is matching bucket %s%n",
+                      testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
 
     return isMatchedBucket;
   }
@@ -262,6 +298,7 @@ public class TestCaseLoader {
     if (TestCase.class.isAssignableFrom(testCaseClass) || TestSuite.class.isAssignableFrom(testCaseClass)) {
       return true;
     }
+
     try {
       final Method suiteMethod = testCaseClass.getMethod("suite");
       if (Test.class.isAssignableFrom(suiteMethod.getReturnType()) && (suiteMethod.getModifiers() & Modifier.STATIC) != 0) {
@@ -271,12 +308,14 @@ public class TestCaseLoader {
     catch (NoSuchMethodException ignored) {
     }
 
-    return TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false);
+    return TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false)
+           || TestFrameworkUtil.isJUnit5TestClass(testCaseClass, false);
   }
 
   private boolean shouldExcludeTestClass(String moduleName, Class<?> testCaseClass) {
     if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(testCaseClass.getSimpleName())) return true;
     String className = testCaseClass.getName();
+
     return !myTestClassesFilter.matches(className, moduleName) || isBombed(testCaseClass) || isExcludeFromTestDiscovery(testCaseClass);
   }
 
@@ -294,7 +333,9 @@ public class TestCaseLoader {
     for (String className : classNamesIterator) {
       try {
         Class<?> candidateClass = Class.forName(className, false, getClassLoader());
-        addClassIfTestCase(candidateClass, moduleName);
+        if (isClassTestCase(candidateClass, moduleName)) {
+          myClassSet.add(candidateClass);
+        }
       }
       catch (Throwable e) {
         String message = "Cannot load class " + className + ": " + e.getMessage();
@@ -315,8 +356,8 @@ public class TestCaseLoader {
   private static int getRank(Class<?> aClass) {
     if (runFirst(aClass)) return 0;
 
-    // PlatformLiteFixture is the very special test case because it doesn't load all the XMLs with component/extension declarations
-    // (that is, uses a mock application). Instead, it allows to declare them manually using its registerComponent/registerExtension
+    // `PlatformLiteFixture` is a very special test case, because it doesn't load all the XMLs with component/extension declarations
+    // (that is, uses a mock application). Instead, it allows declaring them manually using its registerComponent/registerExtension
     // methods. The goal is to make tests which extend PlatformLiteFixture extremely fast. The problem appears when such tests are invoked
     // together with other tests which rely on declarations in XML files (that is, use a real application). The nature of the IDE
     // application is such that static final fields are often used to cache extensions. While having a positive effect on performance,
@@ -346,17 +387,20 @@ public class TestCaseLoader {
   }
 
   public int getClassesCount() {
-    return myClassList.size();
+    return myClassSet.size();
   }
 
+  /**
+   * @return Sorted list of loaded classes
+   */
   public List<Class<?>> getClasses() {
-    List<Class<?>> result = new ArrayList<>(myClassList.size());
+    List<Class<?>> result = new ArrayList<>(myClassSet.size());
 
     if (myFirstTestClass != null) {
       result.add(myFirstTestClass);
     }
 
-    result.addAll(loadTestSorter().sorted(myClassList, TestCaseLoader::getRank));
+    result.addAll(loadTestSorter().sorted(myClassSet.stream().toList(), TestCaseLoader::getRank));
 
     if (myLastTestClass != null) {
       result.add(myLastTestClass);
@@ -387,7 +431,7 @@ public class TestCaseLoader {
   }
 
   private void clearClasses() {
-    myClassList.clear();
+    myClassSet.clear();
     myFirstTestClass = null;
     myLastTestClass = null;
   }
@@ -410,6 +454,8 @@ public class TestCaseLoader {
 
   private static TestClassesFilter ourFilter;
 
+  // called reflectively from `JUnit5TeamCityRunnerForTestsOnClasspath#createClassNameFilter`
+  @SuppressWarnings("unused")
   public static boolean isClassIncluded(String className) {
     if (!INCLUDE_UNCONVENTIONALLY_NAMED_TESTS &&
         !className.endsWith("Test")) {
@@ -420,7 +466,7 @@ public class TestCaseLoader {
       ourFilter = calcTestClassFilter("tests/testGroups.properties");
     }
     return (isIncludingPerformanceTestsRun() || isPerformanceTestsRun() == isPerformanceTest(null, className)) &&
-           // no need to calculate bucket matching (especially that may break fair bucketing), if test will not pass the filter
+           // no need to calculate bucket matching (especially that may break fair bucketing), if the test does not match the filter
            ourFilter.matches(className) &&
            matchesCurrentBucket(className);
   }
@@ -438,7 +484,7 @@ public class TestCaseLoader {
       }
     }
 
-    if (myClassList.isEmpty()) { // nothing valuable to test
+    if (myClassSet.isEmpty()) { // nothing to test
       clearClasses();
     }
 

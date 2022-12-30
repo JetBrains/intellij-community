@@ -82,11 +82,11 @@ class EditorNotificationsImpl(private val project: Project) : EditorNotification
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC, AdditionalLibraryRootsListener { _, _, _, _ -> updateAllNotifications() })
     EditorNotificationProvider.EP_NAME.getPoint(project)
       .addExtensionPointListener(object : ExtensionPointListener<EditorNotificationProvider> {
-        override fun extensionAdded(extension: EditorNotificationProvider, descriptor: PluginDescriptor) {
+        override fun extensionAdded(extension: EditorNotificationProvider, pluginDescriptor: PluginDescriptor) {
           updateAllNotifications()
         }
 
-        override fun extensionRemoved(extension: EditorNotificationProvider, descriptor: PluginDescriptor) {
+        override fun extensionRemoved(extension: EditorNotificationProvider, pluginDescriptor: PluginDescriptor) {
           updateNotifications(extension)
         }
       }, false, null)

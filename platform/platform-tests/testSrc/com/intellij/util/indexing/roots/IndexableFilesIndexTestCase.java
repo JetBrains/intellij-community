@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestModeFlags;
+import com.intellij.util.indexing.IndexableFilesIndex;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class IndexableFilesIndexTestCase extends HeavyPlatformTestCase {

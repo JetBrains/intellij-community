@@ -5,6 +5,7 @@ import com.intellij.core.CoreBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
@@ -75,11 +76,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
      */
     static final int CHILDREN_CASE_SENSITIVE = 0x8000_0000; // makes sense for directory only
     static final int IS_SPECIAL_FLAG = CHILDREN_CASE_SENSITIVE; // makes sense for non-directory file only
+
+    static final int IS_OFFLINE = 0x0400_0000; // Reusing the freed-up INDEXED_FLAG bit
   }
   static final int ALL_FLAGS_MASK =
     VfsDataFlags.DIRTY_FLAG | VfsDataFlags.IS_SYMLINK_FLAG |
     VfsDataFlags.STRICT_PARENT_HAS_SYMLINK_FLAG | VfsDataFlags.IS_WRITABLE_FLAG | VfsDataFlags.IS_HIDDEN_FLAG | VfsDataFlags.INDEXED_FLAG |
-    VfsDataFlags.CHILDREN_CASE_SENSITIVE | VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED;
+    VfsDataFlags.CHILDREN_CASE_SENSITIVE | VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED | VfsDataFlags.IS_OFFLINE;
 
   @MagicConstant(flagsFromClass = VfsDataFlags.class)
   @interface Flags {}
@@ -91,8 +94,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private volatile CachedFileType myFileType;
 
   static {
-    //noinspection ConstantConditions
-    assert (~ALL_FLAGS_MASK) == LocalTimeCounter.TIME_MASK;
+    //noinspection ConstantValue
+    assert ~ALL_FLAGS_MASK == LocalTimeCounter.TIME_MASK;
   }
 
   VirtualFileSystemEntry(int id, @NotNull VfsData.Segment segment, @Nullable VirtualDirectoryImpl parent) {
@@ -181,7 +184,26 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public boolean isDirty() {
-    return getFlagInt(VfsDataFlags.DIRTY_FLAG);
+    return getFlagInt(VfsDataFlags.DIRTY_FLAG) && !isOffline();
+  }
+
+  @Override
+  public boolean isOffline() {
+    if (getFlagInt(VfsDataFlags.IS_OFFLINE)) {
+      return true;
+    }
+
+    VirtualDirectoryImpl parent = getParent();
+    return parent != null && parent.isOffline();
+  }
+
+  @Override
+  public void setOffline(boolean offline) {
+    boolean wasOffline = isOffline();
+    setFlagInt(VfsDataFlags.IS_OFFLINE, offline);
+    if (wasOffline && !isOffline()) {
+      markDirtyRecursively();
+    }
   }
 
   @Override
@@ -202,10 +224,16 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public boolean isFileIndexed() {
+    if (VfsData.isIsIndexedFlagDisabled) {
+      return false;
+    }
     return getSegment().isIndexed(myId);
   }
 
   public void setFileIndexed(boolean indexed) {
+    if (VfsData.isIsIndexedFlagDisabled) {
+      return;
+    }
     getSegment().setIndexed(myId, indexed);
   }
 
@@ -424,7 +452,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   private static class DebugInvalidation {
-    private static final boolean DEBUG = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
+    private static final Logger LOG = Logger.getInstance(VirtualFileSystemEntry.class);
+    private static final boolean DEBUG = LOG.isDebugEnabled();
     private static final Key<String> INVALIDATION_REASON = Key.create("INVALIDATION_REASON");
     private static final Key<Throwable> INVALIDATION_TRACE = Key.create("INVALIDATION_TRACE");
   }

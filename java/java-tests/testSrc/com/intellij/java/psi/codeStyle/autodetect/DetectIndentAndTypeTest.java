@@ -30,11 +30,12 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 public class DetectIndentAndTypeTest extends BasePlatformTestCase {
 
   private CodeStyleSettings mySettings;
-  private static final String myText = "public class T {\n" +
-                                       "\tvoid run() {\n" +
-                                       "\t\tint t = 1 + <caret>2;\n" +
-                                       "\t}\n" +
-                                       "}";
+  private static final String myText = """
+    public class T {
+    \tvoid run() {
+    \t\tint t = 1 + <caret>2;
+    \t}
+    }""";
 
   @Override
   public void setUp() throws Exception {
@@ -75,18 +76,22 @@ public class DetectIndentAndTypeTest extends BasePlatformTestCase {
     indentOptions.TAB_SIZE = 2;
 
     myFixture.configureByText(JavaFileType.INSTANCE,
-                              "public class T {\n" +
-                              "\tvoid run() {\n" +
-                              "\t\tint a = 2;<caret>\n" +
-                              "\t}\n" +
-                              "}\n");
+                              """
+                                public class T {
+                                \tvoid run() {
+                                \t\tint a = 2;<caret>
+                                \t}
+                                }
+                                """);
     myFixture.type('\n');
-    myFixture.checkResult("public class T {\n" +
-                          "\tvoid run() {\n" +
-                          "\t\tint a = 2;\n" +
-                          "\t\t<caret>\n" +
-                          "\t}\n" +
-                          "}\n");
+    myFixture.checkResult("""
+                            public class T {
+                            \tvoid run() {
+                            \t\tint a = 2;
+                            \t\t<caret>
+                            \t}
+                            }
+                            """);
   }
 
   public void testContinuationTab_AsTabSize() {
@@ -104,12 +109,13 @@ public class DetectIndentAndTypeTest extends BasePlatformTestCase {
     myFixture.type('\n');
 
     myFixture.checkResult(
-      "public class T {\n" +
-      "\tvoid run() {\n"   +
-      "\t\tint t = 1 + \n" +
-      "\t\t\t2;\n"         +
-      "\t}\n"              +
-      "}");
+      """
+        public class T {
+        \tvoid run() {
+        \t\tint t = 1 +\s
+        \t\t\t2;
+        \t}
+        }""");
   }
 
   public void testContinuationTabs_AsDoubleTabSize() {
@@ -126,12 +132,13 @@ public class DetectIndentAndTypeTest extends BasePlatformTestCase {
     myFixture.type('\n');
 
     myFixture.checkResult(
-      "public class T {\n" +
-      "\tvoid run() {\n"   +
-      "\t\tint t = 1 + \n" +
-      "\t\t\t\t2;\n"       +
-      "\t}\n"              +
-      "}");
+      """
+        public class T {
+        \tvoid run() {
+        \t\tint t = 1 +\s
+        \t\t\t\t2;
+        \t}
+        }""");
   }
 
   public void testWhenTabsDetected_SetContinuationIndentSizeToDoubleTabSize() {
@@ -145,18 +152,22 @@ public class DetectIndentAndTypeTest extends BasePlatformTestCase {
     indentOptions.CONTINUATION_INDENT_SIZE = 2;
 
     myFixture.configureByText(JavaFileType.INSTANCE,
-                              "public class T {\n" +
-                              "\tvoid run() {\n" +
-                              "\t\tint a = 2 <caret>+ 2;\n" +
-                              "\t}\n" +
-                              "}\n");
+                              """
+                                public class T {
+                                \tvoid run() {
+                                \t\tint a = 2 <caret>+ 2;
+                                \t}
+                                }
+                                """);
     myFixture.type('\n');
-    myFixture.checkResult("public class T {\n" +
-                          "\tvoid run() {\n" +
-                          "\t\tint a = 2 \n" +
-                          "\t\t\t\t<caret>+ 2;\n" +
-                          "\t}\n" +
-                          "}\n");
+    myFixture.checkResult("""
+                            public class T {
+                            \tvoid run() {
+                            \t\tint a = 2\s
+                            \t\t\t\t<caret>+ 2;
+                            \t}
+                            }
+                            """);
   }
   
   public void testDoNotIndentOptions_WhenTabsDetected_AndUseTabsWasSetByDefault() {

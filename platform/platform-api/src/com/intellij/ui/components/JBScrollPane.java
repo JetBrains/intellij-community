@@ -413,11 +413,10 @@ public class JBScrollPane extends JScrollPane {
     public static Alignment get(JComponent component) {
       if (component != null) {
         Object property = component.getClientProperty(Alignment.class);
-        if (property instanceof Alignment) return (Alignment)property;
+        if (property instanceof Alignment alignment) return alignment;
 
         Container parent = component.getParent();
-        if (parent instanceof JScrollPane) {
-          JScrollPane pane = (JScrollPane)parent;
+        if (parent instanceof JScrollPane pane) {
           if (component == pane.getColumnHeader()) {
             return TOP;
           }
@@ -434,16 +433,12 @@ public class JBScrollPane extends JScrollPane {
         }
         // assume alignment for a scroll bar,
         // which is not contained in a scroll pane
-        if (component instanceof JScrollBar) {
-          JScrollBar bar = (JScrollBar)component;
-          switch (bar.getOrientation()) {
-            case Adjustable.HORIZONTAL:
-              return BOTTOM;
-            case Adjustable.VERTICAL:
-              return bar.getComponentOrientation().isLeftToRight()
-                     ? RIGHT
-                     : LEFT;
-          }
+        if (component instanceof JScrollBar bar) {
+          return switch (bar.getOrientation()) {
+            case Adjustable.HORIZONTAL -> BOTTOM;
+            case Adjustable.VERTICAL -> bar.getComponentOrientation().isLeftToRight() ? RIGHT : LEFT;
+            default -> null;
+          };
         }
       }
       return null;
@@ -743,22 +738,20 @@ public class JBScrollPane extends JScrollPane {
         Dimension scSize = statusComponent.getPreferredSize();
 
         switch (flip) {
-          case NONE:
-            statusComponent.setBounds(actualVsbBounds.x + actualVsbBounds.width - scSize.width, actualVsbBounds.y, scSize.width, scSize.height);
+          case NONE -> {
+            statusComponent.setBounds(actualVsbBounds.x + actualVsbBounds.width - scSize.width, actualVsbBounds.y, scSize.width,
+                                      scSize.height);
             actualVsbBounds.y += scSize.height;
-            break;
-          case HORIZONTAL:
+          }
+          case HORIZONTAL -> {
             statusComponent.setBounds(actualVsbBounds.x, actualVsbBounds.y, scSize.width, scSize.height);
             actualVsbBounds.y += scSize.height;
-            break;
-          case VERTICAL:
-            statusComponent.setBounds(actualVsbBounds.x + actualVsbBounds.width - scSize.width,
-                                      actualVsbBounds.y + actualVsbBounds.height - scSize.height, scSize.width, scSize.height);
-            break;
-          case BOTH:
-            statusComponent.setBounds(actualVsbBounds.x,
-                                      actualVsbBounds.y + actualVsbBounds.height - scSize.height, scSize.width, scSize.height);
-            break;
+          }
+          case VERTICAL -> statusComponent.setBounds(actualVsbBounds.x + actualVsbBounds.width - scSize.width,
+                                                     actualVsbBounds.y + actualVsbBounds.height - scSize.height, scSize.width,
+                                                     scSize.height);
+          case BOTH -> statusComponent.setBounds(actualVsbBounds.x,
+                                                 actualVsbBounds.y + actualVsbBounds.height - scSize.height, scSize.width, scSize.height);
         }
 
         actualVsbBounds.height -= scSize.height;

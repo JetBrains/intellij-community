@@ -48,7 +48,7 @@ open class XChildChildEntityImpl(val dataSource: XChildChildEntityData) : XChild
     return connections
   }
 
-  class Builder(val result: XChildChildEntityData?) : ModifiableWorkspaceEntityBase<XChildChildEntity>(), XChildChildEntity.Builder {
+  class Builder(var result: XChildChildEntityData?) : ModifiableWorkspaceEntityBase<XChildChildEntity>(), XChildChildEntity.Builder {
     constructor() : this(XChildChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -66,6 +66,9 @@ open class XChildChildEntityImpl(val dataSource: XChildChildEntityData) : XChild
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -106,10 +109,16 @@ open class XChildChildEntityImpl(val dataSource: XChildChildEntityData) : XChild
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as XChildChildEntity
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (parents != null) {
-        this.parent1 = parents.filterIsInstance<XParentEntity>().single()
-        this.parent2 = parents.filterIsInstance<XChildEntity>().single()
+        val parent1New = parents.filterIsInstance<XParentEntity>().single()
+        if ((this.parent1 as WorkspaceEntityBase).id != (parent1New as WorkspaceEntityBase).id) {
+          this.parent1 = parent1New
+        }
+        val parent2New = parents.filterIsInstance<XChildEntity>().single()
+        if ((this.parent2 as WorkspaceEntityBase).id != (parent2New as WorkspaceEntityBase).id) {
+          this.parent2 = parent2New
+        }
       }
     }
 
@@ -257,7 +266,7 @@ class XChildChildEntityData : WorkspaceEntityData<XChildChildEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as XChildChildEntityData
 
@@ -267,7 +276,7 @@ class XChildChildEntityData : WorkspaceEntityData<XChildChildEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as XChildChildEntityData
 

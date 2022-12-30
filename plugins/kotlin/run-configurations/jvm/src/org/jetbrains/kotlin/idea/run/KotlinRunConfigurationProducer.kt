@@ -10,8 +10,11 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.ClassUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
+import org.jetbrains.kotlin.idea.base.codeInsight.findMainOwner
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
@@ -26,7 +29,7 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
         val location = context.location ?: return false
         val module = location.module?.takeIf { it.platform.isJvm() } ?: return false
         val container = getEntryPointContainer(location) ?: return false
-        val startClassFQName = getStartClassFqName(container) ?: return false
+        val startClassFQName = getMainClassJvmName(container) ?: return false
 
         configuration.setModule(module)
         configuration.runClass = startClassFQName
@@ -36,15 +39,14 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
     }
 
     private fun getEntryPointContainer(location: Location<*>?): KtDeclarationContainer? {
-        if (location == null) return null
+        val element = location?.psiElement ?: return null
         if (DumbService.getInstance(location.project).isDumb) return null
-
-        return EntryPointContainerFinder.find(location.psiElement)
+        return KotlinMainFunctionDetector.getInstance().findMainOwner(element)
     }
 
     override fun isConfigurationFromContext(configuration: KotlinRunConfiguration, context: ConfigurationContext): Boolean {
         val entryPointContainer = getEntryPointContainer(context.location) ?: return false
-        val startClassFQName = getStartClassFqName(entryPointContainer) ?: return false
+        val startClassFQName = getMainClassJvmName(entryPointContainer) ?: return false
 
         return configuration.runClass == startClassFQName &&
                 context.module?.takeIf { it.platform.isJvm() } == configuration.configurationModule?.module
@@ -52,13 +54,30 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
 
     companion object {
         @Deprecated(
-            "Use 'EntryPointContainerFinder.find'",
-            ReplaceWith("org.jetbrains.kotlin.idea.run.EntryPointContainerFinder.find(locationElement)")
+            "Use 'KotlinMainFunctionDetector.findMainOwner()' instead",
+            ReplaceWith(
+                "KotlinMainFunctionDetector.getInstance().findMainOwner(locationElement)",
+                "org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector",
+                "org.jetbrains.kotlin.idea.base.lineMarkers.run.findMainOwner"
+            )
         )
-        fun getEntryPointContainer(locationElement: PsiElement): KtDeclarationContainer? =
-            EntryPointContainerFinder.find(locationElement)
+        fun getEntryPointContainer(locationElement: PsiElement): KtDeclarationContainer? {
+            return KotlinMainFunctionDetector.getInstance().findMainOwner(locationElement)
+        }
 
-        fun getStartClassFqName(container: KtDeclarationContainer): String? = when (container) {
+        @Deprecated(
+            "Use 'getStartClassFqName() instead",
+            ReplaceWith(
+                "getMainClassJvmName(container)",
+                "org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer.Companion.getMainClassJvmName"
+            )
+        )
+        fun getStartClassFqName(container: KtDeclarationContainer): String? {
+            return getMainClassJvmName(container)
+        }
+
+        @ApiStatus.Internal
+        fun getMainClassJvmName(container: KtDeclarationContainer): String? = when (container) {
             is KtFile -> container.javaFileFacadeFqName.asString()
             is KtClassOrObject -> {
                 if (!container.isValid) {

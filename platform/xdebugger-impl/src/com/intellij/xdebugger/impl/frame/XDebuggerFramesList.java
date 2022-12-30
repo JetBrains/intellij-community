@@ -31,6 +31,7 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBScalableIcon;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -326,7 +327,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       }
       else {
         setBackground(UIUtil.getListSelectionBackground(hasFocus));
-        setForeground(UIUtil.getListSelectionForeground(hasFocus));
+        setForeground(NamedColorUtil.getListSelectionForeground(hasFocus));
         mySelectionForeground = getForeground();
       }
 
@@ -338,7 +339,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       {
         setIcon(myPopFrameIcon);
         if (iconHovered && selected) {
-          myPopFrameIcon.setBackground(ColorUtil.withAlpha(UIUtil.getListSelectionForeground(true), 0.2));
+          myPopFrameIcon.setBackground(ColorUtil.withAlpha(NamedColorUtil.getListSelectionForeground(true), 0.2));
         } else {
           myPopFrameIcon.setBackground(null);
         }

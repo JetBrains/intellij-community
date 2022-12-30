@@ -22,13 +22,16 @@ abstract class PersistentFSRecordsStorage {
     LOCK_FREE,
     IN_MEMORY
   }
+
   //static final boolean useLockFreeRecordsStorage = SystemProperties.getBooleanProperty("idea.use.lock.free.record.storage.for.vfs", false);
   static final RecordsStorageKind
     RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(System.getProperty("idea.records-storage-kind", RecordsStorageKind.REGULAR.name()));
 
   static int recordsLength() {
-    //return useLockFreeRecordsStorage ? PersistentFSLockFreeRecordsStorage.RECORD_SIZE : PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
-    return RECORDS_STORAGE_KIND == RecordsStorageKind.LOCK_FREE ? PersistentFSLockFreeRecordsStorage.RECORD_SIZE : PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
+    return switch(RECORDS_STORAGE_KIND){
+      case REGULAR, IN_MEMORY -> PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
+      case LOCK_FREE -> PersistentFSLockFreeRecordsStorage.RECORD_SIZE;
+    };
   }
 
   static PersistentFSRecordsStorage createStorage(@NotNull Path file) throws IOException {
@@ -37,20 +40,20 @@ abstract class PersistentFSRecordsStorage {
     //FSRecords.LOG.info("using " + (useLockFreeRecordsStorage ? "synchronized" : "lock-free") + " storage for VFS records");
     FSRecords.LOG.info("using " + RECORDS_STORAGE_KIND + " storage for VFS records");
 
-    return switch (RECORDS_STORAGE_KIND){
+    return switch (RECORDS_STORAGE_KIND) {
       case REGULAR -> new PersistentFSSynchronizedRecordsStorage(resizeableMappedFile);
       case LOCK_FREE -> new PersistentFSLockFreeRecordsStorage(resizeableMappedFile);
-      case IN_MEMORY -> new PersistentInMemoryFSRecordsStorage(file, 1<<24);
+      case IN_MEMORY -> new PersistentInMemoryFSRecordsStorage(file, 1 << 24);
     };
   }
 
   @VisibleForTesting
   static @NotNull ResizeableMappedFile createFile(@NotNull Path file, int recordLength) throws IOException {
-    int pageSize = PagedFileStorage.BUFFER_SIZE * recordLength / PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
+    int pageSize = PagedFileStorage.DEFAULT_PAGE_SIZE * recordLength / PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
 
     boolean aligned = pageSize % recordLength == 0;
     if (!aligned) {
-      String message = "Buffer size " + PagedFileStorage.BUFFER_SIZE + " is not aligned for record size " + recordLength;
+      String message = "Record length(="+recordLength+") is not aligned with page size(=" + pageSize + ")";
       Logger.getInstance(PersistentFSRecordsStorage.class).error(message);
     }
 
@@ -104,24 +107,26 @@ abstract class PersistentFSRecordsStorage {
 
   abstract int getModCount(int fileId) throws IOException;
 
-  abstract void setModCount(int fileId, int counter) throws IOException;
+  abstract void markRecordAsModified(int fileId) throws IOException;
 
   abstract int getContentRecordId(int fileId) throws IOException;
 
-  abstract void setContentRecordId(int fileId, int recordId) throws IOException;
+  abstract boolean setContentRecordId(int fileId, int recordId) throws IOException;
 
   abstract @PersistentFS.Attributes int getFlags(int fileId) throws IOException;
 
   //TODO RC: what semantics is assumed for the method in concurrent context? If it is 'update atomically' than
   //         it makes it harder to implement a storage in a lock-free way
-  //FIXME RC: method name setAttributesAndIncModCount, but no implementation really increments modCount!
-  abstract void setAttributesAndIncModCount(int fileId,
-                                            long timestamp,
-                                            long length,
-                                            int flags,
-                                            int nameId,
-                                            int parentId,
-                                            boolean overwriteMissed) throws IOException;
+  /**
+   * Fills all record fields in one shot
+   */
+  abstract void fillRecord(int fileId,
+                           long timestamp,
+                           long length,
+                           int flags,
+                           int nameId,
+                           int parentId,
+                           boolean overwriteAttrRef) throws IOException;
 
   abstract void cleanRecord(int fileId) throws IOException;
 
@@ -138,8 +143,6 @@ abstract class PersistentFSRecordsStorage {
   abstract int getVersion() throws IOException;
 
   abstract int getGlobalModCount();
-
-  abstract int incGlobalModCount();
 
   /**
    * @return length of underlying file storage, in bytes

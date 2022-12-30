@@ -62,7 +62,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   protected synchronized void initialize() {
-    UMethod method = (UMethod)getUastElement();
+    UMethod method = getUastElement();
     LOG.assertTrue(method != null);
     PsiElement sourcePsi = method.getSourcePsi();
     LOG.assertTrue(sourcePsi != null);
@@ -278,7 +278,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     initializeIfNeeded();
 
     // Work on code block to find what we're referencing...
-    UMethod method = (UMethod)getUastElement();
+    UMethod method = getUastElement();
     if (method == null) return;
     if (isConstructor()) {
       final RefClass ownerClass = getOwnerClass();
@@ -410,7 +410,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Override
   public String getExternalName() {
     return ReadAction.compute(() -> {
-      final UMethod uMethod = (UMethod)getUastElement();
+      final UMethod uMethod = getUastElement();
       LOG.assertTrue(uMethod != null);
       PsiMethod javaMethod = uMethod.getJavaPsi();
       return PsiFormatUtil.getExternalName(javaMethod, true, Integer.MAX_VALUE);
@@ -529,7 +529,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
           }
         }
       }
-      else if (refUtil.isCallToSuperMethod(expression, (UMethod)getUastElement())) return;
+      else if (refUtil.isCallToSuperMethod(expression, getUastElement())) return;
 
       synchronized (this) {
         //noinspection StringEquality
@@ -650,8 +650,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public boolean isTestMethod() {
-    UMethod method = (UMethod)getUastElement();
-    return TestFrameworks.getInstance().isTestMethod(method.getJavaPsi());
+    return TestFrameworks.getInstance().isTestMethod(getUastElement().getJavaPsi());
   }
 
   @Override
@@ -660,7 +659,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   @Override
-  public UDeclaration getUastElement() {
+  public UMethod getUastElement() {
     return UastContextKt.toUElement(getPsiElement(), UMethod.class);
   }
 

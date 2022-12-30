@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.ClickListener;
@@ -22,19 +21,15 @@ import java.awt.event.MouseEvent;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import static com.intellij.openapi.util.io.FileUtilRt.MEGABYTE;
-
 public final class MemoryUsagePanel extends TextPanel implements CustomStatusBarWidget, Activatable {
   public static final String WIDGET_ID = "Memory";
 
-  private static final Color USED_COLOR = JBColor.namedColor("MemoryIndicator.usedBackground", new JBColor(Gray._185, Gray._110));
-  private static final Color UNUSED_COLOR = JBColor.namedColor("MemoryIndicator.allocatedBackground", new JBColor(Gray._215, Gray._90));
-
+  private final Color myUsedColor = JBColor.namedColor("MemoryIndicator.usedBackground", new JBColor(Gray._185, Gray._110));
+  private final Color myUnusedColor = JBColor.namedColor("MemoryIndicator.allocatedBackground", new JBColor(Gray._215, Gray._90));
+  private final long myMaxMemory = Math.min(Runtime.getRuntime().maxMemory() >> 20, 9999);
   private long myLastAllocated = -1;
   private long myLastUsed = -1;
   private ScheduledFuture<?> myFuture;
-  private final long myMaxMemory = Math.min(Runtime.getRuntime().maxMemory() / MEGABYTE, 9999);
-  private StatusBar myStatusBar;
 
   public MemoryUsagePanel() {
     setFocusable(false);
@@ -73,29 +68,18 @@ public final class MemoryUsagePanel extends TextPanel implements CustomStatusBar
   }
 
   @Override
-  public void install(@NotNull StatusBar statusBar) {
-    //if (statusBar instanceof IdeStatusBarImpl) {
-    //  ((IdeStatusBarImpl)statusBar).setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 6));
-    //}
-  }
+  public void install(@NotNull StatusBar statusBar) { }
 
   @Override
-  public void dispose() { 
-    //if (myStatusBar instanceof IdeStatusBarImpl) {
-    //  ((IdeStatusBarImpl)myStatusBar).setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 0));
-    //}
-    myStatusBar = null;
-  }
+  public void dispose() { }
 
-  @Nullable
   @Override
-  public WidgetPresentation getPresentation() {
+  public @Nullable WidgetPresentation getPresentation() {
     return null;
   }
 
-  @NotNull
   @Override
-  public String ID() {
+  public @NotNull String ID() {
     return WIDGET_ID;
   }
 
@@ -130,11 +114,11 @@ public final class MemoryUsagePanel extends TextPanel implements CustomStatusBar
     g.fillRect(0, 0, barWidth, size.height);
 
     // gauge (allocated)
-    g.setColor(UNUSED_COLOR);
+    g.setColor(myUnusedColor);
     g.fillRect(0, 0, allocatedBarLength, size.height);
 
     // gauge (used)
-    g.setColor(USED_COLOR);
+    g.setColor(myUsedColor);
     g.fillRect(0, 0, usedBarLength, size.height);
 
     //text
@@ -143,7 +127,7 @@ public final class MemoryUsagePanel extends TextPanel implements CustomStatusBar
 
   @Override
   protected String getTextForPreferredSize() {
-    long sample = myMaxMemory < 1000 ? 999 : 9999;
+    var sample = myMaxMemory < 1000 ? 999 : myMaxMemory < 10000 ? 9999 : 99999;
     return " " + UIBundle.message("memory.usage.panel.message.text", sample, sample);
   }
 
@@ -152,17 +136,17 @@ public final class MemoryUsagePanel extends TextPanel implements CustomStatusBar
       return;
     }
 
-    Runtime rt = Runtime.getRuntime();
-    long maxMem = rt.maxMemory() / MEGABYTE;
-    long allocatedMem = rt.totalMemory() / MEGABYTE;
-    long usedMem = allocatedMem - rt.freeMemory() / MEGABYTE;
-    String text = UIBundle.message("memory.usage.panel.message.text", usedMem, maxMem);
+    var rt = Runtime.getRuntime();
+    var maxMem = rt.maxMemory() >> 20;
+    var allocatedMem = rt.totalMemory() >> 20;
+    var usedMem = allocatedMem - (rt.freeMemory() >> 20);
+    var text = UIBundle.message("memory.usage.panel.message.text", usedMem, maxMem);
 
-    if (allocatedMem != myLastAllocated || usedMem != myLastUsed || !StringUtil.equals(text, getText())) {
+    if (allocatedMem != myLastAllocated || usedMem != myLastUsed || !text.equals(getText())) {
       myLastAllocated = allocatedMem;
       myLastUsed = usedMem;
       setText(text);
-      setToolTipText(UIBundle.message("memory.usage.panel.statistics.message", maxMem, allocatedMem, usedMem));
+      setToolTipText(UIBundle.message("memory.usage.panel.message.tooltip", maxMem, allocatedMem, usedMem));
     }
   }
 }

@@ -21,7 +21,7 @@ interface ContentRootEntity : WorkspaceEntity {
 
     @EqualsBy
     val url: VirtualFileUrl
-    val excludedUrls: List<VirtualFileUrl>
+    val excludedUrls: List<@Child ExcludeUrlEntity>
     val excludedPatterns: List<String>
     val sourceRoots: List<@Child SourceRootEntity>
     @Child val sourceRootOrder: SourceRootOrderEntity?
@@ -32,7 +32,7 @@ interface ContentRootEntity : WorkspaceEntity {
     override var entitySource: EntitySource
     override var module: ModuleEntity
     override var url: VirtualFileUrl
-    override var excludedUrls: MutableList<VirtualFileUrl>
+    override var excludedUrls: List<ExcludeUrlEntity>
     override var excludedPatterns: MutableList<String>
     override var sourceRoots: List<SourceRootEntity>
     override var sourceRootOrder: SourceRootOrderEntity?
@@ -40,13 +40,11 @@ interface ContentRootEntity : WorkspaceEntity {
 
   companion object : Type<ContentRootEntity, Builder>() {
     operator fun invoke(url: VirtualFileUrl,
-                        excludedUrls: List<VirtualFileUrl>,
                         excludedPatterns: List<String>,
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): ContentRootEntity {
       val builder = builder()
       builder.url = url
-      builder.excludedUrls = excludedUrls.toMutableWorkspaceList()
       builder.excludedPatterns = excludedPatterns.toMutableWorkspaceList()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -61,6 +59,8 @@ interface ContentRootEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyEntity(entity: ContentRootEntity, modification: ContentRootEntity.Builder.() -> Unit) = modifyEntity(
   ContentRootEntity.Builder::class.java, entity, modification)
 //endregion
+
+val ExcludeUrlEntity.contentRoot: ContentRootEntity? by WorkspaceEntity.extension()
 
 interface SourceRootEntity : WorkspaceEntity {
     val contentRoot: ContentRootEntity

@@ -149,11 +149,8 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
 
       final CmdlineRemoteProto.Message.Type messageType = message.getType();
       switch (messageType) {
-        case FAILURE:
-          handler.handleFailure(sessionId, message.getFailure());
-          break;
-
-        case BUILDER_MESSAGE:
+        case FAILURE -> handler.handleFailure(sessionId, message.getFailure());
+        case BUILDER_MESSAGE -> {
           final CmdlineRemoteProto.Message.BuilderMessage builderMessage = message.getBuilderMessage();
           final CmdlineRemoteProto.Message.BuilderMessage.Type msgType = builderMessage.getType();
           if (msgType == CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST) {
@@ -181,11 +178,8 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
           else {
             handler.handleBuildMessage(context.channel(), sessionId, builderMessage);
           }
-          break;
-
-        default:
-          LOG.info("Unsupported message type " + messageType);
-          break;
+        }
+        default -> LOG.info("Unsupported message type " + messageType);
       }
     }
     finally {

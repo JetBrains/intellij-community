@@ -55,6 +55,7 @@
 package org.jdom;
 
 import org.jdom.util.IteratorIterable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -112,7 +113,7 @@ final class DescendantIterator implements IteratorIterable<Content> {
   }
 
   @Override
-  public DescendantIterator iterator() {
+  public @NotNull DescendantIterator iterator() {
     // Implement the Iterable stuff.
     return new DescendantIterator(parent);
   }

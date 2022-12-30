@@ -261,15 +261,14 @@ public class AbstractFileTreeTable<T> extends TreeTable {
 
     @Override
     public boolean isCellEditable(final Object node, final int column) {
-      switch (column) {
-        case 0:
-          return false;
-        case 1:
+      return switch (column) {
+        case 0 -> false;
+        case 1 -> {
           final Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
-          return !(userObject instanceof VirtualFile || userObject == null) || myTreeTable.isValueEditableForFile((VirtualFile)userObject);
-        default:
-          throw new RuntimeException("invalid column " + column);
-      }
+          yield !(userObject instanceof VirtualFile || userObject == null) || myTreeTable.isValueEditableForFile((VirtualFile)userObject);
+        }
+        default -> throw new RuntimeException("invalid column " + column);
+      };
     }
 
     @Override

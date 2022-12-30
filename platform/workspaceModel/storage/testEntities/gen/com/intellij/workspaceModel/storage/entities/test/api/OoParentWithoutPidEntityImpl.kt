@@ -46,7 +46,7 @@ open class OoParentWithoutPidEntityImpl(val dataSource: OoParentWithoutPidEntity
     return connections
   }
 
-  class Builder(val result: OoParentWithoutPidEntityData?) : ModifiableWorkspaceEntityBase<OoParentWithoutPidEntity>(), OoParentWithoutPidEntity.Builder {
+  class Builder(var result: OoParentWithoutPidEntityData?) : ModifiableWorkspaceEntityBase<OoParentWithoutPidEntity>(), OoParentWithoutPidEntity.Builder {
     constructor() : this(OoParentWithoutPidEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -64,6 +64,9 @@ open class OoParentWithoutPidEntityImpl(val dataSource: OoParentWithoutPidEntity
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -87,8 +90,8 @@ open class OoParentWithoutPidEntityImpl(val dataSource: OoParentWithoutPidEntity
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as OoParentWithoutPidEntity
-      this.entitySource = dataSource.entitySource
-      this.parentProperty = dataSource.parentProperty
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.parentProperty != dataSource.parentProperty) this.parentProperty = dataSource.parentProperty
       if (parents != null) {
       }
     }
@@ -200,7 +203,7 @@ class OoParentWithoutPidEntityData : WorkspaceEntityData<OoParentWithoutPidEntit
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as OoParentWithoutPidEntityData
 
@@ -211,7 +214,7 @@ class OoParentWithoutPidEntityData : WorkspaceEntityData<OoParentWithoutPidEntit
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as OoParentWithoutPidEntityData
 

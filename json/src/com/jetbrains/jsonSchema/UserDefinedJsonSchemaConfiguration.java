@@ -139,10 +139,9 @@ public class UserDefinedJsonSchemaConfiguration {
     final List<PairProcessor<Project, VirtualFile>> result = new SmartList<>();
     for (final Item patternText : patterns) {
       switch (patternText.mappingKind) {
-        case File:
-          result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)) || vfile.getUrl().equals(Item.neutralizePath(patternText.getPath())));
-          break;
-        case Pattern:
+        case File -> result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)) ||
+                                                    vfile.getUrl().equals(Item.neutralizePath(patternText.getPath())));
+        case Pattern -> {
           String pathText = FileUtil.toSystemIndependentName(patternText.getPath());
           final Pattern pattern = pathText.isEmpty()
                                   ? PatternUtil.NOTHING
@@ -150,17 +149,15 @@ public class UserDefinedJsonSchemaConfiguration {
                                     ? PatternUtil.compileSafe(".*/" + PatternUtil.convertToRegex(pathText), PatternUtil.NOTHING)
                                     : PatternUtil.fromMask(pathText);
           result.add((project, file) -> JsonSchemaObject.matchPattern(pattern, pathText.indexOf('/') >= 0
-                                                        ? file.getPath()
-                                                        : file.getName()));
-          break;
-        case Directory:
-          result.add((project, vfile) -> {
-            final VirtualFile relativeFile = getRelativeFile(project, patternText);
-            if (relativeFile == null || !VfsUtilCore.isAncestor(relativeFile, vfile, true)) return false;
-            JsonSchemaService service = JsonSchemaService.Impl.get(project);
-            return service.isApplicableToFile(vfile);
-          });
-          break;
+                                                                               ? file.getPath()
+                                                                               : file.getName()));
+        }
+        case Directory -> result.add((project, vfile) -> {
+          final VirtualFile relativeFile = getRelativeFile(project, patternText);
+          if (relativeFile == null || !VfsUtilCore.isAncestor(relativeFile, vfile, true)) return false;
+          JsonSchemaService service = JsonSchemaService.Impl.get(project);
+          return service.isApplicableToFile(vfile);
+        });
       }
     }
     return result;
@@ -262,16 +259,11 @@ public class UserDefinedJsonSchemaConfiguration {
     }
 
     public @Tooltip String getError() {
-      switch (mappingKind) {
-        case File:
-          return !StringUtil.isEmpty(path) ? null : JsonBundle.message("schema.configuration.error.empty.file.path");
-        case Pattern:
-          return !StringUtil.isEmpty(path) ? null : JsonBundle.message("schema.configuration.error.empty.pattern");
-        case Directory:
-          return null;
-      }
-
-      return JsonBundle.message("schema.configuration.error.unknown.mapping");
+      return switch (mappingKind) {
+        case File -> !StringUtil.isEmpty(path) ? null : JsonBundle.message("schema.configuration.error.empty.file.path");
+        case Pattern -> !StringUtil.isEmpty(path) ? null : JsonBundle.message("schema.configuration.error.empty.pattern");
+        case Directory -> null;
+      };
     }
 
     public boolean isPattern() {

@@ -66,7 +66,7 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
     return connections
   }
 
-  class Builder(val result: EclipseProjectPropertiesEntityData?) : ModifiableWorkspaceEntityBase<EclipseProjectPropertiesEntity>(), EclipseProjectPropertiesEntity.Builder {
+  class Builder(var result: EclipseProjectPropertiesEntityData?) : ModifiableWorkspaceEntityBase<EclipseProjectPropertiesEntity>(), EclipseProjectPropertiesEntity.Builder {
     constructor() : this(EclipseProjectPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -84,6 +84,9 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "eclipseUrls", this.eclipseUrls.toHashSet())
       // Process linked entities that are connected without a builder
@@ -127,19 +130,37 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
       return connections
     }
 
+    override fun afterModification() {
+      val collection_eclipseUrls = getEntityData().eclipseUrls
+      if (collection_eclipseUrls is MutableWorkspaceList<*>) {
+        collection_eclipseUrls.cleanModificationUpdateAction()
+      }
+      val collection_unknownCons = getEntityData().unknownCons
+      if (collection_unknownCons is MutableWorkspaceList<*>) {
+        collection_unknownCons.cleanModificationUpdateAction()
+      }
+      val collection_knownCons = getEntityData().knownCons
+      if (collection_knownCons is MutableWorkspaceList<*>) {
+        collection_knownCons.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as EclipseProjectPropertiesEntity
-      this.entitySource = dataSource.entitySource
-      this.variablePaths = dataSource.variablePaths.toMutableMap()
-      this.eclipseUrls = dataSource.eclipseUrls.toMutableList()
-      this.unknownCons = dataSource.unknownCons.toMutableList()
-      this.knownCons = dataSource.knownCons.toMutableList()
-      this.forceConfigureJdk = dataSource.forceConfigureJdk
-      this.expectedModuleSourcePlace = dataSource.expectedModuleSourcePlace
-      this.srcPlace = dataSource.srcPlace.toMutableMap()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.variablePaths != dataSource.variablePaths) this.variablePaths = dataSource.variablePaths.toMutableMap()
+      if (this.eclipseUrls != dataSource.eclipseUrls) this.eclipseUrls = dataSource.eclipseUrls.toMutableList()
+      if (this.unknownCons != dataSource.unknownCons) this.unknownCons = dataSource.unknownCons.toMutableList()
+      if (this.knownCons != dataSource.knownCons) this.knownCons = dataSource.knownCons.toMutableList()
+      if (this.forceConfigureJdk != dataSource.forceConfigureJdk) this.forceConfigureJdk = dataSource.forceConfigureJdk
+      if (this.expectedModuleSourcePlace != dataSource.expectedModuleSourcePlace) this.expectedModuleSourcePlace = dataSource.expectedModuleSourcePlace
+      if (this.srcPlace != dataSource.srcPlace) this.srcPlace = dataSource.srcPlace.toMutableMap()
       if (parents != null) {
-        this.module = parents.filterIsInstance<ModuleEntity>().single()
+        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
       }
     }
 
@@ -205,7 +226,12 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
       get() {
         val collection_eclipseUrls = getEntityData().eclipseUrls
         if (collection_eclipseUrls !is MutableWorkspaceList) return collection_eclipseUrls
-        collection_eclipseUrls.setModificationUpdateAction(eclipseUrlsUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_eclipseUrls.setModificationUpdateAction(eclipseUrlsUpdater)
+        }
+        else {
+          collection_eclipseUrls.cleanModificationUpdateAction()
+        }
         return collection_eclipseUrls
       }
       set(value) {
@@ -222,7 +248,12 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
       get() {
         val collection_unknownCons = getEntityData().unknownCons
         if (collection_unknownCons !is MutableWorkspaceList) return collection_unknownCons
-        collection_unknownCons.setModificationUpdateAction(unknownConsUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_unknownCons.setModificationUpdateAction(unknownConsUpdater)
+        }
+        else {
+          collection_unknownCons.cleanModificationUpdateAction()
+        }
         return collection_unknownCons
       }
       set(value) {
@@ -239,7 +270,12 @@ open class EclipseProjectPropertiesEntityImpl(val dataSource: EclipseProjectProp
       get() {
         val collection_knownCons = getEntityData().knownCons
         if (collection_knownCons !is MutableWorkspaceList) return collection_knownCons
-        collection_knownCons.setModificationUpdateAction(knownConsUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_knownCons.setModificationUpdateAction(knownConsUpdater)
+        }
+        else {
+          collection_knownCons.cleanModificationUpdateAction()
+        }
         return collection_knownCons
       }
       set(value) {
@@ -350,7 +386,7 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as EclipseProjectPropertiesEntityData
 
@@ -367,7 +403,7 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as EclipseProjectPropertiesEntityData
 

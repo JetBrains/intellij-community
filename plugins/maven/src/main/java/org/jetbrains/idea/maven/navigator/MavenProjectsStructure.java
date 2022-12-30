@@ -140,16 +140,11 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       @Override
       public MavenUIUtil.CheckBoxState getState(Object userObject) {
         MavenProfileKind state = ((ProfileNode)userObject).getState();
-        switch (state) {
-          case NONE:
-            return MavenUIUtil.CheckBoxState.UNCHECKED;
-          case EXPLICIT:
-            return MavenUIUtil.CheckBoxState.CHECKED;
-          case IMPLICIT:
-            return MavenUIUtil.CheckBoxState.PARTIAL;
-        }
-        MavenLog.LOG.error("unknown profile state: " + state);
-        return MavenUIUtil.CheckBoxState.UNCHECKED;
+        return switch (state) {
+          case NONE -> MavenUIUtil.CheckBoxState.UNCHECKED;
+          case EXPLICIT -> MavenUIUtil.CheckBoxState.CHECKED;
+          case IMPLICIT -> MavenUIUtil.CheckBoxState.PARTIAL;
+        };
       }
     });
   }
@@ -169,7 +164,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
   private void updateFrom(SimpleNode node) {
     if (node != null) {
-      myTreeBuilder.addSubtreeToUpdateByElement(node);
+     ApplicationManager.getApplication().invokeLater(() -> myTreeBuilder.addSubtreeToUpdateByElement(node));
     }
   }
 

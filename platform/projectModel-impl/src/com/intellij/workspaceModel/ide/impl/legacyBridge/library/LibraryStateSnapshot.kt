@@ -33,8 +33,7 @@ class LibraryStateSnapshot(
   val parentDisposable: Disposable) {
   private val roots = collectFiles(libraryEntity)
   private val excludedRootsContainer = if (libraryEntity.excludedRoots.isNotEmpty()) {
-    FileContainerDescription(libraryEntity.excludedRoots,
-                             emptyList())
+    FileContainerDescription(libraryEntity.excludedRoots.map { it.url }, emptyList())
   }
   else null
 

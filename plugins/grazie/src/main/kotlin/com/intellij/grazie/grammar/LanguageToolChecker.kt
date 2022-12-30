@@ -86,7 +86,7 @@ open class LanguageToolChecker : TextChecker() {
     return TextRange(start, end)
   }
 
-  class Problem(val match: RuleMatch, lang: Lang, text: TextContent, val testDescription: Boolean)
+  class Problem(val match: RuleMatch, lang: Lang, text: TextContent, private val testDescription: Boolean)
     : TextProblem(LanguageToolRule(lang, match.rule), text, TextRange(match.fromPos, match.toPos)) {
 
     override fun getShortMessage(): String =

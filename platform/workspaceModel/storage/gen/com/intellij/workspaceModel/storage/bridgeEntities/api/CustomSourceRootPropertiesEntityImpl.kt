@@ -49,7 +49,7 @@ open class CustomSourceRootPropertiesEntityImpl(val dataSource: CustomSourceRoot
     return connections
   }
 
-  class Builder(val result: CustomSourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<CustomSourceRootPropertiesEntity>(), CustomSourceRootPropertiesEntity.Builder {
+  class Builder(var result: CustomSourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<CustomSourceRootPropertiesEntity>(), CustomSourceRootPropertiesEntity.Builder {
     constructor() : this(CustomSourceRootPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -67,6 +67,9 @@ open class CustomSourceRootPropertiesEntityImpl(val dataSource: CustomSourceRoot
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -100,10 +103,13 @@ open class CustomSourceRootPropertiesEntityImpl(val dataSource: CustomSourceRoot
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as CustomSourceRootPropertiesEntity
-      this.entitySource = dataSource.entitySource
-      this.propertiesXmlTag = dataSource.propertiesXmlTag
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.propertiesXmlTag != dataSource.propertiesXmlTag) this.propertiesXmlTag = dataSource.propertiesXmlTag
       if (parents != null) {
-        this.sourceRoot = parents.filterIsInstance<SourceRootEntity>().single()
+        val sourceRootNew = parents.filterIsInstance<SourceRootEntity>().single()
+        if ((this.sourceRoot as WorkspaceEntityBase).id != (sourceRootNew as WorkspaceEntityBase).id) {
+          this.sourceRoot = sourceRootNew
+        }
       }
     }
 
@@ -218,7 +224,7 @@ class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRoo
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as CustomSourceRootPropertiesEntityData
 
@@ -229,7 +235,7 @@ class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRoo
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as CustomSourceRootPropertiesEntityData
 

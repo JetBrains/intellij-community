@@ -36,7 +36,6 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.isUnit
-import java.util.*
 
 abstract class ChangeCallableReturnTypeFix(
     element: KtCallableDeclaration,
@@ -184,7 +183,7 @@ abstract class ChangeCallableReturnTypeFix(
         override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
             val function = diagnostic.psiElement.findParentOfType<KtFunction>(strict = false) ?: return emptyList()
 
-            val actions = LinkedList<IntentionAction>()
+            val actions = mutableListOf<IntentionAction>()
 
             val descriptor = function.resolveToDescriptorIfAny(BodyResolveMode.FULL) as? FunctionDescriptor ?: return emptyList()
 
@@ -195,7 +194,7 @@ abstract class ChangeCallableReturnTypeFix(
 
             val functionType = descriptor.returnType ?: return actions
 
-            val overriddenMismatchingFunctions = LinkedList<FunctionDescriptor>()
+            val overriddenMismatchingFunctions = mutableListOf<FunctionDescriptor>()
             for (overriddenFunction in descriptor.overriddenDescriptors) {
                 val overriddenFunctionType = overriddenFunction.returnType ?: continue
                 if (!KotlinTypeChecker.DEFAULT.isSubtypeOf(functionType, overriddenFunctionType)) {

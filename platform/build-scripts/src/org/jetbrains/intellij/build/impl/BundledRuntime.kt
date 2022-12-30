@@ -6,14 +6,14 @@ import org.jetbrains.intellij.build.OsFamily
 import java.nio.file.Path
 
 interface BundledRuntime {
-  fun getHomeForCurrentOsAndArch(): Path
+  suspend fun getHomeForCurrentOsAndArch(): Path
 
   /**
    * contract: returns a directory, where only one subdirectory is available: 'jbr', which contains specified JBR
    */
-  fun extract(prefix: String, os: OsFamily, arch: JvmArchitecture): Path
+  suspend fun extract(prefix: String, os: OsFamily, arch: JvmArchitecture): Path
 
-  fun extractTo(prefix: String, os: OsFamily, destinationDir: Path, arch: JvmArchitecture)
+  suspend fun extractTo(prefix: String, os: OsFamily, destinationDir: Path, arch: JvmArchitecture)
 
   fun archiveName(prefix: String, arch: JvmArchitecture, os: OsFamily, forceVersionWithUnderscores: Boolean = false): String
 

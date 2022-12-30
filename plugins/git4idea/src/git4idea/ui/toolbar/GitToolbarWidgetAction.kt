@@ -13,6 +13,8 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.ui.popup.PopupState
 import git4idea.GitUtil
@@ -58,7 +60,7 @@ internal class GitToolbarWidgetAction : AnAction(), CustomComponentAction {
 
   @NlsSafe
   private fun GitRepository.calcText(): String {
-    return GitBranchUtil.getDisplayableBranchText(this, ::cutText)
+    return StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(this, ::cutText))
   }
 
   private fun GitRepository?.calcIcon(): Icon {
@@ -134,7 +136,8 @@ private class GitToolbarWidget(val presentation: Presentation) : ToolbarComboWid
       val repo = repository
 
       val listPopup: ListPopup
-      val dataContext = DataManager.getInstance().getDataContext(this)
+      val component = IdeFocusManager.getGlobalInstance().focusOwner ?: this
+      val dataContext = DataManager.getInstance().getDataContext(component)
       if (repo != null) {
         listPopup = GitBranchPopup.getInstance(proj, repo, dataContext).asListPopup()
       }
@@ -146,7 +149,7 @@ private class GitToolbarWidget(val presentation: Presentation) : ToolbarComboWid
       }
       popupState.prepareToShow(listPopup)
       listPopup.setRequestFocus(false)
-      listPopup.showAligned()
+      listPopup.showUnderneathOf(this)
     }
   }
 }

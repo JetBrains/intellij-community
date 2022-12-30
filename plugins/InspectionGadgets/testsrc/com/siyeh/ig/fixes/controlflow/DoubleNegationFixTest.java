@@ -30,10 +30,12 @@ public class DoubleNegationFixTest extends IGQuickFixesTestCase {
 
   public void testDoNotCleanupWithSingleNegation() {
     assertQuickfixNotAvailable(myDefaultHint,
-                               "class X {\n" +
-                               "  boolean test(boolean isValid) {\n" +
-                               "    return !/**/isValid;\n" +
-                               "  }\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   boolean test(boolean isValid) {
+                                     return !/**/isValid;
+                                   }
+                                 }
+                                 """);
   }
 }

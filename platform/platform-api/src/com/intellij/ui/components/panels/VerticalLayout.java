@@ -62,14 +62,8 @@ public final class VerticalLayout implements LayoutManager2 {
   public VerticalLayout(@NotNull JBValue gap, int alignment) {
     myGap = gap;
     switch (alignment) {
-      case FILL:
-      case SwingConstants.LEFT:
-      case SwingConstants.RIGHT:
-      case SwingConstants.CENTER:
-        myAlignment = alignment;
-        break;
-      default:
-        throw new IllegalArgumentException("unsupported alignment: " + alignment);
+      case FILL, SwingConstants.LEFT, SwingConstants.RIGHT, SwingConstants.CENTER -> myAlignment = alignment;
+      default -> throw new IllegalArgumentException("unsupported alignment: " + alignment);
     }
   }
 

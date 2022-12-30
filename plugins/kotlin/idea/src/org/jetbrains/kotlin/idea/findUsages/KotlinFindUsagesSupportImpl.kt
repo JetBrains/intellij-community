@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.search.usagesSearch.dataClassComponentFunction
 import org.jetbrains.kotlin.idea.search.usagesSearch.isCallReceiverRefersToCompanionObject
@@ -46,4 +47,8 @@ class KotlinFindUsagesSupportImpl : KotlinFindUsagesSupport {
 
     override fun sourcesAndLibraries(delegate: GlobalSearchScope, project: Project): GlobalSearchScope =
         KotlinSourceFilterScope.everything(delegate, project)
+
+    override fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?, @Nls actionString: String): List<PsiElement> {
+        return org.jetbrains.kotlin.idea.refactoring.checkSuperMethods(declaration, ignore, actionString)
+    }
 }

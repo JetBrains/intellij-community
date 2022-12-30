@@ -7,8 +7,9 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.util.indexing.EntityIndexingServiceEx
+import com.intellij.util.indexing.IndexableFilesIndex
 import com.intellij.util.indexing.roots.IndexableEntityProvider
-import com.intellij.util.indexing.roots.IndexableFilesIndex
+import com.intellij.util.indexing.roots.IndexableFilesIndexImpl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
@@ -29,7 +30,7 @@ internal class ProjectRootsChangeListener(private val project: Project) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
     if (IndexableFilesIndex.shouldBeUsed()) {
-      IndexableFilesIndex.getInstance(project).workspaceModelChanged(event)
+      IndexableFilesIndexImpl.getInstanceImpl(project).workspaceModelChanged(event)
     }
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager !is ProjectRootManagerBridge) return
@@ -91,6 +92,20 @@ internal class ProjectRootsChangeListener(private val project: Project) {
         is LibraryEntity -> hasDependencyOn(entity, project)
         is LibraryPropertiesEntity -> hasDependencyOn(entity.library, project)
         is ModuleGroupPathEntity, is CustomSourceRootPropertiesEntity -> true
+        is ExcludeUrlEntity -> {
+          val library = entity.library
+          val contentRoot = entity.contentRoot
+          if (library != null) {
+            hasDependencyOn(library, project)
+          }
+          else if (contentRoot != null) {
+            val entityClass = contentRoot::class.java
+            customEntitiesToFireRootsChanged.find { it.isAssignableFrom(entityClass) } != null
+          }
+          else {
+            false
+          }
+        }
         else -> {
           val entityClass = entity::class.java
           customEntitiesToFireRootsChanged.find { it.isAssignableFrom(entityClass) } != null

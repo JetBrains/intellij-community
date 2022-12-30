@@ -77,7 +77,7 @@ class TestsVcsConfiguration : PersistentStateComponent<TestsVcsConfiguration.MyS
 class RunTestsCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     if (panel.isNonModalCommit || panel.commitWorkflowHandler is NullCommitWorkflowHandler) {
-      return RunTestsBeforeCheckinHandler(panel)
+      return RunTestsBeforeCheckinHandler(panel.project)
     }
     return CheckinHandler.DUMMY
   }
@@ -87,12 +87,12 @@ class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitPr
   override val text: String
     get() {
       var str = ""
-      val failed = problems.sumBy { it.failed }
+      val failed = problems.sumOf { it.failed }
       if (failed > 0) {
         str = TestRunnerBundle.message("tests.result.failure.summary", failed)
       }
 
-      val ignored = problems.sumBy { it.ignored }
+      val ignored = problems.sumOf { it.ignored }
       if (ignored > 0) {
         str += (if (failed > 0) ", " else "")
         str += TestRunnerBundle.message("tests.result.ignore.summary", ignored)
@@ -119,13 +119,12 @@ data class FailureDescription(val historyFileName: String, val failed: Int, val 
 private fun createCommitProblem(descriptions: List<FailureDescription>): FailedTestCommitProblem? =
   if (descriptions.isNotEmpty()) FailedTestCommitProblem(descriptions) else null
 
-class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck {
-  private val project: Project get() = commitPanel.project
+class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandler(), CommitCheck {
   private val settings: TestsVcsConfiguration get() = project.getService(TestsVcsConfiguration::class.java)
 
   override fun isEnabled(): Boolean = settings.myState.enabled
 
-  override suspend fun runCheck(): FailedTestCommitProblem? {
+  override suspend fun runCheck(commitInfo: CommitInfo): FailedTestCommitProblem? {
     val configurationBean = settings.myState.configuration ?: return null
     val configurationSettings = RunManager.getInstance(project).findConfigurationByTypeAndName(configurationBean.configurationId, configurationBean.name)
     if (configurationSettings == null) {
@@ -147,8 +146,8 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
       else {
         startConfiguration(executor, configurationSettings, problems)
       }
-      
-      return@withContext createCommitProblem(problems) 
+
+      return@withContext createCommitProblem(problems)
     }
   }
 
@@ -277,17 +276,15 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
   }
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
-    
     return object :
-      BooleanCommitOption(commitPanel, getInitialText(), true, settings.myState::enabled) {
-      
-      
+      BooleanCommitOption(project, getInitialText(), true, settings.myState::enabled) {
+
       override fun getComponent(): JComponent {
         val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
           JBPopupMenu.showBelow(sourceLink, ActionPlaces.UNKNOWN, createConfigurationChooser())
         }
         val configureFilterLink = LinkLabel(SmRunnerBundle.message("link.label.choose.configuration.before.commit"), null, showFiltersPopup)
-  
+
         checkBox.text = getInitialText()
         return JBUI.Panels.simplePanel(4, 0).addToLeft(checkBox).addToCenter(configureFilterLink)
       }
@@ -295,6 +292,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
       private fun createConfigurationChooser(): ActionGroup {
         fun testConfiguration(it: RunConfiguration) =
           it is ConsolePropertiesProvider && it.createTestConsoleProperties(DefaultRunExecutor.getRunExecutorInstance()) != null
+
         val result = DefaultActionGroup()
         val runManager = RunManagerImpl.getInstanceImpl(project)
         for ((type, folderMap) in runManager.getConfigurationsGroupedByTypeAndFolder(false)) {
@@ -318,7 +316,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
               target = DefaultActionGroup(folder, true)
               result.add(target)
             }
-            
+
 
             localConfigurations
               .forEach { configuration: RunConfiguration ->

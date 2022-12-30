@@ -519,36 +519,6 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void permissionsCloning() {
-    assumeUnix();
-
-    File donor = tempDir.newFile("donor");
-    File recipient = tempDir.newFile("recipient");
-    assertTrue(donor.setWritable(true, true));
-    assertTrue(donor.setExecutable(true, true));
-    assertTrue(recipient.setWritable(false, false));
-    assertTrue(recipient.setExecutable(false, false));
-    assertNotEquals(donor.canWrite(), recipient.canWrite());
-    assertNotEquals(donor.canExecute(), recipient.canExecute());
-
-    assertTrue(clonePermissions(donor.getPath(), recipient.getPath(), true));
-    assertNotEquals(donor.canWrite(), recipient.canWrite());
-    assertEquals(donor.canExecute(), recipient.canExecute());
-
-    assertTrue(clonePermissions(donor.getPath(), recipient.getPath(), false));
-    assertEquals(donor.canWrite(), recipient.canWrite());
-    assertEquals(donor.canExecute(), recipient.canExecute());
-  }
-
-  static boolean clonePermissions(@NotNull String source, @NotNull String target, boolean execOnly) {
-    try {
-      return FileSystemUtil.computeMediator().clonePermissions(source, target, execOnly);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-  @Test
   public void unicodeName() throws IOException {
     String name = getUnicodeName();
     assumeTrue("Unicode names not supported", name != null);

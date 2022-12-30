@@ -12,6 +12,10 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.*
  * @author Konstantin Bulenkov
  */
 internal class RemoveSelectedProjectsAction : RecentProjectsWelcomeScreenActionBase() {
+  init {
+    isEnabledInModalContext = true  // To allow to delete items from the Manage Recent Projects modal dialog, see IDEA-302750
+  }
+
   override fun actionPerformed(event: AnActionEvent) {
     val item = getSelectedItem(event) ?: return
     removeItem(item)

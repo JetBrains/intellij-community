@@ -23,7 +23,7 @@ class A {
         System.out.println("do some action on " + input);
         return input.substring(0, 10);
     });
-    it = it.map(myFunction::apply);
+    it = it.map(myFunction);
     return it.collect(Collectors.toList());
   }
 

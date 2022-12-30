@@ -41,6 +41,7 @@ import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.impl.VcsLogContentProvider.MAIN_LOG_ID
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsLogManager.BaseVcsLogUiFactory
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToBranch
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
@@ -128,7 +129,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   internal fun navigateToSelectedBranch(focus: Boolean) {
     val selectedReference = filteringTree.getSelectedBranchFilters().singleOrNull() ?: return
 
-    logUi.vcsLog.jumpToReference(selectedReference, focus)
+    logUi.jumpToBranch(selectedReference, false, focus)
   }
 
   internal fun toggleGrouping(key: GroupingKey, state: Boolean) {
@@ -155,7 +156,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   private val BRANCHES_UI_FOCUS_TRAVERSAL_POLICY = object : ComponentsListFocusTraversalPolicy() {
     override fun getOrderedComponents(): List<Component> = listOf(filteringTree.component, logUi.table,
                                                                   logUi.changesBrowser.preferredFocusedComponent,
-                                                                  logUi.filterUi.textFilterComponent.textEditor)
+                                                                  logUi.filterUi.textFilterComponent.textField)
   }
 
   private val showBranches get() = logUi.properties.get(SHOW_GIT_BRANCHES_LOG_PROPERTY)

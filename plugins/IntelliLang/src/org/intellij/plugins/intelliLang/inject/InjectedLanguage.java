@@ -19,7 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,7 +99,7 @@ public final class InjectedLanguage {
       if (ourLanguageCache == null || ourLanguageCount != Language.getRegisteredLanguages().size()) {
         initLanguageCache();
       }
-      return StreamEx.of(ourLanguageCache.values()).distinct().toArray(Language[]::new);
+      return new HashSet<>(ourLanguageCache.values()).toArray(Language[]::new);
     }
   }
 
@@ -142,6 +142,7 @@ public final class InjectedLanguage {
     return create(id, "", "", false);
   }
 
+  @Contract(value = "null, _, _, _ -> null; !null, _, _, _ -> new", pure = true)
   @Nullable
   public static InjectedLanguage create(@Nullable String id, String prefix, String suffix, boolean isDynamic) {
     return id == null ? null : new InjectedLanguage(id, prefix == null ? "" : prefix, suffix == null ? "" : suffix, isDynamic);

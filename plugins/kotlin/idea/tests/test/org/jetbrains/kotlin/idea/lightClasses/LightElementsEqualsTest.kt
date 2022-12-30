@@ -102,7 +102,7 @@ class LightElementsEqualsTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
 }

@@ -20,6 +20,17 @@ class KotlinSourceFilterScope private constructor() {
             NewKotlinSourceFilterScope.projectSourcesAndLibraryClasses(delegate, project)
 
         @Deprecated(
+            "Use 'org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope.projectSources()' instead.",
+            ReplaceWith(
+                "KotlinSourceFilterScope.projectSources(delegate, project)",
+                "org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope"
+            )
+        )
+        @JvmStatic
+        fun projectSources(delegate: GlobalSearchScope, project: Project): GlobalSearchScope =
+            NewKotlinSourceFilterScope.projectSources(delegate, project)
+
+        @Deprecated(
             "Use 'org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope.librarySources()' instead.",
             ReplaceWith(
                 "KotlinSourceFilterScope.librarySources(delegate, project)",

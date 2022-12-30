@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.containers.addIfNotNull
 import java.awt.Component
 import java.awt.event.MouseEvent
@@ -40,10 +40,11 @@ private class EditorsWithOffsetsDataRule : GetDataRule {
     // If the focused component is the editor, it's assumed that the current cell is the cell under the caret.
     result.addIfNotNull(
       contextComponent
-        ?.castSafelyTo<EditorComponentImpl>()
+        ?.asSafely<EditorComponentImpl>()
         ?.editor
         ?.let { contextEditor ->
-          contextEditor to contextEditor.getOffsetFromCaretImpl()
+          if (NotebookCellLinesProvider.get(contextEditor.document) != null) contextEditor to contextEditor.getOffsetFromCaretImpl()
+          else null
         })
 
     // Otherwise, some component inside an editor can be focused. In that case it's assumed that the current cell is the cell closest
@@ -66,7 +67,7 @@ private class EditorsWithOffsetsDataRule : GetDataRule {
 
     // When a user clicks on some toolbar on some menu component, it becomes the focused components. Usually, such components have an
     // assigned editor. In that case it's assumed that the current cell is the cell under the caret.
-    if (editor != null) {
+    if (editor != null && NotebookCellLinesProvider.get(editor.document) != null) {
       result += editor to editor.getOffsetFromCaretImpl()
     }
 

@@ -32,6 +32,8 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
+  // used externally
+  @Suppress("MemberVisibilityCanBePrivate")
   val sdkProperty = propertyGraph.property<Sdk?>(null)
 
   val sdk by sdkProperty

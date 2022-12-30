@@ -283,18 +283,16 @@ public final class PluginManagerMain {
   @ApiStatus.Internal
   public static void onEvent(String description) {
     switch (description) {
-      case PluginManagerCore.DISABLE:
-        PluginManagerCore.onEnable(false);
-        break;
-      case PluginManagerCore.ENABLE:
+      case PluginManagerCore.DISABLE -> PluginManagerCore.onEnable(false);
+      case PluginManagerCore.ENABLE -> {
         if (PluginManagerCore.onEnable(true)) {
           notifyPluginsUpdated(null);
         }
-        break;
-      case PluginManagerCore.EDIT:
+      }
+      case PluginManagerCore.EDIT -> {
         IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(null);
         PluginManagerConfigurable.showPluginConfigurable(frame != null ? frame.getComponent() : null, null, List.of());
-        break;
+      }
     }
   }
 

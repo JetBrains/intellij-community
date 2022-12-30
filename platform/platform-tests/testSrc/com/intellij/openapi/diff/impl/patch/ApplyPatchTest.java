@@ -185,24 +185,15 @@ public class ApplyPatchTest extends HeavyPlatformTestCase {
   }
 
   public void testFileWithGitStyleCyrillicPaths() throws Exception {
-    doTest(0, ApplyPatchStatus.SUCCESS, null, file -> {
-      try {
-        if (file.getName().equals("1.txt")) {
-          //noinspection NonAsciiCharacters
-          file.rename(this, "имя файла.txt");
-        }
+    doTest(0, ApplyPatchStatus.SUCCESS, null, ApplyPatchTest::useCyrillicNames);
+  }
 
-        if (file.getName().equals("2.txt")) {
-          //noinspection NonAsciiCharacters
-          file.rename(this, "кириллица.txt");
-        }
+  public void testRenameFileGitStyleWithCyrillic() throws Exception {
+    doTest(0, ApplyPatchStatus.SUCCESS, null, ApplyPatchTest::useCyrillicNames);
+  }
 
-        return true;
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    });
+  public void testRenameWithModificationWithGitStyleCyrillicPaths() throws Exception {
+    doTest(0, ApplyPatchStatus.SUCCESS, null, ApplyPatchTest::useCyrillicNames);
   }
 
   public void testFileWithGitStylePathsWithSpaces() throws Exception {
@@ -270,5 +261,24 @@ public class ApplyPatchTest extends HeavyPlatformTestCase {
       sb.append('/').append(piece);
     }
     return sb.toString();
+  }
+
+  private static boolean useCyrillicNames(VirtualFile file) {
+    try {
+      if (file.getName().equals("cyr1.txt")) {
+        //noinspection NonAsciiCharacters
+        file.rename(ApplyPatchTest.class, "имя файла.txt");
+      }
+
+      if (file.getName().equals("cyr2.txt")) {
+        //noinspection NonAsciiCharacters
+        file.rename(ApplyPatchTest.class, "кириллица.txt");
+      }
+
+      return true;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

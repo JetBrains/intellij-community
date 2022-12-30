@@ -70,7 +70,7 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
     return tempChannel
   }
 
-  val fileBackedListProvider = object: ListProvider {
+  private val fileBackedListProvider = object: ListProvider {
     override fun createUByteList(name: String, size: Long) = FileBackedUByteList.createEmpty(openTempEmptyFileChannel(name), size)
     override fun createUShortList(name: String, size: Long) = FileBackedUShortList.createEmpty(openTempEmptyFileChannel(name), size)
     override fun createIntList(name: String, size: Long) = FileBackedIntList.createEmpty(openTempEmptyFileChannel(name), size)

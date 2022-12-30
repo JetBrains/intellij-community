@@ -46,14 +46,6 @@ abstract class ToolbarComboWidget: JComponent() {
     pressListeners += action
   }
 
-  protected fun JBPopup.showAligned() {
-    val widget = this@ToolbarComboWidget
-    val widgetLeftInset = UIManager.getInsets("MainToolbar.Dropdown.borderInsets").left
-    val popupLeftInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() +
-                         JBUI.CurrentTheme.Popup.Selection.innerInsets().left
-    show(RelativePoint(widget, Point(widgetLeftInset - popupLeftInset, widget.height)))
-  }
-
   private fun fireUpdateEvents(prop: KProperty<*>, oldValue: Any?, newValue: Any?) {
     firePropertyChange(prop.name, oldValue, newValue)
     invalidate()

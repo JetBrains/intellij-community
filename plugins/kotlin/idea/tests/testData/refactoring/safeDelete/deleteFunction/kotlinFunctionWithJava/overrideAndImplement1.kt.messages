@@ -1,1 +1,1 @@
-fun foo(): Unit in final class B : A, Z implements [Java] void foo() in interface Z.
+function B.foo() implements method Z.foo().

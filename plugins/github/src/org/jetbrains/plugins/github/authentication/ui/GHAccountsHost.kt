@@ -9,11 +9,13 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupFactory.ActionSelectionAid
 import com.intellij.ui.components.DropDownLink
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import javax.swing.JButton
 
 internal interface GHAccountsHost {
   fun addAccount(server: GithubServerPath, login: String, token: String)
+  fun updateAccount(account: GithubAccount, token: String)
   fun isAccountUnique(login: String, server: GithubServerPath): Boolean
 
   companion object {

@@ -29,12 +29,14 @@ public class LocalVariableHidingMemberVariableInspectionTest extends LightJavaIn
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "package com.siyeh.igtest.visibility2;\n" +
-      "public class DifferentPackageClass\n" +
-      "{\n" +
-      "    int fooBar;\n" +
-      "    protected int fooBar2;\n" +
-      "}\n"
+      """
+package com.siyeh.igtest.visibility2;
+public class DifferentPackageClass
+{
+    int fooBar;
+    protected int fooBar2;
+}
+"""
     };
   }
 }

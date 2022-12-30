@@ -15,7 +15,7 @@ abstract class FileEditorBase : UserDataHolderBase(), FileEditor, CheckedDisposa
 
   override fun isDisposed(): Boolean = isDisposed
 
-  protected val propertyChangeSupport = PropertyChangeSupport(this)
+  private val propertyChangeSupport = PropertyChangeSupport(this)
 
   override fun dispose() {
     isDisposed = true

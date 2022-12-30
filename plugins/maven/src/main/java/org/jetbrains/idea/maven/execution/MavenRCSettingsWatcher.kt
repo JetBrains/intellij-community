@@ -22,9 +22,9 @@ internal class MavenRCSettingsWatcherImpl(val project: Project,
                                           private val nameSpace: String,
                                           private val projectSettingsAvailable: Boolean) : MavenRCSettingsWatcher {
 
-  val configurationId: String = MavenRunConfigurationType.getInstance().id
+  private val configurationId: String = MavenRunConfigurationType.getInstance().id
   val event = AnActionEvent.createFromDataContext("MavenRCSettingsWatcher_event", null, DataContext.EMPTY_CONTEXT)
-  var useProjectSettings: Boolean = false
+  private var useProjectSettings: Boolean = false
 
   override fun registerUseProjectSettingsCheckbox(component: JCheckBox) {
     val settingId = "$nameSpace.useProjectSettings"

@@ -524,7 +524,7 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   @NotNull
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
     if (!allowsNestedRoots()) {
       new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance()).doFilter(in);

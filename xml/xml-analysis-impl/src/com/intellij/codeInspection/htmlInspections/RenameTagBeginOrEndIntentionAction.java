@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -7,7 +7,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
@@ -75,7 +78,7 @@ public final class RenameTagBeginOrEndIntentionAction implements IntentionAction
       }
 
       if (target != null) {
-        final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+        final Document document = file.getViewProvider().getDocument();
         if (document != null) {
           final TextRange textRange = target.getTextRange();
           document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), myTargetName);

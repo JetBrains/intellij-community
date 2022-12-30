@@ -273,16 +273,17 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
 
   // PY-26007
   public void testInitializingCollectionsNamedTupleInheritor() {
-    doTestByText("from collections import namedtuple\n" +
-                 "\n" +
-                 "nt = namedtuple(\"nt\", \"f1 f2\")\n" +
-                 "\n" +
-                 "class mynt(nt):\n" +
-                 "    def __new__(cls, p1):\n" +
-                 "        # expected: explicit namedtuple's __init__ and __new__ are not supported yet\n" +
-                 "        return nt.__new__(cls, p1, <warning descr=\"Unexpected argument\">10</warning>)\n" +
-                 "\n" +
-                 "mynt(1)");
+    doTestByText("""
+                   from collections import namedtuple
+
+                   nt = namedtuple("nt", "f1 f2")
+
+                   class mynt(nt):
+                       def __new__(cls, p1):
+                           # expected: explicit namedtuple's __init__ and __new__ are not supported yet
+                           return nt.__new__(cls, p1, <warning descr="Unexpected argument">10</warning>)
+
+                   mynt(1)""");
   }
 
   // PY-22971
@@ -422,20 +423,21 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   public void testMetaclassHavingDunderCall() {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> doTestByText("class MetaFoo(type):\n" +
-                         "  def __call__(cls, p3, p4):\n" +
-                         "    print(f'MetaFoo.__call__: {cls}, {p3}, {p4}')\n" +
-                         "\n" +
-                         "class Foo(metaclass=MetaFoo):\n" +
-                         "  pass\n" +
-                         "\n" +
-                         "class SubFoo(Foo):\n" +
-                         "  def __new__(self, p1, p2):\n" +
-                         "    # This never gets called\n" +
-                         "    print(f'SubFoo.__new__: {p1}, {p2}')\n" +
-                         "\n" +
-                         "sub = SubFoo(1<warning descr=\"Parameter 'p4' unfilled\">)</warning>\n" +
-                         "foo = Foo(3<warning descr=\"Parameter 'p4' unfilled\">)</warning>")
+      () -> doTestByText("""
+                           class MetaFoo(type):
+                             def __call__(cls, p3, p4):
+                               print(f'MetaFoo.__call__: {cls}, {p3}, {p4}')
+
+                           class Foo(metaclass=MetaFoo):
+                             pass
+
+                           class SubFoo(Foo):
+                             def __new__(self, p1, p2):
+                               # This never gets called
+                               print(f'SubFoo.__new__: {p1}, {p2}')
+
+                           sub = SubFoo(1<warning descr="Parameter 'p4' unfilled">)</warning>
+                           foo = Foo(3<warning descr="Parameter 'p4' unfilled">)</warning>""")
     );
   }
 
@@ -443,20 +445,21 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   public void testNotMetaclassHavingSelfArgsKwargsDunderCall() {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> doTestByText("class MetaFoo(type):\n" +
-                         "  def __call__(cls, *args, **kwargs):\n" +
-                         "    print(f'MetaFoo.__call__: {cls}, {args}, {kwargs}')\n" +
-                         "    return super(MetaFoo, cls).__call__(*args, **kwargs)\n" +
-                         "\n" +
-                         "class Foo(metaclass=MetaFoo):\n" +
-                         "  pass\n" +
-                         "\n" +
-                         "class SubFoo(Foo):\n" +
-                         "  def __init__(self, p1, p2):\n" +
-                         "    print(f'SubFoo.__init__: {p1}, {p2}')\n" +
-                         "\n" +
-                         "foo = Foo()\n" +
-                         "sub = SubFoo(1<warning descr=\"Parameter 'p2' unfilled\">)</warning>")
+      () -> doTestByText("""
+                           class MetaFoo(type):
+                             def __call__(cls, *args, **kwargs):
+                               print(f'MetaFoo.__call__: {cls}, {args}, {kwargs}')
+                               return super(MetaFoo, cls).__call__(*args, **kwargs)
+
+                           class Foo(metaclass=MetaFoo):
+                             pass
+
+                           class SubFoo(Foo):
+                             def __init__(self, p1, p2):
+                               print(f'SubFoo.__init__: {p1}, {p2}')
+
+                           foo = Foo()
+                           sub = SubFoo(1<warning descr="Parameter 'p2' unfilled">)</warning>""")
     );
   }
 

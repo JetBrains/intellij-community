@@ -112,6 +112,8 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
   @NotNull private ViewerState myState;
 
+  @Nullable private ScrollToPolicy myCurrentScrollToPolicy;
+
   private final boolean myIsNewToolbar;
 
   public DiffRequestProcessor(@Nullable Project project) {
@@ -237,7 +239,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
   @RequiresEdt
   public void updateRequest(boolean force) {
-    updateRequest(force, null);
+    updateRequest(force, myCurrentScrollToPolicy);
   }
 
   @RequiresEdt
@@ -904,10 +906,16 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     return false;
   }
 
+  /**
+   * @see #goToNextChangeImpl(boolean, Runnable)
+   */
   @RequiresEdt
   protected void goToNextChange(boolean fromDifferences) {
   }
 
+  /**
+   * @see #goToPrevChangeImpl(boolean, Runnable)
+   */
   @RequiresEdt
   protected void goToPrevChange(boolean fromDifferences) {
   }
@@ -915,6 +923,32 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   @RequiresEdt
   protected boolean isNavigationEnabled() {
     return false;
+  }
+
+  protected void goToNextChangeImpl(boolean fromDifferences, @NotNull Runnable navigationTask) {
+    runWithScrollPolicy(fromDifferences, ScrollToPolicy.FIRST_CHANGE, navigationTask);
+  }
+
+  protected void goToPrevChangeImpl(boolean fromDifferences, @NotNull Runnable navigationTask) {
+    runWithScrollPolicy(fromDifferences, ScrollToPolicy.LAST_CHANGE, navigationTask);
+  }
+
+  private void runWithScrollPolicy(boolean fromDifferences, @NotNull ScrollToPolicy lastChange, @NotNull Runnable navigationTask) {
+    if (fromDifferences) {
+      assert myCurrentScrollToPolicy == null;
+      myCurrentScrollToPolicy = lastChange;
+      try {
+        navigationTask.run();
+        updateRequest();
+      }
+      finally {
+        myCurrentScrollToPolicy = null;
+      }
+    }
+    else {
+      navigationTask.run();
+      updateRequest();
+    }
   }
 
   protected class MyNextDifferenceAction extends NextDifferenceAction {

@@ -131,15 +131,11 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
 
   private static Icon getPendingNotificationsIcon(NotificationType maximumType, boolean forToolWindow) {
     if (maximumType != null) {
-      switch (maximumType) {
-        case WARNING:
-          return forToolWindow ? AllIcons.Toolwindows.WarningEvents : AllIcons.Ide.Notification.WarningEvents;
-        case ERROR:
-          return forToolWindow ? AllIcons.Toolwindows.ErrorEvents : AllIcons.Ide.Notification.ErrorEvents;
-        case INFORMATION:
-        case IDE_UPDATE:
-          return forToolWindow ? AllIcons.Toolwindows.InfoEvents : AllIcons.Ide.Notification.InfoEvents;
-      }
+      return switch (maximumType) {
+        case WARNING -> forToolWindow ? AllIcons.Toolwindows.WarningEvents : AllIcons.Ide.Notification.WarningEvents;
+        case ERROR -> forToolWindow ? AllIcons.Toolwindows.ErrorEvents : AllIcons.Ide.Notification.ErrorEvents;
+        case INFORMATION, IDE_UPDATE -> forToolWindow ? AllIcons.Toolwindows.InfoEvents : AllIcons.Ide.Notification.InfoEvents;
+      };
     }
     return forToolWindow ? AllIcons.Toolwindows.NoEvents : AllIcons.Ide.Notification.NoEvents;
   }

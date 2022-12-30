@@ -61,5 +61,6 @@
     <orderEntry type="library" name="jackson-jr-objects" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="module" module-name="intellij.platform.feedback" />
   </component>
 </module>

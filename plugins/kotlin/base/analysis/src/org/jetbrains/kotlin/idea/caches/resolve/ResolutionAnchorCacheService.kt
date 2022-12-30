@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.CachedValueProvider
@@ -20,7 +22,7 @@ import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
 import org.jetbrains.kotlin.types.typeUtil.closure
-import org.jetbrains.kotlin.utils.addToStdlib.cast
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @State(name = "KotlinIdeAnchorService", storages = [Storage("anchors.xml")])
 class ResolutionAnchorCacheServiceImpl(
@@ -74,7 +76,8 @@ class ResolutionAnchorCacheServiceImpl(
                     getLibraryDependencies(libraryDependency).libraries
                 }
             }
-            allTransitiveLibraryDependencies.mapNotNull { resolutionAnchorsForLibraries[it] }.toSet()
+
+            allTransitiveLibraryDependencies.mapNotNullTo(mutableSetOf()) { resolutionAnchorsForLibraries[it] }
         }
     }
 
@@ -93,16 +96,15 @@ class ResolutionAnchorCacheServiceImpl(
         val modulesByNames: Map<String, ModuleInfo> = associateModulesByNames()
 
         return myState.moduleNameToAnchorName.entries.mapNotNull { (libraryName, anchorName) ->
-            val library: LibraryInfo = modulesByNames[libraryName]?.takeIf { it is LibraryInfo }?.cast()
-                ?: run {
-                    logger.warn("Resolution anchor mapping key doesn't point to a known library: $libraryName. Skipping this anchor")
-                    return@mapNotNull null
-                }
-            val anchor: ModuleSourceInfo = modulesByNames[anchorName]?.takeIf { it is ModuleSourceInfo }?.cast()
-                ?: run {
-                    logger.warn("Resolution anchor mapping value doesn't point to a source module: $anchorName. Skipping this anchor")
-                    return@mapNotNull null
-                }
+            val library: LibraryInfo = modulesByNames[libraryName]?.safeAs<LibraryInfo>() ?: run {
+                logger.warn("Resolution anchor mapping key doesn't point to a known library: $libraryName. Skipping this anchor")
+                return@mapNotNull null
+            }
+
+            val anchor: ModuleSourceInfo = modulesByNames[anchorName]?.safeAs<ModuleSourceInfo>() ?: run {
+                logger.warn("Resolution anchor mapping value doesn't point to a source module: $anchorName. Skipping this anchor")
+                return@mapNotNull null
+            }
 
             library to anchor
         }.toMap()

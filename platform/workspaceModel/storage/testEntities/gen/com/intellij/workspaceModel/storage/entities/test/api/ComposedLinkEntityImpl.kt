@@ -41,7 +41,7 @@ open class ComposedLinkEntityImpl(val dataSource: ComposedLinkEntityData) : Comp
     return connections
   }
 
-  class Builder(val result: ComposedLinkEntityData?) : ModifiableWorkspaceEntityBase<ComposedLinkEntity>(), ComposedLinkEntity.Builder {
+  class Builder(var result: ComposedLinkEntityData?) : ModifiableWorkspaceEntityBase<ComposedLinkEntity>(), ComposedLinkEntity.Builder {
     constructor() : this(ComposedLinkEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -59,6 +59,9 @@ open class ComposedLinkEntityImpl(val dataSource: ComposedLinkEntityData) : Comp
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -82,8 +85,8 @@ open class ComposedLinkEntityImpl(val dataSource: ComposedLinkEntityData) : Comp
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ComposedLinkEntity
-      this.entitySource = dataSource.entitySource
-      this.link = dataSource.link
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.link != dataSource.link) this.link = dataSource.link
       if (parents != null) {
       }
     }
@@ -198,7 +201,7 @@ class ComposedLinkEntityData : WorkspaceEntityData<ComposedLinkEntity>(), SoftLi
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ComposedLinkEntityData
 
@@ -209,7 +212,7 @@ class ComposedLinkEntityData : WorkspaceEntityData<ComposedLinkEntity>(), SoftLi
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ComposedLinkEntityData
 

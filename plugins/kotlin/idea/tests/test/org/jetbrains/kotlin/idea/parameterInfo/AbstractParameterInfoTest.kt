@@ -24,7 +24,7 @@ import java.io.File
 
 abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase() {
     private var mockLibraryFacility: MockLibraryFacility? = null
-    override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
     override fun setUp() {
         super.setUp()

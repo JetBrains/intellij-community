@@ -195,15 +195,16 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
 
   // PY-29763
   public void testTryExceptEmptyRaiseUnderFinallyPy2() {
-    doTestByText("try:\n" +
-                 "   something_that_raises_error1()\n" +
-                 "except BaseException as e:\n" +
-                 "    raise\n" +
-                 "finally:\n" +
-                 "    try:\n" +
-                 "        something_that_raises_error2()\n" +
-                 "    except BaseException as e:\n" +
-                 "        raise   ");
+    doTestByText("""
+                   try:
+                      something_that_raises_error1()
+                   except BaseException as e:
+                       raise
+                   finally:
+                       try:
+                           something_that_raises_error2()
+                       except BaseException as e:
+                           raise  \s""");
   }
 
   // PY-15360
@@ -240,11 +241,12 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
   public void testContinueInFinallyBlock() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON38,
-      () -> doTestByText("while True:\n" +
-                         "  try:\n" +
-                         "    print(\"a\")\n" +
-                         "  finally:\n" +
-                         "    <warning descr=\"Python versions 2.7, 3.5, 3.6, 3.7 do not support 'continue' inside 'finally' clause\">continue</warning>")
+      () -> doTestByText("""
+                           while True:
+                             try:
+                               print("a")
+                             finally:
+                               <warning descr="Python versions 2.7, 3.5, 3.6, 3.7 do not support 'continue' inside 'finally' clause">continue</warning>""")
     );
   }
 

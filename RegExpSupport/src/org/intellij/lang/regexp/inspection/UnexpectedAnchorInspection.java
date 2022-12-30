@@ -37,24 +37,20 @@ public class UnexpectedAnchorInspection extends LocalInspectionTool {
     public void visitRegExpBoundary(RegExpBoundary boundary) {
       super.visitRegExpBoundary(boundary);
       final RegExpBoundary.Type type = boundary.getType();
-      switch (type) {
-        case BEGIN: // \A
-          if (!hasUnexpectedSibling(boundary, false, false)) return;
-          break;
-        case LINE_START: // ^
-          if (!hasUnexpectedSibling(boundary, false, true)) return;
-          break;
-        case END: // \z
-        case END_NO_LINE_TERM: // \Z
-          if (!hasUnexpectedSibling(boundary, true, false)) return;
-        break;
-        case LINE_END: // $
-          if (!hasUnexpectedSibling(boundary, true, true)) return;
-          break;
-        default:
-          return;
+      boolean unexpected = switch (type) {
+        case BEGIN -> // \A
+          hasUnexpectedSibling(boundary, false, false);
+        case LINE_START -> // ^
+          hasUnexpectedSibling(boundary, false, true);
+        case END /* \z */, END_NO_LINE_TERM /* \Z */ ->
+          hasUnexpectedSibling(boundary, true, false);
+        case LINE_END -> // $
+          hasUnexpectedSibling(boundary, true, true);
+        default -> false;
+      };
+      if (unexpected) {
+        myHolder.registerProblem(boundary, RegExpBundle.message("inspection.warning.anchor.code.ref.code.in.unexpected.position"));
       }
-      myHolder.registerProblem(boundary, RegExpBundle.message("inspection.warning.anchor.code.ref.code.in.unexpected.position"));
     }
 
     private static boolean hasUnexpectedSibling(PsiElement element, boolean next, boolean line) {
@@ -82,20 +78,11 @@ public class UnexpectedAnchorInspection extends LocalInspectionTool {
       }
       else if (sibling instanceof RegExpSimpleClass) {
         final RegExpSimpleClass.Kind kind = ((RegExpSimpleClass)sibling).getKind();
-        switch (kind) {
-          case ANY:
-          case NON_DIGIT:
-          case NON_WORD:
-          case SPACE:
-          case NON_HORIZONTAL_SPACE:
-          case NON_VERTICAL_SPACE:
-          case NON_XML_NAME_START:
-          case NON_XML_NAME_PART:
-          case UNICODE_LINEBREAK:
-            return false;
-          default:
-            return true;
-        }
+        return switch (kind) {
+          case ANY, NON_DIGIT, NON_WORD, SPACE, NON_HORIZONTAL_SPACE, NON_VERTICAL_SPACE, NON_XML_NAME_START, NON_XML_NAME_PART,
+            UNICODE_LINEBREAK -> false;
+          default -> true;
+        };
       }
       else if (sibling instanceof  RegExpClosure) {
         final RegExpClosure closure = (RegExpClosure)sibling;

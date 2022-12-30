@@ -49,7 +49,7 @@ class DumpFocusableComponentHierarchyAction : AnAction(), DumbAware {
     popup.isVisible = true
   }
 
-  fun createDump() : @NlsSafe String {
+  private fun createDump() : @NlsSafe String {
     val keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
     val activeWindow = keyboardFocusManager.activeWindow
     val focusedWindow = keyboardFocusManager.focusedWindow

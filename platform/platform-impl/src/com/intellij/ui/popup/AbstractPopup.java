@@ -2,6 +2,7 @@
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.WindowAction;
@@ -12,15 +13,18 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -116,6 +120,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   private Component[] myFocusOwners;
   private PopupBorder myPopupBorder;
+  private Color myPopupBorderColor;
   private Dimension myRestoreWindowSize;
   protected Component myOwner;
   private Component myRequestorComponent;
@@ -140,7 +145,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     @Override
     public void update() {
-      updateColors(false);
+      updateSpeedSearchColors(false);
       onSpeedSearchPatternChanged();
       mySpeedSearchPatternField.setText(getFilter());
       if (!mySpeedSearchAlwaysShown) {
@@ -157,19 +162,19 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     @Override
     public void noHits() {
-      updateColors(true);
-    }
-
-    private void updateColors(boolean error) {
-      JBTextField textEditor = mySpeedSearchPatternField.getTextEditor();
-      if (ExperimentalUI.isNewUI()) {
-        textEditor.setForeground(error ? UIUtil.getErrorForeground() : UIUtil.getLabelForeground());
-      }
-      else {
-        textEditor.setBackground(error ? LightColors.RED : UIUtil.getTextFieldBackground());
-      }
+      updateSpeedSearchColors(true);
     }
   };
+
+  protected void updateSpeedSearchColors(boolean error) {
+    JBTextField textEditor = mySpeedSearchPatternField.getTextEditor();
+    if (ExperimentalUI.isNewUI()) {
+      textEditor.setForeground(error ? NamedColorUtil.getErrorForeground() : UIUtil.getLabelForeground());
+    }
+    else {
+      textEditor.setBackground(error ? LightColors.RED : UIUtil.getTextFieldBackground());
+    }
+  }
 
   protected SearchTextField mySpeedSearchPatternField;
   private boolean myNativePopup;
@@ -259,6 +264,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
                                  PopupBorder.Factory.createEmpty();
     myPopupBorder.setPopupUsed();
     myShadowed = showShadow;
+    if (showBorder && SystemInfo.isMac) {
+      myPopupBorderColor = borderColor == null ? JBUI.CurrentTheme.Popup.borderColor(true) : borderColor;
+    }
     myContent = createContentPanel(resizable, myPopupBorder, false);
     myMayBeParent = mayBeParent;
     myCancelOnWindowDeactivation = cancelOnWindowDeactivation;
@@ -499,7 +507,25 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   @Override
   public void showUnderneathOf(@NotNull Component aComponent) {
-    show(new RelativePoint(aComponent, new Point(JBUIScale.scale(2), aComponent.getHeight())));
+    int x = Registry.is("ide.popup.align.by.content") ? calcHorizontalAlignment(aComponent) : JBUIScale.scale(2);
+    show(new RelativePoint(aComponent, new Point(x, aComponent.getHeight())));
+  }
+
+  private static int calcHorizontalAlignment(@NotNull Component comp) {
+    if (!(comp instanceof JComponent jcomp)) return JBUIScale.scale(2);
+    if (comp instanceof ActionButton) return JBUIScale.scale(2);
+    if (comp instanceof ComboBoxWithWidePopup<?>) return JBUIScale.scale(2);
+
+    int componentLeftInset = jcomp.getInsets().left;
+    int popupLeftInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() + JBUI.CurrentTheme.Popup.Selection.innerInsets().left;
+    int res = componentLeftInset - popupLeftInset;
+    if (jcomp instanceof AbstractButton button) {
+      Insets margin = button.getMargin();
+      if (margin != null) {
+        res += margin.left;
+      }
+    }
+    return res;
   }
 
   @Override
@@ -1103,9 +1129,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
         cornerType = PopupCornerType.RoundedWindow;
       }
       if (cornerType != PopupCornerType.None) {
-        WindowRoundedCornersManager.setRoundedCorners(window, cornerType);
-        if (SystemInfoRt.isMac) {
+        if (SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) {
+          WindowRoundedCornersManager.setRoundedCorners(window, new Object[]{cornerType, myPopupBorderColor});
           myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
+        }
+        else {
+          WindowRoundedCornersManager.setRoundedCorners(window, cornerType);
         }
       }
     }
@@ -1353,7 +1382,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   }
 
   protected boolean beforeShow() {
-    if (ApplicationManager.getApplication() == null) return true;
+    if (ApplicationManager.getApplication() == null || !LoadingState.COMPONENTS_REGISTERED.isOccurred()) return true;
     StackingPopupDispatcher.getInstance().onPopupShown(this, myInStack);
     return true;
   }
@@ -1544,23 +1573,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myMouseOutCanceller = null;
 
     if (myFinalRunnable != null) {
-      ModalityState modalityState = ModalityState.current();
       Runnable finalRunnable = myFinalRunnable;
-
       getFocusManager().doWhenFocusSettlesDown(() -> {
-        if (ModalityState.current().equals(modalityState)) {
-          ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> {
-            try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
-              finalRunnable.run();
-            }
-          });
+        try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+          finalRunnable.run();
         }
-        else {
-          LOG.debug("Final runnable of popup is skipped");
-        }
-        // Otherwise the UI has changed unexpectedly and the action is likely not applicable.
-        // And we don't want finalRunnable to perform potentially destructive actions
-        //   in the context of a suddenly appeared modal dialog.
       });
       myFinalRunnable = null;
     }
@@ -1664,25 +1681,23 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     @Override
     public void eventDispatched(final AWTEvent event) {
       switch (event.getID()) {
-        case WINDOW_ACTIVATED:
-        case WINDOW_GAINED_FOCUS:
+        case WINDOW_ACTIVATED, WINDOW_GAINED_FOCUS -> {
           if (myCancelOnWindow && myPopup != null && isCancelNeeded((WindowEvent)event, myPopup.getWindow())) {
             cancel();
           }
-          break;
-        case MOUSE_ENTERED:
+        }
+        case MOUSE_ENTERED -> {
           if (withinPopup(event)) {
             myEverEntered = true;
           }
-          break;
-        case MOUSE_MOVED:
-        case MOUSE_PRESSED:
+        }
+        case MOUSE_MOVED, MOUSE_PRESSED -> {
           if (myCancelOnMouseOutCallback != null && myEverEntered && !withinPopup(event)) {
             if (myCancelOnMouseOutCallback.check((MouseEvent)event)) {
               cancel();
             }
           }
-          break;
+        }
       }
     }
 

@@ -30,4 +30,8 @@ public interface TaskInfo {
   String getCancelTooltipText();
 
   boolean isCancellable();
+
+  default int getStatusBarIndicatorWeight() {
+    return 1000;
+  }
 }

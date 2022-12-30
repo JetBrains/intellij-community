@@ -23,37 +23,16 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
-import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBValue
-import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.components.BrowsableLinkLabel
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScalableUnits
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import org.jetbrains.annotations.Nls
-import java.awt.CardLayout
-import java.awt.Color
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.FlowLayout
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.ActionEvent
-import javax.swing.AbstractAction
-import javax.swing.BorderFactory
-import javax.swing.BoxLayout
-import javax.swing.Icon
-import javax.swing.JCheckBox
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JMenuItem
-import javax.swing.JPanel
-import javax.swing.JScrollPane
-import javax.swing.JTextField
-import javax.swing.KeyStroke
-import javax.swing.Scrollable
+import javax.swing.*
 
 object PackageSearchUI {
 
@@ -359,8 +338,8 @@ object PackageSearchUI {
         init()
     }
 
-    internal fun getTextColorPrimary(isSelected: Boolean = false): Color = when {
-        isSelected -> JBColor.lazy { UIUtil.getListSelectionForeground(true) }
+    private fun getTextColorPrimary(isSelected: Boolean = false): Color = when {
+        isSelected -> JBColor.lazy { NamedColorUtil.getListSelectionForeground(true) }
         else -> JBColor.lazy { UIUtil.getListForeground() }
     }
 

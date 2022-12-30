@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github
 
-import git4idea.remote.hosting.findKnownRepositories
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.*
@@ -29,9 +28,11 @@ import git4idea.GitFileRevision
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
+import git4idea.remote.hosting.findKnownRepositories
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
@@ -44,7 +45,7 @@ open class GHOpenInBrowserActionGroup
                 GithubBundle.messagePointer("open.on.github.action.description"),
                 AllIcons.Vcs.Vendors.Github), DumbAware {
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.OLD_EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     val data = getData(e.dataContext)
@@ -77,9 +78,10 @@ open class GHOpenInBrowserActionGroup
   }
 
   private fun getDataFromPullRequest(project: Project, dataContext: DataContext): List<Data>? {
-    val pullRequest = dataContext.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
-                      ?: dataContext.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)?.detailsData?.loadedDetails
-                      ?: return null
+    val pullRequest: GHPullRequestShort =
+      dataContext.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
+      ?: dataContext.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)?.detailsData?.loadedDetails
+      ?: return null
     return listOf(Data.URL(project, pullRequest.url))
   }
 

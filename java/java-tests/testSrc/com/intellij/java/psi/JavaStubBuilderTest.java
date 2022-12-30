@@ -49,642 +49,699 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
   public void testEmpty() {
     doTest("/**/",
 
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n");
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+             """);
   }
 
   public void testFileHeader() {
-    doTest("package p;\n" +
-           "import a/*comment to skip*/.b;\n" +
-           "import static c.d.*;\n" +
-           "import static java.util.Arrays.sort;",
+    doTest("""
+             package p;
+             import a/*comment to skip*/.b;
+             import static c.d.*;
+             import static java.util.Arrays.sort;""",
 
-           "PsiJavaFileStub [p]\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "    IMPORT_STATEMENT:PsiImportStatementStub[a.b]\n" +
-           "    IMPORT_STATIC_STATEMENT:PsiImportStatementStub[static c.d.*]\n" +
-           "    IMPORT_STATIC_STATEMENT:PsiImportStatementStub[static java.util.Arrays.sort]\n");
+           """
+             PsiJavaFileStub [p]
+               IMPORT_LIST:PsiImportListStub
+                 IMPORT_STATEMENT:PsiImportStatementStub[a.b]
+                 IMPORT_STATIC_STATEMENT:PsiImportStatementStub[static c.d.*]
+                 IMPORT_STATIC_STATEMENT:PsiImportStatementStub[static java.util.Arrays.sort]
+             """);
   }
 
   public void testClassDeclaration() {
-    doTest("package p;" +
-           "class A implements I, J<I> { }\n" +
-           "class B<K, V extends X> extends a/*skip*/.A { class I { } }\n" +
-           "@java.lang.Deprecated interface I { }\n" +
-           "/** @deprecated just don't use */ @interface N { }\n" +
-           "/** {@code @deprecated}? nope. */ class X { }",
+    doTest("""
+             package p;class A implements I, J<I> { }
+             class B<K, V extends X> extends a/*skip*/.A { class I { } }
+             @java.lang.Deprecated interface I { }
+             /** @deprecated just don't use */ @interface N { }
+             /** {@code @deprecated}? nope. */ class X { }""",
 
-           "PsiJavaFileStub [p]\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "  CLASS:PsiClassStub[name=A fqn=p.A]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:I, J<I>]\n" +
-           "  CLASS:PsiClassStub[name=B fqn=p.B]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      TYPE_PARAMETER:PsiTypeParameter[K]\n" +
-           "        EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:]\n" +
-           "      TYPE_PARAMETER:PsiTypeParameter[V]\n" +
-           "        EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:X]\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:a/*skip*/.A]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "    CLASS:PsiClassStub[name=I fqn=p.B.I]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "      IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "  CLASS:PsiClassStub[interface deprecatedA name=I fqn=p.I]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      ANNOTATION:PsiAnnotationStub[@java.lang.Deprecated]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "  CLASS:PsiClassStub[interface annotation deprecated name=N fqn=p.N]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "  CLASS:PsiClassStub[name=X fqn=p.X]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+           """
+             PsiJavaFileStub [p]
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[name=A fqn=p.A]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:I, J<I>]
+               CLASS:PsiClassStub[name=B fqn=p.B]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   TYPE_PARAMETER:PsiTypeParameter[K]
+                     EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:]
+                   TYPE_PARAMETER:PsiTypeParameter[V]
+                     EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:X]
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:a/*skip*/.A]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 CLASS:PsiClassStub[name=I fqn=p.B.I]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                   IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+               CLASS:PsiClassStub[interface deprecatedA name=I fqn=p.I]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   ANNOTATION:PsiAnnotationStub[@java.lang.Deprecated]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+               CLASS:PsiClassStub[interface annotation deprecated name=N fqn=p.N]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+               CLASS:PsiClassStub[name=X fqn=p.X]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+             """);
   }
 
   public void testMethods() {
-    doTest("public @interface Anno {\n" +
-           "  int i() default 42;\n" +
-           "  public static String s();\n" +
-           "}\n" +
-           "private class C {\n" +
-           "  public C() throws Exception { }\n" +
-           "  public abstract void m(final int i, int[] a1, int a2[], int[] a3[]);\n" +
-           "  private static int v2a(int... v) [] { return v; }\n" +
-           "}\n" +
-           "interface I {\n" +
-           "  void m1();\n" +
-           "  default void m2() { }\n" +
-           "}",
+    doTest("""
+             public @interface Anno {
+               int i() default 42;
+               public static String s();
+             }
+             private class C {
+               public C() throws Exception { }
+               public abstract void m(final int i, int[] a1, int a2[], int[] a3[]);
+               private static int v2a(int... v) [] { return v; }
+             }
+             interface I {
+               void m1();
+               default void m2() { }
+             }""",
 
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "  CLASS:PsiClassStub[interface annotation name=Anno fqn=Anno]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "    ANNOTATION_METHOD:PsiMethodStub[annotation i:int default=42]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
-           "    ANNOTATION_METHOD:PsiMethodStub[annotation s:String]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=9]\n" +
-           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
-           "  CLASS:PsiClassStub[name=C fqn=C]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=2]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "    METHOD:PsiMethodStub[cons C:null]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
-           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:Exception]\n" +
-           "    METHOD:PsiMethodStub[m:void]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=1025]\n" +
-           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "        PARAMETER:PsiParameterStub[i:int]\n" +
-           "          MODIFIER_LIST:PsiModifierListStub[mask=16]\n" +
-           "        PARAMETER:PsiParameterStub[a1:int[]]\n" +
-           "          MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "        PARAMETER:PsiParameterStub[a2:int[]]\n" +
-           "          MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "        PARAMETER:PsiParameterStub[a3:int[][]]\n" +
-           "          MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
-           "    METHOD:PsiMethodStub[varargs v2a:int[]]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=10]\n" +
-           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "        PARAMETER:PsiParameterStub[v:int...]\n" +
-           "          MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
-           "  CLASS:PsiClassStub[interface name=I fqn=I]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "    METHOD:PsiMethodStub[m1:void]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
-           "    METHOD:PsiMethodStub[m2:void]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=512]\n" +
-           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[interface annotation name=Anno fqn=Anno]
+                 MODIFIER_LIST:PsiModifierListStub[mask=1]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 ANNOTATION_METHOD:PsiMethodStub[annotation i:int default=42]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   PARAMETER_LIST:PsiParameterListStub
+                   THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+                 ANNOTATION_METHOD:PsiMethodStub[annotation s:String]
+                   MODIFIER_LIST:PsiModifierListStub[mask=9]
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   PARAMETER_LIST:PsiParameterListStub
+                   THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+               CLASS:PsiClassStub[name=C fqn=C]
+                 MODIFIER_LIST:PsiModifierListStub[mask=2]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 METHOD:PsiMethodStub[cons C:null]
+                   MODIFIER_LIST:PsiModifierListStub[mask=1]
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   PARAMETER_LIST:PsiParameterListStub
+                   THROWS_LIST:PsiRefListStub[THROWS_LIST:Exception]
+                 METHOD:PsiMethodStub[m:void]
+                   MODIFIER_LIST:PsiModifierListStub[mask=1025]
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   PARAMETER_LIST:PsiParameterListStub
+                     PARAMETER:PsiParameterStub[i:int]
+                       MODIFIER_LIST:PsiModifierListStub[mask=16]
+                     PARAMETER:PsiParameterStub[a1:int[]]
+                       MODIFIER_LIST:PsiModifierListStub[mask=0]
+                     PARAMETER:PsiParameterStub[a2:int[]]
+                       MODIFIER_LIST:PsiModifierListStub[mask=0]
+                     PARAMETER:PsiParameterStub[a3:int[][]]
+                       MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+                 METHOD:PsiMethodStub[varargs v2a:int[]]
+                   MODIFIER_LIST:PsiModifierListStub[mask=10]
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   PARAMETER_LIST:PsiParameterListStub
+                     PARAMETER:PsiParameterStub[v:int...]
+                       MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+               CLASS:PsiClassStub[interface name=I fqn=I]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 METHOD:PsiMethodStub[m1:void]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   PARAMETER_LIST:PsiParameterListStub
+                   THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+                 METHOD:PsiMethodStub[m2:void]
+                   MODIFIER_LIST:PsiModifierListStub[mask=512]
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   PARAMETER_LIST:PsiParameterListStub
+                   THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+             """);
   }
 
   public void testFields() {
-    doTest("static class C {\n" +
-           "  strictfp float f;\n" +
-           "  int j[] = {0}, k;\n" +
-           "  static String s = \"-\";\n" +
-           "}\n" +
-           "public class D {\n" +
-           "  private volatile boolean b;\n" +
-           "  public final double x;\n" +
-           "}",
+    doTest("""
+             static class C {
+               strictfp float f;
+               int j[] = {0}, k;
+               static String s = "-";
+             }
+             public class D {
+               private volatile boolean b;
+               public final double x;
+             }""",
 
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "  CLASS:PsiClassStub[name=C fqn=C]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=8]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "    FIELD:PsiFieldStub[f:float]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=2048]\n" +
-           "    FIELD:PsiFieldStub[j:int[]={0}]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    FIELD:PsiFieldStub[k:int]\n" +
-           "    FIELD:PsiFieldStub[s:String=\"-\"]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=8]\n" +
-           "  CLASS:PsiClassStub[name=D fqn=D]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "    FIELD:PsiFieldStub[b:boolean]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=66]\n" +
-           "    FIELD:PsiFieldStub[x:double]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=17]\n");
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[name=C fqn=C]
+                 MODIFIER_LIST:PsiModifierListStub[mask=8]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 FIELD:PsiFieldStub[f:float]
+                   MODIFIER_LIST:PsiModifierListStub[mask=2048]
+                 FIELD:PsiFieldStub[j:int[]={0}]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 FIELD:PsiFieldStub[k:int]
+                 FIELD:PsiFieldStub[s:String="-"]
+                   MODIFIER_LIST:PsiModifierListStub[mask=8]
+               CLASS:PsiClassStub[name=D fqn=D]
+                 MODIFIER_LIST:PsiModifierListStub[mask=1]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 FIELD:PsiFieldStub[b:boolean]
+                   MODIFIER_LIST:PsiModifierListStub[mask=66]
+                 FIELD:PsiFieldStub[x:double]
+                   MODIFIER_LIST:PsiModifierListStub[mask=17]
+             """);
   }
 
   public void testAnonymousClasses() {
-    doTest("class C { {\n" +
-           "  new O.P() { };\n" +
-           "  X.new Y() { };\n" +
-           "  f(p -> new R() { });\n" +
-           "} }",
+    doTest("""
+             class C { {
+               new O.P() { };
+               X.new Y() { };
+               f(p -> new R() { });
+             } }""",
 
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "  CLASS:PsiClassStub[name=C fqn=C]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "    CLASS_INITIALIZER:PsiClassInitializerStub\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=O.P]\n" +
-           "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Y inqualifnew]\n" +
-           "      LAMBDA_EXPRESSION:FunctionalExpressionStub\n" +
-           "        ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=R]\n");
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[name=C fqn=C]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 CLASS_INITIALIZER:PsiClassInitializerStub
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=O.P]
+                   ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Y inqualifnew]
+                   LAMBDA_EXPRESSION:FunctionalExpressionStub
+                     ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=R]
+             """);
   }
 
   public void testEnums() {
-    doTest("enum E {\n" +
-           "  E1() { };\n" +
-           "  abstract void m();\n" +
-           "}\n" +
-           "public enum U { U1, U2 }",
+    doTest("""
+             enum E {
+               E1() { };
+               abstract void m();
+             }
+             public enum U { U1, U2 }""",
 
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "  CLASS:PsiClassStub[enum name=E fqn=E]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "    ENUM_CONSTANT:PsiFieldStub[enumconst E1:E]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      ENUM_CONSTANT_INITIALIZER:PsiClassStub[anonymous enumInit name=null fqn=null baseref=E]\n" +
-           "    METHOD:PsiMethodStub[m:void]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=1024]\n" +
-           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
-           "  CLASS:PsiClassStub[enum name=U fqn=U]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "    ENUM_CONSTANT:PsiFieldStub[enumconst U1:U]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    ENUM_CONSTANT:PsiFieldStub[enumconst U2:U]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n");
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[enum name=E fqn=E]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 ENUM_CONSTANT:PsiFieldStub[enumconst E1:E]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   ENUM_CONSTANT_INITIALIZER:PsiClassStub[anonymous enumInit name=null fqn=null baseref=E]
+                 METHOD:PsiMethodStub[m:void]
+                   MODIFIER_LIST:PsiModifierListStub[mask=1024]
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   PARAMETER_LIST:PsiParameterListStub
+                   THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+               CLASS:PsiClassStub[enum name=U fqn=U]
+                 MODIFIER_LIST:PsiModifierListStub[mask=1]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 ENUM_CONSTANT:PsiFieldStub[enumconst U1:U]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 ENUM_CONSTANT:PsiFieldStub[enumconst U2:U]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+             """);
   }
 
   public void testLocalVariables() {
-    doTest("class C {\n" +
-           "  void m() {\n" +
-           "    int local = 0;\n" +
-           "    Object r = new Runnable() {\n" +
-           "      public void run() { }\n" +
-           "    };\n" +
-           "    for (int loop = 0; loop < 10; loop++) ;\n" +
-           "    try (Resource r = new Resource()) { }\n" +
-           "    try (Resource r = new Resource() {\n" +
-           "           @Override public void close() { }\n" +
-           "         }) { }\n" +
-           "    try (new Resource()) { }" +
-           "  }\n" +
-           "}",
+    doTest("""
+             class C {
+               void m() {
+                 int local = 0;
+                 Object r = new Runnable() {
+                   public void run() { }
+                 };
+                 for (int loop = 0; loop < 10; loop++) ;
+                 try (Resource r = new Resource()) { }
+                 try (Resource r = new Resource() {
+                        @Override public void close() { }
+                      }) { }
+                 try (new Resource()) { }  }
+             }""",
 
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "  CLASS:PsiClassStub[name=C fqn=C]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "    METHOD:PsiMethodStub[m:void]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
-           "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Runnable]\n" +
-           "        METHOD:PsiMethodStub[run:void]\n" +
-           "          MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
-           "          TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "          PARAMETER_LIST:PsiParameterListStub\n" +
-           "          THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
-           "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Resource]\n" +
-           "        METHOD:PsiMethodStub[close:void]\n" +
-           "          MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
-           "            ANNOTATION:PsiAnnotationStub[@Override]\n" +
-           "              ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "          TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "          PARAMETER_LIST:PsiParameterListStub\n" +
-           "          THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[name=C fqn=C]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 METHOD:PsiMethodStub[m:void]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   PARAMETER_LIST:PsiParameterListStub
+                   THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+                   ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Runnable]
+                     METHOD:PsiMethodStub[run:void]
+                       MODIFIER_LIST:PsiModifierListStub[mask=1]
+                       TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                       PARAMETER_LIST:PsiParameterListStub
+                       THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+                   ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Resource]
+                     METHOD:PsiMethodStub[close:void]
+                       MODIFIER_LIST:PsiModifierListStub[mask=1]
+                         ANNOTATION:PsiAnnotationStub[@Override]
+                           ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                       TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                       PARAMETER_LIST:PsiParameterListStub
+                       THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+             """);
   }
 
   public void testNonListParameters() {
-    doTest("class C {\n" +
-           "  {\n" +
-           "    for (int i : arr) ;\n" +
-           "    for (String s : new Iterable<String>() {\n" +
-           "      @Override public Iterator<String> iterator() { return null; }\n" +
-           "    }) ;\n" +
-           "    try { }\n" +
-           "      catch (Throwable t) { }\n" +
-           "      catch (E1|E2 e) { }\n" +
-           "  }\n" +
-           "}",
+    doTest("""
+             class C {
+               {
+                 for (int i : arr) ;
+                 for (String s : new Iterable<String>() {
+                   @Override public Iterator<String> iterator() { return null; }
+                 }) ;
+                 try { }
+                   catch (Throwable t) { }
+                   catch (E1|E2 e) { }
+               }
+             }""",
 
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "  CLASS:PsiClassStub[name=C fqn=C]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "    CLASS_INITIALIZER:PsiClassInitializerStub\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Iterable<String>]\n" +
-           "        METHOD:PsiMethodStub[iterator:Iterator<String>]\n" +
-           "          MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
-           "            ANNOTATION:PsiAnnotationStub[@Override]\n" +
-           "              ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "          TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "          PARAMETER_LIST:PsiParameterListStub\n" +
-           "          THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[name=C fqn=C]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 CLASS_INITIALIZER:PsiClassInitializerStub
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Iterable<String>]
+                     METHOD:PsiMethodStub[iterator:Iterator<String>]
+                       MODIFIER_LIST:PsiModifierListStub[mask=1]
+                         ANNOTATION:PsiAnnotationStub[@Override]
+                           ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                       TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                       PARAMETER_LIST:PsiParameterListStub
+                       THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+             """);
   }
 
   public void testAnnotations() {
-    doTest("@Deprecated\n" +
-           "@SuppressWarnings(\"UnusedDeclaration\")\n" +
-           "class Foo { }",
+    doTest("""
+             @Deprecated
+             @SuppressWarnings("UnusedDeclaration")
+             class Foo { }""",
 
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "  CLASS:PsiClassStub[deprecatedA name=Foo fqn=Foo]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      ANNOTATION:PsiAnnotationStub[@Deprecated]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      ANNOTATION:PsiAnnotationStub[@SuppressWarnings(\"UnusedDeclaration\")]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "          NAME_VALUE_PAIR:PsiNameValuePairStubImpl\n" +
-           "            LITERAL_EXPRESSION:PsiLiteralStub\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[deprecatedA name=Foo fqn=Foo]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   ANNOTATION:PsiAnnotationStub[@Deprecated]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   ANNOTATION:PsiAnnotationStub[@SuppressWarnings("UnusedDeclaration")]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                       NAME_VALUE_PAIR:PsiNameValuePairStubImpl
+                         LITERAL_EXPRESSION:PsiLiteralStub
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+             """);
   }
 
   public void testTypeAnnotations() {
-    doTest("import j.u.@A C;\n" +
-           "import @A j.u.D;\n" +
-           "\n" +
-           "class C<@A T extends @A C> implements @A I<@A T> {\n" +
-           "  @TA T<@A T1, @A ? extends @A T2> f;\n" +
-           "  @TA T m(@A C this, @TA int p) throws @A E {\n" +
-           "    o.<@A1 C>m();\n" +
-           "    new <T> @A2 C();\n" +
-           "    C.@A3 B v = (@A4 C)v.new @A5 C();\n" +
-           "    m(@A6 C::m);\n" +
-           "    @A7 T @A8[] @A9[] a = new @A7 T @A8[0] @A9[0];\n" +
-           "  }\n" +
-           "  int @A [] v() @A [] { }\n" +
-           "}",
+    doTest("""
+             import j.u.@A C;
+             import @A j.u.D;
 
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "    IMPORT_STATEMENT:PsiImportStatementStub[j.u.C]\n" +
-           "    IMPORT_STATEMENT:PsiImportStatementStub[j.u.D]\n" +
-           "  CLASS:PsiClassStub[name=C fqn=C]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      TYPE_PARAMETER:PsiTypeParameter[T]\n" +
-           "        ANNOTATION:PsiAnnotationStub[@A]\n" +
-           "          ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "        EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:@A C]\n" +
-           "          ANNOTATION:PsiAnnotationStub[@A]\n" +
-           "            ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:@A I<@A T>]\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "    FIELD:PsiFieldStub[f:T<@A T1, @A ? extends @A T2>]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "        ANNOTATION:PsiAnnotationStub[@TA]\n" +
-           "          ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "    METHOD:PsiMethodStub[m:T]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "        ANNOTATION:PsiAnnotationStub[@TA]\n" +
-           "          ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "        PARAMETER:PsiParameterStub[p:int]\n" +
-           "          MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "            ANNOTATION:PsiAnnotationStub[@TA]\n" +
-           "              ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:@A E]\n" +
-           "        ANNOTATION:PsiAnnotationStub[@A]\n" +
-           "          ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A1]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A2]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A3]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A4]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A5]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      METHOD_REF_EXPRESSION:FunctionalExpressionStub\n" +
-           "        ANNOTATION:PsiAnnotationStub[@A6]\n" +
-           "          ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A7]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A8]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A9]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A7]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A8]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A9]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "    METHOD:PsiMethodStub[v:int[][]]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
+             class C<@A T extends @A C> implements @A I<@A T> {
+               @TA T<@A T1, @A ? extends @A T2> f;
+               @TA T m(@A C this, @TA int p) throws @A E {
+                 o.<@A1 C>m();
+                 new <T> @A2 C();
+                 C.@A3 B v = (@A4 C)v.new @A5 C();
+                 m(@A6 C::m);
+                 @A7 T @A8[] @A9[] a = new @A7 T @A8[0] @A9[0];
+               }
+               int @A [] v() @A [] { }
+             }""",
+
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+                 IMPORT_STATEMENT:PsiImportStatementStub[j.u.C]
+                 IMPORT_STATEMENT:PsiImportStatementStub[j.u.D]
+               CLASS:PsiClassStub[name=C fqn=C]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   TYPE_PARAMETER:PsiTypeParameter[T]
+                     ANNOTATION:PsiAnnotationStub[@A]
+                       ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                     EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:@A C]
+                       ANNOTATION:PsiAnnotationStub[@A]
+                         ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:@A I<@A T>]
+                   ANNOTATION:PsiAnnotationStub[@A]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   ANNOTATION:PsiAnnotationStub[@A]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                 FIELD:PsiFieldStub[f:T<@A T1, @A ? extends @A T2>]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                     ANNOTATION:PsiAnnotationStub[@TA]
+                       ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   ANNOTATION:PsiAnnotationStub[@A]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   ANNOTATION:PsiAnnotationStub[@A]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   ANNOTATION:PsiAnnotationStub[@A]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                 METHOD:PsiMethodStub[m:T]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                     ANNOTATION:PsiAnnotationStub[@TA]
+                       ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   PARAMETER_LIST:PsiParameterListStub
+                     PARAMETER:PsiParameterStub[p:int]
+                       MODIFIER_LIST:PsiModifierListStub[mask=0]
+                         ANNOTATION:PsiAnnotationStub[@TA]
+                           ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   THROWS_LIST:PsiRefListStub[THROWS_LIST:@A E]
+                     ANNOTATION:PsiAnnotationStub[@A]
+                       ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   ANNOTATION:PsiAnnotationStub[@A1]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   ANNOTATION:PsiAnnotationStub[@A2]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   ANNOTATION:PsiAnnotationStub[@A3]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   ANNOTATION:PsiAnnotationStub[@A4]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   ANNOTATION:PsiAnnotationStub[@A5]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   METHOD_REF_EXPRESSION:FunctionalExpressionStub
+                     ANNOTATION:PsiAnnotationStub[@A6]
+                       ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   ANNOTATION:PsiAnnotationStub[@A7]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   ANNOTATION:PsiAnnotationStub[@A8]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   ANNOTATION:PsiAnnotationStub[@A9]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   ANNOTATION:PsiAnnotationStub[@A7]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   ANNOTATION:PsiAnnotationStub[@A8]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   ANNOTATION:PsiAnnotationStub[@A9]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                 METHOD:PsiMethodStub[v:int[][]]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   ANNOTATION:PsiAnnotationStub[@A]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   PARAMETER_LIST:PsiParameterListStub
+                   ANNOTATION:PsiAnnotationStub[@A]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                   THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+             """);
   }
 
   public void testLocalClass() {
-    doTest("class C {\n" +
-           "  void m() {\n" +
-           "    class L { }\n" +
-           "  }\n" +
-           "}",
+    doTest("""
+             class C {
+               void m() {
+                 class L { }
+               }
+             }""",
 
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "  CLASS:PsiClassStub[name=C fqn=C]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "    METHOD:PsiMethodStub[m:void]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
-           "      CLASS:PsiClassStub[name=L fqn=null]\n" +
-           "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "        TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "        EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[name=C fqn=C]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 METHOD:PsiMethodStub[m:void]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   PARAMETER_LIST:PsiParameterListStub
+                   THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+                   CLASS:PsiClassStub[name=L fqn=null]
+                     MODIFIER_LIST:PsiModifierListStub[mask=0]
+                     TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                     EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                     IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+             """);
   }
 
   public void testModuleInfo() {
-    doTest("@Deprecated open module M. /*ignore me*/ N {\n" +
-           "  requires transitive static A.B;\n" +
-           "  exports k.l;\n" +
-           "  opens m.n;\n" +
-           "  uses p.C;\n" +
-           "  provides p.C with x.Y;\n" +
-           "}",
+    doTest("""
+             @Deprecated open module M. /*ignore me*/ N {
+               requires transitive static A.B;
+               exports k.l;
+               opens m.n;
+               uses p.C;
+               provides p.C with x.Y;
+             }""",
 
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "  MODULE:PsiJavaModuleStub:M.N\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=8192]\n" +
-           "      ANNOTATION:PsiAnnotationStub[@Deprecated]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "    REQUIRES_STATEMENT:PsiRequiresStatementStub:A.B\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=16392]\n" +
-           "    EXPORTS_STATEMENT:PsiPackageAccessibilityStatementStub[EXPORTS]:k.l\n" +
-           "    OPENS_STATEMENT:PsiPackageAccessibilityStatementStub[OPENS]:m.n\n" +
-           "    USES_STATEMENT:PsiUsesStatementStub:p.C\n" +
-           "    PROVIDES_STATEMENT:PsiProvidesStatementStub:p.C\n" +
-           "      PROVIDES_WITH_LIST:PsiRefListStub[PROVIDES_WITH_LIST:x.Y]\n");
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               MODULE:PsiJavaModuleStub:M.N
+                 MODIFIER_LIST:PsiModifierListStub[mask=8192]
+                   ANNOTATION:PsiAnnotationStub[@Deprecated]
+                     ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
+                 REQUIRES_STATEMENT:PsiRequiresStatementStub:A.B
+                   MODIFIER_LIST:PsiModifierListStub[mask=16392]
+                 EXPORTS_STATEMENT:PsiPackageAccessibilityStatementStub[EXPORTS]:k.l
+                 OPENS_STATEMENT:PsiPackageAccessibilityStatementStub[OPENS]:m.n
+                 USES_STATEMENT:PsiUsesStatementStub:p.C
+                 PROVIDES_STATEMENT:PsiProvidesStatementStub:p.C
+                   PROVIDES_WITH_LIST:PsiRefListStub[PROVIDES_WITH_LIST:x.Y]
+             """);
   }
 
   public void testRecord() {
     doTest("record A(int x, String y) {}",
 
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "  CLASS:PsiClassStub[record name=A fqn=A]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    RECORD_HEADER:PsiRecordHeaderStub\n" +
-           "      RECORD_COMPONENT:PsiRecordComponentStub[x:int]\n" +
-           "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      RECORD_COMPONENT:PsiRecordComponentStub[y:String]\n" +
-           "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[record name=A fqn=A]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 RECORD_HEADER:PsiRecordHeaderStub
+                   RECORD_COMPONENT:PsiRecordComponentStub[x:int]
+                     MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   RECORD_COMPONENT:PsiRecordComponentStub[y:String]
+                     MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+             """);
   }
 
   public void testIncompleteRecord() {
     doTest("record A",
 
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "  CLASS:PsiClassStub[record name=A fqn=A]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[record name=A fqn=A]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+             """);
   }
 
   public void testLocalRecord() {
-    doTest("class A {\n" +
-           "  void test() {\n" +
-           "    record A(String s) { }\n" +
-           "  }\n" +
-           "}\n",
+    doTest("""
+             class A {
+               void test() {
+                 record A(String s) { }
+               }
+             }
+             """,
 
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "  CLASS:PsiClassStub[name=A fqn=A]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "    METHOD:PsiMethodStub[test:void]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
-           "      CLASS:PsiClassStub[record name=A fqn=null]\n" +
-           "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "        TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "        RECORD_HEADER:PsiRecordHeaderStub\n" +
-           "          RECORD_COMPONENT:PsiRecordComponentStub[s:String]\n" +
-           "            MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "        EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[name=A fqn=A]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 METHOD:PsiMethodStub[test:void]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   PARAMETER_LIST:PsiParameterListStub
+                   THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+                   CLASS:PsiClassStub[record name=A fqn=null]
+                     MODIFIER_LIST:PsiModifierListStub[mask=0]
+                     TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                     RECORD_HEADER:PsiRecordHeaderStub
+                       RECORD_COMPONENT:PsiRecordComponentStub[s:String]
+                         MODIFIER_LIST:PsiModifierListStub[mask=0]
+                     EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                     IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+             """);
   }
 
   public void testLocalRecordIncorrect() {
-    doTest("class A {\n" +
-           "  void test() {\n" +
-           "    record A { }\n" +
-           "  }\n" +
-           "}\n",
+    doTest("""
+             class A {
+               void test() {
+                 record A { }
+               }
+             }
+             """,
 
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "  CLASS:PsiClassStub[name=A fqn=A]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "    METHOD:PsiMethodStub[test:void]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[name=A fqn=A]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 METHOD:PsiMethodStub[test:void]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   PARAMETER_LIST:PsiParameterListStub
+                   THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+             """);
   }
 
   public void testLocalRecordLikeIncompleteCode() {
-    doTest("class A {\n" +
-           "  void foo(){\n" +
-           "    record turn getTitle();\n" +
-           "  }\n" +
-           "}",
+    doTest("""
+             class A {
+               void foo(){
+                 record turn getTitle();
+               }
+             }""",
 
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "  CLASS:PsiClassStub[name=A fqn=A]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "    METHOD:PsiMethodStub[foo:void]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[name=A fqn=A]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 METHOD:PsiMethodStub[foo:void]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   PARAMETER_LIST:PsiParameterListStub
+                   THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+             """);
   }
 
   public void testLocalRecordLikeIncompleteCodeWithTypeParameters() {
-    doTest("class A {\n" +
-           "  void foo(){\n" +
-           "    record turn<A>" +
-           "  }\n" +
-           "}",
+    doTest("""
+             class A {
+               void foo(){
+                 record turn<A>  }
+             }""",
 
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "  CLASS:PsiClassStub[name=A fqn=A]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "    METHOD:PsiMethodStub[foo:void]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
-           "      CLASS:PsiClassStub[record name=turn fqn=null]\n" +
-           "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "        TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "          TYPE_PARAMETER:PsiTypeParameter[A]\n" +
-           "            EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:]\n" +
-           "        EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[name=A fqn=A]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 METHOD:PsiMethodStub[foo:void]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   PARAMETER_LIST:PsiParameterListStub
+                   THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+                   CLASS:PsiClassStub[record name=turn fqn=null]
+                     MODIFIER_LIST:PsiModifierListStub[mask=0]
+                     TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                       TYPE_PARAMETER:PsiTypeParameter[A]
+                         EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:]
+                     EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                     IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+             """);
   }
 
   public void testLocalRecordWithTypeParameters() {
-    doTest("class A {\n" +
-           "  void foo(){\n" +
-           "    record R<String>(){}\n" +
-           "  }\n" +
-           "}",
+    doTest("""
+             class A {
+               void foo(){
+                 record R<String>(){}
+               }
+             }""",
 
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "  CLASS:PsiClassStub[name=A fqn=A]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-           "    METHOD:PsiMethodStub[foo:void]\n" +
-           "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
-           "      CLASS:PsiClassStub[record name=R fqn=null]\n" +
-           "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-           "        TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "          TYPE_PARAMETER:PsiTypeParameter[String]\n" +
-           "            EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:]\n" +
-           "        RECORD_HEADER:PsiRecordHeaderStub\n" +
-           "        EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+           """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[name=A fqn=A]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 METHOD:PsiMethodStub[foo:void]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                   PARAMETER_LIST:PsiParameterListStub
+                   THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+                   CLASS:PsiClassStub[record name=R fqn=null]
+                     MODIFIER_LIST:PsiModifierListStub[mask=0]
+                     TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                       TYPE_PARAMETER:PsiTypeParameter[String]
+                         EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:]
+                     RECORD_HEADER:PsiRecordHeaderStub
+                     EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                     IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+             """);
   }
   
   public void testInterfaceKeywordInBody() {
-    String source = "class X {\n" +
-                    "  void test() {}interface\n" +
-                    "}";
+    String source = """
+      class X {
+        void test() {}interface
+      }""";
     PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
     FileASTNode fileNode = file.getNode();
     assertNotNull(fileNode);
@@ -710,15 +767,17 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     long t = System.currentTimeMillis();
     StubElement<?> tree = myBuilder.buildStubTree(file);
     t = System.currentTimeMillis() - t;
-    assertEquals("PsiJavaFileStub []\n" +
-                 "  IMPORT_LIST:PsiImportListStub\n" +
-                 "  CLASS:PsiClassStub[name=SOE_test fqn=SOE_test]\n" +
-                 "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
-                 "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-                 "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-                 "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
-                 "    FIELD:PsiFieldStub[BIG:BigInteger=;INITIALIZER_NOT_STORED;]\n" +
-                 "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n",
+    assertEquals("""
+                   PsiJavaFileStub []
+                     IMPORT_LIST:PsiImportListStub
+                     CLASS:PsiClassStub[name=SOE_test fqn=SOE_test]
+                       MODIFIER_LIST:PsiModifierListStub[mask=0]
+                       TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                       EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                       IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                       FIELD:PsiFieldStub[BIG:BigInteger=;INITIALIZER_NOT_STORED;]
+                         MODIFIER_LIST:PsiModifierListStub[mask=0]
+                   """,
                  DebugUtil.stubTreeToString(tree));
     LOG.debug("SOE depth=" + i + ", time=" + t + "ms");
   }

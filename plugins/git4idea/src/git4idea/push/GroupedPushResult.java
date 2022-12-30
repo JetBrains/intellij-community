@@ -34,20 +34,13 @@ final class GroupedPushResult {
       GitRepository repository = entry.getKey();
       GitPushRepoResult result = entry.getValue();
 
-      switch (result.getType()) {
-        case REJECTED_NO_FF:
-          rejected.put(repository, result);
-          break;
-        case ERROR:
-          errors.put(repository, result);
-          break;
-        case REJECTED_STALE_INFO:
-        case REJECTED_OTHER:
-          customRejected.put(repository, result);
-          break;
-        default:
-          successful.put(repository, result);
-      }
+      Map<GitRepository, GitPushRepoResult> map = switch (result.getType()) {
+        case REJECTED_NO_FF -> rejected;
+        case ERROR -> errors;
+        case REJECTED_STALE_INFO, REJECTED_OTHER -> customRejected;
+        default -> successful;
+      };
+      map.put(repository, result);
     }
     return new GroupedPushResult(successful, errors, rejected, customRejected);
   }

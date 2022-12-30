@@ -10,7 +10,7 @@ import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-class GradleTaskData(val node: DataNode<TaskData>, val gradleModulePath: String) {
+class GradleTaskData(val node: DataNode<TaskData>, private val gradleModulePath: String) {
   val data = node.data
   val name = data.name.run { substringAfterLast(':').nullize() ?: this }
   val description = data.description

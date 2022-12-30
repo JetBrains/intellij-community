@@ -60,10 +60,12 @@ final class PropertiesLanguageCodeStyleSettingsProvider extends LanguageCodeStyl
 
   @Override
   public String getCodeSample(@NotNull SettingsType settingsType) {
-    return "key1=value\n" +
-           "some_key=some_value\n\n" +
-           "#commentaries\n" +
-           "last.key=some text here";
+    return """
+      key1=value
+      some_key=some_value
+
+      #commentaries
+      last.key=some text here""";
   }
 
   @Nullable

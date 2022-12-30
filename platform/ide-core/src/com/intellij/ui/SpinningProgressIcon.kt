@@ -42,8 +42,8 @@ open class SpinningProgressIcon: AnimatedIcon() {
   private var iconColor: Color = JBColor.namedColor("ProgressIcon.color", JBColor(0x767A8A, 0xCED0D6))
 
   fun getCacheKey() = ColorUtil.toHex(iconColor)
-  val iconCache = arrayOfNulls<Icon>(paths.size)
-  var iconCacheKey = ""
+  private val iconCache = arrayOfNulls<Icon>(paths.size)
+  private var iconCacheKey = ""
   override fun createFrames() = Array(paths.size) { createFrame(it) }
 
   fun setIconColor(color: Color) {

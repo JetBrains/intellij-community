@@ -63,11 +63,12 @@ public class BookmarkManagerTest extends AbstractEditorTest {
   public void testWholeTextReplace() {
     @Language("JAVA")
     @NonNls String text =
-      "public class Test {\n" +
-      "    public void test() {\n" +
-      "        int i = 1;\n" +
-      "    }\n" +
-      "}";
+      """
+        public class Test {
+            public void test() {
+                int i = 1;
+            }
+        }""";
     init(text, PlainTextFileType.INSTANCE);
 
     addBookmark(2);
@@ -87,11 +88,12 @@ public class BookmarkManagerTest extends AbstractEditorTest {
   public void testBookmarkLineRemove() {
     @Language("JAVA")
     @NonNls String text =
-      "public class Test {\n" +
-      "    public void test() {\n" +
-      "        int i = 1;\n" +
-      "    }\n" +
-      "}";
+      """
+        public class Test {
+            public void test() {
+                int i = 1;
+            }
+        }""";
     init(text, PlainTextFileType.INSTANCE);
 
     addBookmark(2);
@@ -104,12 +106,13 @@ public class BookmarkManagerTest extends AbstractEditorTest {
   public void testTwoBookmarksOnSameLine1() {
     @Language("JAVA")
     @NonNls String text =
-      "public class Test {\n" +
-      "    public void test() {\n" +
-      "        int i = 1;\n" +
-      "        int j = 1;\n" +
-      "    }\n" +
-      "}";
+      """
+        public class Test {
+            public void test() {
+                int i = 1;
+                int j = 1;
+            }
+        }""";
     init(text, PlainTextFileType.INSTANCE);
 
     addBookmark(2);
@@ -130,12 +133,13 @@ public class BookmarkManagerTest extends AbstractEditorTest {
   public void testTwoBookmarksOnSameLine2() {
     @Language("JAVA")
     @NonNls String text =
-      "public class Test {\n" +
-      "    public void test() {\n" +
-      "        int i = 1;\n" +
-      "        int j = 1;\n" +
-      "    }\n" +
-      "}";
+      """
+        public class Test {
+            public void test() {
+                int i = 1;
+                int j = 1;
+            }
+        }""";
     init(text, PlainTextFileType.INSTANCE);
 
     addBookmark(2);
@@ -163,11 +167,12 @@ public class BookmarkManagerTest extends AbstractEditorTest {
   public void testBookmarkIsSavedAfterRemoteChange() {
     @Language("JAVA")
     @NonNls String text =
-      "public class Test {\n" +
-      "    public void test() {\n" +
-      "        int i = 1;\n" +
-      "    }\n" +
-      "}";
+      """
+        public class Test {
+            public void test() {
+                int i = 1;
+            }
+        }""";
     init(text, PlainTextFileType.INSTANCE);
     addBookmark(2);
     assertEquals(1, getManager().getBookmarks().size());

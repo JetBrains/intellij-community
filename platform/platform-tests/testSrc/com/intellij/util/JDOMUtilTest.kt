@@ -2,6 +2,7 @@
 package com.intellij.util
 
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.JDOMUtil.MergeAttribute
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -15,6 +16,7 @@ import java.awt.Rectangle
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.test.assertEquals
 
 internal class JDOMUtilTest {
   @Test
@@ -310,6 +312,18 @@ internal class JDOMUtilTest {
         }
       }
     }
+  }
+
+  @Test
+  fun mergeWithAttributes() {
+    val res = JDOMUtil.load(("<hello><data attr='1'><HiThere></HiThere></data></hello>").toByteArray())
+    val res2 = JDOMUtil.load(("<hello><data attr='1' additional='2'><HiThere></HiThere></data></hello>").toByteArray())
+    JDOMUtil.deepMergeWithAttributes(res, res2, listOf(MergeAttribute("data", "attr")))
+    assertEquals("""|<hello>
+                    |  <data attr="1" additional="2">
+                    |    <HiThere />
+                    |  </data>
+                    |</hello>""".trimMargin(), JDOMUtil.write(res))
   }
 
   private fun assertElementText(actual: Element, expected: String) {

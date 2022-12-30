@@ -73,7 +73,7 @@ class DeferredIconRepaintScheduler {
     val x: Int,
     val y: Int,
     val target: Component?,
-    val paintingParent: Component?,
+    private val paintingParent: Component?,
     val paintingParentRec: Rectangle?
   ) {
     fun getActualTarget(): Component? {

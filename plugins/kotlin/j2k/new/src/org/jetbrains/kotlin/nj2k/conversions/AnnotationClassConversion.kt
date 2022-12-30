@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.j2k.ast.Nullability
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.toExpression
 import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotation.UseSiteTarget.PROPERTY_GETTER
 
 import org.jetbrains.kotlin.nj2k.types.JKJavaArrayType
 import org.jetbrains.kotlin.nj2k.types.isArrayType
@@ -54,7 +56,7 @@ class AnnotationClassConversion(context: NewJ2kConverterContext) : RecursiveAppl
             ) {
                 JKKtAnnotationArrayInitializerExpression(initializer)
             } else initializer,
-            annotationList = this::annotationList.detached(),
+            annotationList = ::annotationList.detached().also { it.annotations.forEach { ann -> ann.useSiteTarget = PROPERTY_GETTER } },
         ).also { parameter ->
             parameter.trailingComments += trailingComments
             parameter.leadingComments += leadingComments

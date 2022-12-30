@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.plugins.github.api.data.GHCommit
 import java.util.concurrent.ConcurrentHashMap
 
@@ -18,9 +18,9 @@ class GHPRGraphFileHistory(private val commitsMap: Map<String, GHCommitWithPatch
   }
 
   private fun isSameFile(knownCommit: GHCommitWithPatches, knownFilePath: String, commitSha: String, filePath: String): Boolean {
-    if (knownCommit.cumulativePatches.none { it.castSafelyTo<TextFilePatch>()?.filePath == knownFilePath }) return false
+    if (knownCommit.cumulativePatches.none { it.asSafely<TextFilePatch>()?.filePath == knownFilePath }) return false
 
-    val newKnownFilePath = knownCommit.commitPatches.find { it.castSafelyTo<TextFilePatch>()?.filePath == knownFilePath }?.beforeFileName
+    val newKnownFilePath = knownCommit.commitPatches.find { it.asSafely<TextFilePatch>()?.filePath == knownFilePath }?.beforeFileName
     if (knownCommit.sha == commitSha && (knownFilePath == filePath || newKnownFilePath == filePath)) return true
 
     val knownParents = knownCommit.commit.parents.mapNotNull { commitsMap[it.oid] }

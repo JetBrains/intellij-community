@@ -410,6 +410,11 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_SHOW_FILES;
     }
@@ -427,6 +432,11 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
     HideOutOfCyclePackagesAction() {
       super(JavaBundle.message("hide.out.of.cyclic.packages.action.text"),
             JavaBundle.message("hide.out.of.cyclic.packages.action.description"), AllIcons.General.Filter);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -449,6 +459,11 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_GROUP_BY_SCOPE_TYPE;
     }
@@ -465,6 +480,11 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
     RerunAction(JComponent comp) {
       super(CommonBundle.message("action.rerun"), CodeInsightBundle.message("action.rerun.dependency"), AllIcons.Actions.Rerun);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

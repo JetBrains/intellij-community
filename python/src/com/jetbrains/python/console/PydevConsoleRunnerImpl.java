@@ -93,6 +93,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
@@ -124,6 +125,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private final Project myProject;
   private final @NlsContexts.TabTitle String myTitle;
   @Nullable private final String myWorkingDir;
+  @Nullable private final Function<TargetEnvironment, String> myWorkingDirFunction;
   @Nullable private Sdk mySdk;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
@@ -153,14 +155,15 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                 @Nullable Sdk sdk,
                                 @NotNull final PyConsoleType consoleType,
                                 @NotNull final @NlsContexts.TabTitle String title,
-                                @Nullable final String workingDir,
+                                @Nullable Function<TargetEnvironment, String> workingDirFunction,
                                 @NotNull Map<String, String> environmentVariables,
                                 @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
                                 @NotNull Function<TargetEnvironment, @NotNull String> statementsToExecuteFunction) {
     myProject = project;
     mySdk = sdk;
     myTitle = title;
-    myWorkingDir = workingDir;
+    myWorkingDir = null;
+    myWorkingDirFunction = workingDirFunction;
     myConsoleType = consoleType;
     myEnvironmentVariables = environmentVariables;
     myConsoleSettings = settingsProvider;
@@ -180,6 +183,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     mySdk = sdk;
     myTitle = title;
     myWorkingDir = workingDir;
+    myWorkingDirFunction = null;
     myConsoleType = consoleType;
     myEnvironmentVariables = environmentVariables;
     myConsoleSettings = settingsProvider;
@@ -441,18 +445,14 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     PythonExecution pythonConsoleScriptExecution =
       PydevConsoleCli.createPythonConsoleScriptInClientMode(ideServerPort, helpersAwareTargetRequest);
 
-    TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareTargetRequest.getTargetEnvironmentRequest();
-
     PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = getRemoteAdditionalData(mySdk);
     PyRemotePathMapper pathMapper = remoteSdkAdditionalData != null
                                     ? PydevConsoleRunnerUtil.getPathMapper(myProject, myConsoleSettings, remoteSdkAdditionalData)
                                     : null;
     PythonCommandLineState.initEnvironment(myProject, pythonConsoleScriptExecution, runParams, helpersAwareTargetRequest, pathMapper);
 
-    if (myWorkingDir != null) {
-      Function<TargetEnvironment, String> targetWorkingDir =
-        TargetEnvironmentFunctions.getTargetEnvironmentValueForLocalPath(targetEnvironmentRequest, myWorkingDir);
-      pythonConsoleScriptExecution.setWorkingDir(targetWorkingDir);
+    if (myWorkingDirFunction != null) {
+      pythonConsoleScriptExecution.setWorkingDir(myWorkingDirFunction);
     }
 
     return pythonConsoleScriptExecution;

@@ -17,7 +17,7 @@ val visualFormattingElementKey = Key.create<Boolean>("visual.formatting.element"
 
 abstract class VisualFormattingLayerService {
   private val EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS = Key.create<CodeStyleSettings>("visual.formatting.layer.info")
-  val Editor.visualFormattingLayerEnabled: Boolean
+  private val Editor.visualFormattingLayerEnabled: Boolean
     get() = visualFormattingLayerCodeStyleSettings != null
   var Editor.visualFormattingLayerCodeStyleSettings: CodeStyleSettings?
     get() = getUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS)

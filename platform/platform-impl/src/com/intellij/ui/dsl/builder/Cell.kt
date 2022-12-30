@@ -85,12 +85,14 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
               action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
 
   /**
-   * See doc for overloaded method
+   * Adds the label with optional mnemonic related to the cell component.
+   * See also doc for overloaded method
    */
   fun label(@NlsContexts.Label label: String, position: LabelPosition = LabelPosition.LEFT): Cell<T>
 
   /**
-   * Adds label at specified [position]. [LabelPosition.TOP] labels occupy available width before the next top label (if present) or
+   * Adds the label related to the cell component at specified [position].
+   * [LabelPosition.TOP] labels occupy available width before the next top label (if present) or
    * whole remaining width. Visibility and enabled state of the cell affects the label as well.
    *
    * For layout [RowLayout.LABEL_ALIGNED] labels for two first columns are supported only (there are technical problems,

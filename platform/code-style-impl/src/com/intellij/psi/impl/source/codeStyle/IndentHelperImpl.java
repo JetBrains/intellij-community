@@ -95,8 +95,8 @@ public class IndentHelperImpl extends IndentHelper {
   /**
    * @deprecated Use {@link #fillIndent(CommonCodeStyleSettings.IndentOptions, int)} instead.
    */
-  @Deprecated(forRemoval = true)
-  public static String fillIndent(Project project,  FileType fileType, int indent) {
+  @Deprecated
+  static String fillIndent(Project project,  FileType fileType, int indent) {
     return fillIndent(CodeStyle.getProjectOrDefaultSettings(project).getIndentOptions(fileType), indent);
   }
 

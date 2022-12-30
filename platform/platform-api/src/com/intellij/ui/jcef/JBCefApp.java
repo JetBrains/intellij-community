@@ -63,9 +63,9 @@ public final class JBCefApp {
 
   private static final String MISSING_LIBS_SUPPORT_URL = "https://intellij-support.jetbrains.com/hc/en-us/articles/360016421559";
 
-  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 98;
+  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 104;
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
-  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 7;
+  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 8;
 
   @NotNull private final CefApp myCefApp;
 
@@ -152,6 +152,11 @@ public final class JBCefApp {
 
     settings.cache_path = ApplicationManager.getApplication().getService(JBCefAppCache.class).getPath().toString();
 
+    if (Registry.is("ide.browser.jcef.sandbox.enable")) {
+      LOG.debug("enabled JCEF-sandbox");
+      settings.no_sandbox = false;
+    }
+
     String[] argsFromProviders = JBCefAppRequiredArgumentsProvider
       .getProviders()
       .stream()
@@ -201,28 +206,22 @@ public final class JBCefApp {
     CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes));
     myCefSettings = settings;
     myCefApp = CefApp.getInstance(settings);
+    LOG.info(String.format("jcef version: %s | cmd args: %s", myCefApp.getVersion().getJcefVersion(), Arrays.toString(args)));
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
   }
 
   private static LogSeverity getLogLevel() {
     String level = System.getProperty("ide.browser.jcef.log.level", "disable").toLowerCase(Locale.ENGLISH);
-    switch (level) {
-      case "disable":
-        return LogSeverity.LOGSEVERITY_DISABLE;
-      case "verbose":
-        return LogSeverity.LOGSEVERITY_VERBOSE;
-      case "info":
-        return LogSeverity.LOGSEVERITY_INFO;
-      case "warning":
-        return LogSeverity.LOGSEVERITY_WARNING;
-      case "error":
-        return LogSeverity.LOGSEVERITY_ERROR;
-      case "fatal":
-        return LogSeverity.LOGSEVERITY_FATAL;
-      case "default":
-      default:
-        return LogSeverity.LOGSEVERITY_DEFAULT;
-    }
+    return switch (level) {
+      case "disable" -> LogSeverity.LOGSEVERITY_DISABLE;
+      case "verbose" -> LogSeverity.LOGSEVERITY_VERBOSE;
+      case "info" -> LogSeverity.LOGSEVERITY_INFO;
+      case "warning" -> LogSeverity.LOGSEVERITY_WARNING;
+      case "error" -> LogSeverity.LOGSEVERITY_ERROR;
+      case "fatal" -> LogSeverity.LOGSEVERITY_FATAL;
+      case "default" -> LogSeverity.LOGSEVERITY_DEFAULT;
+      default -> LogSeverity.LOGSEVERITY_DEFAULT;
+    };
   }
 
   @NotNull

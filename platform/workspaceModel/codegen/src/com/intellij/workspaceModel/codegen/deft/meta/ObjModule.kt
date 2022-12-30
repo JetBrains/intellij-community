@@ -24,11 +24,11 @@ interface ObjModule : Obj {
    * - `org.jetbrains.deft.obj.intellijWs.IntellijWs` object name
    **/
   @JvmInline
-  value class Id(val notation: String) {
-    val javaPackage: String
+  value class Id(private val notation: String) {
+    private val javaPackage: String
       get() = notation
 
-    val objName: String
+    private val objName: String
       get() = notation.substringAfterLast(".")
         .replaceFirstChar { it.titlecaseChar() }
 

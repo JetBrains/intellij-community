@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.sun.jdi.*
+import org.jetbrains.kotlin.backend.common.descriptors.synthesizedString
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.AsmUtil.getCapturedFieldName
 import org.jetbrains.kotlin.codegen.AsmUtil.getLabeledThisName
@@ -136,6 +137,9 @@ class VariableFinder(val context: ExecutionContext) {
 
         // Local variables – direct search
         findLocalVariable(variables, kind, kind.name)?.let { return it }
+
+        // Local variables - synthetic captured local variable (IR Backend)
+        findLocalVariable(variables, kind, kind.name.synthesizedString)?.let { return it }
 
         // Recursive search in local receiver variables
         findCapturedVariableInReceiver(variables, kind)?.let { return it }
@@ -390,10 +394,7 @@ class VariableFinder(val context: ExecutionContext) {
                     || name == AsmUtil.THIS_IN_DEFAULT_IMPLS
                     || INLINED_THIS_REGEX.matches(name)
 
-        // In the old backend captured variables are stored as fields of a generated lambda class.
-        // In the IR backend SAM lambdas are generated as functions, and captured variables are
-        // stored in the LVT table.
-        if (kind is VariableKind.ExtensionThis || kind is VariableKind.Ordinary) {
+        if (kind is VariableKind.ExtensionThis) {
             variables.namedEntitySequence()
                 .filter { kind.capturedNameMatches(it.name) && kind.typeMatches(it.type) }
                 .mapNotNull { it.unwrapAndCheck(kind) }

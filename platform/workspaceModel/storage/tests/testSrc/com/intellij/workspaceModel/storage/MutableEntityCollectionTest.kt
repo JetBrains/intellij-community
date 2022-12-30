@@ -5,6 +5,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceSet
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -12,6 +13,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class MutableEntityCollectionTest {
@@ -190,6 +193,34 @@ class MutableEntityCollectionTest {
         assertTrue(virtualFiles.contains(it))
       }
     }
+  }
+
+  @Test(expected = IllegalStateException::class)
+  fun `collection modification allowed only in modifyEntity block`() {
+    val vfuSet = listOf("/user/a.txt", "/user/b.txt", "/user/c.txt", "/user/opt/app/a.txt").map { virtualFileManager.fromUrl(it) }.toSet()
+    val builder = createEmptyBuilder()
+    builder.addEntity(SetVFUEntity("hello", vfuSet, SampleEntitySource("test")))
+    val entity = builder.entities(SetVFUEntity::class.java).first()
+    entity as SetVFUEntityImpl.Builder
+    entity.fileProperty.remove(entity.fileProperty.first())
+  }
+
+  @Test
+  fun `check lambda is available only in certain places`() {
+    val vfuSet = listOf("/user/a.txt", "/user/b.txt", "/user/c.txt", "/user/opt/app/a.txt").map { virtualFileManager.fromUrl(it) }.toSet()
+    val builder = createEmptyBuilder()
+    val entity = SetVFUEntity("hello", vfuSet, SampleEntitySource("test"))
+    assertNotNull((entity.fileProperty as MutableWorkspaceSet).getModificationUpdateAction())
+    (entity.fileProperty as MutableWorkspaceSet).remove(entity.fileProperty.first())
+    builder.addEntity(entity)
+    var existingEntity = builder.entities(SetVFUEntity::class.java).first()
+    assertNull((existingEntity.fileProperty as MutableWorkspaceSet).getModificationUpdateAction())
+    builder.modifyEntity(existingEntity) {
+      assertNotNull((this.fileProperty as MutableWorkspaceSet).getModificationUpdateAction())
+    }
+    assertNull((existingEntity.fileProperty as MutableWorkspaceSet).getModificationUpdateAction())
+    existingEntity = builder.entities(SetVFUEntity::class.java).first()
+    assertNull((existingEntity.fileProperty as MutableWorkspaceSet).getModificationUpdateAction())
   }
 
   private fun makeReplaceOnSetOperationAndCheck(builder: MutableEntityStorageImpl, oldUrls: List<String>, newUrls: List<String>,

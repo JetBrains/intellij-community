@@ -116,12 +116,8 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
     for (int i = start; i < end; i++) {
       char c = text.charAt(i);
       switch (c) {
-        case '\n':
-          line++;
-          break;
-        case '\\':
-          result.put(line, 1);
-          break;
+        case '\n' -> line++;
+        case '\\' -> result.put(line, 1);
       }
     }
     return result;

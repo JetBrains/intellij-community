@@ -63,7 +63,7 @@ abstract class ImageSanityCheckerBase(private val projectHome: Path, private val
       image.files
         .groupBy { ImageExtension.fromFile(it) }
         .all { (ext, files) ->
-          val basicSizes = files.filter { ImageType.fromFile(it) in setOf(BASIC, DARCULA) }.mapNotNull { imageSize(it) }.toSet()
+          val basicSizes = files.filter { ImageType.fromFile(it) in setOf(BASIC, DARCULA, STROKE) }.mapNotNull { imageSize(it) }.toSet()
           val retinaSizes = files.filter { ImageType.fromFile(it) in setOf(RETINA, RETINA_DARCULA) }.mapNotNull { imageSize(it) }.toSet()
 
           if (basicSizes.size > 1 || retinaSizes.size > 1) {

@@ -289,7 +289,7 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
                     KotlinFileChooserDialog dialog = new KotlinFileChooserDialog(
                             KotlinBundle.message("text.choose.containing.file"),
                             myProject,
-                            targetModuleScope, getTargetPackage());
+                            targetModuleScope, freezeTargets ? null : getTargetPackage());
 
                     File targetFile1 = new File(fileChooser.getText());
                     PsiFile targetPsiFile = PhysicalFileSystemUtilsKt.toPsiFile(targetFile1, myProject);

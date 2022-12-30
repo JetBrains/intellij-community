@@ -1,2 +1,2 @@
-internal annotation class NonNls
-internal annotation class Foo(@NonNls val value: String, @NonNls val value2: String = "test")
+internal annotation class Ann
+internal annotation class Foo(@get:Ann val value: String, @get:Ann val value2: String = "test")

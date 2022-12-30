@@ -111,7 +111,7 @@ object DynamicPlugins {
   /**
    * @return true if the requested enabled state was applied without restart, false if restart is required
    */
-  fun loadPlugins(descriptors: Collection<IdeaPluginDescriptor>): Boolean {
+  fun loadPlugins(descriptors: Collection<IdeaPluginDescriptorImpl>): Boolean {
     return updateDescriptorsWithoutRestart(descriptors, load = true) {
       loadPlugin(it, checkImplementationDetailDependencies = true)
     }
@@ -121,7 +121,7 @@ object DynamicPlugins {
    * @return true if the requested enabled state was applied without restart, false if restart is required
    */
   fun unloadPlugins(
-    descriptors: Collection<IdeaPluginDescriptor>,
+    descriptors: Collection<IdeaPluginDescriptorImpl>,
     project: Project? = null,
     parentComponent: JComponent? = null,
     options: UnloadPluginOptions = UnloadPluginOptions(disable = true),
@@ -132,7 +132,7 @@ object DynamicPlugins {
   }
 
   private fun updateDescriptorsWithoutRestart(
-    plugins: Collection<IdeaPluginDescriptor>,
+    plugins: Collection<IdeaPluginDescriptorImpl>,
     load: Boolean,
     executor: (IdeaPluginDescriptorImpl) -> Boolean,
   ): Boolean {
@@ -141,8 +141,11 @@ object DynamicPlugins {
     }
 
     val pluginSet = PluginManagerCore.getPluginSet()
-    @Suppress("UNCHECKED_CAST")
-    val descriptors = (plugins as Collection<IdeaPluginDescriptorImpl>).filter { pluginSet.isPluginEnabled(it.pluginId) != load }
+    val descriptors = plugins
+      .asSequence()
+      .distinctBy { it.pluginId }
+      .filter { pluginSet.isPluginEnabled(it.pluginId) != load }
+      .toList()
 
     val operationText = if (load) "load" else "unload"
     val message = descriptors.joinToString(prefix = "Plugins to $operationText: [", postfix = "]")

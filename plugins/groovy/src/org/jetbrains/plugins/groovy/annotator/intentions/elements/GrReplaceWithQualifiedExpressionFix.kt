@@ -3,7 +3,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions.elements
 
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
@@ -19,7 +19,7 @@ class GrReplaceWithQualifiedExpressionFix : GroovyFix() {
   }
 
   override fun doFix(project: Project, descriptor: ProblemDescriptor) {
-    val element = descriptor.psiElement?.castSafelyTo<GrMethodCall>() ?: return
+    val element = descriptor.psiElement?.asSafely<GrMethodCall>() ?: return
     val container = element.resolveMethod()?.containingClass ?: return
     val factory = GroovyPsiElementFactory.getInstance(project)
     val newInvoked = factory.createExpressionFromText("${container.name}.${element.invokedExpression.text}", element)

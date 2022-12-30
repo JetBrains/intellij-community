@@ -44,7 +44,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
     if (enabled) {
       LOG.debug("Project Model Cache at $cacheFile")
 
-      WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(this), object : WorkspaceModelChangeListener {
+      project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
         override fun changed(event: VersionedStorageChange) {
           LOG.debug("Schedule cache update")
           saveAlarm.request()

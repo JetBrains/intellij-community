@@ -582,7 +582,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         val getOrDefaultExtResolved = getOrDefaultExt.resolve()
             .orFail("cant resolve from $getOrDefaultExt")
         TestCase.assertEquals("getOrDefault", getOrDefaultExtResolved.name)
-        TestCase.assertEquals("Map", getOrDefaultExtResolved.containingClass?.name)
+        TestCase.assertEquals("CollectionsJDK8Kt", getOrDefaultExtResolved.containingClass?.name)
 
         val getOrDefault = uFile.findElementByTextFromPsi<UCallExpression>("getOrDefault(\"a\", \"b\")", strict = false)
             .orFail("cant convert to UCallExpression")
@@ -591,6 +591,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals("b", getOrDefault.valueArguments[1].evaluate())
         val getOrDefaultResolved = getOrDefault.resolve()
             .orFail("cant resolve from $getOrDefault")
+        TestCase.assertTrue(getOrDefaultResolved is PsiCompiledElement)
         TestCase.assertEquals("getOrDefault", getOrDefaultResolved.name)
         TestCase.assertEquals("Map", getOrDefaultResolved.containingClass?.name)
 
@@ -598,6 +599,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             .orFail("cant convert to UCallExpression")
         val removeResolved = remove.resolve()
             .orFail("cant resolve from $remove")
+        TestCase.assertTrue(removeResolved is PsiCompiledElement)
         TestCase.assertEquals("remove", removeResolved.name)
         TestCase.assertEquals("Map", removeResolved.containingClass?.name)
     }
@@ -1223,6 +1225,40 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         // NB: the return type is not a substituted type, String, but the original one, T, since it's resolved to
         // the original function Box#foo()T, not a fake overridden one in SubBox.
         TestCase.assertEquals("PsiType:T", foo.returnType?.toString())
+    }
+
+    fun checkResolveEnumEntrySuperType(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+             package test.pkg
+             enum class MyEnum(mode: String) {
+                ENUM_ENTRY_1("Mode1") {
+                    override fun toString(): String {
+                        return super.toString()
+                    }
+                }
+            }               
+            """.trimIndent()
+        )
+
+        myFixture.file.toUElement()!!.accept(
+            object : AbstractUastVisitor() {
+                override fun visitClass(node: UClass): Boolean {
+                    node.uastSuperTypes.forEach(::visitTypeReferenceExpression)
+                    return false
+                }
+
+                override fun visitTypeReferenceExpression(node: UTypeReferenceExpression): Boolean {
+                    // Without proper parent / containing file chain,
+                    // resolve() triggers an exception from [ClsJavaCodeReferenceElementImpl.diagnoseNoFile]
+                    val psiClass = (node.type as? PsiClassType)?.resolve()
+                    TestCase.assertNotNull(psiClass)
+                    // Enum entry ENUM_ENTRY_1 is the only one that has an explicit super type: its containing enum class
+                    TestCase.assertEquals("MyEnum", psiClass?.name)
+                    return false
+                }
+            }
+        )
     }
 
 }

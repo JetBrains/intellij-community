@@ -575,28 +575,18 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
           keyCode = e.getKeyCode();
         }
         switch (keyCode) {
-          case KeyEvent.VK_DOWN:
-            ScrollingUtil.moveDown(myList, e.getModifiersEx());
-            break;
-          case KeyEvent.VK_UP:
-            ScrollingUtil.moveUp(myList, e.getModifiersEx());
-            break;
-          case KeyEvent.VK_PAGE_UP:
-            ScrollingUtil.movePageUp(myList);
-            break;
-          case KeyEvent.VK_PAGE_DOWN:
-            ScrollingUtil.movePageDown(myList);
-            break;
-          case KeyEvent.VK_TAB:
-            close(true);
-            break;
-          case KeyEvent.VK_ENTER:
+          case KeyEvent.VK_DOWN -> ScrollingUtil.moveDown(myList, e.getModifiersEx());
+          case KeyEvent.VK_UP -> ScrollingUtil.moveUp(myList, e.getModifiersEx());
+          case KeyEvent.VK_PAGE_UP -> ScrollingUtil.movePageUp(myList);
+          case KeyEvent.VK_PAGE_DOWN -> ScrollingUtil.movePageDown(myList);
+          case KeyEvent.VK_TAB -> close(true);
+          case KeyEvent.VK_ENTER -> {
             if (myList.getSelectedValue() == EXTRA_ELEM) {
               myMaximumListSizeLimit += myListSizeIncreasing;
               rebuildList(new SelectIndex(myList.getSelectedIndex()), myRebuildDelay, ModalityState.current(), null);
               e.consume();
             }
-            break;
+          }
         }
       }
     });

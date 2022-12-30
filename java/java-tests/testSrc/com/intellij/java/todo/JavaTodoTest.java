@@ -11,23 +11,26 @@ public class JavaTodoTest extends TodoItemsTestCase {
   }
 
   public void testNewLineBetweenCommentLines() {
-    testTodos("class C {\n" +
-              "    // [TODO first line]<caret>\n" +
-              "    //  [second line]\n" +
-              "}");
+    testTodos("""
+                class C {
+                    // [TODO first line]<caret>
+                    //  [second line]
+                }""");
     type('\n');
-    checkTodos("class C {\n" +
-               "    // [TODO first line]\n" +
-               "    \n" +
-               "    //  second line\n" +
-               "}");
+    checkTodos("""
+                 class C {
+                     // [TODO first line]
+                    \s
+                     //  second line
+                 }""");
   }
 
   public void testNoContinuationOnJaggedLineComments() {
-    testTodos("class C {\n" +
-              "  int a; // [TODO something]\n" +
-              "  int ab; // unrelated\n" +
-              "}");
+    testTodos("""
+                class C {
+                  int a; // [TODO something]
+                  int ab; // unrelated
+                }""");
   }
 
   public void testUnicodeCaseInsensitivePattern() {

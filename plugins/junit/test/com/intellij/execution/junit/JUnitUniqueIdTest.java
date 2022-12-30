@@ -55,10 +55,11 @@ public class JUnitUniqueIdTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testCustomEngineId() {
-    PsiClass psiClass = myFixture.addClass("/** @noinspection ALL*/ @org.junit.platform.commons.annotation.Testable\n" +
-                                           "class MyTest {\n" +
-                                           "  public Object testScenario = null;\n" +
-                                           "}");
+    PsiClass psiClass = myFixture.addClass("""
+                                             /** @noinspection ALL*/ @org.junit.platform.commons.annotation.Testable
+                                             class MyTest {
+                                               public Object testScenario = null;
+                                             }""");
 
     JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture);
     SMTestProxy parent = new SMTestProxy("MyTest", true, "java:suite://MyTest");

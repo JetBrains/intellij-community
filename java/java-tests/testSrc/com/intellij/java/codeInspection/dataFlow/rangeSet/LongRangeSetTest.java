@@ -334,15 +334,9 @@ public class LongRangeSetTest {
         assertTrue(right.contains(e));
       });
       switch (r.nextInt(3)) {
-        case 0:
-          data[idx] = lDiff;
-          break;
-        case 1:
-          data[idx] = rDiff;
-          break;
-        case 2:
-          data[idx] = intersection;
-          break;
+        case 0 -> data[idx] = lDiff;
+        case 1 -> data[idx] = rDiff;
+        case 2 -> data[idx] = intersection;
       }
     }
   }

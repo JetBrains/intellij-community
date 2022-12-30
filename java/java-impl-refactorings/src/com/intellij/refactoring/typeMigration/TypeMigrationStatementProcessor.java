@@ -619,7 +619,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         if (componentType instanceof PsiClassType) {
           final PsiClassType rawType = ((PsiClassType)componentType).rawType();
           if (!rawType.equals(componentType)) {
-            return com.intellij.refactoring.typeCook.Util.createArrayType(rawType, migrationType.getArrayDimensions());
+            return PsiTypesUtil.createArrayType(rawType, migrationType.getArrayDimensions());
           }
         }
       }

@@ -91,9 +91,9 @@ public class TodoCheckinHandlerWorker {
       FilePath afterFilePath = afterRevision.getFile();
       VirtualFile afterFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(afterFilePath.getPath());
 
-      progress(afterFile != null ? ProjectUtil.calcRelativeToProjectPath(afterFile, myProject) : afterFilePath.getName());
-
       EditedFileProcessorBase fileProcessor = ReadAction.compute(() -> {
+        progress(afterFile != null ? ProjectUtil.calcRelativeToProjectPath(afterFile, myProject) : afterFilePath.getName());
+
         if (afterFile == null || afterFile.isDirectory() || afterFile.getFileType().isBinary()) {
           return null; // skip detection
         }

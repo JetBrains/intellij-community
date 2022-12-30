@@ -528,10 +528,7 @@ private fun PsiClass.getMethodBySignature(methodSignature: JvmMemberSignature?) 
 private fun PsiClass.getMethodBySignature(name: String, descr: String?) =
     methods.firstOrNull { method -> method.name == name && descr?.let { method.matchesDesc(it) } ?: true }
 
-private fun PsiMethod.matchesDesc(desc: String) = desc == buildString {
-    parameterList.parameters.joinTo(this, separator = "", prefix = "(", postfix = ")") { MapPsiToAsmDesc.typeDesc(it.type) }
-    append(MapPsiToAsmDesc.typeDesc(returnType ?: PsiType.VOID))
-}
+private fun PsiMethod.matchesDesc(desc: String) = desc == this.desc
 
 private fun getMethodSignatureFromDescriptor(context: KtElement, descriptor: CallableDescriptor): JvmMemberSignature? {
     fun PsiType.raw() = (this as? PsiClassType)?.rawType() ?: PsiPrimitiveType.getUnboxedType(this) ?: this

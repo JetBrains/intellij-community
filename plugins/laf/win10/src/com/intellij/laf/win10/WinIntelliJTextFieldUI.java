@@ -12,7 +12,6 @@ import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseListener;
 
@@ -48,7 +47,7 @@ public final class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
 
   @Override
   protected void paintBackground(Graphics g) {
-    JTextComponent c = getComponent();
+    JComponent c = getComponent();
     if (ComponentUtil.getParentOfType((Class<? extends JComboBox>)JComboBox.class, (Component)c) != null) return;
 
     Graphics2D g2 = (Graphics2D)g.create();

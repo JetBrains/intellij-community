@@ -19,13 +19,15 @@ import org.jetbrains.annotations.NotNull;
 public class CoreJavaFileManagerTest extends JavaPsiTestCase {
 
   public void testCommon() throws Exception {
-    CoreJavaFileManager manager = configureManager("package foo;\n\n" +
-                                                   "public class TopLevel {\n" +
-                                                   "public class Inner {\n" +
-                                                   "   public class Inner {}\n" +
-                                                   "}\n" +
-                                                   "\n" +
-                                                   "}", "TopLevel");
+    CoreJavaFileManager manager = configureManager("""
+                                                     package foo;
+
+                                                     public class TopLevel {
+                                                     public class Inner {
+                                                        public class Inner {}
+                                                     }
+
+                                                     }""", "TopLevel");
 
     assertCanFind(manager, "foo.TopLevel");
     assertCanFind(manager, "foo.TopLevel.Inner");
@@ -37,32 +39,15 @@ public class CoreJavaFileManagerTest extends JavaPsiTestCase {
   }
 
   public void testInnerClassesWithDollars() throws Exception {
-    CoreJavaFileManager manager = configureManager("package foo;\n\n" +
-                                                   "public class TopLevel {\n" +
+    CoreJavaFileManager manager = configureManager("""
+                                                     package foo;
 
-                                                   "public class I$nner {" +
-                                                   "   public class I$nner{}" +
-                                                   "   public class $Inner{}" +
-                                                   "   public class In$ne$r${}" +
-                                                   "   public class Inner$${}" +
-                                                   "   public class $$$$${}" +
-                                                   "}\n" +
-                                                   "public class Inner$ {" +
-                                                   "   public class I$nner{}" +
-                                                   "   public class $Inner{}" +
-                                                   "   public class In$ne$r${}" +
-                                                   "   public class Inner$${}" +
-                                                   "   public class $$$$${}" +
-                                                   "}\n" +
-                                                   "public class In$ner$$ {" +
-                                                   "   public class I$nner{}" +
-                                                   "   public class $Inner{}" +
-                                                   "   public class In$ne$r${}" +
-                                                   "   public class Inner$${}" +
-                                                   "   public class $$$$${}" +
-                                                   "}\n" +
-                                                   "\n" +
-                                                   "}", "TopLevel");
+                                                     public class TopLevel {
+                                                     public class I$nner {   public class I$nner{}   public class $Inner{}   public class In$ne$r${}   public class Inner$${}   public class $$$$${}}
+                                                     public class Inner$ {   public class I$nner{}   public class $Inner{}   public class In$ne$r${}   public class Inner$${}   public class $$$$${}}
+                                                     public class In$ner$$ {   public class I$nner{}   public class $Inner{}   public class In$ne$r${}   public class Inner$${}   public class $$$$${}}
+
+                                                     }""", "TopLevel");
 
     assertCanFind(manager, "foo.TopLevel");
 
@@ -110,22 +95,14 @@ public class CoreJavaFileManagerTest extends JavaPsiTestCase {
   }
 
   public void testTopLevelClassWithDollarsAndInners() throws Exception {
-    CoreJavaFileManager manager = configureManager("package foo;\n\n" +
-                                                   "public class Top$Level$$ {\n" +
+    CoreJavaFileManager manager = configureManager("""
+                                                     package foo;
 
-                                                   "public class I$nner {" +
-                                                   "   public class I$nner{}" +
-                                                   "   public class In$ne$r${}" +
-                                                   "   public class Inner$$$$${}" +
-                                                   "   public class $Inner{}" +
-                                                   "   public class ${}" +
-                                                   "   public class $$$$${}" +
-                                                   "}\n" +
-                                                   "public class Inner {" +
-                                                   "   public class Inner{}" +
-                                                   "}\n" +
-                                                   "\n" +
-                                                   "}", "Top$Level$$");
+                                                     public class Top$Level$$ {
+                                                     public class I$nner {   public class I$nner{}   public class In$ne$r${}   public class Inner$$$$${}   public class $Inner{}   public class ${}   public class $$$$${}}
+                                                     public class Inner {   public class Inner{}}
+
+                                                     }""", "Top$Level$$");
 
     assertCanFind(manager, "foo.Top$Level$$");
 
@@ -153,10 +130,12 @@ public class CoreJavaFileManagerTest extends JavaPsiTestCase {
   }
 
   public void testSeveralClassesInOneFile() throws Exception {
-    CoreJavaFileManager manager = configureManager("package foo;\n\n" +
-                                                   "public class One {}\n" +
-                                                   "class Two {}\n" +
-                                                   "class Three {}", "One");
+    CoreJavaFileManager manager = configureManager("""
+                                                     package foo;
+
+                                                     public class One {}
+                                                     class Two {}
+                                                     class Three {}""", "One");
 
     assertCanFind(manager, "foo.One");
 
@@ -166,7 +145,11 @@ public class CoreJavaFileManagerTest extends JavaPsiTestCase {
   }
 
   public void testScopeCheck() throws Exception {
-    CoreJavaFileManager manager = configureManager("package foo;\n\n" + "public class Test {}\n", "Test");
+    CoreJavaFileManager manager = configureManager("""
+                                                     package foo;
+
+                                                     public class Test {}
+                                                     """, "Test");
 
     assertNotNull("Should find class in all scope", manager.findClass("foo.Test", GlobalSearchScope.allScope(getProject())));
     assertNull("Should not find class in empty scope", manager.findClass("foo.Test", GlobalSearchScope.EMPTY_SCOPE));

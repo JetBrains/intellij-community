@@ -32,7 +32,7 @@ public class PagedFileStorageTest {
   public void setUp() throws IOException {
     withLock(lock, () -> {
       f = tempDir.newFile("storage").toPath();
-      s = new PagedFileStorage(f, lock, PagedFileStorage.BUFFER_SIZE, false, false);
+      s = new PagedFileStorage(f, lock, PagedFileStorage.DEFAULT_PAGE_SIZE, false, false);
     });
   }
 

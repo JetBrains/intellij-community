@@ -27,7 +27,7 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE;
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance();
     }
 
     public void doClassTest(@NotNull String path) throws Exception {

@@ -24,10 +24,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
-import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
-import org.jetbrains.idea.maven.server.MavenServerDownloadListener;
-import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
@@ -76,10 +73,6 @@ public final class MavenIndicesManager implements Disposable {
     if (MavenUtil.isMavenUnitTestModeEnabled()) {
       PathKt.delete(getIndicesDir());
     }
-    MavenServerManager mavenServerManager = MavenServerManager.getInstanceIfCreated();
-    if (mavenServerManager != null) {
-      mavenServerManager.removeDownloadListener(myDownloadListener);
-    }
   }
 
   /**
@@ -105,7 +98,12 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   private void initListeners() {
-    MavenServerManager.getInstance().addDownloadListener(myDownloadListener);
+
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(MavenServerConnector.DOWNLOAD_LISTENER_TOPIC, myDownloadListener);
+
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(MavenIndex.INDEX_IS_BROKEN, new MavenSearchIndexListener(this));
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       MavenProjectsManager.getInstance(myProject).addProjectsTreeListener(new MavenProjectsTree.Listener() {
@@ -209,27 +207,6 @@ public final class MavenIndicesManager implements Disposable {
 
   public MavenIndexUpdateManager.IndexUpdatingState getUpdatingState(@NotNull MavenSearchIndex index) {
     return myIndexUpdateManager.getUpdatingState(index);
-  }
-
-  /**
-   * @deprecated use {@link MavenArchetypeManager#getArchetypes()}
-   */
-  @Deprecated
-  public Set<MavenArchetype> getArchetypes() {
-    Set<MavenArchetype> result = new HashSet<>(myIndexerWrapper.getArchetypes());
-    result.addAll(loadUserArchetypes(getIndicesDir().resolve("UserArchetypes.xml")));
-    if (myMavenIndices.isNotInit()) {
-      myMavenIndices.updateIndicesList(myProject);
-    }
-    MavenIndexHolder indexHolder = myMavenIndices.getIndexHolder();
-    for (MavenIndex index : indexHolder.getIndices()) {
-      result.addAll(index.getArchetypes());
-    }
-
-    for (MavenArchetypesProvider each : MavenArchetypesProvider.EP_NAME.getExtensionList()) {
-      result.addAll(each.getArchetypes());
-    }
-    return result;
   }
 
   @NotNull

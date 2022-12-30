@@ -716,17 +716,11 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   private static String getSuspendPolicy(XBreakpoint<?> breakpoint) {
-    switch (breakpoint.getSuspendPolicy()) {
-      case ALL:
-        return DebuggerSettings.SUSPEND_ALL;
-      case THREAD:
-        return DebuggerSettings.SUSPEND_THREAD;
-      case NONE:
-        return DebuggerSettings.SUSPEND_NONE;
-
-      default:
-        throw new IllegalArgumentException("unknown suspend policy");
-    }
+    return switch (breakpoint.getSuspendPolicy()) {
+      case ALL -> DebuggerSettings.SUSPEND_ALL;
+      case THREAD -> DebuggerSettings.SUSPEND_THREAD;
+      case NONE -> DebuggerSettings.SUSPEND_NONE;
+    };
   }
 
   static SuspendPolicy transformSuspendPolicy(String policy) {

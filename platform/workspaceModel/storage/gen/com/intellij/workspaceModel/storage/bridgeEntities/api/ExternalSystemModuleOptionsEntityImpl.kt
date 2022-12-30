@@ -67,7 +67,7 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
     return connections
   }
 
-  class Builder(val result: ExternalSystemModuleOptionsEntityData?) : ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity>(), ExternalSystemModuleOptionsEntity.Builder {
+  class Builder(var result: ExternalSystemModuleOptionsEntityData?) : ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity>(), ExternalSystemModuleOptionsEntity.Builder {
     constructor() : this(ExternalSystemModuleOptionsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -85,6 +85,9 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -115,16 +118,19 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ExternalSystemModuleOptionsEntity
-      this.entitySource = dataSource.entitySource
-      this.externalSystem = dataSource.externalSystem
-      this.externalSystemModuleVersion = dataSource.externalSystemModuleVersion
-      this.linkedProjectPath = dataSource.linkedProjectPath
-      this.linkedProjectId = dataSource.linkedProjectId
-      this.rootProjectPath = dataSource.rootProjectPath
-      this.externalSystemModuleGroup = dataSource.externalSystemModuleGroup
-      this.externalSystemModuleType = dataSource.externalSystemModuleType
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.externalSystem != dataSource?.externalSystem) this.externalSystem = dataSource.externalSystem
+      if (this.externalSystemModuleVersion != dataSource?.externalSystemModuleVersion) this.externalSystemModuleVersion = dataSource.externalSystemModuleVersion
+      if (this.linkedProjectPath != dataSource?.linkedProjectPath) this.linkedProjectPath = dataSource.linkedProjectPath
+      if (this.linkedProjectId != dataSource?.linkedProjectId) this.linkedProjectId = dataSource.linkedProjectId
+      if (this.rootProjectPath != dataSource?.rootProjectPath) this.rootProjectPath = dataSource.rootProjectPath
+      if (this.externalSystemModuleGroup != dataSource?.externalSystemModuleGroup) this.externalSystemModuleGroup = dataSource.externalSystemModuleGroup
+      if (this.externalSystemModuleType != dataSource?.externalSystemModuleType) this.externalSystemModuleType = dataSource.externalSystemModuleType
       if (parents != null) {
-        this.module = parents.filterIsInstance<ModuleEntity>().single()
+        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
       }
     }
 
@@ -299,7 +305,7 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ExternalSystemModuleOptionsEntityData
 
@@ -316,7 +322,7 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ExternalSystemModuleOptionsEntityData
 

@@ -321,7 +321,7 @@ class PerformanceSuite {
 
                 dispatchAllInvocationEvents()
                 with(DumbService.getInstance(project)) {
-                    UnindexedFilesUpdater(project).queue(project)
+                    UnindexedFilesUpdater(project).queue()
                     completeJustSubmittedTasks()
                 }
                 dispatchAllInvocationEvents()

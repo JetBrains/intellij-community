@@ -275,7 +275,7 @@ public class HintManagerImpl extends HintManager {
     int layeredPaneHeight = externalComponent.getHeight();
 
     switch (constraint) {
-      case LEFT: {
+      case LEFT -> {
         int y = lookupBounds.y;
         if (y < 0) {
           y = 0;
@@ -285,8 +285,7 @@ public class HintManagerImpl extends HintManager {
         }
         return new Point(lookupBounds.x - hintSize.width, y);
       }
-
-      case RIGHT:
+      case RIGHT -> {
         int y = lookupBounds.y;
         if (y < 0) {
           y = 0;
@@ -295,18 +294,19 @@ public class HintManagerImpl extends HintManager {
           y = layeredPaneHeight - hintSize.height;
         }
         return new Point(lookupBounds.x + lookupBounds.width, y);
-
-      case ABOVE:
+      }
+      case ABOVE -> {
         Point posAboveCaret = getHintPosition(hint, editor, pos, ABOVE);
         return new Point(lookupBounds.x, Math.min(posAboveCaret.y, lookupBounds.y - hintSize.height));
-
-      case UNDER:
+      }
+      case UNDER -> {
         Point posUnderCaret = getHintPosition(hint, editor, pos, UNDER);
         return new Point(lookupBounds.x, Math.max(posUnderCaret.y, lookupBounds.y + lookupBounds.height));
-
-      default:
+      }
+      default -> {
         LOG.error("");
         return null;
+      }
     }
   }
 

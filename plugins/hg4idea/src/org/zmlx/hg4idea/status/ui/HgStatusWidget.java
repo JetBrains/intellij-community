@@ -5,7 +5,7 @@ import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -69,7 +69,7 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
   }
 
   @Override
-  protected @NotNull ListPopup getPopup(@NotNull Project project, @NotNull HgRepository repository) {
+  protected @Nullable JBPopup getWidgetPopup(@NotNull Project project, @NotNull HgRepository repository) {
     return HgBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(myStatusBar.getComponent())).asListPopup();
   }
 

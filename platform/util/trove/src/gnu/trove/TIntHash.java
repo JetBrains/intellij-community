@@ -271,6 +271,6 @@ public abstract class TIntHash extends TPrimitiveHash
    */
   @Override
   public final int computeHashCode(int val) {
-    return HashFunctions.hash(val);
+    return val;
   }
 } // TIntHash

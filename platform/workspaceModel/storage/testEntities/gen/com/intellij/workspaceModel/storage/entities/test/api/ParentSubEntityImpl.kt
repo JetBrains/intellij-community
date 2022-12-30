@@ -45,7 +45,7 @@ open class ParentSubEntityImpl(val dataSource: ParentSubEntityData) : ParentSubE
     return connections
   }
 
-  class Builder(val result: ParentSubEntityData?) : ModifiableWorkspaceEntityBase<ParentSubEntity>(), ParentSubEntity.Builder {
+  class Builder(var result: ParentSubEntityData?) : ModifiableWorkspaceEntityBase<ParentSubEntity>(), ParentSubEntity.Builder {
     constructor() : this(ParentSubEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -63,6 +63,9 @@ open class ParentSubEntityImpl(val dataSource: ParentSubEntityData) : ParentSubE
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -86,8 +89,8 @@ open class ParentSubEntityImpl(val dataSource: ParentSubEntityData) : ParentSubE
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ParentSubEntity
-      this.entitySource = dataSource.entitySource
-      this.parentData = dataSource.parentData
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.parentData != dataSource.parentData) this.parentData = dataSource.parentData
       if (parents != null) {
       }
     }
@@ -199,7 +202,7 @@ class ParentSubEntityData : WorkspaceEntityData<ParentSubEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ParentSubEntityData
 
@@ -210,7 +213,7 @@ class ParentSubEntityData : WorkspaceEntityData<ParentSubEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ParentSubEntityData
 

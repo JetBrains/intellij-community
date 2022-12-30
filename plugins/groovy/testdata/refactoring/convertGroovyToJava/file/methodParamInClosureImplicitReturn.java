@@ -26,7 +26,7 @@ return doCall(null);
 org.codehaus.groovy.runtime.DefaultGroovyMethods.each(new java.util.ArrayList<java.lang.Integer>(java.util.Arrays.asList(1, 2, 3)), new groovy.lang.Closure<java.lang.Integer>(this, this) {
 public java.lang.Integer doCall(java.lang.Integer it) {
 print(i.get());
-i.set(i.get()++);
+i.set(i.get() + 1);
 return i.get();
 }
 

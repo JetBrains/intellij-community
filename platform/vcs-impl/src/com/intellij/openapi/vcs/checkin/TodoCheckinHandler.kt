@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.todo.*
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ModalityState
@@ -45,7 +44,9 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
 class TodoCheckinHandlerFactory : CheckinHandlerFactory() {
-  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler = TodoCheckinHandler(panel)
+  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+    return TodoCheckinHandler(panel.project)
+  }
 }
 
 class TodoCommitProblem(val worker: TodoCheckinHandlerWorker) : CommitProblemWithDetails {
@@ -60,20 +61,18 @@ class TodoCommitProblem(val worker: TodoCheckinHandlerWorker) : CommitProblemWit
   }
 }
 
-class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck, DumbAware {
-  private val project: Project get() = commitPanel.project
+class TodoCheckinHandler(private val project: Project) : CheckinHandler(), CommitCheck, DumbAware {
   private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
   private val todoSettings: TodoPanelSettings get() = settings.myTodoPanelSettings
 
-  private var todoFilter: TodoFilter? = null
-
   override fun isEnabled(): Boolean = settings.CHECK_NEW_TODO
 
-  override suspend fun runCheck(): TodoCommitProblem? {
+  override suspend fun runCheck(commitInfo: CommitInfo): TodoCommitProblem? {
     val sink = coroutineContext.progressSink
     sink?.text(message("progress.text.checking.for.todo"))
 
-    val changes = commitPanel.selectedChanges
+    val todoFilter = settings.myTodoPanelSettings.todoFilterName?.let { TodoConfiguration.getInstance().getTodoFilter(it) }
+    val changes = commitInfo.committedChanges
     val worker = TodoCheckinHandlerWorker(project, changes, todoFilter)
 
     withContext(Dispatchers.Default + textToDetailsSinkContext(sink)) {
@@ -90,13 +89,13 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
   }
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    object : BooleanCommitOption(commitPanel, "", false, settings::CHECK_NEW_TODO) {
+    object : BooleanCommitOption(project, "", false, settings::CHECK_NEW_TODO) {
       override fun getComponent(): JComponent {
-        setFilterText(todoSettings.todoFilterName)
-        todoSettings.todoFilterName?.let { todoFilter = TodoConfiguration.getInstance().getTodoFilter(it) }
+        val filter = TodoConfiguration.getInstance().getTodoFilter(todoSettings.todoFilterName)
+        setFilterText(filter?.name)
 
         val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
-          val group = SetTodoFilterAction.createPopupActionGroup(project, todoSettings) { setFilter(it) }
+          val group = SetTodoFilterAction.createPopupActionGroup(project, todoSettings, true) { setFilter(it) }
           JBPopupMenu.showBelow(sourceLink, ActionPlaces.TODO_VIEW_TOOLBAR, group)
         }
         val configureFilterLink = LinkLabel(message("settings.filter.configure.link"), null, showFiltersPopup)
@@ -105,14 +104,18 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
       }
 
       private fun setFilter(filter: TodoFilter?) {
-        todoFilter = filter
         todoSettings.todoFilterName = filter?.name
         setFilterText(filter?.name)
       }
 
       private fun setFilterText(filterName: String?) {
-        val text = if (filterName != null) message("checkin.filter.filter.name", filterName) else IdeBundle.message("action.todo.show.all")
-        checkBox.text = message("before.checkin.new.todo.check", text)
+        if (filterName != null) {
+          val text = message("checkin.filter.filter.name", filterName)
+          checkBox.text = message("before.checkin.new.todo.check", text)
+        }
+        else {
+          checkBox.text = message("before.checkin.new.todo.check.no.filter")
+        }
       }
     }
 

@@ -207,38 +207,37 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
       String id;
       Icon icon = null;
       switch (mode) {
-        case LEFT_MIDDLE:
+        case LEFT_MIDDLE -> {
           mySide1 = ThreeSide.LEFT;
           mySide2 = ThreeSide.BASE;
           id = "Diff.ComparePartial.Base.Left";
           if (!hasFourSides) icon = AllIcons.Diff.Compare3LeftMiddle;
-          break;
-        case RIGHT_MIDDLE:
+        }
+        case RIGHT_MIDDLE -> {
           mySide1 = ThreeSide.RIGHT;
           mySide2 = ThreeSide.BASE;
           id = "Diff.ComparePartial.Base.Right";
           if (!hasFourSides) icon = AllIcons.Diff.Compare3MiddleRight;
-          break;
-        case MIDDLE_LEFT:
+        }
+        case MIDDLE_LEFT -> {
           mySide1 = ThreeSide.BASE;
           mySide2 = ThreeSide.LEFT;
           id = "Diff.ComparePartial.Base.Left";
           if (!hasFourSides) icon = AllIcons.Diff.Compare3LeftMiddle;
-          break;
-        case MIDDLE_RIGHT:
+        }
+        case MIDDLE_RIGHT -> {
           mySide1 = ThreeSide.BASE;
           mySide2 = ThreeSide.RIGHT;
           id = "Diff.ComparePartial.Base.Right";
           if (!hasFourSides) icon = AllIcons.Diff.Compare3MiddleRight;
-          break;
-        case LEFT_RIGHT:
+        }
+        case LEFT_RIGHT -> {
           mySide1 = ThreeSide.LEFT;
           mySide2 = ThreeSide.RIGHT;
           id = "Diff.ComparePartial.Left.Right";
           if (!hasFourSides) icon = AllIcons.Diff.Compare3LeftRight;
-          break;
-        default:
-          throw new IllegalArgumentException();
+        }
+        default -> throw new IllegalArgumentException();
       }
       String text = ActionsBundle.message("action.Diff.ComparePartial.Generic", mySide1.getIndex(), mySide2.getIndex());
       getTemplatePresentation().setText(text);

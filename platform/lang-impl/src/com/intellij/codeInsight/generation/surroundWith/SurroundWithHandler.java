@@ -74,31 +74,45 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     SelectionModel selectionModel = editor.getSelectionModel();
     boolean hasSelection = selectionModel.hasSelection();
     if (!hasSelection) {
-      selectLogicalLineContentsAtCaret(editor);
+      selectLogicalLineContents(editor);
     }
-    int startOffset = selectionModel.getSelectionStart();
-    int endOffset = selectionModel.getSelectionEnd();
-
-    PsiElement element1 = file.findElementAt(startOffset);
-    PsiElement element2 = file.findElementAt(endOffset - 1);
-
-    if (element1 == null || element2 == null) return null;
-
-    TextRange textRange = new TextRange(startOffset, endOffset);
-    for(SurroundWithRangeAdjuster adjuster: SurroundWithRangeAdjuster.EP_NAME.getExtensionList()) {
-      textRange = adjuster.adjustSurroundWithRange(file, textRange, hasSelection);
-      if (textRange == null) return null;
-    }
-    startOffset = textRange.getStartOffset();
-    endOffset = textRange.getEndOffset();
-    element1 = file.findElementAt(startOffset);
+    int[] startOffsets = editor.getCaretModel().getAllCarets().stream()
+      .mapToInt(Caret::getSelectionStart)
+      .toArray();
+    int[] endOffsets = editor.getCaretModel().getAllCarets().stream()
+      .mapToInt(Caret::getSelectionEnd)
+      .toArray();
 
     final Language baseLanguage = file.getViewProvider().getBaseLanguage();
-    assert element1 != null;
-    final Language l = element1.getParent().getLanguage();
 
-    List<SurroundDescriptor> surroundDescriptors = new ArrayList<>(LanguageSurrounders.INSTANCE.allForLanguage(l));
-    if (l != baseLanguage) surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(baseLanguage));
+    Language previousLanguage = null;
+    for (int i = 0; i < startOffsets.length; ++i) {
+      PsiElement element1 = file.findElementAt(startOffsets[i]);
+      PsiElement element2 = file.findElementAt(endOffsets[i] - 1);
+
+      if (element1 == null || element2 == null) return null;
+
+      TextRange textRange = new TextRange(startOffsets[i], endOffsets[i]);
+      for (SurroundWithRangeAdjuster adjuster : SurroundWithRangeAdjuster.EP_NAME.getExtensionList()) {
+        textRange = adjuster.adjustSurroundWithRange(file, textRange, hasSelection);
+        if (textRange == null) return null;
+      }
+      startOffsets[i] = textRange.getStartOffset();
+      endOffsets[i] = textRange.getEndOffset();
+
+      element1 = file.findElementAt(startOffsets[0]);
+      assert element1 != null;
+
+      final Language currentLanguage = element1.getParent().getLanguage();
+      if (previousLanguage != null && !currentLanguage.equals(previousLanguage)) {
+        return null;
+      }
+      previousLanguage = currentLanguage;
+    }
+    assert previousLanguage != null;
+
+    List<SurroundDescriptor> surroundDescriptors = new ArrayList<>(LanguageSurrounders.INSTANCE.allForLanguage(previousLanguage));
+    if (previousLanguage != baseLanguage) surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(baseLanguage));
     surroundDescriptors.add(CustomFoldingSurroundDescriptor.INSTANCE);
 
     int exclusiveCount = 0;
@@ -115,24 +129,42 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     }
 
     if (surrounder != null) {
-      invokeSurrounderInTests(project, editor, file, surrounder, startOffset, endOffset, surroundDescriptors);
+      invokeSurrounderInTests(project, editor, file, surrounder, startOffsets, endOffsets, surroundDescriptors);
       return null;
     }
 
     Map<Surrounder, PsiElement[]> surrounders = new LinkedHashMap<>();
     for (SurroundDescriptor descriptor : surroundDescriptors) {
-      final PsiElement[] elements = descriptor.getElementsToSurround(file, startOffset, endOffset);
+      final PsiElement[] elements = getElementsToSurround(descriptor, file, startOffsets, endOffsets);
       if (elements.length > 0) {
         for (PsiElement element : elements) {
           assert element != null : "descriptor " + descriptor + " returned null element";
           assert element.isValid() : descriptor;
         }
-        for (Surrounder s: descriptor.getSurrounders()) {
+        for (Surrounder s : descriptor.getSurrounders()) {
           surrounders.put(s, elements);
         }
       }
     }
     return doBuildSurroundActions(project, editor, file, surrounders);
+  }
+
+  private static PsiElement[] getElementsToSurround(SurroundDescriptor descriptor, PsiFile file, int[] startOffsets, int[] endOffsets) {
+    final List<PsiElement> elementList = new ArrayList<>();
+    for (int i = 0; i < startOffsets.length; ++i) {
+      elementList.addAll(List.of(descriptor.getElementsToSurround(file, startOffsets[i], endOffsets[i])));
+    }
+    return elementList.toArray(PsiElement[]::new);
+  }
+
+  private static void selectLogicalLineContents(Editor editor) {
+    Document document = editor.getDocument();
+    CharSequence text = document.getImmutableCharSequence();
+    for (Caret caret : editor.getCaretModel().getAllCarets()) {
+      int caretOffset = caret.getOffset();
+      caret.setSelection(CharArrayUtil.shiftForward(text, DocumentUtil.getLineStartOffset(caretOffset, document), " \t"),
+                         CharArrayUtil.shiftBackward(text, DocumentUtil.getLineEndOffset(caretOffset, document) - 1, " \t") + 1);
+    }
   }
 
   public static void selectLogicalLineContentsAtCaret(Editor editor) {
@@ -147,11 +179,11 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
                                               Editor editor,
                                               PsiFile file,
                                               Surrounder surrounder,
-                                              int startOffset,
-                                              int endOffset, List<? extends SurroundDescriptor> surroundDescriptors) {
+                                              int[] startOffsets,
+                                              int[] endOffsets, List<? extends SurroundDescriptor> surroundDescriptors) {
     assert ApplicationManager.getApplication().isUnitTestMode();
     for (SurroundDescriptor descriptor : surroundDescriptors) {
-      final PsiElement[] elements = descriptor.getElementsToSurround(file, startOffset, endOffset);
+      final PsiElement[] elements = getElementsToSurround(descriptor, file, startOffsets, endOffsets);
       if (elements.length > 0) {
         for (Surrounder descriptorSurrounder : descriptor.getSurrounders()) {
           if (surrounder.getClass().equals(descriptorSurrounder.getClass())) {

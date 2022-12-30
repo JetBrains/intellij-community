@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-enum SetUpdateState {
+public enum SetUpdateState {
   ADDED, REMOVED, UPDATED, IGNORED;
 
   public static <T> SetUpdateState add(@NotNull T element, @NotNull Set<T> set) {

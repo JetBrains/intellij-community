@@ -8,14 +8,17 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.IdeBorderFactory.createTitledBorder
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.removeMnemonic
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
 import javax.swing.Box
+import javax.swing.JCheckBox
 import javax.swing.JPanel
 import kotlin.collections.set
 
-class CommitOptionsPanel(private val actionNameSupplier: () -> String) : BorderLayoutPanel(), CommitOptionsUi {
+class CommitOptionsPanel(private val actionNameSupplier: () -> String,
+                         private val nonFocusable: Boolean) : BorderLayoutPanel(), CommitOptionsUi {
   private val perVcsOptionsPanels = mutableMapOf<AbstractVcs, JPanel>()
   private val vcsOptionsPanel = verticalPanel()
   private val beforeOptionsPanel = simplePanel()
@@ -48,6 +51,12 @@ class CommitOptionsPanel(private val actionNameSupplier: () -> String) : BorderL
     setVcsOptions(options.vcsOptions)
     setBeforeOptions(options.beforeOptions)
     setAfterOptions(options.afterOptions)
+
+    if (nonFocusable) {
+      UIUtil.forEachComponentInHierarchy(this) {
+        if (it is JCheckBox) it.isFocusable = false
+      }
+    }
   }
 
   override fun setVisible(vcses: Collection<AbstractVcs>) =

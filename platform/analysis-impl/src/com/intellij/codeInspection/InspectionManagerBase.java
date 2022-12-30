@@ -159,17 +159,6 @@ public abstract class InspectionManagerBase extends InspectionManager {
     return createProblemDescriptor(startElement, endElement, descriptionTemplate, highlightType, true, fixes);
   }
 
-  @NotNull
-  @Override
-  @Deprecated
-  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                   TextRange rangeInElement,
-                                                   @NotNull @InspectionMessage String descriptionTemplate,
-                                                   @NotNull ProblemHighlightType highlightType,
-                                                   LocalQuickFix @Nullable ... fixes) {
-    return createProblemDescriptor(psiElement, rangeInElement, descriptionTemplate, highlightType, true, fixes);
-  }
-
   public String getCurrentProfile() {
     if (myCurrentProfileName == null) {
       myCurrentProfileName = ProjectInspectionProfileManager.getInstance(getProject()).getProjectProfile();

@@ -56,11 +56,13 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public abstract class MavenTestCase extends UsefulTestCase {
-  protected static final String MAVEN_COMPILER_PROPERTIES = "<properties>\n" +
-                                                            "        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>\n" +
-                                                            "        <maven.compiler.source>1.7</maven.compiler.source>\n" +
-                                                            "        <maven.compiler.target>1.7</maven.compiler.target>\n" +
-                                                            "</properties>\n";
+  protected static final String MAVEN_COMPILER_PROPERTIES = """
+    <properties>
+            <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+            <maven.compiler.source>1.7</maven.compiler.source>
+            <maven.compiler.target>1.7</maven.compiler.target>
+    </properties>
+    """;
   protected static final MavenConsole NULL_MAVEN_CONSOLE = new NullMavenConsole();
   private MavenProgressIndicator myProgressIndicator;
   private MavenEmbeddersManager myEmbeddersManager;

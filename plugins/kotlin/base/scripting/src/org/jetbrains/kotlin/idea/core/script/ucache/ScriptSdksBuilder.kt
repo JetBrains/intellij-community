@@ -82,10 +82,10 @@ class ScriptSdksBuilder(
             ?.takeIf { it.canBeUsedForScript() }
     }
 
-    fun addDefaultSdk(): Sdk? =
+    private fun addDefaultSdk(): Sdk? =
         sdks.getOrPut(SdkId.default) { defaultSdk }
 
-    fun addSdkByName(sdkName: String) {
+    private fun addSdkByName(sdkName: String) {
         val sdk = runReadAction { ProjectJdkTable.getInstance() }.allJdks
             .find { it.name == sdkName }
             ?.takeIf { it.canBeUsedForScript() }

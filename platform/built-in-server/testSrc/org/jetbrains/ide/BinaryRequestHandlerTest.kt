@@ -49,8 +49,8 @@ internal class BinaryRequestHandlerTest {
     val port = builtInServerManager.port
     val channel = bootstrap.connect(loopbackSocketAddress(port)).syncUninterruptibly().channel()
     val buffer = channel.alloc().buffer()
-    buffer.writeByte('C'.toInt())
-    buffer.writeByte('H'.toInt())
+    buffer.writeByte('C'.code)
+    buffer.writeByte('H'.code)
     buffer.writeLong(MyBinaryRequestHandler.ID.mostSignificantBits)
     buffer.writeLong(MyBinaryRequestHandler.ID.leastSignificantBits)
 

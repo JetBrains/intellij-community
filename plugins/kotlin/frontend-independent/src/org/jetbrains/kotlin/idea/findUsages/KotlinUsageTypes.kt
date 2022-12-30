@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.findUsages
 
@@ -46,38 +46,41 @@ object KotlinUsageTypes {
         UsageTypeEnum.NAMED_ARGUMENT -> NAMED_ARGUMENT
 
         UsageTypeEnum.USAGE_IN_STRING_LITERAL -> UsageType.LITERAL_USAGE
+
+        UsageTypeEnum.CONSTRUCTOR_DELEGATION_REFERENCE -> CONSTRUCTOR_DELEGATION_REFERENCE
     }
 
     // types
     val TYPE_CONSTRAINT = UsageType(KotlinBundle.lazyMessage("find.usages.type.type.constraint"))
-    val VALUE_PARAMETER_TYPE = UsageType(KotlinBundle.lazyMessage("find.usages.type.value.parameter.type"))
-    val NON_LOCAL_PROPERTY_TYPE = UsageType(KotlinBundle.lazyMessage("find.usages.type.nonLocal.property.type"))
-    val FUNCTION_RETURN_TYPE = UsageType(KotlinBundle.lazyMessage("find.usages.type.function.return.type"))
-    val SUPER_TYPE = UsageType(KotlinBundle.lazyMessage("find.usages.type.superType"))
+    private val VALUE_PARAMETER_TYPE = UsageType(KotlinBundle.lazyMessage("find.usages.type.value.parameter.type"))
+    private val NON_LOCAL_PROPERTY_TYPE = UsageType(KotlinBundle.lazyMessage("find.usages.type.nonLocal.property.type"))
+    private val FUNCTION_RETURN_TYPE = UsageType(KotlinBundle.lazyMessage("find.usages.type.function.return.type"))
+    private val SUPER_TYPE = UsageType(KotlinBundle.lazyMessage("find.usages.type.superType"))
     val IS = UsageType(KotlinBundle.lazyMessage("find.usages.type.is"))
-    val CLASS_OBJECT_ACCESS = UsageType(KotlinBundle.lazyMessage("find.usages.type.class.object"))
-    val COMPANION_OBJECT_ACCESS = UsageType(KotlinBundle.lazyMessage("find.usages.type.companion.object"))
-    val EXTENSION_RECEIVER_TYPE = UsageType(KotlinBundle.lazyMessage("find.usages.type.extension.receiver.type"))
-    val SUPER_TYPE_QUALIFIER = UsageType(KotlinBundle.lazyMessage("find.usages.type.super.type.qualifier"))
-    val TYPE_ALIAS = UsageType(KotlinBundle.lazyMessage("find.usages.type.type.alias"))
+    private val CLASS_OBJECT_ACCESS = UsageType(KotlinBundle.lazyMessage("find.usages.type.class.object"))
+    private val COMPANION_OBJECT_ACCESS = UsageType(KotlinBundle.lazyMessage("find.usages.type.companion.object"))
+    private val EXTENSION_RECEIVER_TYPE = UsageType(KotlinBundle.lazyMessage("find.usages.type.extension.receiver.type"))
+    private val SUPER_TYPE_QUALIFIER = UsageType(KotlinBundle.lazyMessage("find.usages.type.super.type.qualifier"))
+    private val TYPE_ALIAS = UsageType(KotlinBundle.lazyMessage("find.usages.type.type.alias"))
 
     // functions
-    val FUNCTION_CALL = UsageType(KotlinBundle.lazyMessage("find.usages.type.function.call"))
-    val IMPLICIT_GET = UsageType(KotlinBundle.lazyMessage("find.usages.type.implicit.get"))
-    val IMPLICIT_SET = UsageType(KotlinBundle.lazyMessage("find.usages.type.implicit.set"))
-    val IMPLICIT_INVOKE = UsageType(KotlinBundle.lazyMessage("find.usages.type.implicit.invoke"))
-    val IMPLICIT_ITERATION = UsageType(KotlinBundle.lazyMessage("find.usages.type.implicit.iteration"))
-    val PROPERTY_DELEGATION = UsageType(KotlinBundle.lazyMessage("find.usages.type.property.delegation"))
+    private val FUNCTION_CALL = UsageType(KotlinBundle.lazyMessage("find.usages.type.function.call"))
+    private val IMPLICIT_GET = UsageType(KotlinBundle.lazyMessage("find.usages.type.implicit.get"))
+    private val IMPLICIT_SET = UsageType(KotlinBundle.lazyMessage("find.usages.type.implicit.set"))
+    private val IMPLICIT_INVOKE = UsageType(KotlinBundle.lazyMessage("find.usages.type.implicit.invoke"))
+    private val IMPLICIT_ITERATION = UsageType(KotlinBundle.lazyMessage("find.usages.type.implicit.iteration"))
+    private val PROPERTY_DELEGATION = UsageType(KotlinBundle.lazyMessage("find.usages.type.property.delegation"))
 
     // values
     val RECEIVER = UsageType(KotlinBundle.lazyMessage("find.usages.type.receiver"))
-    val DELEGATE = UsageType(KotlinBundle.lazyMessage("find.usages.type.delegate"))
+    private val DELEGATE = UsageType(KotlinBundle.lazyMessage("find.usages.type.delegate"))
 
     // packages
     val PACKAGE_DIRECTIVE = UsageType(KotlinBundle.lazyMessage("find.usages.type.packageDirective"))
-    val PACKAGE_MEMBER_ACCESS = UsageType(KotlinBundle.lazyMessage("find.usages.type.packageMemberAccess"))
+    private val PACKAGE_MEMBER_ACCESS = UsageType(KotlinBundle.lazyMessage("find.usages.type.packageMemberAccess"))
 
     // common usage types
     val CALLABLE_REFERENCE = UsageType(KotlinBundle.lazyMessage("find.usages.type.callable.reference"))
-    val NAMED_ARGUMENT = UsageType(KotlinBundle.lazyMessage("find.usages.type.named.argument"))
+    val CONSTRUCTOR_DELEGATION_REFERENCE = UsageType(KotlinBundle.lazyMessage("find.usages.type.constructor.delegation.reference"))
+    private val NAMED_ARGUMENT = UsageType(KotlinBundle.lazyMessage("find.usages.type.named.argument"))
 }

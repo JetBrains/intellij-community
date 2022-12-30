@@ -209,12 +209,11 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
         final List<SectionField> returns = docString.getReturnFields();
         final PyPsiFacade facade = getPsiFacade(function);
 
-        switch (returns.size()) {
-          case 0:
-            return null;
-          case 1:
+        return switch (returns.size()) {
+          case 0 -> null;
+          case 1 ->
             // Function returns single value
-            return Optional
+            Optional
               .ofNullable(returns.get(0).getType())
               .filter(StringUtil::isNotEmpty)
               .map(typeName -> isUfuncType(function, typeName)
@@ -223,7 +222,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
               .map(type -> PyTypingTypeProvider.toAsyncIfNeeded(function, type))
               .map(Ref::create)
               .orElse(null);
-          default:
+          default -> {
             // Function returns a tuple
             final List<PyType> unionMembers = new ArrayList<>();
             final List<PyType> members = new ArrayList<>();
@@ -249,8 +248,9 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
             }
 
             final PyType type = unionMembers.isEmpty() ? facade.createTupleType(members, function) : facade.createUnionType(unionMembers);
-            return Ref.create(PyTypingTypeProvider.toAsyncIfNeeded(function, type));
-        }
+            yield Ref.create(PyTypingTypeProvider.toAsyncIfNeeded(function, type));
+          }
+        };
       }
     }
 

@@ -46,7 +46,7 @@ open class CommitTabTitleUpdater(val tree: ChangesTree,
     tab.description = branchComponent.toolTipText
   }
 
-  fun setDefaultTitle() {
+  private fun setDefaultTitle() {
     val tab = getTab() ?: return
 
     tab.displayName = defaultTitle()

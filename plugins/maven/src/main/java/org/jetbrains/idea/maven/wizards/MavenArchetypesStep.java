@@ -17,6 +17,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.indices.MavenArchetypeManager;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 
@@ -221,8 +222,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
     myCurrentUpdaterMarker = currentUpdaterMarker;
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      MavenIndicesManager mavenIndicesManager = MavenIndicesManager.getInstance(findProject());
-      final Set<MavenArchetype> archetypes = mavenIndicesManager.getArchetypes();
+      final Set<MavenArchetype> archetypes = MavenArchetypeManager.getInstance(findProject()).getArchetypes();
 
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {

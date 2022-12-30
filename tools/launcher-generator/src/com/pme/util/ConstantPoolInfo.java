@@ -54,51 +54,25 @@ public class ConstantPoolInfo {
   public void read(DataInputStream stream)throws IOException {
     myType = stream.readByte();
     switch (myType) {
-      case CLASS:
-        myIindex1 = stream.readShort();
-        break;
-      case FIELDREF:
+      case CLASS, STRING -> myIindex1 = stream.readShort();
+      case FIELDREF, NAMEANDTYPE, INTERFACE, METHODREF -> {
         myIindex1 = stream.readShort();
         myIndex2 = stream.readShort();
-        break;
-      case METHODREF:
-        myIindex1 = stream.readShort();
-        myIndex2 = stream.readShort();
-        break;
-      case INTERFACE:
-        myIindex1 = stream.readShort();
-        myIndex2 = stream.readShort();
-        break;
-      case NAMEANDTYPE:
-        myIindex1 = stream.readShort();
-        myIndex2 = stream.readShort();
-        break;
-      case STRING:
-        myIindex1 = stream.readShort();
-        break;
-      case INTEGER:
-        myIntValue = stream.readInt();
-        break;
-      case FLOAT:
-        myFloatValue = stream.readFloat();
-        break;
-      case LONG:
-        myLongValue = stream.readLong();
-        break;
-      case DOUBLE:
-        myDoubleValue = stream.readDouble();
-        break;
-      case ASCIZ:
-      case UNICODE:
+      }
+      case INTEGER -> myIntValue = stream.readInt();
+      case FLOAT -> myFloatValue = stream.readFloat();
+      case LONG -> myLongValue = stream.readLong();
+      case DOUBLE -> myDoubleValue = stream.readDouble();
+      case ASCIZ, UNICODE -> {
         StringBuilder buff = new StringBuilder();
         int len = stream.readShort();
         while (len > 0) {
-          char c = (char) (stream.readByte());
+          char c = (char)(stream.readByte());
           buff.append(c);
           len--;
         }
         myStrValue = buff.toString();
-        break;
+      }
     }
   }
 

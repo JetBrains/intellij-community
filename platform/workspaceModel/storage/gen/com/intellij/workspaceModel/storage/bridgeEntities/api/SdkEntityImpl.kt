@@ -49,7 +49,7 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
     return connections
   }
 
-  class Builder(val result: SdkEntityData?) : ModifiableWorkspaceEntityBase<SdkEntity>(), SdkEntity.Builder {
+  class Builder(var result: SdkEntityData?) : ModifiableWorkspaceEntityBase<SdkEntity>(), SdkEntity.Builder {
     constructor() : this(SdkEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -67,6 +67,9 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "homeUrl", this.homeUrl)
       // Process linked entities that are connected without a builder
@@ -101,10 +104,13 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SdkEntity
-      this.entitySource = dataSource.entitySource
-      this.homeUrl = dataSource.homeUrl
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.homeUrl != dataSource.homeUrl) this.homeUrl = dataSource.homeUrl
       if (parents != null) {
-        this.library = parents.filterIsInstance<LibraryEntity>().single()
+        val libraryNew = parents.filterIsInstance<LibraryEntity>().single()
+        if ((this.library as WorkspaceEntityBase).id != (libraryNew as WorkspaceEntityBase).id) {
+          this.library = libraryNew
+        }
       }
     }
 
@@ -219,7 +225,7 @@ class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SdkEntityData
 
@@ -230,7 +236,7 @@ class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SdkEntityData
 

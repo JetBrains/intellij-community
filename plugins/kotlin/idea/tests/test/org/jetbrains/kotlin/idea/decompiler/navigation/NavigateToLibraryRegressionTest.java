@@ -60,7 +60,7 @@ public class NavigateToLibraryRegressionTest extends LightJavaCodeInsightFixture
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE;
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance();
     }
 
     protected PsiElement configureAndResolve(String text) {

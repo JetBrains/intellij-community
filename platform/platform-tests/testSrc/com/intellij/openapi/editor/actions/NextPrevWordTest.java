@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.testFramework.EditorTestUtil;
@@ -95,5 +96,16 @@ public class NextPrevWordTest extends BasePlatformTestCase {
     myFixture.configureByText(regExpFileType, "<caret>abc");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_NEXT_WORD);
     myFixture.checkResult("abc<caret>");
+  }
+
+  public void testNextWordWithJumpToWordStart() {
+    myFixture.configureByText("a.txt", "<caret>foo\nbar\n");
+    CaretStopOptions caretStopOptionsBackup = EditorSettingsExternalizable.getInstance().getCaretStopOptions();
+    EditorSettingsExternalizable.getInstance().setCaretStopOptions(
+      new CaretStopOptions(CaretStopPolicy.WORD_START, new CaretStopPolicy(CaretStop.START, CaretStop.START))
+    );
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_NEXT_WORD_WITH_SELECTION);
+    myFixture.checkResult("<selection>foo</selection>\nbar\n");
+    EditorSettingsExternalizable.getInstance().setCaretStopOptions(caretStopOptionsBackup);
   }
 }

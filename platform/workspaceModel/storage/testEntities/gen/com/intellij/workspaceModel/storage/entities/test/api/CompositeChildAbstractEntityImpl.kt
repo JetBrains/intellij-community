@@ -63,7 +63,7 @@ open class CompositeChildAbstractEntityImpl(val dataSource: CompositeChildAbstra
     return connections
   }
 
-  class Builder(val result: CompositeChildAbstractEntityData?) : ModifiableWorkspaceEntityBase<CompositeChildAbstractEntity>(), CompositeChildAbstractEntity.Builder {
+  class Builder(var result: CompositeChildAbstractEntityData?) : ModifiableWorkspaceEntityBase<CompositeChildAbstractEntity>(), CompositeChildAbstractEntity.Builder {
     constructor() : this(CompositeChildAbstractEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -81,6 +81,9 @@ open class CompositeChildAbstractEntityImpl(val dataSource: CompositeChildAbstra
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -122,10 +125,16 @@ open class CompositeChildAbstractEntityImpl(val dataSource: CompositeChildAbstra
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as CompositeChildAbstractEntity
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (parents != null) {
-        this.parentInList = parents.filterIsInstance<CompositeAbstractEntity>().single()
-        this.parentEntity = parents.filterIsInstance<ParentChainEntity>().singleOrNull()
+        val parentInListNew = parents.filterIsInstance<CompositeAbstractEntity>().single()
+        if ((this.parentInList as WorkspaceEntityBase).id != (parentInListNew as WorkspaceEntityBase).id) {
+          this.parentInList = parentInListNew
+        }
+        val parentEntityNew = parents.filterIsInstance<ParentChainEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 
@@ -192,11 +201,17 @@ open class CompositeChildAbstractEntityImpl(val dataSource: CompositeChildAbstra
         }
       }
       set(value) {
+        // Set list of ref types for abstract entities
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+              // Backref setup before adding to store an abstract entity
+              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
               _diff.addEntity(item_value)
             }
           }
@@ -305,7 +320,7 @@ class CompositeChildAbstractEntityData : WorkspaceEntityData<CompositeChildAbstr
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as CompositeChildAbstractEntityData
 
@@ -315,7 +330,7 @@ class CompositeChildAbstractEntityData : WorkspaceEntityData<CompositeChildAbstr
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as CompositeChildAbstractEntityData
 

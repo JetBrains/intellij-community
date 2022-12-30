@@ -85,35 +85,29 @@ public final class CoreGraphics {
 
     @Override
     public Object fromNative(Object o, FromNativeContext fromNativeContext) {
-      switch (Native.LONG_SIZE) {
-        case 4:
-          return new CGFloat((Float)o);
-        case 8:
-          return new CGFloat((Double)o);
-      }
-      throw new IllegalStateException();
+      return switch (Native.LONG_SIZE) {
+        case 4 -> new CGFloat((Float)o);
+        case 8 -> new CGFloat((Double)o);
+        default -> throw new IllegalStateException();
+      };
     }
 
     @Override
     public Object toNative() {
-      switch (Native.LONG_SIZE) {
-        case 4:
-          return (float)value;
-        case 8:
-          return value;
-      }
-      throw new IllegalStateException();
+      return switch (Native.LONG_SIZE) {
+        case 4 -> (float)value;
+        case 8 -> value;
+        default -> throw new IllegalStateException();
+      };
     }
 
     @Override
     public Class<?> nativeType() {
-      switch (Native.LONG_SIZE) {
-        case 4:
-          return Float.class;
-        case 8:
-          return Double.class;
-      }
-      throw new IllegalStateException();
+      return switch (Native.LONG_SIZE) {
+        case 4 -> Float.class;
+        case 8 -> Double.class;
+        default -> throw new IllegalStateException();
+      };
     }
   }
 }

@@ -102,42 +102,23 @@ public final class EquivalenceChecker {
     if (type1 != type2) {
       return false;
     }
-    switch (type1) {
-      case BLOCK_STATEMENT:
-        return blockStatementsAreEquivalent((GrBlockStatement) exp1, (GrBlockStatement) exp2);
-      case BREAK_STATEMENT:
-        return true;
-      case CONTINUE_STATEMENT:
-        return true;
-      case VAR_STATEMENT:
-        return varStatementsAreEquivalent((GrVariableDeclaration) exp1, (GrVariableDeclaration) exp2);
-      case EMPTY_STATEMENT:
-        return true;
-      case APPLICATION_STATEMENT:
-        return applicationStatementsAreEquivalent((GrApplicationStatement) exp1, (GrApplicationStatement) exp2);
-      case EXPRESSION_STATEMENT:
-        return expressionStatementsAreEquivalent((GrExpression) exp1, (GrExpression) exp2);
-      case FOR_STATEMENT:
-        return forInStatementsAreEquivalent((GrForStatement) exp1, (GrForStatement) exp2);
-      case IF_STATEMENT:
-        return ifStatementsAreEquivalent((GrIfStatement) exp1, (GrIfStatement) exp2);
-      case RETURN_STATEMENT:
-        return returnStatementsAreEquivalent((GrReturnStatement) exp1, (GrReturnStatement) exp2);
-      case SWITCH_STATEMENT:
-        return switchStatementsAreEquivalent((GrSwitchStatement) exp1, (GrSwitchStatement) exp2);
-      case THROW_STATEMENT:
-        return throwStatementsAreEquivalent((GrThrowStatement) exp1, (GrThrowStatement) exp2);
-      case TRY_STATEMENT:
-        return tryStatementsAreEquivalent((GrTryCatchStatement) exp1, (GrTryCatchStatement) exp2);
-      case WHILE_STATEMENT:
-        return whileStatementsAreEquivalent((GrWhileStatement) exp1, (GrWhileStatement) exp2);
-      case SYNCHRONIZED_STATEMENT:
-        return synchronizedStatementsAreEquivalent((GrSynchronizedStatement) exp1, (GrSynchronizedStatement) exp2);
-      case ASSERT_STATEMENT:
-        return assertStatementsAreEquivalent((GrAssertStatement) exp1, (GrAssertStatement) exp2);
-      default:
-        return false;
-    }
+    return switch (type1) {
+      case BLOCK_STATEMENT -> blockStatementsAreEquivalent((GrBlockStatement)exp1, (GrBlockStatement)exp2);
+      case BREAK_STATEMENT, CONTINUE_STATEMENT, EMPTY_STATEMENT -> true;
+      case VAR_STATEMENT -> varStatementsAreEquivalent((GrVariableDeclaration)exp1, (GrVariableDeclaration)exp2);
+      case APPLICATION_STATEMENT -> applicationStatementsAreEquivalent((GrApplicationStatement)exp1, (GrApplicationStatement)exp2);
+      case EXPRESSION_STATEMENT -> expressionStatementsAreEquivalent((GrExpression)exp1, (GrExpression)exp2);
+      case FOR_STATEMENT -> forInStatementsAreEquivalent((GrForStatement)exp1, (GrForStatement)exp2);
+      case IF_STATEMENT -> ifStatementsAreEquivalent((GrIfStatement)exp1, (GrIfStatement)exp2);
+      case RETURN_STATEMENT -> returnStatementsAreEquivalent((GrReturnStatement)exp1, (GrReturnStatement)exp2);
+      case SWITCH_STATEMENT -> switchStatementsAreEquivalent((GrSwitchStatement)exp1, (GrSwitchStatement)exp2);
+      case THROW_STATEMENT -> throwStatementsAreEquivalent((GrThrowStatement)exp1, (GrThrowStatement)exp2);
+      case TRY_STATEMENT -> tryStatementsAreEquivalent((GrTryCatchStatement)exp1, (GrTryCatchStatement)exp2);
+      case WHILE_STATEMENT -> whileStatementsAreEquivalent((GrWhileStatement)exp1, (GrWhileStatement)exp2);
+      case SYNCHRONIZED_STATEMENT -> synchronizedStatementsAreEquivalent((GrSynchronizedStatement)exp1, (GrSynchronizedStatement)exp2);
+      case ASSERT_STATEMENT -> assertStatementsAreEquivalent((GrAssertStatement)exp1, (GrAssertStatement)exp2);
+      default -> false;
+    };
   }
 
   private static boolean applicationStatementsAreEquivalent(GrApplicationStatement statement1,
@@ -424,65 +405,39 @@ public final class EquivalenceChecker {
     if (type1 != type2) {
       return false;
     }
-    switch (type1) {
-      case LITERAL_EXPRESSION:
-      case REFERENCE_EXPRESSION:
+    return switch (type1) {
+      case LITERAL_EXPRESSION, REFERENCE_EXPRESSION -> {
         final String text1 = expToCompare1.getText();
         final String text2 = expToCompare2.getText();
-        return text1.equals(text2);
-      case CALL_EXPRESSION:
-        return methodCallExpressionsAreEquivalent((GrMethodCall) expToCompare1,
-            (GrMethodCall) expToCompare2);
-      case NEW_EXPRESSION:
-        return newExpressionsAreEquivalent((GrNewExpression) expToCompare1,
-            (GrNewExpression) expToCompare2);
-      case ARRAY_LITERAL_EXPRESSION:
-        return arrayDeclarationsAreEquivalent((GrArrayDeclaration) expToCompare1,
-            (GrArrayDeclaration) expToCompare2);
-      case PREFIX_EXPRESSION:
-        return prefixExpressionsAreEquivalent((GrUnaryExpression) expToCompare1,
-            (GrUnaryExpression) expToCompare2);
-      case POSTFIX_EXPRESSION:
-        return postfixExpressionsAreEquivalent((GrUnaryExpression) expToCompare1,
-            (GrUnaryExpression) expToCompare2);
-      case BINARY_EXPRESSION:
-        return binaryExpressionsAreEquivalent((GrBinaryExpression) expToCompare1,
-            (GrBinaryExpression) expToCompare2);
-      case ASSIGNMENT_EXPRESSION:
-        return assignmentExpressionsAreEquivalent((GrAssignmentExpression) expToCompare1,
-            (GrAssignmentExpression) expToCompare2);
-      case CONDITIONAL_EXPRESSION:
-        return conditionalExpressionsAreEquivalent((GrConditionalExpression) expToCompare1,
-            (GrConditionalExpression) expToCompare2);
-      case ELVIS_EXPRESSION:
-        return elvisExpressionsAreEquivalent((GrElvisExpression) expToCompare1,
-            (GrElvisExpression) expToCompare2);
-      case RANGE_EXPRESSION:
-        return rangeExpressionsAreEquivalent((GrRangeExpression) expToCompare1,
-            (GrRangeExpression) expToCompare2);
-      case TYPE_CAST_EXPRESSION:
-        return typecastExpressionsAreEquivalent((GrTypeCastExpression) expToCompare1,
-            (GrTypeCastExpression) expToCompare2);
-      case SAFE_CAST_EXPRESSION:
-        return safeCastExpressionsAreEquivalent((GrSafeCastExpression)expToCompare1,
-                                                (GrSafeCastExpression)expToCompare2);
-      case INSTANCEOF_EXPRESSION:
-        return instanceofExpressionsAreEquivalent((GrInstanceOfExpression) expToCompare1,
-            (GrInstanceOfExpression) expToCompare2);
-      case INDEX_EXPRESSION:
-        return indexExpressionsAreEquivalent((GrIndexProperty) expToCompare1,
-            (GrIndexProperty) expToCompare2);
-      case LIST_OR_MAP_EXPRESSION:
-        return listOrMapExpressionsAreEquivalent((GrListOrMap) expToCompare1,
-            (GrListOrMap) expToCompare2);
-      case CLOSABLE_BLOCK_EXPRESSION:
-        return closableBlockExpressionsAreEquivalent((GrClosableBlock) expToCompare1,
-            (GrClosableBlock) expToCompare2);
-      case PROPERTY_SELECTION_EXPRESSION:
-        return textOfExpressionsIsEquivalent(expToCompare1, expToCompare2); // todo
-      default:
-        return false;
-    }
+        yield text1.equals(text2);
+      }
+      case CALL_EXPRESSION -> methodCallExpressionsAreEquivalent((GrMethodCall)expToCompare1, (GrMethodCall)expToCompare2);
+      case NEW_EXPRESSION -> newExpressionsAreEquivalent((GrNewExpression)expToCompare1, (GrNewExpression)expToCompare2);
+      case ARRAY_LITERAL_EXPRESSION -> arrayDeclarationsAreEquivalent((GrArrayDeclaration)expToCompare1, (GrArrayDeclaration)expToCompare2);
+      case PREFIX_EXPRESSION -> prefixExpressionsAreEquivalent((GrUnaryExpression)expToCompare1, (GrUnaryExpression)expToCompare2);
+      case POSTFIX_EXPRESSION -> postfixExpressionsAreEquivalent((GrUnaryExpression)expToCompare1, (GrUnaryExpression)expToCompare2);
+      case BINARY_EXPRESSION -> binaryExpressionsAreEquivalent((GrBinaryExpression)expToCompare1, (GrBinaryExpression)expToCompare2);
+      case ASSIGNMENT_EXPRESSION ->
+        assignmentExpressionsAreEquivalent((GrAssignmentExpression)expToCompare1, (GrAssignmentExpression)expToCompare2);
+      case CONDITIONAL_EXPRESSION ->
+        conditionalExpressionsAreEquivalent((GrConditionalExpression)expToCompare1, (GrConditionalExpression)expToCompare2);
+      case ELVIS_EXPRESSION -> elvisExpressionsAreEquivalent((GrElvisExpression)expToCompare1, (GrElvisExpression)expToCompare2);
+      case RANGE_EXPRESSION -> rangeExpressionsAreEquivalent((GrRangeExpression)expToCompare1, (GrRangeExpression)expToCompare2);
+      case TYPE_CAST_EXPRESSION ->
+        typecastExpressionsAreEquivalent((GrTypeCastExpression)expToCompare1, (GrTypeCastExpression)expToCompare2);
+      case SAFE_CAST_EXPRESSION ->
+        safeCastExpressionsAreEquivalent((GrSafeCastExpression)expToCompare1, (GrSafeCastExpression)expToCompare2);
+      case INSTANCEOF_EXPRESSION ->
+        instanceofExpressionsAreEquivalent((GrInstanceOfExpression)expToCompare1, (GrInstanceOfExpression)expToCompare2);
+      case INDEX_EXPRESSION ->
+        indexExpressionsAreEquivalent((GrIndexProperty)expToCompare1, (GrIndexProperty)expToCompare2);
+      case LIST_OR_MAP_EXPRESSION -> listOrMapExpressionsAreEquivalent((GrListOrMap)expToCompare1, (GrListOrMap)expToCompare2);
+      case CLOSABLE_BLOCK_EXPRESSION ->
+        closableBlockExpressionsAreEquivalent((GrClosableBlock)expToCompare1, (GrClosableBlock)expToCompare2);
+      case PROPERTY_SELECTION_EXPRESSION -> // todo
+        textOfExpressionsIsEquivalent(expToCompare1, expToCompare2);
+      default -> false;
+    };
   }
 
   private static boolean textOfExpressionsIsEquivalent(GrExpression expToCompare1,

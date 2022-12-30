@@ -56,6 +56,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -87,6 +88,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.VerticalLayout;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -101,6 +103,7 @@ import icons.PlatformDiffImplIcons;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
@@ -614,7 +617,7 @@ public final class DiffUtil {
     if (content instanceof DocumentContent) {
       Document document = ((DocumentContent)content).getDocument();
       if (FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(document)) {
-        components.add(DiffNotifications.createNotification(DiffBundle.message("error.file.is.too.large.only.preview.is.loaded")));
+        components.add(wrapEditorNotificationComponent(DiffNotifications.createNotification(DiffBundle.message("error.file.is.too.large.only.preview.is.loaded"))));
       }
     }
 
@@ -1296,18 +1299,12 @@ public final class DiffUtil {
 
   @NotNull
   public static TextDiffType getDiffType(@NotNull MergeConflictType conflictType) {
-    Type type = conflictType.getType();
-    switch (type) {
-      case INSERTED:
-        return TextDiffType.INSERTED;
-      case DELETED:
-        return TextDiffType.DELETED;
-      case MODIFIED:
-        return TextDiffType.MODIFIED;
-      case CONFLICT:
-        return TextDiffType.CONFLICT;
-    }
-    throw new IllegalStateException(type.name());
+    return switch (conflictType.getType()) {
+      case INSERTED -> TextDiffType.INSERTED;
+      case DELETED -> TextDiffType.DELETED;
+      case MODIFIED -> TextDiffType.MODIFIED;
+      case CONFLICT -> TextDiffType.CONFLICT;
+    };
   }
 
   //
@@ -1550,7 +1547,24 @@ public final class DiffUtil {
   @NotNull
   private static List<JComponent> createNotifications(@Nullable DiffViewer viewer,
                                                       @NotNull List<DiffNotificationProvider> providers) {
-    return ContainerUtil.mapNotNull(providers, it -> it.createNotification(viewer));
+    List<JComponent> notifications = ContainerUtil.mapNotNull(providers, it -> it.createNotification(viewer));
+    return wrapEditorNotificationBorders(notifications);
+  }
+
+  @NotNull
+  public static List<JComponent> wrapEditorNotificationBorders(@NotNull List<JComponent> notifications) {
+    return ContainerUtil.map(notifications, component -> wrapEditorNotificationComponent(component));
+  }
+
+  @NotNull
+  private static JComponent wrapEditorNotificationComponent(JComponent component) {
+    Border border = ClientProperty.get(component, FileEditorManager.SEPARATOR_BORDER);
+    if (border == null) return component;
+
+    Wrapper wrapper = new InvisibleWrapper();
+    wrapper.setContent(component);
+    wrapper.setBorder(border);
+    return wrapper;
   }
 
   //

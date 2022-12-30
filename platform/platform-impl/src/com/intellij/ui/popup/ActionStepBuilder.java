@@ -144,8 +144,9 @@ class ActionStepBuilder {
   }
 
   private List<PopupFactoryImpl.InlineActionItem> createInlineActionsItems(@NotNull List<AnAction> inlineActions) {
+    var inlineActionGroup = new DefaultActionGroup(inlineActions);
     List<PopupFactoryImpl.InlineActionItem> res = new ArrayList<>();
-    for (AnAction action : inlineActions) {
+    for (AnAction action : Utils.expandActionGroup(inlineActionGroup, myPresentationFactory, myDataContext, myActionPlace)) {
       Presentation presentation = myPresentationFactory.getPresentation(action);
       PopupFactoryImpl.InlineActionItem item = new PopupFactoryImpl.InlineActionItem(action, myMaxIconWidth, myMaxIconHeight);
       item.updateFromPresentation(presentation, myActionPlace);

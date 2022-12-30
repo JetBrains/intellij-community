@@ -40,6 +40,7 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction;
+import org.jetbrains.idea.maven.project.importing.FilesList;
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.project.importing.RootPath;
 import org.jetbrains.idea.maven.server.MavenWrapperSupport;
@@ -193,9 +194,8 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
 
 
     if (MavenUtil.isLinearImportEnabled()) {
-      VirtualFile rootPath = LocalFileSystem.getInstance().findFileByNioFile(getRootPath());
       Module dummy = MavenImportingManager.getInstance(project).openProjectAndImport(
-        new RootPath(rootPath),
+        new FilesList(MavenUtil.collectFiles(getParameters().mySelectedProjects)),
         getImportingSettings(),
         getGeneralSettings(),
         MavenImportSpec.EXPLICIT_IMPORT

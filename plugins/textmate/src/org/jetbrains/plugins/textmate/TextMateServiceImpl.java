@@ -59,9 +59,9 @@ public final class TextMateServiceImpl extends TextMateService {
   private final PlistReader myPlistReader = new CompositePlistReader();
   private final BundleFactory myBundleFactory = new BundleFactory(myPlistReader);
   private final TextMateSyntaxTable mySyntaxTable = new TextMateSyntaxTable();
-  private final SnippetsRegistry mySnippetsRegistry = new SnippetsRegistry();
-  private final PreferencesRegistry myPreferencesRegistry = new PreferencesRegistry();
-  private final ShellVariablesRegistry myShellVariablesRegistry = new ShellVariablesRegistry();
+  private final SnippetsRegistryImpl mySnippetsRegistry = new SnippetsRegistryImpl();
+  private final PreferencesRegistryImpl myPreferencesRegistry = new PreferencesRegistryImpl();
+  private final ShellVariablesRegistryImpl myShellVariablesRegistry = new ShellVariablesRegistryImpl();
   private final Interner<CharSequence> myInterner = Interner.createWeakInterner();
 
   public TextMateServiceImpl() {
@@ -171,6 +171,12 @@ public final class TextMateServiceImpl extends TextMateService {
   public Map<CharSequence, TextMateTextAttributesAdapter> getCustomHighlightingColors() {
     ensureInitialized();
     return myCustomHighlightingColors;
+  }
+
+  @Override
+  public @NotNull ShellVariablesRegistry getShellVariableRegistry() {
+    ensureInitialized();
+    return myShellVariablesRegistry;
   }
 
   @Nullable

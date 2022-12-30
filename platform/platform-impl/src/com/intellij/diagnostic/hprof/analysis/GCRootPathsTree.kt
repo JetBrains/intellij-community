@@ -31,7 +31,7 @@ import java.util.*
 
 internal class GCRootPathsTree(
   val analysisContext: AnalysisContext,
-  val treeDisplayOptions: AnalysisConfig.TreeDisplayOptions,
+  private val treeDisplayOptions: AnalysisConfig.TreeDisplayOptions,
   allObjectsOfClass: ClassDefinition?
 ) {
   private val topNode = RootNode(analysisContext.classStore)

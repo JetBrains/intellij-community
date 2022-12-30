@@ -26,9 +26,12 @@ private const val IMAGE_KEY_SIZE = java.lang.Long.BYTES + 3
 private fun getLogger() = Logger.getInstance(SvgCacheManager::class.java)
 
 @ApiStatus.Internal
-data class SvgCacheMapper(@JvmField internal val scale: Float, @JvmField internal val isDark: Boolean) {
-  val key = scale + if (isDark) 10000 else 0
-  val name = "icons@" + scale + if (isDark) "_d" else ""
+data class SvgCacheMapper(@JvmField internal val scale: Float,
+                          @JvmField internal val isDark: Boolean,
+                          @JvmField internal val isStroke: Boolean) {
+  constructor(scale: Float) : this(scale, false, false)
+  val key = scale + (if (isDark) 10000 else 0) + (if (isStroke) 100000 else 0)
+  val name = "icons@" + scale + (if (isDark) "_d" else "") + (if (isStroke) "_s" else "")
 }
 
 @ApiStatus.Internal

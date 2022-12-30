@@ -49,7 +49,7 @@ open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) 
     return connections
   }
 
-  class Builder(val result: ModuleGroupPathEntityData?) : ModifiableWorkspaceEntityBase<ModuleGroupPathEntity>(), ModuleGroupPathEntity.Builder {
+  class Builder(var result: ModuleGroupPathEntityData?) : ModifiableWorkspaceEntityBase<ModuleGroupPathEntity>(), ModuleGroupPathEntity.Builder {
     constructor() : this(ModuleGroupPathEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -67,6 +67,9 @@ open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) 
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -97,13 +100,23 @@ open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) 
       return connections
     }
 
+    override fun afterModification() {
+      val collection_path = getEntityData().path
+      if (collection_path is MutableWorkspaceList<*>) {
+        collection_path.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleGroupPathEntity
-      this.entitySource = dataSource.entitySource
-      this.path = dataSource.path.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.path != dataSource.path) this.path = dataSource.path.toMutableList()
       if (parents != null) {
-        this.module = parents.filterIsInstance<ModuleEntity>().single()
+        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
       }
     }
 
@@ -160,7 +173,12 @@ open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) 
       get() {
         val collection_path = getEntityData().path
         if (collection_path !is MutableWorkspaceList) return collection_path
-        collection_path.setModificationUpdateAction(pathUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_path.setModificationUpdateAction(pathUpdater)
+        }
+        else {
+          collection_path.cleanModificationUpdateAction()
+        }
         return collection_path
       }
       set(value) {
@@ -232,7 +250,7 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ModuleGroupPathEntityData
 
@@ -243,7 +261,7 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ModuleGroupPathEntityData
 

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel;
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.jvm.problems.JvmDfaProblem;
@@ -351,7 +352,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
           PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
           if (labelElementList == null) continue;
           for (PsiCaseLabelElement element : labelElementList.getElements()) {
-            if (element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType())) return null;
+            if (SwitchBlockHighlightingModel.isNullType(element)) return null;
             if (PsiUtil.getLanguageLevel(element).isLessThan(LanguageLevel.JDK_19_PREVIEW) &&
                 element instanceof PsiPattern && expressionType != null &&
                 JavaPsiPatternUtil.isTotalForType(element, expressionType)) {

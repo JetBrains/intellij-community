@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.remoteDev.connection.CodeWithMeSessionInfoProvider
@@ -157,14 +158,16 @@ object CodeWithMeClientDownloader {
     val platformSuffix = if (jreBuildToDownload != null) when {
       SystemInfo.isLinux && CpuArch.isIntel64() -> "-no-jbr.tar.gz"
       SystemInfo.isLinux && CpuArch.isArm64() -> "-no-jbr-aarch64.tar.gz"
-      SystemInfo.isWindows -> ".win.zip"
+      SystemInfo.isWindows && CpuArch.isIntel64() -> ".win.zip"
+      SystemInfo.isWindows && CpuArch.isArm64() -> "-aarch64.win.zip"
       SystemInfo.isMac && CpuArch.isIntel64() -> "-no-jdk.sit"
       SystemInfo.isMac && CpuArch.isArm64() -> "-no-jdk-aarch64.sit"
       else -> null
     } else when {
       SystemInfo.isLinux && CpuArch.isIntel64() -> ".tar.gz"
       SystemInfo.isLinux && CpuArch.isArm64() -> "-aarch64.tar.gz"
-      SystemInfo.isWindows -> ".jbr.win.zip"
+      SystemInfo.isWindows && CpuArch.isIntel64() -> ".jbr.win.zip"
+      SystemInfo.isWindows && CpuArch.isArm64() -> "-aarch64.jbr.win.zip"
       SystemInfo.isMac && CpuArch.isIntel64() -> ".sit"
       SystemInfo.isMac && CpuArch.isArm64() -> "-aarch64.sit"
       else -> null
@@ -175,8 +178,10 @@ object CodeWithMeClientDownloader {
 
     val jreDownloadUrl = if (jreBuildToDownload != null) {
       val platformString = when {
-        SystemInfo.isLinux -> "linux-x64"
-        SystemInfo.isWindows -> "windows-x64"
+        SystemInfo.isLinux && CpuArch.isIntel64() -> "linux-x64"
+        SystemInfo.isLinux && CpuArch.isArm64() -> "linux-aarch64"
+        SystemInfo.isWindows && CpuArch.isIntel64() -> "windows-x64"
+        SystemInfo.isWindows && CpuArch.isArm64() -> "windows-aarch64"
         SystemInfo.isMac && CpuArch.isIntel64() -> "osx-x64"
         SystemInfo.isMac && CpuArch.isArm64() -> "osx-aarch64"
         else -> error("Current platform is not supported")
@@ -565,8 +570,13 @@ object CodeWithMeClientDownloader {
   private fun findLauncherUnderCwmGuestRoot(guestRoot: Path): Pair<Path, List<String>> {
     when {
       SystemInfo.isWindows -> {
-        val launcherNames = listOf("jetbrains_client64.exe", "cwm_guest64.exe", "intellij_client64.exe", "intellij_client.bat")
-        return findLauncher(guestRoot, launcherNames)
+        val batchLaunchers = listOf("intellij_client.bat", "jetbrains_client.bat")
+        val exeLaunchers = listOf("jetbrains_client64.exe", "cwm_guest64.exe", "intellij_client64.exe")
+        val eligibleLaunchers = if (Registry.`is`("com.jetbrains.gateway.client.use.batch.launcher", false))
+          batchLaunchers
+        else
+          exeLaunchers + batchLaunchers
+        return findLauncher(guestRoot, eligibleLaunchers)
       }
 
       SystemInfo.isUnix -> {
@@ -712,15 +722,9 @@ object CodeWithMeClientDownloader {
     return processLifetimeDef.lifetime
   }
 
-  private fun detectMacOsJbrDirectory(root: Path): Path {
-    val jbrDirectory = root.listDirectoryEntries().find { it.nameWithoutExtension.startsWith("jbr") }
-
-    LOG.debug { "JBR directory: $jbrDirectory" }
-    return jbrDirectory ?: error("Unable to find target content directory starts with 'jbr' inside MacOS package: '$root'")
-  }
-
   fun createSymlinkToJdkFromGuest(guestRoot: Path, jdkRoot: Path): Path {
-    val linkTarget = if (SystemInfo.isMac) detectMacOsJbrDirectory(jdkRoot) else detectTrueJdkRoot(jdkRoot)
+    val linkTarget = getJbrDirectory(jdkRoot)
+
     val guestHome = findCwmGuestHome(guestRoot)
     val link = guestHome / "jbr"
     createSymlink(link, linkTarget)
@@ -771,15 +775,36 @@ object CodeWithMeClientDownloader {
     }
   }
 
-  private fun detectTrueJdkRoot(jdkDownload: Path): Path {
-    jdkDownload.toFile().walk(FileWalkDirection.TOP_DOWN).forEach {
-      if (File(it, "bin").isDirectory && File(it, "lib").isDirectory) {
-        return it.toPath()
+  private fun getJbrDirectory(root: Path): Path =
+    tryGetMacOsJbrDirectory(root) ?: tryGetJdkRoot(root) ?: error("Unable to detect jdk content directory in path: '$root'")
+
+
+  private fun tryGetJdkRoot(jdkDownload: Path): Path? {
+    jdkDownload.toFile().walk(FileWalkDirection.TOP_DOWN).forEach { file ->
+      if (File(file, "bin").isDirectory && File(file, "lib").isDirectory) {
+        return file.toPath()
       }
     }
 
-    error("JDK root (bin/lib directories) was not found under $jdkDownload")
+    return null
   }
+
+  private fun getJdkRoot(jdkDownload: Path): Path =
+    tryGetJdkRoot(jdkDownload) ?: error ("JDK root (bin/lib directories) was not found under $jdkDownload")
+
+  private fun tryGetMacOsJbrDirectory(root: Path): Path? {
+    if (!SystemInfo.isMac) {
+      return null
+    }
+
+    val jbrDirectory = root.listDirectoryEntries().find { it.nameWithoutExtension.startsWith("jbr") }
+
+    LOG.debug { "JBR directory: $jbrDirectory" }
+    return jbrDirectory
+  }
+
+  private fun getMacOsJbrDirectory(root: Path): Path =
+    tryGetMacOsJbrDirectory(root) ?: error ("Unable to find target content directory starts with 'jbr' inside MacOS package: '$root'")
 
   fun versionsMatch(hostBuildNumberString: String, localBuildNumberString: String): Boolean {
     try {

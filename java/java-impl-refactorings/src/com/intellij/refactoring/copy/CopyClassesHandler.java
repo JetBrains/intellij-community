@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.copy;
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
@@ -203,7 +203,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     Object targetDirectory = null;
     String className = null;
     boolean openInEditor = true;
-    if (copyOneClass(classes)) {
+    if (copyOneClass(classes, elements)) {
       final String commonPath =
         ArrayUtilRt.find(elements, classes.values().iterator().next()) == -1 ? normalizeRelativeMap(relativePathsMap) : null;
       CopyClassDialog dialog = new CopyClassDialog(classes.values().iterator().next()[0], defaultTargetDirectory, project, false) {
@@ -268,8 +268,8 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     CopyFilesOrDirectoriesHandler.copyAsFiles(files.toArray(PsiElement.EMPTY_ARRAY), defaultTargetDirectory, project);
   }
 
-  private static boolean copyOneClass(Map<PsiFile, PsiClass[]> classes) {
-    if (classes.size() == 1) {
+  private static boolean copyOneClass(Map<PsiFile, PsiClass[]> classes, PsiElement[] elements) {
+    if (classes.size() == 1 && !(elements.length == 1 && elements[0] instanceof PsiDirectory)) {
       final PsiClass[] psiClasses = classes.values().iterator().next();
       return psiClasses != null && psiClasses.length == 1;
     }

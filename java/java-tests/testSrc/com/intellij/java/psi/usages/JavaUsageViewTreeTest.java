@@ -29,22 +29,24 @@ public class JavaUsageViewTreeTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testSimpleModule() {
-    PsiClass aClass = myFixture.addClass("class A {" +
-                                         "  void foo(){}\n" +
-                                         "  void bar()\n {" +
-                                         "    foo();\n" +
-                                         "  } " +
-                                         "}\n");
+    PsiClass aClass = myFixture.addClass("""
+                                           class A {  void foo(){}
+                                             void bar()
+                                            {    foo();
+                                             } }
+                                           """);
 
     PsiMethod[] foos = aClass.findMethodsByName("foo", false);
     assertEquals(1, foos.length);
     PsiMethod foo = foos[0];
     PsiReference ref = ReferencesSearch.search(foo).findFirst();
     assertNotNull(ref);
-    assertEquals("<root> (1)\n" +
-               " Usages in (1)\n" +
-               "  A (1)\n" +
-               "   bar() (1)\n" +
-               "    3{    foo();\n", myFixture.getUsageViewTreeTextRepresentation(Collections.singleton(new UsageInfo(ref))));
+    assertEquals("""
+                   <root> (1)
+                    Usages in (1)
+                     A (1)
+                      bar() (1)
+                       3{    foo();
+                   """, myFixture.getUsageViewTreeTextRepresentation(Collections.singleton(new UsageInfo(ref))));
   }
 }

@@ -59,21 +59,22 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
   @NotNull
   @Override
   public String getDemoText() {
-    return "{\n" +
-           "  // Line comments are not included in standard but nonetheless allowed.\n" +
-           "  /* As well as block comments. */\n" +
-           "  <propertyKey>\"the only keywords are\"</propertyKey>: [true, false, null],\n" +
-           "  <propertyKey>\"strings with\"</propertyKey>: {\n" +
-           "    <propertyKey>\"no escapes\"</propertyKey>: \"pseudopolinomiality\"\n" +
-           "    <propertyKey>\"valid escapes\"</propertyKey>: \"C-style\\r\\n and unicode\\u0021\",\n" +
-           "    <propertyKey>\"illegal escapes\"</propertyKey>: \"\\0377\\x\\\"\n" +
-           "  },\n" +
-           "  <propertyKey>\"some numbers\"</propertyKey>: [\n" +
-           "    42,\n" +
-           "    -0.0e-0,\n" +
-           "    6.626e-34\n" +
-           "  ] \n" +
-           "}";
+    return """
+      {
+        // Line comments are not included in standard but nonetheless allowed.
+        /* As well as block comments. */
+        <propertyKey>"the only keywords are"</propertyKey>: [true, false, null],
+        <propertyKey>"strings with"</propertyKey>: {
+          <propertyKey>"no escapes"</propertyKey>: "pseudopolinomiality"
+          <propertyKey>"valid escapes"</propertyKey>: "C-style\\r\\n and unicode\\u0021",
+          <propertyKey>"illegal escapes"</propertyKey>: "\\0377\\x\\"
+        },
+        <propertyKey>"some numbers"</propertyKey>: [
+          42,
+          -0.0e-0,
+          6.626e-34
+        ]\s
+      }""";
   }
 
   @Nullable

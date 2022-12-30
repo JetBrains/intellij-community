@@ -41,9 +41,10 @@ public class CutLineBackwardActionTest extends LightPlatformCodeInsightTestCase 
   
   public void testZeroPositionNonFirstLine() {
     doTest(
-      "class Test {\n" +
-      "<caret>    // This is comment string\n" +
-      "}",
+      """
+        class Test {
+        <caret>    // This is comment string
+        }""",
       "<caret>    // This is comment string\n" +
       "}"
     );
@@ -51,13 +52,15 @@ public class CutLineBackwardActionTest extends LightPlatformCodeInsightTestCase 
 
   public void testNonZeroPositionNonFirstLine() {
     doTest(
-      "class Test {\n" +
-      "    // This is the comment string\n" +
-      "    // <caret>int i;\n" +
-      "}",
-      "class Test {\n" +
-      "<caret>int i;\n" +
-      "}"
+      """
+        class Test {
+            // This is the comment string
+            // <caret>int i;
+        }""",
+      """
+        class Test {
+        <caret>int i;
+        }"""
     );
   }
   

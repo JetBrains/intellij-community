@@ -1,3 +1,4 @@
+[LibraryNestedClassUsages.0.kt] Constructor delegation reference 11 constructor(n: Int) : super(n)
 [LibraryNestedClassUsages.0.kt] Local variable declaration 17 val a: A.T = A.T()
 [LibraryNestedClassUsages.0.kt] New instance creation 17 val a: A.T = A.T()
 [LibraryNestedClassUsages.0.kt] New instance creation 18 val aa = A.T(1)

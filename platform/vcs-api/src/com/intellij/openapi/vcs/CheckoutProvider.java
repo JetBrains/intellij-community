@@ -24,8 +24,12 @@ public interface CheckoutProvider {
 
   /**
    * @param project current project or default project if no project is open.
+   * @deprecated should not be used outside VcsCloneComponentStub
+   * Migrate to {@link com.intellij.util.ui.cloneDialog.VcsCloneDialog} or {@link VcsCloneComponent}
    */
+  @Deprecated(forRemoval = true)
   void doCheckout(@NotNull final Project project, @Nullable Listener listener);
+
   @NonNls String getVcsName();
 
   interface Listener {

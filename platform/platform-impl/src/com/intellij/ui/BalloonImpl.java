@@ -428,31 +428,19 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   }
 
   public int getLayer() {
-    Integer result = JLayeredPane.DEFAULT_LAYER;
-    switch (myLayer) {
-      case normal:
-        result = JLayeredPane.POPUP_LAYER;
-        break;
-      case top:
-        result = JLayeredPane.DRAG_LAYER;
-        break;
-    }
-
-    return result;
+    return switch (myLayer) {
+      case normal -> JLayeredPane.POPUP_LAYER;
+      case top -> JLayeredPane.DRAG_LAYER;
+    };
   }
 
   public static AbstractPosition getAbstractPositionFor(@NotNull Position position) {
-    switch (position) {
-      case atLeft:
-        return AT_LEFT;
-      case atRight:
-        return AT_RIGHT;
-      case above:
-        return ABOVE;
-      case below:
-      default:
-        return BELOW;
-    }
+    return switch (position) {
+      case atLeft -> AT_LEFT;
+      case atRight -> AT_RIGHT;
+      case above -> ABOVE;
+      case below -> BELOW;
+    };
   }
 
   @Override

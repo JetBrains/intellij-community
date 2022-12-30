@@ -15,9 +15,9 @@ import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
 @ApiStatus.Internal
 class KotlinNullabilityUAnnotation(
-    private val baseKotlinUastResolveProviderService: BaseKotlinUastResolveProviderService,
-    val annotatedElement: PsiElement,
-    override val uastParent: UElement?
+  private val baseKotlinUastResolveProviderService: BaseKotlinUastResolveProviderService,
+  private val annotatedElement: PsiElement,
+  override val uastParent: UElement?
 ) : UAnnotationEx, UAnchorOwner, DelegatedMultiResolve {
 
     override val uastAnchor: UIdentifier? = null

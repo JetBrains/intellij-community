@@ -75,7 +75,7 @@ class NotebookGutterLineMarkerManager {
           NotebookCodeCellBackgroundLineMarkerRenderer(interval, interval.lines)
       } else if (editor.editorKind != EditorKind.DIFF) {
         editor.markupModel.addRangeHighlighter(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE).lineMarkerRenderer =
-          NotebookTextCellBackgroundLineMarkerRenderer(interval, interval.lines)
+          NotebookTextCellBackgroundLineMarkerRenderer(interval.lines)
       }
 
       val notebookCellInlayManager = NotebookCellInlayManager.get(editor) ?: throw AssertionError("Register inlay manager first")
@@ -139,8 +139,8 @@ abstract class NotebookLineMarkerRenderer : LineMarkerRendererEx {
   }
   protected fun getInlayBounds(editor: EditorEx, linesRange: IntRange, inlayId: Long) : Rectangle? {
     val startOffset = editor.document.getLineStartOffset(linesRange.first)
-    val endOffset = editor.document.getLineStartOffset(linesRange.last)
-    val inlays = editor.inlayModel.getBlockElementsInRange(startOffset, endOffset + 1)
+    val endOffset = editor.document.getLineEndOffset(linesRange.last)
+    val inlays = editor.inlayModel.getBlockElementsInRange(startOffset, endOffset)
 
     val inlay = inlays.firstOrNull { it is RangeMarkerEx && it.id == inlayId }
     return inlay?.bounds
@@ -192,22 +192,22 @@ class NotebookCodeCellBackgroundLineMarkerRenderer(private val interval: Noteboo
     val top = editor.offsetToXY(editor.document.getLineStartOffset(lineRange.first)).y
     val height = editor.offsetToXY(editor.document.getLineEndOffset(lineRange.last)).y + editor.lineHeight - top
 
-    paintNotebookCellBackgroundGutter(editor, g, r, interval, top, height) {
+    paintNotebookCellBackgroundGutter(editor, g, r, interval.lines, top, height) {
       paintCaretRow(editor, g, lineRange)
     }
   }
 }
 
-class NotebookTextCellBackgroundLineMarkerRenderer(private val interval: NotebookCellLines.Interval, private val lineRange: IntRange) : NotebookLineMarkerRenderer() {
+class NotebookTextCellBackgroundLineMarkerRenderer(private val lineRange: IntRange) : NotebookLineMarkerRenderer() {
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
     editor as EditorImpl
 
     val top = editor.offsetToXY(editor.document.getLineStartOffset(lineRange.first)).y
     val height = editor.offsetToXY(editor.document.getLineEndOffset(lineRange.last)).y + editor.lineHeight - top
 
-    paintCaretRow(editor, g, interval.lines)
+    paintCaretRow(editor, g, lineRange)
     val appearance = editor.notebookAppearance
-    appearance.getCellStripeColor(editor, interval)?.let {
+    appearance.getCellStripeColor(editor, lineRange)?.let {
       appearance.paintCellStripe(g, r, it, top, height)
     }
   }

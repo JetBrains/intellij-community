@@ -106,5 +106,5 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
         }
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 }

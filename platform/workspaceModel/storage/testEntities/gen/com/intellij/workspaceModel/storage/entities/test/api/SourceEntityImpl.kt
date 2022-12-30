@@ -49,7 +49,7 @@ open class SourceEntityImpl(val dataSource: SourceEntityData) : SourceEntity, Wo
     return connections
   }
 
-  class Builder(val result: SourceEntityData?) : ModifiableWorkspaceEntityBase<SourceEntity>(), SourceEntity.Builder {
+  class Builder(var result: SourceEntityData?) : ModifiableWorkspaceEntityBase<SourceEntity>(), SourceEntity.Builder {
     constructor() : this(SourceEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -67,6 +67,9 @@ open class SourceEntityImpl(val dataSource: SourceEntityData) : SourceEntity, Wo
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -101,8 +104,8 @@ open class SourceEntityImpl(val dataSource: SourceEntityData) : SourceEntity, Wo
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SourceEntity
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
       if (parents != null) {
       }
     }
@@ -147,6 +150,12 @@ open class SourceEntityImpl(val dataSource: SourceEntityData) : SourceEntity, Wo
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+              // Backref setup before adding to store
+              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
+
               _diff.addEntity(item_value)
             }
           }
@@ -219,7 +228,7 @@ class SourceEntityData : WorkspaceEntityData<SourceEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SourceEntityData
 
@@ -230,7 +239,7 @@ class SourceEntityData : WorkspaceEntityData<SourceEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SourceEntityData
 

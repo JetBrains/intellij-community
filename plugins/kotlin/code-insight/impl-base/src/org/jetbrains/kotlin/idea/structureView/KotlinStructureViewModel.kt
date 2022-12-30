@@ -12,7 +12,7 @@ import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
-import org.jetbrains.kotlin.idea.KotlinCodeInsightBundle
+import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
@@ -64,8 +64,11 @@ object PublicElementsFilter : Filter {
     }
 
     override fun getPresentation(): ActionPresentation {
-        return ActionPresentationData(KotlinCodeInsightBundle.message("show.non.public"), null,
-                                      IconManager.getInstance().getPlatformIcon(PlatformIcons.Private))
+        return ActionPresentationData(
+            KotlinCodeInsightBundle.message("show.non.public"),
+            null,
+            IconManager.getInstance().getPlatformIcon(PlatformIcons.Private)
+        )
     }
 
     override fun getName() = ID

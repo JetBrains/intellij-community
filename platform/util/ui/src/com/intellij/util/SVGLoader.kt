@@ -39,7 +39,6 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.Icon
-import javax.swing.UIManager
 import kotlin.math.ceil
 
 private val USE_CACHE = java.lang.Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true"))
@@ -60,19 +59,19 @@ object SVGLoader {
   @Throws(IOException::class)
   @JvmStatic
   fun load(url: URL, scale: Float): Image {
-    return load(path = url.path, stream = url.openStream(), SvgCacheMapper(scale = scale, isDark = false), colorPatcher = null, docSize = null)
+    return load(path = url.path, stream = url.openStream(), SvgCacheMapper(scale = scale), colorPatcher = null, docSize = null)
   }
 
   @Throws(IOException::class)
   @JvmStatic
   fun load(stream: InputStream, scale: Float): Image {
-    return load(path = null, stream = stream, SvgCacheMapper(scale = scale, isDark = false), colorPatcher = null, docSize = null)
+    return load(path = null, stream = stream, SvgCacheMapper(scale = scale), colorPatcher = null, docSize = null)
   }
 
   @Throws(IOException::class)
   @JvmStatic
   fun load(url: URL?, stream: InputStream, scale: Float): Image {
-    return load(path = url?.path, stream = stream, SvgCacheMapper(scale = scale, isDark = false), colorPatcher = null, docSize = null)
+    return load(path = url?.path, stream = stream, SvgCacheMapper(scale = scale), colorPatcher = null, docSize = null)
   }
 
   @ApiStatus.Internal
@@ -88,8 +87,7 @@ object SVGLoader {
     var themeDigest: ByteArray?
     var data: ByteArray? = null
     val subPatcher = colorPatcher?.forPath(path)
-    val cache = SvgCache.prebuiltPersistentCache
-    if (cache != null && (subPatcher == null || subPatcher.digest() != null)) {
+    if (subPatcher == null || subPatcher.digest() != null) {
       val start = StartUpMeasurer.getCurrentTimeIfEnabled()
       themeDigest = DEFAULT_THEME
       if (subPatcher != null) {
@@ -97,9 +95,9 @@ object SVGLoader {
       }
       if (themeDigest != null) {
         @Suppress("ReplaceArrayEqualityOpWithArraysEquals")
-        if (themeDigest == DEFAULT_THEME && rasterizedCacheKey != 0) {
+        if (themeDigest == DEFAULT_THEME && rasterizedCacheKey != 0 && !mapper.isStroke) {
           try {
-            cache.loadFromCache(rasterizedCacheKey, mapper.scale, mapper.isDark, docSize)?.let {
+            SvgCache.prebuiltPersistentCache?.loadFromCache(rasterizedCacheKey, mapper.scale, mapper.isDark, docSize)?.let {
               return it
             }
           }
@@ -108,7 +106,7 @@ object SVGLoader {
           }
         }
         data = ImageLoader.getResourceData(path, resourceClass, classLoader) ?: return null
-        SvgCache.persistentCache!!.loadFromCache(themeDigest, data, mapper, docSize)?.let {
+        SvgCache.persistentCache?.loadFromCache(themeDigest, data, mapper, docSize)?.let {
           return it
         }
       }
@@ -232,7 +230,7 @@ object SVGLoader {
   fun loadHiDPI(url: URL?, stream: InputStream, context: ScaleContext): Image {
     val image = load(path = url?.path,
                      stream = stream,
-                     mapper = SvgCacheMapper(scale = context.getScale(DerivedScaleType.PIX_SCALE).toFloat(), isDark = false),
+                     mapper = SvgCacheMapper(scale = context.getScale(DerivedScaleType.PIX_SCALE).toFloat()),
                      colorPatcher = null,
                      docSize = null)
     return ImageUtil.ensureHiDPI(image, context)
@@ -298,9 +296,10 @@ object SVGLoader {
   }
 
   @JvmStatic
-  fun getStrokePatcher(strokeColors: List<String>,
-                       backgroundColors: List<String> = emptyList(),
-                       resultColor: Color = UIManager.getColor("ToolWindow.Button.selectedForeground")): SvgElementColorPatcherProvider {
+  @ApiStatus.Internal
+  fun getStrokePatcher(resultColor: Color,
+                       strokeColors: List<String>,
+                       backgroundColors: List<String> = emptyList()): SvgElementColorPatcherProvider {
     val fg = ColorUtil.toHtmlColor(resultColor)
     val map: Map<String, String> = strokeColors.associateWith { fg }
     val alpha = HashMap<String, Int>(map.size)

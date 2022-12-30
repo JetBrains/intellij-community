@@ -10,6 +10,7 @@ import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 
+import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.geom.Path2D;
@@ -51,7 +52,7 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
     paintMacSearchArea(g, r, c, fillBackground);
   }
 
-  public static void paintMacSearchArea(Graphics2D g, Rectangle r, JTextComponent c, boolean fillBackground) {
+  public static void paintMacSearchArea(Graphics2D g, Rectangle r, JComponent c, boolean fillBackground) {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);

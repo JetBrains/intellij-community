@@ -131,11 +131,9 @@ public class ConstExprent extends Exprent {
       return new TextBuffer(ExprProcessor.getCastTypeName(constType, Collections.emptyList()));
     }
 
-    switch (constType.getType()) {
-      case CodeConstants.TYPE_BOOLEAN:
-        return new TextBuffer(Boolean.toString((Integer)value != 0));
-
-      case CodeConstants.TYPE_CHAR:
+    return switch (constType.getType()) {
+      case CodeConstants.TYPE_BOOLEAN -> new TextBuffer(Boolean.toString((Integer)value != 0));
+      case CodeConstants.TYPE_CHAR -> {
         Integer val = (Integer)value;
         String ret = CHAR_ESCAPES.get(val);
         if (ret == null) {
@@ -147,134 +145,131 @@ public class ConstExprent extends Exprent {
             ret = TextUtil.charToUnicodeLiteral(c);
           }
         }
-        return new TextBuffer(ret).enclose("'", "'");
-
-      case CodeConstants.TYPE_BYTE:
-        return new TextBuffer(value.toString());
-      case CodeConstants.TYPE_BYTECHAR:
-      case CodeConstants.TYPE_SHORT:
+        yield new TextBuffer(ret).enclose("'", "'");
+      }
+      case CodeConstants.TYPE_BYTE -> new TextBuffer(value.toString());
+      case CodeConstants.TYPE_BYTECHAR, CodeConstants.TYPE_SHORT -> {
         int shortVal = (Integer)value;
         if (!literal) {
           if (shortVal == Short.MAX_VALUE && !inConstantVariable(SHORT_SIG, MAX_VAL)) {
-            return new FieldExprent(MAX_VAL, SHORT_SIG, true, null, FieldDescriptor.SHORT_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(MAX_VAL, SHORT_SIG, true, null, FieldDescriptor.SHORT_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
           else if (shortVal == Short.MIN_VALUE && !inConstantVariable(SHORT_SIG, MIN_VAL)) {
-            return new FieldExprent(MIN_VAL, SHORT_SIG, true, null, FieldDescriptor.SHORT_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(MIN_VAL, SHORT_SIG, true, null, FieldDescriptor.SHORT_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
         }
-        return new TextBuffer(value.toString());
-      case CodeConstants.TYPE_SHORTCHAR:
-      case CodeConstants.TYPE_INT:
+        yield new TextBuffer(value.toString());
+      }
+      case CodeConstants.TYPE_SHORTCHAR, CodeConstants.TYPE_INT -> {
         int intVal = (Integer)value;
         if (!literal) {
           if (intVal == Integer.MAX_VALUE && !inConstantVariable(INT_SIG, MAX_VAL)) {
-            return new FieldExprent(MAX_VAL, INT_SIG, true, null, FieldDescriptor.INTEGER_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(MAX_VAL, INT_SIG, true, null, FieldDescriptor.INTEGER_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
           else if (intVal == Integer.MIN_VALUE && !inConstantVariable(INT_SIG, MIN_VAL)) {
-            return new FieldExprent(MIN_VAL, INT_SIG, true, null, FieldDescriptor.INTEGER_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(MIN_VAL, INT_SIG, true, null, FieldDescriptor.INTEGER_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
         }
-        return new TextBuffer(value.toString());
-
-      case CodeConstants.TYPE_LONG:
+        yield new TextBuffer(value.toString());
+      }
+      case CodeConstants.TYPE_LONG -> {
         long longVal = (Long)value;
         if (!literal) {
           if (longVal == Long.MAX_VALUE && !inConstantVariable(LONG_SIG, MAX_VAL)) {
-            return new FieldExprent(MAX_VAL, LONG_SIG, true, null, FieldDescriptor.LONG_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(MAX_VAL, LONG_SIG, true, null, FieldDescriptor.LONG_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
           else if (longVal == Long.MIN_VALUE && !inConstantVariable(LONG_SIG, MIN_VAL)) {
-            return new FieldExprent(MIN_VAL, LONG_SIG, true, null, FieldDescriptor.LONG_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(MIN_VAL, LONG_SIG, true, null, FieldDescriptor.LONG_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
         }
-        return new TextBuffer(value.toString()).append('L');
-
-      case CodeConstants.TYPE_FLOAT:
+        yield new TextBuffer(value.toString()).append('L');
+      }
+      case CodeConstants.TYPE_FLOAT -> {
         float floatVal = (Float)value;
         if (!literal) {
           if (Float.isNaN(floatVal) && !inConstantVariable(FLOAT_SIG, NAN)) {
-            return new FieldExprent(NAN, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(NAN, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
           else if (floatVal == Float.POSITIVE_INFINITY && !inConstantVariable(FLOAT_SIG, POS_INF)) {
-            return new FieldExprent(POS_INF, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(POS_INF, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
           else if (floatVal == Float.NEGATIVE_INFINITY && !inConstantVariable(FLOAT_SIG, NEG_INF)) {
-            return new FieldExprent(NEG_INF, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(NEG_INF, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
           else if (floatVal == Float.MAX_VALUE && !inConstantVariable(FLOAT_SIG, MAX_VAL)) {
-            return new FieldExprent(MAX_VAL, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(MAX_VAL, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
           else if (floatVal == Float.MIN_VALUE && !inConstantVariable(FLOAT_SIG, MIN_VAL)) {
-            return new FieldExprent(MIN_VAL, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(MIN_VAL, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
           else if (floatVal == Float.MIN_NORMAL && !inConstantVariable(FLOAT_SIG, MIN_NORM)) {
-            return new FieldExprent(MIN_NORM, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(MIN_NORM, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
         }
         else if (Float.isNaN(floatVal)) {
-          return new TextBuffer("0.0F / 0.0F");
+          yield new TextBuffer("0.0F / 0.0F");
         }
         else if (floatVal == Float.POSITIVE_INFINITY) {
-          return new TextBuffer("1.0F / 0.0F");
+          yield new TextBuffer("1.0F / 0.0F");
         }
         else if (floatVal == Float.NEGATIVE_INFINITY) {
-          return new TextBuffer("-1.0F / 0.0F");
+          yield new TextBuffer("-1.0F / 0.0F");
         }
-        return new TextBuffer(value.toString()).append('F');
-
-      case CodeConstants.TYPE_DOUBLE:
+        yield new TextBuffer(value.toString()).append('F');
+      }
+      case CodeConstants.TYPE_DOUBLE -> {
         double doubleVal = (Double)value;
         if (!literal) {
           if (Double.isNaN(doubleVal) && !inConstantVariable(DOUBLE_SIG, NAN)) {
-            return new FieldExprent(NAN, DOUBLE_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(NAN, DOUBLE_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
           else if (doubleVal == Double.POSITIVE_INFINITY && !inConstantVariable(DOUBLE_SIG, POS_INF)) {
-            return new FieldExprent(POS_INF, DOUBLE_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(POS_INF, DOUBLE_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
           else if (doubleVal == Double.NEGATIVE_INFINITY && !inConstantVariable(DOUBLE_SIG, NEG_INF)) {
-            return new FieldExprent(NEG_INF, DOUBLE_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(NEG_INF, DOUBLE_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
           else if (doubleVal == Double.MAX_VALUE && !inConstantVariable(DOUBLE_SIG, MAX_VAL)) {
-            return new FieldExprent(MAX_VAL, DOUBLE_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(MAX_VAL, DOUBLE_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
           else if (doubleVal == Double.MIN_VALUE && !inConstantVariable(DOUBLE_SIG, MIN_VAL)) {
-            return new FieldExprent(MIN_VAL, DOUBLE_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(MIN_VAL, DOUBLE_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
           else if (doubleVal == Double.MIN_NORMAL && !inConstantVariable(DOUBLE_SIG, MIN_NORM)) {
-            return new FieldExprent(MIN_NORM, DOUBLE_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(MIN_NORM, DOUBLE_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
-          else if (doubleVal == Math.E  && !inConstantVariable(MATH_SIG, E)) {
-            return new FieldExprent(E, MATH_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
+          else if (doubleVal == Math.E && !inConstantVariable(MATH_SIG, E)) {
+            yield new FieldExprent(E, MATH_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
           else if (doubleVal == Math.PI && !inConstantVariable(MATH_SIG, PI)) {
-            return new FieldExprent(PI, MATH_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
+            yield new FieldExprent(PI, MATH_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
         }
         else if (Double.isNaN(doubleVal)) {
-          return new TextBuffer("0.0 / 0.0");
+          yield new TextBuffer("0.0 / 0.0");
         }
         else if (doubleVal == Double.POSITIVE_INFINITY) {
-          return new TextBuffer("1.0 / 0.0");
+          yield new TextBuffer("1.0 / 0.0");
         }
         else if (doubleVal == Double.NEGATIVE_INFINITY) {
-          return new TextBuffer("-1.0 / 0.0");
+          yield new TextBuffer("-1.0 / 0.0");
         }
-        return new TextBuffer(value.toString());
-
-      case CodeConstants.TYPE_NULL:
-        return new TextBuffer("null");
-
-      case CodeConstants.TYPE_OBJECT:
+        yield new TextBuffer(value.toString());
+      }
+      case CodeConstants.TYPE_NULL -> new TextBuffer("null");
+      case CodeConstants.TYPE_OBJECT -> {
         if (constType.equals(VarType.VARTYPE_STRING)) {
-          return new TextBuffer(convertStringToJava(value.toString(), ascii)).enclose("\"", "\"");
+          yield new TextBuffer(convertStringToJava(value.toString(), ascii)).enclose("\"", "\"");
         }
         else if (constType.equals(VarType.VARTYPE_CLASS)) {
           String stringVal = value.toString();
           VarType type = new VarType(stringVal, !stringVal.startsWith("["));
-          return new TextBuffer(ExprProcessor.getCastTypeName(type, Collections.emptyList())).append(".class");
+          yield new TextBuffer(ExprProcessor.getCastTypeName(type, Collections.emptyList())).append(".class");
         }
-    }
-
-    throw new RuntimeException("invalid constant type: " + constType);
+        throw new RuntimeException("invalid constant type: " + constType);
+      }
+      default -> throw new RuntimeException("invalid constant type: " + constType);
+    };
   }
 
   private boolean inConstantVariable(String classSignature, String variableName) {
@@ -294,37 +289,29 @@ public class ConstExprent extends Exprent {
 
     for (char c : arr) {
       switch (c) {
-        case '\\': //  u005c: backslash \
+        case '\\' -> //  u005c: backslash \
           buffer.append("\\\\");
-          break;
-        case 0x8: // "\\\\b");  //  u0008: backspace BS
+        case 0x8 -> // "\\\\b");  //  u0008: backspace BS
           buffer.append("\\b");
-          break;
-        case 0x9: //"\\\\t");  //  u0009: horizontal tab HT
+        case 0x9 -> //"\\\\t");  //  u0009: horizontal tab HT
           buffer.append("\\t");
-          break;
-        case 0xA: //"\\\\n");  //  u000a: linefeed LF
+        case 0xA -> //"\\\\n");  //  u000a: linefeed LF
           buffer.append("\\n");
-          break;
-        case 0xC: //"\\\\f");  //  u000c: form feed FF
+        case 0xC -> //"\\\\f");  //  u000c: form feed FF
           buffer.append("\\f");
-          break;
-        case 0xD: //"\\\\r");  //  u000d: carriage return CR
+        case 0xD -> //"\\\\r");  //  u000d: carriage return CR
           buffer.append("\\r");
-          break;
-        case 0x22: //"\\\\\""); // u0022: double quote "
+        case 0x22 -> //"\\\\\""); // u0022: double quote "
           buffer.append("\\\"");
-          break;
-        //case 0x27: //"\\\\'");  // u0027: single quote '
-        //  buffer.append("\\\'");
-        //  break;
-        default:
+
+        default -> {
           if (isPrintableAscii(c) || !ascii && TextUtil.isPrintableUnicode(c)) {
             buffer.append(c);
           }
           else {
             buffer.append(TextUtil.charToUnicodeLiteral(c));
           }
+        }
       }
     }
 
@@ -350,54 +337,36 @@ public class ConstExprent extends Exprent {
 
   public boolean hasBooleanValue() {
     switch (constType.getType()) {
-      case CodeConstants.TYPE_BOOLEAN:
-      case CodeConstants.TYPE_CHAR:
-      case CodeConstants.TYPE_BYTE:
-      case CodeConstants.TYPE_BYTECHAR:
-      case CodeConstants.TYPE_SHORT:
-      case CodeConstants.TYPE_SHORTCHAR:
-      case CodeConstants.TYPE_INT:
+      case CodeConstants.TYPE_BOOLEAN, CodeConstants.TYPE_CHAR, CodeConstants.TYPE_BYTE, CodeConstants.TYPE_BYTECHAR,
+        CodeConstants.TYPE_SHORT, CodeConstants.TYPE_SHORTCHAR, CodeConstants.TYPE_INT -> {
         int value = (Integer)this.value;
         return value == 0 || (DecompilerContext.getOption(IFernflowerPreferences.BOOLEAN_TRUE_ONE) && value == 1);
+      }
     }
 
     return false;
   }
 
   public boolean hasValueOne() {
-    switch (constType.getType()) {
-      case CodeConstants.TYPE_BOOLEAN:
-      case CodeConstants.TYPE_CHAR:
-      case CodeConstants.TYPE_BYTE:
-      case CodeConstants.TYPE_BYTECHAR:
-      case CodeConstants.TYPE_SHORT:
-      case CodeConstants.TYPE_SHORTCHAR:
-      case CodeConstants.TYPE_INT:
-        return (Integer)value == 1;
-      case CodeConstants.TYPE_LONG:
-        return ((Long)value).intValue() == 1;
-      case CodeConstants.TYPE_DOUBLE:
-        return ((Double)value).intValue() == 1;
-      case CodeConstants.TYPE_FLOAT:
-        return ((Float)value).intValue() == 1;
-    }
-
-    return false;
+    return switch (constType.getType()) {
+      case CodeConstants.TYPE_BOOLEAN, CodeConstants.TYPE_CHAR, CodeConstants.TYPE_BYTE, CodeConstants.TYPE_BYTECHAR,
+        CodeConstants.TYPE_SHORT, CodeConstants.TYPE_SHORTCHAR, CodeConstants.TYPE_INT ->
+        (Integer)value == 1;
+      case CodeConstants.TYPE_LONG -> ((Long)value).intValue() == 1;
+      case CodeConstants.TYPE_DOUBLE -> ((Double)value).intValue() == 1;
+      case CodeConstants.TYPE_FLOAT -> ((Float)value).intValue() == 1;
+      default -> false;
+    };
   }
 
   public static ConstExprent getZeroConstant(int type) {
-    switch (type) {
-      case CodeConstants.TYPE_INT:
-        return new ConstExprent(VarType.VARTYPE_INT, 0, null);
-      case CodeConstants.TYPE_LONG:
-        return new ConstExprent(VarType.VARTYPE_LONG, 0L, null);
-      case CodeConstants.TYPE_DOUBLE:
-        return new ConstExprent(VarType.VARTYPE_DOUBLE, 0d, null);
-      case CodeConstants.TYPE_FLOAT:
-        return new ConstExprent(VarType.VARTYPE_FLOAT, 0f, null);
-    }
-
-    throw new RuntimeException("Invalid argument: " + type);
+    return switch (type) {
+      case CodeConstants.TYPE_INT -> new ConstExprent(VarType.VARTYPE_INT, 0, null);
+      case CodeConstants.TYPE_LONG -> new ConstExprent(VarType.VARTYPE_LONG, 0L, null);
+      case CodeConstants.TYPE_DOUBLE -> new ConstExprent(VarType.VARTYPE_DOUBLE, 0d, null);
+      case CodeConstants.TYPE_FLOAT -> new ConstExprent(VarType.VARTYPE_FLOAT, 0f, null);
+      default -> throw new RuntimeException("Invalid argument: " + type);
+    };
   }
 
   public VarType getConstType() {

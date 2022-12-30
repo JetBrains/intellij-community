@@ -348,21 +348,21 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
           int end = action.getEnd();
 
           switch (action.getType()) {
-            case CommentAction.ACTION_INSERT:
+            case CommentAction.ACTION_INSERT -> {
               String comment = getCommentText(action.getPrefix(), action.getSuffix());
               if (!comment.isEmpty()) {
                 doc.insertString(start, comment);
               }
-              break;
-            case CommentAction.ACTION_REPLACE:
+            }
+            case CommentAction.ACTION_REPLACE -> {
               if (allowReplacement) {
                 String oldComment = doc.getText(new TextRange(start, end));
                 doc.replaceString(start, end, getCommentText("", "", oldComment));
               }
-              break;
-            case CommentAction.ACTION_DELETE:
+            }
+            case CommentAction.ACTION_DELETE -> {
               if (allowReplacement) doc.deleteString(start, end);
-              break;
+            }
           }
         }
         PsiDocumentManager.getInstance(file.getProject()).commitDocument(doc);

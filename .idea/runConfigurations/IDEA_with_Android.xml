@@ -21,7 +21,6 @@
     <ConfigurationWrapper RunnerId="Run" />
     <method v="2">
       <option name="Make" enabled="true" />
-      <option name="Gradle.BeforeRunTask" enabled="true" tasks="setupAndroidPluginRuntimeForIdea" externalProjectPath="$PROJECT_DIR$/build/dependencies" vmOptions="" scriptParameters="" />
       <option name="BuildArtifacts" enabled="true">
         <artifact name="debugger-agent" />
       </option>

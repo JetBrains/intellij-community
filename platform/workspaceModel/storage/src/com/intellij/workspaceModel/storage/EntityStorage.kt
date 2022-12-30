@@ -7,6 +7,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityExtensionDelegate
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.annotations.Abstract
 import kotlin.reflect.KClass
@@ -210,8 +211,16 @@ interface EntityStorageSnapshot : EntityStorage {
  * reading its state after modifications.
  */
 interface MutableEntityStorage : EntityStorage {
+  @Deprecated("The name may be misleading, use !hasChanges() instead", ReplaceWith("!hasChanges()"))
   fun isEmpty(): Boolean
-  fun <T : WorkspaceEntity> addEntity(entity: T)
+
+  /**
+   * Returns `true` if there are changes recorded in this storage after its creation. Note, that this method may return `true` if these
+   * changes actually don't modify the resulting set of entities, you may use [hasSameEntities] to perform more sophisticated check.
+   */
+  fun hasChanges(): Boolean
+  
+  infix fun <T : WorkspaceEntity> addEntity(entity: T): T
 
   fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
 
@@ -230,12 +239,22 @@ interface MutableEntityStorage : EntityStorage {
   fun addDiff(diff: MutableEntityStorage)
 
   /**
+   * Returns `true` if this instance contains entities with the same properties as [original] storage it was created from. 
+   * The difference from [hasChanges] is that this method will return `true` in cases when an entity was removed, and then a new entity
+   * with the same properties was added.
+   */
+  fun hasSameEntities(original: EntityStorage): Boolean
+
+  /**
    * Please see [EntityStorage.getExternalMapping] for naming conventions
    */
   fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T>
   fun getMutableVirtualFileUrlIndex(): MutableVirtualFileUrlIndex
 
   val modificationCount: Long
+
+  @ApiStatus.Internal
+  fun setUseNewRbs(value: Boolean)
 
   companion object {
     @JvmStatic
@@ -279,3 +298,14 @@ sealed class EntityChange<T : WorkspaceEntity> {
 open class NotGeneratedRuntimeException(message: String) : RuntimeException(message)
 class NotGeneratedMethodRuntimeException(val methodName: String)
   : NotGeneratedRuntimeException("Method `$methodName` uses default implementation. Please regenerate entities")
+
+
+// Internal tools, not sure if we can open them
+
+
+/**
+ * Return same entity, but in different entity storage. Fail if no entity
+ */
+internal fun <T: WorkspaceEntity> T.from(storage: EntityStorage): T {
+  return this.createReference<T>().resolve(storage)!!
+}

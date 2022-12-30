@@ -590,14 +590,18 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       @NotNull String @NotNull[] actionIds = keymapManager.getActiveKeymap().getActionIds(keyStroke);
       for (String id : actionIds) {
         switch (id) {
-          case IdeActions.ACTION_EDITOR_MOVE_CARET_UP:
+          case IdeActions.ACTION_EDITOR_MOVE_CARET_UP -> {
             return KeyEvent.VK_UP;
-          case IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN:
+          }
+          case IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN -> {
             return KeyEvent.VK_DOWN;
-          case IdeActions.ACTION_EDITOR_MOVE_LINE_START:
+          }
+          case IdeActions.ACTION_EDITOR_MOVE_LINE_START -> {
             return KeyEvent.VK_HOME;
-          case IdeActions.ACTION_EDITOR_MOVE_LINE_END:
+          }
+          case IdeActions.ACTION_EDITOR_MOVE_LINE_END -> {
             return KeyEvent.VK_END;
+          }
         }
       }
     }

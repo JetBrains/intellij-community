@@ -74,14 +74,15 @@ final class PersistentFSTreeAccessor {
   ListResult doLoadChildren(int parentId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(parentId);
 
+    final PersistentFSRecordsStorage records = myFSConnection.getRecords();
     try (DataInputStream input = myAttributeAccessor.readAttribute(parentId, CHILDREN_ATTR)) {
-      int count = input == null ? 0 : DataInputOutputUtil.readINT(input);
-      List<ChildInfo> result = count == 0 ? Collections.emptyList() : new ArrayList<>(count);
+      final int count = (input == null) ? 0 : DataInputOutputUtil.readINT(input);
+      final List<ChildInfo> result = (count == 0) ? Collections.emptyList() : new ArrayList<>(count);
       int prevId = parentId;
       for (int i = 0; i < count; i++) {
         int id = DataInputOutputUtil.readINT(input) + prevId;
         prevId = id;
-        int nameId = myFSConnection.getRecords().getNameId(id);
+        int nameId = records.getNameId(id);
         ChildInfo child = new ChildInfoImpl(id, nameId, null, null, null);
         result.add(child);
       }
@@ -133,6 +134,7 @@ final class PersistentFSTreeAccessor {
     try {
       PersistentFSConnection connection = myFSConnection;
 
+      //TODO RC: with non-strict names enumerator it is possible root==NULL_ID here -> what will happens?
       int root = connection.getNames().tryEnumerate(rootUrl);
 
       int[] names = ArrayUtilRt.EMPTY_INT_ARRAY;

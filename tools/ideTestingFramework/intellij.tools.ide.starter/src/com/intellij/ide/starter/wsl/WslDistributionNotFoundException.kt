@@ -5,7 +5,7 @@ import com.intellij.ide.starter.system.SystemInfo
 import com.intellij.ide.starter.utils.logOutput
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate
 
-class WslDistributionNotFoundException(val jdkPredicate: JdkPredicate? = null) : Exception() {
+class WslDistributionNotFoundException(private val jdkPredicate: JdkPredicate? = null) : Exception() {
   override val message: String
     get() {
       val red = "\u001b[31m"

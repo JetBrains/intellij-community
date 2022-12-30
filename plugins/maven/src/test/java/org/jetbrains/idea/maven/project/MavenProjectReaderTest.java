@@ -191,30 +191,30 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testNewLines() {
-    createProjectPom("<groupId>\n" +
-                     "  group\n" +
-                     "</groupId>\n" +
-                     "<artifactId>\n" +
-                     "  artifact\n" +
-                     "</artifactId>\n" +
-                     "<version>\n" +
-                     "  1\n" +
-                     "</version>\n");
+    createProjectPom("""
+                       <groupId>
+                         group
+                       </groupId>
+                       <artifactId>
+                         artifact
+                       </artifactId>
+                       <version>
+                         1
+                       </version>
+                       """);
 
     MavenModel p = readProject(myProjectPom);
     assertEquals(new MavenId("group", "artifact", "1"), p.getMavenId());
   }
 
   public void testCommentsWithNewLinesInTags() {
-    createProjectPom("<groupId>test<!--a-->\n" +
-                     "</groupId>" +
-                     "<artifactId>\n" +
-                     "<!--a-->project</artifactId>" +
-                     "<version>1\n" +
-                     "<!--a--></version>" +
-                     "<name>\n" +
-                     "<!--a-->\n" +
-                     "</name>");
+    createProjectPom("""
+                       <groupId>test<!--a-->
+                       </groupId><artifactId>
+                       <!--a-->project</artifactId><version>1
+                       <!--a--></version><name>
+                       <!--a-->
+                       </name>""");
 
     MavenModel p = readProject(myProjectPom);
     MavenId id = p.getMavenId();

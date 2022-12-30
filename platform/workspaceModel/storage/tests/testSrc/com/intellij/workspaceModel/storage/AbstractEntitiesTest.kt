@@ -2,14 +2,13 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.workspaceModel.storage.entities.test.api.LeftEntity
-import com.intellij.workspaceModel.storage.entities.test.api.MiddleEntity
-import com.intellij.workspaceModel.storage.entities.test.api.addLeftEntity
-import com.intellij.workspaceModel.storage.entities.test.api.addMiddleEntity
-import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
+import com.intellij.workspaceModel.storage.entities.test.api.*
+import com.intellij.workspaceModel.storage.impl.assertConsistency
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class AbstractEntitiesTest {
   @Test
@@ -76,7 +75,7 @@ class AbstractEntitiesTest {
 
     val anotherBuilder = MutableEntityStorage.from(builder)
     val anotherMiddleEntity = anotherBuilder.addMiddleEntity("Another")
-    anotherBuilder.modifyEntity(leftEntity) {
+    anotherBuilder.modifyEntity(leftEntity.from(anotherBuilder)) {
       this.children = listOf(middleEntity, anotherMiddleEntity)
     }
 
@@ -157,5 +156,44 @@ class AbstractEntitiesTest {
     val children = target.toSnapshot().entities(LeftEntity::class.java).last().children.toList()
     assertEquals(middleEntity2.property, (children[0] as MiddleEntity).property)
     assertEquals(middleEntity1.property, (children[1] as MiddleEntity).property)
+  }
+
+
+  @Test
+  fun `modifying one to one child switch`() {
+    val builder = MutableEntityStorage.create()
+
+    val headAbstractionEntity = HeadAbstractionEntity("info", MySource)
+    builder.addEntity(headAbstractionEntity)
+
+    builder.addEntity(LeftEntity(AnotherSource) {
+      this.parent = headAbstractionEntity
+    })
+
+    builder.addEntity(LeftEntity(MySource) {
+      this.parent = headAbstractionEntity
+    })
+
+    builder.assertConsistency()
+    assertNull(builder.entities(LeftEntity::class.java).single { it.entitySource == AnotherSource }.parent)
+    assertNotNull(builder.entities(LeftEntity::class.java).single { it.entitySource == MySource }.parent)
+  }
+
+  @Test
+  fun `modifying one to one parent switch`() {
+    val builder = MutableEntityStorage.create()
+
+    val child = builder addEntity LeftEntity(AnotherSource)
+
+    builder addEntity HeadAbstractionEntity("Info", MySource) {
+      this.child = child
+    }
+    builder addEntity HeadAbstractionEntity("Info2", MySource) {
+      this.child = child
+    }
+
+    builder.assertConsistency()
+    assertNull(builder.entities(HeadAbstractionEntity::class.java).single { it.data == "Info" }.child)
+    assertNotNull(builder.entities(HeadAbstractionEntity::class.java).single { it.data == "Info2" }.child)
   }
 }

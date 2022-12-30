@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.openapi.application.Application;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
@@ -21,8 +21,10 @@ public abstract class ExpandableItemsHandlerFactory {
 
   @Nullable
   private static ExpandableItemsHandlerFactory getInstance() {
-    Application app = ApplicationManager.getApplication();
-    return app == null || !Registry.is("ide.windowSystem.showListItemsPopup") ? null : app.getService(ExpandableItemsHandlerFactory.class);
+    if (!LoadingState.COMPONENTS_REGISTERED.isOccurred() || !Registry.is("ide.windowSystem.showListItemsPopup", true)) {
+      return null;
+    }
+    return ApplicationManager.getApplication().getService(ExpandableItemsHandlerFactory.class);
   }
 
   protected abstract @Nullable ExpandableItemsHandler<?> doInstall(@NotNull JComponent component);

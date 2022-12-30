@@ -42,10 +42,6 @@ class ComposeMppModuleTemplate : Template() {
         +RepositoryIR(DefaultRepository.GOOGLE)
     }
 
-    override fun Reader.updateBuildFileIRs(irs: List<BuildSystemIR>): List<BuildSystemIR> = irs.filterNot {
-        it.safeAs<GradleOnlyPluginByNameIR>()?.pluginId == AndroidModuleConfigurator.DEPENDENCIES.KOTLIN_ANDROID_EXTENSIONS_NAME
-    }
-
     override fun Reader.updateModuleIR(module: ModuleIR): ModuleIR = when (module.originalModule.configurator) {
         CommonTargetConfigurator -> module.withIrs(
             CustomGradleDependencyDependencyIR("compose.runtime", DependencyType.MAIN, DependencyKind.api),

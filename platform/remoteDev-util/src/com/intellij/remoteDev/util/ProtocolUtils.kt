@@ -30,7 +30,7 @@ object RemoteDevProtocolUtil {
     return URLDecoder.decode(value, StandardCharsets.UTF_8.toString())
   }
 
-  fun buildParamsString(params: Map<String, String>): String {
+  private fun buildParamsString(params: Map<String, String>): String {
     return params.map { "${it.key}=${urlEncode(it.value)}" }.joinToString("&")
   }
 

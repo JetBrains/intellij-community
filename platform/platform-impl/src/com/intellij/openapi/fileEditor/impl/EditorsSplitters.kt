@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty", "PrivatePropertyName")
 
 package com.intellij.openapi.fileEditor.impl
 
@@ -11,6 +11,7 @@ import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.CodeInsightColors
@@ -21,6 +22,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
@@ -118,30 +120,30 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       return false
     }
 
-    @JvmStatic
-    fun activateEditorComponentOnEscape(target: Component?): Boolean {
-      @Suppress("NAME_SHADOWING") var target = target
-      while (target != null && target !is Window) {
-        if (target is EditorsSplitters) {
-          // editor is already focused
-          return false
+    private val ACTIVATE_EDITOR_ON_ESCAPE_HANDLER = KeyEventPostProcessor { e ->
+      if (!e.isConsumed && KeymapUtil.isEventForAction(e, IdeActions.ACTION_FOCUS_EDITOR)) {
+        var target = e.component
+        while (target != null && (target !is Window || target is FloatingDecorator) && target !is EditorsSplitters) {
+          target = target.parent
         }
-        target = target.parent
+        if (target is IdeFrame) {
+          target.project?.let {
+            focusDefaultComponentInSplittersIfPresent(it)
+            e.consume()
+          }
+        }
       }
-      if (target is FloatingDecorator) {
-        target = target.getParent()
-      }
+      false
+    }
 
-      if (target !is IdeFrame) {
-        return false
-      }
-
-      focusDefaultComponentInSplittersIfPresent((target as IdeFrame).project ?: return false)
-      return true
+    private fun enableEditorActivationOnEscape() {
+      val kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+      kfm.removeKeyEventPostProcessor(ACTIVATE_EDITOR_ON_ESCAPE_HANDLER) // we need only one handler, not one per EditorsSplitters instance
+      kfm.addKeyEventPostProcessor(ACTIVATE_EDITOR_ON_ESCAPE_HANDLER)
     }
   }
 
-  var lastFocusGainedTime = 0L
+  var lastFocusGainedTime: Long = 0L
     private set
 
   private val windows = CopyOnWriteArraySet<EditorWindow>()
@@ -150,7 +152,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   private var splittersElement: Element? = null
 
   @JvmField
-  var insideChange = 0
+  internal var insideChange: Int = 0
 
   private val focusWatcher: MyFocusWatcher
   private val iconUpdaterAlarm = Alarm(this)
@@ -198,6 +200,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     focusWatcher = MyFocusWatcher()
     Disposer.register(this) { focusWatcher.deinstall(this) }
     focusTraversalPolicy = MyFocusTraversalPolicy(this)
+    isFocusTraversalPolicyProvider = true
     transferHandler = MyTransferHandler(this)
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
       override fun activeKeymapChanged(keymap: Keymap?) {
@@ -205,6 +208,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
         repaint()
       }
     })
+    enableEditorActivationOnEscape();
   }
 
   override fun dispose() {
@@ -307,13 +311,19 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
     runActivity(StartUpMeasurer.Activities.EDITOR_RESTORING) {
       val component = UIBuilder(this).process(element, topPanel) ?: return
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        validate()
+        val windows = windows.toList()
+        for (window in windows) {
+          (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
+        }
+
         component.isFocusable = false
 
         removeAll()
         add(component, BorderLayout.CENTER)
         // clear empty splitters
-        for (window in windows.toTypedArray()) {
+        for (window in windows) {
           if (window.tabCount == 0) {
             window.removeFromSplitter()
           }
@@ -495,17 +505,12 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   fun updateFileBackgroundColor(file: VirtualFile) {
     val windows = getWindows()
     for (i in windows.indices) {
-      windows[i].updateFileBackgroundColor(file)
+      windows.get(i).updateFileBackgroundColor(file)
     }
   }
 
   val splitCount: Int
-    get() {
-      if (componentCount > 0) {
-        return getSplitCount(getComponent(0) as JPanel)
-      }
-      return 0
-    }
+    get() = if (componentCount > 0) getSplitCount(getComponent(0) as JPanel) else 0
 
   internal open fun afterFileClosed(file: VirtualFile) {}
 
@@ -777,10 +782,10 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
 }
 
 private class MyFocusTraversalPolicy(private val splitters: EditorsSplitters) : IdeFocusTraversalPolicy() {
-  override fun getDefaultComponent(focusCycleRoot: Container): Component {
+  override fun getDefaultComponent(focusCycleRoot: Container): Component? {
     return splitters.currentWindow?.selectedComposite?.focusComponent?.let {
-      getPreferredFocusedComponent(it, this)!!
-    } ?: getPreferredFocusedComponent(splitters, this)!!
+      getPreferredFocusedComponent(it, this)
+    } ?: getPreferredFocusedComponent(splitters, this)
   }
 
   override fun getProject() = splitters.manager.project
@@ -850,8 +855,8 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
     var focusedFile: VirtualFile? = null
     val fileEditorManager = splitters.manager
     for (i in fileElements.indices) {
-      val file = fileElements[i]
-      val historyElement = file.getChild(HistoryEntry.TAG)
+      val fileElement = fileElements.get(i)
+      val historyElement = fileElement.getChild(HistoryEntry.TAG)
       val fileName = historyElement.getAttributeValue(HistoryEntry.FILE_ATTR)
       val activity = StartUpMeasurer.startActivity(PathUtil.getFileName(fileName), ActivityCategory.REOPENING_EDITOR)
       val entry = HistoryEntry.createLight(fileEditorManager.project, historyElement)
@@ -860,40 +865,46 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
         if (ApplicationManager.getApplication().isUnitTestMode) {
           LOG.error(InvalidDataException("No file exists: ${entry.filePointer.url}"))
         }
+        continue
       }
-      else {
-        val openOptions = FileEditorOpenOptions(
-          selectAsCurrent = false,
-          pin = file.getAttributeValue(PINNED).toBoolean(),
-          index = i,
-          isReopeningOnStartup = true,
-        )
-        try {
-          virtualFile.putUserData(OPENED_IN_BULK, true)
-          val document = readAction {
-            if (virtualFile.isValid) FileDocumentManager.getInstance().getDocument(virtualFile) else null
-          }
-          val isCurrentTab = file.getAttributeValue(CURRENT_IN_TAB).toBoolean()
-          (fileEditorManager as AsyncFileEditorOpener).openFileImpl5(window = window,
-                                                                     virtualFile = virtualFile,
-                                                                     entry = entry,
-                                                                     options = openOptions)
-          // This is just to make sure document reference is kept on stack till this point
-          // so that document is available for folding state deserialization in HistoryEntry constructor
-          // and that document will be created only once during file opening
-          Reference.reachabilityFence(document)
-          if (isCurrentTab) {
-            focusedFile = virtualFile
-          }
+
+      val openOptions = FileEditorOpenOptions(
+        selectAsCurrent = false,
+        pin = fileElement.getAttributeValue(PINNED).toBoolean(),
+        index = i,
+        isReopeningOnStartup = true,
+      )
+
+      val isCurrentTab = try {
+        fileElement.getAttributeValue(CURRENT_IN_TAB).toBoolean()
+      }
+      catch (e: InvalidDataException) {
+        if (ApplicationManager.getApplication().isUnitTestMode) {
+          LOG.error(e)
         }
-        catch (e: InvalidDataException) {
-          if (ApplicationManager.getApplication().isUnitTestMode) {
-            LOG.error(e)
-          }
+        false
+      }
+
+      val fileDocumentManager = FileDocumentManager.getInstance()
+      try {
+        virtualFile.putUserData(OPENED_IN_BULK, true)
+        val document = readAction {
+          if (virtualFile.isValid) fileDocumentManager.getDocument(virtualFile) else null
         }
-        finally {
-          virtualFile.putUserData(OPENED_IN_BULK, null)
+        (fileEditorManager as FileEditorManagerExImpl).openFileOnStartup(window = window,
+                                                                         virtualFile = virtualFile,
+                                                                         entry = entry,
+                                                                         options = openOptions)
+        // This is just to make sure document reference is kept on stack till this point
+        // so that document is available for folding state deserialization in HistoryEntry constructor
+        // and that document will be created only once during file opening
+        Reference.reachabilityFence(document)
+        if (isCurrentTab) {
+          focusedFile = virtualFile
         }
+      }
+      finally {
+        virtualFile.putUserData(OPENED_IN_BULK, null)
       }
       activity.end()
     }
@@ -977,15 +988,13 @@ private fun getSplittersToFocus(project: Project?): EditorsSplitters? {
     if (project == null) {
       project = lastFocusedFrame?.project
     }
-    val fileEditorManager = (if (project == null || project.isDisposed) null else FileEditorManagerEx.getInstanceEx(project))
-                            ?: return null
-    return fileEditorManager.getSplittersFor(activeWindow) ?: fileEditorManager.splitters
+    return getSplittersForProject(activeWindow, project)
   }
   if (activeWindow is IdeFrame.Child) {
     if (project == null) {
       project = (activeWindow as IdeFrame.Child).project
     }
-    return getSplittersForProject(WindowManager.getInstance().getFrame(project), project)
+    return getSplittersForProject(activeWindow, project)
   }
   val frame = FocusManagerImpl.getInstance().lastFocusedFrame
   if (frame is IdeFrameImpl && frame.isActive) {

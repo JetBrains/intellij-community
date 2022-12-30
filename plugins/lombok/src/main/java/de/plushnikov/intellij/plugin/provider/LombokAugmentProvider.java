@@ -26,7 +26,6 @@ import static de.plushnikov.intellij.plugin.util.LombokLibraryUtil.hasLombokLibr
  */
 public class LombokAugmentProvider extends PsiAugmentProvider {
   private static class Holder {
-    static final ValProcessor valProcessor = new ValProcessor();
     static final Collection<ModifierProcessor> modifierProcessors = LombokProcessorManager.getLombokModifierProcessors();
   }
 
@@ -56,7 +55,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
 
   @Override
   public boolean canInferType(@NotNull PsiTypeElement typeElement) {
-    return hasLombokLibrary(typeElement.getProject()) && Holder.valProcessor.canInferType(typeElement);
+    return hasLombokLibrary(typeElement.getProject()) && ValProcessor.canInferType(typeElement);
   }
 
   /*
@@ -73,7 +72,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   @Nullable
   @Override
   protected PsiType inferType(@NotNull PsiTypeElement typeElement) {
-    return hasLombokLibrary(typeElement.getProject()) ? Holder.valProcessor.inferType(typeElement) : null;
+    return hasLombokLibrary(typeElement.getProject()) ? ValProcessor.inferType(typeElement) : null;
   }
 
   @NotNull
@@ -106,14 +105,10 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       return emptyResult;
     }
 
-    // All invoker of AugmentProvider already make caching
+    // All invoker of AugmentProvider already make caching,
     // and we want to try to skip recursive calls completely
 
-///      final String message = String.format("Process call for type: %s class: %s", type.getSimpleName(), psiClass.getQualifiedName());
-//      log.info(">>>" + message);
-    final List<Psi> result = getPsis(psiClass, type, nameHint);
-//      log.info("<<<" + message);
-    return result;
+    return getPsis(psiClass, type, nameHint);
   }
 
   @NotNull

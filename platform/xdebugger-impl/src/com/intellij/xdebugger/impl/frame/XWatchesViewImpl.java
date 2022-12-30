@@ -218,6 +218,11 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
                 public void update(@NotNull AnActionEvent e) {
                   e.getPresentation().setEnabled(!XDebuggerUtilImpl.isEmptyExpression(getExpression()));
                 }
+
+                @Override
+                public @NotNull ActionUpdateThread getActionUpdateThread() {
+                  return ActionUpdateThread.BGT;
+                }
               };
             ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
               .createActionToolbar("DebuggerVariablesEvaluate", new DefaultActionGroup(addToWatchesAction), true);

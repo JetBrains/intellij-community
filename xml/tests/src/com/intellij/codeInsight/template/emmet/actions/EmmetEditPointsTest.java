@@ -50,10 +50,12 @@ public class EmmetEditPointsTest extends EmmetEditPointsTestBase {
 
   public void testMultiCursorForward() {
     myFixture.configureByText(HtmlFileType.INSTANCE,
-                              "<ul>\n" +
-                              "    <li><caret><a href=\"\"></a></li>\n" +
-                              "    <li><caret><a href=\"\"></a></li>\n" +
-                              "</ul>\n");
+                              """
+                                <ul>
+                                    <li><caret><a href=""></a></li>
+                                    <li><caret><a href=""></a></li>
+                                </ul>
+                                """);
     final Editor editor = myFixture.getEditor();
     assertCarets(editor, 13, 42);
 
@@ -68,10 +70,12 @@ public class EmmetEditPointsTest extends EmmetEditPointsTestBase {
 
   public void testMultiCursorBackward() {
     myFixture.configureByText(HtmlFileType.INSTANCE,
-                              "<ul>\n" +
-                              "    <li><a href=\"\"></a><caret></li>\n" +
-                              "    <li><a href=\"\"></a><caret></li>\n" +
-                              "</ul>\n");
+                              """
+                                <ul>
+                                    <li><a href=""></a><caret></li>
+                                    <li><a href=""></a><caret></li>
+                                </ul>
+                                """);
     final Editor editor = myFixture.getEditor();
     assertCarets(editor, 28, 57);
 

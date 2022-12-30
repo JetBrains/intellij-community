@@ -11,7 +11,6 @@ import org.kodein.di.instance
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
-import java.lang.Long.numberOfLeadingZeros
 import java.nio.charset.Charset
 import java.nio.file.FileStore
 import java.nio.file.Files
@@ -287,12 +286,6 @@ private fun downloadAsyncProfilerIfNeeded(profiler: Path, toolsDir: Path) {
                         archivePath)
     FileSystem.unpack(archivePath, toolsDir)
   }
-}
-
-fun Long.formatSize(): String {
-  if (this < 1024) return "$this B"
-  val z = (63 - numberOfLeadingZeros(this)) / 10
-  return String.format("%.1f %sB", this.toDouble() / (1L shl z * 10), " KMGTPE"[z])
 }
 
 fun pathInsideJarFile(

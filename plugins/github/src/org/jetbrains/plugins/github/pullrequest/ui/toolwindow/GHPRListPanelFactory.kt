@@ -67,7 +67,8 @@ internal class GHPRListPanelFactory(private val project: Project,
       }
     }
 
-    ListEmptyTextController(scope, listLoader, searchVm, list.emptyText, disposable)
+    val repository = repositoryDataService.repositoryCoordinates.repositoryPath.repository
+    ListEmptyTextController(scope, listLoader, searchVm, list.emptyText, repository, disposable)
 
     val searchPanel = GHPRSearchPanelFactory(searchVm, avatarIconsProvider).create(scope)
 
@@ -152,6 +153,7 @@ internal class GHPRListPanelFactory(private val project: Project,
                                         private val listLoader: GHListLoader<*>,
                                         private val searchVm: GHPRSearchPanelViewModel,
                                         private val emptyText: StatusText,
+                                        private val repository: String,
                                         listenersDisposable: Disposable) {
     init {
       listLoader.addLoadingStateChangeListener(listenersDisposable, ::update)
@@ -170,17 +172,17 @@ internal class GHPRListPanelFactory(private val project: Project,
       val search = searchVm.searchState.value
       if (search == GHPRListSearchValue.DEFAULT) {
         emptyText.appendText(GithubBundle.message("pull.request.list.no.matches"))
-          .appendSecondaryText(GithubBundle.message("pull.request.list.reset.filters"),
+          .appendSecondaryText(GithubBundle.message("pull.request.list.filters.clear"),
                                SimpleTextAttributes.LINK_ATTRIBUTES) {
             searchVm.searchState.update { GHPRListSearchValue.EMPTY }
           }
       }
       else if (search.filterCount == 0) {
-        emptyText.appendText(GithubBundle.message("pull.request.list.nothing.loaded"))
+        emptyText.appendText(GithubBundle.message("pull.request.list.nothing.loaded", repository))
       }
       else {
         emptyText.appendText(GithubBundle.message("pull.request.list.no.matches"))
-          .appendSecondaryText(GithubBundle.message("pull.request.list.reset.filters.to.default",
+          .appendSecondaryText(GithubBundle.message("pull.request.list.filters.reset.to.default",
                                                     GHPRListSearchValue.DEFAULT.toQuery().toString()),
                                SimpleTextAttributes.LINK_ATTRIBUTES) {
             searchVm.searchState.update { GHPRListSearchValue.DEFAULT }

@@ -16,25 +16,26 @@ internal class TestCloudConfigRemoteCommunicator : TestRemoteCommunicator() {
 
   override fun prepareFileOnServer(snapshot: SettingsSnapshot) {
     val zip = SettingsSnapshotZipSerializer.serializeToZip(snapshot)
-
-    versionContext.doWithVersion(null) {
-      client.write(SETTINGS_SYNC_SNAPSHOT_ZIP, zip.inputStream())
-    }
+    cloudConfigServerCommunicator.sendSnapshotFile(zip.inputStream(), null, true, versionContext, client)
   }
 
   override fun checkServerState(): ServerState = cloudConfigServerCommunicator.checkServerState()
 
   override fun receiveUpdates(): UpdateResult = cloudConfigServerCommunicator.receiveUpdates()
 
+  override fun getVersionOnServer(): SettingsSnapshot? {
+    val updateResult = receiveUpdates()
+    return if (updateResult is UpdateResult.Success) updateResult.settingsSnapshot else null
+  }
+
   override fun awaitForPush(): SettingsSnapshot? {
     pushedLatch = CountDownLatch(1)
-    Assert.assertTrue("Didn't await until changes are pushed", pushedLatch.await(30, TIMEOUT_UNIT))
-    return latestPushedSnapshot
+    Assert.assertTrue("Didn't await until changes are pushed", pushedLatch.wait())
+    return getVersionOnServer()
   }
 
   override fun push(snapshot: SettingsSnapshot, force: Boolean, expectedServerVersionId: String?): SettingsSyncPushResult {
     val result = cloudConfigServerCommunicator.push(snapshot, force, expectedServerVersionId)
-    latestPushedSnapshot = snapshot
     if (::pushedLatch.isInitialized) pushedLatch.countDown()
     return result
   }

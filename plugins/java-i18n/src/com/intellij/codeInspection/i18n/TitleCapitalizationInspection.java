@@ -102,14 +102,11 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
   }
 
   private static @Nls String getCapitalizationName(Nls.Capitalization capitalization) {
-    switch (capitalization) {
-      case Title:
-        return JavaI18nBundle.message("capitalization.kind.title");
-      case Sentence:
-        return JavaI18nBundle.message("capitalization.kind.sentence");
-      default:
-        throw new IllegalArgumentException();
-    }
+    return switch (capitalization) {
+      case Title -> JavaI18nBundle.message("capitalization.kind.title");
+      case Sentence -> JavaI18nBundle.message("capitalization.kind.sentence");
+      default -> throw new IllegalArgumentException();
+    };
   }
 
   @Nullable

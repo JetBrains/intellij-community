@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 
 abstract class AbstractAnnotatedMembersSearchTest : AbstractSearcherTest() {
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
     fun doTest(unused: String) {

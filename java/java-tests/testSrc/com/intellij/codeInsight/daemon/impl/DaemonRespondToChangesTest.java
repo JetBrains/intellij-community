@@ -1358,8 +1358,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
 
   public void testApplyErrorInTheMiddle() {
-    String text = "class <caret>X { " + ("\n    {\n" +
-                      "//    String x = \"<zzzzzzzzzz/>\";\n" + "    }").repeat(100) +
+    String text = "class <caret>X { " + ("""
+
+                                               {
+                                           //    String x = "<zzzzzzzzzz/>";
+                                               }""").repeat(100) +
                   "\n}";
     configureByText(JavaFileType.INSTANCE, text);
 

@@ -225,7 +225,7 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   public Color getInactiveTextColor() {
-    return UIUtil.getInactiveTextColor();
+    return NamedColorUtil.getInactiveTextColor();
   }
 
   public void setHorizontalTextPosition(@MagicConstant(valuesFromClass = SwingConstants.class) int position) {

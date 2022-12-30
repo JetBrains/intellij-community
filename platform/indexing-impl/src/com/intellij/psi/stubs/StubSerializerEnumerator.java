@@ -83,7 +83,7 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
 
   void assignId(@NotNull Supplier<? extends ObjectStubSerializer<?, ? extends Stub>> serializer, String name) throws IOException {
     Supplier<? extends ObjectStubSerializer<?, ? extends Stub>> old = myNameToLazySerializer.put(name, serializer);
-    if (old != null) {
+    if (old != null && !isKnownDuplicatedIdViolation(name)) {
       ObjectStubSerializer<?, ? extends Stub> existing = old.get();
       ObjectStubSerializer<?, ? extends Stub> computed = serializer.get();
       if (existing != computed) {
@@ -106,6 +106,11 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
     }
     myIdToName.put(id, name);
     myNameToId.put(name, id);
+  }
+
+  private static boolean isKnownDuplicatedIdViolation(String name) {
+    // // todo temporary https://github.com/JetBrains/kotlin/commit/298494fa08d11b9c374368aac4ae547b6f972f1a
+    return "kotlin.FILE".equals(name);
   }
 
   @Nullable

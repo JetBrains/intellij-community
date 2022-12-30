@@ -12,10 +12,11 @@ import java.io.IOException;
 import java.util.Collections;
 
 public final class FileTypeIndexImpl
-        extends ScalarIndexExtension<FileType>
-        implements CustomImplementationFileBasedIndexExtension<FileType, Void> {
+  extends ScalarIndexExtension<FileType>
+  implements CustomImplementationFileBasedIndexExtension<FileType, Void> {
   private static final boolean USE_LOG_INDEX = SystemProperties.getBooleanProperty("use.log.file.type.index", false);
   private static final boolean USE_MAPPED_INDEX = SystemProperties.getBooleanProperty("use.mapped.file.type.index", true);
+
   @NotNull
   @Override
   public ID<FileType, Void> getName() {

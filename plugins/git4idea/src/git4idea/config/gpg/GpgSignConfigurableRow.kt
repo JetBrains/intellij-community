@@ -14,7 +14,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.Alarm
 import com.intellij.util.application
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.NamedColorUtil
 import git4idea.config.GitExecutableListener
 import git4idea.config.GitExecutableManager
 import git4idea.config.HasGitRootsPredicate
@@ -40,7 +40,7 @@ class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
     foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
   }
   private val errorLabel: JLabel = JBLabel().apply {
-    foreground = UIUtil.getErrorForeground()
+    foreground = NamedColorUtil.getErrorForeground()
   }
 
   private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, disposable)

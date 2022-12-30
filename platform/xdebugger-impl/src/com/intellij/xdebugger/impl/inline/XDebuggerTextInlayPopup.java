@@ -34,6 +34,7 @@ public class XDebuggerTextInlayPopup<D> extends XDebuggerTextPopup<D> {
   private final @NotNull XValueNodeImpl myValueNode;
 
   private XDebuggerTextInlayPopup(@NotNull DebuggerTreeCreator<D> creator,
+                                  @NotNull XValue value,
                                   @NotNull D initialItem,
                                   @NotNull Editor editor,
                                   @NotNull Point point,
@@ -41,7 +42,7 @@ public class XDebuggerTextInlayPopup<D> extends XDebuggerTextPopup<D> {
                                   @NotNull XDebugSession session,
                                   @Nullable Runnable hideRunnable,
                                   @NotNull XValueNodeImpl valueNode) {
-    super(valueNode.getFullValueEvaluator(), creator, initialItem, editor, point, session.getProject(), hideRunnable);
+    super(valueNode.getFullValueEvaluator(), value, creator, initialItem, editor, point, session.getProject(), hideRunnable);
     myPosition = presentationPosition;
     mySession = session;
     myValueNode = valueNode;
@@ -75,7 +76,8 @@ public class XDebuggerTextInlayPopup<D> extends XDebuggerTextPopup<D> {
                                    @NotNull XSourcePosition position,
                                    @NotNull XDebugSession session,
                                    Runnable hideRunnable) {
-    new XDebuggerTextInlayPopup<>(creator, initialItem, editor, point, position, session, hideRunnable, valueNode).show(initialText);
+    new XDebuggerTextInlayPopup<>(creator, initialItem.first, initialItem, editor, point, position, session, hideRunnable, valueNode)
+      .show(initialText);
   }
 
   private class EditInlineWatch extends AnAction {

@@ -15,13 +15,25 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class EnableFilterByRegexAction extends BooleanPropertyToggleAction {
 
   @Override
   protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
     return MainVcsLogUiProperties.TEXT_FILTER_REGEX;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    Icon icon = isSelected(e) ? AllIcons.Actions.RegexSelected : AllIcons.Actions.Regex;
+    e.getPresentation().setIcon(icon);
   }
 }

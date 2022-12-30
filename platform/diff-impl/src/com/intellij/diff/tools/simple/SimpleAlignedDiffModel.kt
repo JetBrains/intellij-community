@@ -393,14 +393,14 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
     return softWrapModel.getSoftWrapsForRange(startOffset, endOffset).size
   }
 
-  fun Document.getLineEndOffsetSafe(line: Int): Int {
+  private fun Document.getLineEndOffsetSafe(line: Int): Int {
     if (line < 0) return 0
     if (line >= DiffUtil.getLineCount(this)) return textLength
 
     return getLineEndOffset(line)
   }
 
-  fun Document.getLineStartOffsetSafe(line: Int): Int {
+  private fun Document.getLineStartOffsetSafe(line: Int): Int {
     if (line < 0) return 0
     if (line >= DiffUtil.getLineCount(this)) return textLength
 

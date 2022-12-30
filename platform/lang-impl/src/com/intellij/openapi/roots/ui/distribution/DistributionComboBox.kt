@@ -34,7 +34,7 @@ class DistributionComboBox(
   var noDistributionText: String = ProjectBundle.message("sdk.missing.item")
   var specifyLocationActionName: String = ProjectBundle.message("sdk.specify.location")
 
-  var defaultDistributionLocation: String? = null
+  private var defaultDistributionLocation: String? = null
 
   private val collectionModel: CollectionComboBoxModel<Item>
     get() = model as CollectionComboBoxModel

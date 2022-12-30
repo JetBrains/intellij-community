@@ -127,10 +127,11 @@ public class CodeStyleSchemesModelTest extends CodeStyleTestCase {
       sb.append(scheme.getName());
     }
     assertEquals(
-      "Project\n" +
-      "Default\n" +
-      "Another Scheme\n" +
-      "New Scheme",
+      """
+        Project
+        Default
+        Another Scheme
+        New Scheme""",
 
       sb.toString()
     );

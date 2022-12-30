@@ -130,16 +130,19 @@ class AnsiStreamingLexer {
     // but we are ignoring most of it for now
 
     switch (myBuffer.charAt(myEndOffset)) {
-      case '[':
+      case '[' -> {
         myEndOffset++;
         processCSISequence();
         return true;
-      case '=': //DECKPAM
+      }
+      case '=' -> { //DECKPAM
         myElementType = CONTROL;
         myEndOffset++;
         return true;
-      default:
+      }
+      default -> {
         return false;
+      }
     }
   }
 

@@ -166,7 +166,8 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
     configConfirmationForYesAnswer();
 
     getMavenImporterSettings().setCreateModulesForAggregators(false);
-    myProjectsManager.performScheduledImportInTests();
+    importProject();
+    //myProjectsManager.performScheduledImportInTests();
     if (supportsCreateAggregatorOption()) {
       assertModules(mn("project", "m2"));
     }
@@ -175,7 +176,7 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
     }
 
     getMavenImporterSettings().setCreateModulesForAggregators(true);
-    myProjectsManager.performScheduledImportInTests();
+    importProject();
     assertModules("project", "m1", "m2");
   }
 
@@ -404,38 +405,40 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
   public void testParentVersionProperty() {
     if (ignore()) return;
     String parentPomTemplate =
-      "<groupId>test</groupId>\n" +
-      "<artifactId>project</artifactId>\n" +
-      "<version>${my.parent.version}</version>\n" +
-      "<packaging>pom</packaging>\n" +
-      "<modules>\n" +
-      "  <module>m1</module>\n" +
-      "</modules>\n" +
-      "<properties>\n" +
-      "  <my.parent.version>1</my.parent.version>\n" +
-      "</properties>\n" +
-      "<build>\n" +
-      "  <plugins>\n" +
-      "    <plugin>\n" +
-      "      <artifactId>maven-compiler-plugin</artifactId>\n" +
-      "      <version>3.1</version>\n" +
-      "      <configuration>\n" +
-      "        <source>%s</source>\n" +
-      "        <target>%<s</target>\n" +
-      "      </configuration>\n" +
-      "    </plugin>\n" +
-      "  </plugins>\n" +
-      "</build>";
+      """
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>${my.parent.version}</version>
+        <packaging>pom</packaging>
+        <modules>
+          <module>m1</module>
+        </modules>
+        <properties>
+          <my.parent.version>1</my.parent.version>
+        </properties>
+        <build>
+          <plugins>
+            <plugin>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <version>3.1</version>
+              <configuration>
+                <source>%s</source>
+                <target>%<s</target>
+              </configuration>
+            </plugin>
+          </plugins>
+        </build>""";
     createProjectPom(String.format(parentPomTemplate, "1.8"));
 
     createModulePom("m1",
-                    "<parent>\n" +
-                    "  <groupId>test</groupId>\n" +
-                    "  <artifactId>project</artifactId>\n" +
-                    "  <version>${my.parent.version}</version>\n" +
-                    "</parent>\n" +
-                    "<artifactId>m1</artifactId>\n" +
-                    "<version>${parent.version}</version>");
+                    """
+                      <parent>
+                        <groupId>test</groupId>
+                        <artifactId>project</artifactId>
+                        <version>${my.parent.version}</version>
+                      </parent>
+                      <artifactId>m1</artifactId>
+                      <version>${parent.version}</version>""");
 
     CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
 
@@ -457,37 +460,39 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testParentVersionProperty2() {
-    createProjectPom("<groupId>test</groupId>\n" +
-                     "<artifactId>project</artifactId>\n" +
-                     "<version>1</version>\n" +
-                     "<packaging>pom</packaging>\n" +
-                     "<modules>\n" +
-                     "  <module>m1</module>\n" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m1</module>
+                       </modules>""");
 
-    String m1pomTemplate = "<parent>\n" +
-                           "  <groupId>${my.parent.groupId}</groupId>\n" +
-                           "  <artifactId>project</artifactId>\n" +
-                           "  <version>${my.parent.version}</version>\n" +
-                           "</parent>\n" +
-                           "<artifactId>m1</artifactId>\n" +
-                           "<version>${my.parent.version}</version>\n" +
-                           "<properties>\n" +
-                           "  <my.parent.version>1</my.parent.version>\n" +
-                           "  <my.parent.groupId>test</my.parent.groupId>\n" +
-                           "</properties>\n" +
-                           "<build>\n" +
-                           "  <plugins>\n" +
-                           "    <plugin>\n" +
-                           "      <artifactId>maven-compiler-plugin</artifactId>\n" +
-                           "      <version>3.1</version>\n" +
-                           "      <configuration>\n" +
-                           "        <source>%s</source>\n" +
-                           "        <target>%<s</target>\n" +
-                           "      </configuration>\n" +
-                           "    </plugin>\n" +
-                           "  </plugins>\n" +
-                           "</build>";
+    String m1pomTemplate = """
+      <parent>
+        <groupId>${my.parent.groupId}</groupId>
+        <artifactId>project</artifactId>
+        <version>${my.parent.version}</version>
+      </parent>
+      <artifactId>m1</artifactId>
+      <version>${my.parent.version}</version>
+      <properties>
+        <my.parent.version>1</my.parent.version>
+        <my.parent.groupId>test</my.parent.groupId>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.1</version>
+            <configuration>
+              <source>%s</source>
+              <target>%<s</target>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>""";
     createModulePom("m1", String.format(m1pomTemplate, "1.8"));
 
     CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);

@@ -12,7 +12,7 @@ data class ProductInfoRequestParameters(
   // e.g "2022.1.1"
   val versionNumber: String = ""
 ) {
-  fun toUriQuery(): URIBuilder {
+  private fun toUriQuery(): URIBuilder {
     val builder = URIBuilder()
 
     // API seems to filter only by code and type. It doesn't respond to majorVersion, build or version params

@@ -150,7 +150,7 @@ public abstract class AbstractDOMOutputProcessor extends
 
   @Override
   public List<Node> process(org.w3c.dom.Document basedoc, Format format, List<? extends Content> list) {
-    List<Node> ret = new ArrayList<Node>(list.size());
+    List<Node> ret = new ArrayList<>(list.size());
     FormatStack formatStack = new FormatStack(format);
     NamespaceStack namespaceStack = new NamespaceStack();
     for (Content c : list) {

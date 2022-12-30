@@ -56,16 +56,6 @@ class SingleAlarm @JvmOverloads constructor(
     }
   }
 
-  fun getUnfinishedRequest(): Runnable? {
-    val unfinishedTasks = unfinishedRequests
-    if (unfinishedTasks.isEmpty()) {
-      return null
-    }
-
-    LOG.assertTrue(unfinishedTasks.size == 1)
-    return unfinishedTasks.first()
-  }
-
   companion object {
     fun pooledThreadSingleAlarm(delay: Int, parentDisposable: Disposable, task: () -> Unit): SingleAlarm {
       return SingleAlarm(Runnable(task), delay, ThreadToUse.POOLED_THREAD, parentDisposable)

@@ -26,8 +26,8 @@ import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -187,13 +187,13 @@ public final class VcsLogUiUtil {
       CommitId commitId = (CommitId)value;
       ActionCallback callback = new ActionCallback();
 
-      ListenableFuture<VcsLogUiEx.JumpResult> future = VcsLogUtil.jumpToCommit(myUi, commitId.getHash(), commitId.getRoot(),
-                                                                               false, true);
+      ListenableFuture<Boolean> future = VcsLogNavigationUtil.jumpToCommit(myUi, commitId.getHash(), commitId.getRoot(),
+                                                                           false, true);
 
       Futures.addCallback(future, new FutureCallback<>() {
         @Override
-        public void onSuccess(VcsLogUiEx.JumpResult result) {
-          if (result == VcsLogUiEx.JumpResult.SUCCESS) {
+        public void onSuccess(Boolean result) {
+          if (result) {
             if (requestFocus) myUi.getTable().requestFocusInWindow();
             callback.setDone();
           }

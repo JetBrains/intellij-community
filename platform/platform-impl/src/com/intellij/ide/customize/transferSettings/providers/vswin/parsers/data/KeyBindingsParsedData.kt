@@ -19,7 +19,7 @@ private class UnknownKeyboardActionException(val command: String) : Exception()
 
 private val logger = logger<VisualStudioKeyboardShortcut>()
 class VisualStudioKeyboardShortcut(val shortcut: String, val command: String) {
-  val splitItems: List<String?>
+  private val splitItems: List<String?>
 
   init {
     logger.info("Started parsing $shortcut, cmd $command")

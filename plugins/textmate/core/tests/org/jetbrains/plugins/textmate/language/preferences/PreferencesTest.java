@@ -93,7 +93,7 @@ public class PreferencesTest {
   private static PreferencesRegistry loadPreferences(@NotNull String bundleName) throws IOException {
     final Bundle bundle = TestUtil.getBundle(bundleName);
     assertNotNull(bundle);
-    final PreferencesRegistry preferencesRegistry = new PreferencesRegistry();
+    final PreferencesRegistryImpl preferencesRegistry = new PreferencesRegistryImpl();
     for (File file : bundle.getPreferenceFiles()) {
       for (Map.Entry<String, Plist> settingsPair : bundle.loadPreferenceFile(file, new CompositePlistReader())) {
         if (settingsPair != null) {

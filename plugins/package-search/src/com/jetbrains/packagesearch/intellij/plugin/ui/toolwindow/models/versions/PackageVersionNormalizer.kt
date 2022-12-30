@@ -81,9 +81,6 @@ internal class PackageSearchCachesService : Disposable {
 
 internal class PackageSearchProjectCachesService(project: Project) {
 
-    val headerOperationsCache: CoroutineLRUCache<PackagesToUpgrade.PackageUpgradeInfo, List<PackageSearchOperation<*>>> =
-        CoroutineLRUCache(2000)
-
     val searchCache: CoroutineLRUCache<PackagesListPanel.SearchCommandModel, ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>> =
         CoroutineLRUCache(200)
 
@@ -97,7 +94,6 @@ internal class PackageSearchProjectCachesService(project: Project) {
         .also { if (!it.exists()) it.createDirectories() }
 
     suspend fun clear() = coroutineScope {
-        launch { headerOperationsCache.clear() }
         launch { searchCache.clear() }
         launch { searchPackageModelCache.clear() }
         launch { installedDependencyCache.clear() }

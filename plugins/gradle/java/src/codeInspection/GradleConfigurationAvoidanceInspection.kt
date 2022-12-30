@@ -6,7 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.InheritanceUtil.isInheritor
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.fix.GradleTaskToRegisterFix
 import org.jetbrains.plugins.gradle.codeInspection.fix.GradleWithTypeFix
@@ -34,7 +34,7 @@ class GradleConfigurationAvoidanceInspection : GradleBaseInspection() {
 
       override fun visitIndexProperty(expression: GrIndexProperty) {
         if (!lazyApiAvailable(expression)) return
-        val method = expression.rValueReference?.resolve().castSafelyTo<PsiMethod>() ?: return
+        val method = expression.rValueReference?.resolve().asSafely<PsiMethod>() ?: return
         val elementToHighlight = expression.argumentList
         processMethod(method, elementToHighlight, holder, expression.isReturnTypeValueUsed())
       }

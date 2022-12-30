@@ -881,10 +881,6 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     doHighlightingTest("redundantComponentInterfaceClass.xml")
   }
 
-  void testRedundantServiceInterfaceClass() {
-    doHighlightingTest("redundantServiceInterfaceClass.xml")
-  }
-
   private void doHighlightingTest(String... filePaths) {
     myFixture.testHighlighting(true, false, false, filePaths)
   }

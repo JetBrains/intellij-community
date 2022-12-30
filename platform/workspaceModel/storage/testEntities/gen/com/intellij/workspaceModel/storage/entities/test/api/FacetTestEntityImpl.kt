@@ -50,7 +50,7 @@ open class FacetTestEntityImpl(val dataSource: FacetTestEntityData) : FacetTestE
     return connections
   }
 
-  class Builder(val result: FacetTestEntityData?) : ModifiableWorkspaceEntityBase<FacetTestEntity>(), FacetTestEntity.Builder {
+  class Builder(var result: FacetTestEntityData?) : ModifiableWorkspaceEntityBase<FacetTestEntity>(), FacetTestEntity.Builder {
     constructor() : this(FacetTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -68,6 +68,9 @@ open class FacetTestEntityImpl(val dataSource: FacetTestEntityData) : FacetTestE
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -104,11 +107,14 @@ open class FacetTestEntityImpl(val dataSource: FacetTestEntityData) : FacetTestE
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FacetTestEntity
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
-      this.moreData = dataSource.moreData
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.moreData != dataSource.moreData) this.moreData = dataSource.moreData
       if (parents != null) {
-        this.module = parents.filterIsInstance<ModuleTestEntity>().single()
+        val moduleNew = parents.filterIsInstance<ModuleTestEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
       }
     }
 
@@ -239,7 +245,7 @@ class FacetTestEntityData : WorkspaceEntityData.WithCalculablePersistentId<Facet
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FacetTestEntityData
 
@@ -251,7 +257,7 @@ class FacetTestEntityData : WorkspaceEntityData.WithCalculablePersistentId<Facet
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FacetTestEntityData
 

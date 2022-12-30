@@ -22,7 +22,10 @@ import java.util.*;
  */
 public class DelegateHandler {
 
-  public boolean validate(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull PsiType psiType, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder builder) {
+  public static boolean validate(@NotNull PsiModifierListOwner psiModifierListOwner,
+                                 @NotNull PsiType psiType,
+                                 @NotNull PsiAnnotation psiAnnotation,
+                                 @NotNull ProblemBuilder builder) {
     boolean result = true;
 
     if (psiModifierListOwner.hasModifierProperty(PsiModifier.STATIC)) {
@@ -39,7 +42,7 @@ public class DelegateHandler {
     return result;
   }
 
-  private Collection<PsiType> collectDelegateTypes(PsiAnnotation psiAnnotation, PsiType psiType) {
+  private static Collection<PsiType> collectDelegateTypes(PsiAnnotation psiAnnotation, PsiType psiType) {
     Collection<PsiType> types = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "types", PsiType.class);
     if (types.isEmpty()) {
       types = Collections.singletonList(psiType);
@@ -47,7 +50,7 @@ public class DelegateHandler {
     return types;
   }
 
-  private boolean validateTypes(Collection<PsiType> psiTypes, ProblemBuilder builder) {
+  private static boolean validateTypes(Collection<PsiType> psiTypes, ProblemBuilder builder) {
     boolean result = true;
     for (PsiType psiType : psiTypes) {
       if (!checkConcreteClass(psiType)) {
@@ -61,7 +64,7 @@ public class DelegateHandler {
     return result;
   }
 
-  private boolean validateRecursion(PsiType psiType, ProblemBuilder builder) {
+  private static boolean validateRecursion(PsiType psiType, ProblemBuilder builder) {
     final PsiClass psiClass = PsiTypesUtil.getPsiClass(psiType);
     if (null != psiClass) {
       final DelegateAnnotationElementVisitor delegateAnnotationElementVisitor = new DelegateAnnotationElementVisitor(psiType, builder);
@@ -72,7 +75,7 @@ public class DelegateHandler {
   }
 
 
-  private boolean checkConcreteClass(@NotNull PsiType psiType) {
+  private static boolean checkConcreteClass(@NotNull PsiType psiType) {
     if (psiType instanceof PsiClassType) {
       PsiClass psiClass = ((PsiClassType) psiType).resolve();
       return !(psiClass instanceof PsiTypeParameter);
@@ -80,11 +83,14 @@ public class DelegateHandler {
     return false;
   }
 
-  private Collection<PsiType> collectExcludeTypes(PsiAnnotation psiAnnotation) {
+  private static Collection<PsiType> collectExcludeTypes(PsiAnnotation psiAnnotation) {
     return PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "excludes", PsiType.class);
   }
 
-  public <T extends PsiMember & PsiNamedElement> void generateElements(@NotNull T psiElement, @NotNull PsiType psiElementType, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  public static <T extends PsiMember & PsiNamedElement> void generateElements(@NotNull T psiElement,
+                                                                              @NotNull PsiType psiElementType,
+                                                                              @NotNull PsiAnnotation psiAnnotation,
+                                                                              @NotNull List<? super PsiElement> target) {
     final PsiManager manager = psiElement.getContainingFile().getManager();
 
     final Collection<Pair<PsiMethod, PsiSubstitutor>> includesMethods = new LinkedHashSet<>();
@@ -110,13 +116,13 @@ public class DelegateHandler {
     }
   }
 
-  private void addMethodsOfTypes(Collection<PsiType> types, Collection<Pair<PsiMethod, PsiSubstitutor>> includesMethods) {
+  private static void addMethodsOfTypes(Collection<PsiType> types, Collection<Pair<PsiMethod, PsiSubstitutor>> includesMethods) {
     for (PsiType type : types) {
       addMethodsOfType(type, includesMethods);
     }
   }
 
-  private void addMethodsOfType(PsiType psiType, Collection<Pair<PsiMethod, PsiSubstitutor>> allMethods) {
+  private static void addMethodsOfType(PsiType psiType, Collection<Pair<PsiMethod, PsiSubstitutor>> allMethods) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(psiType);
 
     final PsiClass psiClass = resolveResult.getElement();
@@ -125,7 +131,9 @@ public class DelegateHandler {
     }
   }
 
-  private void collectAllMethods(Collection<Pair<PsiMethod, PsiSubstitutor>> allMethods, @NotNull PsiClass psiStartClass, @NotNull PsiSubstitutor classSubstitutor) {
+  private static void collectAllMethods(Collection<Pair<PsiMethod, PsiSubstitutor>> allMethods,
+                                        @NotNull PsiClass psiStartClass,
+                                        @NotNull PsiSubstitutor classSubstitutor) {
     PsiClass psiClass = psiStartClass;
     while (null != psiClass) {
       PsiMethod[] psiMethods = psiClass.getMethods();
@@ -157,7 +165,8 @@ public class DelegateHandler {
     }
   }
 
-  private Collection<Pair<PsiMethod, PsiSubstitutor>> findMethodsToDelegate(Collection<Pair<PsiMethod, PsiSubstitutor>> includesMethods, Collection<Pair<PsiMethod, PsiSubstitutor>> excludeMethods) {
+  private static Collection<Pair<PsiMethod, PsiSubstitutor>> findMethodsToDelegate(Collection<Pair<PsiMethod, PsiSubstitutor>> includesMethods,
+                                                                                   Collection<Pair<PsiMethod, PsiSubstitutor>> excludeMethods) {
     final Collection<Pair<PsiMethod, PsiSubstitutor>> result = new ArrayList<>();
     for (Pair<PsiMethod, PsiSubstitutor> includesMethodPair : includesMethods) {
       boolean acceptMethod = true;
@@ -175,7 +184,11 @@ public class DelegateHandler {
   }
 
   @NotNull
-  private <T extends PsiModifierListOwner & PsiNamedElement> PsiMethod generateDelegateMethod(@NotNull PsiClass psiClass, @NotNull T psiElement, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull PsiSubstitutor psiSubstitutor) {
+  private static <T extends PsiModifierListOwner & PsiNamedElement> PsiMethod generateDelegateMethod(@NotNull PsiClass psiClass,
+                                                                                                     @NotNull T psiElement,
+                                                                                                     @NotNull PsiAnnotation psiAnnotation,
+                                                                                                     @NotNull PsiMethod psiMethod,
+                                                                                                     @NotNull PsiSubstitutor psiSubstitutor) {
     final PsiType returnType = psiSubstitutor.substitute(psiMethod.getReturnType());
 
     final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiClass.getManager(), psiMethod.getName())
@@ -211,7 +224,10 @@ public class DelegateHandler {
   }
 
   @NotNull
-  private <T extends PsiModifierListOwner & PsiNamedElement> String createCodeBlockText(@NotNull T psiElement, @NotNull PsiMethod psiMethod, @NotNull PsiType returnType, @NotNull PsiParameter[] psiParameters) {
+  private static <T extends PsiModifierListOwner & PsiNamedElement> String createCodeBlockText(@NotNull T psiElement,
+                                                                                               @NotNull PsiMethod psiMethod,
+                                                                                               @NotNull PsiType returnType,
+                                                                                               @NotNull PsiParameter[] psiParameters) {
     final String blockText;
     final StringBuilder paramString = new StringBuilder();
 

@@ -143,7 +143,7 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     }
   }
 
-  public void testImportProjectWithDirectPom() throws Exception {
+  public void testImportProjectWithChildPomShouldContainRootPom() throws Exception {
     Path pom1 = createPom();
     Path pom2 = pom1.getParent().resolve("pom2.xml");
     PathKt.write(pom2, MavenTestCase.createPomXml(
@@ -157,10 +157,10 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     if (MavenUtil.isLinearImportEnabled()) {
       afterImportFinished(module.getProject(), c -> {
         List<Path> paths = ContainerUtil.map(
-          MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getExistingManagedFiles(), m -> m.toNioPath()
+          MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getRootProjectsFiles(), m -> m.toNioPath()
         );
         assertEquals(1, paths.size());
-        assertContainsElements(paths, pom2);
+        assertEquals(pom2, paths.get(0));
       });
     }
     else {
@@ -168,7 +168,7 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
         MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getExistingManagedFiles(), m -> m.toNioPath()
       );
       assertEquals(1, paths.size());
-      assertContainsElements(paths, pom2);
+      assertEquals(pom2, paths.get(0));
     }
   }
 

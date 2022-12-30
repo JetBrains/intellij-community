@@ -62,6 +62,11 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       if (!state) return;
 

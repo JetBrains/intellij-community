@@ -16,3 +16,22 @@ class ParameterImpl(
         val (destructured_val, _) = listOf(1, 2)
     }
 }
+
+var setter
+    get() = 42
+    set(_) {}
+
+fun catch() {
+    try {
+    } catch(_: Exception) {
+    }
+}
+
+fun lambda() {
+    "".let { _: String -> }
+}
+
+fun anonymousFun() {
+    "".let(fun(_: String) {
+    })
+}

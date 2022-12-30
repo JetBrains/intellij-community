@@ -26,7 +26,7 @@ public class BuilderClassProcessor extends AbstractClassProcessor {
     super(PsiClass.class, LombokClassNames.BUILDER);
   }
 
-  private BuilderHandler getBuilderHandler() {
+  private static BuilderHandler getBuilderHandler() {
     return new BuilderHandler();
   }
 

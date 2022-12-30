@@ -40,7 +40,7 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
   }
 
 
-  private static final class ExperimentalFeatureIdReference extends ExtensionPointReferenceBase {
+  private static final class ExperimentalFeatureIdReference extends ExtensionReferenceBase {
 
     private ExperimentalFeatureIdReference(PsiElement element) {
       super(element);

@@ -38,6 +38,6 @@ public class NavigateToStdlibSourceRegressionTest extends NavigateToLibraryRegre
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {
-        return ProjectDescriptorWithStdlibSources.INSTANCE;
+        return ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources();
     }
 }

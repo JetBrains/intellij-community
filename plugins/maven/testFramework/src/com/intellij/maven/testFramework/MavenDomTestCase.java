@@ -262,6 +262,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
 
   protected void assertCompletionVariants(CodeInsightTestFixture f, Function<? super LookupElement, String> lookupElementStringFunction, String... expected) {
     List<String> actual = getCompletionVariants(f, lookupElementStringFunction);
+    assertNotEmpty(actual);
     assertUnorderedElementsAreEqual(actual, expected);
   }
 
@@ -312,8 +313,10 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
     return result;
   }
 
+  @Nullable
   protected List<String> getCompletionVariants(CodeInsightTestFixture fixture, Function<? super LookupElement, String> lookupElementStringFunction) {
     LookupElement[] variants = fixture.getLookupElements();
+    if (variants == null) return null;
 
     List<String> result = new ArrayList<>();
     for (LookupElement each : variants) {

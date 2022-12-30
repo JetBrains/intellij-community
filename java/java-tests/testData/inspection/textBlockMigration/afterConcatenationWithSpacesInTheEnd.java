@@ -1,4 +1,4 @@
-// "Replace with text block" "true"
+// "Replace with text block" "true-preview"
 
 class TextBlockMigration {
 
@@ -7,7 +7,7 @@ class TextBlockMigration {
             <html> \s
               <body>
               </body>
-            </html>  """;
+            </html> \s""";
   }
 
 }

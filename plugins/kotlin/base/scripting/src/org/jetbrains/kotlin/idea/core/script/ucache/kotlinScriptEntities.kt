@@ -127,7 +127,7 @@ private fun MutableEntityStorage.addOrUpdateScriptDependencies(scriptFile: Virtu
     }
 }
 
-private fun VirtualFile.relativeName(project: Project): String {
+fun VirtualFile.relativeName(project: Project): String {
     return if (ScratchUtil.isScratch(this)) presentableName
     else toNioPath().relativeTo(Path.of(project.basePath!!)).pathString
 }
@@ -140,8 +140,8 @@ private fun addIdeSpecificDependencies(
 ) {
     ScriptAdditionalIdeaDependenciesProvider.getRelatedLibraries(scriptFile, project).forEach { lib ->
         val provider = lib.rootProvider
-        provider.getFiles(OrderRootType.CLASSES).forEach { it -> classDependencies.add(it) }
-        provider.getFiles(OrderRootType.SOURCES).forEach { it -> sourceDependencies.add(it) }
+        provider.getFiles(OrderRootType.CLASSES).forEach { classDependencies.add(it) }
+        provider.getFiles(OrderRootType.SOURCES).forEach { sourceDependencies.add(it) }
     }
 }
 
@@ -165,5 +165,5 @@ private fun Project.createLibrary(
         libraryRoots.add(LibraryRoot(fileUrl, LibraryRootTypeId.SOURCES))
     }
 
-    return LibraryEntity(name, LibraryTableId.ProjectLibraryTableId, libraryRoots, emptyList(), entitySource)
+    return LibraryEntity(name, LibraryTableId.ProjectLibraryTableId, libraryRoots, entitySource)
 }

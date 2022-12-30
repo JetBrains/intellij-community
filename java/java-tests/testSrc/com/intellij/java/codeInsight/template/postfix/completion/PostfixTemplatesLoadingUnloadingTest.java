@@ -29,14 +29,15 @@ public class PostfixTemplatesLoadingUnloadingTest extends LightJavaCodeInsightFi
   
   
   public void testLoadUnload() {
-    myFixture.configureByText("dummy.java", "package templates;\n" +
-                                            "\n" +
-                                            "public class Foo {\n" +
-                                            "    void m(boolean b, int value) {\n" +
-                                            "        b.<caret>\n" +
-                                            "        value = 123;\n" +
-                                            "    }\n" +
-                                            "}");
+    myFixture.configureByText("dummy.java", """
+      package templates;
+
+      public class Foo {
+          void m(boolean b, int value) {
+              b.<caret>
+              value = 123;
+          }
+      }""");
     LookupElement[] elements = myFixture.completeBasic();
     List<String> actual = ContainerUtil.map(elements, element -> element.getLookupString());
     assertDoesntContain(actual, ".hello");

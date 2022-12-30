@@ -2,10 +2,12 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.FileModificationService
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.SuppressIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.KotlinBaseFe10CodeInsightBundle
@@ -20,10 +22,12 @@ import org.jetbrains.kotlin.resolve.BindingContext
 class KotlinSuppressIntentionAction(
     suppressAt: KtElement,
     private val suppressionKey: String,
-    private val kind: AnnotationHostKind
+    @SafeFieldForPreview private val kind: AnnotationHostKind
 ) : SuppressIntentionAction() {
-    val pointer = suppressAt.createSmartPointer()
-    val project = suppressAt.project
+    private val pointer = suppressAt.createSmartPointer()
+
+    @SafeFieldForPreview
+    private val project = suppressAt.project
 
     override fun getFamilyName() = KotlinBaseFe10CodeInsightBundle.message("intention.suppress.family")
     override fun getText() = KotlinBaseFe10CodeInsightBundle.message("intention.suppress.text", suppressionKey, kind.kind, kind.name ?: "")
@@ -57,6 +61,14 @@ class KotlinSuppressIntentionAction(
             is KtFile ->
                 suppressAtFile(suppressAt, id)
         }
+    }
+
+    override fun getFileModifierForPreview(target: PsiFile): KotlinSuppressIntentionAction {
+        return KotlinSuppressIntentionAction(
+            PsiTreeUtil.findSameElementInCopy(pointer.element, target),
+            suppressionKey,
+            kind
+        )
     }
 
     private fun suppressAtFile(ktFile: KtFile, id: String) {

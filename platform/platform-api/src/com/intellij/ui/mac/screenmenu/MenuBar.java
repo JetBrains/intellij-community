@@ -7,7 +7,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
 public class MenuBar extends Menu {
-  private Frame myFrame;
+  private Window myFrame;
   private WindowListener myListener;
 
   public MenuBar(String title) {
@@ -20,7 +20,7 @@ public class MenuBar extends Menu {
     };
   }
 
-  public void setFrame(Frame frame) {
+  public void setFrame(Window frame) {
     if (myFrame != null)
       myFrame.removeWindowListener(myListener);
     myFrame = frame;

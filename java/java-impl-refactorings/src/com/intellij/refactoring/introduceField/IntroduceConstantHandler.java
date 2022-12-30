@@ -2,6 +2,7 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -18,8 +19,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
+import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import com.intellij.refactoring.ui.NameSuggestionsGenerator;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -31,7 +34,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
+public class IntroduceConstantHandler extends BaseExpressionToFieldHandler implements JavaIntroduceVariableHandlerBase,
+                                                                                      PreviewableRefactoringActionHandler {
   protected InplaceIntroduceConstantPopup myInplaceIntroduceConstantPopup;
 
   public IntroduceConstantHandler() {
@@ -43,7 +47,12 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     return HelpID.INTRODUCE_CONSTANT;
   }
 
-  public void invoke(Project project, PsiExpression[] expressions) {
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiExpression expression) {
+    invoke(project, new PsiExpression[]{expression});
+  }
+
+  public void invoke(@NotNull Project project, PsiExpression @NotNull [] expressions) {
     for (PsiExpression expression : expressions) {
       final PsiFile file = expression.getContainingFile();
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
@@ -238,6 +247,15 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     final PsiLocalVariable localVariable = elementToWorkOn.getLocalVariable();
     final PsiExpression initializer = localVariable.getInitializer();
     return initializer != null && isStaticFinalInitializer(initializer) == null;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull PsiElement element) {
+    if (element instanceof PsiExpression expression) {
+      invoke(project, null, expression);
+      return IntentionPreviewInfo.DIFF;
+    }
+    return IntentionPreviewInfo.EMPTY;
   }
 
   @Override

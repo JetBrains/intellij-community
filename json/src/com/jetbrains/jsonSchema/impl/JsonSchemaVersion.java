@@ -19,16 +19,11 @@ public enum JsonSchemaVersion {
 
   @Override
   public String toString() {
-    switch (this) {
-      case SCHEMA_4:
-        return JsonBundle.message("schema.of.version", 4);
-      case SCHEMA_6:
-        return JsonBundle.message("schema.of.version", 6);
-      case SCHEMA_7:
-        return JsonBundle.message("schema.of.version", 7);
-    }
-
-    throw new NotImplementedError("Unknown version: " + this);
+    return JsonBundle.message("schema.of.version", switch (this) {
+      case SCHEMA_4 -> 4;
+      case SCHEMA_6 -> 6;
+      case SCHEMA_7 -> 7;
+    });
   }
 
 
@@ -37,16 +32,12 @@ public enum JsonSchemaVersion {
     if (id.startsWith("https://")) {
       id = "http://" + id.substring("https://".length());
     }
-    switch (StringUtil.trimEnd(id, '#')) {
-      case ourSchemaV4Schema:
-        return SCHEMA_4;
-      case ourSchemaV6Schema:
-        return SCHEMA_6;
-      case ourSchemaV7Schema:
-        return SCHEMA_7;
-    }
-    if (id.startsWith(ourSchemaOrgPrefix)) return SCHEMA_7;
-    return null;
+    return switch (StringUtil.trimEnd(id, '#')) {
+      case ourSchemaV4Schema -> SCHEMA_4;
+      case ourSchemaV6Schema -> SCHEMA_6;
+      case ourSchemaV7Schema -> SCHEMA_7;
+      default -> id.startsWith(ourSchemaOrgPrefix) ? SCHEMA_7 : null;
+    };
   }
 
   public static boolean isSchemaSchemaId(@Nullable String id) {

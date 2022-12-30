@@ -219,7 +219,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     }
   }
 
-  private void reloadKeepingActiveScheme() {
+  @Override
+  public void reloadKeepingActiveScheme() {
     String activeScheme = mySchemeManager.getCurrentSchemeName();
     mySchemeManager.reload();
 

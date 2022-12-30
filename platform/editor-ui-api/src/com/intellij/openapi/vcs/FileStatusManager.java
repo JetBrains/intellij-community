@@ -30,13 +30,17 @@ public abstract class FileStatusManager {
   public abstract void fileStatusChanged(VirtualFile file);
 
   /**
-   * @deprecated Please use overload with parent disposable
+   * @deprecated Please use {@link #addFileStatusListener(FileStatusListener, Disposable)} instead
    */
   @Deprecated(forRemoval = true)
   public abstract void addFileStatusListener(@NotNull FileStatusListener listener);
 
   public abstract void addFileStatusListener(@NotNull FileStatusListener listener, @NotNull Disposable parentDisposable);
 
+  /**
+   * @deprecated Please use {@link #addFileStatusListener(FileStatusListener, Disposable)} instead
+   */
+  @Deprecated(forRemoval = true)
   public abstract void removeFileStatusListener(@NotNull FileStatusListener listener);
 
   public abstract Color getNotChangedDirectoryColor(@NotNull VirtualFile file);

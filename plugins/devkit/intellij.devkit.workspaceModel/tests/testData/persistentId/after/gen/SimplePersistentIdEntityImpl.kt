@@ -45,7 +45,7 @@ open class SimplePersistentIdEntityImpl(val dataSource: SimplePersistentIdEntity
     return connections
   }
 
-  class Builder(val result: SimplePersistentIdEntityData?) : ModifiableWorkspaceEntityBase<SimplePersistentIdEntity>(), SimplePersistentIdEntity.Builder {
+  class Builder(var result: SimplePersistentIdEntityData?) : ModifiableWorkspaceEntityBase<SimplePersistentIdEntity>(), SimplePersistentIdEntity.Builder {
     constructor() : this(SimplePersistentIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -63,6 +63,9 @@ open class SimplePersistentIdEntityImpl(val dataSource: SimplePersistentIdEntity
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -92,11 +95,11 @@ open class SimplePersistentIdEntityImpl(val dataSource: SimplePersistentIdEntity
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SimplePersistentIdEntity
-      this.entitySource = dataSource.entitySource
-      this.version = dataSource.version
-      this.name = dataSource.name
-      this.related = dataSource.related
-      this.sealedClassWithLinks = dataSource.sealedClassWithLinks
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.version != dataSource.version) this.version = dataSource.version
+      if (this.name != dataSource.name) this.name = dataSource.name
+      if (this.related != dataSource.related) this.related = dataSource.related
+      if (this.sealedClassWithLinks != dataSource.sealedClassWithLinks) this.sealedClassWithLinks = dataSource.sealedClassWithLinks
       if (parents != null) {
       }
     }
@@ -397,7 +400,7 @@ class SimplePersistentIdEntityData : WorkspaceEntityData.WithCalculablePersisten
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SimplePersistentIdEntityData
 
@@ -411,7 +414,7 @@ class SimplePersistentIdEntityData : WorkspaceEntityData.WithCalculablePersisten
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SimplePersistentIdEntityData
 

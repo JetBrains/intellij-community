@@ -226,10 +226,8 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
     private void getAllFilesRecursively(@NotNull VirtualFile file, boolean compileTimeOnly, Set<? super VirtualFile> result) {
       if (!result.add(file)) return;
       VirtualFile[] includes = getFiles(file, compileTimeOnly);
-      if (includes.length != 0) {
-        for (VirtualFile include : includes) {
-          getAllFilesRecursively(include, compileTimeOnly, result);
-        }
+      for (VirtualFile include : includes) {
+        getAllFilesRecursively(include, compileTimeOnly, result);
       }
     }
 

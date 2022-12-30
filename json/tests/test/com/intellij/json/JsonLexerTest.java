@@ -20,15 +20,16 @@ public class JsonLexerTest extends LexerTestCase {
   public void testEscapeSlash() {
     // WEB-2803
     doTest("[\"\\/\",-1,\"\\n\", 1]",
-           "[ ('[')\n" +
-           "DOUBLE_QUOTED_STRING ('\"\\/\"')\n" +
-           ", (',')\n" +
-           "NUMBER ('-1')\n" +
-           ", (',')\n" +
-           "DOUBLE_QUOTED_STRING ('\"\\n\"')\n" +
-           ", (',')\n" +
-           "WHITE_SPACE (' ')\n" +
-           "NUMBER ('1')\n" +
-           "] (']')");
+           """
+             [ ('[')
+             DOUBLE_QUOTED_STRING ('"\\/"')
+             , (',')
+             NUMBER ('-1')
+             , (',')
+             DOUBLE_QUOTED_STRING ('"\\n"')
+             , (',')
+             WHITE_SPACE (' ')
+             NUMBER ('1')
+             ] (']')""");
   }
 }

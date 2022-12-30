@@ -100,14 +100,11 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
    * private fields are not accessible at runtime even from inner classes.
    */
   public void testNotAccessible2() {
-    doTest("import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;" +
-           "class Z {" +
-           "  private volatile int value = 0;" +
-           "  static class A {\n" +
-           "    private static final AtomicIntegerFieldUpdater updater = \n" +
-           "      AtomicIntegerFieldUpdater.newUpdater(Z.class, /*'private' field 'value' is not accessible from here*/\"value\"/**/);\n" +
-           "  }" +
-           "}");
+    doTest("""
+             import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;class Z {  private volatile int value = 0;  static class A {
+                 private static final AtomicIntegerFieldUpdater updater =\s
+                   AtomicIntegerFieldUpdater.newUpdater(Z.class, /*'private' field 'value' is not accessible from here*/"value"/**/);
+               }}""");
   }
 
   public void testNotAccessible3() {
@@ -156,29 +153,31 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
   }
 
   public void testAccessibleAnonymousCtor() {
-    doTest("import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;\n" +
-           "\n" +
-           "class Test {\n" +
-           "  private volatile int field;\n" +
-           "\n" +
-           "  static class Holder {\n" +
-           "    Holder(AtomicIntegerFieldUpdater<Test> obj) {}\n" +
-           "  }\n" +
-           "\n" +
-           "  void test() {\n" +
-           "    new Holder(AtomicIntegerFieldUpdater.newUpdater(Test.class, \"field\"));\n" +
-           "    new Holder(AtomicIntegerFieldUpdater.newUpdater(Test.class, \"field\")) {};\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+
+             class Test {
+               private volatile int field;
+
+               static class Holder {
+                 Holder(AtomicIntegerFieldUpdater<Test> obj) {}
+               }
+
+               void test() {
+                 new Holder(AtomicIntegerFieldUpdater.newUpdater(Test.class, "field"));
+                 new Holder(AtomicIntegerFieldUpdater.newUpdater(Test.class, "field")) {};
+               }
+             }""");
   }
 
   public void testAvoidNPE() {
-    doTest("import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;\n" +
-           "class Z</*!Cyclic inheritance involving 'T'*//*!*/T extends T> {\n" +
-           "  private T value = null;\n" +
-           "  private static final AtomicReferenceFieldUpdater updater = \n" +
-           "      AtomicReferenceFieldUpdater.newUpdater(Z.class, Object.class, \"value\");\n" +
-           "}");
+    doTest("""
+             import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+             class Z</*!Cyclic inheritance involving 'T'*//*!*/T extends T> {
+               private T value = null;
+               private static final AtomicReferenceFieldUpdater updater =\s
+                   AtomicReferenceFieldUpdater.newUpdater(Z.class, Object.class, "value");
+             }""");
   }
 
   @Override

@@ -5,11 +5,19 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Determines formatting behavior for injected PSI files
+ */
 public interface InjectedFormattingOptionsService {
 
   static InjectedFormattingOptionsService getInstance() {
     return ApplicationManager.getApplication().getService(InjectedFormattingOptionsService.class);
   }
 
+  /**
+   * For a given PSI file, returns
+   * - `true` if code formatting should be delegated to a file which contains this injected file (top-level file)
+   * - `false` if code formatting shouldn't be delegated to a top-level file
+   */
   boolean shouldDelegateToTopLevel(@NotNull PsiFile file);
 }

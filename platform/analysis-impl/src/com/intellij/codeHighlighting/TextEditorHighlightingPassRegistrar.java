@@ -27,26 +27,19 @@ public abstract class TextEditorHighlightingPassRegistrar {
                                                 int anchorPassId,
                                                 boolean needAdditionalIntentionsPass,
                                                 boolean inPostHighlightingPass) {
-    int[] ids = null;
-    switch (anchor) {
-      case AFTER:
-        ids = new int[]{anchorPassId};
-        break;
-      case BEFORE:
+    int[] ids = switch (anchor) {
+      case AFTER -> new int[]{anchorPassId};
+      case BEFORE ->
         //todo
-        ids = null;
-        break;
-      case FIRST:
-        ids = null;
-        break;
-      case LAST:
+        null;
+      case FIRST -> null;
+      case LAST ->
         //todo
-        ids = new int[]{Pass.UPDATE_ALL,
+        new int[]{Pass.UPDATE_ALL,
           Pass.UPDATE_FOLDING, Pass.LINE_MARKERS, Pass.SLOW_LINE_MARKERS,
           Pass.EXTERNAL_TOOLS,
           Pass.LOCAL_INSPECTIONS, Pass.POPUP_HINTS};
-        break;
-    }
+    };
     return registerTextEditorHighlightingPass(factory, ids, null, needAdditionalIntentionsPass, -1);
   }
 

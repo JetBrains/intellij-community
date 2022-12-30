@@ -52,7 +52,7 @@ open class LibraryFilesPackagingElementEntityImpl(val dataSource: LibraryFilesPa
     return connections
   }
 
-  class Builder(val result: LibraryFilesPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<LibraryFilesPackagingElementEntity>(), LibraryFilesPackagingElementEntity.Builder {
+  class Builder(var result: LibraryFilesPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<LibraryFilesPackagingElementEntity>(), LibraryFilesPackagingElementEntity.Builder {
     constructor() : this(LibraryFilesPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -70,6 +70,9 @@ open class LibraryFilesPackagingElementEntityImpl(val dataSource: LibraryFilesPa
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -90,10 +93,13 @@ open class LibraryFilesPackagingElementEntityImpl(val dataSource: LibraryFilesPa
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as LibraryFilesPackagingElementEntity
-      this.entitySource = dataSource.entitySource
-      this.library = dataSource.library
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.library != dataSource?.library) this.library = dataSource.library
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+        val parentEntityNew = parents.filterIsInstance<CompositePackagingElementEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 
@@ -264,7 +270,7 @@ class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesP
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as LibraryFilesPackagingElementEntityData
 
@@ -275,7 +281,7 @@ class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesP
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as LibraryFilesPackagingElementEntityData
 

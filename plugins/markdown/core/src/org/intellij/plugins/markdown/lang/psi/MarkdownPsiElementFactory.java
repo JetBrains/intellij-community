@@ -316,4 +316,21 @@ public final class MarkdownPsiElementFactory {
     assert(list instanceof MarkdownList);
     return (MarkdownList)list;
   }
+
+  @ApiStatus.Experimental
+  public static @NotNull MarkdownLinkDestination createLinkDestination(@NotNull Project project, @NotNull String link) {
+    final var content = "[](" + link + ")";
+    final var file = createFile(project, content);
+    final var element = Objects.requireNonNull(file.getFirstChild().getFirstChild().getFirstChild());
+    if (!(element instanceof MarkdownInlineLink)) {
+      final var psi = DebugUtil.psiToString(file, true, true);
+      final var message = "Expected a MarkdownInlineLink but was " + element + ". PSI was:\n" + psi;
+      throw new IllegalStateException(message);
+    }
+    final var destination = Objects.requireNonNull(
+      ((MarkdownInlineLink)element).getLinkDestination(),
+      () -> "Failed to get link destination. PSI was:\n" + DebugUtil.psiToString(file, true, true)
+    );
+    return destination;
+  }
 }

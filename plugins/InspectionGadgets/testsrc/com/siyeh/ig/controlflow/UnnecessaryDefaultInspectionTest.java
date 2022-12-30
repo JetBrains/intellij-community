@@ -19,45 +19,51 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
   }
 
   public void testSwitchExpression() {
-    doTest("class X {\n" +
-           "  boolean x(E e) {\n" +
-           "    return switch (e) {\n" +
-           "      case A, B -> true;\n" +
-           "      /*'default' branch is unnecessary*//*_*/default/**/ -> false;\n" +
-           "    };\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             class X {
+               boolean x(E e) {
+                 return switch (e) {
+                   case A, B -> true;
+                   /*'default' branch is unnecessary*//*_*/default/**/ -> false;
+                 };
+               }
+             }""");
     checkQuickFix("Remove 'default' branch",
-                  "class X {\n" +
-                  "  boolean x(E e) {\n" +
-                  "    return switch (e) {\n" +
-                  "      case A, B -> true;\n" +
-                  "    };\n" +
-                  "  }\n" +
-                  "}");
+                  """
+                    class X {
+                      boolean x(E e) {
+                        return switch (e) {
+                          case A, B -> true;
+                        };
+                      }
+                    }""");
   }
 
   public void testSwitchFallthrough() {
-    doTest("class X {\n" +
-           "  void x(E e) {\n" +
-           "    switch (e) {\n" +
-           "      case A,B:\n" +
-           "          System.out.println(e);\n" +
-           "      /*'default' branch is unnecessary*/default/*_*//**/:\n" +
-           "          System.out.println();\n" +
-           "    }\n" +
-           "  }\n" +
-           "}\n");
+    doTest("""
+             class X {
+               void x(E e) {
+                 switch (e) {
+                   case A,B:
+                       System.out.println(e);
+                   /*'default' branch is unnecessary*/default/*_*//**/:
+                       System.out.println();
+                 }
+               }
+             }
+             """);
     checkQuickFix("Remove 'default' branch",
-                  "class X {\n" +
-                  "  void x(E e) {\n" +
-                  "    switch (e) {\n" +
-                  "      case A,B:\n" +
-                  "          System.out.println(e);\n" +
-                  "          System.out.println();\n" +
-                  "    }\n" +
-                  "  }\n" +
-                  "}\n");
+                  """
+                    class X {
+                      void x(E e) {
+                        switch (e) {
+                          case A,B:
+                              System.out.println(e);
+                              System.out.println();
+                        }
+                      }
+                    }
+                    """);
   }
 
   public void testDeclarationInBranch() {
@@ -74,16 +80,11 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
            "   }" +
            "}");
     checkQuickFix("Remove 'default' branch",
-                  "class X {" +
-                  "  void x(E e) {" +
-                  "    switch (e) {\n" +
-                  "    case A,B:\n" +
-                  "        int x;\n" +
-                  "        x = 2;" +
-                  "        System.out.println(x);" +
-                  "      }" +
-                  "   }" +
-                  "}");
+                  """
+                    class X {  void x(E e) {    switch (e) {
+                        case A,B:
+                            int x;
+                            x = 2;        System.out.println(x);      }   }}""");
   }
 
   public void testCaseDefaultInEnumSwitch() {
@@ -221,13 +222,15 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "enum E { A, B }\n" +
-      "sealed interface I {}\n" +
-      "final class C1 implements I {}\n" +
-      "final class C2 implements I {}\n" +
-      "sealed interface J<T>\n" +
-      "final class D1 implements J<String> {}\n" +
-      "final class D2<T> implements J<T> {}\n"
+      """
+enum E { A, B }
+sealed interface I {}
+final class C1 implements I {}
+final class C2 implements I {}
+sealed interface J<T>
+final class D1 implements J<String> {}
+final class D2<T> implements J<T> {}
+"""
     };
   }
 

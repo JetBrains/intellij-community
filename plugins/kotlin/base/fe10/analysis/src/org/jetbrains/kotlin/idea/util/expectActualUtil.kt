@@ -71,6 +71,12 @@ fun KtParameter.liftToExpected(): KtParameter? {
     return DescriptorToSourceUtils.descriptorToDeclaration(expectedDescriptor) as? KtParameter
 }
 
+fun KtDeclaration.withExpectedActuals(): List<KtDeclaration> {
+    val expect = liftToExpected() ?: return listOf(this)
+    val actuals = expect.actualsForExpected()
+    return listOf(expect) + actuals
+}
+
 fun ModuleDescriptor.hasActualsFor(descriptor: MemberDescriptor) =
     descriptor.findActualInModule(this).isNotEmpty()
 

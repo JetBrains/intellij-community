@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.analysis
 
@@ -14,12 +14,14 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.kotlin.idea.base.analysis.libraries.LibraryDependencyCandidate
@@ -30,7 +32,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
-import org.jetbrains.kotlin.idea.base.util.caching.*
+import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
+import org.jetbrains.kotlin.idea.base.util.caching.WorkspaceEntityChangeListener
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.idea.configuration.isMavenized
@@ -65,7 +68,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         else
             DefaultLibraryDependenciesFilter union SharedNativeLibraryToNativeInteropFallbackDependenciesFilter
         val libraries = libraryDependenciesFilter(libraryInfo.platform, dependencyCandidates).flatMap { it.libraries }
-        return LibraryDependencies(libraries, sdks.toList())
+        return LibraryDependencies(libraryInfo, libraries, sdks.toList())
     }
 
     //NOTE: used LibraryRuntimeClasspathScope as reference
@@ -101,6 +104,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             } ?: true
         }
 
+        val infoCache = LibraryInfoCache.getInstance(project)
         ModuleRootManager.getInstance(module).orderEntries().recursively().satisfying(condition).process(object : RootPolicy<Unit>() {
             override fun visitModuleSourceOrderEntry(moduleSourceOrderEntry: ModuleSourceOrderEntry, value: Unit) {
                 processedModules.add(moduleSourceOrderEntry.ownerModule)
@@ -108,16 +112,9 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
             override fun visitLibraryOrderEntry(libraryOrderEntry: LibraryOrderEntry, value: Unit) {
                 checkCanceled()
-                libraryOrderEntry.library.safeAs<LibraryEx>()?.takeIf { !it.isDisposed }?.let { library ->
-                    for (libraryInfo in LibraryInfoCache.getInstance(project)[library]) {
-                        LibraryDependencyCandidate.fromLibraryOrNull(
-                            project,
-                            libraryInfo.library
-                        )?.let {
-                            libraries += it
-                        }
-                    }
-                }
+                val libraryEx = libraryOrderEntry.library.safeAs<LibraryEx>()?.takeUnless { it.isDisposed } ?: return
+                val candidate = LibraryDependencyCandidate.fromLibraryOrNull(infoCache[libraryEx]) ?: return
+                libraries += candidate
             }
 
             override fun visitJdkOrderEntry(jdkOrderEntry: JdkOrderEntry, value: Unit) {
@@ -144,7 +141,10 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     * the inability to get real dependencies from IDEA model. So moving stdlib with all dependencies
     * down is a questionable option.
     */
-    private fun filterForBuiltins(libraryInfo: LibraryInfo, dependencyLibraries: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
+    private fun filterForBuiltins(
+        libraryInfo: LibraryInfo,
+        dependencyLibraries: Set<LibraryDependencyCandidate>
+    ): Set<LibraryDependencyCandidate> {
         return if (!IdeBuiltInsLoadingState.isFromClassLoader && libraryInfo.isCoreKotlinLibrary(project)) {
             dependencyLibraries.filterTo(mutableSetOf()) { dep ->
                 dep.libraries.any { it.isCoreKotlinLibrary(project) }
@@ -164,10 +164,10 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }!!
 
     private inner class LibraryDependenciesInnerCache :
-      SynchronizedFineGrainedEntityCache<LibraryInfo, LibraryDependencies>(project, cleanOnLowMemory = true),
-      LibraryInfoListener,
-      ModuleRootListener,
-      ProjectJdkTable.Listener {
+        SynchronizedFineGrainedEntityCache<LibraryInfo, LibraryDependencies>(project, cleanOnLowMemory = true),
+        LibraryInfoListener,
+        ModuleRootListener,
+        ProjectJdkTable.Listener {
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
             connection.subscribe(LibraryInfoListener.TOPIC, this)
@@ -199,6 +199,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         override fun rootsChanged(event: ModuleRootEvent) {
+            if (event.isCausedByWorkspaceModelChangesOnly) return
+
             // SDK could be changed (esp in tests) out of message bus subscription
             val sdks = project.allSdks()
             invalidateEntries(
@@ -210,14 +212,14 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     }
 
     private inner class ModuleDependenciesCache :
-      SynchronizedFineGrainedEntityCache<Module, LibraryDependencyCandidatesAndSdkInfos>(project, cleanOnLowMemory = true),
-      ProjectJdkTable.Listener,
-      LibraryInfoListener,
-      ModuleRootListener {
+        SynchronizedFineGrainedEntityCache<Module, LibraryDependencyCandidatesAndSdkInfos>(project, cleanOnLowMemory = true),
+        ProjectJdkTable.Listener,
+        LibraryInfoListener,
+        ModuleRootListener {
 
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
-            WorkspaceModelTopics.getInstance(project).subscribeImmediately(connection, ModelChangeListener())
+            connection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
             connection.subscribe(LibraryInfoListener.TOPIC, this)
             connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
             connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
@@ -243,6 +245,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         override fun rootsChanged(event: ModuleRootEvent) {
+            if (event.isCausedByWorkspaceModelChangesOnly) return
+
             // SDK could be changed (esp in tests) out of message bus subscription
             val sdks = project.allSdks()
 
@@ -258,7 +262,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                 get() = ModuleEntity::class.java
 
             override fun map(storage: EntityStorage, entity: ModuleEntity): Module? =
-                storage.findModuleWithHack(entity, project)
+                entity.findModule(storage)
 
             override fun entitiesChanged(outdated: List<Module>) {
                 invalidateKeys(outdated) { _, _ -> false }
@@ -278,29 +282,25 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     }
 
     private inner class LibraryUsageIndex {
-        private val modulesLibraryIsUsedIn: MultiMap<LibraryWrapper, Module>
-
-        init {
-            val map: MultiMap<LibraryWrapper, Module> = MultiMap.createSet()
-            for (module in runReadAction { ModuleManager.getInstance(project).modules }) {
+        private val modulesLibraryIsUsedIn: MultiMap<Library, Module> = runReadAction {
+            val map: MultiMap<Library, Module> = MultiMap.createSet()
+            val libraryCache = LibraryInfoCache.getInstance(project)
+            for (module in ModuleManager.getInstance(project).modules) {
                 checkCanceled()
-                runReadAction {
-                    for (entry in ModuleRootManager.getInstance(module).orderEntries) {
-                        if (entry is LibraryOrderEntry) {
-                            val library = entry.library
-                            if (library != null) {
-                                map.putValue(library.wrap(), module)
-                            }
-                        }
-                    }
+                for (entry in ModuleRootManager.getInstance(module).orderEntries) {
+                    if (entry !is LibraryOrderEntry) continue
+                    val library = entry.library ?: continue
+                    val keyLibrary = libraryCache.deduplicatedLibrary(library)
+                    map.putValue(keyLibrary, module)
                 }
             }
-            modulesLibraryIsUsedIn = map
+
+            map
         }
 
         fun getModulesLibraryIsUsedIn(libraryInfo: LibraryInfo) = sequence<Module> {
             val ideaModelInfosCache = getIdeaModelInfosCache(project)
-            for (module in modulesLibraryIsUsedIn[libraryInfo.library.wrap()]) {
+            for (module in modulesLibraryIsUsedIn[libraryInfo.library]) {
                 val mappedModuleInfos = ideaModelInfosCache.getModuleInfosForModule(module)
                 if (mappedModuleInfos.any { it.platform.canDependOn(libraryInfo, module.isHMPPEnabled) }) {
                     yield(module)
@@ -308,5 +308,4 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             }
         }
     }
-
 }

@@ -83,7 +83,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     }
 
     Window owner = ComponentUtil.getWindow(parent);
-    if (!(owner instanceof Dialog) && !(owner instanceof Frame)) {
+    if (owner == null || UIUtil.isSimpleWindow(owner)) {
       owner = JOptionPane.getRootFrame();
     }
 

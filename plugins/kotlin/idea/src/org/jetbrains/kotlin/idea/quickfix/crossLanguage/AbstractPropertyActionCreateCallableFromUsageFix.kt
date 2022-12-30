@@ -8,8 +8,8 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtElement
 
 abstract class AbstractPropertyActionCreateCallableFromUsageFix(
-    targetContainer: KtElement,
-    val classOrFileName: String?
+  targetContainer: KtElement,
+  private val classOrFileName: String?
 ) : CreateCallableFromUsageFixBase<KtElement>(targetContainer, false) {
 
     protected abstract val propertyInfo: PropertyInfo?

@@ -21,19 +21,15 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
     super(PsiMethod.class, LombokClassNames.DELEGATE, LombokClassNames.EXPERIMENTAL_DELEGATE);
   }
 
-  private DelegateHandler getDelegateHandler() {
-    return new DelegateHandler();
-  }
-
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     final PsiType psiFieldType = psiField.getType();
-    return getDelegateHandler().validate(psiField, psiFieldType, psiAnnotation, builder);
+    return DelegateHandler.validate(psiField, psiFieldType, psiAnnotation, builder);
   }
 
   @Override
   protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    getDelegateHandler().generateElements(psiField, psiField.getType(), psiAnnotation, target);
+    DelegateHandler.generateElements(psiField, psiField.getType(), psiAnnotation, target);
   }
 
   @Override

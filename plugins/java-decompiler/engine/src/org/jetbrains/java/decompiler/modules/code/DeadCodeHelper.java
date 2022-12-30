@@ -391,27 +391,14 @@ public final class DeadCodeHelper {
             ok = true;
           }
           else if (seq.getLastInstr().opcode != CodeConstants.opc_return) {
-            switch (seq.getInstr(0).opcode) {
-              case CodeConstants.opc_iload:
-              case CodeConstants.opc_lload:
-              case CodeConstants.opc_fload:
-              case CodeConstants.opc_dload:
-              case CodeConstants.opc_aload:
-              case CodeConstants.opc_aconst_null:
-              case CodeConstants.opc_bipush:
-              case CodeConstants.opc_sipush:
-              case CodeConstants.opc_lconst_0:
-              case CodeConstants.opc_lconst_1:
-              case CodeConstants.opc_fconst_0:
-              case CodeConstants.opc_fconst_1:
-              case CodeConstants.opc_fconst_2:
-              case CodeConstants.opc_dconst_0:
-              case CodeConstants.opc_dconst_1:
-              case CodeConstants.opc_ldc:
-              case CodeConstants.opc_ldc_w:
-              case CodeConstants.opc_ldc2_w:
-                ok = true;
-            }
+            ok = switch (seq.getInstr(0).opcode) {
+              case CodeConstants.opc_iload, CodeConstants.opc_lload, CodeConstants.opc_fload, CodeConstants.opc_dload,
+                CodeConstants.opc_aload, CodeConstants.opc_aconst_null, CodeConstants.opc_bipush, CodeConstants.opc_sipush,
+                CodeConstants.opc_lconst_0, CodeConstants.opc_lconst_1, CodeConstants.opc_fconst_0, CodeConstants.opc_fconst_1,
+                CodeConstants.opc_fconst_2, CodeConstants.opc_dconst_0, CodeConstants.opc_dconst_1, CodeConstants.opc_ldc,
+                CodeConstants.opc_ldc_w, CodeConstants.opc_ldc2_w -> true;
+              default -> false;
+            };
           }
         }
 

@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.checkers.languageVersionSettingsFromText
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.MainFunctionDetector
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
+import org.jetbrains.kotlin.idea.base.codeInsight.findMainOwner
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration.Companion.findMainClassFile
@@ -86,7 +88,7 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                         foundMainCandidates
                     )
 
-                    val foundMainFileContainer = EntryPointContainerFinder.find(ktFile)
+                    val foundMainFileContainer = KotlinMainFunctionDetector.getInstance().findMainOwner(ktFile)
 
                     if (functionCandidates?.any { it.isMainFunction(languageVersionSettings) } == true) {
                         assertNotNull(
@@ -312,7 +314,7 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                     }
                 }
 
-                val foundMainContainer = EntryPointContainerFinder.find(function)
+                val foundMainContainer = KotlinMainFunctionDetector.getInstance().findMainOwner(function)
 
                 if (isMainFunction) {
                     createConfigurationFromMain(project, function.fqName?.asString()!!).checkConfiguration()

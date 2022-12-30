@@ -13,7 +13,6 @@ import java.util.concurrent.CompletableFuture
 
 interface GHPRDetailsDataProvider {
 
-  @get:RequiresEdt
   val loadedDetails: GHPullRequest?
 
   @RequiresEdt

@@ -22,7 +22,7 @@ abstract class KotlinMultiplatformDependenciesBuilder : KotlinMultiplatformCompo
     override fun buildComponent(origin: Any, importingContext: MultiplatformModelImportingContext): Collection<KotlinDependency> =
         buildDependencies(origin, importingContext, MetadataDependencyTransformationBuilder(origin))
 
-    protected fun buildDependencies(
+    private fun buildDependencies(
         origin: Any,
         importingContext: MultiplatformModelImportingContext,
         metadataDependencyTransformationBuilder: MetadataDependencyTransformationBuilder

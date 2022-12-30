@@ -11,10 +11,11 @@ public class ConstructorNavigationTest extends AbstractLombokLightCodeInsightTes
   //}
 
   public void testConstructorParameter() {
-    PsiClass psiClass = myFixture.addClass("@lombok.AllArgsConstructor\n" +
-                                           "class MyBean {\n" +
-                                           "  String property;\n" +
-                                           "}");
+    PsiClass psiClass = myFixture.addClass("""
+                                             @lombok.AllArgsConstructor
+                                             class MyBean {
+                                               String property;
+                                             }""");
     PsiMethod[] constructors = psiClass.getConstructors();
     PsiMethod constructor = assertOneElement(constructors);
     PsiParameter parameter = assertOneElement(constructor.getParameterList().getParameters());
@@ -25,10 +26,11 @@ public class ConstructorNavigationTest extends AbstractLombokLightCodeInsightTes
   }
 
   public void testStaticFactoryParameter() {
-    PsiClass psiClass = myFixture.addClass("@lombok.AllArgsConstructor(staticName=\"of\", access = AccessLevel.PUBLIC)\n" +
-                                           "class MyBean {\n" +
-                                           "  String property;\n" +
-                                           "}");
+    PsiClass psiClass = myFixture.addClass("""
+                                             @lombok.AllArgsConstructor(staticName="of", access = AccessLevel.PUBLIC)
+                                             class MyBean {
+                                               String property;
+                                             }""");
     PsiMethod factory = ContainerUtil.find(psiClass.getMethods(), psiMethod -> psiMethod.getName().equals("of"));
     assertNotNull(factory);
     PsiParameter parameter = assertOneElement(factory.getParameterList().getParameters());

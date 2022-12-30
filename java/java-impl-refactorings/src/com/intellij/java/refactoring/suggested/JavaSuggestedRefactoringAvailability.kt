@@ -48,7 +48,7 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
     }
   }
 
-  fun callStateToDeclarationState(state: SuggestedRefactoringState): SuggestedRefactoringState? {
+  private fun callStateToDeclarationState(state: SuggestedRefactoringState): SuggestedRefactoringState? {
     val anchor = state.anchor as? PsiCallExpression ?: return null
     val resolveResult = anchor.resolveMethodGenerics()
     if (resolveResult.isValidResult) return null

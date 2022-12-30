@@ -48,7 +48,7 @@ class HeapAnalysisTest {
     }.run(scenario, baselineFileName, nominatedClassNames)
   }
 
-  //@Test
+  @Test
   fun testPathsThroughDifferentFields() {
     class MyRef(val referent: Any)
     class TestString(val s: String)
@@ -133,8 +133,8 @@ class HeapAnalysisTest {
                      listOf("C1"))
   }
 
-  //@Test
-  fun testDisposerTreeSummarySection() {
+  @Test
+  fun testDisposerTree() {
     val objectTree = ObjectTreeTestWrapper()
 
     open class MyDisposable : Disposable {
@@ -149,13 +149,16 @@ class HeapAnalysisTest {
     val root = MyDisposableRoot()
     val child1 = MyDisposableChild()
     val child2 = MyDisposableChild()
+    val largeList = (1..1000).map { MyDisposableGrandchild() }
 
     objectTree.register(root, child1)
     objectTree.register(root, MyDisposableChild())
     objectTree.register(root, child2)
 
     objectTree.register(child1, MyDisposableGrandchild())
-    objectTree.register(child2, MyDisposableGrandchild())
+    for (grandchild in largeList) {
+      objectTree.register(child2, grandchild)
+    }
     objectTree.register(root, Disposer.newDisposable())
 
     objectTree.register(Disposer.newDisposable(), MyDisposableChild())
@@ -164,8 +167,8 @@ class HeapAnalysisTest {
       addDisposer(this, objectTree)
     }
     object : HProfScenarioRunner(tmpFolder, remapInMemory) {
-      override fun adjustConfig(config: AnalysisConfig): AnalysisConfig = configWithDisposerTreeSummaryOnly()
-    }.run(scenario, "testDisposerTreeSummarySection.txt", null)
+      override fun adjustConfig(config: AnalysisConfig): AnalysisConfig = configWithDisposerTreeOnly()
+    }.run(scenario, "testDisposerTree.txt", null)
   }
 
   @Test
@@ -194,7 +197,7 @@ class HeapAnalysisTest {
     }.run(scenario, "testDominatorTreeFlameGraph.txt", null)
   }
 
-  private fun configWithDisposerTreeSummaryOnly() = AnalysisConfig(
+  private fun configWithDisposerTreeOnly() = AnalysisConfig(
     AnalysisConfig.PerClassOptions(
       classNames = listOf(),
       includeClassList = false,
@@ -203,7 +206,7 @@ class HeapAnalysisTest {
                                     includeBySize = false,
                                     includeSummary = false),
     AnalysisConfig.DisposerOptions(
-      includeDisposerTree = false,
+      includeDisposerTree = true,
       includeDisposerTreeSummary = true,
       includeDisposedObjectsSummary = false,
       includeDisposedObjectsDetails = false,

@@ -115,14 +115,12 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
     final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (module != null) {
       final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
-      if (sourceRoots.length > 0) {
-        for (VirtualFile sourceRoot : sourceRoots) {
-          // TODO notify if we have multiple source roots and can't build mapping automatically
-          final VirtualFile contentRoot = ProjectFileIndex.getInstance(module.getProject()).getContentRootForFile(sourceRoot);
-          if (contentRoot != null && !Comparing.equal(contentRoot, sourceRoot)) {
-            final String relativePath = VfsUtilCore.getRelativePath(sourceRoot, contentRoot, '/');
-            return "\n    package_dir={'': '" + relativePath + "'},";
-          }
+      for (VirtualFile sourceRoot : sourceRoots) {
+        // TODO notify if we have multiple source roots and can't build mapping automatically
+        final VirtualFile contentRoot = ProjectFileIndex.getInstance(module.getProject()).getContentRootForFile(sourceRoot);
+        if (contentRoot != null && !Comparing.equal(contentRoot, sourceRoot)) {
+          final String relativePath = VfsUtilCore.getRelativePath(sourceRoot, contentRoot, '/');
+          return "\n    package_dir={'': '" + relativePath + "'},";
         }
       }
     }

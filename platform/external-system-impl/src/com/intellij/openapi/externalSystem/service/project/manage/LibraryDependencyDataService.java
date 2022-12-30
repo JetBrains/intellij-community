@@ -64,17 +64,18 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
       LibraryData libraryData = dependencyData.getTarget();
       hasUnresolved |= libraryData.isUnresolved();
       switch (dependencyData.getLevel()) {
-        case MODULE:
+        case MODULE -> {
           Set<String> paths = new HashSet<>();
-            for (String path : libraryData.getPaths(LibraryPathType.BINARY)) {
-              paths.add(ExternalSystemApiUtil.toCanonicalPath(path) + dependencyData.getScope().name());
-            }
-            moduleLibrariesToImport.put(paths, dependencyData);
-            toImport.add(dependencyData);
-          break;
-        case PROJECT:
+          for (String path : libraryData.getPaths(LibraryPathType.BINARY)) {
+            paths.add(ExternalSystemApiUtil.toCanonicalPath(path) + dependencyData.getScope().name());
+          }
+          moduleLibrariesToImport.put(paths, dependencyData);
+          toImport.add(dependencyData);
+        }
+        case PROJECT -> {
           projectLibrariesToImport.put(libraryData.getInternalName() + dependencyData.getScope().name(), dependencyData);
           toImport.add(dependencyData);
+        }
       }
     }
 
@@ -102,7 +103,7 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
       final LibraryData libraryData = dependencyData.getTarget();
       final String libraryName = libraryData.getInternalName();
       switch (dependencyData.getLevel()) {
-        case MODULE:
+        case MODULE -> {
           final Library moduleLib;
           if (libraryName.isEmpty()) {
             moduleLib = moduleLibraryTable.createLibrary();
@@ -113,8 +114,8 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
           final LibraryOrderEntry existingLibraryDependency =
             syncExistingLibraryDependency(modelsProvider, dependencyData, moduleLib, moduleRootModel, module);
           orderEntryDataMap.put(existingLibraryDependency, dependencyData);
-          break;
-        case PROJECT:
+        }
+        case PROJECT -> {
           final Library projectLib = modelsProvider.getLibraryByName(libraryName);
           if (projectLib == null) {
             final LibraryOrderEntry existingProjectLibraryDependency = syncExistingLibraryDependency(
@@ -131,6 +132,7 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
           else {
             orderEntryDataMap.put(orderEntry, dependencyData);
           }
+        }
       }
     }
   }

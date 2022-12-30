@@ -8,6 +8,7 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.SearchTextField
+import com.intellij.ui.content.Content
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
 import java.awt.event.InputEvent
@@ -120,6 +121,14 @@ object CollaborationToolsUIUtil {
     val focusManager = IdeFocusManager.findInstanceByComponent(panel)
     val toFocus = focusManager.getFocusTargetFor(panel) ?: return
     focusManager.doWhenFocusSettlesDown { focusManager.requestFocus(toFocus, true) }
+  }
+
+  fun setComponentPreservingFocus(content: Content, component: JComponent) {
+    val focused = isFocusParent(content.component)
+    content.component = component
+    if (focused) {
+      focusPanel(content.component)
+    }
   }
 }
 

@@ -17,7 +17,9 @@ public interface RepositoryHostingService {
 
   /**
    * @see RepositoryListLoader
+   * @deprecated deprecated with the removal of completion from an old clone dialog
    */
+  @Deprecated
   @Nullable
   default RepositoryListLoader getRepositoryListLoader(@NotNull Project project) {return null;}
 }

@@ -13,7 +13,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.containers.tail
 import org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
@@ -59,7 +59,7 @@ private fun findTomlFile(context: PsiElement, name: String): TomlFile? {
   } ?: return null
   val tomlPath = context.project.service<VersionCatalogsLocator>().getVersionCatalogsForModule(module)[name] ?: return null
   val toml = VfsUtil.findFile(tomlPath, false) ?: return null
-  return PsiManager.getInstance(context.project).findFile(toml)?.castSafelyTo<TomlFile>()
+  return PsiManager.getInstance(context.project).findFile(toml)?.asSafely<TomlFile>()
 }
 
 private fun PsiMethod.resolveInToml(context: PsiElement): PsiElement? {

@@ -176,13 +176,13 @@ public class GridDropLocation implements ComponentDropLocation {
   @Override
   @Nullable
   public ComponentDropLocation getAdjacentLocation(Direction direction) {
-    switch(direction) {
-      case LEFT:  return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.ColumnBefore);
-      case UP:    return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.RowBefore);
-      case RIGHT: return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.ColumnAfter);
-      case DOWN:  return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.RowAfter);
-    }
-    return null;
+    var insertMode = switch (direction) {
+      case LEFT -> GridInsertMode.ColumnBefore;
+      case UP -> GridInsertMode.RowBefore;
+      case RIGHT -> GridInsertMode.ColumnAfter;
+      case DOWN -> GridInsertMode.RowAfter;
+    };
+    return new GridInsertLocation(myContainer, myRow, myColumn, insertMode);
   }
 
   @NonNls @Override public String toString() {

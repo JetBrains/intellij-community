@@ -7,6 +7,7 @@ import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class Distance {
+  public static final double MINIMUM_SIMILARITY = 0.0;
   public static final double MAXIMUM_SIMILARITY = 1.0;
   public static final double PRECISION = 1e-4;
   private final double myThreshold;
@@ -17,13 +18,20 @@ public class Distance {
 
   double findMinimalSimilarity(@NotNull UsageCluster usageCluster, @NotNull Bag newUsageFeatures) {
     double min = MAXIMUM_SIMILARITY;
+    double max = MINIMUM_SIMILARITY;
     for (SimilarUsage usage : usageCluster.getUsages()) {
       final double similarity = jaccardSimilarityWithThreshold(usage.getFeatures(), newUsageFeatures, myThreshold);
       if (lessThen(similarity, min)) {
         min = similarity;
       }
+      if (lessThen(max, similarity)) {
+        max = similarity;
+      }
+      if (isCompleteMatch(max)) {
+        return MAXIMUM_SIMILARITY;
+      }
       if (lessThen(min, myThreshold)) {
-        return 0;
+        return MINIMUM_SIMILARITY;
       }
     }
     return min;

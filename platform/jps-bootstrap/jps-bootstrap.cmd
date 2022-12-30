@@ -9,14 +9,18 @@ set JPS_BOOTSTRAP_PREPARE_DIR=%JPS_BOOTSTRAP_COMMUNITY_HOME%out\jps-bootstrap\
 
 setlocal
 
-set JBR_VERSION=17.0.3
-set JBR_BUILD=b469.37
-set JBR_ARCH=windows-x64
+set JBR_VERSION=17.0.4.1
+set JBR_BUILD=b597.1
+if "%PROCESSOR_ARCHITECTURE%" == "ARM64" (
+  set JBR_ARCH=windows-aarch64
+) else (
+  set JBR_ARCH=windows-x64
+)
 set SCRIPT_VERSION=jps-bootstrap-cmd-v1
 set COMPANY_NAME=JetBrains
 set TARGET_DIR=%LOCALAPPDATA%\Temp\%COMPANY_NAME%\
 set JVM_TARGET_DIR=%TARGET_DIR%%JBR_VERSION%%JBR_BUILD%-%JBR_ARCH%-%SCRIPT_VERSION%\
-set JVM_TEMP_FILE=jvm-windows-x64.tar.gz
+set JVM_TEMP_FILE=jvm-%JBR_ARCH%.tar.gz
 set JVM_URL=https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-%JBR_VERSION%-%JBR_ARCH%-%JBR_BUILD%.tar.gz
 
 set POWERSHELL=%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe

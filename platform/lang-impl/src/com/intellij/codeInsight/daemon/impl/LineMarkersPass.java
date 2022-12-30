@@ -32,6 +32,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.InjectionUtils;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
@@ -203,12 +204,14 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
 
     if (myMode == Mode.FAST) return;
 
-    Set<PsiFile> visitedInjectedFiles = new HashSet<>();
-    // line markers for injected could be slow
-    for (int i = 0; i < elements.size(); i++) {
-      PsiElement element = elements.get(i);
+    if (InjectionUtils.shouldCollectLineMarkersForInjectedFiles(myFile)) {
+      Set<PsiFile> visitedInjectedFiles = new HashSet<>();
+      // line markers for injected could be slow
+      for (int i = 0; i < elements.size(); i++) {
+        PsiElement element = elements.get(i);
 
-      queryLineMarkersForInjected(element, containingFile, visitedInjectedFiles, consumer);
+        queryLineMarkersForInjected(element, containingFile, visitedInjectedFiles, consumer);
+      }
     }
 
     List<LineMarkerInfo<?>> slowLineMarkers = new NotNullList<>();

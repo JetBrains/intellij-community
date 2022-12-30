@@ -90,28 +90,29 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
   }
 
   public void testRemoveAnnotatedMethod() {
-    doReplaceTest("public class Foo {\n" +
-                  "  <selection>  " +
-                  "   @SuppressWarnings(\"\")\n" +
-                  "    public void method() {}\n" +
-                  "</selection>" +
-                  "}",
+    doReplaceTest("""
+                    public class Foo {
+                      <selection>     @SuppressWarnings("")
+                        public void method() {}
+                    </selection>}""",
                   "");
   }
 
   public void testRenameAnnotatedMethod() {
-    doReplaceTest("public class Foo {\n" +
-                  "   @SuppressWarnings(\"\")\n" +
-                  "    public void me<selection>th</selection>od() {}\n" +
-                  "}",
+    doReplaceTest("""
+                    public class Foo {
+                       @SuppressWarnings("")
+                        public void me<selection>th</selection>od() {}
+                    }""",
                   "zzz");
   }
 
   public void testRenameAnnotatedClass() {
-    doReplaceTest("   @SuppressWarnings(\"\")\n" +
-                  "public class F<selection>o</selection>o {\n" +
-                  "    public void method() {}\n" +
-                  "}",
+    doReplaceTest("""
+                       @SuppressWarnings("")
+                    public class F<selection>o</selection>o {
+                        public void method() {}
+                    }""",
                   "zzz");
   }
 
@@ -454,12 +455,13 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
   }
 
   public void testChangeBothInsideAnonymousAndOutsideShouldAdvanceJavaModStructureAndClearCaches() {
-    PsiFile file = configureByText(JavaFileType.INSTANCE, "class A{ void bar() {\n" +
-                                                          "int a = foo().goo();\n" +
-                                                          "Object r = new Object() {\n" +
-                                                          "  void foo() {}\n" +
-                                                          "};\n" +
-                                                          "}}");
+    PsiFile file = configureByText(JavaFileType.INSTANCE, """
+      class A{ void bar() {
+      int a = foo().goo();
+      Object r = new Object() {
+        void foo() {}
+      };
+      }}""");
 
     PsiAnonymousClass anon = SyntaxTraverser.psiTraverser(file).filter(PsiAnonymousClass.class).first();
     Arrays.stream(anon.getAllMethods()).forEach(PsiUtilCore::ensureValid);
@@ -481,15 +483,14 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
   }
 
   public void testDeleteLocalClass() {
-    PsiFile file = configureByText(JavaFileType.INSTANCE, "class A{ void bar() {\n" +
-                                                          "abstract class Local { abstract void foo(); }\n" +
-                                                          "int a = 1;" +
-                                                          "while (true) {\n" +
-                                                          "Local r = new Local() {\n" +
-                                                          "  public void foo() {}\n" +
-                                                          "}" +
-                                                          "};\n" +
-                                                          "}}");
+    PsiFile file = configureByText(JavaFileType.INSTANCE, """
+      class A{ void bar() {
+      abstract class Local { abstract void foo(); }
+      int a = 1;while (true) {
+      Local r = new Local() {
+        public void foo() {}
+      }};
+      }}""");
 
     PsiAnonymousClass anon = SyntaxTraverser.psiTraverser(file).filter(PsiAnonymousClass.class).first();
     PsiMethod method = anon.getMethods()[0];

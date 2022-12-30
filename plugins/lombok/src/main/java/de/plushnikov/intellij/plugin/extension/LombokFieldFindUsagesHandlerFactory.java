@@ -58,19 +58,19 @@ public class LombokFieldFindUsagesHandlerFactory extends FindUsagesHandlerFactor
         return PsiElement.EMPTY_ARRAY;
       }
 
-      private void processClass(PsiClass containingClass, PsiField refPsiField, Collection<PsiElement> collector) {
+      private static void processClass(PsiClass containingClass, PsiField refPsiField, Collection<PsiElement> collector) {
         processClassMethods(containingClass, refPsiField, collector);
         processClassFields(containingClass, refPsiField, collector);
       }
 
-      private void processClassFields(PsiClass containingClass, PsiField refPsiField, Collection<PsiElement> collector) {
+      private static void processClassFields(PsiClass containingClass, PsiField refPsiField, Collection<PsiElement> collector) {
         Arrays.stream(containingClass.getFields())
           .filter(LombokLightFieldBuilder.class::isInstance)
           .filter(psiField -> psiField.getNavigationElement() == refPsiField)
           .forEach(collector::add);
       }
 
-      private void processClassMethods(PsiClass containingClass, PsiField refPsiField, Collection<PsiElement> collector) {
+      private static void processClassMethods(PsiClass containingClass, PsiField refPsiField, Collection<PsiElement> collector) {
         Arrays.stream(containingClass.getMethods())
           .filter(LombokLightMethodBuilder.class::isInstance)
           .filter(psiMethod -> psiMethod.getNavigationElement() == refPsiField)

@@ -81,6 +81,5 @@ open class TextParagraph(val textParts: List<TextPart>) {
     const val SMALL_INDENT: Float = 4f
     const val MEDIUM_INDENT: Float = 8f
     const val BIG_INDENT: Float = 12f
-    const val LARGE_INDENT: Float = 20f
   }
 }

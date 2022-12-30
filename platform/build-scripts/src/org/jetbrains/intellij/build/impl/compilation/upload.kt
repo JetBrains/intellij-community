@@ -17,10 +17,7 @@ import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.*
-import org.jetbrains.intellij.build.MEDIA_TYPE_BINARY
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.httpClient
-import org.jetbrains.intellij.build.useSuccessful
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.Files

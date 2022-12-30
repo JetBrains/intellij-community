@@ -150,13 +150,13 @@ public final class GrStringUtil {
       }
       else {
         switch (ch) {
-          case '/':
+          case '/' -> {
             if (!unescapeSlash) {
               buffer.append('\\');
             }
             buffer.append('/');
-            break;
-          case 'u':
+          }
+          case 'u' -> {
             if (idx + 4 < length) {
               try {
                 int code = Integer.valueOf(s.substring(idx + 1, idx + 5), 16).intValue();
@@ -170,12 +170,11 @@ public final class GrStringUtil {
             else {
               buffer.append("\\u");
             }
-            break;
-
-          default:
+          }
+          default -> {
             buffer.append('\\');
             buffer.append(ch);
-            break;
+          }
         }
         escaped = false;
       }
@@ -306,46 +305,34 @@ public final class GrStringUtil {
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
       switch (ch) {
-        case '\b':
-          buffer.append("\\b");
-          break;
-
-        case '\t':
-          buffer.append("\\t");
-          break;
-
-        case '\f':
-          buffer.append("\\f");
-          break;
-
-        case '\\':
+        case '\b' -> buffer.append("\\b");
+        case '\t' -> buffer.append("\\t");
+        case '\f' -> buffer.append("\\f");
+        case '\\' -> {
           if (escapeBackSlash) {
             buffer.append("\\\\");
           }
           else {
             buffer.append('\\');
           }
-          break;
-
-        case '\n':
+        }
+        case '\n' -> {
           if (escapeLineFeeds) {
             buffer.append("\\n");
           }
           else {
             buffer.append('\n');
           }
-          break;
-
-        case '\r':
+        }
+        case '\r' -> {
           if (escapeLineFeeds) {
             buffer.append("\\r");
           }
           else {
             buffer.append('\r');
           }
-          break;
-
-        default:
+        }
+        default -> {
           if (additionalChars != null && additionalChars.indexOf(ch) > -1) {
             buffer.append("\\").append(ch);
           }
@@ -355,6 +342,7 @@ public final class GrStringUtil {
           else {
             buffer.append(ch);
           }
+        }
       }
     }
     return buffer;
@@ -663,7 +651,7 @@ public final class GrStringUtil {
       }
       c = chars.charAt(index++);
       switch (c) {
-        case '/':
+        case '/' -> {
           if (escapeSlash) {
             outChars.append(c);
             if (sourceOffsets != null) {
@@ -673,15 +661,14 @@ public final class GrStringUtil {
           else {
             outChars.append('\\').append('/');
           }
-
-          break;
-        case '\n':
+        }
+        case '\n' -> {
           //do nothing
           if (sourceOffsets != null) {
             sourceOffsets[outChars.length() - outOffset] = index;
           }
-          break;
-        case 'u':
+        }
+        case 'u' -> {
           // uuuuu1234 is valid too
           while (index != chars.length() && chars.charAt(index) == 'u') {
             index++;
@@ -705,13 +692,13 @@ public final class GrStringUtil {
           else {
             return false;
           }
-          break;
-        default:
+        }
+        default -> {
           outChars.append('\\').append(c);
           if (sourceOffsets != null) {
             sourceOffsets[outChars.length() - outOffset] = index;
           }
-
+        }
       }
     }
     return true;

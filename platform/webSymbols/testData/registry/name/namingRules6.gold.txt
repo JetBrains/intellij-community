@@ -1,0 +1,14 @@
+[
+ {
+  matchedName: "js/properties/propTwo-Three",
+  origin: "vue@3.0.0 (vue)",
+  complete: true,
+  priority: NORMAL,
+  segments: [
+   {
+    name-part: "propTwo-Three",
+    symbol: <self>,
+   },
+  ],
+ },
+]

@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Deprecated(forRemoval = true)
 public interface AbstractUrlFavoriteConverter {
   @Nullable Object createBookmarkContext(@NotNull Project project, @NotNull String url, @Nullable String moduleName);
 

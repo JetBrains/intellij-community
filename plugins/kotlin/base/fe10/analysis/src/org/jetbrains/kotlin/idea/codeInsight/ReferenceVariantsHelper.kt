@@ -516,8 +516,8 @@ fun ResolutionScope.collectSyntheticStaticMembersAndConstructors(
     nameFilter: (Name) -> Boolean
 ): List<FunctionDescriptor> {
     val syntheticScopes = resolutionFacade.getFrontendService(SyntheticScopes::class.java)
-    val functionDescriptors = getContributedDescriptors(DescriptorKindFilter.FUNCTIONS)
-    val classifierDescriptors = getContributedDescriptors(DescriptorKindFilter.CLASSIFIERS)
+    val functionDescriptors = getContributedDescriptors(DescriptorKindFilter.FUNCTIONS, nameFilter)
+    val classifierDescriptors = getContributedDescriptors(DescriptorKindFilter.CLASSIFIERS, nameFilter)
     return (syntheticScopes.forceEnableSamAdapters().collectSyntheticStaticFunctions(functionDescriptors) +
             syntheticScopes.collectSyntheticConstructors(classifierDescriptors))
         .filter { kindFilter.accepts(it) && nameFilter(it.name) }

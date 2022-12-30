@@ -35,6 +35,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     connection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
       AppUIExecutor.onUiThread().expireWith(window.disposable).execute {
         updateState(window)
+        window.contentManagerIfCreated?.selectFirstContent()
       }
     })
     connection.subscribe(ProjectLevelVcsManagerEx.VCS_ACTIVATED, VcsActivationListener {
@@ -45,7 +46,6 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     connection.subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
       override fun toolWindowMappingChanged() {
         updateState(window)
-        window.contentManagerIfCreated?.selectFirstContent()
       }
     })
     CommitModeManager.subscribeOnCommitModeChange(connection, object : CommitModeManager.CommitModeListener {

@@ -418,7 +418,7 @@ public final class Presentation implements Cloneable {
    * because menus and shortcut processing use different defaults,
    * so values from template presentations are silently ignored.
    */
-  boolean isTemplate() {
+  public boolean isTemplate() {
     return BitUtil.isSet(myFlags, IS_TEMPLATE);
   }
 

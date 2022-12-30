@@ -215,7 +215,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   private AbstractTreeNode alreadySelectedNode(final Object element) {
     final TreePath[] selectionPaths = getTree().getSelectionPaths();
-    if (selectionPaths == null || selectionPaths.length == 0) {
+    if (selectionPaths == null) {
       return null;
     }
     for (TreePath selectionPath : selectionPaths) {

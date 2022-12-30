@@ -140,7 +140,7 @@ public final class RepositoryLibrarySynchronizer implements StartupActivity.Dumb
       libraryTable.addListener(globalLibSynchronizer, disposable);
     }
     globalLibSynchronizer.installOnExistingLibraries();
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(project.getMessageBus().connect(disposable), synchronizer);
+    project.getMessageBus().connect(disposable).subscribe(WorkspaceModelTopics.CHANGED, synchronizer);
     synchronizationQueue.synchronizeAllLibraries();
   }
 

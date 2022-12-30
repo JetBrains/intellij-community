@@ -67,5 +67,6 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.repository.search" />
+    <orderEntry type="module" module-name="intellij.platform.dependenciesToolwindow" />
   </component>
 </module>

@@ -58,7 +58,7 @@ class NonSingularHandler implements BuilderElementHandler {
     return psiFieldName;
   }
 
-  private String getAllMethodBody(@NotNull BuilderInfo info) {
+  private static String getAllMethodBody(@NotNull BuilderInfo info) {
     StringBuilder codeBlockTemplate = new StringBuilder("this.{0} = {1};\n");
     if (info.hasBuilderDefaultAnnotation()) {
       codeBlockTemplate.append("this.{2} = true;\n");
@@ -72,10 +72,11 @@ class NonSingularHandler implements BuilderElementHandler {
   public String renderBuildPrepare(@NotNull BuilderInfo info) {
     if (info.hasBuilderDefaultAnnotation()) {
       return MessageFormat.format(
-        "{0} {1} = this.{1};\n" +
-          "if (!this.{2}) '{'\n" +
-          "  {1} = {4}.{3}();\n" +
-          "'}'",
+        """
+          {0} {1} = this.{1};
+          if (!this.{2}) '{'
+            {1} = {4}.{3}();
+          '}'""",
         info.getFieldType().getCanonicalText(false),
         info.renderFieldName(), info.renderFieldDefaultSetName(), info.renderFieldDefaultProviderName(),
         info.getBuilderClass().getContainingClass().getName());

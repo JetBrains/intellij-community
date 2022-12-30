@@ -96,9 +96,9 @@ final class XPathDiagnosticImpl<T> implements XPathDiagnostic<T> {
                       List<?> inraw, boolean dfirstonly) {
 
     final int sz = inraw.size();
-    final List<Object> raw = new ArrayList<Object>(sz);
-    final List<Object> filtered = new ArrayList<Object>(sz);
-    final List<T> result = new ArrayList<T>(sz);
+    final List<Object> raw = new ArrayList<>(sz);
+    final List<Object> filtered = new ArrayList<>(sz);
+    final List<T> result = new ArrayList<>(sz);
     final Filter<T> filter = dxpath.getFilter();
 
     for (Object o : inraw) {

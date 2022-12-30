@@ -1,4 +1,4 @@
-// LANGUAGE_VERSION: 1.8
+// COMPILER_ARGUMENTS: -XXLanguage:+DataObjects
 import java.io.Serializable
 
 object<caret> Foo : Bar()

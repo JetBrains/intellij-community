@@ -320,7 +320,7 @@ public class SwitchBlockHighlightingModel {
     return ContainerUtil.exists(labelElements, st -> st instanceof PsiPattern || isNullType(st));
   }
 
-  private static boolean isNullType(@NotNull PsiElement element) {
+  public static boolean isNullType(@NotNull PsiElement element) {
     return element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType());
   }
 
@@ -398,6 +398,9 @@ public class SwitchBlockHighlightingModel {
 
   private static @NotNull Set<PsiClass> findMissedClasses(@NotNull PsiType selectorType, Map<PsiClass, PsiPattern> patternClasses) {
     PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(selectorType);
+    if (selectorClass instanceof PsiTypeParameter) {
+      selectorClass = selectorClass.getSuperClass();
+    }
     if (selectorClass == null) return Collections.emptySet();
     Queue<PsiClass> nonVisited = new ArrayDeque<>();
     nonVisited.add(selectorClass);
@@ -553,7 +556,14 @@ public class SwitchBlockHighlightingModel {
           holder.add(info);
           return;
         }
-        if (!TypeConversionUtil.areTypesConvertible(mySelectorType, patternType)) {
+        if (!TypeConversionUtil.areTypesConvertible(mySelectorType, patternType) ||
+            // 14.30.3 A type pattern that declares a pattern variable of a reference type U is
+            // applicable at another reference type T if T is downcast convertible to U (JEP 427)
+            // There is no rule that says that a reference type applies to a primitive type
+            // There is no restriction on primitive types in JEP 406 and JEP 420:
+            // 14.30.1 An expression e is compatible with a pattern if the pattern is of type T
+            // and e is downcast compatible with T
+            (mySelectorType instanceof PsiPrimitiveType && HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(label))) {
           HighlightInfo error =
             HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, elementToReport.getTextRange(), 0);
           holder.add(error);
@@ -844,7 +854,15 @@ public class SwitchBlockHighlightingModel {
         }
         if (defaultElement != null || elementCoversType != null) return;
       }
-      PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
+      PsiType selectorType = mySelectorType;
+      if (selectorType instanceof PsiCapturedWildcardType) {
+        selectorType = ((PsiCapturedWildcardType)selectorType).getUpperBound();
+      }
+      else if (selectorType instanceof PsiWildcardType) {
+        selectorType = ((PsiWildcardType)selectorType).getExtendsBound();
+      }
+
+      PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(selectorType);
       if (selectorClass != null && getSwitchSelectorKind() == SelectorKind.ENUM) {
         List<String> enumElements = new SmartList<>();
         for (PsiCaseLabelElement labelElement : elements) {
@@ -860,8 +878,8 @@ public class SwitchBlockHighlightingModel {
         }
         checkEnumCompleteness(selectorClass, enumElements, results);
       }
-      else if (selectorClass != null && selectorClass.hasModifierProperty(SEALED)) {
-        HighlightInfo info = checkSealedClassCompleteness(mySelectorType, elements);
+      else if (isSealed(selectorClass)) {
+        HighlightInfo info = checkSealedClassCompleteness(selectorType, elements);
         if (info != null) {
           results.add(info);
         }
@@ -877,6 +895,11 @@ public class SwitchBlockHighlightingModel {
       else {
         results.add(createCompletenessInfoForSwitch(!elements.isEmpty()));
       }
+    }
+
+    private static boolean isSealed(@Nullable PsiClass psiClass){
+      PsiClass effectiveClass = psiClass instanceof PsiTypeParameter ? psiClass.getSuperClass() : psiClass;
+      return effectiveClass != null && effectiveClass.hasModifierProperty(SEALED);
     }
 
     private static void fillElementsToCheckDominance(@NotNull List<? super PsiCaseLabelElement> elements,
@@ -1025,8 +1048,7 @@ public class SwitchBlockHighlightingModel {
 
     @Nullable
     private static PsiCaseLabelElement findTotalPatternForType(@NotNull List<? extends PsiCaseLabelElement> labelElements, @NotNull PsiType type) {
-      return ContainerUtil.find(labelElements, element ->
-        element instanceof PsiPattern && JavaPsiPatternUtil.isTotalForType(element, type));
+      return ContainerUtil.find(labelElements, element -> JavaPsiPatternUtil.isTotalForType(element, type));
     }
 
     private static boolean isConstantLabelElement(@NotNull PsiCaseLabelElement labelElement) {
@@ -1101,7 +1123,8 @@ public class SwitchBlockHighlightingModel {
   public static @NotNull Set<PsiElement> findSuspiciousLabelElements(@NotNull PsiSwitchBlock switchBlock) {
     SwitchBlockHighlightingModel switchModel = createInstance(PsiUtil.getLanguageLevel(switchBlock), switchBlock, switchBlock.getContainingFile());
     if (switchModel == null) return Collections.emptySet();
-    List<PsiCaseLabelElement> labelElements = StreamEx.of(SwitchUtils.getSwitchBranches(switchBlock)).select(PsiCaseLabelElement.class).toList();
+    List<PsiCaseLabelElement> labelElements =
+      ContainerUtil.filterIsInstance(SwitchUtils.getSwitchBranches(switchBlock), PsiCaseLabelElement.class);
     if (labelElements.isEmpty()) return Collections.emptySet();
     MultiMap<Object, PsiElement> duplicateCandidates = new MultiMap<>();
     labelElements.forEach(branch -> switchModel.fillElementsToCheckDuplicates(duplicateCandidates, branch));

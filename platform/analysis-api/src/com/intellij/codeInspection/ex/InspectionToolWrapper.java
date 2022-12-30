@@ -107,7 +107,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   public boolean isApplicable(@NotNull Language language) {
     String myLangId = getLanguage();
-    if (myLangId == null) return true;
+    if (myLangId == null || myLangId.isBlank() || "any".equals(myLangId)) return true;
 
     Set<String> languages = applicableToLanguages;
     if (languages == null) {

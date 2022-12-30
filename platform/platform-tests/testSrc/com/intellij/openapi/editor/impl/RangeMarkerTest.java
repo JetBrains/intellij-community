@@ -375,10 +375,11 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   }
 
   public void testDocSynchronizerPrefersLineBoundaryChanges() {
-    String text = "import java.awt.List;\n" +
-                    "[import java.util.ArrayList;\n]" +
-                    "import java.util.HashMap;\n" +
-                    "import java.util.Map;";
+    String text = """
+      import java.awt.List;
+      [import java.util.ArrayList;
+      ]import java.util.HashMap;
+      import java.util.Map;""";
     RangeMarker marker = createMarker(text);
     WriteAction.run(() -> {
       synchronizer.startTransaction(getProject(), document, psiFile);

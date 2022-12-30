@@ -29,13 +29,13 @@ abstract class AbstractBuiltInDecompilerTest : KotlinLightCodeInsightFixtureTest
 
     abstract fun configureAndBuildFileStub(packageFqName: String): PsiFileStub<*>
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 }
 
 @RunWith(JUnit38ClassRunner::class)
 class BuiltInDecompilerTest : AbstractBuiltInDecompilerTest() {
     override fun getProjectDescriptor(): KotlinWithJdkAndRuntimeLightProjectDescriptor =
-        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_NO_SOURCES
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceNoSources()
 
     override fun configureAndBuildFileStub(packageFqName: String): PsiFileStub<*> {
         val dirInRuntime = findDir(packageFqName, project)

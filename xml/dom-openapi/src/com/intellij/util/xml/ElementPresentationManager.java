@@ -54,7 +54,7 @@ public abstract class ElementPresentationManager {
   /**
    * @deprecated use {@link com.intellij.codeInsight.lookup.LookupElementBuilder}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public abstract Object createVariant(final Object variant, final String name, final PsiElement psiElement);
 
   public abstract <T> Object @NotNull [] createVariants(Collection<? extends T> elements, Function<? super T, String> namer, int iconFlags);

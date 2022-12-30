@@ -5,7 +5,7 @@ import com.intellij.execution.executors.ExecutorGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-internal class RunToolbarAdditionActionsHolder(val executorGroup: ExecutorGroup<*>, val process: RunToolbarProcess) {
+internal class RunToolbarAdditionActionsHolder(private val executorGroup: ExecutorGroup<*>, val process: RunToolbarProcess) {
   companion object {
     @JvmStatic
     fun getAdditionActionId(process: RunToolbarProcess) = "${process.moreActionSubGroupName}_additionAction"

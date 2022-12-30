@@ -164,7 +164,9 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
         }
       }""");
     myFixture.completeBasic();
-    assertEquals(List.of(), myFixture.getLookupElementStrings());
+    // Options contributed by TypoTolerantMatcher; these classes contain nested public classes,
+    // so we allow them, as they may potentially contain string constants
+    assertEquals(List.of("ForkJoinPool", "ThreadPoolExecutor"), myFixture.getLookupElementStrings());
   }
 
   @NeedsIndex.Full

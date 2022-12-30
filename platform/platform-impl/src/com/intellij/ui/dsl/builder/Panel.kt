@@ -47,14 +47,16 @@ interface Panel : CellBase<Panel> {
   fun indent(init: Panel.() -> Unit): RowsRange
 
   /**
-   * Adds row with [RowLayout.LABEL_ALIGNED] layout and [label]. Use [EMPTY_LABEL] for empty label.
-   * Do not use row(""), because it creates unnecessary label component in layout
+   * Adds row with [RowLayout.LABEL_ALIGNED] layout and [label]. The label can contain mnemonic and is assigned
+   * to the first component in the row via [JLabel.labelFor] property.
+   * Do not use row(""), because it creates unnecessary label component in layout, use [EMPTY_LABEL] instead.
    */
   fun row(@Nls label: String, init: Row.() -> Unit): Row
 
   /**
-   * Adds row with [RowLayout.LABEL_ALIGNED] layout and [label]. If label is null then
-   * [RowLayout.INDEPENDENT] layout is used
+   * Adds row with [RowLayout.LABEL_ALIGNED] layout and [label]. The label is assigned
+   * to the first component in the row via [JLabel.labelFor] property.
+   * If label is null then [RowLayout.INDEPENDENT] layout is used
    */
   fun row(label: JLabel? = null, init: Row.() -> Unit): Row
 

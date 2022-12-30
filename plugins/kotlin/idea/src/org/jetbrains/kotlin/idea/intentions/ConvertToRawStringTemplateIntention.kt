@@ -3,13 +3,21 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
 class ConvertToRawStringTemplateIntention : ConvertToStringTemplateIntention() {
     init {
         setTextGetter(KotlinBundle.lazyMessage("convert.concatenation.to.raw.string"))
+    }
+
+    override fun isApplicableTo(element: KtBinaryExpression): Boolean {
+        val intention = ToRawStringLiteralIntention()
+        return super.isApplicableTo(element) &&
+                element.descendantsOfType<KtStringTemplateExpression>().all { intention.isApplicableTo(it) }
     }
 
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {

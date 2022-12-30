@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @SuppressWarnings("IOStreamConstructor")
@@ -685,7 +686,7 @@ public final class JDOMUtil {
   }
 
   public static boolean isEmpty(@Nullable Element element) {
-    return element == null || (!element.hasAttributes() && element.getContent().isEmpty());
+    return element == null || element.isEmpty();
   }
 
   public static boolean isEmpty(@Nullable Element element, int attributeCount) {
@@ -720,6 +721,26 @@ public final class JDOMUtil {
   }
 
   public static @NotNull Element deepMerge(@NotNull Element to, @NotNull Element from) {
+    return deepMergeWithAttributes(to, from, Collections.emptyList());
+  }
+
+  public static class MergeAttribute {
+    public String elementName;
+    public String attributeName;
+
+    public MergeAttribute(String elementName, String attributeName) {
+      this.elementName = elementName;
+      this.attributeName = attributeName;
+    }
+  }
+
+  /**
+   * Deep merge that can join tags based on specified attributes.
+   * The regular deepMerge joins two tags only if they have exactly the same attributes.
+   * With this method you can provide a list of tag+attribute names. If two tags have similar attributes from this lists,
+   *   this method will merge them
+   */
+  public static @NotNull Element deepMergeWithAttributes(@NotNull Element to, @NotNull Element from, @NotNull List<MergeAttribute> mergeByAttributes) {
     for (Iterator<Element> iterator = from.getChildren().iterator(); iterator.hasNext(); ) {
       Element child = iterator.next();
       iterator.remove();
@@ -734,11 +755,11 @@ public final class JDOMUtil {
       // if no children (e.g. `<module fileurl="value" />`), it means that element should be added as list item
       if (existingChild == null ||
           existingChild.getChildren().isEmpty() ||
-          !isAttributesEqual(getAttributes(existingChild), getAttributes(child), false)) {
+          !areAttributesEqual(getAttributes(existingChild), getAttributes(child), existingChild, mergeByAttributes)) {
         to.addContent(child);
       }
       else {
-        deepMerge(existingChild, child);
+        deepMergeWithAttributes(existingChild, child, mergeByAttributes);
       }
     }
     for (Iterator<Attribute> iterator = getAttributes(from).iterator(); iterator.hasNext(); ) {
@@ -747,6 +768,24 @@ public final class JDOMUtil {
       to.setAttribute(attribute);
     }
     return to;
+  }
+
+  private static boolean areAttributesEqual(@NotNull List<? extends Attribute> l1,
+                                            @NotNull List<? extends Attribute> l2,
+                                            @NotNull Element base,
+                                            @NotNull List<MergeAttribute> mergeByAttributes) {
+    Set<String> attributes = mergeByAttributes.stream()
+      .filter(o -> o.elementName.equals(base.getName()))
+      .map(o -> o.attributeName)
+      .collect(Collectors.toSet());
+    if (attributes.isEmpty()) {
+      return isAttributesEqual(l1, l2, false);
+    }
+
+    Map<String, String> secondMap = l2.stream().collect(Collectors.toMap(Attribute::getName, Attribute::getValue));
+    return l1.stream()
+      .filter(o -> attributes.contains(o.getName()))
+      .allMatch(o -> o.getValue().equals(secondMap.get(o.getName())));
   }
 
   public static @Nullable Element reduceChildren(@NotNull String name, @NotNull Element parent) {

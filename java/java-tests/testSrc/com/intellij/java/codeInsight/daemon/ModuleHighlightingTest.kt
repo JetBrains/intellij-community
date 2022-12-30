@@ -577,6 +577,25 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     assertThat(JavaModuleGraphUtil.findDescriptorByFile(PsiUtilCore.getVirtualFile(elementInSources), project)).isNotNull
   }
 
+  fun testMultiReleaseJarParts() {
+    addFile("pkg/I.java", """
+      package pkg;
+      public interface I {
+        String m();
+      }""".trimIndent(), MR_MAIN)
+    addFile("pkg/Impl.java", """
+      package pkg;
+      public class Impl implements I {
+        public String m() { return "main impl"; }
+      }""".trimIndent(), MR_MAIN)
+    addFile("module-info.java", "module light.idea.test.mr { }", MR_JAVA9)
+    highlight("pkg/Impl.java", """
+      package pkg;
+      public class Impl implements I {
+        public String m() { return "alt impl"; }
+      }""".trimIndent(), MR_JAVA9)
+  }
+
   //<editor-fold desc="Helpers.">
   private fun highlight(text: String) = highlight("module-info.java", text)
 

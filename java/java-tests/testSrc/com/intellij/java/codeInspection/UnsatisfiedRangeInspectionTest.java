@@ -10,13 +10,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnsatisfiedRangeInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testUnsatisfiedRange() {
-    myFixture.addClass("package org.jetbrains.annotations;\n" +
-                       "import java.lang.annotation.*;\n" +
-                       "@Target(ElementType.TYPE_USE)\n" +
-                       "public @interface Range {\n" +
-                       "  long from();\n" +
-                       "  long to();\n" +
-                       "}");
+    myFixture.addClass("""
+                         package org.jetbrains.annotations;
+                         import java.lang.annotation.*;
+                         @Target(ElementType.TYPE_USE)
+                         public @interface Range {
+                           long from();
+                           long to();
+                         }""");
     myFixture.enableInspections(new UnsatisfiedRangeInspection());
     myFixture.configureByFile(getTestName(false)+".java");
     myFixture.testHighlighting(true, false, false);

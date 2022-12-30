@@ -118,8 +118,7 @@ public class SubstitutionHandler extends MatchingHandler {
       if (firstBranchCheck != null) return firstBranchCheck;
       return findPredicate(binaryPredicate.getSecond(), aClass);
     } else if (start instanceof NotPredicate) {
-      final NotPredicate notPredicate = (NotPredicate)start;
-      return findPredicate(notPredicate.getPredicate(), aClass);
+      return null;
     }
     return null;
   }

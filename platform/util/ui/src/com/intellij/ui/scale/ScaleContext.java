@@ -124,13 +124,11 @@ public class ScaleContext extends UserScaleContext {
    */
   @Override
   public double getScale(@NotNull DerivedScaleType type) {
-    switch (type) {
-      case DEV_SCALE:
-        return JreHiDpiUtil.isJreHiDPIEnabled() ? sysScale.value : 1;
-      case EFF_USR_SCALE: return usrScale.value * objScale.value;
-      case PIX_SCALE: return pixScale;
-    }
-    return 1f; // unreachable
+    return switch (type) {
+      case DEV_SCALE -> JreHiDpiUtil.isJreHiDPIEnabled() ? sysScale.value : 1;
+      case EFF_USR_SCALE -> usrScale.value * objScale.value;
+      case PIX_SCALE -> pixScale;
+    };
   }
 
   /**

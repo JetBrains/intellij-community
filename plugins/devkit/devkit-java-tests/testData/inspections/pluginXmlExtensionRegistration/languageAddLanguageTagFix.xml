@@ -1,0 +1,7 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <intention<caret>Action>
+    </intentionAction>
+  </extensions>
+</idea-plugin>

@@ -462,7 +462,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     addCommentRow(component, forComponent, null)
   }
 
-  fun addCommentRow(component: JComponent, forComponent: Boolean, anchorComponent: JComponent?) {
+  private fun addCommentRow(component: JComponent, forComponent: Boolean, anchorComponent: JComponent?) {
     gapAfter = "${spacing.commentVerticalTopGap}px!"
 
     val isParentRowLabeled = labeled

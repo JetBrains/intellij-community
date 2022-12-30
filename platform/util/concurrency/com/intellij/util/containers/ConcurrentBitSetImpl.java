@@ -5,28 +5,40 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.util.concurrent.locks.StampedLock;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.util.function.IntUnaryOperator;
 
+/**
+ * Implementation: bits are stored packed in the int[] {@link #array}, 32 bits per array element.
+ * When a bit-change request comes, the array is reallocated as necessary.
+ *
+ * N.B. all operations below must be idempotent
+ * (in order to restart themselves correctly when the underlying array is reallocated).
+ * For example, {@code set(i); set(i);} has the same effect as {@code set(i)}.
+ * That's why non-idempotent ops, e.g. {@code flip()}, aren't there.
+ */
 class ConcurrentBitSetImpl implements ConcurrentBitSet {
   ConcurrentBitSetImpl() {
-    clear();
+    this(32);
+  }
+  ConcurrentBitSetImpl(int estimatedSize) {
+    array = new int[Math.max(32, estimatedSize/BITS_PER_WORD)];
   }
 
   /**
    * store all bits here.
-   * The bit at bitIndex is stored in {@code array[arrayIndex(bitIndex)]} word.
+   * The bit at bitIndex is stored in {@code array[wordIndex(bitIndex)]} word.
    */
-  private int[] array;
+  private volatile int[] array;
+  private static final VarHandle ARRAY_ELEMENT = MethodHandles.arrayElementVarHandle(int[].class);
 
-  private static int arrayIndex(int bitIndex) {
+  private static int wordIndex(int bitIndex) {
     return bitIndex >> ADDRESS_BITS_PER_WORD;
   }
   private static int wordMaskForIndex(int bitIndex) {
     return 1 << bitIndex;
   }
-
-  private final StampedLock lock = new StampedLock();
 
   private static final int ADDRESS_BITS_PER_WORD = 5;
   static final int BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;
@@ -35,40 +47,41 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
    * {@inheritDoc}
    */
   @Override
-  public boolean flip(final int bitIndex) {
-    int wordMaskForIndex = wordMaskForIndex(bitIndex);
-    long prevWord = changeWord(bitIndex, word -> word ^ wordMaskForIndex);
-    return (prevWord & wordMaskForIndex) == 0;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public boolean set(final int bitIndex) {
+  public boolean set(int bitIndex) {
     int mask = wordMaskForIndex(bitIndex);
     long prevWord = changeWord(bitIndex, word -> word | mask);
     return (prevWord & mask) != 0;
   }
 
+  // return the old word
+  // changeWord MUST be idempotent
   int changeWord(int bitIndex, @NotNull IntUnaryOperator changeWord) {
-    ensureNonNegative(bitIndex);
-
-    long stamp = lock.writeLock();
-    try {
-      int i = arrayIndex(bitIndex);
-      int[] array = growArrayTo(i);
-      int word = array[i];
-      int newWord = changeWord.applyAsInt(word);
-      array[i] = newWord;
-      return word;
-    }
-    finally {
-      lock.unlockWrite(stamp);
+    assertNonNegative(bitIndex);
+    int i = wordIndex(bitIndex);
+    synchronized (this) {
+      int[] newArray;
+      int[] oldArray = array;
+      int oldWord;
+      if (i < oldArray.length) {
+        newArray = oldArray;
+        oldWord = arrayRead(oldArray, i);
+      }
+      else {
+        oldArray = array;
+        array = newArray = ArrayUtil.realloc(oldArray, Math.max(oldArray.length * 2, i + 1));
+        oldWord = 0;
+      }
+      int newWord = changeWord.applyAsInt(oldWord);
+      ARRAY_ELEMENT.setVolatile(newArray, i, newWord);
+      return oldWord;
     }
   }
 
-  private static void ensureNonNegative(int index) {
+  private static int arrayRead(int[] oldArray, int i) {
+    return (int)ARRAY_ELEMENT.getVolatile(oldArray, i);
+  }
+
+  private static void assertNonNegative(int index) {
     if (index < 0) {
       reportNegativeIndex(index);
     }
@@ -76,14 +89,6 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
 
   private static void reportNegativeIndex(int fromIndex) {
     throw new IndexOutOfBoundsException("index < 0: " + fromIndex);
-  }
-
-  private int[] growArrayTo(int arrayIndex) {
-    int[] array = this.array;
-    if (arrayIndex < array.length) return array;
-    int[] newArray = ArrayUtil.realloc(array, Math.max(array.length * 2, arrayIndex + 1));
-    this.array = newArray;
-    return newArray;
   }
 
   /**
@@ -103,7 +108,7 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
    * {@inheritDoc}
    */
   @Override
-  public boolean clear(final int bitIndex) {
+  public boolean clear(int bitIndex) {
     int wordMaskForIndex = wordMaskForIndex(bitIndex);
     int prevWord = changeWord(bitIndex, word -> word & ~wordMaskForIndex);
     return (prevWord & wordMaskForIndex) != 0;
@@ -114,13 +119,7 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
    */
   @Override
   public void clear() {
-    long stamp = lock.writeLock();
-    try {
-      array = new int[32];
-    }
-    finally {
-      lock.unlockWrite(stamp);
-    }
+    array = new int[32];
   }
 
   /**
@@ -132,16 +131,10 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
   }
 
   int getWord(int bitIndex) {
-    ensureNonNegative(bitIndex);
-    long stamp;
-    int word;
-    int arrayIndex = arrayIndex(bitIndex);
-    do {
-      stamp = lock.tryOptimisticRead();
-      int[] array = this.array;
-      word = arrayIndex < array.length ? array[arrayIndex] : 0;
-    } while (!lock.validate(stamp));
-    return word;
+    assertNonNegative(bitIndex);
+    int arrayIndex = wordIndex(bitIndex);
+    int[] array = this.array;
+    return arrayIndex < array.length ? arrayRead(array, arrayIndex) : 0;
   }
 
   /**
@@ -149,33 +142,27 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
    */
   @Override
   public int nextSetBit(int fromIndex) {
-    ensureNonNegative(fromIndex);
-    int i = arrayIndex(fromIndex);
-    int result;
-    long stamp;
-    do {
-      result = -1;
-      stamp = lock.tryOptimisticRead();
-      int[] array = this.array;
-      if (i < array.length) {
-        int w = array[i];
-        int nextBitsInWord = w & -wordMaskForIndex(fromIndex);
-        if (nextBitsInWord != 0) {
-          int wordIndex = Integer.numberOfTrailingZeros(nextBitsInWord);
+    assertNonNegative(fromIndex);
+    int i = wordIndex(fromIndex);
+    int result = -1;
+    int[] array = this.array;
+    if (i < array.length) {
+      int w = arrayRead(array, i);
+      int nextBitsInWord = w & -wordMaskForIndex(fromIndex);
+      if (nextBitsInWord != 0) {
+        int wordIndex = Integer.numberOfTrailingZeros(nextBitsInWord);
+        result = i * BITS_PER_WORD + wordIndex;
+      }
+      else {
+        for (i += 1; i < array.length; i++) {
+          w = arrayRead(array, i);
+          if (w == 0) continue;
+          int wordIndex = Integer.numberOfTrailingZeros(w);
           result = i * BITS_PER_WORD + wordIndex;
-        }
-        else {
-          for (i += 1; i < array.length; i++) {
-            w = array[i];
-            if (w == 0) continue;
-            int wordIndex = Integer.numberOfTrailingZeros(w);
-            result = i * BITS_PER_WORD + wordIndex;
-            break;
-          }
+          break;
         }
       }
     }
-    while (!lock.validate(stamp));
     return result;
   }
 
@@ -185,37 +172,31 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
    */
   @Override
   public int nextClearBit(int fromIndex) {
-    ensureNonNegative(fromIndex);
-
-    int i = arrayIndex(fromIndex);
+    assertNonNegative(fromIndex);
+    int i = wordIndex(fromIndex);
     int result;
-    long stamp;
-    do {
-      stamp = lock.tryOptimisticRead();
-      int[] array = this.array;
-      result = array.length * BITS_PER_WORD;
-      if (i >= array.length) {
-        result = fromIndex;
+    int[] array = this.array;
+    result = array.length * BITS_PER_WORD;
+    if (i >= array.length) {
+      result = fromIndex;
+    }
+    else {
+      int w = ~arrayRead(array, i);
+      int nextBitsInWord = w & -wordMaskForIndex(fromIndex);
+      if (nextBitsInWord != 0) {
+        int wordIndex = Integer.numberOfTrailingZeros(nextBitsInWord);
+        result = i * BITS_PER_WORD + wordIndex;
       }
       else {
-        int w = ~array[i];
-        int nextBitsInWord = w & -wordMaskForIndex(fromIndex);
-        if (nextBitsInWord != 0) {
-          int wordIndex = Integer.numberOfTrailingZeros(nextBitsInWord);
+        for (i += 1; i < array.length; i++) {
+          w = ~arrayRead(array, i);
+          if (w == 0) continue;
+          int wordIndex = Integer.numberOfTrailingZeros(w);
           result = i * BITS_PER_WORD + wordIndex;
-        }
-        else {
-          for (i += 1; i < array.length; i++) {
-            w = ~array[i];
-            if (w == 0) continue;
-            int wordIndex = Integer.numberOfTrailingZeros(w);
-            result = i * BITS_PER_WORD + wordIndex;
-            break;
-          }
+          break;
         }
       }
     }
-    while (!lock.validate(stamp));
     return result;
   }
 
@@ -225,14 +206,16 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
    */
   @Override
   public int size() {
-    long stamp;
-    int result;
-    do {
-      stamp = lock.tryOptimisticRead();
-      int[] array = this.array;
-      result = array.length << ADDRESS_BITS_PER_WORD;
-    } while (!lock.validate(stamp));
-    return result;
+    return array.length << ADDRESS_BITS_PER_WORD;
+  }
+
+  @Override
+  public int cardinality() {
+    int sum = 0;
+    for (int l : array) {
+      sum += Integer.bitCount(l);
+    }
+    return sum;
   }
 
   /**
@@ -275,21 +258,8 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
     return b.toString();
   }
 
-  @Override
   public int @NotNull [] toIntArray() {
-    int[] array = readArrayUnderReadLock();
     return array.clone();
-  }
-
-  private int[] readArrayUnderReadLock() {
-    long stamp;
-    int[] array;
-    do {
-      stamp = lock.tryOptimisticRead();
-      array = this.array;
-    }
-    while (!lock.validate(stamp));
-    return array;
   }
 
   public void writeTo(@NotNull File file) throws IOException {
@@ -316,6 +286,7 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
     }
   }
 
+  // for serialization only
   private ConcurrentBitSetImpl(int @NotNull [] words) {
     array = words;
   }

@@ -2,15 +2,14 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,9 +17,12 @@ import java.util.Arrays;
 import java.util.Objects;
 
 @ApiStatus.Internal
-public final class ChildInfoImpl extends FileAttributes implements ChildInfo {
+public final class ChildInfoImpl implements ChildInfo {
   public static final int UNKNOWN_ID_YET = -238;
 
+  private static final FileAttributes UNKNOWN = new FileAttributes(false, false, false, false, 0, 0, false);
+
+  private final FileAttributes attributes;
   private final int id;
   private final int nameId;
   private final String symLinkTarget;
@@ -38,11 +40,11 @@ public final class ChildInfoImpl extends FileAttributes implements ChildInfo {
                        @Nullable FileAttributes attributes,
                        ChildInfo @Nullable [] children,
                        @Nullable String symLinkTarget) {
-    super(attributes == null ? UNKNOWN : attributes);
-    this.nameId = nameId;
+    this.attributes = null == attributes ? UNKNOWN : attributes;
     this.id = id;
-    this.children = children;
+    this.nameId = nameId;
     this.symLinkTarget = symLinkTarget;
+    this.children = children;
     if (id <= 0 && id != UNKNOWN_ID_YET || nameId <= 0 && nameId != UNKNOWN_ID_YET) {
       int parentId = FSRecords.getParent(id);
       throw new IllegalArgumentException("invalid arguments id: " + id + " (parent id = " + parentId + "); nameId: " + nameId);
@@ -54,9 +56,8 @@ public final class ChildInfoImpl extends FileAttributes implements ChildInfo {
     return id;
   }
 
-  @NotNull
   @Override
-  public CharSequence getName() {
+  public @NotNull CharSequence getName() {
     return FileNameCache.getVFileName(nameId);
   }
 
@@ -76,57 +77,42 @@ public final class ChildInfoImpl extends FileAttributes implements ChildInfo {
   }
 
   @Override
-  public FileAttributes getFileAttributes() {
-    return flags == -1 ? null : this;
+  public @Nullable FileAttributes getFileAttributes() {
+    return attributes == UNKNOWN ? null : attributes;
   }
 
   @Override
-  @PersistentFS.Attributes
-  public int getFileAttributeFlags() {
-    if (flags == -1) return -1;
-    FileAttributes.Type type = getType();
-    boolean isDirectory = type == FileAttributes.Type.DIRECTORY;
-    boolean isWritable = !BitUtil.isSet(flags, FileAttributes.READ_ONLY);
-    boolean isSymLink = BitUtil.isSet(flags, FileAttributes.SYM_LINK);
-    boolean isSpecial = type == FileAttributes.Type.SPECIAL;
-    boolean isHidden = BitUtil.isSet(flags, FileAttributes.HIDDEN);
-    CaseSensitivity sensitivity = areChildrenCaseSensitive();
-    boolean isCaseSensitive = sensitivity == CaseSensitivity.SENSITIVE;
-    return PersistentFSImpl.fileAttributesToFlags(isDirectory, isWritable, isSymLink, isSpecial, isHidden, sensitivity != CaseSensitivity.UNKNOWN, isCaseSensitive);
+  public @PersistentFS.Attributes int getFileAttributeFlags() {
+    if (attributes == UNKNOWN) return -1;
+    var isDirectory = attributes.isDirectory();
+    var isWritable = attributes.isWritable();
+    var isSymLink = attributes.isSymLink();
+    var isSpecial = attributes.isSpecial();
+    var isHidden = attributes.isHidden();
+    var sensitivity = attributes.areChildrenCaseSensitive();
+    var isCaseSensitive = sensitivity == CaseSensitivity.SENSITIVE;
+    var isCaseSensitivityKnown = sensitivity != CaseSensitivity.UNKNOWN;
+    return PersistentFSImpl.fileAttributesToFlags(isDirectory, isWritable, isSymLink, isSpecial, isHidden, isCaseSensitivityKnown, isCaseSensitive);
   }
 
-  @Override
-  @NonNls
-  public String toString() {
-    return "\"" + (nameId > 0 ? getName() : "?")+"\"; nameId: "+nameId + "; id: " + id + " (" + (flags == -1 ? "unknown" : super.toString()) + ")" +
-           (children == null ? "" : "\n  " + StringUtil.join(children, info -> info.toString().replaceAll("\n", "\n  "), "\n  "));
-  }
-
-  private ChildInfoImpl(int id,
-                       int nameId,
-                       String symLinkTarget,
-                       ChildInfo @Nullable("null means children are unknown") [] children,
-                       byte flags,
-                       long length,
-                       long lastModified) {
-    super(flags, length, lastModified);
+  private ChildInfoImpl(FileAttributes attributes, int id, int nameId, String symLinkTarget, ChildInfo @Nullable [] children) {
+    this.attributes = attributes;
     this.id = id;
     this.nameId = nameId;
     this.symLinkTarget = symLinkTarget;
     this.children = children;
   }
 
-  @NotNull
-  public ChildInfo withChildren(ChildInfo @Nullable [] children) {
-    return new ChildInfoImpl(id, nameId, symLinkTarget, children, flags, length, lastModified);
+  public @NotNull ChildInfo withChildren(ChildInfo @Nullable [] children) {
+    return new ChildInfoImpl(attributes, id, nameId, symLinkTarget, children);
   }
-  @NotNull
-  public ChildInfo withNameId(int nameId) {
-    return new ChildInfoImpl(id, nameId, symLinkTarget, children, flags, length, lastModified);
+
+  public @NotNull ChildInfo withNameId(int nameId) {
+    return new ChildInfoImpl(attributes, id, nameId, symLinkTarget, children);
   }
-  @NotNull
-  public ChildInfo withId(int id) {
-    return new ChildInfoImpl(id, nameId, symLinkTarget, children, flags, length, lastModified);
+
+  public @NotNull ChildInfo withId(int id) {
+    return new ChildInfoImpl(attributes, id, nameId, symLinkTarget, children);
   }
 
   @Override
@@ -144,5 +130,12 @@ public final class ChildInfoImpl extends FileAttributes implements ChildInfo {
   @Override
   public int hashCode() {
     return Objects.hash(super.hashCode(), id, nameId, symLinkTarget, Arrays.hashCode(children));
+  }
+
+  @Override
+  public String toString() {
+    return "\"" + (nameId > 0 ? getName() : "?") + "\"; nameId: " + nameId + "; id: " + id +
+           " (" + (attributes == UNKNOWN ? "unknown" : super.toString()) + ")" +
+           (children == null ? "" : "\n  " + StringUtil.join(children, info -> info.toString().replaceAll("\n", "\n  "), "\n  "));
   }
 }

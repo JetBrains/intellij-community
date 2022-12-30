@@ -112,19 +112,12 @@ public class HgUpdateDialog {
   public void updateFrom(@NotNull HgUpdateConfigurationSettings updateConfiguration) {
     myPullCheckBox.setSelected(updateConfiguration.shouldPull());
     HgUpdateType updateType = updateConfiguration.getUpdateType();
-    switch (updateType) {
-      case ONLY_UPDATE:
-        myOnlyUpdateButton.setSelected(true);
-        break;
-      case MERGE:
-        myMergeRadioButton.setSelected(true);
-        break;
-      case REBASE:
-        myRebaseRadioButton.setSelected(true);
-        break;
-      default:
-        assert false : "Unknown value of update type: " + updateType;
-    }
+    JRadioButton button = switch (updateType) {
+      case ONLY_UPDATE -> myOnlyUpdateButton;
+      case MERGE -> myMergeRadioButton;
+      case REBASE -> myRebaseRadioButton;
+    };
+    button.setSelected(true);
     myCommitAfterMergeCheckBox.setSelected(updateConfiguration.shouldCommitAfterMerge());
   }
 }

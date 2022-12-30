@@ -12,26 +12,29 @@ public class UtilityClassCanBeEnumInspectionTest extends LightJavaInspectionTest
   }
 
   public void testQuickfix() {
-    doTest("final class /*Utility class 'Util' can be 'enum'*//*_*/Util/**/ {\n" +
-           "  public static void driveCar() {}\n" +
-           "}");
+    doTest("""
+             final class /*Utility class 'Util' can be 'enum'*//*_*/Util/**/ {
+               public static void driveCar() {}
+             }""");
     checkQuickFix("Convert to 'enum'",
-                  "enum Util {\n" +
-                  "    ;\n" +
-                  "\n" +
-                  "    public static void driveCar() {}\n" +
-                  "}");
+                  """
+                    enum Util {
+                        ;
+
+                        public static void driveCar() {}
+                    }""");
   }
 
   public void testUtilityClassInstantiation() {
-    doTest("class SmartStepClass {\n" +
-           "  public static final int a = 1;\n" +
-           "  public static final String b = String.valueOf(2);\n" +
-           "\n" +
-           "  public static void main(String[] args) {\n" +
-           "    new SmartStepClass();\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             class SmartStepClass {
+               public static final int a = 1;
+               public static final String b = String.valueOf(2);
+
+               public static void main(String[] args) {
+                 new SmartStepClass();
+               }
+             }""");
   }
 
   @Nullable

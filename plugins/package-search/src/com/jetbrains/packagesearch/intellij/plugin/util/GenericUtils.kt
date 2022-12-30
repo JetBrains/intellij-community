@@ -16,7 +16,7 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.util
 
-import com.intellij.ui.content.ContentManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 
@@ -25,5 +25,4 @@ internal fun SelectionChangedListener(action: (ContentManagerEvent) -> Unit) = o
     override fun selectionChanged(event: ContentManagerEvent) = action(event)
 }
 
-internal fun ContentManager.addSelectionChangedListener(action: (ContentManagerEvent) -> Unit) =
-    SelectionChangedListener(action).also { addContentManagerListener(it) }
+internal fun VirtualFile.toNioPathOrNull() = fileSystem.getNioPath(this)

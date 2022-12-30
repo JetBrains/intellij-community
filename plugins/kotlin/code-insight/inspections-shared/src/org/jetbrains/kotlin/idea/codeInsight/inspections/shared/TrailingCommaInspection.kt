@@ -193,7 +193,7 @@ class TrailingCommaInspection(
     )
 
     class ReformatTrailingCommaFix(commaOwner: KtElement, @IntentionFamilyName private val fixMessage: String) : LocalQuickFix {
-        val commaOwnerPointer = commaOwner.createSmartPointer()
+        private val commaOwnerPointer = commaOwner.createSmartPointer()
 
         override fun getFamilyName(): String = fixMessage
 

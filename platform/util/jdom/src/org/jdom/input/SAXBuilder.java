@@ -98,12 +98,12 @@ public final class SAXBuilder implements SAXEngine {
   /**
    * User-specified features to be set on the SAX parser
    */
-  private final HashMap<String, Boolean> features = new HashMap<String, Boolean>(5);
+  private final HashMap<String, Boolean> features = new HashMap<>(5);
 
   /**
    * User-specified properties to be set on the SAX parser
    */
-  private final HashMap<String, Object> properties = new HashMap<String, Object>(5);
+  private final HashMap<String, Object> properties = new HashMap<>(5);
 
   /**
    * EntityResolver class to use

@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.groovy.dgm
 
 import com.intellij.openapi.components.service
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.storage.EntityChange
@@ -20,7 +20,7 @@ class GroovyMacroModuleListener : WorkspaceModelChangeListener {
     for (moduleEntity in moduleChanges) {
       val entityToFlush = moduleEntity.oldEntity ?: continue
       val bridge = event.storageBefore.moduleMap.getDataByEntity(entityToFlush) ?: continue
-      bridge.project.service<GroovyMacroRegistryService>().castSafelyTo<GroovyMacroRegistryServiceImpl>()?.refreshModule(bridge)
+      bridge.project.service<GroovyMacroRegistryService>().asSafely<GroovyMacroRegistryServiceImpl>()?.refreshModule(bridge)
     }
   }
 }

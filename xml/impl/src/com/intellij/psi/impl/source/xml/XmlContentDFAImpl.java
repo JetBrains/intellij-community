@@ -52,7 +52,7 @@ final class XmlContentDFAImpl extends XmlContentDFA {
 
   private void getPossibleElements(List<XmlElementDescriptor> elements) {
     switch (myGroup.getGroupType()) {
-      case SEQUENCE:
+      case SEQUENCE -> {
         getLastChild();
         while (myLastChild != null) {
           myLastChild.getPossibleElements(elements);
@@ -61,17 +61,13 @@ final class XmlContentDFAImpl extends XmlContentDFA {
           }
           else return;
         }
-        break;
-      case CHOICE:
-      case ALL:
-      case GROUP:
+      }
+      case CHOICE, ALL, GROUP -> {
         for (XmlElementsGroup group : myGroup.getSubGroups()) {
           new XmlContentDFAImpl(group).getPossibleElements(elements);
         }
-        break;
-      case LEAF:
-        ContainerUtil.addIfNotNull(elements, myGroup.getLeafDescriptor());
-        break;
+      }
+      case LEAF -> ContainerUtil.addIfNotNull(elements, myGroup.getLeafDescriptor());
     }
   }
 
@@ -102,14 +98,14 @@ final class XmlContentDFAImpl extends XmlContentDFA {
     while (myLastChild != null) {
       Result result = myLastChild.doTransition(element);
       switch (result) {
-        case CONSUME:
+        case CONSUME -> {
           return Result.CONSUME;
-        case NONE:
-          myLastChild = getNextSubGroup();
-          break;
-        case PROCEED_TO_NEXT:
+        }
+        case NONE -> myLastChild = getNextSubGroup();
+        case PROCEED_TO_NEXT -> {
           myLastChild = getNextSubGroup();
           return myLastChild == null ? Result.PROCEED_TO_NEXT : Result.CONSUME;
+        }
       }
     }
     return Result.NONE;

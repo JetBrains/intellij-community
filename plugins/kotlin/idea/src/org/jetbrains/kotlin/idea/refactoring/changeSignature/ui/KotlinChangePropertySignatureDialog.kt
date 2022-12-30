@@ -133,7 +133,7 @@ class KotlinChangePropertySignatureDialog(
 
     private fun calculateSignature(): String = buildString {
         methodDescriptor.baseDeclaration.safeAs<KtValVarKeywordOwner>()?.valOrVarKeyword?.let {
-            val visibility = visibilityCombo.selectedItem
+            val visibility = if (methodDescriptor.canChangeVisibility()) visibilityCombo.selectedItem else methodDescriptor.visibility
             if (visibility != DescriptorVisibilities.DEFAULT_VISIBILITY) {
                 append("$visibility ")
             }
@@ -238,7 +238,7 @@ class KotlinChangePropertySignatureDialog(
             originalDescriptor,
             name,
             returnTypeCodeFragment.getTypeInfo(isCovariant = false, forPreview = false),
-            visibilityCombo.selectedItem as DescriptorVisibility,
+            if (methodDescriptor.canChangeVisibility()) visibilityCombo.selectedItem as DescriptorVisibility else methodDescriptor.visibility,
             emptyList(),
             receiver,
             originalDescriptor.method,

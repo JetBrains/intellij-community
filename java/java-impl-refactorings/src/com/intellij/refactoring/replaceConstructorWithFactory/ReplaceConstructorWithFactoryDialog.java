@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.replaceConstructorWithFactory;
 
 import com.intellij.ide.util.TreeClassChooser;
@@ -95,12 +95,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
 
     gbc.gridx++;
     gbc.weightx = 1.0;
-    @NonNls final String[] nameSuggestions = new String[]{
-      "create" + myContainingClass.getName(),
-      "new" + myContainingClass.getName(),
-      "getInstance",
-      "newInstance"
-      };
+    @NonNls final String[] nameSuggestions = ReplaceConstructorWithFactoryHandler.suggestFactoryNames(myContainingClass);
     myNameField = new NameSuggestionsField(nameSuggestions, getProject());
     myNameChangedListener = () -> validateButtons();
     myNameField.addDataChangedListener(myNameChangedListener);

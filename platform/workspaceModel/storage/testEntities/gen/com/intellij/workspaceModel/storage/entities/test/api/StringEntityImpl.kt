@@ -37,7 +37,7 @@ open class StringEntityImpl(val dataSource: StringEntityData) : StringEntity, Wo
     return connections
   }
 
-  class Builder(val result: StringEntityData?) : ModifiableWorkspaceEntityBase<StringEntity>(), StringEntity.Builder {
+  class Builder(var result: StringEntityData?) : ModifiableWorkspaceEntityBase<StringEntity>(), StringEntity.Builder {
     constructor() : this(StringEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -55,6 +55,9 @@ open class StringEntityImpl(val dataSource: StringEntityData) : StringEntity, Wo
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -78,8 +81,8 @@ open class StringEntityImpl(val dataSource: StringEntityData) : StringEntity, Wo
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as StringEntity
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
       if (parents != null) {
       }
     }
@@ -156,7 +159,7 @@ class StringEntityData : WorkspaceEntityData<StringEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as StringEntityData
 
@@ -167,7 +170,7 @@ class StringEntityData : WorkspaceEntityData<StringEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as StringEntityData
 

@@ -62,6 +62,7 @@ class RegisterInspectionFix implements IntentionAction {
       Extension e = extensions.addExtension(myEp.getName());
       XmlTag tag = e.getXmlTag();
       tag.setAttribute("implementationClass", myPsiClass.getQualifiedName());
+      tag.setAttribute("language", "");
       return e;
     });
     PsiNavigateUtil.navigate(extension.getXmlTag());

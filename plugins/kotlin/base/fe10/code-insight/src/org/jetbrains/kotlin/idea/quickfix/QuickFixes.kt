@@ -8,9 +8,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.Extensions
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.UnresolvedReferenceQuickFixFactory
+import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 
 class QuickFixes {
     private val factories: Multimap<DiagnosticFactory<*>, KotlinIntentionActionsFactory> =
+        HashMultimap.create<DiagnosticFactory<*>, KotlinIntentionActionsFactory>()
+    private val unresolvedReferenceActionFactories: Multimap<DiagnosticFactory<*>, KotlinIntentionActionsFactory> =
         HashMultimap.create<DiagnosticFactory<*>, KotlinIntentionActionsFactory>()
     private val actions: Multimap<DiagnosticFactory<*>, IntentionAction> = HashMultimap.create<DiagnosticFactory<*>, IntentionAction>()
 
@@ -21,10 +25,16 @@ class QuickFixes {
 
     fun register(diagnosticFactory: DiagnosticFactory<*>, vararg factory: QuickFixFactory) {
         factories.putAll(diagnosticFactory, factory.map { it.asKotlinIntentionActionsFactory() })
+        factory.filterIsInstance<UnresolvedReferenceQuickFixFactory>().ifNotEmpty {
+            unresolvedReferenceActionFactories.putAll(diagnosticFactory, this.map { it.asKotlinIntentionActionsFactory() })
+        }
     }
 
     fun register(diagnosticFactory: DiagnosticFactory<*>, vararg factory: KotlinIntentionActionsFactory) {
         factories.putAll(diagnosticFactory, factory.toList())
+        factory.filterIsInstance<UnresolvedReferenceQuickFixFactory>().ifNotEmpty {
+            unresolvedReferenceActionFactories.putAll(diagnosticFactory, this.map { it.asKotlinIntentionActionsFactory() })
+        }
     }
 
     fun register(diagnosticFactory: DiagnosticFactory<*>, vararg action: IntentionAction) {
@@ -33,6 +43,10 @@ class QuickFixes {
 
     fun getActionFactories(diagnosticFactory: DiagnosticFactory<*>): Collection<KotlinIntentionActionsFactory> {
         return factories.get(diagnosticFactory)
+    }
+
+    fun getUnresolvedReferenceActionFactories(diagnosticFactory: DiagnosticFactory<*>): Collection<KotlinIntentionActionsFactory> {
+        return unresolvedReferenceActionFactories.get(diagnosticFactory)
     }
 
     fun getActions(diagnosticFactory: DiagnosticFactory<*>): Collection<IntentionAction> {

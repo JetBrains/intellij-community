@@ -30,7 +30,7 @@ import javax.swing.plaf.ComponentUI
 class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() {
 
   //unscalable insets
-  val unscalable24px = 24
+  private val unscalable24px = 24
 
   private val interactiveCoursesPanel: JPanel = JPanel()
   private val interactiveCoursesPanelBottomGap = rigid(1, 32)

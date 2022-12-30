@@ -18,6 +18,7 @@ class TestFailedLineInspection : AbstractBaseUastLocalInspectionTool() {
       val sourceNode = node.sourcePsi ?: return true
       val testFailProvider = TestFailedLineManager.getInstance(holder.project)
       val testInfo = testFailProvider.getTestInfo(sourceNode) ?: return true
+      if (testInfo.magnitude < TEST_FAILED_MAGNITUDE) return true // don't highlight skipped tests
       val fixes = listOfNotNull(
         testFailProvider.getDebugQuickFix(sourceNode, testInfo.topStackTraceLine),
         testFailProvider.getRunQuickFix(sourceNode)
@@ -29,5 +30,9 @@ class TestFailedLineInspection : AbstractBaseUastLocalInspectionTool() {
       holder.registerProblem(descriptor)
       return true
     }
+  }
+
+  companion object {
+    const val TEST_FAILED_MAGNITUDE = 6 // see TestStateInfo#Magnitude
   }
 }

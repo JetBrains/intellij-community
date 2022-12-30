@@ -494,6 +494,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/createActual/valueClass/");
         }
 
+        @TestMetadata("valueClassWithGenerics")
+        public void testValueClassWithGenerics() throws Exception {
+            runTest("testData/multiModuleQuickFix/createActual/valueClassWithGenerics/");
+        }
+
         @TestMetadata("withFakeJvm")
         public void testWithFakeJvm() throws Exception {
             runTest("testData/multiModuleQuickFix/createActual/withFakeJvm/");
@@ -965,6 +970,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
         @TestMetadata("commonWithJvm")
         public void testCommonWithJvm() throws Exception {
             runTest("testData/multiModuleQuickFix/inlineToValue/commonWithJvm/");
+        }
+
+        @TestMetadata("genericParameter")
+        public void testGenericParameter() throws Exception {
+            runTest("testData/multiModuleQuickFix/inlineToValue/genericParameter/");
         }
 
         @TestMetadata("JS")

@@ -16,10 +16,12 @@ import com.intellij.psi.PsiJavaFile;
  */
 public class GotoClassTest extends HeavyFileEditorManagerTestCase {
   public void testGotoClass() {
-    PsiJavaFile file = (PsiJavaFile)myFixture.configureByText("Foo.java", "public class Foo {\n" +
-                                                         "}\n" +
-                                                         "\n" +
-                                                         "class Bar {}\n");
+    PsiJavaFile file = (PsiJavaFile)myFixture.configureByText("Foo.java", """
+      public class Foo {
+      }
+
+      class Bar {}
+      """);
 
     VirtualFile virtualFile = file.getVirtualFile();
     assertNotNull(virtualFile);

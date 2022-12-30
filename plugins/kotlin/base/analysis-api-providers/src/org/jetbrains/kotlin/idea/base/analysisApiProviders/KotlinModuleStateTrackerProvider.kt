@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicLong
 class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
     init {
         val busConnection = project.messageBus.connect(this)
-        WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, ModelChangeListener())
+        busConnection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
         busConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, JdkListener())
     }
 
@@ -41,6 +41,7 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
 
     fun getModuleStateTrackerFor(module: KtModule): KtModuleStateTracker {
         return when (module) {
+            is KtBuiltinsModule -> ModuleStateTrackerImpl()
             is KtLibraryModule -> {
                 val libraryInfo = module.moduleInfo as LibraryInfo
                 libraryInfo.checkValidity()
@@ -62,7 +63,6 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
 
             is KtLibrarySourceModule -> getModuleStateTrackerFor(module.binaryLibrary)
             is KtNotUnderContentRootModule -> ModuleStateTrackerImpl() // TODO need proper cache?
-            is KtBuiltinsModule -> ModuleStateTrackerImpl()
         }
     }
 

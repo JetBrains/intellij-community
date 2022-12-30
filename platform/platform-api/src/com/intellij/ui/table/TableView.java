@@ -55,14 +55,6 @@ public class TableView<Item> extends BaseTableView implements SelectionProvider 
     super.setModel(dataModel);
   }
 
-  /**
-   * @deprecated use {@link #setModelAndUpdateColumns(ListTableModel)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void setModel(final ListTableModel<Item> model) {
-    setModelAndUpdateColumns(model);
-  }
-
   public void setModelAndUpdateColumns(final ListTableModel<Item> model) {
     super.setModel(model);
     createDefaultColumnsFromModel();

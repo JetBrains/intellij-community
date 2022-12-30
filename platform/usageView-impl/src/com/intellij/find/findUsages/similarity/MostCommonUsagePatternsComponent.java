@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -50,7 +51,7 @@ import java.util.stream.Collectors;
 
 
 public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel implements Disposable {
-  private static final int CLUSTER_LIMIT = 3;
+  private static final int CLUSTER_LIMIT = 10;
   private final @NotNull Project myProject;
   private final @NotNull UsageViewImpl myUsageView;
   private final @NotNull JBPanelWithEmptyText myMainPanel;
@@ -58,10 +59,10 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   private final @NotNull Ref<Collection<UsageCluster>> mySortedClusters;
   private @NotNull MostCommonUsagesToolbar myMostCommonUsagesToolbar;
   private final @NotNull RefreshAction myRefreshAction;
-  private @NotNull Set<Usage> mySelectedUsages;
+  private final @NotNull Set<Usage> mySelectedUsages;
   private final @NotNull Set<Usage> myNonClusteredUsages;
   private final @NotNull ClusteringSearchSession mySession;
-  private int myAlreadyRenderedSnippets;
+  private final List<@Nullable UsageCodeSnippetComponent> myAlreadyRenderedSnippets;
   private final AtomicBoolean isRefreshing;
   private final AtomicBoolean isShowingSimilarUsagesComponent;
   private final AtomicInteger lastUsagesNumber;
@@ -69,6 +70,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
 
   public MostCommonUsagePatternsComponent(@NotNull UsageViewImpl usageView, @NotNull ClusteringSearchSession session) {
     super(true);
+    myAlreadyRenderedSnippets = new ArrayList<>();
     isRefreshing = new AtomicBoolean(false);
     isShowingSimilarUsagesComponent = new AtomicBoolean(false);
     lastUsagesNumber = new AtomicInteger(0);
@@ -127,10 +129,14 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     return myMostCommonUsageScrollPane.getVerticalScrollBar().getValue() != 0;
   }
 
-  private void refresh() {
+  public void refresh() {
     isRefreshing.set(true);
     mySortedClusters.set(null);
-    mySelectedUsages = myUsageView.getSelectedUsages();
+    mySelectedUsages.clear();
+    mySelectedUsages.addAll(myUsageView.getSelectedUsages());
+    myNonClusteredUsages.clear();
+    myNonClusteredUsages.addAll(
+      mySelectedUsages.stream().filter(e -> !(e instanceof SimilarUsage)).collect(Collectors.toCollection(HashSet::new)));
     addMostCommonUsagesForSelectedGroups();
   }
 
@@ -160,18 +166,18 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   private void loadMoreSnippets(boolean logMoreSnippetsLoaded) {
     if (mySortedClusters.isNull()) return;
     Collection<UsageCluster> sortedClusters = mySortedClusters.get();
-    if (myAlreadyRenderedSnippets < sortedClusters.size()) {
-      sortedClusters.stream().skip(myAlreadyRenderedSnippets).limit(CLUSTER_LIMIT).forEach(cluster -> {
+    if (myAlreadyRenderedSnippets.size() < sortedClusters.size()) {
+      sortedClusters.stream().skip(myAlreadyRenderedSnippets.size()).limit(CLUSTER_LIMIT).forEach(cluster -> {
         final Set<SimilarUsage> filteredUsages =
           cluster.getUsages().stream().filter(e -> (e instanceof UsageInfo2UsageAdapter)).collect(Collectors.toSet());
-        renderClusterDescription(ContainerUtil.getFirstItem(filteredUsages), filteredUsages);
+        renderClusterDescription(filteredUsages);
       });
       if (logMoreSnippetsLoaded) {
-        SimilarUsagesCollector.logMoreClustersLoaded(myProject, myUsageView, myAlreadyRenderedSnippets);
+        SimilarUsagesCollector.logMoreClustersLoaded(myProject, myUsageView, myAlreadyRenderedSnippets.size());
       }
     }
-    if (myAlreadyRenderedSnippets >= sortedClusters.size()) {
-      int numberOfAlreadyRenderedNonClusteredUsages = myAlreadyRenderedSnippets - sortedClusters.size();
+    if (myAlreadyRenderedSnippets.size() >= sortedClusters.size()) {
+      int numberOfAlreadyRenderedNonClusteredUsages = myAlreadyRenderedSnippets.size() - sortedClusters.size();
       if (numberOfAlreadyRenderedNonClusteredUsages < myNonClusteredUsages.size()) {
         myNonClusteredUsages.stream().skip(numberOfAlreadyRenderedNonClusteredUsages).limit(CLUSTER_LIMIT).forEach(e -> {
           if (e instanceof UsageInfo2UsageAdapter && e.isValid()) {
@@ -179,7 +185,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
           }
         });
         if (logMoreSnippetsLoaded) {
-          SimilarUsagesCollector.logMoreNonClusteredUsagesLoaded(myProject, myUsageView, myAlreadyRenderedSnippets);
+          SimilarUsagesCollector.logMoreNonClusteredUsagesLoaded(myProject, myUsageView, myAlreadyRenderedSnippets.size());
         }
       }
     }
@@ -209,6 +215,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
                                             new ActionLink(
                                               UsageViewBundle.message("0.similar.usages.back.to.search.results", UIUtil.leftArrow()),
                                               event -> {
+                                                Disposer.dispose(similarComponent);
                                                 removeAll();
                                                 setToolbar(myMostCommonUsagesToolbar);
                                                 setContent(myMostCommonUsageScrollPane);
@@ -226,29 +233,33 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   @Override
   public void dispose() {
     isDisposed = true;
+    disposeAlreadyRenderedSnippets();
   }
 
-  private void renderClusterDescription(@Nullable SimilarUsage usage, @NotNull Set<@NotNull SimilarUsage> clusterUsages) {
-    if (usage instanceof UsageInfo2UsageAdapter) {
-      final UsageInfo usageInfo = usage.getUsageInfo();
-      PsiElement element = usageInfo.getElement();
-      if (element != null) {
-        UsageCodeSnippetComponent summaryRendererComponent = new UsageCodeSnippetComponent(element);
-        Disposer.register(this, summaryRendererComponent);
-        myMainPanel.add(createHeaderPanel(usageInfo, clusterUsages));
-        myMainPanel.add(summaryRendererComponent);
-      }
-    }
-    myAlreadyRenderedSnippets++;
-  }
-
-  private void renderNonClusteredUsage(UsageInfo2UsageAdapter usage) {
+  private void renderClusterDescription(@NotNull Set<@NotNull SimilarUsage> clusterUsages) {
+    SimilarUsage usage = ContainerUtil.getFirstItem(clusterUsages);
     final UsageInfo usageInfo = usage.getUsageInfo();
-    UsageCodeSnippetComponent summaryRendererComponent = new UsageCodeSnippetComponent(Objects.requireNonNull(usageInfo.getElement()));
-    Disposer.register(this, summaryRendererComponent);
-    myMainPanel.add(createHeaderWithLocationLink(usageInfo));
-    myMainPanel.add(summaryRendererComponent);
-    myAlreadyRenderedSnippets++;
+    renderSnippet(usageInfo, createHeaderPanel(usageInfo, clusterUsages));
+  }
+
+
+  private void renderNonClusteredUsage(@NotNull UsageInfo2UsageAdapter usage) {
+    final UsageInfo usageInfo = usage.getUsageInfo();
+    renderSnippet(usageInfo, createHeaderWithLocationLink(usageInfo));
+  }
+
+  private void renderSnippet(@NotNull UsageInfo usageInfo, @NotNull JPanel headerPanel) {
+    PsiElement element = usageInfo.getElement();
+    UsageCodeSnippetComponent summaryRendererComponent = null;
+    if (element != null) {
+      summaryRendererComponent = new UsageCodeSnippetComponent(element);
+      if (!Disposer.tryRegister(this, summaryRendererComponent)) {
+        Disposer.dispose(summaryRendererComponent);
+      }
+      myMainPanel.add(headerPanel);
+      myMainPanel.add(summaryRendererComponent);
+    }
+    myAlreadyRenderedSnippets.add(summaryRendererComponent);
   }
 
   private void addMostCommonUsagesForSelectedGroups() {
@@ -258,7 +269,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     }).finishOnUiThread(
       ModalityState.NON_MODAL, e -> {
         if (!mySortedClusters.isNull() && !isDisposed) {
-          myAlreadyRenderedSnippets = 0;
+          disposeAlreadyRenderedSnippets();
           myMainPanel.removeAll();
           myMainPanel.revalidate();
           updateToolbar();
@@ -269,6 +280,15 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
         }
       }
     ).submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  private void disposeAlreadyRenderedSnippets() {
+    for (UsageCodeSnippetComponent snippet : myAlreadyRenderedSnippets) {
+      if (snippet != null) {
+        Disposer.dispose(snippet);
+      }
+    }
+    myAlreadyRenderedSnippets.clear();
   }
 
   public static @Nullable ClusteringSearchSession findClusteringSessionInUsageView(@NotNull UsageView usageView) {
@@ -285,8 +305,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     return header;
   }
 
-  @NotNull
-  private static JPanel createHeaderWithLocationLink(@NotNull UsageInfo info) {
+  private static @NotNull JPanel createHeaderWithLocationLink(@NotNull UsageInfo info) {
     final LocationLinkComponent component = new LocationLinkComponent(info);
     final JPanel header = new JPanel();
     header.setBackground(UIUtil.getTextFieldBackground());

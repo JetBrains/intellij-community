@@ -18,7 +18,7 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
   internal fun asyncSession(scope: CoroutineScope,
                             sessionInfo: CommitSessionInfo,
                             commitChecks: suspend () -> CommitChecksResult) {
-    check(isExecuting)
+    check(isExecuting) { "Commit session has already finished" }
     scope.launch {
       try {
         fireBeforeCommitChecksStarted(sessionInfo)
@@ -39,27 +39,27 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     }
   }
 
-  suspend fun runBackgroundBeforeCommitChecks(sessionInfo: CommitSessionInfo): CommitProblem? {
+  suspend fun runBackgroundBeforeCommitChecks(commitInfo: DynamicCommitInfo): CommitProblem? {
     return PartialChangesUtil.underChangeList(project, getBeforeCommitChecksChangelist()) {
-      runCommitHandlers(sessionInfo)
+      runCommitHandlers(commitInfo)
     }
   }
 
-  private suspend fun runCommitHandlers(sessionInfo: CommitSessionInfo): CommitProblem? {
+  private suspend fun runCommitHandlers(commitInfo: DynamicCommitInfo): CommitProblem? {
     try {
       val handlers = commitHandlers
       val commitChecks = handlers
-        .map { it.asCommitCheck(sessionInfo, commitContext) }
+        .map { it.asCommitCheck(commitInfo) }
         .groupBy { it.getExecutionOrder() }
 
-      runCommitChecks(project, commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }
+      runCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }
 
       runMetaHandlers(handlers.filterIsInstance<CheckinMetaHandler>())
 
-      runCommitChecks(project, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION])?.let { return it }
+      runCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION])?.let { return it }
       FileDocumentManager.getInstance().saveAllDocuments()
 
-      runCommitChecks(project, commitChecks[CommitCheck.ExecutionOrder.LATE])?.let { return it }
+      runCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.LATE])?.let { return it }
 
       return null // checks passed
     }
@@ -73,13 +73,11 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     }
   }
 
-  companion object {
-    private suspend fun runCommitChecks(project: Project, commitChecks: List<CommitCheck>?): CommitProblem? {
-      for (commitCheck in commitChecks.orEmpty()) {
-        val problem = runCommitCheck(project, commitCheck)
-        if (problem != null) return problem
-      }
-      return null
+  private suspend fun runCommitChecks(commitInfo: DynamicCommitInfo, commitChecks: List<CommitCheck>?): CommitProblem? {
+    for (commitCheck in commitChecks.orEmpty()) {
+      val problem = runCommitCheck(project, commitCheck, commitInfo)
+      if (problem != null) return problem
     }
+    return null
   }
 }

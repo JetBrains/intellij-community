@@ -65,6 +65,7 @@ public class DaemonProcessRuntimeClasspath {
     "java.net.preferIPv4Stack",
     "java.net.preferIPv6Addresses",
     "java.util.logging.config.file",
+    "jna.boot.library.path",
   });
 
   public static @NotNull Class<?> getMainClass() {

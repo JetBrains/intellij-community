@@ -5,11 +5,9 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vcs.changes.ChangeListWorker;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -20,9 +18,9 @@ public class MoveChanges implements ChangeListCommand {
   private MultiMap<LocalChangeList, Change> myMovedFrom;
   private LocalChangeList myListCopy;
 
-  public MoveChanges(@NotNull String name, Change @NotNull [] changes) {
+  public MoveChanges(@NotNull String name, @NotNull List<Change> changes) {
     myName = name;
-    myChanges = ContainerUtil.skipNulls(Arrays.asList(changes));
+    myChanges = changes;
   }
 
   @Override

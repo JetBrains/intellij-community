@@ -216,6 +216,12 @@
       "UI": "com.intellij.laf.macos.MacIntelliJTextFieldUI"
     },
 
+
+    "SearchFieldWithExtension": {
+      "border": "com.intellij.laf.macos.MacIntelliSearchBorder",
+      "UI": "com.intellij.ui.components.DarculaSearchFieldWithExtensionUI"
+    },
+
     "Tree": {
       "hash": "#E6E6E6",
       "paintLines": false

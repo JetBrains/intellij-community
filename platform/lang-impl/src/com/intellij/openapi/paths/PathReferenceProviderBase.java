@@ -58,9 +58,9 @@ public abstract class PathReferenceProviderBase implements PathReferenceProvider
   public static int getLastPosOfURL(final int offset, @NotNull String url) {
     for (int i = offset; i < url.length(); i++) {
       switch (url.charAt(i)) {
-        case '?':
-        case '#':
+        case '?', '#' -> {
           return i;
+        }
       }
     }
     return -1;

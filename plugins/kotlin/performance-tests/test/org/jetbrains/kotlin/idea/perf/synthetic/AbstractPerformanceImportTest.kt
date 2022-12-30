@@ -22,7 +22,7 @@ import java.io.File
 
 abstract class AbstractPerformanceImportTest : KotlinLightCodeInsightFixtureTestCase() {
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     protected abstract fun stats(): Stats
 

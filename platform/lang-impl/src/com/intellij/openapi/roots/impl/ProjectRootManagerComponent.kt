@@ -36,7 +36,8 @@ import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.EntityIndexingService
-import com.intellij.util.indexing.roots.IndexableFilesIndex
+import com.intellij.util.indexing.IndexableFilesIndex
+import com.intellij.util.indexing.roots.IndexableFilesIndexImpl
 import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
@@ -217,7 +218,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     try {
       (DirectoryIndex.getInstance(myProject) as? DirectoryIndexImpl)?.reset()
       if (IndexableFilesIndex.shouldBeUsed()) {
-        IndexableFilesIndex.getInstance(myProject).beforeRootsChanged()
+        IndexableFilesIndexImpl.getInstanceImpl(myProject).beforeRootsChanged()
       }
       myProject.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(ModuleRootEventImpl(myProject, fileTypes))
     }
@@ -233,7 +234,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
 
       val isFromWorkspaceOnly = EntityIndexingService.getInstance().isFromWorkspaceOnly(indexingInfos)
       if (IndexableFilesIndex.shouldBeUsed()) {
-        IndexableFilesIndex.getInstance(myProject).afterRootsChanged(fileTypes, indexingInfos, isFromWorkspaceOnly)
+        IndexableFilesIndexImpl.getInstanceImpl(myProject).afterRootsChanged(fileTypes, indexingInfos, isFromWorkspaceOnly)
       }
       myProject.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS)
         .rootsChanged(ModuleRootEventImpl(myProject, fileTypes, indexingInfos, isFromWorkspaceOnly))

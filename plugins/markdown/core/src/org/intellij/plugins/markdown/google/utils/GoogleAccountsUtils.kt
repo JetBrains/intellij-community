@@ -6,16 +6,17 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.auth.oauth2.TokenResponse
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
+import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
-import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -23,15 +24,10 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.alsoIfNull
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.plus
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.google.GoogleAppCredentialsException
-import org.intellij.plugins.markdown.google.accounts.GoogleAccountManager
-import org.intellij.plugins.markdown.google.accounts.GoogleAccountsDetailsLoader
-import org.intellij.plugins.markdown.google.accounts.GoogleAccountsListModel
-import org.intellij.plugins.markdown.google.accounts.GoogleUserInfoService
+import org.intellij.plugins.markdown.google.accounts.*
 import org.intellij.plugins.markdown.google.accounts.data.GoogleAccount
 import org.intellij.plugins.markdown.google.authorization.GoogleCredentials
 import org.intellij.plugins.markdown.google.authorization.GoogleOAuthService
@@ -134,8 +130,8 @@ internal object GoogleAccountsUtils {
     val oAuthService = service<GoogleOAuthService>()
     val userInfoService = service<GoogleUserInfoService>()
 
-    val scope = CoroutineScope(SupervisorJob()).also { Disposer.register(disposable) { it.cancel() } }
-    val detailsLoader = GoogleAccountsDetailsLoader(
+    val scope = DisposingMainScope(disposable) + ModalityState.any().asContextElement()
+    val detailsProvider = GoogleAccountsDetailsProvider(
       scope,
       accountManager,
       accountsListModel,
@@ -143,11 +139,12 @@ internal object GoogleAccountsUtils {
       userInfoService
     )
 
-    val panelFactory = AccountsPanelFactory(accountManager, accountsListModel, detailsLoader, disposable)
+    val panelFactory = AccountsPanelFactory(scope, accountManager, accountsListModel)
+    val actionsController = GoogleAccountsPanelActionsController(accountsListModel)
 
     return panel {
       row {
-        panelFactory.accountsPanelCell(this, false)
+        panelFactory.accountsPanelCell(this, detailsProvider, actionsController)
           .horizontalAlign(HorizontalAlign.FILL)
           .verticalAlign(VerticalAlign.FILL)
       }.resizableRow()

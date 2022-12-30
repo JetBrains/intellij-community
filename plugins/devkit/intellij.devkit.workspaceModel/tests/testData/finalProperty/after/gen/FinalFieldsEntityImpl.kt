@@ -36,7 +36,7 @@ open class FinalFieldsEntityImpl(val dataSource: FinalFieldsEntityData) : FinalF
     return connections
   }
 
-  class Builder(val result: FinalFieldsEntityData?) : ModifiableWorkspaceEntityBase<FinalFieldsEntity>(), FinalFieldsEntity.Builder {
+  class Builder(var result: FinalFieldsEntityData?) : ModifiableWorkspaceEntityBase<FinalFieldsEntity>(), FinalFieldsEntity.Builder {
     constructor() : this(FinalFieldsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -54,6 +54,9 @@ open class FinalFieldsEntityImpl(val dataSource: FinalFieldsEntityData) : FinalF
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -77,8 +80,8 @@ open class FinalFieldsEntityImpl(val dataSource: FinalFieldsEntityData) : FinalF
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FinalFieldsEntity
-      this.entitySource = dataSource.entitySource
-      this.descriptor = dataSource.descriptor
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.descriptor != dataSource.descriptor) this.descriptor = dataSource.descriptor
       if (parents != null) {
       }
     }
@@ -156,7 +159,7 @@ class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FinalFieldsEntityData
 
@@ -167,7 +170,7 @@ class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FinalFieldsEntityData
 

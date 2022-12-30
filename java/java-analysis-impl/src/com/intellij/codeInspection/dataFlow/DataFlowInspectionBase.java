@@ -3,12 +3,16 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityProblem;
-import com.intellij.codeInspection.dataFlow.fix.*;
+import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
+import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
+import com.intellij.codeInspection.dataFlow.fix.ReplaceWithArgumentFix;
+import com.intellij.codeInspection.dataFlow.fix.ReplaceWithObjectsEqualsFix;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
@@ -267,6 +271,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
     reportDuplicateAssignments(reporter, visitor);
     reportPointlessSameArguments(reporter, visitor);
+    reportStreamConsumed(holder, visitor);
   }
 
   private static void reportRedundantInstanceOf(DataFlowInstructionVisitor visitor, ProblemReporter reporter) {
@@ -567,6 +572,14 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     });
   }
 
+  private void reportStreamConsumed(ProblemsHolder holder, DataFlowInstructionVisitor visitor) {
+    visitor.streamConsumed().forKeyValue((psiElement, alwaysFails) -> {
+      if (!REPORT_UNSOUND_WARNINGS && !alwaysFails) return;
+      holder.registerProblem(psiElement, JavaAnalysisBundle.message(alwaysFails ? "dataflow.message.stream.consumed.always" :
+                                                                    "dataflow.message.stream.consumed"));
+    });
+  }
+
   private static void reportArrayStoreProblems(ProblemsHolder holder, DataFlowInstructionVisitor visitor) {
     visitor.getArrayStoreProblems().forEach(
       (assignment, types) -> holder.registerProblem(assignment.getOperationSign(), JavaAnalysisBundle
@@ -581,6 +594,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
     NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(scope.getProject()).findOwnNullabilityInfo(method);
     if (info == null || info.getNullability() != Nullability.NULLABLE) return;
+    if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_VOID, method.getReturnType())) return;
 
     PsiAnnotation annotation = info.getAnnotation();
     if (!annotation.isPhysical() || alsoAppliesToInternalSubType(annotation, method)) return;
@@ -741,6 +755,8 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (anchor instanceof PsiInstanceOfExpression) {
       PsiType type = ((PsiInstanceOfExpression)anchor).getOperand().getType();
       if (type == null || !TypeConstraints.instanceOf(type).isResolved()) return true;
+      // 5.20.2 Removed restriction on pattern instanceof for total patterns (JEP 427)
+      if (HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(anchor)) return false;
       PsiPattern pattern = ((PsiInstanceOfExpression)anchor).getPattern();
       if (pattern instanceof PsiTypeTestPattern && ((PsiTypeTestPattern)pattern).getPatternVariable() != null) {
         PsiTypeElement checkType = ((PsiTypeTestPattern)pattern).getCheckType();
@@ -768,15 +784,15 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (info == null) info = DfaPsiUtil.getTypeNullabilityInfo(PsiTypesUtil.getMethodReturnType(block));
     PsiAnnotation anno = info == null ? null : info.getAnnotation();
     Nullability nullability = info == null ? Nullability.UNKNOWN : info.getNullability();
+    PsiType returnType = method.getReturnType();
     if (nullability == Nullability.NULLABLE) {
-      if (!info.isInferred() || DfaPsiUtil.getTypeNullability(method.getReturnType()) == Nullability.NULLABLE) return;
+      if (!info.isInferred() || DfaPsiUtil.getTypeNullability(returnType) == Nullability.NULLABLE) return;
     }
     // In rare cases, inference may produce different result (e.g. if nullable method overrides non-null method)
     if (nullability == Nullability.NOT_NULL && info.isInferred()) return;
 
     if (nullability != Nullability.NOT_NULL && (!SUGGEST_NULLABLE_ANNOTATIONS || block.getParent() instanceof PsiLambdaExpression)) return;
 
-    PsiType returnType = method.getReturnType();
     // no warnings in void lambdas, where the expression is not returned anyway
     if (block instanceof PsiExpression && block.getParent() instanceof PsiLambdaExpression && PsiType.VOID.equals(returnType)) return;
 

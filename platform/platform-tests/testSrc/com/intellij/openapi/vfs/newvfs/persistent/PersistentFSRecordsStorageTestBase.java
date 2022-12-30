@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -10,15 +9,14 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 
+import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.joining;
 import static org.junit.Assert.*;
 
 /**
@@ -55,10 +53,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     recordOriginal.updateInStorage(storage);
     final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordOriginal.id);
 
-    assertEquals("Record updated and record read back by same ID should be equal",
-                 recordOriginal,
-                 recordReadBack
-    );
+    assertEqualExceptModCount("Record updated and record read back by same ID should be equal", recordOriginal, recordReadBack);
   }
 
   @Test
@@ -75,10 +70,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     for (int i = 0; i < records.length; i++) {
       final FSRecord recordOriginal = records[i];
       final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordOriginal.id);
-      //assertEquals("[" + i + "]: fields inserted and fields read back by same ID should be equal",
-      //             recordOriginal,
-      //             recordReadBack);
-      if (!recordOriginal.equals(recordReadBack)) {
+      if (!recordOriginal.equalsExceptModCount(recordReadBack)) {
         incorrectlyReadBackRecords.put(recordOriginal, recordReadBack);
       }
     }
@@ -86,9 +78,9 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       fail("Records read back should be all equal to their originals, but " + incorrectlyReadBackRecords.size() +
            " different: \n" +
            incorrectlyReadBackRecords.entrySet().stream()
-             .sorted(Comparator.comparing(e -> e.getKey().id))
+             .sorted(comparing(e -> e.getKey().id))
              .map(e -> e.getKey() + "\n" + e.getValue())
-             .collect(Collectors.joining("\n"))
+             .collect(joining("\n"))
       );
     }
   }
@@ -131,9 +123,10 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     for (int i = 0; i < records.length; i++) {
       final FSRecord recordOriginal = records[i];
       final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordOriginal.id);
-      assertEquals("[" + i + "]: fields inserted and fields read back by same ID should be equal",
-                   recordOriginal,
-                   recordReadBack);
+      assertEqualExceptModCount("[" + i + "]: fields inserted and fields read back by same ID should be equal",
+                                recordOriginal,
+                                recordReadBack
+      );
     }
   }
 
@@ -175,9 +168,9 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     for (int i = 0; i < records.length; i++) {
       final FSRecord recordOriginal = records[i];
       final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordOriginal.id);
-      assertEquals("[" + i + "]: fields inserted and fields read back by same ID should be equal",
-                   recordOriginal,
-                   recordReadBack);
+      assertEqualExceptModCount("[" + i + "]: fields inserted and fields read back by same ID should be equal", recordOriginal,
+                                recordReadBack
+      );
     }
   }
 
@@ -187,10 +180,10 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
   public void emptyStorageRemainsEmptyButHeaderFieldsStillRestored_AfterStorageClosedAndReopened() throws IOException {
     final int version = 10;
     final int connectionStatus = PersistentFSHeaders.CONNECTED_MAGIC;
-    final int globalModCount = storage.incGlobalModCount();
 
     storage.setVersion(version);
     storage.setConnectionStatus(connectionStatus);
+    final int globalModCount = storage.getGlobalModCount();
     assertTrue("Storage must be 'dirty' after few header fields were written",
                storage.isDirty());
 
@@ -224,10 +217,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     storage = storageReopened;//for tearDown to successfully close it
 
     final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordId);
-    assertEquals("Record written should be read back as-is",
-                 recordWritten,
-                 recordReadBack
-    );
+    assertEqualExceptModCount("Record written should be read back as-is", recordWritten, recordReadBack);
   }
 
   @After
@@ -295,23 +285,17 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       storage.setContentRecordId(id, this.contentRef);
       storage.putTimestamp(id, this.timestamp);
       storage.putLength(id, this.length);
-      storage.setModCount(id, this.modCount);
+      //storage.overwriteModCount(id, this.modCount);
     }
 
-    public FSRecord insertInStorage(final PersistentFSRecordsStorage storage) throws IOException {
-      final int id = storage.allocateRecord();
-      storage.setParent(id, this.parentRef);
-      storage.setNameId(id, this.nameRef);
-      storage.setFlags(id, this.flags);
-      storage.setAttributeRecordId(id, this.attributeRef);
-      storage.setContentRecordId(id, this.contentRef);
-      storage.putTimestamp(id, this.timestamp);
-      storage.putLength(id, this.length);
-      storage.setModCount(id, this.modCount);
-      return assignId(id);
-    }
+    //public FSRecord insertInStorage(final PersistentFSRecordsStorage storage) throws IOException {
+    //  final int id = storage.allocateRecord();
+    //  final FSRecord recordWithId = assignId(id);
+    //  recordWithId.updateInStorage(storage);
+    //  return recordWithId;
+    //}
 
-    public FSRecord assignId(int id) {
+    public FSRecord assignId(final int id) {
       return new FSRecord(id, parentRef, nameRef, flags, attributeRef, contentRef, timestamp, modCount, length);
     }
 
@@ -331,6 +315,22 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       if (timestamp != record.timestamp) return false;
       if (modCount != record.modCount) return false;
       if (length != record.length) return false;
+
+      return true;
+    }
+
+    public boolean equalsExceptModCount(FSRecord other) {
+      if (this == other) return true;
+      if (other == null) return false;
+
+      if (id != other.id) return false;
+      if (parentRef != other.parentRef) return false;
+      if (nameRef != other.nameRef) return false;
+      if (flags != other.flags) return false;
+      if (attributeRef != other.attributeRef) return false;
+      if (contentRef != other.contentRef) return false;
+      if (timestamp != other.timestamp) return false;
+      if (length != other.length) return false;
 
       return true;
     }
@@ -359,8 +359,8 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
              ", attributeRef=" + attributeRef +
              ", contentRef=" + contentRef +
              ", timestamp=" + timestamp +
-             ", modCount=" + modCount +
              ", length=" + length +
+             ", modCount=" + modCount +
              '}';
     }
   }
@@ -377,9 +377,18 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       rnd.nextInt(),
       //rnd.nextBoolean() ? System.currentTimeMillis() : Long.MAX_VALUE,
       System.currentTimeMillis(),
-      rnd.nextInt(),
+      -1,
       Long.MAX_VALUE
       //rnd.nextBoolean() ? rnd.nextLong(0, Long.MAX_VALUE) : Long.MAX_VALUE //check extreme long values
     );
+  }
+
+  private static void assertEqualExceptModCount(final String message,
+                                                final FSRecord recordOriginal,
+                                                final FSRecord recordReadBack) {
+    assertTrue(message + "\n" +
+                 "\toriginal:  " + recordOriginal + "\n" +
+                 "\tread back: " + recordReadBack + "\n",
+                 recordOriginal.equalsExceptModCount(recordReadBack));
   }
 }

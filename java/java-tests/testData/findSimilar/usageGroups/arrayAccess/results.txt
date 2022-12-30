@@ -5,6 +5,7 @@
 8|System.out.println(|getGoods|()[|1|].charAt(|0|));,
 9|System.out.println(|getGoods|()[|0|].charAt(|0|));}
 , {
-10|System.out.println(|getGoods|()[|0|]+ getGoods()[|1|]);,
+10|System.out.println(|getGoods|()[|0|]+ getGoods()[|1|]);}
+, {
 10|System.out.println(getGoods()[|0|]+ |getGoods|()[|1|]);}
 ]

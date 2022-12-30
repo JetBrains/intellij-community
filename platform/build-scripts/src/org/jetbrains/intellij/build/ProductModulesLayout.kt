@@ -11,15 +11,16 @@ import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import java.util.function.BiConsumer
 
-class ProductModulesLayout {
-  companion object {
-    @JvmField
-    val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
-      "intellij.platform.images",
-      "intellij.dev",
-    )
-  }
+/**
+ * Default bundled plugins for all products.
+ * See also [JB_BUNDLED_PLUGINS].
+ */
+val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
+  "intellij.platform.images",
+  "intellij.dev",
+)
 
+class ProductModulesLayout {
   /**
    * Name of the main product JAR file. Outputs of {@link #productImplementationModules} will be packed into it.
    */
@@ -53,12 +54,9 @@ class ProductModulesLayout {
     }
 
   /**
-   * Describes layout of all plugins which may be included into the product. The actual list of the plugins need to be bundled
+   * Describes layout of non-trivial plugins which may be included into the product. The actual list of the plugins need to be bundled
    * with the product is specified by {@link [bundledPluginModules]}, the actual list of plugins which need to be prepared for publishing
    * is specified by {@link [pluginModulesToPublish]}.
-   *
-   * For trivial plugins, i.e. for plugins which include an output of a single module and its module libraries, it's enough to use
-   * [org.jetbrains.intellij.build.impl.PluginLayout.Companion.simplePlugin] as layout.
    */
   var pluginLayouts: PersistentList<PluginLayout> = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
     set(value) {
@@ -163,7 +161,7 @@ class ProductModulesLayout {
    * Map name of JAR to names of the modules; these modules will be packed into these JARs and copied to the product's 'lib' directory.
    */
   fun withAdditionalPlatformJar(jarName: String, vararg moduleNames: String) {
-    additionalPlatformJars.putValues(jarName, moduleNames.toList())
+    additionalPlatformJars.putValues(jarName, moduleNames.asList())
   }
 
   fun withoutAdditionalPlatformJar(jarName: String, moduleName: String) {

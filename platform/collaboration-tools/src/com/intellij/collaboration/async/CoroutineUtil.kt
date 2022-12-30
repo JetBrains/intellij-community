@@ -3,6 +3,7 @@ package com.intellij.collaboration.async
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -34,6 +35,7 @@ fun DisposingScope(parentDisposable: Disposable, context: CoroutineContext = Sup
 fun Disposable.disposingScope(context: CoroutineContext = SupervisorJob()): CoroutineScope =
   DisposingScope(this, context)
 
+@OptIn(InternalCoroutinesApi::class)
 @ApiStatus.Experimental
 fun CoroutineScope.nestedDisposable(): Disposable {
   val job = coroutineContext[Job]
@@ -41,7 +43,9 @@ fun CoroutineScope.nestedDisposable(): Disposable {
     "Found no Job in context: $coroutineContext"
   }
   return Disposer.newDisposable().also {
-    job.invokeOnCompletion { _ -> Disposer.dispose(it) }
+    job.invokeOnCompletion(onCancelling = true, handler =  { _ ->
+      Disposer.dispose(it)
+    })
   }
 }
 
@@ -69,18 +73,15 @@ fun <T, M> StateFlow<T>.mapState(
 ): StateFlow<M> = map { mapper(it) }.stateIn(scope, SharingStarted.Eagerly, mapper(value))
 
 @ApiStatus.Experimental
-fun <T, R> StateFlow<T>.mapStateScoped(scope: CoroutineScope, mapper: (CoroutineScope, T) -> R): StateFlow<R?> {
-  val result = MutableStateFlow<R?>(null)
-  scope.launch {
-    collectLatest { state ->
-      coroutineScope {
-        val nestedScope = this
-        result.value = mapper(nestedScope, state)
-        awaitCancellation()
-      }
+fun <T, R> StateFlow<T>.mapStateScoped(scope: CoroutineScope, mapper: (CoroutineScope, T) -> R): StateFlow<R> {
+  var nestedScope: CoroutineScope? = null
+  return mapState(scope) {value ->
+    nestedScope?.cancel()
+    scope.childScope(Dispatchers.Main).let {
+      nestedScope = it
+      mapper(scope, value)
     }
   }
-  return result
 }
 
 @ApiStatus.Experimental

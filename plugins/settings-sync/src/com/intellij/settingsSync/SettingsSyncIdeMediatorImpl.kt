@@ -17,6 +17,7 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.IconLoader
@@ -90,14 +91,15 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     componentStore.storageManager.removeStreamProvider(this::class.java)
   }
 
-  override fun getInitialSnapshot(appConfigPath: Path): SettingsSnapshot {
+  override fun getInitialSnapshot(appConfigPath: Path, lastSavedSnapshot: SettingsSnapshot): SettingsSnapshot {
     val exportableItems = getExportableComponentsMap(isComputePresentableNames = false, componentStore.storageManager,
                                                      withExportable = false)
     val filesToExport = getExportableItemsFromLocalStorage(exportableItems, componentStore.storageManager).keys
 
     val fileStates = collectFileStatesFromFiles(filesToExport, appConfigPath)
     LOG.debug("Collected files for the following fileSpecs: $fileStates")
-    val pluginsState = SettingsSyncPluginManager.getInstance().updateStateFromIde()
+
+    val pluginsState = SettingsSyncPluginManager.getInstance().updateStateFromIdeOnStart(lastSavedSnapshot.plugins)
     LOG.debug("Collected following plugin state: $pluginsState")
     return SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), fileStates, pluginsState)
   }
@@ -265,7 +267,12 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     updateStateStorage(changedComponentNames, deleted, true)
 
     for (schemeManager in schemeManagersToReload) {
-      schemeManager.reload()
+      if (schemeManager.fileSpec == "colors") {
+        EditorColorsManager.getInstance().reloadKeepingActiveScheme()
+      }
+      else {
+        schemeManager.reload()
+      }
     }
 
     val notReloadableComponents = componentStore.getNotReloadableComponents(changedComponentNames)

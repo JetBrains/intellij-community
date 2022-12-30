@@ -40,7 +40,7 @@ open class ArtifactsOrderEntityImpl(val dataSource: ArtifactsOrderEntityData) : 
     return connections
   }
 
-  class Builder(val result: ArtifactsOrderEntityData?) : ModifiableWorkspaceEntityBase<ArtifactsOrderEntity>(), ArtifactsOrderEntity.Builder {
+  class Builder(var result: ArtifactsOrderEntityData?) : ModifiableWorkspaceEntityBase<ArtifactsOrderEntity>(), ArtifactsOrderEntity.Builder {
     constructor() : this(ArtifactsOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -58,6 +58,9 @@ open class ArtifactsOrderEntityImpl(val dataSource: ArtifactsOrderEntityData) : 
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -78,11 +81,18 @@ open class ArtifactsOrderEntityImpl(val dataSource: ArtifactsOrderEntityData) : 
       return connections
     }
 
+    override fun afterModification() {
+      val collection_orderOfArtifacts = getEntityData().orderOfArtifacts
+      if (collection_orderOfArtifacts is MutableWorkspaceList<*>) {
+        collection_orderOfArtifacts.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ArtifactsOrderEntity
-      this.entitySource = dataSource.entitySource
-      this.orderOfArtifacts = dataSource.orderOfArtifacts.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.orderOfArtifacts != dataSource.orderOfArtifacts) this.orderOfArtifacts = dataSource.orderOfArtifacts.toMutableList()
       if (parents != null) {
       }
     }
@@ -105,7 +115,12 @@ open class ArtifactsOrderEntityImpl(val dataSource: ArtifactsOrderEntityData) : 
       get() {
         val collection_orderOfArtifacts = getEntityData().orderOfArtifacts
         if (collection_orderOfArtifacts !is MutableWorkspaceList) return collection_orderOfArtifacts
-        collection_orderOfArtifacts.setModificationUpdateAction(orderOfArtifactsUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_orderOfArtifacts.setModificationUpdateAction(orderOfArtifactsUpdater)
+        }
+        else {
+          collection_orderOfArtifacts.cleanModificationUpdateAction()
+        }
         return collection_orderOfArtifacts
       }
       set(value) {
@@ -175,7 +190,7 @@ class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ArtifactsOrderEntityData
 
@@ -186,7 +201,7 @@ class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ArtifactsOrderEntityData
 

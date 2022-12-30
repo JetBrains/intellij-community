@@ -383,7 +383,7 @@ public final class DOMBuilder {
                 // must be a defaulted value from an XSD.
                 // perhaps we can find the namespace in our
                 // element's ancestry, and use the prefix from that.
-                HashMap<String, Namespace> tmpmap = new HashMap<String, Namespace>();
+                HashMap<String, Namespace> tmpmap = new HashMap<>();
                 for (Namespace nss : element.getNamespacesInScope()) {
                   if (nss.getPrefix().length() > 0 && nss.getURI().equals(attURI)) {
                     attNS = nss;

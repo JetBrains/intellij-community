@@ -11,9 +11,10 @@ import org.jdom.Element;
 public class ConfigurableExtensionTest extends LightPlatformTestCase {
   public void testDeserialize() throws Exception {
     final Element element = JDOMUtil.load(
-      "<projectConfigurable instance=\"com.intellij.javaee.ExternalResourceConfigurable\" key=\"display.name.edit.external.resource\" bundle=\"messages.XmlBundle\">\n" +
-      "    <configurable instance=\"com.intellij.javaee.XMLCatalogConfigurable\" displayName=\"XML Catalog\"/>\n" +
-      "  </projectConfigurable>");
+      """
+        <projectConfigurable instance="com.intellij.javaee.ExternalResourceConfigurable" key="display.name.edit.external.resource" bundle="messages.XmlBundle">
+            <configurable instance="com.intellij.javaee.XMLCatalogConfigurable" displayName="XML Catalog"/>
+          </projectConfigurable>""");
 
     ConfigurableEP<?> bean = new ConfigurableEP<>(new DefaultPluginDescriptor("ConfigurableExtensionTest"));
     XmlSerializer.deserializeInto(element, bean);

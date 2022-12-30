@@ -21,10 +21,11 @@ public class TestNGExpectedPatternsTest {
   
   @Test
   public void testMultiplePatternsInOneAssertion() {
-    Assert.assertNull(createNotification("The following asserts failed:\n" +
-                                         "\texpected [2] but found [1],\n" +
-                                         "\texpected [4] but found [3],\n" +
-                                         "\texpected [6] but found [5]"));
+    Assert.assertNull(createNotification("""
+                                           The following asserts failed:
+                                           \texpected [2] but found [1],
+                                           \texpected [4] but found [3],
+                                           \texpected [6] but found [5]"""));
   }
   
   private static ComparisonFailureData createNotification(String message) {

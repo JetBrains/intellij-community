@@ -104,7 +104,7 @@ public class PyPep8NamingInspection extends PyInspection {
     }
   }
 
-  protected LocalQuickFix[] createRenameAndIngoreErrorQuickFixes(@Nullable PsiElement node,
+  protected LocalQuickFix[] createRenameAndIgnoreErrorQuickFixes(@Nullable PsiElement node,
                                                                  String errorCode) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     if (node != null) {
@@ -166,7 +166,7 @@ public class PyPep8NamingInspection extends PyInspection {
     }
   }
 
-  protected static class IgnoreErrorFix implements LocalQuickFix {
+  protected class IgnoreErrorFix implements LocalQuickFix {
     private final String myCode;
 
     IgnoreErrorFix(String code) {
@@ -177,6 +177,19 @@ public class PyPep8NamingInspection extends PyInspection {
     @Override
     public String getFamilyName() {
       return PyPsiBundle.message("QFIX.NAME.ignore.errors.like.this");
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      if (ignoredErrors.contains(myCode)) return IntentionPreviewInfo.EMPTY;
+      ArrayList<String> updated = new ArrayList<>(ignoredErrors);
+      updated.add(myCode);
+      return IntentionPreviewInfo.addListOption(updated, myCode, PyPsiBundle.message("INSP.pep8.naming.column.name.ignored.errors"));
     }
 
     @Override
@@ -238,7 +251,7 @@ public class PyPep8NamingInspection extends PyInspection {
 
     protected void registerAndAddRenameAndIgnoreErrorQuickFixes(@Nullable final PsiElement node, @NotNull final String errorCode) {
       if (getHolder() != null && getHolder().isOnTheFly()) {
-        registerProblem(node, ERROR_CODES_DESCRIPTION.get(errorCode).get(), createRenameAndIngoreErrorQuickFixes(node, errorCode));
+        registerProblem(node, ERROR_CODES_DESCRIPTION.get(errorCode).get(), createRenameAndIgnoreErrorQuickFixes(node, errorCode));
       }
       else {
         registerProblem(node, ERROR_CODES_DESCRIPTION.get(errorCode).get(), new IgnoreErrorFix(errorCode));

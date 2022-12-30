@@ -117,6 +117,8 @@ public abstract class ProjectView {
 
   public abstract boolean isShowURL(String paneId);
 
+  public abstract boolean isShowScratchesAndConsoles(String paneId);
+
   public abstract void addProjectPane(@NotNull AbstractProjectViewPane pane);
 
   public abstract void removeProjectPane(@NotNull AbstractProjectViewPane pane);

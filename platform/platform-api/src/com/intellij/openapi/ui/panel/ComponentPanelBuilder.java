@@ -439,18 +439,18 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         if (!myLabelOnTop) {
           gc.gridx = 0;
           switch (myAnchor) {
-            case Top:
+            case Top -> {
               gc.anchor = GridBagConstraints.PAGE_START;
               gc.insets = JBUI.insets(4, 0, 0, 8);
-              break;
-            case Center:
+            }
+            case Center -> {
               gc.anchor = GridBagConstraints.LINE_START;
               gc.insets = JBUI.insetsRight(8);
-              break;
-            case Bottom:
+            }
+            case Bottom -> {
               gc.anchor = GridBagConstraints.PAGE_END;
               gc.insets = JBUI.insets(0, 0, 4, 8);
-              break;
+            }
           }
           panel.add(label, gc);
         }

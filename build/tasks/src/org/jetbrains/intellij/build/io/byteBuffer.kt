@@ -42,7 +42,7 @@ private val unmap by lazy {
   lookup.findVirtual(unsafeClass, "invokeCleaner", MethodType.methodType(Void.TYPE, ByteBuffer::class.java)).bindTo(unsafe)
 }
 
-internal fun unmapBuffer(buffer: ByteBuffer) {
+fun unmapBuffer(buffer: ByteBuffer) {
   unmap.invokeExact(buffer)
 }
 

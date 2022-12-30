@@ -48,9 +48,6 @@ final class RerunFailedTestsAction extends AnAction {
     }
 
     AnAction[] actions = contentDescriptor.getRestartActions();
-    if (actions.length == 0) {
-      return false;
-    }
 
     for (AnAction action : actions) {
       if (action instanceof AbstractRerunFailedTestsAction) {

@@ -9,7 +9,7 @@ import static org.junit.Assert.assertThat;
 
 public class LombokUtilsWitherTest {
 
-  private String makeResults(String fieldName, boolean isBoolean) {
+  private static String makeResults(String fieldName, boolean isBoolean) {
     final AccessorsInfo accessorsInfo = AccessorsInfo.EMPTY;
     String lombokResult = LombokHandlerUtil.toWitherName(accessorsInfo, fieldName, isBoolean);
     String result = LombokUtils.toWitherName(accessorsInfo, fieldName, isBoolean);

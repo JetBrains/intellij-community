@@ -63,6 +63,6 @@ public class AdditionalLibraryRootsListenerHelperImpl implements AdditionalLibra
         AdditionalLibraryRootsContributor.createIndexingIterator(presentableLibraryName, rootsToIndex, libraryNameForDebug));
 
     new UnindexedFilesUpdater(project, indexableFilesIterators, null, "On updated roots of library '" + presentableLibraryName + "'").
-      queue(project);
+      queue();
   }
 }

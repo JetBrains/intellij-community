@@ -2,11 +2,11 @@
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.BaseSwitchFix;
@@ -58,7 +58,7 @@ public final class CreateNullBranchFix extends BaseSwitchFix {
     List<PsiElement> branches = SwitchUtils.getSwitchBranches(switchBlock);
     for (PsiElement branch : branches) {
       // just for the case if we already contain null or total pattern, there is no need to apply the fix
-      if (branch instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)branch).getType())) return;
+      if (SwitchBlockHighlightingModel.isNullType(branch)) return;
       if (branch instanceof PsiPattern && JavaPsiPatternUtil.isTotalForType(((PsiPattern)branch), selectorType)) return;
     }
     PsiElement defaultElement = SwitchUtils.findDefaultElement(switchBlock);

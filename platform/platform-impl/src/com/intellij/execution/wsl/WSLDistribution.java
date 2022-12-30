@@ -39,6 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.intellij.execution.wsl.WSLUtil.LOG;
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
@@ -207,7 +208,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * @deprecated use {@link #patchCommandLine(GeneralCommandLine, Project, WSLCommandLineOptions)} instead
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
                                                                     @Nullable String remoteWorkingDir,
@@ -468,17 +469,23 @@ public class WSLDistribution implements AbstractWslDistribution {
     return null;
   }
 
+  public @NotNull @NlsSafe String getWindowsPath(@NotNull String wslPath) {
+    return getWindowsPath(wslPath, getMsId(), this::getMntRoot);
+  }
+
   /**
    * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL, or {@code null} if path is unmappable
    */
-  public @NotNull @NlsSafe String getWindowsPath(@NotNull String wslPath) {
+  public static @NotNull @NlsSafe String getWindowsPath(@NotNull String wslPath,
+                                                        @NotNull String wslMsId,
+                                                        @NotNull Supplier<String> mntRootSupplier) {
     if (containsDriveLetter(wslPath)) {
-      String windowsPath = WSLUtil.getWindowsPath(wslPath, getMntRoot());
+      String windowsPath = WSLUtil.getWindowsPath(wslPath, mntRootSupplier.get());
       if (windowsPath != null) {
         return windowsPath;
       }
     }
-    return getUNCRoot() + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
+    return WslConstants.UNC_PREFIX + wslMsId + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
   }
 
   private static boolean containsDriveLetter(@NotNull String linuxPath) {
@@ -569,7 +576,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * @deprecated use {@link WSLDistribution#getUNCRootPath()} instead
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public @NotNull File getUNCRoot() {
     return new File(WslConstants.UNC_PREFIX + myDescriptor.getMsId());
   }

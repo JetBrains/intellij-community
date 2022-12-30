@@ -27,7 +27,7 @@ public final class GetterProcessor extends AbstractClassProcessor {
     super(PsiMethod.class, LombokClassNames.GETTER);
   }
 
-  private GetterFieldProcessor getGetterFieldProcessor() {
+  private static GetterFieldProcessor getGetterFieldProcessor() {
     return ApplicationManager.getApplication().getService(GetterFieldProcessor.class);
   }
 
@@ -42,7 +42,7 @@ public final class GetterProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private static boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
       builder.addError(LombokBundle.message("inspection.message.getter.only.supported.on.class.enum.or.field.type"));
@@ -51,7 +51,7 @@ public final class GetterProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  private boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
+  private static boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     return null != methodVisibility;
   }

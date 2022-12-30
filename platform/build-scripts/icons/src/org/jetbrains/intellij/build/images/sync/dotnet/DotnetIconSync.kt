@@ -6,6 +6,7 @@ import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.intellij.build.images.shutdownAppScheduledExecutorService
 import org.jetbrains.intellij.build.images.sync.*
 import java.util.*
+import kotlin.io.path.name
 
 object DotnetIconSync {
 
@@ -14,9 +15,11 @@ object DotnetIconSync {
 
   private class SyncPath(val iconsPath: String, val devPath: String)
 
+  private const val riderIconsRelativePath = "Rider/Frontend/rider/icons"
+
   private val syncPaths = listOf(
-    SyncPath("rider", "Rider/Frontend/rider/icons/resources/rider"),
-    SyncPath("net", "Rider/Frontend/rider/icons/resources/resharper")
+    SyncPath("rider", "$riderIconsRelativePath/resources/rider"),
+    SyncPath("net", "$riderIconsRelativePath/resources/resharper")
   )
 
   private val committer by lazy(::triggeredBy)
@@ -50,6 +53,7 @@ object DotnetIconSync {
       transformIconsToIdeaFormat()
       syncPaths.forEach(this::sync)
       generateClasses()
+      RiderIconsJsonGenerator.generate(context.devRepoRoot.resolve(riderIconsRelativePath))
       if (stageChanges().isEmpty()) {
         println("Nothing to commit")
       }
@@ -101,7 +105,7 @@ object DotnetIconSync {
     step("Staging changes..")
     val changes = gitStatus(context.devRepoRoot, includeUntracked = true).all().filter {
       val file = context.devRepoRoot.resolve(it)
-      isImage(file) || file.toString().endsWith(".java")
+      isImage(file) || file.toString().endsWith(".java") || file.name == RiderIconsJsonGenerator.GENERATED_FILE_NAME
     }
     if (changes.isNotEmpty()) {
       stageFiles(changes, context.devRepoRoot)

@@ -18,12 +18,11 @@ public class InterfaceMayBeAnnotatedFunctionalInspectionTest extends LightJavaIn
   }
 
   public void testLessSimple() {
-    doTest("interface /*Interface 'F' may be annotated with @FunctionalInterface*/F/**/  {" +
-           "    boolean equals(Object o);" +
-           "    static void f00() {}\n" +
-           "    default void g() {}\n" +
-           "    void f();\n" +
-           "}");
+    doTest("""
+             interface /*Interface 'F' may be annotated with @FunctionalInterface*/F/**/  {    boolean equals(Object o);    static void f00() {}
+                 default void g() {}
+                 void f();
+             }""");
   }
 
   public void testNotFunctional() {
@@ -39,16 +38,17 @@ public class InterfaceMayBeAnnotatedFunctionalInspectionTest extends LightJavaIn
   }
 
   public void testSealed() {
-    doTest("sealed interface Fooy {\n" +
-           "    String foo();\n" +
-           "}\n" +
-           "\n" +
-           "final class X implements Fooy {\n" +
-           "    @Override\n" +
-           "    public String foo() {\n" +
-           "        return null;\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             sealed interface Fooy {
+                 String foo();
+             }
+
+             final class X implements Fooy {
+                 @Override
+                 public String foo() {
+                     return null;
+                 }
+             }""");
   }
 
   @NotNull

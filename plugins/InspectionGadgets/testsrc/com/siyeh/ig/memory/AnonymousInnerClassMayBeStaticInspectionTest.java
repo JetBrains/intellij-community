@@ -15,8 +15,12 @@
  */
 package com.siyeh.ig.memory;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -25,6 +29,31 @@ import org.jetbrains.annotations.Nullable;
 public class AnonymousInnerClassMayBeStaticInspectionTest extends LightJavaInspectionTestCase {
 
   public void testAnonymousInnerClassMayBeStatic() { doTest(); }
+
+  public void testAnonymousInnerClassMayBeStaticInsideInterface() {
+    doTest();
+    String message = InspectionGadgetsBundle.message("anonymous.inner.may.be.named.static.inner.class.quickfix");
+    final IntentionAction intention = myFixture.getAvailableIntention(message);
+    assertNotNull(intention);
+    String text = myFixture.getIntentionPreviewText(intention);
+    assertEquals("""
+                   interface A {
+                       default void sample() {
+                           Thread thread = new Thread(new MyRunnable());
+                       }
+                                      
+                       class MyRunnable implements Runnable {
+                           @Override
+                           public void run() {
+                           }
+                       }
+                   }""", text);
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_17;
+  }
 
   @Nullable
   @Override

@@ -16,7 +16,7 @@ import com.intellij.util.containers.addIfNotNull
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.FacetBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -39,7 +39,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   private val listeners: MutableList<ModifiableFacetModel.Listener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
   private val moduleEntity: ModuleEntity
-    get() = diff.findModuleEntity(moduleBridge) ?: error("Cannot find module entity for '$moduleBridge'")
+    get() = moduleBridge.findModuleEntity(diff) ?: error("Cannot find module entity for '$moduleBridge'")
 
   override fun addFacet(facet: Facet<*>) {
     addFacet(facet, null)
@@ -112,12 +112,9 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   }
 
   override fun getNewName(facet: Facet<*>): String {
-    if (facet is FacetBridge<*>) {
-      return facet.getNewName(diff, moduleEntity)
-    } else {
-      val entity = diff.facetMapping().getEntities(facet).single() as FacetEntity
-      return entity.name
-    }
+    val entityTypeToFacetContributor = WorkspaceFacetContributor.EP_NAME.extensions.associateBy { it.rootEntityType }
+    val entity = diff.facetMapping().getEntities(facet).single()
+    return entityTypeToFacetContributor[entity.getEntityInterface()]!!.getFacetName(entity)
   }
 
   override fun commit() {
@@ -169,16 +166,15 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   fun getEntity(facet: Facet<*>): FacetEntity? = diff.facetMapping().getEntities(facet).singleOrNull() as FacetEntity?
 
   override fun isModified(): Boolean {
-    return !diff.isEmpty()
+    return diff.hasChanges()
   }
 
   override fun isNewFacet(facet: Facet<*>): Boolean {
-    if (facet is FacetBridge<*>) {
-      return facet.isNew(diff, moduleEntity)
-    } else {
-      val entity = diff.facetMapping().getEntities(facet).singleOrNull() as FacetEntity?
-      return entity != null && entity.persistentId !in initialStorage
-    }
+    val entity = diff.facetMapping().getEntities(facet).singleOrNull()
+    if (entity == null) return false
+    return if (entity is FacetEntity) {
+      entity.persistentId !in initialStorage
+    } else true
   }
 
   override fun addListener(listener: ModifiableFacetModel.Listener, parentDisposable: Disposable) {

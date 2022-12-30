@@ -13,9 +13,10 @@ public class XmlSimpleHighlightingTest extends BasePlatformTestCase {
   }
 
   public void testUnsupportedIncludeScheme() {
-    checkValidation("<idea-plugin xmlns:xi=\"http://www.w3.org/2001/XInclude\">\n" +
-                    "  <xi:include href=\"extensionPoints.xml\" xpointer=\"xpointer(/extensionPoints/*)\"/>\n" +
-                    "</idea-plugin>");
+    checkValidation("""
+                      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+                        <xi:include href="extensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
+                      </idea-plugin>""");
   }
 
   private void checkValidation(String text) {

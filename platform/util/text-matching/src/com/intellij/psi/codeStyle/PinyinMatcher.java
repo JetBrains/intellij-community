@@ -36,7 +36,7 @@ public class PinyinMatcher extends MinusculeMatcher {
     "dsty,dstz,dsyz,dtxy,dtxz,dtyz,egqy,ehkw,ejwy,enyz,foqx,ghjk,gkoq,hjkq,hmtw,hswx,hsxy,hwxy,jlqy,jlqz,j" +
     "lxy,jlyz,jsty,jsyz,klxy,ksyz,nsyz,qsyz,stxz,bcjxz,bjlmx,cdstz,djstz,dltyz,dqxyz,ghkwx,cdjstyz,gjklqyz";
 
-  static final String DATA =
+  @SuppressWarnings("UnnecessaryUnicodeEscape") static final String DATA =
     "03  *46     6         5     #    -  u   55 5++5657$4/1 ,e6\u0117-#&   7&!47 7$260\u00D0+-72   5  2)$-" +
     "2k+6\"   +,6+)6+#   (5(1 7 (536(),+367767%10#4(3220+2  \u00AD/3\u017B6.3 ,\u0113$6\u00E4)-56  #&++ + " +
     ")    0 #+', '2  ,,02+ 4*$73  \"($'# 0)+5 -5 \")2 ' 650/$\u008D+\u00A403\"'#\u00C5+  2$+(\u0109/$1%06|" +

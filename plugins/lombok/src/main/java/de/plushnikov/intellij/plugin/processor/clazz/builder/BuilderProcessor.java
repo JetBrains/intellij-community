@@ -33,11 +33,11 @@ public class BuilderProcessor extends AbstractClassProcessor {
     super(PsiMethod.class, LombokClassNames.BUILDER);
   }
 
-  private BuilderHandler getBuilderHandler() {
+  private static BuilderHandler getBuilderHandler() {
     return new BuilderHandler();
   }
 
-  private AllArgsConstructorProcessor getAllArgsConstructorProcessor() {
+  private static AllArgsConstructorProcessor getAllArgsConstructorProcessor() {
     return ApplicationManager.getApplication().getService(AllArgsConstructorProcessor.class);
   }
 

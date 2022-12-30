@@ -3,7 +3,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
@@ -31,7 +30,6 @@ import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
@@ -48,14 +46,12 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.indexing.roots.kind.SdkOrigin;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.progress.ConcurrentTasksProgressManager;
 import com.intellij.util.progress.SubTaskProgressIndicator;
 import kotlin.Pair;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -66,8 +62,8 @@ import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.ge
 public class UnindexedFilesScanner extends DumbModeTask {
   @VisibleForTesting
   public static final Key<Boolean> INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY = new Key<>("INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY");
-  // should be used only for test debugging purpose
-  private static final Logger LOG = Logger.getInstance(UnindexedFilesScanner.class);
+
+  private static final Logger LOG = Logger.getInstance(UnindexedFilesScanner.class);  // only for test debugging purpose
 
   public enum TestMode {
     PUSHING, PUSHING_AND_SCANNING
@@ -153,19 +149,16 @@ public class UnindexedFilesScanner extends DumbModeTask {
       reason = myIndexingReason;
     }
     else {
-      reason = "Merged " +
-               StringUtil.trimStart(myIndexingReason, "Merged ") +
-               " with " +
-               StringUtil.trimStart(oldTask.myIndexingReason, "Merged ");
+      reason = "Merged " + StringUtil.trimStart(myIndexingReason, "Merged ") +
+               " with " + StringUtil.trimStart(oldTask.myIndexingReason, "Merged ");
     }
     LOG.debug("Merged " + this + " task");
     return new UnindexedFilesScanner(
       myProject,
       myStartSuspended,
       false,
-      mergeIterators(myPredefinedIndexableFilesIterators, ((UnindexedFilesScanner)taskFromQueue).myPredefinedIndexableFilesIterators),
-      StatusMark.mergeStatus(myProvidedStatusMark,
-                             ((UnindexedFilesScanner)taskFromQueue).myProvidedStatusMark),
+      mergeIterators(myPredefinedIndexableFilesIterators, oldTask.myPredefinedIndexableFilesIterators),
+      StatusMark.mergeStatus(myProvidedStatusMark, oldTask.myProvidedStatusMark),
       reason,
       ScanningType.Companion.merge(oldTask.myScanningType, oldTask.myScanningType)
     );
@@ -184,23 +177,8 @@ public class UnindexedFilesScanner extends DumbModeTask {
     return new ArrayList<>(uniqueIterators.values());
   }
 
-  public UnindexedFilesScanner(@NotNull Project project) {
-    // If we haven't succeeded to fully scan the project content yet, then we must keep trying to run
-    // file based index extensions for all project files until at least one of UnindexedFilesScanner-s finishes without cancellation.
-    // This is important, for example, for shared indexes: all files must be associated with their locally available shared index chunks.
-    this(project, false, false, null, null, null, ScanningType.FULL);
-  }
-
   public UnindexedFilesScanner(@NotNull Project project, @Nullable @NonNls String indexingReason) {
     this(project, false, false, null, null, indexingReason, ScanningType.FULL);
-  }
-
-  public UnindexedFilesScanner(@NotNull Project project,
-                               @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators,
-                               @Nullable StatusMark mark,
-                               @Nullable @NonNls String indexingReason) {
-    this(project, false, false, predefinedIndexableFilesIterators, mark, indexingReason,
-         predefinedIndexableFilesIterators == null ? ScanningType.FULL : ScanningType.PARTIAL);
   }
 
   private @NotNull Map<IndexableFilesIterator, List<VirtualFile>> scan(@NotNull PerformanceWatcher.Snapshot snapshot,
@@ -266,7 +244,8 @@ public class UnindexedFilesScanner extends DumbModeTask {
 
     ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
     if (suspender != null) {
-      listenToProgressSuspenderForSuspendedTimeDiagnostic(suspender, projectIndexingHistory);
+      ApplicationManager.getApplication().getMessageBus().connect(this)
+        .subscribe(ProgressSuspender.TOPIC, projectIndexingHistory.getSuspendListener(suspender));
     }
 
     if (myStartSuspended) {
@@ -296,12 +275,28 @@ public class UnindexedFilesScanner extends DumbModeTask {
     boolean skipInitialRefresh = skipInitialRefresh();
     boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     if (myOnProjectOpen && !isUnitTestMode && !skipInitialRefresh) {
-      // full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
+      // the full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
       scheduleInitialVfsRefresh();
     }
 
-    UnindexedFilesIndexer indexer = new UnindexedFilesIndexer(myProject);
-    indexer.indexFiles(projectIndexingHistory, indicator, providerToFiles);
+    int totalFiles = providerToFiles.values().stream().mapToInt(List::size).sum();
+    if (totalFiles > 0) {
+      UnindexedFilesIndexer indexer = new UnindexedFilesIndexer(myProject, providerToFiles);
+      if (shouldScanInSmartMode()) {
+        // Switch to dumb mode and index
+        indexer.queue(myProject);
+      }
+      else {
+        // Already in dumb mode. Just invoke indexer
+        indexer.indexFiles(projectIndexingHistory, indicator);
+      }
+    } else {
+      LOG.info("Finished for " + myProject.getName() + ". No files to index with loading content.");
+    }
+  }
+
+  private static boolean shouldScanInSmartMode() {
+    return Registry.is("scanning.in.smart.mode", false);
   }
 
   private static @NotNull String getLogScanningCompletedStageMessage(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory) {
@@ -315,24 +310,6 @@ public class UnindexedFilesScanner extends DumbModeTask {
            "; " +
            "Number of files for indexing: " +
            numberOfFilesForIndexing;
-  }
-
-  private void listenToProgressSuspenderForSuspendedTimeDiagnostic(@NotNull ProgressSuspender suspender,
-                                                                   @NotNull ProjectIndexingHistoryImpl projectIndexingHistory) {
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
-    connection.subscribe(ProgressSuspender.TOPIC, new ProgressSuspender.SuspenderListener() {
-      @Override
-      public void suspendedStatusChanged(@NotNull ProgressSuspender changedSuspender) {
-        if (suspender == changedSuspender) {
-          if (suspender.isSuspended()) {
-            projectIndexingHistory.suspendStages();
-          }
-          else {
-            projectIndexingHistory.stopSuspendingStages();
-          }
-        }
-      }
-    });
   }
 
   public static boolean isIndexUpdateInProgress(@NotNull Project project) {
@@ -505,17 +482,21 @@ public class UnindexedFilesScanner extends DumbModeTask {
   }
 
   private void scheduleInitialVfsRefresh() {
+    var projectId = myProject.getLocationHash();
+    LOG.info(projectId + ": marking roots for initial VFS refresh");
     ProjectRootManagerEx.getInstanceEx(myProject).markRootsForRefresh();
 
-    Application app = ApplicationManager.getApplication();
+    LOG.info(projectId + ": starting initial VFS refresh");
+    var app = ApplicationManager.getApplication();
     var t = System.nanoTime();
     if (!app.isCommandLine() || CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
-      long sessionId = VirtualFileManager.getInstance().asyncRefresh(() -> timeInitialVfsRefresh(t));
-      MessageBusConnection connection = app.getMessageBus().connect();
+      var sessionId = VirtualFileManager.getInstance().asyncRefresh(() -> timeInitialVfsRefresh(t));
+      var connection = app.getMessageBus().connect();
       connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
         public void projectClosed(@NotNull Project project) {
           if (project == myProject) {
+            LOG.info(projectId + ": cancelling initial VFS refresh");
             RefreshQueue.getInstance().cancelSession(sessionId);
             connection.disconnect();
           }
@@ -531,7 +512,9 @@ public class UnindexedFilesScanner extends DumbModeTask {
   }
 
   private void timeInitialVfsRefresh(long t) {
-    VfsUsageCollector.logInitialRefresh(myProject, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t));
+    var duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t);
+    LOG.info(myProject.getLocationHash() + ": initial VFS refresh finished " + duration + " ms");
+    VfsUsageCollector.logInitialRefresh(myProject, duration);
   }
 
   @Override

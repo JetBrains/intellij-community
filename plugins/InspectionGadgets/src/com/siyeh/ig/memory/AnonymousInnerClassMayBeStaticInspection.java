@@ -16,6 +16,7 @@
 package com.siyeh.ig.memory;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -52,6 +53,11 @@ public class AnonymousInnerClassMayBeStaticInspection extends BaseInspection {
     @Override
     public void visitAnonymousClass(@NotNull PsiAnonymousClass anonymousClass) {
       if (anonymousClass instanceof PsiEnumConstantInitializer) {
+        return;
+      }
+      if (PsiUtil.isLanguageLevel18OrHigher(anonymousClass) &&
+          !InheritanceUtil.isInheritor(anonymousClass, CommonClassNames.JAVA_IO_SERIALIZABLE)) {
+        // Since Java 18, non-serializable anonymous classes don't capture 'this' reference
         return;
       }
       final PsiMember containingMember = PsiTreeUtil.getParentOfType(anonymousClass, PsiMember.class);

@@ -126,6 +126,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   protected void layoutMoreButton(SingleRowPassInfo data) {
     if (data.requiredLength > data.toFitLength) {
       data.moreRect = getStrategy().getMoreRect(data);
+      if (isWithScrollBar()) data.moreRect.width = 0;
     }
   }
 
@@ -172,7 +173,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   }
 
   private int getMoreRectAxisSize() {
-    if (ExperimentalUI.isNewUI() || isWithScrollBar()) return 0;
+    if (isWithScrollBar()) return 0;
     return getStrategy().getMoreRectAxisSize();
   }
 

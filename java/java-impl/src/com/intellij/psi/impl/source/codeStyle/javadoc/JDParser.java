@@ -392,14 +392,13 @@ public class JDParser {
     for (int i = 0; i < line.length(); i++) {
       char c = line.charAt(i);
       switch (c) {
-        case ' ':
-        case '\t':
-          indentWhitespaces++;
-          break;
-        case '\n':
+        case ' ', '\t' -> indentWhitespaces++;
+        case '\n' -> {
           return Integer.MAX_VALUE;
-        default:
+        }
+        default -> {
           return indentWhitespaces;
+        }
       }
     }
     return Integer.MAX_VALUE;

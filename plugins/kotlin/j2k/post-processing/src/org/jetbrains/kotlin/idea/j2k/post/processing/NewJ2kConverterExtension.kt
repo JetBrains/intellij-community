@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
 import org.jetbrains.kotlin.idea.configuration.hasAnyKotlinRuntimeInScope
 import org.jetbrains.kotlin.idea.configuration.isModuleConfigured
 import org.jetbrains.kotlin.j2k.*
-import org.jetbrains.kotlin.idea.j2k.post.processing.postProcessing.NewJ2kPostProcessor
 import org.jetbrains.kotlin.nj2k.NewJ2kWithProgressProcessor
 import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter
 import org.jetbrains.kotlin.platform.jvm.isJvm

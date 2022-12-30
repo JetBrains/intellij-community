@@ -35,7 +35,7 @@ import java.io.File
 @RunWith(JUnit38ClassRunner::class)
 class KotlinDetachedUastTest : KotlinLightCodeInsightFixtureTestCase() {
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun testLiteralInAnnotation() {
 

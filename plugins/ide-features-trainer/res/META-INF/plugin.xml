@@ -17,6 +17,10 @@
     <plugin id="com.intellij.modules.lang"/>
   </dependencies>
 
+  <content>
+    <module name="intellij.vcs.git.featuresTrainer"/>
+  </content>
+
   <resource-bundle>messages.LearnBundle</resource-bundle>
 
   <projectListeners>

@@ -784,17 +784,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       return;
     }
     myShowBalloonIfNecessary = false;
-    MessageType messageType = null;
-    switch (myGradleHomeSettingType) {
-      case DEDUCED:
-        messageType = MessageType.INFO;
-        break;
-      case EXPLICIT_INCORRECT:
-      case UNKNOWN:
-        messageType = MessageType.ERROR;
-        break;
-      default:
-    }
+    MessageType messageType = switch (myGradleHomeSettingType) {
+      case DEDUCED -> MessageType.INFO;
+      case EXPLICIT_INCORRECT, UNKNOWN -> MessageType.ERROR;
+      default -> null;
+    };
     if (messageType != null) {
       new DelayedBalloonInfo(messageType, myGradleHomeSettingType, BALLOON_DELAY_MILLIS).run();
     }
@@ -936,10 +930,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof MyItem)) return false;
-      MyItem item = (MyItem)o;
-      return Objects.equals(value, item.value);
+      return this == o || o instanceof MyItem<?> item && Objects.equals(value, item.value);
     }
 
     @Override
@@ -993,7 +984,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     @NotNull
     @NlsContexts.ListItem
-    private String getText(@Nullable Boolean state) {
+    private static String getText(@Nullable Boolean state) {
       if (state == Boolean.TRUE) {
         return GradleConstants.GRADLE_NAME; //NON-NLS GRADLE_NAME
       }
@@ -1025,7 +1016,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     @NotNull
     @NlsContexts.ListItem
-    private String getText(@Nullable TestRunner runner) {
+    private static String getText(@Nullable TestRunner runner) {
       if (runner == TestRunner.GRADLE) {
         return GradleConstants.GRADLE_NAME;  //NON-NLS GRADLE_NAME
       }
@@ -1058,18 +1049,14 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     @NotNull
     @NlsContexts.ListItem
-    private String getText(@Nullable DistributionType value) {
+    private static String getText(@Nullable DistributionType value) {
       if (value != null) {
-        switch (value) {
-          case BUNDLED:
-            return GradleBundle.message("gradle.settings.text.distribution.bundled", GradleVersion.current().getVersion());
-          case DEFAULT_WRAPPED:
-            return GradleBundle.message("gradle.settings.text.distribution.wrapper");
-          case WRAPPED:
-            return GradleBundle.message("gradle.settings.text.distribution.wrapper.task");
-          case LOCAL:
-            return GradleBundle.message("gradle.settings.text.distribution.location");
-        }
+        return switch (value) {
+          case BUNDLED -> GradleBundle.message("gradle.settings.text.distribution.bundled", GradleVersion.current().getVersion());
+          case DEFAULT_WRAPPED -> GradleBundle.message("gradle.settings.text.distribution.wrapper");
+          case WRAPPED -> GradleBundle.message("gradle.settings.text.distribution.wrapper.task");
+          case LOCAL -> GradleBundle.message("gradle.settings.text.distribution.location");
+        };
       }
       LOG.error("Unexpected: " + value);
       return GradleBundle.message("gradle.settings.text.unexpected", value);

@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +102,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   }
 
   private void revalidateTree() {
-    FilteringTreeBuilder.revalidateTree(myTree);
+    TreeUtil.invalidateCacheAndRepaint(myTree.getUI());
   }
 
   @Override

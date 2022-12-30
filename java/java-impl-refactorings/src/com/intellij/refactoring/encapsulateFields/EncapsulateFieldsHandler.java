@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.encapsulateFields;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -25,16 +13,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.List;
 
-public class EncapsulateFieldsHandler implements RefactoringActionHandler {
+public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance(EncapsulateFieldsHandler.class);
 
   @Override
@@ -48,8 +38,8 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
         CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.ENCAPSULATE_FIELDS);
         return;
       }
-      if (element instanceof PsiField) {
-        if (((PsiField) element).getContainingClass() == null) {
+      if (element instanceof PsiField field) {
+        if (field.getContainingClass() == null) {
           String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("the.field.should.be.declared.in.a.class"));
           CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.ENCAPSULATE_FIELDS);
           return;
@@ -76,8 +66,7 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
     if (elements.length == 1) {
       if (elements[0] instanceof PsiClass) {
         aClass = (PsiClass) elements[0];
-      } else if (elements[0] instanceof PsiField) {
-        PsiField field = (PsiField) elements[0];
+      } else if (elements[0] instanceof PsiField field) {
         aClass = field.getContainingClass();
         preselectedFields.add(field);
       } else {
@@ -85,10 +74,9 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
       }
     } else {
       for (PsiElement element : elements) {
-        if (!(element instanceof PsiField)) {
+        if (!(element instanceof PsiField field)) {
           return;
         }
-        PsiField field = (PsiField)element;
         if (aClass == null) {
           aClass = field.getContainingClass();
           preselectedFields.add(field);
@@ -133,13 +121,81 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
 
   protected EncapsulateFieldsDialog createDialog(Project project, PsiClass aClass, HashSet<PsiField> preselectedFields) {
     return new EncapsulateFieldsDialog(
-              project,
-              aClass,
-              preselectedFields,
-              new JavaEncapsulateFieldHelper());
+      project,
+      aClass,
+      preselectedFields,
+      new JavaEncapsulateFieldHelper());
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull PsiElement element) {
+    if (!(element instanceof PsiField field)) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    final FieldDescriptor fieldDescriptor = new FieldDescriptorImpl(field, GenerateMembersUtil.suggestGetterName(field),
+                                                                    GenerateMembersUtil.suggestSetterName(field),
+                                                                    GenerateMembersUtil.generateGetterPrototype(field),
+                                                                    GenerateMembersUtil.generateSetterPrototype(field));
+    final EncapsulateFieldsDescriptor descriptor = new EncapsulateOnPreviewDescriptor(fieldDescriptor);
+    final EncapsulateFieldsProcessor processor = new EncapsulateFieldsProcessor(project, descriptor) {
+      @Override
+      protected Iterable<PsiReferenceExpression> getFieldReferences(@NotNull PsiField field) {
+        return VariableAccessUtils.getVariableReferences(field, field.getContainingFile());
+      }
+    };
+    processor.performRefactoring(processor.findUsages());
+    return IntentionPreviewInfo.DIFF;
   }
 
   public static @NlsContexts.DialogTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("encapsulate.fields.title");
+  }
+
+  static private class EncapsulateOnPreviewDescriptor implements EncapsulateFieldsDescriptor {
+    private final FieldDescriptor myFieldDescriptor;
+
+    EncapsulateOnPreviewDescriptor(FieldDescriptor fieldDescriptor) {
+      myFieldDescriptor = fieldDescriptor;
+    }
+
+    @Override
+    public FieldDescriptor[] getSelectedFields() {
+      return new FieldDescriptor[]{myFieldDescriptor};
+    }
+
+    @Override
+    public boolean isToEncapsulateGet() {
+      return true;
+    }
+
+    @Override
+    public boolean isToEncapsulateSet() {
+      return true;
+    }
+
+    @Override
+    public boolean isToUseAccessorsWhenAccessible() {
+      return true;
+    }
+
+    @Override
+    public String getFieldsVisibility() {
+      return PsiModifier.PRIVATE;
+    }
+
+    @Override
+    public String getAccessorsVisibility() {
+      return PsiModifier.PUBLIC;
+    }
+
+    @Override
+    public int getJavadocPolicy() {
+      return DocCommentPolicy.MOVE;
+    }
+
+    @Override
+    public PsiClass getTargetClass() {
+      return myFieldDescriptor.getField().getContainingClass();
+    }
   }
 }

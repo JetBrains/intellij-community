@@ -8,9 +8,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -77,12 +75,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     myFileStatusProvider = VcsFileStatusProvider.getInstance(project);
 
     MessageBusConnection projectBus = project.getMessageBus().connect();
-    projectBus.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
-      @Override
-      public void globalSchemeChange(EditorColorsScheme scheme) {
-        fileStatusesChanged();
-      }
-    });
+    projectBus.subscribe(EditorColorsManager.TOPIC, __ -> fileStatusesChanged());
     projectBus.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this::fileStatusesChanged);
 
     if (!project.isDefault()) {
@@ -136,7 +129,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     }
   }
 
-  public FileStatus calcStatus(@NotNull final VirtualFile virtualFile) {
+  private FileStatus calcStatus(@NotNull final VirtualFile virtualFile) {
     for (FileStatusProvider extension : FileStatusProvider.EP_NAME.getExtensions(myProject)) {
       final FileStatus status = extension.getFileStatus(virtualFile);
       if (status != null) {
@@ -163,7 +156,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
   }
 
   @NotNull
-  public static FileStatus getDefaultStatus(@NotNull final VirtualFile file) {
+  static FileStatus getDefaultStatus(@NotNull final VirtualFile file) {
     return file.isValid() && file.is(VFileProperty.SPECIAL) ? FileStatus.IGNORED : FileStatus.NOT_CHANGED;
   }
 
@@ -179,13 +172,8 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
 
   @Override
   public void addFileStatusListener(@NotNull final FileStatusListener listener, @NotNull Disposable parentDisposable) {
-    addFileStatusListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeFileStatusListener(listener);
-      }
-    });
+    myListeners.add(listener);
+    Disposer.register(parentDisposable, () -> myListeners.remove(listener));
   }
 
   @Override
@@ -266,7 +254,7 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     return status;
   }
 
-  public FileStatus getCachedStatus(final VirtualFile file) {
+  FileStatus getCachedStatus(final VirtualFile file) {
     return myCachedStatuses.get(file);
   }
 

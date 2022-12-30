@@ -40,11 +40,12 @@ public class RefusedBequestInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "package org.junit;\n" +
-      "@Retention(RetentionPolicy.RUNTIME)\n" +
-      "@Target(ElementType.METHOD)\n" +
-      "public @interface Before {\n" +
-      "}",
+      """
+package org.junit;
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Before {
+}""",
 
       "package junit.framework;" +
       "public abstract class TestCase {" +

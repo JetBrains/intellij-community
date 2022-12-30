@@ -26,7 +26,7 @@ internal class SegmentedBarPainter {
     private val bw = 0f
     private val lw = DarculaUIUtil.LW.float
 
-    fun getGradientPaint(component: Component): Paint {
+    private fun getGradientPaint(component: Component): Paint {
       return GradientPaint(bw, bw,
                            JBColor.namedColor(
                              "Button.startBorderColor",

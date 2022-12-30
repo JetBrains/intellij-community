@@ -41,7 +41,7 @@ open class ChildEntityImpl(val dataSource: ChildEntityData) : ChildEntity, Works
     return connections
   }
 
-  class Builder(val result: ChildEntityData?) : ModifiableWorkspaceEntityBase<ChildEntity>(), ChildEntity.Builder {
+  class Builder(var result: ChildEntityData?) : ModifiableWorkspaceEntityBase<ChildEntity>(), ChildEntity.Builder {
     constructor() : this(ChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -59,6 +59,9 @@ open class ChildEntityImpl(val dataSource: ChildEntityData) : ChildEntity, Works
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -88,10 +91,10 @@ open class ChildEntityImpl(val dataSource: ChildEntityData) : ChildEntity, Works
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ChildEntity
-      this.entitySource = dataSource.entitySource
-      this.data1 = dataSource.data1
-      this.data2 = dataSource.data2
-      this.data3 = dataSource.data3
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data1 != dataSource.data1) this.data1 = dataSource.data1
+      if (this.data2 != dataSource.data2) this.data2 = dataSource.data2
+      if (this.data3 != dataSource.data3) this.data3 = dataSource.data3
       if (parents != null) {
       }
     }
@@ -188,7 +191,7 @@ class ChildEntityData : WorkspaceEntityData<ChildEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ChildEntityData
 
@@ -201,7 +204,7 @@ class ChildEntityData : WorkspaceEntityData<ChildEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ChildEntityData
 

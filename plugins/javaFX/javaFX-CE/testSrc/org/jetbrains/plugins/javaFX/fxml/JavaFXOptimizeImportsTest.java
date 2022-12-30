@@ -33,14 +33,18 @@ public class JavaFXOptimizeImportsTest extends AbstractJavaFXTestCase {
   }
 
   public void testStaticPropertiesAttrAndCustomComponents() {
-    myFixture.addClass("import javafx.scene.layout.GridPane;\n" +
-                       "public class MyGridPane extends GridPane {}\n");
+    myFixture.addClass("""
+                         import javafx.scene.layout.GridPane;
+                         public class MyGridPane extends GridPane {}
+                         """);
     doTest();
   }
 
   public void testStaticPropertiesTagAndCustomComponents() {
-    myFixture.addClass("import javafx.scene.layout.GridPane;\n" +
-                       "public class MyGridPane extends GridPane {}\n");
+    myFixture.addClass("""
+                         import javafx.scene.layout.GridPane;
+                         public class MyGridPane extends GridPane {}
+                         """);
     doTest();
   }
 

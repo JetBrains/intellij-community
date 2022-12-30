@@ -9,23 +9,28 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.idea.actions.KotlinAddImportAction
 import org.jetbrains.kotlin.idea.actions.createSingleImportAction
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.core.targetDescriptors
-import org.jetbrains.kotlin.idea.quickfix.ImportFix
-import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.references.resolveToDescriptors
+import org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider
+import org.jetbrains.kotlin.idea.quickfix.ImportFixBase
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import java.util.function.BooleanSupplier
 
 class KotlinReferenceImporter : AbstractKotlinReferenceImporter() {
     override fun isEnabledFor(file: KtFile): Boolean = KotlinCodeInsightSettings.getInstance().addUnambiguousImportsOnTheFly
+
     override val enableAutoImportFilter: Boolean = false
 }
 
@@ -43,44 +48,82 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
             suggestions
         }
 
-    override fun autoImportReferenceAtCursor(editor: Editor, file: PsiFile): Boolean {
-        return autoImportReferenceAtOffset(editor, file, editor.caretModel.offset)
+    private fun hasUnresolvedImportWhichCanImport(file: KtFile, name: String): Boolean = file.importDirectives.any {
+        (it.isAllUnder || it.importPath?.importedName?.asString() == name) && it.targetDescriptors().isEmpty()
     }
 
-    override fun autoImportReferenceAtOffset(editor: Editor, file: PsiFile, offset: Int): Boolean {
-        if (file !is KtFile || !DaemonListeners.canChangeFileSilently(file)) return false
+    private fun computeAutoImport(file: KtFile,
+                                  editor: Editor,
+                                  reference: KtSimpleNameExpression,
+                                  startOffset: Int,
+                                  endOffset: Int): KotlinAddImportAction? {
+        if (hasUnresolvedImportWhichCanImport(file, reference.getReferencedName())) return null
 
-        fun hasUnresolvedImportWhichCanImport(name: String): Boolean = file.importDirectives.any {
-            (it.isAllUnder || it.importPath?.importedName?.asString() == name) && it.targetDescriptors().isEmpty()
-        }
+        val bindingContext = reference.analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
+        val diagnostics = bindingContext.diagnostics.filter {
+            it.severity == Severity.ERROR && startOffset <= it.psiElement.startOffset && it.psiElement.endOffset <= endOffset
+        }.ifEmpty { return null }
 
-        fun KtSimpleNameExpression.autoImport(): Boolean {
-            if (hasUnresolvedImportWhichCanImport(getReferencedName())) return false
-
-            val bindingContext = analyze(BodyResolveMode.PARTIAL)
-            if (mainReference.resolveToDescriptors(bindingContext).isNotEmpty()) return false
-
-            val suggestions = filterSuggestions(file, ImportFix(this).collectSuggestions())
-            val suggestion = suggestions.singleOrNull() ?: return false
-            val descriptors = file.resolveImportReference(suggestion)
-
-            // we do not auto-import nested classes because this will probably add qualification into the text and this will confuse the user
-            if (descriptors.any { it is ClassDescriptor && it.containingDeclaration is ClassDescriptor }) return false
-
-            var result = false
-            CommandProcessor.getInstance().runUndoTransparentAction {
-                result = createSingleImportAction(project, editor, this, suggestions).execute()
+        val quickFixProvider = Fe10QuickFixProvider.getInstance(reference.project)
+        val importFixBases = buildList {
+            diagnostics.groupBy { it.psiElement }.forEach { (_, sameElementDiagnostics) ->
+                sameElementDiagnostics.groupBy { it.factory }.forEach { (_, sameTypeDiagnostic) ->
+                    val quickFixes = quickFixProvider.createUnresolvedReferenceQuickFixes(sameTypeDiagnostic)
+                    for (action in quickFixes.values()) {
+                        if (action is ImportFixBase<*>) {
+                            this.add(action)
+                        }
+                    }
+                }
             }
-            return result
+        }.ifEmpty { return null }
+
+        return importFixBases.firstNotNullOfOrNull { action ->
+            val suggestions = filterSuggestions(file, action.collectSuggestions())
+            if (suggestions.size != 1) {
+                null
+            } else {
+                val suggestion = suggestions.first()
+                val descriptors = file.resolveImportReference(suggestion)
+
+                // we do not auto-import nested classes because this will probably add qualification into the text and this will confuse the user
+                if (descriptors.any { it is ClassDescriptor && it.containingDeclaration is ClassDescriptor }) {
+                    null
+                } else {
+                    val element = action.element
+                    if (element is KtElement) {
+                        createSingleImportAction(file.project, editor, element, suggestions)
+                    } else {
+                        null
+                    }
+                }
+            }
         }
+    }
+
+    override fun computeAutoImportAtOffset(editor: Editor, file: PsiFile, offset: Int, allowCaretNearReference: Boolean): BooleanSupplier? {
+        if (file !is KtFile) return null
 
         val document = editor.document
         val lineNumber = document.getLineNumber(offset)
         val startOffset = document.getLineStartOffset(lineNumber)
         val endOffset = document.getLineEndOffset(lineNumber)
-
-        return file.elementsInRange(TextRange(startOffset, endOffset))
+        val nameExpressions = file.elementsInRange(TextRange(startOffset, endOffset))
             .flatMap { it.collectDescendantsOfType<KtSimpleNameExpression>() }
-            .any { it.endOffset != offset && it.autoImport() }
+        val action: KotlinAddImportAction = nameExpressions.firstNotNullOfOrNull { ref ->
+            if (ref.endOffset != offset) computeAutoImport(file, editor, ref, startOffset, endOffset) else null
+        } ?: return null
+
+        return BooleanSupplier {
+            doImport(file, action)
+        }
+    }
+
+    private fun doImport(file: PsiFile, action: KotlinAddImportAction): Boolean {
+        var res = false;
+        CommandProcessor.getInstance().runUndoTransparentAction {
+            res = action.execute()
+        }
+        return res
     }
 }

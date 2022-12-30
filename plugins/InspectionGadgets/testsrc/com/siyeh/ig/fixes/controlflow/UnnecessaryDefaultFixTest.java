@@ -24,61 +24,71 @@ public class UnnecessaryDefaultFixTest extends IGQuickFixesTestCase {
 
   public void testRemoveReturn() {
     doMemberTest(InspectionGadgetsBundle.message("unnecessary.default.quickfix"),
-                 "  enum E { A, B }\n" +
-                 "  int foo(E e) {\n" +
-                 "    return switch (e) {\n" +
-                 "      case A -> 1;\n" +
-                 "      case B -> 2;\n" +
-                 "      default/**/ -> 3;\n" +
-                 "    };\n" +
-                 "  }\n",
-                 "  enum E { A, B }\n" +
-                 "  int foo(E e) {\n" +
-                 "    return switch (e) {\n" +
-                 "      case A -> 1;\n" +
-                 "      case B -> 2;\n" +
-                 "    };\n" +
-                 "  }\n"
+                 """
+                     enum E { A, B }
+                     int foo(E e) {
+                       return switch (e) {
+                         case A -> 1;
+                         case B -> 2;
+                         default/**/ -> 3;
+                       };
+                     }
+                   """,
+                 """
+                     enum E { A, B }
+                     int foo(E e) {
+                       return switch (e) {
+                         case A -> 1;
+                         case B -> 2;
+                       };
+                     }
+                   """
     );
   }
 
   public void testDoNotFixWithMissingValues() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.default.quickfix"),
-                               "class X {\n" +
-                               "  enum E { A, B, C }\n" +
-                               "  int foo(E e) {\n" +
-                               "    return switch (e) {\n" +
-                               "      case A -> 1;\n" +
-                               "      case B -> 2;\n" +
-                               "      default/**/ -> 3;\n" +
-                               "    };\n" +
-                               "  }\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   enum E { A, B, C }
+                                   int foo(E e) {
+                                     return switch (e) {
+                                       case A -> 1;
+                                       case B -> 2;
+                                       default/**/ -> 3;
+                                     };
+                                   }
+                                 }
+                                 """);
   }
 
   public void testDoNotFixOnObject() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.default.quickfix"),
-                               "class X {\n" +
-                               "  int foo(Character e) {\n" +
-                               "    return switch (e) {\n" +
-                               "      case 'A' -> 1;\n" +
-                               "      case 'B' -> 2;\n" +
-                               "      default/**/ -> 3;\n" +
-                               "    };\n" +
-                               "  }\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   int foo(Character e) {
+                                     return switch (e) {
+                                       case 'A' -> 1;
+                                       case 'B' -> 2;
+                                       default/**/ -> 3;
+                                     };
+                                   }
+                                 }
+                                 """);
   }
 
   public void testDoNotFixOnPrimitive() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.default.quickfix"),
-                               "class X {\n" +
-                               "  int foo(char e) {\n" +
-                               "    return switch (e) {\n" +
-                               "      case 'A' -> 1;\n" +
-                               "      case 'B' -> 2;\n" +
-                               "      default/**/ -> 3;\n" +
-                               "    };\n" +
-                               "  }\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   int foo(char e) {
+                                     return switch (e) {
+                                       case 'A' -> 1;
+                                       case 'B' -> 2;
+                                       default/**/ -> 3;
+                                     };
+                                   }
+                                 }
+                                 """);
   }
 }

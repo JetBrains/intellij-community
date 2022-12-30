@@ -7,19 +7,6 @@ import six
 from six import text_type, u
 
 ENCODING = 'utf-8'
-_stdin = os.fdopen(sys.stdin.fileno(), 'rb')
-_stdout = os.fdopen(sys.stdout.fileno(), 'wb')
-_stderr = os.fdopen(sys.stderr.fileno(), 'wb')
-
-
-def read_safe():
-    return _stdin.read().decode(ENCODING)
-
-
-def print_safe(s, error=False):
-    stream = _stderr if error else _stdout
-    stream.write(s.encode(ENCODING))
-    stream.flush()
 
 
 def format_rest(docstring):
@@ -284,6 +271,18 @@ def format_epytext(docstring):
 
 
 def main():
+    _stdin = os.fdopen(sys.stdin.fileno(), 'rb')
+    _stdout = os.fdopen(sys.stdout.fileno(), 'wb')
+    _stderr = os.fdopen(sys.stderr.fileno(), 'wb')
+
+    def read_safe():
+        return _stdin.read().decode(ENCODING)
+
+    def print_safe(s, error=False):
+        stream = _stderr if error else _stdout
+        stream.write(s.encode(ENCODING))
+        stream.flush()
+
     # Remove existing Sphinx extensions registered via
     # sphinxcontrib setuptools namespace package, as they
     # conflict with sphinxcontrib.napoleon that we bundle.
@@ -308,13 +307,14 @@ def main():
         'epytext': format_epytext
     }.get(docstring_format, format_rest)
 
-    html = formatter(text)
+    try:
+        html = formatter(text)
+    except ImportError:
+        print_safe('sys.path = %s\n\n' % sys.path, error=True)
+        raise
+
     print_safe(html)
 
 
 if __name__ == '__main__':
-    try:
-        main()
-    except ImportError:
-        print_safe('sys.path = %s\n\n' % sys.path, error=True)
-        raise
+    main()

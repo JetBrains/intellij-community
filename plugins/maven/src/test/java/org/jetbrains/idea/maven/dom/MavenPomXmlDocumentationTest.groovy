@@ -38,11 +38,13 @@ class MavenPomXmlDocumentationTest extends MavenDomTestCase {
     )
 
     def expectedText = """Tag name:&nbsp;<b>connection</b><br>Description  :&nbsp;The source control management system URL
-                  that describes the repository and how to connect to the
-                  repository. For more information, see the
-                  <a href="http://maven.apache.org/scm/scm-url-format.html">URL format</a>
-                  and <a href="http://maven.apache.org/scm/scms-overview.html">list of supported SCMs</a>.
-                  This connection is read-only.<br>Version  :&nbsp;4.0.0"""
+            that describes the repository and how to connect to the
+            repository. For more information, see the
+            <a href="https://maven.apache.org/scm/scm-url-format.html">URL format</a>
+            and <a href="https://maven.apache.org/scm/scms-overview.html">list of supported SCMs</a>.
+            This connection is read-only.
+            <br><b>Default value is</b>: parent value [+ path adjustment] + (artifactId or project.directory property), or just parent value if
+            scm&apos;s <code>child.scm.connection.inherit.append.path="false"</code><br>Version  :&nbsp;4.0.0+"""
 
     PsiElement originalElement = getElementAtCaret(myProjectPom)
     PsiElement targetElement = DocumentationManager.getInstance(myProject).findTargetElement(getEditor(), getTestPsiFile(), originalElement)

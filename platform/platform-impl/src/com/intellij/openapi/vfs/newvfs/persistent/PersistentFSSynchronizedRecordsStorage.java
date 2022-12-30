@@ -97,11 +97,6 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
   }
 
   @Override
-  public int incGlobalModCount() {
-    return myGlobalModCount.incrementAndGet();
-  }
-
-  @Override
   public long getTimestamp() throws IOException {
     return read(() -> {
       return myFile.getLong(PersistentFSHeaders.HEADER_TIMESTAMP_OFFSET);
@@ -113,6 +108,7 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
     write(() -> {
       myFile.putInt(PersistentFSHeaders.HEADER_VERSION_OFFSET, version);
       myFile.putLong(PersistentFSHeaders.HEADER_TIMESTAMP_OFFSET, System.currentTimeMillis());
+      //TODO RC: incGlobalModCount?
     });
   }
 
@@ -171,19 +167,17 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
   }
 
   @Override
-  public boolean setFlags(int id, @PersistentFS.Attributes int flags) throws IOException {
-    return write(() -> {
-      final boolean reallyChanged = getFlags(id) != flags;
-      if (reallyChanged) {
-        putRecordInt(id, FLAGS_OFFSET, flags);
-      }
-      return reallyChanged;
-    });
+  public boolean setFlags(int id, @PersistentFS.Attributes int newFlags) throws IOException {
+    return putRecordInt(id, FLAGS_OFFSET, newFlags);
   }
 
   @Override
-  public void setModCount(int id, int value) throws IOException {
-    putRecordInt(id, MOD_COUNT_OFFSET, value);
+  public void markRecordAsModified(int recordId) throws IOException {
+    final int modCount = incrementGlobalModCount();
+    final int absoluteOffset = getOffset(recordId, MOD_COUNT_OFFSET);
+    write(() -> {
+      myFile.putInt(absoluteOffset, modCount);
+    });
   }
 
   @Override
@@ -192,8 +186,8 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
   }
 
   @Override
-  public void setContentRecordId(int id, int value) throws IOException {
-    putRecordInt(id, CONTENT_OFFSET, value);
+  public boolean setContentRecordId(int id, int contentRef) throws IOException {
+    return putRecordInt(id, CONTENT_OFFSET, contentRef);
   }
 
   @Override
@@ -215,14 +209,7 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
 
   @Override
   public boolean putTimestamp(int id, long value) throws IOException {
-    return write(() -> {
-      int timeStampOffset = getOffset(id, TIMESTAMP_OFFSET);
-      final boolean reallyChanged = myFile.getLong(timeStampOffset) != value;
-      if (reallyChanged) {
-        myFile.putLong(timeStampOffset, value);
-      }
-      return reallyChanged;
-    });
+    return putRecordLong(id, TIMESTAMP_OFFSET, value);
   }
 
   @Override
@@ -234,14 +221,7 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
 
   @Override
   public boolean putLength(int id, long value) throws IOException {
-    return write(() -> {
-      int lengthOffset = getOffset(id, LENGTH_OFFSET);
-      final boolean reallyChanged = myFile.getLong(lengthOffset) != value;
-      if (reallyChanged) {
-        myFile.putLong(lengthOffset, value);
-      }
-      return reallyChanged;
-    });
+    return putRecordLong(id, LENGTH_OFFSET, value);
   }
 
   @Override
@@ -249,11 +229,13 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
     write(() -> {
       myRecordCount.updateAndGet(operand -> Math.max(id + 1, operand));
       myFile.put(((long)id) * RECORD_SIZE, ZEROES, 0, RECORD_SIZE);
+      incrementGlobalModCount();
     });
   }
 
   @Override
   public int allocateRecord() {
+    incrementGlobalModCount();
     return myRecordCount.getAndIncrement();
   }
 
@@ -264,25 +246,55 @@ final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsSt
     });
   }
 
-  private void putRecordInt(int id, int offset, int value) throws IOException {
-    final int absoluteOffset = getOffset(id, offset);
-    write(() -> {
-      myFile.putInt(absoluteOffset, value);
+  private boolean putRecordInt(int recordId,
+                               int relativeOffset,
+                               int value) throws IOException {
+    final int absoluteOffset = getOffset(recordId, relativeOffset);
+    final int absoluteOffsetModCount = getOffset(recordId, MOD_COUNT_OFFSET);
+    return write(() -> {
+      final boolean reallyChanged = myFile.getInt(absoluteOffset) != value;
+      if (reallyChanged) {
+        final int modCount = incrementGlobalModCount();
+        myFile.putInt(absoluteOffset, value);
+        myFile.putInt(absoluteOffsetModCount, modCount);
+      }
+      return reallyChanged;
     });
   }
 
+  private Boolean putRecordLong(final int recordId,
+                                final int relativeFieldOffset,
+                                final long newValue) throws IOException {
+    return write(() -> {
+      int absoluteFieldOffset = getOffset(recordId, relativeFieldOffset);
+      int absoluteModCountOffset = getOffset(recordId, MOD_COUNT_OFFSET);
+      final boolean reallyChanged = myFile.getLong(absoluteFieldOffset) != newValue;
+      if (reallyChanged) {
+        final int modCount = incrementGlobalModCount();
+        myFile.putLong(absoluteFieldOffset, newValue);
+        myFile.putInt(absoluteModCountOffset, modCount);
+      }
+      return reallyChanged;
+    });
+  }
+
+  private int incrementGlobalModCount() {
+    return myGlobalModCount.incrementAndGet();
+  }
+
   @Override
-  public void setAttributesAndIncModCount(int id, long timestamp, long length, int flags, int nameId, int parentId, boolean overwriteMissed)
+  public void fillRecord(int id, long timestamp, long length, int flags, int nameId, int parentId, boolean overwriteAttrRef)
     throws IOException {
     write(() -> {
-      //FIXME RC: method name setAttributesAndIncModCount, but there is no modCount increment here!
       assert myPooledWriteBuffer.position() == 0;
-      myPooledWriteBuffer.putLong(TIMESTAMP_OFFSET, timestamp);
-      myPooledWriteBuffer.putInt(ATTR_REF_OFFSET, overwriteMissed ? 0 : getAttributeRecordId(id));
-      myPooledWriteBuffer.putLong(LENGTH_OFFSET, length);
-      myPooledWriteBuffer.putInt(FLAGS_OFFSET, flags);
-      myPooledWriteBuffer.putInt(NAME_OFFSET, nameId);
+      final int modCount = incrementGlobalModCount();
       myPooledWriteBuffer.putInt(PARENT_OFFSET, parentId);
+      myPooledWriteBuffer.putInt(NAME_OFFSET, nameId);
+      myPooledWriteBuffer.putInt(FLAGS_OFFSET, flags);
+      myPooledWriteBuffer.putInt(ATTR_REF_OFFSET, overwriteAttrRef ? 0 : getAttributeRecordId(id));
+      myPooledWriteBuffer.putLong(TIMESTAMP_OFFSET, timestamp);
+      myPooledWriteBuffer.putLong(MOD_COUNT_OFFSET, modCount);
+      myPooledWriteBuffer.putLong(LENGTH_OFFSET, length);
       assert myPooledWriteBuffer.position() == 0;
       myFile.put(((long)id) * RECORD_SIZE, myPooledWriteBuffer);
       myPooledWriteBuffer.rewind();

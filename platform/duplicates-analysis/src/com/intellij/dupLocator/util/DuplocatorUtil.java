@@ -241,28 +241,13 @@ public final class DuplocatorUtil {
       }
     }
 
-    switch (childDescriptor1.getType()) {
-
-      case DEFAULT:
-        return g.match(element1, element2);
-
-      case OPTIONALLY_IN_PATTERN:
-      case OPTIONALLY:
-        return g.matchOptionally(element1, element2);
-
-      case CHILDREN:
-        return g.matchSons(element1, element2);
-
-      case CHILDREN_OPTIONALLY_IN_PATTERN:
-      case CHILDREN_OPTIONALLY:
-        return g.matchSonsOptionally(element1, element2);
-
-      case CHILDREN_IN_ANY_ORDER:
-        return g.matchSonsInAnyOrder(element1, element2);
-
-      default:
-        return false;
-    }
+    return switch (childDescriptor1.getType()) {
+      case DEFAULT -> g.match(element1, element2);
+      case OPTIONALLY_IN_PATTERN, OPTIONALLY -> g.matchOptionally(element1, element2);
+      case CHILDREN -> g.matchSons(element1, element2);
+      case CHILDREN_OPTIONALLY_IN_PATTERN, CHILDREN_OPTIONALLY -> g.matchSonsOptionally(element1, element2);
+      case CHILDREN_IN_ANY_ORDER -> g.matchSonsInAnyOrder(element1, element2);
+    };
   }
 
   private static boolean match(@NotNull MultiChildDescriptor childDescriptor1,
@@ -276,21 +261,11 @@ public final class DuplocatorUtil {
     final PsiElement[] elements1 = childDescriptor1.getElements();
     final PsiElement[] elements2 = childDescriptor2.getElements();
 
-    switch (childDescriptor1.getType()) {
-
-      case DEFAULT:
-        return g.matchSequentially(elements1, elements2);
-
-      case OPTIONALLY_IN_PATTERN:
-      case OPTIONALLY:
-        return g.matchOptionally(elements1, elements2);
-
-      case IN_ANY_ORDER:
-        return g.matchInAnyOrder(elements1, elements2);
-
-      default:
-        return false;
-    }
+    return switch (childDescriptor1.getType()) {
+      case DEFAULT -> g.matchSequentially(elements1, elements2);
+      case OPTIONALLY_IN_PATTERN, OPTIONALLY -> g.matchOptionally(elements1, elements2);
+      case IN_ANY_ORDER -> g.matchInAnyOrder(elements1, elements2);
+    };
   }
 
   @Nullable

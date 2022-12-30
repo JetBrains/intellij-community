@@ -34,7 +34,7 @@ open class SimpleEntityImpl(val dataSource: SimpleEntityData) : SimpleEntity, Wo
     return connections
   }
 
-  class Builder(val result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity>(), SimpleEntity.Builder {
+  class Builder(var result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity>(), SimpleEntity.Builder {
     constructor() : this(SimpleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -52,6 +52,9 @@ open class SimpleEntityImpl(val dataSource: SimpleEntityData) : SimpleEntity, Wo
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -75,8 +78,8 @@ open class SimpleEntityImpl(val dataSource: SimpleEntityData) : SimpleEntity, Wo
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SimpleEntity
-      this.entitySource = dataSource.entitySource
-      this.name = dataSource.name
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.name != dataSource.name) this.name = dataSource.name
       if (parents != null) {
       }
     }
@@ -153,7 +156,7 @@ class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SimpleEntityData
 
@@ -164,7 +167,7 @@ class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SimpleEntityData
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.safeDelete;
 
@@ -17,7 +17,7 @@ import java.util.List;
 
 /**
  * An extension point for "Safe Delete" refactoring.
- * 
+ * <p> 
  * Delegates are processed one by one, the first delegate which agrees to handle element ({@link #handlesElement(PsiElement)}) will be used, rest are ignored.
  * Natural loading order can be changed by providing attribute "order" during registration in plugin.xml.
  */

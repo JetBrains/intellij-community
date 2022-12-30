@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.plugins.PluginManagerProxy
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
-import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.*
+import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.PluginData
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.replaceService
 
@@ -95,7 +95,7 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
 
   fun `test disable installed plugin`() {
     testPluginManager.addPluginDescriptors(pluginManager, quickJump)
-    pluginManager.updateStateFromIde()
+    pluginManager.updateStateFromIdeOnStart(null)
 
     assertPluginManagerState {
       quickJump(enabled = true)
@@ -129,7 +129,7 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
   fun `test update state from IDE`() {
     testPluginManager.addPluginDescriptors(pluginManager, quickJump, typengo, git4idea)
 
-    pluginManager.updateStateFromIde()
+    pluginManager.updateStateFromIdeOnStart(null)
 
     assertPluginManagerState {
       quickJump(enabled = true)
@@ -153,9 +153,27 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     }
   }
 
+  fun `test do not remove entries about disabled plugins which are not installed`() {
+    testPluginManager.addPluginDescriptors(pluginManager, typengo, git4idea)
+
+    val savedState = state {
+      quickJump(enabled = false)
+      typengo(enabled = true)
+      git4idea(enabled = true)
+    }
+
+    pluginManager.updateStateFromIdeOnStart(savedState)
+
+    assertPluginManagerState {
+      quickJump(enabled = false)
+      typengo(enabled = true)
+      // git4idea is removed because existing bundled enabled plugin is the default state
+    }
+  }
+
   fun `test push settings to IDE`() {
     testPluginManager.addPluginDescriptors(pluginManager, quickJump, typengo, git4idea)
-    pluginManager.updateStateFromIde()
+    pluginManager.updateStateFromIdeOnStart(null)
 
     pluginManager.pushChangesToIde(state {
       quickJump(enabled = false)

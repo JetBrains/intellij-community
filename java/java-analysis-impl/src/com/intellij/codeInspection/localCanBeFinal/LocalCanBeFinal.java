@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -150,7 +151,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         List<PsiVariable> ssa = ControlFlowUtil.getSSAVariables(flow, from, end, true);
        
         for (PsiVariable psiVariable : ssa) {
-          if (declared.contains(psiVariable)) {
+          if (declared.contains(psiVariable) && (!psiVariable.hasInitializer() || !VariableAccessUtils.variableIsAssigned(psiVariable, block))) {
             result.add(psiVariable);
           }
         }

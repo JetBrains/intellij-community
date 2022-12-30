@@ -70,7 +70,7 @@ interface NewProjectWizardPythonData : NewProjectWizardBaseData {
   companion object {
     val KEY = Key.create<NewProjectWizardPythonData>(NewProjectWizardPythonData::class.java.name)
 
-    val NewProjectWizardStep.pythonData get() = data.getUserData(KEY)!!
+    private val NewProjectWizardStep.pythonData get() = data.getUserData(KEY)!!
 
     val NewProjectWizardStep.pythonSdkProperty get() = pythonData.pythonSdkProperty
     val NewProjectWizardStep.pythonSdk get() = pythonData.pythonSdk

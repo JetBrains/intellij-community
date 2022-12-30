@@ -91,7 +91,7 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
     }
   }
 
-  protected fun removeEmphasisFromSelection(document: Document, caret: Caret, nodeRange: TextRange) {
+  private fun removeEmphasisFromSelection(document: Document, caret: Caret, nodeRange: TextRange) {
     val text = document.charsSequence
     val boundString = getExistingBoundString(text, nodeRange.startOffset)
     if (boundString == null) {
@@ -131,7 +131,7 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
     }
   }
 
-  protected fun addEmphasisToSelection(document: Document, caret: Caret) {
+  private fun addEmphasisToSelection(document: Document, caret: Caret) {
     var from = caret.selectionStart
     var to = caret.selectionEnd
     val text = document.charsSequence

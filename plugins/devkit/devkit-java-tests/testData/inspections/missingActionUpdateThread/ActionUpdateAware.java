@@ -4,7 +4,7 @@ import com.intellij.openapi.actionSystem.*;
 import static com.intellij.openapi.actionSystem.ActionUpdateThread.*;
 
 // plain
-class <warning descr="Override 'getActionUpdateThread' and chose 'EDT' or 'BGT'">AwareError</warning> implements ActionUpdateThreadAware {
+class <warning descr="Override 'getActionUpdateThread' and choose 'EDT' or 'BGT'">AwareError</warning> implements ActionUpdateThreadAware {
 }
 
 class AwareNoError implements ActionUpdateThreadAware {
@@ -12,12 +12,12 @@ class AwareNoError implements ActionUpdateThreadAware {
 }
 
 // inherited
-class <warning descr="Override 'getActionUpdateThread' and chose 'EDT' or 'BGT'">AwareChildError</warning> extends AwareError {}
+class <warning descr="Override 'getActionUpdateThread' and choose 'EDT' or 'BGT'">AwareChildError</warning> extends AwareError {}
 class AwareChildNoError extends AwareNoError {}
 
 // anonymous
 class Holder {
-  ActionUpdateThreadAware awareError = new <warning descr="Override 'getActionUpdateThread' and chose 'EDT' or 'BGT'">AwareError</warning>() {
+  ActionUpdateThreadAware awareError = new <warning descr="Override 'getActionUpdateThread' and choose 'EDT' or 'BGT'">AwareError</warning>() {
   };
 
   ActionUpdateThreadAware awareNoError = new AwareError() {

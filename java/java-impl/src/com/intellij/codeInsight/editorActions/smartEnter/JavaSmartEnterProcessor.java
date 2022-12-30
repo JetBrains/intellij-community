@@ -59,6 +59,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
             new MissingIfBranchesFixer(),
             new MissingTryBodyFixer(),
             new MissingSwitchBodyFixer(),
+            new MissingLambdaBodyFixer(),
             new MissingCatchBodyFixer(),
             new MissingSynchronizedBodyFixer(),
             new MissingLoopBodyFixer(),
@@ -94,7 +95,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   private static final int MAX_ATTEMPTS = 20;
   private static final Key<Long> SMART_ENTER_TIMESTAMP = Key.create("smartEnterOriginalTimestamp");
 
-  public static class TooManyAttemptsException extends Exception {}
+  private static class TooManyAttemptsException extends Exception {}
 
   private final JavadocFixer myJavadocFixer = new JavadocFixer();
 
@@ -368,7 +369,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   }
 
   private static final class FixerUsageCollector extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("java.smart.enter.fixer", 2);
+    private static final EventLogGroup GROUP = new EventLogGroup("java.smart.enter.fixer", 3);
     private static final EventId1<String> USED = GROUP.registerEvent("fixer_used", new StringEventField.ValidatedByAllowedValues(
       "fixer_used",
       ContainerUtil.map(ourFixers, f -> f.getClass().getSimpleName())));

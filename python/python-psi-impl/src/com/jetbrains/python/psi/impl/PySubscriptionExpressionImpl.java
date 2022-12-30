@@ -121,19 +121,11 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
 
   @Override
   public String getReferencedName() {
-    String res = PyNames.GETITEM;
-    switch (AccessDirection.of(this)) {
-      case READ:
-        res = PyNames.GETITEM;
-        break;
-      case WRITE:
-        res = PyNames.SETITEM;
-        break;
-      case DELETE:
-        res = PyNames.DELITEM;
-        break;
-    }
-    return res;
+    return switch (AccessDirection.of(this)) {
+      case READ -> PyNames.GETITEM;
+      case WRITE -> PyNames.SETITEM;
+      case DELETE -> PyNames.DELITEM;
+    };
   }
 
   @Override

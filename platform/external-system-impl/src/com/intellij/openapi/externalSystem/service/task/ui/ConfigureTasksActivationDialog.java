@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.service.task.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
@@ -32,10 +31,11 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
@@ -64,7 +64,7 @@ public final class ConfigureTasksActivationDialog extends DialogWrapper {
   @SuppressWarnings("unused")
   private JPanel projectFieldPanel;
   private SimpleTree myTree;
-  private AbstractTreeBuilder treeBuilder;
+  private StructureTreeModel<SimpleTreeStructure.Impl> myTreeModel;
   private ComboBox projectCombobox;
   @NotNull
   private final ExternalSystemUiAware uiAware;
@@ -96,7 +96,7 @@ public final class ConfigureTasksActivationDialog extends DialogWrapper {
 
     myTree = new SimpleTree();
     myRootNode = new RootNode();
-    treeBuilder = createTreeBuilder(myProject, myRootNode, myTree);
+    myTreeModel = createModel(myRootNode, myTree);
     final ExternalProjectSettings currentProjectSettings = externalSystemSettings.getLinkedProjectSettings(projectPath);
     if (currentProjectSettings != null) {
       SwingHelper.updateItems(projectCombobox, projects,
@@ -105,16 +105,12 @@ public final class ConfigureTasksActivationDialog extends DialogWrapper {
     projectCombobox.addActionListener(e -> updateTree(myRootNode));
   }
 
-  private static AbstractTreeBuilder createTreeBuilder(@NotNull Project project, @NotNull SimpleNode root, @NotNull Tree tree) {
-    final DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode(root));
-    tree.setModel(treeModel);
+  private StructureTreeModel<SimpleTreeStructure.Impl> createModel(@NotNull SimpleNode root, @NotNull Tree tree) {
     tree.setRootVisible(false);
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
-    final AbstractTreeBuilder treeBuilder = new AbstractTreeBuilder(tree, treeModel, new SimpleTreeStructure.Impl(root), null) {
-      // unique class to simplify search through the logs
-    };
-    Disposer.register(project, treeBuilder);
-    return treeBuilder;
+    StructureTreeModel<SimpleTreeStructure.Impl> model = new StructureTreeModel<>(new SimpleTreeStructure.Impl(root), getDisposable());
+    tree.setModel(new AsyncTreeModel(model, getDisposable()));
+    return model;
   }
 
   @Override
@@ -346,7 +342,7 @@ public final class ConfigureTasksActivationDialog extends DialogWrapper {
 
   private void cleanUpEmptyNodes(@NotNull CachingSimpleNode node) {
     node.cleanUpCache();
-    treeBuilder.addSubtreeToUpdateByElement(node);
+    myTreeModel.invalidateAsync(node, true);
     if (node.getChildren().length == 0) {
       if (node.getParent() instanceof CachingSimpleNode) {
         cleanUpEmptyNodes((CachingSimpleNode)node.getParent());

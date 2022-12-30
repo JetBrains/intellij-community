@@ -137,11 +137,18 @@ class KotlinAddImportAction internal constructor(
     private fun variantsList(): List<AutoImportVariant> {
         if (singleImportVariant != null && !isUnitTestMode()) return listOf(singleImportVariant!!)
 
-        return project.runSynchronouslyWithProgress(KotlinBundle.message("import.progress.text.resolve.imports"), true) {
+        val variantsList = {
             runReadAction {
                 variants.sortedBy { it.priority }.map { it.variant }.toList()
             }
-        }.orEmpty()
+        }
+        return if (isUnitTestMode()) {
+            variantsList()
+        } else {
+            project.runSynchronouslyWithProgress(KotlinBundle.message("import.progress.text.resolve.imports"), true) {
+                variantsList()
+            }.orEmpty()
+        }
     }
 
     fun showHint(): Boolean {

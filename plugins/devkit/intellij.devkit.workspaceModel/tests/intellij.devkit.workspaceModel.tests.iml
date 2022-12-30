@@ -17,5 +17,7 @@
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.codegen" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="module" module-name="intellij.devkit" scope="RUNTIME" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" scope="TEST" />
   </component>
 </module>

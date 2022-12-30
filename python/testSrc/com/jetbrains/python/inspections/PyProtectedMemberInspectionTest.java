@@ -94,16 +94,17 @@ public class PyProtectedMemberInspectionTest extends PyInspectionTestCase {
   // PY-32485
   public void testProtectedMemberOfSameFileClass() {
     // created file should be considered as located inside a package so Python 3 is used here
-    doTestByText("class A:\n" +
-                 "    def __init__(self, arg):\n" +
-                 "        self._arg = arg\n" +
-                 "\n" +
-                 "    def _f(self):\n" +
-                 "        return self._arg\n" +
-                 "\n" +
-                 "a = A(1)\n" +
-                 "print(<weak_warning descr=\"Access to a protected member _arg of a class\">a._arg</weak_warning>)\n" +
-                 "print(<weak_warning descr=\"Access to a protected member _f of a class\">a._f</weak_warning>())");
+    doTestByText("""
+                   class A:
+                       def __init__(self, arg):
+                           self._arg = arg
+
+                       def _f(self):
+                           return self._arg
+
+                   a = A(1)
+                   print(<weak_warning descr="Access to a protected member _arg of a class">a._arg</weak_warning>)
+                   print(<weak_warning descr="Access to a protected member _f of a class">a._f</weak_warning>())""");
   }
 
   @NotNull

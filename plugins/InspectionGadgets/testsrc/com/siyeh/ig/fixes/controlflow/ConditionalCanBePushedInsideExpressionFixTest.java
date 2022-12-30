@@ -11,21 +11,23 @@ public class ConditionalCanBePushedInsideExpressionFixTest extends IGQuickFixesT
 
   public void testSideEffects1() {
     doTest(InspectionGadgetsBundle.message("conditional.can.be.pushed.inside.expression.quickfix"),
-           "class X {\n" +
-           "    String foo(boolean b) {\n" +
-           "        return b/*c0*/ ? String.v<caret>alueOf(new Double(0)) //c1\n" +
-           "                : String.valueOf(new Double(1.2))//c2\n" +
-           "                ;\n" +
-           "    }\n" +
-           "}",
-           "class X {\n" +
-           "    String foo(boolean b) {\n" +
-           "        /*c0*/\n" +
-           "        //c1\n" +
-           "        return String.valueOf(new Double(b ? 0 : 1.2))//c2\n" +
-           "                ;\n" +
-           "    }\n" +
-           "}");
+           """
+             class X {
+                 String foo(boolean b) {
+                     return b/*c0*/ ? String.v<caret>alueOf(new Double(0)) //c1
+                             : String.valueOf(new Double(1.2))//c2
+                             ;
+                 }
+             }""",
+           """
+             class X {
+                 String foo(boolean b) {
+                     /*c0*/
+                     //c1
+                     return String.valueOf(new Double(b ? 0 : 1.2))//c2
+                             ;
+                 }
+             }""");
   }
   @Override
   protected BaseInspection getInspection() {

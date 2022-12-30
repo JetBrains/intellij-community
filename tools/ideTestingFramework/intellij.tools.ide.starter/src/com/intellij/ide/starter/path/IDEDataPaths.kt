@@ -1,12 +1,8 @@
 package com.intellij.ide.starter.path
 
-import com.intellij.ide.starter.ci.CIServer
-import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.utils.FileSystem.getFileOrDirectoryPresentableSize
 import com.intellij.ide.starter.utils.createInMemoryDirectory
 import com.intellij.ide.starter.utils.logOutput
-import org.kodein.di.direct
-import org.kodein.di.instance
 import java.io.Closeable
 import java.nio.file.Files
 import java.nio.file.Path
@@ -58,9 +54,8 @@ class IDEDataPaths(
       }
     }
 
-    if (di.direct.instance<CIServer>().isBuildRunningOnCI) {
-      deleteDirectories()
-    }
+    // [deleteDirectories] is disabled, because sometimes we need to collect some artifacts from those directories
+    // anyway, they will be cleaned up by CI
   }
 
   private fun deleteDirectories() {

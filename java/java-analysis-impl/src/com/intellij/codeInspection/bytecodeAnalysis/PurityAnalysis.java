@@ -138,13 +138,12 @@ abstract class DataValue implements org.jetbrains.org.objectweb.asm.tree.analysi
     }
 
     static ParameterDataValue create(int n) {
-      switch (n) {
-        case 0: return PARAM0;
-        case 1: return PARAM1;
-        case 2: return PARAM2;
-        default:
-          return new ParameterDataValue(n);
-      }
+      return switch (n) {
+        case 0 -> PARAM0;
+        case 1 -> PARAM1;
+        case 2 -> PARAM2;
+        default -> new ParameterDataValue(n);
+      };
     }
 
     @Override
@@ -401,19 +400,18 @@ class DataInterpreter extends Interpreter<DataValue> {
   @Override
   public DataValue newOperation(AbstractInsnNode insn) {
     switch (insn.getOpcode()) {
-      case Opcodes.NEW:
+      case Opcodes.NEW -> {
         return DataValue.LocalDataValue;
-      case Opcodes.LCONST_0:
-      case Opcodes.LCONST_1:
-      case Opcodes.DCONST_0:
-      case Opcodes.DCONST_1:
+      }
+      case Opcodes.LCONST_0, Opcodes.LCONST_1, Opcodes.DCONST_0, Opcodes.DCONST_1 -> {
         return DataValue.UnknownDataValue2;
-      case Opcodes.LDC: {
+      }
+      case Opcodes.LDC -> {
         Object cst = ((LdcInsnNode)insn).cst;
         int size = (cst instanceof Long || cst instanceof Double) ? 2 : 1;
         return size == 1 ? DataValue.UnknownDataValue1 : DataValue.UnknownDataValue2;
       }
-      case Opcodes.GETSTATIC: {
+      case Opcodes.GETSTATIC -> {
         FieldInsnNode fieldInsn = (FieldInsnNode)insn;
         Member method = new Member(fieldInsn.owner, fieldInsn.name, fieldInsn.desc);
         EKey key = new EKey(method, Direction.Volatile, true);
@@ -421,40 +419,26 @@ class DataInterpreter extends Interpreter<DataValue> {
         int size = Type.getType(((FieldInsnNode)insn).desc).getSize();
         return size == 1 ? DataValue.UnknownDataValue1 : DataValue.UnknownDataValue2;
       }
-      default:
+      default -> {
         return DataValue.UnknownDataValue1;
+      }
     }
   }
 
   @Override
   public DataValue binaryOperation(AbstractInsnNode insn, DataValue value1, DataValue value2) {
-    switch (insn.getOpcode()) {
-      case Opcodes.LALOAD:
-      case Opcodes.DALOAD:
-      case Opcodes.LADD:
-      case Opcodes.DADD:
-      case Opcodes.LSUB:
-      case Opcodes.DSUB:
-      case Opcodes.LMUL:
-      case Opcodes.DMUL:
-      case Opcodes.LDIV:
-      case Opcodes.DDIV:
-      case Opcodes.LREM:
-      case Opcodes.LSHL:
-      case Opcodes.LSHR:
-      case Opcodes.LUSHR:
-      case Opcodes.LAND:
-      case Opcodes.LOR:
-      case Opcodes.LXOR:
-        return DataValue.UnknownDataValue2;
-      case Opcodes.PUTFIELD:
+    return switch (insn.getOpcode()) {
+      case Opcodes.LALOAD, Opcodes.DALOAD, Opcodes.LADD, Opcodes.DADD, Opcodes.LSUB, Opcodes.DSUB, Opcodes.LMUL,
+        Opcodes.DMUL, Opcodes.LDIV, Opcodes.DDIV, Opcodes.LREM, Opcodes.LSHL, Opcodes.LSHR, Opcodes.LUSHR,
+        Opcodes.LAND, Opcodes.LOR, Opcodes.LXOR -> DataValue.UnknownDataValue2;
+      case Opcodes.PUTFIELD -> {
         final EffectQuantum effectQuantum = getChangeQuantum(value1);
         int insnIndex = methodNode.instructions.indexOf(insn);
         effects[insnIndex] = effectQuantum;
-        return DataValue.UnknownDataValue1;
-      default:
-        return DataValue.UnknownDataValue1;
-    }
+        yield DataValue.UnknownDataValue1;
+      }
+      default -> DataValue.UnknownDataValue1;
+    };
   }
 
   @Nullable
@@ -484,19 +468,18 @@ class DataInterpreter extends Interpreter<DataValue> {
     int insnIndex = methodNode.instructions.indexOf(insn);
     int opCode = insn.getOpcode();
     switch (opCode) {
-      case Opcodes.MULTIANEWARRAY:
+      case Opcodes.MULTIANEWARRAY -> {
         return DataValue.LocalDataValue;
-      case Opcodes.INVOKEDYNAMIC:
+      }
+      case Opcodes.INVOKEDYNAMIC -> {
         // Lambda creation (w/o invocation) and StringConcatFactory have no side-effect
         InvokeDynamicInsnNode indy = (InvokeDynamicInsnNode)insn;
         if (LambdaIndy.from(indy) == null && !ClassDataIndexer.STRING_CONCAT_FACTORY.equals(indy.bsm.getOwner())) {
           effects[insnIndex] = EffectQuantum.TopEffectQuantum;
         }
         return (ASMUtils.getReturnSizeFast((indy).desc) == 1) ? DataValue.UnknownDataValue1 : DataValue.UnknownDataValue2;
-      case Opcodes.INVOKEVIRTUAL:
-      case Opcodes.INVOKESPECIAL:
-      case Opcodes.INVOKESTATIC:
-      case Opcodes.INVOKEINTERFACE:
+      }
+      case Opcodes.INVOKEVIRTUAL, Opcodes.INVOKESPECIAL, Opcodes.INVOKESTATIC, Opcodes.INVOKEINTERFACE -> {
         boolean stable = opCode == Opcodes.INVOKESPECIAL || opCode == Opcodes.INVOKESTATIC;
         MethodInsnNode mNode = ((MethodInsnNode)insn);
         DataValue[] data = values.toArray(DataValue.EMPTY);
@@ -537,6 +520,7 @@ class DataInterpreter extends Interpreter<DataValue> {
         }
         effects[insnIndex] = quantum;
         return result;
+      }
     }
     return null;
   }
@@ -545,16 +529,10 @@ class DataInterpreter extends Interpreter<DataValue> {
   public DataValue unaryOperation(AbstractInsnNode insn, DataValue value) {
 
     switch (insn.getOpcode()) {
-      case Opcodes.LNEG:
-      case Opcodes.DNEG:
-      case Opcodes.I2L:
-      case Opcodes.I2D:
-      case Opcodes.L2D:
-      case Opcodes.F2L:
-      case Opcodes.F2D:
-      case Opcodes.D2L:
+      case Opcodes.LNEG, Opcodes.DNEG, Opcodes.I2L, Opcodes.I2D, Opcodes.L2D, Opcodes.F2L, Opcodes.F2D, Opcodes.D2L -> {
         return DataValue.UnknownDataValue2;
-      case Opcodes.GETFIELD:
+      }
+      case Opcodes.GETFIELD -> {
         FieldInsnNode fieldInsn = ((FieldInsnNode)insn);
         Member method = new Member(fieldInsn.owner, fieldInsn.name, fieldInsn.desc);
         EKey key = new EKey(method, Direction.Volatile, true);
@@ -565,17 +543,21 @@ class DataInterpreter extends Interpreter<DataValue> {
         else {
           return ASMUtils.getSizeFast(fieldInsn.desc) == 1 ? DataValue.UnknownDataValue1 : DataValue.UnknownDataValue2;
         }
-      case Opcodes.CHECKCAST:
+      }
+      case Opcodes.CHECKCAST -> {
         return value;
-      case Opcodes.PUTSTATIC:
+      }
+      case Opcodes.PUTSTATIC -> {
         int insnIndex = methodNode.instructions.indexOf(insn);
         effects[insnIndex] = EffectQuantum.TopEffectQuantum;
         return DataValue.UnknownDataValue1;
-      case Opcodes.NEWARRAY:
-      case Opcodes.ANEWARRAY:
+      }
+      case Opcodes.NEWARRAY, Opcodes.ANEWARRAY -> {
         return DataValue.LocalDataValue;
-      default:
+      }
+      default -> {
         return DataValue.UnknownDataValue1;
+      }
     }
   }
 

@@ -67,5 +67,5 @@ abstract class AbstractSmartStepIntoTest : KotlinLightCodeInsightFixtureTestCase
         return sb.toString()
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 }

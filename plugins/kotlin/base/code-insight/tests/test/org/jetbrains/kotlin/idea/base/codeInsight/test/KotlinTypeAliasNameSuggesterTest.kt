@@ -4,13 +4,18 @@ package org.jetbrains.kotlin.idea.base.codeInsight.test
 import com.intellij.psi.util.findParentOfType
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
+import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.base.test.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.psi.KtFunction
 
-class KotlinTypeAliasNameSuggesterTest : KotlinLightCodeInsightFixtureTestCase() {
+class KotlinTypeAliasNameSuggesterTest : NewLightKotlinCodeInsightFixtureTestCase() {
+    override val pluginKind: KotlinPluginKind
+        get() = KotlinPluginKind.FIR_PLUGIN
+
     fun testSimple() = test("String", "StringAlias")
     fun testNullable() = test("String?", "NullableString")
     fun testFullyQualified() = test("java.lang.String", "StringAlias")
@@ -35,7 +40,6 @@ class KotlinTypeAliasNameSuggesterTest : KotlinLightCodeInsightFixtureTestCase()
         }
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
-    }
+    override fun getProjectDescriptor() = KotlinJvmLightProjectDescriptor.DEFAULT
+    override fun getTestDataPath() = KotlinRoot.PATH.toString()
 }

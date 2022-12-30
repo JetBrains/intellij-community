@@ -43,8 +43,8 @@ class IdeReplExecutionTest : LightPlatformTestCase() {
         commandsSent++
     }
 
-    private fun checkOutput(expectedOutput: String) {
-        val output = getReplOutput(textOnTimeOut = {
+    private fun checkOutput(expectedOutput: String, maxIterations: Int = 50, sleepTime: Long = 500) {
+        val output = getReplOutput(maxIterations, sleepTime, textOnTimeOut = {
             "Only ${consoleRunner.commandHistory.processedEntriesCount} commands were processed"
         }) { consoleRunner.commandHistory.processedEntriesCount >= commandsSent }
         assertTrue(output.trim().endsWith(expectedOutput), "'$expectedOutput' should be printed but document text is:\n$output")
@@ -113,7 +113,8 @@ class IdeReplExecutionTest : LightPlatformTestCase() {
     fun testPrintlnText() = "Hello, console world!".let { testSimpleCommand("println(\"$it\")", it) }
 
     @Test
-    fun testDivisionByZeroException() = testSimpleCommand("1 / 0", "java.lang.ArithmeticException: / by zero")
+    fun testDivisionByZeroException() =
+        testSimpleCommand("1 / 0", "java.lang.ArithmeticException: / by zero\n\tat Line_0.<init>(Line_0.kts:1)")
 
     @Test
     fun testMultilineSupport() {
@@ -172,6 +173,12 @@ class IdeReplExecutionTest : LightPlatformTestCase() {
         sendCommand(veryLongTextWithErrors)
         sendCommand(veryLongTextWithErrors)
         sendCommand("println(\"OK\")")
-        checkOutput("OK")
+        /**
+         * There is a lot of errors reported ~ 30*3*3, every error on the separate line,
+         * for some reason `refreshAndGetHistoryEditorText()` gets only one error at the time, so we need a lot of Iterations
+         * with relatively small time between iterations.
+         */
+
+        checkOutput("OK", sleepTime = 10, maxIterations = 1000)
     }
 }

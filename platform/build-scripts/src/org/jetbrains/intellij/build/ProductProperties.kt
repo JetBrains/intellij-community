@@ -243,7 +243,7 @@ abstract class ProductProperties() {
    * to allow users to customize location of the product runtime (`<PRODUCT>_JDK` variable),
    * *.vmoptions file (`<PRODUCT>_VM_OPTIONS`), `idea.properties` file (`<PRODUCT>_PROPERTIES`).
    */
-  open fun getEnvironmentVariableBaseName(applicationInfo: ApplicationInfoProperties) = applicationInfo.upperCaseProductName
+  open fun getEnvironmentVariableBaseName(appInfo: ApplicationInfoProperties) = appInfo.upperCaseProductName
 
   /**
    * Override this method to copy additional files to distributions of all operating systems.

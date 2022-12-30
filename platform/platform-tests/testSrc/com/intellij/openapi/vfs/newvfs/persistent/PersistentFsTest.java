@@ -42,6 +42,8 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.AssumptionViolatedException;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -271,38 +273,33 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
     assumeTrue("Not yet exists: " + nestedTestDir.getParent().getParent(), secondRun);
 
-    assertEquals("subDir\n" +
-                 "subDir/subSubDir\n" +
-                 "subDir/subSubDir/Foo.txt\n",
+    assertEquals("""
+                   subDir
+                   subDir/subSubDir
+                   subDir/subSubDir/Foo.txt
+                   """,
                  eventLog.toString());
   }
 
   @Test
-  public void testModCountIncreases() throws IOException {
+  public void testGlobalFSModCountIncreasesOnMostFileAttributesModifications() throws IOException {
     VirtualFile vFile = tempDirectory.newVirtualFile("file.txt");
     HeavyPlatformTestCase.setBinaryContent(vFile, "x".getBytes(StandardCharsets.UTF_8)); // make various listeners update their VFS views
     ManagingFS managingFS = ManagingFS.getInstance();
-    int inSessionModCount = managingFS.getModificationCount();
-    int globalModCount = managingFS.getFilesystemModificationCount();
-    int parentModCount = managingFS.getModificationCount(vFile.getParent());
+    int globalFsModCount = managingFS.getFilesystemModificationCount();
 
     WriteAction.runAndWait(() -> vFile.setWritable(false));
 
-    assertEquals(globalModCount + 1, managingFS.getModificationCount(vFile));
-    assertEquals(globalModCount + 1, managingFS.getFilesystemModificationCount());
-    assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
-    assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
+    assertEquals(globalFsModCount + 1, managingFS.getFilesystemModificationCount());
 
     FSRecords.force();
     assertFalse(FSRecords.isDirty());
-    ++globalModCount;
+    ++globalFsModCount;
 
-    int finalGlobalModCount = globalModCount;
+    int finalGlobalModCount = globalFsModCount;
 
     HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Processing, "This test wants no indices flush", ()-> {
       WriteAction.runAndWait(() -> {
-        long timestamp = vFile.getTimeStamp();
-        int finalInSessionModCount = managingFS.getModificationCount();
         try {
           vFile.setWritable(true);  // 1 change
           vFile.setBinaryContent("foo".getBytes(Charset.defaultCharset())); // content change + length change + maybe timestamp change
@@ -311,24 +308,25 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
           throw new RuntimeException(e);
         }
 
+        //TODO RC: I don't think it is worth to check exact number of 'changes' -- those look like
+        //         an implementation detail. Better to just check _there are_ changes (i.e. modCount
+        //         increases) after any sensible change.
+
         // we check in write action to avoid observing background thread to index stuff
-        int changesCount = timestamp == vFile.getTimeStamp() ? 3 : 4;
-        assertEquals(finalGlobalModCount + changesCount, managingFS.getModificationCount(vFile));
-        assertEquals(finalGlobalModCount + changesCount, managingFS.getFilesystemModificationCount());
-        assertEquals(finalInSessionModCount + changesCount, managingFS.getModificationCount());
-        assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
+        final int changesCount = 3; //flags, content, length, +...
+        assertTrue(
+          "fsModCount(="+managingFS.getFilesystemModificationCount()+") should +3 at least since before (="+finalGlobalModCount+")",
+          managingFS.getFilesystemModificationCount() >= finalGlobalModCount + changesCount);
       });
     });
   }
 
+  @Ignore("Now all that changes DO lead to modCount increments")
   @Test
-  public void testModCountNotIncreases() throws IOException {
-    VirtualFile vFile = tempDirectory.newVirtualFile("file.txt");
+  public void testGlobalFsModCountIncreasesOnAddingFileAttributeOrLengthOrTimestampChanges() throws IOException {
+    final VirtualFile vFile = tempDirectory.newVirtualFile("file.txt");
     ManagingFS managingFS = ManagingFS.getInstance();
-    int globalModCount = managingFS.getFilesystemModificationCount();
-    int parentModCount = managingFS.getModificationCount(vFile.getParent());
-    int fileModCount = managingFS.getModificationCount(vFile);
-    int inSessionModCount = managingFS.getModificationCount();
+    final int globalFsModCountBefore = managingFS.getFilesystemModificationCount();
 
     FSRecords.force();
     assertFalse(FSRecords.isDirty());
@@ -340,10 +338,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       }
     });
 
-    assertEquals(fileModCount, managingFS.getModificationCount(vFile));
-    assertEquals(globalModCount, managingFS.getFilesystemModificationCount());
-    assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
-    assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
+    assertEquals(globalFsModCountBefore, managingFS.getFilesystemModificationCount());
 
     assertTrue(FSRecords.isDirty());
     FSRecords.force();
@@ -353,10 +348,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     FSRecords.setTimestamp(fileId, FSRecords.getTimestamp(fileId));
     FSRecords.setLength(fileId, FSRecords.getLength(fileId));
 
-    assertEquals(fileModCount, managingFS.getModificationCount(vFile));
-    assertEquals(globalModCount, managingFS.getFilesystemModificationCount());
-    assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
-    assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
+    assertEquals(globalFsModCountBefore, managingFS.getFilesystemModificationCount());
     assertFalse(FSRecords.isDirty());
   }
 
@@ -398,8 +390,10 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   public void testProcessEventsMustIgnoreDeleteDuplicates() {
     VirtualFile file = tempDirectory.newVirtualFile("file.txt");
 
-    checkEvents("Before: VFileDeleteEvent->file.txt\n" +
-                "After: VFileDeleteEvent->file.txt\n",
+    checkEvents("""
+                  Before: VFileDeleteEvent->file.txt
+                  After: VFileDeleteEvent->file.txt
+                  """,
 
                 new VFileDeleteEvent(this, file, false),
                 new VFileDeleteEvent(this, file, false));
@@ -409,8 +403,10 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   public void testProcessEventsMustGroupDependentEventsCorrectly() {
     VirtualFile file = tempDirectory.newVirtualFile("file.txt");
 
-    checkEvents("Before: VFileCreateEvent->xx.created VFileDeleteEvent->file.txt\n" +
-                "After: VFileCreateEvent->xx.created VFileDeleteEvent->file.txt\n",
+    checkEvents("""
+                  Before: VFileCreateEvent->xx.created VFileDeleteEvent->file.txt
+                  After: VFileCreateEvent->xx.created VFileDeleteEvent->file.txt
+                  """,
 
                 new VFileDeleteEvent(this, file, false),
                 new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, false, null),
@@ -421,8 +417,10 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   public void testProcessEventsMustBeAwareOfDeleteEventsDomination() {
     VirtualFile file = tempDirectory.newVirtualFile("d/x.txt");
 
-    checkEvents("Before: VFileDeleteEvent->d\n" +
-                "After: VFileDeleteEvent->d\n",
+    checkEvents("""
+                  Before: VFileDeleteEvent->d
+                  After: VFileDeleteEvent->d
+                  """,
 
                 new VFileDeleteEvent(this, file.getParent(), false),
                 new VFileDeleteEvent(this, file, false),
@@ -433,8 +431,10 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   public void testProcessCreateEventsMustFilterOutDuplicates() {
     VirtualFile file = tempDirectory.newVirtualFile("d/x.txt");
 
-    checkEvents("Before: VFileCreateEvent->xx.created\n" +
-                "After: VFileCreateEvent->xx.created\n",
+    checkEvents("""
+                  Before: VFileCreateEvent->xx.created
+                  After: VFileCreateEvent->xx.created
+                  """,
 
                 new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, false, null),
                 new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, false, null)                );
@@ -444,10 +444,12 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   public void testProcessEventsMustGroupDependentEventsCorrectly2() {
     VirtualFile file = tempDirectory.newVirtualFile("a/b/c/test.txt");
 
-    checkEvents("Before: VFileCreateEvent->xx.created VFileCreateEvent->xx.created2 VFileDeleteEvent->test.txt\n" +
-                "After: VFileCreateEvent->xx.created VFileCreateEvent->xx.created2 VFileDeleteEvent->test.txt\n" +
-                "Before: VFileDeleteEvent->c\n" +
-                "After: VFileDeleteEvent->c\n",
+    checkEvents("""
+                  Before: VFileCreateEvent->xx.created VFileCreateEvent->xx.created2 VFileDeleteEvent->test.txt
+                  After: VFileCreateEvent->xx.created VFileCreateEvent->xx.created2 VFileDeleteEvent->test.txt
+                  Before: VFileDeleteEvent->c
+                  After: VFileDeleteEvent->c
+                  """,
 
                 new VFileDeleteEvent(this, file, false),
                 new VFileCreateEvent(this, file.getParent(), "xx.created", false, null, null, false, null),
@@ -459,10 +461,12 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   public void testProcessEventsMustGroupDependentEventsCorrectly3() {
     VirtualFile vFile = tempDirectory.newVirtualFile("a/b/c/test.txt");
 
-    checkEvents("Before: VFileContentChangeEvent->c\n" +
-                "After: VFileContentChangeEvent->c\n" +
-                "Before: VFileDeleteEvent->test.txt\n" +
-                "After: VFileDeleteEvent->test.txt\n",
+    checkEvents("""
+                  Before: VFileContentChangeEvent->c
+                  After: VFileContentChangeEvent->c
+                  Before: VFileDeleteEvent->test.txt
+                  After: VFileDeleteEvent->test.txt
+                  """,
 
                 new VFileContentChangeEvent(this, vFile.getParent(), 0, 0, false),
                 new VFileDeleteEvent(this, vFile, false));
@@ -473,10 +477,12 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     VirtualFile file = tempDirectory.newVirtualFile("a/b/c/test.txt");
     VirtualFile file2 = tempDirectory.newVirtualFile("a/b/c/test2.txt");
 
-    checkEvents("Before: VFileDeleteEvent->test.txt\n" +
-                "After: VFileDeleteEvent->test.txt\n" +
-                "Before: VFileDeleteEvent->c\n" +
-                "After: VFileDeleteEvent->c\n",
+    checkEvents("""
+                  Before: VFileDeleteEvent->test.txt
+                  After: VFileDeleteEvent->test.txt
+                  Before: VFileDeleteEvent->c
+                  After: VFileDeleteEvent->c
+                  """,
 
                 new VFileDeleteEvent(this, file, false),
                 new VFileDeleteEvent(this, file.getParent(), false),
@@ -487,8 +493,10 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   public void testProcessContentChangedLikeReconcilableEventsMustResultInSingleBatch() {
     VirtualFile file = tempDirectory.newVirtualFile("a/b/c/test.txt");
 
-    checkEvents("Before: VFileContentChangeEvent->test.txt VFilePropertyChangeEvent->test.txt VFilePropertyChangeEvent->test.txt\n" +
-                "After: VFileContentChangeEvent->test.txt VFilePropertyChangeEvent->test.txt VFilePropertyChangeEvent->test.txt\n",
+    checkEvents("""
+                  Before: VFileContentChangeEvent->test.txt VFilePropertyChangeEvent->test.txt VFilePropertyChangeEvent->test.txt
+                  After: VFileContentChangeEvent->test.txt VFilePropertyChangeEvent->test.txt VFilePropertyChangeEvent->test.txt
+                  """,
 
                 new VFileContentChangeEvent(this, file, 0, 1, false),
                 new VFilePropertyChangeEvent(this, file, VirtualFile.PROP_WRITABLE, false, true, false),
@@ -500,10 +508,12 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     VirtualFile testTxt = tempDirectory.newVirtualFile("a/b/c/test.txt");
     VirtualFile newParent = tempDirectory.newVirtualDirectory("a/b/d");
 
-    checkEvents("Before: VFileMoveEvent->test.txt\n" +
-                "After: VFileMoveEvent->test.txt\n" +
-                "Before: VFileDeleteEvent->d\n" +
-                "After: VFileDeleteEvent->d\n",
+    checkEvents("""
+                  Before: VFileMoveEvent->test.txt
+                  After: VFileMoveEvent->test.txt
+                  Before: VFileDeleteEvent->d
+                  After: VFileDeleteEvent->d
+                  """,
 
                 new VFileMoveEvent(this, testTxt, newParent),
                 new VFileDeleteEvent(this, newParent, false));
@@ -514,10 +524,12 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     VirtualFile file = tempDirectory.newVirtualFile("a/b/c/test.txt");
     VirtualFile newParent = tempDirectory.newVirtualDirectory("a/b/d");
 
-    checkEvents("Before: VFileCopyEvent->new.txt\n" +
-                "After: VFileCopyEvent->new.txt\n" +
-                "Before: VFileDeleteEvent->test.txt\n" +
-                "After: VFileDeleteEvent->test.txt\n",
+    checkEvents("""
+                  Before: VFileCopyEvent->new.txt
+                  After: VFileCopyEvent->new.txt
+                  Before: VFileDeleteEvent->test.txt
+                  After: VFileDeleteEvent->test.txt
+                  """,
 
                 new VFileCopyEvent(this, file, newParent, "new.txt"),
                 new VFileDeleteEvent(this, file, false));
@@ -528,10 +540,12 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     VirtualFile file = tempDirectory.newVirtualFile("a/b/c/test.txt");
     VirtualFile file2 = tempDirectory.newVirtualFile("a/b/c/test2.txt");
 
-    checkEvents("Before: VFileDeleteEvent->test2.txt\n" +
-                "After: VFileDeleteEvent->test2.txt\n" +
-                "Before: VFilePropertyChangeEvent->test.txt\n" +
-                "After: VFilePropertyChangeEvent->test2.txt\n",
+    checkEvents("""
+                  Before: VFileDeleteEvent->test2.txt
+                  After: VFileDeleteEvent->test2.txt
+                  Before: VFilePropertyChangeEvent->test.txt
+                  After: VFilePropertyChangeEvent->test2.txt
+                  """,
 
                 new VFileDeleteEvent(this, file2, false),
                 new VFilePropertyChangeEvent(this, file, VirtualFile.PROP_NAME, file.getName(), file2.getName(), false));

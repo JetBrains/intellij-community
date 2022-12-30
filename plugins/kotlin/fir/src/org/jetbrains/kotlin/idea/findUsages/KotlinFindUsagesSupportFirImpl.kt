@@ -10,6 +10,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
 import org.jetbrains.kotlin.analysis.api.calls.*
@@ -113,7 +114,7 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
         return emptyList()
     }
 
-    private fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?, actionString: String): List<PsiElement> {
+    override fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?, @Nls actionString: String): List<PsiElement> {
 
         if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return listOf(declaration)
 
@@ -122,7 +123,7 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
             val overriddenDeclarationsAndRenders: Map<PsiElement, String>
         )
 
-        fun KtAnalysisSession.getClassDescription(overriddenElement: PsiElement, containingSymbol: KtSymbolWithKind?): String =
+        fun getClassDescription(overriddenElement: PsiElement, containingSymbol: KtSymbolWithKind?): String =
             when (overriddenElement) {
                 is KtNamedFunction, is KtProperty, is KtParameter -> (containingSymbol as? KtNamedSymbol)?.name?.asString() ?: "Unknown"  //TODO render symbols
                 is PsiMethod -> {
@@ -145,7 +146,7 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
                     }
 
                     val filteredDeclarations =
-                        if (ignore != null) renderToPsi.filter { ignore.contains(it.first) } else renderToPsi
+                        if (ignore != null) renderToPsi.filter { !ignore.contains(it.first) } else renderToPsi
 
                     val renderedClass = containingClass.name?.asString() ?: SpecialNames.ANONYMOUS_STRING //TODO render class
 
@@ -169,7 +170,7 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
         )
 
         return when (exitCode) {
-            Messages.YES -> listOf(declaration) + analyzeResult.overriddenDeclarationsAndRenders.keys
+            Messages.YES -> analyzeResult.overriddenDeclarationsAndRenders.keys.toList()
             Messages.NO -> listOf(declaration)
             else -> emptyList()
         }

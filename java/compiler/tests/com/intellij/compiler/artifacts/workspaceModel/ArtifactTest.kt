@@ -42,7 +42,6 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactProperties
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactRootElementEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase
-import org.junit.Assume.assumeTrue
 import org.junit.runner.RunWith
 import java.util.concurrent.Callable
 
@@ -704,7 +703,7 @@ class ArtifactTest : ArtifactsTestCase() {
     val artifactBridge = ArtifactManager.getInstance(project).artifacts[0]
 
     WorkspaceModel.getInstance(project).updateProjectModel {
-      it.removeEntity(artifactEntity)
+      it.removeEntity(artifactEntity.createReference<ArtifactEntity>().resolve(it)!!)
     }
 
     artifactBridge.rootElement.children

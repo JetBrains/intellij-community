@@ -187,21 +187,23 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     return !browseButton.getText().equals(value);
   }
 
-  @NonNls private static final String GENERAL_CODE_SAMPLE = "#!/usr/bin/env sh\n" +
-                                                            "\n" +
-                                                            "function foo() {\n" +
-                                                            "  if [ -x $file ]; then\n" +
-                                                            "    myArray=(item1 item2 item3)\n" +
-                                                            "  elif [ $file1 -nt $file2 ]; then\n" +
-                                                            "    unset myArray\n" +
-                                                            "  else\n" +
-                                                            "    echo \"Usage: $0 file ...\"\n" +
-                                                            "  fi\n" +
-                                                            "}\n" +
-                                                            "\n" +
-                                                            "for (( i = 0; i < 5; i++ )); do\n" +
-                                                            "  read -p r\n" +
-                                                            "  print -n $r\n" +
-                                                            "  wait $!\n" +
-                                                            "done\n";
+  @NonNls private static final String GENERAL_CODE_SAMPLE = """
+    #!/usr/bin/env sh
+
+    function foo() {
+      if [ -x $file ]; then
+        myArray=(item1 item2 item3)
+      elif [ $file1 -nt $file2 ]; then
+        unset myArray
+      else
+        echo "Usage: $0 file ..."
+      fi
+    }
+
+    for (( i = 0; i < 5; i++ )); do
+      read -p r
+      print -n $r
+      wait $!
+    done
+    """;
 }

@@ -35,7 +35,7 @@ abstract class AbstractMultifileRefactoringTest : KotlinLightCodeInsightFixtureT
         val config = loadTestConfiguration(testConfigurationFile)
         val withRuntime = config["withRuntime"]?.asBoolean ?: false
         if (withRuntime) {
-            return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+            return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
         }
         return KotlinLightProjectDescriptor.INSTANCE
     }

@@ -46,6 +46,7 @@ private val PLATFORM_API_MODULES = persistentListOf(
   "intellij.platform.vcs.log.graph",
   "intellij.platform.execution",
   "intellij.platform.debugger",
+  "intellij.platform.webSymbols",
   "intellij.xml.analysis",
   "intellij.xml",
   "intellij.xml.psi",
@@ -101,6 +102,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.core.ui",
   "intellij.platform.credentialStore",
   "intellij.platform.credentialStore.ui",
+  "intellij.platform.dependenciesToolwindow",
   "intellij.platform.rd.community",
   "intellij.platform.ml.impl",
   "intellij.remoteDev.util",
@@ -110,6 +112,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.idea.community.build.dependencies",
   "intellij.platform.usageView.impl",
   "intellij.platform.ml.impl",
+  "intellij.platform.tips",
 )
 
 object PlatformModules {
@@ -266,6 +269,7 @@ object PlatformModules {
       "intellij.relaxng",
       "intellij.json",
       "intellij.spellchecker",
+      "intellij.platform.webSymbols",
       "intellij.xml.analysis.impl",
       "intellij.xml.psi.impl",
       "intellij.xml.structureView.impl",

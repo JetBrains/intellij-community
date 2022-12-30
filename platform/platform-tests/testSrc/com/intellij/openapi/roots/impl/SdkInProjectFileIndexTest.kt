@@ -9,12 +9,14 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_LIBRARY
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_SOURCE
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.NOT_IN_PROJECT
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -49,17 +51,9 @@ class SdkInProjectFileIndexTest {
     }
     ModuleRootModificationUtil.setModuleSdk(module, sdk)
     
-    assertTrue(fileIndex.isInProject(sdkRoot))
-    assertTrue(fileIndex.isInLibrary(sdkRoot))
-    assertTrue(fileIndex.isInLibraryClasses(sdkRoot))
-    assertFalse(fileIndex.isInLibrarySource(sdkRoot))
-    
-    assertTrue(fileIndex.isInProject(sdkSourcesRoot))
-    assertTrue(fileIndex.isInLibrary(sdkSourcesRoot))
-    assertFalse(fileIndex.isInLibraryClasses(sdkSourcesRoot))
-    assertTrue(fileIndex.isInLibrarySource(sdkSourcesRoot))
-
-    assertFalse(fileIndex.isInProject(sdkDocRoot))
+    fileIndex.assertScope(sdkRoot, IN_LIBRARY)
+    fileIndex.assertScope(sdkSourcesRoot, IN_LIBRARY or IN_SOURCE)
+    fileIndex.assertScope(sdkDocRoot, NOT_IN_PROJECT)
   }
 
   @Test
@@ -67,13 +61,13 @@ class SdkInProjectFileIndexTest {
     val sdk = projectModel.addSdk {
       it.addRoot(sdkRoot, OrderRootType.CLASSES)
     }
-    assertFalse(fileIndex.isInProject(sdkRoot))
+    fileIndex.assertScope(sdkRoot, NOT_IN_PROJECT)
     
     ModuleRootModificationUtil.setModuleSdk(module, sdk)
-    assertTrue(fileIndex.isInProject(sdkRoot))
+    fileIndex.assertScope(sdkRoot, IN_LIBRARY)
 
     ModuleRootModificationUtil.setModuleSdk(module, null)
-    assertFalse(fileIndex.isInProject(sdkRoot))
+    fileIndex.assertScope(sdkRoot, NOT_IN_PROJECT)
   }
   
   @Test
@@ -81,15 +75,18 @@ class SdkInProjectFileIndexTest {
     val sdk = projectModel.addSdk {
       it.addRoot(sdkRoot, OrderRootType.CLASSES)
     }
+    val sdk2 = projectModel.addSdk("sdk2") {
+      it.addRoot(projectModel.baseProjectDir.newVirtualDirectory("sdk2"), OrderRootType.CLASSES)
+    }
     setProjectSdk(sdk)
-    ModuleRootModificationUtil.setModuleSdk(module, null)
-    assertFalse(fileIndex.isInProject(sdkRoot))
+    ModuleRootModificationUtil.setModuleSdk(module, sdk2)
+    fileIndex.assertScope(sdkRoot, NOT_IN_PROJECT)
     
     ModuleRootModificationUtil.setSdkInherited(module)
-    assertTrue(fileIndex.isInProject(sdkRoot))
+    fileIndex.assertScope(sdkRoot, IN_LIBRARY)
 
     ModuleRootModificationUtil.setModuleSdk(module, projectModel.addSdk("different"))
-    assertFalse(fileIndex.isInProject(sdkRoot))
+    fileIndex.assertScope(sdkRoot, NOT_IN_PROJECT)
   }
 
   @Test
@@ -106,6 +103,10 @@ class SdkInProjectFileIndexTest {
 
   @Test
   fun `add and remove project SDK inherited in module`() {
+    val module2 = projectModel.createModule("module2")
+    val sdk2 = projectModel.createSdk("sdk2")
+    ModuleRootModificationUtil.setModuleSdk(module2, sdk2)
+    
     val sdk = projectModel.createSdk("unresolved") {
       it.addRoot(sdkRoot, OrderRootType.CLASSES)
     }
@@ -117,13 +118,13 @@ class SdkInProjectFileIndexTest {
   }
 
   private fun doTestSdkAddingAndRemoving(sdk: Sdk) {
-    assertFalse(fileIndex.isInProject(sdkRoot))
+    fileIndex.assertScope(sdkRoot, NOT_IN_PROJECT)
 
     projectModel.addSdk(sdk)
-    assertTrue(fileIndex.isInProject(sdkRoot))
+    fileIndex.assertScope(sdkRoot, IN_LIBRARY)
 
     removeSdk(sdk)
-    assertFalse(fileIndex.isInProject(sdkRoot))
+    fileIndex.assertScope(sdkRoot, NOT_IN_PROJECT)
   }
 
   @Test
@@ -154,29 +155,32 @@ class SdkInProjectFileIndexTest {
   }
 
   private fun doTestSdkModifications(sdk: Sdk) {
-    assertFalse(fileIndex.isInProject(sdkRoot))
+    fileIndex.assertScope(sdkRoot, NOT_IN_PROJECT)
 
     projectModel.modifySdk(sdk) {
       it.addRoot(sdkRoot, OrderRootType.CLASSES)
     }
-    assertTrue(fileIndex.isInProject(sdkRoot))
+    fileIndex.assertScope(sdkRoot, IN_LIBRARY)
 
     projectModel.modifySdk(sdk) {
       it.removeRoot(sdkRoot, OrderRootType.CLASSES)
     }
-    assertFalse(fileIndex.isInProject(sdkRoot))
+    fileIndex.assertScope(sdkRoot, NOT_IN_PROJECT)
   }
 
   @Test
-  internal fun `project SDK in project without modules`() {
+  fun `project SDK in project without modules`() {
     val sdk = projectModel.addSdk {
       it.addRoot(sdkRoot, OrderRootType.CLASSES)
     }
+    val sdk2 = projectModel.addSdk("sdk2") {
+      it.addRoot(projectModel.baseProjectDir.newVirtualDirectory("sdk2"), OrderRootType.CLASSES)
+    }
     setProjectSdk(sdk)
-    ModuleRootModificationUtil.setModuleSdk(module, null)
-    assertFalse(fileIndex.isInProject(sdkRoot))
+    ModuleRootModificationUtil.setModuleSdk(module, sdk2)
+    fileIndex.assertScope(sdkRoot, NOT_IN_PROJECT)
 
     projectModel.removeModule(module)
-    assertTrue(fileIndex.isInProject(sdkRoot))
+    fileIndex.assertScope(sdkRoot, IN_LIBRARY)
   }
 }

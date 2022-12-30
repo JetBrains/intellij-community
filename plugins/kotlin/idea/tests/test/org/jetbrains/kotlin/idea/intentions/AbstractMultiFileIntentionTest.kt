@@ -31,7 +31,7 @@ abstract class AbstractMultiFileIntentionTest : KotlinLightCodeInsightFixtureTes
         val config = JsonParser().parse(FileUtil.loadFile(testFile, true)) as JsonObject
         val withRuntime = config["withRuntime"]?.asBoolean ?: false
         return if (withRuntime)
-            KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+            KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
         else
             KotlinLightProjectDescriptor.INSTANCE
     }

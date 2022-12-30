@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.name.Name
 import javax.swing.Icon
 
 interface DescriptorBasedDeclarationLookupObject : DeclarationLookupObject {
-    val descriptor: DeclarationDescriptor?
+    override val descriptor: DeclarationDescriptor?
     val importableFqName: FqName?
     val isDeprecated: Boolean
 }

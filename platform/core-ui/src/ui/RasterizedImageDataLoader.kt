@@ -89,6 +89,8 @@ internal class RasterizedImageDataLoader(private val path: String,
 
   override fun isMyClassLoader(classLoader: ClassLoader) = classLoaderRef.get() === classLoader
 
+  override fun getFlags(): Int = imageFlags
+
   override fun toString() = "RasterizedImageDataLoader(classLoader=${classLoaderRef.get()}, path=$path)"
 }
 
@@ -129,7 +131,11 @@ private fun loadRasterized(path: String,
   val ext = if (isSvg) "svg" else if (dotIndex < 0 || dotIndex == path.length - 1) "" else path.substring(dotIndex + 1)
   val effectivePath: String
   var isEffectiveDark = parameters.isDark
-  if (isRetina && parameters.isDark && (imageFlags and ImageDescriptor.HAS_DARK_2x) == ImageDescriptor.HAS_DARK_2x) {
+  if (parameters.isStroke && (imageFlags and ImageDescriptor.HAS_STROKE) == ImageDescriptor.HAS_STROKE) {
+    effectivePath = "${name}_scale.$ext"
+    imageScale = if (isSvg) scale else 1f
+  }
+  else if (isRetina && parameters.isDark && (imageFlags and ImageDescriptor.HAS_DARK_2x) == ImageDescriptor.HAS_DARK_2x) {
     effectivePath = "$name@2x_dark.$ext"
     imageScale = if (isSvg) scale else 2f
   }
@@ -165,7 +171,7 @@ private fun loadRasterized(path: String,
       SVGLoader.loadFromClassResource(resourceClass = null,
                                       classLoader = classLoader, path = effectivePath,
                                       rasterizedCacheKey = rasterizedCacheKey,
-                                      mapper = SvgCacheMapper(imageScale, isEffectiveDark),
+                                      mapper = SvgCacheMapper(imageScale, isEffectiveDark, parameters.isStroke),
                                       colorPatcher = parameters.colorPatcher)
     }
     else {
@@ -195,11 +201,15 @@ private fun loadPatched(name: String,
                         isRetina: Boolean,
                         classLoader: ClassLoader,
                         isEffectiveDark: Boolean): Image? {
+  val stroke = PatchedIconDescriptor("${name}_stroke.$ext", if (isSvg) scale else 1f)
   val retinaDark = PatchedIconDescriptor("$name@2x_dark.$ext", if (isSvg) scale else 2f)
   val dark = PatchedIconDescriptor("${name}_dark.$ext", if (isSvg) scale else 1f)
   val retina = PatchedIconDescriptor("$name@2x.$ext", if (isSvg) scale else 2f)
   val plain = PatchedIconDescriptor(path, if (isSvg) scale else 1f)
-  val descriptors = if (isRetina && parameters.isDark) {
+  val descriptors = if (parameters.isStroke) {
+    listOf(stroke, plain)
+  }
+  else if (isRetina && parameters.isDark) {
     listOf(retinaDark, dark, retina, plain)
   }
   else if (parameters.isDark) {
@@ -215,7 +225,7 @@ private fun loadPatched(name: String,
                                       classLoader = classLoader,
                                       path = descriptor.name,
                                       rasterizedCacheKey = 0,
-                                      mapper = SvgCacheMapper(descriptor.scale, isEffectiveDark),
+                                      mapper = SvgCacheMapper(descriptor.scale, isEffectiveDark, parameters.isStroke),
                                       colorPatcher = parameters.colorPatcher)
     }
     else {

@@ -2,10 +2,17 @@
 
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.function.BooleanSupplier;
 
 
 public interface ReferenceImporter {
@@ -15,14 +22,37 @@ public interface ReferenceImporter {
    * @return true if this extension found an unresolved reference at the current caret offset and successfully imported it.
    * (for example, in case of Java, the plugin added the corresponding import statement to this file, thus making this reference valid)
    */
-  boolean autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file);
+  default boolean autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    Future<BooleanSupplier> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.compute(() -> {
+      if (editor.isDisposed() || file.getProject().isDisposed()) return null;
+      int offset = editor.getCaretModel().getOffset();
+      return computeAutoImportAtOffset(editor, file, offset, true);
+    }));
+    try {
+      BooleanSupplier fix = future.get();
+      if (fix != null) {
+        return fix.getAsBoolean();
+      }
+    }
+    catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+    return false;
+  }
 
   /**
-   * @return true if this extension found an unresolved reference at {@code offset} and successfully imported it.
-   * (for example, in case of Java, the plugin added the corresponding import statement to this file, thus making this reference valid)
+   * This method is called in the background to compute whether this {@code offset} contain an unresolved reference which can be auto-imported
+   * (e.g., by adding the corresponding import statement to the file).
+   * When this extension found an auto-importable reference, it should return an action which, being run in the EDT, does the auto-import
+   * and returns true if the auto-import completed successfully or false if auto-import wasn't able to run.
+   * This method allows to split the process of importing the reference into two parts: computing in background and applying in EDT,
+   * to reduce freezes.
    */
-  default boolean autoImportReferenceAtOffset(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
-    return false;
+  @ApiStatus.Experimental
+  default BooleanSupplier computeAutoImportAtOffset(@NotNull Editor editor, @NotNull PsiFile file, int offset, boolean allowCaretNearReference) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    return null;
   }
 
   /**

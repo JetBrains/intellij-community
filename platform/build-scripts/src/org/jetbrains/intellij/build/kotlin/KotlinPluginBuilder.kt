@@ -20,7 +20,7 @@ object KotlinPluginBuilder {
   /**
    * Module which contains META-INF/plugin.xml
    */
-  const val MAIN_KOTLIN_PLUGIN_MODULE = "kotlin.plugin"
+  const val MAIN_KOTLIN_PLUGIN_MODULE: String = "kotlin.plugin"
 
   /**
    * Version of Kotlin compiler which is used in the cooperative development setup in kt-master && kt-*-master branches
@@ -47,7 +47,6 @@ object KotlinPluginBuilder {
     "kotlin.base.analysis-api-providers",
     "kotlin.base.analysis",
     "kotlin.base.highlighting",
-    "kotlin.base.line-markers",
     "kotlin.base.code-insight",
     "kotlin.base.jps",
     "kotlin.base.analysis-api.utils",
@@ -169,12 +168,17 @@ object KotlinPluginBuilder {
     "kotlin.code-insight.postfix-templates-k1",
     "kotlin.code-insight.postfix-templates-k2",
     "kotlin.code-insight.structural-search-k1",
+    "kotlin.code-insight.line-markers-shared",
+    "kotlin.code-insight.line-markers-k2",
     "kotlin.fir",
+    "kotlin.search",
     "kotlin.highlighting",
     "kotlin.uast.uast-kotlin-fir",
     "kotlin.uast.uast-kotlin-idea-fir",
     "kotlin.fir.fir-low-level-api-ide-impl",
     "kotlin.navigation",
+    "kotlin.refactorings.common",
+    "kotlin.refactorings.k2",
     "kotlin.refactorings.rename.k2",
   )
 
@@ -258,7 +262,6 @@ object KotlinPluginBuilder {
       if (ultimateSources == KotlinUltimateSources.WITH_ULTIMATE_MODULES && kind == KotlinPluginKind.IJ) {
         spec.withModules(persistentListOf(
           "kotlin-ultimate.common-native",
-          "kotlin-ultimate.common-for-kotlin",
           //noinspection SpellCheckingInspection
           "kotlin-ultimate.javascript.debugger",
           "kotlin-ultimate.javascript.nodeJs",

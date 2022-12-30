@@ -51,7 +51,7 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
     preferredVirtualEnvBaseSdk = baseSdk.homePath
   }
 
-  fun setPreferredVirtualEnvBasePath(value: @SystemIndependent String, projectPath: @SystemIndependent String?) {
+  private fun setPreferredVirtualEnvBasePath(value: @SystemIndependent String, projectPath: @SystemIndependent String?) {
     val pathMap = ReplacePathToMacroMap().apply {
       projectPath?.let {
         addMacroReplacement(it, PathMacroUtil.PROJECT_DIR_MACRO_NAME)

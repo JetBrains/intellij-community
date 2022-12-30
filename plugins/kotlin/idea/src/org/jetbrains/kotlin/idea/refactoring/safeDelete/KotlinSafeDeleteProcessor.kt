@@ -17,6 +17,7 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteOverrideAnnotatio
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteOverridingMethodUsageInfo
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDeleteUsageInfo
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
+import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.*
@@ -24,23 +25,23 @@ import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.projectScope
+import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.deleteElementAndCleanParent
-import org.jetbrains.kotlin.idea.refactoring.*
+import org.jetbrains.kotlin.idea.refactoring.checkSuperMethods
+import org.jetbrains.kotlin.idea.refactoring.isTrueJavaMethod
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.usagesSearch.processDelegationCallConstructorUsages
-import org.jetbrains.kotlin.idea.base.util.useScope
+import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.isExpectDeclaration
-import org.jetbrains.kotlin.idea.util.liftToExpected
-import org.jetbrains.kotlin.idea.util.runOnExpectAndAllActuals
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.kotlin.utils.ifEmpty
@@ -102,7 +103,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
         }
 
         fun findKotlinDeclarationUsages(declaration: KtDeclaration): NonCodeUsageSearchInfo {
-            searchKotlinDeclarationReferences(declaration).mapNotNullTo(usages) { reference ->
+            searchKotlinDeclarationReferences(declaration).mapTo(usages) { reference ->
                 val refElement = reference.element
                 refElement.getNonStrictParentOfType<KtImportDirective>()?.let { importDirective ->
                     SafeDeleteImportDirectiveUsageInfo(importDirective, element)
@@ -316,12 +317,14 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
                 .asSequence()
                 .filter { overridenDescriptor -> overridenDescriptor.modality == Modality.ABSTRACT }
                 .mapTo(ArrayList()) { overridenDescriptor ->
+                    val oElement = DescriptorToSourceUtils.getSourceFromDescriptor(overridenDescriptor)
                     KotlinBundle.message(
                         "override.declaration.x.implements.y",
-                        formatFunction(declarationDescriptor, true),
-                        formatClass(declarationDescriptor.containingDeclaration, true),
-                        formatFunction(overridenDescriptor, true),
-                        formatClass(overridenDescriptor.containingDeclaration, true)
+                        ElementDescriptionUtil.getElementDescription(element, RefactoringDescriptionLocation.WITH_PARENT),
+                        if (oElement != null) ElementDescriptionUtil.getElementDescription(
+                            oElement,
+                            RefactoringDescriptionLocation.WITH_PARENT
+                        ) else IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.render(overridenDescriptor),
                     )
                 }
         }

@@ -108,13 +108,10 @@ public final class MethodBytecodeUtil {
       int index = classReader.getItem(i);
       int tag = classReader.readByte(index - 1);
       switch (tag) {
-        case 5:  // Symbol.CONSTANT_LONG_TAG
-        case 6:  // Symbol.CONSTANT_DOUBLE_TAG
+        case 5, 6 ->  // Symbol.CONSTANT_LONG_TAG, Symbol.CONSTANT_DOUBLE_TAG
           //noinspection AssignmentToForLoopParameter
           ++i;
-          break;
-        case 17:  // Symbol.CONSTANT_DYNAMIC_TAG
-        case 18:  // Symbol.CONSTANT_INVOKE_DYNAMIC_TAG
+        case 17, 18 ->  // Symbol.CONSTANT_DYNAMIC_TAG, Symbol.CONSTANT_INVOKE_DYNAMIC_TAG
           bootstrapMethods.add(classReader.readShort(index));
       }
     }
@@ -180,25 +177,13 @@ public final class MethodBytecodeUtil {
   private static final Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");
 
   public static Type getVarInstructionType(int opcode) {
-    switch (opcode) {
-      case Opcodes.LLOAD:
-      case Opcodes.LSTORE:
-        return Type.LONG_TYPE;
-      case Opcodes.DLOAD:
-      case Opcodes.DSTORE:
-        return Type.DOUBLE_TYPE;
-      case Opcodes.FLOAD:
-      case Opcodes.FSTORE:
-        return Type.FLOAT_TYPE;
-      case Opcodes.ILOAD:
-      case Opcodes.ISTORE:
-        return Type.INT_TYPE;
-      default:
-        // case Opcodes.ALOAD:
-        // case Opcodes.ASTORE:
-        // case RET:
-        return OBJECT_TYPE;
-    }
+    return switch (opcode) {
+      case Opcodes.LLOAD, Opcodes.LSTORE -> Type.LONG_TYPE;
+      case Opcodes.DLOAD, Opcodes.DSTORE -> Type.DOUBLE_TYPE;
+      case Opcodes.FLOAD, Opcodes.FSTORE -> Type.FLOAT_TYPE;
+      case Opcodes.ILOAD, Opcodes.ISTORE -> Type.INT_TYPE;
+      default -> OBJECT_TYPE;
+    };
   }
 
   @Nullable

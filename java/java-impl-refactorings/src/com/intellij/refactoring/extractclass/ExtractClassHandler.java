@@ -127,7 +127,6 @@ public class ExtractClassHandler implements ElementsHandler, ContextAwareActionH
   private static boolean classIsTrivial(PsiClass containingClass) {
     if (containingClass.getFields().length == 0) {
       final PsiMethod[] methods = containingClass.getMethods();
-      if (methods.length == 0) return true;
       for (PsiMethod method : methods) {
         if (method.getBody() != null) return false;
       }

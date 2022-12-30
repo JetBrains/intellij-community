@@ -38,7 +38,7 @@ class KotlinCodeInsightSanityTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
     fun testRandomActivity() {
         enableInspections()

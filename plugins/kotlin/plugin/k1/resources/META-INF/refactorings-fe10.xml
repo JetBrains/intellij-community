@@ -98,11 +98,6 @@
             implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinSafeDeleteProcessor"
             order="before javaProcessor"/>
 
-    <refactoring.safeDelete.JavaSafeDeleteDelegate
-            id="kotlinJavaSafeDeleteDelegate"
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinJavaSafeDeleteDelegate"/>
-
     <refactoring.pullUpHelperFactory
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.pullUp.KotlinPullUpHelperFactory"/>

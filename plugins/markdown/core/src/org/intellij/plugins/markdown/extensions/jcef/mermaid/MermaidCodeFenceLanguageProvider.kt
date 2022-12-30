@@ -5,14 +5,33 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.lang.Language
+import com.intellij.openapi.fileTypes.PlainTextLanguage
 import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider
 
-internal class MermaidCodeFenceLanguageProvider : CodeFenceLanguageProvider {
-  private val MERMAID = "mermaid"
+internal class MermaidCodeFenceLanguageProvider: CodeFenceLanguageProvider {
+  override fun getLanguageByInfoString(infoString: String): Language? {
+    return when {
+      isMermaidInfoString(infoString) -> obtainMermaidLanguage()
+      else -> null
+    }
+  }
 
-  override fun getLanguageByInfoString(infoString: String): Language? =
-    MermaidLanguage.INSTANCE.takeIf { infoString == MERMAID }
+  override fun getCompletionVariantsForInfoString(parameters: CompletionParameters): List<LookupElement> {
+    val language = obtainMermaidLanguage()
+    val lookupElement = LookupElementBuilder.create(MERMAID).withIcon(language.associatedFileType?.icon)
+    return listOf(lookupElement)
+  }
 
-  override fun getCompletionVariantsForInfoString(parameters: CompletionParameters): List<LookupElement> =
-    listOf(LookupElementBuilder.create(MERMAID))
+  companion object {
+    private const val MERMAID = "mermaid"
+
+    internal fun isMermaidInfoString(infoString: String): Boolean {
+      return infoString == MERMAID
+    }
+
+    internal fun obtainMermaidLanguage(): Language {
+      val existingLanguage = Language.findLanguageByID("Mermaid")
+      return existingLanguage ?: PlainTextLanguage.INSTANCE
+    }
+  }
 }

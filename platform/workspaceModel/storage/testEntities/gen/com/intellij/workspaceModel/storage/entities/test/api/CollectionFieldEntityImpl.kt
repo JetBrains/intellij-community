@@ -43,7 +43,7 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
     return connections
   }
 
-  class Builder(val result: CollectionFieldEntityData?) : ModifiableWorkspaceEntityBase<CollectionFieldEntity>(), CollectionFieldEntity.Builder {
+  class Builder(var result: CollectionFieldEntityData?) : ModifiableWorkspaceEntityBase<CollectionFieldEntity>(), CollectionFieldEntity.Builder {
     constructor() : this(CollectionFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -61,6 +61,9 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -84,12 +87,23 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
       return connections
     }
 
+    override fun afterModification() {
+      val collection_versions = getEntityData().versions
+      if (collection_versions is MutableWorkspaceSet<*>) {
+        collection_versions.cleanModificationUpdateAction()
+      }
+      val collection_names = getEntityData().names
+      if (collection_names is MutableWorkspaceList<*>) {
+        collection_names.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as CollectionFieldEntity
-      this.entitySource = dataSource.entitySource
-      this.versions = dataSource.versions.toMutableSet()
-      this.names = dataSource.names.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.versions != dataSource.versions) this.versions = dataSource.versions.toMutableSet()
+      if (this.names != dataSource.names) this.names = dataSource.names.toMutableList()
       if (parents != null) {
       }
     }
@@ -112,7 +126,12 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
       get() {
         val collection_versions = getEntityData().versions
         if (collection_versions !is MutableWorkspaceSet) return collection_versions
-        collection_versions.setModificationUpdateAction(versionsUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_versions.setModificationUpdateAction(versionsUpdater)
+        }
+        else {
+          collection_versions.cleanModificationUpdateAction()
+        }
         return collection_versions
       }
       set(value) {
@@ -129,7 +148,12 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
       get() {
         val collection_names = getEntityData().names
         if (collection_names !is MutableWorkspaceList) return collection_names
-        collection_names.setModificationUpdateAction(namesUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_names.setModificationUpdateAction(namesUpdater)
+        }
+        else {
+          collection_names.cleanModificationUpdateAction()
+        }
         return collection_names
       }
       set(value) {
@@ -202,7 +226,7 @@ class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as CollectionFieldEntityData
 
@@ -214,7 +238,7 @@ class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as CollectionFieldEntityData
 

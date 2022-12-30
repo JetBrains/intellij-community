@@ -224,9 +224,10 @@ public final class ActionUrl implements JDOMExternalizable {
     }
   }
 
-  public static ArrayList<String> getGroupPath(final TreePath treePath) {
+  public static ArrayList<String> getGroupPath(final TreePath treePath, boolean includeSelf) {
     final ArrayList<String> result = new ArrayList<>();
-    for (int i = 0; i < treePath.getPath().length - 1; i++) {
+    int length = treePath.getPath().length - (includeSelf ? 0 : 1);
+    for (int i = 0; i < length; i++) {
       Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
       if (o instanceof Group) {
         result.add(((Group)o).getName());

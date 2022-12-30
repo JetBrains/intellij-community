@@ -38,8 +38,7 @@ public final class PythonModulePathCache extends PythonPathCache implements Disp
         clearCache();
       }
     });
-    WorkspaceModelTopics.getInstance(module.getProject()).subscribeImmediately(connection, new WorkspaceListener(module));
-
+    connection.subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceListener(module));
     connection.subscribe(PyPackageManager.PACKAGE_MANAGER_TOPIC, sdk -> {
       final Sdk moduleSdk = PythonSdkUtil.findPythonSdk(module);
       if (sdk == moduleSdk) {

@@ -28,9 +28,10 @@ public class UnexpectedAnchorInspectionTest extends RegExpInspectionTestCase {
   }
 
   public void testCommentMode() {
-    highlightTest("(?x)\n" +
-                  "# comment\n" +
-                  "^impedance");
+    highlightTest("""
+                    (?x)
+                    # comment
+                    ^impedance""");
   }
 
   public void testIDEA184428() {

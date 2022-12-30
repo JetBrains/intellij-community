@@ -1017,6 +1017,31 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
     return null;
   }
 
+  public final <V> @NotNull List<@NotNull T> findExtensions(@NotNull Class<V> aClass) {
+    List<T> extensionsCache = cachedExtensions;
+    if (extensionsCache == null) {
+      List<T> suitableInstances = new ArrayList<>();
+      for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
+        try {
+          // this enables us to not trigger Class initialization for all extensions, but only for those instanceof V
+          if (aClass.isAssignableFrom(adapter.getImplementationClass(componentManager))) {
+            @Nullable T instance = processAdapter(adapter);
+            if (instance != null) {
+              suitableInstances.add(instance);
+            }
+          }
+        }
+        catch (ClassNotFoundException e) {
+          componentManager.logError(e, adapter.pluginDescriptor.getPluginId());
+        }
+      }
+      return suitableInstances;
+    }
+    else {
+      return ContainerUtil.filter(extensionsCache, aClass::isInstance);
+    }
+  }
+
   private @Nullable T findExtensionByExactClass(@NotNull Class<? extends T> aClass) {
     List<T> cachedExtensions = this.cachedExtensions;
     if (cachedExtensions == null) {

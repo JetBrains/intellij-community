@@ -15,7 +15,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
 import java.util.function.Consumer
+import java.util.function.Function
 import javax.swing.KeyStroke
 
 @Suppress("DeprecatedCallableAddReplaceWith")
@@ -76,6 +78,11 @@ abstract class ActionManagerEx : ActionManager() {
   }
 
   abstract fun createActionToolbar(place: String, group: ActionGroup, horizontal: Boolean, decorateButtons: Boolean): ActionToolbar
+
+  abstract fun createActionToolbar(place: String,
+                                   group: ActionGroup,
+                                   horizontal: Boolean,
+                                   separatorCreator: Function<String, Component>): ActionToolbar
 
   /**
    * Do not call directly, prefer [ActionUtil] methods.

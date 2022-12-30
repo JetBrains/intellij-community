@@ -37,7 +37,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-// used in Rider
 public class IntentionDescriptionPanel {
   private static final Logger LOG = Logger.getInstance(IntentionDescriptionPanel.class);
   private final JPanel myPanel;

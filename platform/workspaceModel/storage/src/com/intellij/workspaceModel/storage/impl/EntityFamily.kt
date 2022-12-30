@@ -175,6 +175,7 @@ internal sealed class EntityFamily<E : WorkspaceEntity> {
   internal abstract val entities: List<WorkspaceEntityData<E>?>
 
   operator fun get(idx: Int) = entities.getOrNull(idx)
+  fun getOrFail(idx: Int) = entities[idx]
   fun exists(id: Int) = get(id) != null
   fun all() = entities.asSequence().filterNotNull()
   abstract fun size(): Int

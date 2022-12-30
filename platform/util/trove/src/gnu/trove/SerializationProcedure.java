@@ -39,7 +39,6 @@ import java.io.ObjectOutputStream;
  */
 
 final class SerializationProcedure implements
-                             TIntIntProcedure,
                              TIntLongProcedure,
                              TIntObjectProcedure,
                              TIntProcedure,
@@ -161,21 +160,6 @@ final class SerializationProcedure implements
     }
     return true;
   }
-
-
-  @Override
-  public boolean execute(int key, int val) {
-    try {
-      stream.writeInt(key);
-      stream.writeInt(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
 
   @Override
   public boolean execute(int key, long val) {

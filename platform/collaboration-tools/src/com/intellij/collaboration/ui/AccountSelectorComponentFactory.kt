@@ -3,7 +3,7 @@ package com.intellij.collaboration.ui
 
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.ServerAccount
-import com.intellij.collaboration.ui.codereview.avatar.IconsProvider
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bind
 import com.intellij.collaboration.ui.util.getName
 import com.intellij.openapi.project.Project

@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
@@ -37,6 +38,13 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.ContextKey;
+import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,6 +77,14 @@ public final class Utils {
   public static final AnAction EMPTY_MENU_FILLER = new EmptyAction();
   static {
     EMPTY_MENU_FILLER.getTemplatePresentation().setText(CommonBundle.messagePointer("empty.menu.filler"));
+  }
+
+  static final AttributeKey<String> OT_OP_KEY = AttributeKey.stringKey("op");
+  private static final ContextKey<Boolean> OT_ENABLE_SPANS = ContextKey.named("OT_ENABLE_SPANS");
+
+  static @NotNull Tracer getTracer(boolean checkNoop) {
+    return checkNoop && !Boolean.TRUE.equals(Context.current().get(OT_ENABLE_SPANS)) ?
+           OpenTelemetry.noop().getTracer("") : TraceManager.INSTANCE.getTracer("actionSystem");
   }
 
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
@@ -179,10 +195,20 @@ public final class Utils {
     RelativePoint point = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context) == null ? null :
                           JBPopupFactory.getInstance().guessBestPopupLocation(context);
     Runnable removeIcon = addLoadingIcon(point, place);
-    return computeWithRetries(
-      () -> expandActionGroupImpl(group, presentationFactory,
-                                  context, place, ActionPlaces.isPopupPlace(place), removeIcon, null),
-      null, removeIcon);
+    Span span = getTracer(false).spanBuilder("expandActionGroup").setAttribute("place", place).startSpan();
+    long start = System.nanoTime();
+    try (Scope ignore = Context.current().with(span).with(OT_ENABLE_SPANS, true).makeCurrent()) {
+      return computeWithRetries(
+        () -> expandActionGroupImpl(group, presentationFactory, context, place, ActionPlaces.isPopupPlace(place), removeIcon, null),
+        null, removeIcon);
+    }
+    finally {
+      long elapsed = TimeoutUtil.getDurationMillis(start);
+      span.end();
+      if (elapsed > 1000) {
+        LOG.warn(elapsed + " ms to expandActionGroup@" + place);
+      }
+    }
   }
 
   private static int ourExpandActionGroupImplEDTLoopLevel;
@@ -312,13 +338,24 @@ public final class Utils {
     if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
       throw new ProcessCanceledException();
     }
-    Runnable removeIcon = addLoadingIcon(progressPoint, place);
-    List<AnAction> list = computeWithRetries(
-      () -> expandActionGroupImpl(group, presentationFactory, context, place, true, removeIcon, component),
-      expire, removeIcon);
-    boolean checked = group instanceof CheckedActionGroup;
-    boolean multiChoice = isMultiChoiceGroup(group);
-    fillMenuInner(component, list, checked, multiChoice, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
+    Span span = getTracer(false).spanBuilder("fillMenu").setAttribute("place", place).startSpan();
+    long start = System.nanoTime();
+    try (Scope ignore = Context.current().with(span).with(OT_ENABLE_SPANS, true).makeCurrent()) {
+      Runnable removeIcon = addLoadingIcon(progressPoint, place);
+      List<AnAction> list = computeWithRetries(
+        () -> expandActionGroupImpl(group, presentationFactory, context, place, true, removeIcon, component),
+        expire, removeIcon);
+      boolean checked = group instanceof CheckedActionGroup;
+      boolean multiChoice = isMultiChoiceGroup(group);
+      fillMenuInner(component, list, checked, multiChoice, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
+    }
+    finally {
+      long elapsed = TimeoutUtil.getDurationMillis(start);
+      span.end();
+      if (elapsed > 1000) {
+        LOG.warn(elapsed + " ms to fillMenu@" + place);
+      }
+    }
   }
 
   private static @NotNull Runnable addLoadingIcon(@Nullable RelativePoint point, @NotNull String place) {
@@ -485,10 +522,10 @@ public final class Utils {
     return false;
   }
 
-  static <T> void updateMenuItems(@NotNull JPopupMenu popupMenu,
-                                  @NotNull DataContext dataContext,
-                                  @NotNull String place,
-                                  @NotNull PresentationFactory presentationFactory) {
+  static void updateMenuItems(@NotNull JPopupMenu popupMenu,
+                              @NotNull DataContext dataContext,
+                              @NotNull String place,
+                              @NotNull PresentationFactory presentationFactory) {
     List<ActionMenuItem> items = ContainerUtil.filterIsInstance(popupMenu.getComponents(), ActionMenuItem.class);
     updateComponentActions(
       popupMenu, ContainerUtil.map(items, ActionMenuItem::getAnAction), dataContext, place, presentationFactory,
@@ -500,12 +537,12 @@ public final class Utils {
   }
 
   @ApiStatus.Internal
-  public static <T> void updateComponentActions(@NotNull JComponent component,
-                                                @NotNull Iterable<? extends AnAction> actions,
-                                                @NotNull DataContext dataContext,
-                                                @NotNull String place,
-                                                @NotNull PresentationFactory presentationFactory,
-                                                @NotNull Runnable onUpdate) {
+  public static void updateComponentActions(@NotNull JComponent component,
+                                            @NotNull Iterable<? extends AnAction> actions,
+                                            @NotNull DataContext dataContext,
+                                            @NotNull String place,
+                                            @NotNull PresentationFactory presentationFactory,
+                                            @NotNull Runnable onUpdate) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     for (AnAction action : actions) {
       actionGroup.add(action);

@@ -24,7 +24,7 @@ abstract class AbstractDiagnosticMessageTest : KotlinLightCodeInsightFixtureTest
         TEXT("TEXT", "txt"), HTML("HTML", "html");
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     override val testDataDirectory: File
         get() = File(IDEA_TEST_DATA_DIR, "diagnosticMessage")

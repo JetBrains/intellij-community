@@ -576,19 +576,22 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
 
   @Override
   public LocalQuickFix @Nullable [] getQuickFixes() {
-    return new LocalQuickFix[]{new LocalQuickFix() {
-      @Override
-      public @IntentionFamilyName @NotNull String getFamilyName() {
-        return MavenDomBundle.message("fix.ignore.unresolved.maven.property");
-      }
+    return new LocalQuickFix[]{ new MyLocalQuickFix() };
+  }
 
-      @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        PsiElement psiElement = ObjectUtils.notNull(myElement.getFirstChild(), myElement);
+  private static class MyLocalQuickFix implements LocalQuickFix {
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return MavenDomBundle.message("fix.ignore.unresolved.maven.property");
+    }
 
-        DefaultXmlSuppressionProvider xmlSuppressionProvider = new DefaultXmlSuppressionProvider();
-        xmlSuppressionProvider.suppressForTag(psiElement, MavenPropertyPsiReferenceProvider.UNRESOLVED_MAVEN_PROPERTY_QUICKFIX_ID);
-      }
-    }};
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      PsiElement psiElement = ObjectUtils.notNull(element.getFirstChild(), element);
+
+      DefaultXmlSuppressionProvider xmlSuppressionProvider = new DefaultXmlSuppressionProvider();
+      xmlSuppressionProvider.suppressForTag(psiElement, MavenPropertyPsiReferenceProvider.UNRESOLVED_MAVEN_PROPERTY_QUICKFIX_ID);
+    }
   }
 }

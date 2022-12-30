@@ -51,27 +51,15 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
       if (type != null) {
         final ReflectiveClass ownerClass = getReflectiveClass(myContext);
         if (ownerClass != null) {
-          switch (type) {
-            case FIND_GETTER:
-            case FIND_SETTER:
-              return resolveField(name, ownerClass, JavaLangInvokeHandleReference::isNonStaticField);
-
-            case FIND_STATIC_GETTER:
-            case FIND_STATIC_SETTER:
-              return resolveField(name, ownerClass, JavaLangInvokeHandleReference::isStaticField);
-
-            case FIND_VIRTUAL:
-            case FIND_SPECIAL:
-              return resolveMethod(name, ownerClass, JavaLangInvokeHandleReference::isNonStaticMethod);
-            case FIND_STATIC:
-              return resolveMethod(name, ownerClass, JavaLangInvokeHandleReference::isStaticMethod);
-
-            case FIND_VAR_HANDLE:
-              return resolveField(name, ownerClass, JavaLangInvokeHandleReference::isNonStaticField);
-
-            case FIND_STATIC_VAR_HANDLE:
-              return resolveField(name, ownerClass, JavaLangInvokeHandleReference::isStaticField);
-          }
+          return switch (type) {
+            case FIND_GETTER, FIND_SETTER, FIND_VAR_HANDLE ->
+              resolveField(name, ownerClass, JavaLangInvokeHandleReference::isNonStaticField);
+            case FIND_STATIC_GETTER, FIND_STATIC_SETTER, FIND_STATIC_VAR_HANDLE ->
+              resolveField(name, ownerClass, JavaLangInvokeHandleReference::isStaticField);
+            case FIND_VIRTUAL, FIND_SPECIAL -> resolveMethod(name, ownerClass, JavaLangInvokeHandleReference::isNonStaticMethod);
+            case FIND_STATIC -> resolveMethod(name, ownerClass, JavaLangInvokeHandleReference::isStaticMethod);
+            default -> null;
+          };
         }
       }
     }
@@ -113,24 +101,15 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
       if (type != null) {
         final ReflectiveClass ownerClass = getReflectiveClass(myContext);
         if (ownerClass != null) {
-          switch (type) {
-            case FIND_GETTER:
-            case FIND_SETTER:
-              return lookupFields(ownerClass, JavaLangInvokeHandleReference::isNonStaticField);
-            case FIND_STATIC_GETTER:
-            case FIND_STATIC_SETTER:
-              return lookupFields(ownerClass, JavaLangInvokeHandleReference::isStaticField);
-
-            case FIND_VIRTUAL:
-              return lookupMethods(ownerClass, JavaLangInvokeHandleReference::isNonStaticMethod);
-            case FIND_STATIC:
-              return lookupMethods(ownerClass, JavaLangInvokeHandleReference::isStaticMethod);
-
-            case FIND_VAR_HANDLE:
-              return lookupFields(ownerClass, JavaLangInvokeHandleReference::isNonStaticField);
-            case FIND_STATIC_VAR_HANDLE:
-              return lookupFields(ownerClass, JavaLangInvokeHandleReference::isStaticField);
-          }
+          return switch (type) {
+            case FIND_GETTER, FIND_SETTER, FIND_VAR_HANDLE ->
+              lookupFields(ownerClass, JavaLangInvokeHandleReference::isNonStaticField);
+            case FIND_STATIC_GETTER, FIND_STATIC_SETTER, FIND_STATIC_VAR_HANDLE ->
+              lookupFields(ownerClass, JavaLangInvokeHandleReference::isStaticField);
+            case FIND_VIRTUAL -> lookupMethods(ownerClass, JavaLangInvokeHandleReference::isNonStaticMethod);
+            case FIND_STATIC -> lookupMethods(ownerClass, JavaLangInvokeHandleReference::isStaticMethod);
+            default -> ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+          };
         }
       }
     }

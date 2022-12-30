@@ -46,37 +46,44 @@ public class PropertiesFormatterTest extends FormatterTestCase {
   }
 
   public void testSimple1() {
-    doTextTest("\n\n" +
-               "qwe=asd\n" +
-               "#comment\n" +
-               "  key1  =   value1",
+    doTextTest("""
 
-               "qwe=asd\n" +
-               "#comment\n" +
-               "key1=value1");
+
+                 qwe=asd
+                 #comment
+                   key1  =   value1""",
+
+               """
+                 qwe=asd
+                 #comment
+                 key1=value1""");
   }
 
   public void testSimple2() {
     mySettings.ALIGN_GROUP_FIELD_DECLARATIONS = true;
-    doTextTest("    qwe_very_big_property   =  asd\n" +
-               "#comment\n" +
-               "  key1  =   value1",
+    doTextTest("""
+                     qwe_very_big_property   =  asd
+                 #comment
+                   key1  =   value1""",
 
-               "qwe_very_big_property=asd\n" +
-               "#comment\n" +
-               "key1                 =value1");
+               """
+                 qwe_very_big_property=asd
+                 #comment
+                 key1                 =value1""");
   }
 
   public void testSimple3() {
     mySettings.ALIGN_GROUP_FIELD_DECLARATIONS = true;
     myCustomSettings.SPACES_AROUND_KEY_VALUE_DELIMITER = true;
-    doTextTest("    qwe_very_big_property   =  asd\n" +
-               "#comment\n" +
-               "  key1  =   value1",
+    doTextTest("""
+                     qwe_very_big_property   =  asd
+                 #comment
+                   key1  =   value1""",
 
-               "qwe_very_big_property = asd\n" +
-               "#comment\n" +
-               "key1                  = value1");
+               """
+                 qwe_very_big_property = asd
+                 #comment
+                 key1                  = value1""");
   }
 
   public void testWhitespaceDelimiter() {
@@ -86,28 +93,34 @@ public class PropertiesFormatterTest extends FormatterTestCase {
   public void testKeepBlankLines() {
     myCustomSettings.KEEP_BLANK_LINES = true;
     String propertiesWithBlankLines =
-      "#comment\n" +
-      "\n" +
-      "key1=value1\n" +
-      "\n" +
-      "\n" +
-      "key2=value2\n";
+      """
+        #comment
+
+        key1=value1
+
+
+        key2=value2
+        """;
 
     doTextTest(propertiesWithBlankLines, propertiesWithBlankLines);
   }
 
   public void testDoNotKeepBlankLines() {
     myCustomSettings.KEEP_BLANK_LINES = false;
-    doTextTest("#comment\n" +
-               "\n" +
-               "key1=value1\n" +
-               "\n" +
-               "\n" +
-               "key2=value2\n",
+    doTextTest("""
+                 #comment
 
-               "#comment\n" +
-               "key1=value1\n" +
-               "key2=value2\n");
+                 key1=value1
+
+
+                 key2=value2
+                 """,
+
+               """
+                 #comment
+                 key1=value1
+                 key2=value2
+                 """);
   }
 
   protected void doTextTest(String text) {

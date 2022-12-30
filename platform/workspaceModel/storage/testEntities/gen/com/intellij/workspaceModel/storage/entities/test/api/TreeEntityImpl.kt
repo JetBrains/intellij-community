@@ -53,7 +53,7 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
     return connections
   }
 
-  class Builder(val result: TreeEntityData?) : ModifiableWorkspaceEntityBase<TreeEntity>(), TreeEntity.Builder {
+  class Builder(var result: TreeEntityData?) : ModifiableWorkspaceEntityBase<TreeEntity>(), TreeEntity.Builder {
     constructor() : this(TreeEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -71,6 +71,9 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -115,10 +118,13 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as TreeEntity
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<TreeEntity>().single()
+        val parentEntityNew = parents.filterIsInstance<TreeEntity>().single()
+        if ((this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 
@@ -162,6 +168,12 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+              // Backref setup before adding to store
+              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
+
               _diff.addEntity(item_value)
             }
           }
@@ -275,7 +287,7 @@ class TreeEntityData : WorkspaceEntityData<TreeEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as TreeEntityData
 
@@ -286,7 +298,7 @@ class TreeEntityData : WorkspaceEntityData<TreeEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as TreeEntityData
 

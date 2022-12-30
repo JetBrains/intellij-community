@@ -348,4 +348,8 @@ public class ContainerUtilTest extends TestCase {
     UsefulTestCase.assertOrderedEquals(subSubList, 2);
     assertEquals(new ArrayList<>(subSubList), subSubList);
   }
+  public void testFlatMap() {
+    List<Integer> list = ContainerUtil.flatMap(List.of(0, 1), i->List.of(i,i));
+    assertEquals(List.of(0,0,1,1), list);
+  }
 }

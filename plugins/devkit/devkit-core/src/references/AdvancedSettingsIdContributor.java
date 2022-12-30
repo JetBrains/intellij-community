@@ -38,7 +38,7 @@ class AdvancedSettingsIdContributor extends PsiReferenceContributor {
                                      PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
-  static class AdvancedSettingReference extends ExtensionPointReferenceBase {
+  static class AdvancedSettingReference extends ExtensionReferenceBase {
 
     AdvancedSettingReference(PsiElement element) {
       super(element);

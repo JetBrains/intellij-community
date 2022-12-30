@@ -2438,7 +2438,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void resetMousePointer() {
-    UIUtil.setCursor(myEditorComponent, UIUtil.getTextCursor(getBackgroundColor()));
+    UIUtil.setCursor(myEditorComponent, NamedColorUtil.getTextCursor(getBackgroundColor()));
   }
 
   private void validateMousePointer(@NotNull MouseEvent e, @Nullable EditorMouseEvent editorMouseEvent) {
@@ -2485,7 +2485,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         result = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
       }
     }
-    return result == null ? UIUtil.getTextCursor(getBackgroundColor()) : result;
+    return result == null ? NamedColorUtil.getTextCursor(getBackgroundColor()) : result;
   }
 
   private void runMouseDraggedCommand(@NotNull final MouseEvent e) {
@@ -3859,6 +3859,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       requestFocus();
       runMousePressedCommand(e);
+      myInitialMouseEvent = e.isConsumed() ? e : null;
     }
 
     @Override
@@ -4018,8 +4019,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private boolean processMousePressed(@NotNull final MouseEvent e) {
-      myInitialMouseEvent = e;
-
       if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE &&
           System.currentTimeMillis() - myMouseSelectionChangeTimestamp > Registry.intValue(
             "editor.mouseSelectionStateResetTimeout")) {

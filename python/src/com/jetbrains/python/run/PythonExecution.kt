@@ -12,7 +12,7 @@ import java.nio.charset.Charset
  */
 @ApiStatus.Experimental
 sealed class PythonExecution {
-  var workingDir: TargetEnvironmentFunction<String?>? = null
+  var workingDir: TargetEnvironmentFunction<out String?>? = null
 
   val parameters: MutableList<TargetEnvironmentFunction<String>> = mutableListOf()
 

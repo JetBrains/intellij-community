@@ -452,8 +452,20 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
       if (prev == '<') {
         int nextCharPos = StringUtil.skipWhitespaceForward(contents, offset);
         if (nextCharPos >= 0 && nextCharPos < length && contents.charAt(nextCharPos) == '>') {
-          // Try to find matching empty closing tag
-          int endTagStart = StringUtil.indexOf(contents, '<', nextCharPos, range.getEndOffset());
+          // We look for the next opening tag and start to search for the closing empty tag after the end of the next tag's pair
+          int nextTagStart = StringUtil.indexOf(contents, '<', nextCharPos, range.getEndOffset());
+          int nextTagFirstChar = contents.charAt(StringUtil.skipWhitespaceForward(contents, nextTagStart + 1));
+
+          int searchStart = nextCharPos;
+          if (nextTagFirstChar != '/' && nextTagFirstChar != '>') {
+            PsiFile file = element.getContainingFile();
+            TextRange nextTagsPair = findSupportRange(findNameElement(InjectedLanguageUtilBase.findElementAtNoCommit(file, nextTagStart)));
+            if (nextTagsPair != null && nextTagsPair.getEndOffset() > nextCharPos) {
+              searchStart = nextTagsPair.getEndOffset();
+            }
+          }
+
+          int endTagStart = StringUtil.indexOf(contents, '<', searchStart, range.getEndOffset());
           int endTagEnd = endTagStart > 0 && endTagStart < length - 1 && contents.charAt(endTagStart + 1) == '/'
                           ? StringUtil.skipWhitespaceForward(contents, endTagStart + 2) : -1;
           if (endTagEnd > 0 && endTagEnd < length && contents.charAt(endTagEnd) == '>') {

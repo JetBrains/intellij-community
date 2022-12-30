@@ -73,7 +73,7 @@ public final class ExtensionProcessingHelper {
   /**
    * See {@link com.intellij.openapi.extensions.ExtensionPointName#getByGroupingKey}.
    */
-  public static <K, T> @NotNull List<T> getByGroupingKey(@NotNull ExtensionPointImpl<T> point,
+  public static <K extends @NotNull Object, T extends @NotNull Object> @NotNull List<T> getByGroupingKey(@NotNull ExtensionPointImpl<T> point,
                                                          @NotNull Class<?> cacheId,
                                                          @NotNull K key,
                                                          @NotNull Function<? super @NotNull T, ? extends @Nullable K> keyMapper) {
@@ -95,7 +95,7 @@ public final class ExtensionProcessingHelper {
    * See {@link com.intellij.openapi.extensions.ExtensionPointName#getByKey}.
    */
   @ApiStatus.Internal
-  public static <K, T, V> @Nullable V getByKey(@NotNull ExtensionPointImpl<T> point,
+  public static <K extends @NotNull Object, T extends @NotNull Object, V extends @NotNull Object> @Nullable V getByKey(@NotNull ExtensionPointImpl<T> point,
                                                @NotNull K key,
                                                @NotNull Class<?> cacheId,
                                                @NotNull Function<? super @NotNull T, ? extends @Nullable K> keyMapper,
@@ -107,7 +107,7 @@ public final class ExtensionProcessingHelper {
    * See {@link com.intellij.openapi.extensions.ExtensionPointName#getByKey}.
    */
   @ApiStatus.Internal
-  public static <K, T> @Nullable T getByKey(@NotNull ExtensionPointImpl<T> point,
+  public static <K extends @NotNull Object, T extends @NotNull Object> @Nullable T getByKey(@NotNull ExtensionPointImpl<T> point,
                                             @NotNull K key,
                                             @NotNull Class<?> cacheId,
                                             @NotNull Function<? super @NotNull T, ? extends @Nullable K> keyMapper) {
@@ -118,7 +118,7 @@ public final class ExtensionProcessingHelper {
    * See {@link com.intellij.openapi.extensions.ExtensionPointName#getByKey}.
    */
   @ApiStatus.Internal
-  public static <K, T, V> @NotNull V computeIfAbsent(@NotNull ExtensionPointImpl<T> point,
+  public static <K extends @NotNull Object, T extends @NotNull Object, V extends @NotNull Object> @NotNull V computeIfAbsent(@NotNull ExtensionPointImpl<T> point,
                                                      @NotNull K key,
                                                      @NotNull Class<?> cacheId,
                                                      @NotNull Function<? super @NotNull K, ? extends @NotNull V> valueProducer) {
@@ -128,7 +128,7 @@ public final class ExtensionProcessingHelper {
   }
 
   @ApiStatus.Internal
-  public static <T, V> @NotNull V computeIfAbsent(@NotNull ExtensionPointImpl<T> point,
+  public static <T extends @NotNull Object, V extends @NotNull Object> @NotNull V computeIfAbsent(@NotNull ExtensionPointImpl<T> point,
                                                   @NotNull Class<?> cacheId,
                                                   @NotNull Supplier<? extends @NotNull V> valueProducer) {
     ConcurrentMap<Class<?>, V> cache = point.getCacheMap();

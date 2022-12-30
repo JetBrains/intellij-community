@@ -6,13 +6,15 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 public class SelectSingleLineAtCaretActionTest extends LightPlatformCodeInsightTestCase {
   public void test() {
-    prepare("first line\n" +
-            "second<caret> line\n" +
-            "third line");
+    prepare("""
+              first line
+              second<caret> line
+              third line""");
     selectSingleLine();
-    checkResultByText("first line\n" +
-                      "<selection><caret>second line\n" +
-                      "</selection>third line"
+    checkResultByText("""
+                        first line
+                        <selection><caret>second line
+                        </selection>third line"""
     );
   }
 
@@ -22,46 +24,52 @@ public class SelectSingleLineAtCaretActionTest extends LightPlatformCodeInsightT
             "third line");
     assertTrue("Failed to activate soft wrapping", EditorTestUtil.configureSoftWraps(getEditor(), 6));
     selectSingleLine();
-    checkResultByText("first line\n" +
-                      "<selection><caret>second line\n" +
-                      "</selection>third line"
+    checkResultByText("""
+                        first line
+                        <selection><caret>second line
+                        </selection>third line"""
     );
   }
 
   public void testWithExistingSelection() {
-    prepare("first line\n" +
-            "secon<caret><selection>d line\n" +
-            "third li</selection>ne\n" +
-            "fourth line\n" +
-            "fifth line");
+    prepare("""
+              first line
+              secon<caret><selection>d line
+              third li</selection>ne
+              fourth line
+              fifth line""");
 
     selectSingleLine();
-    checkResultByText("first line\n" +
-                      "<selection><caret>second line\n" +
-                      "</selection>third line\n" +
-                      "fourth line\n" +
-                      "fifth line");
+    checkResultByText("""
+                        first line
+                        <selection><caret>second line
+                        </selection>third line
+                        fourth line
+                        fifth line""");
     selectSingleLine();
-    checkResultByText("first line\n" +
-                      "<selection><caret>second line\n" +
-                      "</selection>third line\n" +
-                      "fourth line\n" +
-                      "fifth line");
+    checkResultByText("""
+                        first line
+                        <selection><caret>second line
+                        </selection>third line
+                        fourth line
+                        fifth line""");
   }
 
   public void testWithExistingSelectionWithCaretInTheMiddle() {
-    prepare("first line\n" +
-            "<selection>second line\n" +
-            "third <caret>line\n" +
-            "</selection>fourth line\n" +
-            "fifth line");
+    prepare("""
+              first line
+              <selection>second line
+              third <caret>line
+              </selection>fourth line
+              fifth line""");
 
     selectSingleLine();
-    checkResultByText("first line\n" +
-                      "second line\n" +
-                      "<selection><caret>third line\n" +
-                      "</selection>fourth line\n" +
-                      "fifth line");
+    checkResultByText("""
+                        first line
+                        second line
+                        <selection><caret>third line
+                        </selection>fourth line
+                        fifth line""");
   }
 
   private void selectSingleLine() {

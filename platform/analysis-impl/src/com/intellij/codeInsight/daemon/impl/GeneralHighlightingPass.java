@@ -70,6 +70,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   final List<HighlightInfo> myHighlights = new ArrayList<>();
 
   protected volatile boolean myHasErrorElement;
+  private volatile boolean myHasErrorSeverity;
   private volatile boolean myErrorFound;
   final EditorColorsScheme myGlobalScheme;
   private volatile NotNullProducer<HighlightVisitor[]> myHighlightVisitorProducer = this::cloneHighlightVisitors;
@@ -220,15 +221,18 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                        outsideResult);
       }
 
-      boolean success = collectHighlights(allInsideElements, allInsideRanges, allOutsideElements, allOutsideRanges, filteredVisitors, insideResult, outsideResult, forceHighlightParents);
+      boolean success = collectHighlights(allInsideElements, allInsideRanges, allOutsideElements,
+                                          allOutsideRanges, filteredVisitors, insideResult, outsideResult, forceHighlightParents);
+      myHighlights.addAll(insideResult);
+      myHighlights.addAll(outsideResult);
 
       if (success) {
         myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, getEditor(),
                                                                          outsideResult, myPriorityRange,
                                                                          myRestrictRange, getId());
-
         if (myUpdateAll) {
           daemonCodeAnalyzer.getFileStatusMap().setErrorFoundFlag(myProject, getDocument(), myErrorFound);
+          reportErrorsToWolf(myHasErrorSeverity);
         }
 
         // Android Studio: collect metrics for syntax highlighting latency.
@@ -241,8 +245,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
     finally {
       incVisitorUsageCount(-1);
-      myHighlights.addAll(insideResult);
-      myHighlights.addAll(outsideResult);
     }
   }
 
@@ -253,10 +255,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   @Override
   protected void applyInformationWithProgress() {
     getFile().putUserData(HAS_ERROR_ELEMENT, myHasErrorElement);
-
-    if (myUpdateAll) {
-      ((HighlightingSessionImpl)myHighlightingSession).applyInEDT(this::reportErrorsToWolf);
-    }
   }
 
   @Override
@@ -343,8 +341,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         continue;
       }
 
-      boolean isErrorElement = element instanceof PsiErrorElement;
-      if (isErrorElement) {
+      if (element instanceof PsiErrorElement) {
         myHasErrorElement = true;
       }
 
@@ -493,6 +490,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   protected void queueInfoToUpdateIncrementally(@NotNull HighlightInfo info) {
     int group = info.getGroup() == 0 ? Pass.UPDATE_ALL : info.getGroup();
+    if (info.getSeverity() == HighlightSeverity.ERROR) {
+      myHasErrorSeverity = true;
+    }
     myHighlightInfoProcessor.infoIsAvailable(myHighlightingSession, info, myPriorityRange, myRestrictRange, group);
   }
 
@@ -506,7 +506,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     PsiTodoSearchHelper helper = PsiTodoSearchHelper.getInstance(file.getProject());
     if (helper == null || !shouldHighlightTodos(helper, file)) return;
     TodoItem[] todoItems = helper.findTodoItems(file, startOffset, endOffset);
-    if (todoItems.length == 0) return;
 
     for (TodoItem todoItem : todoItems) {
       ProgressManager.checkCanceled();
@@ -563,7 +562,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return helper instanceof PsiTodoSearchHelperImpl && ((PsiTodoSearchHelperImpl)helper).shouldHighlightInEditor(file);
   }
 
-  private void reportErrorsToWolf() {
+  private void reportErrorsToWolf(boolean hasErrors) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (!getFile().getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
     Project project = getFile().getProject();
     if (!PsiManager.getInstance(project).isInProject(getFile())) return; // do not report problems in libraries
@@ -573,7 +573,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     List<Problem> problems = convertToProblems(getInfos(), file, myHasErrorElement);
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
 
-    boolean hasErrors = DaemonCodeAnalyzerEx.hasErrors(project, getDocument());
     if (!hasErrors || isWholeFileHighlighting()) {
       wolf.reportProblems(file, problems);
     }

@@ -18,13 +18,11 @@ import java.io.IOException;
 public final class DataStreamUtil {
   public static Entry readEntry(DataInput in) throws IOException {
     int type = DataInputOutputUtil.readINT(in);
-    switch (type) {
-      case 0:
-        return new FileEntry(in, true);
-      case 1:
-        return new DirectoryEntry(in, true);
-    }
-    throw new IOException("unexpected entry type: " + type);
+    return switch (type) {
+      case 0 -> new FileEntry(in, true);
+      case 1 -> new DirectoryEntry(in, true);
+      default -> throw new IOException("unexpected entry type: " + type);
+    };
   }
 
   public static void writeEntry(@NotNull DataOutput out, Entry e) throws IOException {
@@ -42,27 +40,18 @@ public final class DataStreamUtil {
 
   public static Change readChange(DataInput in) throws IOException {
     int type = DataInputOutputUtil.readINT(in);
-    switch (type) {
-      case 1:
-        return new CreateFileChange(in);
-      case 2:
-        return new CreateDirectoryChange(in);
-      case 3:
-        return new ContentChange(in);
-      case 4:
-        return new RenameChange(in);
-      case 5:
-        return new ROStatusChange(in);
-      case 6:
-        return new MoveChange(in);
-      case 7:
-        return new DeleteChange(in);
-      case 8:
-        return new PutLabelChange(in);
-      case 9:
-        return new PutSystemLabelChange(in);
-    }
-    throw new IOException("unexpected change type: " + type);
+    return switch (type) {
+      case 1 -> new CreateFileChange(in);
+      case 2 -> new CreateDirectoryChange(in);
+      case 3 -> new ContentChange(in);
+      case 4 -> new RenameChange(in);
+      case 5 -> new ROStatusChange(in);
+      case 6 -> new MoveChange(in);
+      case 7 -> new DeleteChange(in);
+      case 8 -> new PutLabelChange(in);
+      case 9 -> new PutSystemLabelChange(in);
+      default -> throw new IOException("unexpected change type: " + type);
+    };
   }
 
   public static void writeChange(DataOutput out, Change change) throws IOException {

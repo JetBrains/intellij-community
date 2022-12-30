@@ -23,7 +23,7 @@ import java.util.function.Supplier
  */
 abstract class PyAddSdkPanelBase(protected val project: Project?,
                                  protected val module: Module?,
-                                 protected val targetSupplier: Supplier<TargetEnvironmentConfiguration>?)
+                                 private val targetSupplier: Supplier<TargetEnvironmentConfiguration>?)
   : PyAddSdkPanel(), PyAddTargetBasedSdkView {
   protected val defaultProject: Project
     get() = ProjectManager.getInstance().defaultProject

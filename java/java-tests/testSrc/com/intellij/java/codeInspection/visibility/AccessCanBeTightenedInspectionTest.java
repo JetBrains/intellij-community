@@ -79,30 +79,33 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
            "}");
   }
   public void testUseInAnnotation() {
-    doTest("import java.util.*;\n" +
-           "@interface Ann{ String value(); }\n" +
-           "@Ann(value = C.VAL\n)" +
-           "class C {\n" +
-           "    /*Access can be package-private*/public/**/ static final String VAL = \"xx\";\n" +
-           "}");
+    doTest("""
+             import java.util.*;
+             @interface Ann{ String value(); }
+             @Ann(value = C.VAL
+             )class C {
+                 /*Access can be package-private*/public/**/ static final String VAL = "xx";
+             }""");
   }
 
   public void testUseOfPackagePrivateInAnnotation() {
-    doTest("import java.util.*;\n" +
-           "@interface Ann{ String value(); }\n" +
-           "@Ann(value = C.VAL\n)" +
-           "class C {\n" +
-           "    static final String VAL = \"xx\";\n" +
-           "}");
+    doTest("""
+             import java.util.*;
+             @interface Ann{ String value(); }
+             @Ann(value = C.VAL
+             )class C {
+                 static final String VAL = "xx";
+             }""");
   }
 
   public void testSameFile() {
-    doTest("class C {\n" +
-           "  private static class Err {\n" +
-           "    /*Access can be 'private'*/public/**/ boolean isVisible() { return true; }\n" +
-           "  }\n"+
-           "  boolean f = new Err().isVisible();\n" +
-           "}");
+    doTest("""
+             class C {
+               private static class Err {
+                 /*Access can be 'private'*/public/**/ boolean isVisible() { return true; }
+               }
+               boolean f = new Err().isVisible();
+             }""");
   }
 
   public void testSameFileInheritance() {
@@ -121,48 +124,49 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
   }
 
   public void testSiblingInheritance() {
-    doTest("abstract class Impl {\n" +
-           "  public void doSomething() {\n" +
-           "    run();\n" +
-           "  }\n" +
-           "\n" +
-           "  public void run() {}\n" +
-           "}\n" +
-           "class Concrete extends Impl implements Runnable {\n" +
-           "}");
+    doTest("""
+             abstract class Impl {
+               public void doSomething() {
+                 run();
+               }
+
+               public void run() {}
+             }
+             class Concrete extends Impl implements Runnable {
+             }""");
   }
 
   public void testAccessFromSubclass() {
     myFixture.allowTreeAccessForAllFiles();
     addJavaFile("x/Sub.java",
-                "package x; " +
-                "import y.C; " +
-                "class Sub extends C {\n" +
-                "  boolean f = new Err().isTVisible();\n" +
-                "}");
+                """
+                  package x; import y.C; class Sub extends C {
+                    boolean f = new Err().isTVisible();
+                  }""");
     addJavaFile("y/C.java",
-    "package y; public class C {\n" +
-    "  public static class Err {\n" +
-    "    public boolean isTVisible() { return true; }\n" +
-    "  }\n" +
-    "}");
+                """
+                  package y; public class C {
+                    public static class Err {
+                      public boolean isTVisible() { return true; }
+                    }
+                  }""");
     myFixture.configureByFiles("y/C.java","x/Sub.java");
     myFixture.checkHighlighting();
   }
 
   public void testQualifiedAccessFromSubclass() {
     myFixture.allowTreeAccessForAllFiles();
-    addJavaFile("x/Sub.java", "package x; " +
-                            "import y.C; " +
-                            "class Sub extends C {\n" +
-                            "  void bazz(C c) {\n" +
-                            "    int a = c.foo; c.bar();" +
-                            "  }\n" +
-                            "}\n");
-    addJavaFile("y/C.java", "package y; public class C {\n" +
-                          "  public int foo = 0;\n" +
-                          "  public void bar() {}\n" +
-                          "}");
+    addJavaFile("x/Sub.java", """
+      package x; import y.C; class Sub extends C {
+        void bazz(C c) {
+          int a = c.foo; c.bar();  }
+      }
+      """);
+    addJavaFile("y/C.java", """
+      package y; public class C {
+        public int foo = 0;
+        public void bar() {}
+      }""");
     myFixture.configureByFiles("y/C.java","x/Sub.java");
     myFixture.checkHighlighting();
   }
@@ -172,15 +176,17 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     addJavaFile("x/Sub.java", "package x; " +
                             "import y.C; " +
                             "class Sub extends C {}");
-    addJavaFile("y/C.java", "package y; public class C {\n" +
-                          "  public int foo = 0;\n" +
-                          "  public void bar() {}\n" +
-                          "}");
-    addJavaFile("y/U.java", "package y; import x.Sub;\n" +
-                           "public class U {{\n" +
-                           "  Sub s = new Sub();\n" +
-                           "  s.bar(); int a = s.foo;\n" +
-                           " }}");
+    addJavaFile("y/C.java", """
+      package y; public class C {
+        public int foo = 0;
+        public void bar() {}
+      }""");
+    addJavaFile("y/U.java", """
+      package y; import x.Sub;
+      public class U {{
+        Sub s = new Sub();
+        s.bar(); int a = s.foo;
+       }}""");
     myFixture.configureByFiles("y/C.java","x/Sub.java");
     myFixture.checkHighlighting();
   }
@@ -189,169 +195,187 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
     myVisibilityInspection.SUGGEST_PRIVATE_FOR_INNERS = false;
 
-    doTest("class C {\n" +
-           " {\n" +
-           "  new Runnable() {\n" +
-           "    @Override\n" +
-           "    public void run() { isDisposed = true; }\n"+
-           "    boolean isVisible() { return true; }\n" +
-           "    boolean isDisposed;\n" +
-           "  }.run();\n" +
-           " }\n"+
-           "}");
+    doTest("""
+             class C {
+              {
+               new Runnable() {
+                 @Override
+                 public void run() { isDisposed = true; }
+                 boolean isVisible() { return true; }
+                 boolean isDisposed;
+               }.run();
+              }
+             }""");
   }
 
   public void testDoNotSuggestPrivateIfInExtendsOrImplements() {
-    doTest("abstract class C implements Comparable<C.Inner> {\n" +
-           "  static class Inner {\n" +
-           "  }\n"+
-           "}");
+    doTest("""
+             abstract class C implements Comparable<C.Inner> {
+               static class Inner {
+               }
+             }""");
   }
 
   public void testDoNotSuggestPrivateForAbstractIDEA151875() {
-    doTest("class C {\n" +
-           "  abstract static class Inner {\n" +
-           "    abstract void foo();\n"+
-           "  }\n" +
-           "  void f(Inner i) {\n" +
-           "    i.foo();\n" +
-           "  }\n"+
-           "}");
+    doTest("""
+             class C {
+               abstract static class Inner {
+                 abstract void foo();
+               }
+               void f(Inner i) {
+                 i.foo();
+               }
+             }""");
   }
 
   public void testDoNotSuggestPrivateForInnerStaticSubclass() {
-    doTest("class A {\n" +
-           "    /*Access can be package-private*/protected/**/ String myElement;\n" +
-           "    static class B extends A {\n" +
-           "        @Override\n" +
-           "        public String toString() {\n" +
-           "            return myElement;\n" +
-           "        }\n" +
-           "    }\n" +
-           "    /*Access can be 'private'*/protected/**/ String myElement1;\n" +
-           "    class B1 {\n" +
-           "        @Override\n" +
-           "        public String toString() {\n" +
-           "            return myElement1;\n" +
-           "        }\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             class A {
+                 /*Access can be package-private*/protected/**/ String myElement;
+                 static class B extends A {
+                     @Override
+                     public String toString() {
+                         return myElement;
+                     }
+                 }
+                 /*Access can be 'private'*/protected/**/ String myElement1;
+                 class B1 {
+                     @Override
+                     public String toString() {
+                         return myElement1;
+                     }
+                 }
+             }""");
   }
 
   public void testStupidTwoPublicClassesInTheSamePackage() {
     myFixture.allowTreeAccessForAllFiles();
-    addJavaFile("x/Sub.java", "package x; " +
-                            "public class Sub {\n" +
-                            "  Object o = new C();\n" +
-                            "}\n");
-    addJavaFile("x/C.java", "package x; \n" +
-                          "<warning descr=\"Access can be package-private\">public</warning> class C {\n" +
-                          "}");
+    addJavaFile("x/Sub.java", """
+      package x; public class Sub {
+        Object o = new C();
+      }
+      """);
+    addJavaFile("x/C.java", """
+      package x;\s
+      <warning descr="Access can be package-private">public</warning> class C {
+      }""");
     myFixture.configureByFiles("x/C.java", "x/Sub.java");
     myFixture.checkHighlighting();
   }
 
   public void testInterfaceIsImplementedByLambda() {
     myFixture.allowTreeAccessForAllFiles();
-    addJavaFile("x/MyInterface.java", "package x;\n" +
-                                    "public interface MyInterface {\n" +
-                                    "  void doStuff();\n" +
-                                    "}\n");
-    addJavaFile("x/MyConsumer.java", "package x;\n" +
-                                   "public class MyConsumer {\n" +
-                                   "    public void doIt(MyInterface i) {\n" +
-                                   "        i.doStuff();\n" +
-                                   "    }\n" +
-                                   "}");
-    addJavaFile("y/Test.java", "package y;\n" +
-                             "\n" +
-                             "import x.MyConsumer;\n" +
-                             "\n" +
-                             "public class Test {\n" +
-                             "    void ddd(MyConsumer consumer) {\n" +
-                             "        consumer.doIt(() -> {});\n" +
-                             "    }\n" +
-                             "}");
+    addJavaFile("x/MyInterface.java", """
+      package x;
+      public interface MyInterface {
+        void doStuff();
+      }
+      """);
+    addJavaFile("x/MyConsumer.java", """
+      package x;
+      public class MyConsumer {
+          public void doIt(MyInterface i) {
+              i.doStuff();
+          }
+      }""");
+    addJavaFile("y/Test.java", """
+      package y;
+
+      import x.MyConsumer;
+
+      public class Test {
+          void ddd(MyConsumer consumer) {
+              consumer.doIt(() -> {});
+          }
+      }""");
     myFixture.configureByFiles("x/MyInterface.java", "y/Test.java", "x/MyConsumer.java");
     myFixture.checkHighlighting();
   }
 
   public void testInnerClassIsUnusedButItsMethodsAre() {
     myFixture.allowTreeAccessForAllFiles();
-    addJavaFile("x/Outer.java", "package x;\n" +
-                              "class Outer {\n" +
-                              "    static Inner makeInner() {\n" +
-                              "        return new Inner();\n" +
-                              "    }\n" +
-                              "\n" +
-                              "    static class Inner {\n" +
-                              "        void frob() {}\n" +
-                              "    }\n" +
-                              "}\n");
-    addJavaFile("x/Consumer.java", "package x;\n" +
-                                 "public class Consumer {\n" +
-                                 "    public void doIt() {\n" +
-                                 "        Outer.makeInner().frob();\n" +
-                                 "    }\n" +
-                                 "}");
+    addJavaFile("x/Outer.java", """
+      package x;
+      class Outer {
+          static Inner makeInner() {
+              return new Inner();
+          }
+
+          static class Inner {
+              void frob() {}
+          }
+      }
+      """);
+    addJavaFile("x/Consumer.java", """
+      package x;
+      public class Consumer {
+          public void doIt() {
+              Outer.makeInner().frob();
+          }
+      }""");
     myFixture.configureByFiles("x/Outer.java", "x/Consumer.java");
     myFixture.checkHighlighting();
   }
 
   public void testInnerClassIsExposedInMethodSignature() {
-    doTest("package x;\n" +
-           "class Record {\n" +
-           "    java.util.List<Inner> getRecord() {\n" +
-           "        return null;\n" +
-           "    }\n" +
-           "    static class Inner {}\n" +
-           "\n" +
-           "    void x(Inner2 inner) {}\n" +
-           "    class Inner2 {}\n" +
-           "    \n" +
-           "    Inner3 field;\n" +
-           "    class Inner3 {}\n" +
-           "    \n" +
-           "    private Inner4 field2;\n" +
-           "    class /*Access can be 'private'*/Inner4/**/ {}\n" +
-           "    \n" +
-           "    private void y(Inner5 i) {}\n" +
-           "    class /*Access can be 'private'*/Inner5/**/ {}" +
-           "}");
+    doTest("""
+             package x;
+             class Record {
+                 java.util.List<Inner> getRecord() {
+                     return null;
+                 }
+                 static class Inner {}
+
+                 void x(Inner2 inner) {}
+                 class Inner2 {}
+                \s
+                 Inner3 field;
+                 class Inner3 {}
+                \s
+                 private Inner4 field2;
+                 class /*Access can be 'private'*/Inner4/**/ {}
+                \s
+                 private void y(Inner5 i) {}
+                 class /*Access can be 'private'*/Inner5/**/ {}}""");
   }
 
   public void testClassIsExposedInMethodSignature() {
     addJavaFile("mypackage/sub1/Sub123.java",
-                "package mypackage.sub1;\n" +
-                "\n" +
-                "public class Sub123 {}");
+                """
+                  package mypackage.sub1;
+
+                  public class Sub123 {}""");
     addJavaFile("mypackage/sub1/Intermediate.java",
-                "package mypackage.sub1;\n" +
-                "\n" +
-                "public class Intermediate {\n" +
-                "  public Sub123 getSub() {return null;}\n" +
-                "}");
+                """
+                  package mypackage.sub1;
+
+                  public class Intermediate {
+                    public Sub123 getSub() {return null;}
+                  }""");
     myFixture.configureByFiles("mypackage/sub1/Sub123.java", "mypackage/sub1/Intermediate.java");
     myFixture.checkHighlighting();
   }
 
   public void testNestedEnumWithReferenceByName() {
     myFixture.allowTreeAccessForAllFiles();
-    addJavaFile("x/Outer.java", "package x;\n" +
-                                "public class Outer {\n" +
-                                "    enum E {A}\n" +
-                                "    static final E abc = E.A;\n" +
-                                "\n" +
-                                "    public static void main(String[] args) {\n" +
-                                "        System.out.println(abc.ordinal());\n" +
-                                "    }\n" +
-                                "}\n");
-    addJavaFile("x/Consumer.java", "package x;\n" +
-                                 "public class Consumer {\n" +
-                                 "    public String foo() {\n" +
-                                 "       return Outer.abc.name();\n" +
-                                 "    }\n" +
-                                 "}");
+    addJavaFile("x/Outer.java", """
+      package x;
+      public class Outer {
+          enum E {A}
+          static final E abc = E.A;
+
+          public static void main(String[] args) {
+              System.out.println(abc.ordinal());
+          }
+      }
+      """);
+    addJavaFile("x/Consumer.java", """
+      package x;
+      public class Consumer {
+          public String foo() {
+             return Outer.abc.name();
+          }
+      }""");
     myFixture.configureByFiles("x/Outer.java", "x/Consumer.java");
     myFixture.checkHighlighting();
   }
@@ -368,53 +392,58 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
   }
 
   public void testRecord() {
-    doTest("class Demo {\n" +
-           "    public static void main(String... args) {\n" +
-           "        User user = new User(null, null);\n" +
-           "        System.out.println(user.email());\n" +
-           "        user.xylophone();\n" +
-           "    }\n" +
-           "\n" +
-           "    public record User(String email, String phone){\n" +
-           "        public User {\n" +
-           "            if (email == null && phone == null) {\n" +
-           "                throw new IllegalArgumentException();\n" +
-           "            }\n" +
-           "        }\n" +
-           "\n" +
-           "        public String email() {\n" +
-           "            return email;\n" +
-           "        }\n" +
-           "\n" +
-           "        /*Access can be 'private'*/public/**/ void xylophone() {\n" +
-           "\n" +
-           "        }\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             class Demo {
+                 public static void main(String... args) {
+                     User user = new User(null, null);
+                     System.out.println(user.email());
+                     user.xylophone();
+                 }
+
+                 public record User(String email, String phone){
+                     public User {
+                         if (email == null && phone == null) {
+                             throw new IllegalArgumentException();
+                         }
+                     }
+
+                     public String email() {
+                         return email;
+                     }
+
+                     /*Access can be 'private'*/public/**/ void xylophone() {
+
+                     }
+                 }
+             }""");
   }
 
   public void testSuggestPackagePrivateForTopLevelClassSetting() {
     myFixture.allowTreeAccessForAllFiles();
     myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
-    addJavaFile("x/Outer.java", "package x;\n" +
-                              "public class Outer {\n" +
-                              "\n" +
-                              "}\n");
-    addJavaFile("x/Consumer.java", "package x;\n" +
-                                 "public class Consumer {\n" +
-                                 "    public void doIt() {\n" +
-                                 "        System.out.println(Outer.class.hashCode());\n" +
-                                 "    }\n" +
-                                 "}");
+    addJavaFile("x/Outer.java", """
+      package x;
+      public class Outer {
+
+      }
+      """);
+    addJavaFile("x/Consumer.java", """
+      package x;
+      public class Consumer {
+          public void doIt() {
+              System.out.println(Outer.class.hashCode());
+          }
+      }""");
     myFixture.configureByFiles("x/Outer.java", "x/Consumer.java");
     myFixture.checkHighlighting();
   }
 
   public void testSuggestPackagePrivateForEntryPoint() {
-    addJavaFile("x/MyTest.java", "package x;\n" +
-                               "public class MyTest {\n" +
-                               "    <warning descr=\"Access can be 'protected'\">public</warning> void foo() {}\n" +
-                               "}");
+    addJavaFile("x/MyTest.java", """
+      package x;
+      public class MyTest {
+          <warning descr="Access can be 'protected'">public</warning> void foo() {}
+      }""");
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), EntryPointsManagerBase.DEAD_CODE_EP_NAME, new EntryPointWithVisibilityLevel() {
       @Override
       public void readExternal(Element element) throws InvalidDataException {}
@@ -467,11 +496,12 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
   }
 
   public void testMinimalVisibilityForNonEntryPOint() {
-    addJavaFile("x/MyTest.java", "package x;\n" +
-                               "public class MyTest {\n" +
-                               "    <warning descr=\"Access can be 'protected'\">public</warning> void foo() {}\n" +
-                               "    {foo();}\n" +
-                               "}");
+    addJavaFile("x/MyTest.java", """
+      package x;
+      public class MyTest {
+          <warning descr="Access can be 'protected'">public</warning> void foo() {}
+          {foo();}
+      }""");
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), EntryPointsManagerBase.DEAD_CODE_EP_NAME, new EntryPointWithVisibilityLevel() {
       @Override
       public void readExternal(Element element) throws InvalidDataException {}
@@ -524,11 +554,11 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
   }
 
   public void testSuggestPackagePrivateForImplicitWrittenFields() {
-    addJavaFile("x/MyTest.java", "package x;\n" +
-                               "public class MyTest {\n" +
-                               "    String foo;\n" +
-                               "  {System.out.println(foo);}" +
-                               "}");
+    addJavaFile("x/MyTest.java", """
+      package x;
+      public class MyTest {
+          String foo;
+        {System.out.println(foo);}}""");
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
       @Override
       public boolean isImplicitUsage(@NotNull PsiElement element) {
@@ -552,44 +582,48 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
   @SuppressWarnings("FieldMayBeStatic")
   public void testSuggestForConstants() {
     myVisibilityInspection.SUGGEST_FOR_CONSTANTS = true;
-    doTest("class SuggestForConstants {\n" +
-           "    /*Access can be 'private'*/public/**/ static final String MY_CONSTANT = \"a\";\n" +
-           "    private final String myField = MY_CONSTANT;" +
-           "}");
+    doTest("""
+             class SuggestForConstants {
+                 /*Access can be 'private'*/public/**/ static final String MY_CONSTANT = "a";
+                 private final String myField = MY_CONSTANT;}""");
   }
 
   @SuppressWarnings("FieldMayBeStatic")
   public void testDoNotSuggestForConstants() {
     myVisibilityInspection.SUGGEST_FOR_CONSTANTS = false;
-    doTest("class DoNotSuggestForConstants {\n" +
-           "    public static final String MY_CONSTANT = \"a\";\n" +
-           "    private final String myField = MY_CONSTANT;" +
-           "}");
+    doTest("""
+             class DoNotSuggestForConstants {
+                 public static final String MY_CONSTANT = "a";
+                 private final String myField = MY_CONSTANT;}""");
   }
 
   public void testSuggestPackagePrivateForMembersOfEvenPackagePrivateClass() {
     myFixture.allowTreeAccessForAllFiles();
     myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
-    addJavaFile("x/Outer.java", "package x;\n" +
-                              "public class Outer {\n" +
-                              "  <warning descr=\"Access can be package-private\">public</warning> void foo() {}\n" +
-                              "  public void fromOtherPackage() {}\n" +
-                              "}\n");
+    addJavaFile("x/Outer.java", """
+      package x;
+      public class Outer {
+        <warning descr="Access can be package-private">public</warning> void foo() {}
+        public void fromOtherPackage() {}
+      }
+      """);
     addJavaFile("x/Consumer.java",
-               "package x;\n" +
-               "public class Consumer {\n" +
-               "    public void doIt(Outer o) {\n" +
-               "        o.foo();\n" +
-               "        o.fromOtherPackage();\n" +
-               "    }\n" +
-               "}");
+                """
+                  package x;
+                  public class Consumer {
+                      public void doIt(Outer o) {
+                          o.foo();
+                          o.fromOtherPackage();
+                      }
+                  }""");
     addJavaFile("y/ConsumerOtherPackage.java",
-               "package y;\n" +
-                    "public class ConsumerOtherPackage {\n" +
-                    "    public void doIt(x.Outer o) {\n" +
-                    "        o.fromOtherPackage();\n" +
-                    "    }\n" +
-                    "}");
+                """
+                  package y;
+                  public class ConsumerOtherPackage {
+                      public void doIt(x.Outer o) {
+                          o.fromOtherPackage();
+                      }
+                  }""");
     myFixture.configureByFiles("x/Outer.java", "x/Consumer.java", "y/ConsumerOtherPackage.java");
     myFixture.checkHighlighting();
   }

@@ -29,6 +29,7 @@ import com.jetbrains.python.debugger.PyDebugRunner
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
+import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.targetAdditionalData
@@ -37,14 +38,20 @@ import java.nio.file.Path
 
 private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
 
+/**
+ * If [customInterpreterPath] is specified, it is used instead of [Sdk.getHomePath] from [sdk].
+ */
+@JvmOverloads
 fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironment,
                                              sdk: Sdk?,
                                              interpreterParameters: List<String>,
-                                             isUsePty: Boolean = false): TargetedCommandLine {
+                                             isUsePty: Boolean = false,
+                                             customInterpreterPath: String? = null): TargetedCommandLine {
   val commandLineBuilder = TargetedCommandLineBuilder(targetEnvironment.request)
+  commandLineBuilder.addEnvironmentVariable(PythonEnvUtil.PYTHONIOENCODING, charset.name())
   workingDir?.apply(targetEnvironment)?.let { commandLineBuilder.setWorkingDirectory(it) }
-  charset?.let { commandLineBuilder.setCharset(it) }
-  val interpreterPath = getInterpreterPath(sdk)
+  charset.let { commandLineBuilder.setCharset(it) }
+  val interpreterPath = customInterpreterPath ?: getInterpreterPath(sdk)
   val platform = targetEnvironment.targetPlatform.platform
   if (!interpreterPath.isNullOrEmpty()) {
     commandLineBuilder.setExePath(platform.toSystemDependentName(interpreterPath))

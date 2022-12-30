@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -127,7 +128,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
 
   @Override public Color getForeground() {
     if (isFocusOwner()) {
-      return UIUtil.getListSelectionForeground(true);
+      return NamedColorUtil.getListSelectionForeground(true);
     }
     return super.getForeground();
   }

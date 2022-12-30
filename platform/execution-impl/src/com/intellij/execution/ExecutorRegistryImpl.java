@@ -17,7 +17,9 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.RunConfigurationStartHistory;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunState;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.ui.ToolbarSettings;
@@ -43,6 +45,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.SpinningProgressIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -64,6 +68,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   public static final String RUNNERS_GROUP = "RunnerActions";
   public static final String RUN_CONTEXT_GROUP = "RunContextGroupInner";
   public static final String RUN_CONTEXT_GROUP_MORE = "RunContextGroupMore";
+
+  private static final Key<SpinningProgressIcon> spinningIconKey = Key.create("spinning-icon-key");
 
   private final Set<String> myContextActionIdSet = new HashSet<>();
   private final Map<String, AnAction> myIdToAction = new HashMap<>();
@@ -321,6 +327,26 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
           return;
         }
 
+        // We can consider to add spinning to the inlined run actions. But there is a problem with redrawing
+        if (ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {
+          RunConfigurationStartHistory startHistory = RunConfigurationStartHistory.getInstance(project);
+
+          boolean isLoading = startHistory.firstOrNull(selectedSettings, it ->
+            (it.getExecutorId().equals(myExecutor.getId()) && it.getState() == RunState.SCHEDULED)
+          ) != null;
+          if (isLoading) {
+            SpinningProgressIcon spinningIcon = presentation.getClientProperty(spinningIconKey);
+            if (spinningIcon == null) {
+              spinningIcon = new SpinningProgressIcon();
+              spinningIcon.setIconColor(Color.WHITE);
+              presentation.putClientProperty(spinningIconKey, spinningIcon);
+            }
+            presentation.setDisabledIcon(spinningIcon);
+          } else {
+            presentation.putClientProperty(spinningIconKey, null);
+          }
+        }
+
         presentation.setIcon(getInformativeIcon(project, selectedSettings));
         RunConfiguration configuration = selectedSettings.getConfiguration();
         if (!isSuppressed(project)) {
@@ -505,8 +531,13 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         executionManager.getRunningDescriptors(s -> ExecutionManagerImplKt.isOfSameType(s, selectedConfiguration));
       runningDescriptors = ContainerUtil.filter(runningDescriptors, descriptor -> executionManager.getExecutors(descriptor).contains(myExecutor));
 
-      if (!configuration.isAllowRunningInParallel() && !runningDescriptors.isEmpty() && DefaultRunExecutor.EXECUTOR_ID.equals(myExecutor.getId())) {
-        return AllIcons.Actions.Restart;
+      if (!configuration.isAllowRunningInParallel() && !runningDescriptors.isEmpty()) {
+        if (ExperimentalUI.isNewUI() && myExecutor.getIcon() != myExecutor.getRerunIcon()) {
+          return myExecutor.getRerunIcon();
+        }
+        if (DefaultRunExecutor.EXECUTOR_ID.equals(myExecutor.getId())) {
+          return AllIcons.Actions.Restart;
+        }
       }
       if (runningDescriptors.isEmpty()) {
         return myExecutor.getIcon();

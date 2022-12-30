@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.Patches;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.application.Application;
@@ -657,7 +658,7 @@ public final class HttpRequests {
   }
 
   private static void configureSslConnection(@NotNull String url, @NotNull HttpsURLConnection connection) {
-    if (ApplicationManager.getApplication() == null) {
+    if (!LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       LOG.info("Application is not initialized yet; Using default SSL configuration to connect to " + url);
       return;
     }

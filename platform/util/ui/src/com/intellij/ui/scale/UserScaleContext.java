@@ -132,15 +132,17 @@ public class UserScaleContext {
 
     boolean updated = false;
     switch (scale.type) {
-      case USR_SCALE:
+      case USR_SCALE -> {
         updated = !usrScale.equals(scale);
         usrScale = scale;
-        break;
-      case OBJ_SCALE:
+      }
+      case OBJ_SCALE -> {
         updated = !objScale.equals(scale);
         objScale = scale;
-        break;
-      case SYS_SCALE: return false;
+      }
+      case SYS_SCALE -> {
+        return false;
+      }
     }
     return onUpdated(updated);
   }
@@ -149,32 +151,27 @@ public class UserScaleContext {
    * @return the context scale factor of the provided type (1d for system scale)
    */
   public double getScale(@NotNull ScaleType type) {
-    switch (type) {
-      case USR_SCALE: return usrScale.value;
-      case SYS_SCALE: return 1d;
-      case OBJ_SCALE: return objScale.value;
-    }
-    throw new IllegalStateException("wrong scale type: " + type);
+    return switch (type) {
+      case USR_SCALE -> usrScale.value;
+      case SYS_SCALE -> 1d;
+      case OBJ_SCALE -> objScale.value;
+    };
   }
 
   @NotNull
   protected Scale getScaleObject(@NotNull ScaleType type) {
-    switch (type) {
-      case USR_SCALE: return usrScale;
-      case SYS_SCALE: return SYS_SCALE.of(1d);
-      case OBJ_SCALE: return objScale;
-    }
-    throw new IllegalStateException("wrong scale type: " + type);
+    return switch (type) {
+      case USR_SCALE -> usrScale;
+      case SYS_SCALE -> SYS_SCALE.of(1d);
+      case OBJ_SCALE -> objScale;
+    };
   }
 
   public double getScale(@NotNull DerivedScaleType type) {
-    switch (type) {
-      case DEV_SCALE: return 1;
-      case PIX_SCALE:
-      case EFF_USR_SCALE:
-        return pixScale;
-    }
-    throw new IllegalStateException("wrong scale type: " + type);
+    return switch (type) {
+      case DEV_SCALE -> 1;
+      case PIX_SCALE, EFF_USR_SCALE -> pixScale;
+    };
   }
 
   /**

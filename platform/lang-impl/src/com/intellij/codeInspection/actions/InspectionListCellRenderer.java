@@ -15,6 +15,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,7 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer {
 
   public InspectionListCellRenderer() {
     mySelected = new SimpleTextAttributes(UIUtil.getListSelectionBackground(true),
-                                          UIUtil.getListSelectionForeground(true),
+                                          NamedColorUtil.getListSelectionForeground(true),
                                           JBColor.RED,
                                           SimpleTextAttributes.STYLE_PLAIN);
     myPlain = new SimpleTextAttributes(UIUtil.getListBackground(),
@@ -55,7 +56,8 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer {
     panel.setOpaque(true);
 
     final Color bg = sel ? UIUtil.getListSelectionBackground(true) : UIUtil.getListBackground();
-    final Color fg = sel ? UIUtil.getListSelectionForeground(true) : UIUtil.getListForeground();
+    final Color fg;
+    fg = sel ? NamedColorUtil.getListSelectionForeground(true) : UIUtil.getListForeground();
     panel.setBackground(bg);
     panel.setForeground(fg);
     if (value instanceof InspectionElement) {

@@ -1,37 +1,37 @@
-LineBreakpoint created at smartStepWithInlineClass.kt:11
-LineBreakpoint created at smartStepWithInlineClass.kt:31
-LineBreakpoint created at smartStepWithInlineClass.kt:59
-LineBreakpoint created at smartStepWithInlineClass.kt:66
-LineBreakpoint created at smartStepWithInlineClass.kt:73
-LineBreakpoint created at smartStepWithInlineClass.kt:80
-LineBreakpoint created at smartStepWithInlineClass.kt:87
-LineBreakpoint created at smartStepWithInlineClass.kt:94
+LineBreakpoint created at smartStepWithInlineClass.kt:12
+LineBreakpoint created at smartStepWithInlineClass.kt:32
+LineBreakpoint created at smartStepWithInlineClass.kt:60
+LineBreakpoint created at smartStepWithInlineClass.kt:67
+LineBreakpoint created at smartStepWithInlineClass.kt:74
+LineBreakpoint created at smartStepWithInlineClass.kt:81
+LineBreakpoint created at smartStepWithInlineClass.kt:88
+LineBreakpoint created at smartStepWithInlineClass.kt:95
 Run Java
 Connected to the target VM
-smartStepWithInlineClass.kt:59
 smartStepWithInlineClass.kt:60
-smartStepWithInlineClass.kt:60
-smartStepWithInlineClass.kt:11
+smartStepWithInlineClass.kt:61
+smartStepWithInlineClass.kt:61
 smartStepWithInlineClass.kt:12
-smartStepWithInlineClass.kt:12
-smartStepWithInlineClass.kt:66
+smartStepWithInlineClass.kt:13
+smartStepWithInlineClass.kt:13
 smartStepWithInlineClass.kt:67
-smartStepWithInlineClass.kt:67
-smartStepWithInlineClass.kt:31
+smartStepWithInlineClass.kt:68
+smartStepWithInlineClass.kt:68
 smartStepWithInlineClass.kt:32
-smartStepWithInlineClass.kt:32
-smartStepWithInlineClass.kt:73
+smartStepWithInlineClass.kt:33
+smartStepWithInlineClass.kt:33
 smartStepWithInlineClass.kt:74
-smartStepWithInlineClass.kt:16
-smartStepWithInlineClass.kt:80
+smartStepWithInlineClass.kt:75
+smartStepWithInlineClass.kt:17
 smartStepWithInlineClass.kt:81
-smartStepWithInlineClass.kt:43
-smartStepWithInlineClass.kt:87
+smartStepWithInlineClass.kt:82
+smartStepWithInlineClass.kt:44
 smartStepWithInlineClass.kt:88
-smartStepWithInlineClass.kt:88
-smartStepWithInlineClass.kt:94
+smartStepWithInlineClass.kt:89
+smartStepWithInlineClass.kt:89
 smartStepWithInlineClass.kt:95
-smartStepWithInlineClass.kt:51
+smartStepWithInlineClass.kt:96
+smartStepWithInlineClass.kt:52
 Disconnected from the target VM
 
 Process finished with exit code 0

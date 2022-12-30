@@ -128,47 +128,34 @@ public final class GitRebaseUtils {
     for (GitRepository repository : repositories) {
       Repository.State state = repository.getState();
       String repositoryName = getShortRepositoryName(repository);
-      String message = null;
-      switch (state) {
-        case NORMAL:
+      String message = switch (state) {
+        case NORMAL -> {
           if (repository.isFresh()) {
-            message = GitBundle.message("rebase.notification.not.allowed.empty.repository.message", repositoryName);
+            yield GitBundle.message("rebase.notification.not.allowed.empty.repository.message", repositoryName);
           }
-          break;
-        case MERGING:
-          message = new HtmlBuilder()
-            .append(GitBundle.message("rebase.notification.not.allowed.merging.message.first", repositoryName)).br()
-            .append(GitBundle.message("rebase.notification.not.allowed.merging.message.second"))
-            .toString();
-          break;
-        case REBASING:
-          message = new HtmlBuilder()
-            .append(GitBundle.message("rebase.notification.not.allowed.rebasing.message.first", repositoryName)).br()
-            .append(GitBundle.message("rebase.notification.not.allowed.rebasing.message.second"))
-            .toString();
-          break;
-        case GRAFTING:
-          message = new HtmlBuilder()
-            .append(GitBundle.message("rebase.notification.not.allowed.grafting.message.first", repositoryName)).br()
-            .append(GitBundle.message("rebase.notification.not.allowed.grafting.message.second"))
-            .toString();
-          break;
-        case REVERTING:
-          message = new HtmlBuilder()
-            .append(GitBundle.message("rebase.notification.not.allowed.reverting.message.first", repositoryName)).br()
-            .append(GitBundle.message("rebase.notification.not.allowed.reverting.message.second"))
-            .toString();
-          break;
-        case DETACHED:
-          message = new HtmlBuilder()
-            .append(GitBundle.message("rebase.notification.not.allowed.detached.message.first", repositoryName)).br()
-            .append(GitBundle.message("rebase.notification.not.allowed.detached.message.second"))
-            .toString();
-          break;
-        default:
-          LOG.error("Unknown state [" + state.name() + "]");
-          message = GitBundle.message("rebase.notification.not.allowed.message", repositoryName);
-      }
+          yield null;
+        }
+        case MERGING -> new HtmlBuilder()
+          .append(GitBundle.message("rebase.notification.not.allowed.merging.message.first", repositoryName)).br()
+          .append(GitBundle.message("rebase.notification.not.allowed.merging.message.second"))
+          .toString();
+        case REBASING -> new HtmlBuilder()
+          .append(GitBundle.message("rebase.notification.not.allowed.rebasing.message.first", repositoryName)).br()
+          .append(GitBundle.message("rebase.notification.not.allowed.rebasing.message.second"))
+          .toString();
+        case GRAFTING -> new HtmlBuilder()
+          .append(GitBundle.message("rebase.notification.not.allowed.grafting.message.first", repositoryName)).br()
+          .append(GitBundle.message("rebase.notification.not.allowed.grafting.message.second"))
+          .toString();
+        case REVERTING -> new HtmlBuilder()
+          .append(GitBundle.message("rebase.notification.not.allowed.reverting.message.first", repositoryName)).br()
+          .append(GitBundle.message("rebase.notification.not.allowed.reverting.message.second"))
+          .toString();
+        case DETACHED -> new HtmlBuilder()
+          .append(GitBundle.message("rebase.notification.not.allowed.detached.message.first", repositoryName)).br()
+          .append(GitBundle.message("rebase.notification.not.allowed.detached.message.second"))
+          .toString();
+      };
       if (message != null) {
         VcsNotifier.getInstance(project).notifyError(
           REBASE_NOT_ALLOWED,
@@ -184,7 +171,7 @@ public final class GitRebaseUtils {
   /**
    * @deprecated Use {@link GitRepository#isRebaseInProgress()}.
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static boolean isRebaseInTheProgress(@NotNull Project project, @NotNull VirtualFile root) {
     return getRebaseDir(project, root) != null;
   }

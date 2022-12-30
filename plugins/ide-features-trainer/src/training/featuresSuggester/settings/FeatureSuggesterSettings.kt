@@ -26,10 +26,10 @@ class FeatureSuggesterSettings : PersistentStateComponent<FeatureSuggesterSettin
   }
 
   // SuggesterId to the last time this suggestion was shown
-  var suggestionLastShownTime: MutableMap<String, Long> = mutableMapOf()
+  private var suggestionLastShownTime: MutableMap<String, Long> = mutableMapOf()
 
   // List of timestamps (millis) of the first IDE session start for the last days
-  var workingDays: MutableList<Long> = mutableListOf()
+  private var workingDays: MutableList<Long> = mutableListOf()
 
   val isAnySuggesterEnabled: Boolean
     get() = suggesters.any { it.value }

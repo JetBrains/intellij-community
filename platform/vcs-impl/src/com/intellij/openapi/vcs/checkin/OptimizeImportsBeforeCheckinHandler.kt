@@ -5,6 +5,7 @@ package com.intellij.openapi.vcs.checkin
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle
@@ -15,20 +16,20 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 
 class OptimizeOptionsCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
-    OptimizeImportsBeforeCheckinHandler(panel)
+    OptimizeImportsBeforeCheckinHandler(panel.project)
 }
 
-class OptimizeImportsBeforeCheckinHandler(commitPanel: CheckinProjectPanel) : CodeProcessorCheckinHandler(commitPanel) {
+class OptimizeImportsBeforeCheckinHandler(project: Project) : CodeProcessorCheckinHandler(project) {
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    BooleanCommitOption(commitPanel, VcsBundle.message("checkbox.checkin.options.optimize.imports"), true,
+    BooleanCommitOption(project, VcsBundle.message("checkbox.checkin.options.optimize.imports"), true,
                         settings::OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT)
 
   override fun isEnabled(): Boolean = settings.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT
 
   override fun getProgressMessage(): String = VcsBundle.message("progress.text.optimizing.imports")
 
-  override fun createCodeProcessor(): AbstractLayoutCodeProcessor =
-    OptimizeImportsProcessor(project, getPsiFiles(project, commitPanel.virtualFiles), COMMAND_NAME, null)
+  override fun createCodeProcessor(commitInfo: CommitInfo): AbstractLayoutCodeProcessor =
+    OptimizeImportsProcessor(project, getPsiFiles(project, commitInfo.committedVirtualFiles), COMMAND_NAME, null)
 
   companion object {
     @JvmField

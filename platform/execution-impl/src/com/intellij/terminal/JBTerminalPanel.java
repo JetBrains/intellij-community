@@ -21,6 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.terminal.actions.TerminalActionWrapper;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,7 +34,9 @@ import com.jediterm.terminal.TerminalCopyPasteHandler;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
+import com.jediterm.terminal.model.hyperlinks.LinkInfo;
 import com.jediterm.terminal.ui.TerminalAction;
+import com.jediterm.terminal.ui.TerminalActionProvider;
 import com.jediterm.terminal.ui.TerminalPanel;
 import com.pty4j.windows.conpty.WinConPtyProcess;
 import org.intellij.lang.annotations.JdkConstants;
@@ -213,6 +217,71 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
   @Override
   protected TerminalCopyPasteHandler createCopyPasteHandler() {
     return new IdeTerminalCopyPasteHandler();
+  }
+
+  @Override
+  protected @NotNull JPopupMenu createPopupMenu(@Nullable LinkInfo linkInfo, @NotNull MouseEvent e) {
+    if (ExperimentalUI.isNewUI()) {
+      return ActionManager.getInstance().createActionPopupMenu(
+        ActionPlaces.TOOLWINDOW_POPUP,
+        wrapTerminalActions(getTerminalActionProvider(linkInfo, e))
+      ).getComponent();
+    } else {
+      return super.createPopupMenu(linkInfo, e);
+    }
+  }
+
+  private TerminalActionProvider getTerminalActionProvider(@Nullable LinkInfo linkInfo, @NotNull MouseEvent e) {
+    // copied from super.createPopupMenu() and adjusted to our needs:
+    TerminalActionProvider provider;
+    LinkInfo.PopupMenuGroupProvider popupMenuGroupProvider = linkInfo != null ? linkInfo.getPopupMenuGroupProvider() : null;
+    if (popupMenuGroupProvider != null) {
+      provider = new TerminalActionProvider() {
+        @Override
+        public List<TerminalAction> getActions() {
+          return popupMenuGroupProvider.getPopupMenuGroup(e);
+        }
+
+        @Override
+        public TerminalActionProvider getNextProvider() {
+          return JBTerminalPanel.this;
+        }
+
+        @Override
+        public void setNextProvider(TerminalActionProvider provider) {
+        }
+      };
+    }
+    else {
+      provider = this;
+    }
+    return provider;
+  }
+
+  @NotNull
+  public ActionGroup wrapTerminalActions(@NotNull TerminalActionProvider provider) {
+    var result = new DefaultActionGroup();
+    var providers = new ArrayList<TerminalActionProvider>();
+    for (var p = provider; p != null; p = p.getNextProvider()) {
+      providers.add(0, p);
+    }
+    var canAddSeparator = false;
+    for (TerminalActionProvider p : providers) {
+      var shouldAddSeparator = true;
+      for (TerminalAction a : p.getActions()) {
+        if (a.isHidden()) {
+          continue;
+        }
+        shouldAddSeparator = shouldAddSeparator || a.isSeparated();
+        if (shouldAddSeparator && canAddSeparator) {
+          result.addSeparator();
+        }
+        result.add(new TerminalActionWrapper(a, this));
+        canAddSeparator = true;
+        shouldAddSeparator = false;
+      }
+    }
+    return result;
   }
 
   @Override

@@ -12,8 +12,8 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.list.TargetPopup;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.OptionsDialog;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,7 +27,7 @@ public final class ReadOnlyStatusDialog extends OptionsDialog {
   private static final SimpleTextAttributes BOLD_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.foreground());
   private static final SimpleTextAttributes SELECTED_BOLD_ATTRIBUTES =
-    new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.lazy(() -> UIUtil.getListSelectionForeground(true)));
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.lazy(() -> NamedColorUtil.getListSelectionForeground(true)));
 
   private JPanel myTopPanel;
   private JList<PresentableFileInfo> myFileList;

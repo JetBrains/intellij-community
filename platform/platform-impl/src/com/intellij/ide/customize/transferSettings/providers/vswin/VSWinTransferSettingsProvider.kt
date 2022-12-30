@@ -27,10 +27,10 @@ private val logger = logger<VSWinTransferSettingsProvider>()
 class VSWinTransferSettingsProvider : TransferSettingsProvider {
   override val name = "Visual Studio"
 
-  val defaultAdviceBase = "uit Visual Studio and any programs that use Visual Studio tooling. Wait about 30 seconds after that."
-  val defaultAdvice = "Q$defaultAdviceBase"
+  private val defaultAdviceBase = "uit Visual Studio and any programs that use Visual Studio tooling. Wait about 30 seconds after that."
+  private val defaultAdvice = "Q$defaultAdviceBase"
   val failureReason = "This happens if Visual Studio is open or its files are accessed by another program. $defaultAdvice"
-  val noSettings = "This happens if Visual Studio was not properly uninstalled, if its settings are corrupt, or if it has never been launched."
+  private val noSettings = "This happens if Visual Studio was not properly uninstalled, if its settings are corrupt, or if it has never been launched."
   // file is not accessible
   val fnaReason = "Required configuration file is missing."
 

@@ -14,6 +14,8 @@ public final class NativeLibraryLoader {
     String baseName = libName;
     if (CpuArch.isIntel64()) {
       baseName = baseName.replace("32", "") + "64";
+    } else if (CpuArch.isArm64()) {
+      baseName = baseName.replace("32", "") + "64a";
     }
 
     String libFileName = System.mapLibraryName(baseName).replace(".jnilib", ".dylib");

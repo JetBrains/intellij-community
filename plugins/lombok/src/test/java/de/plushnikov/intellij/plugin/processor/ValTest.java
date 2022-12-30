@@ -27,14 +27,15 @@ public class ValTest extends AbstractLombokLightCodeInsightTestCase {
   }
 
   public void testIntParameter() {
-    myFixture.configureByText("a.java", "import lombok.val;\n" +
-      "abstract class Test {\n" +
-      "    private void test() {\n" +
-      "       int[] myArray = new int[] {1, 2, 3, 4, 5};\n" +
-      "       for(val my<caret>Var: myArray) {" +
-      "       }\n" +
-      "    } \n" +
-      "}\n");
+    myFixture.configureByText("a.java", """
+      import lombok.val;
+      abstract class Test {
+          private void test() {
+             int[] myArray = new int[] {1, 2, 3, 4, 5};
+             for(val my<caret>Var: myArray) {       }
+          }\s
+      }
+      """);
 
     final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
     assertTrue(elementAtCaret instanceof PsiIdentifier);
@@ -67,42 +68,48 @@ public class ValTest extends AbstractLombokLightCodeInsightTestCase {
 
   public void testGenericMethod168() {
     configureClass("forClass(Integer.class)",
-      "public static <T> java.util.List<T> forClass(Class<T> clazz) {\n" +
-        "            return new java.util.ArrayList<T>();\n" +
-        "        }\n");
+                   """
+                     public static <T> java.util.List<T> forClass(Class<T> clazz) {
+                                 return new java.util.ArrayList<T>();
+                             }
+                     """);
     verifyLocalVariableType("java.util.List<java.lang.Integer>");
   }
 
   public void testConditionalExpressionThen260() {
     configureClass("TYPE_ID_MAPPINGS.containsKey(\"key\") ? newHashSet(TYPE_ID_MAPPINGS.get(\"key\")) : MULTIPLE_SEARCH_TYPES",
-      "private static java.util.Map<java.lang.String, java.lang.String> TYPE_ID_MAPPINGS = new java.util.HashMap<>();\n" +
-        " private static java.util.Set<java.lang.String> MULTIPLE_SEARCH_TYPES = new java.util.HashSet<>();\n" +
-        " public static <E> java.util.Collection<E> newHashSet(E foo) {\n" +
-        "    return new java.util.HashSet<>();\n" +
-        "  }");
+                   """
+                     private static java.util.Map<java.lang.String, java.lang.String> TYPE_ID_MAPPINGS = new java.util.HashMap<>();
+                      private static java.util.Set<java.lang.String> MULTIPLE_SEARCH_TYPES = new java.util.HashSet<>();
+                      public static <E> java.util.Collection<E> newHashSet(E foo) {
+                         return new java.util.HashSet<>();
+                       }""");
     verifyLocalVariableType("java.util.Collection<java.lang.String>");
   }
 
   public void testConditionalExpressionElse260() {
     configureClass("TYPE_ID_MAPPINGS.containsKey(\"key\") ? newHashSet(TYPE_ID_MAPPINGS.get(\"key\")) : MULTIPLE_SEARCH_TYPES",
-      "private static java.util.Map<java.lang.String, java.lang.String> TYPE_ID_MAPPINGS = new java.util.HashMap<>();\n" +
-        " private static java.util.Set<java.lang.String> MULTIPLE_SEARCH_TYPES = new java.util.HashSet<>();\n" +
-        " public static <E> java.util.SortedSet<E> newHashSet(E foo) {\n" +
-        "    return new java.util.TreeSet<>();\n" +
-        "  }");
+                   """
+                     private static java.util.Map<java.lang.String, java.lang.String> TYPE_ID_MAPPINGS = new java.util.HashMap<>();
+                      private static java.util.Set<java.lang.String> MULTIPLE_SEARCH_TYPES = new java.util.HashSet<>();
+                      public static <E> java.util.SortedSet<E> newHashSet(E foo) {
+                         return new java.util.TreeSet<>();
+                       }""");
     verifyLocalVariableType("java.util.Set<java.lang.String>");
   }
 
   public void testIssue802GenericTypeParamShouldNotBecomeObjectAfterMappingOuterCollection() {
     PsiFile file = myFixture.configureByText("a.java",
-      "import lombok.val;\n" +
-        "import java.util.Optional;\n" +
-        "class Test {\n" +
-        "    public void test() {\n" +
-        "        val strOpt = Optional.of(\"1\");\n" +
-        "        val intOptInferred<caret>Lambda = strOpt.map(str -> Integer.valueOf(str));\n" +
-        "    }\n" +
-        "}\n");
+                                             """
+                                               import lombok.val;
+                                               import java.util.Optional;
+                                               class Test {
+                                                   public void test() {
+                                                       val strOpt = Optional.of("1");
+                                                       val intOptInferred<caret>Lambda = strOpt.map(str -> Integer.valueOf(str));
+                                                   }
+                                               }
+                                               """);
 
     PsiLocalVariable var = PsiTreeUtil.getParentOfType(file.findElementAt(myFixture.getCaretOffset()), PsiLocalVariable.class);
     assertNotNull(var);

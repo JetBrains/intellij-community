@@ -44,7 +44,7 @@ open class SimpleChildAbstractEntityImpl(val dataSource: SimpleChildAbstractEnti
     return connections
   }
 
-  class Builder(val result: SimpleChildAbstractEntityData?) : ModifiableWorkspaceEntityBase<SimpleChildAbstractEntity>(), SimpleChildAbstractEntity.Builder {
+  class Builder(var result: SimpleChildAbstractEntityData?) : ModifiableWorkspaceEntityBase<SimpleChildAbstractEntity>(), SimpleChildAbstractEntity.Builder {
     constructor() : this(SimpleChildAbstractEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -62,6 +62,9 @@ open class SimpleChildAbstractEntityImpl(val dataSource: SimpleChildAbstractEnti
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -92,9 +95,12 @@ open class SimpleChildAbstractEntityImpl(val dataSource: SimpleChildAbstractEnti
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SimpleChildAbstractEntity
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (parents != null) {
-        this.parentInList = parents.filterIsInstance<CompositeAbstractEntity>().single()
+        val parentInListNew = parents.filterIsInstance<CompositeAbstractEntity>().single()
+        if ((this.parentInList as WorkspaceEntityBase).id != (parentInListNew as WorkspaceEntityBase).id) {
+          this.parentInList = parentInListNew
+        }
       }
     }
 
@@ -201,7 +207,7 @@ class SimpleChildAbstractEntityData : WorkspaceEntityData<SimpleChildAbstractEnt
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SimpleChildAbstractEntityData
 
@@ -211,7 +217,7 @@ class SimpleChildAbstractEntityData : WorkspaceEntityData<SimpleChildAbstractEnt
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SimpleChildAbstractEntityData
 

@@ -249,16 +249,19 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
       //noinspection EnumSwitchStatementWhichMissesCases
       switch (info.getState()) {
-        case DOWNLOADING_NOT_STARTED:
+        case DOWNLOADING_NOT_STARTED -> {
           addDownloadingUpdateListener(info);
           return new MyWidgetState(tooltip + getSchemaFileDesc(schemaFile), bar + getPresentableNameForFile(schemaFile),
                                    true);
-        case DOWNLOADING_IN_PROGRESS:
+        }
+        case DOWNLOADING_IN_PROGRESS -> {
           addDownloadingUpdateListener(info);
           return new MyWidgetState(JsonBundle.message("schema.widget.download.in.progress.tooltip"),
                                    JsonBundle.message("schema.widget.download.in.progress.label"), false);
-        case ERROR_OCCURRED:
+        }
+        case ERROR_OCCURRED -> {
           return getDownloadErrorState(info.getErrorMessage());
+        }
       }
     }
 

@@ -49,7 +49,7 @@ open class KeyParentImpl(val dataSource: KeyParentData) : KeyParent, WorkspaceEn
     return connections
   }
 
-  class Builder(val result: KeyParentData?) : ModifiableWorkspaceEntityBase<KeyParent>(), KeyParent.Builder {
+  class Builder(var result: KeyParentData?) : ModifiableWorkspaceEntityBase<KeyParent>(), KeyParent.Builder {
     constructor() : this(KeyParentData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -67,6 +67,9 @@ open class KeyParentImpl(val dataSource: KeyParentData) : KeyParent, WorkspaceEn
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -104,9 +107,9 @@ open class KeyParentImpl(val dataSource: KeyParentData) : KeyParent, WorkspaceEn
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as KeyParent
-      this.entitySource = dataSource.entitySource
-      this.keyField = dataSource.keyField
-      this.notKeyField = dataSource.notKeyField
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.keyField != dataSource.keyField) this.keyField = dataSource.keyField
+      if (this.notKeyField != dataSource.notKeyField) this.notKeyField = dataSource.notKeyField
       if (parents != null) {
       }
     }
@@ -159,6 +162,12 @@ open class KeyParentImpl(val dataSource: KeyParentData) : KeyParent, WorkspaceEn
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+              // Backref setup before adding to store
+              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
+
               _diff.addEntity(item_value)
             }
           }
@@ -233,7 +242,7 @@ class KeyParentData : WorkspaceEntityData<KeyParent>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as KeyParentData
 
@@ -245,7 +254,7 @@ class KeyParentData : WorkspaceEntityData<KeyParent>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as KeyParentData
 
@@ -270,7 +279,7 @@ class KeyParentData : WorkspaceEntityData<KeyParent>() {
 
   override fun equalsByKey(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as KeyParentData
 

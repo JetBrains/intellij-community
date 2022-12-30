@@ -41,15 +41,11 @@ public interface VcsShowConfirmationOption {
   @NotNull
   @Nls
   static String getConfirmationOptionText(@NotNull VcsShowConfirmationOption.Value value) {
-    switch (value) {
-      case SHOW_CONFIRMATION:
-        return VcsBundle.message("settings.confirmation.option.text.ask");
-      case DO_NOTHING_SILENTLY:
-        return VcsBundle.message("settings.confirmation.option.text.no");
-      case DO_ACTION_SILENTLY:
-        return VcsBundle.message("settings.confirmation.option.text.yes");
-    }
-    throw new IllegalArgumentException("Unknown confirmation option " + value);
+    return VcsBundle.message(switch (value) {
+      case SHOW_CONFIRMATION -> "settings.confirmation.option.text.ask";
+      case DO_NOTHING_SILENTLY -> "settings.confirmation.option.text.no";
+      case DO_ACTION_SILENTLY -> "settings.confirmation.option.text.yes";
+    });
   }
 
   Value getValue();

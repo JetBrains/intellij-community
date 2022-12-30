@@ -19,7 +19,7 @@ abstract class TestDataReferenceTestCase : TestDataPathTestCase() {
     TestCase.assertEquals(fileSystemItem, myFixture.file.getReferenceForText(referenceTest).resolve())
   }
 
-  fun PsiFile.getReferenceForText(text: String): PsiReference {
+  private fun PsiFile.getReferenceForText(text: String): PsiReference {
     val textPosition = this.text.indexOf(text).also {
       if (it == -1) throw AssertionError("text \"$text\" not found in \"$name\" ")
     }

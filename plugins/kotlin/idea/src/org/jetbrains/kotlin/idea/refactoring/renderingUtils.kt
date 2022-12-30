@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
-import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 
 private val FUNCTION_RENDERER = DescriptorRenderer.withOptions {
     withDefinedIn = false
@@ -49,23 +48,6 @@ fun formatPsiClass(
     return if (markAsJava) "[Java] $description" else description
 }
 
-fun formatClass(classDescriptor: DeclarationDescriptor, inCode: Boolean): String {
-    val element = DescriptorToSourceUtils.descriptorToDeclaration(classDescriptor)
-    return if (element is PsiClass) {
-        formatPsiClass(element, false, inCode)
-    } else {
-        wrapOrSkip(formatClassDescriptor(classDescriptor), inCode)
-    }
-}
-
-fun formatFunction(functionDescriptor: DeclarationDescriptor, inCode: Boolean): String {
-    val element = DescriptorToSourceUtils.descriptorToDeclaration(functionDescriptor)
-    return if (element is PsiMethod) {
-        formatPsiMethod(element, false, inCode)
-    } else {
-        wrapOrSkip(formatFunctionDescriptor(functionDescriptor), inCode)
-    }
-}
 
 private fun formatFunctionDescriptor(functionDescriptor: DeclarationDescriptor): String = FUNCTION_RENDERER.render(functionDescriptor)
 

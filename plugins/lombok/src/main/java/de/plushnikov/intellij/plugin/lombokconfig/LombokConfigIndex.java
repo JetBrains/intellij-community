@@ -59,7 +59,7 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, Config
         return result;
       }
 
-      private Map<String, String> extractValues(LombokConfigFile configFile) {
+      private static Map<String, String> extractValues(LombokConfigFile configFile) {
         Map<String, String> result = new HashMap<>();
 
         final LombokConfigCleaner[] configCleaners = LombokConfigUtil.getLombokConfigCleaners(configFile);

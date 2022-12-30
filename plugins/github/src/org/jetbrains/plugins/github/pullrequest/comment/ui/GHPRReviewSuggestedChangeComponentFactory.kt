@@ -28,6 +28,7 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeApplier
@@ -170,7 +171,7 @@ class GHPRReviewSuggestedChangeComponentFactory(
         private val errorLabel = JBLabel().apply {
           text = VcsBundle.message("error.no.commit.message")
           icon = AllIcons.General.Error
-          foreground = UIUtil.getErrorForeground()
+          foreground = NamedColorUtil.getErrorForeground()
           isVisible = false
         }
 

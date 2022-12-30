@@ -15,10 +15,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceElement, PsiJavaCodeReferenceElement> {
   public ImportClassFix(@NotNull PsiJavaCodeReferenceElement element) {
@@ -154,5 +151,38 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   @Override
   protected boolean isAccessible(@NotNull PsiMember member, @NotNull PsiJavaCodeReferenceElement referenceElement) {
     return PsiUtil.isAccessible(member, referenceElement, null);
+  }
+
+  @Override
+  protected boolean isClassMaybeImportedAlready(@NotNull PsiFile containingFile, @NotNull PsiClass classToImport) {
+    PsiImportList importList = ((PsiJavaFile)containingFile).getImportList();
+    if (importList == null) return false;
+    boolean result = false;
+    String classQualifiedName = classToImport.getQualifiedName();
+    String packageName = classQualifiedName == null ? "" : StringUtil.getPackageName(classQualifiedName);
+    for (PsiImportStatementBase statement : importList.getAllImportStatements()) {
+      PsiJavaCodeReferenceElement importRef = statement.getImportReference();
+      if (importRef == null) continue;
+      String canonicalText = importRef.getCanonicalText(); // rely on the optimization: no resolve while getting import statement canonical text
+
+      if (statement.isOnDemand()) {
+        if (canonicalText.equals(packageName)) {
+          result = true;
+          break;
+        }
+      }
+      else {
+        if (canonicalText.equals(classQualifiedName)) {
+          result = true;
+          break;
+        }
+      }
+    }
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    return "ImportClassFix: "+getReference()+" -> "+getClassesToImport();
   }
 }

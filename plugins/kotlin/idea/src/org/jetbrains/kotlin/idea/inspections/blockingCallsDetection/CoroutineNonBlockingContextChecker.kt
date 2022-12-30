@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.util.parentsOfType
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
@@ -123,7 +123,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
 
     private fun checkFunctionWithDefaultDispatcher(callExpression: KtCallExpression): ContextType {
         val classDescriptor =
-            callExpression.receiverValue().castSafelyTo<ImplicitClassReceiver>()?.classDescriptor ?: return Unsure
+            callExpression.receiverValue().asSafely<ImplicitClassReceiver>()?.classDescriptor ?: return Unsure
         if (classDescriptor.typeConstructor.supertypes.none { it.fqName?.asString() == COROUTINE_SCOPE }) return Unsure
         val propertyDescriptor = classDescriptor
             .unsubstitutedMemberScope
@@ -132,7 +132,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
             .singleOrNull { it.isOverridableOrOverrides && it.type.isCoroutineContext() }
             ?: return Unsure
 
-        val initializer = propertyDescriptor.findPsi().castSafelyTo<KtProperty>()?.initializer ?: return Unsure
+        val initializer = propertyDescriptor.findPsi().asSafely<KtProperty>()?.initializer ?: return Unsure
         return initializer.hasBlockFriendlyDispatcher()
     }
 
@@ -153,7 +153,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
             override fun visitElement(element: PsiElement) {
                 if (element is KtExpression) {
                     val callableDescriptor = element.getCallableDescriptor()
-                    val allowsBlocking = callableDescriptor.castSafelyTo<DeclarationDescriptor>()
+                    val allowsBlocking = callableDescriptor.asSafely<DeclarationDescriptor>()
                         ?.isBlockFriendlyDispatcher()
                     if (allowsBlocking != null && allowsBlocking != Unsure) {
                         this.allowsBlocking = allowsBlocking
@@ -170,7 +170,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
     private fun DeclarationDescriptor?.isBlockFriendlyDispatcher(): ContextType {
         if (this == null) return Unsure
 
-        val returnTypeDescriptor = this.castSafelyTo<CallableDescriptor>()?.returnType
+        val returnTypeDescriptor = this.asSafely<CallableDescriptor>()?.returnType
         val typeConstructor = returnTypeDescriptor?.constructor?.declarationDescriptor
 
         if (isTypeOrUsageAnnotatedWith(returnTypeDescriptor, typeConstructor, BLOCKING_EXECUTOR_ANNOTATION)) return Blocking

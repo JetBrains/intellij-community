@@ -36,7 +36,7 @@ open class MainEntityImpl(val dataSource: MainEntityData) : MainEntity, Workspac
     return connections
   }
 
-  class Builder(val result: MainEntityData?) : ModifiableWorkspaceEntityBase<MainEntity>(), MainEntity.Builder {
+  class Builder(var result: MainEntityData?) : ModifiableWorkspaceEntityBase<MainEntity>(), MainEntity.Builder {
     constructor() : this(MainEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -54,6 +54,9 @@ open class MainEntityImpl(val dataSource: MainEntityData) : MainEntity, Workspac
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -77,8 +80,8 @@ open class MainEntityImpl(val dataSource: MainEntityData) : MainEntity, Workspac
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as MainEntity
-      this.entitySource = dataSource.entitySource
-      this.x = dataSource.x
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.x != dataSource.x) this.x = dataSource.x
       if (parents != null) {
       }
     }
@@ -155,7 +158,7 @@ class MainEntityData : WorkspaceEntityData<MainEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as MainEntityData
 
@@ -166,7 +169,7 @@ class MainEntityData : WorkspaceEntityData<MainEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as MainEntityData
 

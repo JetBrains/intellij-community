@@ -44,7 +44,10 @@ public final class CanonicalTypes {
     protected final TypeAnnotationProvider myProvider;
 
     AnnotatedType(@NotNull TypeAnnotationProvider provider) {
-      PsiAnnotation[] annotations = ContainerUtil.map(provider.getAnnotations(), annotation -> (PsiAnnotation)annotation.copy(), PsiAnnotation.EMPTY_ARRAY);
+      PsiAnnotation[] annotations = ContainerUtil.map(
+        provider.getAnnotations(),
+        annotation -> (PsiAnnotation)Objects.requireNonNull(annotation.copy(), () -> annotation.getClass().getName()),
+        PsiAnnotation.EMPTY_ARRAY);
       myProvider = TypeAnnotationProvider.Static.create(annotations);
     }
   }

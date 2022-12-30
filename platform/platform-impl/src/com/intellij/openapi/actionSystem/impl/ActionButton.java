@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
@@ -133,11 +134,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return getPopState(isSelected());
   }
 
-  protected final boolean isRollover() {
+  public final boolean isRollover() {
     return myRollover;
   }
 
-  protected final boolean isMouseDown() {
+  public final boolean isMouseDown() {
     return myMouseDown;
   }
 
@@ -434,7 +435,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   protected void paintButtonLook(Graphics g) {
     ActionButtonLook look = getButtonLook();
-    if (isEnabled() || !StartupUiUtil.isUnderDarcula()) {
+    if (isEnabled() || !StartupUiUtil.isUnderDarcula() || ExperimentalUI.isNewUI()) {
       look.paintBackground(g, this);
     }
     look.paintIcon(g, this, getIcon());

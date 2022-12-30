@@ -53,16 +53,11 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
 
   @Override
   public Icon getIcon(boolean open) {
-    switch (myOverrides) {
-      case IMPLEMENTS:
-        return AllIcons.General.ImplementingMethod;
-      case INHERITS:
-        return AllIcons.General.InheritedMethod;
-      case OVERRIDES:
-        return AllIcons.General.OverridingMethod;
-    }
-
-    return null; // Can't be
+    return switch (myOverrides) {
+      case IMPLEMENTS -> AllIcons.General.ImplementingMethod;
+      case INHERITS -> AllIcons.General.InheritedMethod;
+      case OVERRIDES -> AllIcons.General.OverridingMethod;
+    };
   }
 
   @Override

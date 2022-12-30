@@ -12,12 +12,12 @@ public class GradleJpsJavaCompilationTest extends GradleJpsCompilingTestCase {
     ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true);
     createProjectSubFile("src/intTest/java/DepTest.java", "class DepTest extends CommonTest {}");
     createProjectSubFile("src/test/java/CommonTest.java", "public class CommonTest {}");
-    importProject("apply plugin: 'java'\n" +
-                  "sourceSets {\n" +
-                  "  intTest {\n" +
-                  "     compileClasspath += main.output + test.output" +
-                  "  }\n" +
-                  "}");
+    importProject("""
+                    apply plugin: 'java'
+                    sourceSets {
+                      intTest {
+                         compileClasspath += main.output + test.output  }
+                    }""");
     compileModules("project.main", "project.test", "project.intTest");
   }
 
@@ -26,15 +26,17 @@ public class GradleJpsJavaCompilationTest extends GradleJpsCompilingTestCase {
     ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true);
     createProjectSubFile(
       "src/main/java/Main.java",
-      "public class Main {\n" +
-      "    public static void main(String[] args) {\n" +
-      "        run(() -> System.out.println(\"Hello Home!\"));\n" +
-      "    }\n" +
-      "\n" +
-      "    public static void run(Runnable runnable) {\n" +
-      "        runnable.run();\n" +
-      "    }\n" +
-      "}\n");
+      """
+        public class Main {
+            public static void main(String[] args) {
+                run(() -> System.out.println("Hello Home!"));
+            }
+
+            public static void run(Runnable runnable) {
+                runnable.run();
+            }
+        }
+        """);
     importProject(
       createBuildScriptBuilder()
         .withJavaPlugin()

@@ -28,7 +28,7 @@ import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.createSdkByGenerateTask
 import com.jetbrains.python.sdk.excludeInnerVirtualEnv
-import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout

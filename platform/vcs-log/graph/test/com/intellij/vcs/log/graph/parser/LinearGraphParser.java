@@ -49,21 +49,14 @@ public class LinearGraphParser {
 
         GraphEdge edge;
         switch (type) {
-          case USUAL:
-          case DOTTED:
+          case USUAL, DOTTED -> {
             assert nodeIdToNodeIndex.containsKey(pairEdge.nodeId);
             int downNodeIndex = nodeIdToNodeIndex.get(pairEdge.nodeId);
             edge = GraphEdge.createNormalEdge(graphNode.getNodeIndex(), downNodeIndex, type);
-            break;
-
-          case NOT_LOAD_COMMIT:
-          case DOTTED_ARROW_DOWN:
-          case DOTTED_ARROW_UP:
+          }
+          case NOT_LOAD_COMMIT, DOTTED_ARROW_DOWN, DOTTED_ARROW_UP ->
             edge = GraphEdge.createEdgeWithTargetId(graphNode.getNodeIndex(), pairEdge.nodeId, type);
-            break;
-
-          default:
-            throw new IllegalStateException("Unknown type: " + type);
+          default -> throw new IllegalStateException("Unknown type: " + type);
         }
         if (edge.getUpNodeIndex() != null) downEdges.putValue(edge.getUpNodeIndex(), edge);
         if (edge.getDownNodeIndex() != null) upEdges.putValue(edge.getDownNodeIndex(), edge);

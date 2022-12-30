@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -67,7 +67,7 @@ public final class VfsTestUtil {
           parent = child;
         }
 
-        parent.getChildren();  // need this to ensure that fileCreated event is fired
+        parent.getChildren();  // to ensure that fileCreated event is fired
 
         String name = PathUtil.getFileName(relativePath);
         VirtualFile file;
@@ -87,7 +87,7 @@ public final class VfsTestUtil {
           if (data != null) {
             file.setBinaryContent(data);
           }
-          manager.reloadFiles(file);  // update the document now, otherwise MemoryDiskConflictResolver will do it later at unexpected moment of time
+          manager.reloadFiles(file);  // update the document now, to prevent MemoryDiskConflictResolver from kicking in later
         }
         return file;
       });
@@ -107,7 +107,7 @@ public final class VfsTestUtil {
     }
   }
 
-  public static void clearContent(@NotNull final VirtualFile file) {
+  public static void clearContent(final @NotNull VirtualFile file) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         VfsUtil.saveText(file, "");
@@ -161,8 +161,7 @@ public final class VfsTestUtil {
     return actual;
   }
 
-  @NotNull
-  public static VirtualFile findFileByCaseSensitivePath(@NotNull String absolutePath) {
+  public static @NotNull VirtualFile findFileByCaseSensitivePath(@NotNull String absolutePath) {
     String vfsPath = FileUtil.toSystemIndependentName(absolutePath);
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(vfsPath);
     Assert.assertNotNull("file " + absolutePath + " not found", vFile);
@@ -188,8 +187,7 @@ public final class VfsTestUtil {
     }
   }
 
-  @NotNull
-  public static List<VFileEvent> getEvents(@NotNull Runnable action) {
+  public static @NotNull List<VFileEvent> getEvents(@NotNull Runnable action) {
     List<VFileEvent> allEvents = Collections.synchronizedList(new ArrayList<>());
 
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
@@ -209,8 +207,7 @@ public final class VfsTestUtil {
     return allEvents;
   }
 
-  @NotNull
-  public static List<String> print(@NotNull List<? extends VFileEvent> events) {
+  public static @NotNull List<String> print(@NotNull List<? extends VFileEvent> events) {
     return ContainerUtil.map(events, VfsTestUtil::print);
   }
 

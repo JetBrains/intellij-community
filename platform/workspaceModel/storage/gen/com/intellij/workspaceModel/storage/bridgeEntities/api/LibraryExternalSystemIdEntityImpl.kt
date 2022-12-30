@@ -48,7 +48,7 @@ open class LibraryExternalSystemIdEntityImpl(val dataSource: LibraryExternalSyst
     return connections
   }
 
-  class Builder(val result: LibraryExternalSystemIdEntityData?) : ModifiableWorkspaceEntityBase<LibraryExternalSystemIdEntity>(), LibraryExternalSystemIdEntity.Builder {
+  class Builder(var result: LibraryExternalSystemIdEntityData?) : ModifiableWorkspaceEntityBase<LibraryExternalSystemIdEntity>(), LibraryExternalSystemIdEntity.Builder {
     constructor() : this(LibraryExternalSystemIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -66,6 +66,9 @@ open class LibraryExternalSystemIdEntityImpl(val dataSource: LibraryExternalSyst
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -99,10 +102,13 @@ open class LibraryExternalSystemIdEntityImpl(val dataSource: LibraryExternalSyst
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as LibraryExternalSystemIdEntity
-      this.entitySource = dataSource.entitySource
-      this.externalSystemId = dataSource.externalSystemId
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.externalSystemId != dataSource.externalSystemId) this.externalSystemId = dataSource.externalSystemId
       if (parents != null) {
-        this.library = parents.filterIsInstance<LibraryEntity>().single()
+        val libraryNew = parents.filterIsInstance<LibraryEntity>().single()
+        if ((this.library as WorkspaceEntityBase).id != (libraryNew as WorkspaceEntityBase).id) {
+          this.library = libraryNew
+        }
       }
     }
 
@@ -215,7 +221,7 @@ class LibraryExternalSystemIdEntityData : WorkspaceEntityData<LibraryExternalSys
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as LibraryExternalSystemIdEntityData
 
@@ -226,7 +232,7 @@ class LibraryExternalSystemIdEntityData : WorkspaceEntityData<LibraryExternalSys
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as LibraryExternalSystemIdEntityData
 

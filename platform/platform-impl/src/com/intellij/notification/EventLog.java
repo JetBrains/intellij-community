@@ -7,6 +7,7 @@ import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.notification.LogModel.StatusMessage;
 import com.intellij.notification.impl.NotificationCollector;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
@@ -145,7 +146,7 @@ public final class EventLog {
     getProjectService(project).doClear();
   }
 
-  public static @Nullable Trinity<Notification, @NlsContexts.StatusBarText String, Long> getStatusMessage(@Nullable Project project) {
+  public static @Nullable StatusMessage getStatusMessage(@Nullable Project project) {
     return getLogModel(project).getStatusMessage();
   }
 

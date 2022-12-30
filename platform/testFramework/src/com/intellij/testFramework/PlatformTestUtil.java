@@ -1006,9 +1006,11 @@ public final class PlatformTestUtil {
   public static void setLongMeaninglessFileIncludeTemplateTemporarilyFor(@NotNull Project project, @NotNull Disposable parentDisposable) {
     FileTemplateManagerImpl templateManager = (FileTemplateManagerImpl)FileTemplateManager.getInstance(project);
     templateManager.setDefaultFileIncludeTemplateTextTemporarilyForTest(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME,
-    "/**\n" +
-    " * Created by ${USER} on ${DATE}.\n" +
-    " */\n", parentDisposable);
+                                                                        """
+                                                                          /**
+                                                                           * Created by ${USER} on ${DATE}.
+                                                                           */
+                                                                          """, parentDisposable);
   }
 
   /**
@@ -1069,7 +1071,7 @@ public final class PlatformTestUtil {
     ProcessHandler processHandler = result.second.getProcessHandler();
     assertNotNull("Process handler must not be null!", processHandler);
     waitWithEventsDispatching("Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler,
-                              processHandler::isProcessTerminated, 60);
+                              processHandler::isProcessTerminated, Math.toIntExact(timeoutInSeconds));
     return result.first;
   }
 

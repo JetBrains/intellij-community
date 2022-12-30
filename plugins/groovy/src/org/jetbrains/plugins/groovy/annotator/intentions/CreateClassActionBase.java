@@ -46,22 +46,14 @@ public abstract class CreateClassActionBase extends Intention {
   @NotNull
   public String getText() {
     String referenceName = myRefElement.getReferenceName();
-    switch (getType()) {
-      case TRAIT:
-        return GroovyBundle.message("create.trait", referenceName);
-      case ENUM:
-        return GroovyBundle.message("create.enum", referenceName);
-      case CLASS:
-        return GroovyBundle.message("create.class.text", referenceName);
-      case INTERFACE:
-        return GroovyBundle.message("create.interface.text", referenceName);
-      case ANNOTATION:
-        return GroovyBundle.message("create.annotation.text", referenceName);
-      case RECORD:
-        return GroovyBundle.message("create.record.text", referenceName);
-      default:
-        return "";
-    }
+    return switch (getType()) {
+      case TRAIT -> GroovyBundle.message("create.trait", referenceName);
+      case ENUM -> GroovyBundle.message("create.enum", referenceName);
+      case CLASS -> GroovyBundle.message("create.class.text", referenceName);
+      case INTERFACE -> GroovyBundle.message("create.interface.text", referenceName);
+      case ANNOTATION -> GroovyBundle.message("create.annotation.text", referenceName);
+      case RECORD -> GroovyBundle.message("create.record.text", referenceName);
+    };
   }
 
   @Override
@@ -77,29 +69,14 @@ public abstract class CreateClassActionBase extends Intention {
     String packageName = ((GroovyFileBase)containingFile).getPackageName();
     String prefix = packageName.isEmpty() ? "" : "package " + packageName + "\n\n";
     String template = prefix + "%s " + name + " {\n}" ;
-    String newClassPrefix;
-    switch (myType) {
-      case CLASS:
-        newClassPrefix = "class";
-        break;
-      case INTERFACE:
-        newClassPrefix = "interface";
-        break;
-      case TRAIT:
-        newClassPrefix = "trait";
-        break;
-      case ENUM:
-        newClassPrefix = "enum";
-        break;
-      case ANNOTATION:
-        newClassPrefix = "@interface";
-        break;
-      case RECORD:
-        newClassPrefix = "record";
-        break;
-      default:
-        return IntentionPreviewInfo.EMPTY;
-    }
+    String newClassPrefix = switch (myType) {
+      case CLASS -> "class";
+      case INTERFACE -> "interface";
+      case TRAIT -> "trait";
+      case ENUM -> "enum";
+      case ANNOTATION -> "@interface";
+      case RECORD -> "record";
+    };
 
     return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, name + ".groovy", "", String.format(template, newClassPrefix));
   }

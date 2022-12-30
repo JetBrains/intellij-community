@@ -121,7 +121,8 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
   @Override
   public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     final ComboBoxButton button = createComboBoxButton(presentation);
-    button.setMinimumSize(new Dimension(100, 0));
+    button.setMinimumSize(new Dimension(100, button.getPreferredSize().height));
+    button.setPreferredSize(button.getMinimumSize());
     return button;
   }
 }

@@ -8,7 +8,7 @@ import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.JarPackager
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.io.deleteDir
-import org.jetbrains.intellij.build.io.zip
+import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.tasks.DirSource
 import org.jetbrains.intellij.build.tasks.buildJar
 import java.nio.file.Files
@@ -114,7 +114,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path, context: BuildCo
       })
 
 
-      zip(targetDir.resolve("standalone-jps-$buildNumber.zip"), mapOf(tempDir to ""), compress = true)
+      zipWithCompression(targetDir.resolve("standalone-jps-$buildNumber.zip"), mapOf(tempDir to ""))
     }
 
     context.notifyArtifactWasBuilt(targetDir)

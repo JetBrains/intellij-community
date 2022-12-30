@@ -63,6 +63,7 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.*;
@@ -3055,7 +3056,7 @@ public final class HighlightUtil {
       color = ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND : UIUtil.getToolTipForeground();
     }
     else {
-      color = UIUtil.getErrorForeground();
+      color = NamedColorUtil.getErrorForeground();
     }
     return HtmlChunk.tag("font").attr("color", ColorUtil.toHtmlColor(color))
       .addText(shortType || type instanceof PsiCapturedWildcardType ? type.getPresentableText() : type.getCanonicalText());
@@ -3253,7 +3254,6 @@ public final class HighlightUtil {
       return field != null && field.hasModifierProperty(PsiModifier.STATIC);
     }
     PsiMethod[] methods = clazz.findMethodsByName(memberName.getText(), true);
-    if (methods.length == 0) return false;
     for (PsiMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
         PsiClass containingClass = method.getContainingClass();

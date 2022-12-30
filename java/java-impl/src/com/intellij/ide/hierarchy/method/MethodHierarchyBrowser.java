@@ -78,5 +78,5 @@ public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
     return (PsiMethod)getHierarchyBase();
   }
 
-  public static final class BaseOnThisMethodAction extends MethodHierarchyBrowserBase.BaseOnThisMethodAction { }
+  private static final class BaseOnThisMethodAction extends MethodHierarchyBrowserBase.BaseOnThisMethodAction { }
 }

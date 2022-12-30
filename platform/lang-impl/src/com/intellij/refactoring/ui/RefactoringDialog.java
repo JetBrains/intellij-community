@@ -175,13 +175,13 @@ public abstract class RefactoringDialog extends DialogWrapper {
   protected void validateButtons() {
     boolean enabled = true;
     try {
-      setErrorText(null);
       canRun();
     }
     catch (ConfigurationException e) {
       enabled = false;
       setErrorText(e.getMessage());
     }
+    if (enabled) setErrorText(null);
     getPreviewAction().setEnabled(enabled);
     getRefactorAction().setEnabled(enabled);
   }
@@ -191,7 +191,6 @@ public abstract class RefactoringDialog extends DialogWrapper {
   }
 
   protected void validateButtonsAsync(@NotNull ModalityState modalityState) {
-    setErrorText(null);
     ReadAction.nonBlocking(() -> {
         try {
           canRun();
@@ -201,9 +200,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
           return e;
         }
       }).finishOnUiThread(modalityState, e -> {
-        if (e != null) {
-          setErrorText(e.getMessage());
-        }
+        setErrorText(e == null ? null : e.getMessage());
         getPreviewAction().setEnabled(e == null);
         getRefactorAction().setEnabled(e == null);
       })

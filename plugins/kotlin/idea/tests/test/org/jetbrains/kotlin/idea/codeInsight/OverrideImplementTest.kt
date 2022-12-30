@@ -23,6 +23,14 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
     override val testDataDirectory: File
         get() = IDEA_TEST_DATA_DIR.resolve("codeInsight/overrideImplement")
 
+    open fun testNoCallToAbstractSuper() {
+        doOverrideFileTest()
+    }
+
+    open fun testNoCallToAbstractSuper2() {
+        doOverrideFileTest()
+    }
+
    open fun testAndroidxNotNull() {
         doOverrideDirectoryTest("foo")
     }
@@ -200,6 +208,10 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
     }
 
     open fun testNoAnyMembersInValueClass() {
+        doMultiOverrideFileTest()
+    }
+
+    open fun testNoAnyMembersInValueClassWithGenerics() {
         doMultiOverrideFileTest()
     }
 

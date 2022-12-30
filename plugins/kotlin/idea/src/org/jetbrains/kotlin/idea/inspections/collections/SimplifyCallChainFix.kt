@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.inspections.collections
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
@@ -11,7 +12,7 @@ import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.util.reformatted
-import org.jetbrains.kotlin.idea.formatter.commitAndUnblockDocument
+import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -19,10 +20,10 @@ import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class SimplifyCallChainFix(
-    private val conversion: AbstractCallChainChecker.Conversion,
+    @SafeFieldForPreview private val conversion: AbstractCallChainChecker.Conversion,
     private val removeReceiverOfFirstCall: Boolean = false,
     private val runOptimizeImports: Boolean = false,
-    private val modifyArguments: KtPsiFactory.(KtCallExpression) -> Unit = {}
+    @SafeFieldForPreview private val modifyArguments: KtPsiFactory.(KtCallExpression) -> Unit = {}
 ) : LocalQuickFix {
     private val shortenedText = conversion.replacement.substringAfterLast(".")
 

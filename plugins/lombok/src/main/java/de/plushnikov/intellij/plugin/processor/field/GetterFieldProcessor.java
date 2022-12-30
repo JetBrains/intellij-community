@@ -78,7 +78,7 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
     return result;
   }
 
-  private boolean isLazyGetter(@NotNull PsiAnnotation psiAnnotation) {
+  private static boolean isLazyGetter(@NotNull PsiAnnotation psiAnnotation) {
     return PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "lazy", false);
   }
 
@@ -98,7 +98,8 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
     LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiField.getManager(), methodName)
       .withMethodReturnType(psiField.getType())
       .withContainingClass(psiClass)
-      .withNavigationElement(psiField);
+      .withNavigationElement(psiField)
+      .withContract("pure = true");
     if (StringUtil.isNotEmpty(methodModifier)) {
       methodBuilder.withModifier(methodModifier);
     }

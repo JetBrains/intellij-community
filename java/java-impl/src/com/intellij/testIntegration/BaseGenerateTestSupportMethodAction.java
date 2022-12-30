@@ -179,17 +179,11 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
 
     private void doGenerate(final Editor editor, final PsiFile file, final PsiClass targetClass, final TestFramework framework) {
       if (framework instanceof JavaTestFramework && ((JavaTestFramework)framework).isSingleConfig()) {
-        PsiElement alreadyExist = null;
-        switch (myMethodKind) {
-          case SET_UP:
-            alreadyExist = framework.findSetUpMethod(targetClass);
-            break;
-          case TEAR_DOWN:
-            alreadyExist = framework.findTearDownMethod(targetClass);
-            break;
-          default:
-            break;
-        }
+        PsiElement alreadyExist = switch (myMethodKind) {
+          case SET_UP -> framework.findSetUpMethod(targetClass);
+          case TEAR_DOWN -> framework.findTearDownMethod(targetClass);
+          default -> null;
+        };
 
         if (alreadyExist instanceof PsiMethod) {
           editor.getCaretModel().moveToOffset(alreadyExist.getNavigationElement().getTextOffset());

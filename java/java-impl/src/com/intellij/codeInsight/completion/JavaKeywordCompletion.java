@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
@@ -10,6 +11,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
@@ -220,12 +222,7 @@ public class JavaKeywordCompletion {
     }
 
     if (!psiElement().inside(PsiSwitchExpression.class).accepts(myPosition) || psiElement().inside(PsiLambdaExpression.class).accepts(myPosition)) {
-      TailType returnTail = getReturnTail(myPosition);
-      LookupElement ret = createKeyword(PsiKeyword.RETURN);
-      if (returnTail != TailType.NONE) {
-        ret = new OverridableSpace(ret, returnTail);
-      }
-      addKeyword(ret);
+      addKeyword(createReturnKeyword());
     }
 
     if (psiElement().withText(";").withSuperParent(2, PsiIfStatement.class).accepts(myPrevLeaf) ||
@@ -243,6 +240,16 @@ public class JavaKeywordCompletion {
       }
       addKeyword(elseKeyword);
     }
+  }
+
+  @NotNull
+  private LookupElement createReturnKeyword() {
+    TailType returnTail = getReturnTail(myPosition);
+    LookupElement ret = createKeyword(PsiKeyword.RETURN);
+    if (returnTail != TailType.NONE) {
+      ret = new OverridableSpace(ret, returnTail);
+    }
+    return ret;
   }
 
   void addKeywords() {
@@ -281,6 +288,12 @@ public class JavaKeywordCompletion {
         return;
       }
     }
+    else {
+      PsiSwitchLabeledRuleStatement rule = findEnclosingSwitchRule(myPosition);
+      if (rule != null) {
+        addSwitchRuleKeywords(rule);
+      }
+    }
 
     addThisSuper();
 
@@ -303,6 +316,48 @@ public class JavaKeywordCompletion {
     addExtendsImplements();
 
     addCaseNullToSwitch();
+  }
+
+  private void addSwitchRuleKeywords(@NotNull PsiSwitchLabeledRuleStatement rule) {
+    addKeyword(new OverridableSpace(createKeyword(PsiKeyword.THROW), TailType.INSERT_SPACE));
+    addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(PsiKeyword.ASSERT), TailType.INSERT_SPACE)));
+    addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(PsiKeyword.WHILE), TailTypes.WHILE_LPARENTH)));
+    addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(PsiKeyword.DO), TailTypes.DO_LBRACE)));
+    addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(PsiKeyword.FOR), TailTypes.FOR_LPARENTH)));
+    addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(PsiKeyword.IF), TailTypes.IF_LPARENTH)));
+    addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(PsiKeyword.TRY), TailTypes.TRY_LBRACE)));
+    if (rule.getEnclosingSwitchBlock() instanceof PsiSwitchStatement) {
+      addKeyword(wrapRuleIntoBlock(createReturnKeyword()));
+    }
+  }
+
+  private static LookupElement wrapRuleIntoBlock(LookupElement element) {
+    return new LookupElementDecorator<>(element) {
+      @Override
+      public void handleInsert(@NotNull InsertionContext context) {
+        PsiStatement statement = PsiTreeUtil.getParentOfType(context.getFile().findElementAt(context.getStartOffset()), PsiStatement.class);
+        if (statement != null && statement.getParent() instanceof PsiCodeBlock) {
+          PsiElement prevLeaf = PsiTreeUtil.prevCodeLeaf(statement);
+          if (PsiUtil.isJavaToken(prevLeaf, JavaTokenType.ARROW) && prevLeaf.getParent() instanceof PsiSwitchLabeledRuleStatement) {
+            CaretModel model = context.getEditor().getCaretModel();
+            int origPos = model.getOffset();
+            int start = statement.getTextRange().getStartOffset();
+            PsiStatement updatedStatement = BlockUtils.expandSingleStatementToBlockStatement(statement);
+            int updatedStart = updatedStatement.getTextRange().getStartOffset();
+            model.moveToOffset(origPos + updatedStart - start);
+            PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
+            context.setTailOffset(model.getOffset());
+          }
+        }
+        super.handleInsert(context);
+      }
+    };
+  }
+
+  private static PsiSwitchLabeledRuleStatement findEnclosingSwitchRule(PsiElement position) {
+    PsiElement parent = position.getParent();
+    return parent.getParent() instanceof PsiExpressionStatement stmt &&
+           stmt.getParent() instanceof PsiSwitchLabeledRuleStatement rule ? rule : null;
   }
 
   private void addCaseNullToSwitch() {

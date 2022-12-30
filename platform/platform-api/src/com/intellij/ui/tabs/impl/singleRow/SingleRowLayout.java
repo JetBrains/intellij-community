@@ -48,18 +48,12 @@ public abstract class SingleRowLayout extends TabLayout {
   }
 
   SingleRowLayoutStrategy getStrategy() {
-    switch (myTabs.getPresentation().getTabsPosition()) {
-      case top:
-        return myTop;
-      case left:
-        return myLeft;
-      case bottom:
-        return myBottom;
-      case right:
-        return myRight;
-    }
-
-    return null;
+    return switch (myTabs.getPresentation().getTabsPosition()) {
+      case top -> myTop;
+      case left -> myLeft;
+      case bottom -> myBottom;
+      case right -> myRight;
+    };
   }
 
   protected boolean checkLayoutLabels(SingleRowPassInfo data) {

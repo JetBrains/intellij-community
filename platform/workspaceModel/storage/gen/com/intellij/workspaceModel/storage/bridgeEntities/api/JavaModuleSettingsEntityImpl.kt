@@ -56,7 +56,7 @@ open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntity
     return connections
   }
 
-  class Builder(val result: JavaModuleSettingsEntityData?) : ModifiableWorkspaceEntityBase<JavaModuleSettingsEntity>(), JavaModuleSettingsEntity.Builder {
+  class Builder(var result: JavaModuleSettingsEntityData?) : ModifiableWorkspaceEntityBase<JavaModuleSettingsEntity>(), JavaModuleSettingsEntity.Builder {
     constructor() : this(JavaModuleSettingsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -74,6 +74,9 @@ open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntity
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "compilerOutput", this.compilerOutput)
       index(this, "compilerOutputForTests", this.compilerOutputForTests)
@@ -106,14 +109,17 @@ open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntity
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as JavaModuleSettingsEntity
-      this.entitySource = dataSource.entitySource
-      this.inheritedCompilerOutput = dataSource.inheritedCompilerOutput
-      this.excludeOutput = dataSource.excludeOutput
-      this.compilerOutput = dataSource.compilerOutput
-      this.compilerOutputForTests = dataSource.compilerOutputForTests
-      this.languageLevelId = dataSource.languageLevelId
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.inheritedCompilerOutput != dataSource.inheritedCompilerOutput) this.inheritedCompilerOutput = dataSource.inheritedCompilerOutput
+      if (this.excludeOutput != dataSource.excludeOutput) this.excludeOutput = dataSource.excludeOutput
+      if (this.compilerOutput != dataSource?.compilerOutput) this.compilerOutput = dataSource.compilerOutput
+      if (this.compilerOutputForTests != dataSource?.compilerOutputForTests) this.compilerOutputForTests = dataSource.compilerOutputForTests
+      if (this.languageLevelId != dataSource?.languageLevelId) this.languageLevelId = dataSource.languageLevelId
       if (parents != null) {
-        this.module = parents.filterIsInstance<ModuleEntity>().single()
+        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
       }
     }
 
@@ -268,7 +274,7 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as JavaModuleSettingsEntityData
 
@@ -283,7 +289,7 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as JavaModuleSettingsEntityData
 

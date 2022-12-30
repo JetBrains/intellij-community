@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,11 +136,14 @@ public final class ClassUtils {
     if (aClass == null) {
       return false;
     }
-    if (isImmutableClass(aClass)) return true;
-    return JCiPUtil.isImmutable(aClass, checkDocComment);
+    return isImmutableClass(aClass, checkDocComment);
   }
 
   public static boolean isImmutableClass(@NotNull PsiClass aClass) {
+    return isImmutableClass(aClass, false);
+  }
+
+  private static boolean isImmutableClass(@NotNull PsiClass aClass, boolean checkDocComment) {
     if (aClass.isRecord()) {
       return true;
     }
@@ -149,13 +152,16 @@ public final class ClassUtils {
         (immutableTypes.contains(qualifiedName) || qualifiedName.startsWith("com.google.common.collect.Immutable"))) {
       return true;
     }
+    if (JCiPUtil.isImmutable(aClass, checkDocComment)) {
+      return true;
+    }
 
     return aClass.hasModifierProperty(PsiModifier.FINAL) &&
-           Arrays.stream(aClass.getAllFields())
-             .filter(field -> !field.hasModifierProperty(PsiModifier.STATIC))
-             .allMatch(field -> field.hasModifierProperty(PsiModifier.FINAL) &&
-                                (TypeConversionUtil.isPrimitiveAndNotNull(field.getType()) ||
-                                 immutableTypes.contains(field.getType().getCanonicalText())));
+           ContainerUtil.and(aClass.getAllFields(),
+                             field -> !field.hasModifierProperty(PsiModifier.STATIC) &&
+                                      field.hasModifierProperty(PsiModifier.FINAL) &&
+                                      (TypeConversionUtil.isPrimitiveAndNotNull(field.getType()) ||
+                                       immutableTypes.contains(field.getType().getCanonicalText())));
   }
 
   public static boolean inSamePackage(@Nullable PsiElement element1, @Nullable PsiElement element2) {

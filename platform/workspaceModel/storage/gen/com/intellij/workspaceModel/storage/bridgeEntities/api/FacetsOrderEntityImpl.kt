@@ -48,7 +48,7 @@ open class FacetsOrderEntityImpl(val dataSource: FacetsOrderEntityData) : Facets
     return connections
   }
 
-  class Builder(val result: FacetsOrderEntityData?) : ModifiableWorkspaceEntityBase<FacetsOrderEntity>(), FacetsOrderEntity.Builder {
+  class Builder(var result: FacetsOrderEntityData?) : ModifiableWorkspaceEntityBase<FacetsOrderEntity>(), FacetsOrderEntity.Builder {
     constructor() : this(FacetsOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -66,6 +66,9 @@ open class FacetsOrderEntityImpl(val dataSource: FacetsOrderEntityData) : Facets
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -96,13 +99,23 @@ open class FacetsOrderEntityImpl(val dataSource: FacetsOrderEntityData) : Facets
       return connections
     }
 
+    override fun afterModification() {
+      val collection_orderOfFacets = getEntityData().orderOfFacets
+      if (collection_orderOfFacets is MutableWorkspaceList<*>) {
+        collection_orderOfFacets.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FacetsOrderEntity
-      this.entitySource = dataSource.entitySource
-      this.orderOfFacets = dataSource.orderOfFacets.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.orderOfFacets != dataSource.orderOfFacets) this.orderOfFacets = dataSource.orderOfFacets.toMutableList()
       if (parents != null) {
-        this.moduleEntity = parents.filterIsInstance<ModuleEntity>().single()
+        val moduleEntityNew = parents.filterIsInstance<ModuleEntity>().single()
+        if ((this.moduleEntity as WorkspaceEntityBase).id != (moduleEntityNew as WorkspaceEntityBase).id) {
+          this.moduleEntity = moduleEntityNew
+        }
       }
     }
 
@@ -124,7 +137,12 @@ open class FacetsOrderEntityImpl(val dataSource: FacetsOrderEntityData) : Facets
       get() {
         val collection_orderOfFacets = getEntityData().orderOfFacets
         if (collection_orderOfFacets !is MutableWorkspaceList) return collection_orderOfFacets
-        collection_orderOfFacets.setModificationUpdateAction(orderOfFacetsUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_orderOfFacets.setModificationUpdateAction(orderOfFacetsUpdater)
+        }
+        else {
+          collection_orderOfFacets.cleanModificationUpdateAction()
+        }
         return collection_orderOfFacets
       }
       set(value) {
@@ -231,7 +249,7 @@ class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FacetsOrderEntityData
 
@@ -242,7 +260,7 @@ class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FacetsOrderEntityData
 

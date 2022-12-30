@@ -769,6 +769,12 @@
       "disabledBackground": "panel"
     },
 
+    "SearchFieldWithExtension": {
+      "background": "contentBackground",
+      "border": "com.intellij.ui.components.DarculaSearchBorder",
+      "UI": "com.intellij.ui.components.DarculaSearchFieldWithExtensionUI"
+    },
+
     "TitledBorder.titleColor": "black",
 
     "TitlePane": {

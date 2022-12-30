@@ -216,7 +216,7 @@ public final class DocPreviewUtil {
     for (; i < text.length(); i++) {
       char c = text.charAt(i);
       switch (state) {
-        case TEXT:
+        case TEXT -> {
           if (c == '<') {
             if (i > dataStartOffset) {
               if (!callback.onText(text.substring(dataStartOffset, i).replace("&nbsp;", " "))) {
@@ -233,8 +233,8 @@ public final class DocPreviewUtil {
               tagNameStartOffset = i + 1;
             }
           }
-          break;
-        case INSIDE_OPEN_TAG:
+        }
+        case INSIDE_OPEN_TAG -> {
           if (c == ' ') {
             tagName = text.substring(tagNameStartOffset, i);
           }
@@ -249,7 +249,6 @@ public final class DocPreviewUtil {
               tagName = null;
               state = State.TEXT;
               dataStartOffset = ++i + 1;
-              break;
             }
           }
           else if (c == '>') {
@@ -263,12 +262,10 @@ public final class DocPreviewUtil {
             state = State.TEXT;
             dataStartOffset = i + 1;
           }
-          break;
-        case INSIDE_CLOSE_TAG:
+        }
+        case INSIDE_CLOSE_TAG -> {
           if (c == '>') {
-            if (tagName == null) {
-              tagName = text.substring(tagNameStartOffset, i);
-            }
+            tagName = text.substring(tagNameStartOffset, i);
             if (!callback.onCloseTag(tagName, text.substring(dataStartOffset, i + 1))) {
               return dataStartOffset;
             }
@@ -276,6 +273,7 @@ public final class DocPreviewUtil {
             state = State.TEXT;
             dataStartOffset = i + 1;
           }
+        }
       }
     }
 

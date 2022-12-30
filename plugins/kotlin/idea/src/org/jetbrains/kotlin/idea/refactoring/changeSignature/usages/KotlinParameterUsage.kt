@@ -29,9 +29,9 @@ abstract class KotlinExplicitReferenceUsage<T : KtElement>(element: T) : KotlinU
 }
 
 class KotlinParameterUsage(
-    element: KtElement,
-    private val parameterInfo: KotlinParameterInfo,
-    val containingCallable: KotlinCallableDefinitionUsage<*>
+  element: KtElement,
+  private val parameterInfo: KotlinParameterInfo,
+  private val containingCallable: KotlinCallableDefinitionUsage<*>
 ) : KotlinExplicitReferenceUsage<KtElement>(element) {
     override fun processReplacedElement(element: KtElement) {
         val qualifiedExpression = element.parent as? KtQualifiedExpression
@@ -61,10 +61,10 @@ class KotlinNonQualifiedOuterThisUsage(
 }
 
 class KotlinNonQualifiedOuterThisCallUsage(
-    element: KtCallExpression,
-    val parameterInfo: KotlinParameterInfo,
-    val containingCallable: KotlinCallableDefinitionUsage<*>,
-    val targetDescriptor: DeclarationDescriptor
+  element: KtCallExpression,
+  val parameterInfo: KotlinParameterInfo,
+  private val containingCallable: KotlinCallableDefinitionUsage<*>,
+  val targetDescriptor: DeclarationDescriptor
 ) : KotlinExplicitReferenceUsage<KtCallExpression>(element) {
     override fun getReplacementText(changeInfo: KotlinChangeInfo): String {
         val inheritedName = parameterInfo.getInheritedName(containingCallable)

@@ -4,6 +4,7 @@ package com.jetbrains.python.packaging;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.ide.IdeBundle;
+import com.intellij.model.SideEffectGuard;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -56,14 +57,17 @@ public final class PyPackageManagerUI {
   }
 
   public void installManagement() {
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.EXEC);
     ProgressManager.getInstance().run(new InstallManagementTask(myProject, mySdk, myListener));
   }
 
   public void install(@Nullable final List<PyRequirement> requirements, @NotNull final List<String> extraArgs) {
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.EXEC);
     ProgressManager.getInstance().run(new InstallTask(myProject, mySdk, requirements, extraArgs, myListener));
   }
 
   public void uninstall(@NotNull final List<PyPackage> packages) {
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.EXEC);
     if (checkDependents(packages)) {
       return;
     }

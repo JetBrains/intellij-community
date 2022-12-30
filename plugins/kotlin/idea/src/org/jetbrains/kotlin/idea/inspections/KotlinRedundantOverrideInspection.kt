@@ -71,7 +71,17 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
             ) return
 
             if (function.hasDerivedProperty(functionDescriptor, context)) return
-            val overriddenDescriptors = functionDescriptor.original.overriddenDescriptors
+            var overriddenDescriptors = functionDescriptor.original.overriddenDescriptors
+            if (overriddenDescriptors.size == 1) {
+                fun FunctionDescriptor.listClosestNonFakeSupersOrSelf(): MutableCollection<out FunctionDescriptor> {
+                    if (kind != CallableMemberDescriptor.Kind.FAKE_OVERRIDE) return mutableListOf(this)
+                    this.overriddenDescriptors.singleOrNull()?.let { return it.listClosestNonFakeSupersOrSelf() }
+                    return this.overriddenDescriptors
+                }
+
+                overriddenDescriptors = overriddenDescriptors.single().listClosestNonFakeSupersOrSelf()
+            }
+
             if (overriddenDescriptors.any { it is JavaMethodDescriptor && it.visibility == JavaDescriptorVisibilities.PACKAGE_VISIBILITY }) return
             if (overriddenDescriptors.any { it.modality == Modality.ABSTRACT }) {
                 if (superCallDescriptor.fqNameSafe in Holder.METHODS_OF_ANY) return

@@ -36,28 +36,31 @@ public class SetTodoFilterAction extends ActionGroup implements DumbAware {
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    return createPopupActionGroup(myProject, myToDoSettings, myTodoFilterConsumer).getChildren(e);
+    return createPopupActionGroup(myProject, myToDoSettings, false, myTodoFilterConsumer).getChildren(e);
   }
 
   public static DefaultActionGroup createPopupActionGroup(@NotNull Project project,
                                                           @NotNull TodoPanelSettings settings,
+                                                          boolean skipShowAllWithoutFilters,
                                                           @NotNull Consumer<? super TodoFilter> todoFilterConsumer) {
     TodoFilter[] filters = TodoConfiguration.getInstance().getTodoFilters();
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new TodoFilterApplier(IdeBundle.message("action.todo.show.all"),
-                                    IdeBundle.message("action.description.todo.show.all"), null, settings, todoFilterConsumer));
+    if (!skipShowAllWithoutFilters || filters.length != 0) {
+      group.add(new TodoFilterApplier(IdeBundle.message("action.todo.show.all"),
+                                      IdeBundle.message("action.description.todo.show.all"), null, settings, todoFilterConsumer));
+    }
     for (TodoFilter filter : filters) {
       group.add(new TodoFilterApplier(filter.getName(), null, filter, settings, todoFilterConsumer));
     }
     group.addSeparator();
     group.add(new DumbAwareAction(IdeBundle.messagePointer("action.todo.edit.filters"),
                                   IdeBundle.messagePointer("action.todo.edit.filters.description"), AllIcons.General.Settings) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-          util.editConfigurable(project, ConfigurableFactory.Companion.getInstance().getTodoConfigurable(project));
-        }
-      }
+                @Override
+                public void actionPerformed(@NotNull AnActionEvent e) {
+                  final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+                  util.editConfigurable(project, ConfigurableFactory.Companion.getInstance().getTodoConfigurable(project));
+                }
+              }
     );
     return group;
   }

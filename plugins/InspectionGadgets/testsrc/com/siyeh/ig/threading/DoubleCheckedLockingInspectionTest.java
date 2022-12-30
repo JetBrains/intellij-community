@@ -29,51 +29,52 @@ public class DoubleCheckedLockingInspectionTest extends LightJavaInspectionTestC
 
   @SuppressWarnings("DoubleCheckedLocking")
   public void testSimple() {
-    doTest("class A {" +
-           "    private  boolean initialized;\n" +
-           "    private void initialize() {\n" +
-           "        /*Double-checked locking*/if/**/ (initialized == false) {\n" +
-           "            synchronized (this) {\n" +
-           "                if (initialized == false) {\n" +
-           "                    initialized = true;\n" +
-           "                }\n" +
-           "            }\n" +
-           "        }\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             class A {    private  boolean initialized;
+                 private void initialize() {
+                     /*Double-checked locking*/if/**/ (initialized == false) {
+                         synchronized (this) {
+                             if (initialized == false) {
+                                 initialized = true;
+                             }
+                         }
+                     }
+                 }
+             }""");
   }
 
   public void testVolatile() {
-    doTest("class X {" +
-           "    private volatile boolean initialized;\n" +
-           "    private void initialize() {\n" +
-           "        if (initialized == false) {\n" +
-           "            synchronized (this) {\n" +
-           "                if (initialized == false) {\n" +
-           "                    initialized = true;\n" +
-           "                }\n" +
-           "            }\n" +
-           "        }\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             class X {    private volatile boolean initialized;
+                 private void initialize() {
+                     if (initialized == false) {
+                         synchronized (this) {
+                             if (initialized == false) {
+                                 initialized = true;
+                             }
+                         }
+                     }
+                 }
+             }""");
   }
 
   public void testVolatile2() {
-    doTest("class Main654 {\n" +
-           "  private volatile int myListenPort = -1;\n" +
-           "  private void ensureListening() {\n" +
-           "    if (myListenPort < 0) {\n" +
-           "      synchronized (this) {\n" +
-           "        if (myListenPort < 0) {\n" +
-           "          myListenPort = startListening();\n" +
-           "        }\n" +
-           "      }\n" +
-           "    }\n" +
-           "  }\n" +
-           "  private int startListening() {\n" +
-           "    return 0;\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             class Main654 {
+               private volatile int myListenPort = -1;
+               private void ensureListening() {
+                 if (myListenPort < 0) {
+                   synchronized (this) {
+                     if (myListenPort < 0) {
+                       myListenPort = startListening();
+                     }
+                   }
+                 }
+               }
+               private int startListening() {
+                 return 0;
+               }
+             }""");
   }
 
   @Override

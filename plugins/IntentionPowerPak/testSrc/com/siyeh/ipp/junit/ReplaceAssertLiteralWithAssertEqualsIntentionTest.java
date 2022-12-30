@@ -26,17 +26,17 @@ public class ReplaceAssertLiteralWithAssertEqualsIntentionTest extends IPPTestCa
                        "public @interface Test {}");
     myFixture.addClass("package org.junit.platform.commons.annotation;" +
                        "public @interface Testable {}");
-    myFixture.addClass("package org.junit.jupiter.api;\n" +
-                       "public final class Assertions {\n" +
-                       "    public static void assertArrayEquals(Object[] expected, Object[] actual) {}\n" +
-                       "    public static void assertArrayEquals(Object[] expected, Object[] actual, String message) {}\n" +
-                       "    public static void assertEquals(Object expected, Object actual) {}\n" +
-                       "    public static void assertTrue(boolean expected) {}\n" +
-                       "    public static void assertFalse(boolean expected) {}\n" +
-                       "    public static void assertEquals(Object expected, Object actual, String message) {}\n" +
-                       "    public static void assertTrue(Object expected, String message) {}\n" +
-                       "    public static void fail(String message) {}" +
-                       "}");
+    myFixture.addClass("""
+                         package org.junit.jupiter.api;
+                         public final class Assertions {
+                             public static void assertArrayEquals(Object[] expected, Object[] actual) {}
+                             public static void assertArrayEquals(Object[] expected, Object[] actual, String message) {}
+                             public static void assertEquals(Object expected, Object actual) {}
+                             public static void assertTrue(boolean expected) {}
+                             public static void assertFalse(boolean expected) {}
+                             public static void assertEquals(Object expected, Object actual, String message) {}
+                             public static void assertTrue(Object expected, String message) {}
+                             public static void fail(String message) {}}""");
   }
 
   @Override

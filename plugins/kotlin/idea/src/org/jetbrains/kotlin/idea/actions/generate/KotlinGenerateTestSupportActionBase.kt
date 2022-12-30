@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.setupE
 import org.jetbrains.kotlin.idea.testIntegration.findSuitableFrameworks
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.j2k.ConverterSettings.Companion.publicByDefault
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
@@ -158,7 +159,7 @@ abstract class KotlinGenerateTestSupportActionBase(
                 val factory = PsiElementFactory.getInstance(project)
                 val psiMethod = factory.createMethodFromText(templateText, null)
                 psiMethod.throwsList.referenceElements.forEach { it.delete() }
-                var function = psiMethod.j2k() as? KtNamedFunction ?: run {
+                var function = psiMethod.j2k(settings = publicByDefault) as? KtNamedFunction ?: run {
                     errorHint = KotlinBundle.message("action.generate.test.support.error.cant.convert.java.template")
                     return@executeWriteCommand
                 }

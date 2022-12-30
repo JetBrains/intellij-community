@@ -17,16 +17,14 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.ui.DeferredIcon
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.SVGLoader
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
@@ -147,7 +145,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
       val shape = when (component) {
         component.parent?.components?.lastOrNull() -> {
           val shape1 = RoundRectangle2D.Float(rect.x.toFloat(), rect.y.toFloat(), width.toFloat(), height.toFloat(), arc, arc)
-          val shape2 = Rectangle2D.Float(rect.x.toFloat(), rect.y.toFloat(), arc, height.toFloat())
+          val shape2 = Rectangle2D.Float(rect.x.toFloat() - 1, rect.y.toFloat(), arc, height.toFloat())
           Area(shape1).also { it.add(Area(shape2)) }
         }
         component.parent?.components?.get(0) -> {
@@ -156,7 +154,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
           Area(shape1).also { it.add(Area(shape2)) }
         }
         else -> {
-          Rectangle2D.Float(rect.x.toFloat(), rect.y.toFloat(), width.toFloat(), height.toFloat())
+          Rectangle2D.Float(rect.x.toFloat() - 1, rect.y.toFloat(), width.toFloat() + 2, height.toFloat())
         }
       }
 
@@ -172,10 +170,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
     if (icon.iconWidth == 0 || icon.iconHeight == 0) {
       return
     }
-    val targetIcon = (icon as? DeferredIcon)?.baseIcon ?: icon
-    val patcher = SVGLoader.getStrokePatcher(listOf("#767a8a", "#6c707e", "#ced0d6", "#6e6e6e", "#afb1b3"), backgroundColors = listOf("#ebecf0"),
-                                             resultColor = Color.WHITE)
-    super.paintIcon(g, actionButton, IconLoader.colorPatchedIcon(targetIcon, patcher), x, y)
+    super.paintIcon(g, actionButton, IconUtil.toStrokeIcon(icon, Color.WHITE), x, y)
   }
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
@@ -290,7 +285,7 @@ private class RunToolbarSeparator(private val isCurrentConfigurationRunning: () 
     g2.color = getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
     g2.fill(Rectangle(size))
     g2.color = Color.WHITE.addAlpha(0.4)
-    g2.stroke = BasicStroke(JBUIScale.scale(1f));
+    g2.stroke = BasicStroke(JBUIScale.scale(1f))
     g2.drawLine(0, JBUI.scale(5), 0, JBUI.scale(25))
   }
 

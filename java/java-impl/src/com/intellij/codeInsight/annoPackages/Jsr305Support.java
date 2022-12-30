@@ -103,13 +103,10 @@ public class Jsr305Support implements AnnotationPackageSupport {
   @NotNull
   @Override
   public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
-    switch (nullability) {
-      case NOT_NULL:
-        return Collections.singletonList(JAVAX_ANNOTATION_NONNULL);
-      case NULLABLE:
-        return Arrays.asList(JAVAX_ANNOTATION_NULLABLE, "javax.annotation.CheckForNull");
-      default:
-        return Collections.emptyList();
-    }
+    return switch (nullability) {
+      case NOT_NULL -> Collections.singletonList(JAVAX_ANNOTATION_NONNULL);
+      case NULLABLE -> Arrays.asList(JAVAX_ANNOTATION_NULLABLE, "javax.annotation.CheckForNull");
+      case UNKNOWN -> Collections.emptyList();
+    };
   }
 }

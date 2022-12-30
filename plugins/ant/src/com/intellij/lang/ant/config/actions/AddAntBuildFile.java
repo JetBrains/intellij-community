@@ -85,7 +85,7 @@ public final class AddAntBuildFile extends AnAction {
     final Project project = e.getProject();
     if (project != null) {
       final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-      if (files != null && files.length > 0) {
+      if (files != null) {
         for (VirtualFile file : files) {
           final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
           if (!(psiFile instanceof XmlFile)) {

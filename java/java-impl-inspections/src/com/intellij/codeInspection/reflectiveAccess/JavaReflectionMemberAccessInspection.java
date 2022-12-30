@@ -105,28 +105,12 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
             final PsiClass containingClass = method.getContainingClass();
             if (containingClass != null && JAVA_LANG_CLASS.equals(containingClass.getQualifiedName())) {
               switch (referenceName) {
-
-                case GET_FIELD:
-                  checkField(expression, false, holder);
-                  break;
-                case GET_DECLARED_FIELD:
-                  checkField(expression, true, holder);
-                  break;
-
-                case GET_METHOD:
-                  checkMethod(expression, false, holder);
-                  break;
-                case GET_DECLARED_METHOD:
-                  checkMethod(expression, true, holder);
-                  break;
-
-                case GET_CONSTRUCTOR:
-                  checkConstructor(expression, false, holder);
-                  break;
-                case GET_DECLARED_CONSTRUCTOR: {
-                  checkConstructor(expression, true, holder);
-                  break;
-                }
+                case GET_FIELD -> checkField(expression, false, holder);
+                case GET_DECLARED_FIELD -> checkField(expression, true, holder);
+                case GET_METHOD -> checkMethod(expression, false, holder);
+                case GET_DECLARED_METHOD -> checkMethod(expression, true, holder);
+                case GET_CONSTRUCTOR -> checkConstructor(expression, false, holder);
+                case GET_DECLARED_CONSTRUCTOR -> checkConstructor(expression, true, holder);
               }
             }
           }

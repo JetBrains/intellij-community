@@ -52,15 +52,16 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
   }
 
   public void testBasic() {
-    doTest("import org.slf4j.*;\n" +
-           "class X {\n" +
-           "  void foo() {\n" +
-           "    Logger logger = LoggerFactory.getLogger(X.class);\n" +
-           "    final String CONST = \"const\";\n" +
-           "    String var = \"var\";\n" +
-           "    logger./*Non-constant string concatenation as argument to 'debug()' logging call*/debug/**/(\"string \" + var + CONST);\n" +
-           "  }\n" +
-           "}"
+    doTest("""
+             import org.slf4j.*;
+             class X {
+               void foo() {
+                 Logger logger = LoggerFactory.getLogger(X.class);
+                 final String CONST = "const";
+                 String var = "var";
+                 logger./*Non-constant string concatenation as argument to 'debug()' logging call*/debug/**/("string " + var + CONST);
+               }
+             }"""
            );
   }
 

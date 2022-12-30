@@ -159,16 +159,14 @@ public class DataManagerImpl extends DataManager {
   }
 
   private static @Nullable GetDataRule getDataRule(@NotNull String dataId, @NotNull GetDataRuleType ruleType) {
-    switch (ruleType) {
-      case FAST:
+    return switch (ruleType) {
+      case FAST -> {
         List<GetDataRule> rules = rulesForKey(dataId, GetDataRuleType.FAST);
-        return rules == null ? null : rules.size() == 1 ? rules.get(0) : dataProvider -> getRulesData(dataId, rules, dataProvider);
-      case PROVIDER:
-        return getDataRuleInner(dataId, GetDataRuleType.PROVIDER);
-      case CONTEXT:
-        return getDataRuleInner(dataId, GetDataRuleType.CONTEXT);
-    }
-    throw new AssertionError("unknown type: " + ruleType);
+        yield rules == null ? null : rules.size() == 1 ? rules.get(0) : dataProvider -> getRulesData(dataId, rules, dataProvider);
+      }
+      case PROVIDER -> getDataRuleInner(dataId, GetDataRuleType.PROVIDER);
+      case CONTEXT -> getDataRuleInner(dataId, GetDataRuleType.CONTEXT);
+    };
   }
 
   private static @Nullable GetDataRule getDataRuleInner(@NotNull String dataId, @NotNull GetDataRuleType ruleType) {

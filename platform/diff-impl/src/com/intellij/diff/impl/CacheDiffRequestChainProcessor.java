@@ -5,7 +5,6 @@ import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.AsyncDiffRequestChain;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
-import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -80,14 +79,16 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor.Si
 
   @Override
   protected void goToNextChange(boolean fromDifferences) {
-    myIndex += 1;
-    updateRequest(false, fromDifferences ? ScrollToPolicy.FIRST_CHANGE : null);
+    goToNextChangeImpl(fromDifferences, () -> {
+      myIndex += 1;
+    });
   }
 
   @Override
   protected void goToPrevChange(boolean fromDifferences) {
-    myIndex -= 1;
-    updateRequest(false, fromDifferences ? ScrollToPolicy.LAST_CHANGE : null);
+    goToPrevChangeImpl(fromDifferences, () -> {
+      myIndex -= 1;
+    });
   }
 
   @Override

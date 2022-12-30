@@ -52,7 +52,7 @@ class KotlinInlinePropertyDialog(
         declaration = declaration,
         reference = reference,
         inlineThisOnly = isInlineThisOnly,
-        deleteAfter = !isInlineThisOnly && !isKeepTheDeclaration,
+        deleteAfter = !isInlineThisOnly && !(isKeepTheDeclaration && reference != null),
         isWhenSubjectVariable = (declaration.parent as? KtWhenExpression)?.subjectVariable == declaration,
         editor = editor,
         statementToDelete = assignmentToDelete,

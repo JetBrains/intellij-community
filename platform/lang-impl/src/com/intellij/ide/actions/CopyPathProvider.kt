@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -21,15 +22,18 @@ import com.intellij.ui.tabs.impl.TabLabel
 import java.awt.datatransfer.StringSelection
 
 abstract class CopyPathProvider : AnAction() {
+  companion object {
+    @JvmField val QUALIFIED_NAME : Key<@NlsSafe String> = Key.create("QUALIFIED_NAME");
+  }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val dataContext = e.dataContext
-    val editor = CommonDataKeys.EDITOR.getData(dataContext)
     val project = e.project
-    e.presentation.isEnabledAndVisible = project != null
-                                         && getQualifiedName(project, getElementsToCopy(editor, dataContext), editor, dataContext) != null
+    val editor = e.getData(CommonDataKeys.EDITOR)
+    val qName = if (project == null) null else getQualifiedName(project, getElementsToCopy(editor, e.dataContext), editor, e.dataContext)
+    e.presentation.isEnabledAndVisible = project != null && qName != null
+    e.presentation.putClientProperty(QUALIFIED_NAME, qName)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -63,7 +67,7 @@ abstract class CopyPathProvider : AnAction() {
   }
 
   @NlsSafe
-  open fun getQualifiedName(project: Project, elements: List<PsiElement>, editor: Editor?, dataContext: DataContext): String? {
+  protected open fun getQualifiedName(project: Project, elements: List<PsiElement>, editor: Editor?, dataContext: DataContext): String? {
     if (elements.isEmpty()) {
       return getPathToElement(project, editor?.document?.let { FileDocumentManager.getInstance().getFile(it) }, editor)
     }

@@ -108,6 +108,14 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  public void findChildWithSpecialName() {
+    VirtualFile dir = requireNonNull(myFS.refreshAndFindFileByIoFile(tempDir.newDirectory("xxx")));
+    assertFalse(((VirtualDirectoryImpl)dir).allChildrenLoaded());    
+    assertNull(dir.findChild("."));
+    assertNull(dir.findChild(".."));
+  }
+
+  @Test
   public void testChildrenAccessedButNotCached() throws IOException {
     File dir = tempDir.newDirectory("xxx");
     ManagingFS managingFS = ManagingFS.getInstance();

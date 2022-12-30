@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.*
 import com.intellij.uast.UastHintedVisitorAdapter
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
 import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.uast.*
@@ -87,7 +87,7 @@ private class MigrateToAssertThatQuickFix(private val matcherClassFqn: String, p
     val factory = call.getUastElementFactory(project) ?: return
     val methodName = call.methodName ?: return
     val arguments = call.valueArguments.toMutableList()
-    val method = call.resolveToUElement()?.castSafelyTo<UMethod>() ?: return
+    val method = call.resolveToUElement()?.asSafely<UMethod>() ?: return
     val message = if (TypeUtils.typeEquals(JAVA_LANG_STRING, method.uastParameters.first().type)) {
       arguments.removeFirst()
     } else null
@@ -101,7 +101,7 @@ private class MigrateToAssertThatQuickFix(private val matcherClassFqn: String, p
             conditionArgument.leftOperand to matchExpression
           }
           is UQualifiedReferenceExpression -> {
-            val conditionCall = conditionArgument.selector.castSafelyTo<UCallExpression>() ?: return
+            val conditionCall = conditionArgument.selector.asSafely<UCallExpression>() ?: return
             val conditionMethodName = conditionCall.methodName ?: return
             val matchExpression = if (methodName.contains("False")) {
               factory.createMatchExpression(
@@ -147,11 +147,11 @@ private class MigrateToAssertThatQuickFix(private val matcherClassFqn: String, p
     }
     if (importMemberOnDemand) {
       val assertThatCall = factory.createAssertThat(listOfNotNull(message, left, right)) ?: return
-      val replaced = call.getQualifiedParentOrThis().replace(assertThatCall)?.castSafelyTo<UQualifiedReferenceExpression>() ?: return
+      val replaced = call.getQualifiedParentOrThis().replace(assertThatCall)?.asSafely<UQualifiedReferenceExpression>() ?: return
       var toImport = replaced
       while (true) {
-        val imported = toImport.importMemberOnDemand()?.castSafelyTo<UCallExpression>() ?: return
-        toImport = imported.valueArguments.lastOrNull()?.castSafelyTo<UQualifiedReferenceExpression>() ?: return
+        val imported = toImport.importMemberOnDemand()?.asSafely<UCallExpression>() ?: return
+        toImport = imported.valueArguments.lastOrNull()?.asSafely<UQualifiedReferenceExpression>() ?: return
       }
     }
   }

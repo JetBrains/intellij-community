@@ -34,8 +34,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.rd.createNestedDisposable
-import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.impl.DirectoryIndex
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
@@ -82,7 +81,9 @@ open class CodeVisionHost(val project: Project) {
     }
   }
 
-  protected val codeVisionLifetime: Lifetime = project.createLifetime()
+  // used externally
+  @Suppress("MemberVisibilityCanBePrivate")
+  val codeVisionLifetime: Lifetime = project.createLifetime()
 
   /**
    * Pass empty list to update ALL providers in editor
@@ -182,8 +183,7 @@ open class CodeVisionHost(val project: Project) {
     if (!lifeSettingModel.isEnabledWithRegistry.value) return emptyList()
     val project = editor.project ?: return emptyList()
     if (psiFile != null && psiFile.virtualFile != null) {
-      val directoryInfo = DirectoryIndex.getInstance(project).getInfoForFile(psiFile.virtualFile)
-      if (!directoryInfo.isInModuleSource(psiFile.virtualFile)) return emptyList()
+      if (ProjectFileIndex.getInstance(project).isInLibrarySource(psiFile.virtualFile)) return emptyList()
     }
     val bypassBasedCollectors = ArrayList<Pair<BypassBasedPlaceholderCollector, CodeVisionProvider<*>>>()
     val placeholders = ArrayList<Pair<TextRange, CodeVisionEntry>>()
@@ -273,8 +273,9 @@ open class CodeVisionHost(val project: Project) {
     logger.trace { "No provider found with id ${entry.providerId}" }
   }
 
-  protected fun CodeVisionAnchorKind?.nullIfDefault(): CodeVisionAnchorKind? = if (this === CodeVisionAnchorKind.Default) null else this
-
+  // used externally
+  @Suppress("MemberVisibilityCanBePrivate")
+  fun CodeVisionAnchorKind?.nullIfDefault(): CodeVisionAnchorKind? = if (this === CodeVisionAnchorKind.Default) null else this
 
   open fun getAnchorForEntry(entry: CodeVisionEntry): CodeVisionAnchorKind {
     val provider = getProviderById(entry.providerId) ?: return lifeSettingModel.defaultPosition.value

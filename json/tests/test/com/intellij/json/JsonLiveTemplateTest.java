@@ -86,9 +86,10 @@ public class JsonLiveTemplateTest extends JsonTestCase {
   }
 
   public void testCustomTemplateExpansion() {
-    final String templateContent = "{\n" +
-                                   "  \"foo\": \"$1$\"\n" +
-                                   "}";
+    final String templateContent = """
+      {
+        "foo": "$1$"
+      }""";
     createJsonTemplate("foo", "foo", templateContent);
     myFixture.configureByText(JsonFileType.INSTANCE, "foo<caret>");
     final Editor editor = myFixture.getEditor();

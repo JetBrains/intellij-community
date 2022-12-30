@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.UINumericRange;
@@ -168,6 +168,13 @@ public interface Configurable extends UnnamedConfigurable {
    */
   interface NoScroll {
     // see ConfigurableCardPanel#create(Configurable)
+  }
+
+  /**
+   * This marker interface tells the Settings dialog to show a Beta icon for the configurable.
+   */
+  interface Beta {
+
   }
 
   /**

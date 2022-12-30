@@ -132,13 +132,13 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     }
   }
 
-  private void compareInitializers(PsiExpression beforeInitializer, PsiExpression afterInitializer) {
+  private static void compareInitializers(PsiExpression beforeInitializer, PsiExpression afterInitializer) {
     String beforeInitializerText = null == beforeInitializer ? "" : beforeInitializer.getText();
     String afterInitializerText = null == afterInitializer ? "" : afterInitializer.getText();
     assertEquals("Initializers are not equals ", afterInitializerText, beforeInitializerText);
   }
 
-  private void compareType(PsiType beforeType, PsiType afterType, PomNamedTarget whereTarget) {
+  private static void compareType(PsiType beforeType, PsiType afterType, PomNamedTarget whereTarget) {
     if (null != beforeType && null != afterType) {
       final String afterText = stripJavaLang(afterType.getCanonicalText());
       final String beforeText = stripJavaLang(beforeType.getCanonicalText());
@@ -146,7 +146,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     }
   }
 
-  private String stripJavaLang(String canonicalText) {
+  private static String stripJavaLang(String canonicalText) {
     return StringUtil.trimStart(canonicalText, "java.lang.");
   }
 
@@ -187,7 +187,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
         .map(PsiAnnotation::getQualifiedName)
         .filter(Pattern.compile(annotationToComparePattern()).asPredicate()).toList();
 
-      assertTrue("Annotations are different for " + afterModifierList.getParent(),
+      assertTrue("Annotations are different for " + afterModifierList.getParent() + ": " + beforeAnnotations + "/" + afterAnnotations,
                  beforeAnnotations.size() == afterAnnotations.size()
                  && beforeAnnotations.containsAll(afterAnnotations)
                  && afterAnnotations.containsAll(beforeAnnotations));
@@ -256,7 +256,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     }
   }
 
-  private Collection<PsiMethod> filterMethods(PsiMethod[] beforeMethods, PsiMethod compareMethod) {
+  private static Collection<PsiMethod> filterMethods(PsiMethod[] beforeMethods, PsiMethod compareMethod) {
     Collection<PsiMethod> result = new ArrayList<>();
     for (PsiMethod psiMethod : beforeMethods) {
       final PsiParameterList compareMethodParameterList = compareMethod.getParameterList();
@@ -274,7 +274,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
   }
 
   @NotNull
-  private Collection<String> mapToTypeString(PsiParameterList compareMethodParameterList) {
+  private static Collection<String> mapToTypeString(PsiParameterList compareMethodParameterList) {
     Collection<String> result = new ArrayList<>();
     final PsiParameter[] compareMethodParameterListParameters = compareMethodParameterList.getParameters();
     for (PsiParameter compareMethodParameterListParameter : compareMethodParameterListParameters) {
@@ -283,12 +283,12 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     return result;
   }
 
-  private String[] toList(PsiNamedElement[] beforeMethods) {
+  private static String[] toList(PsiNamedElement[] beforeMethods) {
     return Arrays.stream(beforeMethods).map(PsiNamedElement::getName)
       .filter(java.util.Objects::isNull).sorted(String.CASE_INSENSITIVE_ORDER).toArray(String[]::new);
   }
 
-  private void compareThrows(PsiReferenceList beforeThrows, PsiReferenceList afterThrows, PsiMethod psiMethod) {
+  private static void compareThrows(PsiReferenceList beforeThrows, PsiReferenceList afterThrows, PsiMethod psiMethod) {
     PsiClassType[] beforeTypes = beforeThrows.getReferencedTypes();
     PsiClassType[] afterTypes = afterThrows.getReferencedTypes();
 
@@ -337,7 +337,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     }
   }
 
-  private void compareContainingClasses(PsiClass intellij, PsiClass theirs) {
+  private static void compareContainingClasses(PsiClass intellij, PsiClass theirs) {
     PsiClass intellijContainingClass = intellij.getContainingClass();
     PsiClass theirsContainingClass = theirs.getContainingClass();
 

@@ -539,7 +539,7 @@ public final class PsiLiteralUtil {
   }
 
   private static int parseUnicodeEscapeBackwards(@NotNull String s, int index, @NotNull Predicate<? super Character> charPredicate) {
-    // \u1234 needs at least 6 positions
+    // \uFFFD needs at least 6 positions
     if (index - 5 < 0) return -1;
 
     int start = findSlashU(s, index - 4);
@@ -617,7 +617,7 @@ public final class PsiLiteralUtil {
     if (i >= line.length()) return -1;
     char c = line.charAt(i++);
     if (c == '\\') {
-      // like \u0020
+      // like \uFFFD
       char c1 = line.charAt(i++);
       if (c1 == 'u') {
         while (i < line.length() && line.charAt(i) == 'u') i++;

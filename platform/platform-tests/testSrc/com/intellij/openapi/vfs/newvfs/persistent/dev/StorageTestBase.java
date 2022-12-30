@@ -3,10 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.StorageLockContext;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArraySet;
-import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -15,21 +12,18 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedStorage.NULL_ID;
-import static java.nio.charset.StandardCharsets.US_ASCII;
+import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID;
+import static com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.NULL_ID;
 import static org.junit.Assert.*;
 
 /**
- * FIXME type something meaningful here
+ *
  */
 public abstract class StorageTestBase<S> {
   static {
@@ -37,7 +31,7 @@ public abstract class StorageTestBase<S> {
   }
 
   protected static final StorageLockContext LOCK_CONTEXT = new StorageLockContext(true, true);
-  protected static final int ENOUGH_RECORDS = 2_000_000;
+  protected static final int ENOUGH_RECORDS = 1_000_000;
 
 
   @Rule
@@ -46,9 +40,16 @@ public abstract class StorageTestBase<S> {
   protected Path storagePath;
   protected S storage;
 
+  // =============================================================================
+  // RC: storages share no common interface, so the test itself used as an adapter,
+  //    adopting them to the common interface:
   protected abstract S openStorage(final Path pathToStorage) throws Exception;
 
   protected abstract void closeStorage(final S storage) throws Exception;
+
+  protected abstract boolean hasRecord(final S storage,
+                                       final int recordId) throws Exception;
+
 
   protected abstract StorageRecord readRecord(final S storage,
                                               final int recordId) throws Exception;
@@ -58,6 +59,8 @@ public abstract class StorageTestBase<S> {
 
   protected abstract void deleteRecord(final int recordId,
                                        final S storage) throws Exception;
+
+  //======== end of adapters =====================================================
 
 
   @Before
@@ -107,6 +110,7 @@ public abstract class StorageTestBase<S> {
       recordRead.payload
     );
   }
+
 
   @Test
   public void manyRecordsWritten_CouldAllBeReadBackUnchanged() throws Exception {
@@ -215,8 +219,8 @@ public abstract class StorageTestBase<S> {
     final StorageRecord[] recordsToWrite = StorageTestBase.generateRecords(ENOUGH_RECORDS);
 
     //write initial records
-    for (StorageRecord record : recordsToWrite) {
-      record.writeIntoStorage(this, storage);
+    for (int i = 0; i < recordsToWrite.length; i++) {
+      recordsToWrite[i] = recordsToWrite[i].writeIntoStorage(this, storage);
     }
 
     closeStorage(storage);
@@ -228,6 +232,9 @@ public abstract class StorageTestBase<S> {
         .withRandomPayloadOfSize(recordsToWrite[i].payload.length() * 3)
         .writeIntoStorage(this, storage);
     }
+
+    closeStorage(storage);
+    storage = openStorage(storagePath);
 
     for (int i = 0; i < recordsToWrite.length; i++) {
       final StorageRecord recordWritten = recordsToWrite[i];
@@ -241,6 +248,8 @@ public abstract class StorageTestBase<S> {
     }
   }
 
+  //TODO RC: test space reclamation (not implemented yet): add/delete records multiple time, check storage.size is not
+  //         growing infinitely
 
   @NotNull
   protected static StorageRecord[] generateRecords(final int count) {

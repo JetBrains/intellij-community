@@ -399,23 +399,13 @@ public final class TypedHandler extends TypedActionHandlerBase {
     boolean matched = BraceMatchingUtil.matchBrace(fileText, fileType, iterator, true, true);
 
     if (!matched) {
-      String text;
-      switch (lparenChar) {
-        case '(':
-          text = ")";
-          break;
-        case '[':
-          text = "]";
-          break;
-        case '<':
-          text = ">";
-          break;
-        case '{':
-          text = "}";
-          break;
-        default:
-          throw new AssertionError("Unknown char '" + lparenChar+'\'');
-      }
+      String text = switch (lparenChar) {
+        case '(' -> ")";
+        case '[' -> "]";
+        case '<' -> ">";
+        case '{' -> "}";
+        default -> throw new AssertionError("Unknown char '" + lparenChar + '\'');
+      };
       editor.getDocument().insertString(offset, text);
       TabOutScopesTracker.getInstance().registerEmptyScope(editor, offset);
     }

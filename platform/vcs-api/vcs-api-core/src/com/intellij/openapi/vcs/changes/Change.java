@@ -218,16 +218,12 @@ public class Change {
   @NonNls
   public String toString() {
     final Type type = getType();
-    switch (type) {
-      case NEW:
-        return "A: " + myAfterRevision;
-      case DELETED:
-        return "D: " + myBeforeRevision;
-      case MOVED:
-        return "M: " + myBeforeRevision + " -> " + myAfterRevision;
-      default:
-        return "M: " + myAfterRevision;
-    }
+    return switch (type) {
+      case NEW -> "A: " + myAfterRevision;
+      case DELETED -> "D: " + myBeforeRevision;
+      case MOVED -> "M: " + myBeforeRevision + " -> " + myAfterRevision;
+      default -> "M: " + myAfterRevision;
+    };
   }
 
   @Nullable

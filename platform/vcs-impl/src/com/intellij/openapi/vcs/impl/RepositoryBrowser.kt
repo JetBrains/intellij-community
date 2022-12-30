@@ -32,7 +32,6 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.IconManager
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.PlatformIcons
@@ -87,7 +86,7 @@ object RepositoryBrowser {
 class RepositoryBrowserPanel(
   val project: Project,
   val root: AbstractVcsVirtualFile,
-  val localRoot: VirtualFile
+  private val localRoot: VirtualFile
 ) : JPanel(BorderLayout()), DataProvider, Disposable {
   companion object {
     val REPOSITORY_BROWSER_DATA_KEY = DataKey.create<RepositoryBrowserPanel>("com.intellij.openapi.vcs.impl.RepositoryBrowserPanel")
@@ -112,8 +111,6 @@ class RepositoryBrowserPanel(
       }
     }
     fileSystemTree = object : FileSystemTreeImpl(project, fileChooserDescriptor) {
-      @Suppress("OverridingDeprecatedMember")
-      override fun useNewAsyncModel() = true
     }
     fileSystemTree.addOkAction {
       val files = fileSystemTree.selectedFiles

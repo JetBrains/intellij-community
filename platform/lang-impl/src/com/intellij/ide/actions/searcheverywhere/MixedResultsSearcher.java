@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType;
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchingProcessStatisticsCollector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -171,6 +172,7 @@ class MixedResultsSearcher implements SESearcher {
     @Override
     public void run() {
       LOG.debug("Search task started for contributor ", myContributor);
+      SearchingProcessStatisticsCollector.searchStarted(myContributor);
       try {
         boolean repeat;
         do {
@@ -215,6 +217,8 @@ class MixedResultsSearcher implements SESearcher {
           return true;
         }
 
+        reportElementOnce();
+
         boolean added = myAccumulator.addElement(element, myContributor, priority, wrapperIndicator);
         if (!added) {
           myAccumulator.setContributorHasMore(myContributor, true);
@@ -225,6 +229,13 @@ class MixedResultsSearcher implements SESearcher {
         LOG.warn("Search task was interrupted");
         return false;
       }
+    }
+
+    private boolean firstElementReported;
+    private void reportElementOnce() {
+      if (firstElementReported) return;
+      firstElementReported = true;
+      SearchingProcessStatisticsCollector.elementFound(myContributor);
     }
   }
 

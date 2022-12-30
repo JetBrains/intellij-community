@@ -133,7 +133,7 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
     return Signature.create(signature.name, signature.type, newParameters, signature.additionalData)!!
   }
 
-  protected fun guessParameterIdByName(parameter: SuggestedRefactoringSupport.Parameter, prevState: SuggestedRefactoringState): Any? {
+  private fun guessParameterIdByName(parameter: SuggestedRefactoringSupport.Parameter, prevState: SuggestedRefactoringState): Any? {
     prevState.newSignature.parameterByName(parameter.name)
       ?.let { return it.id }
 

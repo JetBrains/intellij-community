@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.gradleTooling
 import org.gradle.api.Named
 import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.Project
-import java.lang.reflect.Method
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinSourceSetReflection
 
 internal fun getAdditionalVisibleSourceSets(project: Project, sourceSetName: String): Set<String> {
     val kotlinExtension = project.extensions.findByName("kotlin") ?: return emptySet()
@@ -13,27 +13,9 @@ internal fun getAdditionalVisibleSourceSets(project: Project, sourceSetName: Str
     val getSourceSets = kotlinExtensionClass.getMethodOrNull("getSourceSets") ?: return emptySet()
     val sourceSets = getSourceSets.invoke(kotlinExtension) as NamedDomainObjectCollection<*>
     val sourceSet = sourceSets.findByName(sourceSetName) as? Named ?: return emptySet()
-    return getAdditionalVisibleSourceSets(project, sourceSet)
+    return getAdditionalVisibleSourceSets(sourceSet)
 }
 
-internal fun getAdditionalVisibleSourceSets(project: Project, sourceSet: Named): Set<String> {
-    val sourceSetClass = sourceSet.javaClass
-    val getAdditionalVisibleSourceSets = sourceSetClass.getMethodOrNull("getAdditionalVisibleSourceSets") ?: return emptySet()
-
-    /*
-    Invoke 'getAdditionalVisibleSourceSets' catching, since this method threw exceptions in older versions
-    of the Gradle plugin. In particular: Some tests experienced 'NoSuchElementException' for certain source sets, that
-    should be available.
-     */
-    val additionalVisibleSourceSets = getAdditionalVisibleSourceSets.invokeCatching(project, sourceSet)?.let { it as List<*> }
-    return additionalVisibleSourceSets.orEmpty().map { it as Named }.map { it.name }.toSet()
-}
-
-private fun Method.invokeCatching(project: Project, obj: Any, vararg args: Any?): Any? {
-    return try {
-        invoke(obj, *args)
-    } catch (t: Throwable) {
-        project.logger.warn("Method invocation $name failed", t)
-        null
-    }
+internal fun getAdditionalVisibleSourceSets(sourceSet: Named): Set<String> {
+    return KotlinSourceSetReflection(sourceSet).additionalVisibleSourceSets.map { it.name }.toSet()
 }

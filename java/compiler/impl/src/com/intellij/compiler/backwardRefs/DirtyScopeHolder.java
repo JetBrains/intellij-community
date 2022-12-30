@@ -95,7 +95,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
 
     compilationAffectedModulesSubscription.accept(connect, myCompilationAffectedModules);
 
-    WorkspaceModelTopics.getInstance(myProject).subscribeAfterModuleLoading(connect, new WorkspaceModelChangeListener() {
+    connect.subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceModelChangeListener() {
       @Override
       public void beforeChanged(@NotNull VersionedStorageChange event) {
         for (EntityChange<ModuleEntity> change : event.getChanges(ModuleEntity.class)) {

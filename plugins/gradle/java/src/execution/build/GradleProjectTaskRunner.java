@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build;
 
 import com.intellij.build.BuildViewManager;
@@ -53,72 +53,76 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
   private static final Logger LOG = Logger.getInstance(GradleProjectTaskRunner.class);
 
   @Language("Groovy")
-  private static final String COLLECT_OUTPUT_PATHS_USING_SERVICES_INIT_SCRIPT_TEMPLATE = "import org.gradle.tooling.events.OperationCompletionListener\n" +
-                                                                                         "import org.gradle.tooling.events.FinishEvent\n" +
-                                                                                         "import org.gradle.api.services.BuildService\n" +
-                                                                                         "import org.gradle.api.services.BuildServiceParameters\n" +
-                                                                                         "import org.gradle.util.GradleVersion\n" +
-                                                                                         "import org.gradle.api.Task\n" +
-                                                                                         "\n" +
-                                                                                         "def outputFile = new File(\"%s\")\n" +
-                                                                                         "\n" +
-                                                                                         "abstract class OutputPathCollectorService\n" +
-                                                                                         "        implements BuildService<OutputPathCollectorService.Params>, AutoCloseable {\n" +
-                                                                                         "\n" +
-                                                                                         "    interface Params extends BuildServiceParameters {\n" +
-                                                                                         "        Property<File> getOutputFile()\n" +
-                                                                                         "    }\n" +
-                                                                                         "\n" +
-                                                                                         "    Set<Task> tasks = new HashSet<Task>()\n" +
-                                                                                         "\n" +
-                                                                                         "    void registerTask(Task t) {\n" +
-                                                                                         "        tasks.add(t)\n" +
-                                                                                         "    }\n" +
-                                                                                         "\n" +
-                                                                                         "    @Override\n" +
-                                                                                         "    void close() throws Exception {\n" +
-                                                                                         "        def outputFile = getParameters().outputFile.get()\n" +
-                                                                                         "        tasks.each { Task task ->\n" +
-                                                                                         "            def state = task.state\n" +
-                                                                                         "            def work = state.didWork\n" +
-                                                                                         "            def fromCache = state.skipped && state.skipMessage == 'FROM-CACHE'\n" +
-                                                                                         "            def hasOutput = task.outputs.hasOutput\n" +
-                                                                                         "            if ((work || fromCache) && hasOutput) {\n" +
-                                                                                         "                task.outputs.files.files.each { outputFile.append(it.path + '\\n') }\n" +
-                                                                                         "            }\n" +
-                                                                                         "        }\n" +
-                                                                                         "    }\n" +
-                                                                                         "}\n" +
-                                                                                         "\n" +
-                                                                                         "Provider<OutputPathCollectorService> provider = gradle.sharedServices.registerIfAbsent(\"outputPathCollectorService\",\n" +
-                                                                                         "        OutputPathCollectorService) { it.parameters.outputFile.set(outputFile)  }\n" +
-                                                                                         "\n" +
-                                                                                         "gradle.taskGraph.whenReady { TaskExecutionGraph tg ->\n" +
-                                                                                         "    tg.allTasks.each { Task t ->\n" +
-                                                                                         "        t.onlyIf {\n" +
-                                                                                         "            provider.get().registerTask(t)\n" +
-                                                                                         "            return true\n" +
-                                                                                         "        }\n" +
-                                                                                         "    }\n" +
-                                                                                         "}\n";
+  private static final String COLLECT_OUTPUT_PATHS_USING_SERVICES_INIT_SCRIPT_TEMPLATE = """
+    import org.gradle.tooling.events.OperationCompletionListener
+    import org.gradle.tooling.events.FinishEvent
+    import org.gradle.api.services.BuildService
+    import org.gradle.api.services.BuildServiceParameters
+    import org.gradle.util.GradleVersion
+    import org.gradle.api.Task
+
+    def outputFile = new File("%s")
+
+    abstract class OutputPathCollectorService
+            implements BuildService<OutputPathCollectorService.Params>, AutoCloseable {
+
+        interface Params extends BuildServiceParameters {
+            Property<File> getOutputFile()
+        }
+
+        Set<Task> tasks = new HashSet<Task>()
+
+        void registerTask(Task t) {
+            tasks.add(t)
+        }
+
+        @Override
+        void close() throws Exception {
+            def outputFile = getParameters().outputFile.get()
+            tasks.each { Task task ->
+                def state = task.state
+                def work = state.didWork
+                def fromCache = state.skipped && state.skipMessage == 'FROM-CACHE'
+                def hasOutput = task.outputs.hasOutput
+                if ((work || fromCache) && hasOutput) {
+                    task.outputs.files.files.each { outputFile.append(it.path + '\\n') }
+                }
+            }
+        }
+    }
+
+    Provider<OutputPathCollectorService> provider = gradle.sharedServices.registerIfAbsent("outputPathCollectorService",
+            OutputPathCollectorService) { it.parameters.outputFile.set(outputFile)  }
+
+    gradle.taskGraph.whenReady { TaskExecutionGraph tg ->
+        tg.allTasks.each { Task t ->
+            t.onlyIf {
+                provider.get().registerTask(t)
+                return true
+            }
+        }
+    }
+    """;
 
   @Language("Groovy")
-  private static final String COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE = "def outputFile = new File(\"%s\")\n" +
-                                                                          "def effectiveTasks = []\n" +
-                                                                          "gradle.taskGraph.addTaskExecutionListener(new TaskExecutionAdapter() {\n" +
-                                                                          "    void afterExecute(Task task, TaskState state) {\n" +
-                                                                          "        if ((state.didWork || (state.skipped && state.skipMessage == 'FROM-CACHE')) && task.outputs.hasOutput) {\n" +
-                                                                          "            effectiveTasks.add(task)\n" +
-                                                                          "        }\n" +
-                                                                          "    }\n" +
-                                                                          "})\n" +
-                                                                          "gradle.addBuildListener(new BuildAdapter() {\n" +
-                                                                          "    void buildFinished(BuildResult result) {\n" +
-                                                                          "        effectiveTasks.each { Task task ->\n" +
-                                                                          "            task.outputs.files.files.each { outputFile.append(it.path + '\\n') }\n" +
-                                                                          "        }\n" +
-                                                                          "    }\n" +
-                                                                          "})\n";
+  private static final String COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE = """
+    def outputFile = new File("%s")
+    def effectiveTasks = []
+    gradle.taskGraph.addTaskExecutionListener(new TaskExecutionAdapter() {
+        void afterExecute(Task task, TaskState state) {
+            if ((state.didWork || (state.skipped && state.skipMessage == 'FROM-CACHE')) && task.outputs.hasOutput) {
+                effectiveTasks.add(task)
+            }
+        }
+    })
+    gradle.addBuildListener(new BuildAdapter() {
+        void buildFinished(BuildResult result) {
+            effectiveTasks.each { Task task ->
+                task.outputs.files.files.each { outputFile.append(it.path + '\\n') }
+            }
+        }
+    })
+    """;
 
   @Override
   public Promise<Result> run(@NotNull Project project,
@@ -270,12 +274,10 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       if (!GradleProjectSettings.isDelegatedBuildEnabled(module)) return false;
       return isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module);
     }
-    if (projectTask instanceof ProjectModelBuildTask) {
-      ProjectModelBuildTask<?> buildTask = (ProjectModelBuildTask<?>)projectTask;
-      if (buildTask.getBuildableElement() instanceof Artifact) {
-        for (GradleBuildTasksProvider buildTasksProvider : GradleBuildTasksProvider.EP_NAME.getExtensions()) {
-          if (buildTasksProvider.isApplicable(buildTask)) return true;
-        }
+    if (projectTask instanceof BuildTask) {
+      BuildTask buildTask = (BuildTask)projectTask;
+      for (GradleBuildTasksProvider buildTasksProvider : GradleBuildTasksProvider.EP_NAME.getExtensions()) {
+        if (buildTasksProvider.isApplicable(buildTask)) return true;
       }
     }
 

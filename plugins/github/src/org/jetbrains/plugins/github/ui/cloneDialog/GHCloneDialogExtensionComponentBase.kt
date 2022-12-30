@@ -5,13 +5,14 @@ import com.intellij.collaboration.async.disposingMainScope
 import com.intellij.collaboration.auth.ui.CompactAccountsPanelFactory
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.util.CollectionDelta
-import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.dvcs.ui.DvcsBundle.message
 import com.intellij.dvcs.ui.FilePathDocumentChildPathHandle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -41,13 +42,12 @@ import git4idea.commands.Git
 import git4idea.remote.GitRememberedInputs
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsLoader
+import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsProvider
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -62,6 +62,7 @@ import kotlin.properties.Delegates
 
 internal abstract class GHCloneDialogExtensionComponentBase(
   private val project: Project,
+  private val modalityState: ModalityState,
   private val authenticationManager: GithubAuthenticationManager,
   private val executorManager: GithubApiRequestExecutorManager
 ) : VcsCloneDialogExtensionComponent() {
@@ -130,25 +131,14 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       }
     }
 
-    val indicatorsProvider = ProgressIndicatorsProvider()
-
     @Suppress("LeakingThis")
     val parentDisposable: Disposable = this
     Disposer.register(parentDisposable, loader)
-    Disposer.register(parentDisposable, indicatorsProvider)
 
+    val accountDetailsProvider = GHAccountsDetailsProvider(disposingMainScope(), authenticationManager.accountManager)
 
-    val accountDetailsLoader = GHAccountsDetailsLoader(indicatorsProvider) {
-      try {
-        executorManager.getExecutor(it)
-      }
-      catch (e: Exception) {
-        null
-      }
-    }
-
-    val accountsPanel = CompactAccountsPanelFactory(accountListModel, accountDetailsLoader)
-      .create(GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.avatarSize, AccountsPopupConfig())
+    val accountsPanel = CompactAccountsPanelFactory(accountListModel)
+      .create(accountDetailsProvider, VcsCloneDialogUiSpec.Components.avatarSize, AccountsPopupConfig())
 
     repositoriesPanel = panel {
       row {
@@ -373,7 +363,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   private fun createAccountsModel(): ListModel<GithubAccount> {
     val accountsState = authenticationManager.accountManager.accountsState
     val model = CollectionListModel(accountsState.value.keys.filter(::isAccountHandled))
-    disposingMainScope().launch {
+    disposingMainScope().launch(modalityState.asContextElement()) {
       val prev = accountsState.value.filterKeys(::isAccountHandled)
       accountsState.collect {
         val new = it.filterKeys(::isAccountHandled)

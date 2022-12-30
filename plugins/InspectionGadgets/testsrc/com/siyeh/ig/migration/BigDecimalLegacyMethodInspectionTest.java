@@ -37,53 +37,54 @@ public class BigDecimalLegacyMethodInspectionTest extends LightJavaInspectionTes
 
   public void testNoWarn() {
     // noinspection BigDecimalLegacyMethod, deprecation
-    doTest("import java.math.BigDecimal;\n" +
-           "import java.math.RoundingMode;\n" +
-           "class SetScaleDetectionIssueTest {\n" +
-           "    void something() {\n" +
-           "        System.out.println(BigDecimal.valueOf(42)./*Call to 'BigDecimal.setScale()' can use 'RoundingMode' enum constant*/setScale/**/(2, 1).toString());\n" +
-           "        System.out.println(setScale(BigDecimal.valueOf(42), 2).toString());\n" +
-           "        System.out.println(setScale(2, BigDecimal.valueOf(42)).toString());\n" +
-           "        System.out.println(setScale(BigDecimal.valueOf(42), 2, \"blah-blah\").toString());\n" +
-           "        System.out.println(setScale(\"decr\", BigDecimal.valueOf(42), 2).toString());\n" +
-           "        System.out.println(setScaleOtherWay(BigDecimal.valueOf(42), 2).toString());\n" +
-           "        System.out.println(BigDecimal.valueOf(42)./*Call to 'BigDecimal.divide()' can use 'RoundingMode' enum constant*/divide/**/(BigDecimal.valueOf(2), 1).toString());\n" +
-           "        System.out.println(divide(BigDecimal.valueOf(42), 2).toString());\n" +
-           "        System.out.println(divide(2, BigDecimal.valueOf(42)).toString());\n" +
-           "        System.out.println(divideOtherWay(BigDecimal.valueOf(42), 2).toString());\n" +
-           "    }\n" +
-           "    // Inspection found\n" +
-           "    static BigDecimal setScale(final BigDecimal value, final int scale) {\n" +
-           "        return value.setScale(scale, RoundingMode.HALF_UP);\n" +
-           "    }\n" +
-           "    // Inspection found\n" +
-           "    static BigDecimal setScale(final String descr, final BigDecimal value, final int scale) {\n" +
-           "        return value.setScale(scale, RoundingMode.HALF_UP);\n" +
-           "    }\n" +
-           "    // Inspection not found\n" +
-           "    static BigDecimal setScale(final BigDecimal value, final int scale, final String descr) {\n" +
-           "        return value.setScale(scale, RoundingMode.HALF_UP);\n" +
-           "    }\n" +
-           "    // Inspection not found\n" +
-           "    static BigDecimal setScale(final int scale, final BigDecimal value) {\n" +
-           "        return value.setScale(scale, RoundingMode.HALF_UP);\n" +
-           "    }\n" +
-           "    // Inspection not found\n" +
-           "    static BigDecimal setScaleOtherWay(final BigDecimal value, final int scale) {\n" +
-           "        return value.setScale(scale, RoundingMode.HALF_UP);\n" +
-           "    }\n" +
-           "    // Inspection found\n" +
-           "    static BigDecimal divide(final BigDecimal value, final int divisor) {\n" +
-           "        return value.divide(BigDecimal.valueOf(divisor), RoundingMode.HALF_UP);\n" +
-           "    }\n" +
-           "    // Inspection not found\n" +
-           "    static BigDecimal divide(final int divisor, final BigDecimal value) {\n" +
-           "        return value.divide(BigDecimal.valueOf(divisor), RoundingMode.HALF_UP);\n" +
-           "    }\n" +
-           "    // Inspection not found\n" +
-           "    static BigDecimal divideOtherWay(final BigDecimal value, final int divisor) {\n" +
-           "        return value.divide(BigDecimal.valueOf(divisor), RoundingMode.HALF_UP);\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             import java.math.BigDecimal;
+             import java.math.RoundingMode;
+             class SetScaleDetectionIssueTest {
+                 void something() {
+                     System.out.println(BigDecimal.valueOf(42)./*Call to 'BigDecimal.setScale()' can use 'RoundingMode' enum constant*/setScale/**/(2, 1).toString());
+                     System.out.println(setScale(BigDecimal.valueOf(42), 2).toString());
+                     System.out.println(setScale(2, BigDecimal.valueOf(42)).toString());
+                     System.out.println(setScale(BigDecimal.valueOf(42), 2, "blah-blah").toString());
+                     System.out.println(setScale("decr", BigDecimal.valueOf(42), 2).toString());
+                     System.out.println(setScaleOtherWay(BigDecimal.valueOf(42), 2).toString());
+                     System.out.println(BigDecimal.valueOf(42)./*Call to 'BigDecimal.divide()' can use 'RoundingMode' enum constant*/divide/**/(BigDecimal.valueOf(2), 1).toString());
+                     System.out.println(divide(BigDecimal.valueOf(42), 2).toString());
+                     System.out.println(divide(2, BigDecimal.valueOf(42)).toString());
+                     System.out.println(divideOtherWay(BigDecimal.valueOf(42), 2).toString());
+                 }
+                 // Inspection found
+                 static BigDecimal setScale(final BigDecimal value, final int scale) {
+                     return value.setScale(scale, RoundingMode.HALF_UP);
+                 }
+                 // Inspection found
+                 static BigDecimal setScale(final String descr, final BigDecimal value, final int scale) {
+                     return value.setScale(scale, RoundingMode.HALF_UP);
+                 }
+                 // Inspection not found
+                 static BigDecimal setScale(final BigDecimal value, final int scale, final String descr) {
+                     return value.setScale(scale, RoundingMode.HALF_UP);
+                 }
+                 // Inspection not found
+                 static BigDecimal setScale(final int scale, final BigDecimal value) {
+                     return value.setScale(scale, RoundingMode.HALF_UP);
+                 }
+                 // Inspection not found
+                 static BigDecimal setScaleOtherWay(final BigDecimal value, final int scale) {
+                     return value.setScale(scale, RoundingMode.HALF_UP);
+                 }
+                 // Inspection found
+                 static BigDecimal divide(final BigDecimal value, final int divisor) {
+                     return value.divide(BigDecimal.valueOf(divisor), RoundingMode.HALF_UP);
+                 }
+                 // Inspection not found
+                 static BigDecimal divide(final int divisor, final BigDecimal value) {
+                     return value.divide(BigDecimal.valueOf(divisor), RoundingMode.HALF_UP);
+                 }
+                 // Inspection not found
+                 static BigDecimal divideOtherWay(final BigDecimal value, final int divisor) {
+                     return value.divide(BigDecimal.valueOf(divisor), RoundingMode.HALF_UP);
+                 }
+             }""");
   }
 }

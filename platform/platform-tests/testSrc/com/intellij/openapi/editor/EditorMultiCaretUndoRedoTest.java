@@ -56,26 +56,30 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
 
   public void testUndoRedo() {
     WriteAction.run(()-> {
-      init("some<caret> text<caret>\n" +
-           "some <selection><caret>other</selection> <selection>text<caret></selection>\n" +
-           "<selection>ano<caret>ther</selection> line");
+      init("""
+             some<caret> text<caret>
+             some <selection><caret>other</selection> <selection>text<caret></selection>
+             <selection>ano<caret>ther</selection> line""");
       type('A');
       executeAction("EditorDelete");
       mouse().clickAt(0, 1);
       undo();
       checkResult("someA<caret>textA<caret>some A<caret>A<caret>A<caret>line");
       undo();
-      checkResult("someA<caret> textA<caret>\n" +
-                  "some A<caret> A<caret>\n" +
-                  "A<caret> line");
+      checkResult("""
+                    someA<caret> textA<caret>
+                    some A<caret> A<caret>
+                    A<caret> line""");
       undo();
-      checkResult("some<caret> text<caret>\n" +
-                  "some <selection><caret>other</selection> <selection>text<caret></selection>\n" +
-                  "<selection>ano<caret>ther</selection> line");
+      checkResult("""
+                    some<caret> text<caret>
+                    some <selection><caret>other</selection> <selection>text<caret></selection>
+                    <selection>ano<caret>ther</selection> line""");
       redo();
-      checkResult("someA<caret> textA<caret>\n" +
-                  "some A<caret> A<caret>\n" +
-                  "A<caret> line");
+      checkResult("""
+                    someA<caret> textA<caret>
+                    some A<caret> A<caret>
+                    A<caret> line""");
     });
   }
 

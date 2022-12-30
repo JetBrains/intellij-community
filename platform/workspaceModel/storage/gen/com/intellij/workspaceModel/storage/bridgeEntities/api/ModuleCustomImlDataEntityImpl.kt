@@ -51,7 +51,7 @@ open class ModuleCustomImlDataEntityImpl(val dataSource: ModuleCustomImlDataEnti
     return connections
   }
 
-  class Builder(val result: ModuleCustomImlDataEntityData?) : ModifiableWorkspaceEntityBase<ModuleCustomImlDataEntity>(), ModuleCustomImlDataEntity.Builder {
+  class Builder(var result: ModuleCustomImlDataEntityData?) : ModifiableWorkspaceEntityBase<ModuleCustomImlDataEntity>(), ModuleCustomImlDataEntity.Builder {
     constructor() : this(ModuleCustomImlDataEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -69,6 +69,9 @@ open class ModuleCustomImlDataEntityImpl(val dataSource: ModuleCustomImlDataEnti
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -102,11 +105,14 @@ open class ModuleCustomImlDataEntityImpl(val dataSource: ModuleCustomImlDataEnti
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleCustomImlDataEntity
-      this.entitySource = dataSource.entitySource
-      this.rootManagerTagCustomData = dataSource.rootManagerTagCustomData
-      this.customModuleOptions = dataSource.customModuleOptions.toMutableMap()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.rootManagerTagCustomData != dataSource?.rootManagerTagCustomData) this.rootManagerTagCustomData = dataSource.rootManagerTagCustomData
+      if (this.customModuleOptions != dataSource.customModuleOptions) this.customModuleOptions = dataSource.customModuleOptions.toMutableMap()
       if (parents != null) {
-        this.module = parents.filterIsInstance<ModuleEntity>().single()
+        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
       }
     }
 
@@ -229,7 +235,7 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ModuleCustomImlDataEntityData
 
@@ -241,7 +247,7 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ModuleCustomImlDataEntityData
 

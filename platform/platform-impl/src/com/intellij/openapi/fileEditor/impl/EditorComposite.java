@@ -74,11 +74,6 @@ public class EditorComposite extends FileEditorComposite implements Disposable {
    * Whether the composite is opened as preview tab or not
    */
   private boolean myPreview;
-  /**
-   * This is initial timestamp of the file. It uses to implement
-   * "close non modified editors first" feature.
-   */
-  private final long myInitialFileTimeStamp;
   private TabbedPaneWrapper myTabbedPaneWrapper;
   private final @NotNull MyComponent myComponent;
   private final FocusWatcher myFocusWatcher;
@@ -115,7 +110,6 @@ public class EditorComposite extends FileEditorComposite implements Disposable {
       }
     }
     myFileEditorManager = fileEditorManager;
-    myInitialFileTimeStamp = myFile.getTimeStamp();
 
     myProject = fileEditorManager.getProject();
     Disposer.register(myProject, this);
@@ -183,7 +177,7 @@ public class EditorComposite extends FileEditorComposite implements Disposable {
 
   @Override
   public @NotNull List<@NotNull FileEditorProvider> getAllProviders() {
-    return ContainerUtil.map(getAllEditorsWithProviders(), it -> it.getProvider());
+    return ContainerUtil.map(getAllEditorsWithProviders(), FileEditorWithProvider::getProvider);
   }
 
   private @NotNull TabbedPaneWrapper.AsJBTabs createTabbedPaneWrapper(MyComponent myComponent) {
@@ -314,11 +308,11 @@ public class EditorComposite extends FileEditorComposite implements Disposable {
 
   @Override
   public @NotNull List<@NotNull FileEditor> getAllEditors() {
-    return ContainerUtil.map(getAllEditorsWithProviders(), it -> it.getFileEditor());
+    return ContainerUtil.map(getAllEditorsWithProviders(), FileEditorWithProvider::getFileEditor);
   }
 
   public @NotNull List<@NotNull FileEditorWithProvider> getAllEditorsWithProviders() {
-    return Collections.unmodifiableList(new SmartList<>(myEditorsWithProviders));
+    return List.copyOf(myEditorsWithProviders);
   }
 
   @NotNull
@@ -497,7 +491,7 @@ public class EditorComposite extends FileEditorComposite implements Disposable {
    * @return {@code true} if the composite contains at least one modified myEditor
    */
   public boolean isModified() {
-    return ContainerUtil.exists(getAllEditors(), editor -> editor.isModified());
+    return ContainerUtil.exists(getAllEditors(), FileEditor::isModified);
   }
 
   /**

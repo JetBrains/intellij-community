@@ -189,6 +189,7 @@ public final class MavenProjectsTree {
     }
   }
 
+  @NotNull
   public List<String> getManagedFilesPaths() {
     synchronized (myStateLock) {
       return new ArrayList<>(myManagedFilesPaths);

@@ -313,6 +313,22 @@ public final class MavenDomProjectProcessorUtils {
     return processor.myResult;
   }
 
+  public static boolean processPluginsInPluginManagement(@NotNull MavenDomProjectModel projectDom,
+                                                         @NotNull final Processor<? super MavenDomPlugin> processor,
+                                                         @NotNull final Project project) {
+
+    Processor<MavenDomPlugins> managedPluginsListProcessor = plugins -> {
+      for (MavenDomPlugin domPlugin : plugins.getPlugins()) {
+        if (processor.process(domPlugin)) return true;
+      }
+      return false;
+    };
+
+    Function<MavenDomProjectModelBase, MavenDomPlugins> domFunction =
+      mavenDomProfile -> mavenDomProfile.getBuild().getPluginManagement().getPlugins();
+
+    return process(projectDom, managedPluginsListProcessor, project, domFunction, domFunction);
+  }
 
   private static boolean processDependencyRecurrently(@NotNull final Processor<? super MavenDomDependency> processor,
                                                       @NotNull MavenDomDependency domDependency,

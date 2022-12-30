@@ -3,8 +3,6 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.ToolbarHolder
@@ -41,14 +39,9 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
   private val myHeaderContent = createHeaderContent()
 
   private fun createToolbarPlaceholder(): NonOpaquePanel {
-    val sideSeparatorGap = JBUI.scale(4)
-    val sideSeparatorColor = JBColor.namedColor("MainToolbar.separatorColor", JBColor.gray)
+    val borderWidth = JBUI.scale(4)
     val panel = NonOpaquePanel()
-    panel.border = JBUI.Borders.compound(
-      JBUI.Borders.emptyLeft(sideSeparatorGap),
-      JBUI.Borders.customLine(sideSeparatorColor, 0, 1, 0, 1),
-      JBUI.Borders.empty(0, sideSeparatorGap)
-    )
+    panel.border = JBUI.Borders.empty(0, borderWidth)
     return panel
   }
 
@@ -73,8 +66,6 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     add(buttonsView, gb.next().anchor(EAST))
 
     setCustomFrameTopBorder({ false }, {true})
-
-    Disposer.register(this, mainMenuButton.menuShortcutHandler)
   }
 
   private fun wrap(comp: JComponent) = object : NonOpaquePanel(comp) {
@@ -103,18 +94,19 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
 
   override fun installListeners() {
     super.installListeners()
-    mainMenuButton.menuShortcutHandler.registerShortcuts(frame.rootPane)
+    mainMenuButton.rootPane = frame.rootPane
     myMenuBar.addComponentListener(contentResizeListener)
   }
 
   override fun uninstallListeners() {
     super.uninstallListeners()
-    mainMenuButton.menuShortcutHandler.unregisterShortcuts()
     myMenuBar.removeComponentListener(contentResizeListener)
     toolbar?.removeComponentListener(contentResizeListener)
   }
 
-  override fun updateMenuActions(forceRebuild: Boolean) {} //todo remove
+  override fun updateMenuActions(forceRebuild: Boolean) {
+    myMenuBar.updateMenuActions(forceRebuild)
+  }
 
   override fun getComponent(): JComponent = this
 
@@ -160,12 +152,12 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
 
     val menuPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
-      add(myMenuBar, gb.next().insetLeft(JBUI.scale(20)).fillCellVertically().weighty(1.0))
+      add(myMenuBar, gb.next().insetLeft(JBUI.scale(16)).fillCellVertically().weighty(1.0))
       add(Box.createHorizontalGlue(), gb.next().weightx(1.0).fillCell())
     }
     val toolbarPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
-      add(mainMenuButton.button, gb.next().insetLeft(JBUI.scale(20)))
+      add(mainMenuButton.button, gb.next().insetLeft(JBUI.scale(16)))
       add(myToolbarPlaceholder, gb.next().weightx(1.0).fillCell())
     }
 

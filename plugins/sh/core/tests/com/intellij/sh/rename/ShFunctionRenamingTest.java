@@ -34,21 +34,25 @@ public class ShFunctionRenamingTest extends BasePlatformTestCase {
   }
 
   public void testImportedFunctionRename() {
-    myFixture.addFileToProject("source.sh", "#!/bin/zsh\n" +
-                                            "source ./target.sh\n" +
-                                            "foo");
-    myFixture.configureByText("target.sh", "#!/bin/zsh\n" +
-                                           "function <caret>foo() {\n" +
-                                           "    echo \"Simple text\"\n" +
-                                           "}");
+    myFixture.addFileToProject("source.sh", """
+      #!/bin/zsh
+      source ./target.sh
+      foo""");
+    myFixture.configureByText("target.sh", """
+      #!/bin/zsh
+      function <caret>foo() {
+          echo "Simple text"
+      }""");
     myFixture.renameElementAtCaret("bar");
-    myFixture.checkResult("source.sh", "#!/bin/zsh\n" +
-                                       "source ./target.sh\n" +
-                                       "bar", false);
-    myFixture.checkResult("#!/bin/zsh\n" +
-                          "function <caret>bar() {\n" +
-                          "    echo \"Simple text\"\n" +
-                          "}");
+    myFixture.checkResult("source.sh", """
+      #!/bin/zsh
+      source ./target.sh
+      bar""", false);
+    myFixture.checkResult("""
+                            #!/bin/zsh
+                            function <caret>bar() {
+                                echo "Simple text"
+                            }""");
   }
 
   private void doTest(@Nullable String newName) {

@@ -283,30 +283,23 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-      switch(columnIndex) {
-        case CHECK_COLUMN:
-          return myShouldRename[rowIndex];
-        case OLD_NAME_COLUMN:
-          return getElements().get(rowIndex);
-        case NEW_NAME_COLUMN:
-          return myNewNames[rowIndex];
-        default:
+      return switch (columnIndex) {
+        case CHECK_COLUMN -> myShouldRename[rowIndex];
+        case OLD_NAME_COLUMN -> getElements().get(rowIndex);
+        case NEW_NAME_COLUMN -> myNewNames[rowIndex];
+        default -> {
           LOG.assertTrue(false);
-          return null;
-      }
+          yield null;
+        }
+      };
     }
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-      switch(columnIndex) {
-        case CHECK_COLUMN:
-          myShouldRename[rowIndex] = (Boolean) aValue;
-          break;
-        case NEW_NAME_COLUMN:
-          myNewNames[rowIndex] = (String) aValue;
-          break;
-        default:
-          LOG.assertTrue(false);
+      switch (columnIndex) {
+        case CHECK_COLUMN -> myShouldRename[rowIndex] = (Boolean)aValue;
+        case NEW_NAME_COLUMN -> myNewNames[rowIndex] = (String)aValue;
+        default -> LOG.assertTrue(false);
       }
       handleChanges();
       repaintTable();
@@ -320,25 +313,20 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     @Override
     @Nullable
     public Class<?> getColumnClass(int columnIndex) {
-      switch(columnIndex) {
-        case CHECK_COLUMN: return Boolean.class;
-        case OLD_NAME_COLUMN:
-        case NEW_NAME_COLUMN:
-          return String.class;
-        default: return null;
-      }
+      return switch (columnIndex) {
+        case CHECK_COLUMN -> Boolean.class;
+        case OLD_NAME_COLUMN, NEW_NAME_COLUMN -> String.class;
+        default -> null;
+      };
     }
 
     @Override
     public String getColumnName(int column) {
-      switch(column) {
-        case OLD_NAME_COLUMN:
-          return RefactoringBundle.message("automatic.renamer.entity.name.column", myRenamer.getEntityName());
-        case NEW_NAME_COLUMN:
-          return RefactoringBundle.message("automatic.renamer.rename.to.column");
-        default:
-          return " ";
-      }
+      return switch (column) {
+        case OLD_NAME_COLUMN -> RefactoringBundle.message("automatic.renamer.entity.name.column", myRenamer.getEntityName());
+        case NEW_NAME_COLUMN -> RefactoringBundle.message("automatic.renamer.rename.to.column");
+        default -> " ";
+      };
     }
 
     private class MySpaceAction extends AbstractAction {

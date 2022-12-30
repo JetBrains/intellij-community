@@ -102,14 +102,12 @@ public class WrapWithMutableCollectionFix implements LocalQuickFix {
     if (aClass == null) return null;
     String name = aClass.getQualifiedName();
     if (name == null) return null;
-    switch (name) {
-      case CommonClassNames.JAVA_LANG_ITERABLE:
-      case CommonClassNames.JAVA_UTIL_COLLECTION:
-      case CommonClassNames.JAVA_UTIL_LIST: return CommonClassNames.JAVA_UTIL_ARRAY_LIST;
-      case CommonClassNames.JAVA_UTIL_SET: return CommonClassNames.JAVA_UTIL_HASH_SET;
-      case CommonClassNames.JAVA_UTIL_MAP:
-        return CommonClassNames.JAVA_UTIL_HASH_MAP;
-    }
-    return null;
+    return switch (name) {
+      case CommonClassNames.JAVA_LANG_ITERABLE, CommonClassNames.JAVA_UTIL_COLLECTION, CommonClassNames.JAVA_UTIL_LIST ->
+        CommonClassNames.JAVA_UTIL_ARRAY_LIST;
+      case CommonClassNames.JAVA_UTIL_SET -> CommonClassNames.JAVA_UTIL_HASH_SET;
+      case CommonClassNames.JAVA_UTIL_MAP -> CommonClassNames.JAVA_UTIL_HASH_MAP;
+      default -> null;
+    };
   }
 }

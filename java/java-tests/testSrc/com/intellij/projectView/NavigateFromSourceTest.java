@@ -43,34 +43,40 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
 
     myStructure.checkNavigateFromSourceBehaviour(psiClass, virtualFile, pane);
 
-    PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
-                                                     " -PsiDirectory: showClassMembers\n" +
-                                                     "  -PsiDirectory: src\n" +
-                                                     "   -PsiDirectory: com\n" +
-                                                     "    -PsiDirectory: package1\n" +
-                                                     "     [Class1]\n" +
-                                                     "     Class2\n" +
-                                                     " +External Libraries\n"
+    PlatformTestUtil.assertTreeEqual(pane.getTree(), """
+                                       -Project
+                                        -PsiDirectory: showClassMembers
+                                         -PsiDirectory: src
+                                          -PsiDirectory: com
+                                           -PsiDirectory: package1
+                                            [Class1]
+                                            Class2
+                                        +External Libraries
+                                       """
       , true);
 
-    changeClassTextAndTryToNavigate("class Class11 {}", (PsiJavaFile)containingFile, pane, "-Project\n" +
-                                                                                           " -PsiDirectory: showClassMembers\n" +
-                                                                                           "  -PsiDirectory: src\n" +
-                                                                                           "   -PsiDirectory: com\n" +
-                                                                                           "    -PsiDirectory: package1\n" +
-                                                                                           "     -Class1.java\n" +
-                                                                                           "      [Class11]\n" +
-                                                                                           "     Class2\n" +
-                                                                                           " +External Libraries\n");
+    changeClassTextAndTryToNavigate("class Class11 {}", (PsiJavaFile)containingFile, pane, """
+      -Project
+       -PsiDirectory: showClassMembers
+        -PsiDirectory: src
+         -PsiDirectory: com
+          -PsiDirectory: package1
+           -Class1.java
+            [Class11]
+           Class2
+       +External Libraries
+      """);
 
-    changeClassTextAndTryToNavigate("class Class1 {}", (PsiJavaFile)containingFile, pane, "-Project\n" +
-                                                                                          " -PsiDirectory: showClassMembers\n" +
-                                                                                          "  -PsiDirectory: src\n" +
-                                                                                          "   -PsiDirectory: com\n" +
-                                                                                          "    -PsiDirectory: package1\n" +
-                                                                                          "     [Class1]\n" +
-                                                                                          "     Class2\n" +
-                                                                                          " +External Libraries\n");
+    changeClassTextAndTryToNavigate("class Class1 {}", (PsiJavaFile)containingFile, pane, """
+      -Project
+       -PsiDirectory: showClassMembers
+        -PsiDirectory: src
+         -PsiDirectory: com
+          -PsiDirectory: package1
+           [Class1]
+           Class2
+       +External Libraries
+      """);
 
     doTestMultipleSelection(pane, ((PsiJavaFile)containingFile).getClasses()[0]);
   }
@@ -146,13 +152,15 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
     VirtualFile file = JarFileSystem.getInstance().getJarRootForLocalFile(archive).findChild("Main.class");
     pane.select(PsiManager.getInstance(project).findFile(file), file, false);
     PlatformTestUtil.waitWhileBusy(pane.getTree());
-    PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
-                                                     " -Group: group\n" +
-                                                     "  -PsiDirectory: module\n" +
-                                                     "   -test.jar\n" +
-                                                     "    PsiDirectory: META-INF\n" +
-                                                     "    [Main]\n" +
-                                                     " PsiDirectory: selectFileInArchiveUnderModuleGroup\n" +
-                                                     " +External Libraries\n", true);
+    PlatformTestUtil.assertTreeEqual(pane.getTree(), """
+      -Project
+       -Group: group
+        -PsiDirectory: module
+         -test.jar
+          PsiDirectory: META-INF
+          [Main]
+       PsiDirectory: selectFileInArchiveUnderModuleGroup
+       +External Libraries
+      """, true);
   }
 }

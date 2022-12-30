@@ -6,14 +6,14 @@ import org.jetbrains.intellij.build.IdeaCommunityProperties
 import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 
-object KotlinPluginBuildTarget {
+internal object KotlinPluginBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
     val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     runBlocking(Dispatchers.Default) {
       KotlinPluginBuilder.build(communityHome = communityHome,
                                 home = communityHome.communityRoot,
-                                properties = IdeaCommunityProperties(communityHome))
+                                properties = IdeaCommunityProperties(communityHome.communityRoot))
     }
   }
 }

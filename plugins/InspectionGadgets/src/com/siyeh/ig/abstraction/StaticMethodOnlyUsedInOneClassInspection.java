@@ -159,10 +159,10 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
 
   @NotNull
   static ProblemDescriptor createProblemDescriptor(@NotNull InspectionManager manager, PsiElement problemElement, PsiClass usageClass) {
-    final String message = (usageClass instanceof PsiAnonymousClass)
+    final String message = (usageClass instanceof PsiAnonymousClass anonymousClass)
                            ? InspectionGadgetsBundle.message("static.method.only.used.in.one.anonymous.class.problem.descriptor",
                                                              (problemElement.getParent() instanceof PsiMethod) ? 1 : 2,
-                                                             ((PsiAnonymousClass)usageClass).getBaseClassReference().getText())
+                                                             anonymousClass.getBaseClassReference().getText())
                            : InspectionGadgetsBundle.message("static.method.only.used.in.one.class.problem.descriptor",
                                                              (problemElement.getParent() instanceof PsiMethod) ? 1 : 2,
                                                              usageClass.getName());
@@ -203,11 +203,11 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
                 return true;
               }
             };
-          if (refEntity instanceof RefMethod) {
-            globalJavaContext.enqueueMethodUsagesProcessor((RefMethod)refEntity, processor);
+          if (refEntity instanceof RefMethod refMethod) {
+            globalJavaContext.enqueueMethodUsagesProcessor(refMethod, processor);
           }
-          else if (refEntity instanceof RefField) {
-            globalJavaContext.enqueueFieldUsagesProcessor((RefField)refEntity, processor);
+          else if (refEntity instanceof RefField refField) {
+            globalJavaContext.enqueueFieldUsagesProcessor(refField, processor);
           }
         }
       }
@@ -245,8 +245,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
       }
       super.visitCallExpression(callExpression);
       final PsiMethod method = callExpression.resolveMethod();
-      if (callExpression instanceof PsiNewExpression && method == null) {
-        final PsiNewExpression newExpression = (PsiNewExpression)callExpression;
+      if (callExpression instanceof PsiNewExpression newExpression && method == null) {
         final PsiJavaCodeReferenceElement reference = newExpression.getClassReference();
         if (reference != null) {
           checkElement(reference.resolve());
@@ -267,13 +266,12 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     }
 
     private void checkElement(PsiElement element) {
-      if (!(element instanceof PsiMember)) {
-        return;
+      if (element instanceof PsiMember member) {
+        if (PsiTreeUtil.isAncestor(myElementToCheck, element, false)) {
+          return; // internal reference
+        }
+        myAccessible = PsiUtil.isAccessible(member, myPlace, null);
       }
-      if (PsiTreeUtil.isAncestor(myElementToCheck, element, false)) {
-        return; // internal reference
-      }
-      myAccessible =  PsiUtil.isAccessible((PsiMember)element, myPlace, null);
     }
 
     public boolean isAccessible() {
@@ -308,8 +306,8 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     @Nullable
     public PsiClass findUsageClass(PsiMember member) {
       ProgressManager.getInstance().runProcess(() -> {
-        final Query<PsiReference> query = member instanceof PsiMethod
-                                          ? MethodReferencesSearch.search((PsiMethod)member)
+        final Query<PsiReference> query = member instanceof PsiMethod method
+                                          ? MethodReferencesSearch.search(method)
                                           : ReferencesSearch.search(member);
         if (!query.forEach(this)) {
           foundClass.set(null);
@@ -337,10 +335,10 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     protected String buildErrorString(Object... infos) {
       final PsiMember member = (PsiMember)infos[0];
       final PsiClass usageClass = (PsiClass)infos[1];
-      return (usageClass instanceof PsiAnonymousClass)
+      return (usageClass instanceof PsiAnonymousClass anonymousClass)
              ? InspectionGadgetsBundle.message("static.method.only.used.in.one.anonymous.class.problem.descriptor",
                                                (member instanceof PsiMethod) ? 1 : 2,
-                                               ((PsiAnonymousClass)usageClass).getBaseClassReference().getText())
+                                               anonymousClass.getBaseClassReference().getText())
              : InspectionGadgetsBundle.message("static.method.only.used.in.one.class.problem.descriptor",
                                                (member instanceof PsiMethod) ? 1 : 2,
                                                usageClass.getName());
@@ -454,8 +452,8 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
           return null;
         }
         if (mySettingsDelegate.ignoreOnConflicts) {
-          if (member instanceof PsiMethod) {
-            if (usageClass.findMethodsBySignature((PsiMethod)member, true).length > 0 ||
+          if (member instanceof PsiMethod method) {
+            if (usageClass.findMethodsBySignature(method, true).length > 0 ||
                 !areReferenceTargetsAccessible(member, usageClass)) {
               return null;
             }

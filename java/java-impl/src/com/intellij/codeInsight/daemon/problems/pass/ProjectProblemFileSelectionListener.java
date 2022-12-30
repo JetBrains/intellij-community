@@ -219,7 +219,7 @@ final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter imp
     return textEditor == null ? null : textEditor.getEditor();
   }
 
-  public static class MyStartupActivity implements StartupActivity {
+  private static class MyStartupActivity implements StartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
       if (ApplicationManager.getApplication().isHeadlessEnvironment() && !TestModeFlags.is(ProjectProblemUtils.ourTestingProjectProblems)) {

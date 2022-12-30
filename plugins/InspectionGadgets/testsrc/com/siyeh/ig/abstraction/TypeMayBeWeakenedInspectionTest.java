@@ -23,32 +23,35 @@ public class TypeMayBeWeakenedInspectionTest extends LightJavaInspectionTestCase
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "package weaken_type.sub;\n" +
-      "public class NumberAdderImpl implements NumberAdder {\n" +
-      "  public int doSomething() {\n" +
-      "    return getNumberOne() + 1;\n" +
-      "  }\n" +
-      "  protected int getNumberOne() {\n" +
-      "    return 1;\n" +
-      "  }\n" +
-      "}",
-      "package weaken_type.sub;\n" +
-      "public class NumberAdderExtension extends NumberAdderImpl {\n" +
-      "  @Override\n" +
-      "  public int getNumberOne() {\n" +
-      "    return super.getNumberOne();\n" +
-      "  }\n" +
-      "}",
+      """
+package weaken_type.sub;
+public class NumberAdderImpl implements NumberAdder {
+  public int doSomething() {
+    return getNumberOne() + 1;
+  }
+  protected int getNumberOne() {
+    return 1;
+  }
+}""",
+      """
+package weaken_type.sub;
+public class NumberAdderExtension extends NumberAdderImpl {
+  @Override
+  public int getNumberOne() {
+    return super.getNumberOne();
+  }
+}""",
       "package java.util.function;" +
       "@FunctionalInterface " +
       "public interface Function<T, R> {" +
       "    R apply(T t);" +
       "}",
-      "package java.util.function;\n" +
-      "@FunctionalInterface\n" +
-      "public interface Supplier<T> {\n" +
-      "    T get();\n" +
-      "}"
+      """
+package java.util.function;
+@FunctionalInterface
+public interface Supplier<T> {
+    T get();
+}"""
     };
   }
 

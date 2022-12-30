@@ -488,23 +488,16 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   }
 
   private static String _evtype2str(int eventType) {
-    switch (eventType) {
-      case GlobalMenuLib.EVENT_OPENED:
-        return "event-opened";
-      case GlobalMenuLib.EVENT_CLOSED:
-        return "event-closed";
-      case GlobalMenuLib.EVENT_CLICKED:
-        return "event-clicked";
-      case GlobalMenuLib.SIGNAL_ABOUT_TO_SHOW:
-        return "signal-about-to-show";
-      case GlobalMenuLib.SIGNAL_ACTIVATED:
-        return "signal-activated";
-      case GlobalMenuLib.SIGNAL_CHILD_ADDED:
-        return "signal-child-added";
-      case GlobalMenuLib.SIGNAL_SHOWN:
-        return "signal-shown";
-    }
-    return "unknown-event-type-" + eventType;
+    return switch (eventType) {
+      case GlobalMenuLib.EVENT_OPENED -> "event-opened";
+      case GlobalMenuLib.EVENT_CLOSED -> "event-closed";
+      case GlobalMenuLib.EVENT_CLICKED -> "event-clicked";
+      case GlobalMenuLib.SIGNAL_ABOUT_TO_SHOW -> "signal-about-to-show";
+      case GlobalMenuLib.SIGNAL_ACTIVATED -> "signal-activated";
+      case GlobalMenuLib.SIGNAL_CHILD_ADDED -> "signal-child-added";
+      case GlobalMenuLib.SIGNAL_SHOWN -> "signal-shown";
+      default -> "unknown-event-type-" + eventType;
+    };
   }
 
   private static byte[] _icon2png(Icon icon) {

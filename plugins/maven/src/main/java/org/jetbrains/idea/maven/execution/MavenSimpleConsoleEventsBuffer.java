@@ -8,17 +8,17 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenSp
 import java.util.function.BiConsumer;
 
 public class MavenSimpleConsoleEventsBuffer {
-  private final StringBuilder myBuffer = new StringBuilder();
-  private final BiConsumer<String, Key> myConsumer;
+  private final TypedBuffer myBuffer = new TypedBuffer();
+  private final BiConsumer<String, Key<String>> myConsumer;
   private final boolean myShowSpyOutput;
   private boolean isProcessingSpyNow;
 
-  public MavenSimpleConsoleEventsBuffer(BiConsumer<String, Key> consumer, boolean showSpyOutput) {
+  public MavenSimpleConsoleEventsBuffer(BiConsumer<String, Key<String>> consumer, boolean showSpyOutput) {
     myConsumer = consumer;
     myShowSpyOutput = showSpyOutput;
   }
 
-  public void addText(@NotNull String text, @NotNull Key outputType) {
+  public void addText(@NotNull String text, @NotNull Key<String> outputType) {
     if (myShowSpyOutput) {
       myConsumer.accept(text, outputType);
       return;
@@ -26,25 +26,57 @@ public class MavenSimpleConsoleEventsBuffer {
 
     boolean lastChunk = text.charAt(text.length() - 1) == '\n';
     if (isProcessingSpyNow) {
-      myBuffer.setLength(0);
-
       isProcessingSpyNow = !lastChunk;
       return;
     }
 
+    if (!myBuffer.canAppend(outputType)){
+      myBuffer.sendAndReset(myConsumer);
+    }
 
-    String textToSend = myBuffer.length() == 0 ? text : myBuffer + text;
-    if (textToSend.length() >= MavenSpyOutputParser.PREFIX.length() || lastChunk) {
-      myBuffer.setLength(0);
-      if (!MavenSpyOutputParser.isSpyLog(textToSend)) {
-        myConsumer.accept(textToSend, outputType);
-      }
-      else {
+    myBuffer.append(text, outputType);
+    if (myBuffer.length() >= MavenSpyOutputParser.PREFIX.length() || lastChunk) {
+      if (!MavenSpyOutputParser.isSpyLog(myBuffer.getText())) {
+        myBuffer.sendAndReset(myConsumer);
+      } else {
         isProcessingSpyNow = !lastChunk;
+        myBuffer.reset();
       }
     }
-    else {
-      myBuffer.append(text);
+  }
+
+  private static final class TypedBuffer {
+    private final StringBuilder myBuilder = new StringBuilder();
+    private Key<String> myOutputType;
+
+    public void reset() {
+      myBuilder.setLength(0);
+      myOutputType = null;
+    }
+
+    public void sendAndReset(BiConsumer<String, @NotNull Key<String>> consumer) {
+      consumer.accept(getText(), myOutputType);
+      reset();
+    }
+
+    public String getText() {
+      return myBuilder.toString();
+    }
+
+    public boolean canAppend(@NotNull Key<String> outputType) {
+      return null == myOutputType || myOutputType.toString().equals(outputType.toString());
+    }
+
+    public void append(@NotNull String text, @NotNull Key<String> outputType) {
+      if (!canAppend(outputType)) {
+        throw new RuntimeException("Can't append outputType" + outputType);
+      }
+      myBuilder.append(text);
+      myOutputType = outputType;
+    }
+
+    public int length() {
+      return myBuilder.length();
     }
   }
 }

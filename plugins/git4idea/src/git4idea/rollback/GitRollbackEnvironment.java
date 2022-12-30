@@ -76,23 +76,19 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
     // collect changes to revert
     for (Change c : changes) {
       switch (c.getType()) {
-        case NEW:
+        case NEW ->
           // note that this the only change that could happen
           // for HEAD-less working directories.
           registerFile(toUnversion, c.getAfterRevision().getFile(), exceptions);
-          break;
-        case MOVED:
+        case MOVED -> {
           registerFile(toRevert, c.getBeforeRevision().getFile(), exceptions);
           registerFile(toUnindex, c.getAfterRevision().getFile(), exceptions);
           toDelete.add(c.getAfterRevision().getFile());
-          break;
-        case MODIFICATION:
+        }
+        case MODIFICATION ->
           // note that changes are also removed from index, if they got into index somehow
           registerFile(toRevert, c.getBeforeRevision().getFile(), exceptions);
-          break;
-        case DELETED:
-          registerFile(toRevert, c.getBeforeRevision().getFile(), exceptions);
-          break;
+        case DELETED -> registerFile(toRevert, c.getBeforeRevision().getFile(), exceptions);
       }
     }
     // unindex files

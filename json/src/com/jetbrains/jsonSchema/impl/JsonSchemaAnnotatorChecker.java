@@ -419,20 +419,13 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
     Collection<JsonValidationError> values = checker.getErrors().values();
     for (JsonValidationError value: values) {
       switch (value.getPriority()) {
-        case LOW_PRIORITY:
-          lowPriorityCount++;
-          break;
-        case MISSING_PROPS:
-          hasMissing = true;
-          break;
-        case MEDIUM_PRIORITY:
-          hasMedium = true;
-          break;
-        case TYPE_MISMATCH:
-          hasHard = true;
-          break;
-        case NOT_SCHEMA:
+        case LOW_PRIORITY -> lowPriorityCount++;
+        case MISSING_PROPS -> hasMissing = true;
+        case MEDIUM_PRIORITY -> hasMedium = true;
+        case TYPE_MISMATCH -> hasHard = true;
+        case NOT_SCHEMA -> {
           return AverageFailureAmount.NotSchema;
+        }
       }
     }
 

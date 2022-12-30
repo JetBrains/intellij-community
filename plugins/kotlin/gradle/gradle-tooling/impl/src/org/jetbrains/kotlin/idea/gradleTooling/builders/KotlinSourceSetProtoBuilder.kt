@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.idea.gradleTooling.builders
 
 import org.gradle.api.Named
 import org.gradle.api.Project
-import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.*
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinLanguageSettingsReflection
+import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinAndroidSourceSetInfoBuilder.buildKotlinAndroidSourceSetInfo
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinSourceSetReflection
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinTargetReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
@@ -16,9 +16,9 @@ import org.jetbrains.plugins.gradle.model.DefaultFileCollectionDependency
 import java.io.File
 
 class KotlinSourceSetProtoBuilder(
-    val androidDeps: Map<String, List<Any>>?,
+    private val androidDeps: Map<String, List<Any>>?,
     val project: Project
-) : KotlinMultiplatformComponentBuilderBase<KotlinSourceSetProto> {
+) : KotlinMultiplatformComponentBuilder<KotlinSourceSetReflection, KotlinSourceSetProto> {
     private val sourceSetsWithoutNeedOfBuildingDependenciesMetadata: Set<Named> by lazy {
         val isHMPPEnabled = project.getProperty(GradleImportProperties.IS_HMPP_ENABLED)
         if (!isHMPPEnabled) return@lazy emptySet()
@@ -40,27 +40,26 @@ class KotlinSourceSetProtoBuilder(
             .keys
     }
 
-    override fun buildComponent(origin: Any, importingContext: MultiplatformModelImportingContext): KotlinSourceSetProto? {
-        val gradleSourceSet = origin as Named
-
-        val languageSettings = gradleSourceSet["getLanguageSettings"]
-            ?.let { KotlinLanguageSettingsBuilder.buildComponent(KotlinLanguageSettingsReflection(it)) }
+    override fun buildComponent(
+        origin: KotlinSourceSetReflection,
+        importingContext: MultiplatformModelImportingContext
+    ): KotlinSourceSetProto? {
+        val languageSettings = origin.languageSettings
+            ?.let { KotlinLanguageSettingsBuilder.buildComponent(it) }
             ?: return null
-        val sourceDirs = (gradleSourceSet["getKotlin"] as? SourceDirectorySet)?.srcDirs ?: emptySet()
-        val resourceDirs = (gradleSourceSet["getResources"] as? SourceDirectorySet)?.srcDirs ?: emptySet()
 
-        @Suppress("UNCHECKED_CAST")
-        val dependsOnSourceSets = (gradleSourceSet["getDependsOn"] as? Set<Named>)
-            ?.mapTo(LinkedHashSet()) { it.name }
-            ?: emptySet<String>()
+        val sourceDirs = origin.kotlin?.srcDirs ?: emptySet()
+        val resourceDirs = origin.resources?.srcDirs ?: emptySet()
+        val dependsOnSourceSets = origin.dependsOn.map { it.name }.toSet()
+        val additionalVisibleSourceSets = origin.additionalVisibleSourceSets.map { it.name }.toSet()
 
         val sourceSetDependenciesBuilder: () -> Array<KotlinDependencyId> = {
-            val androidDependenciesForSourceSet = buildAndroidSourceSetDependencies(androidDeps, gradleSourceSet)
+            val androidDependenciesForSourceSet = buildAndroidSourceSetDependencies(androidDeps, origin.instance)
             val includeAndroidDependencies = importingContext.getProperty(GradleImportProperties.INCLUDE_ANDROID_DEPENDENCIES)
 
             val dependencies = when {
-                !includeAndroidDependencies && gradleSourceSet in sourceSetsWithoutNeedOfBuildingDependenciesMetadata -> emptyList()
-                else -> buildMetadataDependencies(gradleSourceSet, importingContext) + androidDependenciesForSourceSet
+                !includeAndroidDependencies && origin.instance in sourceSetsWithoutNeedOfBuildingDependenciesMetadata -> emptyList()
+                else -> buildMetadataDependencies(origin.instance, importingContext) + androidDependenciesForSourceSet
             }
 
             dependencies
@@ -70,21 +69,25 @@ class KotlinSourceSetProtoBuilder(
         }
 
         val intransitiveSourceSetDependenciesBuilder: () -> Array<KotlinDependencyId> = {
-            buildIntransitiveSourceSetDependencies(gradleSourceSet, importingContext)
+            buildIntransitiveSourceSetDependencies(origin.instance, importingContext)
                 .map { importingContext.dependencyMapper.getId(it) }
                 .distinct()
                 .toTypedArray()
         }
 
+        val androidSourceSetInfo = if (importingContext.kotlinGradlePluginVersion.supportsKotlinAndroidSourceSetInfo())
+            origin.androidSourceSetInfo?.let { info -> buildKotlinAndroidSourceSetInfo(info) } else null
+
         return KotlinSourceSetProto(
-            name = gradleSourceSet.name,
+            name = origin.name,
             languageSettings = languageSettings,
             sourceDirs = sourceDirs,
             resourceDirs = resourceDirs,
             regularDependencies = sourceSetDependenciesBuilder,
             intransitiveDependencies = intransitiveSourceSetDependenciesBuilder,
             dependsOnSourceSets = dependsOnSourceSets,
-            additionalVisibleSourceSets = getAdditionalVisibleSourceSets(importingContext.project, gradleSourceSet)
+            additionalVisibleSourceSets = additionalVisibleSourceSets,
+            androidSourceSetInfo = androidSourceSetInfo
         )
     }
 
@@ -112,7 +115,7 @@ class KotlinSourceSetProtoBuilder(
         }
 
         private val intransitiveMetadataDependenciesBuilder = object : KotlinMultiplatformDependenciesBuilder() {
-            override val configurationNameAccessor: String = "getIntransitiveMetadataConfigurationName"
+            override val configurationNameAccessor: String = INTRANSITIVE_METADATA_CONFIGURATION_NAME_ACCESSOR
             override val scope: String = "COMPILE"
         }
 
@@ -161,3 +164,5 @@ class KotlinSourceSetProtoBuilder(
             intransitiveMetadataDependenciesBuilder.buildComponent(gradleSourceSet, importingContext).toList()
     }
 }
+
+internal const val INTRANSITIVE_METADATA_CONFIGURATION_NAME_ACCESSOR = "getIntransitiveMetadataConfigurationName"

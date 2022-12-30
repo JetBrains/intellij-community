@@ -98,6 +98,13 @@ open class MarkdownHeaderAnchorTextTest: LightPlatformCodeInsightTestCase() {
     doTest(content, "--foo--bar--baz")
   }
 
+  fun `test unicode`() {
+    val content = """
+    # This header has Unicode in it 한글
+    """.trimIndent()
+    doTest(content, "this-header-has-unicode-in-it-한글")
+  }
+
   protected open fun doTest(content: String, expected: String) {
     configureFromFileText("some.md", content)
     val header = firstElement as MarkdownHeader

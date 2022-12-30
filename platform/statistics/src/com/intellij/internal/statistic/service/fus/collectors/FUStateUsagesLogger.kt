@@ -175,11 +175,10 @@ class FUStateUsagesLogger private constructor(): UsagesCollectorConsumer {
   private suspend fun logApplicationStates(onStartup: Boolean) {
     coroutineScope {
       val recorderLoggers = HashMap<String, StatisticsEventLogger>()
-      for (usagesCollector in ApplicationUsagesCollector.getExtensions(this@FUStateUsagesLogger)) {
-        if (onStartup && usagesCollector !is AllowedDuringStartupCollector) {
-          continue
-        }
 
+      val collectors = ApplicationUsagesCollector.getExtensions(this@FUStateUsagesLogger, onStartup)
+
+      for (usagesCollector in collectors) {
         if (!getPluginInfo(usagesCollector.javaClass).isDevelopedByJetBrains()) {
           @Suppress("removal", "DEPRECATION")
           LOG.warn("Skip '${usagesCollector.groupId}' because its registered in a third-party plugin")

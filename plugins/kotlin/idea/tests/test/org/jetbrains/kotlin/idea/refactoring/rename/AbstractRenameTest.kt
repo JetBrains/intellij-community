@@ -91,7 +91,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         }
 
         if (withRuntime != null) {
-            return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+            return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
         }
         return KotlinLightProjectDescriptor.INSTANCE
     }

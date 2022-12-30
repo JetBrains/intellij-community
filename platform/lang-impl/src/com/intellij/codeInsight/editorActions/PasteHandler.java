@@ -202,7 +202,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     // We assume that EditorModificationUtil.insertStringAtCaret() is smart enough to remove currently selected text (if any).
 
     CopyPasteOptions copyPasteOptions = CopyPasteOptionsTransferableData.valueFromTransferable(content);
-    boolean isInsertingEntireLineAboveCaret = copyPasteOptions.isEntireLineFromEmptySelection() &&
+    boolean isInsertingEntireLineAboveCaret = copyPasteOptions.isCopiedFromEmptySelection() &&
                                               !selectionModel.hasSelection();
     List<CaretState> caretStateToRestore = null;
     if (isInsertingEntireLineAboveCaret) {

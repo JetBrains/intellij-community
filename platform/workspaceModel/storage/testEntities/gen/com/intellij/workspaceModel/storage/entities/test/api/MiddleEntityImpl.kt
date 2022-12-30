@@ -46,7 +46,7 @@ open class MiddleEntityImpl(val dataSource: MiddleEntityData) : MiddleEntity, Wo
     return connections
   }
 
-  class Builder(val result: MiddleEntityData?) : ModifiableWorkspaceEntityBase<MiddleEntity>(), MiddleEntity.Builder {
+  class Builder(var result: MiddleEntityData?) : ModifiableWorkspaceEntityBase<MiddleEntity>(), MiddleEntity.Builder {
     constructor() : this(MiddleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -64,6 +64,9 @@ open class MiddleEntityImpl(val dataSource: MiddleEntityData) : MiddleEntity, Wo
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -87,10 +90,13 @@ open class MiddleEntityImpl(val dataSource: MiddleEntityData) : MiddleEntity, Wo
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as MiddleEntity
-      this.entitySource = dataSource.entitySource
-      this.property = dataSource.property
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.property != dataSource.property) this.property = dataSource.property
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<CompositeBaseEntity>().singleOrNull()
+        val parentEntityNew = parents.filterIsInstance<CompositeBaseEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 
@@ -206,7 +212,7 @@ class MiddleEntityData : WorkspaceEntityData<MiddleEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as MiddleEntityData
 
@@ -217,7 +223,7 @@ class MiddleEntityData : WorkspaceEntityData<MiddleEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as MiddleEntityData
 

@@ -36,13 +36,6 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
   }
 
   @Override
-  public void fillSelectionAndBorder(Graphics2D g, JBTabsImpl.ShapeInfo selectedShape, Color tabColor, int x, int y, int height) {
-    g.setColor(tabColor != null ? tabColor : getDefaultTabColor());
-    g.fill(selectedShape.fillPath.getShape());
-    //g.draw(selectedShape.fillPath.getShape());
-  }
-
-  @Override
   public Color getBackgroundColor() {
     return BORDER_COLOR;
   }

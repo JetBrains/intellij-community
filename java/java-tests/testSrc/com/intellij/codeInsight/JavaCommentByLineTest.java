@@ -72,43 +72,47 @@ public class JavaCommentByLineTest extends CommentByLineTestBase {
 
   public void testFoldedOneLineMethod() {
     configureFromFileText(getTestName(false) + ".java",
-                          "class C {\n" +
-                          "  void m() {\n" +
-                          "    <caret>System.out.println();\n" +
-                          "  }\n" +
-                          "}");
+                          """
+                            class C {
+                              void m() {
+                                <caret>System.out.println();
+                              }
+                            }""");
     CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(getEditor());
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
     performAction();
-    checkResultByText("class C {\n" +
-                      "//  void m() {\n" +
-                      "//    System.out.println();\n" +
-                      "//  }\n" +
-                      "}");
+    checkResultByText("""
+                        class C {
+                        //  void m() {
+                        //    System.out.println();
+                        //  }
+                        }""");
   }
 
   public void testFoldingAtSelectionEnd() {
     configureFromFileText(getTestName(false) + ".java",
-                          "class C {\n" +
-                          "<caret>  void m1() {\n" +
-                          "    System.out.println();\n" +
-                          "  }\n" +
-                          "  void m2() {\n" +
-                          "    System.out.println();\n" +
-                          "  }\n" +
-                          "}");
+                          """
+                            class C {
+                            <caret>  void m1() {
+                                System.out.println();
+                              }
+                              void m2() {
+                                System.out.println();
+                              }
+                            }""");
     CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(getEditor());
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
     performAction();
-    checkResultByText("class C {\n" +
-                      "//  void m1() {\n" +
-                      "//    System.out.println();\n" +
-                      "//  }\n" +
-                      "  void m2() {\n" +
-                      "    System.out.println();\n" +
-                      "  }\n" +
-                      "}");
+    checkResultByText("""
+                        class C {
+                        //  void m1() {
+                        //    System.out.println();
+                        //  }
+                          void m2() {
+                            System.out.println();
+                          }
+                        }""");
   }
 
   public void testJava_AlignedWithSmartTabs() {

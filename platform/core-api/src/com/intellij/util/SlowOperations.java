@@ -28,6 +28,11 @@ public final class SlowOperations {
   public static final String FAST_TRACK = "  fast track  ";
   public static final String RESET = "  reset  ";
 
+  /**
+   * VM property, set to {@code true} if running in plugin development sandbox.
+   */
+  public static final String IDEA_PLUGIN_SANDBOX_MODE = "idea.plugin.in.sandbox.mode";
+
   private static int ourAlwaysAllow = -1;
   private static @NotNull FList<@NotNull String> ourStack = FList.emptyList();
 
@@ -75,7 +80,7 @@ public final class SlowOperations {
     }
     if (isInsideActivity(FAST_TRACK)) {
       if (Cancellation.isInNonCancelableSection()) {
-        LOG.error("Non-cancellable section in FAST_TRACK");
+        reportNonCancellableSectionInFastTrack();
       }
       else {
         throw new ProcessCanceledException();
@@ -111,6 +116,10 @@ public final class SlowOperations {
     LOG.error("Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.");
   }
 
+  private static void reportNonCancellableSectionInFastTrack() {
+    LOG.error("Non-cancellable section in FAST_TRACK");
+  }
+
   @ApiStatus.Internal
   public static boolean isInsideActivity(@NotNull String activityName) {
     EDT.assertIsEdt();
@@ -118,7 +127,7 @@ public final class SlowOperations {
       if (RESET.equals(activity)) {
         break;
       }
-      if (activityName == activity) {
+      if (activityName.equals(activity)) {
         return true;
       }
     }

@@ -585,23 +585,14 @@ public final class DnDManagerImpl extends DnDManager {
   }
 
   private static DnDAction getDnDActionForPlatformAction(int platformAction) {
-    DnDAction action = null;
     boolean altOnly = UISettings.getInstance().getDndWithPressedAltOnly();
-    switch (platformAction) {
-      case DnDConstants.ACTION_COPY:
-        action = altOnly ? DnDAction.MOVE : DnDAction.COPY;
-        break;
-      case DnDConstants.ACTION_MOVE:
-        action = altOnly? DnDAction.COPY : DnDAction.MOVE;
-        break;
-      case DnDConstants.ACTION_LINK:
-        action = DnDAction.LINK;
-        break;
-      default:
-        break;
-    }
 
-    return action;
+    return switch (platformAction) {
+      case DnDConstants.ACTION_COPY -> altOnly ? DnDAction.MOVE : DnDAction.COPY;
+      case DnDConstants.ACTION_MOVE -> altOnly ? DnDAction.COPY : DnDAction.MOVE;
+      case DnDConstants.ACTION_LINK -> DnDAction.LINK;
+      default -> null;
+    };
   }
 
   private class MyDragSourceListener implements DragSourceListener {

@@ -301,10 +301,10 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
 
   public void testPrivateClassInheritors() {
     @Language("JAVA")
-    String fileText = "class C {\n" +
-                  "  private static class Pr<caret>ivate {}\n" +
-                  "  public static class Public extends Private {}" +
-                  "}";
+    String fileText = """
+      class C {
+        private static class Pr<caret>ivate {}
+        public static class Public extends Private {}}""";
     PsiFile file = myFixture.addFileToProject("Foo.java",
                                               fileText);
     myFixture.addClass("class Inheritor extends C.Public {}");
@@ -342,12 +342,14 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
       "jar://" + JavaTestUtil.getJavaTestDataPath() + "/codeInsight/navigation/MyInterfaceLibrary.jar!/"
     );
     @Language("JAVA")
-    String fileText = "import com.company.MyInterface;\n" +
-                      "\n" +
-                      "public class MyInterfaceImplementation implements My<caret>Interface {\n" +
-                      "    @Override\n" +
-                      "    public void doIt() {}\n" +
-                      "}\n";
+    String fileText = """
+      import com.company.MyInterface;
+
+      public class MyInterfaceImplementation implements My<caret>Interface {
+          @Override
+          public void doIt() {}
+      }
+      """;
     PsiFile psiFile = myFixture.addFileToProject("MyInterfaceImplementation.java",
                                                  fileText);
 

@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@Deprecated(forRemoval = true)
 public class AbstractUrlFavoriteAdapter extends AbstractUrl {
   private static final Logger LOG = Logger.getInstance(AbstractUrlFavoriteAdapter.class);
 

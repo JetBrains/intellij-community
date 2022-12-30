@@ -13,8 +13,11 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.WelcomeScreenCloneCollector
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Alarm
+import com.intellij.util.containers.JBTreeTraverser
+import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import javax.swing.tree.TreeNode
 
 internal object RecentProjectPanelComponentFactory {
   private const val UPDATE_INTERVAL = 50 // 50ms -- 20 frames per second
@@ -64,13 +67,22 @@ internal object RecentProjectPanelComponentFactory {
 
     val updateQueue = MergingUpdateQueue("Welcome screen UI updater", UPDATE_INTERVAL, true, null,
                                          parentDisposable, tree, Alarm.ThreadToUse.SWING_THREAD)
-    updateQueue.queue(Update.create(filteringTree, Runnable { updateProgressBars(updateQueue, filteringTree) }))
+    updateQueue.queue(Update.create(filteringTree, Runnable { repaintProgressBars(updateQueue, filteringTree) }))
 
     return filteringTree
   }
 
-  private fun updateProgressBars(updateQueue: MergingUpdateQueue, filteringTree: RecentProjectFilteringTree) {
-    filteringTree.component.repaint()
-    updateQueue.queue(Update.create(filteringTree, Runnable { updateProgressBars(updateQueue, filteringTree) }))
+  private fun repaintProgressBars(updateQueue: MergingUpdateQueue, filteringTree: RecentProjectFilteringTree) {
+    val cloneableProjectsService = CloneableProjectsService.getInstance()
+    if (cloneableProjectsService.isCloneActive()) {
+      val model = filteringTree.searchModel
+      JBTreeTraverser.from<TreeNode> { node -> TreeUtil.nodeChildren(node) }
+        .withRoot(model.root)
+        .traverse()
+        .filter { node -> TreeUtil.getUserObject(CloneableProjectItem::class.java, node) != null }
+        .forEach { node -> model.nodeChanged(node) }
+    }
+
+    updateQueue.queue(Update.create(filteringTree, Runnable { repaintProgressBars(updateQueue, filteringTree) }))
   }
 }

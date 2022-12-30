@@ -50,9 +50,10 @@ public class KotlinDslGradleGroovyFrameworkSupportProvider extends KotlinDslGrad
     buildScriptData
       .addPluginDefinitionInPluginsGroup("groovy")
       .addRepositoriesDefinition("mavenCentral()")
-      .addOther("tasks.getByName<Test>(\"test\") {\n" +
-                "    useJUnitPlatform()\n" +
-                "}")
+      .addOther("""
+                  tasks.getByName<Test>("test") {
+                      useJUnitPlatform()
+                  }""")
       .addDependencyNotation("implementation(\"org.codehaus.groovy:groovy-all:3.0.5\")")
       .addDependencyNotation("testImplementation(\"org.junit.jupiter:junit-jupiter-api:5.6.0\")")
       .addDependencyNotation("testRuntimeOnly(\"org.junit.jupiter:junit-jupiter-engine\")");

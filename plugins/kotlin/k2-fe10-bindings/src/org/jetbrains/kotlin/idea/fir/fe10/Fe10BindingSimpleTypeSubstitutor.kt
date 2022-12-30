@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.types.model.TypeVariance
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
 
 class Fe10BindingSimpleTypeSubstitutor private constructor(
-    val map: Map<KtTypeParameterSymbol, TypeProjection>
+  private val map: Map<KtTypeParameterSymbol, TypeProjection>
 ) {
     private fun substitute(kotlinType: KotlinType): KotlinType? {
         val unwrappedType = kotlinType.unwrap()

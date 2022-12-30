@@ -207,32 +207,29 @@ class DfDoubleRangeType implements DfDoubleType {
   static @NotNull DfType fromRelation(@NotNull RelationType relationType, double min, double max) {
     assert !Double.isNaN(min);
     assert !Double.isNaN(max);
-    switch (relationType) {
-      case LE:
-        return create(Double.NEGATIVE_INFINITY, max == 0.0 ? 0.0 : max, false, true);
-      case LT:
-        return max == Double.NEGATIVE_INFINITY ? DfTypes.DOUBLE_NAN :
+    return switch (relationType) {
+      case LE -> create(Double.NEGATIVE_INFINITY, max == 0.0 ? 0.0 : max, false, true);
+      case LT -> max == Double.NEGATIVE_INFINITY ? DfTypes.DOUBLE_NAN :
                create(Double.NEGATIVE_INFINITY, Math.nextDown(max), false, true);
-      case GE:
-        return create(min == 0.0 ? -0.0 : min, Double.POSITIVE_INFINITY, false, true);
-      case GT:
-        return min == Double.POSITIVE_INFINITY ? DfTypes.DOUBLE_NAN :
+      case GE -> create(min == 0.0 ? -0.0 : min, Double.POSITIVE_INFINITY, false, true);
+      case GT -> min == Double.POSITIVE_INFINITY ? DfTypes.DOUBLE_NAN :
                create(Math.nextUp(min), Double.POSITIVE_INFINITY, false, true);
-      case EQ:
+      case EQ -> {
         if (min == 0.0) min = -0.0;
         if (max == 0.0) max = 0.0;
-        return create(min, max, false, true);
-      case NE:
+        yield create(min, max, false, true);
+      }
+      case NE -> {
         if (min == max) {
           if (min == 0.0) {
-            return create(-0.0, 0.0, true, true);
+            yield create(-0.0, 0.0, true, true);
           }
-          return create(min, min, true, true);
+          yield create(min, min, true, true);
         }
-        return DfTypes.DOUBLE;
-      default:
-        return DfTypes.DOUBLE;
-    }
+        yield DfTypes.DOUBLE;
+      }
+      default -> DfTypes.DOUBLE;
+    };
   }
 
   @Override

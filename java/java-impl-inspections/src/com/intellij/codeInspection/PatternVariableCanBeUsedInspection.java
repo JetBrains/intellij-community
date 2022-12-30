@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.util.JavaPsiPatternUtil;
@@ -31,60 +30,83 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
     if (!HighlightingFeature.PATTERNS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
-        if (!HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(holder.getFile())) {
-          return;
-        }
-        PsiElement resolved = expression.resolve();
-        if (resolved instanceof PsiPatternVariable variable && variable.getPattern() instanceof PsiDeconstructionPattern deconstruction) {
-          Ref<Result> resultRef = Ref.create();
-          findMethodCallAndCorrespondingVariable(expression, deconstruction, resultRef);
-          if (resultRef.isNull()) return;
-          Result result = resultRef.get();
-          PsiMethodCallExpression call = result.call();
-          PsiPatternVariable existingPatternVariable = result.existingPatternVariable();
-          PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
+        if (!HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(holder.getFile())) return;
+        PsiReferenceExpression qualifier = getQualifierReferenceExpression(call);
+        if (qualifier == null) return;
+        if (qualifier.resolve() instanceof PsiPatternVariable variable &&
+            variable.getPattern() instanceof PsiDeconstructionPattern deconstruction) {
+          if (!isFinalOrEffectivelyFinal(variable)) return;
+          PsiPatternVariable existingPatternVariable = findExistingPatternVariable(qualifier, deconstruction, call);
+          if (existingPatternVariable == null) return;
+          if (!isFinalOrEffectivelyFinal(existingPatternVariable)) return;
           String patternName = existingPatternVariable.getName();
-          if (parent instanceof PsiLocalVariable localVariable) {
+          if (PsiUtil.skipParenthesizedExprUp(call.getParent()) instanceof PsiLocalVariable localVariable &&
+              canReplaceLocalVariableWithPatternVariable(localVariable, existingPatternVariable)) {
             String name = localVariable.getName();
             LocalQuickFix fix = new ExistingPatternVariableCanBeUsedFix(name, existingPatternVariable);
             holder.registerProblem(call, InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.existing.message",
                                                                          patternName, name), fix);
           }
           else {
-            LocalQuickFix fix = new ExistingPatternVariableCanBeUsedFix(call.getText(), existingPatternVariable);
+            String callText = call.getText();
+            LocalQuickFix fix = new ExistingPatternVariableCanBeUsedFix(callText, existingPatternVariable);
             holder.registerProblem(call, InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.existing.message",
-                                                                         patternName, call.getText()), fix);
+                                                                         patternName, callText), fix);
           }
         }
       }
 
-      private static void findMethodCallAndCorrespondingVariable(@NotNull PsiExpression expression,
-                                                                 @NotNull PsiDeconstructionPattern deconstruction,
-                                                                 @NotNull Ref<Result> resultRef) {
-        PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-        if (!(parent instanceof PsiReferenceExpression)) return;
+      private static boolean isFinalOrEffectivelyFinal(@NotNull PsiPatternVariable variable) {
+        return (!(variable.getPattern() instanceof PsiDeconstructionPattern) && variable.hasModifierProperty(PsiModifier.FINAL)) ||
+               !VariableAccessUtils.variableIsAssigned(variable, variable.getDeclarationScope());
+      }
+
+      private static boolean canReplaceLocalVariableWithPatternVariable(@NotNull PsiLocalVariable localVariable,
+                                                                        @NotNull PsiPatternVariable patternVariable) {
+        PsiElement scope = PsiUtil.getVariableCodeBlock(localVariable, null);
+        if (scope == null) return false;
+        return localVariable.hasModifierProperty(PsiModifier.FINAL) ||
+               !patternVariable.hasModifierProperty(PsiModifier.FINAL) ||
+               HighlightControlFlowUtil.isEffectivelyFinal(localVariable, scope, null);
+      }
+
+      @Nullable
+      private static PsiReferenceExpression getQualifierReferenceExpression(@NotNull PsiMethodCallExpression call) {
+        while (true) {
+          if (!call.getArgumentList().isEmpty()) return null;
+          PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
+          PsiMethodCallExpression qualifierMethodCall = ObjectUtils.tryCast(qualifier, PsiMethodCallExpression.class);
+          if (qualifierMethodCall == null) return ObjectUtils.tryCast(qualifier, PsiReferenceExpression.class);
+          call = qualifierMethodCall;
+        }
+      }
+
+      private static PsiPatternVariable findExistingPatternVariable(@NotNull PsiExpression currentQualifier,
+                                                                    @NotNull PsiDeconstructionPattern currentDeconstruction,
+                                                                    @NotNull PsiMethodCallExpression call) {
+        PsiElement parent = PsiUtil.skipParenthesizedExprUp(currentQualifier.getParent());
+        if (!(parent instanceof PsiReferenceExpression)) return null;
         PsiElement grandParent = parent.getParent();
-        if (grandParent instanceof PsiMethodCallExpression call && call.resolveMethod() instanceof LightRecordMethod recordMethod) {
+        if (grandParent instanceof PsiMethodCallExpression currentCall &&
+            currentCall.resolveMethod() instanceof LightRecordMethod recordMethod) {
           PsiClass aClass = recordMethod.getContainingClass();
           PsiRecordComponent[] recordComponents = aClass.getRecordComponents();
           PsiRecordComponent recordComponent = recordMethod.getRecordComponent();
           int index = ArrayUtil.find(recordComponents, recordComponent);
-          if (index == -1) return;
-
-          PsiPattern[] deconstructionComponents = deconstruction.getDeconstructionList().getDeconstructionComponents();
-          if (index >= deconstructionComponents.length) return;
+          if (index < 0) return null;
+          PsiPattern[] deconstructionComponents = currentDeconstruction.getDeconstructionList().getDeconstructionComponents();
+          if (index >= deconstructionComponents.length) return null;
           PsiPattern deconstructionComponent = deconstructionComponents[index];
           PsiType componentType = JavaPsiPatternUtil.getPatternType(deconstructionComponent);
-          if (componentType == null || !componentType.equals(recordComponent.getType())) return;
+          if (componentType == null || !componentType.equals(recordComponent.getType())) return null;
           PsiPatternVariable variable = JavaPsiPatternUtil.getPatternVariable(deconstructionComponent);
-          if (variable != null) {
-            resultRef.set(new Result(call, variable));
-          }
-          if (deconstructionComponent instanceof PsiDeconstructionPattern) {
-            findMethodCallAndCorrespondingVariable(call, (PsiDeconstructionPattern)deconstructionComponent, resultRef);
+          if (currentCall.equals(call)) return variable;
+          if (deconstructionComponent instanceof PsiDeconstructionPattern deconstruction) {
+            return findExistingPatternVariable(currentCall, deconstruction, call);
           }
         }
+        return null;
       }
 
       @Override
@@ -105,17 +127,18 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
         if (scope == null) return;
         PsiDeclarationStatement declaration = ObjectUtils.tryCast(variable.getParent(), PsiDeclarationStatement.class);
         if (declaration == null) return;
-        if (!PsiUtil.isLanguageLevel16OrHigher(holder.getFile()) &&
-            !variable.hasModifierProperty(PsiModifier.FINAL) &&
-            !HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) return;
         PsiInstanceOfExpression instanceOf = InstanceOfUtils.findPatternCandidate(cast);
         if (instanceOf != null) {
           PsiPattern pattern = instanceOf.getPattern();
           PsiPatternVariable existingPatternVariable = JavaPsiPatternUtil.getPatternVariable(pattern);
           String name = identifier.getText();
           if (existingPatternVariable != null) {
+            if (!canReplaceLocalVariableWithPatternVariable(variable, existingPatternVariable) ||
+                !isFinalOrEffectivelyFinal(existingPatternVariable)) {
+              return;
+            }
             holder.registerProblem(identifier,
-                                   InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.existing.message", 
+                                   InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.existing.message",
                                                                    existingPatternVariable.getName(), name),
                                    new ExistingPatternVariableCanBeUsedFix(name, existingPatternVariable));
           } else {
@@ -129,9 +152,6 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
     };
   }
 
-  private record Result(PsiMethodCallExpression call, PsiPatternVariable existingPatternVariable) {
-  }
-  
   private static class ExistingPatternVariableCanBeUsedFix implements LocalQuickFix {
     private final @NotNull String myName;
     private final @NotNull String myPatternName;

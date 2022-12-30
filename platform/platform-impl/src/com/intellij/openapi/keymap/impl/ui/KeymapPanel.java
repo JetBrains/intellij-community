@@ -811,8 +811,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   private static @Nullable KeyboardShortcut findKeyboardShortcut(@NotNull Keymap keymap, @NotNull KeyStroke ks, @NotNull String actionId) {
     Shortcut[] actionShortcuts = keymap.getShortcuts(actionId);
-    if (actionShortcuts.length == 0)
-      return null;
 
     for (Shortcut sc: actionShortcuts) {
       if (!(sc instanceof KeyboardShortcut))

@@ -55,7 +55,9 @@ public class CleanupProcessor extends AbstractProcessor {
     return problemNewBuilder.getProblems();
   }
 
-  private void validateCleanUpMethodExists(@NotNull PsiLocalVariable psiVariable, @NotNull String cleanupName, @NotNull ProblemNewBuilder problemNewBuilder) {
+  private static void validateCleanUpMethodExists(@NotNull PsiLocalVariable psiVariable,
+                                                  @NotNull String cleanupName,
+                                                  @NotNull ProblemNewBuilder problemNewBuilder) {
     final PsiType psiType = psiVariable.getType();
     if (psiType instanceof PsiClassType) {
       final PsiClassType psiClassType = (PsiClassType) psiType;
@@ -80,7 +82,7 @@ public class CleanupProcessor extends AbstractProcessor {
     }
   }
 
-  private void validateInitializerExist(@NotNull ProblemNewBuilder problemNewBuilder, @NotNull PsiLocalVariable psiVariable) {
+  private static void validateInitializerExist(@NotNull ProblemNewBuilder problemNewBuilder, @NotNull PsiLocalVariable psiVariable) {
     if (!psiVariable.hasInitializer()) {
       problemNewBuilder.addError(LombokBundle.message("inspection.message.cleanup.variable.declarations.need.to.be.initialized"));
     }

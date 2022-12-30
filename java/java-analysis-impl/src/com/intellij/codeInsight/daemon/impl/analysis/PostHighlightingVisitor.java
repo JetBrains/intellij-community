@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -75,6 +76,9 @@ class PostHighlightingVisitor {
 
   private void scheduleOptimizeOnDaemonFinished() {
     Disposable daemonDisposable = Disposer.newDisposable();
+    VirtualFile virtualFile = myFile.getVirtualFile();
+    boolean isInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(myProject, virtualFile, false);
+
     // schedule optimise action after all applyInformation() calls
     myProject.getMessageBus().connect(daemonDisposable)
       .subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
@@ -85,7 +89,7 @@ class PostHighlightingVisitor {
             // later because should invoke when highlighting is finished (OptimizeImportsFix relies on that)
             AppUIExecutor.onUiThread().later().withDocumentsCommitted(myProject).execute(() -> {
               if (!myFile.isValid() || !myFile.isWritable()) return;
-              IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true);
+              IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, isInContent);
               if (optimizeImportsFix.isAvailable(myProject, null, myFile)) {
                 optimizeImportsFix.invoke(myProject, null, myFile);
               }
@@ -593,8 +597,8 @@ class PostHighlightingVisitor {
   }
 
   private HighlightInfo registerRedundantImport(@NotNull PsiImportStatementBase importStatement, @NotNull HighlightDisplayKey unusedImportKey) {
-    VirtualFile file = PsiUtilCore.getVirtualFile(myFile);
-    Set<String> imports = file != null ? file.getCopyableUserData(ImportsHighlightUtil.IMPORTS_FROM_TEMPLATE) : null;
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(myFile);
+    Set<String> imports = virtualFile != null ? virtualFile.getCopyableUserData(ImportsHighlightUtil.IMPORTS_FROM_TEMPLATE) : null;
     boolean predefinedImport = imports != null && imports.contains(importStatement.getText());
     String description = !predefinedImport ? JavaAnalysisBundle.message("unused.import.statement") :
                          JavaAnalysisBundle.message("text.unused.import.in.template");
@@ -604,7 +608,9 @@ class PostHighlightingVisitor {
         .group(GeneralHighlightingPass.POST_UPDATE_ALL)
         .create();
 
-    QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createOptimizeImportsFix(false), unusedImportKey);
+    boolean isInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(myProject, virtualFile, false);
+    QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createOptimizeImportsFix(false, isInContent), unusedImportKey);
+
     QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createEnableOptimizeImportsOnTheFlyFix(), unusedImportKey);
     if (!predefinedImport) myHasRedundantImports = true;
     return info;

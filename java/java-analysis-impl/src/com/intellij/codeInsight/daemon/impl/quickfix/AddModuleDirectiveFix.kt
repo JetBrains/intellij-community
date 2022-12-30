@@ -2,7 +2,10 @@
 package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -19,6 +22,14 @@ abstract class AddModuleDirectiveFix(module: PsiJavaModule) : LocalQuickFixAndIn
     invoke(project, file, editor, startElement as PsiJavaModule)
 
   protected abstract fun invoke(project: Project, file: PsiFile, editor: Editor?, module: PsiJavaModule)
+
+  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+    val moduleFile =  IntentionPreviewUtils.obtainCopyForPreview(startElement.containingFile)
+    val copy = (getFileModifierForPreview(moduleFile) as? IntentionAction) ?: return IntentionPreviewInfo.FALLBACK_DIFF
+    val beforeText = moduleFile.text
+    copy.invoke(project, editor, file)
+    return IntentionPreviewInfo.CustomDiff(moduleFile.fileType, beforeText, moduleFile.text)
+  }
 }
 
 class AddRequiresDirectiveFix(module: PsiJavaModule, private val requiredName: String) : AddModuleDirectiveFix(module) {

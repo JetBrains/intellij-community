@@ -25,7 +25,7 @@ import java.util.List;
  * @deprecated use {@link ExternalSystemProjectTracker} instead
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
-@Deprecated(forRemoval = true)
+@Deprecated
 public class ExternalSystemProjectsWatcherImpl implements ExternalSystemProjectsWatcher {
 
   @NotNull
@@ -101,7 +101,7 @@ public class ExternalSystemProjectsWatcherImpl implements ExternalSystemProjects
    * @deprecated see {@link ExternalSystemProjectsWatcherImpl}
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public interface Contributor {
 
     void markDirtyAllExternalProjects(@NotNull Project project);

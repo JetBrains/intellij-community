@@ -62,7 +62,7 @@ public interface Git {
 
   Set<FilePath> ignoredFilePathsNoChunk(@NotNull Project project, @NotNull VirtualFile root, @Nullable List<String> paths) throws VcsException;
 
-  @Deprecated(forRemoval = true)
+  @Deprecated
   @NotNull
   Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root,
                                   @Nullable Collection<? extends VirtualFile> files) throws VcsException;

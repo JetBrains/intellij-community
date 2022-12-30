@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -122,7 +123,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
     if (workingDir != null) {
       return workingDir;
     }
-    return TargetEnvironmentFunctions.getTargetEnvironmentValueForLocalPath(request, myConfiguration.getWorkingDirectorySafe());
+    return TargetEnvironmentFunctions.targetPath(Path.of(myConfiguration.getWorkingDirectorySafe()));
   }
 
   protected void setWorkingDirectory(@NotNull final GeneralCommandLine cmd) {

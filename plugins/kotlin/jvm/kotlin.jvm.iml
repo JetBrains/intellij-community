@@ -27,7 +27,6 @@
     <orderEntry type="module" module-name="kotlin.base.code-insight" />
     <orderEntry type="module" module-name="kotlin.base.resources" />
     <orderEntry type="module" module-name="kotlin.base.highlighting" />
-    <orderEntry type="module" module-name="kotlin.base.line-markers" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration-ui" />
     <orderEntry type="module" module-name="kotlin.base.statistics" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />

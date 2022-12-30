@@ -178,14 +178,11 @@ public class GitMergeHandler {
 
     @Nullable
     private ConflictSide getResolutionSide(@NotNull MergeResult result) {
-      switch (result) {
-        case LEFT:
-          return !myIsReversed ? ConflictSide.OURS : ConflictSide.THEIRS;
-        case RIGHT:
-          return myIsReversed ? ConflictSide.OURS : ConflictSide.THEIRS;
-        default:
-          return null;
-      }
+      return switch (result) {
+        case LEFT -> !myIsReversed ? ConflictSide.OURS : ConflictSide.THEIRS;
+        case RIGHT -> myIsReversed ? ConflictSide.OURS : ConflictSide.THEIRS;
+        default -> null;
+      };
     }
 
     @NotNull

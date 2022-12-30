@@ -24,7 +24,7 @@ abstract class AbstractKotlinPostfixTemplateTest : NewLightKotlinCodeInsightFixt
     protected fun performTest() {
         myFixture.configureByMainPath()
         myFixture.type(".$templateName\t")
-        myFixture.checkResultByExpectedPath(".after")
+        myFixture.checkContentByExpectedPath(".after")
     }
 
     private val templateName: String

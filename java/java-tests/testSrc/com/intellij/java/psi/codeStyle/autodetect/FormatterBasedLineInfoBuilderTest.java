@@ -37,19 +37,21 @@ public class FormatterBasedLineInfoBuilderTest extends LightPlatformCodeInsightT
   }
   
   public void testKotlinComment() {
-    String text = "[i_cont]([i_norm]/**\n" +
-                  " [i_norm]([i_space_1]*)\n" +
-                  " [i_space_1]*/)";
+    String text = """
+      [i_cont]([i_norm]/**
+       [i_norm]([i_space_1]*)
+       [i_space_1]*/)""";
 
     List<LineIndentInfo> infos = getLineInfos(text);
     assertLinesWithNormalIndent(infos, 0);
   }
   
   public void testXmlContinuationWithoutFirst() {
-    String text = "[i_none]<idea-plugin>\n" +
-                  "    [i_none]([i_norm]([i_none]<[i_none]name/>)\n" +
-                  "             [i_norm]([i_none]([]<[i_none]id/>)))\n" +
-                  "[i_none]</idea-plugin>";
+    String text = """
+      [i_none]<idea-plugin>
+          [i_none]([i_norm]([i_none]<[i_none]name/>)
+                   [i_norm]([i_none]([]<[i_none]id/>)))
+      [i_none]</idea-plugin>""";
 
     List<LineIndentInfo> infos = getLineInfos(text);
     assertLinesWithNormalIndent(infos, 4);

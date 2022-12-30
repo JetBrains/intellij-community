@@ -10,6 +10,7 @@ import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -37,6 +38,7 @@ data class BuildRequest(
   @JvmField val homePath: Path,
   @JvmField val productionClassOutput: Path = Path.of(System.getenv("CLASSES_DIR")
                                                       ?: homePath.resolve("out/classes/production").toString()).toAbsolutePath(),
+  @JvmField val keepHttpClient: Boolean = true,
 )
 
 private suspend fun computeLibClassPath(targetFile: Path, homePath: Path, context: BuildContext) {
@@ -93,7 +95,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
 
   val moduleNameToPluginBuildDescriptor = HashMap<String, PluginBuildDescriptor>()
   val pluginBuildDescriptors = mutableListOf<PluginBuildDescriptor>()
-  for (plugin in context.productProperties.productLayout.pluginLayouts) {
+  for (plugin in getPluginLayoutsByJpsModuleNames(bundledMainModuleNames, context.productProperties.productLayout)) {
     if (!isPluginApplicable(bundledMainModuleNames = bundledMainModuleNames, plugin = plugin, context = context)) {
       continue
     }
@@ -125,8 +127,8 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     withContext(Dispatchers.IO) {
       Files.createDirectories(pluginRootDir)
     }
-    spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope2 {
-      initialBuild(pluginBuildDescriptors = pluginBuildDescriptors, pluginBuilder = pluginBuilder)
+    launch {
+      buildPlugins(pluginBuildDescriptors = pluginBuildDescriptors, pluginBuilder = pluginBuilder)
     }
     launch {
       computeLibClassPath(targetFile = runDir.resolve(if (isServerMode) "libClassPath.txt" else "core-classpath.txt"),
@@ -231,6 +233,10 @@ private fun checkBuildModulesModificationAndMark(productConfiguration: ProductCo
     }
 
     createMarkFile(markFile)
+  }
+
+  if (isApplicable) {
+    Span.current().addEvent("plugin cache will be reused (build modules were not changed)")
   }
   return isApplicable
 }
@@ -363,7 +369,7 @@ private fun createBuildOptions(runDir: Path): BuildOptions {
   val options = BuildOptions()
   options.printFreeSpace = false
   options.useCompiledClassesFromProjectOutput = true
-  options.targetOs = BuildOptions.OS_NONE
+  options.targetOs = persistentListOf()
   options.cleanOutputFolder = false
   options.skipDependencySetup = true
   options.outputRootPath = runDir

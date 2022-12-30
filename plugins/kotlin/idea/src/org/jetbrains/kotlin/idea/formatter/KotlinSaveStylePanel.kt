@@ -36,7 +36,7 @@ class KotlinSaveStylePanel(settings: CodeStyleSettings) : CodeStyleAbstractPanel
         SaveItem(KotlinObsoleteCodeStyle.CODE_STYLE_TITLE, KotlinObsoleteCodeStyle.CODE_STYLE_ID),
     )
 
-    var selectedId: String?
+    private var selectedId: String?
         get() {
             val (_, id) = saveDefaultsComboBox.selectedItem as SaveItem
             return id

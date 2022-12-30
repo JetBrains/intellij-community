@@ -10,7 +10,7 @@ import org.jetbrains.idea.maven.project.MavenProjectChanges
 
 open class ModuleData(val moduleName: String,
                       val type: StandardMavenModuleType,
-                      val javaVersionHolder: MavenJavaVersionHolder) {
+                      private val javaVersionHolder: MavenJavaVersionHolder) {
   val sourceLanguageLevel: LanguageLevel?
     get() = if (type == StandardMavenModuleType.TEST_ONLY) javaVersionHolder.testSourceLevel else javaVersionHolder.sourceLevel
   val targetLanguageLevel: LanguageLevel?

@@ -65,7 +65,7 @@ public class LombokUsageTest extends AbstractLombokLightCodeInsightTestCase {
     assertEmpty(StringUtil.join(usages, u -> u.getElement().getText() , ","), usages);
   }
 
-  private void assertUsages(Collection<UsageInfo> usages, String... usageTexts) {
+  private static void assertUsages(Collection<UsageInfo> usages, String... usageTexts) {
     assertEquals(usageTexts.length, usages.size());
     List<UsageInfo> sortedUsages = new ArrayList<>(usages);
     sortedUsages.sort(UsageInfo::compareToByStartOffset);

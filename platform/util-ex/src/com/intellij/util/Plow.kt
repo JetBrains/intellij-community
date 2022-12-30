@@ -20,7 +20,7 @@ class Plow<T> private constructor(private val producingFunction: (Processor<T>) 
   @Suppress("UNCHECKED_CAST")
   fun processWith(processor: Processor<in T>): Boolean = producingFunction(processor as Processor<T>)
 
-  fun <P : Processor<T>> processTo(processor: P): P = processor.apply { producingFunction(this) }
+  private fun <P : Processor<T>> processTo(processor: P): P = processor.apply { producingFunction(this) }
 
   fun findAny(): T? = processTo(CommonProcessors.FindFirstProcessor()).foundValue
 

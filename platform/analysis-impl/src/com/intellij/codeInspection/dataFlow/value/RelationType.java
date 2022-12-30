@@ -40,58 +40,38 @@ public enum RelationType {
 
   public boolean isSubRelation(RelationType other) {
     if (other == this) return true;
-    switch (this) {
-      case LE:
-        return other == LT || other == EQ;
-      case GE:
-        return other == GT || other == EQ;
-      case NE:
-        return other == LT || other == GT;
-      default:
-        return false;
-    }
+    return switch (this) {
+      case LE -> other == LT || other == EQ;
+      case GE -> other == GT || other == EQ;
+      case NE -> other == LT || other == GT;
+      default -> false;
+    };
   }
 
   @NotNull
   public RelationType getNegated() {
-    switch (this) {
-      case LE:
-        return GT;
-      case LT:
-        return GE;
-      case GE:
-        return LT;
-      case GT:
-        return LE;
-      case EQ:
-        return NE;
-      case NE:
-        return EQ;
-      case IS:
-        return IS_NOT;
-      case IS_NOT:
-        return IS;
-    }
-    throw new InternalError("Unexpected enum value: " + this);
+    return switch (this) {
+      case LE -> GT;
+      case LT -> GE;
+      case GE -> LT;
+      case GT -> LE;
+      case EQ -> NE;
+      case NE -> EQ;
+      case IS -> IS_NOT;
+      case IS_NOT -> IS;
+    };
   }
 
   @Nullable
   public RelationType getFlipped() {
-    switch (this) {
-      case LE:
-        return GE;
-      case LT:
-        return GT;
-      case GE:
-        return LE;
-      case GT:
-        return LT;
-      case EQ:
-      case NE:
-        return this;
-      default:
-        return null;
-    }
+    return switch (this) {
+      case LE -> GE;
+      case LT -> GT;
+      case GE -> LE;
+      case GT -> LT;
+      case EQ, NE -> this;
+      default -> null;
+    };
   }
 
   /**

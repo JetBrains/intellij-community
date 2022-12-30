@@ -104,6 +104,17 @@
             parentId="project.propCompiler"/>
 
     <errorHandler implementation="org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter"/>
+    
+    <typeHierarchyProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProviderBySuperTypeCallEntry"/>
+    <typeHierarchyProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProvider"/>
+    <typeHierarchyProvider
+            language="JAVA"
+            order="last"
+            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProviderBySuperTypeCallEntry"/>
 
     <pathMacroExpandableProtocol protocol="kotlin-js-meta"/>
 
@@ -118,7 +129,7 @@
     <lang.foldingBuilder
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.KotlinFoldingBuilder"/>
-
+    <stacktrace.fold substring="at kotlinx.coroutines."/>
 
     <codeInsight.linkHandler
             prefix="#kotlinClass/"
@@ -187,6 +198,13 @@
             defaultValue="false"
             restartRequired="false"/>
     <iconMapper mappingFile="KotlinIconMappings.json"/>
+  </extensions>
+
+  <!-- Line markers -->
+  <extensions defaultExtensionNs="com.intellij">
+    <runLineMarkerContributor
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.KotlinRunLineMarkerContributor"/>
   </extensions>
 
   <projectListeners>
@@ -330,6 +348,12 @@
                  defaultValue="false"
                  restartRequired="true"/>
 
+    <registryKey
+            key="kotlin.enable.inlay.hint.for.lambda.return.type"
+            description="Show inlay hint for lambda return type"
+            defaultValue="false"
+            restartRequired="false"/>
+
     <registryKey key="kotlin.cache.packages.strong.map"
                  description="Hold info about packages using strong references instead of soft ones"
                  defaultValue="true"
@@ -421,9 +445,14 @@
     <methodReferencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinConventionMethodReferencesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.DefaultAnnotationMethodKotlinImplicitReferenceSearcher"/>
 
+    <refactoring.safeDelete.JavaSafeDeleteDelegate
+            id="kotlinJavaSafeDeleteDelegate"
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinJavaSafeDeleteDelegate"/>
+    <safeDelete.importSearcher implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinImportSearcher"/>
+
     <importFilteringRule implementation="org.jetbrains.kotlin.idea.findUsages.KotlinImportFilteringRule"/>
 
-    <elementDescriptionProvider order="first" implementation="org.jetbrains.kotlin.idea.findUsages.KotlinElementDescriptionProvider"/>
     <elementDescriptionProvider implementation="org.jetbrains.kotlin.idea.findUsages.KotlinNonCodeSearchElementDescriptionProvider"/>
 
     <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.slicer.KotlinUsageContextDataInflowPanel$Provider"/>

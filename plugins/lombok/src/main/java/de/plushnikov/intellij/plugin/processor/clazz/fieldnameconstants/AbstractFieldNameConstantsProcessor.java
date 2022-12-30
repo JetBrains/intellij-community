@@ -36,7 +36,7 @@ public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassP
     return validateAnnotationOnRightType(psiClass, builder) && LombokProcessorUtil.isLevelVisible(psiAnnotation);
   }
 
-  private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private static boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
       builder.addError(LombokBundle.message("inspection.message.field.name.constants.only.supported.on.class.or.enum"));
       return false;

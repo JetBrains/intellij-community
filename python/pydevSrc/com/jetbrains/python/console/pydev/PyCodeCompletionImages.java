@@ -14,13 +14,10 @@ public final class PyCodeCompletionImages {
    * Returns an image for the given type
    */
   public static @Nullable Icon getImageForType(int type) {
-    switch (type) {
-      case IToken.TYPE_CLASS:
-        return IconManager.getInstance().getPlatformIcon(PlatformIcons.Class);
-      case IToken.TYPE_FUNCTION:
-        return IconManager.getInstance().getPlatformIcon(PlatformIcons.Method);
-      default:
-        return null;
-    }
+    return switch (type) {
+      case IToken.TYPE_CLASS -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Class);
+      case IToken.TYPE_FUNCTION -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Method);
+      default -> null;
+    };
   }
 }

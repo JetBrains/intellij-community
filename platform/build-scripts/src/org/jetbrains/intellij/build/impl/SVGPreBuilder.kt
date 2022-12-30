@@ -7,6 +7,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import java.nio.file.Files
 import java.nio.file.Path
@@ -39,9 +40,9 @@ object SVGPreBuilder {
     }
   }
 
-  private fun runSvgTool(context: BuildContext, svgToolClasspath: List<String>, requestFile: Path) {
-    val dbDir = context.paths.tempDir.resolve("icons.db.dir")
-    runJava(
+  private suspend fun runSvgTool(context: BuildContext, svgToolClasspath: List<String>, requestFile: Path) {
+    val dbDir = context.paths.tempDir.resolve("icon-db")
+    runIdea(
       context = context,
       mainClass = "org.jetbrains.intellij.build.images.ImageSvgPreCompiler",
       args = listOf(dbDir.toString(), requestFile.toString()) + context.applicationInfo.svgProductIcons,
@@ -52,16 +53,16 @@ object SVGPreBuilder {
     Files.newDirectoryStream(dbDir).use { dirStream ->
       var found = false
       for (file in dirStream) {
-        if (!Files.isRegularFile(file)) {
-          context.messages.error("SVG tool: output must be a regular file: $file")
+        check(Files.isRegularFile(file)) {
+          "SVG tool: output must be a regular file: $file"
         }
 
         found = true
-        context.addDistFile(java.util.Map.entry(file, "bin/icons"))
+        context.addDistFile(DistFile(file = file, relativePath = "bin/icons/${file.fileName}"))
       }
 
-      if (!found) {
-        context.messages.error("SVG tool: after running SVG prebuild it must be a least one file at $dbDir")
+      check(found) {
+        "SVG tool: after running SVG prebuild it must be a least one file at $dbDir"
       }
     }
   }

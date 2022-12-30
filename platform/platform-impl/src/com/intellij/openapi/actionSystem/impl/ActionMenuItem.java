@@ -235,7 +235,8 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
   }
 
   private Icon wrapNullIcon(Icon icon) {
-    if (ActionMenu.isShowNoIcons()) {
+    boolean isMainMenu = ActionPlaces.MAIN_MENU.equals(myPlace);
+    if (ActionMenu.isShowNoIcons() && isMainMenu) {
       return null;
     }
     if (!ActionMenu.isAligned() || !ActionMenu.isAlignedInGroup()) {

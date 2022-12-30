@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.JavaTestUtil;
@@ -31,7 +31,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetedCommandLineBuilder;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -59,7 +58,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCase {
   protected static final int DEFAULT_ADDRESS = 3456;
@@ -67,9 +65,6 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   protected DebuggerSession myDebuggerSession;
   private ExecutionEnvironment myExecutionEnvironment;
   private RunProfileState myRunnableState;
-  private final AtomicInteger myRestart = new AtomicInteger();
-  private static final int MAX_RESTARTS = 3;
-  private volatile TestDisposable myTestRootDisposable;
   private final List<Runnable> myTearDownRunnables = new ArrayList<>();
   private CompilerManagerImpl myCompilerManager;
 
@@ -121,40 +116,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       myDebuggerSession = null;
     }
 
-    // disabled, see JRE-253
-    if (false && getChecker().contains("JVMTI_ERROR_WRONG_PHASE(112)")) {
-      myRestart.incrementAndGet();
-      if (needsRestart()) {
-        return;
-      }
-    } else {
-      myRestart.set(0);
-    }
-
     throwExceptionsIfAny();
     checkTestOutput();
-  }
-
-  private boolean needsRestart() {
-    int restart = myRestart.get();
-    return restart > 0 && restart <= MAX_RESTARTS;
-  }
-
-  @Override
-  protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> runnable) throws Throwable {
-    myTestRootDisposable = new TestDisposable();
-    super.runBareRunnable(runnable);
-    while (needsRestart()) {
-      assert myTestRootDisposable.isDisposed();
-      myTestRootDisposable = new TestDisposable();
-      super.runBareRunnable(runnable);
-    }
-  }
-
-  @NotNull
-  @Override
-  public Disposable getTestRootDisposable() {
-    return myTestRootDisposable;
   }
 
   protected void checkTestOutput() throws Exception {

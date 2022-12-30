@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtTreeVisitor
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
 abstract class AbstractDslHighlighterTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     protected fun doTest(unused: String) {
         val psiFile = myFixture.configureByFile(fileName()) as KtFile

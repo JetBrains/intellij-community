@@ -23,7 +23,7 @@ import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.JBUI.scale
-import com.intellij.util.ui.UIUtil.getInactiveTextColor
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.VcsUserEditor
 import com.intellij.vcs.log.util.VcsUserUtil
@@ -122,7 +122,7 @@ class CommitAuthorComponent(private val project: Project) : NonOpaquePanel(), Co
 
 private class VcsUserViewer(val clickListener: (VcsUser?) -> Unit) : NonOpaquePanel() {
   private val byLabel = JBLabel(message("label.by.author")).apply {
-    foreground = getInactiveTextColor()
+    foreground = NamedColorUtil.getInactiveTextColor()
     border = emptyRight(4)
   }
 
@@ -148,7 +148,7 @@ private class VcsUserViewer(val clickListener: (VcsUser?) -> Unit) : NonOpaquePa
 
 private class VcsDateViewer(val deleteListener: () -> Unit) : NonOpaquePanel() {
   private val label = JBLabel().apply {
-    foreground = getInactiveTextColor()
+    foreground = NamedColorUtil.getInactiveTextColor()
   }
   private val closeButton = InplaceButton(IconButton(message("button.tooltip.remove.commit.author.date"),
                                                      AllIcons.Actions.Close,

@@ -167,7 +167,7 @@ internal class RepaintHighlighting<T : Component>(val original: T,
 internal class LearningHighlightPainter(
   private val startDate: Date,
   private val options: LearningUiHighlightingManager.HighlightingOptions,
-  val bounds: Rectangle
+  private val bounds: Rectangle
 ) : AbstractPainter() {
   private val pulsationOffset = if (options.usePulsation) pulsationSize else 0
   private var previous: Long = 0

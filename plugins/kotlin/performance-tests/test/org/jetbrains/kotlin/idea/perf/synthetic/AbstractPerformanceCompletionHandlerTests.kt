@@ -174,7 +174,7 @@ abstract class AbstractPerformanceCompletionHandlerTests(
 
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 }
 
 abstract class AbstractPerformanceBasicCompletionHandlerTest : AbstractPerformanceCompletionHandlerTests(CompletionType.BASIC)

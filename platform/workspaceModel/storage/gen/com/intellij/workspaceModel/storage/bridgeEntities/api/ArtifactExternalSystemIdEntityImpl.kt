@@ -48,7 +48,7 @@ open class ArtifactExternalSystemIdEntityImpl(val dataSource: ArtifactExternalSy
     return connections
   }
 
-  class Builder(val result: ArtifactExternalSystemIdEntityData?) : ModifiableWorkspaceEntityBase<ArtifactExternalSystemIdEntity>(), ArtifactExternalSystemIdEntity.Builder {
+  class Builder(var result: ArtifactExternalSystemIdEntityData?) : ModifiableWorkspaceEntityBase<ArtifactExternalSystemIdEntity>(), ArtifactExternalSystemIdEntity.Builder {
     constructor() : this(ArtifactExternalSystemIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -66,6 +66,9 @@ open class ArtifactExternalSystemIdEntityImpl(val dataSource: ArtifactExternalSy
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -99,10 +102,13 @@ open class ArtifactExternalSystemIdEntityImpl(val dataSource: ArtifactExternalSy
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ArtifactExternalSystemIdEntity
-      this.entitySource = dataSource.entitySource
-      this.externalSystemId = dataSource.externalSystemId
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.externalSystemId != dataSource.externalSystemId) this.externalSystemId = dataSource.externalSystemId
       if (parents != null) {
-        this.artifactEntity = parents.filterIsInstance<ArtifactEntity>().single()
+        val artifactEntityNew = parents.filterIsInstance<ArtifactEntity>().single()
+        if ((this.artifactEntity as WorkspaceEntityBase).id != (artifactEntityNew as WorkspaceEntityBase).id) {
+          this.artifactEntity = artifactEntityNew
+        }
       }
     }
 
@@ -215,7 +221,7 @@ class ArtifactExternalSystemIdEntityData : WorkspaceEntityData<ArtifactExternalS
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ArtifactExternalSystemIdEntityData
 
@@ -226,7 +232,7 @@ class ArtifactExternalSystemIdEntityData : WorkspaceEntityData<ArtifactExternalS
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ArtifactExternalSystemIdEntityData
 

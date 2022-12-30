@@ -147,7 +147,7 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
 
     private const val PREVIEW_JDK_HOME = "/home/me/.jdks/openjdk-18"
     private const val JDK_HOME = "/home/me/.jdks/openjdk-18"
-    private val LANGUAGE_LEVEL = LanguageLevel.JDK_18
-    private const val SINCE_VERSION = "18"
+    private val LANGUAGE_LEVEL = LanguageLevel.JDK_19
+    private const val SINCE_VERSION = "19"
   }
 }

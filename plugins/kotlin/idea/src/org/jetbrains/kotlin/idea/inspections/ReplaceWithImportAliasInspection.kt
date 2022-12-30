@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -43,7 +44,7 @@ class ReplaceWithImportAliasInspection : AbstractKotlinInspection() {
     }
 
     private class ReplaceWithImportAliasFix(
-        private val aliasNameIdentifierPointer: SmartPsiElementPointer<PsiElement>,
+        @SafeFieldForPreview private val aliasNameIdentifierPointer: SmartPsiElementPointer<PsiElement>,
         private val aliasName: String
     ) : LocalQuickFix {
         override fun getName() = KotlinBundle.message("replace.with.0", aliasName)

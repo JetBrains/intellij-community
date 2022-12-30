@@ -47,53 +47,62 @@ public class SelectUnselectOccurrenceActionsTest extends BasePlatformTestCase {
   }
 
   public void testAllWithoutInitialSelection() {
-    init("some t<caret>ext\n" +
-         "some texts\n" +
-         "another text here"
+    init("""
+           some t<caret>ext
+           some texts
+           another text here"""
     );
     executeSelectAllAction();
-    checkResult("some <selection>t<caret>ext</selection>\n" +
-                "some texts\n" +
-                "another <selection>t<caret>ext</selection> here");
+    checkResult("""
+                  some <selection>t<caret>ext</selection>
+                  some texts
+                  another <selection>t<caret>ext</selection> here""");
   }
 
   public void testAllWithInitialWholeWordSelection() {
-    init("some <selection>t<caret>ext</selection>\n" +
-         "some texts\n" +
-         "some texts\n" +
-         "another text here");
+    init("""
+           some <selection>t<caret>ext</selection>
+           some texts
+           some texts
+           another text here""");
     executeSelectAllAction();
-    checkResult("some <selection>t<caret>ext</selection>\n" +
-                "some <selection>t<caret>ext</selection>s\n" +
-                "some <selection>t<caret>ext</selection>s\n" +
-                "another <selection>t<caret>ext</selection> here");
+    checkResult("""
+                  some <selection>t<caret>ext</selection>
+                  some <selection>t<caret>ext</selection>s
+                  some <selection>t<caret>ext</selection>s
+                  another <selection>t<caret>ext</selection> here""");
     assertEquals(0, hintCount);
   }
 
   public void testNoInitialSelection() {
-    init("some t<caret>ext\n" +
-         "some texts\n" +
-         "another text here"
+    init("""
+           some t<caret>ext
+           some texts
+           another text here"""
     );
     executeAction();
-    checkResult("some <selection>t<caret>ext</selection>\n" +
-                "some texts\n" +
-                "another text here");
+    checkResult("""
+                  some <selection>t<caret>ext</selection>
+                  some texts
+                  another text here""");
     executeAction();
-    checkResult("some <selection>t<caret>ext</selection>\n" +
-                "some texts\n" +
-                "another <selection>t<caret>ext</selection> here");
+    checkResult("""
+                  some <selection>t<caret>ext</selection>
+                  some texts
+                  another <selection>t<caret>ext</selection> here""");
     assertEquals(0, hintCount);
   }
 
   public void testInitialWholeWordSelection() {
-    init("some <selection>t<caret>ext</selection>\n" +
-         "some texts\n" +
-         "another text here");
+    init("""
+           some <selection>t<caret>ext</selection>
+           some texts
+           another text here""");
     executeAction();
-    checkResult("some <selection>t<caret>ext</selection>\n" +
-                "some <selection>t<caret>ext</selection>s\n" +
-                "another text here");
+    checkResult("""
+                  some <selection>t<caret>ext</selection>
+                  some <selection>t<caret>ext</selection>s
+                  another text here""");
     assertEquals(0, hintCount);
   }
 
@@ -120,44 +129,52 @@ public class SelectUnselectOccurrenceActionsTest extends BasePlatformTestCase {
   }
 
   public void testRevertSingleSelection() {
-    init("some <selection>t<caret>ext</selection>\n" +
-         "some texts\n" +
-         "another text here");
+    init("""
+           some <selection>t<caret>ext</selection>
+           some texts
+           another text here""");
     executeReverseAction();
-    checkResult("some t<caret>ext\n" +
-                "some texts\n" +
-                "another text here");
+    checkResult("""
+                  some t<caret>ext
+                  some texts
+                  another text here""");
     assertEquals(0, hintCount);
   }
 
   public void testSelectAfterHint() {
-    init("some text\n" +
-         "some texts\n" +
-         "another <selection>t<caret>ext</selection> here");
+    init("""
+           some text
+           some texts
+           another <selection>t<caret>ext</selection> here""");
     executeAction();
-    checkResult("some text\n" +
-                "some texts\n" +
-                "another <selection>t<caret>ext</selection> here");
+    checkResult("""
+                  some text
+                  some texts
+                  another <selection>t<caret>ext</selection> here""");
     assertEquals(1, hintCount);
     executeAction();
-    checkResult("some <selection>t<caret>ext</selection>\n" +
-                "some texts\n" +
-                "another <selection>t<caret>ext</selection> here");
+    checkResult("""
+                  some <selection>t<caret>ext</selection>
+                  some texts
+                  another <selection>t<caret>ext</selection> here""");
     assertEquals(1, hintCount);
   }
 
   public void testInitialNonWholeWordSelection() {
-    init("some <selection>t<caret>ex</selection>t\n" +
-         "some texts\n" +
-         "another text here");
+    init("""
+           some <selection>t<caret>ex</selection>t
+           some texts
+           another text here""");
     executeAction();
-    checkResult("some <selection>t<caret>ex</selection>t\n" +
-                "some <selection>t<caret>ex</selection>ts\n" +
-                "another text here");
+    checkResult("""
+                  some <selection>t<caret>ex</selection>t
+                  some <selection>t<caret>ex</selection>ts
+                  another text here""");
     executeAction();
-    checkResult("some <selection>t<caret>ex</selection>t\n" +
-                "some <selection>t<caret>ex</selection>ts\n" +
-                "another <selection>t<caret>ex</selection>t here");
+    checkResult("""
+                  some <selection>t<caret>ex</selection>t
+                  some <selection>t<caret>ex</selection>ts
+                  another <selection>t<caret>ex</selection>t here""");
     assertEquals(0, hintCount);
   }
 
@@ -204,43 +221,48 @@ public class SelectUnselectOccurrenceActionsTest extends BasePlatformTestCase {
   }
 
   public void testSkippingOccurrence() {
-    init("fr<caret>uit\n" +
-         "fruits\n" +
-         "fruit\n" +
-         "fruits\n" +
-         "fruit");
+    init("""
+           fr<caret>uit
+           fruits
+           fruit
+           fruits
+           fruit""");
     executeAction();
     executeAction();
     executeFindNext();
-    checkResult("<selection>fr<caret>uit</selection>\n" +
-                "fruits\n" +
-                "fruit\n" +
-                "fruits\n" +
-                "<selection>fr<caret>uit</selection>");
+    checkResult("""
+                  <selection>fr<caret>uit</selection>
+                  fruits
+                  fruit
+                  fruits
+                  <selection>fr<caret>uit</selection>""");
   }
 
   public void testMovingSelectionBackAndForth() {
-    init("fr<caret>uit\n" +
-         "fruits\n" +
-         "fruit\n" +
-         "fruits\n" +
-         "fruit");
+    init("""
+           fr<caret>uit
+           fruits
+           fruit
+           fruits
+           fruit""");
     executeAction();
     executeAction();
     executeFindNext();
     executeFindPrevious();
     executeAction();
-    checkResult("<selection>fr<caret>uit</selection>\n" +
-                "fruits\n" +
-                "<selection>fr<caret>uit</selection>\n" +
-                "fruits\n" +
-                "<selection>fr<caret>uit</selection>");
+    checkResult("""
+                  <selection>fr<caret>uit</selection>
+                  fruits
+                  <selection>fr<caret>uit</selection>
+                  fruits
+                  <selection>fr<caret>uit</selection>""");
   }
 
   public void testSkipDoesNotRemovePreviousSelections() {
-    init("<caret>fruit\n" +
-         "fruit\n" +
-         "fruit");
+    init("""
+           <caret>fruit
+           fruit
+           fruit""");
     executeAction();
     executeAction();
     executeFindNext();
@@ -248,9 +270,10 @@ public class SelectUnselectOccurrenceActionsTest extends BasePlatformTestCase {
     assertEquals(1, hintCount);
     executeFindNext();
     assertEquals(1, hintCount);
-    checkResult("<selection><caret>fruit</selection>\n" +
-                "fruit\n" +
-                "<selection><caret>fruit</selection>");
+    checkResult("""
+                  <selection><caret>fruit</selection>
+                  fruit
+                  <selection><caret>fruit</selection>""");
   }
 
   public void testNearInlays() {

@@ -199,10 +199,13 @@ public abstract class KeymapsTestCaseBase {
                                ) +
                                "},\n";
 
-          String message = String.format("Shortcut conflicts found in keymap '%s':\n\n" +
-                                         "Please specify 'use-shortcut-of' attribute for your action if it is similar to " +
-                                         "another action (but it won't appear in Settings/Keymap),\n" +
-                                         "reassign shortcut, or, if absolutely must, modify the 'known duplicates list'\n\n%s",
+          String message = String.format("""
+                                           Shortcut conflicts found in keymap '%s':
+
+                                           Please specify 'use-shortcut-of' attribute for your action if it is similar to another action (but it won't appear in Settings/Keymap),
+                                           reassign shortcut, or, if absolutely must, modify the 'known duplicates list'
+
+                                           %s""",
                                          keymap, replacement);
           failures.add(new NamedFailure("duplicate shortcut in keymap " + keymap + ": " + key, message));
         }

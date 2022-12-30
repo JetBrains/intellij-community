@@ -11,10 +11,11 @@ data class LoadIconParameters(
   @JvmField val filters: List<ImageFilter>,
   @JvmField val scaleContext: ScaleContext,
   @JvmField val isDark: Boolean,
-  @JvmField val colorPatcher: SVGLoader.SvgElementColorPatcherProvider?
+  @JvmField val colorPatcher: SVGLoader.SvgElementColorPatcherProvider?,
+  @JvmField val isStroke: Boolean
 ) {
   companion object {
     @JvmStatic
-    fun defaultParameters(isDark: Boolean): LoadIconParameters = LoadIconParameters(emptyList(), ScaleContext.create(), isDark, null)
+    fun defaultParameters(isDark: Boolean): LoadIconParameters = LoadIconParameters(emptyList(), ScaleContext.create(), isDark, null, false)
   }
 }

@@ -12,28 +12,30 @@ import org.jetbrains.annotations.Nullable;
 public class TextLabelInSwitchStatementInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSwitchStatement() {
-    doTest("class Type {\n" +
-           "    void x(E e) {\n" +
-           "        switch (e) {\n" +
-           "            case A, B:\n" +
-           "                /*Text label 'caseZ:' in 'switch' statement*/caseZ/**/: break;\n" +
-           "            case C:\n" +
-           "                break;\n" +
-           "        }\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             class Type {
+                 void x(E e) {
+                     switch (e) {
+                         case A, B:
+                             /*Text label 'caseZ:' in 'switch' statement*/caseZ/**/: break;
+                         case C:
+                             break;
+                     }
+                 }
+             }""");
   }
 
   public void testSwitchExpression() {
-    doTest("class Type {\n" +
-           "    void x(E e) {\n" +
-           "        int i = switch (e) {\n" +
-           "            case A,B:\n" +
-           "            /*Text label 'caseZ:' in 'switch' expression*/caseZ/**/: yield 1;\n" +
-           "            case C: yield 0;\n" +
-           "        };\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             class Type {
+                 void x(E e) {
+                     int i = switch (e) {
+                         case A,B:
+                         /*Text label 'caseZ:' in 'switch' expression*/caseZ/**/: yield 1;
+                         case C: yield 0;
+                     };
+                 }
+             }""");
   }
 
   @Nullable
@@ -45,9 +47,10 @@ public class TextLabelInSwitchStatementInspectionTest extends LightJavaInspectio
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "enum E {\n" +
-      "    A,B,C\n" +
-      "}"
+      """
+enum E {
+    A,B,C
+}"""
     };
   }
 }

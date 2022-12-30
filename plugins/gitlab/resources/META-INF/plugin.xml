@@ -20,8 +20,18 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabPersistentAccounts"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager"
+                        serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.PersistentGitLabAccountManager"/>
+
+    <projectService serviceInterface="org.jetbrains.plugins.gitlab.GitLabProjectsManager"
+                    serviceImplementation="org.jetbrains.plugins.gitlab.GitLabProjectsManagerImpl"/>
 
     <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"
                          instance="org.jetbrains.plugins.gitlab.GitLabSettingsConfigurable"/>
+
+    <!--TODO: correct icon-->
+    <toolWindow id="Merge Requests" icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo"
+                anchor="left" doNotActivateOnStart="true"
+                factoryClass="org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowFactory"/>
   </extensions>
 </idea-plugin>

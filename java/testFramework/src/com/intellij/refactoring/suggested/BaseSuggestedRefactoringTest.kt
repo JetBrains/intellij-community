@@ -79,6 +79,10 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
 
     if (!ignoreErrorsBefore) {
       myFixture.testHighlighting(false, false, false, myFixture.file.virtualFile)
+    } else {
+      // Invoking highlighting has side effects (in our particular case, we are interested in initializing
+      // `SuggestedRefactoringChangeListener`). That's why we have to invoke highlighting even when `ignoreErrorsBefore` is `true`
+      myFixture.doHighlighting()
     }
 
     executeEditingActions(editingActions, wrapIntoCommandAndWriteActionAndCommitAll)

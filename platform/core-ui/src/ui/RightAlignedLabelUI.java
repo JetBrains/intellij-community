@@ -65,8 +65,6 @@ public class RightAlignedLabelUI extends BasicLabelUI {
     Rectangle textR,
     int textIconGap) {
     boolean orientationIsLeftToRight = true;
-    int hAlign = horizontalAlignment;
-    int hTextPos = horizontalTextPosition;
 
 
     if (c != null) {
@@ -78,25 +76,19 @@ public class RightAlignedLabelUI extends BasicLabelUI {
 
     // Translate LEADING/TRAILING values in horizontalAlignment
     // to LEFT/RIGHT values depending on the components orientation
-    switch (horizontalAlignment) {
-    case LEADING:
-      hAlign = (orientationIsLeftToRight) ? LEFT : RIGHT;
-      break;
-    case TRAILING:
-      hAlign = (orientationIsLeftToRight) ? RIGHT : LEFT;
-      break;
-    }
+    int hAlign = switch (horizontalAlignment) {
+      case LEADING -> (orientationIsLeftToRight) ? LEFT : RIGHT;
+      case TRAILING -> (orientationIsLeftToRight) ? RIGHT : LEFT;
+      default -> horizontalAlignment;
+    };
 
     // Translate LEADING/TRAILING values in horizontalTextPosition
     // to LEFT/RIGHT values depending on the components orientation
-    switch (horizontalTextPosition) {
-    case LEADING:
-      hTextPos = (orientationIsLeftToRight) ? LEFT : RIGHT;
-      break;
-    case TRAILING:
-      hTextPos = (orientationIsLeftToRight) ? RIGHT : LEFT;
-      break;
-    }
+    int hTextPos = switch (horizontalTextPosition) {
+      case LEADING -> (orientationIsLeftToRight) ? LEFT : RIGHT;
+      case TRAILING -> (orientationIsLeftToRight) ? RIGHT : LEFT;
+      default -> horizontalTextPosition;
+    };
 
     return layoutCompoundLabel(fm,
       text,

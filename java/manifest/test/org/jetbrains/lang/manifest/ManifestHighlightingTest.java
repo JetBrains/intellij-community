@@ -20,26 +20,32 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 public class ManifestHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
   public void testHeaders() {
     doTest(
-      "Normal-Header: value\n" +
-      "Empty_Header: \n" +
-      "<error descr=\"Invalid header name\">Extra-Space </error>: value\n" +
-      "<error descr=\"Invalid header name\">Other*Header</error>: value\n");
+      """
+        Normal-Header: value
+        Empty_Header:\s
+        <error descr="Invalid header name">Extra-Space </error>: value
+        <error descr="Invalid header name">Other*Header</error>: value
+        """);
   }
 
   public void testMainClass() {
     doTest(
-      "Main-Class: <error descr=\"Invalid reference\"></error>\n" +
-      "Main-Class: <error descr=\"Cannot resolve class 'org.acme.Main'\">org.acme.Main</error>\n" +
-      "Main-Class: <error descr=\"Invalid main class\">java.lang.String</error>\n" +
-      "Main-Class: pkg.C1\n");
+      """
+        Main-Class: <error descr="Invalid reference"></error>
+        Main-Class: <error descr="Cannot resolve class 'org.acme.Main'">org.acme.Main</error>
+        Main-Class: <error descr="Invalid main class">java.lang.String</error>
+        Main-Class: pkg.C1
+        """);
   }
 
   public void testAgentHeaders() {
     doTest(
-      "Premain-Class: <error descr=\"Invalid pre-main class\">pkg.C1</error>\n" +
-      "Premain-Class: pkg.C2\n" +
-      "Agent-Class: <error descr=\"Invalid agent class\">pkg.C1</error>\n" +
-      "Agent-Class: pkg.C3\n");
+      """
+        Premain-Class: <error descr="Invalid pre-main class">pkg.C1</error>
+        Premain-Class: pkg.C2
+        Agent-Class: <error descr="Invalid agent class">pkg.C1</error>
+        Agent-Class: pkg.C3
+        """);
   }
 
   private void doTest(String text) {

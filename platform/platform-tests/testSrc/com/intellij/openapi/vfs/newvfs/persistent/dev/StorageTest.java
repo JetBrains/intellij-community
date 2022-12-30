@@ -2,32 +2,14 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.util.io.PagedFileStorage;
-import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.storage.Storage;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArraySet;
-import it.unimi.dsi.fastutil.ints.IntSet;
-import org.jetbrains.annotations.NotNull;
-import org.junit.*;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Stream;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedStorage.NULL_ID;
+import static com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.NULL_ID;
 import static java.nio.charset.StandardCharsets.US_ASCII;
-import static org.junit.Assert.*;
 
 /**
  *
@@ -41,6 +23,13 @@ public class StorageTest extends StorageTestBase<Storage> {
   @Override
   protected void closeStorage(final Storage storage) throws Exception {
     storage.dispose();
+  }
+
+  @Override
+  protected boolean hasRecord(final Storage storage,
+                              final int recordId) throws Exception {
+    throw new UnsupportedOperationException("Method not implemented yet");
+    //return storage.readStream(recordId).available() > 0;
   }
 
   @Override

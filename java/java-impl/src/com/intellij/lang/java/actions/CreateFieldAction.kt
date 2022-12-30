@@ -5,8 +5,10 @@ import com.intellij.codeInsight.daemon.QuickFixBundle.message
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.positionCursor
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate
 import com.intellij.codeInsight.daemon.impl.quickfix.JavaCreateFieldFromUsageHelper
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.request.CreateFieldFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmLong
 import com.intellij.lang.jvm.JvmModifier
@@ -30,8 +32,15 @@ internal class CreateFieldAction(target: PsiClass, request: CreateFieldRequest) 
   override fun getText(): String = message("create.element.in.class", JavaElementKind.FIELD.`object`(),
                                            request.fieldName, getNameForClass(target, false))
 
+  private fun fieldRenderer(project: Project) = JavaFieldRenderer(project, false, target, request)
+
+  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+    val field = fieldRenderer(project).renderField()
+    return IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", field.text)
+  }
+
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    JavaFieldRenderer(project, false, target, request).doRender()
+    fieldRenderer(project).doRender()
   }
 }
 
@@ -75,7 +84,7 @@ internal class JavaFieldRenderer(
     startTemplate(field)
   }
 
-  private fun renderField(): PsiField {
+  fun renderField(): PsiField {
     val field = JavaPsiFacade.getElementFactory(project).createField(request.fieldName, PsiType.INT)
 
     // clean template modifiers

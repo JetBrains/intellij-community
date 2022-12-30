@@ -35,6 +35,8 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
     M6("light_idea_test_m6", sourceRootName = "src_m6", resourceRootName = "res_m6"),
     M7("light_idea_test_m7", sourceRootName = "src_m7"),
     M8("light_idea_test_m8", sourceRootName = "src_m8"),
+    MR_MAIN("light.idea.test.mr.main", sourceRootName = "src_mr_main"),
+    MR_JAVA9("light.idea.test.mr.java9", sourceRootName = "src_mr_java9"),
     M_TEST("light_idea_test_m_test", sourceRootName="m_src_src", testRootName = "m_test_src");
 
     fun sourceRoot(): VirtualFile? = if (this === MAIN) LightPlatformTestCase.getSourceRoot() else findRoot(sourceRootName)
@@ -73,6 +75,10 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
 
       val m8 = makeModule(project, ModuleDescriptor.M8)
       ModuleRootModificationUtil.addDependency(m6, m8)
+
+      val mrMain = makeModule(project, ModuleDescriptor.MR_MAIN)
+      val mrAdd = makeModule(project, ModuleDescriptor.MR_JAVA9)
+      ModuleRootModificationUtil.addDependency(mrAdd, mrMain, DependencyScope.COMPILE, false)
 
       val m_test = makeModule(project, ModuleDescriptor.M_TEST)
       ModuleRootModificationUtil.addDependency(m_test, m2, DependencyScope.TEST, false)
@@ -113,7 +119,8 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
     configureModule(module, model, ModuleDescriptor.MAIN)
 
   private fun configureModule(module: Module, model: ModifiableRootModel, descriptor: ModuleDescriptor) {
-    model.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel = LanguageLevel.JDK_1_9
+    model.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel =
+      if (descriptor == ModuleDescriptor.MR_MAIN) LanguageLevel.JDK_1_8 else LanguageLevel.JDK_1_9
     if (descriptor !== ModuleDescriptor.MAIN) {
       model.sdk = sdk
     }

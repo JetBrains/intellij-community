@@ -31,17 +31,17 @@ import org.jetbrains.kotlin.types.KotlinType
 import javax.swing.JCheckBox
 
 class KotlinVariableInplaceIntroducer(
-    addedVariable: KtProperty,
-    originalExpression: KtExpression?,
-    occurrencesToReplace: Array<KtExpression>,
-    suggestedNames: Collection<String>,
-    val isVar: Boolean,
-    val doNotChangeVar: Boolean,
-    val expressionType: KotlinType?,
-    val noTypeInference: Boolean,
-    project: Project,
-    editor: Editor,
-    private val postProcess: (KtDeclaration) -> Unit
+  addedVariable: KtProperty,
+  originalExpression: KtExpression?,
+  occurrencesToReplace: Array<KtExpression>,
+  suggestedNames: Collection<String>,
+  val isVar: Boolean,
+  private val doNotChangeVar: Boolean,
+  val expressionType: KotlinType?,
+  private val noTypeInference: Boolean,
+  project: Project,
+  editor: Editor,
+  private val postProcess: (KtDeclaration) -> Unit
 ) : AbstractKotlinInplaceIntroducer<KtProperty>(
     localVariable = addedVariable.takeIf { it.isLocal },
     expression = originalExpression,

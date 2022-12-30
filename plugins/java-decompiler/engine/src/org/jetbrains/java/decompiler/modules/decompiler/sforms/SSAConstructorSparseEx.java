@@ -139,7 +139,7 @@ public class SSAConstructorSparseEx {
     boolean finished = false;
 
     switch (expr.type) {
-      case Exprent.EXPRENT_ASSIGNMENT:
+      case Exprent.EXPRENT_ASSIGNMENT -> {
         AssignmentExprent assexpr = (AssignmentExprent)expr;
         if (assexpr.getCondType() == AssignmentExprent.CONDITION_NONE) {
           Exprent dest = assexpr.getLeft();
@@ -147,11 +147,11 @@ public class SSAConstructorSparseEx {
             varassign = (VarExprent)dest;
           }
         }
-        break;
-      case Exprent.EXPRENT_FUNCTION:
+      }
+      case Exprent.EXPRENT_FUNCTION -> {
         FunctionExprent func = (FunctionExprent)expr;
         switch (func.getFuncType()) {
-          case FunctionExprent.FUNCTION_IIF:
+          case FunctionExprent.FUNCTION_IIF -> {
             processExprent(func.getLstOperands().get(0), varmaparr);
 
             SFormsFastMapDirect varmapFalse;
@@ -172,8 +172,8 @@ public class SSAConstructorSparseEx {
             varmaparr[1] = null;
 
             finished = true;
-            break;
-          case FunctionExprent.FUNCTION_CADD:
+          }
+          case FunctionExprent.FUNCTION_CADD -> {
             processExprent(func.getLstOperands().get(0), varmaparr);
 
             SFormsFastMapDirect[] varmaparrAnd = new SFormsFastMapDirect[]{new SFormsFastMapDirect(varmaparr[0]), null};
@@ -186,8 +186,8 @@ public class SSAConstructorSparseEx {
             varmaparr[0] = varmaparrAnd[0];
 
             finished = true;
-            break;
-          case FunctionExprent.FUNCTION_COR:
+          }
+          case FunctionExprent.FUNCTION_COR -> {
             processExprent(func.getLstOperands().get(0), varmaparr);
 
             SFormsFastMapDirect[] varmaparrOr =
@@ -201,7 +201,9 @@ public class SSAConstructorSparseEx {
             varmaparr[0] = mergeMaps(varmaparr[0], varmaparrOr[0]);
 
             finished = true;
+          }
         }
+      }
     }
 
     if (finished) {
@@ -442,9 +444,7 @@ public class SSAConstructorSparseEx {
     SFormsFastMapDirect map;
 
     switch (stat.type) {
-      case CATCH_ALL:
-      case TRY_CATCH:
-
+      case CATCH_ALL, TRY_CATCH -> {
         List<VarExprent> lstVars;
         if (stat.type == StatementType.CATCH_ALL) {
           lstVars = ((CatchAllStatement)stat).getVars();
@@ -462,6 +462,7 @@ public class SSAConstructorSparseEx {
 
           extraVarVersions.put(dgraph.nodes.getWithKey(flatthelper.getMapDestinationNodes().get(stat.getStats().get(i).id)[0]).id, map);
         }
+      }
     }
 
     for (Statement st : stat.getStats()) {

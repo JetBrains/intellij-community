@@ -67,23 +67,25 @@ public class PyMiscellaneousPsiOperationsTest extends PyTestCase {
 
   public void testPrecedingImportBlock() {
     List<List<PsiComment>> blocks;
-    blocks = getPrecedingImportBlocks("# comment\n" +
-                                      "\n" +
-                                      "# comment\n" +
-                                      "# comment\n" +
-                                      "def func(): \n" +
-                                      "    pass");
+    blocks = getPrecedingImportBlocks("""
+                                        # comment
+
+                                        # comment
+                                        # comment
+                                        def func():\s
+                                            pass""");
     assertSize(2, blocks);
     assertSize(1, blocks.get(0));
     assertSize(2, blocks.get(1));
 
-    blocks = getPrecedingImportBlocks("# comment\n" +
-                                      "\n" +
-                                      "# comment\n" +
-                                      "# comment\n" +
-                                      "\n" +
-                                      "def func(): \n" +
-                                      "    pass");
+    blocks = getPrecedingImportBlocks("""
+                                        # comment
+
+                                        # comment
+                                        # comment
+
+                                        def func():\s
+                                            pass""");
     assertSize(3, blocks);
     assertSize(1, blocks.get(0));
     assertSize(2, blocks.get(1));
@@ -93,19 +95,21 @@ public class PyMiscellaneousPsiOperationsTest extends PyTestCase {
                                       "    pass");
     assertSize(0, blocks);
 
-    blocks = getPrecedingImportBlocks("# comment\n" +
-                                      "x = 42\n" +
-                                      "\n" +
-                                      "def func(): \n" +
-                                      "    pass");
+    blocks = getPrecedingImportBlocks("""
+                                        # comment
+                                        x = 42
+
+                                        def func():\s
+                                            pass""");
     assertSize(0, blocks);
 
-    blocks = getPrecedingImportBlocks("# comment\n" +
-                                      "x = 42\n" +
-                                      "\n" +
-                                      "# comment\n" +
-                                      "def func(): \n" +
-                                      "    pass");
+    blocks = getPrecedingImportBlocks("""
+                                        # comment
+                                        x = 42
+
+                                        # comment
+                                        def func():\s
+                                            pass""");
     assertSize(1, blocks);
     assertSize(1, blocks.get(0));
   }

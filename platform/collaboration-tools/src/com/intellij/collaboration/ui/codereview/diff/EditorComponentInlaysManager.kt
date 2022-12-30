@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.diff
 
 import com.intellij.diff.tools.simple.SimpleAlignedDiffModel.Companion.ALIGNED_CHANGE_INLAY_PRIORITY
@@ -91,12 +91,15 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
 
     init {
       val metrics = editor.getFontMetrics(Font.PLAIN)
-      val spaceWidth = FontLayoutService.getInstance().charWidth2D(metrics, ' '.toInt())
+      val spaceWidth = FontLayoutService.getInstance().charWidth2D(metrics, ' '.code)
       // -4 to create some space
       maximumEditorTextWidth = ceil(spaceWidth * (editor.settings.getRightMargin(editor.project)) - 4).toInt()
 
       val scrollbarFlip = editor.scrollPane.getClientProperty(JBScrollPane.Flip::class.java)
       verticalScrollbarFlipped = scrollbarFlip == JBScrollPane.Flip.HORIZONTAL || scrollbarFlip == JBScrollPane.Flip.BOTH
+
+      // calculate initial [editorTextWidth] if editor is already shown
+      updateWidthForAllInlays()
     }
 
     override fun componentResized(e: ComponentEvent) = updateWidthForAllInlays()

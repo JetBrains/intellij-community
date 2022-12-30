@@ -35,7 +35,7 @@ class ReplaceManualRangeWithIndicesCallsInspection : AbstractRangeInspection() {
         if (left.toIntConstant() != 0) return
         val sizeOrLengthCall = right.sizeOrLengthCall(type) ?: return
         val collection = sizeOrLengthCall.safeAs<KtQualifiedExpression>()?.receiverExpression
-        if (collection != null && collection !is KtSimpleNameExpression) return
+        if (collection != null && collection !is KtSimpleNameExpression && collection !is KtThisExpression) return
 
         val parent = range.parent.parent
         if (parent is KtForExpression) {
@@ -83,7 +83,7 @@ class ReplaceManualRangeWithIndicesCallQuickFix : LocalQuickFix {
             else -> null
         }
         val psiFactory = KtPsiFactory(project)
-        val newExpression = if (receiver != null) {
+        val newExpression = if (receiver != null && receiver !is KtThisExpression) {
             psiFactory.createExpressionByPattern("$0.indices", receiver)
         } else {
             psiFactory.createExpression("indices")

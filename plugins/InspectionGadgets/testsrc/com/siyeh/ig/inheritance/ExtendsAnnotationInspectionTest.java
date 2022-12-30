@@ -37,15 +37,16 @@ public class ExtendsAnnotationInspectionTest extends LightJavaInspectionTestCase
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "package javax.enterprise.util;\n" +
-      "import java.lang.annotation.Annotation;\n" +
-      "public abstract class AnnotationLiteral<T extends Annotation> implements Annotation {\n" +
-      "    protected AnnotationLiteral() {}\n" +
-      "    public Class<? extends Annotation> annotationType() { return null; }\n" +
-      "    @Override public boolean equals(Object other) { return false; }\n" +
-      "    @Override public int hashCode() { return 0; }\n" +
-      "    @Override public String toString() { return \"\"; }\n" +
-      "}"
+      """
+package javax.enterprise.util;
+import java.lang.annotation.Annotation;
+public abstract class AnnotationLiteral<T extends Annotation> implements Annotation {
+    protected AnnotationLiteral() {}
+    public Class<? extends Annotation> annotationType() { return null; }
+    @Override public boolean equals(Object other) { return false; }
+    @Override public int hashCode() { return 0; }
+    @Override public String toString() { return ""; }
+}"""
     };
   }
 }

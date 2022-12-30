@@ -52,5 +52,6 @@
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" />
+    <orderEntry type="module" module-name="intellij.platform.tips" />
   </component>
 </module>

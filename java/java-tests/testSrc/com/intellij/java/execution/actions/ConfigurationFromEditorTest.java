@@ -49,54 +49,51 @@ public class ConfigurationFromEditorTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testApplicationConfigurationForUnknownMethod() {
-    assertNull(setupConfigurationContext("public class Foo {\n" +
-                              "  public static void x<caret>xx(String[] args) {}\n" +
-                              "}"));
-    assertNotNull(setupConfigurationContext("public class Foo {\n" +
-                              "  public static void m<caret>ain(String[] args) {}\n" +
-                              "}"));
+    assertNull(setupConfigurationContext("""
+                                           public class Foo {
+                                             public static void x<caret>xx(String[] args) {}
+                                           }"""));
+    assertNotNull(setupConfigurationContext("""
+                                              public class Foo {
+                                                public static void m<caret>ain(String[] args) {}
+                                              }"""));
   }
 
   public void testPatternConfigurationFromSelection() {
-    JUnitConfiguration configuration = setupConfigurationContext("import org.junit.Test; public class MyTest {\n" +
-                                                                 "<selection>@Test\n" +
-                                                                 "public void t1(){}\n" +
-
-                                                                 "@Test\n" +
-                                                                 "public void t2(){}\n" +
-                                                                 "</selection>" +
-
-                                                                 "@Test\n" +
-                                                                 "public void t3(){}\n" +
-
-                                                                 "}");
+    JUnitConfiguration configuration = setupConfigurationContext("""
+                                                                   import org.junit.Test; public class MyTest {
+                                                                   <selection>@Test
+                                                                   public void t1(){}
+                                                                   @Test
+                                                                   public void t2(){}
+                                                                   </selection>@Test
+                                                                   public void t3(){}
+                                                                   }""");
     Set<String> patterns = configuration.getPersistentData().getPatterns();
     assertSameElements(patterns, "MyTest,t1", "MyTest,t2");
   }
 
   public void testPatternConfigurationFromMultipleCarets() {
-    JUnitConfiguration configuration = setupConfigurationContext("import org.junit.Test; public class MyTest {\n" +
-                                                                 "@Test\n" +
-                                                                 "public void t<caret>1(){}\n" +
-
-                                                                 "@Test\n" +
-                                                                 "public void t<caret>2(){}\n" +
-
-                                                                 "@Test\n" +
-                                                                 "public void t3(){}\n" +
-
-                                                                 "}");
+    JUnitConfiguration configuration = setupConfigurationContext("""
+                                                                   import org.junit.Test; public class MyTest {
+                                                                   @Test
+                                                                   public void t<caret>1(){}
+                                                                   @Test
+                                                                   public void t<caret>2(){}
+                                                                   @Test
+                                                                   public void t3(){}
+                                                                   }""");
     Set<String> patterns = configuration.getPersistentData().getPatterns();
     assertSameElements(patterns, "MyTest,t1", "MyTest,t2");
   }
 
   public void testStaticNestedClassWithAnnotations() {
-    JUnitConfiguration configuration = setupConfigurationContext("import org.junit.runner.RunWith; " +
-                                                                 "@RunWith(Suite.class)\n" +
-                                                                 "public class MyTest {\n" +
-                                                                 "  @RunWith(Suite.class)\n" +
-                                                                 "  public static class Nes<caret>ted {}\n" +
-                                                                 "}");
+    JUnitConfiguration configuration = setupConfigurationContext("""
+                                                                   import org.junit.runner.RunWith; @RunWith(Suite.class)
+                                                                   public class MyTest {
+                                                                     @RunWith(Suite.class)
+                                                                     public static class Nes<caret>ted {}
+                                                                   }""");
     assertEquals("MyTest$Nested", configuration.getPersistentData().getMainClassName());
   }
 }

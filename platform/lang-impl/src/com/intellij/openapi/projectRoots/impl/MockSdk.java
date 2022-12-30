@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -13,6 +12,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
@@ -37,6 +37,7 @@ public class MockSdk implements Sdk, SdkModificator {
   private final MultiMap<OrderRootType, VirtualFile> myRoots;
   private final @NotNull Supplier<? extends SdkTypeId> mySdkType;
   private SdkAdditionalData myData;
+  private final MyRootProvider myRootProvider = new MyRootProvider();
 
   public MockSdk(@NotNull String name,
                  @NotNull String homePath,
@@ -172,6 +173,7 @@ public class MockSdk implements Sdk, SdkModificator {
 
   @Override
   public void commitChanges() {
+    WriteAction.run(myRootProvider::fireRootSetChanged);
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       WriteAction.run(() -> {
         BuildableRootsChangeRescanningInfo info = BuildableRootsChangeRescanningInfo.newInstance().addSdk(this);
@@ -188,7 +190,7 @@ public class MockSdk implements Sdk, SdkModificator {
   @NotNull
   @Override
   public RootProvider getRootProvider() {
-    return new MyRootProvider();
+    return myRootProvider;
   }
 
   private static void throwReadOnly() {
@@ -211,7 +213,8 @@ public class MockSdk implements Sdk, SdkModificator {
     return "MockSDK[" + myName + "]";
   }
 
-  private class MyRootProvider implements RootProvider, Supplier<Sdk> {
+  private class MyRootProvider extends RootProviderBaseImpl implements Supplier<Sdk> {
+    
     @Override
     public String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
       return ContainerUtil.map2Array(getFiles(rootType), String.class, VirtualFile::getUrl);
@@ -223,18 +226,14 @@ public class MockSdk implements Sdk, SdkModificator {
     }
 
     @Override
-    public void addRootSetChangedListener(@NotNull RootSetChangedListener listener) { }
-
-    @Override
-    public void addRootSetChangedListener(@NotNull RootSetChangedListener listener, @NotNull Disposable parentDisposable) { }
-
-    @Override
-    public void removeRootSetChangedListener(@NotNull RootSetChangedListener listener) { }
-
-    @Override
     public Sdk get() {
       //noinspection TestOnlyProblems
       return MockSdk.this;
+    }
+
+    @Override
+    public void fireRootSetChanged() {
+      super.fireRootSetChanged();
     }
   }
 }

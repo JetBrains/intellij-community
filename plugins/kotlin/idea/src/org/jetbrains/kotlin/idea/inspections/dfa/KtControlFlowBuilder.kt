@@ -396,10 +396,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 } else {
                     if (lastIndex && storedValue != null) {
                         processExpression(storedValue)
-                        addInstruction(PopInstruction())
+                        addCall(storedValue.parent as KtExpression, 3)
+                    } else {
+                        addCall(expr, 2)
                     }
-                    addInstruction(EvalUnknownInstruction(anchor, 2, expectedType))
-                    addInstruction(FlushFieldsInstruction())
                 }
             }
         }

@@ -46,7 +46,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -391,8 +391,8 @@ class ForkedDebuggerThread extends Thread {
               int endOffset = myHyperlink.getEndOffset();
               TextAttributes attributes = myHyperlink.getTextAttributes(mainConsoleView.getEditor().getColorsScheme());
               TextAttributes inactiveTextAttributes = attributes != null ? attributes.clone() : TextAttributes.ERASE_MARKER.clone();
-              inactiveTextAttributes.setForegroundColor(UIUtil.getInactiveTextColor());
-              inactiveTextAttributes.setEffectColor(UIUtil.getInactiveTextColor());
+              inactiveTextAttributes.setForegroundColor(NamedColorUtil.getInactiveTextColor());
+              inactiveTextAttributes.setEffectColor(NamedColorUtil.getInactiveTextColor());
               inactiveTextAttributes.setFontType(Font.ITALIC);
               hyperlinkSupport.removeHyperlink(myHyperlink);
               hyperlinkSupport.addHighlighter(startOffset, endOffset, inactiveTextAttributes, HighlighterLayer.CONSOLE_FILTER);

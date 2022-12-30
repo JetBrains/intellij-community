@@ -187,7 +187,8 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
     val resolvedDependenciesMap = resolvedDependenciesMapJob.await()
 
     val dependencies: List<ResolvedUnifiedDependency> = declaredDependencies.map {
-        ResolvedUnifiedDependency(it.unifiedDependency, resolvedDependenciesMap[it.unifiedDependency.key], dependenciesLocationMap[it]) }
+        ResolvedUnifiedDependency(it.unifiedDependency, resolvedDependenciesMap[it.unifiedDependency.key], dependenciesLocationMap[it])
+    }
 
     nativeModule.project.lifecycleScope.launch {
         val jsonText = json.encodeToString(

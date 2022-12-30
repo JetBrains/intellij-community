@@ -42,7 +42,7 @@ open class SelfLinkedEntityImpl(val dataSource: SelfLinkedEntityData) : SelfLink
     return connections
   }
 
-  class Builder(val result: SelfLinkedEntityData?) : ModifiableWorkspaceEntityBase<SelfLinkedEntity>(), SelfLinkedEntity.Builder {
+  class Builder(var result: SelfLinkedEntityData?) : ModifiableWorkspaceEntityBase<SelfLinkedEntity>(), SelfLinkedEntity.Builder {
     constructor() : this(SelfLinkedEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -60,6 +60,9 @@ open class SelfLinkedEntityImpl(val dataSource: SelfLinkedEntityData) : SelfLink
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -80,9 +83,12 @@ open class SelfLinkedEntityImpl(val dataSource: SelfLinkedEntityData) : SelfLink
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SelfLinkedEntity
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<SelfLinkedEntity>().singleOrNull()
+        val parentEntityNew = parents.filterIsInstance<SelfLinkedEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 
@@ -188,7 +194,7 @@ class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SelfLinkedEntityData
 
@@ -198,7 +204,7 @@ class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SelfLinkedEntityData
 

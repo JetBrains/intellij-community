@@ -8,6 +8,7 @@ import com.intellij.execution.dashboard.tree.RunDashboardGroupImpl;
 import com.intellij.execution.services.ServiceViewContributorDeleteProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -30,6 +31,11 @@ final class RunDashboardServiceViewDeleteProvider implements ServiceViewContribu
   @Override
   public void setFallbackProvider(DeleteProvider provider) {
     myDelegate = provider;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

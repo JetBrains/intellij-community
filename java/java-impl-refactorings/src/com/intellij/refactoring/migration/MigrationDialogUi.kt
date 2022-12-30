@@ -19,7 +19,7 @@ class MigrationDialogUi(map: MigrationMap?) {
   lateinit var nameLabel: JLabel
   var removeLink: ActionLink? = null
   lateinit var editLink: ActionLink
-  lateinit var descriptionLabel: JEditorPane
+  private lateinit var descriptionLabel: JEditorPane
   lateinit var modulesCombo: ModulesComboBox
 
   val panel = panel {

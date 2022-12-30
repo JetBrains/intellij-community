@@ -25,15 +25,16 @@ public class PyMissingTypeHintsInspectionTest extends PyInspectionTestCase {
 
   // PY-39556
   public void testOverloads() {
-    doTestByText("from typing import overload\n" +
-                 "@overload\n" +
-                 "def test(value: int) -> int:\n" +
-                 "    ...\n" +
-                 "@overload\n" +
-                 "def test(value: float) -> float:\n" +
-                 "    ...\n" +
-                 "def test(value):\n" +
-                 "    return value");
+    doTestByText("""
+                   from typing import overload
+                   @overload
+                   def test(value: int) -> int:
+                       ...
+                   @overload
+                   def test(value: float) -> float:
+                       ...
+                   def test(value):
+                       return value""");
   }
 
   private void doTest(LanguageLevel languageLevel) {

@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
@@ -223,37 +222,39 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     }
   }
 
-  private abstract static class FSItem {
+  private abstract static sealed class FSItem {
     private FSDir myParent;
     private String myName;
     private long myTimestamp;
     private boolean myWritable;
 
-    FSItem(@Nullable FSDir parent, @NotNull String name) {
+    private FSItem(@Nullable("only the root") FSDir parent, String name) {
       myParent = parent;
       myName = name;
       myTimestamp = LocalTimeCounter.currentTime();
       myWritable = true;
     }
 
-    public abstract boolean isDirectory();
+    protected boolean isDirectory() {
+      return false;
+    }
 
-    public @Nullable FSItem findChild(@NotNull String name) {
+    protected FSItem findChild(String name) {
       return null;
     }
 
-    void setName(@NotNull String name) {
+    private void setName(String name) {
       myParent.myChildren.remove(myName);
       myName = name;
       myParent.myChildren.put(name, this);
     }
 
-    public FSDir getParent() {
+    protected FSDir getParent() {
       return myParent;
     }
 
-    public String @NotNull [] list() {
-      return ArrayUtilRt.EMPTY_STRING_ARRAY;
+    protected String[] list() {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
     @Override
@@ -262,28 +263,28 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     }
   }
 
-  private static class FSDir extends FSItem {
+  private final static class FSDir extends FSItem {
     private final Map<String, FSItem> myChildren = new LinkedHashMap<>();
 
-    FSDir(@Nullable FSDir parent, @NotNull String name) {
+    private FSDir(@Nullable FSDir parent, String name) {
       super(parent, name);
     }
 
     @Override
-    public @Nullable FSItem findChild(@NotNull String name) {
+    protected @Nullable FSItem findChild(String name) {
       return myChildren.get(name);
     }
 
     @Override
-    public boolean isDirectory() {
+    protected boolean isDirectory() {
       return true;
     }
 
-    void addChild(@NotNull FSItem item) {
+    private void addChild(FSItem item) {
       myChildren.put(item.myName, item);
     }
 
-    void removeChild(@NotNull FSItem fsItem) {
+    private void removeChild(FSItem fsItem) {
       if (fsItem.myName.equals("src") && getParent() == null) {
         throw new RuntimeException("removing src directory");
       }
@@ -291,22 +292,17 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     }
 
     @Override
-    public String @NotNull [] list() {
-      return ArrayUtilRt.toStringArray(myChildren.keySet());
+    protected String[] list() {
+      return ArrayUtil.toStringArray(myChildren.keySet());
     }
   }
 
-  private static class FSFile extends FSItem {
-    FSFile(@NotNull FSDir parent, @NotNull String name) {
+  private final static class FSFile extends FSItem {
+    private FSFile(FSDir parent, String name) {
       super(parent, name);
     }
 
     private byte[] myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
-
-    @Override
-    public boolean isDirectory() {
-      return false;
-    }
   }
 
   @Override

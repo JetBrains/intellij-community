@@ -42,20 +42,11 @@ public enum IgnorePolicy {
 
   @NotNull
   public ComparisonPolicy getComparisonPolicy() {
-    switch (this) {
-      case DEFAULT:
-        return ComparisonPolicy.DEFAULT;
-      case TRIM_WHITESPACES:
-        return ComparisonPolicy.TRIM_WHITESPACES;
-      case IGNORE_WHITESPACES:
-        return ComparisonPolicy.IGNORE_WHITESPACES;
-      case IGNORE_WHITESPACES_CHUNKS:
-        return ComparisonPolicy.IGNORE_WHITESPACES;
-      case FORMATTING:
-        return ComparisonPolicy.DEFAULT;
-      default:
-        throw new IllegalArgumentException(this.name());
-    }
+    return switch (this) {
+      case DEFAULT, FORMATTING -> ComparisonPolicy.DEFAULT;
+      case TRIM_WHITESPACES -> ComparisonPolicy.TRIM_WHITESPACES;
+      case IGNORE_WHITESPACES, IGNORE_WHITESPACES_CHUNKS -> ComparisonPolicy.IGNORE_WHITESPACES;
+    };
   }
 
   public boolean isShouldTrimChunks() {

@@ -36,7 +36,7 @@ UFile (package = ) [import kotlin.reflect.KProperty...]
         UAnnotation (fqName = ThreadSafe) [@ThreadSafe]
         UField (name = Companion) [@null public static final var Companion: SafeClass.Companion]
             UAnnotation (fqName = null) [@null]
-        UField (name = s) [@org.jetbrains.annotations.NotNull @kotlin.jvm.JvmStatic public static final var s: UnsafeClass = <init>()]
+        UField (name = s) [@org.jetbrains.annotations.NotNull @kotlin.jvm.JvmStatic private static final var s: UnsafeClass = <init>()]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UAnnotation (fqName = kotlin.jvm.JvmStatic) [@kotlin.jvm.JvmStatic]
             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : PsiType:UnsafeClass

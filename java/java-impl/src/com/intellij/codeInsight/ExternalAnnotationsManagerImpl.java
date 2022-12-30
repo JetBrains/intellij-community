@@ -114,8 +114,8 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
 
     myBus = project.getMessageBus();
     MessageBusConnection connection = myBus.connect(this);
-    
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(connection, new ExternalAnnotationsRootListener());
+
+    connection.subscribe(WorkspaceModelTopics.CHANGED, new ExternalAnnotationsRootListener());
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
@@ -1127,15 +1127,15 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   private class ExternalAnnotationsRootListener implements WorkspaceModelChangeListener {
     @Override
     public void changed(@NotNull VersionedStorageChange event) {
-      if (hasAnnotationRootInChanges(event, LibraryEntity.class, this::hasAnnotationRoot) ||
-          hasAnnotationRootInChanges(event, ModuleCustomImlDataEntity.class, this::hasAnnotationRoot)) {
+      if (hasAnnotationRootInChanges(event, LibraryEntity.class, ExternalAnnotationsRootListener::hasAnnotationRoot) ||
+          hasAnnotationRootInChanges(event, ModuleCustomImlDataEntity.class, ExternalAnnotationsRootListener::hasAnnotationRoot)) {
         dropAnnotationsCache();
       }
     }
 
-    private <T extends WorkspaceEntity> boolean hasAnnotationRootInChanges(@NotNull VersionedStorageChange event,
-                                                                           @NotNull Class<T> entityClass,
-                                                                           @NotNull Predicate<T> hasAnnotationRoot) {
+    private static <T extends WorkspaceEntity> boolean hasAnnotationRootInChanges(@NotNull VersionedStorageChange event,
+                                                                                  @NotNull Class<T> entityClass,
+                                                                                  @NotNull Predicate<T> hasAnnotationRoot) {
       for (EntityChange<T> change : event.getChanges(entityClass)) {
         T newEntity = change.getNewEntity();
         T oldEntity = change.getOldEntity();
@@ -1146,11 +1146,11 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
       return false;
     }
 
-    private boolean hasAnnotationRoot(LibraryEntity e) {
-      return e.getRoots().stream().anyMatch(root -> "ANNOTATIONS".equals(root.getType().getName()));
+    private static boolean hasAnnotationRoot(LibraryEntity e) {
+      return ContainerUtil.exists(e.getRoots(), root -> AnnotationOrderRootType.ANNOTATIONS_ID.equals(root.getType().getName()));
     }
 
-    private boolean hasAnnotationRoot(ModuleCustomImlDataEntity e) {
+    private static boolean hasAnnotationRoot(ModuleCustomImlDataEntity e) {
       String tagCustomData = e.getRootManagerTagCustomData();
       if (tagCustomData != null) {
         try {

@@ -9,30 +9,34 @@ import com.intellij.workspaceModel.storage.entities.test.addChildWithOptionalPar
 import com.intellij.workspaceModel.storage.entities.test.addParentEntity
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
-import com.intellij.workspaceModel.storage.impl.assertConsistency
+import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
-import com.intellij.workspaceModel.storage.impl.toClassId
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.junit.Assert
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 
-internal fun getEntityManipulation(workspace: MutableEntityStorageImpl): Generator<ImperativeCommand>? {
+internal fun getEntityManipulation(workspace: MutableEntityStorageImpl,
+                                   detachedEntities: MutableList<WorkspaceEntity> = ArrayList()): Generator<ImperativeCommand>? {
   return Generator.anyOf(
     RemoveSomeEntity.create(workspace),
     EntityManipulation.addManipulations(workspace),
     EntityManipulation.modifyManipulations(workspace),
+    EntityManipulation.createDetachedEntities(workspace, detachedEntities),
     ChangeEntitySource.create(workspace),
     EntitiesBySource.create(workspace),
+    AddDetachedToStorage.create(workspace, detachedEntities)
   )
 }
 
 internal interface EntityManipulation {
   fun addManipulation(storage: MutableEntityStorageImpl): AddEntity
   fun modifyManipulation(storage: MutableEntityStorageImpl): ModifyEntity<out WorkspaceEntity, out ModifiableWorkspaceEntity<out WorkspaceEntity>>
+  fun addDetachedManipulation(storage: MutableEntityStorageImpl, detachedEntities: MutableList<WorkspaceEntity>): AddEntity {
+    return addManipulation(storage)
+  }
 
   companion object {
     fun addManipulations(storage: MutableEntityStorageImpl): Generator<AddEntity> {
@@ -41,6 +45,10 @@ internal interface EntityManipulation {
 
     fun modifyManipulations(storage: MutableEntityStorageImpl): Generator<ModifyEntity<*, *>> {
       return Generator.sampledFrom(manipulations.map { it.modifyManipulation(storage) })
+    }
+
+    fun createDetachedEntities(storage: MutableEntityStorageImpl, detachedEntities: MutableList<WorkspaceEntity>): Generator<AddEntity> {
+      return Generator.sampledFrom(manipulations.map { it.addDetachedManipulation(storage, detachedEntities) })
     }
 
     private val manipulations = listOf(
@@ -74,6 +82,26 @@ private class EntitiesBySource(private val storage: MutableEntityStorageImpl) : 
 
   companion object {
     fun create(workspace: MutableEntityStorageImpl): Generator<EntitiesBySource> = Generator.constant(EntitiesBySource(workspace))
+  }
+}
+
+private class AddDetachedToStorage(private val storage: MutableEntityStorageImpl, private val entities: MutableList<WorkspaceEntity>) : ImperativeCommand {
+  override fun performCommand(env: ImperativeCommand.Environment) {
+    if (entities.isEmpty()) return
+    val entityIndex = env.generateValue(Generator.integers(0, entities.size - 1), null)
+    val someEntity = entities.removeAt(entityIndex)
+    if (someEntity is ModifiableWorkspaceEntityBase<*> && someEntity.diff == null) {
+      storage.addEntity(someEntity)
+      env.logMessage("Added ${someEntity.id.asString()} to storage")
+    } else {
+      env.logMessage("Cannot add an entity to storage")
+    }
+  }
+
+  companion object {
+    fun create(workspace: MutableEntityStorageImpl, entities: MutableList<WorkspaceEntity>): Generator<AddDetachedToStorage> {
+      return Generator.constant(AddDetachedToStorage(workspace, entities))
+    }
   }
 }
 
@@ -119,10 +147,10 @@ private class ChangeEntitySource(private val storage: MutableEntityStorageImpl) 
 }
 
 internal abstract class AddEntity(protected val storage: MutableEntityStorageImpl,
-                                  private val entityDescription: String) : ImperativeCommand {
+                                  protected val entityDescription: String) : ImperativeCommand {
   abstract fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String>
 
-  final override fun performCommand(env: ImperativeCommand.Environment) {
+  override fun performCommand(env: ImperativeCommand.Environment) {
     val property = env.generateValue(randomNames, null)
     val source = env.generateValue(sources, null)
     val (createdEntity, description) = makeEntity(source, property, env)
@@ -130,6 +158,26 @@ internal abstract class AddEntity(protected val storage: MutableEntityStorageImp
       createdEntity as WorkspaceEntityBase
       Assert.assertNotNull(storage.entityDataById(createdEntity.id))
       env.logMessage("New entity added: $createdEntity. Source: ${createdEntity.entitySource}. $description")
+    }
+    else {
+      env.logMessage("Tried to add $entityDescription but failed because: $description")
+    }
+  }
+}
+
+internal abstract class CreateDetachedEntity(storage: MutableEntityStorageImpl,
+                                             entityDescription: String,
+                                             private val detachedEntities: MutableList<WorkspaceEntity>) : AddEntity(storage, entityDescription) {
+  override fun performCommand(env: ImperativeCommand.Environment) {
+    val property = env.generateValue(randomNames, null)
+    val source = env.generateValue(sources, null)
+    val (createdEntity, description) = makeEntity(source, property, env)
+    if (createdEntity != null) {
+      createdEntity as WorkspaceEntityBase
+      if (createdEntity is ModifiableWorkspaceEntityBase<*> && createdEntity.diff == null) {
+        detachedEntities.add(createdEntity)
+      }
+      env.logMessage("New detached entity created: $createdEntity. Source: ${createdEntity.entitySource}. $description")
     }
     else {
       env.logMessage("Tried to add $entityDescription but failed because: $description")
@@ -465,6 +513,19 @@ private object SampleEntityManipulation : EntityManipulation {
           modifyStringProperty(SampleEntity.Builder::stringProperty, env),
           addOrRemoveInList(SampleEntity.Builder::stringListProperty, randomNames, env)
         )
+      }
+    }
+  }
+
+  override fun addDetachedManipulation(storage: MutableEntityStorageImpl, detachedEntities: MutableList<WorkspaceEntity>): AddEntity {
+    return object : CreateDetachedEntity(storage, "Sample", detachedEntities) {
+      override fun makeEntity(source: EntitySource,
+                              someProperty: String,
+                              env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
+        val virtualFileManager = VirtualFileUrlManagerImpl()
+        return SampleEntity(false, someProperty, emptyList(), emptyMap(), virtualFileManager.fromUrl("file:///tmp"), source) {
+          this.children = emptyList()
+        } to "property: $someProperty"
       }
     }
   }

@@ -25,12 +25,12 @@ class InlayTextMetricsStorage(val editor: EditorImpl) {
   private var smallTextMetrics : InlayTextMetrics? = null
   private var normalTextMetrics : InlayTextMetrics? = null
 
-  val smallTextSize: Float
+  private val smallTextSize: Float
     @RequiresEdt
     get() = max(1f, editor.colorsScheme.editorFontSize2D - 1f)
 
 
-  val normalTextSize: Float
+  private val normalTextSize: Float
     @RequiresEdt
     get() = editor.colorsScheme.editorFontSize2D
 

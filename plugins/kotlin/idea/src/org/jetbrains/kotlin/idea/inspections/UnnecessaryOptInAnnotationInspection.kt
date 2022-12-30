@@ -17,9 +17,12 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.core.OLD_EXPERIMENTAL_FQ_NAME
+import org.jetbrains.kotlin.idea.core.OPT_IN_FQ_NAMES
 import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker
@@ -35,7 +38,6 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.SINCE_KOTLIN_FQ_NAME
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
-import org.jetbrains.kotlin.resolve.checkers.OptInNames.OPT_IN_FQ_NAMES
 import org.jetbrains.kotlin.resolve.constants.ArrayValue
 import org.jetbrains.kotlin.resolve.constants.KClassValue
 import org.jetbrains.kotlin.resolve.constants.StringValue
@@ -84,7 +86,7 @@ class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
     )
 
     // Short names for `kotlin.OptIn` and `kotlin.UseExperimental` for faster comparison without name resolution
-    private val OPT_IN_SHORT_NAMES = OPT_IN_FQ_NAMES.map { it.shortName().asString() }.toSet()
+    private val OPT_IN_SHORT_NAMES = OptInNames.OPT_IN_FQ_NAMES.map { it.shortName().asString() }.toSet()
 
     /**
      * Main inspection visitor to traverse all annotation entries.
@@ -108,7 +110,7 @@ class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
             val resolutionFacade = annotationEntry.getResolutionFacade()
             val annotationContext = annotationEntry.analyze(resolutionFacade)
             val annotationFqName = annotationContext[BindingContext.ANNOTATION, annotationEntry]?.fqName
-            if (annotationFqName !in OPT_IN_FQ_NAMES) return@annotationEntryVisitor
+            if (annotationFqName !in OptInNames.OPT_IN_FQ_NAMES) return@annotationEntryVisitor
 
             val resolvedMarkers = mutableListOf<ResolvedMarker>()
             for (arg in annotationEntryArguments) {
@@ -259,7 +261,7 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
 
             // Add the annotation class as a marker if it has `@RequireOptIn` annotation.
             if (annotationClass.annotations.hasAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME)
-                || annotationClass.annotations.hasAnnotation(OptInNames.OLD_EXPERIMENTAL_FQ_NAME)) {
+                || annotationClass.annotations.hasAnnotation(FqNames.OptInFqNames.OLD_EXPERIMENTAL_FQ_NAME)) {
                 foundMarkers += annotationFqName
             }
 
@@ -340,6 +342,8 @@ private class RemoveAnnotationArgumentOrEntireEntry : LocalQuickFix {
         }
     }
 }
+
+
 
 /**
  * A quick fix that removes the entire annotation entry.

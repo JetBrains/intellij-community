@@ -1,8 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.naming;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +27,8 @@ public class UpperCaseFieldNameNotConstantInspectionTest extends LightJavaCodeIn
 
   public void testUpperCaseFieldNameNotConstant() {
     doTest();
+    final IntentionAction intention = myFixture.getAvailableIntention(InspectionGadgetsBundle.message("rename.quickfix"));
+    assertNotNull(intention);
+    myFixture.checkIntentionPreviewHtml(intention, "Renames field &#39;FOO&#39; and its usages");
   }
-
 }

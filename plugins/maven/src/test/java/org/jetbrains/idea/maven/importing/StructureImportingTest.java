@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -110,6 +111,28 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
       assertSources("m2", "src/main/java");
       assertSources("m3", "user-sources");
     }
+  }
+
+  @Test
+  public void testImportWithAlreadyExistingModuleWithDifferentNameButSameContentRoot() throws IOException {
+    Assume.assumeTrue(isWorkspaceImport());
+
+    Module userModuleWithConflictingRoot = createModule("userModuleWithConflictingRoot");
+    PsiTestUtil.removeAllRoots(userModuleWithConflictingRoot, null);
+    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, myProjectRoot);
+    assertContentRoots(userModuleWithConflictingRoot.getName(), getProjectPath());
+
+    Module userModuleWithUniqueRoot = createModule("userModuleWithUniqueRoot");
+    assertContentRoots(userModuleWithUniqueRoot.getName(), getProjectPath() + "/userModuleWithUniqueRoot");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+
+    importProject();
+    assertModules("project", userModuleWithUniqueRoot.getName());
+    assertContentRoots("project", getProjectPath());
+    assertContentRoots(userModuleWithUniqueRoot.getName(), getProjectPath() + "/userModuleWithUniqueRoot");
   }
 
   @Test
@@ -679,7 +702,13 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     assertModuleGroupPath("module2");
 
     getMavenImporterSettings().setCreateModuleGroups(true);
-    myProjectsManager.performScheduledImportInTests();
+    if (isNewImportingProcess) {
+      importViaNewFlow(Collections.singletonList(myProjectPom), true, Collections.emptyList());
+    }
+    else {
+      myProjectsManager.performScheduledImportInTests();
+    }
+
     assertModuleGroupPath("module2", "module1 and modules");
   }
 
@@ -755,7 +784,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testReleaseCompilerPropertyInPerSourceTypeModules() {
-    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
+    Assume.assumeTrue(isWorkspaceImport());
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -982,7 +1011,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
-    if(isNewImportingProcess){
+    if (isNewImportingProcess) {
       PlatformTestUtil.waitForPromise(myImportingResult.getVfsRefreshPromise());
     }
 
@@ -990,53 +1019,55 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
-  public void  testErrorImportArtifactVersionCannotBeEmpty() {
+  public void testErrorImportArtifactVersionCannotBeEmpty() {
     assumeVersionMoreThan("3.0.5");
-    createProjectPom("<groupId>test</groupId>\n" +
-                     "  <artifactId>parent</artifactId>\n" +
-                     "  <packaging>pom</packaging>\n" +
-                     "  <version>1</version>\n" +
-                     "  <modules>\n" +
-                     "   <module>m1</module>\n" +
-                     "  </modules>\n" +
-                     "  <properties>\n" +
-                     "   <junit.group.id>junit</junit.group.id>\n" +
-                     "   <junit.artifact.id>junit</junit.artifact.id>\n" +
-                     "  </properties>\n" +
-                     "  <profiles>\n" +
-                     "    <profile>\n" +
-                     "      <id>profile-test</id>\n" +
-                     "      <dependencies>\n" +
-                     "        <dependency>\n" +
-                     "          <groupId>${junit.group.id}</groupId>\n" +
-                     "          <artifactId>${junit.artifact.id}</artifactId>\n" +
-                     "        </dependency>\n" +
-                     "      </dependencies>\n" +
-                     "    </profile>\n" +
-                     "  </profiles>\n" +
-                     "  \n" +
-                     "  <dependencyManagement>\n" +
-                     "    <dependencies>\n" +
-                     "      <dependency>\n" +
-                     "        <groupId>junit</groupId>\n" +
-                     "        <artifactId>junit</artifactId>\n" +
-                     "        <version>4.0</version> \n" +
-                     "      </dependency>\n" +
-                     "    </dependencies>\n" +
-                     "  </dependencyManagement>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                         <artifactId>parent</artifactId>
+                         <packaging>pom</packaging>
+                         <version>1</version>
+                         <modules>
+                          <module>m1</module>
+                         </modules>
+                         <properties>
+                          <junit.group.id>junit</junit.group.id>
+                          <junit.artifact.id>junit</junit.artifact.id>
+                         </properties>
+                         <profiles>
+                           <profile>
+                             <id>profile-test</id>
+                             <dependencies>
+                               <dependency>
+                                 <groupId>${junit.group.id}</groupId>
+                                 <artifactId>${junit.artifact.id}</artifactId>
+                               </dependency>
+                             </dependencies>
+                           </profile>
+                         </profiles>
+                        \s
+                         <dependencyManagement>
+                           <dependencies>
+                             <dependency>
+                               <groupId>junit</groupId>
+                               <artifactId>junit</artifactId>
+                               <version>4.0</version>\s
+                             </dependency>
+                           </dependencies>
+                         </dependencyManagement>""");
 
-    createModulePom("m1", "<parent>\n" +
-                          "<groupId>test</groupId>\n" +
-                          "<artifactId>parent</artifactId>\n" +
-                          "<version>1</version>\t\n" +
-                          "</parent>\n" +
-                          "<artifactId>m1</artifactId>\t\n" +
-                          "<dependencies>\n" +
-                          "  <dependency>\n" +
-                          "    <groupId>junit</groupId>\n" +
-                          "    <artifactId>junit</artifactId>\n" +
-                          "  </dependency>\n" +
-                          "</dependencies>");
+    createModulePom("m1", """
+      <parent>
+      <groupId>test</groupId>
+      <artifactId>parent</artifactId>
+      <version>1</version>\t
+      </parent>
+      <artifactId>m1</artifactId>\t
+      <dependencies>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+        </dependency>
+      </dependencies>""");
 
     doImportProjects(Collections.singletonList(myProjectPom), false, "profile-test");
   }
@@ -1045,19 +1076,19 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
   public void testProjectWithMavenConfigCustomUserSettingsXml() throws IOException {
     createProjectSubFile(".mvn/maven.config", "-s .mvn/custom-settings.xml");
     createProjectSubFile(".mvn/custom-settings.xml",
-                         "<settings>\n" +
-                         "    <profiles>\n" +
-                         "        <profile>\n" +
-                         "            <id>custom1</id>\n" +
-                         "            <properties>\n" +
-                         "                <projectName>customName</prop>\n" +
-                         "            </properties>\n" +
-                         "        </profile>\n" +
-                         "    </profiles>\n" +
-                         "    <activeProfiles>\n" +
-                         "        <activeProfile>custom1</activeProfile>\n" +
-                         "    </activeProfiles>" +
-                         "</settings>");
+                         """
+                           <settings>
+                               <profiles>
+                                   <profile>
+                                       <id>custom1</id>
+                                       <properties>
+                                           <projectName>customName</prop>
+                                       </properties>
+                                   </profile>
+                               </profiles>
+                               <activeProfiles>
+                                   <activeProfile>custom1</activeProfile>
+                               </activeProfiles></settings>""");
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>${projectName}</artifactId>" +
                      "<version>1</version>");
@@ -1071,9 +1102,10 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testProjectWithActiveProfilesFromSettingsXml() throws IOException {
-    updateSettingsXml("<activeProfiles>\n" +
-                      "  <activeProfile>one</activeProfile>\n" +
-                      "</activeProfiles>");
+    updateSettingsXml("""
+                        <activeProfiles>
+                          <activeProfile>one</activeProfile>
+                        </activeProfiles>""");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>${projectName}</artifactId>" +
@@ -1094,10 +1126,11 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testProjectWithActiveProfilesAndInnactiveFromSettingsXml() throws IOException {
-    updateSettingsXml("<activeProfiles>\n" +
-                      "  <activeProfile>one</activeProfile>\n" +
-                      "  <activeProfile>two</activeProfile>\n" +
-                      "</activeProfiles>");
+    updateSettingsXml("""
+                        <activeProfiles>
+                          <activeProfile>one</activeProfile>
+                          <activeProfile>two</activeProfile>
+                        </activeProfiles>""");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>${projectName}</artifactId>" +
@@ -1119,7 +1152,12 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
                      "</profiles>");
 
     List<String> disabledProfiles = Collections.singletonList("one");
-    doImportProjects(Collections.singletonList(myProjectPom), true, disabledProfiles);
+    if (isNewImportingProcess) {
+      importViaNewFlow(Collections.singletonList(myProjectPom), true, Collections.emptyList());
+    }
+    else {
+      doImportProjectsLegacyWay(Collections.singletonList(myProjectPom), true, disabledProfiles);
+    }
     assertModules("project-two");
   }
 }

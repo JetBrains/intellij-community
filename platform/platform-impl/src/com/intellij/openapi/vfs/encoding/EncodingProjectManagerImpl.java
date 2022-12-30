@@ -602,15 +602,10 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
   @Override
   public boolean shouldAddBOMForNewUtf8File() {
-    switch (myBomForNewUtf8Files) {
-      case ALWAYS:
-        return true;
-      case NEVER:
-        return false;
-      case WINDOWS_ONLY:
-        return SystemInfo.isWindows;
-      default:
-        throw new IllegalStateException(myBomForNewUtf8Files.toString());
-    }
+    return switch (myBomForNewUtf8Files) {
+      case ALWAYS -> true;
+      case NEVER -> false;
+      case WINDOWS_ONLY -> SystemInfo.isWindows;
+    };
   }
 }

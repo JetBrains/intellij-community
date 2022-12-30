@@ -676,8 +676,6 @@
 
     <applicationService serviceInterface="com.intellij.notification.NotificationsManager"
                         serviceImplementation="com.intellij.notification.impl.NotificationsManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.notification.NotificationGroupManager"
-                        serviceImplementation="com.intellij.notification.impl.NotificationGroupManagerImpl"/>
     <applicationService serviceInterface="com.intellij.notification.NotificationsConfiguration"
                         serviceImplementation="com.intellij.notification.impl.NotificationsConfigurationImpl"/>
 
@@ -751,7 +749,6 @@
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector$RegistryUtilValidator" />
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule"/>
     <statistics.validation.customValidationRule implementation="com.intellij.openapi.updateSettings.impl.UpdateInfoStatsCollector$UrlValidationRule"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.ide.TipsOfTheDayUsagesCollector$TipInfoValidationRule"/>
     <statistics.validation.customValidationRule implementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorValidationRule"/>
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.ui.GotItIDValidator"/>
 
@@ -790,7 +787,6 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.application.ImportOldConfigsUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.application.OldDirectoryCleaner$Stats"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.featureStatistics.fusCollectors.FileEditorCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.TipsOfTheDayUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.editor.impl.EditorGutterComponentImpl$GutterIconClickCollectors"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile$InspectionWidgetUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.cache.CacheRecoveryUsageCollector"/>.
@@ -876,8 +872,8 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <search.topHitProvider implementation="com.intellij.ide.ui.OptionsTopHitProvider$ProjectLevelProvidersAdapter"/>
     <applicationService serviceImplementation="com.intellij.ide.ui.TopHitCache"/>
 
-    <backgroundPostStartupActivity implementation="com.intellij.ide.util.TipsOrderUtil$RecommendationsStartupActivity"/>
-    <postStartupActivity id="TipOfTheDayActivity" implementation="com.intellij.ide.TipOfTheDayStartupActivity"/>
+    <applicationService serviceInterface="com.intellij.ide.util.TipAndTrickManager"
+                        serviceImplementation="com.intellij.ide.util.TipAndTrickManagerImpl"/>
     <postStartupActivity implementation="com.intellij.ide.actions.PowerSaveModeNotifier"/>
     <postStartupActivity implementation="com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity"/>
 
@@ -921,7 +917,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <getDataRule key="fileEditor" implementationClass="com.intellij.ide.impl.dataRules.FileEditorRule" type="fast"/>
     <getDataRule key="NavigatableArray" implementationClass="com.intellij.ide.impl.dataRules.NavigatableArrayRule" type="fast"/>
     <getDataRule key="editor.even.if.inactive" implementationClass="com.intellij.ide.impl.dataRules.InactiveEditorRule" type="fast"/>
-    <getDataRule key="context.ProjectFileDirectory" implementationClass="com.intellij.ide.impl.dataRules.ProjectFileDirectoryRule" type="fast"/>
+    <getDataRule key="context.ProjectFileDirectory" implementationClass="com.intellij.ide.impl.dataRules.ProjectFileDirectoryRule"/>
 
     <localInspection shortName="InconsistentLineSeparators" bundle="messages.LangBundle" key="inconsistent.line.separators"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false" level="WARNING"
@@ -1408,14 +1404,15 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <applicationService serviceInterface="com.intellij.diagnostic.PerformanceWatcher"
                         serviceImplementation="com.intellij.diagnostic.PerformanceWatcherImpl" preload="notHeadless"/>
 
-    <!-- MiniMap -->
-    <registryKey key="editor.minimap.enabled" defaultValue="false" description="Enables MiniMap"/>
-    <editorFactoryListener implementation="com.intellij.ide.miniMap.MiniMapEditorFactoryListener"/>
-    <applicationService serviceImplementation="com.intellij.ide.miniMap.settings.MiniMapSettings"/>
-    <applicationConfigurable id="com.intellij.miniMap" parentId="editor"
-                             provider="com.intellij.ide.miniMap.settings.MiniMapConfigurableProvider"
-                             key="settings.name" bundle="messages.MiniMapBundle"/>
-    <applicationService serviceImplementation="com.intellij.ide.miniMap.MiniMapService"/>
+    <!-- Minimap -->
+    <registryKey key="editor.minimap.enabled" defaultValue="false" description="Enables Minimap"/>
+    <editorFactoryListener implementation="com.intellij.ide.minimap.MinimapEditorFactoryListener"/>
+    <applicationService serviceImplementation="com.intellij.ide.minimap.settings.MinimapSettings"/>
+    <applicationConfigurable id="com.intellij.minimap" parentId="editor"
+                             provider="com.intellij.ide.minimap.settings.MinimapConfigurableProvider"
+                             key="settings.name" bundle="messages.MinimapBundle"/>
+    <applicationService serviceImplementation="com.intellij.ide.minimap.MinimapService"/>
+    <registryKey key="popup.advertiser.speed.search" defaultValue="false" description="Shows speed search advertiser in popups"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
@@ -1488,10 +1485,6 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
               activeInHeadlessMode="false"
               activeInTestMode="false"
               topic="com.intellij.notification.Notifications"/>
-
-    <listener class="com.intellij.ide.util.TipsUsageManager$TipsUsageListener"
-              activeInTestMode="false"
-              topic="com.intellij.featureStatistics.FeaturesRegistryListener"/>
   </projectListeners>
 
   <xi:include href="/META-INF/RemoteDevUtil.xml">

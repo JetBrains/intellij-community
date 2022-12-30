@@ -318,23 +318,14 @@ public final class TestResultsXmlFormatter {
   private static String getStatusString(AbstractTestProxy node) {
     int magnitude = node.getMagnitude();
     // TODO enumeration!
-    switch (magnitude) {
-      case 0:
-        return STATUS_SKIPPED;
-      case 2:
-      case 4:
-        return STATUS_SKIPPED;
-      case 5:
-        return STATUS_IGNORED;
-      case 1:
-        return STATUS_PASSED;
-      case 6:
-        return STATUS_FAILED;
-      case 8:
-        return STATUS_ERROR;
-      default:
-        return node.isPassed() ? STATUS_PASSED : STATUS_FAILED;
-    }
+    return switch (magnitude) {
+      case 0, 2, 4 -> STATUS_SKIPPED;
+      case 5 -> STATUS_IGNORED;
+      case 1 -> STATUS_PASSED;
+      case 6 -> STATUS_FAILED;
+      case 8 -> STATUS_ERROR;
+      default -> node.isPassed() ? STATUS_PASSED : STATUS_FAILED;
+    };
   }
 
   private void startElement(String name, Map<String, String> attributes) throws SAXException {

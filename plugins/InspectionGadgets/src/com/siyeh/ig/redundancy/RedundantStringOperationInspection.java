@@ -846,21 +846,20 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       if (qualifier == null) return;
       CommentTracker ct = new CommentTracker();
       switch (myFixType) {
-        case REPLACE_WITH_QUALIFIER: {
+        case REPLACE_WITH_QUALIFIER -> {
           PsiExpression result = (PsiExpression)ct.replaceAndRestoreComments(call, qualifier);
           if (result.getParent() instanceof PsiExpressionStatement) {
             extractSideEffects(result, (PsiExpressionStatement)result.getParent());
           }
-          break;
         }
-        case REPLACE_WITH_ARGUMENTS:
+        case REPLACE_WITH_ARGUMENTS -> {
           PsiExpressionList list = tryCast(PsiUtil.skipParenthesizedExprUp(call.getParent()), PsiExpressionList.class);
           if (list == null) return;
           for (PsiExpression arg : call.getArgumentList().getExpressions()) {
             list.add(ct.markUnchanged(arg));
           }
           ct.replaceAndRestoreComments(call, qualifier);
-          break;
+        }
       }
     }
 

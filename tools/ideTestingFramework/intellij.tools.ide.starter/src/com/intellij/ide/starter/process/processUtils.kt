@@ -17,7 +17,7 @@ import kotlin.time.Duration.Companion.seconds
 // TODO: consider using https://github.com/oshi/oshi for acquiring process info
 
 /**
- * TeamCity may not kill processes started during the build (TW-69045).
+ * CI may not kill processes started during the build (for TeamCity: TW-69045).
  * They stay alive and consume resources after tests.
  * This lead to OOM and other errors during tests, for example,
  * IDEA-256265: shared-indexes tests on Linux suspiciously fail with 137 (killed by OOM)

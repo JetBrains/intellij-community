@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.j2k.append
 import org.jetbrains.kotlin.lexer.KtTokens
 import java.util.*
 
-class ArrayAccessExpression(val expression: Expression, val index: Expression, val lvalue: Boolean) : Expression() {
+class ArrayAccessExpression(val expression: Expression, val index: Expression, private val lvalue: Boolean) : Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.appendOperand(this, expression)
         if (!lvalue && expression.isNullable) builder.append("!!")
@@ -22,7 +22,7 @@ open class AssignmentExpression(val left: Expression, val right: Expression, val
 
     fun isMultiAssignment() = right is AssignmentExpression
 
-    fun appendAssignment(builder: CodeBuilder, left: Expression, right: Expression) {
+    private fun appendAssignment(builder: CodeBuilder, left: Expression, right: Expression) {
         builder.appendOperand(this, left).append(" ").append(op).append(" ").appendOperand(this, right)
     }
 
@@ -73,7 +73,7 @@ class TypeCastExpression(val type: Type, val expression: Expression) : Expressio
         get() = type.isNullable
 }
 
-open class LiteralExpression(val literalText: String) : Expression() {
+open class LiteralExpression(private val literalText: String) : Expression() {
 
     override fun generateCode(builder: CodeBuilder) {
         builder.append(literalText)
@@ -148,7 +148,7 @@ class QualifiedExpression(val qualifier: Expression, val identifier: Expression,
     }
 }
 
-open class Operator(val operatorType: IElementType): Expression() {
+open class Operator(private val operatorType: IElementType): Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append(asString(operatorType))
     }

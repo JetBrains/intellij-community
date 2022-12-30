@@ -41,9 +41,10 @@ public class CopyActionTest extends LightPlatformCodeInsightTestCase {
   }
 
   public void testCopyWithoutSelection() {
-    prepare("first line\n" +
-            "second<caret> line\n" +
-            "third line");
+    prepare("""
+              first line
+              second<caret> line
+              third line""");
     copy();
     verifyResult("first line\n" +
                  maybeCaretOnLineStart(maybeSelection("second<caret> line\n")) +

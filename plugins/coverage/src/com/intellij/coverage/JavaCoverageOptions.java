@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationsPanel;
 import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.psi.PsiClass;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +69,12 @@ final class JavaCoverageOptions extends CoverageOptions {
         coverageOptionsProvider.getExcludeAnnotationPatterns(),
         JavaCoverageOptionsProvider.getDefaultExcludeAnnotationPatterns(),
         Collections.emptySet(), false, false
-      );
+      ) {
+        @Override
+        protected boolean isAnnotationAccepted(PsiClass annotation) {
+          return annotation.getContainingClass() == null;
+        }
+      };
       myPanel.add(Box.createVerticalStrut(5));
       myPanel.add(myExcludeAnnotationsPanel.getComponent());
     }

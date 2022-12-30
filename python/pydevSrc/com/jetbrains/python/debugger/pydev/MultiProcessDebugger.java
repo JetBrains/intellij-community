@@ -54,7 +54,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   /**
    * @deprecated the dispatcher code must be removed if no issues arise in Python debugger
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public MultiProcessDebugger(@NotNull final IPyDebugProcess debugProcess,
                               @NotNull final ServerSocket serverSocket,
                               final int timeoutInMillis,

@@ -32,7 +32,7 @@ public class UtilityClassProcessor extends AbstractClassProcessor {
     return validateOnRightType(psiClass, builder) && validateNoConstructorsDefined(psiClass, builder);
   }
 
-  private boolean validateNoConstructorsDefined(PsiClass psiClass, ProblemBuilder builder) {
+  private static boolean validateNoConstructorsDefined(PsiClass psiClass, ProblemBuilder builder) {
     Collection<PsiMethod> psiMethods = PsiClassUtil.collectClassConstructorIntern(psiClass);
     if (!psiMethods.isEmpty()) {
       builder.addError(LombokBundle.message("inspection.message.utility.classes.cannot.have.declared.constructors"));

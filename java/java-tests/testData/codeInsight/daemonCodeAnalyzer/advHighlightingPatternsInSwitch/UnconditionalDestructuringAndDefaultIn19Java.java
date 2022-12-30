@@ -14,8 +14,8 @@ public class Totality {
       case <error descr="'switch' has both a total pattern and a default label">default</error> -> {}
     }
     switch (recordInterface){
-        case RecordInterface(I x, I y) r when true-> {}
-        case default -> {}
+        case <error descr="'switch' has both a total pattern and a default label">RecordInterface(I x, I y) r when true</error>-> {}
+        case <error descr="'switch' has both a total pattern and a default label">default</error> -> {}
     }
     switch (recordInterface){
         case RecordInterface(I x, I y) -> {}

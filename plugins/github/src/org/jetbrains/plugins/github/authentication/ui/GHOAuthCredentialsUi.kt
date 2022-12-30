@@ -7,7 +7,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.util.ui.UIUtil.getInactiveTextColor
+import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GHOAuthService
@@ -48,7 +48,7 @@ internal class GHOAuthCredentialsUi(
     row {
       label(message("label.login.progress")).applyToComponent {
         icon = AnimatedIcon.Default()
-        foreground = getInactiveTextColor()
+        foreground = NamedColorUtil.getInactiveTextColor()
       }
     }
   }

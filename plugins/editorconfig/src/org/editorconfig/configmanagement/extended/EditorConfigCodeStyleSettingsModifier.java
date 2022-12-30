@@ -33,6 +33,7 @@ import org.editorconfig.EditorConfigNotifier;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.EditorConfigFilesCollector;
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
+import org.editorconfig.configmanagement.EditorConfigUsagesCollector;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.core.EditorConfigException;
@@ -188,6 +189,10 @@ public final class EditorConfigCodeStyleSettingsModifier implements CodeStyleSet
       processed.clear();
       isModified |= processOptions(context, mapper, false, processed);
       isModified |= processOptions(context, mapper, true, processed);
+    }
+    if (isModified) {
+      ObjectUtils.consumeIfNotNull(
+        context.myOptions, options-> EditorConfigUsagesCollector.logEditorConfigUsed(context.myFile, options));
     }
     return isModified;
   }

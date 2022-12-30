@@ -5,12 +5,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This class is a thread-safe version of the
- * {@code java.util.BitSet} except for some methods which don't make sense in concurrent environment or those I was too lazy to implement.
- *
- * Implementation: bits stored packed in {@link ConcurrentBitSetImpl#array}, 32 bits per array element.
- * When bit change request comes, the array is reallocated as necessary.
- *
+ * Thread-safe version of the {@code java.util.BitSet}
+ * (except for methods which don't make sense in concurrent environment or those I was too lazy to implement or that are not idempotent - e.g., flip()).
+ * This class is optimized for read-heavy multi-threaded usage pattern, so very frequent concurrent modifications might be slow.
  * @see java.util.BitSet
  */
 public interface ConcurrentBitSet {
@@ -19,16 +16,12 @@ public interface ConcurrentBitSet {
   static ConcurrentBitSet create() {
     return new ConcurrentBitSetImpl();
   }
+  @NotNull
+  @Contract("_->new")
+  static ConcurrentBitSet create(int estimatedSize) {
+    return new ConcurrentBitSetImpl(estimatedSize);
+  }
 
-  /**
-   * Sets the bit at the specified index to the complement of its
-   * current value.
-   *
-   * @param bitIndex the index of the bit to flip
-   * @return new bit value
-   * @throws IndexOutOfBoundsException if the specified index is negative
-   */
-  boolean flip(final int bitIndex);
 
   /**
    * Sets the bit at the specified index to {@code true}.
@@ -104,11 +97,13 @@ public interface ConcurrentBitSet {
   int nextClearBit(int fromIndex);
 
   /**
-  * Returns the number of bits of space actually in use
-  *
-  * @return the number of bits currently in this bit set
+  * @return the number of bits of space actually in use (i.e., the index of the highest bit set)
   */
   int size();
 
-  int @NotNull [] toIntArray();
+
+  /**
+   * @return number of bits set
+   */
+  int cardinality();
 }

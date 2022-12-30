@@ -56,6 +56,9 @@ public final class MavenServerManager implements Disposable {
   public static final String WRAPPED_MAVEN = "Use Maven wrapper";
 
   private final Map<String, MavenServerConnector> myMultimoduleDirToConnectorMap = new HashMap<>();
+
+  private MavenIndexingConnectorImpl myIndexingConnector = null;
+  // should be replaced by map, where key is the indexing directory. (local/wsl)
   private File eventListenerJar;
 
 
@@ -213,9 +216,8 @@ public final class MavenServerManager implements Disposable {
   }
 
 
-  private static Integer getDebugPort(Project project) {
-    if ((project.isDefault() && Registry.is("maven.server.debug.default")) ||
-        Registry.is("maven.server.debug")) {
+  private static Integer getDebugPort(@Nullable Project project) {
+    if (Registry.is("maven.server.debug")) {
       try {
         return NetUtils.findAvailableSocketPort();
       }
@@ -321,9 +323,10 @@ public final class MavenServerManager implements Disposable {
     }
     if (!eventListenerJar.exists()) {
       if (ApplicationManager.getApplication().isInternal()) {
-        MavenLog.LOG.warn("Event listener does not exist: Please run rebuild for maven modules:\n" +
-                          "community/plugins/maven/maven-event-listener\n" +
-                          "and all maven*-server* modules"
+        MavenLog.LOG.warn("""
+                            Event listener does not exist: Please run rebuild for maven modules:
+                            community/plugins/maven/maven-event-listener
+                            and all maven*-server* modules"""
         );
       }
       else {
@@ -356,24 +359,7 @@ public final class MavenServerManager implements Disposable {
     return null;
   }
 
-  public static @NotNull List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution) {
-    if (!distribution.isValid()) {
-      MavenLog.LOG.warn("Maven Distribution " + distribution + " is not valid");
-      throw new IllegalArgumentException("Maven distribution at" + distribution.getMavenHome().toAbsolutePath() + " is not valid");
-    }
 
-    MavenVersionAwareSupportExtension extension = MavenVersionSupportUtil.getExtensionFor(distribution);
-
-
-    if (extension == null) {
-      if (StringUtil.compareVersionNumbers(distribution.getVersion(), "3") < 0) {
-        throw new BuildIssueException(new InstallMaven2BuildIssue());
-      }
-      throw new IllegalStateException("Maven distribution at" + distribution.getMavenHome().toAbsolutePath() + " is not supported");
-    }
-    MavenLog.LOG.warn("Using extension " + extension + " to start MavenServer");
-    return extension.collectClassPathAndLibsFolder(distribution);
-  }
 
   @NotNull
   public MavenEmbedderWrapper createEmbedder(final Project project,
@@ -417,21 +403,58 @@ public final class MavenServerManager implements Disposable {
     };
   }
 
+
   public MavenIndexerWrapper createIndexer(@NotNull Project project) {
+    if (Registry.is("maven.dedicated.indexer")) {
+      return createDedicatedIndexer(project);
+    }
+    else {
+      return createLegacyIndexer(project);
+    }
+  }
+
+  private MavenIndexerWrapper createDedicatedIndexer(@NotNull Project project) {
+    return new MavenIndexerWrapper(null) {
+
+      @Override
+      protected @NotNull MavenServerIndexer create() throws RemoteException {
+        MavenServerConnector indexingConnector = getIndexingConnector();
+        return indexingConnector.createIndexer();
+      }
+
+      private MavenServerConnector getIndexingConnector() {
+        if (myIndexingConnector != null) return myIndexingConnector;
+        synchronized (myMultimoduleDirToConnectorMap) {
+          if (myIndexingConnector != null) return myIndexingConnector;
+          myIndexingConnector = new MavenIndexingConnectorImpl(MavenServerManager.this,
+                                                               JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(),
+                                                               "",
+                                                               getDebugPort(null),
+                                                               MavenDistributionsCache.resolveEmbeddedMavenHome(),
+                                                               ObjectUtils.chooseNotNull(project.getBasePath(),
+                                                                                         SystemUtils.getUserHome().getAbsolutePath()));
+          myIndexingConnector.connect();
+        }
+        return myIndexingConnector;
+      }
+    };
+  }
+
+  private MavenIndexerWrapper createLegacyIndexer(@NotNull Project project) {
     String path = project.getBasePath();
     if (path == null) {
       path = new File(".").getPath();
     }
     String finalPath = path;
     if (MavenWslUtil.tryGetWslDistributionForPath(path) != null) {
-      return new MavenIndexerWrapper(null, project) {
+      return new MavenIndexerWrapper(null) {
         @Override
         protected @NotNull MavenServerIndexer create() throws RemoteException {
           return new DummyIndexer();
         }
       };
     }
-    return new MavenIndexerWrapper(null, project) {
+    return new MavenIndexerWrapper(null) {
       @NotNull
       @Override
       protected MavenServerIndexer create() throws RemoteException {
@@ -453,18 +476,6 @@ public final class MavenServerManager implements Disposable {
         ).createIndexer();
       }
     };
-  }
-
-  public void addDownloadListener(MavenServerDownloadListener listener) {
-    synchronized (myMultimoduleDirToConnectorMap) {
-      myMultimoduleDirToConnectorMap.values().forEach(connector -> connector.addDownloadListener(listener));
-    }
-  }
-
-  public void removeDownloadListener(MavenServerDownloadListener listener) {
-    synchronized (myMultimoduleDirToConnectorMap) {
-      myMultimoduleDirToConnectorMap.values().forEach(connector -> connector.removeDownloadListener(listener));
-    }
   }
 
   public static MavenServerSettings convertSettings(@NotNull Project project, @Nullable MavenGeneralSettings settings) {

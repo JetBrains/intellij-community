@@ -182,13 +182,14 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
     final VirtualFile addressFile = myFixture.copyFileToProject("Address.html");
     ExternalResourceManagerExImpl.registerResourceTemporarily("http://data-vocabulary.org/Person", personFile.getPath(), getTestRootDisposable());
     ExternalResourceManagerExImpl.registerResourceTemporarily("http://data-vocabulary.org/Address", addressFile.getPath(), getTestRootDisposable());
-    doTestInHtml("<div itemscope itemtype=\"http://data-vocabulary.org/Person\">\n" +
-                 "    My name is <span itemprop=\"name\">Smith</span>\n" +
-                 "    <span itemprop=\"<caret>\" itemscope itemtype=\"http://data-vocabulary.org/Address\">\n" +
-                 "        <span itemprop=\"locality\">Albuquerque</span>\n" +
-                 "        <span itemprop=\"region\">NM</span>\n" +
-                 "    </span>\n" +
-                 "</div>",
+    doTestInHtml("""
+                   <div itemscope itemtype="http://data-vocabulary.org/Person">
+                       My name is <span itemprop="name">Smith</span>
+                       <span itemprop="<caret>" itemscope itemtype="http://data-vocabulary.org/Address">
+                           <span itemprop="locality">Albuquerque</span>
+                           <span itemprop="region">NM</span>
+                       </span>
+                   </div>""",
                  "name", "nickname", "photo", "title", "role", "url", "affiliation", "friend", "acquaintance", "address"
     );
   }
@@ -198,17 +199,18 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
     final VirtualFile addressFile = myFixture.copyFileToProject("Address.html");
     ExternalResourceManagerExImpl.registerResourceTemporarily("http://data-vocabulary.org/Person", personFile.getPath(), getTestRootDisposable());
     ExternalResourceManagerExImpl.registerResourceTemporarily("http://data-vocabulary.org/Address", addressFile.getPath(), getTestRootDisposable());
-    doTestInHtml("<div itemscope itemtype=\"http://data-vocabulary.org/Person\" >\n" +
-                 "    name is <span itemprop=\"name\">ann</span>\n" +
-                 "    role is <span itemprop=\"role\">smth</span>\n" +
-                 "   <span itemprop=\"address\" itemscope\n" +
-                 "         itemtype=\"http://data-vocabulary.org/Address\" itemref=\"qq\">\n" +
-                 "      <span itemprop=\"locality\">spb</span>\n" +
-                 "   </span>\n" +
-                 "</div>\n" +
-                 "<div>\n" +
-                 "    <span id=\"qq\" itemprop=\"<caret>\">russia</span>\n" +
-                 "</div>",
+    doTestInHtml("""
+                   <div itemscope itemtype="http://data-vocabulary.org/Person" >
+                       name is <span itemprop="name">ann</span>
+                       role is <span itemprop="role">smth</span>
+                      <span itemprop="address" itemscope
+                            itemtype="http://data-vocabulary.org/Address" itemref="qq">
+                         <span itemprop="locality">spb</span>
+                      </span>
+                   </div>
+                   <div>
+                       <span id="qq" itemprop="<caret>">russia</span>
+                   </div>""",
                  "street-address", "locality", "region", "postal-code", "country-name"
     );
   }

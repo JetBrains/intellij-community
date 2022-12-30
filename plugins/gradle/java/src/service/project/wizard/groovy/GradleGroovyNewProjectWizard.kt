@@ -39,7 +39,7 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     private val addSampleCodeProperty = propertyGraph.property(true)
       .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
 
-    var addSampleCode by addSampleCodeProperty
+    private var addSampleCode by addSampleCodeProperty
 
     override fun setupSettingsUI(builder: Panel) {
       super.setupSettingsUI(builder)

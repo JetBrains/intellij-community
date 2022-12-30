@@ -188,22 +188,22 @@ public class WhiteSpace {
     int column = mySpaces + myIndentSpaces;
     for (int i = oldEndOffset - 1; i >= newEndOffset; i--) {
       switch (oldText.charAt(i)) {
-        case LINE_FEED:
+        case LINE_FEED -> {
           ++lineFeedsNumberAtRemovedText;
           column = 0;
-          break;
-        case ' ':
+        }
+        case ' ' -> {
           ++spacesNumberAtRemovedText;
           column--;
-          break;
-        case '\t':
+        }
+        case '\t' -> {
           int change = column % tabSize;
           if (change == 0) {
             change = tabSize;
           }
           indentSpacesNumberAtRemovedText += change;
           column -= change;
-          break;
+        }
       }
     }
 
@@ -250,18 +250,21 @@ public class WhiteSpace {
 
     for (int i = startOffset; i < endOffset; i++) {
       switch (text.charAt(i)) {
-        case LINE_FEED:
+        case LINE_FEED -> {
           lineFeeds++;
           spaces = 0;
           indentSpaces = 0;
           column = 0;
-          break;
-        case '\t':
+        }
+        case '\t' -> {
           int change = tabSize - (column % tabSize);
           indentSpaces += change;
           column += change;
-          break;
-        default: spaces++; column++;
+        }
+        default -> {
+          spaces++;
+          column++;
+        }
       }
     }
 

@@ -62,7 +62,7 @@ internal fun createHandler(typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter
   return typeToTypeHandler.get(aClass)!!
 }
 
-internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>?>) {
+internal class InterfaceReader(private val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>?>) {
   val processed = HashSet<Class<*>>()
   private val refs = ArrayList<TypeRef<*>>()
   val subtypeCasters = ArrayList<SubtypeCaster>()
@@ -187,7 +187,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
     }
   }
 
-  fun <T> getTypeRef(typeClass: Class<T>): TypeRef<T> {
+  private fun <T> getTypeRef(typeClass: Class<T>): TypeRef<T> {
     val result = TypeRef(typeClass)
     refs.add(result)
     return result

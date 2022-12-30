@@ -166,12 +166,12 @@ public class VerticalFlowLayout extends FlowLayout implements Serializable {
   }
 
   public String toString() {
-    String str = "";
-    switch (getAlignment()) {
-      case TOP:        str = ",align=top"; break;
-      case MIDDLE:     str = ",align=middle"; break;
-      case BOTTOM:     str = ",align=bottom"; break;
-    }
+    String str = switch (getAlignment()) {
+      case TOP -> ",align=top";
+      case MIDDLE -> ",align=middle";
+      case BOTTOM -> ",align=bottom";
+      default -> "";
+    };
     return getClass().getSimpleName() +
            "[hgap=" + hGap +
            ",vgap=" + vGap +

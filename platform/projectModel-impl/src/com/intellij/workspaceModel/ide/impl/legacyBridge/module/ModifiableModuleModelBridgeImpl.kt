@@ -20,7 +20,6 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.mutableModuleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -188,7 +187,7 @@ internal class ModifiableModuleModelBridgeImpl(
 
     myNewNameToModule.removeValue(module)
     myModulesToDispose[module.name] = module
-    val moduleEntity = diff.findModuleEntity(module)
+    val moduleEntity = module.findModuleEntity(diff)
     if (moduleEntity == null) {
       LOG.error("Could not find module entity to remove by $module")
       return
@@ -277,7 +276,7 @@ internal class ModifiableModuleModelBridgeImpl(
       else {
         myNewNameToModule[newName] = module
       }
-      val entity = entityStorageOnDiff.current.findModuleEntity(module) ?: error("Unable to find module entity for $module")
+      val entity = module.findModuleEntity(entityStorageOnDiff.current) ?: error("Unable to find module entity for $module")
       diff.modifyEntity(entity) {
         name = newName
       }
@@ -299,7 +298,7 @@ internal class ModifiableModuleModelBridgeImpl(
 
   override fun setModuleGroupPath(module: Module, groupPath: Array<out String>?) {
     val storage = entityStorageOnDiff.current
-    val moduleEntity = storage.findModuleEntity(module as ModuleBridge) ?: error("Could not resolve module entity for $module")
+    val moduleEntity = (module as ModuleBridge).findModuleEntity(storage) ?: error("Could not resolve module entity for $module")
     val moduleGroupEntity = moduleEntity.groupPath
     val groupPathList = groupPath?.toMutableList()
 

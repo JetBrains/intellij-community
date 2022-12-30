@@ -33,15 +33,16 @@ public class CastToIncompatibleInterfaceInspectionTest extends LightJavaInspecti
 
   /** @noinspection InstanceofIncompatibleInterface*/
   public void testOrNot() {
-    doTest("class A {\n" +
-           "  public boolean check(final boolean flag) {\n" +
-           "    return flag || !(getDelegate() instanceof Bar) ||\n" +
-           "           Boolean.TRUE.equals(((Bar)getDelegate()).getValue());\n" +
-           "  }\n" +
-           "  native Foo getDelegate();\n" +
-           "  static class Foo {}\n" +
-           "  interface Bar { Boolean getValue();}\n" +
-           "}");
+    doTest("""
+             class A {
+               public boolean check(final boolean flag) {
+                 return flag || !(getDelegate() instanceof Bar) ||
+                        Boolean.TRUE.equals(((Bar)getDelegate()).getValue());
+               }
+               native Foo getDelegate();
+               static class Foo {}
+               interface Bar { Boolean getValue();}
+             }""");
   }
 
   public void testCastToIncompatibleInterface() {

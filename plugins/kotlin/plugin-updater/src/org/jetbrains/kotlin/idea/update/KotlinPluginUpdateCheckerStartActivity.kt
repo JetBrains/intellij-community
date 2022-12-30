@@ -30,7 +30,7 @@ class KotlinPluginUpdateCheckerStartActivity : ProjectPostStartupActivity {
             override fun documentChanged(e: DocumentEvent) {
                 FileDocumentManager.getInstance().getFile(e.document)?.let { virtualFile ->
                     if (virtualFile.isKotlinFileType() && virtualFile.isInLocalFileSystem) {
-                        KotlinPluginUpdater.getInstance().kotlinFileEdited()
+                        KotlinPluginUpdater.getInstance().pluginUsed()
                         showEapAdvertisementNotification()
                     }
                 }

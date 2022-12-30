@@ -77,6 +77,6 @@ public final class JaxenXPathFactory extends XPathFactory {
   @Override
   public <T> XPathExpression<T> compile(String expression, Filter<T> filter,
                                         Map<String, Object> variables, Namespace... namespaces) {
-    return new JaxenCompiled<T>(expression, filter, variables, namespaces);
+    return new JaxenCompiled<>(expression, filter, variables, namespaces);
   }
 }

@@ -40,7 +40,7 @@ class JComponentEditorProvider : FileEditorProvider, DumbAware {
     }
   }
 
-  override fun accept(project: Project, file: VirtualFile) = isJComponentEditor(file)
+  override fun accept(project: Project, file: VirtualFile) = isJComponentFile(file)
 
   override fun getEditorTypeId() = "jcomponent-editor"
 
@@ -58,6 +58,6 @@ class JComponentEditorProvider : FileEditorProvider, DumbAware {
     }
 
     @JvmStatic
-    fun isJComponentEditor(file: VirtualFile): Boolean = file.getUserData(JCOMPONENT_KEY) != null
+    fun isJComponentFile(file: VirtualFile): Boolean = file.getUserData(JCOMPONENT_KEY) != null
   }
 }

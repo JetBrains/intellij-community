@@ -8,10 +8,12 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
 import com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters
 import com.intellij.codeInsight.generation.OverrideImplementUtil
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilder
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.request.CreateConstructorFromJavaUsageRequest
 import com.intellij.lang.jvm.actions.CreateConstructorRequest
 import com.intellij.openapi.command.WriteCommandAction
@@ -36,8 +38,15 @@ internal class CreateConstructorAction(
     message("create.constructor.text", getNameForClass(target, false))
   }
 
+  private fun constructorRenderer(project: Project) = JavaConstructorRenderer(project, target, request)
+
+  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+    val constructor = constructorRenderer(project).renderConstructor()
+    return IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", constructor.text)
+  }
+
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    JavaConstructorRenderer(project, target, request).doMagic()
+    constructorRenderer(project).doMagic()
   }
 }
 
@@ -73,7 +82,7 @@ private class JavaConstructorRenderer(
     return TemplateContext(project, factory, targetClass, builder, guesser, guesserContext)
   }
 
-  private fun renderConstructor(): PsiMethod {
+  fun renderConstructor(): PsiMethod {
     val constructor = factory.createConstructor()
 
     for (modifier in request.modifiers) {

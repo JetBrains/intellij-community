@@ -15,8 +15,7 @@ import kotlin.io.path.absolutePathString
 object AddToClasspathUtil {
   private var addStackTrace: Throwable? = null
 
-  @Synchronized
-  fun addToClassPathViaAgent(additionalClassPath: List<Path>) {
+  suspend fun addToClassPathViaAgent(additionalClassPath: List<Path>) {
     require(additionalClassPath.isNotEmpty())
 
     if (addStackTrace != null) {
@@ -32,7 +31,7 @@ object AddToClasspathUtil {
     attachAgent(agentPath, mainClass, additionalClassPath.joinToString(File.pathSeparator))
   }
 
-  private fun attachAgent(agentPath: Path, mainClass: Class<*>, agentArguments: String) {
+  private suspend fun attachAgent(agentPath: Path, mainClass: Class<*>, agentArguments: String) {
     // -Djdk.attach.allowAttachSelf required to attach to self,
     // we could not guarantee any additional system parameters upon start
     // since code will be run as any jvm main class e.g. from IDE gutter mark

@@ -64,14 +64,15 @@ public class ControlFlowTest extends LightJavaCodeInsightTestCase {
 
   public void testMethodWithOnlyDoWhileStatementHasExitPoints() throws Exception {
     @Language("JAVA")
-    String text = "public class Foo {\n" +
-                  "  public void foo() {\n" +
-                  "    boolean f;\n" +
-                  "    do {\n" +
-                  "      f = something();\n" +
-                  "    } while (f);\n" +
-                  "  }\n" +
-                  "}";
+    String text = """
+      public class Foo {
+        public void foo() {
+          boolean f;
+          do {
+            f = something();
+          } while (f);
+        }
+      }""";
     configureFromFileText("a.java", text);
     final PsiCodeBlock body = ((PsiJavaFile)getFile()).getClasses()[0].getMethods()[0].getBody();
     ControlFlow flow = ControlFlowFactory.getInstance(getProject()).getControlFlow(body, new LocalsControlFlowPolicy(body), false);

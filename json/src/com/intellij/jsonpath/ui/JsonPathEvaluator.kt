@@ -9,7 +9,7 @@ import com.jayway.jsonpath.*
 
 class JsonPathEvaluator(val jsonFile: JsonFile?,
                         val expression: String,
-                        val evalOptions: Set<Option>) {
+                        private val evalOptions: Set<Option>) {
 
   fun evaluate(): EvaluateResult? {
     val jsonPath: JsonPath = try {

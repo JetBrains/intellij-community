@@ -136,7 +136,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
         }
         int nextChar = i + 1;
         while (nextChar < length && text.charAt(nextChar) == 'u') {
-          nextChar++; // \\uuuu0061 is a legal Unicode escape
+          nextChar++; // \uuuuFFFD is a legal Unicode escape
         }
         if (nextChar == i + 1 || nextChar + 3 >= length) {
           continue;

@@ -114,14 +114,14 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
           reasonMessage += " and " + (debugNames.size() - maxNamesToLog) + " iterators more";
         }
         logRootChanges(project, false);
-        new UnindexedFilesUpdater(project, mergedIterators, dependenciesStatusMark, reasonMessage).queue(project);
+        new UnindexedFilesUpdater(project, mergedIterators, dependenciesStatusMark, reasonMessage).queue();
       }
     }
   }
 
   private static void runFullRescan(@NotNull Project project, @NotNull @NonNls String reason) {
     logRootChanges(project, true);
-    new UnindexedFilesUpdater(project, reason).queue(project);
+    new UnindexedFilesUpdater(project, reason).queue();
   }
 
 

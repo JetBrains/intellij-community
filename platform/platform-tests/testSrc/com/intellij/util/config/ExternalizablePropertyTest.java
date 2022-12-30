@@ -4,7 +4,6 @@ package com.intellij.util.config;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.Assertion;
 import com.intellij.util.NewInstanceFactory;
 import junit.framework.TestCase;
 import org.jdom.Element;
@@ -12,10 +11,11 @@ import org.jdom.Element;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class ExternalizablePropertyTest extends TestCase {
   private final ExternalizablePropertyContainer myContainer = new ExternalizablePropertyContainer();
   private static final ListProperty<MockJDOMExternalizable> PROPERTY = new ListProperty<>("list");
-  private final Assertion CHECK = new Assertion();
   private static final Externalizer<MockJDOMExternalizable> EXTERNALIZER =
     new Externalizer.FactoryBased<>(NewInstanceFactory.fromClass(MockJDOMExternalizable.class));
 
@@ -51,7 +51,7 @@ public class ExternalizablePropertyTest extends TestCase {
 
     Element element = new Element("element");
     myContainer.writeExternal(element);
-    Assertion.size(0, element.getChildren());
+    assertThat(element.getChildren()).isEmpty();
   }
 
   public void testWriteList() throws WriteExternalException {

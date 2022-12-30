@@ -14,6 +14,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,20 +33,20 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   private final List<Disposable> myCleanupDisposables = new ArrayList<>();
 
   PsiReferenceRegistrarImpl() {
-    myBindingCache = ConcurrentFactoryMap.createMap(key-> {
-      List<ProviderBinding> result = new SmartList<>();
-        for (Class<?> bindingClass : myBindingsMap.keySet()) {
-          if (bindingClass.isAssignableFrom(key)) {
-            result.add(myBindingsMap.get(bindingClass));
-          }
-        }
-        for (Class<?> bindingClass : myNamedBindingsMap.keySet()) {
-          if (bindingClass.isAssignableFrom(key)) {
-            result.add(myNamedBindingsMap.get(bindingClass));
-          }
-        }
-      return result.toArray(new ProviderBinding[0]);
-      }
+    myBindingCache = ConcurrentFactoryMap.createMap(key -> {
+                                                      List<ProviderBinding> result = new SmartList<>();
+                                                      for (Class<?> bindingClass : myBindingsMap.keySet()) {
+                                                        if (bindingClass.isAssignableFrom(key)) {
+                                                          result.add(myBindingsMap.get(bindingClass));
+                                                        }
+                                                      }
+                                                      for (Class<?> bindingClass : myNamedBindingsMap.keySet()) {
+                                                        if (bindingClass.isAssignableFrom(key)) {
+                                                          result.add(myNamedBindingsMap.get(bindingClass));
+                                                        }
+                                                      }
+                                                      return result.toArray(new ProviderBinding[0]);
+                                                    }
     );
   }
 
@@ -86,7 +87,8 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
       for (PatternCondition<? super String> condition1 : conditions1) {
         if (condition1 instanceof ValuePatternCondition) {
           final Collection<String> strings = ((ValuePatternCondition)condition1).getValues();
-          registerNamedReferenceProvider(ArrayUtilRt.toStringArray(strings), nameCondition, scope, true, provider, priority, pattern, parentDisposable);
+          registerNamedReferenceProvider(ArrayUtilRt.toStringArray(strings), nameCondition, scope, true, provider, priority, pattern,
+                                         parentDisposable);
           return;
         }
         if (condition1 instanceof CaseInsensitiveValuePatternCondition) {
@@ -174,9 +176,9 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     }
   }
 
-  @NotNull
-  List<ProviderBinding.ProviderInfo<ProcessingContext>> getPairsByElement(@NotNull PsiElement element,
-                                                                          @NotNull PsiReferenceService.Hints hints) {
+  @ApiStatus.Internal
+  public @NotNull List<ProviderBinding.ProviderInfo<ProcessingContext>> getPairsByElement(@NotNull PsiElement element,
+                                                                                          @NotNull PsiReferenceService.Hints hints) {
     final ProviderBinding[] bindings = myBindingCache.get(element.getClass());
     if (bindings.length == 0) return Collections.emptyList();
 

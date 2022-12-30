@@ -30,33 +30,33 @@ interface KotlinScriptEntity: WorkspaceEntityWithPersistentId {
     override val persistentId: ScriptId
         get() = ScriptId(path)
 
-    //region generated code
-    @GeneratedCodeApiVersion(1)
-    interface Builder : KotlinScriptEntity, ModifiableWorkspaceEntity<KotlinScriptEntity>, ObjBuilder<KotlinScriptEntity> {
-        override var entitySource: EntitySource
-        override var path: String
-        override var dependencies: List<LibraryEntity>
-    }
+  //region generated code
+  @GeneratedCodeApiVersion(1)
+  interface Builder : KotlinScriptEntity, ModifiableWorkspaceEntity<KotlinScriptEntity>, ObjBuilder<KotlinScriptEntity> {
+    override var entitySource: EntitySource
+    override var path: String
+    override var dependencies: List<LibraryEntity>
+  }
 
-    companion object : Type<KotlinScriptEntity, Builder>() {
-        operator fun invoke(path: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): KotlinScriptEntity {
-            val builder = builder()
-            builder.path = path
-            builder.entitySource = entitySource
-            init?.invoke(builder)
-            return builder
-        }
+  companion object : Type<KotlinScriptEntity, Builder>() {
+    operator fun invoke(path: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): KotlinScriptEntity {
+      val builder = builder()
+      builder.path = path
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
     }
-    //endregion
+  }
+  //endregion
 
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: KotlinScriptEntity, modification: KotlinScriptEntity.Builder.() -> Unit) =
-    modifyEntity(KotlinScriptEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: KotlinScriptEntity, modification: KotlinScriptEntity.Builder.() -> Unit) = modifyEntity(
+  KotlinScriptEntity.Builder::class.java, entity, modification)
 
 var LibraryEntity.Builder.kotlinScript: KotlinScriptEntity?
-        by WorkspaceEntity.extension()
+  by WorkspaceEntity.extension()
 //endregion
 
 data class KotlinScriptEntitySource(override val virtualFileUrl: VirtualFileUrl?): EntitySource

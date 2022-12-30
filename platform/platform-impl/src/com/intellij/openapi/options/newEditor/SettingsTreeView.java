@@ -597,7 +597,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       add(BorderLayout.CENTER, myTextLabel);
       add(BorderLayout.WEST, myNodeIcon);
       add(BorderLayout.EAST, myProjectIcon);
-      setBorder(JBUI.Borders.empty(1, 10, 3, 10));
+      setBorder(JBUI.Borders.empty(2, 10));
     }
 
     @Override
@@ -626,6 +626,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
                                                   int row,
                                                   boolean focused) {
       myTextLabel.clear();
+      myTextLabel.setIconOnTheRight(false);
       setPreferredSize(null);
 
       MyNode node = extractNode(value);
@@ -664,6 +665,12 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
           myTextLabel.append("   ", SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
           myTextLabel.append(label, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES, false);
         }
+      }
+
+      if (isBeta(configurable)) {
+        myTextLabel.setIconOnTheRight(true);
+        myTextLabel.setIconTextGap(JBUIScale.scale(8));
+        myTextLabel.setIcon(AllIcons.General.Beta);
       }
 
       if (node != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
@@ -748,6 +755,11 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         myRenderInfo = null;
       }
     }
+  }
+
+  private static boolean isBeta(Configurable c) {
+    return c instanceof Configurable.Beta ||
+           (c instanceof ConfigurableWrapper w && w.getConfigurable() instanceof Configurable.Beta);
   }
 
   @SuppressWarnings("unused")

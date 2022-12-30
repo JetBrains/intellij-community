@@ -123,18 +123,20 @@ public final class StaticGenericInfoBuilder {
   @Nullable
   private MultiValuesMap<XmlName, JavaMethod> getAddersMap(final JavaMethod method) {
     final Class<?>[] parameterTypes = method.getParameterTypes();
-    switch (parameterTypes.length) {
-      case 0:
-        return collectionAdders;
-      case 1:
-        if (Class.class.equals(parameterTypes[0])) return collectionClassAdders;
-        if (isInt(parameterTypes[0])) return collectionIndexAdders;
-        break;
-      case 2:
-        if (isIndexClassAdder(parameterTypes[0], parameterTypes[1])) return collectionIndexClassAdders;
-        if (isIndexClassAdder(parameterTypes[1], parameterTypes[0])) return collectionClassIndexAdders;
-    }
-    return null;
+    return switch (parameterTypes.length) {
+      case 0 -> collectionAdders;
+      case 1 -> {
+        if (Class.class.equals(parameterTypes[0])) yield collectionClassAdders;
+        if (isInt(parameterTypes[0])) yield collectionIndexAdders;
+        yield null;
+      }
+      case 2 -> {
+        if (isIndexClassAdder(parameterTypes[0], parameterTypes[1])) yield collectionIndexClassAdders;
+        if (isIndexClassAdder(parameterTypes[1], parameterTypes[0])) yield collectionClassIndexAdders;
+        yield null;
+      }
+      default -> null;
+    };
   }
 
   private static boolean isIndexClassAdder(final Class<?> first, final Class<?> second) {

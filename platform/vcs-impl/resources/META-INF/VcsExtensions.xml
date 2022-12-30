@@ -61,7 +61,6 @@
     <postStartupActivity implementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager$PostStartupActivity"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager"
                     headlessImplementation=""/>
-    <postStartupActivity implementation="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$PostStartupActivity"/>
 
     <fileDocumentManagerListener implementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl$FileStatusManagerDocumentListener"/>
     <editorFactoryDocumentListener implementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl$FileStatusManagerDocumentListener"/>
@@ -175,6 +174,12 @@
                         preloaderClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentPreloader"
                         predicateClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentPredicate"
                         displayNameSupplierClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$DisplayNameSupplier"
+                        isInCommitToolWindow="true"/>
+    <changesViewContent tabName="Shelf"
+                        className="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$ContentProvider"
+                        preloaderClassName="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$ContentPreloader"
+                        predicateClassName="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$ContentPredicate"
+                        displayNameSupplierClassName="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$DisplayNameSupplier"
                         isInCommitToolWindow="true"/>
 
     <statusBarWidgetFactory id="IncomingChanges" implementation="com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicatorFactory"/>

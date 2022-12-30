@@ -290,12 +290,12 @@ interface DeferredKotlinMoveUsage : KotlinMoveUsage {
 }
 
 class CallableReferenceMoveRenameUsageInfo(
-    element: PsiElement,
-    reference: PsiReference,
-    referencedElement: PsiElement,
-    val originalFile: PsiFile,
-    val addImportToOriginalFile: Boolean,
-    override val isInternal: Boolean
+  element: PsiElement,
+  reference: PsiReference,
+  referencedElement: PsiElement,
+  val originalFile: PsiFile,
+  private val addImportToOriginalFile: Boolean,
+  override val isInternal: Boolean
 ) : MoveRenameUsageInfo(
     element,
     reference,

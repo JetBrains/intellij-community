@@ -32,33 +32,22 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
 
   @Test
   public void testBasic() throws Exception {
-    createProjectSubFile("resources/file.properties", "value=${project.version}\n" +
-                                                      "value2=@project.version@\n" +
-                                                      "time=${time}");
+    createProjectSubFile("resources/file.properties", """
+      value=${project.version}
+      value2=@project.version@
+      time=${time}""");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<properties>" +
-                  "  <time>${maven.build.timestamp}</time>" +
-                  "  <maven.build.timestamp.format>---</maven.build.timestamp.format>\n" +
-                  "</properties>\n" +
-                  "" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>resources</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId><artifactId>project</artifactId><version>1</version><properties>  <time>${maven.build.timestamp}</time>  <maven.build.timestamp.format>---</maven.build.timestamp.format>
+                    </properties>
+                    <build>  <resources>    <resource>      <directory>resources</directory>      <filtering>true</filtering>    </resource>  </resources></build>""");
 
     compileModules("project");
 
-    assertResult("target/classes/file.properties", "value=1\n" +
-                                                   "value2=1\n" +
-                                                   "time=---");
+    assertResult("target/classes/file.properties", """
+      value=1
+      value2=1
+      time=---""");
   }
 
   @Test
@@ -84,11 +73,12 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
 
   @Test
   public void testCustomDelimiter() throws Exception {
-    createProjectSubFile("resources/file.properties", "value1=${project.version}\n" +
-                                                      "value2=@project.version@\n" +
-                                                      "valueX=|\n" +
-                                                      "value3=|project.version|\n" +
-                                                      "value4=(project.version]");
+    createProjectSubFile("resources/file.properties", """
+      value1=${project.version}
+      value2=@project.version@
+      valueX=|
+      value3=|project.version|
+      value4=(project.version]""");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -117,11 +107,12 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
 
     compileModules("project");
 
-    assertResult("target/classes/file.properties", "value1=1\n" +
-                                                   "value2=1\n" +
-                                                   "valueX=|\n" +
-                                                   "value3=1\n" +
-                                                   "value4=1");
+    assertResult("target/classes/file.properties", """
+      value1=1
+      value2=1
+      valueX=|
+      value3=1
+      value4=1""");
   }
 
   @Test
@@ -297,9 +288,10 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
 
   @Test
   public void testEscapingWindowsChars() throws Exception {
-    createProjectSubFile("resources/file.txt", "value=${foo}\n" +
-                                               "value2=@foo@\n" +
-                                               "value3=${bar}");
+    createProjectSubFile("resources/file.txt", """
+      value=${foo}
+      value2=@foo@
+      value3=${bar}""");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -320,9 +312,10 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                   "</build>");
     compileModules("project");
 
-    assertResult("target/classes/file.txt", "value=c:\\\\projects\\\\foo/bar\n" +
-                                            "value2=c:\\\\projects\\\\foo/bar\n" +
-                                            "value3=a\\b\\c");
+    assertResult("target/classes/file.txt", """
+      value=c:\\\\projects\\\\foo/bar
+      value2=c:\\\\projects\\\\foo/bar
+      value3=a\\b\\c""");
   }
 
   @Test
@@ -731,13 +724,17 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
   @Test
   public void testCustomFilters() throws Exception {
     createProjectSubFile("filters/filter1.properties",
-                         "xxx=value\n" +
-                         "yyy=${project.version}\n");
+                         """
+                           xxx=value
+                           yyy=${project.version}
+                           """);
     createProjectSubFile("filters/filter2.properties", "zzz=value2");
     createProjectSubFile("resources/file.properties",
-                         "value1=${xxx}\n" +
-                         "value2=${yyy}\n" +
-                         "value3=${zzz}\n");
+                         """
+                           value1=${xxx}
+                           value2=${yyy}
+                           value3=${zzz}
+                           """);
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -757,9 +754,11 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                   "</build>");
     compileModules("project");
 
-    assertResult("target/classes/file.properties", "value1=value\n" +
-                                                   "value2=1\n" +
-                                                   "value3=value2\n");
+    assertResult("target/classes/file.properties", """
+      value1=value
+      value2=1
+      value3=value2
+      """);
   }
 
   @Test
@@ -767,38 +766,27 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     createProjectSubFile("filters/filter.properties", "xxx=value");
     createProjectSubFile("resources/file.properties", "value1=${xxx}");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>\n" +
-                  "    <plugin>\n" +
-                  "      <groupId>org.codehaus.mojo</groupId>\n" +
-                  "      <artifactId>properties-maven-plugin</artifactId>\n" +
-                  "      <executions>\n" +
-                  "        <execution>\n" +
-                  "          <id>common-properties</id>\n" +
-                  "          <phase>initialize</phase>\n" +
-                  "          <goals>\n" +
-                  "            <goal>read-project-properties</goal>\n" +
-                  "          </goals>\n" +
-                  "          <configuration>\n" +
-                  "            <files>\n" +
-                  "              <file>filters/filter.properties</file>\n" +
-                  "            </files>\n" +
-                  "          </configuration>\n" +
-                  "        </execution>\n" +
-                  "      </executions>\n" +
-                  "    </plugin>" +
-                  "  </plugins>\n" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>resources</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId><artifactId>project</artifactId><version>1</version><build>  <plugins>
+                        <plugin>
+                          <groupId>org.codehaus.mojo</groupId>
+                          <artifactId>properties-maven-plugin</artifactId>
+                          <executions>
+                            <execution>
+                              <id>common-properties</id>
+                              <phase>initialize</phase>
+                              <goals>
+                                <goal>read-project-properties</goal>
+                              </goals>
+                              <configuration>
+                                <files>
+                                  <file>filters/filter.properties</file>
+                                </files>
+                              </configuration>
+                            </execution>
+                          </executions>
+                        </plugin>  </plugins>
+                      <resources>    <resource>      <directory>resources</directory>      <filtering>true</filtering>    </resource>  </resources></build>""");
     compileModules("project");
 
     assertResult("target/classes/file.properties", "value1=value");
@@ -838,8 +826,10 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     createProjectSubFile("filters/filter1.properties", "xxx=value1");
     createProjectSubFile("filters/filter2.properties", "yyy=value2");
     createProjectSubFile("resources/file.properties",
-                         "value1=${xxx}\n" +
-                         "value2=${yyy}\n");
+                         """
+                           value1=${xxx}
+                           value2=${yyy}
+                           """);
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -875,24 +865,29 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
 
     importProjectWithProfiles("one");
     compileModules("project");
-    assertResult("target/classes/file.properties", "value1=value1\n" +
-                                                   "value2=${yyy}\n");
+    assertResult("target/classes/file.properties", """
+      value1=value1
+      value2=${yyy}
+      """);
 
     importProjectWithProfiles("two");
     compileModules("project");
-    assertResult("target/classes/file.properties", "value1=${xxx}\n" +
-                                                   "value2=value2\n");
+    assertResult("target/classes/file.properties", """
+      value1=${xxx}
+      value2=value2
+      """);
   }
 
   @Test
   public void testEscapingFiltering() throws Exception {
     createProjectSubFile("filters/filter.properties", "xxx=value");
     createProjectSubFile("resources/file.properties",
-                         "value1=\\${xxx}\n" +
-                         "value2=\\\\${xxx}\n" +
-                         "value3=\\\\\\${xxx}\n" +
-                         "value3=\\\\\\\\${xxx}\n" +
-                         "value4=.\\.\\\\.\\\\\\.");
+                         """
+                           value1=\\${xxx}
+                           value2=\\\\${xxx}
+                           value3=\\\\\\${xxx}
+                           value3=\\\\\\\\${xxx}
+                           value4=.\\.\\\\.\\\\\\.""");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -921,11 +916,12 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
 
     compileModules("project");
     assertResult("target/classes/file.properties",
-                 "value1=${xxx}\n" +
-                 "value2=\\\\value\n" +
-                 "value3=\\\\${xxx}\n" +
-                 "value3=\\\\\\\\value\n" +
-                 "value4=.\\.\\\\.\\\\\\.");
+                 """
+                   value1=${xxx}
+                   value2=\\\\value
+                   value3=\\\\${xxx}
+                   value3=\\\\\\\\value
+                   value4=.\\.\\\\.\\\\\\.""");
   }
 
   @Test
@@ -965,8 +961,10 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
   public void testCustomEscapingFiltering() throws Exception {
     createProjectSubFile("filters/filter.properties", "xxx=value");
     createProjectSubFile("resources/file.properties",
-                         "value1=^${xxx}\n" +
-                         "value2=\\${xxx}\n");
+                         """
+                           value1=^${xxx}
+                           value2=\\${xxx}
+                           """);
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -995,8 +993,10 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
 
     compileModules("project");
     assertResult("target/classes/file.properties",
-                 "value1=${xxx}\n" +
-                 "value2=\\value\n");
+                 """
+                   value1=${xxx}
+                   value2=\\value
+                   """);
   }
 
   @Test

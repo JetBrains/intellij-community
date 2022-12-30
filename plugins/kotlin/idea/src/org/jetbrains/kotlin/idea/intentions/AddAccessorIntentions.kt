@@ -19,8 +19,8 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtProperty
 
 abstract class AddAccessorsIntention(
-    protected val addGetter: Boolean,
-    protected val addSetter: Boolean
+  private val addGetter: Boolean,
+  private val addSetter: Boolean
 ) : SelfTargetingRangeIntention<KtProperty>(KtProperty::class.java, AddAccessorApplicator.applicator(addGetter, addSetter).getFamilyName()) {
 
     override fun applyTo(element: KtProperty, editor: Editor?) {

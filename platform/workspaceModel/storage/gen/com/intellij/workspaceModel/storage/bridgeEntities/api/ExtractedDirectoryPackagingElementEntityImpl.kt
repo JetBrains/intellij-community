@@ -52,7 +52,7 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
     return connections
   }
 
-  class Builder(val result: ExtractedDirectoryPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ExtractedDirectoryPackagingElementEntity>(), ExtractedDirectoryPackagingElementEntity.Builder {
+  class Builder(var result: ExtractedDirectoryPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ExtractedDirectoryPackagingElementEntity>(), ExtractedDirectoryPackagingElementEntity.Builder {
     constructor() : this(ExtractedDirectoryPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -70,6 +70,9 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -96,11 +99,14 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ExtractedDirectoryPackagingElementEntity
-      this.entitySource = dataSource.entitySource
-      this.filePath = dataSource.filePath
-      this.pathInArchive = dataSource.pathInArchive
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.filePath != dataSource.filePath) this.filePath = dataSource.filePath
+      if (this.pathInArchive != dataSource.pathInArchive) this.pathInArchive = dataSource.pathInArchive
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+        val parentEntityNew = parents.filterIsInstance<CompositePackagingElementEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 
@@ -230,7 +236,7 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ExtractedDirectoryPackagingElementEntityData
 
@@ -242,7 +248,7 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ExtractedDirectoryPackagingElementEntityData
 

@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
 
@@ -8,8 +8,7 @@ import com.intellij.openapi.util.text.Strings
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
@@ -27,15 +26,19 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicReference
 
-class BuildContextImpl private constructor(private val compilationContext: CompilationContextImpl,
-                                           override val productProperties: ProductProperties,
-                                           override val windowsDistributionCustomizer: WindowsDistributionCustomizer?,
-                                           override val linuxDistributionCustomizer: LinuxDistributionCustomizer?,
-                                           override val macDistributionCustomizer: MacDistributionCustomizer?,
-                                           override val proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-                                           private val distFiles: ConcurrentLinkedQueue<Map.Entry<Path, String>>) : BuildContext {
+class BuildContextImpl private constructor(
+  private val compilationContext: CompilationContextImpl,
+  override val productProperties: ProductProperties,
+  override val windowsDistributionCustomizer: WindowsDistributionCustomizer?,
+  override val linuxDistributionCustomizer: LinuxDistributionCustomizer?,
+  internal val macDistributionCustomizer: MacDistributionCustomizer?,
+  override val proprietaryBuildTools: ProprietaryBuildTools,
+) : BuildContext {
+  private val distFiles = ConcurrentLinkedQueue<DistFile>()
 
+  private val extraExecutablePatterns = AtomicReference<PersistentMap<OsFamily, PersistentList<String>>>(persistentHashMapOf())
 
   override val fullBuildNumber: String
     get() = "${applicationInfo.productCode}-$buildNumber"
@@ -44,7 +47,7 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
     get() = productProperties.getSystemSelector(applicationInfo, buildNumber)
 
 
-  override val buildNumber: String = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDir)
+  override val buildNumber: String = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDirRoot)
 
   override val xBootClassPathJarNames: List<String>
     get() = productProperties.xBootClassPathJarNames
@@ -117,8 +120,7 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
                               windowsDistributionCustomizer = windowsDistributionCustomizer,
                               linuxDistributionCustomizer = linuxDistributionCustomizer,
                               macDistributionCustomizer = macDistributionCustomizer,
-                              proprietaryBuildTools = proprietaryBuildTools,
-                              distFiles = ConcurrentLinkedQueue())
+                              proprietaryBuildTools = proprietaryBuildTools)
     }
   }
 
@@ -135,13 +137,19 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
       builtinModulesData = value
     }
 
-  override fun addDistFile(file: Map.Entry<Path, String>) {
-    messages.debug("$file requested to be added to app resources")
+  override fun addDistFile(file: DistFile) {
+    Span.current().addEvent("add app resource", Attributes.of(AttributeKey.stringKey("file"), file.toString()))
     distFiles.add(file)
   }
 
-  override fun getDistFiles(): Collection<Map.Entry<Path, String>> {
-    return java.util.List.copyOf(distFiles)
+  override fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile> {
+    if (os == null && arch == null) {
+      return java.util.List.copyOf(distFiles)
+    }
+
+    return distFiles.filter {
+       (os == null || it.os == null || it.os == os) && (arch == null || it.arch == null || it.arch == arch)
+    }
   }
 
   override fun findApplicationInfoModule(): JpsModule {
@@ -150,6 +158,7 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
 
   override val options: BuildOptions
     get() = compilationContext.options
+
   @Suppress("SSBasedInspection")
   override val messages: BuildMessages
     get() = compilationContext.messages
@@ -169,8 +178,8 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
     get() = compilationContext.stableJavaExecutable
   override val stableJdkHome: Path
     get() = compilationContext.stableJdkHome
-  override val projectOutputDirectory: Path
-    get() = compilationContext.projectOutputDirectory
+  override val classesOutputDirectory: Path
+    get() = compilationContext.classesOutputDirectory
 
   override fun findRequiredModule(name: String): JpsModule {
     return compilationContext.findRequiredModule(name)
@@ -212,18 +221,6 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
     return null
   }
 
-  override fun signFiles(files: List<Path>, options: Map<String, String>) {
-    if (proprietaryBuildTools.signTool == null) {
-      Span.current().addEvent("files won't be signed", Attributes.of(
-        AttributeKey.stringArrayKey("files"), files.map(Path::toString),
-        AttributeKey.stringKey("reason"), "sign tool isn't defined")
-      )
-    }
-    else {
-      proprietaryBuildTools.signTool.signFiles(files, this, options)
-    }
-  }
-
   override fun executeStep(stepMessage: String, stepId: String, step: Runnable): Boolean {
     if (options.buildStepsToSkip.contains(stepId)) {
       Span.current().addEvent("skip step", Attributes.of(AttributeKey.stringKey("name"), stepMessage))
@@ -234,14 +231,10 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
     return true
   }
 
-  override fun shouldBuildDistributions(): Boolean {
-    return options.targetOs.lowercase() != BuildOptions.OS_NONE
-  }
+  override fun shouldBuildDistributions(): Boolean = !options.targetOs.isEmpty()
 
   override fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean {
-    return shouldBuildDistributions()
-           && listOf(BuildOptions.OS_ALL, os.osId).contains(options.targetOs.lowercase())
-           && (options.targetArch == null || options.targetArch == arch)
+    return shouldBuildDistributions() && options.targetOs.contains(os) && (options.targetArch == null || options.targetArch == arch)
   }
 
   override fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext {
@@ -260,7 +253,6 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
       linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizersAsString),
       macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizersAsString),
       proprietaryBuildTools = proprietaryBuildTools,
-      distFiles = ConcurrentLinkedQueue()
     )
     @Suppress("DEPRECATION") val productCode = productProperties.productCode
     copy.paths.artifactDir = paths.artifactDir.resolve(productCode!!)
@@ -279,14 +271,26 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
     Files.writeString(path, Files.readString(path).replace(" inspect ", " ${productProperties.inspectCommandName} "))
   }
 
-  override fun getAdditionalJvmArguments(os: OsFamily): List<String> {
-    val jvmArgs: MutableList<String> = ArrayList()
-    val classLoader = productProperties.classLoader
-    if (classLoader != null) {
-      jvmArgs.add("-Djava.system.class.loader=$classLoader")
+  @Suppress("SpellCheckingInspection")
+  override fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isPortableDist: Boolean): List<String> {
+    val jvmArgs = ArrayList<String>()
+    productProperties.classLoader?.let {
+      jvmArgs.add("-Djava.system.class.loader=$it")
     }
     jvmArgs.add("-Didea.vendor.name=${applicationInfo.shortCompanyName}")
     jvmArgs.add("-Didea.paths.selector=$systemSelector")
+
+    val macroName = when (os) {
+      OsFamily.MACOS -> "\$APP_PACKAGE${if (isPortableDist) "" else "/Contents"}"
+      OsFamily.LINUX -> "\$IDE_HOME"
+      else -> "%IDE_HOME%"
+    }
+    jvmArgs.add("-Djna.boot.library.path=$macroName/lib/jna/${arch.dirName}")
+    jvmArgs.add("-Dpty4j.preferred.native.folder=$macroName/lib/pty4j")
+    // prefer bundled JNA dispatcher lib
+    jvmArgs.add("-Djna.nosys=true")
+    jvmArgs.add("-Djna.nounpack=true")
+
     if (productProperties.platformPrefix != null) {
       jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")
     }
@@ -295,9 +299,18 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
       @Suppress("SpellCheckingInspection")
       jvmArgs.add("-Dsplash=true")
     }
+
     jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(this, os))
     return jvmArgs
   }
+
+  override fun addExtraExecutablePattern(os: OsFamily, pattern: String) {
+    extraExecutablePatterns.updateAndGet { prev ->
+      prev.put(os, (prev.get(os) ?: persistentListOf()).add(pattern))
+    }
+  }
+
+  override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get().get(os) ?: emptyList()
 }
 
 private fun createBuildOutputRootEvaluator(projectHome: Path,

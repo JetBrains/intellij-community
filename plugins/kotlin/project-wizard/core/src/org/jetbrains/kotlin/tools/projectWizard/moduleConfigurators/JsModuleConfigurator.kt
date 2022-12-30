@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsNodeBasedC
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JvmModuleConfigurator.Companion.testFramework
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.GradlePlugin
+import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModulesToIrConversionData
@@ -118,7 +119,7 @@ interface JsBrowserBasedConfigurator {
                 applicationSupport()
             }
             "browser" {
-                if (reader.cssSupportNeeded(module)) commonCssSupport()
+                if (reader.cssSupportNeeded(module)) commonCssSupport(reader)
             }
         }
     }
@@ -206,16 +207,27 @@ fun GradleIRListBuilder.applicationSupport() {
     +"binaries.executable()"
 }
 
-fun GradleIRListBuilder.commonCssSupport() {
+fun GradleIRListBuilder.commonCssSupport(reader: Reader) {
+    val version = with (reader) {
+        KotlinPlugin.version.propertyValue
+    }.version.text
+
     "commonWebpackConfig" {
-        "cssSupport" {
-            addRaw {
-                val receiver = when (dsl) {
-                    GradlePrinter.GradleDsl.KOTLIN -> ""
-                    GradlePrinter.GradleDsl.GROOVY -> "it."
+        val more1_8 =
+            version.substringBefore(".").toInt() >= 1 &&
+                    version.substringAfter(".").substringBefore(".").toInt() >= 8
+        if (more1_8) {
+            "cssSupport" {
+                addRaw {
+                    val receiver = when (dsl) {
+                        GradlePrinter.GradleDsl.KOTLIN -> ""
+                        GradlePrinter.GradleDsl.GROOVY -> "it."
+                    }
+                    +"${receiver}enabled.set(true)"
                 }
-                +"${receiver}enabled.set(true)"
             }
+        } else {
+            +"cssSupport.enabled = true"
         }
     }
 }

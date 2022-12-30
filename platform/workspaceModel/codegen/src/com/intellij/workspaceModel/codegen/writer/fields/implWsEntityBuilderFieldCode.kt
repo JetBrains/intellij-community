@@ -93,6 +93,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
               line("}")
             }
             section("set(value)") {
+              lineComment("Set list of ref types for abstract entities")
               line("checkModificationAllowed()")
               line("val _diff = diff")
               `if`("_diff != null") {
@@ -100,6 +101,8 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                   `if`("item_value is ${ModifiableWorkspaceEntityBase::class.fqn}<*> && (item_value as? ${
                     ModifiableWorkspaceEntityBase::class.fqn
                   }<*>)?.diff == null") {
+                    lineComment("Backref setup before adding to store an abstract entity")
+                    backrefSetup(field, "item_value")
                     line("_diff.addEntity(item_value)")
                   }
                 }
@@ -137,6 +140,9 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
               `if`("_diff != null") {
                 `for`("item_value in value") {
                   `if`("item_value is ${ModifiableWorkspaceEntityBase::class.fqn}<*> && (item_value as? ${ModifiableWorkspaceEntityBase::class.fqn}<*>)?.diff == null") {
+                    lineComment("Backref setup before adding to store")
+                    backrefSetup(field, "item_value")
+                    line()
                     line("_diff.addEntity(item_value)")
                   }
                 }
@@ -160,11 +166,15 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                 changedProperty.add("${field.javaName}")
             }
             override var ${field.javaName}: MutableList<${elementType.javaType}>
-                get() { 
+                get() {
                     val collection_${field.javaName} = getEntityData().${field.javaName}
                     if (collection_${field.javaName} !is ${MutableWorkspaceList::class.fqn}) return collection_${field.javaName}
-                    collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
-                    return collection_${field.javaName}
+                    if (diff == null || modifiable.get()) {
+                      collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
+                    } else {
+                      collection_${field.javaName}.cleanModificationUpdateAction()
+                    }
+                    return collection_${field.javaName}  
                 }
                 set(value) {
                     checkModificationAllowed()
@@ -189,8 +199,12 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                 get() { 
                     val collection_${field.javaName} = getEntityData().${field.javaName}
                     if (collection_${field.javaName} !is ${MutableWorkspaceSet::class.fqn}) return collection_${field.javaName}
-                    collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
-                    return collection_${field.javaName}
+                    if (diff == null || modifiable.get()) {
+                      collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
+                    } else {
+                      collection_${field.javaName}.cleanModificationUpdateAction()
+                    }
+                    return collection_${field.javaName} 
                 }
                 set(value) {
                     checkModificationAllowed()

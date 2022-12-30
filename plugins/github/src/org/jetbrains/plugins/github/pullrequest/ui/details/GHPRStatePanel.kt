@@ -5,12 +5,10 @@ import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ui.CardLayoutPanel
 import com.intellij.ui.components.JBOptionButton
-import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.NamedColorUtil
 import icons.CollaborationToolsIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -57,7 +55,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
         }
       }
       val errorComponent = HtmlEditorPane().apply {
-        foreground = UIUtil.getErrorForeground()
+        foreground = NamedColorUtil.getErrorForeground()
       }
       stateModel.addAndInvokeActionErrorChangedListener {
         errorComponent.setBody(stateModel.actionError?.message.orEmpty())

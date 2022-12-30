@@ -20,10 +20,10 @@ import org.jetbrains.kotlin.resolve.calls.checkers.COROUTINE_CONTEXT_FQ_NAME
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 internal class KotlinSuspendFunctionWrapper(
-    val bindingContext: BindingContext,
-    val executionContext: ExecutionContext,
-    val psiContext: PsiElement?,
-    isCoroutineScopeAvailable: Boolean
+  val bindingContext: BindingContext,
+  private val executionContext: ExecutionContext,
+  private val psiContext: PsiElement?,
+  isCoroutineScopeAvailable: Boolean
 ) : KotlinExpressionWrapper {
     private val coroutineContextKeyword =
         if (isCoroutineScopeAvailable)

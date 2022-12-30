@@ -80,6 +80,10 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
     }
   }
 
+  // TODO Breaks encapsulation. Instead, targetPortBinding should contain hosts to connect to.
+  fun getWslIpAddress(): String =
+    distribution.wslIp
+
   private fun getWslPort(localPort: Int): Int {
     proxies[localPort]?.wslIngressPort?.let {
       return it

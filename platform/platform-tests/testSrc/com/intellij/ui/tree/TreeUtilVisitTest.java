@@ -148,67 +148,79 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testShowColor() {
-    testShow(() -> new StringFinder("RootColor"), "-Root\n" +
-                                                  " +[RootColor]\n" +
-                                                  " +RootDigit\n" +
-                                                  " +RootGreek\n");
+    testShow(() -> new StringFinder("RootColor"), """
+      -Root
+       +[RootColor]
+       +RootDigit
+       +RootGreek
+      """);
   }
 
   @Test
   public void testShowDigit() {
-    testShow(() -> new StringFinder("RootDigit"), "-Root\n" +
-                                                  " +RootColor\n" +
-                                                  " +[RootDigit]\n" +
-                                                  " +RootGreek\n");
+    testShow(() -> new StringFinder("RootDigit"), """
+      -Root
+       +RootColor
+       +[RootDigit]
+       +RootGreek
+      """);
   }
 
   @Test
   public void testShowGreek() {
-    testShow(() -> new StringFinder("RootGreek"), "-Root\n" +
-                                                  " +RootColor\n" +
-                                                  " +RootDigit\n" +
-                                                  " +[RootGreek]\n");
+    testShow(() -> new StringFinder("RootGreek"), """
+      -Root
+       +RootColor
+       +RootDigit
+       +[RootGreek]
+      """);
   }
 
   @Test
   public void testShowGreen() {
-    testShow(() -> new StringFinder("RootColorGreen"), "-Root\n" +
-                                                       " -RootColor\n" +
-                                                       "  RootColorRed\n" +
-                                                       "  [RootColorGreen]\n" +
-                                                       "  RootColorBlue\n" +
-                                                       " +RootDigit\n" +
-                                                       " +RootGreek\n");
+    testShow(() -> new StringFinder("RootColorGreen"), """
+      -Root
+       -RootColor
+        RootColorRed
+        [RootColorGreen]
+        RootColorBlue
+       +RootDigit
+       +RootGreek
+      """);
   }
 
   @Test
   public void testShowFive() {
-    testShow(() -> new StringFinder("RootDigitFive"), "-Root\n" +
-                                                      " +RootColor\n" +
-                                                      " -RootDigit\n" +
-                                                      "  RootDigitOne\n" +
-                                                      "  RootDigitTwo\n" +
-                                                      "  RootDigitThree\n" +
-                                                      "  RootDigitFour\n" +
-                                                      "  [RootDigitFive]\n" +
-                                                      "  RootDigitSix\n" +
-                                                      "  RootDigitSeven\n" +
-                                                      "  RootDigitEight\n" +
-                                                      "  RootDigitNine\n" +
-                                                      " +RootGreek\n");
+    testShow(() -> new StringFinder("RootDigitFive"), """
+      -Root
+       +RootColor
+       -RootDigit
+        RootDigitOne
+        RootDigitTwo
+        RootDigitThree
+        RootDigitFour
+        [RootDigitFive]
+        RootDigitSix
+        RootDigitSeven
+        RootDigitEight
+        RootDigitNine
+       +RootGreek
+      """);
   }
 
   @Test
   public void testShowGamma() {
-    testShow(() -> new StringFinder("RootGreekGamma"), "-Root\n" +
-                                                       " +RootColor\n" +
-                                                       " +RootDigit\n" +
-                                                       " -RootGreek\n" +
-                                                       "  RootGreekAlpha\n" +
-                                                       "  RootGreekBeta\n" +
-                                                       "  [RootGreekGamma]\n" +
-                                                       "  RootGreekDelta\n" +
-                                                       "  RootGreekEpsilon\n");
+    testShow(() -> new StringFinder("RootGreekGamma"), """
+      -Root
+       +RootColor
+       +RootDigit
+       -RootGreek
+        RootGreekAlpha
+        RootGreekBeta
+        [RootGreekGamma]
+        RootGreekDelta
+        RootGreekEpsilon
+      """);
   }
 
   private static void testShow(@NotNull Supplier<Visitor> supplier, @NotNull String expected) {
@@ -227,10 +239,12 @@ public final class TreeUtilVisitTest {
     TreeTest.test(TreeUtilVisitTest::root, test
       -> test.assertTree("+Root\n", ()
       -> TreeUtil.expand(test.getTree(), 1, ()
-      -> test.assertTree("-Root\n" +
-                         " +RootColor\n" +
-                         " +RootDigit\n" +
-                         " +RootGreek\n",
+      -> test.assertTree("""
+                           -Root
+                            +RootColor
+                            +RootDigit
+                            +RootGreek
+                           """,
                          test::done))));
   }
 
@@ -239,19 +253,21 @@ public final class TreeUtilVisitTest {
     TreeTest.test(TreeUtilVisitTest::rootDeep, test
       -> test.assertTree("+Root\n", ()
       -> TreeUtil.expand(test.getTree(), 2, ()
-      -> test.assertTree("-Root\n" +
-                         " -1\n" +
-                         "  +11\n" +
-                         "  +12\n" +
-                         "  +13\n" +
-                         " -2\n" +
-                         "  +21\n" +
-                         "  +22\n" +
-                         "  +23\n" +
-                         " -3\n" +
-                         "  +31\n" +
-                         "  +32\n" +
-                         "  +33\n",
+      -> test.assertTree("""
+                           -Root
+                            -1
+                             +11
+                             +12
+                             +13
+                            -2
+                             +21
+                             +22
+                             +23
+                            -3
+                             +31
+                             +32
+                             +33
+                           """,
                          test::done))));
   }
 
@@ -260,27 +276,29 @@ public final class TreeUtilVisitTest {
     TreeTest.test(TreeUtilVisitTest::root, test
       -> test.assertTree("+Root\n", ()
       -> TreeUtil.expandAll(test.getTree(), ()
-      -> test.assertTree("-Root\n" +
-                         " -RootColor\n" +
-                         "  RootColorRed\n" +
-                         "  RootColorGreen\n" +
-                         "  RootColorBlue\n" +
-                         " -RootDigit\n" +
-                         "  RootDigitOne\n" +
-                         "  RootDigitTwo\n" +
-                         "  RootDigitThree\n" +
-                         "  RootDigitFour\n" +
-                         "  RootDigitFive\n" +
-                         "  RootDigitSix\n" +
-                         "  RootDigitSeven\n" +
-                         "  RootDigitEight\n" +
-                         "  RootDigitNine\n" +
-                         " -RootGreek\n" +
-                         "  RootGreekAlpha\n" +
-                         "  RootGreekBeta\n" +
-                         "  RootGreekGamma\n" +
-                         "  RootGreekDelta\n" +
-                         "  RootGreekEpsilon\n",
+      -> test.assertTree("""
+                           -Root
+                            -RootColor
+                             RootColorRed
+                             RootColorGreen
+                             RootColorBlue
+                            -RootDigit
+                             RootDigitOne
+                             RootDigitTwo
+                             RootDigitThree
+                             RootDigitFour
+                             RootDigitFive
+                             RootDigitSix
+                             RootDigitSeven
+                             RootDigitEight
+                             RootDigitNine
+                            -RootGreek
+                             RootGreekAlpha
+                             RootGreekBeta
+                             RootGreekGamma
+                             RootGreekDelta
+                             RootGreekEpsilon
+                           """,
                          test::done))
     ));
   }
@@ -289,10 +307,12 @@ public final class TreeUtilVisitTest {
   @Test
   public void testCollapseAll() {
     testCollapseAll(true, true, false, 0,
-                    "-Root\n" +
-                    " +1\n" +
-                    " +[2]\n" +
-                    " +3\n");
+                    """
+                      -Root
+                       +1
+                       +[2]
+                       +3
+                      """);
   }
 
   @Test
@@ -304,80 +324,92 @@ public final class TreeUtilVisitTest {
   @Test
   public void testCollapseAllWithoutRoot() {
     testCollapseAll(false, true, false, 0,
-                    " +1\n" +
-                    " +[2]\n" +
-                    " +3\n");
+                    """
+                       +1
+                       +[2]
+                       +3
+                      """);
   }
 
   @Test
   public void testCollapseAllWithoutRootHandles() {
     testCollapseAll(true, false, false, 0,
-                    "-Root\n" +
-                    " +1\n" +
-                    " +[2]\n" +
-                    " +3\n");
+                    """
+                      -Root
+                       +1
+                       +[2]
+                       +3
+                      """);
   }
 
   @Test
   public void testCollapseAllWithoutRootAndHandles() {
     testCollapseAll(false, false, false, 0,
-                    " -1\n" +
-                    "  +11\n" +
-                    "  +12\n" +
-                    "  +13\n" +
-                    " -2\n" +
-                    "  +21\n" +
-                    "  +[22]\n" +
-                    "  +23\n" +
-                    " -3\n" +
-                    "  +31\n" +
-                    "  +32\n" +
-                    "  +33\n");
+                    """
+                       -1
+                        +11
+                        +12
+                        +13
+                       -2
+                        +21
+                        +[22]
+                        +23
+                       -3
+                        +31
+                        +32
+                        +33
+                      """);
   }
 
   @Test
   public void testCollapseAllExceptSelectedNode() {
     testCollapseAll(true, true, false, -1,
-                    "-Root\n" +
-                    " +1\n" +
-                    " -2\n" +
-                    "  +21\n" +
-                    "  -22\n" +
-                    "   +221\n" +
-                    "   -222\n" +
-                    "    2221\n" +
-                    "    [2222]\n" +
-                    "    2223\n" +
-                    "   +223\n" +
-                    "  +23\n" +
-                    " +3\n");
+                    """
+                      -Root
+                       +1
+                       -2
+                        +21
+                        -22
+                         +221
+                         -222
+                          2221
+                          [2222]
+                          2223
+                         +223
+                        +23
+                       +3
+                      """);
   }
 
   @Test
   public void testCollapseAllExceptParentOfSelectedNode() {
     testCollapseAll(true, true, false, 4,
-                    "-Root\n" +
-                    " +1\n" +
-                    " -2\n" +
-                    "  +21\n" +
-                    "  -22\n" +
-                    "   +221\n" +
-                    "   +[222]\n" +
-                    "   +223\n" +
-                    "  +23\n" +
-                    " +3\n");
+                    """
+                      -Root
+                       +1
+                       -2
+                        +21
+                        -22
+                         +221
+                         +[222]
+                         +223
+                        +23
+                       +3
+                      """);
   }
 
   @Test
   public void testCollapseAllExceptGrandParentOfSelectedNode() {
     testCollapseAll(true, true, false, 3,
-                    "-Root\n" +
-                    " +1\n" +
-                    " -2\n" +
-                    "  +21\n" +
-                    "  +[22]\n" +
-                    "  +23\n" +
-                    " +3\n");
+                    """
+                      -Root
+                       +1
+                       -2
+                        +21
+                        +[22]
+                        +23
+                       +3
+                      """);
   }
 
   private static void testCollapseAll(boolean visible, boolean showHandles, boolean strict, int keepSelectionLevel, String expected) {
@@ -412,163 +444,187 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testMakeVisible1() {
-    testMakeVisible("-Root\n" +
-                    " +[1]\n" +
-                    " +2\n" +
-                    " +3\n",
+    testMakeVisible("""
+                      -Root
+                       +[1]
+                       +2
+                       +3
+                      """,
                     "1");
   }
 
   @Test
   public void testMakeVisible11() {
-    testMakeVisible("-Root\n" +
-                    " -1\n" +
-                    "  +[11]\n" +
-                    "  +12\n" +
-                    "  +13\n" +
-                    " +2\n" +
-                    " +3\n",
+    testMakeVisible("""
+                      -Root
+                       -1
+                        +[11]
+                        +12
+                        +13
+                       +2
+                       +3
+                      """,
                     "1", "11");
   }
 
   @Test
   public void testMakeVisible111() {
-    testMakeVisible("-Root\n" +
-                    " -1\n" +
-                    "  -11\n" +
-                    "   +[111]\n" +
-                    "   +112\n" +
-                    "   +113\n" +
-                    "  +12\n" +
-                    "  +13\n" +
-                    " +2\n" +
-                    " +3\n",
+    testMakeVisible("""
+                      -Root
+                       -1
+                        -11
+                         +[111]
+                         +112
+                         +113
+                        +12
+                        +13
+                       +2
+                       +3
+                      """,
                     "1", "11", "111");
   }
 
   @Test
   public void testMakeVisible1111() {
-    testMakeVisible("-Root\n" +
-                    " -1\n" +
-                    "  -11\n" +
-                    "   -111\n" +
-                    "    [1111]\n" +
-                    "    1112\n" +
-                    "    1113\n" +
-                    "   +112\n" +
-                    "   +113\n" +
-                    "  +12\n" +
-                    "  +13\n" +
-                    " +2\n" +
-                    " +3\n",
+    testMakeVisible("""
+                      -Root
+                       -1
+                        -11
+                         -111
+                          [1111]
+                          1112
+                          1113
+                         +112
+                         +113
+                        +12
+                        +13
+                       +2
+                       +3
+                      """,
                     "1", "11", "111", "1111");
   }
 
   @Test
   public void testMakeVisible2() {
-    testMakeVisible("-Root\n" +
-                    " +1\n" +
-                    " +[2]\n" +
-                    " +3\n",
+    testMakeVisible("""
+                      -Root
+                       +1
+                       +[2]
+                       +3
+                      """,
                     "2");
   }
 
   @Test
   public void testMakeVisible22() {
-    testMakeVisible("-Root\n" +
-                    " +1\n" +
-                    " -2\n" +
-                    "  +21\n" +
-                    "  +[22]\n" +
-                    "  +23\n" +
-                    " +3\n",
+    testMakeVisible("""
+                      -Root
+                       +1
+                       -2
+                        +21
+                        +[22]
+                        +23
+                       +3
+                      """,
                     "2", "22");
   }
 
   @Test
   public void testMakeVisible222() {
-    testMakeVisible("-Root\n" +
-                    " +1\n" +
-                    " -2\n" +
-                    "  +21\n" +
-                    "  -22\n" +
-                    "   +221\n" +
-                    "   +[222]\n" +
-                    "   +223\n" +
-                    "  +23\n" +
-                    " +3\n",
+    testMakeVisible("""
+                      -Root
+                       +1
+                       -2
+                        +21
+                        -22
+                         +221
+                         +[222]
+                         +223
+                        +23
+                       +3
+                      """,
                     "2", "22", "222");
   }
 
   @Test
   public void testMakeVisible2222() {
-    testMakeVisible("-Root\n" +
-                    " +1\n" +
-                    " -2\n" +
-                    "  +21\n" +
-                    "  -22\n" +
-                    "   +221\n" +
-                    "   -222\n" +
-                    "    2221\n" +
-                    "    [2222]\n" +
-                    "    2223\n" +
-                    "   +223\n" +
-                    "  +23\n" +
-                    " +3\n",
+    testMakeVisible("""
+                      -Root
+                       +1
+                       -2
+                        +21
+                        -22
+                         +221
+                         -222
+                          2221
+                          [2222]
+                          2223
+                         +223
+                        +23
+                       +3
+                      """,
                     "2", "22", "222", "2222");
   }
 
   @Test
   public void testMakeVisible3() {
-    testMakeVisible("-Root\n" +
-                    " +1\n" +
-                    " +2\n" +
-                    " +[3]\n",
+    testMakeVisible("""
+                      -Root
+                       +1
+                       +2
+                       +[3]
+                      """,
                     "3");
   }
 
   @Test
   public void testMakeVisible33() {
-    testMakeVisible("-Root\n" +
-                    " +1\n" +
-                    " +2\n" +
-                    " -3\n" +
-                    "  +31\n" +
-                    "  +32\n" +
-                    "  +[33]\n",
+    testMakeVisible("""
+                      -Root
+                       +1
+                       +2
+                       -3
+                        +31
+                        +32
+                        +[33]
+                      """,
                     "3", "33");
   }
 
   @Test
   public void testMakeVisible333() {
-    testMakeVisible("-Root\n" +
-                    " +1\n" +
-                    " +2\n" +
-                    " -3\n" +
-                    "  +31\n" +
-                    "  +32\n" +
-                    "  -33\n" +
-                    "   +331\n" +
-                    "   +332\n" +
-                    "   +[333]\n",
+    testMakeVisible("""
+                      -Root
+                       +1
+                       +2
+                       -3
+                        +31
+                        +32
+                        -33
+                         +331
+                         +332
+                         +[333]
+                      """,
                     "3", "33", "333");
   }
 
   @Test
   public void testMakeVisible3333() {
-    testMakeVisible("-Root\n" +
-                    " +1\n" +
-                    " +2\n" +
-                    " -3\n" +
-                    "  +31\n" +
-                    "  +32\n" +
-                    "  -33\n" +
-                    "   +331\n" +
-                    "   +332\n" +
-                    "   -333\n" +
-                    "    3331\n" +
-                    "    3332\n" +
-                    "    [3333]\n",
+    testMakeVisible("""
+                      -Root
+                       +1
+                       +2
+                       -3
+                        +31
+                        +32
+                        -33
+                         +331
+                         +332
+                         -333
+                          3331
+                          3332
+                          [3333]
+                      """,
                     "3", "33", "333", "3333");
   }
 
@@ -582,46 +638,52 @@ public final class TreeUtilVisitTest {
   @Test
   public void testSelect11() {
     testSelect(convertArrayToVisitor("1", "11"),
-               "-Root\n" +
-               " -1\n" +
-               "  +[11]\n" +
-               "  +12\n" +
-               "  +13\n" +
-               " +2\n" +
-               " +3\n");
+               """
+                 -Root
+                  -1
+                   +[11]
+                   +12
+                   +13
+                  +2
+                  +3
+                 """);
   }
 
   @Test
   public void testSelect222() {
     testSelect(convertArrayToVisitor("2", "22", "222"),
-               "-Root\n" +
-               " +1\n" +
-               " -2\n" +
-               "  +21\n" +
-               "  -22\n" +
-               "   +221\n" +
-               "   +[222]\n" +
-               "   +223\n" +
-               "  +23\n" +
-               " +3\n");
+               """
+                 -Root
+                  +1
+                  -2
+                   +21
+                   -22
+                    +221
+                    +[222]
+                    +223
+                   +23
+                  +3
+                 """);
   }
 
   @Test
   public void testSelect3333() {
     testSelect(convertArrayToVisitor("3", "33", "333", "3333"),
-               "-Root\n" +
-               " +1\n" +
-               " +2\n" +
-               " -3\n" +
-               "  +31\n" +
-               "  +32\n" +
-               "  -33\n" +
-               "   +331\n" +
-               "   +332\n" +
-               "   -333\n" +
-               "    3331\n" +
-               "    3332\n" +
-               "    [3333]\n");
+               """
+                 -Root
+                  +1
+                  +2
+                  -3
+                   +31
+                   +32
+                   -33
+                    +331
+                    +332
+                    -333
+                     3331
+                     3332
+                     [3333]
+                 """);
   }
 
   private static void testSelect(TreeVisitor visitor, String expected) {
@@ -643,28 +705,30 @@ public final class TreeUtilVisitTest {
       path -> TreeVisitor.Action.INTERRUPT,
     };
     testMultiSelect(array, array.length,
-                    "-[Root]\n" +
-                    " -1\n" +
-                    "  +[11]\n" +
-                    "  +12\n" +
-                    "  +13\n" +
-                    " -2\n" +
-                    "  +21\n" +
-                    "  -22\n" +
-                    "   +221\n" +
-                    "   +[222]\n" +
-                    "   +223\n" +
-                    "  +23\n" +
-                    " -3\n" +
-                    "  +31\n" +
-                    "  +32\n" +
-                    "  -33\n" +
-                    "   +331\n" +
-                    "   +332\n" +
-                    "   -333\n" +
-                    "    3331\n" +
-                    "    3332\n" +
-                    "    [3333]\n");
+                    """
+                      -[Root]
+                       -1
+                        +[11]
+                        +12
+                        +13
+                       -2
+                        +21
+                        -22
+                         +221
+                         +[222]
+                         +223
+                        +23
+                       -3
+                        +31
+                        +32
+                        -33
+                         +331
+                         +332
+                         -333
+                          3331
+                          3332
+                          [3333]
+                      """);
   }
 
   @Test
@@ -677,28 +741,30 @@ public final class TreeUtilVisitTest {
       null,
     };
     testMultiSelect(array, 1,
-                    "-[Root]\n" +
-                    " -1\n" +
-                    "  +11\n" +
-                    "  +12\n" +
-                    "  +13\n" +
-                    " -2\n" +
-                    "  +21\n" +
-                    "  -22\n" +
-                    "   +221\n" +
-                    "   +222\n" +
-                    "   +223\n" +
-                    "  +23\n" +
-                    " -3\n" +
-                    "  +31\n" +
-                    "  +32\n" +
-                    "  -33\n" +
-                    "   +331\n" +
-                    "   +332\n" +
-                    "   -333\n" +
-                    "    3331\n" +
-                    "    3332\n" +
-                    "    3333\n");
+                    """
+                      -[Root]
+                       -1
+                        +11
+                        +12
+                        +13
+                       -2
+                        +21
+                        -22
+                         +221
+                         +222
+                         +223
+                        +23
+                       -3
+                        +31
+                        +32
+                        -33
+                         +331
+                         +332
+                         -333
+                          3331
+                          3332
+                          3333
+                      """);
   }
 
   @Test
@@ -919,28 +985,30 @@ public final class TreeUtilVisitTest {
       path -> TreeVisitor.Action.INTERRUPT,
     };
     testMultiSelect(array, array.length,
-                    "-[Root]\n" +
-                    " -1\n" +
-                    "  +[11]\n" +
-                    "  +12\n" +
-                    "  +13\n" +
-                    " -2\n" +
-                    "  +21\n" +
-                    "  -22\n" +
-                    "   +221\n" +
-                    "   +[222]\n" +
-                    "   +223\n" +
-                    "  +23\n" +
-                    " -3\n" +
-                    "  +31\n" +
-                    "  +32\n" +
-                    "  -[33]\n" +
-                    "   +331\n" +
-                    "   +332\n" +
-                    "   -333\n" +
-                    "    [3331]\n" +
-                    "    [3332]\n" +
-                    "    [3333]\n",
+                    """
+                      -[Root]
+                       -1
+                        +[11]
+                        +12
+                        +13
+                       -2
+                        +21
+                        -22
+                         +221
+                         +[222]
+                         +223
+                        +23
+                       -3
+                        +31
+                        +32
+                        -[33]
+                         +331
+                         +332
+                         -333
+                          [3331]
+                          [3332]
+                          [3333]
+                      """,
                     consumer);
   }
 
@@ -976,7 +1044,11 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testSelectFirstWithoutRoot() {
-    testSelectFirst(TreeUtilVisitTest::rootDeep, false, " +[1]\n" + " +2\n" + " +3\n");
+    testSelectFirst(TreeUtilVisitTest::rootDeep, false, """
+       +[1]
+       +2
+       +3
+      """);
   }
 
   private static void testSelectFirst(@NotNull Supplier<TreeNode> root, boolean visible, @NotNull String expected) {
@@ -1012,35 +1084,39 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testSelectFirstLeafWithRoot() {
-    testSelectFirstLeaf(TreeUtilVisitTest::rootDeep, true, "-Root\n" +
-                                                           " -1\n" +
-                                                           "  -11\n" +
-                                                           "   -111\n" +
-                                                           "    [1111]\n" +
-                                                           "    1112\n" +
-                                                           "    1113\n" +
-                                                           "   +112\n" +
-                                                           "   +113\n" +
-                                                           "  +12\n" +
-                                                           "  +13\n" +
-                                                           " +2\n" +
-                                                           " +3\n");
+    testSelectFirstLeaf(TreeUtilVisitTest::rootDeep, true, """
+      -Root
+       -1
+        -11
+         -111
+          [1111]
+          1112
+          1113
+         +112
+         +113
+        +12
+        +13
+       +2
+       +3
+      """);
   }
 
   @Test
   public void testSelectFirstLeafWithoutRoot() {
-    testSelectFirstLeaf(TreeUtilVisitTest::rootDeep, false, " -1\n" +
-                                                            "  -11\n" +
-                                                            "   -111\n" +
-                                                            "    [1111]\n" +
-                                                            "    1112\n" +
-                                                            "    1113\n" +
-                                                            "   +112\n" +
-                                                            "   +113\n" +
-                                                            "  +12\n" +
-                                                            "  +13\n" +
-                                                            " +2\n" +
-                                                            " +3\n");
+    testSelectFirstLeaf(TreeUtilVisitTest::rootDeep, false, """
+       -1
+        -11
+         -111
+          [1111]
+          1112
+          1113
+         +112
+         +113
+        +12
+        +13
+       +2
+       +3
+      """);
   }
 
   private static void testSelectFirstLeaf(@NotNull Supplier<TreeNode> root, boolean visible, @NotNull String expected) {
@@ -1061,13 +1137,15 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testMakeVisibleNonExistent() {
-    testMakeVisibleNonExistent("-Root\n" +
-                               " +1\n" +
-                               " +2\n" +
-                               " -3\n" +
-                               "  +31\n" +
-                               "  +32\n" +
-                               "  +33\n",
+    testMakeVisibleNonExistent("""
+                                 -Root
+                                  +1
+                                  +2
+                                  -3
+                                   +31
+                                   +32
+                                   +33
+                                 """,
                                convertArrayToVisitor("3", "NonExistent"));
   }
 
@@ -1082,13 +1160,15 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testExpandNonExistent() {
-    testExpandNonExistent("-Root\n" +
-                          " +1\n" +
-                          " +2\n" +
-                          " -3\n" +
-                          "  +31\n" +
-                          "  +32\n" +
-                          "  +33\n",
+    testExpandNonExistent("""
+                            -Root
+                             +1
+                             +2
+                             -3
+                              +31
+                              +32
+                              +33
+                            """,
                           convertArrayToVisitor("3", "NonExistent"));
   }
 

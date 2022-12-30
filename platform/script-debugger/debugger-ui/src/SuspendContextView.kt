@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ColoredTextContainer
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
@@ -232,7 +232,7 @@ class ExecutionStackView(val suspendContext: SuspendContext<*>,
 }
 
 private val ASYNC_HEADER_ATTRIBUTES = SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE or SimpleTextAttributes.STYLE_BOLD,
-                                                           UIUtil.getInactiveTextColor())
+                                                           NamedColorUtil.getInactiveTextColor())
 
 private class AsyncFramesHeader(val asyncFunctionName: String) : XStackFrame(), XDebuggerFramesList.ItemWithCustomBackgroundColor {
   override fun customizePresentation(component: ColoredTextContainer) {

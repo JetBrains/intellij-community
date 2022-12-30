@@ -118,7 +118,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertEquals("$projectUrl/out/test-util", utilJavaSettings.compilerOutputForTests?.url)
     val utilContentRoot = assertOneElement(utilModule.contentRoots.toList())
     assertEquals("$projectUrl/util", utilContentRoot.url.url)
-    assertEquals("$projectUrl/util/exc", assertOneElement(utilContentRoot.excludedUrls).url)
+    assertEquals("$projectUrl/util/exc", assertOneElement(utilContentRoot.excludedUrls).url.url)
     assertEquals(listOf("*.xml", "cvs"), utilContentRoot.excludedPatterns)
     val utilModuleSrc = assertOneElement(utilModule.sourceRoots.toList())
     assertEquals("$projectUrl/util/src", utilModuleSrc.url.url)

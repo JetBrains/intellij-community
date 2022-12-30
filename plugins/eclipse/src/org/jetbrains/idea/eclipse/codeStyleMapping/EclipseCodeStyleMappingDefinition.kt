@@ -49,7 +49,7 @@ internal class EclipseJavaCodeStyleMappingDefinitionBuilder(codeStyleSettings: C
   : MappingDefinitionBuilder(),
     AllJavaCodeStyleSettings by AllJavaCodeStyleSettings.from(codeStyleSettings) {
 
-  val parenPositionConvertor = ParenPositionConvertorFactory(common.KEEP_LINE_BREAKS)
+  private val parenPositionConvertor = ParenPositionConvertorFactory(common.KEEP_LINE_BREAKS)
 
   fun SettingMapping<Boolean>.convertParenPosition(eclipseValueToExportIfTrue: String) =
     convert(parenPositionConvertor.ifInternalIsTrueExport(eclipseValueToExportIfTrue))

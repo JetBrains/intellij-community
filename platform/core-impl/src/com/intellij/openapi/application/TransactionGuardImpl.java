@@ -95,7 +95,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
   }
 
   /**
-   * An absolutely guru method, only intended to be used from Swing event processing. Please consult Peter if you think you need to invoke this.
+   * An absolute guru method, only intended to be used from Swing event processing. Please consult Peter if you think you need to invoke this.
    */
   @ApiStatus.Internal
   public void performActivity(boolean userActivity, @NotNull Runnable runnable) {

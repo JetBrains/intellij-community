@@ -39,7 +39,7 @@ open class DefaultFieldEntityImpl(val dataSource: DefaultFieldEntityData) : Defa
     return connections
   }
 
-  class Builder(val result: DefaultFieldEntityData?) : ModifiableWorkspaceEntityBase<DefaultFieldEntity>(), DefaultFieldEntity.Builder {
+  class Builder(var result: DefaultFieldEntityData?) : ModifiableWorkspaceEntityBase<DefaultFieldEntity>(), DefaultFieldEntity.Builder {
     constructor() : this(DefaultFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -57,6 +57,9 @@ open class DefaultFieldEntityImpl(val dataSource: DefaultFieldEntityData) : Defa
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -80,11 +83,11 @@ open class DefaultFieldEntityImpl(val dataSource: DefaultFieldEntityData) : Defa
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as DefaultFieldEntity
-      this.entitySource = dataSource.entitySource
-      this.version = dataSource.version
-      this.data = dataSource.data
-      this.anotherVersion = dataSource.anotherVersion
-      this.description = dataSource.description
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.version != dataSource.version) this.version = dataSource.version
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.anotherVersion != dataSource.anotherVersion) this.anotherVersion = dataSource.anotherVersion
+      if (this.description != dataSource.description) this.description = dataSource.description
       if (parents != null) {
       }
     }
@@ -192,7 +195,7 @@ class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as DefaultFieldEntityData
 
@@ -206,7 +209,7 @@ class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as DefaultFieldEntityData
 

@@ -85,18 +85,10 @@ public class GrIntroduceFieldProcessor {
     List<PsiElement> replaced = processOccurrences(targetClass, field);
 
     switch (mySettings.initializeIn()) {
-      case CUR_METHOD:
-        initializeInMethod(field, replaced);
-        break;
-      case FIELD_DECLARATION:
-        field.setInitializerGroovy(myInitializer);
-        break;
-      case CONSTRUCTOR:
-        initializeInConstructor(field, replaced);
-        break;
-      case SETUP_METHOD:
-        initializeInSetup(field, replaced);
-        break;
+      case CUR_METHOD -> initializeInMethod(field, replaced);
+      case FIELD_DECLARATION -> field.setInitializerGroovy(myInitializer);
+      case CONSTRUCTOR -> initializeInConstructor(field, replaced);
+      case SETUP_METHOD -> initializeInSetup(field, replaced);
     }
 
     JavaCodeStyleManager.getInstance(declaration.getProject()).shortenClassReferences(declaration);

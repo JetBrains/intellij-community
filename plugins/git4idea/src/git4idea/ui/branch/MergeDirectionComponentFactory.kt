@@ -16,6 +16,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import git4idea.GitBranch
@@ -102,7 +103,7 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
 
       add(base, CC().minWidth("${UI.scale(30)}"))
       add(JLabel(" ${UIUtil.leftArrow()} ").apply {
-        foreground = UIUtil.getInactiveTextColor()
+        foreground = NamedColorUtil.getInactiveTextColor()
         border = JBUI.Borders.empty(0, 5)
       })
       add(head, CC().minWidth("${UI.scale(30)}"))

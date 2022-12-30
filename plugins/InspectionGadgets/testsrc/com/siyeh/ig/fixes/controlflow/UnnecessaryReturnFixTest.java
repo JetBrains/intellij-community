@@ -17,74 +17,90 @@ public class UnnecessaryReturnFixTest extends IGQuickFixesTestCase {
 
   public void testRemoveReturn() {
     doMemberTest(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "return"),
-                 "  public void printName(String name) {\n" +
-                 "    System.out.println(name);\n" +
-                 "    return/**/;\n" +
-                 "}\n",
-                 "  public void printName(String name) {\n" +
-                 "    System.out.println(name);\n" +
-                 "}\n"
+                 """
+                     public void printName(String name) {
+                       System.out.println(name);
+                       return/**/;
+                   }
+                   """,
+                 """
+                     public void printName(String name) {
+                       System.out.println(name);
+                   }
+                   """
     );
   }
 
   public void testRemoveReturnIntoIf() {
     doMemberTest(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "return"),
-                 "  public void printName(String name) {\n" +
-                 "    if (!\"foo\".equals(name)) {\n" +
-                 "      System.out.println(name);\n" +
-                 "      return/**/;\n" +
-                 "    }\n" +
-                 "  }\n",
-                 "  public void printName(String name) {\n" +
-                 "    if (!\"foo\".equals(name)) {\n" +
-                 "      System.out.println(name);\n" +
-                 "    }\n" +
-                 "  }\n"
+                 """
+                     public void printName(String name) {
+                       if (!"foo".equals(name)) {
+                         System.out.println(name);
+                         return/**/;
+                       }
+                     }
+                   """,
+                 """
+                     public void printName(String name) {
+                       if (!"foo".equals(name)) {
+                         System.out.println(name);
+                       }
+                     }
+                   """
     );
   }
 
   public void testRemoveReturnInConstructor() {
     doTest(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "return"),
 
-                 "class X {\n" +
-                 "  public X(String name) {\n" +
-                 "    if (!\"foo\".equals(name)) {\n" +
-                 "      System.out.println(name);\n" +
-                 "      return/**/;\n" +
-                 "    }\n" +
-                 "  }\n" +
-                 "}\n",
+           """
+             class X {
+               public X(String name) {
+                 if (!"foo".equals(name)) {
+                   System.out.println(name);
+                   return/**/;
+                 }
+               }
+             }
+             """,
 
-                 "class X {\n" +
-                 "  public X(String name) {\n" +
-                 "    if (!\"foo\".equals(name)) {\n" +
-                 "      System.out.println(name);\n" +
-                 "    }\n" +
-                 "  }\n" +
-                 "}\n"
+           """
+             class X {
+               public X(String name) {
+                 if (!"foo".equals(name)) {
+                   System.out.println(name);
+                 }
+               }
+             }
+             """
     );
   }
 
   public void testDoNotFixReturnWithValue() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "return"),
-                               "class X {\n" +
-                               "  public int printName(String name) {\n" +
-                               "    System.out.println(name);\n" +
-                               "    return/**/ 0;\n" +
-                               "  }\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   public int printName(String name) {
+                                     System.out.println(name);
+                                     return/**/ 0;
+                                   }
+                                 }
+                                 """);
   }
 
   public void testDoNotFixFollowedReturn() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "return"),
-                               "class X {\n" +
-                               "  public void printName(String name) {\n" +
-                               "    if (!\"foo\".equals(name)) {\n" +
-                               "      System.out.println(name);\n" +
-                               "      return/**/;\n" +
-                               "    }\n" +
-                               "    System.out.println(\"Bad code\");\n" +
-                               "  }\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   public void printName(String name) {
+                                     if (!"foo".equals(name)) {
+                                       System.out.println(name);
+                                       return/**/;
+                                     }
+                                     System.out.println("Bad code");
+                                   }
+                                 }
+                                 """);
   }
 }

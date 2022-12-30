@@ -40,7 +40,7 @@ open class OneEntityWithPersistentIdImpl(val dataSource: OneEntityWithPersistent
     return connections
   }
 
-  class Builder(val result: OneEntityWithPersistentIdData?) : ModifiableWorkspaceEntityBase<OneEntityWithPersistentId>(), OneEntityWithPersistentId.Builder {
+  class Builder(var result: OneEntityWithPersistentIdData?) : ModifiableWorkspaceEntityBase<OneEntityWithPersistentId>(), OneEntityWithPersistentId.Builder {
     constructor() : this(OneEntityWithPersistentIdData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -58,6 +58,9 @@ open class OneEntityWithPersistentIdImpl(val dataSource: OneEntityWithPersistent
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -81,8 +84,8 @@ open class OneEntityWithPersistentIdImpl(val dataSource: OneEntityWithPersistent
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as OneEntityWithPersistentId
-      this.entitySource = dataSource.entitySource
-      this.myName = dataSource.myName
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.myName != dataSource.myName) this.myName = dataSource.myName
       if (parents != null) {
       }
     }
@@ -163,7 +166,7 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as OneEntityWithPersistentIdData
 
@@ -174,7 +177,7 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as OneEntityWithPersistentIdData
 

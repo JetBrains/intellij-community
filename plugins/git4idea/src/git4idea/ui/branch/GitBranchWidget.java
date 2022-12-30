@@ -8,9 +8,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.navigationToolbar.experimental.ExperimentalToolbarStateListener;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
@@ -79,10 +80,15 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   }
 
   @Override
-  protected @NotNull ListPopup getPopup(@NotNull Project project, @NotNull GitRepository repository) {
+  protected @Nullable JBPopup getWidgetPopup(@NotNull Project project, @NotNull GitRepository repository) {
     GitBranchesUsageCollector.branchWidgetClicked();
-    return GitBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(myStatusBar.getComponent()))
-      .asListPopup();
+    if (Registry.is("git.branches.popup.tree", false)) {
+      return GitBranchesTreePopup.create(project, repository);
+    }
+    else {
+      return GitBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(myStatusBar.getComponent()))
+        .asListPopup();
+    }
   }
 
   @Override

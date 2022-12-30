@@ -174,11 +174,12 @@ public class FindUsagesTest extends JavaPsiTestCase {
         moduleModel.newModule("independent/independent.iml", StdModuleTypes.JAVA.getId());
         moduleModel.commit();
 
-        tdf.createFile("plugin.xml", "<document>\n" +
-                                     "  <action class=\"com.Foo\" />\n" +
-                                     "  <action class=\"com.Foo.Bar\" />\n" +
-                                     "  <action class=\"com.Foo$Bar\" />\n" +
-                                     "</document>");
+        tdf.createFile("plugin.xml", """
+          <document>
+            <action class="com.Foo" />
+            <action class="com.Foo.Bar" />
+            <action class="com.Foo$Bar" />
+          </document>""");
 
         PsiTestUtil.addContentRoot(ModuleManager.getInstance(getProject()).findModuleByName("independent"), tdf.getFile(""));
       });

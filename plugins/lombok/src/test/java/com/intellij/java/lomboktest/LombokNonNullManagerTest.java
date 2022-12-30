@@ -24,13 +24,13 @@ public class LombokNonNullManagerTest extends LightJavaCodeInsightFixtureTestCas
     List<String> notNulls = NullableNotNullManager.getInstance(getProject()).getNotNulls();
     assertTrue(notNulls.contains(LombokClassNames.NON_NULL));
 
-    PsiClass clazz = myFixture.addClass("import lombok.NonNull;\n" +
-                                        "public class NonNullTest {\n" +
-                                        "    @NonNull\n" +
-                                        "    private String test(@NonNull Integer param) {\n" +
-                                        "        return String.valueOf(param.hashCode());\n" +
-                                        "    }" +
-                                        "}");
+    PsiClass clazz = myFixture.addClass("""
+                                          import lombok.NonNull;
+                                          public class NonNullTest {
+                                              @NonNull
+                                              private String test(@NonNull Integer param) {
+                                                  return String.valueOf(param.hashCode());
+                                              }}""");
     assertEquals(Nullability.NOT_NULL, DfaPsiUtil.getTypeNullability(clazz.getMethods()[0].getReturnType()));
     assertEquals(Nullability.NOT_NULL, DfaPsiUtil.getTypeNullability(clazz.getMethods()[0].getParameterList().getParameter(0).getType()));
   }

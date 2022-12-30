@@ -50,7 +50,7 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
     return connections
   }
 
-  class Builder(val result: SourceRootOrderEntityData?) : ModifiableWorkspaceEntityBase<SourceRootOrderEntity>(), SourceRootOrderEntity.Builder {
+  class Builder(var result: SourceRootOrderEntityData?) : ModifiableWorkspaceEntityBase<SourceRootOrderEntity>(), SourceRootOrderEntity.Builder {
     constructor() : this(SourceRootOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -68,6 +68,9 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "orderOfSourceRoots", this.orderOfSourceRoots.toHashSet())
       // Process linked entities that are connected without a builder
@@ -99,13 +102,23 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
       return connections
     }
 
+    override fun afterModification() {
+      val collection_orderOfSourceRoots = getEntityData().orderOfSourceRoots
+      if (collection_orderOfSourceRoots is MutableWorkspaceList<*>) {
+        collection_orderOfSourceRoots.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SourceRootOrderEntity
-      this.entitySource = dataSource.entitySource
-      this.orderOfSourceRoots = dataSource.orderOfSourceRoots.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.orderOfSourceRoots != dataSource.orderOfSourceRoots) this.orderOfSourceRoots = dataSource.orderOfSourceRoots.toMutableList()
       if (parents != null) {
-        this.contentRootEntity = parents.filterIsInstance<ContentRootEntity>().single()
+        val contentRootEntityNew = parents.filterIsInstance<ContentRootEntity>().single()
+        if ((this.contentRootEntity as WorkspaceEntityBase).id != (contentRootEntityNew as WorkspaceEntityBase).id) {
+          this.contentRootEntity = contentRootEntityNew
+        }
       }
     }
 
@@ -163,7 +176,12 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
       get() {
         val collection_orderOfSourceRoots = getEntityData().orderOfSourceRoots
         if (collection_orderOfSourceRoots !is MutableWorkspaceList) return collection_orderOfSourceRoots
-        collection_orderOfSourceRoots.setModificationUpdateAction(orderOfSourceRootsUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_orderOfSourceRoots.setModificationUpdateAction(orderOfSourceRootsUpdater)
+        }
+        else {
+          collection_orderOfSourceRoots.cleanModificationUpdateAction()
+        }
         return collection_orderOfSourceRoots
       }
       set(value) {
@@ -235,7 +253,7 @@ class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SourceRootOrderEntityData
 
@@ -246,7 +264,7 @@ class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SourceRootOrderEntityData
 

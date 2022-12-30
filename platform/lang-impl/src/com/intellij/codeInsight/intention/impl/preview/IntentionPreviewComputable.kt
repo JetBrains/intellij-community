@@ -74,6 +74,7 @@ internal class IntentionPreviewComputable(private val project: Project,
     val origPair = ShowIntentionActionsHandler.chooseFileForAction(originalFile, originalEditor, action) ?: return null
     val origFile: PsiFile
     val selection: TextRange
+    val caretOffset: Int
     val fileFactory = PsiFileFactory.getInstance(project)
     if (origPair.first != originalFile) {
       val manager = InjectedLanguageManager.getInstance(project)
@@ -84,15 +85,22 @@ internal class IntentionPreviewComputable(private val project: Project,
       val end = if (selectionModel.selectionEnd == selectionModel.selectionStart) start else
         mapInjectedOffsetToUnescaped(origPair.first, selectionModel.selectionEnd)
       selection = TextRange(start, end)
+      val caretModel = origPair.second.caretModel
+      caretOffset = when (caretModel.offset) {
+        selectionModel.selectionStart -> start
+        selectionModel.selectionEnd -> end
+        else -> mapInjectedOffsetToUnescaped(origPair.first, caretModel.offset)
+      }
     }
     else {
       origFile = originalFile
       selection = TextRange(originalEditor.selectionModel.selectionStart, originalEditor.selectionModel.selectionEnd)
+      caretOffset = originalEditor.caretModel.offset
     }
     ProgressManager.checkCanceled()
     val writable = originalEditor.document.isWritable
     try {
-      val (result: IntentionPreviewInfo, psiFileCopy: PsiFile?) = invokePreview(origFile, selection)
+      val (result: IntentionPreviewInfo, psiFileCopy: PsiFile?) = invokePreview(origFile, selection, caretOffset)
       ProgressManager.checkCanceled()
       val comparisonManager = ComparisonManager.getInstance()
       return when (result) {
@@ -125,10 +133,11 @@ internal class IntentionPreviewComputable(private val project: Project,
     }
   }
 
-  private fun invokePreview(origFile: PsiFile, selection: TextRange): Pair<IntentionPreviewInfo, PsiFile?> {
+  private fun invokePreview(origFile: PsiFile, selection: TextRange, caretOffset: Int): Pair<IntentionPreviewInfo, PsiFile?> {
     var info: IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
     val psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(origFile)
     val editorCopy = IntentionPreviewEditor(psiFileCopy, originalEditor.settings)
+    editorCopy.caretModel.moveToOffset(caretOffset)
     editorCopy.selectionModel.setSelection(selection.startOffset, selection.endOffset)
     originalEditor.document.setReadOnly(true)
     ProgressManager.checkCanceled()

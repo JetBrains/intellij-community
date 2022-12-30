@@ -29,6 +29,7 @@ object NotUnderContentRootModuleInfo : OldNotUnderContentRootModuleInfo(), IdeaM
 
     //TODO: (module refactoring) dependency on runtime can be of use here
     override fun dependencies(): List<IdeaModuleInfo> = listOf(this)
+    override fun dependenciesWithoutSelf(): Sequence<IdeaModuleInfo> = emptySequence()
 
     override val platform: TargetPlatform
         get() = JvmPlatforms.defaultJvmPlatform

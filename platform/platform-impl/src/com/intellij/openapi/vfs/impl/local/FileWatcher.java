@@ -3,8 +3,6 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.notification.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -160,19 +158,14 @@ public final class FileWatcher {
   public void notifyOnFailure(@NotNull @NlsContexts.NotificationContent String cause, @Nullable NotificationListener listener) {
     LOG.warn(cause);
 
-    NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup("File Watcher Messages");
     String title = IdeCoreBundle.message("watcher.slow.sync");
-    ApplicationManager.getApplication().invokeLater(
-      () -> {
-        Notification notification = group.createNotification(title, cause, NotificationType.WARNING);
-        notification.setSuggestionType(true);
-        if (listener != null) {
-          //noinspection deprecation
-          notification.setListener(listener);
-        }
-        Notifications.Bus.notify(notification);
-      },
-      ModalityState.NON_MODAL);
+    Notification notification = new Notification("File Watcher Messages", title, cause, NotificationType.WARNING)
+      .setSuggestionType(true);
+    if (listener != null) {
+      //noinspection deprecation
+      notification.setListener(listener);
+    }
+    notification.notify(null);
   }
 
   boolean belongsToWatchRoots(@NotNull String reportedPath, boolean isFile) {

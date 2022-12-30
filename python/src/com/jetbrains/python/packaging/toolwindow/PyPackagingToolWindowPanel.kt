@@ -27,6 +27,7 @@ import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle.message
 import java.awt.BorderLayout
@@ -56,9 +57,9 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
   private var currentPackageInfo: PackageInfo? = null
   private var documentationUrl: String? = null
 
-  val packageListPanel: JPanel
-  val tablesView: PyPackagingTablesView
-  val noPackagePanel = JBPanelWithEmptyText().apply { emptyText.text = message("python.toolwindow.packages.description.panel.placeholder") }
+  private val packageListPanel: JPanel
+  private val tablesView: PyPackagingTablesView
+  private val noPackagePanel = JBPanelWithEmptyText().apply { emptyText.text = message("python.toolwindow.packages.description.panel.placeholder") }
 
   // layout
   private var mainPanel: JPanel? = null
@@ -236,7 +237,7 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
 
     mainPanel = borderPanel {
       val topToolbar = boxPanel {
-        border = SideBorder(UIUtil.getBoundsColor(), SideBorder.BOTTOM)
+        border = SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.BOTTOM)
         preferredSize = Dimension(preferredSize.width, 30)
         minimumSize = Dimension(minimumSize.width, 30)
         maximumSize = Dimension(maximumSize.width, 30)
@@ -360,14 +361,14 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
     progressBar.isVisible = false
   }
 
-  fun showInstalledControls() {
+  private fun showInstalledControls() {
     hideInstallableControls()
     progressBar.isVisible = false
     versionLabel.isVisible = true
     uninstallAction.isVisible = true
   }
 
-  fun showInstallableControls() {
+  private fun showInstallableControls() {
     hideInstalledControls()
     progressBar.isVisible = false
     versionSelector.isVisible = true

@@ -2,7 +2,6 @@
 package com.intellij.openapi.util;
 
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +18,6 @@ import java.util.*;
  */
 @Debug.Renderer(text = "\"size = \" + myDelegate.size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
 @Deprecated
-@ApiStatus.ScheduledForRemoval
 public class MultiValuesMap<K, V>{
   private final MultiMap<K, V> myDelegate;
   private final boolean myOrdered;
@@ -28,7 +26,6 @@ public class MultiValuesMap<K, V>{
    * @deprecated Use {@link MultiMap#createSet()}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
   public MultiValuesMap() {
     this(false);
   }

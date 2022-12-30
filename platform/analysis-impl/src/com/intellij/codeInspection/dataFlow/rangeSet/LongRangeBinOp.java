@@ -25,32 +25,19 @@ public enum LongRangeBinOp {
    * @return the resulting LongRangeSet which covers possible results of the operation (probably including some more elements).
    */
   public @NotNull LongRangeSet eval(@NotNull LongRangeSet left, @NotNull LongRangeSet right, LongRangeType lrType) {
-    switch (this) {
-      case PLUS:
-        return left.plus(right, lrType);
-      case MINUS:
-        return left.minus(right, lrType);
-      case AND:
-        return left.bitwiseAnd(right);
-      case OR:
-        return left.bitwiseOr(right, lrType);
-      case XOR:
-        return left.bitwiseXor(right, lrType);
-      case MUL:
-        return left.mul(right, lrType);
-      case MOD:
-        return left.mod(right);
-      case DIV:
-        return left.div(right, lrType);
-      case SHL:
-        return left.shiftLeft(right, lrType);
-      case SHR:
-        return left.shiftRight(right, lrType);
-      case USHR:
-        return left.unsignedShiftRight(right, lrType);
-      default:
-        throw new IllegalStateException("Unexpected value: " + this);
-    }
+    return switch (this) {
+      case PLUS -> left.plus(right, lrType);
+      case MINUS -> left.minus(right, lrType);
+      case AND -> left.bitwiseAnd(right);
+      case OR -> left.bitwiseOr(right, lrType);
+      case XOR -> left.bitwiseXor(right, lrType);
+      case MUL -> left.mul(right, lrType);
+      case MOD -> left.mod(right);
+      case DIV -> left.div(right, lrType);
+      case SHL -> left.shiftLeft(right, lrType);
+      case SHR -> left.shiftRight(right, lrType);
+      case USHR -> left.unsignedShiftRight(right, lrType);
+    };
   }
 
   /**
@@ -63,20 +50,18 @@ public enum LongRangeBinOp {
    * @return the resulting LongRangeSet which covers possible results of the operation (probably including some more elements).
    */
   public @NotNull LongRangeSet evalWide(@NotNull LongRangeSet left, @NotNull LongRangeSet right, LongRangeType lrType) {
-    switch (this) {
-      case PLUS:
-        return left.plusWiden(right, lrType);
-      case MINUS:
+    return switch (this) {
+      case PLUS -> left.plusWiden(right, lrType);
+      case MINUS -> {
         if (Long.valueOf(0).equals(left.getConstantValue())) {
           // Unary minus
-          return left.minus(right, lrType);
+          yield left.minus(right, lrType);
         }
-        return left.plusWiden(right.negate(lrType), lrType);
-      case MUL:
-        return left.mulWiden(right, lrType);
-      default:
-        return eval(left, right, lrType);
-    }
+        yield left.plusWiden(right.negate(lrType), lrType);
+      }
+      case MUL -> left.mulWiden(right, lrType);
+      default -> eval(left, right, lrType);
+    };
   }
 
   @Override

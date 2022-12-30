@@ -1187,6 +1187,11 @@
       "description": "A color for inline buttons separator"
     },
     {
+      "key": "List.Button.separatorInset",
+      "since": "2022.3",
+      "description": "A top an bottom insets for inline buttons separator"
+    },
+    {
       "key": "List.Button.hoverBackground",
       "since": "2022.3",
       "description": "Hover background for inline buttons in list popups"
@@ -1594,6 +1599,11 @@
       "key": "VersionControl.MarkerPopup.borderInsets",
       "description": "Insets between the icons toolbar and popup borders in the Vcs Marker Popup",
       "since": "2022.2"
+    },
+    {
+      "key": "VersionControl.MarkerPopup.Toolbar.background",
+      "description": "Color of toolbar background in the Vcs Marker Popup",
+      "since": "2022.3"
     },
     {
       "key": "WelcomeScreen.background"

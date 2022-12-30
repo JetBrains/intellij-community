@@ -113,6 +113,10 @@ public final class MavenExternalParameters {
                                                MavenServerUtil.findMavenBasedir(parameters.getWorkingDirFile()).getPath());
     }
 
+    if (StringUtil.compareVersionNumbers(mavenVersion, "3.5") >= 0) {
+      params.getVMParametersList().addProperty("jansi.passthrough", "true");
+    }
+
     String vmOptions = getRunVmOptions(runnerSettings, project, parameters.getWorkingDirPath());
     addVMParameters(params.getVMParametersList(), mavenHome, vmOptions);
 

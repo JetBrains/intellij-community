@@ -13,6 +13,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
@@ -24,6 +25,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.NonNls
+import java.util.regex.Pattern
 
 /**
  * Checks package accessibility according to JLS 7 "Packages and Modules".
@@ -147,12 +149,22 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
     }
     else if (useModule != null) {
       val autoModule = detectAutomaticModule(target)
-      if (autoModule == null || !JavaModuleGraphUtil.reads(useModule, autoModule)) {
+      if (autoModule == null || !JavaModuleGraphUtil.reads(useModule, autoModule) && !inSameMultiReleaseModule(place, target)) {
         return if (quick) ERR else ErrorWithFixes(JavaErrorBundle.message("module.access.to.unnamed", packageName, useModule.name))
       }
     }
 
     return null
+  }
+
+  private fun inSameMultiReleaseModule(place: PsiElement, target: PsiElement): Boolean {
+    val placeModule = ModuleUtilCore.findModuleForPsiElement(place) ?: return false
+    val targetModule = ModuleUtilCore.findModuleForPsiElement(target) ?: return false
+    if (targetModule.name.endsWith(".$MAIN")) {
+      val baseModuleName = targetModule.name.substringBeforeLast(MAIN)
+      return javaVersionPattern.matcher(placeModule.name.substringAfter(baseModuleName)).matches()
+    }
+    return false
   }
 
   private fun detectAutomaticModule(target: PsiFileSystemItem): PsiJavaModule? {
@@ -271,5 +283,10 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         }
       }
     }
+  }
+
+  private companion object {
+    const val MAIN = "main"
+    val javaVersionPattern: Pattern by lazy { Pattern.compile("java\\d+") }
   }
 }

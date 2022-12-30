@@ -15,7 +15,7 @@ import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
@@ -216,11 +216,29 @@ internal class WorkspaceProjectImporter(
     // remove modules which should be replaced with Maven modules, in order to clean them from pre-existing sources, dependencies etc.
     // It's needed since otherwise 'replaceBySource' will merge pre-existing Module content with imported module content, resulting in
     // unexpected module configuration.
-    val importedModuleNames = mavenProjectsWithModules
-      .flatMapTo(mutableSetOf()) { it.modules.asSequence().map { it.module.name } }
+    val importedModuleNames by lazy {
+      mavenProjectsWithModules.flatMapTo(mutableSetOf()) { it.modules.asSequence().map { it.module.name } }
+    }
+
+    // also remove non-Maven modules that has clashing content roots, otherwise we might end up with a situation:
+    //  * A user opens a project with existing non-maven module 'A', with a single content root(==project root), and a pom.xml in the root.
+    //  * The user asks the IDE to import pom.xml artifactId 'B'.
+    //  * the IDE creates module 'B' along with a non-maven module 'A', both pointing at the same content root.
+    //  -> IDE is confused - which module to use to resolve project files?.
+    //  -> User thinks that either resolve or import is broken.
+    val importedContentRootUrls by lazy {
+      mavenProjectsWithModules
+        .flatMapTo(mutableSetOf()) { it.modules.asSequence().flatMap { it.module.contentRoots.asSequence() }.map { it.url } }
+    }
+
     currentStorage
       .entities(ModuleEntity::class.java)
-      .filter { !isMavenEntity(it.entitySource) && it.name in importedModuleNames }
+      .filter {
+        if (isMavenEntity(it.entitySource)) return@filter false
+        if (it.name in importedModuleNames) return@filter true
+        if (it.contentRoots.map { it.url }.any { it in importedContentRootUrls }) return@filter true
+        false
+      }
       .forEach { currentStorage.removeEntity(it) }
 
     currentStorage.replaceBySource({ isMavenEntity(it) }, newStorage)
@@ -235,7 +253,7 @@ internal class WorkspaceProjectImporter(
       val appliedModules = each.modules.mapNotNull<ModuleWithTypeData<ModuleEntity>, ModuleWithTypeData<Module>> {
         val originalEntity = it.module
         val appliedEntity = appliedStorage.resolve(originalEntity.persistentId) ?: return@mapNotNull null
-        val module = appliedStorage.findModuleByEntity(appliedEntity) ?: return@mapNotNull null
+        val module = appliedEntity.findModule(appliedStorage) ?: return@mapNotNull null
         ModuleWithTypeData(module, it.type)
       }
 
@@ -409,6 +427,17 @@ internal class WorkspaceProjectImporter(
           prepareInBackground(builder)
           durationInBackground += System.nanoTime() - beforeBG
 
+          if (!snapshot.areEntitiesChanged()) {
+            updated = true
+            MavenUtil.invokeAndWaitWriteAction(project) {
+              val beforeWA = System.nanoTime()
+              //we need this e.g. to update Java compiler settings
+              afterApplyInWriteAction(workspaceModel.entityStorage.current)
+              durationInWriteAction += System.nanoTime() - beforeWA
+            }
+            break
+          }
+          
           MavenUtil.invokeAndWaitWriteAction(project) {
             val beforeWA = System.nanoTime()
             updated = workspaceModel.replaceProjectModel(snapshot.getStorageReplacement())

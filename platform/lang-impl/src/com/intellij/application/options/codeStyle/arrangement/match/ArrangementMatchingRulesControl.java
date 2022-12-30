@@ -115,10 +115,10 @@ public class ArrangementMatchingRulesControl extends JBTable {
   protected void processMouseEvent(MouseEvent e) {
     int id = e.getID();
     switch (id) {
-      case MouseEvent.MOUSE_ENTERED: onMouseEntered(e); break;
-      case MouseEvent.MOUSE_EXITED: onMouseExited(); break;
-      case MouseEvent.MOUSE_RELEASED: onMouseReleased(e); break;
-      case MouseEvent.MOUSE_CLICKED: onMouseClicked(e); break;
+      case MouseEvent.MOUSE_ENTERED -> onMouseEntered(e);
+      case MouseEvent.MOUSE_EXITED -> onMouseExited();
+      case MouseEvent.MOUSE_RELEASED -> onMouseReleased(e);
+      case MouseEvent.MOUSE_CLICKED -> onMouseClicked(e);
     }
     if (!e.isConsumed()) {
       super.processMouseEvent(e);
@@ -303,17 +303,16 @@ public class ArrangementMatchingRulesControl extends JBTable {
   private void onTableChange(@NotNull TableModelEvent e) {
     final int signum;
     switch (e.getType()) {
-      case TableModelEvent.INSERT:
-        signum = 1;
-        break;
-      case TableModelEvent.DELETE:
+      case TableModelEvent.INSERT -> signum = 1;
+      case TableModelEvent.DELETE -> {
         signum = -1;
         for (int i = e.getLastRow(); i >= e.getFirstRow(); i--) {
           myComponents.remove(i);
         }
-        break;
-      default:
+      }
+      default -> {
         return;
+      }
     }
     int shift = Math.abs(e.getFirstRow() - e.getLastRow() + 1) * signum;
     myComponents.shiftKeys(e.getFirstRow(), shift);

@@ -45,7 +45,7 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
     return connections
   }
 
-  class Builder(val result: EntityWithUrlsData?) : ModifiableWorkspaceEntityBase<EntityWithUrls>(), EntityWithUrls.Builder {
+  class Builder(var result: EntityWithUrlsData?) : ModifiableWorkspaceEntityBase<EntityWithUrls>(), EntityWithUrls.Builder {
     constructor() : this(EntityWithUrlsData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -63,6 +63,9 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "simpleUrl", this.simpleUrl)
       index(this, "nullableUrl", this.nullableUrl)
@@ -92,14 +95,21 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
       return connections
     }
 
+    override fun afterModification() {
+      val collection_listOfUrls = getEntityData().listOfUrls
+      if (collection_listOfUrls is MutableWorkspaceList<*>) {
+        collection_listOfUrls.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as EntityWithUrls
-      this.entitySource = dataSource.entitySource
-      this.simpleUrl = dataSource.simpleUrl
-      this.nullableUrl = dataSource.nullableUrl
-      this.listOfUrls = dataSource.listOfUrls.toMutableList()
-      this.dataClassWithUrl = dataSource.dataClassWithUrl
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.simpleUrl != dataSource.simpleUrl) this.simpleUrl = dataSource.simpleUrl
+      if (this.nullableUrl != dataSource?.nullableUrl) this.nullableUrl = dataSource.nullableUrl
+      if (this.listOfUrls != dataSource.listOfUrls) this.listOfUrls = dataSource.listOfUrls.toMutableList()
+      if (this.dataClassWithUrl != dataSource.dataClassWithUrl) this.dataClassWithUrl = dataSource.dataClassWithUrl
       if (parents != null) {
       }
     }
@@ -143,7 +153,12 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
       get() {
         val collection_listOfUrls = getEntityData().listOfUrls
         if (collection_listOfUrls !is MutableWorkspaceList) return collection_listOfUrls
-        collection_listOfUrls.setModificationUpdateAction(listOfUrlsUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_listOfUrls.setModificationUpdateAction(listOfUrlsUpdater)
+        }
+        else {
+          collection_listOfUrls.cleanModificationUpdateAction()
+        }
         return collection_listOfUrls
       }
       set(value) {
@@ -228,7 +243,7 @@ class EntityWithUrlsData : WorkspaceEntityData<EntityWithUrls>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as EntityWithUrlsData
 
@@ -242,7 +257,7 @@ class EntityWithUrlsData : WorkspaceEntityData<EntityWithUrls>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as EntityWithUrlsData
 

@@ -2,6 +2,8 @@
 package com.intellij.execution.wsl.sync
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.processTools.getBareExecutionResult
+import com.intellij.execution.processTools.waitGetResultStdout
 import com.intellij.execution.wsl.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.TimeoutUtil
@@ -31,7 +33,7 @@ class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution, only
                              .joinToString("\n")
                              // No need to create link if parent dir doesn't exist
                              { "[ -e $(dirname ${it.first}) ] && ln -s ${it.second} ${it.first}" })
-    distro.runCommand("sh", script.second, ignoreExitCode = true)
+    distro.createProcess("sh", script.second).getBareExecutionResult().get()
     script.first.delete()
   }
 
@@ -46,7 +48,7 @@ class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution, only
         hashes += hashesAndLinks.first
         links += hashesAndLinks.second
       }
-      waitProcess(process, tool.commandLineString)
+      process.waitGetResultStdout()
     }
     LOGGER.info("Linux files calculated in $time")
     return Pair(hashes, links)

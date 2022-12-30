@@ -89,7 +89,7 @@ public class DesignerToolWindow implements LightToolWindowContent {
 
   public void updateComponentTree() {
     if (myComponentTreeBuilder != null) {
-      myComponentTreeBuilder.queueUpdate();
+      myComponentTreeBuilder.invalidateAsync();
     }
   }
 

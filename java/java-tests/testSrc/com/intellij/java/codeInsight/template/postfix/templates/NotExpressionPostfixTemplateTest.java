@@ -59,20 +59,22 @@ public class NotExpressionPostfixTemplateTest extends PostfixTemplateTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.addClass("package java.util;\n" +
-                       "public class Optional<T> {\n" +
-                       "  public static <T> Optional<T> of(T value) { return null; }\n" +
-                       "  public boolean isPresent() { return true; }\n" +
-                       "  public boolean isEmpty() { return false;  }\n" +
-                       "}");
-    myFixture.addClass("package java.util.stream;\n" +
-                       "\n" +
-                       "import java.util.function.Predicate;\n" +
-                       "\n" +
-                       "public class Stream<T> {\n" +
-                       "  boolean anyMatch(Predicate<? super T> predicate) { return true;}\n" +
-                       "  boolean noneMatch(Predicate<? super T> predicate) { return false;}\n" +
-                       "}");
+    myFixture.addClass("""
+                         package java.util;
+                         public class Optional<T> {
+                           public static <T> Optional<T> of(T value) { return null; }
+                           public boolean isPresent() { return true; }
+                           public boolean isEmpty() { return false;  }
+                         }""");
+    myFixture.addClass("""
+                         package java.util.stream;
+
+                         import java.util.function.Predicate;
+
+                         public class Stream<T> {
+                           boolean anyMatch(Predicate<? super T> predicate) { return true;}
+                           boolean noneMatch(Predicate<? super T> predicate) { return false;}
+                         }""");
   }
 
   @NotNull

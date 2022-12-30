@@ -206,7 +206,7 @@ class ArtifactModifiableModelBridge(
 
   override fun isModified(): Boolean {
     // TODO: 03.02.2021 May give a wrong result
-    return !diff.isEmpty()
+    return diff.hasChanges()
   }
 
   @RequiresWriteLock

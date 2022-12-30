@@ -74,7 +74,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   private void initContentRoots() {
     Url url = toUrl(myMavenProject.getDirectory());
     if (getContentRootFor(url) != null) return;
-    myRootModel.addContentEntry(url.getUrl());
+    myRootModel.addContentEntry(url.getUrl(), getMavenExternalSource());
   }
 
   private ContentEntry getContentRootFor(Url url) {
@@ -209,7 +209,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
     ContentEntry e = getContentRootFor(url);
     if (e == null) return;
     if (e.getUrl().equals(url.getUrl())) return;
-    e.addExcludeFolder(url.getUrl());
+    e.addExcludeFolder(url.getUrl(), getMavenExternalSource());
   }
 
   @Override

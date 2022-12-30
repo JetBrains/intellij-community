@@ -103,8 +103,10 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   private void show(final NavBarItem item, boolean checkRepaint) {
     UIEventLogger.NavBarShowPopup.log(myPanel.getProject());
 
+    UISettings settings = UISettings.getInstance();
     int relativeY = ExperimentalUI.isNewUI()
-                    && UISettings.getInstance().getShowNavigationBarInBottom()
+                    && settings.getShowNavigationBarInBottom()
+                    && settings.getShowStatusBar()
                     ? -getComponent().getPreferredSize().height
                     : item.getHeight();
 
@@ -184,6 +186,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
           selectables.add(selectable);
         }
 
+        selectable.setBackground(null);
         selectable.setSelectionColor(isSelected ? UIUtil.getListSelectionBackground(cellHasFocus) : null);
         return selectable;
       }
@@ -208,7 +211,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     list.putClientProperty(DISPOSED_OBJECTS, renderer.selectables);
     list.setCellRenderer(renderer);
     list.setBorder(JBUI.Borders.empty(5));
-    list.setBackground(UIUtil.getPanelBackground());
+    list.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
     list.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {

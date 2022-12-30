@@ -47,8 +47,8 @@ abstract class CommonStarterInitialStep(
 
   protected val propertyGraph: PropertyGraph = PropertyGraph()
   protected val entityNameProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestName)
-  protected val locationProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestLocationByName)
-  protected val canonicalPathProperty = locationProperty.joinCanonicalPath(entityNameProperty)
+  private val locationProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestLocationByName)
+  private val canonicalPathProperty = locationProperty.joinCanonicalPath(entityNameProperty)
   protected val groupIdProperty: GraphProperty<String> = propertyGraph.lazyProperty { starterContext.group }
   protected val artifactIdProperty: GraphProperty<String> = propertyGraph.lazyProperty { entityName }
   protected val sdkProperty: GraphProperty<Sdk?> = propertyGraph.lazyProperty { null }
@@ -184,7 +184,7 @@ abstract class CommonStarterInitialStep(
   protected fun <T : JComponent> Cell<T>.withSpecialValidation(vararg errorValidationUnits: TextValidationFunction): Cell<T> =
     withValidation(this, errorValidationUnits.asList(), null, validatedTextComponents, parentDisposable)
 
-  protected fun <T : JComponent> Cell<T>.withSpecialValidation(
+  private fun <T : JComponent> Cell<T>.withSpecialValidation(
     errorValidationUnits: List<TextValidationFunction>,
     warningValidationUnit: TextValidationFunction?
   ): Cell<T> {

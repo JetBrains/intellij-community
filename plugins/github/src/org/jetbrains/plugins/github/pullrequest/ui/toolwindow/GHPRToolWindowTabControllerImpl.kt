@@ -15,7 +15,6 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import java.awt.BorderLayout
-import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class GHPRToolWindowTabControllerImpl(scope: CoroutineScope,
@@ -32,14 +31,7 @@ internal class GHPRToolWindowTabControllerImpl(scope: CoroutineScope,
     scope.launch {
       tabVm.viewState.collectScoped { scope, vm ->
         content.displayName = GithubBundle.message("toolwindow.stripe.Pull_Requests")
-
-        val nestedComponent = if (vm != null) {
-          createNestedComponent(scope, vm)
-        }
-        else {
-          JPanel(null)
-        }
-        setComponentPreservingFocus(content, nestedComponent)
+        CollaborationToolsUIUtil.setComponentPreservingFocus(content, createNestedComponent(scope, vm))
       }
     }
   }
@@ -74,12 +66,4 @@ internal class GHPRToolWindowTabControllerImpl(scope: CoroutineScope,
   override fun canResetRemoteOrAccount(): Boolean = tabVm.canSelectDifferentRepoOrAccount()
 
   override fun resetRemoteAndAccount() = tabVm.selectDifferentRepoOrAccount()
-}
-
-private fun setComponentPreservingFocus(content: Content, component: JComponent) {
-  val focused = CollaborationToolsUIUtil.isFocusParent(content.component)
-  content.component = component
-  if (focused) {
-    CollaborationToolsUIUtil.focusPanel(content.component)
-  }
 }

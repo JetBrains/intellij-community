@@ -77,17 +77,12 @@ final class FocusDebuggerAction extends AnAction implements DumbAware {
       ACTIVE, DELAYED, INACTIVE, UNKNOWN;
 
       public Color getColor() {
-        switch (this) {
-          case ACTIVE:
-            return JBColor.green;
-          case DELAYED:
-            return JBColor.yellow;
-          case INACTIVE:
-            return JBColor.red;
-          case UNKNOWN:
-            return JBColor.gray;
-        }
-        throw new RuntimeException("Unknown application state");
+        return switch (this) {
+          case ACTIVE -> JBColor.green;
+          case DELAYED -> JBColor.yellow;
+          case INACTIVE -> JBColor.red;
+          case UNKNOWN -> JBColor.gray;
+        };
       }
     }
 

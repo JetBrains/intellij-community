@@ -88,21 +88,43 @@ public final class InjectorUtils {
       InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
 
     List<TextRange> ranges = injection.getInjectedArea(host);
-    List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list = new ArrayList<>(ranges.size());
+    List<InjectionInfo> list = new ArrayList<>(ranges.size());
 
     for (TextRange range : ranges) {
-      list.add(Trinity.create(host, injectedLanguage, range));
+      list.add(new InjectionInfo(host, injectedLanguage, range));
     }
-    registerInjection(language, list, host.getContainingFile(), registrar);
+    registerInjection(language, host.getContainingFile(), list, registrar);
     if (support != null) {
       registerSupport(support, true, host, language);
     }
     return !ranges.isEmpty();
   }
 
+  /**
+   * Record that represents a single injection
+   * @param host the element that hosts the injection
+   * @param language language of the injected content
+   * @param range range of the injection within the host
+   */
+  public record InjectionInfo(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguage language, @NotNull TextRange range) {
+  }
+
+  /**
+   * @deprecated use {@link #registerInjection(Language, PsiFile, List, MultiHostRegistrar)}
+   */
+  @Deprecated(forRemoval = true)
   public static void registerInjection(@Nullable Language language,
                                        @NotNull List<? extends Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
                                        @NotNull PsiFile containingFile,
+                                       @NotNull MultiHostRegistrar registrar) {
+    registerInjection(language, containingFile,
+                      ContainerUtil.map(list, trinity -> new InjectionInfo(trinity.first, trinity.second, trinity.third)), registrar);
+  }
+
+
+  public static void registerInjection(@Nullable Language language,
+                                       @NotNull PsiFile containingFile,
+                                       @NotNull List<InjectionInfo> list,
                                        @NotNull MultiHostRegistrar registrar) {
     // if language isn't injected when length == 0, subsequent edits will not cause the language to be injected as well.
     // Maybe IDEA core is caching a bit too aggressively here?
@@ -112,28 +134,28 @@ public final class InjectorUtils {
     ParserDefinition parser = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     ReferenceInjector injector = ReferenceInjector.findById(language.getID());
     if (parser == null && injector != null) {
-      for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
-        String prefix = trinity.second.getPrefix();
-        String suffix = trinity.second.getSuffix();
-        PsiLanguageInjectionHost host = trinity.first;
-        TextRange textRange = trinity.third;
+      for (InjectionInfo trinity : list) {
+        String prefix = trinity.language().getPrefix();
+        String suffix = trinity.language().getSuffix();
+        PsiLanguageInjectionHost host = trinity.host();
+        TextRange textRange = trinity.range();
         InjectedLanguageUtil.injectReference(registrar, language, prefix, suffix, host, textRange);
         return;
       }
       return;
     }
     boolean injectionStarted = false;
-    for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> t : list) {
-      PsiLanguageInjectionHost host = t.first;
+    for (InjectionInfo t : list) {
+      PsiLanguageInjectionHost host = t.host();
       if (host.getContainingFile() != containingFile || !host.isValidHost()) continue;
 
-      TextRange textRange = t.third;
-      InjectedLanguage injectedLanguage = t.second;
+      TextRange textRange = t.range();
+      InjectedLanguage injectedLanguage = t.language();
 
       if (!injectionStarted) {
         // TextMate language requires file extension
-        if (!StringUtil.equalsIgnoreCase(language.getID(), t.second.getID())) {
-          registrar.startInjecting(language, StringUtil.toLowerCase(t.second.getID()));
+        if (!StringUtil.equalsIgnoreCase(language.getID(), t.language().getID())) {
+          registrar.startInjecting(language, StringUtil.toLowerCase(t.language().getID()));
         }
         else {
           registrar.startInjecting(language);

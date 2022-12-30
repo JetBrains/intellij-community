@@ -7,27 +7,30 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.LazyKt;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
 
 import static java.util.Arrays.asList;
 
 public class SameKeyPostfixTemplatesTest extends PostfixTemplateTestCase {
-  private static final JavaPostfixTemplateProvider PROVIDER = new JavaPostfixTemplateProvider();
+  private static final Lazy<JavaPostfixTemplateProvider> PROVIDER = LazyKt.lazyPub(() -> new JavaPostfixTemplateProvider());
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
 
+    JavaPostfixTemplateProvider provider = PROVIDER.getValue();
     PostfixTemplate template1 = new JavaEditablePostfixTemplate(
       "myId1", "sameKey", "Boolean.toString($EXPR$);$END$", "",
       ContainerUtil.set(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateBooleanExpressionCondition()),
-      LanguageLevel.JDK_1_8, true, PROVIDER);
+      LanguageLevel.JDK_1_8, true, provider);
     PostfixTemplate template2 = new JavaEditablePostfixTemplate(
       "myId2", "sameKey", "Integer.toString($EXPR$);$END$", "",
       ContainerUtil.set(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNumberExpressionCondition()),
-      LanguageLevel.JDK_1_8, true, PROVIDER);
-    PostfixTemplateStorage.getInstance().setTemplates(PROVIDER, asList(template1, template2));
+      LanguageLevel.JDK_1_8, true, provider);
+    PostfixTemplateStorage.getInstance().setTemplates(provider, asList(template1, template2));
   }
 
   public void testSameKeyInteger() {

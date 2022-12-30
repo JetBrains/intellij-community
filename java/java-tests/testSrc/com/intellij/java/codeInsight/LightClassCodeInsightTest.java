@@ -34,12 +34,13 @@ public class LightClassCodeInsightTest extends LightJavaCodeInsightFixtureTestCa
     assertTrue(ContainerUtil.exists(allMethods, m -> m.getName().contains("staticMethod")));
 
     myFixture.configureByText(JavaFileType.INSTANCE,
-                              "class TestMethodAccess {\n" +
-                              "  public static void main() {\n" +
-                              "    abc.MyInterface foo = new abc.MyInterface() {};\n" +
-                              "    foo.instanceMethod();\n" +
-                              "  }\n" +
-                              "}");
+                              """
+                                class TestMethodAccess {
+                                  public static void main() {
+                                    abc.MyInterface foo = new abc.MyInterface() {};
+                                    foo.instanceMethod();
+                                  }
+                                }""");
     List<HighlightInfo> highlightInfos = myFixture.doHighlighting(HighlightSeverity.ERROR);
     assertEmpty(highlightInfos);
   }
@@ -50,27 +51,29 @@ public class LightClassCodeInsightTest extends LightJavaCodeInsightFixtureTestCa
     assertTrue(ContainerUtil.exists(allMethods, m -> m.getName().contains("staticMethod")));
 
     myFixture.configureByText(JavaFileType.INSTANCE,
-                              "class TestMethodAccess {\n" +
-                              "  public static void main() {\n" +
-                              "    abc.MyInterface.staticMethod();\n" +
-                              "  }\n" +
-                              "}");
+                              """
+                                class TestMethodAccess {
+                                  public static void main() {
+                                    abc.MyInterface.staticMethod();
+                                  }
+                                }""");
     List<HighlightInfo> highlightInfos = myFixture.doHighlighting(HighlightSeverity.ERROR);
     assertEmpty(highlightInfos);
   }
 
   public void testInstanceMethodCompletion() {
     myFixture.configureByText("TestCompletion.java",
-                              "public class TestCompletion {\n" +
-                              "  public static void main(String[] args) {\n" +
-                              "    MyInterface foo = null;\n" +
-                              "    foo.<caret>\n" +
-                              "  }\n" +
-                              "  interface MyInterface{\n" +
-                              "    static void staticMethod() {}\n" +
-                              "    void instanceMethod();\n" +
-                              "  }\n" +
-                              "}");
+                              """
+                                public class TestCompletion {
+                                  public static void main(String[] args) {
+                                    MyInterface foo = null;
+                                    foo.<caret>
+                                  }
+                                  interface MyInterface{
+                                    static void staticMethod() {}
+                                    void instanceMethod();
+                                  }
+                                }""");
     myFixture.completeBasic();
     assertContainsItems("instanceMethod");
   }
@@ -81,15 +84,16 @@ public class LightClassCodeInsightTest extends LightJavaCodeInsightFixtureTestCa
 
   public void testStaticMethodCompletion() {
     myFixture.configureByText("TestCompletion.java",
-                              "public class TestCompletion {\n" +
-                              "  public static void main(String[] args) {\n" +
-                              "    MyInterface.<caret>\n" +
-                              "  }\n" +
-                              "  interface MyInterface{\n" +
-                              "    static void staticMethod() {}\n" +
-                              "    void instanceMethod();\n" +
-                              "  }\n" +
-                              "}");
+                              """
+                                public class TestCompletion {
+                                  public static void main(String[] args) {
+                                    MyInterface.<caret>
+                                  }
+                                  interface MyInterface{
+                                    static void staticMethod() {}
+                                    void instanceMethod();
+                                  }
+                                }""");
     myFixture.completeBasic();
     assertContainsItems("staticMethod");
   }
@@ -100,12 +104,13 @@ public class LightClassCodeInsightTest extends LightJavaCodeInsightFixtureTestCa
     assertTrue(ContainerUtil.exists(allMethods, m -> m.getName().contains("staticMethod")));
 
     myFixture.configureByText("TestCompletion.java",
-                              "public class TestCompletion {\n" +
-                              "  public static void main(String[] args) {\n" +
-                              "    abc.MyInterface foo = null;\n" +
-                              "    foo.<caret>\n" +
-                              "  }\n" +
-                              "}");
+                              """
+                                public class TestCompletion {
+                                  public static void main(String[] args) {
+                                    abc.MyInterface foo = null;
+                                    foo.<caret>
+                                  }
+                                }""");
     myFixture.completeBasic();
     assertContainsItems("instanceMethod");
   }
@@ -116,11 +121,12 @@ public class LightClassCodeInsightTest extends LightJavaCodeInsightFixtureTestCa
     assertTrue(ContainerUtil.exists(allMethods, m -> m.getName().contains("staticMethod")));
 
     myFixture.configureByText("TestCompletion.java",
-                              "public class TestCompletion {\n" +
-                              "  public static void main(String[] args) {\n" +
-                              "    abc.MyInterface.<caret>\n" +
-                              "  }\n" +
-                              "}");
+                              """
+                                public class TestCompletion {
+                                  public static void main(String[] args) {
+                                    abc.MyInterface.<caret>
+                                  }
+                                }""");
     myFixture.completeBasic();
     assertContainsItems("staticMethod");
   }
@@ -147,11 +153,13 @@ public class LightClassCodeInsightTest extends LightJavaCodeInsightFixtureTestCa
 
     private static PsiJavaFile createDummyJavaFile(Project project) {
       final String source =
-        "package abc;\n" +
-        "public interface MyInterface {\n" +
-        "  static void staticMethod() {}\n" +
-        "  default void instanceMethod() {}\n" +
-        "}\n";
+        """
+          package abc;
+          public interface MyInterface {
+            static void staticMethod() {}
+            default void instanceMethod() {}
+          }
+          """;
       final FileType fileType = JavaFileType.INSTANCE;
       return (PsiJavaFile)PsiFileFactory.getInstance(project).createFileFromText(
         ABC_MY_INTERFACE + '.' + fileType.getDefaultExtension(), fileType, source);

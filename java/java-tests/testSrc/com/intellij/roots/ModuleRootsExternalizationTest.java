@@ -85,18 +85,19 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     StoreUtil.saveDocumentsAndProjectSettings(myProject);
 
     assertEquals(
-      "<component name=\"NewModuleRootManager\">\n" +
-      "  <output url=\"file://$MODULE_DIR$/classes\" />\n" +
-      "  <output-test url=\"file://$MODULE_DIR$/testClasses\" />\n" +
-      "  <exclude-output />\n" +
-      "  <content url=\"file://$MODULE_DIR$\">\n" +
-      "    <sourceFolder url=\"file://$MODULE_DIR$/source\" isTestSource=\"false\" />\n" +
-      "    <sourceFolder url=\"file://$MODULE_DIR$/testSource\" isTestSource=\"true\" />\n" +
-      "    <excludeFolder url=\"file://$MODULE_DIR$/exclude\" />\n" +
-      "  </content>\n" +
-      "  <orderEntry type=\"jdk\" jdkName=\"java 1.7\" jdkType=\"JavaSDK\" />\n" +
-      "  <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n" +
-      "</component>",
+      """
+        <component name="NewModuleRootManager">
+          <output url="file://$MODULE_DIR$/classes" />
+          <output-test url="file://$MODULE_DIR$/testClasses" />
+          <exclude-output />
+          <content url="file://$MODULE_DIR$">
+            <sourceFolder url="file://$MODULE_DIR$/source" isTestSource="false" />
+            <sourceFolder url="file://$MODULE_DIR$/testSource" isTestSource="true" />
+            <excludeFolder url="file://$MODULE_DIR$/exclude" />
+          </content>
+          <orderEntry type="jdk" jdkName="java 1.7" jdkType="JavaSDK" />
+          <orderEntry type="sourceFolder" forTests="false" />
+        </component>""",
       JDOMUtil.writeElement(JDOMUtil.load(moduleFile).getChild("component"))
     );
   }
@@ -121,16 +122,17 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     StoreUtil.saveDocumentsAndProjectSettings(myProject);
 
     assertEquals(
-      "<component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n" +
-      "  <exclude-output />\n" +
-      "  <annotation-paths>\n" +
-      "    <root url=\"file://$MODULE_DIR$/annotations\" />\n" +
-      "  </annotation-paths>\n" +
-      "  <javadoc-paths>\n" +
-      "    <root url=\"file://$MODULE_DIR$/javadoc\" />\n" +
-      "  </javadoc-paths>\n" +
-      "  <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n" +
-      "</component>",
+      """
+        <component name="NewModuleRootManager" inherit-compiler-output="true">
+          <exclude-output />
+          <annotation-paths>
+            <root url="file://$MODULE_DIR$/annotations" />
+          </annotation-paths>
+          <javadoc-paths>
+            <root url="file://$MODULE_DIR$/javadoc" />
+          </javadoc-paths>
+          <orderEntry type="sourceFolder" forTests="false" />
+        </component>""",
       JDOMUtil.writeElement(JDOMUtil.load(moduleFile).getChild("component"))
     );
   }
@@ -180,28 +182,29 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     StoreUtil.saveDocumentsAndProjectSettings(myProject);
 
     assertEquals(
-      "<component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n" +
-      "  <exclude-output />\n" +
-      "  <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n" +
-      "  <orderEntry type=\"module-library\">\n" +
-      "    <library>\n" +
-      "      <CLASSES>\n" +
-      "        <root url=\"file://$MODULE_DIR$/unnamedLibClasses\" />\n" +
-      "      </CLASSES>\n" +
-      "      <JAVADOC />\n" +
-      "      <SOURCES />\n" +
-      "    </library>\n" +
-      "  </orderEntry>\n" +
-      "  <orderEntry type=\"module-library\">\n" +
-      "    <library name=\"namedLibrary\">\n" +
-      "      <CLASSES>\n" +
-      "        <root url=\"file://$MODULE_DIR$/namedLibClasses\" />\n" +
-      "      </CLASSES>\n" +
-      "      <JAVADOC />\n" +
-      "      <SOURCES />\n" +
-      "    </library>\n" +
-      "  </orderEntry>\n" +
-      "</component>",
+      """
+        <component name="NewModuleRootManager" inherit-compiler-output="true">
+          <exclude-output />
+          <orderEntry type="sourceFolder" forTests="false" />
+          <orderEntry type="module-library">
+            <library>
+              <CLASSES>
+                <root url="file://$MODULE_DIR$/unnamedLibClasses" />
+              </CLASSES>
+              <JAVADOC />
+              <SOURCES />
+            </library>
+          </orderEntry>
+          <orderEntry type="module-library">
+            <library name="namedLibrary">
+              <CLASSES>
+                <root url="file://$MODULE_DIR$/namedLibClasses" />
+              </CLASSES>
+              <JAVADOC />
+              <SOURCES />
+            </library>
+          </orderEntry>
+        </component>""",
       JDOMUtil.writeElement(JDOMUtil.load(moduleFile).getChild("component"))
     );
   }
@@ -216,10 +219,11 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     StoreUtil.saveDocumentsAndProjectSettings(myProject);
 
     assertEquals(
-      "<component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n" +
-      "  <exclude-output />\n" +
-      "  <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n" +
-      "</component>",
+      """
+        <component name="NewModuleRootManager" inherit-compiler-output="true">
+          <exclude-output />
+          <orderEntry type="sourceFolder" forTests="false" />
+        </component>""",
       JDOMUtil.writeElement(JDOMUtil.load(moduleFile).getChild("component"))
     );
   }

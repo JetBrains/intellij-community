@@ -44,7 +44,7 @@ open class AttachedEntityListImpl(val dataSource: AttachedEntityListData) : Atta
     return connections
   }
 
-  class Builder(val result: AttachedEntityListData?) : ModifiableWorkspaceEntityBase<AttachedEntityList>(), AttachedEntityList.Builder {
+  class Builder(var result: AttachedEntityListData?) : ModifiableWorkspaceEntityBase<AttachedEntityList>(), AttachedEntityList.Builder {
     constructor() : this(AttachedEntityListData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -62,6 +62,9 @@ open class AttachedEntityListImpl(val dataSource: AttachedEntityListData) : Atta
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -85,10 +88,13 @@ open class AttachedEntityListImpl(val dataSource: AttachedEntityListData) : Atta
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as AttachedEntityList
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
       if (parents != null) {
-        this.ref = parents.filterIsInstance<MainEntityList>().singleOrNull()
+        val refNew = parents.filterIsInstance<MainEntityList?>().singleOrNull()
+        if ((refNew == null && this.ref != null) || (refNew != null && this.ref == null) || (refNew != null && this.ref != null && (this.ref as WorkspaceEntityBase).id != (refNew as WorkspaceEntityBase).id)) {
+          this.ref = refNew
+        }
       }
     }
 
@@ -203,7 +209,7 @@ class AttachedEntityListData : WorkspaceEntityData<AttachedEntityList>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as AttachedEntityListData
 
@@ -214,7 +220,7 @@ class AttachedEntityListData : WorkspaceEntityData<AttachedEntityList>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as AttachedEntityListData
 

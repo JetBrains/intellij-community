@@ -85,15 +85,10 @@ public class WindowWrapperBuilder {
 
   @NotNull
   public WindowWrapper build() {
-    switch (myMode) {
-      case FRAME:
-        return new FrameWindowWrapper(this);
-      case MODAL:
-      case NON_MODAL:
-        return new DialogWindowWrapper(this);
-      default:
-        throw new IllegalArgumentException(myMode.toString());
-    }
+    return switch (myMode) {
+      case FRAME -> new FrameWindowWrapper(this);
+      case MODAL, NON_MODAL -> new DialogWindowWrapper(this);
+    };
   }
 
   private static void installOnShowCallback(@Nullable Window window, @Nullable final Runnable onShowCallback) {
@@ -122,14 +117,11 @@ public class WindowWrapperBuilder {
 
       setTitle(builder.title);
       switch (builder.myMode) {
-        case MODAL:
-          myDialog.setModal(true);
-          break;
-        case NON_MODAL:
-          myDialog.setModal(false);
-          break;
-        default:
+        case MODAL -> myDialog.setModal(true);
+        case NON_MODAL -> myDialog.setModal(false);
+        default -> {
           assert false;
+        }
       }
       myDialog.init();
       Disposer.register(myDialog.getDisposable(), this);

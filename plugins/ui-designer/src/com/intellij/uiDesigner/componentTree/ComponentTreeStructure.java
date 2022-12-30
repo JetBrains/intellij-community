@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 
 final class ComponentTreeStructure extends AbstractTreeStructure {
-  private static final Logger LOG = Logger.getInstance(ComponentPtr.class);
+  private static final Logger LOG = Logger.getInstance(ComponentTreeStructure.class);
 
   private final Object myRootElement;
   private final GuiEditor myEditor;
@@ -119,7 +119,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure {
 
   @Override
   @NotNull
-  public NodeDescriptor createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor) {
+  public NodeDescriptor<?> createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor) {
     if (element == myRootElement) {
       return new RootDescriptor(parentDescriptor, myRootElement);
     }

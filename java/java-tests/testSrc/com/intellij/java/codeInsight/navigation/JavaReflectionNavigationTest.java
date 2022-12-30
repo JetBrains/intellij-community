@@ -91,45 +91,47 @@ public class JavaReflectionNavigationTest extends LightJavaCodeInsightFixtureTes
 
   public void testOverloadedMethodBothPublic() {
     doTestOverloadedMethod("foo",
-                           "class Overloaded {\n" +
-                           "  public void foo() {}\n" +
-                           "  public void foo(String s) {}\n" +
-                           "}", false, "java.lang.String");
+                           """
+                             class Overloaded {
+                               public void foo() {}
+                               public void foo(String s) {}
+                             }""", false, "java.lang.String");
   }
 
   public void testOverloadedMethodPublicFirst() {
     doTestOverloadedMethod("foo",
-                           "class Overloaded {\n" +
-                           "  public void foo() {}\n" +
-                           "  void foo(String s) {}\n" +
-                           "}", false);
+                           """
+                             class Overloaded {
+                               public void foo() {}
+                               void foo(String s) {}
+                             }""", false);
   }
 
   public void testOverloadedMethodPublicSecond() {
     doTestOverloadedMethod("foo",
-                           "class Overloaded {\n" +
-                           "  void foo() {}\n" +
-                           "  public void foo(String s) {}\n" +
-                           "}", false, "java.lang.String");
+                           """
+                             class Overloaded {
+                               void foo() {}
+                               public void foo(String s) {}
+                             }""", false, "java.lang.String");
   }
 
   public void testOverloadedDeclaredMethod() {
     doTestOverloadedMethod("foo",
-                           "class Overloaded {\n" +
-                           "  public void foo() {}\n" +
-                           "  public void foo(String s) {}\n" +
-                           "}", true, "java.lang.String");
+                           """
+                             class Overloaded {
+                               public void foo() {}
+                               public void foo(String s) {}
+                             }""", true, "java.lang.String");
   }
 
   public void testOverloadedInheritedMethod() {
     doTestOverloadedMethod("bar",
-                           "class OverloadedParent {" +
-                           "  public void bar(String s) {}\n" +
-                           "}" +
-                           "" +
-                           "class Overloaded extends OverloadedParent {\n" +
-                           "  public void bar() {}\n" +
-                           "}", false, "java.lang.String");
+                           """
+                             class OverloadedParent {  public void bar(String s) {}
+                             }class Overloaded extends OverloadedParent {
+                               public void bar() {}
+                             }""", false, "java.lang.String");
   }
 
   private void doTestOverloadedMethod(String name,
@@ -185,18 +187,20 @@ public class JavaReflectionNavigationTest extends LightJavaCodeInsightFixtureTes
 
   @NotNull
   private PsiReference getReference(String mainClassText) {
-    myFixture.addClass("class Parent {\n" +
-                       "  public int field3;\n" +
-                       "  int field4;\n" +
-                       "  public void method3(int n) {}\n" +
-                       "  void method4(int n) {}\n" +
-                       "}");
-    myFixture.addClass("class Test extends Parent {\n" +
-                       "  public int field;\n" +
-                       "  int field2;\n" +
-                       "  public void method() {}\n" +
-                       "  void method2(int n) {}\n" +
-                       "}");
+    myFixture.addClass("""
+                         class Parent {
+                           public int field3;
+                           int field4;
+                           public void method3(int n) {}
+                           void method4(int n) {}
+                         }""");
+    myFixture.addClass("""
+                         class Test extends Parent {
+                           public int field;
+                           int field2;
+                           public void method() {}
+                           void method2(int n) {}
+                         }""");
     myFixture.configureByText("Main.java", mainClassText);
 
     int offset = myFixture.getCaretOffset();

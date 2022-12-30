@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
-import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.application.options.editor.EditorCaretStopPolicyItem.*
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
+import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.actionSystem.ActionManager
@@ -348,7 +348,7 @@ private class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOp
         row { checkBox(highlightScope) }
         row { checkBox(highlightIdentifierUnderCaret) }
       }
-      if (!AccessibilityUtils.isScreenReaderDetected()) {
+      if (!GeneralSettings.getInstance().isSupportScreenReaders()) {
         group(message("group.quick.documentation")) {
           row { checkBox(cdShowQuickDocOnMouseMove) }
         }

@@ -58,6 +58,8 @@ public final class JdkDownloader {
     throw new IllegalStateException("No java executables were found under " + jdkHome);
   }
 
+  // TODO: convert to enhanced switch when build level is fixed
+  @SuppressWarnings("EnhancedSwitchMigration")
   private static URI getUrl(BuildDependenciesCommunityRoot communityRoot, OS os, Arch arch) {
     String archString;
     String osString;

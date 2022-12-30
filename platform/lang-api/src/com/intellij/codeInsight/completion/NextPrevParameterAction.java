@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated Use {@link NextPrevParameterHandler}
  */
-@Deprecated(forRemoval = true)
+@Deprecated
 public abstract class NextPrevParameterAction extends CodeInsightAction implements DumbAware {
   private final boolean myNext;
 

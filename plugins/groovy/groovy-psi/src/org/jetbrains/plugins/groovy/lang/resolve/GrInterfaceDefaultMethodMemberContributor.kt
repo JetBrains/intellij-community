@@ -5,7 +5,7 @@ import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parentOfType
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
@@ -18,7 +18,7 @@ class GrInterfaceDefaultMethodMemberContributor : NonCodeMembersContributor() {
     if (!processor.shouldProcessMethods()) {
       return
     }
-    val qualifier = place.castSafelyTo<GrReferenceExpression>()?.qualifier ?: return
+    val qualifier = place.asSafely<GrReferenceExpression>()?.qualifier ?: return
     if (qualifier.lastChild.elementType != GroovyTokenTypes.kSUPER) return
     val name = processor.getName(state) ?: return
     val implementedInterfaces = place.parentOfType<PsiClass>()?.implementsListTypes ?: return

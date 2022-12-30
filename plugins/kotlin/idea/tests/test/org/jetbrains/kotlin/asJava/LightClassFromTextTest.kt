@@ -23,7 +23,7 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/asJava/fileLightClass")
 @RunWith(JUnit38ClassRunner::class)
 class LightClassFromTextTest8 : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun testSimple() {
         myFixture.configureByText("Dummy.kt", "") as KtFile

@@ -18,15 +18,15 @@ class MarkdownHighlightingAnnotator : Annotator {
     when (PsiUtilCore.getElementType(element)) {
       MarkdownTokenTypes.EMPH -> annotateBasedOnParent(element, holder) {
         when (it) {
-          MarkdownElementTypes.EMPH -> MarkdownHighlighterColors.ITALIC_MARKER_ATTR_KEY
-          MarkdownElementTypes.STRONG -> MarkdownHighlighterColors.BOLD_MARKER_ATTR_KEY
+          MarkdownElementTypes.EMPH -> MarkdownHighlighterColors.ITALIC_MARKER
+          MarkdownElementTypes.STRONG -> MarkdownHighlighterColors.BOLD_MARKER
           else -> null
         }
       }
       MarkdownTokenTypes.BACKTICK -> annotateBasedOnParent(element, holder) {
         when (it) {
-          MarkdownElementTypes.CODE_FENCE -> MarkdownHighlighterColors.CODE_FENCE_MARKER_ATTR_KEY
-          MarkdownElementTypes.CODE_SPAN -> MarkdownHighlighterColors.CODE_SPAN_MARKER_ATTR_KEY
+          MarkdownElementTypes.CODE_FENCE -> MarkdownHighlighterColors.CODE_FENCE_MARKER
+          MarkdownElementTypes.CODE_SPAN -> MarkdownHighlighterColors.CODE_SPAN_MARKER
           else -> null
         }
       }
@@ -47,7 +47,7 @@ class MarkdownHighlightingAnnotator : Annotator {
       return
     }
     val highlights = syntaxHighlighter.getTokenHighlights(PsiUtilCore.getElementType(element))
-    if (highlights.isNotEmpty() && highlights.first() != MarkdownHighlighterColors.TEXT_ATTR_KEY) {
+    if (highlights.isNotEmpty() && highlights.first() != MarkdownHighlighterColors.TEXT) {
       holder.newSilentAnnotation(HighlightSeverity.INFORMATION).textAttributes(highlights.first()).create()
     }
   }

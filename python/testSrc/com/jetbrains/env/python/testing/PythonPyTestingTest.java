@@ -119,7 +119,10 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull final String all,
                                       int exitCode) {
 
-        final String expectedConsoleText = "Expected :'expected'\n" + "Actual   :'actual'\n" + "<Click to see difference>";
+        final String expectedConsoleText = """
+          Expected :'expected'
+          Actual   :'actual'
+          <Click to see difference>""";
         assertThat("No diff", runner.getAllConsoleText(), containsString(expectedConsoleText));
       }
     });
@@ -304,11 +307,13 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                         @NotNull final String stderr,
                                         @NotNull final String all,
                                         int exitCode) {
-          assertEquals("Only one test should be launched", "Test tree:\n" +
-                                                           "[root](-)\n" +
-                                                           ".test_pytest_parametrized(-)\n" +
-                                                           "..test_eval(-)\n" +
-                                                           "...(three plus file-8)(-)\n", runner.getFormattedTestTree());
+          assertEquals("Only one test should be launched", """
+            Test tree:
+            [root](-)
+            .test_pytest_parametrized(-)
+            ..test_eval(-)
+            ...(three plus file-8)(-)
+            """, runner.getFormattedTestTree());
         }
       });
   }
@@ -344,19 +349,21 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull final String stderr,
                                       @NotNull final String all,
                                       int exitCode) {
-        assertEquals("Test name before message broke output", "Test tree:\n" +
-                                                              "[root](+)\n" +
-                                                              ".test_test(+)\n" +
-                                                              "..SampleTest1(+)\n" +
-                                                              "...test_sample_1(+)\n" +
-                                                              "...test_sample_2(+)\n" +
-                                                              "...test_sample_3(+)\n" +
-                                                              "...test_sample_4(+)\n" +
-                                                              "..SampleTest2(+)\n" +
-                                                              "...test_sample_5(+)\n" +
-                                                              "...test_sample_6(+)\n" +
-                                                              "...test_sample_7(+)\n" +
-                                                              "...test_sample_8(+)\n", runner.getFormattedTestTree());
+        assertEquals("Test name before message broke output", """
+          Test tree:
+          [root](+)
+          .test_test(+)
+          ..SampleTest1(+)
+          ...test_sample_1(+)
+          ...test_sample_2(+)
+          ...test_sample_3(+)
+          ...test_sample_4(+)
+          ..SampleTest2(+)
+          ...test_sample_5(+)
+          ...test_sample_6(+)
+          ...test_sample_7(+)
+          ...test_sample_8(+)
+          """, runner.getFormattedTestTree());
       }
     });
   }
@@ -418,7 +425,12 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull final String stderr,
                                       @NotNull final String all,
                                       final int exitCode) {
-        assertEquals("Test tree:\n" + "[root](+)\n" + ".test_test(+)\n" + "..test_eggs(+)\n", runner.getFormattedTestTree());
+        assertEquals("""
+                       Test tree:
+                       [root](+)
+                       .test_test(+)
+                       ..test_eggs(+)
+                       """, runner.getFormattedTestTree());
         assertEquals(0, exitCode);
       }
     });
@@ -460,25 +472,30 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull final String all,
                                       final int exitCode) {
         if (useCustomMode) {
-          assertEquals("Wrong test launched", "Test tree:\n" +
-                                              "[root](+)\n" +
-                                              ".test_test(+)\n" +
-                                              "..SampleTest1(+)\n" +
-                                              "...test_sample_1(+)\n" +
-                                              "...test_sample_2(+)\n" +
-                                              "...test_sample_3(+)\n" +
-                                              "...test_sample_4(+)\n" +
-                                              "..SampleTest2(+)\n" +
-                                              "...test_sample_5(+)\n" +
-                                              "...test_sample_6(+)\n" +
-                                              "...test_sample_7(+)\n" +
-                                              "...test_sample_8(+)\n", runner.getFormattedTestTree());
+          assertEquals("Wrong test launched", """
+            Test tree:
+            [root](+)
+            .test_test(+)
+            ..SampleTest1(+)
+            ...test_sample_1(+)
+            ...test_sample_2(+)
+            ...test_sample_3(+)
+            ...test_sample_4(+)
+            ..SampleTest2(+)
+            ...test_sample_5(+)
+            ...test_sample_6(+)
+            ...test_sample_7(+)
+            ...test_sample_8(+)
+            """, runner.getFormattedTestTree());
           runner.getFormattedTestTree();
         }
         else {
           assertEquals("Wrong message for empty suite", PyBundle.message("runcfg.tests.empty_suite"),
                        runner.getTestProxy().getPresentation());
-          assertEquals("Wrong empty suite tree", "Test tree:\n" + "[root](-)\n", runner.getFormattedTestTree());
+          assertEquals("Wrong empty suite tree", """
+            Test tree:
+            [root](-)
+            """, runner.getFormattedTestTree());
         }
       }
     });
@@ -509,7 +526,13 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull String all,
                                       int exitCode) {
         assertThat("xdist not launched?", all, containsString("gw0"));
-        assertEquals("Test tree:\n" + "[root](+)\n" + ".test_parallel(+)\n" + "..ExampleTestCase(+)\n" + "...test_example(+)\n",
+        assertEquals("""
+                       Test tree:
+                       [root](+)
+                       .test_parallel(+)
+                       ..ExampleTestCase(+)
+                       ...test_example(+)
+                       """,
                      runner.getFormattedTestTree());
       }
     });
@@ -563,7 +586,12 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                         @NotNull String stderr,
                                         @NotNull String all,
                                         int exitCode) {
-          assertEquals("Marker support broken", "Test tree:\n" + "[root](+)\n" + ".test_with_markers(+)\n" + "..test_fast(+)\n",
+          assertEquals("Marker support broken", """
+                         Test tree:
+                         [root](+)
+                         .test_with_markers(+)
+                         ..test_fast(+)
+                         """,
                        runner.getFormattedTestTree());
         }
       });
@@ -1053,7 +1081,13 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         assertEquals("Wrong number of passed tests", 0, runner.getPassedTestsCount());
         assertEquals("Wrong number of failed tests", 1, runner.getFailedTestsCount());
         assertEquals("Wrong tests executed",
-                     "Test tree:\n" + "[root](-)\n" + ".test_subsystems(-)\n" + "..TestBar(-)\n" + "...test_something(-)\n",
+                     """
+                       Test tree:
+                       [root](-)
+                       .test_subsystems(-)
+                       ..TestBar(-)
+                       ...test_something(-)
+                       """,
                      runner.getFormattedTestTree());
       }
     });

@@ -52,7 +52,7 @@ open class ModuleOutputPackagingElementEntityImpl(val dataSource: ModuleOutputPa
     return connections
   }
 
-  class Builder(val result: ModuleOutputPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ModuleOutputPackagingElementEntity>(), ModuleOutputPackagingElementEntity.Builder {
+  class Builder(var result: ModuleOutputPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ModuleOutputPackagingElementEntity>(), ModuleOutputPackagingElementEntity.Builder {
     constructor() : this(ModuleOutputPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -70,6 +70,9 @@ open class ModuleOutputPackagingElementEntityImpl(val dataSource: ModuleOutputPa
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -90,10 +93,13 @@ open class ModuleOutputPackagingElementEntityImpl(val dataSource: ModuleOutputPa
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleOutputPackagingElementEntity
-      this.entitySource = dataSource.entitySource
-      this.module = dataSource.module
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.module != dataSource?.module) this.module = dataSource.module
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+        val parentEntityNew = parents.filterIsInstance<CompositePackagingElementEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 
@@ -264,7 +270,7 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ModuleOutputPackagingElementEntityData
 
@@ -275,7 +281,7 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ModuleOutputPackagingElementEntityData
 

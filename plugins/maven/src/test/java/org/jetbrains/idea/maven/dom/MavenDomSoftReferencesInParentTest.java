@@ -25,35 +25,34 @@ public class MavenDomSoftReferencesInParentTest extends MavenDomTestCase {
 
   @Test
   public void testDoNotHighlightSourceDirectoryInParentPom() {
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>1</version>\n" +
-
-                  "<packaging>pom</packaging>\n" +
-                  "<build>\n" +
-                  "<sourceDirectory>dsfsfd/sdfsdf</sourceDirectory>\n" +
-                  "<testSourceDirectory>qwqwq/weqweqw</testSourceDirectory>\n" +
-                  "<scriptSourceDirectory>dfsdf/fsdf</scriptSourceDirectory>\n" +
-                  "</build>\n" +
-                  "");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <build>
+                    <sourceDirectory>dsfsfd/sdfsdf</sourceDirectory>
+                    <testSourceDirectory>qwqwq/weqweqw</testSourceDirectory>
+                    <scriptSourceDirectory>dfsdf/fsdf</scriptSourceDirectory>
+                    </build>
+                    """);
 
     checkHighlighting();
   }
 
   @Test 
   public void testHighlightSourceDirectory() {
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>1</version>\n" +
-
-                  "<packaging>jar</packaging>\n" +
-
-                  "<build>\n" +
-                  "<sourceDirectory>foo1</sourceDirectory>\n" +
-                  "<testSourceDirectory>foo2</testSourceDirectory>\n" +
-                  "<scriptSourceDirectory>foo3</scriptSourceDirectory>\n" +
-                  "</build>\n" +
-                  "");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>jar</packaging>
+                    <build>
+                    <sourceDirectory>foo1</sourceDirectory>
+                    <testSourceDirectory>foo2</testSourceDirectory>
+                    <scriptSourceDirectory>foo3</scriptSourceDirectory>
+                    </build>
+                    """);
 
     createProjectPom("<groupId>test</groupId>\n" +
                  "<artifactId>project</artifactId>\n" +

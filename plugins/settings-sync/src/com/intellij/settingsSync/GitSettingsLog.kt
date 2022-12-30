@@ -33,7 +33,7 @@ import kotlin.io.path.div
 internal class GitSettingsLog(private val settingsSyncStorage: Path,
                               private val rootConfigPath: Path,
                               parentDisposable: Disposable,
-                              private val initialSnapshotProvider: () -> SettingsSnapshot
+                              private val initialSnapshotProvider: (SettingsSnapshot) -> SettingsSnapshot
 ) : SettingsLog, Disposable {
 
   private lateinit var repository: Repository
@@ -84,8 +84,8 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
   private fun copyExistingSettings() {
     LOG.info("Copying existing settings from $rootConfigPath to $settingsSyncStorage")
-    val snapshot = initialSnapshotProvider()
-    applyState(IDE_REF_NAME, snapshot, "Copy current configs")
+    val snapshot = initialSnapshotProvider(collectCurrentSnapshot())
+    applyState(IDE_REF_NAME, snapshot, "Copy current configs", warnAboutEmptySnapshot = false)
   }
 
   private fun initRepository(repository: Repository?) {
@@ -102,7 +102,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
     val git = Git(repository)
     git.add().addFilepattern(".gitignore").call()
-    git.commit().setMessage("Initial").call()
+    commit("Initial")
   }
 
   override fun applyIdeState(snapshot: SettingsSnapshot, message: String) {
@@ -118,9 +118,9 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     return getMasterPosition()
   }
 
-  private fun applyState(refName: String, snapshot: SettingsSnapshot, message: String) {
-    if (snapshot.isEmpty()) {
-      LOG.error("Empty snapshot")
+  private fun applyState(refName: String, snapshot: SettingsSnapshot, message: String, warnAboutEmptySnapshot: Boolean = true) {
+    if (snapshot.isEmpty() && warnAboutEmptySnapshot) {
+      LOG.error("Empty snapshot, requested to apply on branch '$refName' with message '$message'")
       return
     }
 
@@ -143,7 +143,8 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     }
 
     if (snapshot.plugins != null) {
-      val pluginsState = json.encodeToString(snapshot.plugins)
+      val sortedState = SettingsSyncPluginsState(snapshot.plugins.plugins.toSortedMap())
+      val pluginsState = json.encodeToString(sortedState)
       pluginsFile.write(pluginsState)
       addCommand.addFilepattern("$METAINFO_FOLDER/$PLUGINS_FILE")
     }
@@ -153,12 +154,19 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     commit(message, snapshot.metaInfo.dateCreated)
   }
 
-  private fun commit(message: String, dateCreated: Instant) {
+  private fun commit(message: String, dateCreated: Instant? = null) {
     try {
       // Don't allow empty commit: sometimes the stream provider can notify about changes but there are no actual changes on disk
-      val commit = git.commit().setMessage(message).setAllowEmpty(false).call()
+      val commit = git.commit()
+        .setMessage(message)
+        .setAllowEmpty(false)
+        .setNoVerify(true)
+        .setSign(false)
+        .call()
 
-      recordCreationDate(commit, dateCreated)
+      if (dateCreated != null) {
+        recordCreationDate(commit, dateCreated)
+      }
     }
     catch (e: EmptyCommitException) {
       LOG.info("No actual changes in the settings")

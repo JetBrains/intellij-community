@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.kotlin
 
 import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.addToClasspathAgent.AddToClasspathUtil
 import java.nio.file.Files
@@ -11,9 +10,7 @@ import java.nio.file.Path
 /**
  * Sets up Kotlin compiler (downloaded from Marketplace) which is required for JPS to compile the repository
  */
-internal class KotlinBinaries(private val communityHome: BuildDependenciesCommunityRoot,
-                              private val options: BuildOptions,
-                              private val messages: BuildMessages) {
+internal class KotlinBinaries(private val communityHome: BuildDependenciesCommunityRoot, private val messages: BuildMessages) {
   val kotlinCompilerHome: Path by lazy {
     val compilerHome = KotlinCompilerDependencyDownloader.downloadAndExtractKotlinCompiler(communityHome)
     val kotlinc = compilerHome.resolve("bin/kotlinc")
@@ -26,7 +23,7 @@ internal class KotlinBinaries(private val communityHome: BuildDependenciesCommun
     jpsPlugin
   }
 
-  fun loadKotlinJpsPluginToClassPath() {
+  suspend fun loadKotlinJpsPluginToClassPath() {
     val required = KotlinCompilerDependencyDownloader.getKotlinJpsPluginVersion(communityHome)
 
     val current = getCurrentKotlinJpsPluginVersionFromClassPath()

@@ -32,26 +32,28 @@ public class JavaIndenterTest extends AbstractJavaFormatterTest {
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
 
     String initial =
-      "class BrokenAlignment {\n" +
-      "    public\n" +
-      "\tstatic int foo(String a, String b, String c,\n" +
-      "        String d) {\n" +
-      "        return -1;\n" +
-      "    }\n" +
-      "}";
+      """
+        class BrokenAlignment {
+            public
+        \tstatic int foo(String a, String b, String c,
+                String d) {
+                return -1;
+            }
+        }""";
 
     int start = initial.indexOf("        String d");
     int end = initial.indexOf("\n", start);
     myTextRange = new TextRange(start, end);
 
     doTextTest(initial,
-      "class BrokenAlignment {\n" +
-      "    public\n" +
-      "\tstatic int foo(String a, String b, String c,\n" +
-      "                   String d) {\n" +
-      "        return -1;\n" +
-      "    }\n" +
-      "}"
+               """
+                 class BrokenAlignment {
+                     public
+                 \tstatic int foo(String a, String b, String c,
+                                    String d) {
+                         return -1;
+                     }
+                 }"""
     );
   }
 
@@ -59,19 +61,19 @@ public class JavaIndenterTest extends AbstractJavaFormatterTest {
     // Inspired by IDEA-53778
 
     doTextTest(
-      "class Test {\n" +
-      "   // some comment\n" +
-      "        public void doSmth(int[] p) {\n" +
-      "<caret>\n" +
-      "        }" +
-      "}",
+      """
+        class Test {
+           // some comment
+                public void doSmth(int[] p) {
+        <caret>
+                }}""",
 
-      "class Test {\n" +
-      "   // some comment\n" +
-      "        public void doSmth(int[] p) {\n" +
-      "            \n" +
-      "        }" +
-      "}");
+      """
+        class Test {
+           // some comment
+                public void doSmth(int[] p) {
+                   \s
+                }}""");
   }
 
   @Override

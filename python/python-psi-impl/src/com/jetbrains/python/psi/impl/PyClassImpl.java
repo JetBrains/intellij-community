@@ -897,15 +897,11 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     @NotNull
     @Override
     public Maybe<PyCallable> getByDirection(@NotNull AccessDirection direction) {
-      switch (direction) {
-        case READ:
-          return getGetter();
-        case WRITE:
-          return getSetter();
-        case DELETE:
-          return getDeleter();
-      }
-      throw new IllegalArgumentException("Unknown direction " + PyUtil.nvl(direction));
+      return switch (direction) {
+        case READ -> getGetter();
+        case WRITE -> getSetter();
+        case DELETE -> getDeleter();
+      };
     }
 
     @Nullable

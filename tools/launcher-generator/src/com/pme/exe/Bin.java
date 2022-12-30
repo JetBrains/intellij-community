@@ -204,6 +204,8 @@ public abstract class Bin {
       return (Bin.Structure) myMembersMap.get(name);
     }
 
+    public Bin.Txt getTxtMember(String name) { return (Bin.Txt)myMembersMap.get(name); }
+
     public long getValue(String name) {
       return ((Bin.Value) myMembersMap.get(name)).getValue();
     }

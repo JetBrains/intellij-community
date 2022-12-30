@@ -10,7 +10,7 @@ internal open class DelegatingProgressIndicatorEx(indicator: ProgressIndicatorEx
   DelegatingProgressIndicator(indicator),
   ProgressIndicatorEx {
 
-  protected val delegateEx: ProgressIndicatorEx get() = delegate as ProgressIndicatorEx
+  private val delegateEx: ProgressIndicatorEx get() = delegate as ProgressIndicatorEx
 
   override fun addStateDelegate(delegate: ProgressIndicatorEx) = delegateEx.addStateDelegate(delegate)
   override fun finish(task: TaskInfo) = delegateEx.finish(task)

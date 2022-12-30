@@ -36,7 +36,7 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
-abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcessor) :
+abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor) :
   EditorTabPreviewBase(diffProcessor.project!!, diffProcessor) {
 
   override val previewFile: VirtualFile = EditorTabDiffPreviewVirtualFile(diffProcessor, ::getCurrentName)

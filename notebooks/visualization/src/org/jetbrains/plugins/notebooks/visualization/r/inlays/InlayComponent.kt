@@ -113,7 +113,7 @@ open class InlayComponent : JPanel(BorderLayout()), EditorCustomElementRenderer 
   }
 
   /** Fits size and position of component to inlay's size and position. */
-  protected fun updateComponentBounds(targetRegion: Rectangle) {
+  private fun updateComponentBounds(targetRegion: Rectangle) {
     if (bounds == targetRegion) {
       return
     }

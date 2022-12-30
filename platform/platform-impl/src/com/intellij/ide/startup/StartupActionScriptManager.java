@@ -229,7 +229,7 @@ public final class StartupActionScriptManager {
         throw new IOException("Source file missing: " + mySource);
       }
       Files.createDirectories(destination);
-      new Decompressor.Zip(source).filter(myFilenameFilter).extract(destination);
+      new Decompressor.Zip(source).withZipExtensionsIfUnix().filter(myFilenameFilter).extract(destination);
     }
 
     @Override

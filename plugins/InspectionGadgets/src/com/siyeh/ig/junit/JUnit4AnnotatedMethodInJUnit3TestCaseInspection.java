@@ -50,7 +50,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
     final List<InspectionGadgetsFix> fixes = new ArrayList<>(3);
     final PsiMethod method = (PsiMethod)infos[1];
     if (AnnotationUtil.isAnnotated(method, IGNORE, 0)) {
-      fixes.add(new RemoveIgnoreAndRename(method));
+      fixes.add(new RemoveIgnoreAndRenameFix(method));
     }
     if (TestUtils.isJUnit4TestMethod(method)) {
       String methodName = method.getName();
@@ -110,11 +110,12 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
       return;
     }
     annotation.delete();
+    JavaCodeStyleManager.getInstance(element.getProject()).optimizeImports(element.getContainingFile());
   }
 
-  private static class RemoveIgnoreAndRename extends RenameFix {
+  private static class RemoveIgnoreAndRenameFix extends RenameFix {
 
-    RemoveIgnoreAndRename(@NonNls PsiMethod method) {
+    RemoveIgnoreAndRenameFix(@NonNls PsiMethod method) {
       super("_" + method.getName());
     }
 
@@ -134,6 +135,12 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
     public void doFix(Project project, ProblemDescriptor descriptor) {
       WriteAction.run(() -> deleteAnnotation(descriptor, IGNORE));
       super.doFix(project, descriptor);
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      deleteAnnotation(previewDescriptor, IGNORE);
+      return super.generatePreview(project, previewDescriptor);
     }
   }
 
@@ -424,6 +431,15 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
       if (myNewName != null) {
         super.doFix(project, descriptor);
       }
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      deleteAnnotation(previewDescriptor, "org.junit.Test");
+      if (myNewName == null) {
+        return IntentionPreviewInfo.DIFF;
+      }
+      return super.generatePreview(project, previewDescriptor);
     }
   }
 

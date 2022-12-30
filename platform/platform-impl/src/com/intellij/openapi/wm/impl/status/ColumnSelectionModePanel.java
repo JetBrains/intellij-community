@@ -9,20 +9,21 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.ui.FocusUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class ColumnSelectionModePanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget, PropertyChangeListener {
+  @NonNls static final String SWING_FOCUS_OWNER_PROPERTY = "focusOwner";
   private final TextPanel myTextPanel = new TextPanel();
 
   public ColumnSelectionModePanel(@NotNull Project project) {
@@ -54,10 +55,7 @@ public class ColumnSelectionModePanel extends EditorBasedWidget implements Statu
   @Override
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(SWING_FOCUS_OWNER_PROPERTY, this);
-    Disposer.register(this, 
-                      () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(SWING_FOCUS_OWNER_PROPERTY, 
-                                                                                                               this));
+    FocusUtil.addFocusOwnerListener(this, this);
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     if (multicaster instanceof EditorEventMulticasterEx) {
       ((EditorEventMulticasterEx)multicaster).addPropertyChangeListener(this, this);

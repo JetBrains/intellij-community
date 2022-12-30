@@ -36,6 +36,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.Language;
@@ -307,7 +308,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   public @NotNull @NlsContexts.TabTitle String getName(int count) {
     String name = myName.get();
     String padding = String.valueOf(count <= 0 ? 0 : JBUI.scale(8));
-    String fg = toHtmlColor(UIUtil.getInactiveTextColor());
+    String fg = toHtmlColor(NamedColorUtil.getInactiveTextColor());
     String number = count <= 0 ? "" : String.valueOf(count);
     @Language("HTML")
     String labelWithCounter = "<html><body>" +

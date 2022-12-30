@@ -470,6 +470,12 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI"
     },
 
+    "SearchFieldWithExtension": {
+      "background": "#45494A",
+      "border": "com.intellij.ui.components.DarculaSearchBorder",
+      "UI": "com.intellij.ui.components.DarculaSearchFieldWithExtensionUI"
+    },
+
     "TitledBorder.titleColor": "#bbbbbb",
 
     "ToggleButton": {

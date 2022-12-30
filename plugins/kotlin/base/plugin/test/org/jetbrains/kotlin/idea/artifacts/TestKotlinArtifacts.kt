@@ -2,11 +2,12 @@
 package org.jetbrains.kotlin.idea.base.plugin.artifacts
 
 import com.intellij.openapi.application.PathManager
-import org.jetbrains.kotlin.idea.artifacts.KotlinNativeVersion
-import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_DEV_CDN_URL
+import com.intellij.platform.testFramework.io.ExternalResourcesChecker
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.downloadFile
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.unpackPrebuildArchive
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader.downloadArtifactForIdeFromSources
+import org.jetbrains.kotlin.idea.artifacts.KotlinNativeVersion
+import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_DEV_CDN_URL
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinMavenUtils
 import org.jetbrains.kotlin.konan.target.HostManager
 import java.io.File
@@ -19,17 +20,15 @@ const val kotlincStdlibFileName = "kotlinc_kotlin_stdlib.xml"
 object TestKotlinArtifacts {
     private fun getLibraryFile(groupId: String, artifactId: String, libraryFileName: String): File {
         val version = KotlinMavenUtils.findLibraryVersion(libraryFileName)
-            ?: error("Cannot find library version for library $libraryFileName")
-
         return KotlinMavenUtils.findArtifactOrFail(groupId, artifactId, version).toFile()
     }
 
-    private fun getJar(artifactId: String): File {
-        return downloadArtifactForIdeFromSources(kotlincStdlibFileName, artifactId)
-    }
+    private fun getJar(artifactId: String): File =
+        downloadOrReportUnavailability(artifactId, KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName))
 
     private fun getSourcesJar(artifactId: String): File {
-        return downloadArtifactForIdeFromSources(kotlincStdlibFileName, artifactId, suffix = "-sources.jar")
+        val version = KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName)
+        return downloadOrReportUnavailability(artifactId, version, suffix = "-sources.jar")
             .copyTo(                                       // Some tests hardcode jar names in their test data
                 File(PathManager.getCommunityHomePath())   // (KotlinReferenceTypeHintsProviderTestGenerated).
                     .resolve("out")                        // That's why we need to strip version from the jar name
@@ -98,9 +97,9 @@ object TestKotlinArtifacts {
 
     @JvmStatic
     val jsIrRuntimeDir: File by lazy {
-        downloadArtifactForIdeFromSources(
-            libraryFileName = "kotlinc_kotlin_jps_plugin_tests.xml",
-            artifactId = "js-ir-runtime-for-ide",
+        downloadOrReportUnavailability(
+            "js-ir-runtime-for-ide",
+            KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_jps_plugin_tests.xml"),
             suffix = ".klib"
         )
     }
@@ -111,7 +110,7 @@ object TestKotlinArtifacts {
     }
 
     private fun downloadAndUnpack(libraryFileName: String, artifactId: String, dirName: String): File {
-        val jar = downloadArtifactForIdeFromSources(libraryFileName, artifactId)
+        val jar = downloadOrReportUnavailability(artifactId, KotlinMavenUtils.findLibraryVersion(libraryFileName))
         return LazyZipUnpacker(File(PathManager.getCommunityHomePath()).resolve("out").resolve(dirName)).lazyUnpack(jar)
     }
 
@@ -141,3 +140,8 @@ object TestKotlinArtifacts {
             throw IOException("Library doesn't exist: $libPath")
     }
 }
+
+@JvmOverloads
+fun downloadOrReportUnavailability(artifactId: String, version: String, suffix: String = ".jar"): File =
+    KotlinArtifactsDownloader.downloadArtifactForIdeFromSources(artifactId, version, suffix)
+        ?: ExternalResourcesChecker.reportUnavailability<Nothing>(KotlinArtifactsDownloader::downloadArtifactForIdeFromSources.name, null)

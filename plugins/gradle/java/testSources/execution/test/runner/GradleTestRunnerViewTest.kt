@@ -25,7 +25,7 @@ import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.ThrowableRunnable
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.ui.tree.TreeUtil
 import groovy.json.StringEscapeUtils.escapeJava
 import org.assertj.core.api.Assertions.assertThat
@@ -266,7 +266,7 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
     val classChild = root.children.single()
     assertEquals("HelloSpockSpec", classChild.name)
 
-    fun AbstractTestProxy.resolveToMethod() : PsiMethod = getLocation(myProject, GlobalSearchScope.allScope(myProject)).psiElement.castSafelyTo<PsiMethod>()!!
+    fun AbstractTestProxy.resolveToMethod() : PsiMethod = getLocation(myProject, GlobalSearchScope.allScope(myProject)).psiElement.asSafely<PsiMethod>()!!
 
     runReadAction {
       val testNodeChild = classChild.children.single()

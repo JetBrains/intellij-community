@@ -303,9 +303,8 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     public String calcTargetReferenceText(String targetReferenceText) {
       if (!myPrefixes.isEmpty()) {
         final InclusionKind kind = myPrefixes.getLast().getSecond();
-        switch (kind) {
-          case IMPORT  : return targetReferenceText;
-          case INCLUDE : return getFQPrefix() + targetReferenceText;
+        if (kind == InclusionKind.INCLUDE) {
+          return getFQPrefix() + targetReferenceText;
         }
       }
       return targetReferenceText;

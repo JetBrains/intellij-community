@@ -70,6 +70,10 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
     debugLogger.setOutputFile(path)
   }
 
+  fun close() {
+    debugLogger.close()
+  }
+
   val debugLogFile: Path?
     get() = debugLogger.getOutputFile()
 
@@ -171,7 +175,13 @@ private class DebugLogger {
   }
 
   @Synchronized
-  fun getOutputFile() = outputFile
+  fun close() {
+    output.close()
+    outputFile = null
+  }
+
+  @Synchronized
+  fun getOutputFile(): Path? = outputFile
 
   @Synchronized
   fun createLogger(): BuildMessageLogger {

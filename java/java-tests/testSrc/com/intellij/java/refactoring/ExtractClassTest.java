@@ -288,15 +288,17 @@ public class ExtractClassTest extends LightMultiFileTestCase {
   }
 
   public void testUsedInInitializer() {
-    doTestField("Field 'myT' needs setter\n" +
-                "Field 'myT' needs getter\n" +
-                "Class initializer requires moved members");
+    doTestField("""
+                  Field 'myT' needs setter
+                  Field 'myT' needs getter
+                  Class initializer requires moved members""");
   }
 
   public void testUsedInConstructor() {
-    doTestField("Field 'myT' needs getter\n" +
-                "Field 'myT' needs setter\n" +
-                "Constructor requires moved members");
+    doTestField("""
+                  Field 'myT' needs getter
+                  Field 'myT' needs setter
+                  Constructor requires moved members""");
   }
 
   public void testRefInJavadoc() {

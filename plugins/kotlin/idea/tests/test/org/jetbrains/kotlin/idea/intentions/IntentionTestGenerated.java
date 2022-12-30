@@ -7036,6 +7036,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertPrimaryConstructorToSecondary/valueClass.kt");
         }
 
+        @TestMetadata("valueClassWithGeneric.kt")
+        public void testValueClassWithGeneric() throws Exception {
+            runTest("testData/intentions/convertPrimaryConstructorToSecondary/valueClassWithGeneric.kt");
+        }
+
         @TestMetadata("vararg.kt")
         public void testVararg() throws Exception {
             runTest("testData/intentions/convertPrimaryConstructorToSecondary/vararg.kt");
@@ -8299,99 +8304,6 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/convertToForEachFunctionCall")
-    public static class ConvertToForEachFunctionCall extends AbstractIntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("binaryExpressionLoopRange.kt")
-        public void testBinaryExpressionLoopRange() throws Exception {
-            runTest("testData/intentions/convertToForEachFunctionCall/binaryExpressionLoopRange.kt");
-        }
-
-        @TestMetadata("blockBodyExpression.kt")
-        public void testBlockBodyExpression() throws Exception {
-            runTest("testData/intentions/convertToForEachFunctionCall/blockBodyExpression.kt");
-        }
-
-        @TestMetadata("blockCommentOnly.kt")
-        public void testBlockCommentOnly() throws Exception {
-            runTest("testData/intentions/convertToForEachFunctionCall/blockCommentOnly.kt");
-        }
-
-        @TestMetadata("commentsInBody.kt")
-        public void testCommentsInBody() throws Exception {
-            runTest("testData/intentions/convertToForEachFunctionCall/commentsInBody.kt");
-        }
-
-        @TestMetadata("commentsInBody2.kt")
-        public void testCommentsInBody2() throws Exception {
-            runTest("testData/intentions/convertToForEachFunctionCall/commentsInBody2.kt");
-        }
-
-        @TestMetadata("commentsOutsideBody.kt")
-        public void testCommentsOutsideBody() throws Exception {
-            runTest("testData/intentions/convertToForEachFunctionCall/commentsOutsideBody.kt");
-        }
-
-        @TestMetadata("continueToReturnWithLabel.kt")
-        public void testContinueToReturnWithLabel() throws Exception {
-            runTest("testData/intentions/convertToForEachFunctionCall/continueToReturnWithLabel.kt");
-        }
-
-        @TestMetadata("continueToReturnWithoutLabel.kt")
-        public void testContinueToReturnWithoutLabel() throws Exception {
-            runTest("testData/intentions/convertToForEachFunctionCall/continueToReturnWithoutLabel.kt");
-        }
-
-        @TestMetadata("emptyBody.kt")
-        public void testEmptyBody() throws Exception {
-            runTest("testData/intentions/convertToForEachFunctionCall/emptyBody.kt");
-        }
-
-        @TestMetadata("endOfLineComment1.kt")
-        public void testEndOfLineComment1() throws Exception {
-            runTest("testData/intentions/convertToForEachFunctionCall/endOfLineComment1.kt");
-        }
-
-        @TestMetadata("endOfLineComment2.kt")
-        public void testEndOfLineComment2() throws Exception {
-            runTest("testData/intentions/convertToForEachFunctionCall/endOfLineComment2.kt");
-        }
-
-        @TestMetadata("endOfLineComment3.kt")
-        public void testEndOfLineComment3() throws Exception {
-            runTest("testData/intentions/convertToForEachFunctionCall/endOfLineComment3.kt");
-        }
-
-        @TestMetadata("iterativeElementTypeSpecified.kt")
-        public void testIterativeElementTypeSpecified() throws Exception {
-            runTest("testData/intentions/convertToForEachFunctionCall/iterativeElementTypeSpecified.kt");
-        }
-
-        @TestMetadata("noCurlyBraces.kt")
-        public void testNoCurlyBraces() throws Exception {
-            runTest("testData/intentions/convertToForEachFunctionCall/noCurlyBraces.kt");
-        }
-
-        @TestMetadata("noStatements.kt")
-        public void testNoStatements() throws Exception {
-            runTest("testData/intentions/convertToForEachFunctionCall/noStatements.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/intentions/convertToForEachFunctionCall/simple.kt");
-        }
-
-        @TestMetadata("typeAnnotatedWithNonBlockBody.kt")
-        public void testTypeAnnotatedWithNonBlockBody() throws Exception {
-            runTest("testData/intentions/convertToForEachFunctionCall/typeAnnotatedWithNonBlockBody.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertToIndexedFunctionCall")
     public abstract static class ConvertToIndexedFunctionCall extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
@@ -8551,6 +8463,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("basic.kt")
         public void testBasic() throws Exception {
             runTest("testData/intentions/convertToRawStringTemplate/basic.kt");
+        }
+
+        @TestMetadata("octalEscape.kt")
+        public void testOctalEscape() throws Exception {
+            runTest("testData/intentions/convertToRawStringTemplate/octalEscape.kt");
         }
     }
 
@@ -15002,59 +14919,6 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("withProperties.kt")
         public void testWithProperties() throws Exception {
             runTest("testData/intentions/removeConstructorKeyword/withProperties.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/removeEmptyParenthesesFromLambdaCall")
-    public static class RemoveEmptyParenthesesFromLambdaCall extends AbstractIntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("afterLambda.kt")
-        public void testAfterLambda() throws Exception {
-            runTest("testData/intentions/removeEmptyParenthesesFromLambdaCall/afterLambda.kt");
-        }
-
-        @TestMetadata("afterLambda2.kt")
-        public void testAfterLambda2() throws Exception {
-            runTest("testData/intentions/removeEmptyParenthesesFromLambdaCall/afterLambda2.kt");
-        }
-
-        @TestMetadata("afterLambda3.kt")
-        public void testAfterLambda3() throws Exception {
-            runTest("testData/intentions/removeEmptyParenthesesFromLambdaCall/afterLambda3.kt");
-        }
-
-        @TestMetadata("afterLambda4.kt")
-        public void testAfterLambda4() throws Exception {
-            runTest("testData/intentions/removeEmptyParenthesesFromLambdaCall/afterLambda4.kt");
-        }
-
-        @TestMetadata("afterLambda5.kt")
-        public void testAfterLambda5() throws Exception {
-            runTest("testData/intentions/removeEmptyParenthesesFromLambdaCall/afterLambda5.kt");
-        }
-
-        @TestMetadata("afterLambda6.kt")
-        public void testAfterLambda6() throws Exception {
-            runTest("testData/intentions/removeEmptyParenthesesFromLambdaCall/afterLambda6.kt");
-        }
-
-        @TestMetadata("nextLine.kt")
-        public void testNextLine() throws Exception {
-            runTest("testData/intentions/removeEmptyParenthesesFromLambdaCall/nextLine.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/intentions/removeEmptyParenthesesFromLambdaCall/simple.kt");
-        }
-
-        @TestMetadata("suspend.kt")
-        public void testSuspend() throws Exception {
-            runTest("testData/intentions/removeEmptyParenthesesFromLambdaCall/suspend.kt");
         }
     }
 

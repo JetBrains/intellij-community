@@ -197,7 +197,7 @@ internal class MutableStorageIndexes(
     builder.indexes.persistentIdIndex.getEntryById(oldEntityId)?.also { persistentIdIndex.index(newEntityId, it) }
   }
 
-  fun <T : WorkspaceEntity> simpleUpdateSoftReferences(copiedData: WorkspaceEntityData<T>, modifiableEntity: ModifiableWorkspaceEntityBase<*>?) {
+  private fun <T : WorkspaceEntity> simpleUpdateSoftReferences(copiedData: WorkspaceEntityData<T>, modifiableEntity: ModifiableWorkspaceEntityBase<*>?) {
     val pid = copiedData.createEntityId()
     if (copiedData is SoftLinkable) {
 //      if (modifiableEntity is ModifiableModuleEntity && !modifiableEntity.dependencyChanged) return

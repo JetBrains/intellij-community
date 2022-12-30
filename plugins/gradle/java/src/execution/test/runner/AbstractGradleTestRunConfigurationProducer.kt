@@ -168,7 +168,7 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
     return parse(commandLine).tasksAndArguments
   }
 
-  fun TestTasksToRun.toTasksAndArguments() = createTasksAndArguments(tasksToRun, listOf(testFilter))
+  private fun TestTasksToRun.toTasksAndArguments() = createTasksAndArguments(tasksToRun, listOf(testFilter))
 
   class TestTasksToRun(val tasksToRun: TasksToRun, val testFilter: String)
 }

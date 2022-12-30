@@ -3,10 +3,15 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.feedback.kotlinRejecters.state.KotlinRejectersInfoService
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
+
+private val LOG
+  get() = logger<DynamicPluginEnabler>()
 
 @ApiStatus.Internal
 internal class DynamicPluginEnabler : PluginEnabler {
@@ -24,7 +29,9 @@ internal class DynamicPluginEnabler : PluginEnabler {
     PluginManagerUsageCollector.pluginsStateChanged(descriptors, enable = true, project)
 
     PluginEnabler.HEADLESS.enable(descriptors)
-    return DynamicPlugins.loadPlugins(descriptors)
+    val installedDescriptors = findInstalledPlugins(descriptors)
+    return installedDescriptors != null
+           && DynamicPlugins.loadPlugins(installedDescriptors)
   }
 
   override fun disable(descriptors: Collection<IdeaPluginDescriptor>): Boolean =
@@ -40,7 +47,9 @@ internal class DynamicPluginEnabler : PluginEnabler {
     recordKotlinPluginDisabling(descriptors)
 
     PluginEnabler.HEADLESS.disable(descriptors)
-    return DynamicPlugins.unloadPlugins(descriptors, project, parentComponent)
+    val installedDescriptors = findInstalledPlugins(descriptors)
+    return installedDescriptors != null
+           && DynamicPlugins.unloadPlugins(installedDescriptors, project, parentComponent)
   }
 
   private fun recordKotlinPluginDisabling(descriptors: Collection<IdeaPluginDescriptor>) {
@@ -49,5 +58,26 @@ internal class DynamicPluginEnabler : PluginEnabler {
         && descriptors.any { it.pluginId.idString == "org.jetbrains.kotlin" }) {
       KotlinRejectersInfoService.getInstance().state.showNotificationAfterRestart = true
     }
+  }
+}
+
+private fun findInstalledPlugins(descriptors: Collection<IdeaPluginDescriptor>): List<IdeaPluginDescriptorImpl>? {
+  val result = descriptors.mapNotNull {
+    runCatching { findInstalledPlugin(it) }
+      .getOrLogException(LOG)
+  }
+  return if (result.size == descriptors.size) result else null
+}
+
+private fun findInstalledPlugin(descriptor: IdeaPluginDescriptor): IdeaPluginDescriptorImpl {
+  return when (descriptor) {
+    is IdeaPluginDescriptorImpl -> descriptor
+    is PluginNode -> {
+      val pluginId = descriptor.pluginId
+
+      PluginManagerCore.getPluginSet().findInstalledPlugin(pluginId)
+      ?: throw IllegalStateException("Plugin '$pluginId' is not installed")
+    }
+    else -> throw IllegalArgumentException("Unknown descriptor kind: $descriptor")
   }
 }

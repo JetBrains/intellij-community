@@ -84,9 +84,10 @@ public class GenerateMembersUtilTest extends LightJavaCodeInsightTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> {
       PsiMethod newMethod = file.getClasses()[1].getMethods()[0];
       GenerateMembersUtil.setupGeneratedMethod(newMethod);
-      assertEquals("@Override void foo() {\n" +
-                   "    super.foo();\n" +
-                   "    }", newMethod.getText());
+      assertEquals("""
+                     @Override void foo() {
+                         super.foo();
+                         }""", newMethod.getText());
     });
   }
 
@@ -97,9 +98,10 @@ public class GenerateMembersUtilTest extends LightJavaCodeInsightTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> {
       PsiMethod newMethod = file.getClasses()[1].getMethods()[0];
       GenerateMembersUtil.setupGeneratedMethod(newMethod);
-      assertEquals("@Override void foo()  {\n" +
-                   "    super.foo();\n" +
-                   "    }", newMethod.getText());
+      assertEquals("""
+                     @Override void foo()  {
+                         super.foo();
+                         }""", newMethod.getText());
     });
   }
 }

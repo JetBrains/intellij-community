@@ -110,10 +110,10 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     }
   }
 
-  // when running very long tasks (e.g. during stress/perf tests) CoreProgressManager might decide to de-prioritize background processes,
-  // defeating the whole purpose. Do not let him do that.
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    // when running very long tasks (e.g. during stress/perf tests) CoreProgressManager might decide to de-prioritize background processes,
+    // defeating the whole purpose. Do not let him do that.
     ((CoreProgressManager)ProgressManager.getInstance()).<Void, Throwable>suppressAllDeprioritizationsDuringLongTestsExecutionIn(()-> {
       super.runTestRunnable(testRunnable);
       return null;

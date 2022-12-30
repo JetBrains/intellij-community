@@ -94,6 +94,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testSafeVarargsApplicability() { doTest(true, false); }
   public void testUncheckedGenericsArrayCreation() { doTest(true, false); }
   public void testGenericsArrayCreation() { doTest(false, false); }
+  public void testCannotCreateArrayWithEmptyDiamond() { doTest(false, false); }
   public void testPreciseRethrow() { doTest(false, false); }
   public void testPreciseRethrowCaptured() { doTest(false, false); }
   public void testPreciseRethrowNonAssignableToException() { doTest(false, false); }

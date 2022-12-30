@@ -3,7 +3,6 @@ package com.intellij.codeInspection.duplicateStringLiteral;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.i18n.IntroduceConstantFix;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -35,6 +34,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
+import com.siyeh.ig.fixes.IntroduceConstantFix;
 import com.siyeh.ig.style.UnnecessarilyQualifiedStaticUsageInspection;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;

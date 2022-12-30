@@ -379,13 +379,13 @@ public final class OldDirectoryCleaner {
 
       @Override
       public Object getValueAt(int row, int column) {
-        switch (column) {
-          case 0:  return mySelected.get(row);
-          case 1:  return myGroups.get(row).name;
-          case 2:  return DateFormatUtil.formatBetweenDates(myGroups.get(row).lastUpdated, myNow);
-          case 3:  return StringUtil.formatFileSize(myGroups.get(row).size);
-          default: return null;
-        }
+        return switch (column) {
+          case 0 -> mySelected.get(row);
+          case 1 -> myGroups.get(row).name;
+          case 2 -> DateFormatUtil.formatBetweenDates(myGroups.get(row).lastUpdated, myNow);
+          case 3 -> StringUtil.formatFileSize(myGroups.get(row).size);
+          default -> null;
+        };
       }
 
       @Override

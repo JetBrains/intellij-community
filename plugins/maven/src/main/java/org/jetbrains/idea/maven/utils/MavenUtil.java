@@ -912,7 +912,7 @@ public class MavenUtil {
   }
 
   @NotNull
-  private static File makeLocalRepositoryFile(MavenId id,
+  public static File makeLocalRepositoryFile(MavenId id,
                                               File localRepository,
                                               @NotNull String extension,
                                               @Nullable String classifier) {

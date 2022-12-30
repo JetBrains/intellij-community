@@ -365,7 +365,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
             }
         }
 
-        fun onEvents(events: List<VFileEvent>, isAfter: Boolean) {
+        private fun onEvents(events: List<VFileEvent>, isAfter: Boolean) {
             val service = getInstance(project)
             val fileManager = PsiManagerEx.getInstanceEx(project).fileManager
             if (events.size >= FULL_DROP_THRESHOLD) {

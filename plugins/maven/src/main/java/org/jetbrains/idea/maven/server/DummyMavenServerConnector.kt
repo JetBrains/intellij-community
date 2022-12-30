@@ -38,12 +38,6 @@ class DummyMavenServerConnector(project: @NotNull Project,
     return DummyMavenServer(myProject)
   }
 
-  override fun addDownloadListener(listener: MavenServerDownloadListener?) {
-  }
-
-  override fun removeDownloadListener(listener: MavenServerDownloadListener?) {
-  }
-
   override fun stop(wait: Boolean) {
   }
 
@@ -126,7 +120,7 @@ class DummyIndexer : MavenServerIndexer {
     return 0
   }
 
-  override fun updateIndex(id: MavenIndexId, settings: MavenServerSettings?, indicator: MavenServerProgressIndicator?, token: MavenToken?) {
+  override fun updateIndex(id: MavenIndexId, indicator: MavenServerProgressIndicator?, token: MavenToken?) {
   }
 
   override fun processArtifacts(indexId: MavenIndexId, startFrom: Int, token: MavenToken?): List<IndexedMavenId>? = null
@@ -139,7 +133,7 @@ class DummyIndexer : MavenServerIndexer {
     return emptySet()
   }
 
-  override fun getArchetypes(token: MavenToken?): Collection<MavenArchetype> {
+  override fun getInternalArchetypes(token: MavenToken?): Collection<MavenArchetype> {
     return emptySet()
   }
 

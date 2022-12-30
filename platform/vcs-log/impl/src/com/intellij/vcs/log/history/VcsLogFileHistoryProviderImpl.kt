@@ -12,12 +12,12 @@ import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.impl.*
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToRow
 import com.intellij.vcs.log.impl.VcsLogTabLocation.Companion.findLogUi
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.util.VcsLogUtil
-import com.intellij.vcs.log.util.VcsLogUtil.jumpToRow
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.matches
@@ -156,7 +156,7 @@ private fun selectRowWhenOpen(logManager: VcsLogManager, hash: Hash?, root: Virt
     ui.jumpToNearestCommit(logManager.dataManager.storage, hash, root, true)
   }
   else if (firstTime) {
-    jumpToRow(ui, 0, true)
+    ui.jumpToRow(0, true, true)
   }
 }
 

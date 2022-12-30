@@ -58,12 +58,18 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  */
 public final class VfsData {
   private static final Logger LOG = Logger.getInstance(VfsData.class);
+  public static final boolean isIsIndexedFlagDisabled;
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
 
   private static final short NULL_INDEXING_STAMP = 0;
   private static final AtomicInteger ourIndexingStamp = new AtomicInteger(1);
+
+  static {
+    String property = System.getProperty("disable.virtual.file.system.entry.is.file.indexed");
+    isIsIndexedFlagDisabled = !"false".equals(property);
+  }
 
   @ApiStatus.Internal
   static void markAllFilesAsUnindexed() {
@@ -242,10 +248,16 @@ public final class VfsData {
     }
 
     boolean isIndexed(int fileId) {
+      if (isIsIndexedFlagDisabled) {
+        return false;
+      }
       return myIntArray.get(getOffset(fileId) * 3 + 2) == ourIndexingStamp.intValue();
     }
 
     void setIndexed(int fileId, boolean indexed) {
+      if (isIsIndexedFlagDisabled) {
+        return;
+      }
       if (fileId <= 0) throw new IllegalArgumentException("invalid arguments id: " + fileId);
       int stamp = indexed ? ourIndexingStamp.intValue() : NULL_INDEXING_STAMP;
       myIntArray.set(getOffset(fileId) * 3 + 2, stamp);

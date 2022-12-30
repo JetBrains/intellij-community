@@ -376,7 +376,7 @@ public final class PsiVFSListener implements BulkFileListener {
       treeEvent.setParent(parentDir);
 
       switch (propertyName) {
-        case VirtualFile.PROP_NAME:
+        case VirtualFile.PROP_NAME -> {
           if (vFile.isDirectory()) {
             PsiDirectory psiDir = myFileManager.getCachedDirectory(vFile);
             if (psiDir != null) {
@@ -437,8 +437,8 @@ public final class PsiVFSListener implements BulkFileListener {
               }
             }
           }
-          break;
-        case VirtualFile.PROP_WRITABLE:
+        }
+        case VirtualFile.PROP_WRITABLE -> {
           if (oldPsiFile == null) return;
 
           treeEvent.setElement(oldPsiFile);
@@ -446,8 +446,8 @@ public final class PsiVFSListener implements BulkFileListener {
           treeEvent.setOldValue(event.getOldValue());
           treeEvent.setNewValue(event.getNewValue());
           myManager.propertyChanged(treeEvent);
-          break;
-        case VirtualFile.PROP_ENCODING:
+        }
+        case VirtualFile.PROP_ENCODING -> {
           if (oldPsiFile == null) return;
 
           treeEvent.setElement(oldPsiFile);
@@ -455,7 +455,7 @@ public final class PsiVFSListener implements BulkFileListener {
           treeEvent.setOldValue(event.getOldValue());
           treeEvent.setNewValue(event.getNewValue());
           myManager.propertyChanged(treeEvent);
-          break;
+        }
       }
     });
   }

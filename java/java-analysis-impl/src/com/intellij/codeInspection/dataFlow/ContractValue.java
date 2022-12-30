@@ -334,15 +334,10 @@ public abstract class ContractValue {
 
     @Override
     public boolean isBoundCheckingCondition() {
-      switch (myRelationType) {
-        case LE:
-        case LT:
-        case GE:
-        case GT:
-          return true;
-        default:
-          return false;
-      }
+      return switch (myRelationType) {
+        case LE, LT, GE, GT -> true;
+        default -> false;
+      };
     }
 
     @Override

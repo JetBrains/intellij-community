@@ -103,18 +103,11 @@ public class WrapWithUnmodifiableAction extends BaseIntentionAction {
         if (expectedClass != null) {
           String collectionClass = findSuperClass(psiClass, expectedClass, CLASS_TO_METHOD.keySet());
           if (collectionClass != null && !isUnmodifiable(expression)) {
-            String message;
-            switch (collectionClass) {
-              case JAVA_UTIL_LIST:
-                message = "intention.wrap.with.unmodifiable.list";
-                break;
-              case JAVA_UTIL_SET:
-              case JAVA_UTIL_SORTED_SET:
-                message = "intention.wrap.with.unmodifiable.set";
-                break;
-              default:
-                message = "intention.wrap.with.unmodifiable.map";
-            }
+            String message = switch (collectionClass) {
+              case JAVA_UTIL_LIST -> "intention.wrap.with.unmodifiable.list";
+              case JAVA_UTIL_SET, JAVA_UTIL_SORTED_SET -> "intention.wrap.with.unmodifiable.set";
+              default -> "intention.wrap.with.unmodifiable.map";
+            };
             setText(JavaBundle.message(message));
             return true;
           }

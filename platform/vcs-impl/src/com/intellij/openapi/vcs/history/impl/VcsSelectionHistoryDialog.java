@@ -260,7 +260,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
         ColumnInfo[] additionalColumns = components.getColumns();
         myListModel = new ListTableModel<>(ArrayUtil.mergeArrays(myDefaultColumns, additionalColumns, ColumnInfo[]::new));
         myListModel.setSortable(false);
-        myList.setModel(myListModel);
+        myList.setModelAndUpdateColumns(myListModel);
 
         mySelectedRevisionListener = components.getRevisionListener();
         myDetailsPanel.setContent(components.getDetailsComponent());

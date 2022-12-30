@@ -23,7 +23,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlText
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationIndexes
@@ -61,7 +61,7 @@ internal class MavenModuleTransformer : CoroutineModuleTransformer {
             moduleType = MavenProjectModuleType,
             availableScopes = PackageSearchMavenConfiguration.getInstance(project).getMavenScopes(),
             dependencyDeclarationCallback = project.dependencyDeclarationCallback { dependency ->
-                val children: Array<PsiElement> = dependency.psiElement.castSafelyTo<XmlTag>()
+                val children: Array<PsiElement> = dependency.psiElement.asSafely<XmlTag>()
                     ?.children
                     ?: return@dependencyDeclarationCallback null
                 val xmlTag = children.filterIsInstance<XmlText>()

@@ -141,7 +141,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     }.toFileState()
     remoteCommunicator.prepareFileOnServer(SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), setOf(fileState), null))
 
-    updateChecker.scheduleUpdateFromServer()
+    SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
 
     waitForSettingsToBeApplied(generalSettings)
     assertFalse(generalSettings.isSaveOnFrameDeactivation)
@@ -225,7 +225,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     remoteCommunicator.prepareFileOnServer(SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), setOf(fileState), null))
     //remoteCommunicator.offline = false
 
-    updateChecker.scheduleUpdateFromServer() // merge will happen here
+    SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker) // merge will happen here
 
     assertSettingsPushed {
       fileState {
@@ -252,7 +252,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
   private fun waitForSettingsToBeApplied(vararg componentsToReinit: PersistentStateComponent<*>) {
     val cdl = CountDownLatch(1)
     componentStore.reinitLatch = cdl
-    assertTrue("Didn't await until new settings are applied", cdl.await(5, TIMEOUT_UNIT))
+    assertTrue("Didn't await until new settings are applied", cdl.wait())
 
     val reinitedComponents = componentStore.reinitedComponents
     for (componentToReinit in componentsToReinit) {

@@ -32,32 +32,22 @@ public enum FileHighlightingSetting {
 
   @NotNull
   public static FileHighlightingSetting fromInspectionsLevel(@NotNull InspectionsLevel inspectionsLevel)  {
-    switch (inspectionsLevel) {
-      case NONE:
-        return SKIP_HIGHLIGHTING;
-      case SYNTAX:
-        return SKIP_INSPECTION;
-      case ESSENTIAL:
-        return ESSENTIAL;
-      case ALL:
-      default:
-        return FORCE_HIGHLIGHTING;
-    }
+    return switch (inspectionsLevel) {
+      case NONE -> SKIP_HIGHLIGHTING;
+      case SYNTAX -> SKIP_INSPECTION;
+      case ESSENTIAL -> ESSENTIAL;
+      case ALL -> FORCE_HIGHLIGHTING;
+    };
   }
 
   @NotNull
   public static InspectionsLevel toInspectionsLevel(@NotNull FileHighlightingSetting highlightingSetting)  {
-    switch (highlightingSetting) {
-      case SKIP_HIGHLIGHTING:
-        return InspectionsLevel.NONE;
-      case SKIP_INSPECTION:
-        return InspectionsLevel.SYNTAX;
-      case ESSENTIAL:
-        return InspectionsLevel.ESSENTIAL;
-      case FORCE_HIGHLIGHTING:
-      default:
-        return InspectionsLevel.ALL;
-    }
+    return switch (highlightingSetting) {
+      case NONE, SKIP_HIGHLIGHTING -> InspectionsLevel.NONE;
+      case SKIP_INSPECTION -> InspectionsLevel.SYNTAX;
+      case ESSENTIAL -> InspectionsLevel.ESSENTIAL;
+      case FORCE_HIGHLIGHTING -> InspectionsLevel.ALL;
+    };
   }
 
 }

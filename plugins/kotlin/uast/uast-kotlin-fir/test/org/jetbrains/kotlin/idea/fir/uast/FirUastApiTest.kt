@@ -23,8 +23,6 @@ abstract class FirUastApiTest : AbstractFirUastTest() {
     private val whitelist : Set<String> = setOf(
         // TODO: resolve to inline and stdlib
         FileUtil.toSystemDependentName("uast-kotlin/tests/testData/Resolve.kt"),
-        // TODO: return type of inline functions
-        FileUtil.toSystemDependentName("uast-kotlin/tests/testData/ReifiedReturnType.kt"),
     )
 
     override fun isExpectedToFail(filePath: String, fileContent: String): Boolean {

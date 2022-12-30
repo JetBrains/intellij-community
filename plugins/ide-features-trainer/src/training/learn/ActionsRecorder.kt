@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.ui.FocusUtil
 import com.intellij.util.ui.TimerUtil
 import training.dsl.TaskContext
 import training.dsl.impl.LessonExecutor
@@ -29,7 +30,6 @@ import training.statistic.LessonStartingWay
 import training.statistic.StatisticBase
 import training.ui.LearningUiManager
 import training.util.DataLoader
-import java.awt.KeyboardFocusManager
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
@@ -61,8 +61,6 @@ internal class ActionsRecorder(private val project: Project,
   private var editorListener: FileEditorManagerListener? = null
 
   private var checkCallback: (() -> Unit)? = null
-
-  private var focusChangeListener: PropertyChangeListener? = null
 
   init {
     Disposer.register(lessonExecutor, this)
@@ -237,10 +235,7 @@ internal class ActionsRecorder(private val project: Project,
       }
     })
 
-    PropertyChangeListener { check() }.let {
-      KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusOwner", it)
-      focusChangeListener = it
-    }
+    FocusUtil.addFocusOwnerListener(this, PropertyChangeListener { check() })
 
     return future
   }
@@ -306,7 +301,6 @@ internal class ActionsRecorder(private val project: Project,
     eventDispatchers.clear()
     commandListener = null
     editorListener = null
-    focusChangeListener?.let { KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener("focusOwner", it) }
     timer?.stop()
     timer = null
   }

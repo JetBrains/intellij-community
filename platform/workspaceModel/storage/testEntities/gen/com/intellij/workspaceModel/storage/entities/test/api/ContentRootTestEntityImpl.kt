@@ -61,7 +61,7 @@ open class ContentRootTestEntityImpl(val dataSource: ContentRootTestEntityData) 
     return connections
   }
 
-  class Builder(val result: ContentRootTestEntityData?) : ModifiableWorkspaceEntityBase<ContentRootTestEntity>(), ContentRootTestEntity.Builder {
+  class Builder(var result: ContentRootTestEntityData?) : ModifiableWorkspaceEntityBase<ContentRootTestEntity>(), ContentRootTestEntity.Builder {
     constructor() : this(ContentRootTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -79,6 +79,9 @@ open class ContentRootTestEntityImpl(val dataSource: ContentRootTestEntityData) 
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -120,9 +123,12 @@ open class ContentRootTestEntityImpl(val dataSource: ContentRootTestEntityData) 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ContentRootTestEntity
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (parents != null) {
-        this.module = parents.filterIsInstance<ModuleTestEntity>().single()
+        val moduleNew = parents.filterIsInstance<ModuleTestEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
       }
     }
 
@@ -231,6 +237,12 @@ open class ContentRootTestEntityImpl(val dataSource: ContentRootTestEntityData) 
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+              // Backref setup before adding to store
+              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+                item_value.entityLinks[EntityLink(false, SOURCEROOTS_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
+
               _diff.addEntity(item_value)
             }
           }
@@ -303,7 +315,7 @@ class ContentRootTestEntityData : WorkspaceEntityData<ContentRootTestEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ContentRootTestEntityData
 
@@ -313,7 +325,7 @@ class ContentRootTestEntityData : WorkspaceEntityData<ContentRootTestEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ContentRootTestEntityData
 

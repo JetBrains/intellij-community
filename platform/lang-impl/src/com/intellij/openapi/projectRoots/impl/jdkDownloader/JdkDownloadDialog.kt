@@ -34,7 +34,7 @@ class JdkVersionItem(
   /* we should prefer the default selected item from the JDKs.json feed,
    * the list below is sorted by vendor, and default item is not necessarily first
    */
-  val defaultSelectedItem: JdkVersionVendorItem,
+  private val defaultSelectedItem: JdkVersionVendorItem,
   val includedItems: List<JdkVersionVendorItem>,
   val excludedItems: List<JdkVersionVendorItem>
 )  {
@@ -224,7 +224,7 @@ internal class JdkDownloadDialog(
   val project: Project?,
   val parentComponent: Component?,
   val sdkType: SdkTypeId,
-  val mergedModel: JdkDownloaderMergedModel,
+  private val mergedModel: JdkDownloaderMergedModel,
 ) : DialogWrapper(project, parentComponent, false, IdeModalityType.PROJECT) {
   private val panel: JComponent
   private val versionComboBox : ComboBox<JdkVersionItem>

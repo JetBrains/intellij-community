@@ -50,17 +50,13 @@ public abstract class EventProcessor {
   }
 
   protected static ComponentDropLocation.Direction directionFromKey(final int keyCode) {
-    switch(keyCode) {
-      case KeyEvent.VK_RIGHT: return ComponentDropLocation.Direction.RIGHT;
-      case KeyEvent.VK_LEFT: return ComponentDropLocation.Direction.LEFT;
-      case KeyEvent.VK_UP: return ComponentDropLocation.Direction.UP;
-      case KeyEvent.VK_DOWN: return ComponentDropLocation.Direction.DOWN;
-      case KeyEvent.VK_END: return ComponentDropLocation.Direction.RIGHT;
-      case KeyEvent.VK_HOME: return ComponentDropLocation.Direction.LEFT;
-      case KeyEvent.VK_PAGE_UP: return ComponentDropLocation.Direction.UP;
-      case KeyEvent.VK_PAGE_DOWN: return ComponentDropLocation.Direction.DOWN;
-      default: return null;
-    }
+    return switch (keyCode) {
+      case KeyEvent.VK_RIGHT, KeyEvent.VK_END -> ComponentDropLocation.Direction.RIGHT;
+      case KeyEvent.VK_LEFT, KeyEvent.VK_HOME -> ComponentDropLocation.Direction.LEFT;
+      case KeyEvent.VK_UP, KeyEvent.VK_PAGE_UP -> ComponentDropLocation.Direction.UP;
+      case KeyEvent.VK_DOWN, KeyEvent.VK_PAGE_DOWN -> ComponentDropLocation.Direction.DOWN;
+      default -> null;
+    };
   }
 
   private static boolean isMoveToLast(final int keyCode) {

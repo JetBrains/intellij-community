@@ -97,11 +97,13 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Test
   public void testLanguageLevel() throws Exception {
     importProject(
-      "apply plugin: 'java'\n" +
-      "sourceCompatibility = 1.5\n" +
-      "compileTestJava {\n" +
-      "  sourceCompatibility = 1.8\n" +
-      "}\n"
+      """
+        apply plugin: 'java'
+        sourceCompatibility = 1.5
+        compileTestJava {
+          sourceCompatibility = 1.8
+        }
+        """
     );
 
     assertModules("project", "project.main", "project.test");
@@ -133,11 +135,13 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Test
   public void testTargetLevel() throws Exception {
     importProject(
-      "apply plugin: 'java'\n" +
-      "targetCompatibility = 1.8\n" +
-      "compileJava {\n" +
-      "  targetCompatibility = 1.5\n" +
-      "}\n"
+      """
+        apply plugin: 'java'
+        targetCompatibility = 1.8
+        compileJava {
+          targetCompatibility = 1.5
+        }
+        """
     );
 
     assertModules("project", "project.main", "project.test");
@@ -152,13 +156,15 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     Sdk myJdk = IdeaTestUtil.getMockJdk17("MyJDK");
     edt(() -> ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(myJdk, myProject)));
     importProject(
-      "apply plugin: 'java'\n" +
-      "apply plugin: 'idea'\n" +
-      "idea {\n" +
-      "  module {\n" +
-      "    jdkName = 'MyJDK'\n" +
-      "  }\n" +
-      "}\n"
+      """
+        apply plugin: 'java'
+        apply plugin: 'idea'
+        idea {
+          module {
+            jdkName = 'MyJDK'
+          }
+        }
+        """
     );
 
     assertModules("project", "project.main", "project.test");
@@ -183,10 +189,11 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Test
   public void testESLinkedProjectIds() throws Exception {
     // main build
-    createSettingsFile("rootProject.name = 'multiproject'\n" +
-                       "include ':app'\n" +
-                       "include ':util'\n" +
-                       "includeBuild 'included-build'");
+    createSettingsFile("""
+                         rootProject.name = 'multiproject'
+                         include ':app'
+                         include ':util'
+                         includeBuild 'included-build'""");
     createProjectSubFile("build.gradle", "allprojects { apply plugin: 'java' }");
 
     // main buildSrc

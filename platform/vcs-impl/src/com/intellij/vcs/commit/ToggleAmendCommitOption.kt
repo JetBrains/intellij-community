@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
-import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle
@@ -14,7 +13,6 @@ class ToggleAmendCommitOption(commitPanel: CheckinProjectPanel, parent: Disposab
   private val amendCommitHandler = commitPanel.commitWorkflowHandler.amendCommitHandler
 
   init {
-    isFocusable = UISettings.shadowInstance.disableMnemonicsInControls
     mnemonic = KeyEvent.VK_M
     toolTipText = VcsBundle.message("commit.tooltip.merge.this.commit.with.the.previous.one")
 

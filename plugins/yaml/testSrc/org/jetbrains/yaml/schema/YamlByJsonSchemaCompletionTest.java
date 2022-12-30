@@ -28,71 +28,77 @@ public class YamlByJsonSchemaCompletionTest extends JsonBySchemaCompletionBaseTe
   }
 
   public void testNestedInArray() throws Exception {
-    testBySchema("{\n" +
-                 "  \"properties\": {\n" +
-                 "    \"colorMap\": {\n" +
-                 "      \"type\": \"array\",\n" +
-                 "      \"items\": {\n" +
-                 "        \"properties\": {\n" +
-                 "          \"hue\": {\n" +
-                 "            \"type\": \"string\"\n" +
-                 "          },\n" +
-                 "          \"saturation\": {\n" +
-                 "            \"type\": \"string\"\n" +
-                 "          },\n" +
-                 "          \"value\": {\n" +
-                 "            \"type\": \"string\"\n" +
-                 "          }\n" +
-                 "        }\n" +
-                 "      }\n" +
-                 "    }\n" +
-                 "  }\n" +
-                 "}", "colorMap:\n  - <caret>", "yml", "hue", "saturation", "value");
+    testBySchema("""
+                   {
+                     "properties": {
+                       "colorMap": {
+                         "type": "array",
+                         "items": {
+                           "properties": {
+                             "hue": {
+                               "type": "string"
+                             },
+                             "saturation": {
+                               "type": "string"
+                             },
+                             "value": {
+                               "type": "string"
+                             }
+                           }
+                         }
+                       }
+                     }
+                   }""", "colorMap:\n  - <caret>", "yml", "hue", "saturation", "value");
   }
 
   public void testEnumInArray() throws Exception {
-    testBySchema("{\n" +
-                 "  \"properties\": {\n" +
-                 "    \"colorMap\": {\n" +
-                 "      \"type\": \"array\",\n" +
-                 "      \"items\": {\n" +
-                 "        \"enum\": [\"white\", \"blue\", \"red\"]\n" +
-                 "      }\n" +
-                 "    }\n" +
-                 "  }\n" +
-                 "}", "colorMap:\n  - <caret>", "yml", "blue", "red", "white");
+    testBySchema("""
+                   {
+                     "properties": {
+                       "colorMap": {
+                         "type": "array",
+                         "items": {
+                           "enum": ["white", "blue", "red"]
+                         }
+                       }
+                     }
+                   }""", "colorMap:\n  - <caret>", "yml", "blue", "red", "white");
   }
 
   public void testBeforeProps() throws Exception {
-    testBySchema("{\n" +
-                 "  \"properties\": {\n" +
-                 "    \"root\": {\n" +
-                 "      \"properties\": {\n" +
-                 "        \"item1\": { },\n" +
-                 "        \"item2\": { },\n" +
-                 "        \"item3\": { },\n" +
-                 "        \"item4\": { },\n" +
-                 "        \"item5\": { },\n" +
-                 "        \"item6\": { }\n" +
-                 "      }\n" +
-                 "    }\n" +
-                 "  }\n" +
-                 "}", "root:\n" +
-                      "    item1: 1\n" +
-                      "    item3: 3\n" +
-                      "    <caret>\n" +
-                      "    item5: 5", "yml", "item2", "item4", "item6");
+    testBySchema("""
+                   {
+                     "properties": {
+                       "root": {
+                         "properties": {
+                           "item1": { },
+                           "item2": { },
+                           "item3": { },
+                           "item4": { },
+                           "item5": { },
+                           "item6": { }
+                         }
+                       }
+                     }
+                   }""", """
+                   root:
+                       item1: 1
+                       item3: 3
+                       <caret>
+                       item5: 5""", "yml", "item2", "item4", "item6");
   }
 
   public void testPropInArray() throws Exception {
     @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/ifThenElseSchema.json"));
-    testBySchema(schemaText, "provider:\n" +
-                             "  - select: A\n" +
-                             "    <caret>\n" +
-                             "  - select: B", "yml", "var_a_1", "var_a_2");
-    testBySchema(schemaText, "provider:\n" +
-                             "  - select: A\n" +
-                             "  - select: B\n" +
-                             "    <caret>", "yml", "var_b_1", "var_b_2", "var_b_3");
+    testBySchema(schemaText, """
+      provider:
+        - select: A
+          <caret>
+        - select: B""", "yml", "var_a_1", "var_a_2");
+    testBySchema(schemaText, """
+      provider:
+        - select: A
+        - select: B
+          <caret>""", "yml", "var_b_1", "var_b_2", "var_b_3");
   }
 }

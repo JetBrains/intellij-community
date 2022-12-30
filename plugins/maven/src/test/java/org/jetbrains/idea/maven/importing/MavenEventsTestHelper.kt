@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics.Companion.getInstance
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import org.junit.Assert
@@ -28,7 +29,7 @@ class MavenEventsTestHelper {
       }
     })
 
-    getInstance(project).subscribeImmediately(connection, object : WorkspaceModelChangeListener {
+    connection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         val hasChanges = event.getAllChanges().iterator().hasNext()
         if (hasChanges) workspaceChangesCount++

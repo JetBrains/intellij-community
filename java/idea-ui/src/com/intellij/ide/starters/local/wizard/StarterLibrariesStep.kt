@@ -37,7 +37,7 @@ import javax.swing.tree.TreeSelectionModel
 
 open class StarterLibrariesStep(contextProvider: StarterContextProvider) : ModuleWizardStep() {
   protected val starterContext = contextProvider.starterContext
-  protected val starterSettings: StarterWizardSettings = contextProvider.settings
+  private val starterSettings: StarterWizardSettings = contextProvider.settings
   protected val moduleBuilder: StarterModuleBuilder = contextProvider.moduleBuilder
 
   private val topLevelPanel: BorderLayoutPanel = BorderLayoutPanel()

@@ -22,12 +22,6 @@ interface BuildTasks {
     zipSourcesOfModules(modules, targetFile, false)
   }
 
-  fun zipSourcesOfModulesBlocking(modules: List<String>, targetFile: Path, includeLibraries: Boolean) {
-    runBlocking {
-      zipSourcesOfModules(modules, targetFile, includeLibraries = includeLibraries)
-    }
-  }
-
   fun zipSourcesOfModulesBlocking(modules: List<String>, targetFile: Path) {
     runBlocking {
       zipSourcesOfModules(modules, targetFile, includeLibraries = false)
@@ -77,13 +71,6 @@ interface BuildTasks {
    * Builds updater-full.jar artifact which includes 'intellij.platform.updater' module with all its dependencies
    */
   fun buildFullUpdaterJar()
-
-  /**
-   * Performs a fast dry run to check that the build scripts a properly configured. It'll run compilation, build platform and plugin JAR files,
-   * build searchable options index and scramble the main JAR, but won't produce the product archives and installation files which occupy a lot
-   * of disk space and take a long time to build.
-   */
-  suspend fun runTestBuild()
 
   suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean)
 

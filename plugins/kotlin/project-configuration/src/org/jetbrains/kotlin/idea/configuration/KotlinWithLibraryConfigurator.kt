@@ -246,7 +246,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         writeActions.addOrExecute { runWriteAction { model.commit() } }
     }
 
-    fun createNewLibrary(
+    private fun createNewLibrary(
         project: Project,
         collector: NotificationMessageCollector
     ): Library {

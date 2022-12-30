@@ -122,6 +122,7 @@ fun uastReferenceProviderByUsage(targetClass: Class<out PsiElement>?,
  * Consider using [uastReferenceProviderByUsage] if you need to obtain additional context from a usage place.
  */
 @ApiStatus.Experimental
+@JvmOverloads
 fun PsiReferenceRegistrar.registerReferenceProviderByUsage(expressionPattern: ElementPattern<out UElement>,
                                                            usagePattern: ElementPattern<out UElement>,
                                                            provider: UastReferenceProvider,
@@ -129,7 +130,8 @@ fun PsiReferenceRegistrar.registerReferenceProviderByUsage(expressionPattern: El
   this.registerUastReferenceProvider(usagePattern, provider, priority)
 
   if (Registry.`is`("uast.references.by.usage", true)) {
-    this.registerUastReferenceProvider(expressionPattern, UastReferenceByUsageAdapter(usagePattern, provider), priority)
+    val adapter = UastReferenceByUsageAdapter(expressionPattern, usagePattern, provider)
+    this.registerReferenceProvider(adaptPattern(expressionPattern::accepts, adapter.supportedUElementTypes), adapter, priority)
   }
 }
 
@@ -139,4 +141,3 @@ fun PsiReferenceRegistrar.registerReferenceProviderByUsage(usagePattern: Element
                                                            priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
   registerReferenceProviderByUsage(uExpressionInVariable(), usagePattern, provider, priority)
 }
-

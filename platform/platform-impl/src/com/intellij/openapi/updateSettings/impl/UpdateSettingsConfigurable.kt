@@ -128,7 +128,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
                     .bold()
                 }
                 row {
-                  label(IdeBundle.message("updates.settings.recommend.toolbox.multiline.description"))
+                  text(IdeBundle.message("updates.settings.recommend.toolbox.multiline.description"))
                 }.customize(customRowGaps = VerticalGaps(top = JBUI.scale(3)))
               }
             }.customize(customRowGaps = VerticalGaps(top = JBUI.scale(12)))

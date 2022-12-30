@@ -162,7 +162,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       val keyFields = allFields.filter { it.isKey }
       sectionNl("override fun equals(other: Any?): Boolean") {
         line("if (other == null) return false")
-        line("if (this::class != other::class) return false")
+        line("if (this.javaClass != other.javaClass) return false")
 
         lineWrapped("other as $javaDataName")
 
@@ -176,7 +176,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       // --- equalsIgnoringEntitySource
       sectionNl("override fun equalsIgnoringEntitySource(other: Any?): Boolean") {
         line("if (other == null) return false")
-        line("if (this::class != other::class) return false")
+        line("if (this.javaClass != other.javaClass) return false")
 
         lineWrapped("other as $javaDataName")
 
@@ -209,7 +209,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         line()
         section("override fun equalsByKey(other: Any?): Boolean") {
           line("if (other == null) return false")
-          line("if (this::class != other::class) return false")
+          line("if (this.javaClass != other.javaClass) return false")
 
           lineWrapped("other as $javaDataName")
 

@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBMenu;
@@ -244,7 +245,7 @@ public final class ActionMenu extends JBMenu {
   }
 
   static boolean isShowNoIcons() {
-    return SystemInfo.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("No icons");
+    return SystemInfo.isMac && (Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("No icons") || ExperimentalUI.isNewUI());
   }
 
   static boolean isAligned() {

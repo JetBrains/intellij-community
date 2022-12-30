@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -20,7 +19,7 @@ open class JComponentFileType(@JvmField @NonNls protected val name: String = "JC
 
   override fun getDescription() = description
 
-  override fun isMyFileType(file: VirtualFile) = file is LightVirtualFile && file.fileType is JComponentFileType
+  override fun isMyFileType(file: VirtualFile) = JComponentEditorProvider.isJComponentFile(file)
 
   override fun getIcon(): Icon = icon
 }

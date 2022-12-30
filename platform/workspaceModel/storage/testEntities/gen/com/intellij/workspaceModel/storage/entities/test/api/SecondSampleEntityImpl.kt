@@ -40,7 +40,7 @@ open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : Seco
     return connections
   }
 
-  class Builder(val result: SecondSampleEntityData?) : ModifiableWorkspaceEntityBase<SecondSampleEntity>(), SecondSampleEntity.Builder {
+  class Builder(var result: SecondSampleEntityData?) : ModifiableWorkspaceEntityBase<SecondSampleEntity>(), SecondSampleEntity.Builder {
     constructor() : this(SecondSampleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -58,6 +58,9 @@ open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : Seco
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -78,8 +81,8 @@ open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : Seco
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SecondSampleEntity
-      this.entitySource = dataSource.entitySource
-      this.intProperty = dataSource.intProperty
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.intProperty != dataSource.intProperty) this.intProperty = dataSource.intProperty
       if (parents != null) {
       }
     }
@@ -155,7 +158,7 @@ class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SecondSampleEntityData
 
@@ -166,7 +169,7 @@ class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SecondSampleEntityData
 

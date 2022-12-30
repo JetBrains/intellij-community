@@ -80,15 +80,15 @@ public class AlignmentHelper {
       myCyclesDetector.registerOffsetResponsibleBlock(offsetResponsibleBlock);
     }
     BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
-    switch (result) {
-      case TARGET_BLOCK_PROCESSED_NOT_ALIGNED:
-        return null;
-      case TARGET_BLOCK_ALIGNED:
+    return switch (result) {
+      case TARGET_BLOCK_PROCESSED_NOT_ALIGNED -> null;
+      case TARGET_BLOCK_ALIGNED -> {
         storeAlignmentMapping(currentBlock);
-        return null;
-      case BACKWARD_BLOCK_ALIGNED:
+        yield null;
+      }
+      case BACKWARD_BLOCK_ALIGNED -> {
         if (offsetResponsibleBlock == null) {
-          return null;
+          yield null;
         }
         Set<LeafBlockWrapper> blocksCausedRealignment = new HashSet<>();
         myBackwardShiftedAlignedBlocks.clear();
@@ -97,19 +97,20 @@ public class AlignmentHelper {
         storeAlignmentMapping(currentBlock, offsetResponsibleBlock);
         if (myCyclesDetector.isCycleDetected()) {
           reportAlignmentProcessingError(context);
-          return null;
+          yield null;
         }
         myCyclesDetector.registerBlockRollback(currentBlock);
-        return offsetResponsibleBlock.getNextBlock();
-      case RECURSION_DETECTED:
+        yield offsetResponsibleBlock.getNextBlock();
+      }
+      case RECURSION_DETECTED -> {
         myAlignmentsToSkip.add(alignment);
-        return offsetResponsibleBlock; // Fall through to the 'register alignment to skip'.
-      case UNABLE_TO_ALIGN_BACKWARD_BLOCK:
+        yield offsetResponsibleBlock; // Fall through to the 'register alignment to skip'.
+      }
+      case UNABLE_TO_ALIGN_BACKWARD_BLOCK -> {
         myAlignmentsToSkip.add(alignment);
-        return null;
-      default:
-        return null;
-    }
+        yield null;
+      }
+    };
   }
 
   boolean shouldSkip(AlignmentImpl alignment) {

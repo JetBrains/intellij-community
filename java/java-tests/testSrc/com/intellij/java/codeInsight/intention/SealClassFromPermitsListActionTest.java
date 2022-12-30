@@ -26,7 +26,7 @@ public class SealClassFromPermitsListActionTest extends LightJavaCodeInsightFixt
     SealClassFromPermitsListAction action = new SealClassFromPermitsListAction(myFixture.getElementAtCaret());
     if (isAvailable) {
       assertTrue(action.isAvailable(getProject(), getEditor(), getFile()));
-      myFixture.checkPreviewAndLaunchAction(action);
+      myFixture.launchAction(action);
     }
     else {
       assertFalse(action.isAvailable(getProject(), getEditor(), getFile()));

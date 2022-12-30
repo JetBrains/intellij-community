@@ -18,8 +18,8 @@ class GradleStandaloneScriptActions(
     private val scriptDefinition
         get() = file.findScriptDefinition(project)
 
-    val isAutoReloadAvailable: Boolean
-    val isAutoReloadEnabled: Boolean
+    private val isAutoReloadAvailable: Boolean
+    private val isAutoReloadEnabled: Boolean
 
     init {
         val scriptDefinition = scriptDefinition

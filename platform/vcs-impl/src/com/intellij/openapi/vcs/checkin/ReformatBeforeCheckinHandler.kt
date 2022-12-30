@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.checkin
 
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.CommitContext
@@ -13,17 +14,17 @@ import com.intellij.psi.formatter.FormatterUtil.getReformatBeforeCommitCommandNa
 
 class ReformatCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
-    ReformatBeforeCheckinHandler(panel)
+    ReformatBeforeCheckinHandler(panel.project)
 }
 
-class ReformatBeforeCheckinHandler(commitPanel: CheckinProjectPanel) : CodeProcessorCheckinHandler(commitPanel) {
+class ReformatBeforeCheckinHandler(project: Project) : CodeProcessorCheckinHandler(project) {
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
-    BooleanCommitOption(commitPanel, message("checkbox.checkin.options.reformat.code"), true, settings::REFORMAT_BEFORE_PROJECT_COMMIT)
+    BooleanCommitOption(project, message("checkbox.checkin.options.reformat.code"), true, settings::REFORMAT_BEFORE_PROJECT_COMMIT)
 
   override fun isEnabled(): Boolean = settings.REFORMAT_BEFORE_PROJECT_COMMIT
 
   override fun getProgressMessage(): String = message("progress.text.reformatting.code")
 
-  override fun createCodeProcessor(): AbstractLayoutCodeProcessor =
-    ReformatCodeProcessor(project, getPsiFiles(project, commitPanel.virtualFiles), getReformatBeforeCommitCommandName(), null, true)
+  override fun createCodeProcessor(commitInfo: CommitInfo): AbstractLayoutCodeProcessor =
+    ReformatCodeProcessor(project, getPsiFiles(project, commitInfo.committedVirtualFiles), getReformatBeforeCommitCommandName(), null, true)
 }

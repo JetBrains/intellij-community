@@ -45,7 +45,7 @@ open class WithListSoftLinksEntityImpl(val dataSource: WithListSoftLinksEntityDa
     return connections
   }
 
-  class Builder(val result: WithListSoftLinksEntityData?) : ModifiableWorkspaceEntityBase<WithListSoftLinksEntity>(), WithListSoftLinksEntity.Builder {
+  class Builder(var result: WithListSoftLinksEntityData?) : ModifiableWorkspaceEntityBase<WithListSoftLinksEntity>(), WithListSoftLinksEntity.Builder {
     constructor() : this(WithListSoftLinksEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -63,6 +63,9 @@ open class WithListSoftLinksEntityImpl(val dataSource: WithListSoftLinksEntityDa
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -86,12 +89,19 @@ open class WithListSoftLinksEntityImpl(val dataSource: WithListSoftLinksEntityDa
       return connections
     }
 
+    override fun afterModification() {
+      val collection_links = getEntityData().links
+      if (collection_links is MutableWorkspaceList<*>) {
+        collection_links.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as WithListSoftLinksEntity
-      this.entitySource = dataSource.entitySource
-      this.myName = dataSource.myName
-      this.links = dataSource.links.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.myName != dataSource.myName) this.myName = dataSource.myName
+      if (this.links != dataSource.links) this.links = dataSource.links.toMutableList()
       if (parents != null) {
       }
     }
@@ -122,7 +132,12 @@ open class WithListSoftLinksEntityImpl(val dataSource: WithListSoftLinksEntityDa
       get() {
         val collection_links = getEntityData().links
         if (collection_links !is MutableWorkspaceList) return collection_links
-        collection_links.setModificationUpdateAction(linksUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_links.setModificationUpdateAction(linksUpdater)
+        }
+        else {
+          collection_links.cleanModificationUpdateAction()
+        }
         return collection_links
       }
       set(value) {
@@ -249,7 +264,7 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as WithListSoftLinksEntityData
 
@@ -261,7 +276,7 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as WithListSoftLinksEntityData
 

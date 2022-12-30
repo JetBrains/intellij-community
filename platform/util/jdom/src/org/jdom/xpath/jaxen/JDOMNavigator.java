@@ -55,56 +55,57 @@
 package org.jdom.xpath.jaxen;
 
 import org.jaxen.NamespaceContext;
+import org.jdom.Element;
 import org.jdom.Namespace;
-import org.jdom.NamespaceAware;
 
 import java.util.HashMap;
 import java.util.List;
 
 final class JDOMNavigator extends JDOMCoreNavigator implements NamespaceContext {
-	/**
-	 * Standard JDOM2 Serialization. Default mechanism.
-	 */
-	private static final long serialVersionUID = 200L;
+  /**
+   * Standard JDOM2 Serialization. Default mechanism.
+   */
+  private static final long serialVersionUID = 200L;
 
-	private final HashMap<String, String> nsFromContext = new HashMap<String, String>();
-	private final HashMap<String, String> nsFromUser = new HashMap<String, String>();
+  private final HashMap<String, String> nsFromContext = new HashMap<>();
+  private final HashMap<String, String> nsFromUser = new HashMap<>();
 
-	@Override
+  @Override
   void reset() {
-		super.reset();
-		nsFromContext.clear();
-	}
+    super.reset();
+    nsFromContext.clear();
+  }
 
-	void setContext(Object node) {
-		nsFromContext.clear();
+  void setContext(Object node) {
+    nsFromContext.clear();
 
-		List<Namespace> nsl = null;
-		if (node instanceof NamespaceAware) {
-			nsl = ((NamespaceAware)node).getNamespacesInScope();
-		} else if (node instanceof NamespaceContainer) {
-			nsl = ((NamespaceContainer)node).getParentElement().getNamespacesInScope();
-		}
-		if (nsl != null) {
-			for (Namespace ns : nsl) {
-				nsFromContext.put(ns.getPrefix(), ns.getURI());
-			}
-		}
-	}
+    List<Namespace> nsl = null;
+    if (node instanceof Element) {
+      nsl = ((Element)node).getNamespacesInScope();
+    }
+    else if (node instanceof NamespaceContainer) {
+      nsl = ((NamespaceContainer)node).getParentElement().getNamespacesInScope();
+    }
+    if (nsl != null) {
+      for (Namespace ns : nsl) {
+        nsFromContext.put(ns.getPrefix(), ns.getURI());
+      }
+    }
+  }
 
-	void includeNamespace(Namespace namespace) {
-		nsFromUser.put(namespace.getPrefix(), namespace.getURI());
-	}
+  void includeNamespace(Namespace namespace) {
+    nsFromUser.put(namespace.getPrefix(), namespace.getURI());
+  }
 
-	@Override
-	public String translateNamespacePrefixToUri(String prefix) {
-		if (prefix == null) {
-			return null;
-		}
-		String uri = nsFromUser.get(prefix);
-		if (uri != null) {
-			return uri;
-		}
-		return nsFromContext.get(prefix);
-	}
+  @Override
+  public String translateNamespacePrefixToUri(String prefix) {
+    if (prefix == null) {
+      return null;
+    }
+    String uri = nsFromUser.get(prefix);
+    if (uri != null) {
+      return uri;
+    }
+    return nsFromContext.get(prefix);
+  }
 }

@@ -78,7 +78,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
       }
       finally {
         stopIndicator();
-        if (Registry.is("vfs.async.event.processing")) {
+        if (Registry.is("vfs.async.event.processing") && session.hasEvents()) {
           var evQueuedAt = System.nanoTime();
           var evTimeInQueue = new AtomicLong(-1);
           var evListenerTime = new AtomicLong(-1);

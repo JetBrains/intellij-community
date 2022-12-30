@@ -265,7 +265,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
     }
 
     val ideaUltimate = SuggestedIde("IntelliJ IDEA Ultimate", "https://www.jetbrains.com/idea/download/")
-    val pyCharmProfessional = SuggestedIde("PyCharm Professional", "https://www.jetbrains.com/pycharm/download/")
+    private val pyCharmProfessional = SuggestedIde("PyCharm Professional", "https://www.jetbrains.com/pycharm/download/")
 
     private val ides = linkedMapOf(
       "WS" to SuggestedIde("WebStorm", "https://www.jetbrains.com/webstorm/download/"),

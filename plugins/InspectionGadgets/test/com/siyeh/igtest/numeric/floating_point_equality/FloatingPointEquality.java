@@ -19,13 +19,13 @@ public class FloatingPointEquality
 
     public void foo()
     {
-        if (<warning descr="'m_bar == m_baz': floating point values compared for exact equality">m_bar == m_baz</warning>) {
+        if (<warning descr="'m_bar == m_baz': floating-point values compared for exact equality">m_bar == m_baz</warning>) {
             System.out.println("m_bar = " + m_bar);
         }
-        if (<warning descr="'m_barf == m_bazf': floating point values compared for exact equality">m_barf == m_bazf</warning>) {
+        if (<warning descr="'m_barf == m_bazf': floating-point values compared for exact equality">m_barf == m_bazf</warning>) {
             System.out.println("m_barf = " + m_barf);
         }
-        if (<warning descr="'m_barf != m_bar': floating point values compared for exact equality">m_barf != m_bar</warning>) {
+        if (<warning descr="'m_barf != m_bar': floating-point values compared for exact equality">m_barf != m_bar</warning>) {
             System.out.println("m_barf = " + m_barf);
         }
 

@@ -32,7 +32,6 @@ import com.intellij.ui.layout.*
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.PathUtilRt
 import com.intellij.util.ui.ListTableModel
-import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Component
 import java.awt.event.MouseAdapter
@@ -47,7 +46,7 @@ import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreePath
 
-internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) : BorderLayoutPanel() {
+internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) {
   private var treeState: TreeState
   private val treeModel = models.treeModel
   private val root = treeModel.root as DefaultMutableTreeNode

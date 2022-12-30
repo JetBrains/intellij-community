@@ -66,42 +66,44 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
   public void visitAll() {
     doTest(
       null, null,
-      "-> / [0]\n" +
-      "  -> d1 [1]\n" +
-      "    -> d11 [2]\n" +
-      "      -> f11.1 [3]\n" +
-      "      <- f11.1 [4]\n" +
-      "      -> f11.2 [3]\n" +
-      "      <- f11.2 [4]\n" +
-      "    <- d11 [3]\n" +
-      "    -> d11_link [2]\n" +
-      "      -> f11.1 [3]\n" +
-      "      <- f11.1 [4]\n" +
-      "      -> f11.2 [3]\n" +
-      "      <- f11.2 [4]\n" +
-      "    <- d11_link [3]\n" +
-      "    -> d12 [2]\n" +
-      "    <- d12 [3]\n" +
-      "    -> d13 [2]\n" +
-      "      -> f13.1 [3]\n" +
-      "      <- f13.1 [4]\n" +
-      "      -> f13.2 [3]\n" +
-      "      <- f13.2 [4]\n" +
-      "    <- d13 [3]\n" +
-      "    -> f1.1 [2]\n" +
-      "    <- f1.1 [3]\n" +
-      "  <- d1 [2]\n" +
-      "  -> d2 [1]\n" +
-      "    -> f2.1 [2]\n" +
-      "    <- f2.1 [3]\n" +
-      "    -> f2.2 [2]\n" +
-      "    <- f2.2 [3]\n" +
-      "  <- d2 [2]\n" +
-      "  -> d3 [1]\n" +
-      "    -> d3_rec_link [2]\n" +
-      "    <- d3_rec_link [3]\n" +
-      "  <- d3 [2]\n" +
-      "<- / [1]\n");
+      """
+        -> / [0]
+          -> d1 [1]
+            -> d11 [2]
+              -> f11.1 [3]
+              <- f11.1 [4]
+              -> f11.2 [3]
+              <- f11.2 [4]
+            <- d11 [3]
+            -> d11_link [2]
+              -> f11.1 [3]
+              <- f11.1 [4]
+              -> f11.2 [3]
+              <- f11.2 [4]
+            <- d11_link [3]
+            -> d12 [2]
+            <- d12 [3]
+            -> d13 [2]
+              -> f13.1 [3]
+              <- f13.1 [4]
+              -> f13.2 [3]
+              <- f13.2 [4]
+            <- d13 [3]
+            -> f1.1 [2]
+            <- f1.1 [3]
+          <- d1 [2]
+          -> d2 [1]
+            -> f2.1 [2]
+            <- f2.1 [3]
+            -> f2.2 [2]
+            <- f2.2 [3]
+          <- d2 [2]
+          -> d3 [1]
+            -> d3_rec_link [2]
+            <- d3_rec_link [3]
+          <- d3 [2]
+        <- / [1]
+        """);
   }
 
   @Test
@@ -109,37 +111,39 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
     doTest(
       file -> "d11".equals(file.getName()) ? VirtualFileVisitor.SKIP_CHILDREN : VirtualFileVisitor.CONTINUE,
       null,
-      "-> / [0]\n" +
-      "  -> d1 [1]\n" +
-      "    -> d11 [2]\n" +
-      "    -> d11_link [2]\n" +
-      "      -> f11.1 [3]\n" +
-      "      <- f11.1 [4]\n" +
-      "      -> f11.2 [3]\n" +
-      "      <- f11.2 [4]\n" +
-      "    <- d11_link [3]\n" +
-      "    -> d12 [2]\n" +
-      "    <- d12 [3]\n" +
-      "    -> d13 [2]\n" +
-      "      -> f13.1 [3]\n" +
-      "      <- f13.1 [4]\n" +
-      "      -> f13.2 [3]\n" +
-      "      <- f13.2 [4]\n" +
-      "    <- d13 [3]\n" +
-      "    -> f1.1 [2]\n" +
-      "    <- f1.1 [3]\n" +
-      "  <- d1 [2]\n" +
-      "  -> d2 [1]\n" +
-      "    -> f2.1 [2]\n" +
-      "    <- f2.1 [3]\n" +
-      "    -> f2.2 [2]\n" +
-      "    <- f2.2 [3]\n" +
-      "  <- d2 [2]\n" +
-      "  -> d3 [1]\n" +
-      "    -> d3_rec_link [2]\n" +
-      "    <- d3_rec_link [3]\n" +
-      "  <- d3 [2]\n" +
-      "<- / [1]\n");
+      """
+        -> / [0]
+          -> d1 [1]
+            -> d11 [2]
+            -> d11_link [2]
+              -> f11.1 [3]
+              <- f11.1 [4]
+              -> f11.2 [3]
+              <- f11.2 [4]
+            <- d11_link [3]
+            -> d12 [2]
+            <- d12 [3]
+            -> d13 [2]
+              -> f13.1 [3]
+              <- f13.1 [4]
+              -> f13.2 [3]
+              <- f13.2 [4]
+            <- d13 [3]
+            -> f1.1 [2]
+            <- f1.1 [3]
+          <- d1 [2]
+          -> d2 [1]
+            -> f2.1 [2]
+            <- f2.1 [3]
+            -> f2.2 [2]
+            <- f2.2 [3]
+          <- d2 [2]
+          -> d3 [1]
+            -> d3_rec_link [2]
+            <- d3_rec_link [3]
+          <- d3 [2]
+        <- / [1]
+        """);
   }
 
   @Test
@@ -147,33 +151,35 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
     doTest(
       file -> file.isDirectory() ? VirtualFileVisitor.CONTINUE : VirtualFileVisitor.SKIP_CHILDREN,
       null,
-      "-> / [0]\n" +
-      "  -> d1 [1]\n" +
-      "    -> d11 [2]\n" +
-      "      -> f11.1 [3]\n" +
-      "      -> f11.2 [3]\n" +
-      "    <- d11 [3]\n" +
-      "    -> d11_link [2]\n" +
-      "      -> f11.1 [3]\n" +
-      "      -> f11.2 [3]\n" +
-      "    <- d11_link [3]\n" +
-      "    -> d12 [2]\n" +
-      "    <- d12 [3]\n" +
-      "    -> d13 [2]\n" +
-      "      -> f13.1 [3]\n" +
-      "      -> f13.2 [3]\n" +
-      "    <- d13 [3]\n" +
-      "    -> f1.1 [2]\n" +
-      "  <- d1 [2]\n" +
-      "  -> d2 [1]\n" +
-      "    -> f2.1 [2]\n" +
-      "    -> f2.2 [2]\n" +
-      "  <- d2 [2]\n" +
-      "  -> d3 [1]\n" +
-      "    -> d3_rec_link [2]\n" +
-      "    <- d3_rec_link [3]\n" +
-      "  <- d3 [2]\n" +
-      "<- / [1]\n");
+      """
+        -> / [0]
+          -> d1 [1]
+            -> d11 [2]
+              -> f11.1 [3]
+              -> f11.2 [3]
+            <- d11 [3]
+            -> d11_link [2]
+              -> f11.1 [3]
+              -> f11.2 [3]
+            <- d11_link [3]
+            -> d12 [2]
+            <- d12 [3]
+            -> d13 [2]
+              -> f13.1 [3]
+              -> f13.2 [3]
+            <- d13 [3]
+            -> f1.1 [2]
+          <- d1 [2]
+          -> d2 [1]
+            -> f2.1 [2]
+            -> f2.2 [2]
+          <- d2 [2]
+          -> d3 [1]
+            -> d3_rec_link [2]
+            <- d3_rec_link [3]
+          <- d3 [2]
+        <- / [1]
+        """);
   }
 
   @Test
@@ -185,21 +191,23 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
         return "f11.1".equals(file.getName()) ? skip.get() : VirtualFileVisitor.CONTINUE;
       },
       null,
-      "-> / [0]\n" +
-      "  -> d1 [1]\n" +
-      "    -> d11 [2]\n" +
-      "      -> f11.1 [3]\n" +
-      "  -> d2 [1]\n" +
-      "    -> f2.1 [2]\n" +
-      "    <- f2.1 [3]\n" +
-      "    -> f2.2 [2]\n" +
-      "    <- f2.2 [3]\n" +
-      "  <- d2 [2]\n" +
-      "  -> d3 [1]\n" +
-      "    -> d3_rec_link [2]\n" +
-      "    <- d3_rec_link [3]\n" +
-      "  <- d3 [2]\n" +
-      "<- / [1]\n");
+      """
+        -> / [0]
+          -> d1 [1]
+            -> d11 [2]
+              -> f11.1 [3]
+          -> d2 [1]
+            -> f2.1 [2]
+            <- f2.1 [3]
+            -> f2.2 [2]
+            <- f2.2 [3]
+          <- d2 [2]
+          -> d3 [1]
+            -> d3_rec_link [2]
+            <- d3_rec_link [3]
+          <- d3 [2]
+        <- / [1]
+        """);
   }
 
   @Test
@@ -207,10 +215,12 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
     doTest(
       file -> "f11.1".equals(file.getName()) ? myRoot : VirtualFileVisitor.CONTINUE,
       null,
-      "-> / [0]\n" +
-      "  -> d1 [1]\n" +
-      "    -> d11 [2]\n" +
-      "      -> f11.1 [3]\n");
+      """
+        -> / [0]
+          -> d1 [1]
+            -> d11 [2]
+              -> f11.1 [3]
+        """);
   }
 
   @Test
@@ -221,42 +231,50 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
         return VirtualFileVisitor.CONTINUE;
       },
       null,
-      "-> / [0]\n" +
-      "  -> d1 [1]\n" +
-      "    -> d11 [2]\n" +
-      "      -> f11.1 [3]\n");
+      """
+        -> / [0]
+          -> d1 [1]
+            -> d11 [2]
+              -> f11.1 [3]
+        """);
   }
 
   @Test
   public void depthLimit() {
     doTest(
       null, null,
-      "-> / [0]\n" +
-      "<- / [1]\n",
+      """
+        -> / [0]
+        <- / [1]
+        """,
       VirtualFileVisitor.limit(0)
     );
 
     doTest(
       null, null,
-      "-> / [0]\n" +
-      "  -> d1 [1]\n" +
-      "  <- d1 [2]\n" +
-      "  -> d2 [1]\n" +
-      "  <- d2 [2]\n" +
-      "  -> d3 [1]\n" +
-      "  <- d3 [2]\n" +
-      "<- / [1]\n",
+      """
+        -> / [0]
+          -> d1 [1]
+          <- d1 [2]
+          -> d2 [1]
+          <- d2 [2]
+          -> d3 [1]
+          <- d3 [2]
+        <- / [1]
+        """,
       VirtualFileVisitor.ONE_LEVEL_DEEP
     );
 
     doTest(
       null, null,
-      "-> d1 [0]\n" +
-      "<- d1 [1]\n" +
-      "-> d2 [0]\n" +
-      "<- d2 [1]\n" +
-      "-> d3 [0]\n" +
-      "<- d3 [1]\n",
+      """
+        -> d1 [0]
+        <- d1 [1]
+        -> d2 [0]
+        <- d2 [1]
+        -> d3 [0]
+        <- d3 [1]
+        """,
       VirtualFileVisitor.SKIP_ROOT, VirtualFileVisitor.ONE_LEVEL_DEEP);
   }
 
@@ -265,40 +283,42 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
     doTest(
       null,
       file -> "d13".equals(file.getName()) ? Collections.singletonList(file.getChildren()[1]) : null,
-      "-> / [0]\n" +
-      "  -> d1 [1]\n" +
-      "    -> d11 [2]\n" +
-      "      -> f11.1 [3]\n" +
-      "      <- f11.1 [4]\n" +
-      "      -> f11.2 [3]\n" +
-      "      <- f11.2 [4]\n" +
-      "    <- d11 [3]\n" +
-      "    -> d11_link [2]\n" +
-      "      -> f11.1 [3]\n" +
-      "      <- f11.1 [4]\n" +
-      "      -> f11.2 [3]\n" +
-      "      <- f11.2 [4]\n" +
-      "    <- d11_link [3]\n" +
-      "    -> d12 [2]\n" +
-      "    <- d12 [3]\n" +
-      "    -> d13 [2]\n" +
-      "      -> f13.2 [3]\n" +
-      "      <- f13.2 [4]\n" +
-      "    <- d13 [3]\n" +
-      "    -> f1.1 [2]\n" +
-      "    <- f1.1 [3]\n" +
-      "  <- d1 [2]\n" +
-      "  -> d2 [1]\n" +
-      "    -> f2.1 [2]\n" +
-      "    <- f2.1 [3]\n" +
-      "    -> f2.2 [2]\n" +
-      "    <- f2.2 [3]\n" +
-      "  <- d2 [2]\n" +
-      "  -> d3 [1]\n" +
-      "    -> d3_rec_link [2]\n" +
-      "    <- d3_rec_link [3]\n" +
-      "  <- d3 [2]\n" +
-      "<- / [1]\n");
+      """
+        -> / [0]
+          -> d1 [1]
+            -> d11 [2]
+              -> f11.1 [3]
+              <- f11.1 [4]
+              -> f11.2 [3]
+              <- f11.2 [4]
+            <- d11 [3]
+            -> d11_link [2]
+              -> f11.1 [3]
+              <- f11.1 [4]
+              -> f11.2 [3]
+              <- f11.2 [4]
+            <- d11_link [3]
+            -> d12 [2]
+            <- d12 [3]
+            -> d13 [2]
+              -> f13.2 [3]
+              <- f13.2 [4]
+            <- d13 [3]
+            -> f1.1 [2]
+            <- f1.1 [3]
+          <- d1 [2]
+          -> d2 [1]
+            -> f2.1 [2]
+            <- f2.1 [3]
+            -> f2.2 [2]
+            <- f2.2 [3]
+          <- d2 [2]
+          -> d3 [1]
+            -> d3_rec_link [2]
+            <- d3_rec_link [3]
+          <- d3 [2]
+        <- / [1]
+        """);
   }
 
   private static class AbortException extends RuntimeException { }

@@ -5,202 +5,250 @@ import com.intellij.codeInsight.unwrap.UnwrapTestCase;
 
 public class UnwrapAnonymousTest extends UnwrapTestCase {
   public void testUnwrap() {
-    assertUnwrapped("{\n" +
-                    "    new Runnable() {\n" +
-                    "        public void run() {\n" +
-                    "            Sys<caret>tem.gc();\n" +
-                    "        }\n" +
-                    "    }\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          new Runnable() {
+                              public void run() {
+                                  Sys<caret>tem.gc();
+                              }
+                          }
+                      }
+                      """,
 
-                    "{\n" +
-                    "    Sys<caret>tem.gc();\n" +
-                    "}\n");
+                    """
+                      {
+                          Sys<caret>tem.gc();
+                      }
+                      """);
   }
   
   public void testUnwrapDeclaration() {
-    assertUnwrapped("{\n" +
-                    "    Runnable r = new Runnable() {\n" +
-                    "        public void run() {\n" +
-                    "            Sys<caret>tem.gc();\n" +
-                    "        }\n" +
-                    "    }\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          Runnable r = new Runnable() {
+                              public void run() {
+                                  Sys<caret>tem.gc();
+                              }
+                          }
+                      }
+                      """,
 
-                    "{\n" +
-                    "    Sys<caret>tem.gc();\n" +
-                    "}\n");
+                    """
+                      {
+                          Sys<caret>tem.gc();
+                      }
+                      """);
   }
 
   public void testUnwrapAssignment() {
-    assertUnwrapped("{\n" +
-                    "    Runnable r = null;\n" +
-                    "    r = new Runnable() {\n" +
-                    "        public void run() {\n" +
-                    "            Sys<caret>tem.gc();\n" +
-                    "        }\n" +
-                    "    }\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          Runnable r = null;
+                          r = new Runnable() {
+                              public void run() {
+                                  Sys<caret>tem.gc();
+                              }
+                          }
+                      }
+                      """,
 
-                    "{\n" +
-                    "    Runnable r = null;\n" +
-                    "    Sys<caret>tem.gc();\n" +
-                    "}\n");
+                    """
+                      {
+                          Runnable r = null;
+                          Sys<caret>tem.gc();
+                      }
+                      """);
   }
 
   public void testInsideMethodCall() {
-    assertUnwrapped("{\n" +
-                    "    foo(new Runnable() {\n" +
-                    "        public void run() {\n" +
-                    "            Sys<caret>tem.gc();\n" +
-                    "        }\n" +
-                    "    });\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          foo(new Runnable() {
+                              public void run() {
+                                  Sys<caret>tem.gc();
+                              }
+                          });
+                      }
+                      """,
 
-                    "{\n" +
-                    "    Sys<caret>tem.gc();\n" +
-                    "}\n");
+                    """
+                      {
+                          Sys<caret>tem.gc();
+                      }
+                      """);
   }
 
   public void testInsideAnotherAnonymous() {
-    assertUnwrapped("{\n" +
-                    "    new Runnable() {\n" +
-                    "        public void run() {\n" +
-                    "            int i = 0;\n" +
-                    "            new Runnable() {\n" +
-                    "                public void run() {\n" +
-                    "                    Sys<caret>tem.gc();\n" +
-                    "                }\n" +
-                    "            };\n" +
-                    "        }\n" +
-                    "    };\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          new Runnable() {
+                              public void run() {
+                                  int i = 0;
+                                  new Runnable() {
+                                      public void run() {
+                                          Sys<caret>tem.gc();
+                                      }
+                                  };
+                              }
+                          };
+                      }
+                      """,
 
-                    "{\n" +
-                    "    new Runnable() {\n" +
-                    "        public void run() {\n" +
-                    "            int i = 0;\n" +
-                    "            Sys<caret>tem.gc();\n" +
-                    "        }\n" +
-                    "    };\n" +
-                    "}\n");
+                    """
+                      {
+                          new Runnable() {
+                              public void run() {
+                                  int i = 0;
+                                  Sys<caret>tem.gc();
+                              }
+                          };
+                      }
+                      """);
   }
 
   public void testInsideAnotherAnonymousWithAssignment() {
-    assertUnwrapped("{\n" +
-                    "    Runnable r = new Runnable() {\n" +
-                    "        public void run() {\n" +
-                    "            int i = 0;\n" +
-                    "            new Runnable() {\n" +
-                    "                public void run() {\n" +
-                    "                    Sys<caret>tem.gc();\n" +
-                    "                }\n" +
-                    "            };\n" +
-                    "        }\n" +
-                    "    };\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          Runnable r = new Runnable() {
+                              public void run() {
+                                  int i = 0;
+                                  new Runnable() {
+                                      public void run() {
+                                          Sys<caret>tem.gc();
+                                      }
+                                  };
+                              }
+                          };
+                      }
+                      """,
 
-                    "{\n" +
-                    "    Runnable r = new Runnable() {\n" +
-                    "        public void run() {\n" +
-                    "            int i = 0;\n" +
-                    "            Sys<caret>tem.gc();\n" +
-                    "        }\n" +
-                    "    };\n" +
-                    "}\n");
+                    """
+                      {
+                          Runnable r = new Runnable() {
+                              public void run() {
+                                  int i = 0;
+                                  Sys<caret>tem.gc();
+                              }
+                          };
+                      }
+                      """);
   }
 
   public void testDeclarationWithMethodCall() {
-    assertUnwrapped("{\n" +
-                    "    Object obj = foo(new Runnable() {\n" +
-                    "        public void run() {\n" +
-                    "            Sys<caret>tem.gc();\n" +
-                    "        }\n" +
-                    "    });\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          Object obj = foo(new Runnable() {
+                              public void run() {
+                                  Sys<caret>tem.gc();
+                              }
+                          });
+                      }
+                      """,
 
-                    "{\n" +
-                    "    Sys<caret>tem.gc();\n" +
-                    "}\n");
+                    """
+                      {
+                          Sys<caret>tem.gc();
+                      }
+                      """);
   }
 
   public void testSeveralMethodCalls() {
-    assertUnwrapped("{\n" +
-                    "    bar(foo(new Runnable() {\n" +
-                    "        public void run() {\n" +
-                    "            Sys<caret>tem.gc();\n" +
-                    "        }\n" +
-                    "    }));\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          bar(foo(new Runnable() {
+                              public void run() {
+                                  Sys<caret>tem.gc();
+                              }
+                          }));
+                      }
+                      """,
 
-                    "{\n" +
-                    "    Sys<caret>tem.gc();\n" +
-                    "}\n");
+                    """
+                      {
+                          Sys<caret>tem.gc();
+                      }
+                      """);
   }
 
   public void testWhenCaretIsOnDeclaration() {
-    assertUnwrapped("{\n" +
-                    "    Runnable r = new Run<caret>nable() {\n" +
-                    "        public void run() {\n" +
-                    "            System.gc();\n" +
-                    "        }\n" +
-                    "    }\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          Runnable r = new Run<caret>nable() {
+                              public void run() {
+                                  System.gc();
+                              }
+                          }
+                      }
+                      """,
 
-                    "{\n" +
-                    "    System.gc();<caret>\n" +
-                    "}\n");
+                    """
+                      {
+                          System.gc();<caret>
+                      }
+                      """);
   }
   
   public void testEmptyClass() {
-    assertUnwrapped("{\n" +
-                    "    Runnable r = new Run<caret>nable() {}\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          Runnable r = new Run<caret>nable() {}
+                      }
+                      """,
 
-                    "{\n" +
-                    "<caret>}\n");
+                    """
+                      {
+                      <caret>}
+                      """);
   }
 
   public void testDoNothingWithSeveralMethods() {
-    assertUnwrapped("Runnable r = new Runnable() {\n" +
-                    "    public void one() {\n" +
-                    "        // method one\n" +
-                    "        System.gc();\n" +
-                    "    }\n" +
-                    "    public void two() {\n" +
-                    "        // method two\n" +
-                    "        Sys<caret>tem.gc();\n" +
-                    "    }\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      Runnable r = new Runnable() {
+                          public void one() {
+                              // method one
+                              System.gc();
+                          }
+                          public void two() {
+                              // method two
+                              Sys<caret>tem.gc();
+                          }
+                      }
+                      """,
 
-                    "Runnable r = new Runnable() {\n" +
-                    "    public void one() {\n" +
-                    "        // method one\n" +
-                    "        System.gc();\n" +
-                    "    }\n" +
-                    "    public void two() {\n" +
-                    "        // method two\n" +
-                    "        Sys<caret>tem.gc();\n" +
-                    "    }\n" +
-                    "}\n");
+                    """
+                      Runnable r = new Runnable() {
+                          public void one() {
+                              // method one
+                              System.gc();
+                          }
+                          public void two() {
+                              // method two
+                              Sys<caret>tem.gc();
+                          }
+                      }
+                      """);
   }
 
   public void testReassignValue() {
-    assertUnwrapped("int i = new Comparable<String>() {\n" +
-                    "            public int compareTo(String o) {\n" +
-                    "                return <caret>0;\n" +
-                    "            }\n" +
-                    "        };\n",
+    assertUnwrapped("""
+                      int i = new Comparable<String>() {
+                                  public int compareTo(String o) {
+                                      return <caret>0;
+                                  }
+                              };
+                      """,
 
                     "int i = 0;\n");
   }
 
   public void testReturnValue() {
-    assertUnwrapped("return new Comparable<Integer>() {\n" +
-                    "    public int compareTo(Integer o) {\n" +
-                    "        return <caret>0;\n" +
-                    "    }\n" +
-                    "};\n"
+    assertUnwrapped("""
+                      return new Comparable<Integer>() {
+                          public int compareTo(Integer o) {
+                              return <caret>0;
+                          }
+                      };
+                      """
                     ,
 
                     "return 0;\n");

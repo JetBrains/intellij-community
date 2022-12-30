@@ -101,7 +101,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     InspectionTreeModel model = context.getView().getTree().getInspectionTreeModel();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     final CommonProblemDescriptor[] problems = ((RefEntityContainer<CommonProblemDescriptor>)container).getDescriptors();
-    if (problems != null && problems.length != 0) {
+    if (problems != null) {
         for (CommonProblemDescriptor problem : problems) {
           assert problem != null;
           model.createProblemDescriptorNode(refElement, problem, presentation, parent);

@@ -131,12 +131,14 @@ public class XmlReparseTest extends AbstractReparseTestCase {
   }
 
   public void testXmlReparseProblem() throws IncorrectOperationException {
-    prepareFile("<table>\n" +
-                "    <tr>\n" +
-                "<td>\n" +
-                "<table width"," </td>\n" +
-               "    </tr>\n" +
-               "</table>");
+    prepareFile("""
+                  <table>
+                      <tr>
+                  <td>
+                  <table width""", """
+                   </td>
+                      </tr>
+                  </table>""");
     insert("=");
   }
   private static final String marker = "<marker>";

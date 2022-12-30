@@ -229,12 +229,13 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     scheme.setColor(ColorKey.createColorKey("BASE_COLOR"), new Color(0x80, 0x81, 0x82));
     scheme.setColor(ColorKey.createColorKey("ALPHA_COLOR"), new Color(0x80, 0x81, 0x82, 0x83));
     EditorColorSchemeTestCase.assertXmlOutputEquals(
-      "<scheme name=\"test\" version=\"142\" parent_scheme=\"Default\">\n" +
-      "  <colors>\n" +
-      "    <option name=\"ALPHA_COLOR\" value=\"80818283\" />\n" +
-      "    <option name=\"BASE_COLOR\" value=\"808182\" />\n" +
-      "  </colors>\n" +
-      "</scheme>",
+      """
+        <scheme name="test" version="142" parent_scheme="Default">
+          <colors>
+            <option name="ALPHA_COLOR" value="80818283" />
+            <option name="BASE_COLOR" value="808182" />
+          </colors>
+        </scheme>""",
       serialize(scheme));
   }
 
@@ -251,11 +252,12 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     editorColorsScheme.setConsoleFontName(fontName);
     editorColorsScheme.setConsoleFontSize(10);
     EditorColorSchemeTestCase.assertXmlOutputEquals(
-      "<scheme name=\"test\" version=\"142\" parent_scheme=\"Default\">\n" +
-      "  <option name=\"CONSOLE_FONT_NAME\" value=\"Test\" />\n" +
-      "  <option name=\"CONSOLE_FONT_SIZE\" value=\"10\" />\n" +
-      "  <option name=\"CONSOLE_LINE_SPACING\" value=\"1.2\" />\n" +
-      "</scheme>",
+      """
+        <scheme name="test" version="142" parent_scheme="Default">
+          <option name="CONSOLE_FONT_NAME" value="Test" />
+          <option name="CONSOLE_FONT_SIZE" value="10" />
+          <option name="CONSOLE_LINE_SPACING" value="1.2" />
+        </scheme>""",
       serialize(editorColorsScheme));
   }
 
@@ -299,16 +301,15 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertNotNull(fallbackKey);
 
     EditorColorsScheme scheme = EditorColorSchemeTestCase.loadScheme(
-      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-      "<scheme name=\"Test\" version=\"141\" parent_scheme=\"Default\">\n" +
-      "<attributes>" +
-      "   <option name=\"TEXT\">\n" +
-      "      <value>\n" +
-      "           option name=\"FOREGROUND\" value=\"ffaaaa\" />\n" +
-      "      </value>\n" +
-      "   </option>" +
-      "</attributes>" +
-      "</scheme>\n"
+      """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <scheme name="Test" version="141" parent_scheme="Default">
+        <attributes>   <option name="TEXT">
+              <value>
+                   option name="FOREGROUND" value="ffaaaa" />
+              </value>
+           </option></attributes></scheme>
+        """
     );
 
     TextAttributes constAttrs = scheme.getAttributes(constKey);
@@ -405,13 +406,15 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     editorColorsScheme.setName("rainbow");
 
     final String BEGIN =
-      "<scheme name=\"rainbow\" version=\"142\" parent_scheme=\"Default\">\n" +
-      "  <metaInfo>\n" +
-      "    <property name=\"created\" />\n" +
-      "    <property name=\"ide\" />\n" +
-      "    <property name=\"ideVersion\" />\n" +
-      "    <property name=\"modified\" />\n" +
-      "    <property name=\"originalScheme\" />\n";
+      """
+        <scheme name="rainbow" version="142" parent_scheme="Default">
+          <metaInfo>
+            <property name="created" />
+            <property name="ide" />
+            <property name="ideVersion" />
+            <property name="modified" />
+            <property name="originalScheme" />
+        """;
     final String END =
       "  </metaInfo>\n" +
       "</scheme>";
@@ -504,131 +507,132 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   public void testOptimizeAttributes() throws Exception {
     TextAttributesKey staticFieldKey = TextAttributesKey.createTextAttributesKey("STATIC_FIELD_ATTRIBUTES");
     AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)EditorColorSchemeTestCase.loadScheme(
-      "<scheme name=\"IdeaLight\" version=\"142\" parent_scheme=\"Default\">\n" +
-      "  <colors>\n" +
-      "    <option name=\"CARET_ROW_COLOR\" value=\"f5f5f5\" />\n" +
-      "    <option name=\"CONSOLE_BACKGROUND_KEY\" value=\"fdfdfd\" />\n" +
-      "  </colors>\n" +
-      "  <attributes>\n" +
-      "    <option name=\"DEFAULT_ATTRIBUTE\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"4c4fa1\" />\n" +
-      "        <option name=\"FONT_TYPE\" value=\"1\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_CLASS_NAME\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"906f5d\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_CONSTANT\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"776186\" />\n" +
-      "        <option name=\"FONT_TYPE\" value=\"3\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_FUNCTION_DECLARATION\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"707070\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_GLOBAL_VARIABLE\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"6e6cc2\" />\n" +
-      "        <option name=\"FONT_TYPE\" value=\"1\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_IDENTIFIER\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"707070\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_INSTANCE_FIELD\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"776186\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_INTERFACE_NAME\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"906f5d\" />\n" +
-      "        <option name=\"FONT_TYPE\" value=\"2\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_KEYWORD\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"707070\" />\n" +
-      "        <option name=\"FONT_TYPE\" value=\"1\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_LOCAL_VARIABLE\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"6f8374\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_METADATA\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"989800\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_NUMBER\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"8281e8\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_OPERATION_SIGN\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"9587a4\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_PARAMETER\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"a05f72\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_PARENTHS\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"7e7e7e\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_PREDEFINED_SYMBOL\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"ab8381\" />\n" +
-      "        <option name=\"FONT_TYPE\" value=\"2\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_SEMICOLON\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"9587a4\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_STATIC_FIELD\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"776186\" />\n" +
-      "        <option name=\"FONT_TYPE\" value=\"2\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_STATIC_METHOD\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"707070\" />\n" +
-      "        <option name=\"FONT_TYPE\" value=\"2\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"DEFAULT_STRING\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"58806b\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "    <option name=\"INSTANCE_FIELD_ATTRIBUTES\" baseAttributes=\"DEFAULT_INSTANCE_FIELD\" />\n" +
-      "    <option name=\"STATIC_FIELD_ATTRIBUTES\" baseAttributes=\"DEFAULT_STATIC_FIELD\" />\n" +
-      "    <option name=\"STATIC_FINAL_FIELD_ATTRIBUTES\" baseAttributes=\"STATIC_FIELD_ATTRIBUTES\" />\n" +
-      "    <option name=\"TEXT\">\n" +
-      "      <value>\n" +
-      "        <option name=\"FOREGROUND\" value=\"141414\" />\n" +
-      "        <option name=\"BACKGROUND\" value=\"fbfbfb\" />\n" +
-      "      </value>\n" +
-      "    </option>\n" +
-      "  </attributes>\n" +
-      "</scheme>"
+      """
+        <scheme name="IdeaLight" version="142" parent_scheme="Default">
+          <colors>
+            <option name="CARET_ROW_COLOR" value="f5f5f5" />
+            <option name="CONSOLE_BACKGROUND_KEY" value="fdfdfd" />
+          </colors>
+          <attributes>
+            <option name="DEFAULT_ATTRIBUTE">
+              <value>
+                <option name="FOREGROUND" value="4c4fa1" />
+                <option name="FONT_TYPE" value="1" />
+              </value>
+            </option>
+            <option name="DEFAULT_CLASS_NAME">
+              <value>
+                <option name="FOREGROUND" value="906f5d" />
+              </value>
+            </option>
+            <option name="DEFAULT_CONSTANT">
+              <value>
+                <option name="FOREGROUND" value="776186" />
+                <option name="FONT_TYPE" value="3" />
+              </value>
+            </option>
+            <option name="DEFAULT_FUNCTION_DECLARATION">
+              <value>
+                <option name="FOREGROUND" value="707070" />
+              </value>
+            </option>
+            <option name="DEFAULT_GLOBAL_VARIABLE">
+              <value>
+                <option name="FOREGROUND" value="6e6cc2" />
+                <option name="FONT_TYPE" value="1" />
+              </value>
+            </option>
+            <option name="DEFAULT_IDENTIFIER">
+              <value>
+                <option name="FOREGROUND" value="707070" />
+              </value>
+            </option>
+            <option name="DEFAULT_INSTANCE_FIELD">
+              <value>
+                <option name="FOREGROUND" value="776186" />
+              </value>
+            </option>
+            <option name="DEFAULT_INTERFACE_NAME">
+              <value>
+                <option name="FOREGROUND" value="906f5d" />
+                <option name="FONT_TYPE" value="2" />
+              </value>
+            </option>
+            <option name="DEFAULT_KEYWORD">
+              <value>
+                <option name="FOREGROUND" value="707070" />
+                <option name="FONT_TYPE" value="1" />
+              </value>
+            </option>
+            <option name="DEFAULT_LOCAL_VARIABLE">
+              <value>
+                <option name="FOREGROUND" value="6f8374" />
+              </value>
+            </option>
+            <option name="DEFAULT_METADATA">
+              <value>
+                <option name="FOREGROUND" value="989800" />
+              </value>
+            </option>
+            <option name="DEFAULT_NUMBER">
+              <value>
+                <option name="FOREGROUND" value="8281e8" />
+              </value>
+            </option>
+            <option name="DEFAULT_OPERATION_SIGN">
+              <value>
+                <option name="FOREGROUND" value="9587a4" />
+              </value>
+            </option>
+            <option name="DEFAULT_PARAMETER">
+              <value>
+                <option name="FOREGROUND" value="a05f72" />
+              </value>
+            </option>
+            <option name="DEFAULT_PARENTHS">
+              <value>
+                <option name="FOREGROUND" value="7e7e7e" />
+              </value>
+            </option>
+            <option name="DEFAULT_PREDEFINED_SYMBOL">
+              <value>
+                <option name="FOREGROUND" value="ab8381" />
+                <option name="FONT_TYPE" value="2" />
+              </value>
+            </option>
+            <option name="DEFAULT_SEMICOLON">
+              <value>
+                <option name="FOREGROUND" value="9587a4" />
+              </value>
+            </option>
+            <option name="DEFAULT_STATIC_FIELD">
+              <value>
+                <option name="FOREGROUND" value="776186" />
+                <option name="FONT_TYPE" value="2" />
+              </value>
+            </option>
+            <option name="DEFAULT_STATIC_METHOD">
+              <value>
+                <option name="FOREGROUND" value="707070" />
+                <option name="FONT_TYPE" value="2" />
+              </value>
+            </option>
+            <option name="DEFAULT_STRING">
+              <value>
+                <option name="FOREGROUND" value="58806b" />
+              </value>
+            </option>
+            <option name="INSTANCE_FIELD_ATTRIBUTES" baseAttributes="DEFAULT_INSTANCE_FIELD" />
+            <option name="STATIC_FIELD_ATTRIBUTES" baseAttributes="DEFAULT_STATIC_FIELD" />
+            <option name="STATIC_FINAL_FIELD_ATTRIBUTES" baseAttributes="STATIC_FIELD_ATTRIBUTES" />
+            <option name="TEXT">
+              <value>
+                <option name="FOREGROUND" value="141414" />
+                <option name="BACKGROUND" value="fbfbfb" />
+              </value>
+            </option>
+          </attributes>
+        </scheme>"""
     );
     editorColorsScheme.optimizeAttributeMap();
     //
@@ -642,12 +646,12 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     TextAttributesKey TEST_KEY = TextAttributesKey.createTextAttributesKey("TEST_ATTRIBUTE_KEY", DefaultLanguageHighlighterColors.KEYWORD);
     try {
       AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)EditorColorSchemeTestCase.loadScheme(
-        "<scheme name=\"Super Scheme\" parent_scheme=\"Darcula\" version=\"1\">\n" +
-        "  <attributes>\n" +
-        "    <option name=\"DEFAULT_KEYWORD\" baseAttributes=\"TEXT\" />\n" +
-        "    <option name=\"TEST_ATTRIBUTE_KEY\" baseAttributes=\"TEXT\" />\n" +
-        "  </attributes>" +
-        "</scheme>");
+        """
+          <scheme name="Super Scheme" parent_scheme="Darcula" version="1">
+            <attributes>
+              <option name="DEFAULT_KEYWORD" baseAttributes="TEXT" />
+              <option name="TEST_ATTRIBUTE_KEY" baseAttributes="TEXT" />
+            </attributes></scheme>""");
       TextAttributes originalAttributes = editorColorsScheme.getAttributes(TEST_KEY);
 
       Element dumpedDom = editorColorsScheme.writeScheme();

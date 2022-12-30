@@ -400,7 +400,7 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
       }
     };
 
-    if (interfaces != null && interfaces.length > 0) {
+    if (interfaces != null) {
       for (Class<?> anInterface : interfaces) {
         ClassLoader loader = anInterface.getClassLoader();
         if (loader instanceof PluginClassLoader) {

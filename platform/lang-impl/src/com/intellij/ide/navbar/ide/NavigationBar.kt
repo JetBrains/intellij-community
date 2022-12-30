@@ -13,7 +13,7 @@ import com.intellij.ide.navbar.impl.ModuleNavBarItem
 import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.ide.navbar.impl.PsiNavBarItem
 import com.intellij.ide.navbar.ui.FloatingModeHelper
-import com.intellij.ide.navbar.ui.NavBarPanel
+import com.intellij.ide.navbar.ui.NewNavBarPanel
 import com.intellij.ide.navbar.ui.NavigationBarPopup
 import com.intellij.ide.navbar.ui.PopupEvent
 import com.intellij.ide.navbar.ui.PopupEvent.*
@@ -21,13 +21,12 @@ import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.Utils
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.NaturalComparator
@@ -46,11 +45,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.swing.JComponent
+import javax.swing.SwingUtilities
 import kotlin.coroutines.resume
 
 
 internal val navbarV2Enabled: Boolean = Registry.`is`("ide.navBar.v2", false)
+
+
 internal val LOG: Logger = Logger.getInstance("#com.intellij.ide.navbar.ide")
 
 internal class UiNavBarItem(
@@ -95,7 +96,7 @@ internal class NavigationBar(
   private val modelChangesAllowed = AtomicBoolean(true)
 
   private val myItemClickEvents = MutableSharedFlow<ItemClickEvent>(replay = 1, onBufferOverflow = DROP_OLDEST)
-  private lateinit var myComponent: NavBarPanel
+  private lateinit var myComponent: NewNavBarPanel
 
   private val myActivityEvents = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = DROP_OLDEST)
   private val myItems: MutableStateFlow<List<UiNavBarItem>>
@@ -132,17 +133,23 @@ internal class NavigationBar(
             try {
               if (modelChangesAllowed.get()) {
                 val focusedData = getFocusedData()
-                val model = readAction {
-                  buildModel(focusedData).ifEmpty {
-                    val item = ProjectNavBarItem(myProject)
-                    listOf(UiNavBarItem(item.createPointer(), item.presentation(), item.javaClass))
+                val focusedProject = CommonDataKeys.PROJECT.getData(focusedData)
+                if (focusedProject == myProject) {
+                  val model = readAction {
+                    buildModel(focusedData)
+                  }
+                  if (model.isNotEmpty()) {
+                    myItems.emit(model)
                   }
                 }
-                myItems.emit(model)
               }
             }
             catch (ce: CancellationException) {
               throw ce
+            }
+            catch (pce: ProcessCanceledException) {
+              // To throw or not to throw that is a question...
+              // ignore // TODO find out why it is being actually thrown
             }
             catch (t: Throwable) {
               LOG.error(t)
@@ -179,19 +186,21 @@ internal class NavigationBar(
   }
 
 
-  fun getPanel(): JComponent {
+  fun getPanel(): NewNavBarPanel {
     EDT.assertIsEdt()
-    myComponent = NavBarPanel(myItemClickEvents, myItems.asStateFlow(), cs)
+    myComponent = NewNavBarPanel(myItemClickEvents, myItems.asStateFlow(), cs)
     return myComponent
   }
 
   private suspend fun childrenPopupPrompt(selectedItemIndex: Int, children: List<UiNavBarItem>): PopupEvent =
     suspendCancellableCoroutine {
-      myComponent.scrollTo(selectedItemIndex)
-      val nextItem = myItems.value.getOrNull(selectedItemIndex + 1)
-      val popupHint = NavigationBarPopup(children, nextItem, it)
-      val absolutePoint = myComponent.getItemPopupLocation(selectedItemIndex)
-      popupHint.show(myComponent, absolutePoint.x, absolutePoint.y, myComponent, HintHint(myComponent, absolutePoint))
+      SwingUtilities.invokeLater {
+        myComponent.scrollTo(selectedItemIndex)
+        val nextItem = myItems.value.getOrNull(selectedItemIndex + 1)
+        val popupHint = NavigationBarPopup(children, nextItem, it)
+        val absolutePoint = myComponent.getItemPopupLocation(selectedItemIndex, popupHint)
+        popupHint.show(myComponent, absolutePoint.x, absolutePoint.y, myComponent, HintHint(myComponent, absolutePoint))
+      }
     }
 
   // Run body with no external model changes allowed

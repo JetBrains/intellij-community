@@ -9,7 +9,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsUserUtil.isSamePerson
 
 class EditedCommitNode(editedCommit: EditedCommitDetails) : ChangesBrowserNode<EditedCommitDetails>(editedCommit) {
-  val editedCommit: EditedCommitDetails get() = getUserObject()
+  private val editedCommit: EditedCommitDetails get() = getUserObject()
   val commit: VcsFullCommitDetails get() = editedCommit.commit
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {

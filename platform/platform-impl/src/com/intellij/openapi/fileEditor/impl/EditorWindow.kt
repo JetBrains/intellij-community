@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "PrivatePropertyName")
 
 package com.intellij.openapi.fileEditor.impl
 
@@ -173,8 +173,9 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
    * @param ignorePopup if `false` and context menu is shown currently for some tab,
    * composite for which menu is invoked will be returned
    */
-  fun getSelectedComposite(ignorePopup: Boolean): EditorComposite? = (tabbedPane.getSelectedComponent(
-    ignorePopup) as? EditorWindowTopComponent)?.composite
+  fun getSelectedComposite(ignorePopup: Boolean): EditorComposite? {
+    return (tabbedPane.getSelectedComponent(ignorePopup) as? EditorWindowTopComponent)?.composite
+  }
 
   val allComposites: List<EditorComposite>
     get() = composites.toList()
@@ -219,7 +220,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
 
   private fun getAdjacentEditors(): Map<RelativePosition, EditorWindow> {
     checkConsistency()
-    val adjacentEditors = HashMap<RelativePosition, EditorWindow>(4) //Can't have more than 4
+    val adjacentEditors = HashMap<RelativePosition, EditorWindow>(4) // can't have more than 4
     val windows = owner.getOrderedWindows()
     windows.remove(this)
     val panelToWindow = HashMap<JPanel, EditorWindow>()
@@ -496,7 +497,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
   }
 
   fun updateTabsVisibility(settings: UISettings = UISettings.getInstance()) {
-    tabbedPane.tabs.presentation.isHideTabs = (owner.isFloating && shouldHideTabs(selectedComposite)) ||
+    tabbedPane.tabs.presentation.isHideTabs = (owner.isFloating && this.tabCount == 1 && shouldHideTabs(selectedComposite)) ||
                                               settings.editorTabPlacement == UISettings.TABS_NONE || settings.presentationMode
   }
 
@@ -616,7 +617,6 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       }
       else -> throw IllegalStateException("Unknown container: $parent")
     }
-    @Suppress("SSBasedInspection")
     dispose()
   }
 
@@ -746,7 +746,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       AllIcons.Chooser.Left.paintIcon(component, g, forLeftRightIcons.x - arrowsHShift, forLeftRightIcons.y)
       val textVShift = Registry.intValue("ide.splitter.chooser.info.panel.text.shift")
       val textY = forUpDownIcons.y + AllIcons.Chooser.Bottom.iconHeight + textVShift
-      g.color = UIUtil.getInactiveTextColor()
+      g.color = NamedColorUtil.getInactiveTextColor()
       g.font = font
       g.drawString(openShortcuts, centerX - openShortcutsWidth / 2, textY)
       if (owner.getWindows().size > 1) {
@@ -1223,8 +1223,8 @@ private fun hasClientPropertyInHierarchy(owner: Component, @Suppress("SameParame
   return false
 }
 
-internal class EditorWindowTopComponent(val window: EditorWindow, val composite: EditorComposite) : JPanel(
-  BorderLayout()), DataProvider, EditorWindowHolder {
+internal class EditorWindowTopComponent(@JvmField val window: EditorWindow,
+                                        @JvmField val composite: EditorComposite) : JPanel(BorderLayout()), DataProvider, EditorWindowHolder {
   init {
     add(composite.component, BorderLayout.CENTER)
     addFocusListener(object : FocusAdapter() {
@@ -1258,10 +1258,7 @@ internal class EditorWindowTopComponent(val window: EditorWindow, val composite:
 
   override fun getData(dataId: String): Any? {
     return when {
-      CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> {
-        val virtualFile = composite.file
-        if (virtualFile.isValid) virtualFile else null
-      }
+      CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> composite.file.takeIf { it.isValid }
       else -> if (CommonDataKeys.PROJECT.`is`(dataId)) composite.project else null
     }
   }

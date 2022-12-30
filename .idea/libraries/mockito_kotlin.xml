@@ -1,0 +1,19 @@
+<component name="libraryTable">
+  <library name="mockito.kotlin" type="repository">
+    <properties maven-id="org.mockito.kotlin:mockito-kotlin:4.0.0">
+      <exclude>
+        <dependency maven-id="org.mockito:mockito-core" />
+        <dependency maven-id="net.bytebuddy:byte-buddy" />
+        <dependency maven-id="net.bytebuddy:byte-buddy-agent" />
+        <dependency maven-id="org.objenesis:objenesis" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/kotlin/mockito-kotlin/4.0.0/mockito-kotlin-4.0.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/kotlin/mockito-kotlin/4.0.0/mockito-kotlin-4.0.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

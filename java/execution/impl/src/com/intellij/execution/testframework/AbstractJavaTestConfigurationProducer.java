@@ -261,7 +261,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
             final PsiFile psiFile = psiManager.findFile(file);
             if (psiFile instanceof PsiClassOwner) {
               PsiClass[] psiClasses = ((PsiClassOwner)psiFile).getClasses();
-              if (element != null && psiClasses.length > 0) {
+              if (element != null) {
                 for (PsiClass aClass : psiClasses) {
                   if (PsiTreeUtil.isAncestor(aClass, element, false)) {
                     psiClasses = new PsiClass[]{aClass};

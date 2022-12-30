@@ -574,7 +574,7 @@ public class TByteArrayList implements Serializable, Cloneable {
   public int hashCode() {
     int h = 0;
     for (int i = _pos; i-- > 0; ) {
-      h += HashFunctions.hash(_data[i]);
+      h += _data[i];
     }
     return h;
   }

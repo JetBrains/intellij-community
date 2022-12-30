@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
@@ -74,7 +75,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             )
         })
 
-    private class ChangeTypeToMutableFix(private val type: KotlinType) : LocalQuickFix {
+    private class ChangeTypeToMutableFix(@SafeFieldForPreview private val type: KotlinType) : LocalQuickFix {
         override fun getName() = KotlinBundle.message("change.type.to.mutable.fix.text")
 
         override fun getFamilyName() = name
@@ -160,7 +161,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
         }
     }
 
-    private class JoinWithInitializerFix(private val op: KtSingleValueToken) : LocalQuickFix {
+    private class JoinWithInitializerFix(@SafeFieldForPreview private val op: KtSingleValueToken) : LocalQuickFix {
         override fun getName() = KotlinBundle.message("join.with.initializer.fix.text")
 
         override fun getFamilyName() = name

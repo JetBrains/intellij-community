@@ -21,8 +21,8 @@ public final class ActionsGlobalSummaryManager {
   private static final Logger LOG = Logger.getInstance(ActionsGlobalSummaryManager.class);
   private static final @NotNull CharFilter QUOTE_FILTER = ch -> ch != '"';
 
-  private static final int DEFAULT_STATISTICS_VERSION = 1;
-  private static final int UPDATED_STATISTICS_VERSION = 2;
+  private static final int DEFAULT_STATISTICS_VERSION = 2;
+  private static final int UPDATED_STATISTICS_VERSION = 3;
 
   private final Map<String, ActionGlobalUsageInfo> myStatisticsMap;
   private final Map<String, ActionGlobalUsageInfo> myUpdatedStatisticsMap;
@@ -32,8 +32,8 @@ public final class ActionsGlobalSummaryManager {
 
 
   public ActionsGlobalSummaryManager() {
-    myStatisticsMap = loadStatistics("/statistics/actionsUsagesV1.csv");
-    myUpdatedStatisticsMap = loadStatistics("/statistics/actionsUsagesV2.csv");
+    myStatisticsMap = loadStatistics("/statistics/actionsUsagesV2.csv");
+    myUpdatedStatisticsMap = loadStatistics("/statistics/actionsUsagesV3.csv");
     mySummary = calculateTotalSummary(myStatisticsMap);
     myUpdatedSummary = calculateTotalSummary(myUpdatedStatisticsMap);
   }

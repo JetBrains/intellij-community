@@ -105,19 +105,21 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     Disposer.register(getTestRootDisposable(), () -> settings.resetEnabled(descriptor));
 
     checkHasGutter("org.apache.velocity.util.ExceptionUtils",
-                   "<html><i>Inferred</i> annotations available. Full signature:<p>\n" +
-                   "<b><i><span style=\"color:#808000;\">@</span><a href=\"psi_element://org.jetbrains.annotations.Contract\"><code><span style=\"color:#808000;\">Contract</span></code></a><span style=\"\">(</span><span style=\"color:#008000;font-weight:bold;\">\"null,_,_->null\"</span><span style=\"\">)</span></i></b> \n" +
-                   "<span style=\"color:#000000;\">Throwable</span> <span style=\"color:#000000;\">createWithCause</span><span style=\"\">(</span><span style=\"color:#000000;\">Class</span><span style=\"\">,</span>\n" +
-                   "<span style=\"color:#000000;\">String</span><span style=\"\">,</span>\n" +
-                   "<span style=\"color:#000000;\">Throwable</span><span style=\"\">)</span></html>");
+                   """
+                     <html><i>Inferred</i> annotations available. Full signature:<p>
+                     <b><i><span style="color:#808000;">@</span><a href="psi_element://org.jetbrains.annotations.Contract"><code><span style="color:#808000;">Contract</span></code></a><span style="">(</span><span style="color:#008000;font-weight:bold;">"null,_,_->null"</span><span style="">)</span></i></b>\s
+                     <span style="color:#000000;">Throwable</span> <span style="color:#000000;">createWithCause</span><span style="">(</span><span style="color:#000000;">Class</span><span style="">,</span>
+                     <span style="color:#000000;">String</span><span style="">,</span>
+                     <span style="color:#000000;">Throwable</span><span style="">)</span></html>""");
   }
 
   public void testExternalAnnoGutter() {
     checkHasGutter("java.lang.String",
-                   "<html>External annotations available. Full signature:<p>\n" +
-                   "<span style=\"color:#000000;\">String</span><span style=\"\">(</span><b><span style=\"color:#808000;\">@</span><a href=\"psi_element://org.jetbrains.annotations.NotNull\"><code><span style=\"color:#808000;\">NotNull</span></code></a></b> <span style=\"color:#000080;font-weight:bold;\">char</span><span style=\"\">[]</span><span style=\"\">,</span>\n" +
-                   "<span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,</span>\n" +
-                   "<span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">)</span></html>");
+                   """
+                     <html>External annotations available. Full signature:<p>
+                     <span style="color:#000000;">String</span><span style="">(</span><b><span style="color:#808000;">@</span><a href="psi_element://org.jetbrains.annotations.NotNull"><code><span style="color:#808000;">NotNull</span></code></a></b> <span style="color:#000080;font-weight:bold;">char</span><span style="">[]</span><span style="">,</span>
+                     <span style="color:#000080;font-weight:bold;">int</span><span style="">,</span>
+                     <span style="color:#000080;font-weight:bold;">int</span><span style="">)</span></html>""");
   }
 
   private void checkHasGutter(String className, String expectedText) {

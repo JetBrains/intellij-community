@@ -88,6 +88,7 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.redundant.setter.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SimplifyNegatedBinaryExpressionInspection"
             groupPath="Kotlin"
@@ -153,5 +154,16 @@
                      level="WARNING"
                      language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.semicolon.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RemoveEmptyParenthesesFromLambdaCallInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+            enabledByDefault="true"
+            cleanupTool="true"
+            level="WEAK WARNING"
+            language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+            key="inspection.remove.empty.parentheses.from.lambda.call.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>

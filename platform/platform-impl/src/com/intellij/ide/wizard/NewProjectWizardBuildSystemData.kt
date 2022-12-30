@@ -14,7 +14,7 @@ interface NewProjectWizardBuildSystemData : NewProjectWizardLanguageData {
   companion object {
     val KEY = Key.create<NewProjectWizardBuildSystemData>(NewProjectWizardBuildSystemData::class.java.name)
 
-    val NewProjectWizardStep.buildSystemData get() = data.getUserData(KEY)!!
+    private val NewProjectWizardStep.buildSystemData get() = data.getUserData(KEY)!!
 
     val NewProjectWizardStep.buildSystemProperty get() = buildSystemData.buildSystemProperty
     val NewProjectWizardStep.buildSystem get() = buildSystemData.buildSystem

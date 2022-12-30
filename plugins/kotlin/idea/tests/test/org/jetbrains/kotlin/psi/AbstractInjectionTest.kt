@@ -24,7 +24,7 @@ abstract class AbstractInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
         val testName = getTestName(true)
         return when {
             testName.endsWith("WithAnnotation") -> KotlinLightProjectDescriptor.INSTANCE
-            testName.endsWith("WithRuntime") -> KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+            testName.endsWith("WithRuntime") -> KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
             else -> JAVA_LATEST
         }
     }

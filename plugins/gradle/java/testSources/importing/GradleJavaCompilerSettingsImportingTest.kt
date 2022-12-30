@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.pom.java.LanguageLevel
+import org.jetbrains.plugins.gradle.util.isSupported
+import org.junit.Assume
 import org.junit.Test
 
 class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImportingTestCase() {
@@ -66,12 +68,12 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
 
   @Test
   fun `test language level approximation`() {
-    if (isNotSupportedJava14) return
-
     val nonPreviewLevel = LanguageLevel.HIGHEST
     val preview = LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal + 1]
-    
-    val feature = nonPreviewLevel.toJavaVersion().feature
+    val javaVersion = nonPreviewLevel.toJavaVersion()
+    val feature = javaVersion.feature
+
+    Assume.assumeTrue(isSupported(currentGradleVersion, javaVersion))
 
     createJavaGradleSubProject(
       projectSourceCompatibility = "$feature",

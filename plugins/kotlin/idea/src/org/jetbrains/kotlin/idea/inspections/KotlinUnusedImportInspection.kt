@@ -202,7 +202,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
         }
         if (hasErrors) return false
 
-        return DaemonListeners.canChangeFileSilently(file)
+        return DaemonListeners.canChangeFileSilently(file, true/* assume inspections are run on files in content only */)
     }
 
     private fun optimizeImportsOnTheFly(file: KtFile, optimizedImports: List<ImportPath>, editor: Editor, project: Project) {

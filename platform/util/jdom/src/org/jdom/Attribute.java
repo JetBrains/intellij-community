@@ -55,10 +55,6 @@
 package org.jdom;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.TreeMap;
 
 /**
  * An XML attribute. Methods allow the user to obtain the value of the attribute
@@ -79,7 +75,7 @@ import java.util.TreeMap;
  * @author Victor Toni
  * @author Rolf Lear
  */
-public class Attribute extends CloneBase implements NamespaceAware, Serializable, Cloneable {
+public class Attribute extends CloneBase implements Serializable, Cloneable {
   /**
    * JDOM 2.0.0 Serialization version. Attribute is simple
    */
@@ -619,67 +615,5 @@ public class Attribute extends CloneBase implements NamespaceAware, Serializable
     else {
       throw new DataConversionException(name, "boolean");
     }
-  }
-
-  /**
-   * Get the namespaces that are in-scope on this Attribute.
-   * <p>
-   * Attribute has peculiarities that affect the in-scope Namespaces because
-   * there are conditions in which the Attribute's scope is different to its
-   * parent Element's scope. Specifically, if the parent Element is in a
-   * 'default' Namespace that is not the empty Namespace (e.g.
-   * xmlns="someurl") and this Attribute is also in the default Namespace (has
-   * no prefix - but for Attributes that means the Namespace URL is ""), then
-   * this Attribute has a different namespace scope from it's parent Element
-   * because it does not include the 'someurl' Namespace.
-   * <p>
-   * In the above conditions (no-prefix Attribute in an Element with a
-   * non-empty no-prefix Namespace) this Attribute effectively re-binds the ""
-   * prefix to the "" URL, thus the Attribute 'introduces' the Namespace.
-   * It follows then that the getNamespacesIntroduced() will return a list
-   * with the single member {@link Namespace#NO_NAMESPACE}.
-   * <p>
-   * Note that the Attribute's Namespace will always be reported first.
-   * <p>
-   * <strong>Description copied from</strong>
-   * <p>
-   * {@inheritDoc}
-   */
-  @Override
-  public List<Namespace> getNamespacesInScope() {
-    if (getParent() == null) {
-      List<Namespace> ret = new ArrayList<Namespace>(3);
-      ret.add(getNamespace());
-      ret.add(Namespace.XML_NAMESPACE);
-      return Collections.unmodifiableList(ret);
-    }
-    return orderFirst(getNamespace(), getParent().getNamespacesInScope());
-  }
-
-  @Override
-  public List<Namespace> getNamespacesIntroduced() {
-    if (getParent() == null) {
-      return Collections.singletonList(getNamespace());
-    }
-    return Collections.emptyList();
-  }
-
-  private static List<Namespace> orderFirst(final Namespace nsa, final List<Namespace> nsl) {
-    if (nsl.get(0) == nsa) {
-      return nsl;
-    }
-
-    // OK, we have our namespace list, but ours is not the first.
-    // we need the Attribute's Namespace to be up front.
-    TreeMap<String, Namespace> tm = new TreeMap<String, Namespace>();
-    for (Namespace ns : nsl) {
-      if (ns != nsa) {
-        tm.put(ns.getPrefix(), ns);
-      }
-    }
-    ArrayList<Namespace> ret = new ArrayList<Namespace>(tm.size() + 1);
-    ret.add(nsa);
-    ret.addAll(tm.values());
-    return Collections.unmodifiableList(ret);
   }
 }

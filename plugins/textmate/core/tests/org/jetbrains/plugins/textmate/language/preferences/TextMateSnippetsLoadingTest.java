@@ -45,9 +45,10 @@ public class TextMateSnippetsLoadingTest {
     TextMateSnippet snippet = snippets.iterator().next();
     assertNotNull(snippet);
     assertEquals("div", snippet.getKey());
-    assertEquals("<div${1: id=\"${2:name}\"}>\n" +
-                 "\t${0:$TM_SELECTED_TEXT}\n" +
-                 "</div>", snippet.getContent());
+    assertEquals("""
+                   <div${1: id="${2:name}"}>
+                   \t${0:$TM_SELECTED_TEXT}
+                   </div>""", snippet.getContent());
     assertEquals("Div", snippet.getName());
     assertEquals("576036C0-A60E-11D9-ABD6-000D93C8BE28", snippet.getSettingsId());
   }
@@ -56,7 +57,7 @@ public class TextMateSnippetsLoadingTest {
   private static SnippetsRegistry loadSnippets(@NotNull String bundleName) throws IOException {
     final Bundle bundle = getBundle(bundleName);
     assertNotNull(bundle);
-    final SnippetsRegistry snippetsRegistry = new SnippetsRegistry();
+    final SnippetsRegistryImpl snippetsRegistry = new SnippetsRegistryImpl();
     Interner<CharSequence> interner = new HashSetInterner<>();
     for (File file : bundle.getSnippetFiles()) {
       final TextMateSnippet snippet = PreferencesReadUtil.loadSnippet(file, new CompositePlistReader().read(file), interner);

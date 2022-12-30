@@ -100,7 +100,9 @@ object ContentRootCollector {
     }
   }
 
-  sealed class ImportedFolder(val path: String, internal val rank: Int) : Comparable<ImportedFolder> {
+  sealed class ImportedFolder(path: String, internal val rank: Int) : Comparable<ImportedFolder> {
+    val path: String = FileUtil.toCanonicalPath(path)
+
     override fun compareTo(other: ImportedFolder): Int {
       val result = FileUtil.comparePaths(path, other.path)
       if (result != 0) return result

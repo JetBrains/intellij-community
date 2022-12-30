@@ -91,11 +91,10 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
   void testClassWithDisabledCondition() throws ExecutionException {
     myFixture.addClass("package org.junit.jupiter.api; public @interface Disabled {}");
     PsiClass aClass = myFixture.addClass(
-      "/** @noinspection ALL*/\n" +
-      "@org.junit.jupiter.api.Disabled\n" +
-      "public class MyTest " +
-      "{@org.junit.jupiter.api.Test " +
-      "void method() {}}");
+      """
+        /** @noinspection ALL*/
+        @org.junit.jupiter.api.Disabled
+        public class MyTest {@org.junit.jupiter.api.Test void method() {}}""");
     assertNotNull(aClass);
     TestFramework framework = TestFrameworks.detectFramework(aClass);
     assertTrue(framework instanceof JUnit5Framework, framework.getName());
@@ -107,16 +106,15 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
 
   @Test
   void testMetaDisabledClass() throws ExecutionException {
-    myFixture.addClass("package org.test.sample;\n" +
-                       "@org.junit.jupiter.api.Disabled\n" +
-                       "public @interface " +
-                       "MetaDisabled {}");
+    myFixture.addClass("""
+                         package org.test.sample;
+                         @org.junit.jupiter.api.Disabled
+                         public @interface MetaDisabled {}""");
     PsiClass aClass = myFixture.addClass(
-      "/** @noinspection ALL*/\n" +
-      "@org.test.sample.MetaDisabled\n" +
-      "public class MyTest " +
-      "{@org.junit.jupiter.api.Test " +
-      "void method() {}}");
+      """
+        /** @noinspection ALL*/
+        @org.test.sample.MetaDisabled
+        public class MyTest {@org.junit.jupiter.api.Test void method() {}}""");
     assertNotNull(aClass);
     TestFramework framework = TestFrameworks.detectFramework(aClass);
     assertTrue(framework instanceof JUnit5Framework, framework.getName());
@@ -129,12 +127,11 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
   @Test
   void testWithDisabledCondition() throws ExecutionException {
     PsiClass aClass = myFixture.addClass(
-      "/** @noinspection ALL*/\n" +
-      "public class MyTest {\n" +
-      "  " +
-      "@org.junit.jupiter.api.Disabled\n" +
-      "  @org.junit.jupiter.api.Test " +
-      "void method() {}}");
+      """
+        /** @noinspection ALL*/
+        public class MyTest {
+          @org.junit.jupiter.api.Disabled
+          @org.junit.jupiter.api.Test void method() {}}""");
     assertNotNull(aClass);
     TestFramework framework = TestFrameworks.detectFramework(aClass);
     assertTrue(framework instanceof JUnit5Framework, framework.getName());
@@ -187,16 +184,19 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
 
   @Test
   void metaAnnotations() {
-    myFixture.addClass("package a;\n" +
-                       "import java.lang.annotation.Retention;\n" +
-                       "import java.lang.annotation.RetentionPolicy;\n" +
-                       "@Retention(RetentionPolicy.RUNTIME)\n" +
-                       "@org.junit.jupiter.api.Test\n" +
-                       "@interface MyTest {}");
-    PsiClass aClass = myFixture.addClass("class ATest {\n" +
-                                         "    @a.MyTest\n" +
-                                         "    void foo() {}\n" +
-                                         "}\n");
+    myFixture.addClass("""
+                         package a;
+                         import java.lang.annotation.Retention;
+                         import java.lang.annotation.RetentionPolicy;
+                         @Retention(RetentionPolicy.RUNTIME)
+                         @org.junit.jupiter.api.Test
+                         @interface MyTest {}""");
+    PsiClass aClass = myFixture.addClass("""
+                                           class ATest {
+                                               @a.MyTest
+                                               void foo() {}
+                                           }
+                                           """);
     assertTrue(JUnitUtil.isTestClass(aClass, false, false));
     assertTrue(JUnitUtil.isTestMethod(MethodLocation.elementInClass(aClass.getMethods()[0], aClass)));
   }

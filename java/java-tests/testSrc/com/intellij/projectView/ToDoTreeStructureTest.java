@@ -62,12 +62,14 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
       TodoTreeStructure structure = all.getTodoTreeStructure();
       structure.setFlattenPackages(true);
       ProjectViewTestUtil.assertStructureEqual(structure,
-                                               "Root\n" +
-                                               " Summary\n" +
-                                               "  package2 toDoFileCount=1,toDoItemCount=2\n" +
-                                               "   JavaClass.java\n" +
-                                               "    Item: (62,78)\n" +
-                                               "    Item: (145,162)\n",
+                                               """
+                                                 Root
+                                                  Summary
+                                                   package2 toDoFileCount=1,toDoItemCount=2
+                                                    JavaClass.java
+                                                     Item: (62,78)
+                                                     Item: (145,162)
+                                                 """,
                                                myPrintInfo);
 
       checkOccurrences(all, new String[]{"Item: (62,78)", "Item: (145,162)"});
@@ -85,23 +87,25 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       AbstractTreeStructure structure = all.getTodoTreeStructure();
       ProjectViewTestUtil.assertStructureEqual(structure,
-                                               "Root\n" +
-                                               " Summary\n" +
-                                               "  toDo\n" +
-                                               "   xmlFile.xml\n" +
-                                               "    Item: (12,16)\n" +
-                                               "  package1 toDoFileCount=2,toDoItemCount=4\n" +
-                                               "   package2 toDoFileCount=1,toDoItemCount=2\n" +
-                                               "    JavaClass.java\n" +
-                                               "     Item: (62,78)\n" +
-                                               "     Item: (145,162)\n" +
-                                               "   JavaClass.java\n" +
-                                               "    Item: (52,68)\n" +
-                                               "    Item: (134,151)\n" +
-                                               "  package3 toDoFileCount=1,toDoItemCount=2\n" +
-                                               "   JavaClass.java\n" +
-                                               "    Item: (53,69)\n" +
-                                               "    Item: (136,153)\n", myPrintInfo);
+                                               """
+                                                 Root
+                                                  Summary
+                                                   toDo
+                                                    xmlFile.xml
+                                                     Item: (12,16)
+                                                   package1 toDoFileCount=2,toDoItemCount=4
+                                                    package2 toDoFileCount=1,toDoItemCount=2
+                                                     JavaClass.java
+                                                      Item: (62,78)
+                                                      Item: (145,162)
+                                                    JavaClass.java
+                                                     Item: (52,68)
+                                                     Item: (134,151)
+                                                   package3 toDoFileCount=1,toDoItemCount=2
+                                                    JavaClass.java
+                                                     Item: (53,69)
+                                                     Item: (136,153)
+                                                 """, myPrintInfo);
 
       checkOccurrences(all, new String[]{"Item: (12,16)", "Item: (62,78)", "Item: (145,162)", "Item: (52,68)", "Item: (134,151)",
         "Item: (53,69)", "Item: (136,153)"});
@@ -121,10 +125,12 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
       builder.setFile(getSrcDirectory().findSubdirectory("package1").findFile("JavaClass.java"));
       builder.updateTree();
       ProjectViewTestUtil.assertStructureEqual(builder.getTodoTreeStructure(),
-                                               "JavaClass.java\n" +
-                                               " JavaClass.java\n" +
-                                               "  Item: (52,68)\n" +
-                                               "  Item: (134,151)\n", myPrintInfo);
+                                               """
+                                                 JavaClass.java
+                                                  JavaClass.java
+                                                   Item: (52,68)
+                                                   Item: (134,151)
+                                                 """, myPrintInfo);
     }
     finally {
       Disposer.dispose(builder);

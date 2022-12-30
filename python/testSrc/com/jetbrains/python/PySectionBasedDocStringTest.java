@@ -171,20 +171,22 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     final SectionField param1 = section1.getFields().get(0);
     assertEquals("x", param1.getName());
     assertEquals("int", param1.getType());
-    assertEquals("first line of the description\n" +
-                 "second line\n" +
-                 "  third line\n" +
-                 "\n" +
-                 "Example::\n" +
-                 "\n" +
-                 "    assert func(42) is None", param1.getDescription());
+    assertEquals("""
+                   first line of the description
+                   second line
+                     third line
+
+                   Example::
+
+                       assert func(42) is None""", param1.getDescription());
   }
 
   public void testMultilineSummary() {
     final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
-    assertEquals("First line\n" +
-                 "Second line\n" +
-                 "Third line", docString.getSummary());
+    assertEquals("""
+                   First line
+                   Second line
+                   Third line""", docString.getSummary());
   }
 
   public void testNumpyNamedReturnsAndYields() {
@@ -229,10 +231,11 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     final SectionField param1 = paramSection.getFields().get(0);
     assertEquals("x", param1.getName());
     assertEmpty(param1.getType());
-    assertEquals("First line\n" +
-                 "Second line\n" +
-                 "\n" +
-                 "Line after single break", param1.getDescription());
+    assertEquals("""
+                   First line
+                   Second line
+
+                   Line after single break""", param1.getDescription());
   }
 
   // PY-21883
@@ -298,14 +301,16 @@ public class PySectionBasedDocStringTest extends PyTestCase {
   // PY-16766
   public void testGoogleDocStringContentDetection() {
     assertTrue(DocStringUtil.isLikeGoogleDocString(
-      "\n" +
-      "    My Section:\n" +
-      "        some user defined section\n" +
-      "    \n" +
-      "    Parameters:\n" +
-      "        param1: \n" +
-      "\n" +
-      "    Returns:\n"));
+      """
+
+            My Section:
+                some user defined section
+           \s
+            Parameters:
+                param1:\s
+
+            Returns:
+        """));
   }
 
   public void testNumpyEmptySectionIndent() {
@@ -394,18 +399,20 @@ public class PySectionBasedDocStringTest extends PyTestCase {
 
   // PY-17657, PY-16303
   public void testNotGoogleFormatIfDocstringContainTags() {
-    assertEquals(DocStringFormat.REST, DocStringUtil.guessDocStringFormat("\"\"\"\n" +
-                                                                          ":type sub_field: FieldDescriptor | () -> FieldDescriptor\n" +
-                                                                          ":param sub_field: The type of field in this collection\n" +
-                                                                          "    Tip: You can pass a ValueObject class here to ...\n" +
-                                                                          "    Example:\n" +
-                                                                          "        addresses = field.Collection(AddressObject)\n" +
-                                                                          "\"\"\""));
+    assertEquals(DocStringFormat.REST, DocStringUtil.guessDocStringFormat("""
+                                                                            ""\"
+                                                                            :type sub_field: FieldDescriptor | () -> FieldDescriptor
+                                                                            :param sub_field: The type of field in this collection
+                                                                                Tip: You can pass a ValueObject class here to ...
+                                                                                Example:
+                                                                                    addresses = field.Collection(AddressObject)
+                                                                            ""\""""));
 
-    assertEquals(DocStringFormat.REST, DocStringUtil.guessDocStringFormat("\"\"\"\n" +
-                                                                          "Args:\n" +
-                                                                          "    :param Tuple[int, int] name: Some description\n" +
-                                                                          "\"\"\""));
+    assertEquals(DocStringFormat.REST, DocStringUtil.guessDocStringFormat("""
+                                                                            ""\"
+                                                                            Args:
+                                                                                :param Tuple[int, int] name: Some description
+                                                                            ""\""""));
   }
 
   // PY-31025

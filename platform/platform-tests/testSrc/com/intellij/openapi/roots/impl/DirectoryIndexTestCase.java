@@ -89,9 +89,9 @@ public abstract class DirectoryIndexTestCase extends HeavyPlatformTestCase {
     assertExcluded(file, null);
   }
 
-  protected void assertIteratedContent(Module module, @Nullable List<VirtualFile> mustContain, @Nullable List<VirtualFile> mustNotContain) {
+  static void assertIteratedContent(@NotNull Module module, @Nullable List<VirtualFile> mustContain, @Nullable List<VirtualFile> mustNotContain) {
     assertIteratedContent(ModuleRootManager.getInstance(module).getFileIndex(), mustContain, mustNotContain);
-    assertIteratedContent(myFileIndex, mustContain, mustNotContain);
+    assertIteratedContent(ProjectFileIndex.getInstance(module.getProject()), mustContain, mustNotContain);
   }
 
   protected void assertIndexableContent(@Nullable List<VirtualFile> mustContain, @Nullable List<VirtualFile> mustNotContain) {

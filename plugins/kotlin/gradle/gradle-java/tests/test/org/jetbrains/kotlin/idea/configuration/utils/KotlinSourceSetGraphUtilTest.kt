@@ -8,6 +8,7 @@ import com.google.common.graph.GraphBuilder
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.createSourceSetDependsOnGraph
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.putInferredTestToProductionEdges
 import org.jetbrains.kotlin.idea.gradleTooling.*
+import org.jetbrains.kotlin.idea.projectModel.KotlinAndroidSourceSetInfo
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_MAIN_SOURCE_SET_NAME
@@ -171,6 +172,7 @@ private fun createKotlinSourceSetPair(
     allDependsOnSourceSets: Set<String> = declaredDependsOnSourceSets,
     platforms: Set<KotlinPlatform> = emptySet(),
     isTestModule: Boolean = false,
+    androidSourceSetInfo: KotlinAndroidSourceSetInfo? = null
 ): Pair<String, KotlinSourceSet> = name to KotlinSourceSetImpl(
     name = name,
     languageSettings = KotlinLanguageSettingsImpl(
@@ -191,7 +193,8 @@ private fun createKotlinSourceSetPair(
     allDependsOnSourceSets = allDependsOnSourceSets,
     additionalVisibleSourceSets = emptySet(),
     actualPlatforms = KotlinPlatformContainerImpl().apply { pushPlatforms(platforms) },
-    isTestComponent = isTestModule
+    isTestComponent = isTestModule,
+    androidSourceSetInfo = androidSourceSetInfo
 )
 
 private fun Graph<KotlinSourceSet>.nameEdges() = edges()

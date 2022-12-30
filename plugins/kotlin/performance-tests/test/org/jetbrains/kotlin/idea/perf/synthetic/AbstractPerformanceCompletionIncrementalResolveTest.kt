@@ -37,7 +37,7 @@ abstract class AbstractPerformanceCompletionIncrementalResolveTest : KotlinLight
         val stats: Stats = Stats("completion-incremental")
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     override fun setUp() {
         super.setUp()

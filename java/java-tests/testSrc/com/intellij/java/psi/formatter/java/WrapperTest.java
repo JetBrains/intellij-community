@@ -450,21 +450,22 @@ public class WrapperTest extends JavaFormatterTestCase {
     getSettings(JavaLanguage.INSTANCE).getRootSettings().getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 2;
     getSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
 
-    doTextTest("class Foo {\n" +
-               "  void foo() {\n" +
-               "    for (int i = 0; i < descriptors.length; i++) {\n" +
-               "      descriptors[i] = manager.createProblemDescriptor(results.get(i), \"Usage of the API documented as @since 1.5\", (LocalQuickFix)null,ProblemHighlightType.GENERIC_ERROR_OR_WARNING);\n" +
-               "    }" +
-               "  }\n" +
-               "}",
-               "class Foo {\n" +
-               "  void foo() {\n" +
-               "    for (int i = 0; i < descriptors.length; i++) {\n" +
-               "      descriptors[i] = manager.createProblemDescriptor(results.get(i), \"Usage of the API documented as @since 1.5\", (LocalQuickFix) null,\n" +
-               "                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);\n" +
-               "    }\n" +
-               "  }\n" +
-               "}");
+    doTextTest("""
+                 class Foo {
+                   void foo() {
+                     for (int i = 0; i < descriptors.length; i++) {
+                       descriptors[i] = manager.createProblemDescriptor(results.get(i), "Usage of the API documented as @since 1.5", (LocalQuickFix)null,ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                     }  }
+                 }""",
+               """
+                 class Foo {
+                   void foo() {
+                     for (int i = 0; i < descriptors.length; i++) {
+                       descriptors[i] = manager.createProblemDescriptor(results.get(i), "Usage of the API documented as @since 1.5", (LocalQuickFix) null,
+                                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                     }
+                   }
+                 }""");
   }
 
   private void defaultCodeStyle() {
@@ -513,30 +514,34 @@ public class WrapperTest extends JavaFormatterTestCase {
     getSettings(JavaLanguage.INSTANCE).THROWS_LIST_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     getSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_THROWS_LIST = false;
 
-    doTextTest("class Foo {\n" +
-               "    void methodFoo() throws IOException, InvalidOperationException {\n" +
-               "    }\n" +
-               "}",
-               "class Foo {\n" +
-               "    void methodFoo()\n" +
-               "            throws IOException, InvalidOperationException {\n" +
-               "    }\n" +
-               "}");
+    doTextTest("""
+                 class Foo {
+                     void methodFoo() throws IOException, InvalidOperationException {
+                     }
+                 }""",
+               """
+                 class Foo {
+                     void methodFoo()
+                             throws IOException, InvalidOperationException {
+                     }
+                 }""");
 
     getSettings(JavaLanguage.INSTANCE).THROWS_KEYWORD_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     getSettings(JavaLanguage.INSTANCE).THROWS_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_THROWS_LIST = false;
 
-    doTextTest("class Foo {\n" +
-               "    void methodFoo() throws IOException, InvalidOperationException {\n" +
-               "    }\n" +
-               "}",
-               "class Foo {\n" +
-               "    void methodFoo() throws\n" +
-               "            IOException,\n" +
-               "            InvalidOperationException {\n" +
-               "    }\n" +
-               "}");
+    doTextTest("""
+                 class Foo {
+                     void methodFoo() throws IOException, InvalidOperationException {
+                     }
+                 }""",
+               """
+                 class Foo {
+                     void methodFoo() throws
+                             IOException,
+                             InvalidOperationException {
+                     }
+                 }""");
 
   }
 

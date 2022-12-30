@@ -16,6 +16,7 @@
 
 package org.jetbrains.idea.packagesearch.http
 
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -58,7 +59,9 @@ class HttpWrapper {
       .GET()
       .build()
 
-    val client = HttpClient.newHttpClient()
+    val client = HttpClient.newBuilder()
+        .executor(ProcessIOExecutorService.INSTANCE)
+        .build()
     val response = client.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream()).await()
     val responseText = response.body().use { it.readBytes().toString(Charsets.UTF_8) }
 

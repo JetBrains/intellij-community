@@ -393,7 +393,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   @Override
   public void waitForUpdate() {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    assert !ApplicationManager.getApplication().isReadAccessAllowed();
     CountDownLatch waiter = new CountDownLatch(1);
     invokeAfterUpdate(false, waiter::countDown);
     awaitWithCheckCanceled(waiter);
@@ -418,6 +418,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   @Override
   public void scheduleUpdate() {
+    scheduleUpdateImpl();
+  }
+
+  public void scheduleUpdateImpl() {
     myUpdater.schedule();
   }
 
@@ -797,7 +801,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   /**
    * @deprecated use {@link #getUnversionedFilesPaths}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   @NotNull
   public List<VirtualFile> getUnversionedFiles() {
     return mapNotNull(getUnversionedFilesPaths(), FilePath::getVirtualFile);
@@ -1035,6 +1039,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   @Override
   public void moveChangesTo(@NotNull LocalChangeList list, Change @NotNull ... changes) {
+    moveChangesTo(list, ContainerUtil.skipNulls(Arrays.asList(changes)));
+  }
+
+  @Override
+  public void moveChangesTo(@NotNull LocalChangeList list, @NotNull List<@NotNull Change> changes) {
     ApplicationManager.getApplication().runReadAction(() -> {
       synchronized (myDataLock) {
         myModifier.moveChangesTo(list.getName(), changes);

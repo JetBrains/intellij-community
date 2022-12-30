@@ -2,8 +2,6 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
-import org.gradle.api.Named
-import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.*
@@ -11,6 +9,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel.Companion.NO
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheMapperImpl
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinSourceSetProtoBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinTargetBuilder
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinExtensionReflection
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinTargetReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_MAIN_SOURCE_SET_NAME
@@ -39,16 +38,23 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
 
     private fun buildAll(project: Project, builderContext: ModelBuilderContext?): KotlinMPPGradleModel? {
         try {
-            val projectTargets = project.getTargets() ?: return null
+            val kotlinExtension = project.extensions.findByName("kotlin") ?: return null
+            val kotlinExtensionReflection = KotlinExtensionReflection(project, kotlinExtension)
+            if (!shouldBuild(kotlinExtensionReflection)) return null
+
             val modelBuilderContext = builderContext ?: return null
+
+            val kotlinGradlePluginVersion = kotlinExtensionReflection.parseKotlinGradlePluginVersion()
             val argsMapper = CompilerArgumentsCacheMapperImpl()
 
-            val importingContext = MultiplatformModelImportingContextImpl(project, argsMapper, modelBuilderContext)
+            val importingContext = MultiplatformModelImportingContextImpl(
+                project, kotlinGradlePluginVersion, argsMapper, modelBuilderContext
+            )
 
-            val sourceSets = buildSourceSets(importingContext) ?: return null
+            val sourceSets = buildSourceSets(kotlinExtensionReflection, importingContext)
             importingContext.initializeSourceSets(sourceSets)
 
-            val targets = buildTargets(importingContext, projectTargets)
+            val targets = buildTargets(importingContext, kotlinExtensionReflection.targets)
             importingContext.initializeTargets(targets)
             importingContext.initializeCompilations(targets.flatMap { it.compilations })
 
@@ -65,7 +71,8 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
                 ),
                 kotlinNativeHome = kotlinNativeHome,
                 dependencyMap = importingContext.dependencyMapper.toDependencyMap(),
-                cacheAware = argsMapper
+                cacheAware = argsMapper,
+                kotlinGradlePluginVersion = kotlinGradlePluginVersion
             ).apply {
                 kotlinImportingDiagnostics += collectDiagnostics(importingContext)
             }
@@ -95,14 +102,12 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
         return experimentalExt["getCoroutines"] as? String
     }
 
-    private fun buildSourceSets(importingContext: MultiplatformModelImportingContext): Map<String, KotlinSourceSetImpl>? {
-        val kotlinExt = importingContext.project.extensions.findByName("kotlin") ?: return null
-        val getSourceSets = kotlinExt.javaClass.getMethodOrNull("getSourceSets") ?: return null
-
-        @Suppress("UNCHECKED_CAST")
-        val sourceSets =
-            (getSourceSets(kotlinExt) as? NamedDomainObjectContainer<Named>)?.asMap?.values ?: emptyList<Named>()
-        val androidDeps = buildAndroidDeps(importingContext, kotlinExt.javaClass.classLoader)
+    private fun buildSourceSets(
+        kotlinExtensionReflection: KotlinExtensionReflection,
+        importingContext: MultiplatformModelImportingContext
+    ): Map<String, KotlinSourceSetImpl> {
+        val sourceSets = kotlinExtensionReflection.sourceSets
+        val androidDeps = buildAndroidDeps(importingContext, kotlinExtensionReflection.kotlinExtension.javaClass.classLoader)
 
         val sourceSetProtoBuilder = KotlinSourceSetProtoBuilder(androidDeps, importingContext.project)
 
@@ -143,10 +148,10 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
 
     private fun buildTargets(
         importingContext: MultiplatformModelImportingContext,
-        projectTargets: Collection<Named>
+        projectTargets: List<KotlinTargetReflection>
     ): Collection<KotlinTarget> {
-        return projectTargets.mapNotNull {
-            KotlinTargetBuilder.buildComponent(KotlinTargetReflection(it), importingContext)
+        return projectTargets.mapNotNull { kotlinTargetReflection ->
+            KotlinTargetBuilder.buildComponent(kotlinTargetReflection, importingContext)
         }
     }
 
@@ -219,6 +224,18 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
             // in all other cases, in HMPP we shouldn't coerce anything
             else -> false
         }
+    }
+
+    private fun KotlinExtensionReflection.parseKotlinGradlePluginVersion(): KotlinGradlePluginVersion? {
+        val version = KotlinGradlePluginVersion.parse(kotlinGradlePluginVersion ?: return null)
+        if (version == null) {
+            MPP_BUILDER_LOGGER.warn("[sync warning] Failed to parse KotlinGradlePluginVersion: $version")
+        }
+        return version
+    }
+
+    private fun shouldBuild(extension: KotlinExtensionReflection): Boolean {
+        return extension.kotlinExtension.javaClass.getMethodOrNull("getTargets") != null && extension.targets.isNotEmpty()
     }
 
     companion object {

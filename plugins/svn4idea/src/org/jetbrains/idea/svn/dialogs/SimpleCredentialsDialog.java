@@ -4,7 +4,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
 
@@ -125,7 +125,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
     gb.gridy += 1;
     if (! myAllowSave) {
       final JLabel cannotSaveLabel = new JLabel(SvnBundle.message("svn.cannot.save.credentials.store-auth-creds"));
-      cannotSaveLabel.setForeground(UIUtil.getInactiveTextColor());
+      cannotSaveLabel.setForeground(NamedColorUtil.getInactiveTextColor());
       panel.add(cannotSaveLabel, gb);
       gb.gridy += 1;
     }

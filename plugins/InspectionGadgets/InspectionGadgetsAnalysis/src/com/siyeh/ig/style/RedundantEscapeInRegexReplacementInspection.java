@@ -57,6 +57,7 @@ public class RedundantEscapeInRegexReplacementInspection extends BaseInspection 
         }
         else {
           if (escaped) {
+            escaped = false;
             if (c == '$') continue;
             final TextRange range = ExpressionUtils.findStringLiteralRange(lastArgument, i - 1, i);
             if (range != null) {

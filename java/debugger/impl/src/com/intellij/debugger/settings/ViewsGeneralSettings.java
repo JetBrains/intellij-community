@@ -14,6 +14,7 @@ public final class ViewsGeneralSettings implements PersistentStateComponent<View
   public boolean HIDE_NULL_ARRAY_ELEMENTS = true;
   public boolean AUTOSCROLL_TO_NEW_LOCALS = true;
   public boolean USE_DFA_ASSIST = true;
+  public boolean USE_DFA_ASSIST_GRAY_OUT = true;
   public boolean POPULATE_THROWABLE_STACKTRACE = true;
 
   public static ViewsGeneralSettings getInstance() {
@@ -36,6 +37,7 @@ public final class ViewsGeneralSettings implements PersistentStateComponent<View
     return HIDE_NULL_ARRAY_ELEMENTS == generalSettings.HIDE_NULL_ARRAY_ELEMENTS &&
            AUTOSCROLL_TO_NEW_LOCALS == generalSettings.AUTOSCROLL_TO_NEW_LOCALS &&
            POPULATE_THROWABLE_STACKTRACE == generalSettings.POPULATE_THROWABLE_STACKTRACE &&
-           USE_DFA_ASSIST == generalSettings.USE_DFA_ASSIST;
+           USE_DFA_ASSIST == generalSettings.USE_DFA_ASSIST &&
+           USE_DFA_ASSIST_GRAY_OUT == generalSettings.USE_DFA_ASSIST_GRAY_OUT;
   }
 }

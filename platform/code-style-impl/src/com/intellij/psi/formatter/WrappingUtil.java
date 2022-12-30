@@ -22,16 +22,12 @@ public final class WrappingUtil {
   }
 
   public static WrapType getWrapType(int setting) {
-    switch (setting) {
-      case CommonCodeStyleSettings.WRAP_ALWAYS:
-        return WrapType.ALWAYS;
-      case CommonCodeStyleSettings.WRAP_AS_NEEDED:
-        return WrapType.NORMAL;
-      case CommonCodeStyleSettings.DO_NOT_WRAP:
-        return WrapType.NONE;
-      default:
-        return WrapType.CHOP_DOWN_IF_LONG;
-    }
+    return switch (setting) {
+      case CommonCodeStyleSettings.WRAP_ALWAYS -> WrapType.ALWAYS;
+      case CommonCodeStyleSettings.WRAP_AS_NEEDED -> WrapType.NORMAL;
+      case CommonCodeStyleSettings.DO_NOT_WRAP -> WrapType.NONE;
+      default -> WrapType.CHOP_DOWN_IF_LONG;
+    };
   }
 
 }

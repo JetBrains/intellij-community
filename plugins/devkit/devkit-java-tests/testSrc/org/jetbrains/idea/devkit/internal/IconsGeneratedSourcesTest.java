@@ -20,32 +20,35 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public class IconsGeneratedSourcesTest extends LightJavaCodeInsightFixtureTestCase {
   public void testGeneratedFile() {
-    PsiFile file = myFixture.configureByText("MyIcons.java", "package icons;\n" +
-                                                             "/**\n" +
-                                                             " * NOTE THIS FILE IS AUTO-GENERATED\n" +
-                                                             " * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead\n" +
-                                                             " */\n" +
-                                                             "public class RubyIcons {}");
+    PsiFile file = myFixture.configureByText("MyIcons.java", """
+      package icons;
+      /**
+       * NOTE THIS FILE IS AUTO-GENERATED
+       * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead
+       */
+      public class RubyIcons {}""");
     assertTrue(new IconsGeneratedSourcesFilter().isGeneratedSource(file.getVirtualFile(), myFixture.getProject()));
   }
 
   public void testNewGeneratedFile() {
-    PsiFile file = myFixture.configureByText("MyIcons.java", "package icons;\n" +
-                                                             "/**\n" +
-                                                             " * NOTE THIS FILE IS AUTO-GENERATED\n" +
-                                                             " * DO NOT EDIT IT BY HAND, run \"Generate icon classes\" configuration instead\n" +
-                                                             " */\n" +
-                                                             "public class RubyIcons {}");
+    PsiFile file = myFixture.configureByText("MyIcons.java", """
+      package icons;
+      /**
+       * NOTE THIS FILE IS AUTO-GENERATED
+       * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
+       */
+      public class RubyIcons {}""");
     assertTrue(new IconsGeneratedSourcesFilter().isGeneratedSource(file.getVirtualFile(), myFixture.getProject()));
   }
 
   public void testFilterByName() {
-    PsiFile file = myFixture.configureByText("MyIconsTest.java", "package icons;\n" +
-                                                                 "/**\n" +
-                                                                 " * NOTE THIS FILE IS AUTO-GENERATED\n" +
-                                                                 " * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead\n" +
-                                                                 " */\n" +
-                                                                 "public class RubyIcons {}");
+    PsiFile file = myFixture.configureByText("MyIconsTest.java", """
+      package icons;
+      /**
+       * NOTE THIS FILE IS AUTO-GENERATED
+       * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead
+       */
+      public class RubyIcons {}""");
     assertFalse(new IconsGeneratedSourcesFilter().isGeneratedSource(file.getVirtualFile(), myFixture.getProject()));
   }
 

@@ -117,18 +117,9 @@ public abstract class ToolbarLabelAction extends DumbAwareAction implements Cust
           if (e.getInputEvent() instanceof MouseEvent) {
             MouseEvent mouseEvent = (MouseEvent)e.getInputEvent();
             switch (mouseEvent.getID()) {
-              case MouseEvent.MOUSE_ENTERED: {
-                tooltip.mouseEntered(mouseEvent);
-                break;
-              }
-              case MouseEvent.MOUSE_EXITED: {
-                tooltip.mouseExited(mouseEvent);
-                break;
-              }
-              case MouseEvent.MOUSE_MOVED: {
-                tooltip.mouseMoved(mouseEvent);
-                break;
-              }
+              case MouseEvent.MOUSE_ENTERED -> tooltip.mouseEntered(mouseEvent);
+              case MouseEvent.MOUSE_EXITED -> tooltip.mouseExited(mouseEvent);
+              case MouseEvent.MOUSE_MOVED -> tooltip.mouseMoved(mouseEvent);
             }
           }
 

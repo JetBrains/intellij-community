@@ -8,13 +8,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.stateStore
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.toVirtualFile
+import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 
 open class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPolicy(project) {
   init {
-    val busConnection = project.messageBus.connect()
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, MyModulesListener())
+    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, MyModulesListener())
   }
 
   override fun getDefaultVcsRoots(): Collection<VirtualFile> {
@@ -36,7 +35,7 @@ open class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPolicy(p
     result += runReadAction {
       WorkspaceModel.getInstance(myProject).entityStorage.current
         .entities(ContentRootEntity::class.java)
-        .mapNotNull { it.url.toVirtualFile() }
+        .mapNotNull { it.url.virtualFile }
         .filter { it.isInLocalFileSystem }
         .filter { it.isDirectory }
     }

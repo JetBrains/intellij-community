@@ -58,14 +58,18 @@ public class FunctionalInterfaceSuggesterTest extends LightJavaCodeInsightFixtur
   }
 
   public void testConstructorFactory() {
-    myFixture.addClass("@FunctionalInterface\n" +
-                       "public interface MyFactoryEmpty {\n" +
-                       "    Foo create();\n" +
-                       "}\n");
-     myFixture.addClass("@FunctionalInterface\n" +
-                       "public interface MyFactoryInt {\n" +
-                       "    Foo create(int value);\n" +
-                       "}\n");
+    myFixture.addClass("""
+                         @FunctionalInterface
+                         public interface MyFactoryEmpty {
+                             Foo create();
+                         }
+                         """);
+     myFixture.addClass("""
+                          @FunctionalInterface
+                          public interface MyFactoryInt {
+                              Foo create(int value);
+                          }
+                          """);
     Collection<? extends PsiType> suggestedTypes = suggestTypes("class Foo { Foo() {} Foo(int value) {} }", "Foo::new");
     checkWithExpected(suggestedTypes, "MyFactoryEmpty",
                       "MyFactoryInt",
@@ -78,10 +82,12 @@ public class FunctionalInterfaceSuggesterTest extends LightJavaCodeInsightFixtur
   }
 
   public void testConstructorFactoryWithGenerics() {
-    myFixture.addClass("@FunctionalInterface\n" +
-                       "public interface MyFactory<T, R> {\n" +
-                       "    R create(T value);\n" +
-                       "}\n");
+    myFixture.addClass("""
+                         @FunctionalInterface
+                         public interface MyFactory<T, R> {
+                             R create(T value);
+                         }
+                         """);
     Collection<? extends PsiType> suggestedTypes =
       suggestTypes("import java.math.BigDecimal; class Foo { Foo() {} Foo(int value) {} Foo(BigDecimal value) {} }", "Foo::new");
     checkWithExpected(suggestedTypes,"MyFactory<java.lang.Integer,Foo>",
@@ -96,10 +102,12 @@ public class FunctionalInterfaceSuggesterTest extends LightJavaCodeInsightFixtur
   }
 
   public void testConstructorFactoryWithGenericMethodThatIsNotSupported() {
-    myFixture.addClass("@FunctionalInterface\n" +
-                       "public interface MyInvalidFactory {\n" +
-                       "    <T, R> R create(T value);\n" +
-                       "}\n");
+    myFixture.addClass("""
+                         @FunctionalInterface
+                         public interface MyInvalidFactory {
+                             <T, R> R create(T value);
+                         }
+                         """);
     Collection<? extends PsiType> suggestedTypes =
       suggestTypes("class Foo { Foo() {} Foo(int value) {} }", "Foo::new");
     assertEquals(6, suggestedTypes.size());
@@ -107,22 +115,30 @@ public class FunctionalInterfaceSuggesterTest extends LightJavaCodeInsightFixtur
   }
 
   public void testConstructorFactoryWithGenericsSubTypes() {
-    myFixture.addClass("@FunctionalInterface\n" +
-                       "public interface MyFactoryNumber<T extends Number, R> {\n" +
-                       "    R create(T value);\n" +
-                       "}\n");
-    myFixture.addClass("@FunctionalInterface\n" +
-                       "public interface MyFactoryString<T extends String, R> {\n" +
-                       "    R create(T value);\n" +
-                       "}\n");
-    myFixture.addClass("@FunctionalInterface\n" +
-                       "public interface MyFactoryReturnFoo<T, R extends Foo> {\n" +
-                       "    R create(T value);\n" +
-                       "}\n");
-    myFixture.addClass("@FunctionalInterface\n" +
-                       "public interface MyFactoryReturnNumber<T, R extends Number> {\n" +
-                       "    R create(T value);\n" +
-                       "}\n");
+    myFixture.addClass("""
+                         @FunctionalInterface
+                         public interface MyFactoryNumber<T extends Number, R> {
+                             R create(T value);
+                         }
+                         """);
+    myFixture.addClass("""
+                         @FunctionalInterface
+                         public interface MyFactoryString<T extends String, R> {
+                             R create(T value);
+                         }
+                         """);
+    myFixture.addClass("""
+                         @FunctionalInterface
+                         public interface MyFactoryReturnFoo<T, R extends Foo> {
+                             R create(T value);
+                         }
+                         """);
+    myFixture.addClass("""
+                         @FunctionalInterface
+                         public interface MyFactoryReturnNumber<T, R extends Number> {
+                             R create(T value);
+                         }
+                         """);
     Collection<? extends PsiType> suggestedTypes =
       suggestTypes("import java.math.BigDecimal; class Foo { Foo() {} Foo(int value) {} Foo(BigDecimal value) {} }", "Foo::new");
     checkWithExpected(suggestedTypes,"MyFactoryNumber<java.lang.Integer,Foo>",
@@ -172,10 +188,12 @@ public class FunctionalInterfaceSuggesterTest extends LightJavaCodeInsightFixtur
   }
 
   public void testSAMWithThrowable() {
-    myFixture.addClass("@FunctionalInterface\n" +
-                       "public interface MyThrowingConsumer<T> {\n" +
-                       "    void accept(T t) throws Throwable;\n" +
-                       "}\n");
+    myFixture.addClass("""
+                         @FunctionalInterface
+                         public interface MyThrowingConsumer<T> {
+                             void accept(T t) throws Throwable;
+                         }
+                         """);
     PsiMethod method = myFixture.addClass("class Foo { void foo(int i) {}}").getMethods()[0];
     Collection<? extends PsiType> suggestedTypes = FunctionalInterfaceSuggester.suggestFunctionalInterfaces(method, true);
     checkWithExpected(suggestedTypes,"MyThrowingConsumer<java.lang.Integer>",
@@ -184,10 +202,12 @@ public class FunctionalInterfaceSuggesterTest extends LightJavaCodeInsightFixtur
   }
 
   public void testMethodReferenceWithoutGenerics() {
-    myFixture.addClass("@FunctionalInterface\n" +
-                       "public interface MyFunc {\n" +
-                       "    void accept(int value);\n" +
-                       "}\n");
+    myFixture.addClass("""
+                         @FunctionalInterface
+                         public interface MyFunc {
+                             void accept(int value);
+                         }
+                         """);
     PsiMethod method = myFixture.addClass("class Foo { void foo(int i) {}}").getMethods()[0];
     Collection<? extends PsiType> suggestedTypes = FunctionalInterfaceSuggester.suggestFunctionalInterfaces(method, true);
     checkWithExpected(suggestedTypes, "MyFunc",
@@ -196,10 +216,12 @@ public class FunctionalInterfaceSuggesterTest extends LightJavaCodeInsightFixtur
   }
 
   public void testMethodReferenceOfType() {
-    myFixture.addClass("@FunctionalInterface\n" +
-                       "public interface MyFunc {\n" +
-                       "    void accept(Foo foo, int value);\n" +
-                       "}\n");
+    myFixture.addClass("""
+                         @FunctionalInterface
+                         public interface MyFunc {
+                             void accept(Foo foo, int value);
+                         }
+                         """);
     Collection<? extends PsiType> suggestedTypes = suggestTypes("class Foo { void foo(int i) {}}", "Foo::foo");
     checkWithExpected(suggestedTypes, "MyFunc",
                       "java.util.function.BiConsumer<Foo,java.lang.Integer>",
@@ -207,20 +229,22 @@ public class FunctionalInterfaceSuggesterTest extends LightJavaCodeInsightFixtur
   }
 
   public void testMethodReferenceWithTypeArgs() {
-    Collection<? extends PsiType> suggestedTypes = suggestTypes("class Foo { " +
-                                                                "public static <T> T fromInt(Integer i) {\n" +
-                                                                "        return null;\n" +
-                                                                "    }}", "Foo::<String>fromInt");
+    Collection<? extends PsiType> suggestedTypes = suggestTypes("""
+                                                                  class Foo { public static <T> T fromInt(Integer i) {
+                                                                          return null;
+                                                                      }}""", "Foo::<String>fromInt");
     checkWithExpected(suggestedTypes, "java.util.function.Function<java.lang.Integer,java.lang.String>",
                       "java.util.function.IntConsumer",
                       "java.util.function.IntFunction<java.lang.String>");
   }
 
   public void testMethodReferenceOfInstance() {
-    myFixture.addClass("@FunctionalInterface\n" +
-                       "public interface MyFunc {\n" +
-                       "    void accept(int value);\n" +
-                       "}\n");
+    myFixture.addClass("""
+                         @FunctionalInterface
+                         public interface MyFunc {
+                             void accept(int value);
+                         }
+                         """);
     PsiClass fooClass = myFixture.addClass("class Foo { void foo(int i) {}}");
     PsiDeclarationStatement fooVar =
       getElementFactory().createVariableDeclarationStatement("foo", getElementFactory().createType(fooClass), null, fooClass);

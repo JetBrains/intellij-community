@@ -270,6 +270,9 @@ data class IDETestContext(
 
   fun internalMode(value: Boolean = true) = addVMOptionsPatch { addSystemProperty("idea.is.internal", value) }
 
+  /**
+   * Cleans .idea and removes all the .iml files for project
+   */
   fun prepareProjectCleanImport(): IDETestContext {
     return removeIdeaProjectDirectory().removeAllImlFilesInProject()
   }

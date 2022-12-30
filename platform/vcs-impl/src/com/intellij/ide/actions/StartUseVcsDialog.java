@@ -13,7 +13,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,7 +72,7 @@ public class StartUseVcsDialog extends DialogWrapper {
     String path = isMac ? VcsBundle.message("vcs.settings.path.mac") : VcsBundle.message("vcs.settings.path");
     JLabel helpText = new JLabel(VcsBundle.message("dialog.enable.version.control.integration.hint.text") + path);
     helpText.setUI(new MultiLineLabelUI());
-    helpText.setForeground(UIUtil.getInactiveTextColor());
+    helpText.setForeground(NamedColorUtil.getInactiveTextColor());
 
     gb.anchor = GridBagConstraints.NORTHWEST;
     gb.gridx = 0;

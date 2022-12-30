@@ -51,27 +51,29 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
   }
 
   public void testLog4j2() {
-    doTest("import org.apache.logging.log4j.*;\n" +
-           "class Logging {\n" +
-           "  private static final Logger LOG = LogManager.getLogger();\n" +
-           "  void m(int i) {\n" +
-           "    LOG.info(/*Fewer arguments provided (1) than placeholders specified (3)*/\"hello? {}{}{}\"/**/, i);\n" +
-           "    LOG.fatal(/*More arguments provided (1) than placeholders specified (0)*/\"you got me \"/**/,  i);\n" +
-           "    LOG.error(() -> \"\", new Exception());\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             import org.apache.logging.log4j.*;
+             class Logging {
+               private static final Logger LOG = LogManager.getLogger();
+               void m(int i) {
+                 LOG.info(/*Fewer arguments provided (1) than placeholders specified (3)*/"hello? {}{}{}"/**/, i);
+                 LOG.fatal(/*More arguments provided (1) than placeholders specified (0)*/"you got me "/**/,  i);
+                 LOG.error(() -> "", new Exception());
+               }
+             }""");
   }
 
   public void testLog4j2LogBuilder() {
-    doTest("import org.apache.logging.log4j.*;\n" +
-           "class Logging {\n" +
-           "  private static final Logger LOG = LogManager.getLogger();\n" +
-           "  void m(int i) {\n" +
-           "    LOG.atInfo().log(/*Fewer arguments provided (1) than placeholders specified (3)*/\"hello? {}{}{}\"/**/, i);\n" +
-           "    LOG.atFatal().log(/*More arguments provided (2) than placeholders specified (0)*/\"you got me \"/**/, i, i);\n" +
-           "    LOG.atError().log(/*More arguments provided (1) than placeholders specified (0)*/\"what does the supplier say? \"/**/, () -> \"\");\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             import org.apache.logging.log4j.*;
+             class Logging {
+               private static final Logger LOG = LogManager.getLogger();
+               void m(int i) {
+                 LOG.atInfo().log(/*Fewer arguments provided (1) than placeholders specified (3)*/"hello? {}{}{}"/**/, i);
+                 LOG.atFatal().log(/*More arguments provided (2) than placeholders specified (0)*/"you got me "/**/, i, i);
+                 LOG.atError().log(/*More arguments provided (1) than placeholders specified (0)*/"what does the supplier say? "/**/, () -> "");
+               }
+             }""");
   }
 
   public void testOneExceptionArgument() {
@@ -105,75 +107,81 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
   }
 
   public void testNoWarn() {
-    doTest("import org.slf4j.*;\n" +
-           "class X {\n" +
-           "  void foo() {\n" +
-           "    Logger logger = LoggerFactory.getLogger(X.class);\n" +
-           "    logger.info(\"string {}\", 1);\n" +
-           "  }\n" +
-           "}"
+    doTest("""
+             import org.slf4j.*;
+             class X {
+               void foo() {
+                 Logger logger = LoggerFactory.getLogger(X.class);
+                 logger.info("string {}", 1);
+               }
+             }"""
            );
   }
 
   public void testMorePlaceholders() {
-    doTest("import org.slf4j.*;\n" +
-           "class X {\n" +
-           "  void foo() {\n" +
-           "    Logger logger = LoggerFactory.getLogger(X.class);\n" +
-           "    logger.info(/*Fewer arguments provided (1) than placeholders specified (2)*/\"string {}{}\"/**/, 1);\n" +
-           "  }\n" +
-           "}"
+    doTest("""
+             import org.slf4j.*;
+             class X {
+               void foo() {
+                 Logger logger = LoggerFactory.getLogger(X.class);
+                 logger.info(/*Fewer arguments provided (1) than placeholders specified (2)*/"string {}{}"/**/, 1);
+               }
+             }"""
     );
   }
 
   public void testFewerPlaceholders() {
-    doTest("import org.slf4j.*;\n" +
-           "class X {\n" +
-           "  void foo() {\n" +
-           "    Logger logger = LoggerFactory.getLogger(X.class);\n" +
-           "    logger.info(/*More arguments provided (1) than placeholders specified (0)*/\"string\"/**/, 1);\n" +
-           "  }\n" +
-           "}"
+    doTest("""
+             import org.slf4j.*;
+             class X {
+               void foo() {
+                 Logger logger = LoggerFactory.getLogger(X.class);
+                 logger.info(/*More arguments provided (1) than placeholders specified (0)*/"string"/**/, 1);
+               }
+             }"""
     );
   }
 
   public void testThrowable() {
-    doTest("import org.slf4j.*;\n" +
-           "class X {\n" +
-           "  void foo() {\n" +
-           "    Logger logger = LoggerFactory.getLogger(X.class);\n" +
-           "    logger.info(\"string {}\", 1, new RuntimeException());\n" +
-           "  }\n" +
-           "}"
+    doTest("""
+             import org.slf4j.*;
+             class X {
+               void foo() {
+                 Logger logger = LoggerFactory.getLogger(X.class);
+                 logger.info("string {}", 1, new RuntimeException());
+               }
+             }"""
     );
   }
 
   public void testMultiCatch() {
-    doTest("import org.slf4j.*;\n" +
-           "class X {\n" +
-           "    private static final Logger logger = LoggerFactory.getLogger( X.class );\n" +
-           "    public void multiCatch() {\n" +
-           "        try {\n" +
-           "            method();\n" +
-           "        } catch ( FirstException|SecondException e ) {\n" +
-           "            logger.info( \"failed with first or second\", e );\n" +
-           "        }\n" +
-           "    }\n" +
-           "    public void method() throws FirstException, SecondException {}\n" +
-           "    public static class FirstException extends Exception { }\n" +
-           "    public static class SecondException extends Exception { }\n" +
-           "}");
+    doTest("""
+             import org.slf4j.*;
+             class X {
+                 private static final Logger logger = LoggerFactory.getLogger( X.class );
+                 public void multiCatch() {
+                     try {
+                         method();
+                     } catch ( FirstException|SecondException e ) {
+                         logger.info( "failed with first or second", e );
+                     }
+                 }
+                 public void method() throws FirstException, SecondException {}
+                 public static class FirstException extends Exception { }
+                 public static class SecondException extends Exception { }
+             }""");
   }
 
   public void testNoSlf4j() {
-    doTest("class FalsePositiveSLF4J {\n" +
-           "    public void method( DefinitelyNotSLF4J definitelyNotSLF4J ) {\n" +
-           "        definitelyNotSLF4J.info( \"not a trace message\", \"not a trace parameter\" );\n" +
-           "    }\n" +
-           "    public interface DefinitelyNotSLF4J {\n" +
-           "        void info( String firstParameter, Object secondParameter );\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             class FalsePositiveSLF4J {
+                 public void method( DefinitelyNotSLF4J definitelyNotSLF4J ) {
+                     definitelyNotSLF4J.info( "not a trace message", "not a trace parameter" );
+                 }
+                 public interface DefinitelyNotSLF4J {
+                     void info( String firstParameter, Object secondParameter );
+                 }
+             }""");
   }
 
   @SuppressWarnings("RedundantArrayCreation")

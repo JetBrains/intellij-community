@@ -153,10 +153,11 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
   public void testJavaMethodExternalization() throws Exception {
     GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext();
     context.initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
-    PsiFile file = createFile("Foo.java", "public class Foo {\n" +
-                                          "    <T> void foo(T t) {\n" +
-                                          "    }\n" +
-                                          "}");
+    PsiFile file = createFile("Foo.java", """
+      public class Foo {
+          <T> void foo(T t) {
+          }
+      }""");
     PsiClass[] classes = ((PsiClassOwner)file).getClasses();
     PsiClass fooClass = classes[0];
     PsiMethod fooMethod = fooClass.findMethodsByName("foo", false)[0];

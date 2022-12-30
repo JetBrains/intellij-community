@@ -195,7 +195,11 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
     launch(CoroutineName("coroutine debug probes init")) {
-      enableCoroutineDump()
+      try {
+        enableCoroutineDump()
+      }
+      catch (ignore: Exception) {
+      }
     }
   }
 
@@ -283,6 +287,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 }
 
+@Suppress("SpellCheckingInspection")
 private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: Deferred<Logger>,
                                                                  appInfoDeferred: Deferred<ApplicationInfoEx>,
                                                                  initUiDeferred: Job,
@@ -292,7 +297,9 @@ private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: De
     val log = logDeferred.await()
 
     runActivity("system libs setup") {
-      setupSystemLibraries()
+      if (SystemInfoRt.isWindows && System.getProperty("winp.folder.preferred") == null) {
+        System.setProperty("winp.folder.preferred", PathManager.getTempPath())
+      }
     }
 
     withContext(Dispatchers.IO) {
@@ -902,28 +909,6 @@ private fun CoroutineScope.setupLogger(consoleLoggerJob: Job, checkSystemDirJob:
       }
       log
     }
-  }
-}
-
-@Suppress("SpellCheckingInspection")
-private fun setupSystemLibraries() {
-  val ideTempPath = PathManager.getTempPath()
-  if (System.getProperty("jna.tmpdir") == null) {
-    // to avoid collisions and work around no-exec /tmp
-    System.setProperty("jna.tmpdir", ideTempPath)
-  }
-  if (System.getProperty("jna.nosys") == null) {
-    // prefer bundled JNA dispatcher lib
-    System.setProperty("jna.nosys", "true")
-  }
-  if (SystemInfoRt.isWindows && System.getProperty("winp.folder.preferred") == null) {
-    System.setProperty("winp.folder.preferred", ideTempPath)
-  }
-  if (System.getProperty("pty4j.tmpdir") == null) {
-    System.setProperty("pty4j.tmpdir", ideTempPath)
-  }
-  if (System.getProperty("pty4j.preferred.native.folder") == null) {
-    System.setProperty("pty4j.preferred.native.folder", Path.of(PathManager.getLibPath(), "pty4j-native").toAbsolutePath().toString())
   }
 }
 

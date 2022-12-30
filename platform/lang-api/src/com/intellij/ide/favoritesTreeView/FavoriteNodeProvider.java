@@ -20,7 +20,10 @@ import java.util.Collection;
  * Returns the nodes which should be added to the Favorites for the given data context.
  * Implementations of this class must be registered as extensions for
  * {@code com.intellij.favoriteNodeProvider} extension point.
+ *
+ * @deprecated Use Bookmarks API instead.
  */
+@Deprecated(forRemoval = true)
 public abstract class FavoriteNodeProvider {
   public static final ExtensionPointName<FavoriteNodeProvider> EP_NAME = new ExtensionPointName<>("com.intellij.favoriteNodeProvider");
 

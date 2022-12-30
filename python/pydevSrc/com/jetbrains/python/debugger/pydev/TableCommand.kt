@@ -4,7 +4,7 @@ package com.jetbrains.python.debugger.pydev
 class TableCommand constructor(debugger: RemoteDebugger?,
                                threadId: String?,
                                frameId: String?,
-                               val initExpr: String,
+                               private val initExpr: String,
                                private val commandType: TableCommandType) : AbstractFrameCommand<String?>(debugger,
                                                                                                           CMD_TABLE_EXEC,
                                                                                                           threadId,

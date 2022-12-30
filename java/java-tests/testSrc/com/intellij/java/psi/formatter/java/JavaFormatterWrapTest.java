@@ -28,30 +28,24 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().RIGHT_MARGIN = 80;
     getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doTextTest(
-      "@AttributeOverrides( { @AttributeOverride(name = \"id\", column = @Column(name = \"recovery_id\"))," +
-      "@AttributeOverride(name = \"transactionReference\", column = @Column(name = \"deal_reference\"))," +
-      "@AttributeOverride(name = \"eventDate\", column = @Column(name = \"recovery_date\"))," +
-      "@AttributeOverride(name = \"amount\", column = @Column(name = \"recovery_amount\"))," +
-      "@AttributeOverride(name = \"currency\", column = @Column(name = \"local_currency\"))," +
-      "@AttributeOverride(name = \"exchangeRate\", column = @Column(name = \"exchange_rate\"))," +
-      "@AttributeOverride(name = \"exchangeRateDate\", column = @Column(name = \"recovery_date\", insertable = false, updatable = false))," +
-      "@AttributeOverride(name = \"exchangeRateAlterationJustification\", column = @Column(name = \"exchange_rate_justification\"))," +
-      "@AttributeOverride(name = \"systemExchangeRate\", column = @Column(name = \"system_exchange_rate\")) })\n" +
-      "class Foo {\n" +
-      "}",
+      """
+        @AttributeOverrides( { @AttributeOverride(name = "id", column = @Column(name = "recovery_id")),@AttributeOverride(name = "transactionReference", column = @Column(name = "deal_reference")),@AttributeOverride(name = "eventDate", column = @Column(name = "recovery_date")),@AttributeOverride(name = "amount", column = @Column(name = "recovery_amount")),@AttributeOverride(name = "currency", column = @Column(name = "local_currency")),@AttributeOverride(name = "exchangeRate", column = @Column(name = "exchange_rate")),@AttributeOverride(name = "exchangeRateDate", column = @Column(name = "recovery_date", insertable = false, updatable = false)),@AttributeOverride(name = "exchangeRateAlterationJustification", column = @Column(name = "exchange_rate_justification")),@AttributeOverride(name = "systemExchangeRate", column = @Column(name = "system_exchange_rate")) })
+        class Foo {
+        }""",
 
-      "@AttributeOverrides({\n" +
-      "        @AttributeOverride(name = \"id\", column = @Column(name = \"recovery_id\")),\n" +
-      "        @AttributeOverride(name = \"transactionReference\", column = @Column(name = \"deal_reference\")),\n" +
-      "        @AttributeOverride(name = \"eventDate\", column = @Column(name = \"recovery_date\")),\n" +
-      "        @AttributeOverride(name = \"amount\", column = @Column(name = \"recovery_amount\")),\n" +
-      "        @AttributeOverride(name = \"currency\", column = @Column(name = \"local_currency\")),\n" +
-      "        @AttributeOverride(name = \"exchangeRate\", column = @Column(name = \"exchange_rate\")),\n" +
-      "        @AttributeOverride(name = \"exchangeRateDate\", column = @Column(name = \"recovery_date\", insertable = false, updatable = false)),\n" +
-      "        @AttributeOverride(name = \"exchangeRateAlterationJustification\", column = @Column(name = \"exchange_rate_justification\")),\n" +
-      "        @AttributeOverride(name = \"systemExchangeRate\", column = @Column(name = \"system_exchange_rate\"))})\n" +
-      "class Foo {\n" +
-      "}"
+      """
+        @AttributeOverrides({
+                @AttributeOverride(name = "id", column = @Column(name = "recovery_id")),
+                @AttributeOverride(name = "transactionReference", column = @Column(name = "deal_reference")),
+                @AttributeOverride(name = "eventDate", column = @Column(name = "recovery_date")),
+                @AttributeOverride(name = "amount", column = @Column(name = "recovery_amount")),
+                @AttributeOverride(name = "currency", column = @Column(name = "local_currency")),
+                @AttributeOverride(name = "exchangeRate", column = @Column(name = "exchange_rate")),
+                @AttributeOverride(name = "exchangeRateDate", column = @Column(name = "recovery_date", insertable = false, updatable = false)),
+                @AttributeOverride(name = "exchangeRateAlterationJustification", column = @Column(name = "exchange_rate_justification")),
+                @AttributeOverride(name = "systemExchangeRate", column = @Column(name = "system_exchange_rate"))})
+        class Foo {
+        }"""
     );
   }
 
@@ -59,62 +53,62 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     // Inspired by IDEA-18051
     getSettings().RIGHT_MARGIN = 80;
     doTextTest(
-      "package formatting;\n" +
-      "\n" +
-      "public class EnumInAnnotationFormatting {\n" +
-      "\n" +
-      "    public enum TheEnum {\n" +
-      "\n" +
-      "        FIRST,\n" +
-      "        SECOND,\n" +
-      "        THIRD,\n" +
-      "\n" +
-      "    }\n" +
-      "\n" +
-      "    public @interface TheAnnotation {\n" +
-      "\n" +
-      "        TheEnum[] value();\n" +
-      "\n" +
-      "        String comment();\n" +
-      "\n" +
-      "    }\n" +
-      "\n" +
-      "\n" +
-      "    @TheAnnotation(value = {TheEnum.FIRST, TheEnum.SECOND}, comment =" +
-      " \"some long comment that goes longer that right margin 012345678901234567890\")\n" +
-      "    public class Test {\n" +
-      "\n" +
-      "    }\n" +
-      "\n" +
-      "}",
-      "package formatting;\n" +
-      "\n" +
-      "public class EnumInAnnotationFormatting {\n" +
-      "\n" +
-      "    public enum TheEnum {\n" +
-      "\n" +
-      "        FIRST,\n" +
-      "        SECOND,\n" +
-      "        THIRD,\n" +
-      "\n" +
-      "    }\n" +
-      "\n" +
-      "    public @interface TheAnnotation {\n" +
-      "\n" +
-      "        TheEnum[] value();\n" +
-      "\n" +
-      "        String comment();\n" +
-      "\n" +
-      "    }\n" +
-      "\n" +
-      "\n" +
-      "    @TheAnnotation(value = {TheEnum.FIRST, TheEnum.SECOND}, comment =" +
-      " \"some long comment that goes longer that right margin 012345678901234567890\")\n" +
-      "    public class Test {\n" +
-      "\n" +
-      "    }\n" +
-      "\n" +
-      "}");
+      """
+        package formatting;
+
+        public class EnumInAnnotationFormatting {
+
+            public enum TheEnum {
+
+                FIRST,
+                SECOND,
+                THIRD,
+
+            }
+
+            public @interface TheAnnotation {
+
+                TheEnum[] value();
+
+                String comment();
+
+            }
+
+
+            @TheAnnotation(value = {TheEnum.FIRST, TheEnum.SECOND}, comment = "some long comment that goes longer that right margin 012345678901234567890")
+            public class Test {
+
+            }
+
+        }""",
+      """
+        package formatting;
+
+        public class EnumInAnnotationFormatting {
+
+            public enum TheEnum {
+
+                FIRST,
+                SECOND,
+                THIRD,
+
+            }
+
+            public @interface TheAnnotation {
+
+                TheEnum[] value();
+
+                String comment();
+
+            }
+
+
+            @TheAnnotation(value = {TheEnum.FIRST, TheEnum.SECOND}, comment = "some long comment that goes longer that right margin 012345678901234567890")
+            public class Test {
+
+            }
+
+        }""");
   }
 
   @SuppressWarnings("SpellCheckingInspection")
@@ -133,9 +127,10 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     doTextTest(
       "enum Test {FIRST, SECOND, THIIIIIIIIIIIIIIIIIRRDDDDDDDDDDDDDD, FOURTHHHHHHHHHHHHHHHH}",
 
-      "enum Test {\n" +
-      "    FIRST, SECOND, THIIIIIIIIIIIIIIIIIRRDDDDDDDDDDDDDD, FOURTHHHHHHHHHHHHHHHH\n" +
-      "}"
+      """
+        enum Test {
+            FIRST, SECOND, THIIIIIIIIIIIIIIIIIRRDDDDDDDDDDDDDD, FOURTHHHHHHHHHHHHHHHH
+        }"""
     );
   }
 
@@ -144,38 +139,40 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
 
     doTextTest(
-      "public enum Test {\n" +
-      "\n" +
-      "  TEST1(\"test\"),//comment 1\n" +
-      "  TEST2(\"test\");//comment 2\n" +
-      "\n" +
-      "  private String value;\n" +
-      "\n" +
-      "  Test(String value) {\n" +
-      "    this.value = value;\n" +
-      "  }\n" +
-      "\n" +
-      "  public String getValue() {\n" +
-      "    return value;\n" +
-      "  }\n" +
-      "\n" +
-      "}",
-      "public enum Test {\n" +
-      "\n" +
-      "    TEST1(\"test\"),//comment 1\n" +
-      "    TEST2(\"test\");//comment 2\n" +
-      "\n" +
-      "    private String value;\n" +
-      "\n" +
-      "    Test(String value) {\n" +
-      "        this.value = value;\n" +
-      "    }\n" +
-      "\n" +
-      "    public String getValue() {\n" +
-      "        return value;\n" +
-      "    }\n" +
-      "\n" +
-      "}"
+      """
+        public enum Test {
+
+          TEST1("test"),//comment 1
+          TEST2("test");//comment 2
+
+          private String value;
+
+          Test(String value) {
+            this.value = value;
+          }
+
+          public String getValue() {
+            return value;
+          }
+
+        }""",
+      """
+        public enum Test {
+
+            TEST1("test"),//comment 1
+            TEST2("test");//comment 2
+
+            private String value;
+
+            Test(String value) {
+                this.value = value;
+            }
+
+            public String getValue() {
+                return value;
+            }
+
+        }"""
     );
   }
 
@@ -184,18 +181,20 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
     // Expect comments to be wrapped
     doTextTest(
-      "public enum FormatTest {\n" +
-      "    FOO, /**\n" +
-      "    * some description\n" +
-      "    */ BAR, BAZ;\n" +
-      "}",
-      "public enum FormatTest {\n" +
-      "    FOO,\n" +
-      "    /**\n" +
-      "     * some description\n" +
-      "     */\n" +
-      "    BAR, BAZ;\n" +
-      "}"
+      """
+        public enum FormatTest {
+            FOO, /**
+            * some description
+            */ BAR, BAZ;
+        }""",
+      """
+        public enum FormatTest {
+            FOO,
+            /**
+             * some description
+             */
+            BAR, BAZ;
+        }"""
     );
   }
 
@@ -203,15 +202,16 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     String before = "final GeoZone geoZone1 = new GeoZone(APPROACHING, new Polygon(point(\"0.0\", \"0.0\"), point(\"10.0\", \"0.0\")," +
                     "point(\"10.0\", \"10.0\"), point(\"0.0\", \"10.0\")));";
-    String after = "final GeoZone geoZone1 = new GeoZone(APPROACHING,\n" +
-                   "        new Polygon(point(\"0.0\",\n" +
-                   "                \"0.0\"),\n" +
-                   "                point(\"10.0\",\n" +
-                   "                        \"0.0\"),\n" +
-                   "                point(\"10.0\",\n" +
-                   "                        \"10.0\"),\n" +
-                   "                point(\"0.0\",\n" +
-                   "                        \"10.0\")));";
+    String after = """
+      final GeoZone geoZone1 = new GeoZone(APPROACHING,
+              new Polygon(point("0.0",
+                      "0.0"),
+                      point("10.0",
+                              "0.0"),
+                      point("10.0",
+                              "10.0"),
+                      point("0.0",
+                              "10.0")));""";
     doMethodTest(before, after);
   }
 
@@ -220,9 +220,10 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
 
     String text =
-      "@Test//my_comment\n" +
-      "public void foo() {\n" +
-      "}";
+      """
+        @Test//my_comment
+        public void foo() {
+        }""";
 
     // Expecting the code to be left as-is
     doClassTest(text, text);
@@ -234,9 +235,10 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().KEEP_LINE_BREAKS = true;
 
     // Expecting the code to be left as-is
-    String text = "@Test\n" +
-                  "class MyClass {\n" +
-                  "}";
+    String text = """
+      @Test
+      class MyClass {
+      }""";
     doTextTest(text, text);
   }
 
@@ -256,10 +258,11 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().RIGHT_MARGIN = 30;
     getSettings().WRAP_LONG_LINES = true;
 
-    final String text = "class Test {\n" +
-                        "    String s = \"first line \" +\n" +
-                        "            +\"second line\";\n" +
-                        "}";
+    final String text = """
+      class Test {
+          String s = "first line " +
+                  +"second line";
+      }""";
     doTextTest(text, text);
   }
 
@@ -269,26 +272,27 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().WRAP_LONG_LINES = true;
 
     doTextTest(
-      "class TestClass {\n" +
-      "    // Single line comment that is long enough to exceed right margin\n" +
-      "    /* Multi line comment that is long enough to exceed right margin*/\n" +
-      "    /**\n" +
-      "      Javadoc comment that is long enough to exceed right margin" +
-      "     */\n" +
-      "     public String s = \"this is a string that is long enough to be wrapped\"\n" +
-      "}",
-      "class TestClass {\n" +
-      "    // Single line comment that is long enough \n" +
-      "    // to exceed right margin\n" +
-      "    /* Multi line comment that is long enough \n" +
-      "    to exceed right margin*/\n" +
-      "    /**\n" +
-      "     * Javadoc comment that is long enough to \n" +
-      "     * exceed right margin\n" +
-      "     */\n" +
-      "    public String s = \"this is a string that is\" +\n" +
-      "            \" long enough to be wrapped\"\n" +
-      "}"
+      """
+        class TestClass {
+            // Single line comment that is long enough to exceed right margin
+            /* Multi line comment that is long enough to exceed right margin*/
+            /**
+              Javadoc comment that is long enough to exceed right margin     */
+             public String s = "this is a string that is long enough to be wrapped"
+        }""",
+      """
+        class TestClass {
+            // Single line comment that is long enough\s
+            // to exceed right margin
+            /* Multi line comment that is long enough\s
+            to exceed right margin*/
+            /**
+             * Javadoc comment that is long enough to\s
+             * exceed right margin
+             */
+            public String s = "this is a string that is" +
+                    " long enough to be wrapped"
+        }"""
     );
   }
 
@@ -300,13 +304,15 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getIndentOptions().TAB_SIZE = 4;
 
     doTextTest(
-      "class TestClass {\n" +
-      "\t \t   //This is a comment\n" +
-      "}",
-      "class TestClass {\n" +
-      "\t//This is a \n" +
-      "\t// comment\n" +
-      "}"
+      """
+        class TestClass {
+        \t \t   //This is a comment
+        }""",
+      """
+        class TestClass {
+        \t//This is a\s
+        \t// comment
+        }"""
     );
   }
 
@@ -316,10 +322,11 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().WRAP_LONG_LINES = true;
 
     String initial =
-      "class TestClass {\n" +
-      "    //This is a comment\n" +
-      "    //This is another comment\n" +
-      "}";
+      """
+        class TestClass {
+            //This is a comment
+            //This is another comment
+        }""";
 
     int start = initial.indexOf("//");
     int end = initial.indexOf("comment");
@@ -329,11 +336,12 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     myLineRange = new TextRange(1, 1);
     doTextTest(
       initial,
-      "class TestClass {\n" +
-      "    //This is a \n" +
-      "    // comment\n" +
-      "    //This is another comment\n" +
-      "}"
+      """
+        class TestClass {
+            //This is a\s
+            // comment
+            //This is another comment
+        }"""
     );
   }
 
@@ -345,8 +353,10 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
     doClassTest(
         "@SuppressWarnings({\"SomeInspectionIWantToIgnore\"}) public void doSomething(int x, int y) {}",
-        "@SuppressWarnings({\"SomeInspectionIWantToIgnore\"})\n" +
-        "public void doSomething(int x, int y) {\n}"
+        """
+          @SuppressWarnings({"SomeInspectionIWantToIgnore"})
+          public void doSomething(int x, int y) {
+          }"""
     );
   }
 
@@ -388,10 +398,11 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().RESOURCE_LIST_LPAREN_ON_NEXT_LINE = true;
     getSettings().RESOURCE_LIST_RPAREN_ON_NEXT_LINE = true;
     doMethodTest("try (MyResource r1 = null; MyResource r2 = null) { }",
-                 "try (\n" +
-                 "        MyResource r1 = null;\n" +
-                 "        MyResource r2 = null\n" +
-                 ") {}");
+                 """
+                   try (
+                           MyResource r1 = null;
+                           MyResource r2 = null
+                   ) {}""");
   }
 
   public void testLineLongEnoughToExceedAfterFirstWrapping() {
@@ -401,16 +412,18 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     // No wrapping for now
     doMethodTest(
-      "test(1,\n" +
-      "     2,\n" +
-      "     MyTestClass.loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongMethod());\n" +
-      "int i = 1;\n" +
-      "int j = 2;",
-      "test(1,\n" +
-      "     2,\n" +
-      "     MyTestClass.loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongMethod());\n" +
-      "int i = 1;\n" +
-      "int j = 2;"
+      """
+        test(1,
+             2,
+             MyTestClass.loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongMethod());
+        int i = 1;
+        int j = 2;""",
+      """
+        test(1,
+             2,
+             MyTestClass.loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongMethod());
+        int i = 1;
+        int j = 2;"""
     );
   }
 
@@ -421,13 +434,14 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().RIGHT_MARGIN = 40;
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     String text =
-      "test(1,\n" +
-      "     2,\n" +
-      "     Test.\n" +
-      "             loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongMethod()\n" +
-      ");\n" +
-      "int i = 1;\n" +
-      "int j = 2;";
+      """
+        test(1,
+             2,
+             Test.
+                     loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongMethod()
+        );
+        int i = 1;
+        int j = 2;""";
     doMethodTest(text, text);
   }
 
@@ -440,31 +454,34 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     String before = "processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, " +
                     "String.format(\"Could not process annotations: %s%n%s\", e.toString(), writer.toString()));";
 
-    String afterFirstReformat = "processingEnv.getMessenger().printMessage(\n" +
-                                "        Diagnostic.Kind.ERROR, String.format(\n" +
-                                "        \"Could not process annotations: %s%n%s\",\n" +
-                                "        e.toString(),\n" +
-                                "        writer.toString()\n" +
-                                ")\n" +
-                                ");";
+    String afterFirstReformat = """
+      processingEnv.getMessenger().printMessage(
+              Diagnostic.Kind.ERROR, String.format(
+              "Could not process annotations: %s%n%s",
+              e.toString(),
+              writer.toString()
+      )
+      );""";
 
-    String after = "processingEnv.getMessenger().printMessage(\n" +
-                   "        Diagnostic.Kind.ERROR, String.format(\n" +
-                   "                \"Could not process annotations: %s%n%s\",\n" +
-                   "                e.toString(),\n" +
-                   "                writer.toString()\n" +
-                   "        )\n" +
-                   ");";
+    String after = """
+      processingEnv.getMessenger().printMessage(
+              Diagnostic.Kind.ERROR, String.format(
+                      "Could not process annotations: %s%n%s",
+                      e.toString(),
+                      writer.toString()
+              )
+      );""";
 
     doMethodTest(afterFirstReformat, after);
 
     getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
     getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
     doMethodTest(before,
-                 "processingEnv.getMessenger().printMessage(\n" +
-                 "        Diagnostic.Kind.ERROR,\n" +
-                 "        String.format(\"Could not process annotations: %s%n%s\", e.toString(), writer.toString())\n" +
-                 ");");
+                 """
+                   processingEnv.getMessenger().printMessage(
+                           Diagnostic.Kind.ERROR,
+                           String.format("Could not process annotations: %s%n%s", e.toString(), writer.toString())
+                   );""");
 
     String literal = "\"" + StringUtil.repeatSymbol('A', 128) + "\"";
     before = "processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, call(" + literal + "));\n";
@@ -504,11 +521,15 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().getRootSettings().FORMATTER_TAGS_ENABLED = true;
 
     String prefix =
-      "import java.lang.annotation.*;\n\n" +
-      "//@formatter:off\n" +
-      "@interface A { }\n" +
-      "@Target({ElementType.TYPE_USE}) @interface TA { int value() default 0; }\n" +
-      "//@formatter:on\n\n";
+      """
+        import java.lang.annotation.*;
+
+        //@formatter:off
+        @interface A { }
+        @Target({ElementType.TYPE_USE}) @interface TA { int value() default 0; }
+        //@formatter:on
+
+        """;
 
     doTextTest(
         prefix + "interface C {\n" +
@@ -529,16 +550,18 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
   public void testKeepSingleFieldAnnotationOnSameLine() {
     getJavaSettings().DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION = true;
     doClassTest(
-        "@NotNull public String result = \"OK\"\n" +
-        "@NotNull String newResult = \"OK\"\n" +
-        "@NotNull\n" +
-        "@Deprecated public String bad = \"bad\"",
+      """
+        @NotNull public String result = "OK"
+        @NotNull String newResult = "OK"
+        @NotNull
+        @Deprecated public String bad = "bad\"""",
 
-        "@NotNull public String result = \"OK\"\n" +
-        "@NotNull String newResult = \"OK\"\n" +
-        "@NotNull\n" +
-        "@Deprecated\n" +
-        "public String bad = \"bad\""
+      """
+        @NotNull public String result = "OK"
+        @NotNull String newResult = "OK"
+        @NotNull
+        @Deprecated
+        public String bad = "bad\""""
     );
   }
 
@@ -546,38 +569,46 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getJavaSettings().DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION = true;
     getSettings().KEEP_LINE_BREAKS = false;
     doClassTest(
-      "@NotNull\n" +
-      "public String test = \"tst\";\n" +
-      "String ok = \"ok\";\n",
-      "@NotNull public String test = \"tst\";\n" +
-      "String ok = \"ok\";\n"
+      """
+        @NotNull
+        public String test = "tst";
+        String ok = "ok";
+        """,
+      """
+        @NotNull public String test = "tst";
+        String ok = "ok";
+        """
     );
   }
 
   public void test_Wrap_On_Method_Parameter_Declaration() {
     getSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doClassTest(
-        "      public static void main(String[] args) {\n" +
-        "    boolean ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa = false;\n" +
-        "    soo.ifTrue(ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa, (v) -> v.setText(\"syyycuuuuuuuuurrrrrrrrrrrrrrennnnnnnnnnnnnnnnnnnnnt\"));\n" +
-        "}",
-        "public static void main(String[] args) {\n" +
-        "    boolean ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa = false;\n" +
-        "    soo.ifTrue(ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa, (v) -> v.setText(\"syyycuuuuuuuuurrrrrrrrrrrrrrennnnnnnnnnnnnnnnnnnnnt\"));\n" +
-        "}"
+      """
+              public static void main(String[] args) {
+            boolean ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa = false;
+            soo.ifTrue(ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa, (v) -> v.setText("syyycuuuuuuuuurrrrrrrrrrrrrrennnnnnnnnnnnnnnnnnnnnt"));
+        }""",
+      """
+        public static void main(String[] args) {
+            boolean ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa = false;
+            soo.ifTrue(ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa, (v) -> v.setText("syyycuuuuuuuuurrrrrrrrrrrrrrennnnnnnnnnnnnnnnnnnnnt"));
+        }"""
     );
 
     getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doClassTest(
-        "      public static void main(String[] args) {\n" +
-        "    boolean ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa = false;\n" +
-        "    soo.ifTrue(ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa, (v) -> v.setText(\"syyycuuuuuuuuurrrrrrrrrrrrrrennnnnnnnnnnnnnnnnnnnnt\"));\n" +
-        "}",
-        "public static void main(String[] args) {\n" +
-        "    boolean ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa = false;\n" +
-        "    soo.ifTrue(ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa,\n" +
-        "            (v) -> v.setText(\"syyycuuuuuuuuurrrrrrrrrrrrrrennnnnnnnnnnnnnnnnnnnnt\"));\n" +
-        "}"
+      """
+              public static void main(String[] args) {
+            boolean ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa = false;
+            soo.ifTrue(ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa, (v) -> v.setText("syyycuuuuuuuuurrrrrrrrrrrrrrennnnnnnnnnnnnnnnnnnnnt"));
+        }""",
+      """
+        public static void main(String[] args) {
+            boolean ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa = false;
+            soo.ifTrue(ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa,
+                    (v) -> v.setText("syyycuuuuuuuuurrrrrrrrrrrrrrennnnnnnnnnnnnnnnnnnnnt"));
+        }"""
     );
   }
 
@@ -593,21 +624,25 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
   public void test_PlaceOnNewLineParenth_DoNotWork_IfLineNotExceedsRightMargin() {
     getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
 
-    doMethodTest("run(new Runnable() {\n" +
-                 "public void run() {\n" +
-                 "}\n" +
-                 "});",
-                 "run(new Runnable() {\n" +
-                 "    public void run() {\n" +
-                 "    }\n" +
-                 "});");
+    doMethodTest("""
+                   run(new Runnable() {
+                   public void run() {
+                   }
+                   });""",
+                 """
+                   run(new Runnable() {
+                       public void run() {
+                       }
+                   });""");
 
-    doMethodTest("run(() -> {\n" +
-                 "int a = 2;\n" +
-                 "});",
-                 "run(() -> {\n" +
-                 "    int a = 2;\n" +
-                 "});");
+    doMethodTest("""
+                   run(() -> {
+                   int a = 2;
+                   });""",
+                 """
+                   run(() -> {
+                       int a = 2;
+                   });""");
   }
 
   public void test_WrapIfLong_ActivatesPlaceNewLineAfterParenthesis() {
@@ -615,9 +650,10 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
     doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccccccccccccccccccccccc\");",
-                 "fuun(\n" +
-                 "        \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n" +
-                 "        \"cccccccccccccccccccccccccccccccccc\");");
+                 """
+                   fuun(
+                           "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                           "cccccccccccccccccccccccccccccccccc");""");
 
   }
 
@@ -626,9 +662,10 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
     doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
-                 "fuun(\n" +
-                 "        \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n" +
-                 "        \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");");
+                 """
+                   fuun(
+                           "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                           "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "cccccccccccccc");""");
   }
 
   public void test_LParen_OnNextLine_IfWrapped() {
@@ -636,17 +673,19 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
 
     doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
-                 "fuun(\n" +
-                 "        \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n" +
-                 "        \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n" +
-                 "        \"cccccccccccccc\");");
+                 """
+                   fuun(
+                           "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                           "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                           "cccccccccccccc");""");
 
 
     getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = false;
     doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
-                 "fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n" +
-                 "        \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n" +
-                 "        \"cccccccccccccc\");");
+                 """
+                   fuun("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                           "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                           "cccccccccccccc");""");
 
   }
 
@@ -655,17 +694,19 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
 
     doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
-                 "fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n" +
-                 "        \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n" +
-                 "        \"cccccccccccccc\"" +
-                 "\n);");
+                 """
+                   fuun("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                           "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                           "cccccccccccccc"
+                   );""");
 
 
     getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
     doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
-                 "fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n" +
-                 "        \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n" +
-                 "        \"cccccccccccccc\");");
+                 """
+                   fuun("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                           "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                           "cccccccccccccc");""");
 
   }
 
@@ -675,27 +716,30 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
     doMethodTest(
       "obj.call().call().call().call();",
-      "obj\n" +
-      "        .call()\n" +
-      "        .call()\n" +
-      "        .call()\n" +
-      "        .call();"
+      """
+        obj
+                .call()
+                .call()
+                .call()
+                .call();"""
     );
 
     doMethodTest(
       "call().call().call().call();",
-      "call()\n" +
-      "        .call()\n" +
-      "        .call()\n" +
-      "        .call();"
+      """
+        call()
+                .call()
+                .call()
+                .call();"""
     );
 
     doMethodTest(
       "nestedCall(call().call().call().call());",
-      "nestedCall(call()\n" +
-      "        .call()\n" +
-      "        .call()\n" +
-      "        .call());"
+      """
+        nestedCall(call()
+                .call()
+                .call()
+                .call());"""
     );
   }
 
@@ -714,14 +758,16 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().ALIGN_MULTILINE_RESOURCES = false;
     getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
     doMethodTest(
-      "try (Foo foo = createAFoo(); Bar bar = createABar(foo); Bar bar = createABar(foo); Bar bar = createABar(foo); Bar bar = createABar(foo)) {\n" +
-      "    useThem();\n"                                                                                                                             +
-      "}",
-      "try (Foo foo = createAFoo(); Bar bar = createABar(foo); Bar bar = createABar(foo); Bar bar = createABar(foo);\n" +
-      "        Bar bar = createABar(foo))\n" +
-      "{\n" +
-      "    useThem();\n"                                                                                                                             +
-      "}"
+      """
+        try (Foo foo = createAFoo(); Bar bar = createABar(foo); Bar bar = createABar(foo); Bar bar = createABar(foo); Bar bar = createABar(foo)) {
+            useThem();
+        }""",
+      """
+        try (Foo foo = createAFoo(); Bar bar = createABar(foo); Bar bar = createABar(foo); Bar bar = createABar(foo);
+                Bar bar = createABar(foo))
+        {
+            useThem();
+        }"""
     );
   }
   
@@ -743,60 +789,62 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().RIGHT_MARGIN = 80;
     
     doTextTest(
-      "package com.acme;\n" +
-      "\n" +
-      "public class Test {\n" +
-      "    @Override\n" +
-      "    public boolean equals(Object obj) {\n" +
-      "\n" +
-      "        String direction = \" \";\n" +
-      "        String humanId = \" \";\n" +
-      "        String instrument = \" \";\n" +
-      "        String price = \" \";\n" +
-      "        String quantity = \" \";\n" +
-      "        String stopLoss = \" \";\n" +
-      "        String thatsDirection = \"\";\n" +
-      "\n" +
-      "        return 0 < 0\n" +
-      "                + (direction != null && thatsDirection != null ? direction.equalsIgnoreCase(thatsDirection)          ? 1 : -100 : 0)\n" +
-      "                // @formatter:off\n" +
-      "                + (humanId      != null && thatsDirection  != null ? humanId.equalsIgnoreCase(thatsDirection)        ? 1 : -100 : 0)\n" +
-      "                + (instrument   != null && thatsDirection  != null ? instrument.equals(thatsDirection)               ? 1 : -100 : 0)\n" +
-      "                + (price        != null && thatsDirection  != null ? price.equals(thatsDirection)                    ? 1 : -100 : 0)\n" +
-      "                // @formatter:on\n" +
-      "                + (quantity     != null && thatsDirection  != null ? quantity.equals(thatsDirection)                 ? 1 : -100 : 0)\n" +
-      "                + (stopLoss     != null && thatsDirection  != null ? stopLoss.equals(thatsDirection)                 ? 1 : -100 : 0);\n" +
-      "    }\n" +
-      "}",
-      
-      "package com.acme;\n" +
-      "\n" +
-      "public class Test {\n" +
-      "    @Override\n" +
-      "    public boolean equals(Object obj) {\n" +
-      "\n" +
-      "        String direction = \" \";\n" +
-      "        String humanId = \" \";\n" +
-      "        String instrument = \" \";\n" +
-      "        String price = \" \";\n" +
-      "        String quantity = \" \";\n" +
-      "        String stopLoss = \" \";\n" +
-      "        String thatsDirection = \"\";\n" +
-      "\n" +
-      "        return 0 < 0\n" +
-      "                + (direction != null && thatsDirection != null ?\n" +
-      "                direction.equalsIgnoreCase(thatsDirection) ? 1 : -100 : 0)\n" +
-      "                // @formatter:off\n" +
-      "                + (humanId      != null && thatsDirection  != null ? humanId.equalsIgnoreCase(thatsDirection)        ? 1 : -100 : 0)\n" +
-      "                + (instrument   != null && thatsDirection  != null ? instrument.equals(thatsDirection)               ? 1 : -100 : 0)\n" +
-      "                + (price        != null && thatsDirection  != null ? price.equals(thatsDirection)                    ? 1 : -100 : 0)\n" +
-      "                // @formatter:on\n" +
-      "                + (quantity != null && thatsDirection != null ?\n" +
-      "                quantity.equals(thatsDirection) ? 1 : -100 : 0)\n" +
-      "                + (stopLoss != null && thatsDirection != null ?\n" +
-      "                stopLoss.equals(thatsDirection) ? 1 : -100 : 0);\n" +
-      "    }\n" +
-      "}"
+      """
+        package com.acme;
+
+        public class Test {
+            @Override
+            public boolean equals(Object obj) {
+
+                String direction = " ";
+                String humanId = " ";
+                String instrument = " ";
+                String price = " ";
+                String quantity = " ";
+                String stopLoss = " ";
+                String thatsDirection = "";
+
+                return 0 < 0
+                        + (direction != null && thatsDirection != null ? direction.equalsIgnoreCase(thatsDirection)          ? 1 : -100 : 0)
+                        // @formatter:off
+                + (humanId      != null && thatsDirection  != null ? humanId.equalsIgnoreCase(thatsDirection)        ? 1 : -100 : 0)
+                + (instrument   != null && thatsDirection  != null ? instrument.equals(thatsDirection)               ? 1 : -100 : 0)
+                + (price        != null && thatsDirection  != null ? price.equals(thatsDirection)                    ? 1 : -100 : 0)
+                // @formatter:on
+                        + (quantity     != null && thatsDirection  != null ? quantity.equals(thatsDirection)                 ? 1 : -100 : 0)
+                        + (stopLoss     != null && thatsDirection  != null ? stopLoss.equals(thatsDirection)                 ? 1 : -100 : 0);
+            }
+        }""",
+
+      """
+        package com.acme;
+
+        public class Test {
+            @Override
+            public boolean equals(Object obj) {
+
+                String direction = " ";
+                String humanId = " ";
+                String instrument = " ";
+                String price = " ";
+                String quantity = " ";
+                String stopLoss = " ";
+                String thatsDirection = "";
+
+                return 0 < 0
+                        + (direction != null && thatsDirection != null ?
+                        direction.equalsIgnoreCase(thatsDirection) ? 1 : -100 : 0)
+                        // @formatter:off
+                + (humanId      != null && thatsDirection  != null ? humanId.equalsIgnoreCase(thatsDirection)        ? 1 : -100 : 0)
+                + (instrument   != null && thatsDirection  != null ? instrument.equals(thatsDirection)               ? 1 : -100 : 0)
+                + (price        != null && thatsDirection  != null ? price.equals(thatsDirection)                    ? 1 : -100 : 0)
+                // @formatter:on
+                        + (quantity != null && thatsDirection != null ?
+                        quantity.equals(thatsDirection) ? 1 : -100 : 0)
+                        + (stopLoss != null && thatsDirection != null ?
+                        stopLoss.equals(thatsDirection) ? 1 : -100 : 0);
+            }
+        }"""
     );
   }
 
@@ -805,31 +853,33 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().RIGHT_MARGIN = 40;
 
     doTextTest(
-      "package com.company;\n" +
-      "\n" +
-      "import com.company.subpackage.TestClassOne;\n" +
-      "import com.company.subpackage.TestClassTwo;\n" +
-      "\n" +
-      "public class Test {\n" +
-      "    void foo() {\n" +
-      "        TestClassOne testClassOne = new TestClassOne();\n" +
-      "        TestClassTwo testClassTwo = new TestClassTwo();\n" +
-      "    }\n" +
-      "}",
+      """
+        package com.company;
 
-      "package com.company;\n" +
-      "\n" +
-      "import com.company.subpackage.TestClassOne;\n" +
-      "import com.company.subpackage.TestClassTwo;\n" +
-      "\n" +
-      "public class Test {\n" +
-      "    void foo() {\n" +
-      "        TestClassOne testClassOne =\n" +
-      "                new TestClassOne();\n" +
-      "        TestClassTwo testClassTwo =\n" +
-      "                new TestClassTwo();\n" +
-      "    }\n" +
-      "}"
+        import com.company.subpackage.TestClassOne;
+        import com.company.subpackage.TestClassTwo;
+
+        public class Test {
+            void foo() {
+                TestClassOne testClassOne = new TestClassOne();
+                TestClassTwo testClassTwo = new TestClassTwo();
+            }
+        }""",
+
+      """
+        package com.company;
+
+        import com.company.subpackage.TestClassOne;
+        import com.company.subpackage.TestClassTwo;
+
+        public class Test {
+            void foo() {
+                TestClassOne testClassOne =
+                        new TestClassOne();
+                TestClassTwo testClassTwo =
+                        new TestClassTwo();
+            }
+        }"""
     );
   }
 
@@ -838,20 +888,22 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().RIGHT_MARGIN = 35;
 
     doTextTest(
-      "package org.example.sandbox;\n" +
-      "\n" +
-      "public class Test {\n" +
-      "    void test(String a, String... b) {\n" +
-      "    }\n" +
-      "}",
+      """
+        package org.example.sandbox;
 
-      "package org.example.sandbox;\n" +
-      "\n" +
-      "public class Test {\n" +
-      "    void test(String a,\n" +
-      "              String... b) {\n" +
-      "    }\n" +
-      "}"
+        public class Test {
+            void test(String a, String... b) {
+            }
+        }""",
+
+      """
+        package org.example.sandbox;
+
+        public class Test {
+            void test(String a,
+                      String... b) {
+            }
+        }"""
     );
   }
 
@@ -860,22 +912,24 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().RIGHT_MARGIN = 35;
 
     doTextTest(
-      "package org.example.sandbox;\n" +
-      "\n" +
-      "public class Test {\n" +
-      "    void test() {\n" +
-      "        double doubleNumber = 12.456;\n" +
-      "    }\n" +
-      "}",
+      """
+        package org.example.sandbox;
 
-      "package org.example.sandbox;\n" +
-      "\n" +
-      "public class Test {\n" +
-      "    void test() {\n" +
-      "        double doubleNumber =\n" +
-      "                12.456;\n" +
-      "    }\n" +
-      "}"
+        public class Test {
+            void test() {
+                double doubleNumber = 12.456;
+            }
+        }""",
+
+      """
+        package org.example.sandbox;
+
+        public class Test {
+            void test() {
+                double doubleNumber =
+                        12.456;
+            }
+        }"""
     );
   }
 
@@ -888,18 +942,20 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getIndentOptions().CONTINUATION_INDENT_SIZE = 4;
 
     doTextTest(
-      "interface Test {\n" +
-      "    @SuppressWarnings(\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\" + \" \"\n" +
-      "        + \"xxxxxxxxxxxxxxxxxxx\")\n" +
-      "    void test();\n" +
-      "}",
+      """
+        interface Test {
+            @SuppressWarnings("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" + " "
+                + "xxxxxxxxxxxxxxxxxxx")
+            void test();
+        }""",
 
-      "interface Test {\n" +
-      "    @SuppressWarnings(\n" +
-      "        \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\" + \" \"\n" +
-      "            + \"xxxxxxxxxxxxxxxxxxx\")\n" +
-      "    void test();\n" +
-      "}"
+      """
+        interface Test {
+            @SuppressWarnings(
+                "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" + " "
+                    + "xxxxxxxxxxxxxxxxxxx")
+            void test();
+        }"""
     );
   }
 
@@ -909,29 +965,31 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().RIGHT_MARGIN = 50;
 
     doTextTest(
-      "public class Main {\n" +
-      "\n" +
-      "    /**\n" +
-      "     * {@link #authenticationCompleted(android.app.Activity, int, int, android.content.Intent)}\n" +
-      "     *\n" +
-      "     * @param args\n" +
-      "     */\n" +
-      "    public static void main(String[] args) {\n" +
-      "    }\n" +
-      "}",
+      """
+        public class Main {
 
-      "public class Main {\n" +
-      "\n" +
-      "    /**\n" +
-      "     * {@link\n" +
-      "     * #authenticationCompleted(android.app.Activity,\n" +
-      "     * int, int, android.content.Intent)}\n" +
-      "     *\n" +
-      "     * @param args\n" +
-      "     */\n" +
-      "    public static void main(String[] args) {\n" +
-      "    }\n" +
-      "}"
+            /**
+             * {@link #authenticationCompleted(android.app.Activity, int, int, android.content.Intent)}
+             *
+             * @param args
+             */
+            public static void main(String[] args) {
+            }
+        }""",
+
+      """
+        public class Main {
+
+            /**
+             * {@link
+             * #authenticationCompleted(android.app.Activity,
+             * int, int, android.content.Intent)}
+             *
+             * @param args
+             */
+            public static void main(String[] args) {
+            }
+        }"""
     );
   }
 
@@ -940,33 +998,35 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
 
     doTextTest(
-      "class Test {\n" +
-      "    public static void main(String[] args) {\n" +
-      "        PanelBuilder.wrap(getCenterPanel(), \"review-view\").flowPanel(\"sidebar-offset\").widget(myReviewHints).flowPanel(\"island\").flowPanel(\"pane-toolbar pane-toolbar_island clearfix\").flowPanel(\"pane-toolbar__left pane-toolbar__left_header\").widget(reviewStateLabel(reviewDescriptorSignal)).widget(reviewIdLabel(reviewDescriptorSignal)).builder(reviewTitle(projectDescriptor, reviewDescriptorSignal)).end().end().flowPanel(\"revision-files-standalone\").widget(myChangesListView).end().end().widget(myReviewFeedView).end();\n" +
-      "    }\n" +
-      "}",
+      """
+        class Test {
+            public static void main(String[] args) {
+                PanelBuilder.wrap(getCenterPanel(), "review-view").flowPanel("sidebar-offset").widget(myReviewHints).flowPanel("island").flowPanel("pane-toolbar pane-toolbar_island clearfix").flowPanel("pane-toolbar__left pane-toolbar__left_header").widget(reviewStateLabel(reviewDescriptorSignal)).widget(reviewIdLabel(reviewDescriptorSignal)).builder(reviewTitle(projectDescriptor, reviewDescriptorSignal)).end().end().flowPanel("revision-files-standalone").widget(myChangesListView).end().end().widget(myReviewFeedView).end();
+            }
+        }""",
 
-      "class Test {\n" +
-      "    public static void main(String[] args) {\n" +
-      "        PanelBuilder.wrap(getCenterPanel(), \"review-view\")\n" +
-      "                .flowPanel(\"sidebar-offset\")\n" +
-      "                .widget(myReviewHints)\n" +
-      "                .flowPanel(\"island\")\n" +
-      "                .flowPanel(\"pane-toolbar pane-toolbar_island clearfix\")\n" +
-      "                .flowPanel(\"pane-toolbar__left pane-toolbar__left_header\")\n" +
-      "                .widget(reviewStateLabel(reviewDescriptorSignal))\n" +
-      "                .widget(reviewIdLabel(reviewDescriptorSignal))\n" +
-      "                .builder(reviewTitle(projectDescriptor, reviewDescriptorSignal))\n" +
-      "                .end()\n" +
-      "                .end()\n" +
-      "                .flowPanel(\"revision-files-standalone\")\n" +
-      "                .widget(myChangesListView)\n" +
-      "                .end()\n" +
-      "                .end()\n" +
-      "                .widget(myReviewFeedView)\n" +
-      "                .end();\n" +
-      "    }\n" +
-      "}"
+      """
+        class Test {
+            public static void main(String[] args) {
+                PanelBuilder.wrap(getCenterPanel(), "review-view")
+                        .flowPanel("sidebar-offset")
+                        .widget(myReviewHints)
+                        .flowPanel("island")
+                        .flowPanel("pane-toolbar pane-toolbar_island clearfix")
+                        .flowPanel("pane-toolbar__left pane-toolbar__left_header")
+                        .widget(reviewStateLabel(reviewDescriptorSignal))
+                        .widget(reviewIdLabel(reviewDescriptorSignal))
+                        .builder(reviewTitle(projectDescriptor, reviewDescriptorSignal))
+                        .end()
+                        .end()
+                        .flowPanel("revision-files-standalone")
+                        .widget(myChangesListView)
+                        .end()
+                        .end()
+                        .widget(myReviewFeedView)
+                        .end();
+            }
+        }"""
     );
   }
 
@@ -974,23 +1034,25 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
 
     doTextTest(
-      "public class Test {\n" +
-      "    void foo() {\n" +
-      "        String zozo = List.<String>of(\"titi\", \"toto\", \"tutu\").stream().filter(it -> it.contains(\"i\"))\n" +
-      "                .findAny().<String>map(it -> it.replaceFirst(\"t\", \"l\")).orElse(\"zozoggrezgzee\");\n" +
-      "    }\n" +
-      "}",
+      """
+        public class Test {
+            void foo() {
+                String zozo = List.<String>of("titi", "toto", "tutu").stream().filter(it -> it.contains("i"))
+                        .findAny().<String>map(it -> it.replaceFirst("t", "l")).orElse("zozoggrezgzee");
+            }
+        }""",
 
-      "public class Test {\n" +
-      "    void foo() {\n" +
-      "        String zozo = List.<String>of(\"titi\", \"toto\", \"tutu\")\n" +
-      "                .stream()\n" +
-      "                .filter(it -> it.contains(\"i\"))\n" +
-      "                .findAny()\n" +
-      "                .<String>map(it -> it.replaceFirst(\"t\", \"l\"))\n" +
-      "                .orElse(\"zozoggrezgzee\");\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Test {
+            void foo() {
+                String zozo = List.<String>of("titi", "toto", "tutu")
+                        .stream()
+                        .filter(it -> it.contains("i"))
+                        .findAny()
+                        .<String>map(it -> it.replaceFirst("t", "l"))
+                        .orElse("zozoggrezgzee");
+            }
+        }"""
     );
   }
 
@@ -999,23 +1061,25 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().WRAP_FIRST_METHOD_IN_CALL_CHAIN = true;
 
     doTextTest(
-      "public class Test {\n" +
-      "\n" +
-      "    void foo() {\n" +
-      "        String result = this.nonBuilder().start().addInt().addText().end().toString();\n" +
-      "    }\n" +
-      "}",
+      """
+        public class Test {
 
-      "public class Test {\n" +
-      "\n" +
-      "    void foo() {\n" +
-      "        String result = this.nonBuilder()\n" +
-      "                .start()\n" +
-      "                .addInt()\n" +
-      "                .addText()\n" +
-      "                .end().toString();\n" +
-      "    }\n" +
-      "}"
+            void foo() {
+                String result = this.nonBuilder().start().addInt().addText().end().toString();
+            }
+        }""",
+
+      """
+        public class Test {
+
+            void foo() {
+                String result = this.nonBuilder()
+                        .start()
+                        .addInt()
+                        .addText()
+                        .end().toString();
+            }
+        }"""
     );
   }
 
@@ -1025,17 +1089,19 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().RIGHT_MARGIN = 40;
 
     doTextTest(
-      "public class Cls {\n" +
-      " public void foo () {\n" +
-      " int x = 0; // See https://youtrack.jetbrains.com/issue/IDEA-189817#focus=Comments-27-2841120.0-0\n" +
-      "  }\n" +
-      "}",
+      """
+        public class Cls {
+         public void foo () {
+         int x = 0; // See https://youtrack.jetbrains.com/issue/IDEA-189817#focus=Comments-27-2841120.0-0
+          }
+        }""",
 
-      "public class Cls {\n" +
-      "    public void foo() {\n" +
-      "        int x = 0; // See https://youtrack.jetbrains.com/issue/IDEA-189817#focus=Comments-27-2841120.0-0\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Cls {
+            public void foo() {
+                int x = 0; // See https://youtrack.jetbrains.com/issue/IDEA-189817#focus=Comments-27-2841120.0-0
+            }
+        }"""
     );
   }
 
@@ -1044,18 +1110,20 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().RIGHT_MARGIN = 40;
 
     doTextTest(
-      "public class Cls {\n" +
-      " public void foo () {\n" +
-      " int x = 0; // See https://youtrack.jetbrains.com/issue/IDEA-189817#focus=Comments-27-2841120.0-0 and other sources\n" +
-      "  }\n" +
-      "}",
+      """
+        public class Cls {
+         public void foo () {
+         int x = 0; // See https://youtrack.jetbrains.com/issue/IDEA-189817#focus=Comments-27-2841120.0-0 and other sources
+          }
+        }""",
 
-      "public class Cls {\n" +
-      "    public void foo() {\n" +
-      "        int x = 0; // See https://youtrack.jetbrains.com/issue/IDEA-189817#focus=Comments-27-2841120.0-0\n" +
-      "        // and other sources\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Cls {
+            public void foo() {
+                int x = 0; // See https://youtrack.jetbrains.com/issue/IDEA-189817#focus=Comments-27-2841120.0-0
+                // and other sources
+            }
+        }"""
     );
   }
 
@@ -1069,10 +1137,11 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "final ImmutableMap<String, String> map = ImmutableMap.of(\"content\", \"value\", \"content\", \"value\",\"content\", \"value\"," +
       "\"content\", \"value\",\"content\", \"value\",\"content\", \"value\");",
 
-      "final ImmutableMap<String, String> map = ImmutableMap.of(\n" +
-      "        \"content\", \"value\", \"content\", \"value\",\n" +
-      "        \"content\", \"value\", \"content\", \"value\",\n" +
-      "        \"content\", \"value\", \"content\", \"value\");"
+      """
+        final ImmutableMap<String, String> map = ImmutableMap.of(
+                "content", "value", "content", "value",
+                "content", "value", "content", "value",
+                "content", "value", "content", "value");"""
     );
   }
 
@@ -1080,53 +1149,56 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
 
     doClassTest(
-      "static boolean test(String name)" +
-      "{\n" +
-      "    switch (name)" +
-      "{\n" +
-      "        case \"GET\" -> {\n" +
-      "            return true;\n" +
-      "        }\n" +
-      "        case \"POST\" -> {\n" +
-      "            return false;\n" +
-      "        }\n" +
-      "    }\n" +
-      "    return false;\n" +
-      "}",
+      """
+        static boolean test(String name){
+            switch (name){
+                case "GET" -> {
+                    return true;
+                }
+                case "POST" -> {
+                    return false;
+                }
+            }
+            return false;
+        }""",
 
-      "static boolean test(String name) {\n" +
-      "    switch (name)\n" +
-      "    {\n" +
-      "        case \"GET\" ->\n" +
-      "        {\n" +
-      "            return true;\n" +
-      "        }\n" +
-      "        case \"POST\" ->\n" +
-      "        {\n" +
-      "            return false;\n" +
-      "        }\n" +
-      "    }\n" +
-      "    return false;\n" +
-      "}"
+      """
+        static boolean test(String name) {
+            switch (name)
+            {
+                case "GET" ->
+                {
+                    return true;
+                }
+                case "POST" ->
+                {
+                    return false;
+                }
+            }
+            return false;
+        }"""
     );
   }
 
   public void testExprInSwitchWrapping() {
     doClassTest(
-      "  String process(E e) {\n" +
-      "    return switch (e) {\n" +
-      "      case LONG_NAME_A -> throw new IllegalStateException(\"long text long text long text long text long text long text  |  long text\");\n" +
-      "      case LONG_NAME_B -> \"text\";\n" +
-      "    };\n" +
-      "  }",
+      """
+          String process(E e) {
+            return switch (e) {
+              case LONG_NAME_A -> throw new IllegalStateException("long text long text long text long text long text long text  |  long text");
+              case LONG_NAME_B -> "text";
+            };
+          }\
+        """,
 
-      "String process(E e) {\n" +
-      "    return switch (e) {\n" +
-      "        case LONG_NAME_A ->\n" +
-      "                throw new IllegalStateException(\"long text long text long text long text long text long text  |  long text\");\n" +
-      "        case LONG_NAME_B -> \"text\";\n" +
-      "    };\n" +
-      "}"
+      """
+        String process(E e) {
+            return switch (e) {
+                case LONG_NAME_A ->
+                        throw new IllegalStateException("long text long text long text long text long text long text  |  long text");
+                case LONG_NAME_B -> "text";
+            };
+        }"""
     );
   }
 
@@ -1137,9 +1209,10 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     doTextTest(
       "class A permits Class1, Class2, Class3, Class4, Class5 {}",
 
-      "class A permits Class1, Class2,\n" +
-      "        Class3, Class4, Class5 {\n" +
-      "}"
+      """
+        class A permits Class1, Class2,
+                Class3, Class4, Class5 {
+        }"""
     );
   }
 
@@ -1150,17 +1223,19 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getJavaSettings().ALIGN_MULTILINE_DECONSTRUCTION_LIST_COMPONENTS = false;
 
     doMethodTest(
-      "switch (a) {\n" +
-      "  case Rec(String s, int i) -> {}\n" +
-      "}",
+      """
+        switch (a) {
+          case Rec(String s, int i) -> {}
+        }""",
 
-      "switch (a) {\n" +
-      "    case Rec(\n" +
-      "            String s,\n" +
-      "            int i\n" +
-      "    ) -> {\n" +
-      "    }\n" +
-      "}"
+      """
+        switch (a) {
+            case Rec(
+                    String s,
+                    int i
+            ) -> {
+            }
+        }"""
     );
   }
 }

@@ -41,10 +41,7 @@ import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ProjectType;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
@@ -78,6 +75,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -231,7 +229,10 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     }
     CustomActionsSchema customActionsSchema = ApplicationManager.getApplication().getServiceIfCreated(CustomActionsSchema.class);
     if (customActionsSchema != null && StringUtil.isNotEmpty(customActionsSchema.getIconPath(stub.getId()))) {
-      customActionsSchema.initActionIcon(anAction, stub.getId(), ActionManager.getInstance());
+      RecursionManager.doPreventingRecursion(stub.getId(), false, () -> {
+        customActionsSchema.initActionIcon(anAction, stub.getId(), ActionManager.getInstance());
+        return null;
+      });
     }
   }
 
@@ -390,6 +391,15 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     return contextComponent != null ? dataManager.getDataContext(contextComponent) : dataManager.getDataContext();
   }
 
+  private static @NotNull ActionToolbarImpl createActionToolbarImpl(@NotNull String place,
+                                                                    @NotNull ActionGroup group,
+                                                                    boolean horizontal,
+                                                                    boolean decorateButtons) {
+    ActionToolbarImpl toolbar = new ActionToolbarImpl(place, group, horizontal, decorateButtons);
+    managerPublisher().toolbarCreated(place, group, horizontal, toolbar);
+    return toolbar;
+  }
+
   @Override
   public void dispose() {
     if (myTimer != null) {
@@ -447,8 +457,16 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
   @Override
   public @NotNull ActionToolbar createActionToolbar(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons) {
-    ActionToolbar toolbar = new ActionToolbarImpl(place, group, horizontal, decorateButtons);
-    managerPublisher().toolbarCreated(place, group, horizontal, toolbar);
+    return createActionToolbarImpl(place, group, horizontal, decorateButtons);
+  }
+
+  @Override
+  public @NotNull ActionToolbar createActionToolbar(@NotNull String place,
+                                                    @NotNull ActionGroup group,
+                                                    boolean horizontal,
+                                                    @NotNull Function<String, Component> separatorCreator) {
+    ActionToolbarImpl toolbar = createActionToolbarImpl(place, group, horizontal, false);
+    toolbar.setSeparatorCreator(separatorCreator);
     return toolbar;
   }
 

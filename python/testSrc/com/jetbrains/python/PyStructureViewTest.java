@@ -22,74 +22,80 @@ public class PyStructureViewTest extends PyTestCase {
   public void testBaseClassNames() {
     myFixture.configureByFiles(TEST_DIRECTORY + "baseClassNames.py",
                                TEST_DIRECTORY + "lib1.py");
-    doTest("-baseClassNames.py\n" +
-           " -B1\n" +
-           "  f(self, x)\n" +
-           " -B2(object)\n" +
-           "  g(x)\n" +
-           " C(B1, B2)\n" +
-           " D1(C)\n" +
-           " D2(C)\n" +
-           " D3(lib1.C)\n" +
-           " D4(foo.bar.C)\n",
+    doTest("""
+             -baseClassNames.py
+              -B1
+               f(self, x)
+              -B2(object)
+               g(x)
+              C(B1, B2)
+              D1(C)
+              D2(C)
+              D3(lib1.C)
+              D4(foo.bar.C)
+             """,
            false);
   }
 
   // PY-3371
   public void testAttributes() {
     myFixture.configureByFile(TEST_DIRECTORY + "attributes.py");
-    doTest("-attributes.py\n" +
-           " -B(object)\n" +
-           "  f(self, x)\n" +
-           "  __init__(self, x, y)\n" +
-           "  g(cls, x)\n" +
-           "  c1\n" +
-           "  c2\n" +
-           "  i1\n" +
-           "  i2\n" +
-           "  i3\n" +
-           " g1\n" +
-           " -C(B)\n" +
-           "  __init__(self, x, y)\n" +
-           "  h(self)\n" +
-           "  c2\n" +
-           "  c3\n" +
-           "  i3\n" +
-           "  i4\n" +
-           "  i5\n" +
-           " g2\n",
+    doTest("""
+             -attributes.py
+              -B(object)
+               f(self, x)
+               __init__(self, x, y)
+               g(cls, x)
+               c1
+               c2
+               i1
+               i2
+               i3
+              g1
+              -C(B)
+               __init__(self, x, y)
+               h(self)
+               c2
+               c3
+               i3
+               i4
+               i5
+              g2
+             """,
            false);
   }
 
   // PY-3936
   public void testInherited() {
     myFixture.configureByFile(TEST_DIRECTORY + "inherited.py");
-    doTest("-inherited.py\n" +
-           " -C(object)\n" +
-           "  f(self, x)\n" +
-           "  __str__(self)\n" +
-           "  x\n" +
-           "  __class__(self)\n" +
-           "  __init__(self)\n" +
-           "  __new__(cls)\n" +
-           "  __setattr__(self, name, value)\n" +
-           "  __eq__(self, o)\n" +
-           "  __ne__(self, o)\n" +
-           "  __repr__(self)\n" +
-           "  __hash__(self)\n" +
-           "  __format__(self, format_spec)\n" +
-           "  __getattribute__(self, name)\n" +
-           "  __delattr__(self, name)\n" +
-           "  __sizeof__(self)\n" +
-           "  __reduce__(self)\n" +
-           "  __reduce_ex__(self, protocol)\n" +
-           "  __dir__(self)\n" +
-           "  __init_subclass__(cls)\n" +
-           "  __annotations__\n" +
-           "  __dict__\n" +
-           "  __doc__\n" +
-           "  __module__\n" +
-           "  __slots__\n",
+    doTest("""
+             -inherited.py
+              -C(object)
+               f(self, x)
+               __str__(self)
+               x
+               __class__(self)
+               __init__(self)
+               __new__(cls)
+               __setattr__(self, name, value)
+               __eq__(self, o)
+               __ne__(self, o)
+               __repr__(self)
+               __hash__(self)
+               __format__(self, format_spec)
+               __getattribute__(self, name)
+               __delattr__(self, name)
+               __sizeof__(self)
+               __reduce__(self)
+               __reduce_ex__(self, protocol)
+               __dir__(self)
+               __init_subclass__(cls)
+               __annotations__
+               __dict__
+               __doc__
+               __module__
+               __slots__
+             """,
            true);
   }
 
@@ -111,31 +117,33 @@ public class PyStructureViewTest extends PyTestCase {
   // PY-19078
   public void testParentImportedWithAs() {
     myFixture.configureByFiles(TEST_DIRECTORY + "parentImportedWithAs.py", TEST_DIRECTORY + "lib2.py");
-    doTest("-parentImportedWithAs.py\n" +
-           " -CLS(P)\n" +
-           "  foo(self)\n" +
-           "  __class__(self)\n" +
-           "  __init__(self)\n" +
-           "  __new__(cls)\n" +
-           "  __setattr__(self, name, value)\n" +
-           "  __eq__(self, o)\n" +
-           "  __ne__(self, o)\n" +
-           "  __str__(self)\n" +
-           "  __repr__(self)\n" +
-           "  __hash__(self)\n" +
-           "  __format__(self, format_spec)\n" +
-           "  __getattribute__(self, name)\n" +
-           "  __delattr__(self, name)\n" +
-           "  __sizeof__(self)\n" +
-           "  __reduce__(self)\n" +
-           "  __reduce_ex__(self, protocol)\n" +
-           "  __dir__(self)\n" +
-           "  __init_subclass__(cls)\n" +
-           "  __annotations__\n" +
-           "  __dict__\n" +
-           "  __doc__\n" +
-           "  __module__\n" +
-           "  __slots__\n",
+    doTest("""
+             -parentImportedWithAs.py
+              -CLS(P)
+               foo(self)
+               __class__(self)
+               __init__(self)
+               __new__(cls)
+               __setattr__(self, name, value)
+               __eq__(self, o)
+               __ne__(self, o)
+               __str__(self)
+               __repr__(self)
+               __hash__(self)
+               __format__(self, format_spec)
+               __getattribute__(self, name)
+               __delattr__(self, name)
+               __sizeof__(self)
+               __reduce__(self)
+               __reduce_ex__(self, protocol)
+               __dir__(self)
+               __init_subclass__(cls)
+               __annotations__
+               __dict__
+               __doc__
+               __module__
+               __slots__
+             """,
            true);
   }
 

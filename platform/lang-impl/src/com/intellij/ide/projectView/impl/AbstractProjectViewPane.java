@@ -671,6 +671,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return element;
   }
 
+  @Deprecated(forRemoval = true)
   public final AbstractTreeBuilder getTreeBuilder() {
     return myTreeBuilder;
   }
@@ -772,19 +773,23 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return new GroupByTypeComparator(myProject, getId());
   }
 
+  @Deprecated(forRemoval = true)
   public void installComparator() {
     installComparator(getTreeBuilder());
   }
 
+  @Deprecated(forRemoval = true)
   void installComparator(AbstractTreeBuilder treeBuilder) {
     installComparator(treeBuilder, createComparator());
   }
 
   @TestOnly
+  @Deprecated(forRemoval = true)
   public void installComparator(@NotNull Comparator<? super NodeDescriptor<?>> comparator) {
     installComparator(getTreeBuilder(), comparator);
   }
 
+  @Deprecated(forRemoval = true)
   protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor<?>> comparator) {
     if (builder != null) {
       builder.setNodeDescriptorComparator(comparator);
@@ -795,6 +800,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return myTree;
   }
 
+  @Deprecated
   public PsiDirectory @NotNull [] getSelectedDirectories() {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return PsiDirectory.EMPTY_ARRAY;
@@ -803,7 +809,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return getSelectedDirectories(selectedUserObjects);
   }
 
-  
+  @RequiresBackgroundThread(generateAssertion = false)
   protected PsiDirectory @NotNull [] getSelectedDirectories(Object @NotNull[] selectedUserObjects) {
     List<PsiDirectory> directories = new ArrayList<>();
     for (Object obj : selectedUserObjects) {
@@ -962,6 +968,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   protected void beforeDnDLeave() { }
 
+  @Deprecated(forRemoval = true)
   public void setTreeBuilder(final AbstractTreeBuilder treeBuilder) {
     if (treeBuilder != null) {
       Disposer.register(this, treeBuilder);
@@ -1008,6 +1015,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @ApiStatus.Internal
   public boolean supportsShowModules() {
+    return false;
+  }
+
+  @ApiStatus.Internal
+  public boolean supportsShowScratchesAndConsoles() {
     return false;
   }
 
@@ -1069,18 +1081,19 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       final TreePath[] paths = getSelectionPaths();
       if (paths == null) return null;
 
-      List<Trinity<@Nls String, Icon, @Nullable VirtualFile>> toRender = new ArrayList<>();
+      record LabelData(@Nls String text, Icon icon, @Nullable VirtualFile file) { }
+      List<LabelData> toRender = new ArrayList<>();
       for (TreePath path : paths) {
         Pair<Icon, @Nls String> iconAndText = getIconAndText(path);
-        toRender.add(Trinity.create(iconAndText.second, iconAndText.first,
-                                    PsiCopyPasteManager.asVirtualFile(getFirstElementFromNode(path.getLastPathComponent()))));
+        toRender.add(new LabelData(iconAndText.second, iconAndText.first,
+                                   PsiCopyPasteManager.asVirtualFile(getFirstElementFromNode(path.getLastPathComponent()))));
       }
 
       int count = 0;
       JPanel panel = new JPanel(new VerticalFlowLayout(0, 0));
       int maxItemsToShow = toRender.size() < 20 ? toRender.size() : 10;
-      for (Trinity<@Nls String, Icon, @Nullable VirtualFile> trinity : toRender) {
-        JLabel fileLabel = new DragImageLabel(trinity.first, trinity.second, trinity.third);
+      for (LabelData data : toRender) {
+        JLabel fileLabel = new DragImageLabel(data.text(), data.icon(), data.file());
         panel.add(fileLabel);
         count++;
         if (count > maxItemsToShow) {
@@ -1193,6 +1206,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     @Override
     protected PsiElement @NotNull [] getSelectedPSIElements(@NotNull DataContext dataContext) {
       return AbstractProjectViewPane.this.getSelectedPSIElements();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

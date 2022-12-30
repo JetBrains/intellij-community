@@ -15,7 +15,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.util.application
 import com.jetbrains.rd.util.first
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
-import com.jetbrains.rd.util.lifetime.onTermination
 import java.awt.event.MouseEvent
 
 val editorLensContextKey: Key<EditorCodeVisionContext> = Key<EditorCodeVisionContext>("EditorCodeLensContext")
@@ -81,8 +80,9 @@ open class EditorCodeVisionContext(
     hasPendingLenses = false
   }
 
-
-  protected fun resubmitThings() {
+  // used externally
+  @Suppress("MemberVisibilityCanBePrivate")
+  fun resubmitThings() {
     val viewService = ServiceManager.getService(
       editor.project!!,
       CodeVisionView::class.java

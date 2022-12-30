@@ -29,45 +29,45 @@ public class JUnitAssertsWithoutMessagesInspectionTest extends LightJavaInspecti
   }
 
   public void testQuickFixAssertEquals() {
-    doTest("import org.junit.Test;\n" +
-           "import static org.junit.Assert.*;\n" +
-
-           "class TestCase {\n" +
-           "    @Test\n" +
-           "    public void test() {\n" +
-           "        <warning descr=\"'assertEquals()' without message\"><caret>assertEquals</warning>(1, 1);\n" +
-           "    }\n" +
-           "}");
-    checkQuickFix("Add error message", "import org.junit.Test;\n" +
-                                       "import static org.junit.Assert.*;\n" +
-
-                                       "class TestCase {\n" +
-                                       "    @Test\n" +
-                                       "    public void test() {\n" +
-                                       "        assertEquals(\"<caret>\", 1, 1);\n" +
-                                       "    }\n" +
-                                       "}");
+    doTest("""
+             import org.junit.Test;
+             import static org.junit.Assert.*;
+             class TestCase {
+                 @Test
+                 public void test() {
+                     <warning descr="'assertEquals()' without message"><caret>assertEquals</warning>(1, 1);
+                 }
+             }""");
+    checkQuickFix("Add error message", """
+      import org.junit.Test;
+      import static org.junit.Assert.*;
+      class TestCase {
+          @Test
+          public void test() {
+              assertEquals("<caret>", 1, 1);
+          }
+      }""");
   }
 
   public void testQuickFixFail() {
-    doTest("import org.junit.Test;\n" +
-           "import static org.junit.Assert.*;\n" +
-
-           "class TestCase {\n" +
-           "    @Test\n" +
-           "    public void test() {\n" +
-           "        <warning descr=\"'fail()' without message\"><caret>fail</warning>();\n" +
-           "    }\n" +
-           "}");
-    checkQuickFix("Add error message", "import org.junit.Test;\n" +
-                                       "import static org.junit.Assert.*;\n" +
-
-                                       "class TestCase {\n" +
-                                       "    @Test\n" +
-                                       "    public void test() {\n" +
-                                       "        fail(\"<caret>\");\n" +
-                                       "    }\n" +
-                                       "}");
+    doTest("""
+             import org.junit.Test;
+             import static org.junit.Assert.*;
+             class TestCase {
+                 @Test
+                 public void test() {
+                     <warning descr="'fail()' without message"><caret>fail</warning>();
+                 }
+             }""");
+    checkQuickFix("Add error message", """
+      import org.junit.Test;
+      import static org.junit.Assert.*;
+      class TestCase {
+          @Test
+          public void test() {
+              fail("<caret>");
+          }
+      }""");
   }
 
   @Override
@@ -97,10 +97,11 @@ public class JUnitAssertsWithoutMessagesInspectionTest extends LightJavaInspecti
       "  static public void fail(String message){}" +
       "}",
 
-      "package org.junit.jupiter.api;\n" +
-      "public final class Assertions {\n" +
-      "    public static void fail(String message) {}\n" +
-      "}"
+      """
+package org.junit.jupiter.api;
+public final class Assertions {
+    public static void fail(String message) {}
+}"""
     };
   }
 

@@ -38,7 +38,7 @@ open class ChildWithNullsMultipleImpl(val dataSource: ChildWithNullsMultipleData
     return connections
   }
 
-  class Builder(val result: ChildWithNullsMultipleData?) : ModifiableWorkspaceEntityBase<ChildWithNullsMultiple>(), ChildWithNullsMultiple.Builder {
+  class Builder(var result: ChildWithNullsMultipleData?) : ModifiableWorkspaceEntityBase<ChildWithNullsMultiple>(), ChildWithNullsMultiple.Builder {
     constructor() : this(ChildWithNullsMultipleData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -56,6 +56,9 @@ open class ChildWithNullsMultipleImpl(val dataSource: ChildWithNullsMultipleData
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -79,8 +82,8 @@ open class ChildWithNullsMultipleImpl(val dataSource: ChildWithNullsMultipleData
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ChildWithNullsMultiple
-      this.entitySource = dataSource.entitySource
-      this.childData = dataSource.childData
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.childData != dataSource.childData) this.childData = dataSource.childData
       if (parents != null) {
       }
     }
@@ -157,7 +160,7 @@ class ChildWithNullsMultipleData : WorkspaceEntityData<ChildWithNullsMultiple>()
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ChildWithNullsMultipleData
 
@@ -168,7 +171,7 @@ class ChildWithNullsMultipleData : WorkspaceEntityData<ChildWithNullsMultiple>()
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ChildWithNullsMultipleData
 

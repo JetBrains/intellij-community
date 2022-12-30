@@ -680,6 +680,20 @@ public final class RefactoringUtil {
     return result;
   }
 
+  public static boolean equivalentTypes(PsiType t1, PsiType t2, PsiManager manager) {
+    while (t1 instanceof PsiArrayType) {
+      if (!(t2 instanceof PsiArrayType)) return false;
+      t1 = ((PsiArrayType)t1).getComponentType();
+      t2 = ((PsiArrayType)t2).getComponentType();
+    }
+
+    if (t1 instanceof PsiPrimitiveType) {
+      return t2 instanceof PsiPrimitiveType && t1.equals(t2);
+    }
+
+    return manager.areElementsEquivalent(PsiUtil.resolveClassInType(t1), PsiUtil.resolveClassInType(t2));
+  }
+
   public static List<PsiVariable> collectReferencedVariables(PsiElement scope) {
     final List<PsiVariable> result = new ArrayList<>();
     scope.accept(new JavaRecursiveElementWalkingVisitor() {

@@ -6,8 +6,6 @@ package org.jetbrains.intellij.build.impl.compilation
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.util.io.Decompressor
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.get
-import org.jetbrains.intellij.build.httpClient
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.io.retryWithExponentialBackOff
@@ -60,7 +58,7 @@ internal class PortableCompilationCacheDownloader(
   }
 
   private val availableCachesKeys by lazy {
-    val json = downloadString("$remoteCacheUrl/${CommitsHistory.JSON_FILE}")
+    val json = downloadString("${this.remoteCacheUrl}/${CommitsHistory.JSON_FILE}")
     CommitsHistory(json).commitsForRemote(gitUrl)
   }
 

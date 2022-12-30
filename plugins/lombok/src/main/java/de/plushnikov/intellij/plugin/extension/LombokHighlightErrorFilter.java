@@ -115,7 +115,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
       private final Pattern pattern2 = preparePattern(2);
 
       @NotNull
-      private Pattern preparePattern(int count) {
+      private static Pattern preparePattern(int count) {
         return Pattern.compile(JavaErrorBundle.message("unhandled.exceptions", ".*", count));
       }
 

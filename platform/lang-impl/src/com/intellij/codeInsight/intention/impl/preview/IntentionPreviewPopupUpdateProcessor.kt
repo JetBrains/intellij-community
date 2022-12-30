@@ -154,7 +154,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   }
 
   private fun cancel(): Boolean {
-    editorsToRelease.forEach { editor -> if (!editor.isDisposed) EditorFactory.getInstance().releaseEditor(editor) }
+    editorsToRelease.forEach { editor -> EditorFactory.getInstance().releaseEditor(editor) }
     editorsToRelease.clear()
     component.removeAll()
     show = false

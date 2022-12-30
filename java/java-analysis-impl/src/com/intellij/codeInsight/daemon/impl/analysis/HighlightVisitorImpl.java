@@ -830,7 +830,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitInstanceOfExpression(expression);
     if (!myHolder.hasErrorResults()) HighlightUtil.checkInstanceOfApplicable(expression, myHolder);
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkInstanceOfGenericType(myLanguageLevel, expression));
-    if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_16)) {
+    if (!myHolder.hasErrorResults() &&
+        myLanguageLevel.isAtLeast(LanguageLevel.JDK_16) &&
+        // 5.20.2 Removed restriction on pattern instanceof for total patterns (JEP 427)
+        myLanguageLevel.isLessThan(LanguageLevel.JDK_19_PREVIEW)) {
       myHolder.add(HighlightUtil.checkInstanceOfPatternSupertype(expression));
     }
   }
@@ -1023,6 +1026,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (aClass != null && !myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkInstantiationOfAbstractClass(aClass, expression));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumInstantiation(expression, aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkGenericArrayCreation(expression, type));
+    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkArrayWithEmptyDiamondCreation(expression, type));
     if (!myHolder.hasErrorResults()) registerConstructorCall(expression);
     try {
       if (!myHolder.hasErrorResults()) HighlightMethodUtil.checkNewExpression(expression, type, myHolder, myJavaSdkVersion);
@@ -1931,14 +1935,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     if (myHolder.hasErrorResults()) return;
     PsiExpression guardingExpr = pattern.getGuardingExpression();
-    if (guardingExpr == null) return;
-    // 14.30.1 Kinds of Patterns GuardedPattern: PrimaryPattern && ConditionalAndExpression
-    // 15.23. ConditionalAndExpression: Each operand of the conditional-and operator must be of type boolean or Boolean, or a compile-time error occurs.
-    if (!TypeConversionUtil.isBooleanType(guardingExpr.getType())) {
-      String message = JavaErrorBundle.message("incompatible.types", JavaHighlightUtil.formatType(PsiType.BOOLEAN),
-                                               JavaHighlightUtil.formatType(guardingExpr.getType()));
-      myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(guardingExpr).descriptionAndTooltip(message).create());
-    }
+    myHolder.add(checkGuardingExpressionHasBooleanType(guardingExpr));
   }
 
   @Override
@@ -1947,11 +1944,23 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myHolder.add(checkFeature(guard, HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS));
     if (myHolder.hasErrorResults()) return;
     PsiExpression guardingExpr = guard.getGuardingExpression();
+    myHolder.add(checkGuardingExpressionHasBooleanType(guardingExpr));
+    if (myHolder.hasErrorResults()) return;
     Object constVal = ExpressionUtils.computeConstantExpression(guardingExpr);
     if (Boolean.FALSE.equals(constVal)) {
       String message = JavaErrorBundle.message("when.expression.is.false");
       myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(guardingExpr).descriptionAndTooltip(message).create());
     }
+  }
+
+  @Nullable
+  private static HighlightInfo checkGuardingExpressionHasBooleanType(@Nullable PsiExpression guardingExpression) {
+    if (guardingExpression != null && !TypeConversionUtil.isBooleanType(guardingExpression.getType())) {
+      String message = JavaErrorBundle.message("incompatible.types", JavaHighlightUtil.formatType(PsiType.BOOLEAN),
+                                               JavaHighlightUtil.formatType(guardingExpression.getType()));
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(guardingExpression).descriptionAndTooltip(message).create();
+    }
+    return null;
   }
 
   @Override

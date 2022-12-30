@@ -72,7 +72,7 @@ internal class ToolboxUpdateAction(
   val lifetime: Disposable,
   text: @Nls String,
   description: @Nls String,
-  val actionHandler: Consumer<AnActionEvent>,
+  private val actionHandler: Consumer<AnActionEvent>,
   val restartRequired: Boolean
 ) : SettingsEntryPointAction.UpdateAction(text) {
   lateinit var registry : ToolboxSettingsActionRegistry

@@ -280,19 +280,15 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
   @NotNull
   public Promise<VirtualFile> download() {
     synchronized (myLock) {
-      switch (getState()) {
-        case DOWNLOADING_NOT_STARTED:
+      return switch (getState()) {
+        case DOWNLOADING_NOT_STARTED -> {
           startDownloading();
-          return createDownloadedCallback(this);
-        case DOWNLOADING_IN_PROGRESS:
-          return createDownloadedCallback(this);
-        case DOWNLOADED:
-          return Promises.resolvedPromise(myLocalVirtualFile);
-
-        case ERROR_OCCURRED:
-        default:
-          return rejectedPromise("errorOccurred");
-      }
+          yield createDownloadedCallback(this);
+        }
+        case DOWNLOADING_IN_PROGRESS -> createDownloadedCallback(this);
+        case DOWNLOADED -> Promises.resolvedPromise(myLocalVirtualFile);
+        case ERROR_OCCURRED -> rejectedPromise("errorOccurred");
+      };
     }
   }
 

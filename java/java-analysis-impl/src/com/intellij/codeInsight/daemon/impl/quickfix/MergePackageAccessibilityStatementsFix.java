@@ -96,25 +96,17 @@ public class MergePackageAccessibilityStatementsFix
 
   @NotNull
   private static Iterable<PsiPackageAccessibilityStatement> getStatements(@NotNull PsiJavaModule javaModule, @NotNull Role role) {
-    switch (role) {
-      case OPENS:
-        return javaModule.getOpens();
-      case EXPORTS:
-        return javaModule.getExports();
-    }
-    LOG.error("Unexpected role " + role);
-    return Collections.emptyList();
+    return switch (role) {
+      case OPENS -> javaModule.getOpens();
+      case EXPORTS -> javaModule.getExports();
+    };
   }
 
   @NotNull
   private String getKeyword() {
-    switch (myRole) {
-      case OPENS:
-        return PsiKeyword.OPENS;
-      case EXPORTS:
-        return PsiKeyword.EXPORTS;
-    }
-    LOG.error("Unexpected role " + myRole);
-    return "";
+    return switch (myRole) {
+      case OPENS -> PsiKeyword.OPENS;
+      case EXPORTS -> PsiKeyword.EXPORTS;
+    };
   }
 }

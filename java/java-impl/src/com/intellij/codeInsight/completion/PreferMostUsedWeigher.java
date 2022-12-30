@@ -66,7 +66,6 @@ final class PreferMostUsedWeigher extends LookupElementWeigher {
     if (method.isConstructor()) return false;
     if (isRawDeepTypeEqualToObject(method.getReturnType())) return true;
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length == 0) return false;
     for (PsiParameter parameter : parameters) {
       PsiType paramType = parameter.getType();
       if (isRawDeepTypeEqualToObject(paramType)) {

@@ -16,7 +16,7 @@ data class AndroidResolutionStrategyIR(
         sectionCall("resolutionStrategy", needIndent = true) {
             sectionCall("eachPlugin", needIndent = true) {
                 sectionCall(
-                    "if (requested.id.namespace == ${"com.android".quotified} || requested.id.name == ${"kotlin-android-extensions".quotified})",
+                    "if (requested.id.namespace == ${"com.android".quotified})",
                     needIndent = true
                 ) {
                     call("useModule", forceBrackets = true) {

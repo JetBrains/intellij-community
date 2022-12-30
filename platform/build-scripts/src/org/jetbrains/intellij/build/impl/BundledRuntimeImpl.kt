@@ -4,12 +4,13 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.diagnostic.telemetry.use
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
+import kotlinx.collections.immutable.persistentListOf
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
-import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
@@ -24,7 +25,6 @@ class BundledRuntimeImpl(
   private val error: (String) -> Unit,
   private val info: (String) -> Unit) : BundledRuntime {
   companion object {
-    @JvmStatic
     fun getProductPrefix(context: BuildContext): String {
       return context.options.bundledRuntimePrefix ?: context.productProperties.runtimeDistribution.artifactPrefix
     }
@@ -34,7 +34,7 @@ class BundledRuntimeImpl(
     options.bundledRuntimeBuild ?: dependenciesProperties.property("runtimeBuild")
   }
 
-  override fun getHomeForCurrentOsAndArch(): Path {
+  override suspend fun getHomeForCurrentOsAndArch(): Path {
     var prefix = "jbr_jcef-"
     val os = OsFamily.currentOs
     val arch = JvmArchitecture.currentJvmArch
@@ -51,43 +51,43 @@ class BundledRuntimeImpl(
 
     val home = if (os == OsFamily.MACOS) path.resolve("jbr/Contents/Home") else path.resolve("jbr")
     val releaseFile = home.resolve("release")
-    if (!Files.exists(releaseFile)) {
-      throw IllegalStateException("Unable to find release file $releaseFile after extracting JBR at $path")
+    check(Files.exists(releaseFile)) {
+      "Unable to find release file $releaseFile after extracting JBR at $path"
     }
 
     return home
   }
 
   // contract: returns a directory, where only one subdirectory is available: 'jbr', which contains specified JBR
-  override fun extract(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
-    val targetDir = paths.communityHomeDir.communityRoot.resolve("build/download/${prefix}${build}-${os.jbrArchiveSuffix}-$arch")
+  override suspend fun extract(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
+    val targetDir = paths.communityHomeDir.resolve("build/download/${prefix}${build}-${os.jbrArchiveSuffix}-$arch")
     val jbrDir = targetDir.resolve("jbr")
 
     val archive = findArchive(prefix, os, arch)
     BuildDependenciesDownloader.extractFile(
       archive, jbrDir,
-      paths.communityHomeDir,
+      paths.communityHomeDirRoot,
       BuildDependenciesExtractOptions.STRIP_ROOT,
     )
     fixPermissions(jbrDir, os == OsFamily.WINDOWS)
 
     val releaseFile = if (os == OsFamily.MACOS) jbrDir.resolve("Contents/Home/release") else jbrDir.resolve("release")
 
-    if (!Files.exists(releaseFile)) {
-      throw IllegalStateException("Unable to find release file $releaseFile after extracting JBR at $archive")
+    check(Files.exists(releaseFile)) {
+      "Unable to find release file $releaseFile after extracting JBR at $archive"
     }
 
     return targetDir
   }
 
-  override fun extractTo(prefix: String, os: OsFamily, destinationDir: Path, arch: JvmArchitecture) {
+  override suspend fun extractTo(prefix: String, os: OsFamily, destinationDir: Path, arch: JvmArchitecture) {
     doExtract(findArchive(prefix, os, arch), destinationDir, os)
   }
 
-  private fun findArchive(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
-    val archiveName = archiveName(prefix, arch, os)
-    val url = URI("https://cache-redirector.jetbrains.com/intellij-jbr/$archiveName")
-    return BuildDependenciesDownloader.downloadFileToCacheLocation(paths.communityHomeDir, url)
+  private suspend fun findArchive(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
+    val archiveName = archiveName(prefix = prefix, arch = arch, os = os)
+    val url = "https://cache-redirector.jetbrains.com/intellij-jbr/$archiveName"
+    return downloadFileToCacheLocation(url = url, communityRoot = paths.communityHomeDirRoot)
   }
 
   /**
@@ -124,14 +124,14 @@ class BundledRuntimeImpl(
   override fun executableFilesPatterns(os: OsFamily): List<String> {
     val pathPrefix = if (os == OsFamily.MACOS) "jbr/Contents/Home/" else "jbr/"
     @Suppress("SpellCheckingInspection")
-    val executableFilesPatterns = mutableListOf(
+    var executableFilesPatterns = persistentListOf(
       pathPrefix + "bin/*",
       pathPrefix + "lib/jexec",
       pathPrefix + "lib/jspawnhelper",
       pathPrefix + "lib/chrome-sandbox"
     )
     if (os == OsFamily.LINUX) {
-      executableFilesPatterns += "jbr/lib/jcef_helper"
+      executableFilesPatterns = executableFilesPatterns.add("jbr/lib/jcef_helper")
     }
     return executableFilesPatterns
   }
@@ -145,7 +145,7 @@ private fun getArchSuffix(arch: JvmArchitecture): String {
 }
 
 private fun doExtract(archive: Path, destinationDir: Path, os: OsFamily) {
-  TraceManager.spanBuilder("extract JBR")
+  spanBuilder("extract JBR")
     .setAttribute("archive", archive.toString())
     .setAttribute("os", os.osName)
     .setAttribute("destination", destinationDir.toString())

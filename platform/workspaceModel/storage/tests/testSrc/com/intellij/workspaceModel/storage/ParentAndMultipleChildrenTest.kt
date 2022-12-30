@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.test.api.ChildMultipleEntity
-import com.intellij.workspaceModel.storage.entities.test.api.MySource
-import com.intellij.workspaceModel.storage.entities.test.api.ParentMultipleEntity
+import com.intellij.workspaceModel.storage.entities.test.api.*
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -186,5 +184,45 @@ class ParentAndMultipleChildrenTest {
     assertEquals("Parent", child.parentEntity.children.first().parentEntity.parentData)
     assertEquals(1, child.parentEntity.children.size)
     assertEquals(1, parent.children.size)
+  }
+
+  @Test
+  fun `adding entity via modify`() {
+    val target = createEmptyBuilder()
+    target addEntity ParentMultipleEntity("Parent", MySource)
+    val source = createBuilderFrom(target)
+    val parentToModify = source.toSnapshot().entities(ParentMultipleEntity::class.java).single()
+    source.modifyEntity(parentToModify) {
+      this.children = listOf(
+        ChildMultipleEntity("child1", MySource),
+        ChildMultipleEntity("child2", MySource),
+      )
+    }
+  }
+
+  @Test
+  fun `adding entity via modify 1`() {
+    val target = createEmptyBuilder()
+    target addEntity ParentMultipleEntity("Parent", MySource)
+    val source = createBuilderFrom(target)
+    val parentToModify = source.toSnapshot().entities(ParentMultipleEntity::class.java).single()
+    source.modifyEntity(parentToModify) {
+      this.children = listOf(
+        ChildMultipleEntity("child1", MySource),
+        ChildMultipleEntity("child2", MySource),
+      )
+    }
+  }
+
+  @Test
+  fun `adding entity via modify 2`() {
+    val target = createEmptyBuilder()
+    target addEntity XChildWithOptionalParentEntity("Data", MySource)
+
+    val source = createBuilderFrom(target)
+    val childToModify = source.toSnapshot().entities(XChildWithOptionalParentEntity::class.java).single()
+    source.modifyEntity(childToModify) {
+      this.optionalParent = XParentEntity("parent", MySource)
+    }
   }
 }

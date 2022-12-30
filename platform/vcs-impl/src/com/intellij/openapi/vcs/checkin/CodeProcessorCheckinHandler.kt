@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.ProgressDetails
 import com.intellij.openapi.util.NlsContexts.ProgressText
-import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsConfiguration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -16,32 +15,25 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
-/**
- * Should only be used in Commit Tool Window. Commit Dialog is not supported.
- *
- * @see com.intellij.openapi.vcs.impl.CheckinHandlersManagerImpl.getRegisteredCheckinHandlerFactories
- * @see com.intellij.vcs.commit.NonModalCommitWorkflowHandler.runAllHandlers
- */
 abstract class CodeProcessorCheckinHandler(
-  val commitPanel: CheckinProjectPanel
+  val project: Project
 ) : CheckinHandler(),
     CommitCheck {
 
-  val project: Project get() = commitPanel.project
   val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
 
   protected open fun getProgressMessage(): @NlsContexts.ProgressText String? = null
-  protected abstract fun createCodeProcessor(): AbstractLayoutCodeProcessor
+  protected abstract fun createCodeProcessor(commitInfo: CommitInfo): AbstractLayoutCodeProcessor
 
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.MODIFICATION
 
-  override suspend fun runCheck(): CommitProblem? {
+  override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
     val sink = coroutineContext.progressSink
     getProgressMessage()?.let {
       sink?.text(it)
     }
 
-    val processor = createCodeProcessor()
+    val processor = createCodeProcessor(commitInfo)
 
     withContext(Dispatchers.Default + noTextSinkContext(sink)) {
       // TODO suspending code processor

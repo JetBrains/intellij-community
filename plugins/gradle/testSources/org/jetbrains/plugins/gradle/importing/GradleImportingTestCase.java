@@ -369,13 +369,15 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   @NotNull
   protected String injectRepo(@NonNls @Language("Groovy") String config) {
     String mavenRepositoryPatch =
-      "allprojects {\n" +
-      "    repositories {\n" +
-      "        maven {\n" +
-      "            url 'https://repo.labs.intellij.net/repo1'\n" +
-      "        }\n" +
-      "    }\n" +
-      "}\n";
+      """
+        allprojects {
+            repositories {
+                maven {
+                    url 'https://repo.labs.intellij.net/repo1'
+                }
+            }
+        }
+        """;
     if (config.contains(MAVEN_REPOSITORY_PATCH_PLACE)) {
       return config.replace(MAVEN_REPOSITORY_PATCH_PLACE, mavenRepositoryPatch);
     }

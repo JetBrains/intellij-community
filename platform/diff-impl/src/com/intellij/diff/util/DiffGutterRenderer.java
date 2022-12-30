@@ -84,8 +84,7 @@ public abstract class DiffGutterRenderer extends GutterIconRenderer implements N
 
   protected void performAction(@NotNull AnActionEvent e) {
     MouseEvent mouseEvent = ObjectUtils.tryCast(e.getInputEvent(), MouseEvent.class);
-    if (mouseEvent == null ||
-        mouseEvent.getButton() == MouseEvent.BUTTON1 && mouseEvent.getClickCount() == 1) {
+    if (mouseEvent == null || mouseEvent.getButton() == MouseEvent.BUTTON1) {
       handleMouseClick();
     }
   }

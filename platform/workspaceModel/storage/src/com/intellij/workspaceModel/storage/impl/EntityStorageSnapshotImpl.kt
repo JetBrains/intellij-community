@@ -30,6 +30,14 @@ internal data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: Ent
     @Suppress("UNCHECKED_CAST")
     return (storage as AbstractEntityStorage).entityDataById(id)?.createEntity(storage) as? E
   }
+
+  override fun equals(other: Any?): Boolean {
+    return id == (other as? EntityReferenceImpl<*>)?.id
+  }
+
+  override fun hashCode(): Int {
+    return id.hashCode()
+  }
 }
 
 internal class EntityStorageSnapshotImpl constructor(
@@ -80,7 +88,7 @@ internal class MutableEntityStorageImpl(
   internal val changeLog = WorkspaceBuilderChangeLog()
 
   // Temporal solution for accessing error in deft project.
-  internal var throwExceptionOnError = false
+  private var throwExceptionOnError = false
 
   internal fun incModificationCount() {
     this.changeLog.modificationCount++
@@ -88,6 +96,10 @@ internal class MutableEntityStorageImpl(
 
   override val modificationCount: Long
     get() = this.changeLog.modificationCount
+
+  override fun setUseNewRbs(value: Boolean) {
+    useNewRbs = value
+  }
 
   private val writingFlag = AtomicBoolean()
 
@@ -109,6 +121,9 @@ internal class MutableEntityStorageImpl(
 
   @set:TestOnly
   internal var upgradeEngine: ((ReplaceBySourceOperation) -> Unit)? = null
+
+  @set:TestOnly
+  internal var upgradeAddDiffEngine: ((AddDiffOperation) -> Unit)? = null
 
   // --------------- Replace By Source stuff -----------
 
@@ -152,17 +167,20 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  override fun <T : WorkspaceEntity> addEntity(entity: T) {
+  override fun <T : WorkspaceEntity> addEntity(entity: T): T {
     try {
       lockWrite()
 
       entity as ModifiableWorkspaceEntityBase<T>
 
       entity.applyToBuilder(this)
+      entity.changedProperty.clear()
     }
     finally {
       unlockWrite()
     }
+
+    return entity
   }
 
   // This should be removed or not extracted into the interface
@@ -219,6 +237,7 @@ internal class MutableEntityStorageImpl(
   override fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
     try {
       lockWrite()
+      if (e is ModifiableWorkspaceEntityBase<*> && e.diff !== this) error("Trying to modify entity from a different builder")
       val entityId = (e as WorkspaceEntityBase).id
 
       val originalEntityData = this.getOriginalEntityData(entityId) as WorkspaceEntityData<T>
@@ -226,7 +245,9 @@ internal class MutableEntityStorageImpl(
       // Get entity data that will be modified
       val copiedData = entitiesByType.getEntityDataForModification(entityId) as WorkspaceEntityData<T>
 
-      val modifiableEntity = copiedData.wrapAsModifiable(this) as M
+      val modifiableEntity = (if (e is ModifiableWorkspaceEntity<*>) e else copiedData.wrapAsModifiable(this)) as M
+      modifiableEntity as ModifiableWorkspaceEntityBase<*>
+      modifiableEntity.changedProperty.clear()
 
       val beforePersistentId = if (e is WorkspaceEntityWithPersistentId) e.persistentId else null
 
@@ -235,8 +256,9 @@ internal class MutableEntityStorageImpl(
       val beforeChildren = this.refs.getChildrenRefsOfParentBy(entityId.asParent()).flatMap { (key, value) -> value.map { key to it } }
 
       // Execute modification code
-      (modifiableEntity as ModifiableWorkspaceEntityBase<*>).allowModifications {
+      modifiableEntity.allowModifications {
         modifiableEntity.change()
+        modifiableEntity.afterModification()
       }
 
       // Check for persistent id uniqueness
@@ -300,6 +322,7 @@ internal class MutableEntityStorageImpl(
   override fun removeEntity(e: WorkspaceEntity): Boolean {
     try {
       lockWrite()
+      if (e is ModifiableWorkspaceEntityBase<*> && e.diff !== this) error("Trying to remove entity from a different builder")
 
       LOG.debug { "Removing ${e.javaClass}..." }
       e as WorkspaceEntityBase
@@ -346,8 +369,6 @@ internal class MutableEntityStorageImpl(
       lockWrite()
       val originalImpl = original as AbstractEntityStorage
 
-      cleanupChanges(originalImpl)
-
       val res = HashMap<Class<*>, MutableList<EntityChange<*>>>()
       for ((entityId, change) in this.changeLog.changeLog) {
         when (change) {
@@ -392,11 +413,10 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  /**
-   * Here we eliminate remove + add changes if the entities are the same and they don't have external mappings.
-   * We don't join events if the entities have external mappings just because it's safer.
-   */
-  internal fun cleanupChanges(originalImpl: AbstractEntityStorage) {
+  override fun hasSameEntities(original: EntityStorage): Boolean {
+    if (changeLog.changeLog.isEmpty()) return true
+    
+    original as AbstractEntityStorage
     val adds = ArrayList<WorkspaceEntityData<*>>()
     val removes = CollectionFactory.createSmallMemoryFootprintMap<WorkspaceEntityData<out WorkspaceEntity>, MutableList<WorkspaceEntityData<out WorkspaceEntity>>>()
     changeLog.changeLog.forEach { _, value ->
@@ -408,31 +428,48 @@ internal class MutableEntityStorageImpl(
         removes[value.oldData] = if (existingValue != null) ArrayList(existingValue + value.oldData) else mutableListOf(value.oldData)
       }
     }
-    val idsToRemove = ArrayList<EntityId>()
+    val idsToRemove = ArrayList<Pair<EntityId, EntityId>>()
     adds.forEach { addedEntityData ->
       if (removes.isEmpty()) return@forEach
       val possibleRemovedSameEntity = removes[addedEntityData]
-      val addedEntityId = addedEntityData.createEntityId()
+      val newEntityId = addedEntityData.createEntityId()
       val hasMapping = this.indexes.externalMappings.any { (_, value) ->
-        (value as ExternalEntityMappingImpl<*>).getDataByEntityId(addedEntityId) != null
+        (value as ExternalEntityMappingImpl<*>).getDataByEntityId(newEntityId) != null
       }
       if (hasMapping) return@forEach
       val found = possibleRemovedSameEntity?.firstOrNull { possibleRemovedSame ->
-        same(originalImpl, addedEntityId, possibleRemovedSame.createEntityId())
+        same(original, newEntityId, possibleRemovedSame.createEntityId())
       }
       if (found != null) {
-        val foundEntityId = found.createEntityId()
-        val hasRemovedMapping = originalImpl.indexes.externalMappings.any { (_, value) ->
-          value.getDataByEntityId(foundEntityId) != null
+        val initialEntityId = found.createEntityId()
+        val hasRemovedMapping = original.indexes.externalMappings.any { (_, value) ->
+          value.getDataByEntityId(initialEntityId) != null
         }
         if (hasRemovedMapping) return@forEach
         possibleRemovedSameEntity.remove(found)
         if (possibleRemovedSameEntity.isEmpty()) removes.remove(addedEntityData)
-        idsToRemove += addedEntityId
-        idsToRemove += foundEntityId
+        idsToRemove += newEntityId to initialEntityId
       }
     }
-    idsToRemove.forEach { changeLog.changeLog.remove(it) }
+    val collapsibleChanges = HashSet<EntityId>()
+    idsToRemove.forEach { (new, initial) ->
+      collapsibleChanges.add(new)
+      collapsibleChanges.add(initial)
+
+
+      this.refs.getParentRefsOfChild(new.asChild()).forEach { (connection, parent) ->
+        val changedParent = changeLog.changeLog[parent.id]
+        if (changedParent is ChangeEntry.ReplaceEntity) {
+          if (changedParent.newData == changedParent.oldData
+              && changedParent.modifiedParents.isEmpty()
+              && changedParent.removedChildren.singleOrNull()?.takeIf { it.first == connection && it.second.id == initial } != null
+              && changedParent.newChildren.singleOrNull()?.takeIf { it.first == connection && it.second.id == new } != null) {
+            collapsibleChanges.add(parent.id)
+          }
+        }
+      }
+    }
+    return collapsibleChanges == changeLog.changeLog.keys
   }
 
   private fun same(originalImpl: AbstractEntityStorage,
@@ -463,14 +500,18 @@ internal class MutableEntityStorageImpl(
     return EntityStorageSnapshotImpl(newEntities, newRefs, newIndexes)
   }
 
+  @Deprecated("The name may be misleading, use !hasChanges() instead", replaceWith = ReplaceWith("!hasChanges()"))
   override fun isEmpty(): Boolean = this.changeLog.changeLog.isEmpty()
+  override fun hasChanges(): Boolean = changeLog.changeLog.isNotEmpty()
 
   override fun addDiff(diff: MutableEntityStorage) {
     try {
       lockWrite()
       diff as MutableEntityStorageImpl
       applyDiffProtection(diff, "addDiff")
-      AddDiffOperation(this, diff).addDiff()
+      val addDiffOperation = AddDiffOperation(this, diff)
+      upgradeAddDiffEngine?.invoke(addDiffOperation)
+      addDiffOperation.addDiff()
     }
     finally {
       unlockWrite()
@@ -702,7 +743,7 @@ internal sealed class AbstractEntityStorage : EntityStorage {
   internal fun entityDataByIdOrDie(id: EntityId): WorkspaceEntityData<out WorkspaceEntity> {
     val entityFamily = entitiesByType[id.clazz] ?: error(
       "Entity family doesn't exist or has no entities: ${id.clazz.findWorkspaceEntity()}")
-    return entityFamily.get(id.arrayId) ?: error("Cannot find an entity by id $id")
+    return entityFamily.getOrFail(id.arrayId) ?: error("Cannot find an entity by id $id")
   }
 
   override fun <E : WorkspaceEntity, R : WorkspaceEntity> referrers(e: E, entityClass: KClass<R>,

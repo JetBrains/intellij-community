@@ -44,7 +44,7 @@ open class ListVFUEntityImpl(val dataSource: ListVFUEntityData) : ListVFUEntity,
     return connections
   }
 
-  class Builder(val result: ListVFUEntityData?) : ModifiableWorkspaceEntityBase<ListVFUEntity>(), ListVFUEntity.Builder {
+  class Builder(var result: ListVFUEntityData?) : ModifiableWorkspaceEntityBase<ListVFUEntity>(), ListVFUEntity.Builder {
     constructor() : this(ListVFUEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -62,6 +62,9 @@ open class ListVFUEntityImpl(val dataSource: ListVFUEntityData) : ListVFUEntity,
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "fileProperty", this.fileProperty.toHashSet())
       // Process linked entities that are connected without a builder
@@ -86,12 +89,19 @@ open class ListVFUEntityImpl(val dataSource: ListVFUEntityData) : ListVFUEntity,
       return connections
     }
 
+    override fun afterModification() {
+      val collection_fileProperty = getEntityData().fileProperty
+      if (collection_fileProperty is MutableWorkspaceList<*>) {
+        collection_fileProperty.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ListVFUEntity
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
-      this.fileProperty = dataSource.fileProperty.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.fileProperty != dataSource.fileProperty) this.fileProperty = dataSource.fileProperty.toMutableList()
       if (parents != null) {
       }
     }
@@ -123,7 +133,12 @@ open class ListVFUEntityImpl(val dataSource: ListVFUEntityData) : ListVFUEntity,
       get() {
         val collection_fileProperty = getEntityData().fileProperty
         if (collection_fileProperty !is MutableWorkspaceList) return collection_fileProperty
-        collection_fileProperty.setModificationUpdateAction(filePropertyUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_fileProperty.setModificationUpdateAction(filePropertyUpdater)
+        }
+        else {
+          collection_fileProperty.cleanModificationUpdateAction()
+        }
         return collection_fileProperty
       }
       set(value) {
@@ -195,7 +210,7 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ListVFUEntityData
 
@@ -207,7 +222,7 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ListVFUEntityData
 

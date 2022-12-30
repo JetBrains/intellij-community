@@ -38,7 +38,7 @@ abstract class JButtonAction(text: @ActionText String?, @ActionDescription descr
 
   protected open fun createButton(): JButton = JButton().configureForToolbar()
 
-  protected fun JButton.configureForToolbar(): JButton =
+  private fun JButton.configureForToolbar(): JButton =
     apply {
       isFocusable = false
       font = JBUI.Fonts.toolbarFont()

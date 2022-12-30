@@ -14,7 +14,7 @@ internal object ConfigurableCollectorAction {
     return getAllConfigurables().map { it.id }
   }
 
-  fun getAllConfigurables(): List<ConfigurableWithId> {
+  private fun getAllConfigurables(): List<ConfigurableWithId> {
     val list = mutableListOf<ConfigurableWithId>()
     ShowSettingsUtilImpl.getConfigurableGroups(null, true)[0]
       .configurables.forEach {

@@ -1,5 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("KotlinModuleDependencyUtils")
+
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.components.Service
@@ -70,7 +71,11 @@ class ModuleDependencyCollector(private val project: Project) {
         return result
     }
 
-    private fun getOrderEnumerator(module: Module, sourceRootType: KotlinSourceRootType, includeExportedDependencies: Boolean): OrderEnumerator {
+    private fun getOrderEnumerator(
+        module: Module,
+        sourceRootType: KotlinSourceRootType,
+        includeExportedDependencies: Boolean,
+    ): OrderEnumerator {
         val rootManager = ModuleRootManager.getInstance(module)
 
         val dependencyEnumerator = rootManager.orderEntries().compileOnly()
@@ -97,13 +102,15 @@ class ModuleDependencyCollector(private val project: Project) {
     }
 
     private fun collectModuleDependenciesForOrderEntry(orderEntry: OrderEntry, sourceRootType: KotlinSourceRootType): List<IdeaModuleInfo> {
-        fun Module.toInfos() =
-            sourceModuleInfos.filter { sourceRootType == TestSourceKotlinRootType || it is ModuleProductionSourceInfo }
+        fun Module.toInfos() = sourceModuleInfos.filter {
+            sourceRootType == TestSourceKotlinRootType || it is ModuleProductionSourceInfo
+        }
 
         return when (orderEntry) {
             is ModuleSourceOrderEntry -> {
                 orderEntry.ownerModule.toInfos()
             }
+
             is ModuleOrderEntry -> {
                 val module = orderEntry.module ?: return emptyList()
                 if (sourceRootType == SourceKotlinRootType && orderEntry.isProductionOnTestDependency) {
@@ -112,14 +119,17 @@ class ModuleDependencyCollector(private val project: Project) {
                     module.toInfos()
                 }
             }
+
             is LibraryOrderEntry -> {
                 val library = orderEntry.library ?: return listOf()
-                LibraryInfoCache.getInstance(project).get(library)
+                LibraryInfoCache.getInstance(project)[library]
             }
+
             is JdkOrderEntry -> {
                 val sdk = orderEntry.jdk ?: return listOf()
                 listOfNotNull(SdkInfo(project, sdk))
             }
+
             else -> {
                 throw IllegalStateException("Unexpected order entry $orderEntry")
             }

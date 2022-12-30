@@ -78,7 +78,7 @@ val Class<*>.fqn: QualifiedName
     }
   }
 
-class Imports(val scopeFqn: String?) {
+class Imports(private val scopeFqn: String?) {
   val set = mutableSetOf<String>()
 
   fun findAndRemoveFqns(str: String): String {

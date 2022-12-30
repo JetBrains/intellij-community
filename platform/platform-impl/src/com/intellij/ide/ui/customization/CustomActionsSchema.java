@@ -513,11 +513,11 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     }
 
     private static int getEquivalenceClass(ActionUrl url) {
-      switch (url.getActionType()) {
-        case ActionUrl.DELETED: return 1;
-        case ActionUrl.ADDED: return 2;
-        default: return 3;
-      }
+      return switch (url.getActionType()) {
+        case ActionUrl.DELETED -> 1;
+        case ActionUrl.ADDED -> 2;
+        default -> 3;
+      };
     }
   }
 }

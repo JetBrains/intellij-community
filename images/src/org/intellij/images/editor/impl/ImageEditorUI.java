@@ -23,6 +23,8 @@ import com.intellij.ide.util.DeleteHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,12 +33,15 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.Magnificator;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.LazyInitializer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBUI;
 import org.intellij.images.ImagesBundle;
@@ -98,7 +103,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   private final boolean isEmbedded;
 
   ImageEditorUI(@Nullable ImageEditor editor) {
-    this(editor, false, true);
+    this(editor, false, false);
   }
 
   ImageEditorUI(@Nullable ImageEditor editor, boolean isEmbedded, boolean isOpaque) {
@@ -152,6 +157,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       actionToolbar.setTargetComponent(this);
 
       toolbarPanel = actionToolbar.getComponent();
+      toolbarPanel.setBackground(JBColor.lazy(() -> getBackground()));
       toolbarPanel.addMouseListener(new FocusRequester());
     }
 
@@ -167,7 +173,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     contentPanel.add(myScrollPane, IMAGE_PANEL);
     contentPanel.add(errorPanel, ERROR_PANEL);
 
-    JPanel topPanel = new JPanel(new BorderLayout());
+    JPanel topPanel = new NonOpaquePanel(new BorderLayout());
     if (!isEmbedded) {
       topPanel.add(toolbarPanel, BorderLayout.WEST);
       infoLabel = new JLabel((String)null, SwingConstants.RIGHT);
@@ -186,12 +192,15 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     });
 
     if (!isOpaque) {
-      setOpaque(false);
+      //setOpaque(false);
       contentPanel.setOpaque(false);
       myScrollPane.setOpaque(false);
       myScrollPane.getViewport().setOpaque(false);
     }
 
+    setBackground(JBColor.lazy(() -> ObjectUtils.notNull(
+      EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.PREVIEW_BACKGROUND),
+      EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground())));
     updateInfo();
   }
 

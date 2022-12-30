@@ -97,15 +97,16 @@ public class SimplifiableJUnitAssertionFixTest extends IGQuickFixesTestCase {
 
     myFixture.addClass("package java.util.function; public interface Supplier<T> { T get();}");
 
-    myFixture.addClass("package org.junit.jupiter.api;\n" +
-                       "import java.util.function.Supplier;\n" +
-                       "public final class Assertions {\n" +
-                       "    public static void assertEquals(Object expected, Object actual) {}\n" +
-                       "    public static void assertTrue(boolean expected) {}\n" +
-                       "    public static void assertTrue(boolean expected, String message) {}\n" +
-                       "    public static void assertTrue(boolean expected, Supplier<String> message) {}\n" +
-                       "    public static void assertEquals(Object expected, Object actual, Supplier<String> message) {}\n" +
-                       "    public static void assertArrayEquals(int[] expected, int[] actual, String message) {}\n" +
-                       "}");
+    myFixture.addClass("""
+                         package org.junit.jupiter.api;
+                         import java.util.function.Supplier;
+                         public final class Assertions {
+                             public static void assertEquals(Object expected, Object actual) {}
+                             public static void assertTrue(boolean expected) {}
+                             public static void assertTrue(boolean expected, String message) {}
+                             public static void assertTrue(boolean expected, Supplier<String> message) {}
+                             public static void assertEquals(Object expected, Object actual, Supplier<String> message) {}
+                             public static void assertArrayEquals(int[] expected, int[] actual, String message) {}
+                         }""");
   }
 }

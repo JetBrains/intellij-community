@@ -52,9 +52,11 @@ public class NestedFilesInProjectViewTest extends BasePlatformTestCase {
                             myFixture.addFileToProject("Foo.groovy", "");
                             myFixture.addFileToProject("Foo.txt", "");
 
-                            doTest("  -Foo.txt\n" +
-                                   "   Foo\n" +
-                                   "   Foo.groovy\n");
+                            doTest("""
+                                       -Foo.txt
+                                        Foo
+                                        Foo.groovy
+                                     """);
                           },
                           new NestingRule(".txt", ".java"),
                           new NestingRule(".txt", ".groovy"));
@@ -67,11 +69,13 @@ public class NestedFilesInProjectViewTest extends BasePlatformTestCase {
                             myFixture.addFileToProject("Foo.groovy", "");
                             myFixture.addFileToProject("Foo.txt", "");
 
-                            doTest("  -Foo\n" +
-                                   "   Foo.txt\n" +
-                                   "   FooImpl\n" +
-                                   "  -Foo.groovy\n" +
-                                   "   Foo.txt\n");
+                            doTest("""
+                                       -Foo
+                                        Foo.txt
+                                        FooImpl
+                                       -Foo.groovy
+                                        Foo.txt
+                                     """);
                           },
                           new NestingRule(".java", ".txt"),
                           new NestingRule(".groovy", ".txt"),

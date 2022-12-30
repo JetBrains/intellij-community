@@ -63,7 +63,7 @@ open class TreeMultiparentLeafEntityImpl(val dataSource: TreeMultiparentLeafEnti
     return connections
   }
 
-  class Builder(val result: TreeMultiparentLeafEntityData?) : ModifiableWorkspaceEntityBase<TreeMultiparentLeafEntity>(), TreeMultiparentLeafEntity.Builder {
+  class Builder(var result: TreeMultiparentLeafEntityData?) : ModifiableWorkspaceEntityBase<TreeMultiparentLeafEntity>(), TreeMultiparentLeafEntity.Builder {
     constructor() : this(TreeMultiparentLeafEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -81,6 +81,9 @@ open class TreeMultiparentLeafEntityImpl(val dataSource: TreeMultiparentLeafEnti
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -115,11 +118,17 @@ open class TreeMultiparentLeafEntityImpl(val dataSource: TreeMultiparentLeafEnti
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as TreeMultiparentLeafEntity
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
       if (parents != null) {
-        this.mainParent = parents.filterIsInstance<TreeMultiparentRootEntity>().singleOrNull()
-        this.leafParent = parents.filterIsInstance<TreeMultiparentLeafEntity>().singleOrNull()
+        val mainParentNew = parents.filterIsInstance<TreeMultiparentRootEntity?>().singleOrNull()
+        if ((mainParentNew == null && this.mainParent != null) || (mainParentNew != null && this.mainParent == null) || (mainParentNew != null && this.mainParent != null && (this.mainParent as WorkspaceEntityBase).id != (mainParentNew as WorkspaceEntityBase).id)) {
+          this.mainParent = mainParentNew
+        }
+        val leafParentNew = parents.filterIsInstance<TreeMultiparentLeafEntity?>().singleOrNull()
+        if ((leafParentNew == null && this.leafParent != null) || (leafParentNew != null && this.leafParent == null) || (leafParentNew != null && this.leafParent != null && (this.leafParent as WorkspaceEntityBase).id != (leafParentNew as WorkspaceEntityBase).id)) {
+          this.leafParent = leafParentNew
+        }
       }
     }
 
@@ -240,6 +249,12 @@ open class TreeMultiparentLeafEntityImpl(val dataSource: TreeMultiparentLeafEnti
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+              // Backref setup before adding to store
+              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
+
               _diff.addEntity(item_value)
             }
           }
@@ -314,7 +329,7 @@ class TreeMultiparentLeafEntityData : WorkspaceEntityData<TreeMultiparentLeafEnt
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as TreeMultiparentLeafEntityData
 
@@ -325,7 +340,7 @@ class TreeMultiparentLeafEntityData : WorkspaceEntityData<TreeMultiparentLeafEnt
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as TreeMultiparentLeafEntityData
 

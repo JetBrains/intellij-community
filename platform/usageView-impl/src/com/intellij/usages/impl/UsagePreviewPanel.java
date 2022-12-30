@@ -72,7 +72,8 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private Pattern myCachedReplacePattern;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private @NotNull Set<GroupNode> myPreviousSelectedGroupNodes = new HashSet<>();
-  private @Nullable UsagePreviewToolbarWithSimilarUsagesLink myToolbar;
+  private @Nullable UsagePreviewToolbarWithSimilarUsagesLink myToolbarWithSimilarUsagesLink;
+  private @Nullable MostCommonUsagePatternsComponent myMostCommonUsagePatternsComponent;
 
   public UsagePreviewPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
     this(project, presentation, false);
@@ -349,10 +350,18 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   public void dispose() {
     isDisposed = true;
     releaseEditor();
+    disposeSimilarUsagesToolbar();
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
       if (editor.getProject() == myProject && editor.getUserData(PREVIEW_EDITOR_FLAG) == this) {
         LOG.error("Editor was not released:" + editor);
       }
+    }
+  }
+
+  private void disposeSimilarUsagesToolbar() {
+    if (myToolbarWithSimilarUsagesLink != null) {
+      Disposer.dispose(myToolbarWithSimilarUsagesLink);
+      myToolbarWithSimilarUsagesLink = null;
     }
   }
 
@@ -397,6 +406,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   @Override
   @RequiresEdt
   public void updateLayoutLater(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
+    disposeSimilarUsagesToolbar();
     UsageViewImpl usageViewImpl = ObjectUtils.tryCast(usageView, UsageViewImpl.class);
     if (ClusteringSearchSession.isSimilarUsagesClusteringEnabled() && usageViewImpl != null) {
       ClusteringSearchSession sessionInUsageView = findClusteringSessionInUsageView(usageViewImpl);
@@ -417,16 +427,16 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
 
   public void updateSimilarUsagesToolBar(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
     if (Registry.is("similarity.find.usages.show.similar.usages.in.usage.preview")) {
-      if (myToolbar != null) {
-        remove(myToolbar);
+      if (myToolbarWithSimilarUsagesLink != null) {
+        remove(myToolbarWithSimilarUsagesLink);
         revalidate();
       }
       ClusteringSearchSession session = findClusteringSessionInUsageView(usageView);
       if (session != null) {
         UsageCluster cluster = session.findCluster(ContainerUtil.getFirstItem(infos));
         if (cluster != null && cluster.getUsages().size() > 1) {
-          myToolbar = new UsagePreviewToolbarWithSimilarUsagesLink(this, usageView, infos, cluster);
-          add(myToolbar, BorderLayout.NORTH);
+          myToolbarWithSimilarUsagesLink = new UsagePreviewToolbarWithSimilarUsagesLink(this, usageView, infos, cluster, session);
+          add(myToolbarWithSimilarUsagesLink, BorderLayout.NORTH);
         }
       }
     }
@@ -438,9 +448,12 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     if (!myPreviousSelectedGroupNodes.equals(selectedGroupNodes)) {
       releaseEditor();
       removeAll();
-      MostCommonUsagePatternsComponent mostCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(usageViewImpl, session);
-      add(mostCommonUsagePatternsComponent);
-      Disposer.register(this, mostCommonUsagePatternsComponent);
+      if (myMostCommonUsagePatternsComponent == null) {
+        myMostCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(usageViewImpl, session);
+        Disposer.register(this, myMostCommonUsagePatternsComponent);
+      }
+      add(myMostCommonUsagePatternsComponent);
+      myMostCommonUsagePatternsComponent.refresh();
     }
   }
 

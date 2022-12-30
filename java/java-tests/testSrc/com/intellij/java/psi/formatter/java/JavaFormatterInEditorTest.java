@@ -41,104 +41,114 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
     javaCommonSettings.WRAP_LONG_LINES = true;
     javaCommonSettings.RIGHT_MARGIN = 40;
     doTest(
-      "import static java.util.concurrent.atomic.AtomicInteger.*;\n" +
-      "\n" +
-      "/**\n" +
-      " * Some really long javadoc comment which exceeeds the right margin\n" +
-      " */\n" +
-      "class <caret>Test {\n" +
-      "}",
+      """
+        import static java.util.concurrent.atomic.AtomicInteger.*;
 
-      "import static java.util.concurrent.atomic.AtomicInteger.*;\n" +
-      "\n" +
-      "/**\n" +
-      " * Some really long javadoc comment \n" +
-      " * which exceeeds the right margin\n" +
-      " */\n" +
-      "class <caret>Test {\n" +
-      "}"
+        /**
+         * Some really long javadoc comment which exceeeds the right margin
+         */
+        class <caret>Test {
+        }""",
+
+      """
+        import static java.util.concurrent.atomic.AtomicInteger.*;
+
+        /**
+         * Some really long javadoc comment\s
+         * which exceeeds the right margin
+         */
+        class <caret>Test {
+        }"""
     );
   }
 
   public void testCaretPositionPreserved_WhenOnSameLineWithWhiteSpacesOnly() {
-    String text = "class Test {\n" +
-                  "    void test() {\n" +
-                  "         <caret>\n" +
-                  "    }\n" +
-                  "}";
+    String text = """
+      class Test {
+          void test() {
+               <caret>
+          }
+      }""";
     doTest(text, text);
 
-    String before = "class Test {\n" +
-                   "    void test() {\n" +
-                   "         <caret>       \n" +
-                   "    }\n" +
-                   "}";
+    String before = """
+      class Test {
+          void test() {
+               <caret>      \s
+          }
+      }""";
     doTest(before, text);
   }
 
   public void testCaretPositionPreserved_WhenSomeFormattingNeeded() {
-    String before = "public class Test {\n" +
-                    "        int a;\n" +
-                    "    \n" +
-                    "    public static void main(String[] args) {\n" +
-                    "                     <caret>\n" +
-                    "    }\n" +
-                    "\n" +
-                    "    static final long j = 2;\n" +
-                    "}";
-    String after = "public class Test {\n" +
-                   "    int a;\n" +
-                   "\n" +
-                   "    public static void main(String[] args) {\n" +
-                   "                     <caret>\n" +
-                   "    }\n" +
-                   "\n" +
-                   "    static final long j = 2;\n" +
-                   "}";
+    String before = """
+      public class Test {
+              int a;
+         \s
+          public static void main(String[] args) {
+                           <caret>
+          }
+
+          static final long j = 2;
+      }""";
+    String after = """
+      public class Test {
+          int a;
+
+          public static void main(String[] args) {
+                           <caret>
+          }
+
+          static final long j = 2;
+      }""";
     doTest(before, after);
 
-    before = "public class Test {\n" +
-             "        int a;\n" +
-             "    \n" +
-             "    public static void main(String[] args) {\n" +
-             "                     <caret>           \n" +
-             "    }\n" +
-             "\n" +
-             "    static final long j = 2;\n" +
-             "}";
+    before = """
+      public class Test {
+              int a;
+         \s
+          public static void main(String[] args) {
+                           <caret>          \s
+          }
+
+          static final long j = 2;
+      }""";
     doTest(before, after);
   }
 
   public void testCaretLineAndPositionPreserved_WhenBracketOnNextLineWillBeFormatted() {
-    String before = "public class Test {\n" +
-                    "        int a;\n" +
-                    "    \n" +
-                    "    public static void main(String[] args) {\n" +
-                    "                     <caret>\n" +
-                    "            }\n" +
-                    "\n" +
-                    "    static final long j = 2;\n" +
-                    "}";
-    String after = "public class Test {\n" +
-                   "    int a;\n" +
-                   "\n" +
-                   "    public static void main(String[] args) {\n" +
-                   "                     <caret>\n" +
-                   "    }\n" +
-                   "\n" +
-                   "    static final long j = 2;\n" +
-                   "}";
+    String before = """
+      public class Test {
+              int a;
+         \s
+          public static void main(String[] args) {
+                           <caret>
+                  }
+
+          static final long j = 2;
+      }""";
+    String after = """
+      public class Test {
+          int a;
+
+          public static void main(String[] args) {
+                           <caret>
+          }
+
+          static final long j = 2;
+      }""";
     doTest(before, after);
 
-    before = "public class Test {\n" +
-             "        int a;\n" +
-             "    \n" +
-             "    public static void main(String[] args) {\n" +
-             "                     <caret>           \n" +
-             "                }\n" +
-             "\n" +
-             "    static final long j = 2;\n" +
-             "}";
+    before = """
+      public class Test {
+              int a;
+         \s
+          public static void main(String[] args) {
+                           <caret>          \s
+                      }
+
+          static final long j = 2;
+      }""";
     doTest(before, after);
   }
 
@@ -148,30 +158,32 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
     assertNotNull(indentOptions);
     indentOptions.KEEP_INDENTS_ON_EMPTY_LINES = true;
     final String initial =
-      "public class Main {\n" +
-      "    public void foo(boolean a, int x, int y, int z) {\n" +
-      "        do {\n" +
-      "            if (x > 0) {\n" +
-      "                <caret>\n" +
-      "            }\n" +
-      "        }\n" +
-      "        while (y > 0);\n" +
-      "    }\n" +
-      "}";
+      """
+        public class Main {
+            public void foo(boolean a, int x, int y, int z) {
+                do {
+                    if (x > 0) {
+                        <caret>
+                    }
+                }
+                while (y > 0);
+            }
+        }""";
 
     doTest(
       initial,
 
-      "public class Main {\n" +
-      "    public void foo(boolean a, int x, int y, int z) {\n" +
-      "        do {\n" +
-      "            if (x > 0) {\n" +
-      "                <caret>\n" +
-      "            }\n" +
-      "        }\n" +
-      "        while (y > 0);\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Main {
+            public void foo(boolean a, int x, int y, int z) {
+                do {
+                    if (x > 0) {
+                        <caret>
+                    }
+                }
+                while (y > 0);
+            }
+        }"""
     );
   }
   
@@ -186,28 +198,30 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
       editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
       indentOptions.KEEP_INDENTS_ON_EMPTY_LINES = true;
       final String initial =
-        "<caret>package com.acme;\n" +
-        "\n" +
-        "class Foo {\n" +
-        "    Integer[] foo() {\n" +
-        "          \n" +
-        "             \n" +
-        "        return new Integer[]{0, 1};\n" +
-        "    }\n" +
-        "      \n" +
-        "}";
+        """
+          <caret>package com.acme;
+
+          class Foo {
+              Integer[] foo() {
+                   \s
+                      \s
+                  return new Integer[]{0, 1};
+              }
+               \s
+          }""";
       
       final String expected =
-        " package com.acme;\n" +
-        "\n" +
-        "class Foo {\n" +
-        "    Integer[] foo() {\n" +
-        "        \n" +
-        "        \n" +
-        "        return new Integer[]{0, 1};\n" +
-        "    }\n" +
-        "    \n" +
-        "}";
+        """
+           package com.acme;
+
+          class Foo {
+              Integer[] foo() {
+                 \s
+                 \s
+                  return new Integer[]{0, 1};
+              }
+             \s
+          }""";
 
       configureFromFileText(getTestName(false) + ".java", initial);
       //WriteCommandAction.runWriteCommandAction(getProject(), () -> CodeStyleManager.getInstance(getProject())

@@ -28,8 +28,11 @@ public class PyTodoTest extends TodoItemsTestCase {
 
   // PY-11040
   public void testTodoInDocstrings() {
-    testTodos("''' [TODO: return dead parrot ]'''\n" +
-              "def foo():\n''' [TODO: return dead parrot ]'''\n");
+    testTodos("""
+                ''' [TODO: return dead parrot ]'''
+                def foo():
+                ''' [TODO: return dead parrot ]'''
+                """);
   }
 
   // PY-11040
@@ -74,10 +77,11 @@ public class PyTodoTest extends TodoItemsTestCase {
   // PY-6027
   @Override
   public void testContinuationInBlockCommentWithStars() {
-    testTodos("'''\n" +
-              "[TODO first line]\n" +
-              " [second line]\n" +
-              "'''");
+    testTodos("""
+                '''
+                [TODO first line]
+                 [second line]
+                '''""");
   }
 
   // PY-6027
@@ -91,9 +95,10 @@ public class PyTodoTest extends TodoItemsTestCase {
     testTodos("# [TODO first line]<caret>\n" +
               "#  [second line]");
     type('\n');
-    checkTodos("# [TODO first line]\n" +
-               "\n" +
-               "#  second line");
+    checkTodos("""
+                 # [TODO first line]
+
+                 #  second line""");
   }
 
   @Override

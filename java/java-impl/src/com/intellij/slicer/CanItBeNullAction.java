@@ -18,8 +18,6 @@ package com.intellij.slicer;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.DefaultMutableTreeNode;
-
 class CanItBeNullAction extends GroupByNullnessActionBase {
   CanItBeNullAction(@NotNull SliceTreeBuilder treeBuilder) {
     super(treeBuilder);
@@ -27,9 +25,7 @@ class CanItBeNullAction extends GroupByNullnessActionBase {
 
   @Override
   protected boolean isAvailable() {
-    DefaultMutableTreeNode root = myTreeBuilder.getRootNode();
-    if (root == null) return false;
-    SliceRootNode rootNode = (SliceRootNode)root.getUserObject();
+    SliceRootNode rootNode = myTreeBuilder.getRootSliceNode();
     PsiElement element = rootNode == null ? null : rootNode.getRootUsage().getUsageInfo().getElement();
     PsiType type;
     if (element instanceof PsiVariable) {

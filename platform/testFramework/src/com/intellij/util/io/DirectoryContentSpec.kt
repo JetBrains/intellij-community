@@ -4,6 +4,7 @@
 package com.intellij.util.io
 
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.impl.*
 import org.junit.rules.ErrorCollector
@@ -168,4 +169,12 @@ interface FileTextMatcher {
 
 fun DirectoryContentSpec.generateInVirtualTempDir(): VirtualFile {
   return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(generateInTempDir())!!
+}
+
+/**
+ * Generates files, directories and archives accordingly to this specification in [target] directory and refresh them in VFS
+ */
+fun DirectoryContentSpec.generate(target: VirtualFile) {
+  generate(VfsUtil.virtualToIoFile(target))
+  VfsUtil.markDirtyAndRefresh(false, true, true, target)
 }

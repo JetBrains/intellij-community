@@ -130,66 +130,70 @@ public class HighlightUsagesHandlerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testIDEADEV28822() {
-    configureByText( JavaFileType.INSTANCE, "\n"+
-      "class Foo {\n"+
-      "  public String foo(String s) {\n"+
-      "    while (s.length() > 0) {\n"+
-      "      if (s.length() < 0) {\n"+
-      "        s = \"\";\n"+
-      "        continue;\n"+
-      "      }\n"+
-      "      else {\n"+
-      "      }\n"+
-      "    }\n"+
-      "    <caret>return s;\n"+
-      "  }\n"+
-      "}");
+    configureByText(JavaFileType.INSTANCE, """
+
+      class Foo {
+        public String foo(String s) {
+          while (s.length() > 0) {
+            if (s.length() < 0) {
+              s = "";
+              continue;
+            }
+            else {
+            }
+          }
+          <caret>return s;
+        }
+      }""");
     ctrlShiftF7();
     assertRangeText("return s;");
   }
 
   public void testReturnsInTryFinally() {
     // See IDEADEV-14028
-    configureByText( JavaFileType.INSTANCE, "\n"+
-      "class Foo {\n"+
-      "  int foo(boolean b) {\n"+
-      "    try {\n"+
-      "      if (b) return 1;\n"+
-      "    }\n"+
-      "    finally {\n"+
-      "      if (b) return 2;\n"+
-      "    }\n"+
-      "    <caret>return 3;\n"+
-      "  }\n"+
-      "}");
+    configureByText(JavaFileType.INSTANCE, """
+
+      class Foo {
+        int foo(boolean b) {
+          try {
+            if (b) return 1;
+          }
+          finally {
+            if (b) return 2;
+          }
+          <caret>return 3;
+        }
+      }""");
     ctrlShiftF7();
     assertRangeText("return 1;", "return 2;", "return 3;");
   }
 
   public void testReturnsInLambda() {
     // See IDEADEV-14028
-    configureByText( JavaFileType.INSTANCE, "\n"+
-      "class Foo {\n"+
-      "  {\n"+
-      "    Runnable r = () -> {\n"+
-      "           if (true) return;\n"+
-      "           <caret>return;\n"+
-      "    }\n"+
-      "  }\n"+
-      "}");
+    configureByText(JavaFileType.INSTANCE, """
+
+      class Foo {
+        {
+          Runnable r = () -> {
+                 if (true) return;
+                 <caret>return;
+          }
+        }
+      }""");
     ctrlShiftF7();
     assertRangeText("return;", "return;");
   }
 
   public void testSuppressedWarningsHighlights() {
-    configureByText( JavaFileType.INSTANCE, "\n"+
-      "class Foo {\n"+
-      "  @SuppressWarnings({\"Sil<caret>lyAssignment\"});\n"+
-      "  void foo() {\n"+
-      "      int i = 0;\n"+
-      "      i = i;\n"+
-      "  }\n"+
-      "}");
+    configureByText(JavaFileType.INSTANCE, """
+
+      class Foo {
+        @SuppressWarnings({"Sil<caret>lyAssignment"});
+        void foo() {
+            int i = 0;
+            i = i;
+        }
+      }""");
     enableInspectionTool(new SillyAssignmentInspection());
     ctrlShiftF7();
     assertRangeText("i");
@@ -200,13 +204,14 @@ public class HighlightUsagesHandlerTest extends DaemonAnalyzerTestCase {
     testInjector.injectAll(getTestRootDisposable());
 
     @Language("JAVA")
-    String text = "\n"+
-      "class Foo {\n"+
-      "  public static void a(boolean b, String c) {\n"+
-      "     @SuppressWarnings(\"SillyAssignment\")\n"+
-      "     String java = \"class A {{int i = 0; i = i;}}\";\n"+
-      "  }\n"+
-      "}";
+    String text = """
+
+      class Foo {
+        public static void a(boolean b, String c) {
+           @SuppressWarnings("SillyAssignment")
+           String java = "class A {{int i = 0; i = i;}}";
+        }
+      }""";
     configureByText( JavaFileType.INSTANCE, text);
     enableInspectionTool(new SillyAssignmentInspection());
     getEditor().getCaretModel().moveToOffset(getFile().getText().indexOf("illyAssignment"));
@@ -217,37 +222,41 @@ public class HighlightUsagesHandlerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testStaticallyImportedOverloadsFromUsage() throws IOException {
-    createClass("\n"+
-      "class Foo {\n"+
-      "  static void foo(int a) {}\n"+
-      "  static void foo(int a, int b) {}\n"+
-      "}");
-    configureByText( JavaFileType.INSTANCE, "\n"+
-      "import static Foo.foo;\n"+
-      "\n"+
-      "class Bar {\n"+
-      "  {\n"+
-      "    <caret>foo(1);\n"+
-      "  }\n"+
-      "}");
+    createClass("""
+
+                  class Foo {
+                    static void foo(int a) {}
+                    static void foo(int a, int b) {}
+                  }""");
+    configureByText(JavaFileType.INSTANCE, """
+
+      import static Foo.foo;
+
+      class Bar {
+        {
+          <caret>foo(1);
+        }
+      }""");
     ctrlShiftF7();
     assertRangeText("foo", "foo");
   }
 
   public void testStaticallyImportedOverloadsFromImport() throws IOException {
-    createClass("\n"+
-      "class Foo {\n"+
-      "  static void foo(int a) {}\n"+
-      "  static void foo(int a, int b) {}\n"+
-      "}");
-    configureByText( JavaFileType.INSTANCE, "\n"+
-      "import static Foo.<caret>foo;\n"+
-      "\n"+
-      "class Bar {\n"+
-      "  {\n"+
-      "    foo(1);\n"+
-      "  }\n"+
-      "}");
+    createClass("""
+
+                  class Foo {
+                    static void foo(int a) {}
+                    static void foo(int a, int b) {}
+                  }""");
+    configureByText(JavaFileType.INSTANCE, """
+
+      import static Foo.<caret>foo;
+
+      class Bar {
+        {
+          foo(1);
+        }
+      }""");
     ctrlShiftF7();
     assertRangeText("foo", "foo", "foo"); //import highlighted twice: for each overloaded usage target
   }
@@ -255,23 +264,25 @@ public class HighlightUsagesHandlerTest extends DaemonAnalyzerTestCase {
   public void testIdentifierHighlighterForStaticImports() {
     IdentifierHighlighterPassFactory.doWithHighlightingEnabled(getProject(), getTestRootDisposable(), ()->{
       try {
-        createClass("\n"+
-        "class Foo {\n"+
-        "  static void foo(int a) {}\n"+
-        "  static void foo(int a, int b) {}\n"+
-        "}");
+        createClass("""
+
+                      class Foo {
+                        static void foo(int a) {}
+                        static void foo(int a, int b) {}
+                      }""");
       }
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-      configureByText(JavaFileType.INSTANCE, "\n"+
-      "import static Foo.fo<caret>o;\n"+
-      "\n"+
-      "class Bar {\n"+
-      "  {\n"+
-      "    foo(1);\n"+
-      "  }\n"+
-      "}");
+      configureByText(JavaFileType.INSTANCE, """
+
+        import static Foo.fo<caret>o;
+
+        class Bar {
+          {
+            foo(1);
+          }
+        }""");
 
       IdentifierHighlighterPassFactory.waitForIdentifierHighlighting();
       //import highlighted twice: for each overloaded usage target
@@ -291,27 +302,29 @@ public class HighlightUsagesHandlerTest extends DaemonAnalyzerTestCase {
       .collect(Collectors.toList());
   }
   public void testExceptionsInTryWithResources() {
-    configureByText( JavaFileType.INSTANCE, "\n"+
-      "import java.io.*;\n"+
-      "class A {\n"+
-      "  public void test() throws IOException {\n"+
-      "    try (InputStream in = new FileInputStream(\"file.name\")) { }\n"+
-      "    <caret>catch (FileNotFoundException e) { throw new FileNotFoundException(\"no highlighting here\"); }\n"+
-      "  }\n"+
-      "}");
+    configureByText(JavaFileType.INSTANCE, """
+
+      import java.io.*;
+      class A {
+        public void test() throws IOException {
+          try (InputStream in = new FileInputStream("file.name")) { }
+          <caret>catch (FileNotFoundException e) { throw new FileNotFoundException("no highlighting here"); }
+        }
+      }""");
     ctrlShiftF7();
     assertRangeText("FileInputStream", "catch");
   }
 
   public void testExceptionsResourceCloser() {
-    configureByText( JavaFileType.INSTANCE, "\n"+
-      "import java.io.*;\n"+
-      "class A {\n"+
-      "  public void test() {\n"+
-      "    try (InputStream in = new FileInputStream(\"file.name\")) { }\n"+
-      "    <caret>catch (IOException e) { }\n"+
-      "  }\n"+
-      "}");
+    configureByText(JavaFileType.INSTANCE, """
+
+      import java.io.*;
+      class A {
+        public void test() {
+          try (InputStream in = new FileInputStream("file.name")) { }
+          <caret>catch (IOException e) { }
+        }
+      }""");
     ctrlShiftF7();
     assertRangeText("in", "FileInputStream", "FileInputStream", "catch");
   }
@@ -331,14 +344,15 @@ public class HighlightUsagesHandlerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testRecordComponents() {
-    configureByText( JavaFileType.INSTANCE, "\n"+
-      "record A(String s) {\n"+
-      "  void test() {\n"+
-      "    <caret>s();\n"+
-      "    s();\n"+
-      "    String a = s;\n"+
-      "  }\n"+
-      "}");
+    configureByText(JavaFileType.INSTANCE, """
+
+      record A(String s) {
+        void test() {
+          <caret>s();
+          s();
+          String a = s;
+        }
+      }""");
     ctrlShiftF7();
     assertRangesAndTexts("17:18 s", "42:43 s", "51:52 s", "71:72 s");
   }
@@ -349,12 +363,13 @@ public class HighlightUsagesHandlerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testCompactConstructorParameters() {
-    configureByText(JavaFileType.INSTANCE, "\n"+
-      "record A(String s) {\n"+
-      "  A {\n"+
-      "    <caret>s;\n"+
-      "  }\n"+
-      "}");
+    configureByText(JavaFileType.INSTANCE, """
+
+      record A(String s) {
+        A {
+          <caret>s;
+        }
+      }""");
     ctrlShiftF7();
     assertRangesAndTexts("17:18 s", "32:33 s");
   }
@@ -409,16 +424,17 @@ public class HighlightUsagesHandlerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testCaretOnExceptionInMethodThrowsDeclarationMustHighlightPlacesThrowingThisException() {
-    String s = "\n"+
-      "import java.io.*;\n"+
-      "class A {\n"+
-      "  public static void deserialize(File file) throws <caret>IOException, java.lang.RuntimeException, ClassNotFoundException {\n"+
-      "    boolean length = file.createNewFile();\n"+
-      "    if (length == false) throw new RuntimeException();\n"+
-      "    file.getCanonicalPath();\n"+
-      "    if (length == true) throw new ClassNotFoundException();\n"+
-      "  }\n"+
-      "}";
+    String s = """
+
+      import java.io.*;
+      class A {
+        public static void deserialize(File file) throws <caret>IOException, java.lang.RuntimeException, ClassNotFoundException {
+          boolean length = file.createNewFile();
+          if (length == false) throw new RuntimeException();
+          file.getCanonicalPath();
+          if (length == true) throw new ClassNotFoundException();
+        }
+      }""";
     configureByText( JavaFileType.INSTANCE, s);
 
     HighlightUsagesHandlerBase<PsiElement> handler = HighlightUsagesHandler.createCustomHandler(getEditor(), getFile());

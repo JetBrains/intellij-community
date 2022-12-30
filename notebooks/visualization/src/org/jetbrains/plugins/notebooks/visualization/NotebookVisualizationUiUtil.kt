@@ -48,14 +48,14 @@ inline fun paintNotebookCellBackgroundGutter(
   editor: EditorImpl,
   g: Graphics,
   r: Rectangle,
-  interval: NotebookCellLines.Interval,
+  lines: IntRange,
   top: Int,
   height: Int,
   crossinline actionBetweenBackgroundAndStripe: () -> Unit = {}
 ) {
   val appearance = editor.notebookAppearance
-  val stripe = appearance.getCellStripeColor(editor, interval)
-  val stripeHover = appearance.getCellStripeHoverColor(editor, interval)
+  val stripe = appearance.getCellStripeColor(editor, lines)
+  val stripeHover = appearance.getCellStripeHoverColor(editor, lines)
   val borderWidth = appearance.getLeftBorderWidth()
   val rectBorderCellX = r.width - borderWidth
   g.color = appearance.getCodeCellBackground(editor.colorsScheme)

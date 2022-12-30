@@ -12,7 +12,10 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaVersionService
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.refactoring.RefactoringManager
@@ -29,13 +32,9 @@ import com.siyeh.ig.psiutils.TestUtils
 import org.jetbrains.uast.*
 
 class JUnit5ConverterInspection : AbstractBaseUastLocalInspectionTool(UClass::class.java) {
-  private fun shouldInspect(file: PsiFile): Boolean {
-    if (!JavaVersionService.getInstance().isAtLeast(file, JavaSdkVersion.JDK_1_8)) return false
-    if (JavaPsiFacade.getInstance(file.project).findClass(JUnitCommonClassNames.ORG_JUNIT_TEST, file.resolveScope) == null) return false
-    if (JavaPsiFacade.getInstance(file.project)
-        .findClass(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST, file.resolveScope) == null) return false
-    return true
-  }
+  private fun shouldInspect(file: PsiFile): Boolean =
+    JavaVersionService.getInstance().isAtLeast(file, JavaSdkVersion.JDK_1_8)
+    && isJUnit4InScope(file) && isJUnit5InScope(file)
 
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
     val javaPsi = aClass.javaPsi
@@ -83,7 +82,6 @@ class JUnit5ConverterInspection : AbstractBaseUastLocalInspectionTool(UClass::cl
         }
       }
     }
-
 
     private class JUnit5MigrationProcessor(project: Project, migrationMap: MigrationMap, private val files: Set<UFile>)
       : MigrationProcessor(

@@ -160,8 +160,11 @@ class BuildActionRunner(
     return executer
   }
 
-  private fun BuildActionExecuter<*>.prepare() = GradleExecutionHelper.prepare(this, resolverCtx.externalSystemTaskId, settings,
-                                                                               resolverCtx.listener, resolverCtx.connection)
+  private fun BuildActionExecuter<*>.prepare() {
+    GradleExecutionHelper.prepare(this, resolverCtx.externalSystemTaskId, settings,
+                                  resolverCtx.listener, resolverCtx.connection)
+    GradleOperationHelperExtension.EP_NAME.forEachExtensionSafe { it.prepareForSync(this, resolverCtx) }
+  }
 
   private inner class BuildActionResultHandler(
     val buildFinishedCallBack: Consumer<GradleConnectionException?>

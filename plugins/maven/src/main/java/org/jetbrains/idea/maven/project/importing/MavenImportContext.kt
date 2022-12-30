@@ -50,7 +50,7 @@ data class WrapperData(val distributionUrl: String, val baseDir: VirtualFile)
 class MavenReadContext internal constructor(project: Project,
                                             val projectsTree: MavenProjectsTree,
                                             val toResolve: Collection<MavenProject>,
-                                            val withSyntaxErrors: Collection<MavenProject>,
+                                            private val withSyntaxErrors: Collection<MavenProject>,
                                             val initialContext: MavenInitialImportContext,
                                             val wrapperData: WrapperData?,
                                             override val indicator: MavenProgressIndicator) : MavenImportContext(project) {
@@ -70,12 +70,12 @@ class MavenResolvedContext internal constructor(project: Project,
 
 class MavenPluginResolvedContext internal constructor(project: Project,
                                                       val unresolvedPlugins: Set<MavenPlugin>,
-                                                      val resolvedContext: MavenResolvedContext) : MavenImportContext(project) {
+                                                      private val resolvedContext: MavenResolvedContext) : MavenImportContext(project) {
   override val indicator = resolvedContext.indicator
 }
 
 
-class MavenSourcesGeneratedContext internal constructor(val resolvedContext: MavenResolvedContext,
+class MavenSourcesGeneratedContext internal constructor(private val resolvedContext: MavenResolvedContext,
                                                         val projectsFoldersResolved: List<MavenProject>) : MavenImportContext(
   resolvedContext.project) {
   override val indicator = resolvedContext.indicator

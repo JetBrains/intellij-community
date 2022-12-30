@@ -2,16 +2,16 @@
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import java.io.Serializable
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
 
@@ -20,7 +20,7 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
     val tableId: LibraryTableId
 
     val roots: List<LibraryRoot>
-    val excludedRoots: List<VirtualFileUrl>
+    val excludedRoots: List<@Child ExcludeUrlEntity>
     @Child val sdk: SdkEntity?
     @Child val libraryProperties: LibraryPropertiesEntity?
     @Child val libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
@@ -35,7 +35,7 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
     override var name: String
     override var tableId: LibraryTableId
     override var roots: MutableList<LibraryRoot>
-    override var excludedRoots: MutableList<VirtualFileUrl>
+    override var excludedRoots: List<ExcludeUrlEntity>
     override var sdk: SdkEntity?
     override var libraryProperties: LibraryPropertiesEntity?
     override var libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
@@ -45,14 +45,12 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
     operator fun invoke(name: String,
                         tableId: LibraryTableId,
                         roots: List<LibraryRoot>,
-                        excludedRoots: List<VirtualFileUrl>,
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): LibraryEntity {
       val builder = builder()
       builder.name = name
       builder.tableId = tableId
       builder.roots = roots.toMutableWorkspaceList()
-      builder.excludedRoots = excludedRoots.toMutableWorkspaceList()
       builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
@@ -69,6 +67,8 @@ fun MutableEntityStorage.modifyEntity(entity: LibraryEntity, modification: Libra
 var LibraryEntity.Builder.externalSystemId: @Child LibraryExternalSystemIdEntity?
   by WorkspaceEntity.extension()
 //endregion
+
+val ExcludeUrlEntity.library: LibraryEntity? by WorkspaceEntity.extension()
 
 interface LibraryPropertiesEntity : WorkspaceEntity {
     val library: LibraryEntity

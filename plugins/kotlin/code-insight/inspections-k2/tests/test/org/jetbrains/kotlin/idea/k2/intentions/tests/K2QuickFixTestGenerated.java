@@ -17,59 +17,100 @@ import org.junit.runner.RunWith;
 @TestRoot("code-insight/inspections-k2/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../../idea/tests/testData/quickfix/redundantIf")
-public class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/redundantIf")
+    public static class RedundantIf extends AbstractK2QuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("assignExpression.kt")
+        public void testAssignExpression() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantIf/assignExpression.kt");
+        }
+
+        @TestMetadata("assignment.kt")
+        public void testAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantIf/assignment.kt");
+        }
+
+        @TestMetadata("assignmentFake.kt")
+        public void testAssignmentFake() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantIf/assignmentFake.kt");
+        }
+
+        @TestMetadata("expression.kt")
+        public void testExpression() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantIf/expression.kt");
+        }
+
+        @TestMetadata("expressionBody.kt")
+        public void testExpressionBody() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantIf/expressionBody.kt");
+        }
+
+        @TestMetadata("labeledReturn.kt")
+        public void testLabeledReturn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantIf/labeledReturn.kt");
+        }
+
+        @TestMetadata("negate.kt")
+        public void testNegate() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantIf/negate.kt");
+        }
+
+        @TestMetadata("negate2.kt")
+        public void testNegate2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantIf/negate2.kt");
+        }
+
+        @TestMetadata("negate3.kt")
+        public void testNegate3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantIf/negate3.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantIf/simple.kt");
+        }
     }
 
-    @TestMetadata("assignExpression.kt")
-    public void testAssignExpression() throws Exception {
-        runTest("../../../idea/tests/testData/quickfix/redundantIf/assignExpression.kt");
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/removeToStringInStringTemplate")
+    public static class RemoveToStringInStringTemplate extends AbstractK2QuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("assignment.kt")
-    public void testAssignment() throws Exception {
-        runTest("../../../idea/tests/testData/quickfix/redundantIf/assignment.kt");
-    }
+        @TestMetadata("call.kt")
+        public void testCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeToStringInStringTemplate/call.kt");
+        }
 
-    @TestMetadata("assignmentFake.kt")
-    public void testAssignmentFake() throws Exception {
-        runTest("../../../idea/tests/testData/quickfix/redundantIf/assignmentFake.kt");
-    }
+        @TestMetadata("name.kt")
+        public void testName() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeToStringInStringTemplate/name.kt");
+        }
 
-    @TestMetadata("expression.kt")
-    public void testExpression() throws Exception {
-        runTest("../../../idea/tests/testData/quickfix/redundantIf/expression.kt");
-    }
+        @TestMetadata("nameWithPostfix.kt")
+        public void testNameWithPostfix() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeToStringInStringTemplate/nameWithPostfix.kt");
+        }
 
-    @TestMetadata("expressionBody.kt")
-    public void testExpressionBody() throws Exception {
-        runTest("../../../idea/tests/testData/quickfix/redundantIf/expressionBody.kt");
-    }
+        @TestMetadata("necessaryBrackets1.kt")
+        public void testNecessaryBrackets1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeToStringInStringTemplate/necessaryBrackets1.kt");
+        }
 
-    @TestMetadata("labeledReturn.kt")
-    public void testLabeledReturn() throws Exception {
-        runTest("../../../idea/tests/testData/quickfix/redundantIf/labeledReturn.kt");
-    }
+        @TestMetadata("necessaryBrackets2.kt")
+        public void testNecessaryBrackets2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeToStringInStringTemplate/necessaryBrackets2.kt");
+        }
 
-    @TestMetadata("negate.kt")
-    public void testNegate() throws Exception {
-        runTest("../../../idea/tests/testData/quickfix/redundantIf/negate.kt");
-    }
-
-    @TestMetadata("negate2.kt")
-    public void testNegate2() throws Exception {
-        runTest("../../../idea/tests/testData/quickfix/redundantIf/negate2.kt");
-    }
-
-    @TestMetadata("negate3.kt")
-    public void testNegate3() throws Exception {
-        runTest("../../../idea/tests/testData/quickfix/redundantIf/negate3.kt");
-    }
-
-    @TestMetadata("simple.kt")
-    public void testSimple() throws Exception {
-        runTest("../../../idea/tests/testData/quickfix/redundantIf/simple.kt");
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeToStringInStringTemplate/simple.kt");
+        }
     }
 }

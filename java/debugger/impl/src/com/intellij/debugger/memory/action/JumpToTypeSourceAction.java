@@ -57,8 +57,8 @@ public class JumpToTypeSourceAction extends ClassesActionBase {
   private PsiClass getPsiClass(AnActionEvent e, boolean fromUpdate) {
 
     final ReferenceType selectedClass = fromUpdate ? Utils.getOrCreateUpdateSession(e)
-      .compute(this, "selectedClass", ActionUpdateThread.EDT, () -> ActionUtil.getSelectedClass(e))
-                                                   : ActionUtil.getSelectedClass(e);
+      .compute(this, "selectedClass", ActionUpdateThread.EDT, () -> DebuggerActionUtil.getSelectedClass(e))
+                                                   : DebuggerActionUtil.getSelectedClass(e);
     final Project project = e.getProject();
     if (selectedClass == null || project == null) {
       return null;

@@ -43,8 +43,10 @@ public class ProjectTreeStateTest extends BaseProjectViewTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myExpectedTree = "-Project\n" +
-                     " +PsiDirectory: updateProjectView\n" +
-                     " +External Libraries\n";
+    myExpectedTree = """
+      -Project
+       +PsiDirectory: updateProjectView
+       +External Libraries
+      """;
   }
 }

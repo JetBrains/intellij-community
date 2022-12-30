@@ -36,7 +36,7 @@ open class MainEntityListImpl(val dataSource: MainEntityListData) : MainEntityLi
     return connections
   }
 
-  class Builder(val result: MainEntityListData?) : ModifiableWorkspaceEntityBase<MainEntityList>(), MainEntityList.Builder {
+  class Builder(var result: MainEntityListData?) : ModifiableWorkspaceEntityBase<MainEntityList>(), MainEntityList.Builder {
     constructor() : this(MainEntityListData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -54,6 +54,9 @@ open class MainEntityListImpl(val dataSource: MainEntityListData) : MainEntityLi
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -77,8 +80,8 @@ open class MainEntityListImpl(val dataSource: MainEntityListData) : MainEntityLi
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as MainEntityList
-      this.entitySource = dataSource.entitySource
-      this.x = dataSource.x
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.x != dataSource.x) this.x = dataSource.x
       if (parents != null) {
       }
     }
@@ -155,7 +158,7 @@ class MainEntityListData : WorkspaceEntityData<MainEntityList>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as MainEntityListData
 
@@ -166,7 +169,7 @@ class MainEntityListData : WorkspaceEntityData<MainEntityList>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as MainEntityListData
 

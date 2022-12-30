@@ -17,7 +17,7 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     override fun isFirPlugin(): Boolean = true
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     private val whitelist : Set<String> = setOf(
         // TODO: multiResolve, getArgumentForParameter
@@ -211,6 +211,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testResolveToSubstituteOverride() {
         doCheck("ResolveToSubstituteOverride", ::checkResolveToSubstituteOverride)
+    }
+
+    fun testResolveEnumEntrySuperType() {
+        doCheck("TypeReferenceFromEnumEntry", ::checkResolveEnumEntrySuperType)
     }
 
 }

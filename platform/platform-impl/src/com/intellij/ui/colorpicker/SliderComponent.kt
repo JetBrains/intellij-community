@@ -50,7 +50,7 @@ abstract class SliderComponent<T: Number>(initialValue: T) : JComponent() {
   protected val bottomPadding = DEFAULT_VERTICAL_PADDING
 
   private var _knobPosition: Int = 0
-  var knobPosition: Int
+  private var knobPosition: Int
     get() = _knobPosition
     set(newPointerValue) {
       _knobPosition = newPointerValue
