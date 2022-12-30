@@ -10,7 +10,7 @@ import java.util.Map;
 
 import static org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.underTeamCity;
 
-public class BuildDependenciesLogging {
+public final class BuildDependenciesLogging {
   public static void setVerboseEnabled(boolean verboseEnabled) {
     BuildDependenciesLogging.verboseEnabled = verboseEnabled;
   }

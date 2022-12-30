@@ -41,7 +41,7 @@ public final class JBCefClient implements JBCefDisposable {
   /**
    * @see #setProperty(String, Object)
    */
-  public static class Properties {
+  public static final class Properties {
     /**
      * Defines the size of the pool used by {@link JBCefJSQuery} after a native browser has been created.
      * <p>

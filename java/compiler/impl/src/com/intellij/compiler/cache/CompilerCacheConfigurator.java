@@ -19,7 +19,7 @@ import java.util.Set;
 
 import static org.jetbrains.jps.cache.JpsCachesLoaderUtil.INTELLIJ_REPO_NAME;
 
-public class CompilerCacheConfigurator {
+public final class CompilerCacheConfigurator {
   private static final Logger LOG = Logger.getInstance(CompilerCacheConfigurator.class);
 
   public static @Nullable CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings getCacheDownloadSettings(@NotNull Project project) {

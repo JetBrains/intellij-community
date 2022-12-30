@@ -13,7 +13,7 @@ import static com.intellij.codeInspection.options.OptPane.dropdown;
 /**
  * Common controls used in Java inspection options
  */
-public class JavaInspectionControls {
+public final class JavaInspectionControls {
   public static @NotNull OptCustom button(@NotNull JavaInspectionButtons.ButtonKind kind) {
     return new JavaInspectionButtons().component(kind);
   }

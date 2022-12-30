@@ -76,7 +76,7 @@ import java.util.Map;
  * @see Builder
  */
 public abstract class PySkeletonGenerator {
-  private static class Run {
+  private static final class Run {
     static final Logger LOG = Logger.getInstance(Run.class);
   }
 

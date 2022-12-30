@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * This class intended for working with the alternative representation of {@link TextRange} as a long value, which logically consists of two int parts for startOffset and endOffset.
  * It might be useful to address atomicity or memory concerns.
  */
-public class TextRangeScalarUtil {
+public final class TextRangeScalarUtil {
   public static long toScalarRange(@NotNull Segment range) {
     return toScalarRange(range.getStartOffset(), range.getEndOffset());
   }

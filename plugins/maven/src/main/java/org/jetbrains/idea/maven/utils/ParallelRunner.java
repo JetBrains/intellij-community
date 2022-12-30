@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.function.Consumer;
 
-public class ParallelRunner {
+public final class ParallelRunner {
   @FunctionalInterface
   public interface ThrowingConsumer<T> extends Consumer<T> {
     @Override

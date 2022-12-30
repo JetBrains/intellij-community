@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class DataDumper {
+public final class DataDumper {
   private static final Logger LOG = Logger.getInstance(DataDumper.class);
   public static final ObjectMapper objectMapper = ExtensionsKt.jacksonObjectMapper()
     .setDefaultPrettyPrinter(new DefaultPrettyPrinter());

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
-public class CoreCodeStyleUtil {
+public final class CoreCodeStyleUtil {
   private final static Logger LOG = Logger.getInstance(CoreCodeStyleUtil.class);
 
   private static final ThreadLocal<ProcessingUnderProgressInfo> SEQUENTIAL_PROCESSING_ALLOWED

@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class JpsChecksumUtil {
+public final class JpsChecksumUtil {
   public static String getSha256Checksum(@NotNull Path path) throws IOException {
     try {
       MessageDigest algorithm = MessageDigest.getInstance("SHA-256");

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode;
 import org.jetbrains.kotlin.types.DeferredType;
 import org.jetbrains.kotlin.types.KotlinType;
 
-public class QuickFixUtil {
+public final class QuickFixUtil {
     private QuickFixUtil() {
     }
 

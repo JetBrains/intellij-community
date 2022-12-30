@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.chains;
 
 import com.intellij.diff.requests.DiffRequest;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SimpleDiffRequestProducer {
+public final class SimpleDiffRequestProducer {
   private static final Logger LOG = Logger.getInstance(SimpleDiffRequestProducer.class);
 
   @NotNull

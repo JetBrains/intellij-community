@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyWhiteSpaceUtil {
+public final class PyWhiteSpaceUtil {
   public static boolean needInsertBackslash(PsiFile file, int offset, boolean autoWrapInProgress) {
     if (offset > 0) {
       final PsiElement beforeCaret = file.findElementAt(offset - 1);

@@ -15,7 +15,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
-public class JBCefTestHelper {
+public final class JBCefTestHelper {
   /**
    * Shows the browser in a frame in waits for a load completion.
    */

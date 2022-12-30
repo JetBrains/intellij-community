@@ -16,7 +16,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 
-public class BalloonTest {
+public final class BalloonTest {
   public static void main(String[] args) {
     IconLoader.INSTANCE.activate();
 

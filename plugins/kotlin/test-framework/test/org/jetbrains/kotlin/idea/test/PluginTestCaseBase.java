@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test;
 
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.test.TestJdkKind;
 
 import java.io.File;
 
-public class PluginTestCaseBase {
+public final class PluginTestCaseBase {
     private PluginTestCaseBase() {
     }
 

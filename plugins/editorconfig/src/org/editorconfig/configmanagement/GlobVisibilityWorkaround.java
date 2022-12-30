@@ -8,7 +8,7 @@ import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 
-public class GlobVisibilityWorkaround {
+public final class GlobVisibilityWorkaround {
 
   private GlobVisibilityWorkaround() {
   }

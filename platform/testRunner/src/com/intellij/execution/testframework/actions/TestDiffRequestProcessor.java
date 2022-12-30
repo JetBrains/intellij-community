@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class TestDiffRequestProcessor {
+public final class TestDiffRequestProcessor {
   @NotNull
   public static DiffRequestChain createRequestChain(@NotNull Project project, @NotNull ListSelection<? extends DiffHyperlink> requests) {
     ListSelection<DiffRequestProducer> producers = requests.map(hyperlink -> new DiffHyperlinkRequestProducer(project, hyperlink));

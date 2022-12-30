@@ -129,7 +129,7 @@ public interface EditorColors {
     return currentKey;
   }
 
-  class GlobalScheme {
+  final class GlobalScheme {
     @Nullable
     public static Color getColor(@NotNull ColorKey key) {
       return EditorColorsManager.getInstance().getGlobalScheme().getColor(key);

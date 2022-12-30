@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class EqualsAndHashCodeToStringHandler {
+public final class EqualsAndHashCodeToStringHandler {
 
   private static final String TO_STRING_RANK_ANNOTATION_PARAMETER = "rank";
 

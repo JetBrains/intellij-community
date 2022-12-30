@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Random;
 
-public class TouchbarTest {
+public final class TouchbarTest {
   private static final Icon ourTestIcon = IconLoader.getIcon("modules/edit.png", TouchbarTest.class.getClassLoader());
 
   public static void main(String[] args) {

@@ -66,7 +66,7 @@ import java.util.regex.Pattern;
 import static org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.IGNORE_BACKEND_DIRECTIVE_PREFIX;
 import static org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.isIgnoredTarget;
 
-public class KotlinTestUtils {
+public final class KotlinTestUtils {
     public static final String TEST_MODULE_NAME = "test-module";
 
     private static final boolean RUN_IGNORED_TESTS_AS_REGULAR =

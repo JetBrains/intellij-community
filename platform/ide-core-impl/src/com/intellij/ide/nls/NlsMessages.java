@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.nls;
 
 import com.ibm.icu.number.FormattedNumber;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 /**
  * Utility methods to produce localized messages
  */
-public class NlsMessages {
+public final class NlsMessages {
   private static final MeasureUnit[] TIME_UNITS =
     {MeasureUnit.NANOSECOND, MeasureUnit.MICROSECOND, MeasureUnit.MILLISECOND, MeasureUnit.SECOND, MeasureUnit.MINUTE, MeasureUnit.HOUR,
       MeasureUnit.DAY, MeasureUnit.WEEK};

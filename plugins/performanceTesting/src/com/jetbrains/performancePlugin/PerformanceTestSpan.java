@@ -6,7 +6,7 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 
-public class PerformanceTestSpan {
+public final class PerformanceTestSpan {
   public static final String SPAN_NAME = "performance_test";
   public final static IJTracer TRACER = TraceManager.INSTANCE.getTracer("performance-plugin");
   private static Span performanceTestSpan;

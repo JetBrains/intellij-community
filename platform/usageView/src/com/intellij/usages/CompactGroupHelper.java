@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class CompactGroupHelper {
+public final class CompactGroupHelper {
   public static @NotNull List<String> findLongestCommonParent(@NotNull String path1, @NotNull String path2) {
     List<String> result = new ArrayList<>();
     List<String> path1Arr = pathToPathList(path1);

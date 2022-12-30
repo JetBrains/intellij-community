@@ -39,7 +39,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class CompareWithLocalDialog {
+public final class CompareWithLocalDialog {
   @RequiresEdt
   public static void showChanges(@NotNull Project project,
                                  @NotNull @NlsContexts.DialogTitle String dialogTitle,

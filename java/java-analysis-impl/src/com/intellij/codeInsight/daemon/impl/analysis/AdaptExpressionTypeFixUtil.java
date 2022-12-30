@@ -3,7 +3,10 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceExpressionAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.WrapExpressionFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.WrapWithAdapterMethodCallFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.util.TextRange;
@@ -23,7 +26,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -32,7 +34,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * Utilities to register fixes for mismatching type
  */
-class AdaptExpressionTypeFixUtil {
+final class AdaptExpressionTypeFixUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
   private AdaptExpressionTypeFixUtil() { }

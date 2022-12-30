@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.parser;
 
 import com.intellij.openapi.util.Pair;
@@ -10,7 +11,7 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class CommitParser {
+public final class CommitParser {
 
   public static final String SEPARATOR = "|-";
 

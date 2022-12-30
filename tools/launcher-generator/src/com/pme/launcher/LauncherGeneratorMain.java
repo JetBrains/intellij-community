@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 
 
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
-public class LauncherGeneratorMain {
+public final class LauncherGeneratorMain {
   public static void main(String[] args) {
     if (args.length != 6) {
       System.err.println("Usage: LauncherGeneratorMain <template EXE file> <app info file> <resource.h file> <properties> <path to ico> <output>");

@@ -46,7 +46,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @ApiStatus.Internal
-  static class VfsDataFlags {
+  static final class VfsDataFlags {
     static final int IS_WRITABLE_FLAG = 0x0100_0000;
     static final int IS_HIDDEN_FLAG = 0x0200_0000;
     static final int IS_OFFLINE = 0x0400_0000;

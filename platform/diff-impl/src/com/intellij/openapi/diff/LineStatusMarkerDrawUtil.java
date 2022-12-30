@@ -29,7 +29,7 @@ import java.util.List;
 
 import static com.intellij.diff.util.DiffDrawUtil.lineToY;
 
-public class LineStatusMarkerDrawUtil {
+public final class LineStatusMarkerDrawUtil {
   @NotNull
   public static List<Range> getSelectedRanges(@NotNull List<? extends Range> ranges, @NotNull Editor editor, int y) {
     int lineHeight = editor.getLineHeight();

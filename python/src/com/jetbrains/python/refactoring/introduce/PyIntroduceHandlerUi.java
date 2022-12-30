@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 
 import static com.jetbrains.python.refactoring.introduce.IntroduceHandler.findOccurrenceUnderCaret;
 
-public class PyIntroduceHandlerUi {
+public final class PyIntroduceHandlerUi {
 
   public static void performInplaceIntroduceVariable(IntroduceOperation operation, PsiElement statement) {
     if (statement instanceof PyAssignmentStatement) {

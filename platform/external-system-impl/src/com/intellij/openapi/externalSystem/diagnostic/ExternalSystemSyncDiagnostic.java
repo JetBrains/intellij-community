@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-public class ExternalSystemSyncDiagnostic {
+public final class ExternalSystemSyncDiagnostic {
   public static final IJTracer syncTracer = TraceManager.INSTANCE.getTracer("external-system-sync");
 
   private static final ConcurrentHashMap<String, Span> spans = new ConcurrentHashMap<>();

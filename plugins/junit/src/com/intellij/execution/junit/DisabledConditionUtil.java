@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Objects;
 
-public class DisabledConditionUtil {
+public final class DisabledConditionUtil {
 
   private static final String[] DISABLED_ANNO = {"org.junit.jupiter.api.Disabled"};
 

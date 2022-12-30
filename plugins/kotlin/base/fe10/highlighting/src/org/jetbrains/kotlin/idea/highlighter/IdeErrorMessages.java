@@ -25,7 +25,7 @@ import static org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.*;
 /**
  * @see DefaultErrorMessages
  */
-public class IdeErrorMessages {
+public final class IdeErrorMessages {
     private static final DiagnosticFactoryToRendererMap MAP = new DiagnosticFactoryToRendererMap("IDE");
 
     // TODO: i18n

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration;
 import javax.swing.*;
 import java.awt.*;
 
-class Utils {
+final class Utils {
     private Utils() {
     }
 

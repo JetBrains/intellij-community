@@ -19,7 +19,7 @@ import java.util.*;
 /**
  * Handler for Delegate annotation processing, for fields and for methods
  */
-public class DelegateHandler {
+public final class DelegateHandler {
 
   public static boolean validate(@NotNull PsiModifierListOwner psiModifierListOwner,
                                  @NotNull PsiType psiType,

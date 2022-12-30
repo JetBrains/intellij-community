@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.diagnostic.LoadingState;
@@ -24,7 +24,7 @@ import java.util.Collections;
 //
 // Public API for assigning touchbar actions to ui-component
 //
-public class Touchbar {
+public final class Touchbar {
   public static @Nullable ActionGroup getActions(@NotNull JComponent component) {
     return ComponentUtil.getClientProperty(component, ACTION_GROUP_KEY);
   }

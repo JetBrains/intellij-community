@@ -48,7 +48,7 @@ import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBa
 /**
  * @author vlan
  */
-public class PyTypeParser {
+public final class PyTypeParser {
   private static final ParseResult EMPTY_RESULT = new ParseResult(null, Collections.emptyMap(), Collections.emptyMap(),
                                                                   Collections.emptyMap());
 

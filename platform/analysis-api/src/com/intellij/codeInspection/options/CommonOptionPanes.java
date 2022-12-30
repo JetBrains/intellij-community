@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class CommonOptionPanes {
+public final class CommonOptionPanes {
   private CommonOptionPanes() {}
 
   public static @NotNull OptPane conventions(@Language("jvm-field-name") @NonNls @NotNull String minLengthProperty,

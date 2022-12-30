@@ -4,7 +4,7 @@ package com.intellij.compiler.cache;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
 
-public class CompilerCacheLoadingSettings {
+public final class CompilerCacheLoadingSettings {
   private static final Logger LOG = Logger.getInstance(CompilerCacheLoadingSettings.class);
 
   private static final String FORCE_UPDATE = "JpsOutputLoaderManager.forceUpdate";

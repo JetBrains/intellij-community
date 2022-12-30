@@ -9,7 +9,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.function.Consumer;
 
-public class BuildHelperMavenPluginUtil {
+public final class BuildHelperMavenPluginUtil {
   @Nullable
   public static MavenPlugin findPlugin(@NotNull MavenProject mavenProject) {
     return mavenProject.findPlugin("org.codehaus.mojo", "build-helper-maven-plugin");
