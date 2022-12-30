@@ -78,9 +78,9 @@ final class StrippedLongToObjectMap<V> implements LongFunction<V> {
   }
 
   /**
-   * Index is negative for non-existing key.
+   * The index is negative for non-existing key.
    */
-  public int index(final long key) {
+  public int index(long key) {
     if (key == 0) {
       return containsNullKey ? tableSize : -(tableSize + 1);
     }

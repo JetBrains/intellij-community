@@ -24,7 +24,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * A class loader that allows for various customizations, e.g. not locking jars or using a special cache to speed up class loading.
+ * A class loader which allows for various customizations, e.g. not locking jars or using a special cache to speed up class loading.
  * Should be constructed using {@link #build()} method.
  * <p>
  * This classloader implementation is separate from {@link PathClassLoader} because it's used in runtime modules with JDK 1.8.
@@ -60,7 +60,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
   /**
    * There are two definitions of the `ClassPath` class: one from the app class loader that is used by bootstrap,
-   * and another one from the core class loader produced as a result of creating of plugin class loader.
+   * and another one from the core class loader produced as a result of creating a plugin class loader.
    * The core class loader doesn't use bootstrap class loader as a parent - instead, only platform classloader is used (only JRE classes).
    */
   @ApiStatus.Internal
@@ -595,7 +595,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     /**
      * `ZipFile` handles opened in `JarLoader` will be kept in as soft references.
      * Depending on OS, the option significantly speeds up classloading from libraries.
-     * Caveat: on Windows, unclosed handle locks a file, preventing its modification.
+     * Caveat: on Windows, an unclosed handle locks a file, preventing its modification.
      * Thus, the option is recommended when .jar files are not modified or a process that uses this option is transient.
      */
     public @NotNull UrlClassLoader.Builder allowLock(boolean lockJars) {
@@ -604,7 +604,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     }
 
     /**
-     * Build a backward index of packages to class/resource names; allows to reduce I/O during classloading.
+     * Build a backward index of packages to class/resource names; allows reducing I/O during classloading.
      */
     public @NotNull UrlClassLoader.Builder useCache() {
       useCache = true;
@@ -622,7 +622,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
      * Currently, the flag is used for faster unit tests / debug IDE instance, because IDEA's build process (as of 14.1) ensures deletion of
      * such information upon appearing new file for output root.
      * <p>
-     * N.b. IDEA's build process does not ensure deletion of cached information upon deletion of some file under a local root,
+     * IDEA's building process does not ensure deletion of cached information upon deletion of some file under a local root,
      * but false positives are not a logical error, since code is prepared for that and disk access is performed upon class/resource loading.
      */
     public @NotNull UrlClassLoader.Builder usePersistentClasspathIndexForLocalClassDirectories(boolean value) {
@@ -636,7 +636,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     }
 
     /**
-     * Requests the class loader being built to use cache and, if possible, retrieve and store the cached data from a special cache pool
+     * Requests the class loader being built to use a cache and, if possible, retrieve and store the cached data from a special cache pool
      * that can be shared between several loaders.
      *
      * @param pool      cache pool
