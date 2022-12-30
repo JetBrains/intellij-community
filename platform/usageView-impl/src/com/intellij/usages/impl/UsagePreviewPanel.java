@@ -326,6 +326,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     }
     FindModel stub = new FindModel();
     stub.setCaseSensitive(panel.myPresentation.isCaseSensitive());
+    stub.setPreserveCase(panel.myPresentation.isPreserveCase());
     stub.setMultiline(true);
     stub.setRegularExpressions(true);
     stub.setReplaceAll(true);

@@ -393,6 +393,7 @@ public final class FindInProjectUtil {
       presentation.setReplaceString(null);
     }
     presentation.setCaseSensitive(findModel.isCaseSensitive());
+    presentation.setPreserveCase(findModel.isPreserveCase());
     presentation.setReplaceMode(findModel.isReplaceState());
   }
 

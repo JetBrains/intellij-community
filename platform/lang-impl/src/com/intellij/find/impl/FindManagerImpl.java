@@ -789,13 +789,13 @@ public final class FindManagerImpl extends FindManager {
 
   @Override
   public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model,
-                                   int startOffset, @NotNull CharSequence documentText) throws MalformedReplacementStringException{
+                                   int startOffset, @NotNull CharSequence documentText) throws MalformedReplacementStringException {
     String toReplace = model.getStringToReplace();
     if (model.isRegularExpressions()) {
-      return getStringToReplaceByRegexp(model, documentText, startOffset);
+      toReplace = getStringToReplaceByRegexp(model, documentText, startOffset);
     }
     if (model.isPreserveCase()) {
-      return replaceWithCaseRespect (toReplace, foundString);
+      toReplace = replaceWithCaseRespect(toReplace, foundString);
     }
     return toReplace;
   }

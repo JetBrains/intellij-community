@@ -576,15 +576,15 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     myCaseSensitiveAction =
       new MySwitchStateToggleAction("find.popup.case.sensitive", ToggleOptionName.CaseSensitive,
                                     AllIcons.Actions.MatchCase, AllIcons.Actions.MatchCaseHovered, AllIcons.Actions.MatchCaseSelected,
-                                    myCaseSensitiveState, () -> !myHelper.getModel().isReplaceState() || !myPreserveCaseState.get());
+                                    myCaseSensitiveState);
     myWholeWordsAction =
       new MySwitchStateToggleAction("find.whole.words", ToggleOptionName.WholeWords,
                                     AllIcons.Actions.Words, AllIcons.Actions.WordsHovered, AllIcons.Actions.WordsSelected,
-                                    myWholeWordsState, () -> true);
+                                    myWholeWordsState);
     myRegexAction =
       new MySwitchStateToggleAction("find.regex", ToggleOptionName.Regex,
                                     AllIcons.Actions.Regex, AllIcons.Actions.RegexHovered, AllIcons.Actions.RegexSelected,
-                                    myRegexState, () -> !myHelper.getModel().isReplaceState() || !myPreserveCaseState.get(),
+                                    myRegexState,
                                     new TooltipLinkProvider.TooltipLink(FindBundle.message("find.regex.help.link"),
                                                                         RegExHelpPopup.createRegExLinkRunnable(mySearchTextArea)));
     List<Component> searchExtraButtons =
@@ -592,9 +592,8 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     AnAction preserveCaseAction =
       new MySwitchStateToggleAction("find.options.replace.preserve.case", ToggleOptionName.PreserveCase,
                      AllIcons.Actions.PreserveCase, AllIcons.Actions.PreserveCaseHover, AllIcons.Actions.PreserveCaseSelected,
-                     myPreserveCaseState, () -> !myRegexState.get() && !myCaseSensitiveState.get());
-    List<Component> replaceExtraButtons = myReplaceTextArea.setExtraActions(
-      preserveCaseAction);
+                     myPreserveCaseState);
+    List<Component> replaceExtraButtons = myReplaceTextArea.setExtraActions(preserveCaseAction);
     Pair<FindPopupScopeUI.ScopeType, JComponent>[] scopeComponents = myScopeUI.getComponents();
 
     myScopeDetailsPanel = new JPanel(new CardLayout());
@@ -1755,27 +1754,23 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
   private final class MySwitchStateToggleAction extends DumbAwareToggleAction implements TooltipLinkProvider, TooltipDescriptionProvider {
     private final ToggleOptionName myOptionName;
     private final AtomicBoolean myState;
-    private final Producer<Boolean> myEnableStateProvider;
     private final TooltipLink myTooltipLink;
 
     private MySwitchStateToggleAction(@NotNull String message,
                                       @NotNull FindPopupPanel.ToggleOptionName optionName,
                                       @NotNull Icon icon, @NotNull Icon hoveredIcon, @NotNull Icon selectedIcon,
-                                      @NotNull AtomicBoolean state,
-                                      @NotNull Producer<Boolean> enableStateProvider) {
-      this(message, optionName, icon, hoveredIcon, selectedIcon, state, enableStateProvider, null);
+                                      @NotNull AtomicBoolean state) {
+      this(message, optionName, icon, hoveredIcon, selectedIcon, state, null);
     }
 
     private MySwitchStateToggleAction(@NotNull String message,
                                       @NotNull FindPopupPanel.ToggleOptionName optionName,
                                       @NotNull Icon icon, @NotNull Icon hoveredIcon, @NotNull Icon selectedIcon,
                                       @NotNull AtomicBoolean state,
-                                      @NotNull Producer<Boolean> enableStateProvider,
                                       @Nullable TooltipLink tooltipLink) {
       super(FindBundle.message(message), null, icon);
       myOptionName = optionName;
       myState = state;
-      myEnableStateProvider = enableStateProvider;
       myTooltipLink = tooltipLink;
       getTemplatePresentation().setHoveredIcon(hoveredIcon);
       getTemplatePresentation().setSelectedIcon(selectedIcon);
@@ -1798,7 +1793,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(myEnableStateProvider.produce());
       Toggleable.setSelected(e.getPresentation(), myState.get());
     }
 
@@ -2066,8 +2060,10 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
   }
 
   private final class MyPinAction extends ToggleAction {
-    private MyPinAction() {super(IdeBundle.messagePointer("action.ToggleAction.text.pin.window"),
-                                 IdeBundle.messagePointer("action.ToggleAction.description.pin.window"), AllIcons.General.Pin_tab);}
+    private MyPinAction() {
+      super(IdeBundle.messagePointer("action.ToggleAction.text.pin.window"),
+            IdeBundle.messagePointer("action.ToggleAction.description.pin.window"), AllIcons.General.Pin_tab);
+    }
 
     @Override
     public boolean isDumbAware() {

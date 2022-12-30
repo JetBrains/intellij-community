@@ -43,6 +43,7 @@ public class UsageViewPresentation {
   private boolean myExcludeAvailable = true;
   private Pattern mySearchPattern;
   private boolean myCaseSensitive;
+  private boolean myPreserveCase;
   private String myReplaceString;
   private boolean myReplaceMode;
 
@@ -227,6 +228,14 @@ public class UsageViewPresentation {
 
   public boolean isCaseSensitive() {
     return myCaseSensitive;
+  }
+
+  public void setPreserveCase(boolean preserveCase) {
+    myPreserveCase = preserveCase;
+  }
+
+  public boolean isPreserveCase() {
+    return myPreserveCase;
   }
 
   /**
