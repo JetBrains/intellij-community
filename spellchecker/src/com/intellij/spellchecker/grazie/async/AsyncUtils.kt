@@ -5,12 +5,13 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 internal object AsyncUtils {
@@ -24,14 +25,13 @@ internal object AsyncUtils {
     }
 
     for (project in ProjectManager.getInstance().openProjects.filter { it.isInitialized && it.isOpen && !it.isDefault }) {
-      DaemonCodeAnalyzer.getInstance(project)?.restart()
+      project.serviceIfCreated<DaemonCodeAnalyzer>()?.restart()
     }
   }
 
   fun run(project: Project, body: suspend () -> Unit) {
     if (isNonAsyncMode()) {
-      @Suppress("RAW_RUN_BLOCKING")
-      runBlocking {
+      runBlockingMaybeCancellable {
         body()
       }
       return
