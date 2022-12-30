@@ -78,7 +78,7 @@ final class StrippedLongSet {
   }
 
   StrippedLongSet() {
-    this(Hash.DEFAULT_INITIAL_SIZE, Hash.DEFAULT_LOAD_FACTOR);
+    this(Hash.DEFAULT_INITIAL_SIZE, Hash.FAST_LOAD_FACTOR);
   }
 
   private int realSize() {

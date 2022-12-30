@@ -16,36 +16,30 @@
 package com.intellij.util.lang;
 
 final class Hash {
-  static final float DEFAULT_LOAD_FACTOR = .75f;
+  static final float FAST_LOAD_FACTOR = .5f;
   static final int DEFAULT_INITIAL_SIZE = 16;
 
   private static final long LONG_PHI = 0x9E3779B97F4A7C15L;
 
   static int arraySize(final int expected, final float f) {
     final long s = Math.max(2, nextPowerOfTwo((long)Math.ceil(expected / f)));
-    if (s > (1 << 30)) throw new IllegalArgumentException("Too large (" + expected + " expected elements with load factor " + f + ")");
+    if (s > (1 << 30)) {
+      throw new IllegalArgumentException("Too large (" + expected + " expected elements with load factor " + f + ")");
+    }
     return (int)s;
   }
 
-  @SuppressWarnings("DuplicatedCode")
   private static long nextPowerOfTwo(long x) {
-    if (x == 0) return 1;
-    x--;
-    x |= x >> 1;
-    x |= x >> 2;
-    x |= x >> 4;
-    x |= x >> 8;
-    x |= x >> 16;
-    return (x | x >> 32) + 1;
+    return 1L << (64 - Long.numberOfLeadingZeros(x - 1));
   }
 
-  static int maxFill(final int n, final float f) {
+  static int maxFill(int n, float f) {
     /* We must guarantee that there is always at least
      * one free entry (even with pathological load factors). */
     return Math.min((int)Math.ceil(n * f), n - 1);
   }
 
-  static long mix(final long x) {
+  static long mix(long x) {
     long h = x * LONG_PHI;
     h ^= h >>> 32;
     return h ^ (h >>> 16);
