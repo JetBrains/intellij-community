@@ -4,12 +4,9 @@ package com.intellij.ui.svg
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ui.icons.IconLoadMeasurer
 import org.jetbrains.ikv.Ikv
-import org.jetbrains.ikv.UniversalHash
 import java.awt.Image
 import java.nio.ByteBuffer
 import java.nio.file.Path
-
-private val intKeyHash = UniversalHash.IntHash()
 
 internal class SvgPrebuiltCacheManager(dbDir: Path) {
   private val lightStores = Stores(dbDir, "")
@@ -29,11 +26,6 @@ internal class SvgPrebuiltCacheManager(dbDir: Path) {
     }
 
     val data = store.getUnboundedValue(key) ?: return null
-    val storedKey = data.getInt()
-    if (storedKey != key) {
-      return null
-    }
-
     val actualWidth: Int
     val actualHeight: Int
     val format = data.get().toInt() and 0xff
@@ -69,15 +61,15 @@ private class Stores(dbDir: Path, classifier: String) {
 
 private class StoreContainer(private val dbDir: Path, private val scale: Float, private val classifier: String) {
   @Volatile
-  private var store: Ikv.SizeUnawareIkv<Int>? = null
+  private var store: Ikv.SizeUnawareIkv? = null
 
   fun getOrCreate() = store ?: getSynchronized()
 
   @Synchronized
-  private fun getSynchronized(): Ikv.SizeUnawareIkv<Int> {
+  private fun getSynchronized(): Ikv.SizeUnawareIkv {
     var store = store
     if (store == null) {
-      store = Ikv.loadSizeUnawareIkv(dbDir.resolve("icons-v3-$scale$classifier.db"), intKeyHash)
+      store = Ikv.loadSizeUnawareIkv(dbDir.resolve("icon-v4-$scale$classifier.db"))
       this.store = store
     }
     return store

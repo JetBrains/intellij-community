@@ -12,7 +12,7 @@ import org.assertj.core.configuration.ConfigurationProvider
 import org.jetbrains.intellij.build.tasks.DirSource
 import org.jetbrains.intellij.build.tasks.ZipSource
 import org.jetbrains.intellij.build.tasks.buildJar
-import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
@@ -57,7 +57,7 @@ class ZipTest {
 
   @Test
   fun `read zip file with more than 65K entries`() {
-    Assumptions.assumeTrue(SystemInfoRt.isUnix)
+    assumeTrue(SystemInfoRt.isUnix)
 
     val (list, archiveFile) = createLargeArchive(Short.MAX_VALUE * 2 + 20, fs.root)
     checkZip(archiveFile) { zipFile ->
@@ -136,7 +136,7 @@ class ZipTest {
 
     checkZip(archiveFile) { zipFile ->
       if (zipFile is ImmutableZipFile) {
-        assertThat(zipFile.getOrComputeNames()).containsExactly(
+        assertThat(zipFile.getOrComputeNames()).containsOnly(
           "entry-item663137163-10",
           "entry-item972016666-0",
           "entry-item1791766502-3",

@@ -327,10 +327,10 @@ private fun addEntry(map: IkvWriter, bitmap: Bitmap, imageKey: Int, totalSize: A
   val w = bitmap.width
   val h = bitmap.height
 
-  map.write(imageKey) { channel, position ->
+  map.write(map.entry(imageKey)) { channel, position ->
     var currentPosition = position
 
-    val headerBuffer = writeHeader(bufferAllocator = bufferAllocator, imageKey = imageKey, w = w, h = h)
+    val headerBuffer = writeHeader(bufferAllocator = bufferAllocator, w = w, h = h)
     headerBuffer.flip()
     currentPosition = writeData(currentPosition, channel, headerBuffer, totalSize)
 
@@ -358,13 +358,8 @@ private fun writeData(position: Long, channel: FileChannel, buffer: ByteBuffer, 
   return currentPosition
 }
 
-private fun writeHeader(bufferAllocator: ByteBufferAllocator,
-                       imageKey: Int,
-                       w: Int,
-                       h: Int): ByteBuffer {
+private fun writeHeader(bufferAllocator: ByteBufferAllocator, w: Int, h: Int): ByteBuffer {
   val headerBuffer = bufferAllocator.allocate(Int.SIZE_BYTES + 5 * 2 * Int.SIZE_BYTES + 1)
-  // don't use a var int - image key it is a hash (often negative)
-  headerBuffer.putInt(imageKey)
   if (w == h) {
     if (w < 254) {
       headerBuffer.put(w.toByte())
@@ -432,7 +427,7 @@ private class StoreContainer(private val scale: Float, private val classifier: S
   private fun getSynchronized(): IkvWriter {
     var store = store
     if (store == null) {
-      val file = dbDir.resolve("icons-v3-$scale$classifier.db")
+      val file = dbDir.resolve("icon-v4-$scale$classifier.db")
       this.file = file
       store = sizeUnawareIkvWriter(file)
       this.store = store

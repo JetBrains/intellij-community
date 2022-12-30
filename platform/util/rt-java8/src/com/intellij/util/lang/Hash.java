@@ -15,12 +15,15 @@
  */
 package com.intellij.util.lang;
 
-// we don't use mix - not required as a key it is a XXH3 hash
-final class Hash {
-  static final float FAST_LOAD_FACTOR = .5f;
-  static final int DEFAULT_INITIAL_SIZE = 16;
+import org.jetbrains.annotations.ApiStatus;
 
-  static int arraySize(final int expected, final float f) {
+// we don't use mix - not required as a key it is a XXH3 hash
+@ApiStatus.Internal
+public final class Hash {
+  public static final float FAST_LOAD_FACTOR = .5f;
+  public static final int DEFAULT_INITIAL_SIZE = 16;
+
+  public static int arraySize(final int expected, final float f) {
     final long s = Math.max(2, nextPowerOfTwo((long)Math.ceil(expected / f)));
     if (s > (1 << 30)) {
       throw new IllegalArgumentException("Too large (" + expected + " expected elements with load factor " + f + ")");
@@ -32,7 +35,7 @@ final class Hash {
     return 1L << (64 - Long.numberOfLeadingZeros(x - 1));
   }
 
-  static int maxFill(int n, float f) {
+  public static int maxFill(int n, float f) {
     /* We must guarantee that there is always at least
      * one free entry (even with pathological load factors). */
     return Math.min((int)Math.ceil(n * f), n - 1);

@@ -1,20 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ikv.builder
 
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.ikv.Ikv
-import org.jetbrains.ikv.UniversalHash
 import org.jetbrains.xxh3.Xxh3
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.nio.ByteBuffer
-import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
-import java.util.*
 import kotlin.random.Random
 
 internal class IkvTest {
@@ -24,15 +20,12 @@ internal class IkvTest {
     private fun generateDb(file: Path, count: Int, random: Random): List<Pair<Int, ByteArray>> {
       Files.createDirectories(file.parent)
       val list = ArrayList<Pair<Int, ByteArray>>(count)
-      FileChannel.open(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)).use { channel ->
-        val writer = IkvWriter(channel)
-        writer.use {
-          for (i in 0 until count) {
-            val data = random.nextBytes(random.nextInt(64, 512))
-            val key = Xxh3.hash32(data)
-            writer.write(key, data)
-            list.add(Pair(key, data))
-          }
+      sizeAwareIkvWriter(file).use { writer ->
+        for (i in 0 until count) {
+          val data = random.nextBytes(random.nextInt(64, 512))
+          val key = Xxh3.hash32(data)
+          writer.write(writer.entry(key), data)
+          list.add(Pair(key, data))
         }
       }
       return list
@@ -51,15 +44,12 @@ internal class IkvTest {
     val key = Xxh3.hash32(data)
 
     Files.createDirectories(file.parent)
-    FileChannel.open(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)).use { channel ->
-      val writer = IkvWriter(channel)
-      writer.use {
-        writer.write(key, data)
-      }
+    sizeAwareIkvWriter(file).use { writer ->
+      writer.write(writer.entry(key), data)
     }
 
-    Ikv.loadSizeAwareIkv(file, UniversalHash.IntHash()).use {
-      assertThat(it.getValue(key)).isEqualTo(ByteBuffer.wrap(data))
+    Ikv.loadSizeAwareIkv(file).use {
+      assertThat(it.getValue(key.toLong())).isEqualTo(ByteBuffer.wrap(data))
     }
   }
 
@@ -71,28 +61,40 @@ internal class IkvTest {
     val key = Xxh3.hash32(data)
 
     Files.createDirectories(file.parent)
-    FileChannel.open(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)).use { channel ->
-      val writer = IkvWriter(channel, writeSize = false)
-      writer.use {
-        writer.write(key, data)
-      }
+    sizeUnawareIkvWriter(file).use { writer ->
+      writer.write(writer.entry(key), data)
     }
 
-    Ikv.loadSizeUnawareIkv(file, UniversalHash.IntHash()).use {
+    Ikv.loadSizeUnawareIkv(file).use {
       val value = it.getUnboundedValue(key)
       assertThat(value).isNotEqualTo(ByteBuffer.wrap(data))
       assertThat(value.slice().limit(value.position() + data.size)).isEqualTo(ByteBuffer.wrap(data))
     }
   }
 
+  //@Test
+  //fun app() {
+  //  val file = Path.of("/Users/develar/Desktop/app.jar")
+  //  val zip = ImmutableZipFile.load(file)
+  //  val time = measureTimeMillis {
+  //    repeat(100_00) {
+  //      val byteBuffer = zip.getByteBuffer("ai/grazie/DataHolder.class")
+  //      if (byteBuffer!!.position() < 0) {
+  //        println(12)
+  //      }
+  //    }
+  //  }
+  //  println(time)
+  //}
+
   @Test
   fun `two keys`(@TempDir tempDir: Path) {
     val file = tempDir.resolve("db")
 
-    val list = generateDb(file, 2, random)
-    Ikv.loadSizeAwareIkv(file, UniversalHash.IntHash()).use {
+    val list = generateDb(file = file, count = 2, random = random)
+    Ikv.loadSizeAwareIkv(file).use {
       for ((key, data) in list) {
-        assertThat(it.getValue(key)).isEqualTo(ByteBuffer.wrap(data))
+        assertThat(it.getValue(key.toLong())).isEqualTo(ByteBuffer.wrap(data))
       }
     }
   }
@@ -102,10 +104,10 @@ internal class IkvTest {
   fun manyKeys(keyCount: Int) {
     val file = tempDir!!.resolve("db")
 
-    val list = generateDb(file, keyCount, random)
-    Ikv.loadSizeAwareIkv(file, UniversalHash.IntHash()).use { ikv ->
+    val list = generateDb(file = file, count = keyCount, random = random)
+    Ikv.loadSizeAwareIkv(file).use { ikv ->
       for ((key, data) in list) {
-        assertThat(ikv.getValue(key)).isEqualTo(ByteBuffer.wrap(data))
+        assertThat(ikv.getValue(key.toLong())).isEqualTo(ByteBuffer.wrap(data))
       }
     }
   }
