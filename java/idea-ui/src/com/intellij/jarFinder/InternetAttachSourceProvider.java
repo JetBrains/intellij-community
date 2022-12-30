@@ -121,8 +121,7 @@ public final class InternetAttachSourceProvider extends AbstractAttachSourceProv
           public void run(@NotNull final ProgressIndicator indicator) {
             String artifactUrl = null;
 
-            SourceSearcher[] searchers = {new MavenCentralSourceSearcher(), new SonatypeSourceSearcher()};
-            for (SourceSearcher searcher : searchers) {
+            for (SourceSearcher searcher : SourceSearcher.EP_NAME.getExtensionList()) {
               try {
                 artifactUrl = searcher.findSourceJar(indicator, artifactId, version, jar);
               }

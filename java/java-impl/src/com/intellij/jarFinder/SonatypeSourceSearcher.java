@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarFinder;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -13,10 +12,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.List;
 
+import static com.intellij.jarFinder.MavenSourceSearcherUtils.*;
+
 /**
  * @author Sergey Evdokimov
  */
-public class SonatypeSourceSearcher extends SourceSearcher {
+public class SonatypeSourceSearcher implements SourceSearcher {
   private static final Logger LOG = Logger.getInstance(SonatypeSourceSearcher.class);
 
   @Nullable

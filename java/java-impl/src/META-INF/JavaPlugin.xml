@@ -279,6 +279,7 @@
     <extensionPoint qualifiedName="com.intellij.jarRepositoryAuthenticationDataProvider"
                     interface="com.intellij.jarRepository.JarRepositoryAuthenticationDataProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jpsServerAuthExtension" interface="com.intellij.compiler.cache.client.JpsServerAuthExtension" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.sourceSearcher" interface="com.intellij.jarFinder.SourceSearcher" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -2385,6 +2386,9 @@
     <dataflowIRProvider language="JAVA" implementationClass="com.intellij.codeInspection.dataFlow.java.JavaDataFlowIRProvider"/>
     <java.effectively.final.fixer implementation="com.intellij.codeInsight.daemon.impl.quickfix.makefinal.MoveInitializerToIfBranchFixer"/>
     <java.effectively.final.fixer implementation="com.intellij.codeInspection.streamMigration.ConvertToStreamFixer"/>
+
+    <sourceSearcher id="mavenCentral" implementation="com.intellij.jarFinder.MavenCentralSourceSearcher"/>
+    <sourceSearcher id="sonatype" implementation="com.intellij.jarFinder.SonatypeSourceSearcher"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
