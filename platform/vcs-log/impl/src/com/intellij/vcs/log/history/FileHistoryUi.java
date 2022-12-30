@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
@@ -105,10 +104,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     if (pack.canRequestMore()) {
       requestMore(EmptyRunnable.INSTANCE);
     }
-  }
-
-  public @Nullable VcsFileRevision createRevision(@Nullable VcsCommitMetadata commit) {
-    return myFileHistoryModel.createRevision(commit);
   }
 
   public @Nullable FilePath getPathInCommit(@NotNull Hash hash) {

@@ -27,7 +27,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.history.actions.GetVersionAction;
 import com.intellij.vcs.log.VcsCommitMetadata;
-import com.intellij.vcs.log.history.FileHistoryUi;
+import com.intellij.vcs.log.history.FileHistoryModel;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,12 +57,12 @@ public class GetVersionFromHistoryAction implements AnActionExtensionProvider {
 
   private static class Delegate extends FileHistoryMetadataAction {
     @Override
-    protected boolean isEnabled(@NotNull FileHistoryUi ui, @Nullable VcsCommitMetadata detail, @NotNull AnActionEvent e) {
+    protected boolean isEnabled(@NotNull FileHistoryModel model, @Nullable VcsCommitMetadata detail, @NotNull AnActionEvent e) {
       FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
       if (filePath == null || filePath.isDirectory()) return false;
 
       if (detail != null) {
-        VcsFileRevision fileRevision = ui.createRevision(detail);
+        VcsFileRevision fileRevision = model.createRevision(detail);
         if (VcsHistoryUtil.isEmpty(fileRevision)) return false;
       }
 
@@ -71,12 +71,12 @@ public class GetVersionFromHistoryAction implements AnActionExtensionProvider {
 
     @Override
     protected void performAction(@NotNull Project project,
-                                 @NotNull FileHistoryUi ui,
+                                 @NotNull FileHistoryModel model,
                                  @NotNull VcsCommitMetadata detail,
                                  @NotNull AnActionEvent e) {
       if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
-      VcsFileRevision revision = ui.createRevision(detail);
+      VcsFileRevision revision = model.createRevision(detail);
 
       if (!VcsHistoryUtil.isEmpty(revision)) {
         GetVersionAction.doGet(project, revision, e.getRequiredData(VcsDataKeys.FILE_PATH));

@@ -3,19 +3,12 @@ package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.data.DataGetter;
-import com.intellij.vcs.log.history.FileHistoryUi;
+import com.intellij.vcs.log.data.VcsLogData;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
-public abstract class FileHistoryMetadataAction extends FileHistorySingleCommitAction<VcsCommitMetadata> {
+public abstract class FileHistoryMetadataAction extends FileHistoryOneCommitAction<VcsCommitMetadata> {
   @Override
-  protected @NotNull List<VcsCommitMetadata> getSelection(@NotNull FileHistoryUi ui) {
-    return ui.getTable().getSelection().getCachedMetadata();
-  }
-
-  @Override
-  protected @NotNull DataGetter<VcsCommitMetadata> getDetailsGetter(@NotNull FileHistoryUi ui) {
-    return ui.getLogData().getMiniDetailsGetter();
+  protected @NotNull DataGetter<VcsCommitMetadata> getDetailsGetter(@NotNull VcsLogData logData) {
+    return logData.getMiniDetailsGetter();
   }
 }

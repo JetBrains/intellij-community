@@ -72,4 +72,25 @@ public abstract class FileHistoryModel {
     }
     return FileHistoryUtil.createChangeToParents(row, parentRows, visiblePack, myDiffHandler, myLogData);
   }
+
+  public @NotNull FileHistoryModel createSnapshot() {
+    return new Snapshot(myLogData, myDiffHandler, myRoot, getVisiblePack());
+  }
+
+  private static class Snapshot extends FileHistoryModel {
+    private final @NotNull VisiblePack myVisiblePack;
+
+    private Snapshot(@NotNull VcsLogData data,
+                     @NotNull VcsLogDiffHandler handler,
+                     @NotNull VirtualFile root,
+                     @NotNull VisiblePack visiblePack) {
+      super(data, handler, root);
+      myVisiblePack = visiblePack;
+    }
+
+    @Override
+    protected @NotNull VisiblePack getVisiblePack() {
+      return myVisiblePack;
+    }
+  }
 }
