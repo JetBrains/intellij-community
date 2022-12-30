@@ -147,10 +147,6 @@ public class EditorSearchSession implements SearchSession,
         if (myReentrantLock) return;
         try {
           myReentrantLock = true;
-          String stringToFind = myFindModel.getStringToFind();
-          if (!wholeWordsApplicable(stringToFind)) {
-            myFindModel.setWholeWordsOnly(false);
-          }
           if (myIsGlobal != myFindModel.isGlobal() || myIsReplace != myFindModel.isReplaceState()) {
             if (myFindModel.getStringToFind().isEmpty() && myFindModel.isGlobal()) {
               myFindModel.setStringToFind(StringUtil.notNullize(myEditor.getSelectionModel().getSelectedText()));
@@ -494,13 +490,6 @@ public class EditorSearchSession implements SearchSession,
       }
     }
     return ApplicationBundle.message("editorsearch.in.selection");
-  }
-
-  private static boolean wholeWordsApplicable(String stringToFind) {
-    return !stringToFind.startsWith(" ") &&
-           !stringToFind.startsWith("\t") &&
-           !stringToFind.endsWith(" ") &&
-           !stringToFind.endsWith("\t");
   }
 
   private void setMatchesLimit(int value) {
