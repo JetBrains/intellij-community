@@ -2,14 +2,12 @@
 package com.intellij.vcs.log
 
 import com.intellij.util.Consumer
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Commit selection in the Vcs Log table.
  *
  * @see VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION
  */
-@ApiStatus.Experimental
 interface VcsLogCommitSelection {
   /**
    * Selection size.

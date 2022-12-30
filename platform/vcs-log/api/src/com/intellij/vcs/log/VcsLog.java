@@ -18,24 +18,27 @@ import java.util.concurrent.Future;
 public interface VcsLog {
 
   /**
-   * Use {@link VcsLogCommitSelection#getCommits()} instead.
+   * @deprecated Use {@link VcsLogCommitSelection#getCommits()} instead.
    */
   @RequiresEdt
   @NotNull
+  @Deprecated
   List<CommitId> getSelectedCommits();
 
   /**
-   * Use {@link VcsLogCommitSelection#getCachedMetadata()} instead.
+   * @deprecated Use {@link VcsLogCommitSelection#getCachedMetadata()} instead.
    */
   @RequiresEdt
   @NotNull
+  @Deprecated
   List<VcsCommitMetadata> getSelectedShortDetails();
 
   /**
-   * Use {@link VcsLogCommitSelection#getCachedFullDetails()} instead.
+   * @deprecated Use {@link VcsLogCommitSelection#getCachedFullDetails()} instead.
    */
   @RequiresEdt
   @NotNull
+  @Deprecated
   List<VcsFullCommitDetails> getSelectedDetails();
 
   /**
