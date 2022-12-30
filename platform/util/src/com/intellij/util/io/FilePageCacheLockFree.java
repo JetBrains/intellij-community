@@ -43,11 +43,14 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
   /** Before housekeeper thread created */
   private static final int STATE_NOT_STARTED = 0;
-  /** No storage yet registered -> housekeeper thread not yet started */
+  /**
+   * Housekeeper thread is created, cache is operational -- but thread is not started, because no
+   * storage registers its pages with the cache for housekeeping yet.
+   */
   private static final int STATE_WAITING_FIRST_STORAGE_REGISTRATION = 1;
-  /** Housekeeper thread started, cache working */
+  /** Housekeeper thread started, cache is operational */
   private static final int STATE_WORKING = 2;
-  /** Housekeeper thread stopped, cache closed */
+  /** Housekeeper thread stopped, cache is closed, new accesses are prohibited */
   private static final int STATE_CLOSED = 3;
 
   /**
@@ -75,14 +78,15 @@ public final class FilePageCacheLockFree implements AutoCloseable {
   private final Object2ObjectOpenHashMap<Path, PagesTable> pagesPerFile = new Object2ObjectOpenHashMap<>();
 
   /**
-   * Queue of pages that are likely the best suited to reclaim -- i.e. unmap, and re-use their
-   * buffer for another page needs to be loaded. This queue is filled with background thread
-   * periodically scanning all pages, and selecting the pages not used right now, and the least
-   * used recently.
-   * Bear in mind that page state changes async, so this queue is not exactly up-to-date.
-   * I.e. pages in this queue are just 'likely' to be the ones ready to reclaim -- it is
-   * possible that somebody starts using a page after it was put in the queue, and hence the
-   * page in queue becomes not eligible to reclaim anymore.
+   * Queue of pages that are likely the best suited to reclaim -- i.e. to unmap, and re-use their
+   * buffer for another page needs to be loaded. To fill the queue housekeeper thread periodically
+   * scans all the pages and selects the pages that are not in use right now, and used the least
+   * recently.
+   * Bear in mind that page state changes asynchronously, so this queue is not exactly up-to-date.
+   * I.e. pages in this queue are just 'likely' to be the ones ready to reclaim -- it is possible
+   * that somebody starts using a page after it was put in the queue, and hence the page in queue
+   * becomes not eligible to reclaim anymore. So each page must be carefully inspected before
+   * reclaiming it.
    */
   private volatile ConcurrentLinkedQueue<PageImpl> pagesToProbablyReclaimQueue = new ConcurrentLinkedQueue<>();
 
@@ -130,7 +134,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
    * and housekeeping.
    */
   public PagesTable registerStorage(final @NotNull PagedFileStorageLockFree storage) throws IOException {
-    checkCacheNotClosed();
+    checkNotClosed();
     synchronized (pagesPerFile) {
       final Path absolutePath = storage.getFile().toAbsolutePath();
       if (pagesPerFile.containsKey(absolutePath)) {
@@ -155,7 +159,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
   protected Future<?> enqueueStoragePagesClosing(final @NotNull PagedFileStorageLockFree storage,
                                                  final @NotNull CompletableFuture<Object> finish) {
-    checkCacheNotClosed();
+    checkNotClosed();
     final CloseStorageCommand task = new CloseStorageCommand(storage, finish);
     commandsQueue.add(task);
     return task.onFinish;
@@ -198,7 +202,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
         //assess allocation pressure and adjust our efforts
         if (pagesRemainedToReclaim > pagesPreparedToReclaim / 2) {
           //allocation pressure low: could collect less and sleep more
-          pagesForReclaimCollector.decreasePercentage();
+          pagesForReclaimCollector.collectLessAggressively();
           Thread.sleep(1);
         }
         else if (pagesRemainedToReclaim > 0) {
@@ -209,7 +213,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
           //allocation pressure is so high we don't catch up with it:
           // no time to wait
           // need to collect more pages-to-reclaim
-          pagesForReclaimCollector.increasePercentage();
+          pagesForReclaimCollector.collectMoreAggressively();
         }
       }
       catch (InterruptedException e) {
@@ -544,7 +548,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
   @NotNull
   protected ByteBuffer allocatePageBuffer(final int bufferSize) {
-    checkCacheNotClosed();
+    checkNotClosed();
     final boolean reclaimedSuccessfully = tryReclaimEnoughPages(bufferSize, MAX_PAGES_TO_RECLAIM_AT_ONCE);
     if (reclaimedSuccessfully) {
       final ByteBuffer buffer = DirectByteBufferAllocator.ALLOCATOR.allocate(bufferSize);
@@ -605,7 +609,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     return true;
   }
 
-  private void checkCacheNotClosed() throws IllegalStateException {
+  private void checkNotClosed() throws IllegalStateException {
     if (state == STATE_CLOSED) {
       throw new IllegalStateException("Cache is already closed");
     }
@@ -637,7 +641,8 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
   private static class PagesForReclaimCollector {
 
-    public static final Comparator<PageImpl> BY_USEFULNESS = comparing(page -> page.localTokensOfUsefulness());
+    private static final Comparator<PageImpl> BY_USEFULNESS = comparing(page -> page.localTokensOfUsefulness());
+    
     /**
      * Keeps and updates a 'low-usefulness' threshold: i.e. which value of page.tokensOfUsefulness
      * considered 'low', so the pages with usefulness below it are considered candidates for reclamation.
@@ -691,17 +696,17 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       return pagesForReclaimDirty.size() + pagesForReclaimNonDirty.size();
     }
 
-    public void decreasePercentage() {
-      final int currentPercentage = lowUsefulnessThresholdEstimator.percentileToEstimate();
-      if (currentPercentage > minPercentOfPagesToPrepareForReclaim) {
-        lowUsefulnessThresholdEstimator.updateTargetPercentile(currentPercentage - 1);
-      }
-    }
-
-    public void increasePercentage() {
+    public void collectMoreAggressively() {
       final int currentPercentage = lowUsefulnessThresholdEstimator.percentileToEstimate();
       if (currentPercentage < maxPercentOfPagesToPrepareForReclaim) {
         lowUsefulnessThresholdEstimator.updateTargetPercentile(currentPercentage + 1);
+      }
+    }
+
+    public void collectLessAggressively() {
+      final int currentPercentage = lowUsefulnessThresholdEstimator.percentileToEstimate();
+      if (currentPercentage > minPercentOfPagesToPrepareForReclaim) {
+        lowUsefulnessThresholdEstimator.updateTargetPercentile(currentPercentage - 1);
       }
     }
 

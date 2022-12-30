@@ -15,10 +15,55 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * {@link Page} implementation. Class is internal for file page cache implementation, so even though
- * class itself and a lot of its methods are public, they are intended to be used only by the file
- * page cache machinery. Only {@link Page} implementation methods are 'public' for use outside
- * page cache implementation.
+ * {@link Page} implementation. PageImpl is internal for file page cache implementation, so even
+ * though the class itself and a lot of its methods are public, they are intended to be used only
+ * by the file page cache machinery. Only {@link Page} implementation methods are 'public' for
+ * use outside page cache implementation.
+ * <p>
+ * Page contains 3 pieces of information: page state, page data (buffer + modified region), and
+ * 'tokens of usefulness' (used by page cache for page eviction/reclamation). Page state and tokens
+ * of usefulness are lock-free (modified with CAS), while page data buffer & modified region are
+ * protected with pageLock.
+ * <p>
+ * <b>Page state</b>: (see {@link #statePacked}) is a pair
+ * <code>(NOT_READY_YET | USABLE | ABOUT_TO_UNMAP | PRE_TOMBSTONE | TOMBSTONE)x(usageCount)</code>,
+ * there usageCount is number of clients using page right now. During its lifecycle, the page goes
+ * through those states in the same order:
+ * <pre>
+ *    NOT_READY_YET   (usageCount == 0) page buffer allocation & data loading
+ * -> USABLE          (usageCount >= 0) page is used by clients
+ * -> ABOUT_TO_UNMAP  (usageCount >= 0) not accept new clients, but current clients continue to use it
+ * -> PRE_TOMBSTONE   (usageCount == 0) cleanup: flush, reclaim page buffer...
+ * -> TOMBSTONE       (usageCount == 0) occupies slot in PageTable, waiting until rehash cleans it
+ * </pre>
+ * More strictly, allowed transitions are:
+ * <pre>
+ * NOT_READY_YET   (usageCount: 0                                 )
+ *                              ↓
+ * USABLE          (usageCount: 0 <-> 1 <-> 2 <-> 3 <-> 4 <-> ... )
+ *                              ↓     ↓     ↓     ↓     ↓     ↓
+ * ABOUT_TO_UNMAP  (usageCount: 0 <-  1 <-  2 <-  3 <-  4 <-  ... )
+ *                              ↓
+ * PRE_TOMBSTONE   (usageCount: 0                                 )
+ *                              ↓
+ * TOMBSTONE       (usageCount: 0                                 )
+ * </pre>
+ * (there is also a 'shortcut' transition NOT_READY_YET -> PRE_TOMBSTONE which is used on storage close)
+ * <p>
+ * Page is only visible to the 'clients' within state USABLE and ABOUT_TO_UNMAP -- other states are
+ * used only internally. Because only USABLE and ABOUT_TO_UNMAP could be visible to the clients, only
+ * in those 2 states usageCount could be >0.
+ * <p>
+ * Transition graph is uni-directional: e.g. there is no way for page to return from ABOUT_TO_UNMAP to
+ * USABLE. So pages are not re-usable: page _buffers_ could be reused, but as page transitions to
+ * ABOUT_TO_UNMAP there is no way back -- page will inevitably go towards TOMBSTONE, after which it
+ * could be only thrown away to GC. This 'equifinality' is important property of state graph.
+ * <p>
+ * Transitions between states are implemented with CAS, so they could be tried concurrently, and only
+ * one thread 'wins' the transition -- this is the thread that is responsible for some actions attached
+ * to transition. E.g. thread that 'wins' => PRE_TOMBSTONE transition is responsible for page cleanup:
+ * flush modified data if needed, and reclaim page buffer. This way only one thread is doing cleanup,
+ * without using locks.
  *
  * @see FilePageCacheLockFree
  * @see PagesTable
