@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.Stack;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -31,6 +32,8 @@ import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
  * @author Bas Leijdekkers
  */
 public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspection {
+
+  private static final int MAX_PROCESSED_VARIABLES = 2;
 
   private static final CallMatcher FORMATTED_LOG4J =
     staticCall("org.apache.logging.log4j.LogManager", "getFormatterLogger");
@@ -358,111 +361,138 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
         }
       }
 
-      ArrayList<PartHolder> holders = new ArrayList<>();
-      PsiExpression current = expression;
-      if (current instanceof PsiReferenceExpression referenceExpression) {
-        PsiElement resolved = referenceExpression.resolve();
-        if (!(resolved instanceof PsiVariable variable)) {
-          return null;
-        }
-        if (variable.hasModifierProperty(PsiModifier.FINAL)) {
-          current = variable.getInitializer();
-        }
-        else if (variable instanceof PsiLocalVariable localVariable) {
-          current = localVariable.getInitializer();
-          if (VariableAccessUtils.variableIsAssignedAtPoint(localVariable, PsiTreeUtil.findCommonParent(localVariable, referenceExpression),
-                                                            referenceExpression)) {
-            return null;
-          }
-        }
-      }
-      if (current instanceof PsiPolyadicExpression polyadicExpression) {
-        for (PsiExpression operand : polyadicExpression.getOperands()) {
-          if (operand instanceof PsiLiteralExpression literalExpression) {
-            Object value = literalExpression.getValue();
-            if (value instanceof String || value instanceof Character) {
-              holders.add(new PartHolder(literalExpression.getValue().toString(), true));
-              continue;
-            }
-            else if (value != null) {
-              holders.add(new PartHolder(null, true));
-              continue;
-            }
-          }
-          Set<Object> objects = dataflowResult.getExpressionValues(operand);
-          if (objects.size() == 1) {
-            Object next = objects.iterator().next();
-            if (next instanceof String str) {
-              holders.add(new PartHolder(str, true));
-            }
-            else if (next instanceof Character character) {
-              holders.add(new PartHolder(character.toString(), true));
-            }
-            else {
-              holders.add(new PartHolder(null, true));
-            }
-          }
-          else {
-            if (operand.getType() == null ||
-                operand.getType().equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
-                 operand.getType().equalsToText(CommonClassNames.JAVA_LANG_CHARACTER)) {
-              holders.add(new PartHolder(null, false));
-            }else{
-              holders.add(new PartHolder(null, true));
-            }
-          }
-        }
-      }
+      List<PartHolder> parts = new ArrayList<>();
+      buildStrings(expression, parts, dataflowResult);
 
-      for (PartHolder holder : holders) {
-        if (holder.complete && holder.text != null) {
-          return holders;
+      for (PartHolder part : parts) {
+        if (part.complete && part.text != null) {
+          return parts;
         }
       }
       return null;
     }
 
-    private static PlaceholderCountResult countPlaceholders(List<PartHolder> holders) {
-      int count = 0;
-      boolean full = true;
-      for (int j = 0; j < holders.size(); j++) {
-        PartHolder partHolder = holders.get(j);
-        if (!partHolder.complete) {
-          full = false;
+    public static void buildStrings(@Nullable PsiExpression source,
+                                    @NotNull List<PartHolder> parts,
+                                    @NotNull CommonDataflow.DataflowResult dataflowResult) {
+      Stack<PsiExpression> psiExpressionStack = new Stack<>();
+      psiExpressionStack.add(source);
+      int processedVariablesNumber = 0;
+      while (!psiExpressionStack.isEmpty()) {
+        PsiExpression expression = psiExpressionStack.pop();
+        if (expression == null) {
+          //got something strange
+          parts.add(new PartHolder(null, false));
           continue;
         }
-        String string = partHolder.text;
-        if (string == null) {
+        final PsiType type = expression.getType();
+        if (!TypeUtils.isJavaLangString(type) && !PsiType.CHAR.equals(type)) {
+          parts.add(new PartHolder(null, true));
           continue;
         }
-        final int length = string.length();
-        boolean escaped = false;
-        boolean placeholder = false;
-        for (int i = 0; i < length; i++) {
-          final char c = string.charAt(i);
-          if (c == '\\') {
-            escaped = !escaped;
+
+        final Set<Object> values = dataflowResult.getExpressionValues(expression);
+        if (values.size() == 1) {
+          Object next = values.iterator().next();
+          parts.add(new PartHolder(next != null ? next.toString() : null, true));
+          continue;
+        }
+        else if (values.size() > 1) {
+          parts.add(new PartHolder(null, false));
+          continue;
+        }
+
+        if (expression instanceof PsiLiteralExpression literalExpression) {
+          Object value = literalExpression.getValue();
+          parts.add(new PartHolder(value == null ? null : value.toString(), true));
+          continue;
+        }
+
+        if (expression instanceof final PsiParenthesizedExpression parenthesizedExpression) {
+          psiExpressionStack.add(parenthesizedExpression.getExpression());
+          continue;
+        }
+
+        if (expression instanceof final PsiPolyadicExpression polyadicExpression) {
+          PsiExpression[] operands = polyadicExpression.getOperands();
+          for (int i = operands.length - 1; i >= 0; i--) {
+            psiExpressionStack.add(operands[i]);
           }
-          else if (c == '{') {
-            if (j != 0 && i == 0 && !holders.get(j - 1).complete) {
-              continue;
-            }
-            if (!escaped) placeholder = true;
+          continue;
+        }
+
+        //allow to resolve local variables only several times, not to process too much
+        if (MAX_PROCESSED_VARIABLES > processedVariablesNumber &&
+            expression instanceof PsiReferenceExpression psiReferenceExpression &&
+            psiReferenceExpression.resolve() instanceof PsiVariable variable) {
+
+          if (variable.hasModifierProperty(PsiModifier.FINAL)) {
+            processedVariablesNumber++;
+            psiExpressionStack.add(variable.getInitializer());
+            continue;
           }
-          else if (c == '}') {
-            if (placeholder) {
-              count++;
-              placeholder = false;
-            }
+          if (!(variable instanceof PsiLocalVariable psiLocalVariable)) {
+            parts.add(new PartHolder(null, false));
+            continue;
           }
-          else {
-            escaped = false;
+          PsiElement parent = PsiTreeUtil.findCommonParent(psiLocalVariable, expression);
+          if (parent == null) {
+            parts.add(new PartHolder(null, false));
+            continue;
+          }
+          if (VariableAccessUtils.variableIsAssignedBeforeReference(psiReferenceExpression, parent)) {
+            parts.add(new PartHolder(null, false));
+            continue;
+          }
+          processedVariablesNumber++;
+          psiExpressionStack.add(psiLocalVariable.getInitializer());
+          continue;
+        }
+        parts.add(new PartHolder(null, false));
+      }
+    }
+  }
+
+  private static PlaceholderCountResult countPlaceholders(List<PartHolder> holders) {
+    int count = 0;
+    boolean full = true;
+    for (int j = 0; j < holders.size(); j++) {
+      PartHolder partHolder = holders.get(j);
+      if (!partHolder.complete) {
+        full = false;
+        continue;
+      }
+      String string = partHolder.text;
+      if (string == null) {
+        continue;
+      }
+      final int length = string.length();
+      boolean escaped = false;
+      boolean placeholder = false;
+      for (int i = 0; i < length; i++) {
+        final char c = string.charAt(i);
+        if (c == '\\') {
+          escaped = !escaped;
+        }
+        else if (c == '{') {
+          if (j != 0 && i == 0 && !holders.get(j - 1).complete) {
+            continue;
+          }
+          if (!escaped) placeholder = true;
+        }
+        else if (c == '}') {
+          if (placeholder) {
+            count++;
             placeholder = false;
           }
         }
+        else {
+          escaped = false;
+          placeholder = false;
+        }
       }
-      return new PlaceholderCountResult(count, full ? PlaceholderStatus.EXACTLY : PlaceholderStatus.PARTIAL);
     }
+    return new PlaceholderCountResult(count, full ? PlaceholderStatus.EXACTLY : PlaceholderStatus.PARTIAL);
   }
 
   private enum ResultType {

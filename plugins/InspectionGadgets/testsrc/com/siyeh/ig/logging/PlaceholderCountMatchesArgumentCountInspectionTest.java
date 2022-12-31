@@ -424,6 +424,7 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
   public void testSlf4JPartial() {
     doTest("""
              import org.slf4j.*;
+             import java.util.Random;
              class X {
               Logger logger = LoggerFactory.getLogger(X.class);
               
@@ -431,8 +432,8 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
               private static final String logText2 = "{} {}" + 1 + "{}" + getSomething();
               private static final String logText3 = "{} {}" + 1 + "{}";
           
-              private static String getSomething() {
-                  return "";
+              private static String getSomething(){
+                return new Random().nextBoolean() ? "{}" : "";
               }
               
               void m(String t) {
@@ -454,22 +455,27 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
               }
                          
               void m(int i, String s) {
-               logger.info(/*Fewer arguments provided (0) than placeholders specified (1)*/"abc {}"/**/);
-               logger.info(/*Fewer arguments provided (0) than placeholders specified (at least 1)*/"abc {}" + s/**/);
-               logger.info(/*Fewer arguments provided (0) than placeholders specified (1)*/"abc {}" + i/**/);
+               logger.info(/*Fewer arguments provided (0) than placeholders specified (1)*/"test1 {}"/**/);
+               logger.info(/*Fewer arguments provided (0) than placeholders specified (at least 1)*/"test1 {}" + s/**/);
+               logger.info(/*Fewer arguments provided (0) than placeholders specified (1)*/"test1 {}" + i/**/);
               }
              }""");
   }
   public void testLog4jBuilderPartial() {
     doTest("""
              import org.apache.logging.log4j.*;
+             import java.util.Random;
              class Logging {
               private static final Logger LOG = LogManager.getLogger();
               private static final String logText = "{} {}" + getSomething();
               private static final String logText2 = "{} {}" + 1 + "{}" + getSomething();
               private static final String logText3 = "{} {}" + 1 + "{}";
-              private static String getSomething() {
-                  return "";
+              private static String getSomething(){
+                return new Random().nextBoolean() ? "{}" : "";
+              }
+              static {
+               LOG.atError().log(/*Fewer arguments provided (1) than placeholders specified (at least 2)*/logText/**/, 1);
+               LOG.atError().log(/*Fewer arguments provided (1) than placeholders specified (at least 4)*/logText + logText2/**/, 1);
               }
               public static void test(String t) {
                LogBuilder logger = LOG.atError();
