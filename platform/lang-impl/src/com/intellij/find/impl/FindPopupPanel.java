@@ -1017,9 +1017,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     myRegexState.set(myModel.isRegularExpressions());
 
     mySelectedContextName = getSearchContextName(myModel);
-    if (myModel.isReplaceState()) {
-      myPreserveCaseState.set(myModel.isPreserveCase());
-    }
+    myPreserveCaseState.set(myModel.isPreserveCase());
 
     mySelectedScope = myScopeUI.initByModel(myModel);
 
@@ -1572,9 +1570,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
 
   private void applyTo(@NotNull FindModel model) {
     model.setCaseSensitive(myCaseSensitiveState.get());
-    if (model.isReplaceState()) {
-      model.setPreserveCase(myPreserveCaseState.get());
-    }
+    model.setPreserveCase(myPreserveCaseState.get());
     model.setWholeWordsOnly(myWholeWordsState.get());
 
     FindModel.SearchContext searchContext = parseSearchContext(mySelectedContextName);
