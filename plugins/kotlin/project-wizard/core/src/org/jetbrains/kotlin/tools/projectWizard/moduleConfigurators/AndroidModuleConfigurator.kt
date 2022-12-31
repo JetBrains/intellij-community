@@ -62,15 +62,6 @@ interface AndroidModuleConfigurator : ModuleConfigurator,
             .map { PluginManagementRepositoryIR(RepositoryIR(it)) }
     }
 
-    override fun createModuleIRs(
-        reader: Reader,
-        configurationData: ModulesToIrConversionData,
-        module: Module
-    ): List<BuildSystemIR> = buildList {
-        +DEPENDENCIES.MATERIAL
-    }
-
-
     override fun createStdlibType(configurationData: ModulesToIrConversionData, module: Module): StdlibType? =
         StdlibType.StdlibJdk7
 
@@ -90,22 +81,19 @@ interface AndroidModuleConfigurator : ModuleConfigurator,
             "src" / "main" / "res" / "values" / "colors.xml"
         )
 
-        val stylesXml = FileTemplateDescriptor(
-            "android/styles.xml",
+        fun stylesXml(compose: Boolean) = FileTemplateDescriptor(
+            "android/styles${if (compose) "Compose" else ""}.xml",
             "src" / "main" / "res" / "values" / "styles.xml"
         )
 
-        fun mainActivityKt(javaPackage: JavaPackage) = FileTemplateDescriptor(
-            "android/MainActivity.kt.vm",
+        fun mainActivityKt(javaPackage: JavaPackage, compose: Boolean) = FileTemplateDescriptor(
+            "android/MainActivity${if (compose) "Compose" else ""}.kt.vm",
             "src" / "main" / "java" / javaPackage.asPath() / "MainActivity.kt"
         )
-    }
 
-    object DEPENDENCIES {
-        val MATERIAL = ArtifactBasedLibraryDependencyIR(
-            MavenArtifact(DefaultRepository.GOOGLE, "com.google.android.material", "material"),
-            version = Versions.ANDROID.ANDROID_MATERIAL,
-            dependencyType = DependencyType.MAIN
+        fun myApplicationThemeKt(javaPackage: JavaPackage) = FileTemplateDescriptor(
+            "android/MyApplicationTheme.kt.vm",
+            "src" / "main" / "java" / javaPackage.asPath() / "MyApplicationTheme.kt"
         )
     }
 
@@ -124,7 +112,7 @@ object AndroidTargetConfigurator : AndroidTargetConfiguratorBase(),
 
     override fun skipResolutionStrategy(data: ModulesToIrConversionData) =
         data.allModules.any { module ->
-            module.configurator == AndroidSinglePlatformModuleConfigurator ||
+            module.configurator is AndroidSinglePlatformModuleConfiguratorBase ||
                     module.configurator is MppModuleConfigurator &&
                     module.subModules.any { subModule ->
                         subModule.configurator is AndroidTargetConfiguratorBase &&
@@ -197,9 +185,11 @@ abstract class AndroidTargetConfiguratorBase : TargetConfigurator,
     override fun createBuildFileIRs(reader: Reader, configurationData: ModulesToIrConversionData, module: Module): List<BuildSystemIR> =
         buildList {
             +super<AndroidModuleConfigurator>.createBuildFileIRs(reader, configurationData, module)
+            +RepositoryIR(DefaultRepository.GOOGLE)
             +AndroidConfigIR(
                 javaPackage = module.javaPackage(configurationData.pomIr),
-                isApplication = reader.createAndroidPlugin(module) == AndroidGradlePlugin.APPLICATION
+                isApplication = reader.createAndroidPlugin(module) == AndroidGradlePlugin.APPLICATION,
+                useCompose = false,
             )
         }
 

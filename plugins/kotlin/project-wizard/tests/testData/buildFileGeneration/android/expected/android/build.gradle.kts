@@ -7,9 +7,12 @@ group = "testGroupId"
 version = "1.0-SNAPSHOT"
 
 dependencies {
-    implementation("com.google.android.material:material:1.5.0")
-    implementation("androidx.appcompat:appcompat:1.4.1")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.3")
+    implementation("androidx.compose.ui:ui:1.2.1")
+    implementation("androidx.compose.ui:ui-tooling:1.2.1")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.2.1")
+    implementation("androidx.compose.foundation:foundation:1.2.1")
+    implementation("androidx.compose.material:material:1.2.1")
+    implementation("androidx.activity:activity-compose:1.5.1")
 }
 
 android {
@@ -21,6 +24,17 @@ android {
         targetSdk = 32
         versionCode = 1
         versionName = "1.0"
+    }
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.3.2"
+    }
+    packagingOptions {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
     }
     buildTypes {
         getByName("release") {
