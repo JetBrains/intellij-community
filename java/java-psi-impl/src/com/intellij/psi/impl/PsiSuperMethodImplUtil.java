@@ -14,8 +14,8 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenCustomHashMap;
+import com.intellij.util.containers.hash.EqualityPolicy;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,63 +100,48 @@ public final class PsiSuperMethodImplUtil {
                                                                                         boolean isInRawContext,
                                                                                         GlobalSearchScope resolveScope) {
     ProgressManager.checkCanceled();
-    Map<MethodSignature, HierarchicalMethodSignature> result = new Object2ObjectLinkedOpenCustomHashMap<>(
-      new Hash.Strategy<MethodSignature>() {
+    Map<MethodSignature, HierarchicalMethodSignature> result = new LinkedHashMap<>(
+      new EqualityPolicy<MethodSignature>() {
         @Override
-        public int hashCode(@Nullable MethodSignature object) {
-          return object == null ? 0 : object.hashCode();
+        public int getHashCode(MethodSignature object) {
+          return object.hashCode();
         }
 
         @Override
-        public boolean equals(@Nullable MethodSignature o1, @Nullable MethodSignature o2) {
-          if (o1 == o2) {
-            return true;
-          }
-          if (o1 == null || o2 == null || !o1.equals(o2)) {
-            return false;
-          }
+        public boolean isEqual(MethodSignature o1, MethodSignature o2) {
+          if (o1.equals(o2)) {
+            final PsiMethod method1 = ((MethodSignatureBackedByPsiMethod)o1).getMethod();
+            final PsiType returnType1 = method1.getReturnType();
+            final PsiMethod method2 = ((MethodSignatureBackedByPsiMethod)o2).getMethod();
+            final PsiType returnType2 = method2.getReturnType();
+            if (method1.hasModifierProperty(PsiModifier.STATIC) || method2.hasModifierProperty(PsiModifier.STATIC)) {
+              return true;
+            }
 
-          PsiMethod method1 = ((MethodSignatureBackedByPsiMethod)o1).getMethod();
-          PsiType returnType1 = method1.getReturnType();
-          PsiMethod method2 = ((MethodSignatureBackedByPsiMethod)o2).getMethod();
-          PsiType returnType2 = method2.getReturnType();
-          if (method1.hasModifierProperty(PsiModifier.STATIC) || method2.hasModifierProperty(PsiModifier.STATIC)) {
-            return true;
-          }
+            if (MethodSignatureUtil.isReturnTypeSubstitutable(o1, o2, returnType1, returnType2)) {
+              return true;
+            }
 
-          if (MethodSignatureUtil.isReturnTypeSubstitutable(o1, o2, returnType1, returnType2)) {
-            return true;
-          }
-
-          PsiClass containingClass1 = method1.getContainingClass();
-          PsiClass containingClass2 = method2.getContainingClass();
-          if (containingClass1 != null && containingClass2 != null) {
-            return containingClass1.isAnnotationType() || containingClass2.isAnnotationType();
+            final PsiClass containingClass1 = method1.getContainingClass();
+            final PsiClass containingClass2 = method2.getContainingClass();
+            if (containingClass1 != null && containingClass2 != null) {
+              return containingClass1.isAnnotationType() || containingClass2.isAnnotationType();
+            }
           }
           return false;
         }
       });
     Map<MethodSignature, List<PsiMethod>> sameParameterErasureMethods = MethodSignatureUtil.createErasedMethodSignatureMap();
 
-    Map<MethodSignature, HierarchicalMethodSignatureImpl> map = new Object2ObjectLinkedOpenCustomHashMap<>(new Hash.Strategy<MethodSignature>() {
+    Map<MethodSignature, HierarchicalMethodSignatureImpl> map = new LinkedHashMap<>(new EqualityPolicy<MethodSignature>() {
       @Override
-      public int hashCode(@Nullable MethodSignature signature) {
-        return signature == null ? 0 : signature.hashCode();
+      public int getHashCode(MethodSignature signature) {
+        return signature.hashCode();
       }
 
       @Override
-      public boolean equals(@Nullable MethodSignature o1, @Nullable MethodSignature o2) {
-        if (o1 == o2) {
-          return true;
-        }
-        if (o1 == null || o2 == null) {
-          return false;
-        }
-
-        if (!MethodSignatureUtil.areSignaturesErasureEqual(o1, o2)) {
-          return false;
-        }
-
+      public boolean isEqual(MethodSignature o1, MethodSignature o2) {
+        if (!MethodSignatureUtil.areSignaturesErasureEqual(o1, o2)) return false;
         List<PsiMethod> list = sameParameterErasureMethods.get(o1);
         boolean toCheckReturnType = list != null && list.size() > 1;
         if (!toCheckReturnType) return true;
