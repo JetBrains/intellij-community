@@ -14,6 +14,7 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.GlobalScope
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -37,6 +38,7 @@ object TraceManager {
       .build()
     tracer = openTelemetry.getTracer("build-script")
     TracerProviderManager.tracerProvider = tracerProvider
+    BuildDependenciesDownloader.TRACER = tracer
   }
 
   @JvmStatic

@@ -4,32 +4,31 @@ package org.jetbrains.intellij.build.dependencies;
 import com.github.luben.zstd.ZstdInputStreamNoFinalizer;
 import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.Striped;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.trace.TracerProvider;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesNoopTracer;
-import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesSpan;
-import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesTraceEventAttributes;
-import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesTracer;
+import org.jetbrains.intellij.build.KtorKt;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigInteger;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -42,7 +41,6 @@ import java.util.stream.Stream;
 public final class BuildDependenciesDownloader {
   private static final Logger LOG = Logger.getLogger(BuildDependenciesDownloader.class.getName());
 
-  private static final String HTTP_HEADER_CONTENT_LENGTH = "Content-Length";
   private static final Striped<Lock> fileLocks = Striped.lock(1024);
   private static final AtomicBoolean cleanupFlag = new AtomicBoolean(false);
 
@@ -51,18 +49,13 @@ public final class BuildDependenciesDownloader {
 
   // increment on semantic changes in download code to invalidate all current caches
   // e.g. when some issues in extraction code were fixed
-  private static final int DOWNLOAD_CODE_VERSION = 1;
+  private static final int DOWNLOAD_CODE_VERSION = 2;
 
   /**
    * Set tracer to get telemetry. e.g. it's set for build scripts to get opentelemetry events
    */
-  @SuppressWarnings("StaticNonFinalField") public static @NotNull BuildDependenciesTracer TRACER = BuildDependenciesNoopTracer.INSTANCE;
-
-  // init is very expensive due to SSL initialization
-  private static final class HttpClientHolder {
-    private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER)
-      .version(HttpClient.Version.HTTP_1_1).build();
-  }
+  @SuppressWarnings("StaticNonFinalField")
+  public static volatile @NotNull Tracer TRACER = TracerProvider.noop().get("noop-build-dependencies");
 
   public static DependenciesProperties getDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
     try {
@@ -125,24 +118,8 @@ public final class BuildDependenciesDownloader {
     return path;
   }
 
-  public static synchronized Path downloadFileToCacheLocation(@NotNull BuildDependenciesCommunityRoot communityRoot, @NotNull URI uri, @Nullable String bearerToken) {
-    cleanUpIfRequired(communityRoot);
-    String uriString = uri.toString();
-    try {
-      Path targetFile = getTargetFile(communityRoot, uriString);
-      downloadFile(uri, targetFile, bearerToken);
-      return targetFile;
-    }
-    catch (HttpStatusException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      throw new RuntimeException("Cannot download " + uriString, e);
-    }
-  }
-
   public static Path downloadFileToCacheLocation(@NotNull BuildDependenciesCommunityRoot communityRoot, @NotNull URI uri) {
-    return downloadFileToCacheLocation(communityRoot, uri, null);
+    return KtorKt.downloadFileToCacheLocationSync(uri.toString(), communityRoot);
   }
 
   public static @NotNull Path getTargetFile(@NotNull BuildDependenciesCommunityRoot communityRoot, @NotNull String uriString) throws IOException {
@@ -312,140 +289,6 @@ public final class BuildDependenciesDownloader {
     finally {
       lock.unlock();
     }
-  }
-
-  private static void downloadFile(URI uri, Path target, String bearerToken) throws Exception {
-    Lock lock = fileLocks.get(target);
-    lock.lock();
-    try {
-      BuildDependenciesTraceEventAttributes attributes = TRACER.createAttributes();
-      attributes.setAttribute("uri", uri.toString());
-      attributes.setAttribute("target", target.toString());
-
-      BuildDependenciesSpan span = TRACER.startSpan("download", attributes);
-      try {
-        Instant now = Instant.now();
-        if (Files.exists(target)) {
-          span.addEvent("skip downloading because target file already exists", TRACER.createAttributes());
-
-          // update file modification time to maintain FIFO caches i.e. in persistent cache folder on TeamCity agent
-          Files.setLastModifiedTime(target, FileTime.from(now));
-          return;
-        }
-
-        // save to the same disk to ensure that move will be atomic and not as a copy
-        String tempFileName = target.getFileName() + "-"
-                              + Long.toString(now.getEpochSecond() - 1634886185, 36) + "-"
-                              + Integer.toString(now.getNano(), 36);
-
-        if (tempFileName.length() > 255) {
-          tempFileName = tempFileName.substring(tempFileName.length() - 255);
-        }
-        Path tempFile = target.getParent().resolve(tempFileName);
-        try {
-          LOG.info(" * Downloading " + uri + " -> " + target);
-          Retry.withExponentialBackOff(() -> {
-            Files.deleteIfExists(tempFile);
-            tryToDownloadFile(uri, tempFile, bearerToken);
-          });
-          Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-        }
-        finally {
-          Files.deleteIfExists(tempFile);
-        }
-      }
-      catch (Throwable e) {
-        span.recordException(e);
-        span.setStatus(BuildDependenciesSpan.SpanStatus.ERROR);
-        throw e;
-      }
-      finally {
-        span.close();
-      }
-    }
-    finally {
-      lock.unlock();
-    }
-  }
-
-  private static void tryToDownloadFile(URI uri, Path tempFile, String bearerToken) throws Exception {
-    HttpResponse<Path> response = getResponseFollowingRedirects(uri, tempFile, bearerToken);
-    int statusCode = response.statusCode();
-
-    if (statusCode != 200) {
-      StringBuilder builder = new StringBuilder("Cannot download\n");
-
-      Map<String, List<String>> headers = response.headers().map();
-      headers.keySet().stream().sorted()
-        .flatMap(headerName -> headers.get(headerName).stream().map(value -> "Header: " + headerName + ": " + value + "\n"))
-        .forEach(builder::append);
-
-      builder.append('\n');
-      if (Files.exists(tempFile)) {
-        try (InputStream inputStream = Files.newInputStream(tempFile)) {
-          // yes, not trying to guess encoding
-          // string constructor should be exception free,
-          // so at worse we'll get some random characters
-          builder.append(new String(inputStream.readNBytes(1024), StandardCharsets.UTF_8));
-        }
-      }
-
-      throw new HttpStatusException(builder.toString(), statusCode, uri.toString());
-    }
-
-    long contentLength = response.headers().firstValueAsLong(HTTP_HEADER_CONTENT_LENGTH).orElse(-1);
-    if (contentLength <= 0) {
-      throw new IllegalStateException("Header '" + HTTP_HEADER_CONTENT_LENGTH + "' is missing or zero for " + uri);
-    }
-
-    long fileSize = Files.size(tempFile);
-    if (fileSize != contentLength) {
-      throw new IllegalStateException("Wrong file length after downloading uri '" + uri +
-                                      "' to '" + tempFile +
-                                      "': expected length " + contentLength +
-                                      "from Content-Length header, but got " + fileSize + " on disk");
-    }
-  }
-
-  private static HttpResponse<Path> getResponseFollowingRedirects(URI uri, Path tempFile, String bearerToken) throws Exception {
-    HttpRequest request = createBuildScriptDownloaderRequest(uri, bearerToken);
-    HttpResponse<Path> response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
-    String originHost = uri.getHost();
-    int REDIRECT_LIMIT = 10;
-    for (int i = 0; i < REDIRECT_LIMIT; i++) {
-      int statusCode = response.statusCode();
-      if (!(statusCode == 301 || statusCode == 302 || statusCode == 307 || statusCode == 308)) {
-        return response;
-      }
-
-      Optional<String> locationHeader = response.headers().firstValue("Location");
-      if (locationHeader.isEmpty()) {
-        locationHeader = response.headers().firstValue("location");
-        if (locationHeader.isEmpty()) {
-          return response;
-        }
-      }
-
-      URI newUri = new URI(locationHeader.get());
-      request = newUri.getHost().equals(originHost)
-                ? createBuildScriptDownloaderRequest(newUri, bearerToken)
-                : createBuildScriptDownloaderRequest(newUri, null);
-      response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
-    }
-
-    return response;
-  }
-
-  private static HttpRequest createBuildScriptDownloaderRequest(URI uri, String bearerToken) {
-    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-      .GET()
-      .uri(uri)
-      .setHeader("User-Agent", "Build Script Downloader");
-    if (bearerToken != null) {
-      requestBuilder = requestBuilder.setHeader("Authorization", "Bearer " + bearerToken);
-    }
-
-    return requestBuilder.build();
   }
 
   public static final class HttpStatusException extends IllegalStateException {

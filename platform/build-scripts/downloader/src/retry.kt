@@ -1,13 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.io
+package org.jetbrains.intellij.build
 
-import com.intellij.diagnostic.telemetry.use
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.intellij.build.tracer
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.math.min
@@ -63,7 +62,7 @@ suspend fun <T> suspendingRetryWithExponentialBackOff(
 }
 
 private fun defaultExceptionConsumer(attempt: Int, e: Exception) {
-  tracer.spanBuilder("Retrying action with exponential back off").use { span ->
+  BuildDependenciesDownloader.TRACER.spanBuilder("Retrying action with exponential back off").startSpan().use { span ->
     span.addEvent("Attempt failed", Attributes.of(
       AttributeKey.longKey("attemptNumber"), attempt.toLong(),
       AttributeKey.stringKey("error"), e.toString()

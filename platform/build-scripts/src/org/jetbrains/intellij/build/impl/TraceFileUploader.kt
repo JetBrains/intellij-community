@@ -4,7 +4,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.fasterxml.jackson.jr.ob.JSON
-import org.jetbrains.intellij.build.toUrlWithTrailingSlash
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -14,7 +13,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 open class TraceFileUploader(serverUrl: String, token: String?) {
-  private val serverUrl = toUrlWithTrailingSlash(serverUrl)
+  private val serverUrl = serverUrl.withTrailingSlash()
   private val serverAuthToken = token
 
   protected open fun log(message: String) {}

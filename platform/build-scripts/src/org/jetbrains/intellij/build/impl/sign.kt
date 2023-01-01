@@ -50,6 +50,7 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.jps.api.GlobalOptions
 import java.io.InputStream
 import java.io.OutputStream

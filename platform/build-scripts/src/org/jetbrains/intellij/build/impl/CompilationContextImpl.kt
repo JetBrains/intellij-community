@@ -17,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
@@ -48,6 +47,7 @@ fun createCompilationContextBlocking(communityHome: BuildDependenciesCommunityRo
                                      projectHome: Path,
                                      defaultOutputRoot: Path,
                                      options: BuildOptions = BuildOptions()): CompilationContextImpl {
+  @Suppress("RAW_RUN_BLOCKING")
   return runBlocking(Dispatchers.Default) {
     createCompilationContext(communityHome = communityHome,
                              projectHome = projectHome,
@@ -155,12 +155,7 @@ class CompilationContextImpl private constructor(
 
       val isCompilationRequired = CompiledClasses.isCompilationRequired(options)
 
-      // this is not a proper place to initialize tracker for downloader but this is the only place which is called in most build scripts
       val model = coroutineScope {
-        launch {
-          BuildDependenciesDownloader.TRACER = BuildDependenciesOpenTelemetryTracer.INSTANCE
-        }
-
         loadProject(projectHome = projectHome, kotlinBinaries = KotlinBinaries(communityHome, messages), isCompilationRequired)
       }
 

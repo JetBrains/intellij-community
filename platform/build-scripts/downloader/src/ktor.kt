@@ -1,8 +1,7 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("BlockingMethodInNonBlockingContext", "ReplaceGetOrSet")
 package org.jetbrains.intellij.build
 
-import com.intellij.diagnostic.telemetry.useWithScope2
-import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -26,12 +25,13 @@ import io.ktor.utils.io.jvm.nio.copyTo
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import io.opentelemetry.api.trace.SpanBuilder
+import io.opentelemetry.api.trace.StatusCode
+import io.opentelemetry.context.Context
+import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
-import org.jetbrains.intellij.build.io.suspendingRetryWithExponentialBackOff
-import org.jetbrains.xxh3.Xx3UnencodedString
 import java.nio.channels.FileChannel
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -41,6 +41,9 @@ import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.FileTime
 import java.time.Instant
 import java.util.*
+import java.util.concurrent.CancellationException
+import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Supplier
 import kotlin.time.Duration.Companion.hours
 
 const val SPACE_REPO_HOST = "packages.jetbrains.team"
@@ -109,6 +112,81 @@ private val httpSpaceClient = SynchronizedClearableLazy {
   }
 }
 
+// copy from util, do not make public
+private class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Lazy<T>, Supplier<T> {
+  private val computedValue = AtomicReference(notYetInitialized())
+
+  @Suppress("UNCHECKED_CAST")
+  private fun notYetInitialized(): T = NOT_YET_INITIALIZED as T
+
+  private fun nullize(t: T): T? = if (isInitialized(t)) t else null
+
+  private fun isInitialized(t: T?): Boolean = t !== NOT_YET_INITIALIZED
+
+  companion object {
+    private val NOT_YET_INITIALIZED = object {
+      override fun toString(): String = "Not yet initialized"
+    }
+  }
+
+  override fun get(): T = value
+
+  override var value: T
+    get() {
+      val currentValue = computedValue.get()
+      if (isInitialized(currentValue)) {
+        return currentValue
+      }
+
+      // do not call initializer in parallel
+      synchronized(this) {
+        // set under lock to ensure that initializer is not called several times
+        return computedValue.updateAndGet { old ->
+          if (isInitialized(old)) old else initializer()
+        }
+      }
+    }
+    set(value) {
+      computedValue.set(value)
+    }
+
+  override fun isInitialized() = isInitialized(computedValue.get())
+
+  override fun toString() = computedValue.toString()
+
+  fun drop(): T? = nullize(computedValue.getAndSet(notYetInitialized()))
+}
+
+// copy from util, do not make public
+internal inline fun <T> Span.use(operation: (Span) -> T): T {
+  try {
+    return operation(this)
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    recordException(e)
+    setStatus(StatusCode.ERROR)
+    throw e
+  }
+  finally {
+    end()
+  }
+}
+
+// copy from util, do not make public
+internal suspend inline fun <T> SpanBuilder.useWithScope2(crossinline operation: suspend (Span) -> T): T {
+  val span = startSpan()
+  return withContext(Context.current().with(span).asContextElement()) {
+    span.use {
+      operation(span)
+    }
+  }
+}
+
+internal fun spanBuilder(spanName: String): SpanBuilder = BuildDependenciesDownloader.TRACER.spanBuilder(spanName)
+
 fun closeKtorClient() {
   httpClient.drop()?.close()
   httpSpaceClient.drop()?.close()
@@ -132,8 +210,11 @@ suspend fun downloadAsText(url: String): String {
   }
 }
 
-suspend fun downloadFileToCacheLocation(url: String, context: BuildContext): Path {
-  return downloadFileToCacheLocation(url, context.paths.communityHomeDirRoot)
+fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependenciesCommunityRoot): Path {
+  @Suppress("RAW_RUN_BLOCKING")
+  return runBlocking(Dispatchers.IO) {
+    downloadFileToCacheLocation(url, communityRoot)
+  }
 }
 
 suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot): Path {
@@ -141,7 +222,7 @@ suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDepende
 
   val target = BuildDependenciesDownloader.getTargetFile(communityRoot, url)
   val targetPath = target.toString()
-  val lock = fileLocks.getLock(Xx3UnencodedString.hashUnencodedString(targetPath).toInt())
+  val lock = fileLocks.getLock(targetPath.hashCode())
   lock.lock()
   try {
     val now = Instant.now()
@@ -245,16 +326,4 @@ internal fun CoroutineScope.writeChannel(file: Path): ByteWriteChannel {
       channel.copyTo(fileChannel)
     }
   }.channel
-}
-
-@Suppress("HttpUrlsUsage")
-internal fun toUrlWithTrailingSlash(serverUrl: String): String {
-  var result = serverUrl
-  if (!result.startsWith("http://") && !result.startsWith("https://")) {
-    result = "http://$result"
-  }
-  if (!result.endsWith('/')) {
-    result += '/'
-  }
-  return result
 }

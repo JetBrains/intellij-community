@@ -19,7 +19,7 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.io.runProcess
-import org.jetbrains.intellij.build.io.suspendingRetryWithExponentialBackOff
+import org.jetbrains.intellij.build.suspendingRetryWithExponentialBackOff
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
