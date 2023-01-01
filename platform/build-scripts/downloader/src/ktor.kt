@@ -237,6 +237,8 @@ suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDepende
       return target
     }
 
+    println(" * Downloading $url")
+
     return spanBuilder("download").setAttribute("url", url).setAttribute("target", targetPath).useWithScope2 {
       suspendingRetryWithExponentialBackOff {
         // save to the same disk to ensure that move will be atomic and not as a copy
