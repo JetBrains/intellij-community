@@ -224,7 +224,7 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
 
   </style>
 
-  <!-- General: Point, TimeSeries -->
+  <!-- General objects/helpers: Point, TimeSeries, formatting methods -->
   <script lang="js">
     function Point(time, value) {
       this.time = time
@@ -324,6 +324,23 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
       }
     }
 
+    Object.defineProperty(Number.prototype, 'formatSizeAsHumanReadable', {
+      value: function () {
+        const units = [' b', ' KiB', ' MiB', ' GiB', ' TiB', ' PiB']
+        const step = 1024
+        let size = this
+        let i = 0
+        for (; i < units.length - 1; i++) {
+          if (size < step) {
+            break
+          }
+          else {
+            size /= step
+          }
+        }
+        return size.toFixed(1) + units[i]
+      }
+    })
   </script>
 
   <!-- Plotting -->
@@ -349,6 +366,7 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
       }],
       layout: {
         showlegend: true,
+        dragmode: 'pan',
         legend: {x: 1, y: 1, xanchor: 'right'},
         margin: {l: 60, r: 20, t: 40, b: 40},
         xaxis: {type: 'date'},
@@ -359,166 +377,8 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
     const PLOTLY_CONFIG = {
       displayModeBar: true,
       responsive: true,
-      displaylogo: false
-    }
-
-    function readFiles(files) {
-      console.log("Files: " + files.length)
-      if (files.length == 0) {
-        return
-      }
-
-      $("#splashScreen").hide()
-      document.progressBar.show("Parsing " + files.length + " files...")
-      document.progressBar.update(0)
-
-      for (plot of document.plots) {
-        Plotly.purge(plot)
-      }
-      document.plots = []
-
-      const fileNames = Array.from(files)
-        .reduce((string, file) => string + file.name + " (" + (file.size / 1024).toFixed() + " KiB)\n", "")
-      const totalFileSize = Array.from(files)
-        .map(file => file.size)
-        .reduce((total, size) => total + size, 0)
-
-      $("#filesLoadedInfo")
-        .text(`Loaded ${files.length} files, ${(totalFileSize / 1024).toFixed(1)} KiB total`)
-        .attr('title', fileNames)
-
-      new Promise((resolve, reject) => {
-        let fileContents = []
-        for (file of files) {
-          const fileName = file.name
-          const reader = new FileReader()
-          reader.addEventListener('load', (event) => {
-            const fileText = event.target.result
-            console.log(`\tread ${fileName}: ${fileText.length} b`)
-
-            fileContents.push(fileText)
-            if (fileContents.length < files.length) {
-              document.progressBar.update(fileContents.length * 60 / files.length)
-            }
-            else {
-              //all files done:
-              resolve(fileContents)
-            }
-          })
-          console.log(`reading ${fileName}...`)
-          reader.readAsText(file)
-        }
-      })
-        .then(parseFileContents)
-        .then(csvRows => {
-          document.progressBar.update(69)
-
-          document.loadedAndParsedData.parsedCSV = csvRows
-          document.loadedAndParsedData.names = [...new Set(csvRows.map(row => {
-            return row.name
-          }))]
-
-          let minTs = 1e30, maxTs = 0
-          csvRows.map(row => {
-            return row.startedAt.getTime()
-          }).forEach(timestamp => {
-            minTs = Math.min(minTs, timestamp)
-            maxTs = Math.max(maxTs, timestamp)
-          })
-          document.loadedAndParsedData.dateRange = [new Date(minTs), new Date(maxTs)]
-
-          $("#pointsLoadedInfo").text(`Loaded ${csvRows.length} points, covering [${new Date(minTs)}..${new Date(maxTs)}]`)
-          document.progressBar.update(74)
-          return csvRows
-        })
-        .then(onDataLoaded)
-        .then(() => {
-          for (const plot of document.plots) {
-            //FIXME RC: 'reset axis' doesn't issue plotly_relayout?
-            plot.on('plotly_relayout', (eventData) => {
-              const from = eventData['xaxis.range[0]']
-              const to = eventData['xaxis.range[1]']
-              if (from && to) {
-                console.log(`${plot.id}: x-axis range: [${from}, ${to}]`)
-                for (otherPlot of document.plots) {
-                  if (otherPlot !== plot) {
-                    console.log(`\treLayout: ${otherPlot.id}`)
-                    Plotly.relayout(otherPlot, {'xaxis.range': [from, to]})
-                  }
-                }
-              }
-            })
-          }
-          document.progressBar.hide()
-        })
-    }
-
-    /* @param contents: String, multi-lines csv
-     * @return Array of records {name, startedAt:Date, value: float}
-     */
-    function parseFileContents(contents) {
-      console.log("File contents: " + contents.length)
-      let data = []
-      for (const content of contents) {
-        const lines = content.split('\n')
-        lines.shift()//comment
-        lines.shift()//header (field names)
-        for (const line of lines) {
-          if (!line.startsWith('#') && line.trim().length > 0) {
-            const parts = line.split(',')
-            if (parts.length === 4) {//name, startEpochNs, endEpochNs, value:
-              data.push({
-                name: parts[0].trim(),
-                startedAt: new Date(parseInt(parts[1].trim()) / 1_000_000 /* ns -> ms */),
-                value: parseFloat(parts[3].trim())
-              })
-            }
-            else {
-              console.log("Error parsing line: [" + line + "]")
-            }
-          }
-        }
-      }
-
-      return data
-    }
-
-    /* Updates UI after CSV data is loaded */
-    function onDataLoaded(data) {
-      const names = document.loadedAndParsedData.names
-
-      const timeSeriesChooser = $("#timeSeriesChooser")
-      timeSeriesChooser.html("")
-      for (const name of names) {
-        timeSeriesChooser.append(`<option value="${name}">${name}</option>`)
-      }
-      //click on <select> propagates to parent .caption, and click on .caption collapses/expands
-      // the apt section, which is frustrating => to prevent it I stop the propagation:
-      timeSeriesChooser.on('click', e => {
-        e.stopPropagation()
-      })
-
-      if (names && names.length > 0) {
-        extractAndPlotTimeSeries(names[0])
-      }
-
-
-      //TODO setup time-range chooser:
-      const $timeRangeChooser = $("#timeRangeChooser")
-      $timeRangeChooser.append(`<option value="">---all---</option>`)
-
-      //TODO RC: how to iterate time range hour by hour?
-      const min = document.loadedAndParsedData.dateRange[0]
-      const max = document.loadedAndParsedData.dateRange[1]
-      // for(v=min; v<max; v++) {
-      //     $timeRangeChooser.append(`<option value="">---all---</option>`)
-      // }
-
-      //RC: plot predefined charts:
-      plotAWTQueueCharts()
-      plotFlushQueueCharts()
-      plotNonBlockingReadActionChart()
-      plotFilePageCacheCharts()
+      displaylogo: false,
+      modeBarButtonsToRemove: ['select2d', 'lasso2d']
     }
 
     /* Extracts time series with name nameOfSeriesToPlot from loadedAndParsedData.
@@ -556,74 +416,37 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
       console.log("FPC disposal times: " + pageDisposalTimeUs)
 
       const totalPagesRequested = pageFastHits.plus(pageHits).plus(pageMisses).plus(pageLoads)
-      const pageFastHitsPercent = pageFastHits.div(totalPagesRequested)
-      const pageHitsPercent = pageHits.div(totalPagesRequested)
-      const pageLoadsPercent = pageLoads.plus(pageMisses).div(totalPagesRequested)
+      const pageFastHitsPercent = pageFastHits.div(totalPagesRequested).mulScalar(100)
+      const pageHitsPercent = pageHits.div(totalPagesRequested).mulScalar(100)
+      const pageLoadsPercent = pageLoads.plus(pageMisses).div(totalPagesRequested).mulScalar(100)
 
-      const hitsMissesChart = document.getElementById("filePageCache_HitsMisses_Chart")
-      hitsMissesChart.plot = Plotly.newPlot(hitsMissesChart,
-        /* data: */     [{
-          name: 'Fast hits',
-          line: {color: 'green'},
-          marker: {color: 'green'},
-          x: pageFastHitsPercent.timestamps(),
-          y: pageFastHitsPercent.values().map(value => value * 100)
-        }, {
-          name: 'Regular hits',
-          line: {color: 'blue'},
-          marker: {color: 'blue'},
-          x: pageHitsPercent.timestamps(),
-          y: pageHitsPercent.values().map(value => value * 100)
-        }, {
-          name: 'Misses (loads)',
-          line: {color: 'red'},
-          marker: {color: 'red'},
-          x: pageLoadsPercent.timestamps(),
-          y: pageLoadsPercent.values().map(value => value * 100)
-        }],
-        /* layout: */   {
-          template: PLOTLY_TEMPLATE,
-          title: 'FilePageCache: hits/misses/loads',
-          xaxis: {range: timeRange},
-          yaxis: {
-            title: '%',
-            autorange: false,
-            range: [0, 100]
-          }
-        },
-        PLOTLY_CONFIG
+      plotTimeSeries(
+        'FilePageCache: hits/misses/loads',
+        $("#filePageCache_HitsMisses_Chart"),
+        [
+          {name: 'Fast hits', color: 'green', series: pageFastHitsPercent},
+          {name: 'Regular hits', color: 'blue', series: pageHitsPercent},
+          {name: 'Misses (loads)', color: 'red', series: pageLoadsPercent},
+        ],
+        /*yaxis: */ {
+          title: '%',
+          autorange: false,
+          range: [0, 100]
+        }
       )
-      document.plots.push(hitsMissesChart)
 
-      const timesChart = document.getElementById("filePageCache_Times_Chart")
-      timesChart.plot = Plotly.newPlot(timesChart,
-        /* data: */     [{
-          name: 'Page load times, ms',
-          line: {color: 'green'},
-          marker: {color: 'green'},
-          x: pageLoadsTimeUs.timestamps(),
-          y: pageLoadsTimeUs.values().map(value => value / 1000 /*us -> ms*/)
-        }, {
-          name: 'Page dispose times, ms',
-          line: {color: 'blue'},
-          marker: {color: 'blue'},
-          x: pageDisposalTimeUs.timestamps(),
-          y: pageDisposalTimeUs.values().map(value => value / 1000 /*us -> ms*/)
-        }],
-        /* layout: */   {
-          template: PLOTLY_TEMPLATE,
-          title: 'FilePageCache: loads/dispose times',
-          xaxis: {
-            range: timeRange
-          },
-          yaxis: {
-            title: 'ms',
-            autorange: true
-          }
-        },
-        PLOTLY_CONFIG
+      plotTimeSeries(
+        'FilePageCache: loads/dispose times',
+        $("#filePageCache_Times_Chart"),
+        [
+          {name: 'Page load times, ms', color: 'green', series: pageLoadsTimeUs.mulScalar(1e-3 /*us->ms*/)},
+          {name: 'Page dispose times, ms', color: 'blue', series: pageDisposalTimeUs.mulScalar(1e-3 /*us->ms*/)}
+        ],
+        /*yaxis: */ {
+          title: 'ms',
+          autorange: true
+        }
       )
-      document.plots.push(timesChart)
     }
 
     function plotAWTQueueCharts() {
@@ -631,7 +454,7 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
         console.log("Error: .loadedAndParsedData is not loaded")
         return
       }
-      //AWT Queue: ========
+
       const awtEventsCount = extractTimeSeries("AWTEventQueue.eventsDispatched")
       const awtDispatchTimeMaxMs = extractTimeSeries("AWTEventQueue.dispatchTimeMaxNs").mulScalar(0.000_001 /* ns-> ms */)
       const awtDispatchTime90PMs = extractTimeSeries("AWTEventQueue.dispatchTime90PNs").mulScalar(0.000_001 /* ns-> ms */)
@@ -667,7 +490,8 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
         }, {
           name: 'MAX, ms',
           color: 'red',
-          series: awtDispatchTimeMaxMs
+          series: awtDispatchTimeMaxMs,
+          visible: 'legendonly'  //MAX is too dominating => toggle off by default
         }],
         /*yaxis:*/ {
           title: 'ms'
@@ -724,7 +548,8 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
         }, {
           name: 'MAX, ms',
           color: 'red',
-          series: flushQueueWaitingTimeMaxMs
+          series: flushQueueWaitingTimeMaxMs,
+          visible: 'legendonly' //MAX is too dominating => toggle off by default
         }],
         /*yaxis:*/ {
           title: 'ms'
@@ -745,7 +570,8 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
         }, {
           name: 'MAX, ms',
           color: 'red',
-          series: flushQueueExecutionTimeMaxMs
+          series: flushQueueExecutionTimeMaxMs,
+          visible: 'legendonly'  //MAX is too dominating => toggle them off by default
         }],
         /*yaxis:*/ {
           title: 'ms'
@@ -903,9 +729,7 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
       const timeSeries = extractTimeSeries(nameOfSeriesToPlot)
       if (timeSeries) {
         console.log(`Plot series: ${nameOfSeriesToPlot}, ${timeSeries}`)
-        // const canvas = document.getElementById("customChart")
-        //plotCustomTimeSeries(nameOfSeriesToPlot, data, canvas)
-        const canvas = document.getElementById("customChartPlotly")
+        const canvas = $("#customChartPlotly")
         plotCustomTimeSeries(nameOfSeriesToPlot, timeSeries, canvas)
       }
       else {
@@ -926,16 +750,24 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
       )
     }
 
+    /* @param caption: String, plot title
+     * @param domElementOrId container to plot into: id, DOM element, or jQuery object
+     * @param dataToPlot: [{name, color, series, visible?}]
+     * @param yaxis: optional {range, ...}
+     */
     function plotTimeSeries(caption, domElementOrId, dataToPlot, yaxis) {
       let domElement
-      if (typeof (domElementOrId) == 'string') {
-        domElement = document.getElementById(domElementOrId)
+      if (domElementOrId instanceof jQuery) {
+        domElement = domElementOrId[0]
+      }
+      else if (typeof (domElementOrId) == 'string') {
+        domElement = $("#" + domElementOrId)[0]
       }
       else if (domElementOrId.id) {
-        domElement = domElementOrId
+        domElement = $(domElementOrId)[0]
       }
       else {
-        throw `Unrecognized ${domElementOrId}: should be id or DOM element`
+        throw `Unrecognized ${domElementOrId}: should be (ID | DOM element | jQuery object)`
       }
       console.log(`plotTimeSeries(${caption}, ${domElement.id}, ${dataToPlot.length} plots, ...)`)
       //RC: seems like Plotly purge previous plot by itself anyway
@@ -943,13 +775,17 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
       //     Plotly.purge(canvasElement);
       // }
       const plotlyTrace = dataToPlot.map(row => {
-        return {
+        const trace = {
           name: row.name,
           line: {color: row.color},
           marker: {color: row.color},
           x: row.series.timestamps(),
           y: row.series.values()
         }
+        if (row.visible === 'legendonly') {
+          trace.visible = 'legendonly'
+        }
+        return trace
       })
 
       const layout = {
@@ -972,6 +808,188 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
 
   </script>
 
+  <!-- Files loading -->
+  <script lang="js">
+
+    function readFiles(files) {
+      console.log("Files: " + files.length)
+      if (files.length === 0) {
+        return
+      }
+
+      $("#splashScreen").hide()
+      document.progressBar.show(`Parsing ${files.length} files...`)
+      document.progressBar.update(0)
+
+      for (plot of document.plots) {
+        Plotly.purge(plot)
+      }
+      document.plots = []
+
+      const fileNames = Array.from(files)
+        .reduce((string, file) => `${string + file.name} (${file.size.formatSizeAsHumanReadable()}) `, "")
+      const totalFileSize = Array.from(files)
+        .map(file => file.size)
+        .reduce((total, size) => total + size, 0)
+
+      new Promise((resolve, reject) => {
+        let fileContents = []
+        for (file of files) {
+          const fileName = file.name
+          const reader = new FileReader()
+          reader.addEventListener('load', (event) => {
+            const fileText = event.target.result
+            console.log(`\tread ${fileName}: ${fileText.length} b`)
+
+            fileContents.push(fileText)
+            if (fileContents.length < files.length) {
+              document.progressBar.update(fileContents.length * 40 / files.length)
+            }
+            else {
+              //all files done:
+              resolve(fileContents)
+            }
+          })
+          console.log(`reading ${fileName}...`)
+          reader.readAsText(file)
+        }
+      })
+        .then(parseFileContents)
+        .then(csvRows => {
+          document.progressBar.update(69)
+
+          document.loadedAndParsedData.parsedCSV = csvRows
+          document.loadedAndParsedData.names = [...new Set(csvRows.map(row => {
+            return row.name
+          }))]
+
+          let minTs = 1e30, maxTs = 0
+          csvRows.map(row => {
+            return row.startedAt.getTime()
+          }).forEach(timestamp => {
+            minTs = Math.min(minTs, timestamp)
+            maxTs = Math.max(maxTs, timestamp)
+          })
+          document.loadedAndParsedData.dateRange = [new Date(minTs), new Date(maxTs)]
+
+          $("#filesLoadedInfo")
+            .text(`Loaded ${files.length} files: ${totalFileSize.formatSizeAsHumanReadable()}, ${csvRows.length} points`)
+            .attr('title', fileNames)
+          $("#pointsLoadedInfo").html(
+            `Interval covered: [${new Date(minTs).toLocaleString()}  &mdash;  ${new Date(maxTs).toLocaleString()}]`
+          )
+          document.progressBar.show(`Parsed ${files.length} files, ${totalFileSize.formatSizeAsHumanReadable()}, plotting...`)
+          document.progressBar.update(74)
+          return csvRows
+        })
+        .then(onDataLoaded)
+        //RC: plot predefined charts:
+        .then(plotAWTQueueCharts)
+        .then(() => {
+          document.progressBar.update(80)
+        })
+        .then(plotFlushQueueCharts)
+        .then(() => {
+          document.progressBar.update(85)
+        })
+        .then(plotNonBlockingReadActionChart)
+        .then(() => {
+          document.progressBar.update(90)
+        })
+        .then(plotFilePageCacheCharts)
+        .then(() => {
+          document.progressBar.hide()
+        })
+        .then(() => {
+          //RC: 'connect' plots x-axes so that all plots show the same datetime range:
+          for (const plot of document.plots) {
+            //FIXME RC: 'reset axis' doesn't issue plotly_relayout?
+            plot.on('plotly_relayout', (eventData) => {
+              const from = eventData['xaxis.range[0]']
+              const to = eventData['xaxis.range[1]']
+              $(document.body).css('cursor', 'progress')
+              try {
+                if (from && to) {
+                  console.log(`${plot.id}: x-axis range: [${from}, ${to}]`)
+                  for (otherPlot of document.plots) {
+                    if (otherPlot !== plot) {
+                      console.log(`\treLayout: ${otherPlot.id}`)
+                      Plotly.relayout(otherPlot, {'xaxis.range': [from, to]})
+                    }
+                  }
+                }
+              }
+              finally {
+                $(document.body).css('cursor', 'default')
+              }
+            })
+          }
+
+        })
+    }
+
+    /* @param contents: String, multi-lines csv
+     * @return Array of records {name, startedAt:Date, value: float}
+     */
+    function parseFileContents(contents) {
+      console.log("File contents: " + contents.length)
+      let data = []
+      for (const content of contents) {
+        const lines = content.split('\n')
+        lines.shift()//comment
+        lines.shift()//header (field names)
+        for (const line of lines) {
+          if (!line.startsWith('#') && line.trim().length > 0) {
+            const parts = line.split(',')
+            if (parts.length === 4) {//name, startEpochNs, endEpochNs, value:
+              data.push({
+                name: parts[0].trim(),
+                startedAt: new Date(parseInt(parts[1].trim()) / 1_000_000 /* ns -> ms */),
+                value: parseFloat(parts[3].trim())
+              })
+            }
+            else {
+              console.log("Error parsing line: [" + line + "]")
+            }
+          }
+        }
+      }
+
+      return data
+    }
+
+    /* Updates UI after CSV data is loaded */
+    function onDataLoaded(data) {
+      const names = document.loadedAndParsedData.names
+
+      const timeSeriesChooser = $("#timeSeriesChooser")
+      timeSeriesChooser.html("")
+      for (const name of names) {
+        timeSeriesChooser.append(`<option value="${name}">${name}</option>`)
+      }
+      //click on <select> propagates to parent .caption, and click on .caption collapses/expands
+      // the apt section, which is frustrating => to prevent it I stop the propagation:
+      timeSeriesChooser.on('click', e => {
+        e.stopPropagation()
+      })
+
+      if (names && names.length > 0) {
+        extractAndPlotTimeSeries(names[0])
+      }
+
+
+      //TODO setup time-range chooser:
+      const $timeRangeChooser = $("#timeRangeChooser")
+      $timeRangeChooser.append(`<option value="">---all---</option>`)
+
+      //TODO RC: how to iterate time range hour by hour?
+      const min = document.loadedAndParsedData.dateRange[0]
+      const max = document.loadedAndParsedData.dateRange[1]
+      // for(v=min; v<max; v++) {
+      //     $timeRangeChooser.append(`<option value="">---all---</option>`)
+      // }
+    }
+  </script>
 </head>
 <body>
 
@@ -996,7 +1014,7 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
            title="Select 'open-telemetry-metrics.*.csv' files"
            class="fileInput"
            onchange="readFiles(event.target.files)"
-    />     
+    />
 
     <div class="faq hidden">
       <div class="caption">FAQ (aka 'WTF is this?')</div>
