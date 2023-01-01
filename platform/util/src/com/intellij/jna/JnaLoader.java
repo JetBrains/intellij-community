@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jna;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.system.CpuArch;
@@ -13,6 +14,14 @@ public final class JnaLoader {
   public static synchronized void load(@NotNull Logger logger) {
     if (ourJnaLoaded == null) {
       ourJnaLoaded = Boolean.FALSE;
+
+      // Android Studio: b/264609522 (this code path covers the Android Studio run configs)
+      if (System.getProperty("jna.nounpack") == null) {
+        System.setProperty("jna.nounpack", "true");
+        System.setProperty("jna.nosys", "true");
+        System.setProperty("jna.boot.library.path", PathManager.getLibPath() + "/jna/" + (CpuArch.isArm64() ? "aarch64" : "amd64"));
+        System.setProperty("pty4j.preferred.native.folder", PathManager.getLibPath() + "/pty4j/");
+      }
 
       try {
         long t = System.currentTimeMillis();

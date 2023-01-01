@@ -4,10 +4,12 @@ package com.intellij.testFramework.common
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.idea.Java11ShimImpl
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.Java11Shim
+import com.intellij.util.system.CpuArch
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 
@@ -35,4 +37,10 @@ fun initializeTestEnvironment() {
   StartUpMeasurer.disable() // from TestApplicationManager
   PlatformPrefix.autodetectPlatformPrefix() // from TestApplicationManager
   isTestEnvironmentInitialized = true
+
+  // Android Studio: b/264609522 (covers tests loading the unpacked JNA and pty4j native libraries)
+  System.setProperty("jna.nounpack", "true")
+  System.setProperty("jna.nosys", "true")
+  System.setProperty("jna.boot.library.path", PathManager.getLibPath() + "/jna/" + if (CpuArch.isArm64()) "aarch64" else "amd64")
+  System.setProperty("pty4j.preferred.native.folder", PathManager.getLibPath() + "/pty4j")
 }
