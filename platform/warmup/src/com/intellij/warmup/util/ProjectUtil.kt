@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
 import com.intellij.conversion.ConversionListener
@@ -167,8 +167,8 @@ private suspend fun callProjectConfigurators(
   if (!projectArgs.configureProject) return
 
   val activeConfigurators = getAllConfigurators().filter {
-    if (it.name in projectArgs.disabledConfigurators) {
-      ConsoleLog.info("Configurator ${it.name} is disabled in the settings")
+    if (it.configuratorPresentableName in projectArgs.disabledConfigurators) {
+      ConsoleLog.info("Configurator ${it.configuratorPresentableName} is disabled in the settings")
       false
     } else {
       true
@@ -179,8 +179,8 @@ private suspend fun callProjectConfigurators(
 
   withLoggingProgressReporter {
     for (configuration in activeConfigurators) {
-      durationStep(fraction, "Configurator ${configuration.name} is in action..." /* NON-NLS */) {
-        runTaskAndLogTime("Configure " + configuration.name) {
+      durationStep(fraction, "Configurator ${configuration.configuratorPresentableName} is in action..." /* NON-NLS */) {
+        runTaskAndLogTime("Configure " + configuration.configuratorPresentableName) {
           action(configuration)
         }
       }

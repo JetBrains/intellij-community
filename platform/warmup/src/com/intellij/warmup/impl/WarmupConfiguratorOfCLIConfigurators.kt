@@ -37,7 +37,7 @@ internal class WarmupConfiguratorOfCLIConfigurator(val delegate: CommandLineInsp
       }
     }
 
-  override val name: String
+  override val configuratorPresentableName: String
     get() = delegate.name
 
   private suspend fun produceConfigurationContext(projectDir: Path?): CommandLineInspectionProjectConfigurator.ConfiguratorContext {
