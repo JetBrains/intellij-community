@@ -12,6 +12,10 @@ dependencyResolutionManagement {
 }
 
 pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven("https://oss.sonatype.org/content/repositories/snapshots/")
+    }
     plugins {
         val kotlinVersion = "1.7.20"
         kotlin("jvm") version kotlinVersion
