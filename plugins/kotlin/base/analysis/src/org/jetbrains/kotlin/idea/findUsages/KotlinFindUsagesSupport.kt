@@ -15,16 +15,12 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
-import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 interface KotlinFindUsagesSupport {
 
     companion object {
         fun getInstance(project: Project): KotlinFindUsagesSupport = project.service()
-
-        val KtParameter.isDataClassComponentFunction: Boolean
-            get() = getInstance(project).isDataClassComponentFunction(this)
 
         fun processCompanionObjectInternalReferences(
             companionObject: KtObjectDeclaration,
@@ -56,8 +52,6 @@ interface KotlinFindUsagesSupport {
     }
 
     fun processCompanionObjectInternalReferences(companionObject: KtObjectDeclaration, referenceProcessor: Processor<PsiReference>): Boolean
-
-    fun isDataClassComponentFunction(element: KtParameter): Boolean
 
     fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String?
 

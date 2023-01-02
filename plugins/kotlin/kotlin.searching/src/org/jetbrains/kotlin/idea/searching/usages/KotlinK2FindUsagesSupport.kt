@@ -74,11 +74,6 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
                 (extensionReceiver as? KtImplicitReceiverValue)?.symbol == companionObjectSymbol
     }
 
-    override fun isDataClassComponentFunction(element: KtParameter): Boolean {
-        // TODO: implement this
-        return false
-    }
-
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String {
         return analyzeInModalWindow(declaration, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             declaration.getSymbol().render(noAnnotationsShortNameRenderer())

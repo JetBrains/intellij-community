@@ -9,13 +9,12 @@ import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.MethodSignatureUtil
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeWithReadAction
+import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.calls.KtDelegatedConstructorCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
+import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -30,8 +29,10 @@ import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.match
@@ -76,11 +77,19 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     }
 
     override fun dataClassComponentMethodName(element: KtParameter): String? {
-        return null
+        if (!element.hasValOrVar() || element.containingClassOrObject?.hasModifier(KtTokens.DATA_KEYWORD) != true) return null
+        analyze(element) {
+            val paramSymbol = element.getSymbol() as? KtValueParameterSymbol ?: return null
+            val constructorSymbol = paramSymbol.getContainingSymbol() as? KtConstructorSymbol ?: return null
+            val index = constructorSymbol.valueParameters.indexOf(paramSymbol)
+            return DataClassResolver.createComponentName(index + 1).asString()
+        }
     }
 
     override fun hasType(element: KtExpression): Boolean {
-        return false
+        return analyze(element) {
+            element.getKtType() != null
+        }
     }
 
     override fun isSamInterface(psiClass: PsiClass): Boolean {
@@ -172,8 +181,15 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                             val psiClass = getPsiClassOfKtType(containingClassType) ?: return@analyzeWithReadAction null
 
                             ReceiverTypeSearcherInfo(psiClass) {
-                                // TODO: stubbed - not exercised by FindUsagesFir Test Suite
-                                it.getNonStrictParentOfType<PsiClass>() == psiClass
+                                analyze(it) {
+                                    val returnType = it.getReturnKtType()
+                                    returnType == containingClassType || returnType is KtNonErrorClassType && returnType.ownTypeArguments.any { arg ->
+                                        when (arg) {
+                                            is KtStarTypeProjection -> false
+                                            is KtTypeArgumentWithVariance -> arg.type == containingClassType
+                                        }
+                                    }
+                                }
                             }
                         }
                         is KtCallableSymbol -> {

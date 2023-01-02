@@ -10,7 +10,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
-import org.jetbrains.kotlin.idea.search.usagesSearch.dataClassComponentFunction
 import org.jetbrains.kotlin.idea.search.usagesSearch.isCallReceiverRefersToCompanionObject
 import org.jetbrains.kotlin.idea.search.usagesSearch.isKotlinConstructorUsage
 import org.jetbrains.kotlin.psi.*
@@ -30,9 +29,6 @@ class KotlinFindUsagesSupportImpl : KotlinFindUsagesSupport {
             } else false
         })
     }
-
-    override fun isDataClassComponentFunction(element: KtParameter): Boolean =
-        element.dataClassComponentFunction() != null
 
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String? =
         org.jetbrains.kotlin.idea.search.usagesSearch.tryRenderDeclarationCompactStyle(declaration)

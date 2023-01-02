@@ -41,7 +41,6 @@ import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindFunctio
 import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindPropertyUsagesDialog
 import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.isDataClassComponentFunction
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.filterDataClassComponentsIfDisabled
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isOverridable
@@ -277,7 +276,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                 if (element is KtElement && !isOnlyKotlinSearch(options.searchScope)) {
                     // TODO: very bad code!! ReferencesSearch does not work correctly for constructors and annotation parameters
                     val psiMethodScopeSearch = when {
-                        element is KtParameter && element.isDataClassComponentFunction ->
+                        element is KtParameter && KotlinSearchUsagesSupport.getInstance(project).dataClassComponentMethodName(element) != null ->
                             options.searchScope.excludeKotlinSources(project)
                         else -> options.searchScope
                     }
@@ -329,7 +328,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
         return if (baseDeclarations.isNotEmpty()) {
             baseDeclarations.flatMap {
-                val handler = (FindManager.getInstance(project) as FindManagerImpl).findUsagesManager.getFindUsagesHandler(it!!, true)
+                val handler = (FindManager.getInstance(project) as FindManagerImpl).findUsagesManager.getFindUsagesHandler(it, true)
                 handler?.findReferencesToHighlight(it, searchScope) ?: emptyList()
             }
         } else {
