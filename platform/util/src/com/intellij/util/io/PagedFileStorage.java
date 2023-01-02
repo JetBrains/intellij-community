@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
@@ -17,14 +17,16 @@ import org.jetbrains.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 
 import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
@@ -36,6 +38,8 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
 
   @NotNull
   private static final ThreadLocal<byte[]> ourTypedIOBuffer = ThreadLocal.withInitial(() -> new byte[8]);
+
+  private static final EnumSet<StandardOpenOption> WRITE_OPTION = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
   @NotNull
   public static final ThreadLocal<StorageLockContext> THREAD_LOCAL_STORAGE_LOCK_CONTEXT = new ThreadLocal<>();
@@ -358,6 +362,7 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
 
   public void resize(long newSize) throws IOException {
     long oldSize;
+
     if (Files.exists(myFile)) {
       oldSize = Files.size(myFile);
     }
@@ -365,21 +370,27 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
       Files.createDirectories(myFile.getParent());
       oldSize = 0;
     }
-    if (oldSize == newSize && oldSize == length()) return;
-    resizeFile(newSize);
-
-    // it is not guaranteed that new partition will consist of null
-    // after resize, so we should fill it manually
-    long delta = newSize - oldSize;
-    if (delta > 0) fillWithZeros(oldSize, delta);
-  }
-
-  private void resizeFile(long newSize) throws IOException {
-    mySize = -1;
-    try (RandomAccessFile raf = new RandomAccessFile(myFile.toFile(), "rw")) {
-      raf.setLength(newSize);
+    if (oldSize == newSize && oldSize == length()) {
+      return;
     }
-    mySize = newSize;
+
+    // FileChannel.truncate doesn't modify file if the given size is greater than or equal to the file's current size,
+    // and it is not guaranteed that new partition will consist of null after truncate, so we should fill it manually
+    long delta = newSize - oldSize;
+    mySize = -1;
+    if (delta > 0) {
+      try (FileChannel channel = FileChannel.open(myFile, WRITE_OPTION)) {
+        channel.write(ByteBuffer.allocate(1), newSize - 1);
+      }
+      mySize = newSize;
+      fillWithZeros(oldSize, delta);
+    }
+    else {
+      try (FileChannel channel = FileChannel.open(myFile, WRITE_OPTION)) {
+        channel.truncate(newSize);
+      }
+      mySize = newSize;
+    }
   }
 
   private static final int MAX_FILLER_SIZE = 8192;
