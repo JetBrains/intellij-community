@@ -5,6 +5,7 @@ import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.LC
 import net.miginfocom.layout.UnitValue
 
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 fun createLayoutConstraints(horizontalGap: Int, verticalGap: Int): LC {
   val lc = LC()
   lc.gridGapX = gapToBoundSize(horizontalGap, isHorizontal = true)
@@ -13,11 +14,13 @@ fun createLayoutConstraints(horizontalGap: Int, verticalGap: Int): LC {
   return lc
 }
 
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
   val unitValue = createUnitValue(value, isHorizontal)
   return BoundSize(unitValue, unitValue, null, false, null)
 }
 
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 fun createLayoutConstraints(): LC {
   val lc = LC()
   lc.gridGapX = gapToBoundSize(0, true)
@@ -25,14 +28,17 @@ fun createLayoutConstraints(): LC {
   return lc
 }
 
-fun LC.setInsets(value: Int) = setInsets(value, value)
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
+internal fun LC.setInsets(value: Int) = setInsets(value, value)
 
-fun LC.setInsets(topBottom: Int, leftRight: Int) {
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
+internal fun LC.setInsets(topBottom: Int, leftRight: Int) {
   val h = createUnitValue(leftRight, isHorizontal = true)
   val v = createUnitValue(topBottom, isHorizontal = false)
   insets = arrayOf(v, h, v, h)
 }
 
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 fun createUnitValue(value: Int, isHorizontal: Boolean): UnitValue {
   return UnitValue(value.toFloat(), "px", isHorizontal, UnitValue.STATIC, null)
 }

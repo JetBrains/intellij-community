@@ -17,8 +17,6 @@ import com.intellij.testFramework.UITestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.compareFileContent
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.layout.*
-import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.ui.scale.TestScaleHelper
 import com.intellij.ui.scale.paint.ImageComparator
 import com.intellij.util.SVGLoader
@@ -32,8 +30,6 @@ import kotlinx.coroutines.withContext
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
 import org.junit.runners.model.MultipleFailureException
-import org.yaml.snakeyaml.DumperOptions
-import org.yaml.snakeyaml.Yaml
 import java.awt.Color
 import java.awt.Component
 import java.awt.Container
@@ -111,23 +107,6 @@ fun getSnapshotRelativePath(lafName: String): String {
   result.append(platformName)
 
   return result.toString()
-}
-
-@Throws(FileComparisonFailure::class)
-fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String) {
-  val actualSerializedLayout: String
-  if (component.layout is MigLayout) {
-    actualSerializedLayout = serializeLayout(component, isIncludeCellBounds = false, isIncludeComponentBounds = false)
-  }
-  else {
-    val dumperOptions = DumperOptions()
-    dumperOptions.lineBreak = DumperOptions.LineBreak.UNIX
-    val yaml = Yaml(dumperOptions)
-    actualSerializedLayout = yaml
-      .dump(linkedMapOf("bounds" to dumpComponentBounds(component)))
-  }
-
-  compareFileContent(actualSerializedLayout, snapshotDir.resolve("$snapshotName.yml"))
 }
 
 @Throws(FileComparisonFailure::class)

@@ -16,6 +16,7 @@ import java.awt.Component
 import java.awt.Container
 import javax.swing.*
 
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuilderImpl {
   companion object {
     private var hRelatedGap = -1

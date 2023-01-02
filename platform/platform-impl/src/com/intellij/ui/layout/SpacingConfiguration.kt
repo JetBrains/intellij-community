@@ -4,7 +4,7 @@ package com.intellij.ui.layout
 import com.intellij.util.ui.JBUI
 
 @Deprecated("Use Kotlin UI DSL Version 2")
-interface SpacingConfiguration {
+internal interface SpacingConfiguration {
   /**
    * Horizontal space between two components (in terms of layout grid - cells).
    *
@@ -49,7 +49,7 @@ interface SpacingConfiguration {
 
 // https://jetbrains.github.io/ui/controls/input_field/#spacing
 @Deprecated("Use Kotlin UI DSL Version 2")
-fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
+internal fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
   return object : SpacingConfiguration {
     override val horizontalGap = JBUI.scale(6)
     override val componentVerticalGap = JBUI.scale(6)

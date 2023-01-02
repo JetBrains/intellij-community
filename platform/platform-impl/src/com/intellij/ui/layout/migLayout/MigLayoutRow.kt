@@ -15,7 +15,6 @@ import com.intellij.ui.TitledSeparator
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.DialogPanel
 import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
 import net.miginfocom.layout.*
@@ -455,11 +454,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   fun addCommentRow(@Nls comment: String, maxLineLength: Int, forComponent: Boolean, anchorComponent: JComponent?) {
     val commentComponent = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
     addCommentRow(commentComponent, forComponent, anchorComponent)
-  }
-
-  // not using @JvmOverloads to maintain binary compatibility
-  fun addCommentRow(component: JComponent, forComponent: Boolean) {
-    addCommentRow(component, forComponent, null)
   }
 
   private fun addCommentRow(component: JComponent, forComponent: Boolean, anchorComponent: JComponent?) {
