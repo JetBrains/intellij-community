@@ -1134,8 +1134,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         cornerType = PopupCornerType.RoundedWindow;
       }
       if (cornerType != PopupCornerType.None) {
-        if (SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) {
-          WindowRoundedCornersManager.setRoundedCorners(window, new Object[]{cornerType, myPopupBorderColor});
+        if ((SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
+          WindowRoundedCornersManager.setRoundedCorners(window, new Object[]{cornerType,
+            SystemInfoRt.isWindows ? JBUI.CurrentTheme.Popup.borderColor(true) : myPopupBorderColor});
           myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
         }
         else {
