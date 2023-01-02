@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup
 
 import com.intellij.openapi.application.ApplicationManager
@@ -52,7 +52,7 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
     }
     catch (t: Throwable) {
       val argsParser = ArgsParser(listOf())
-      runCatching { OpenProjectArgsImpl(argsParser) }
+      runCatching { WarmupProjectArgsImpl(argsParser) }
       ConsoleLog.error(
 """Failed to parse commandline: ${t.message}
   Usage:
