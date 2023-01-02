@@ -99,6 +99,7 @@ class ServiceViewTreeUi implements ServiceViewUi {
     myMasterActionToolbar = actionProvider.createMasterComponentToolbar(component);
     JComponent toolbarComponent = myMasterActionToolbar.getComponent();
     myMasterPanel.add(toolbarComponent, BorderLayout.NORTH);
+    myMasterPanel.updateUI();
 
     actionProvider.installPopupHandler(component);
   }
