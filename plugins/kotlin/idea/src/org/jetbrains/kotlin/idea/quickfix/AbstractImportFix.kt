@@ -834,12 +834,7 @@ internal open class ImportForMismatchingArgumentsFix(
 
         val imported = resolutionScope.collectFunctions(identifier, NoLookupLocation.FROM_IDE)
 
-        fun filterFunction(descriptor: FunctionDescriptor): Boolean {
-            if (!callTypeAndReceiver.callType.descriptorKindFilter.accepts(descriptor)) return false
-
-            val original = descriptor.original
-            if (original in imported) return false // already imported
-
+        fun filterFunctionMatchesAllArguments(original: MemberDescriptor): Boolean {
             // check that this function matches all arguments
             val resolutionScopeWithAddedImport = resolutionScope.addImportingScope(ExplicitImportsScope(listOf(original)))
             val dataFlowInfo = bindingContext.getDataFlowInfoBefore(elementToAnalyze)
@@ -851,11 +846,30 @@ internal open class ImportForMismatchingArgumentsFix(
             return newBindingContext.diagnostics.none { it.severity == Severity.ERROR }
         }
 
-        val result = ArrayList<FunctionDescriptor>()
+        fun filterFunction(descriptor: FunctionDescriptor): Boolean {
+            if (!callTypeAndReceiver.callType.descriptorKindFilter.accepts(descriptor)) return false
+
+            val original = descriptor.original
+            if (original in imported) return false // already imported
+
+            return filterFunctionMatchesAllArguments(original)
+        }
+
+        val result = ArrayList<DeclarationDescriptor>()
 
         fun processDescriptor(descriptor: CallableDescriptor) {
             if (descriptor is FunctionDescriptor && filterFunction(descriptor)) {
                 result.add(descriptor)
+            }
+        }
+
+        ProgressManager.checkCanceled()
+
+        (element.parent as? KtCallExpression)?.let {callExpression ->
+            val filterByCallType: (DeclarationDescriptor) -> Boolean = callTypeAndReceiver.toFilter()
+            indicesHelper.getClassesByName(callExpression, name).filterTo(result) { classDescriptor ->
+                val original = classDescriptor.original
+                filterFunctionMatchesAllArguments(original) && filterByCallType(classDescriptor)
             }
         }
 
