@@ -12,8 +12,11 @@ import org.jetbrains.annotations.ApiStatus
 internal open class RowsRangeImpl(val panel: PanelImpl, val startIndex: Int) : RowsRange {
 
   var endIndex = 0
+  var visible = true
+  var enabled = true
 
   override fun visible(isVisible: Boolean): RowsRange {
+    visible = isVisible
     panel.visibleFromParent(isVisible, startIndex..endIndex)
     return this
   }
@@ -33,6 +36,7 @@ internal open class RowsRangeImpl(val panel: PanelImpl, val startIndex: Int) : R
   }
 
   override fun enabled(isEnabled: Boolean): RowsRange {
+    enabled = isEnabled
     panel.enabledFromParent(isEnabled, startIndex..endIndex)
     return this
   }

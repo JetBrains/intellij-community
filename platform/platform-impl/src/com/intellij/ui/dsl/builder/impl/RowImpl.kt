@@ -129,7 +129,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun enabled(isEnabled: Boolean): RowImpl {
     enabled = isEnabled
-    if (parent.isEnabled()) {
+    if (parent.isEnabled(this)) {
       doEnabled(enabled)
     }
     return this
@@ -141,7 +141,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   fun isEnabled(): Boolean {
-    return enabled && parent.isEnabled()
+    return enabled && parent.isEnabled(this)
   }
 
   override fun enabledIf(predicate: ComponentPredicate): RowImpl {
@@ -160,7 +160,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun visible(isVisible: Boolean): RowImpl {
     visible = isVisible
-    if (parent.isVisible()) {
+    if (parent.isVisible(this)) {
       doVisible(visible)
     }
     return this
@@ -186,7 +186,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   fun isVisible(): Boolean {
-    return visible && parent.isVisible()
+    return visible && parent.isVisible(this)
   }
 
   override fun topGap(topGap: TopGap): RowImpl {

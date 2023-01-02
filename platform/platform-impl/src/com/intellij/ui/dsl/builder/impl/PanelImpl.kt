@@ -31,6 +31,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   private var panelContext = PanelContext()
 
   private val _rows = mutableListOf<RowImpl>()
+  private val rowsRanges = mutableListOf<RowsRangeImpl>()
 
   private var visible = true
   private var enabled = true
@@ -153,7 +154,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun rowsRange(init: Panel.() -> Unit): RowsRangeImpl {
-    val result = RowsRangeImpl(this, _rows.size)
+    val result = createRowRange()
     this.init()
     result.endIndex = _rows.size - 1
     return result
@@ -209,7 +210,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun groupRowsRange(title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?,
                               init: Panel.() -> Unit): RowsRangeImpl {
-    val result = RowsRangeImpl(this, _rows.size)
+    val result = createRowRange()
     createSeparatorRow(title)
     if (indent) {
       indent(init)
@@ -252,6 +253,8 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun buttonsGroup(title: String?, indent: Boolean, init: Panel.() -> Unit): ButtonsGroupImpl {
     val result = ButtonsGroupImpl(this, _rows.size)
+    rowsRanges.add(result)
+
     dialogPanelConfig.context.addButtonsGroup(result)
     try {
       if (title != null) {
@@ -318,8 +321,9 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     doEnabled(parentEnabled && enabled, range)
   }
 
-  fun isEnabled(): Boolean {
-    return enabled && (parent == null || parent.isEnabled())
+  fun isEnabled(row: RowImpl): Boolean {
+    val rowIndex = rows.indexOf(row)
+    return enabled && isRowFromEnabledRange(rowIndex) && (parent == null || parent.isEnabled())
   }
 
   override fun enabledIf(predicate: ComponentPredicate): PanelImpl {
@@ -348,8 +352,9 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     doVisible(parentVisible && visible, range)
   }
 
-  fun isVisible(): Boolean {
-    return visible && (parent == null || parent.isVisible())
+  fun isVisible(row: RowImpl): Boolean {
+    val rowIndex = rows.indexOf(row)
+    return visible && isRowFromVisibleRange(rowIndex) && (parent == null || parent.isVisible())
   }
 
   @Deprecated("Use align method instead")
@@ -380,7 +385,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun indent(init: Panel.() -> Unit): RowsRangeImpl {
-    val result = RowsRangeImpl(this, _rows.size)
+    val result = createRowRange()
     val prevPanelContext = panelContext
     panelContext = panelContext.copy(indentCount = prevPanelContext.indentCount + 1)
     try {
@@ -395,14 +400,32 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   private fun doEnabled(isEnabled: Boolean, range: IntRange) {
     for (i in range) {
-      _rows[i].enabledFromParent(isEnabled)
+      _rows[i].enabledFromParent(isEnabled && isRowFromEnabledRange(i))
     }
+  }
+
+  private fun isRowFromEnabledRange(rowIndex: Int): Boolean {
+    for (rowsRange in rowsRanges) {
+      if (rowIndex >= rowsRange.startIndex && rowIndex <= rowsRange.endIndex && !rowsRange.enabled) {
+        return false
+      }
+    }
+    return true
   }
 
   private fun doVisible(isVisible: Boolean, range: IntRange) {
     for (i in range) {
-      _rows[i].visibleFromParent(isVisible)
+      _rows[i].visibleFromParent(isVisible && isRowFromVisibleRange(i))
     }
+  }
+
+  private fun isRowFromVisibleRange(rowIndex: Int): Boolean {
+    for (rowsRange in rowsRanges) {
+      if (rowIndex >= rowsRange.startIndex && rowIndex <= rowsRange.endIndex && !rowsRange.visible) {
+        return false
+      }
+    }
+    return true
   }
 
   private fun setTopGroupGap(row: RowImpl, topGap: Boolean?) {
@@ -421,6 +444,12 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     else {
       row.bottomGap(if (bottomGap) BottomGap.MEDIUM else BottomGap.NONE)
     }
+  }
+
+  private fun createRowRange(): RowsRangeImpl {
+    val result = RowsRangeImpl(this, _rows.size)
+    rowsRanges.add(result)
+    return result
   }
 }
 
