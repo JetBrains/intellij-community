@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.analysis.PackagesScopesProvider;
@@ -12,6 +12,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -20,6 +21,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
@@ -136,8 +138,12 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     ModuleManager moduleManager = ModuleManager.getInstance(getProject());
     Module java4 = moduleManager.findModuleByName("java4");
     Module java5 = moduleManager.findModuleByName("java5");
-    ModuleRootModificationUtil.setModuleSdk(java4, IdeaTestUtil.getMockJdk17("java 1.4"));
-    ModuleRootModificationUtil.setModuleSdk(java5, IdeaTestUtil.getMockJdk17("java 1.5"));
+    Sdk jdk17 = IdeaTestUtil.getMockJdk17("java 1.4");
+    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk17, getTestRootDisposable()));
+    ModuleRootModificationUtil.setModuleSdk(java4, jdk17);
+    Sdk jdk171 = IdeaTestUtil.getMockJdk17("java 1.5");
+    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk171, getTestRootDisposable()));
+    ModuleRootModificationUtil.setModuleSdk(java5, jdk171);
     ModuleRootModificationUtil.addDependency(java5, java4);
 
     configureByExistingFile(root.findFileByRelativePath("moduleJava5/com/Java5.java"));
