@@ -30,7 +30,7 @@ internal class DisableDeclarativeInlayAction : AnAction(CodeInsightBundle.messag
     val project = e.project ?: return
     val editor = e.getData(CommonDataKeys.EDITOR) ?: return
     val providerId = e.dataContext.getData(InlayHintsProvider.PROVIDER_ID) ?: return
-    val settings = DeclarativeInlayHintsSettings.getInstance(project)
+    val settings = DeclarativeInlayHintsSettings.getInstance()
     settings.setProviderEnabled(providerId, false)
     DeclarativeInlayHintsPassFactory.scheduleRecompute(editor, project)
   }

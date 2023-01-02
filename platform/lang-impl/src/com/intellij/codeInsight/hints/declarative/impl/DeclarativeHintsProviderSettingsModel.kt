@@ -29,7 +29,7 @@ class DeclarativeHintsProviderSettingsModel(
 
   val provider: InlayHintsProvider
     get() = providerDescription.instance
-  private val settings = DeclarativeInlayHintsSettings.getInstance(project)
+  private val settings = DeclarativeInlayHintsSettings.getInstance()
   @Suppress("UNCHECKED_CAST")
   private val customSettingsProvider: InlayHintsCustomSettingsProvider<Any?> = (InlayHintsCustomSettingsProvider.getCustomSettingsProvider(id, language) ?: DefaultSettingsProvider()) as InlayHintsCustomSettingsProvider<Any?>
   private var savedSettings = customSettingsProvider.getSettingsCopy()
