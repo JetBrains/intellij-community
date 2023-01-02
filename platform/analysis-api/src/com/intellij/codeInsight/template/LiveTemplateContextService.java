@@ -25,10 +25,10 @@ public final class LiveTemplateContextService implements Disposable {
   private Map<String, String> myInternalIds = new HashMap<>();
 
   public LiveTemplateContextService() {
-    loadLiveTemplateContexts();
+    loadLiveTemplateContextsNoLock();
 
-    LiveTemplateContextBean.EP_NAME.addChangeListener(this::loadLiveTemplateContexts, this);
-    LiveTemplateContextProvider.EP_NAME.addChangeListener(this::loadLiveTemplateContexts, this);
+    LiveTemplateContextBean.EP_NAME.addChangeListener(this::reloadLiveTemplateContexts, this);
+    LiveTemplateContextProvider.EP_NAME.addChangeListener(this::reloadLiveTemplateContexts, this);
   }
 
   public static LiveTemplateContextService getInstance() {
@@ -104,7 +104,9 @@ public final class LiveTemplateContextService implements Disposable {
     return context.getTemplateContextType();
   }
 
-  private void loadLiveTemplateContexts() {
+  private void reloadLiveTemplateContexts() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+
     myRwLock.writeLock().lock();
     try {
       // reset previously calculated base contexts
@@ -112,29 +114,33 @@ public final class LiveTemplateContextService implements Disposable {
         liveTemplateContext.getTemplateContextType().clearCachedBaseContextType();
       }
 
-      List<LiveTemplateContextBean> allBeans = LiveTemplateContextBean.EP_NAME.getExtensionList();
-      Map<String, LiveTemplateContext> allIdsMap = new LinkedHashMap<>();
-      for (LiveTemplateContextBean bean : allBeans) {
-        allIdsMap.put(bean.getContextId(), bean);
-      }
-
-      for (LiveTemplateContextProvider provider : LiveTemplateContextProvider.EP_NAME.getExtensionList()) {
-        for (LiveTemplateContext contextType : provider.createContexts()) {
-          allIdsMap.put(contextType.getContextId(), contextType);
-        }
-      }
-
-      this.myLiveTemplateIds = allIdsMap;
-      this.myLiveTemplateClasses.clear();
-
-      this.myInternalIds = allIdsMap.values().stream()
-        .map(LiveTemplateContext::getContextId)
-        .distinct()
-        .collect(Collectors.toMap(Function.identity(), Function.identity()));
+      loadLiveTemplateContextsNoLock();
     }
     finally {
       myRwLock.writeLock().unlock();
     }
+  }
+
+  private void loadLiveTemplateContextsNoLock() {
+    List<LiveTemplateContextBean> allBeans = LiveTemplateContextBean.EP_NAME.getExtensionList();
+    Map<String, LiveTemplateContext> allIdsMap = new LinkedHashMap<>();
+    for (LiveTemplateContextBean bean : allBeans) {
+      allIdsMap.put(bean.getContextId(), bean);
+    }
+
+    for (LiveTemplateContextProvider provider : LiveTemplateContextProvider.EP_NAME.getExtensionList()) {
+      for (LiveTemplateContext contextType : provider.createContexts()) {
+        allIdsMap.put(contextType.getContextId(), contextType);
+      }
+    }
+
+    this.myLiveTemplateIds = allIdsMap;
+    this.myLiveTemplateClasses.clear();
+
+    this.myInternalIds = allIdsMap.values().stream()
+      .map(LiveTemplateContext::getContextId)
+      .distinct()
+      .collect(Collectors.toMap(Function.identity(), Function.identity()));
   }
 
   public @NotNull LiveTemplateContextsSnapshot getSnapshot() {
