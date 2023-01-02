@@ -154,5 +154,9 @@ public abstract class StubIndex {
    */
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  abstract public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull StubFileElementType<?> fileElementType);
+  public abstract @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull StubFileElementType<?> fileElementType);
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public abstract @NotNull ModificationTracker getStubIndexModificationTracker(@NotNull Project project);
 }

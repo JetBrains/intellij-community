@@ -417,6 +417,11 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   @Override
+  public @NotNull ModificationTracker getStubIndexModificationTracker(@NotNull Project project) {
+    return () -> FileBasedIndex.getInstance().getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project);
+  }
+
+  @Override
   public @NotNull FileUpdateProcessor getPerFileElementTypeModificationTrackerUpdateProcessor() {
     return myPerFileElementTypeStubModificationTracker;
   }
