@@ -153,7 +153,9 @@ public class MavenProjectImportContextProvider {
                                                        String moduleName,
                                                        Map<String, Module> legacyModuleByName,
                                                        MavenProjectChanges changes) {
-    MavenJavaVersionHolder javaVersions = getMavenJavaVersions(project);
+    MavenJavaVersionHolder setUpJavaVersions = getMavenJavaVersions(project);
+    MavenJavaVersionHolder javaVersions = adjustJavaVersions(setUpJavaVersions);
+
     StandardMavenModuleType type = getModuleType(project, javaVersions);
 
     ModuleData moduleData = getModuleData(project, moduleName, type, javaVersions, legacyModuleByName);
@@ -168,6 +170,15 @@ public class MavenProjectImportContextProvider {
 
     SplittedMainAndTestModules mainAndTestModules = new SplittedMainAndTestModules(mainData, testData);
     return new MavenProjectImportData(project, moduleData, changes, mainAndTestModules);
+  }
+
+  private MavenJavaVersionHolder adjustJavaVersions(MavenJavaVersionHolder holder) {
+    return new MavenJavaVersionHolder(
+      holder.sourceLevel == null ? null : adjustLevelAndNotify(myProject, holder.sourceLevel),
+      holder.targetLevel == null ? null : adjustLevelAndNotify(myProject, holder.targetLevel),
+      holder.testSourceLevel == null ? null : adjustLevelAndNotify(myProject, holder.testSourceLevel),
+      holder.testTargetLevel == null ? null : adjustLevelAndNotify(myProject, holder.testTargetLevel)
+    );
   }
 
   private static StandardMavenModuleType getModuleType(MavenProject project, MavenJavaVersionHolder mavenJavaVersions) {

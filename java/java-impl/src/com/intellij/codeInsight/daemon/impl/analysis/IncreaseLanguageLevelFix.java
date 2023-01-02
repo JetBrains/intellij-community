@@ -87,17 +87,17 @@ public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix,
     LanguageLevel oldLevel = LanguageLevelUtil.getCustomLanguageLevel(module);
     VirtualFile vFile = file.getVirtualFile();
     WriteCommandAction.runWriteCommandAction(project, getText(), null, () -> {
-      JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, myLevel);
+      JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, myLevel, true);
       if (oldLevel != null) {
         UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
           @Override
           public void undo() {
-            JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, oldLevel);
+            JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, oldLevel, true);
           }
 
           @Override
           public void redo() {
-            JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, myLevel);
+            JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, myLevel, true);
           }
         });
       }

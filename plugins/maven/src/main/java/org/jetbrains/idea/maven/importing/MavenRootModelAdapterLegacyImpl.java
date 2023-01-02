@@ -525,6 +525,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   @Override
   public void setLanguageLevel(LanguageLevel level) {
     try {
+      level = MavenImportUtil.adjustLevelAndNotify(myRootModel.getProject(), level);
       myRootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level);
     }
     catch (IllegalArgumentException e) {
