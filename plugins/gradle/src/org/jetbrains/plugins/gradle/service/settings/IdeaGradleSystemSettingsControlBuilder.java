@@ -49,50 +49,42 @@ import static org.jetbrains.plugins.gradle.service.settings.IdeaGradleProjectSet
  */
 public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSettingsControlBuilder {
 
-  @NotNull
-  private final GradleSettings myInitialSettings;
+  private final @NotNull GradleSettings myInitialSettings;
 
-  // Used by reflection at showUi() and disposeUiResources()
-  @SuppressWarnings("FieldCanBeLocal")
-  @Nullable
-  private JBLabel myServiceDirectoryLabel;
-  private JBLabel myServiceDirectoryHint;
-  @Nullable
-  private TargetPathFieldWithBrowseButton myServiceDirectoryPathField;
-
-  @Nullable
-  private JBTextField myGradleVmOptionsField;
-  List<Component> myGradleVmOptionsComponents = new ArrayList<>();
   private boolean dropVmOptions;
-
-  @Nullable
-  private JBCheckBox myGenerateImlFilesCheckBox;
-  private JBLabel myGenerateImlFilesHint;
   private boolean dropStoreExternallyCheckBox;
+
+  @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
+  private @Nullable JBLabel myServiceDirectoryLabel;
+  @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
+  private @Nullable JBLabel myServiceDirectoryHint;
+  private @Nullable TargetPathFieldWithBrowseButton myServiceDirectoryPathField;
+  private @Nullable JBTextField myGradleVmOptionsField;
+  @SuppressWarnings({"FieldCanBeLocal", "FieldMayBeFinal"}) // Used by reflection at showUi() and disposeUiResources()
+  private @NotNull List<Component> myGradleVmOptionsComponents = new ArrayList<>();
+  private @Nullable JBCheckBox myGenerateImlFilesCheckBox;
+  @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
+  private @Nullable JBLabel myGenerateImlFilesHint;
 
   public IdeaGradleSystemSettingsControlBuilder(@NotNull GradleSettings initialSettings) {
     myInitialSettings = initialSettings;
+  }
+
+  public IdeaGradleSystemSettingsControlBuilder dropStoreExternallyCheckBox() {
+    dropStoreExternallyCheckBox = true;
+    return this;
+  }
+
+  public IdeaGradleSystemSettingsControlBuilder dropVmOptions() {
+    dropVmOptions = true;
+    return this;
   }
 
   @Override
   public void fillUi(@NotNull PaintAwarePanel canvas, int indentLevel) {
     addServiceDirectoryControl(canvas, indentLevel);
     addVMOptionsControl(canvas, indentLevel);
-
-    if (!dropStoreExternallyCheckBox) {
-      myGenerateImlFilesCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.generate.iml.files"));
-      canvas.add(myGenerateImlFilesCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
-
-      myGenerateImlFilesHint = new JBLabel(
-        XmlStringUtil.wrapInHtml(GradleBundle.message("gradle.settings.text.generate.iml.files.hint", getIDEName())),
-        UIUtil.ComponentStyle.SMALL);
-      myGenerateImlFilesHint.setForeground(UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER));
-
-      GridBag constraints = ExternalSystemUiUtil.getFillLineConstraints(indentLevel);
-      constraints.insets.left += UIUtil.getCheckBoxTextHorizontalOffset(myGenerateImlFilesCheckBox);
-      constraints.insets.top = 0;
-      canvas.add(myGenerateImlFilesHint, constraints);
-    }
+    addStoreExternallyCheckBox(canvas, indentLevel);
   }
 
   @Override
@@ -173,17 +165,6 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     return myInitialSettings;
   }
 
-  public IdeaGradleSystemSettingsControlBuilder dropStoreExternallyCheckBox() {
-    dropStoreExternallyCheckBox = true;
-    return this;
-  }
-
-  public IdeaGradleSystemSettingsControlBuilder dropVmOptions() {
-    dropVmOptions = true;
-    return this;
-  }
-
-
   private void addServiceDirectoryControl(PaintAwarePanel canvas, int indentLevel) {
     myServiceDirectoryLabel = new JBLabel(GradleBundle.message("gradle.settings.text.user.home"));
     myServiceDirectoryHint = new JBLabel(XmlStringUtil.wrapInHtml(GradleBundle.message("gradle.settings.text.user.home.hint")),
@@ -251,6 +232,23 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
           }
         }
       });
+    }
+  }
+
+  private void addStoreExternallyCheckBox(@NotNull PaintAwarePanel canvas, int indentLevel) {
+    if (!dropStoreExternallyCheckBox) {
+      myGenerateImlFilesCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.generate.iml.files"));
+      canvas.add(myGenerateImlFilesCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+
+      myGenerateImlFilesHint = new JBLabel(
+        XmlStringUtil.wrapInHtml(GradleBundle.message("gradle.settings.text.generate.iml.files.hint", getIDEName())),
+        UIUtil.ComponentStyle.SMALL);
+      myGenerateImlFilesHint.setForeground(UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER));
+
+      GridBag constraints = ExternalSystemUiUtil.getFillLineConstraints(indentLevel);
+      constraints.insets.left += UIUtil.getCheckBoxTextHorizontalOffset(myGenerateImlFilesCheckBox);
+      constraints.insets.top = 0;
+      canvas.add(myGenerateImlFilesHint, constraints);
     }
   }
 
