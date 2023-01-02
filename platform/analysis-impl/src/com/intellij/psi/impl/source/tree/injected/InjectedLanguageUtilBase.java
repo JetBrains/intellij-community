@@ -228,6 +228,15 @@ public class InjectedLanguageUtilBase {
                                       @NotNull PsiFile hostPsiFile,
                                       boolean probeUp,
                                       @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
+    ReadActionCache.getInstance().allowInWriteAction(
+      () -> probeElementsUpInner(element, hostPsiFile, probeUp, visitor)
+    );
+  }
+
+  private static void probeElementsUpInner(@NotNull PsiElement element,
+                                           @NotNull PsiFile hostPsiFile,
+                                           boolean probeUp,
+                                           @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     element = skipNonInjectablePsi(element, probeUp);
     if (element == null) return;
 

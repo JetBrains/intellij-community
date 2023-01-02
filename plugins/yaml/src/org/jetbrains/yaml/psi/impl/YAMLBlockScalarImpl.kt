@@ -6,9 +6,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.*
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.splitLineRanges
@@ -53,21 +51,14 @@ abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node) {
       }, PsiModificationTracker.MODIFICATION_COUNT)
   })
 
-  private val cachedValuesManager: CachedValuesManager? = if (super.isValid()) CachedValuesManager.getManager(project) else null
+  // it is a memory optimisation
+  private val textCache: ReadActionCachedValue<String> = ReadActionCachedValue { super.getText() }
+  
+  override fun getText(): String = textCache.getCachedOrEvaluate()
 
-  override fun getText(): String {
-    // it is a memory optimisation
-    return cachedValuesManager?.getCachedValue(this, CachedValueProvider {
-      CachedValueProvider.Result.create(super.getText(), PsiModificationTracker.MODIFICATION_COUNT)
-    }) ?: super.getText()
-  }
-
-  override fun isValid(): Boolean {
-    // mb read-action-context-cache?
-    return cachedValuesManager?.getCachedValue(this, CachedValueProvider {
-      CachedValueProvider.Result.create(super.isValid(), PsiModificationTracker.MODIFICATION_COUNT)
-    }) ?: super.isValid()
-  }
+  private val validCache: ReadActionCachedValue<Boolean> = ReadActionCachedValue { super.isValid() }
+  
+  override fun isValid(): Boolean = validCache.getCachedOrEvaluate()
 
   protected open val includeFirstLineInContent: Boolean get() = false
 

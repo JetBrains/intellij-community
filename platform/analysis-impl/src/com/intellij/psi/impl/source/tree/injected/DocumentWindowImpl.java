@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.util.ReadActionCache;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -872,18 +873,21 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     synchronized (myLock) {
       shreds = myShreds; // assumption: myShreds list is immutable
     }
-    // can grab PsiLock in SmartPsiPointer.restore()
-    // will check the 0th element manually (to avoid getting .getHost() twice)
-    for (int i = 1; i < shreds.size(); i++) {
-      PsiLanguageInjectionHost.Shred shred = shreds.get(i);
-      if (!shred.isValid()) return false;
-    }
+    return ReadActionCache.getInstance().allowInWriteAction(
+      () -> {
+        // can grab PsiLock in SmartPsiPointer.restore()
+        // will check the 0th element manually (to avoid getting .getHost() twice)
+        for (int i = 1; i < shreds.size(); i++) {
+          PsiLanguageInjectionHost.Shred shred = shreds.get(i);
+          if (!shred.isValid()) return false;
+        }
 
-    PsiLanguageInjectionHost.Shred firstShred = shreds.get(0);
-    PsiLanguageInjectionHost host = firstShred.getHost();
-    if (host == null || firstShred.getHostRangeMarker() == null) return false;
-    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(this);
-    return virtualFile != null && ((PsiManagerEx)host.getManager()).getFileManager().findCachedViewProvider(virtualFile) != null;
+        PsiLanguageInjectionHost.Shred firstShred = shreds.get(0);
+        PsiLanguageInjectionHost host = firstShred.getHost();
+        if (host == null || firstShred.getHostRangeMarker() == null) return false;
+        VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(this);
+        return virtualFile != null && ((PsiManagerEx)host.getManager()).getFileManager().findCachedViewProvider(virtualFile) != null;
+      });
   }
 
   @Override

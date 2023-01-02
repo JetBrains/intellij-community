@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.cancelActionsToBeCancelledBeforeWrite;
 
@@ -63,6 +65,8 @@ final class ReadMostlyRWLock {
     Reader(@NotNull Thread readerThread) {
       thread = readerThread;
     }
+    
+    private ProcessingContext processingContext;
 
     @Override
     @NonNls
@@ -152,8 +156,10 @@ final class ReadMostlyRWLock {
     // If implicit read lock is disabled, don't check for write thread, check for true read lock
     if (allowImplicitRead)
       checkReadThreadAccess();
-    if (status != null)
+    if (status != null) {
       status.readRequested = false;
+      status.processingContext = null;
+    }
     if (writeRequested) {
       LockSupport.unpark(writeThread);  // parked by writeLock()
     }
@@ -184,6 +190,33 @@ final class ReadMostlyRWLock {
 
   boolean isInImpatientReader() {
     return R.get().impatientReads;
+  }
+
+
+  ProcessingContext getProcessingContext() {
+    if (Thread.currentThread() == writeThread) return writeActionProcessingContext;
+    Reader reader = R.get();
+    if (!reader.readRequested) return null;
+    ProcessingContext context = reader.processingContext;
+    if (context == null) {
+      context = reader.processingContext = new ProcessingContext();
+    }
+    return context;
+  }
+
+  private ProcessingContext writeActionProcessingContext = null;
+
+  <T> T allowProcessingContextInWriteAction(Supplier<T> supplier) {
+    if (Thread.currentThread() != writeThread || writeActionProcessingContext != null) {
+      return supplier.get();
+    }
+    try {
+      writeActionProcessingContext = new ProcessingContext();
+      return supplier.get();
+    }
+    finally {
+      writeActionProcessingContext = null;
+    }
   }
 
   /**
