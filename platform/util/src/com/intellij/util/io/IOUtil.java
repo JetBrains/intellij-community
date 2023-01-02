@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,11 +11,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
 import java.io.DataOutputStream;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -24,8 +25,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.IntFunction;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public final class IOUtil {
   public static final int KiB = 1024;
@@ -234,9 +233,13 @@ public final class IOUtil {
       return true;
     }
 
-    List<Path> files;
-    try (Stream<Path> stream = Files.list(parentFile)) {
-      files = stream.filter(it -> it.getFileName().toString().startsWith(baseName)).collect(Collectors.toList());
+    List<Path> files = new ArrayList<>();
+    try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(parentFile)) {
+      for (Path path : directoryStream) {
+        if (path.getFileName().toString().startsWith(baseName)) {
+          files.add(path);
+        }
+      }
     }
     catch (NoSuchFileException ignore) {
       return true;
