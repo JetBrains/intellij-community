@@ -749,21 +749,23 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       MyNode node = extractNode(value);
       if (node == null) return Collections.emptyList();
 
-      Configurable configurable = ConfigurableWrapper.cast(Configurable.class, node.myConfigurable);
+      Configurable wrapper = node.myConfigurable;
+      UnnamedConfigurable configurable = ConfigurableWrapper.cast(UnnamedConfigurable.class, wrapper);
       if (configurable == null) return Collections.emptyList();
 
       List<PropertyBean> result = new ArrayList<>();
       result.add(new PropertyBean("Configurable class", UiInspectorUtil.getClassName(configurable), true));
-      if (configurable instanceof SearchableConfigurable searchableConfigurable) {
+
+      if (wrapper instanceof SearchableConfigurable searchableConfigurable) {
         result.add(new PropertyBean("Configurable ID", searchableConfigurable.getId(), true));
-        result.add(new PropertyBean("Configurable HelpTopic", configurable.getHelpTopic()));
       }
-      if (node.myConfigurable instanceof Weighted weightedConfigurable &&
-          weightedConfigurable.getWeight() != 0) {
+      if (wrapper.getHelpTopic() != null) {
+        result.add(new PropertyBean("Configurable HelpTopic", wrapper.getHelpTopic()));
+      }
+      if (wrapper instanceof Weighted weightedConfigurable && weightedConfigurable.getWeight() != 0) {
         result.add(new PropertyBean("Configurable Weight", weightedConfigurable.getWeight(), true));
       }
-      if (node.myConfigurable instanceof ConfigurableMarkerProvider markerProvider &&
-          markerProvider.getMarkerText() != null) {
+      if (wrapper instanceof ConfigurableMarkerProvider markerProvider && markerProvider.getMarkerText() != null) {
         result.add(new PropertyBean("Configurable Marker", markerProvider.getMarkerText(), true));
       }
 
