@@ -25,14 +25,11 @@ internal class AgentTestLogger(logger: Logger, private val factory: AgentTestLog
       ?: emptyList()
 
     val rdtseMessage: String =
-      when {
-        message != null && message == t?.message -> message
-
-        t?.message != null && message != null ->
-          listOfNotNull(message, t.message).joinToString(": ")
-
+      when (message) {
+        t?.message ->
+          message ?: "There was an error of type ${t?.javaClass?.name}"
         else ->
-          "There was an error of type ${t?.javaClass?.name}"
+          listOfNotNull(message, t?.message).joinToString(": ")
       }
 
     val rdtseType = t?.javaClass?.typeName ?: "<LOG_ERROR>"
