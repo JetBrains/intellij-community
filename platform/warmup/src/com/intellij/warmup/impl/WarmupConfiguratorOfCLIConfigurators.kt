@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.impl
 
 import com.intellij.ide.CommandLineInspectionProgressReporter
@@ -11,18 +11,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.warmup.util.ConsoleLog
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.function.Predicate
 import kotlin.coroutines.coroutineContext
 
 /**
  * This class is a temporary bridge between old [CommandLineInspectionProjectConfigurator] and new [WarmupConfigurator].
- * Please don't use it if you want to configure warmup.
  */
-@ApiStatus.Internal
-@ApiStatus.Obsolete
-class WarmupConfiguratorOfCLIConfigurator(val delegate: CommandLineInspectionProjectConfigurator) : WarmupConfigurator {
+internal class WarmupConfiguratorOfCLIConfigurator(val delegate: CommandLineInspectionProjectConfigurator) : WarmupConfigurator {
 
   override suspend fun prepareEnvironment(projectPath: Path) =
     withRawProgressReporter {
