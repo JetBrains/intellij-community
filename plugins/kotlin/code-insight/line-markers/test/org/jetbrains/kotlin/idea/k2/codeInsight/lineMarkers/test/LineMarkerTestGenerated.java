@@ -188,6 +188,11 @@ public abstract class LineMarkerTestGenerated extends AbstractLineMarkerTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement")
     public static class OverrideImplement extends AbstractLineMarkerTest {
+        @TestMetadata("AbstractClass.kt")
+        public void testAbstractClass() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("BadCodeNoExceptions.kt")
         public void testBadCodeNoExceptions() throws Exception {
             performTest();

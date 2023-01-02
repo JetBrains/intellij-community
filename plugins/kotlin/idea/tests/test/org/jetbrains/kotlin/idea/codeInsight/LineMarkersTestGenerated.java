@@ -52,6 +52,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("AbstractClass.kt")
+        public void testAbstractClass() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/AbstractClass.kt");
+        }
+
         @TestMetadata("BadCodeNoExceptions.kt")
         public void testBadCodeNoExceptions() throws Exception {
             runTest("testData/codeInsight/lineMarker/overrideImplement/BadCodeNoExceptions.kt");
