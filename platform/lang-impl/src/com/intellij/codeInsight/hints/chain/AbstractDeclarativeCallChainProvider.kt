@@ -66,10 +66,6 @@ abstract class AbstractDeclarativeCallChainProvider<DotQualifiedExpression : Psi
     }
   }
 
-  override fun createCollectorForPreview(file: PsiFile, editor: Editor): InlayHintsCollector {
-    return Collector(file)
-  }
-
   protected abstract fun ExpressionType.buildTree(
     expression: PsiElement,
     project: Project,

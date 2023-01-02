@@ -48,6 +48,8 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
    *
    * Should not make any visible changes (run in nonBlockingReadAction)
    *
+   * Must not access index! You must expect the default project inside.
+   *
    * @return continuation which is run in EDT
    */
   open fun collectData(editor: Editor, file: PsiFile) : Runnable {

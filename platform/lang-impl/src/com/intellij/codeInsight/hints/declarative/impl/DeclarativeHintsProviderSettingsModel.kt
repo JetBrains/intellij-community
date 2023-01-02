@@ -2,13 +2,17 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.codeInsight.hints.InlayDumpUtil
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.lang.Language
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -19,6 +23,12 @@ class DeclarativeHintsProviderSettingsModel(
   language: Language,
   private val project: Project
 ) : InlayProviderSettingsModel(isEnabled, providerDescription.requiredProviderId(), language) {
+  companion object {
+    private val PREVIEW_ENTRIES : Key<List<Pair<Int, String>>> = Key.create("declarative.inlays.preview.entries")
+  }
+
+  val provider: InlayHintsProvider
+    get() = providerDescription.instance
   private val settings = DeclarativeInlayHintsSettings.getInstance(project)
   @Suppress("UNCHECKED_CAST")
   private val customSettingsProvider: InlayHintsCustomSettingsProvider<Any?> = (InlayHintsCustomSettingsProvider.getCustomSettingsProvider(id, language) ?: DefaultSettingsProvider()) as InlayHintsCustomSettingsProvider<Any?>
@@ -57,7 +67,21 @@ class DeclarativeHintsProviderSettingsModel(
     get() = providerDescription.getDescription()
 
   override val previewText: String?
-    get() = DeclarativeHintsPreviewProvider.getPreview(language, id, providerDescription.instance)
+    get() {
+      val previewTextWithInlayPlaceholders = DeclarativeHintsPreviewProvider.getPreview(language, id, providerDescription.instance)
+      if (previewTextWithInlayPlaceholders == null) return null
+      return InlayDumpUtil.removeHints(previewTextWithInlayPlaceholders)
+    }
+
+  override fun createFile(project: Project, fileType: FileType, document: Document): PsiFile {
+    val file = super.createFile(project, fileType, document)
+    val previewTextWithInlayPlaceholders = DeclarativeHintsPreviewProvider.getPreview(language, id, providerDescription.instance)
+    if (previewTextWithInlayPlaceholders != null) {
+      val inlayEntries: List<Pair<Int, String>> = InlayDumpUtil.extractEntries(previewTextWithInlayPlaceholders)
+      file.putUserData(PREVIEW_ENTRIES, inlayEntries)
+    }
+    return file
+  }
 
   override fun getCasePreview(case: ImmediateConfigurable.Case?): String? {
     if (case == null) return previewText
@@ -68,6 +92,34 @@ class DeclarativeHintsProviderSettingsModel(
 
   override fun collectData(editor: Editor, file: PsiFile): Runnable {
     val providerId = providerDescription.requiredProviderId()
+
+    val enabledOptions = providerDescription.options.associateBy(keySelector = { it.requireOptionId() },
+                                                                 valueTransform = { true }) // we enable all the options
+    val previewEntries = file.getUserData(PREVIEW_ENTRIES) ?: emptyList()
+
+    val pass = DeclarativeInlayHintsPass(file, editor, listOf(InlayProviderPassInfo(object : InlayHintsProvider {
+      override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector {
+        return object: OwnBypassCollector {
+          override fun collectHintsForFile(file: PsiFile, sink: InlayTreeSink) {
+            for ((offset, content) in previewEntries) {
+              sink.addPresentation(InlineInlayPosition(offset, true), hasBackground = true) {
+                text(content)
+              }
+            }
+          }
+        }
+      }
+    }, providerId, enabledOptions)), false, !isEnabled)
+
+    pass.doCollectInformation(EmptyProgressIndicator())
+    return Runnable {
+      pass.doApplyInformationToEditor()
+    }
+  }
+
+  fun collectDataDirectly(editor: Editor, file: PsiFile): Runnable {
+    val providerId = providerDescription.requiredProviderId()
+
     val provider = providerDescription.instance
 
     val enabledOptions = providerDescription.options.associateBy(keySelector = { it.requireOptionId() },

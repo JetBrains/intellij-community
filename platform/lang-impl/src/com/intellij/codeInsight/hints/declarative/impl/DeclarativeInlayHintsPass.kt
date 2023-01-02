@@ -135,10 +135,6 @@ class DeclarativeInlayHintsPass(
   }
 
   private fun createCollector(provider: InlayHintsProvider): InlayHintsCollector? {
-    return if (isPreview) {
-      provider.createCollectorForPreview(myFile, editor)
-    } else {
-      provider.createCollector(myFile, editor)
-    }
+    return provider.createCollector(myFile, editor)
   }
 }
