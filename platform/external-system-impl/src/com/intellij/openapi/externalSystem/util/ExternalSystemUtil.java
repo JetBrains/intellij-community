@@ -290,7 +290,8 @@ public final class ExternalSystemUtil {
     ExternalProjectRefreshCallback callback = importSpec.getCallback();
     boolean isPreviewMode = importSpec.isPreviewMode();
     ProgressExecutionMode progressExecutionMode = importSpec.getProgressExecutionMode();
-    boolean reportRefreshError = importSpec.isReportRefreshError();
+    boolean isActivateBuildToolWindowOnStart = importSpec.isActivateBuildToolWindowOnStart();
+    boolean isActivateBuildToolWindowOnFailure = importSpec.isActivateBuildToolWindowOnFailure();
     ThreeState isNavigateToError = importSpec.isNavigateToError();
 
     File projectFile = new File(externalProjectPath);
@@ -427,14 +428,14 @@ public final class ExternalSystemUtil {
                 .withRestartAction(rerunImportAction)
                 .withContentDescriptor(() -> {
                   if (consoleView == null) return null;
-                  boolean activateToolWindow = isNewProject(project);
-                  BuildContentDescriptor contentDescriptor =
-                    new BuildContentDescriptor(consoleView, processHandler, consoleView.getComponent(),
-                                               ExternalSystemBundle.message("build.event.title.sync"));
-                  contentDescriptor.setActivateToolWindowWhenAdded(activateToolWindow);
-                  contentDescriptor.setActivateToolWindowWhenFailed(reportRefreshError);
+                  BuildContentDescriptor contentDescriptor = new BuildContentDescriptor(
+                    consoleView, processHandler, consoleView.getComponent(),
+                    ExternalSystemBundle.message("build.event.title.sync")
+                  );
+                  contentDescriptor.setActivateToolWindowWhenAdded(isActivateBuildToolWindowOnStart);
+                  contentDescriptor.setActivateToolWindowWhenFailed(isActivateBuildToolWindowOnFailure);
                   contentDescriptor.setNavigateToError(isNavigateToError);
-                  contentDescriptor.setAutoFocusContent(reportRefreshError);
+                  contentDescriptor.setAutoFocusContent(isActivateBuildToolWindowOnFailure);
                   return contentDescriptor;
                 })
                 .withActions(consoleManager.getCustomActions(project, resolveProjectTask, null))

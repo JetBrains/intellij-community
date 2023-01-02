@@ -35,7 +35,8 @@ public class ImportSpecImpl implements ImportSpec {
   @Nullable private ExternalProjectRefreshCallback myCallback;
   private boolean isPreviewMode;
   private boolean createDirectoriesForEmptyContentRoots;
-  private boolean isReportRefreshError;
+  private boolean isActivateBuildToolWindowOnStart;
+  private boolean isActivateBuildToolWindowOnFailure;
   @NotNull private ThreeState myNavigateToError = ThreeState.UNSURE;
   @Nullable private String myVmOptions;
   @Nullable private String myArguments;
@@ -99,12 +100,21 @@ public class ImportSpecImpl implements ImportSpec {
   }
 
   @Override
-  public boolean isReportRefreshError() {
-    return isReportRefreshError;
+  public boolean isActivateBuildToolWindowOnStart() {
+    return isActivateBuildToolWindowOnStart;
   }
 
-  public void setReportRefreshError(boolean isReportRefreshError) {
-    this.isReportRefreshError = isReportRefreshError;
+  public void setActivateBuildToolWindowOnStart(boolean isActivate) {
+    isActivateBuildToolWindowOnStart = isActivate;
+  }
+
+  @Override
+  public boolean isActivateBuildToolWindowOnFailure() {
+    return isActivateBuildToolWindowOnFailure;
+  }
+
+  public void setActivateBuildToolWindowOnFailure(boolean isActivate) {
+    isActivateBuildToolWindowOnFailure = isActivate;
   }
 
   @Override
