@@ -31,7 +31,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.GridBag;
@@ -64,6 +63,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil.INSETS;
 import static com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil.createUniqueSdkName;
@@ -816,7 +816,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     }
     int count = result.getComponentCount();
 
-    configuration.consume(result);
+    configuration.accept(result);
 
     if (result.getComponentCount() > count) {
       content.add(result, ExternalSystemUiUtil.getFillLineConstraints(0).insets(0, 0, 0, 0));
