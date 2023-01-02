@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.LanguageParserDefinitions;
@@ -17,12 +17,14 @@ import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataEnumeratorEx;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.InMemoryDataEnumerator;
+import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataOutputStream;
 import java.io.*;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -32,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static com.intellij.util.io.PersistentHashMapValueStorage.*;
+import static com.intellij.util.io.PersistentHashMapValueStorage.CreationTimeOptions;
 import static java.util.Comparator.comparing;
 
 // todo rewrite: it's an app service for now but its lifecycle should be synchronized with stub index.
@@ -138,7 +140,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
         catch (Exception ignored) {}
       }
       if (myOpenFile != null) {
-        IOUtil.deleteAllFilesStartingWith(myOpenFile.toFile());
+        IOUtil.deleteAllFilesStartingWith(myOpenFile);
       }
       doInitialize();
     }

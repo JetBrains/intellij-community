@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -357,7 +357,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     }
     catch (IOException ignored) {
     }
-    IOUtil.deleteAllFilesStartingWith(baseFile.toFile());
+    IOUtil.deleteAllFilesStartingWith(baseFile);
     try {
       if (myWal != null) {
         myWal.closeAndDelete();
@@ -400,7 +400,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   @NotNull
   private static Path checkDataFiles(@NotNull Path file) {
     if (!Files.exists(file)) {
-      IOUtil.deleteAllFilesStartingWith(getDataFile(file).toFile());
+      IOUtil.deleteAllFilesStartingWith(getDataFile(file));
     }
     return file;
   }
