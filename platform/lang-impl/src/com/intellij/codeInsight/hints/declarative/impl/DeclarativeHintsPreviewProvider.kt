@@ -35,7 +35,7 @@ object DeclarativeHintsPreviewProvider {
     return getPreviewOptionSearchPath(providerId, language, MAIN_PREVIEW_NAME)
   }
 
-  private fun getPreviewOptionSearchPath(
+  fun getPreviewOptionSearchPath(
     providerId: String,
     language: Language,
     optionId: String
