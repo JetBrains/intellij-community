@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
@@ -122,7 +123,14 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     }
 
     MySearchableOptionProcessor processor = new MySearchableOptionProcessor(stopWords);
-    EP_NAME.forEachExtensionSafe(contributor -> contributor.processOptions(processor));
+    try {
+      EP_NAME.forEachExtensionSafe(contributor -> contributor.processOptions(processor));
+    }
+    catch (ProcessCanceledException e) {
+      LOG.warn("=== Search storage init canceled ===");
+      isInitialized.set(false);
+      throw e;
+    }
 
     // index
     highlightOptionToSynonym = processor.computeHighlightOptionToSynonym();
@@ -229,26 +237,24 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     Set<Configurable> nameHits = new LinkedHashSet<>();
     Set<Configurable> nameFullHits = new LinkedHashSet<>();
 
-    for (Configurable each : effectiveConfigurables) {
-      if (each.getDisplayName() == null) {
-        continue;
-      }
-      final String displayName = Strings.toLowerCase(each.getDisplayName());
-      final List<String> allWords = StringUtil.getWordsIn(displayName);
-      if (displayName.contains(optionToCheck)) {
-        nameFullHits.add(each);
-        nameHits.add(each);
-      }
-      for (String eachWord : allWords) {
-        if (eachWord.startsWith(optionToCheck)) {
+    if (options.isEmpty()) {
+      for (Configurable each : effectiveConfigurables) {
+        if (each.getDisplayName() != null) {
           nameHits.add(each);
-          break;
+          nameFullHits.add(each);
         }
       }
-
-      if (options.isEmpty()) {
-        nameHits.add(each);
-        nameFullHits.add(each);
+    }
+    else {
+      for (Configurable each : effectiveConfigurables) {
+        if (each.getDisplayName() == null) {
+          continue;
+        }
+        final String displayName = Strings.toLowerCase(each.getDisplayName());
+        if (displayName.contains(optionToCheck)) {
+          nameFullHits.add(each);
+          nameHits.add(each);
+        }
       }
     }
 
