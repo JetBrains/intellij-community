@@ -1621,10 +1621,13 @@
                  description="Amount in milliseconds to wait for completion contributors till decide whether to insert the single item"
                  key="ide.completion.auto.insert.item.timeout"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryPropertyEntityIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ContentRootIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.CustomSourceRootPropertyIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.SourceRootIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ModuleDependencyEntitiesIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ModuleCustomImlDataFilesIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ModuleGroupPathIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.JavaSourceRootPropertiesIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.JavaResourceRootPropertiesIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.JavaModuleSettingsIndexableEntityProvider"/>

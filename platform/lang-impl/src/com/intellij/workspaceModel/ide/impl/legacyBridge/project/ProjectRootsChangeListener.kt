@@ -88,7 +88,6 @@ internal class ProjectRootsChangeListener(private val project: Project) {
         // Library changes should not fire any events if no modules depend on it
         is LibraryEntity -> hasDependencyOn(entity, project)
         is LibraryPropertiesEntity -> hasDependencyOn(entity.library, project)
-        is ModuleGroupPathEntity, is CustomSourceRootPropertiesEntity -> true
         is ExcludeUrlEntity -> {
           val library = entity.library
           val contentRoot = entity.contentRoot
