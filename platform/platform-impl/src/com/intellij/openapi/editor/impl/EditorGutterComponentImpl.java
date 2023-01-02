@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -387,7 +387,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
 
     // paint all backgrounds
-    int gutterSeparatorX = getWhitespaceSeparatorOffset();
+    int gutterSeparatorX = ExperimentalUI.isNewUI() ? (int)getExpUIVerticalLineX() : getWhitespaceSeparatorOffset();
     Color caretRowColor = getCaretRowColor();
     paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor, caretRowColor);
     paintBackground(g, clip, gutterSeparatorX, getFoldingAreaWidth(), myEditor.getBackgroundColor(), caretRowColor);
@@ -697,10 +697,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (myEditor.isInDistractionFreeMode() || !myPaintBackground) {
       return myEditor.getBackgroundColor();
     }
-    Color color = myEditor.getColorsScheme().getColor(EditorColors.GUTTER_BACKGROUND);
+
     if (ExperimentalUI.isNewUI()) {
-      color = myEditor.getBackgroundColor();
+      Color bg = myEditor.getColorsScheme().getColor(EditorColors.EDITOR_GUTTER_BACKGROUND);
+      return bg == null ? myEditor.getBackgroundColor() : bg;
     }
+
+    Color color = myEditor.getColorsScheme().getColor(EditorColors.GUTTER_BACKGROUND);
     return color != null ? color : EditorColors.GUTTER_BACKGROUND.getDefaultColor();
   }
 
