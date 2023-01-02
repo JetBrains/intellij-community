@@ -27,11 +27,13 @@ public final class PageCacheUtils {
    * Enables new (code-name 'lock-free') implementations for various VFS components.
    * So far they co-exist with the legacy implementations
    */
-  public static final boolean LOCK_FREE_VFS_ENABLED = getBooleanProperty("vfs.lock-free-impl.enable", true);
+  public static final boolean LOCK_FREE_VFS_ENABLED = getBooleanProperty("vfs.lock-free-impl.enable", false);
 
   /**
    * How much direct memory new (code name 'lock-free') FilePageCache impl allowed to utilize:
-   * fraction of total direct memory
+   * a fraction of total direct memory. I.e. if MAX_DIRECT_MEMORY_TO_USE_BYTES=100Mb, and
+   * NEW_PAGE_CACHE_MEMORY_FRACTION=0.1 => 10Mb will be allocated for new cache, and 90Mb for
+   * the old one.
    */
   public static final double NEW_PAGE_CACHE_MEMORY_FRACTION =
     getFloatProperty("vfs.lock-free-impl.fraction-direct-memory-to-utilize", 0.1f);
@@ -93,9 +95,14 @@ public final class PageCacheUtils {
   }
 
   private static long estimateTotalCacheCapacityLimit(final long maxDirectMemoryToUseBytes) {
-    //RC: basically, try to allocate cache of sys("idea.max.paged.storage.cache", default: defaultCacheCapacityMb) size,
-    //    but not less than minCacheCapacityMb,
-    //    and not more than maxDirectMemoryToUseBytes (strictly)
+    //RC: Basically, try to allocate cache of sys("idea.max.paged.storage.cache"),
+    //    with default 500Mb on 64bit, and 200Mb on 32bit platforms,
+    //    but not less than 100Mb, and not more than maxDirectMemoryToUseBytes (strictly)
+    //
+    //    Now, usually, maxDirectMemoryToUseBytes=2Gb, so if one does not overwrite
+    //    'idea.max.paged.storage.cache' then everything below simplified down to 'just 500Mb'
+    //    ('cos 32bit platforms are infrequent today)
+
 
     final int defaultCacheCapacityMb = CpuArch.is32Bit() ? 200 : 500;
 
