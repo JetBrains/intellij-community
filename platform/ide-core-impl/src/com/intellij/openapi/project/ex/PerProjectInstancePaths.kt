@@ -108,7 +108,8 @@ class PerProjectInstancePaths(private val projectStoreBaseDir: Path) {
     }
 
     private fun perProjectDirRelativePath(projectStoreBaseDir: Path): Path {
-      return Paths.get("/").relativize(projectStoreBaseDir)
+      val absolute = projectStoreBaseDir.toAbsolutePath()
+      return absolute.root.relativize(absolute)
     }
 
     private fun toBaseDir(perProjectDir: Path, projectStoreBaseDir: Path?): Path {
