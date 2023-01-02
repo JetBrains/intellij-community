@@ -1,10 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.junit5.impl
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.testFramework.SdkLeakTracker
-import com.intellij.testFramework.common.runAll
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
@@ -33,11 +36,12 @@ internal class TestApplicationLeakTrackerExtension : BeforeEachCallback, AfterEa
     val virtualFilePointerTracker = VirtualFilePointerTracker()
 
     fun checkNothingLeaked() {
-      runAll(
-        { sdkLeakTracker.checkForJdkTableLeaks() },
-        { libraryLeakTracker.assertDisposed() },
-        { virtualFilePointerTracker.assertPointersAreDisposed() },
-      )
+      @Suppress("RAW_RUN_BLOCKING")  // Control flow exceptions are not supposed to be called in AfterEachCallback, AfterAllCallback, etc.
+      runBlocking {
+        launch(Dispatchers.EDT) { sdkLeakTracker.checkForJdkTableLeaks() }
+        launch { libraryLeakTracker.assertDisposed() }
+        launch { virtualFilePointerTracker.assertPointersAreDisposed() }
+      }
     }
   }
 }
