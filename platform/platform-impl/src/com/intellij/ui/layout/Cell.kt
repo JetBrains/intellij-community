@@ -131,20 +131,6 @@ interface CellBuilder<out T : JComponent> {
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun applyIfEnabled(): CellBuilder<T>
 
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun accessibleName(@Nls name: String): CellBuilder<T> {
-    component.accessibleContext.accessibleName = name
-
-    return this
-  }
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun accessibleDescription(@Nls description: String): CellBuilder<T> {
-    component.accessibleContext.accessibleDescription = description
-
-    return this
-  }
-
   fun <V> withBinding(
     componentGet: (T) -> V,
     componentSet: (T, V) -> Unit,
@@ -181,37 +167,10 @@ interface CellBuilder<out T : JComponent> {
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun withLeftGap(): CellBuilder<T>
 
-  @Deprecated("Prefer not to use hardcoded values")
-  @ApiStatus.ScheduledForRemoval
-  fun withLeftGap(gapLeft: Int): CellBuilder<T>
-}
-
-@Deprecated("Use Kotlin UI DSL Version 2")
-internal interface CheckboxCellBuilder {
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun actsAsLabel()
-}
-
-@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-fun <T : JCheckBox> CellBuilder<T>.actsAsLabel(): CellBuilder<T> {
-  (this as CheckboxCellBuilder).actsAsLabel()
-  return this
 }
 
 fun <T : JComponent> CellBuilder<T>.applyToComponent(task: T.() -> Unit): CellBuilder<T> {
   return also { task(component) }
-}
-
-@Deprecated("Use Kotlin UI DSL Version 2")
-internal interface ScrollPaneCellBuilder {
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun noGrowY()
-}
-
-@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-fun <T : JScrollPane> CellBuilder<T>.noGrowY(): CellBuilder<T> {
-  (this as ScrollPaneCellBuilder).noGrowY()
-  return this
 }
 
 @Deprecated("Use Kotlin UI DSL Version 2")
@@ -286,13 +245,6 @@ abstract class Cell : BaseBuilder {
     return component(result)
   }
 
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun buttonFromAction(@Button text: String, @NonNls actionPlace: String, action: AnAction): CellBuilder<JButton> {
-    val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
-    button.addActionListener { ActionUtil.invokeAction(action, button, actionPlace, null, null) }
-    return component(button)
-  }
-
   fun button(@Button text: String, actionListener: (event: ActionEvent) -> Unit): CellBuilder<JButton> {
     val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
     button.addActionListener(actionListener)
@@ -335,24 +287,10 @@ abstract class Cell : BaseBuilder {
   }
 
   @Deprecated("Use Kotlin UI DSL Version 2")
-  fun checkBox(@Checkbox text: String,
-               property: GraphProperty<Boolean>,
-               @DetailedDescription comment: String? = null): CellBuilder<JBCheckBox> {
-    val component = JBCheckBox(text, property.get())
-    return component(comment = comment).withGraphProperty(property).applyToComponent { component.bind(property) }
-  }
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
   open fun radioButton(@RadioButton text: String, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text)
     component.putClientProperty(UNBOUND_RADIO_BUTTON, true)
     return component(comment = comment)
-  }
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  open fun radioButton(@RadioButton text: String, getter: () -> Boolean, setter: (Boolean) -> Unit, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
-    val component = JBRadioButton(text, getter())
-    return component(comment = comment).withSelectedBinding(PropertyBinding(getter, setter))
   }
 
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -419,28 +357,6 @@ abstract class Cell : BaseBuilder {
   }
 
   @Deprecated("Use Kotlin UI DSL Version 2")
-  fun textArea(prop: KMutableProperty0<String>, rows: Int? = null, columns: Int? = null): CellBuilder<JBTextArea> = textArea(prop.toBinding(), rows, columns)
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun textArea(getter: () -> String, setter: (String) -> Unit, rows: Int? = null, columns: Int? = null) = textArea(PropertyBinding(getter, setter), rows, columns)
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun textArea(binding: PropertyBinding<String>, rows: Int? = null, columns: Int? = null): CellBuilder<JBTextArea> {
-    return component(JBTextArea(binding.get(), rows ?: 0, columns ?: 0))
-      .withTextBinding(binding)
-  }
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun textArea(property: GraphProperty<String>, rows: Int? = null, columns: Int? = null): CellBuilder<JBTextArea> {
-    return textArea(property::get, property::set, rows, columns)
-      .withGraphProperty(property)
-      .applyToComponent { bind(property) }
-  }
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun scrollableTextArea(prop: KMutableProperty0<String>, rows: Int? = null): CellBuilder<JBTextArea> = scrollableTextArea(prop.toBinding(), rows)
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
   fun scrollableTextArea(getter: () -> String, setter: (String) -> Unit, rows: Int? = null) = scrollableTextArea(PropertyBinding(getter, setter), rows)
 
   private fun scrollableTextArea(binding: PropertyBinding<String>, rows: Int? = null): CellBuilder<JBTextArea> {
@@ -448,32 +364,6 @@ abstract class Cell : BaseBuilder {
     val scrollPane = JBScrollPane(textArea)
     return component(textArea, scrollPane)
       .withTextBinding(binding)
-  }
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun scrollableTextArea(property: GraphProperty<String>, rows: Int? = null): CellBuilder<JBTextArea> {
-    return scrollableTextArea(property::get, property::set, rows)
-      .withGraphProperty(property)
-      .applyToComponent { bind(property) }
-  }
-
-  @JvmOverloads
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
-    val binding = prop.toBinding()
-    return textField(
-      { binding.get().toString() },
-      { value -> value.toIntOrNull()?.let { intValue -> binding.set(range?.let { intValue.coerceIn(it.first, it.last) } ?: intValue) } },
-      columns
-    ).withValidationOnInput {
-      val value = it.text.toIntOrNull()
-      when {
-        value == null -> error(UIBundle.message("please.enter.a.number"))
-        range != null && value !in range -> error(UIBundle.message("please.enter.a.number.from.0.to.1", range.first, range.last))
-        else -> null
-      }
-    }
   }
 
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -520,18 +410,6 @@ abstract class Cell : BaseBuilder {
 
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun textFieldWithBrowseButton(
-    prop: KMutableProperty0<String>,
-    @DialogTitle browseDialogTitle: String? = null,
-    project: Project? = null,
-    fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
-    fileChosen: ((chosenFile: VirtualFile) -> String)? = null
-  ): CellBuilder<TextFieldWithBrowseButton> {
-    val modelBinding = prop.toBinding()
-    return textFieldWithBrowseButton(modelBinding, browseDialogTitle, project, fileChooserDescriptor, fileChosen)
-  }
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun textFieldWithBrowseButton(
     getter: () -> String,
     setter: (String) -> Unit,
     @DialogTitle browseDialogTitle: String? = null,
@@ -556,20 +434,6 @@ abstract class Cell : BaseBuilder {
     return component(textField)
       .constraints(growX)
       .withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, modelBinding)
-  }
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun textFieldWithBrowseButton(
-    property: GraphProperty<String>,
-    emptyTextProperty: GraphProperty<String>,
-    @DialogTitle browseDialogTitle: String? = null,
-    project: Project? = null,
-    fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
-    fileChosen: ((chosenFile: VirtualFile) -> String)? = null
-  ): CellBuilder<TextFieldWithBrowseButton> {
-    return textFieldWithBrowseButton(property, browseDialogTitle, project, fileChooserDescriptor, fileChosen)
-      .applyToComponent { emptyText.bind(emptyTextProperty) }
-      .applyToComponent { emptyText.text = emptyTextProperty.get() }
   }
 
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -615,47 +479,8 @@ abstract class Cell : BaseBuilder {
   }
 
   @Deprecated("Use Kotlin UI DSL Version 2")
-  fun expandableTextField(prop: KMutableProperty0<String>,
-                          parser: Function<in String, out MutableList<String>> = ParametersListUtil.DEFAULT_LINE_PARSER,
-                          joiner: Function<in MutableList<String>, String> = ParametersListUtil.DEFAULT_LINE_JOINER)
-    : CellBuilder<ExpandableTextField> {
-    return expandableTextField(prop::get, prop::set, parser, joiner)
-  }
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun expandableTextField(prop: GraphProperty<String>,
-                          parser: Function<in String, out MutableList<String>> = ParametersListUtil.DEFAULT_LINE_PARSER,
-                          joiner: Function<in MutableList<String>, String> = ParametersListUtil.DEFAULT_LINE_JOINER)
-    : CellBuilder<ExpandableTextField> {
-    return expandableTextField(prop::get, prop::set, parser, joiner)
-      .withGraphProperty(prop)
-      .applyToComponent { bind(prop) }
-  }
-
-  /**
-   * @see LayoutBuilder.titledRow
-   */
-  @JvmOverloads
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun panel(@BorderTitle title: String, wrappedComponent: Component, hasSeparator: Boolean = true): CellBuilder<JPanel> {
-    val panel = Panel(title, hasSeparator)
-    panel.add(wrappedComponent)
-    return component(panel)
-  }
-
   fun scrollPane(component: Component): CellBuilder<JScrollPane> {
     return component(JBScrollPane(component))
-  }
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun comment(@DetailedDescription text: String, maxLineLength: Int = -1): CellBuilder<JLabel> {
-    return component(ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength, true))
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun commentNoWrap(@DetailedDescription text: String): CellBuilder<JLabel> {
-    return component(ComponentPanelBuilder.createNonWrappingCommentComponent(text))
   }
 
   @ApiStatus.ScheduledForRemoval
@@ -670,6 +495,7 @@ abstract class Cell : BaseBuilder {
 
   abstract fun <T : JComponent> component(component: T): CellBuilder<T>
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   abstract fun <T : JComponent> component(component: T, viewComponent: JComponent): CellBuilder<T>
 
   operator fun <T : JComponent> T.invoke(

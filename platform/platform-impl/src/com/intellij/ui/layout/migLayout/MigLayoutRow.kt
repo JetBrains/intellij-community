@@ -560,7 +560,7 @@ private class CellBuilderImpl<T : JComponent>(
   private val row: MigLayoutRow,
   override val component: T,
   private val viewComponent: JComponent = component
-) : CellBuilder<T>, CheckboxCellBuilder, ScrollPaneCellBuilder {
+) : CellBuilder<T> {
   private var applyIfEnabled = false
   private var property: GraphProperty<*>? = null
 
@@ -634,19 +634,6 @@ private class CellBuilderImpl<T : JComponent>(
     return !(applyIfEnabled && !viewComponent.isEnabled)
   }
 
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  override fun actsAsLabel() {
-    builder.updateComponentConstraints(viewComponent) { spanX = 1 }
-  }
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  override fun noGrowY() {
-    builder.updateComponentConstraints(viewComponent) {
-      growY(0.0f)
-      pushY(0.0f)
-    }
-  }
-
   @Deprecated("Use Kotlin UI DSL Version 2, see Cell.widthGroup()")
   override fun sizeGroup(name: String): CellBuilderImpl<T> {
     builder.updateComponentConstraints(viewComponent) {
@@ -680,13 +667,6 @@ private class CellBuilderImpl<T : JComponent>(
   override fun withLeftGap(): CellBuilder<T> {
     builder.updateComponentConstraints(viewComponent) {
       horizontal.gapBefore = gapToBoundSize(builder.spacing.horizontalGap, true)
-    }
-    return this
-  }
-
-  override fun withLeftGap(gapLeft: Int): CellBuilder<T> {
-    builder.updateComponentConstraints(viewComponent) {
-      horizontal.gapBefore = gapToBoundSize(gapLeft, true)
     }
     return this
   }
