@@ -68,6 +68,19 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertOpenFiles("foo.xml", "3.txt");
   }
 
+  /**
+   * IDEA-309704 Files are closed if tabs exceed the limit
+   */
+  public void testTabLimit2() {
+    manager.closeAllFiles();
+    UISettings.getInstance().getState().setEditorTabLimit(3);
+    manager.openFile(getFile("/src/1.txt"), true);
+    manager.openFile(getFile("/src/2.txt"), true);
+    manager.openFile(getFile("/src/3.txt"), true);
+    manager.openFile(getFile("/src/foo.xml"), true);
+    assertOpenFiles("2.txt", "3.txt", "foo.xml");
+  }
+
   public void testTabLimitWithJupyterNotebooks() {
     manager.openFile(getFile("/src/test.ipynb"), true);
     manager.closeAllFiles();

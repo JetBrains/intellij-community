@@ -866,12 +866,19 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     }
 
     val limit = tabLimit
-    if (tabbedPane.tabCount <= limit || tabbedPane.tabCount == 0 || areAllTabsPinned(fileToIgnore)) {
+    fun isUnderLimit(): Boolean =
+      tabbedPane.tabCount <= limit || tabbedPane.tabCount == 0 || areAllTabsPinned(fileToIgnore)
+
+    if (isUnderLimit()) {
       return
     }
 
     val closingOrder = getTabClosingOrder(closeNonModifiedFilesFirst)
     for (file in closingOrder) {
+      if (isUnderLimit()) {
+        return
+      }
+
       if (file != alreadyClosedFile && fileCanBeClosed(file, fileToIgnore)) {
         defaultCloseFile(file, transferFocus)
       }
