@@ -14,6 +14,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.SortedConfigurableGroup;
+import com.intellij.openapi.options.ex.Weighted;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -757,6 +758,14 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         result.add(new PropertyBean("Configurable ID", searchableConfigurable.getId(), true));
         result.add(new PropertyBean("Configurable HelpTopic", configurable.getHelpTopic()));
       }
+      if (node.myConfigurable instanceof Weighted weightedConfigurable &&
+          weightedConfigurable.getWeight() != 0) {
+        result.add(new PropertyBean("Configurable Weight", weightedConfigurable.getWeight(), true));
+      }
+      if (node.myConfigurable instanceof ConfigurableMarkerProvider markerProvider &&
+          markerProvider.getMarkerText() != null) {
+        result.add(new PropertyBean("Configurable Marker", markerProvider.getMarkerText(), true));
+      }
 
       return result;
     }
@@ -957,7 +966,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       MyNode node = findNode(toSelect);
       if (node != null) {
         FilteringTreeStructure.FilteringNode filteringNode = myModel.getTreeStructure().getVisibleNodeFor(node);
-        myModel.select(filteringNode, myTree, treePath -> {});
+        myModel.select(filteringNode, myTree, treePath -> {
+        });
       }
     });
   }
