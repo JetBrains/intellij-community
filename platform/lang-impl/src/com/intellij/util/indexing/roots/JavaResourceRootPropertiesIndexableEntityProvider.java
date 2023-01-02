@@ -17,7 +17,7 @@ import java.util.Collections;
 import static com.intellij.util.indexing.roots.JavaSourceRootPropertiesIndexableEntityProvider.collectBuildersOnAddedEntityWithDataExtractor;
 import static com.intellij.util.indexing.roots.JavaSourceRootPropertiesIndexableEntityProvider.collectBuildersOnReplacedEntityWithDataExtractor;
 
-class JavaResourceRootPropertiesIndexableEntityProvider implements IndexableEntityProvider<JavaResourceRootPropertiesEntity> {
+class JavaResourceRootPropertiesIndexableEntityProvider implements IndexableEntityProvider.Enforced<JavaResourceRootPropertiesEntity> {
   @Override
   public @NotNull Class<JavaResourceRootPropertiesEntity> getEntityClass() {
     return JavaResourceRootPropertiesEntity.class;

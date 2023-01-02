@@ -3,6 +3,7 @@ package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.indexing.IndexableFilesIndex;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
@@ -136,5 +137,12 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
    * {@link com.intellij.util.indexing.roots.builders.IndexableIteratorBuilderHandler#instantiate(Collection, Project, EntityStorage)}
    */
   interface IndexableIteratorBuilder {
+  }
+
+  /**
+   * Marks providers that should be used to determine scope of reindexing on Workspace model changes even after switching to
+   * {@link com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor} ({@link IndexableFilesIndex#isEnabled()})
+   */
+  interface Enforced<E extends WorkspaceEntity> extends IndexableEntityProvider<E> {
   }
 }

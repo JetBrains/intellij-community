@@ -12,7 +12,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-class CustomSourceRootPropertyIndexableEntityProvider implements IndexableEntityProvider<CustomSourceRootPropertiesEntity> {
+class CustomSourceRootPropertyIndexableEntityProvider implements IndexableEntityProvider.Enforced<CustomSourceRootPropertiesEntity> {
 
   @Override
   public @NotNull Class<CustomSourceRootPropertiesEntity> getEntityClass() {

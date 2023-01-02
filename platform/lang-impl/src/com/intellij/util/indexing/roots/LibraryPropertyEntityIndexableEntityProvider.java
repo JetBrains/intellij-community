@@ -12,7 +12,7 @@ import java.util.*;
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-public class LibraryPropertyEntityIndexableEntityProvider implements IndexableEntityProvider<LibraryPropertiesEntity> {
+public class LibraryPropertyEntityIndexableEntityProvider implements IndexableEntityProvider.Enforced<LibraryPropertiesEntity> {
 
   @Override
   public @NotNull Class<LibraryPropertiesEntity> getEntityClass() {
