@@ -33,11 +33,6 @@ class KotlinBinaries(private val communityHome: BuildDependenciesCommunityRoot, 
     compilerHome
   }
 
-  private val kotlinJpsPlugin: Path by lazy {
-    val jpsPlugin = KotlinCompilerDependencyDownloader.downloadKotlinJpsPlugin(communityHome)
-    jpsPlugin
-  }
-
   suspend fun loadKotlinJpsPluginToClassPath() {
     val required = KotlinCompilerDependencyDownloader.getKotlinJpsPluginVersion(communityHome)
 
@@ -51,8 +46,9 @@ class KotlinBinaries(private val communityHome: BuildDependenciesCommunityRoot, 
       return
     }
 
-    messages.info("Loading Kotlin JPS plugin from $kotlinJpsPlugin")
-    AddToClasspathUtil.addToClassPathViaAgent(listOf(kotlinJpsPlugin))
+    val jpsPlugin = KotlinCompilerDependencyDownloader.downloadKotlinJpsPlugin(communityHome)
+    messages.info("Loading Kotlin JPS plugin from $jpsPlugin")
+    AddToClasspathUtil.addToClassPathViaAgent(listOf(jpsPlugin))
 
     val afterLoad = getCurrentKotlinJpsPluginVersionFromClassPath()
     check(afterLoad == required) {
