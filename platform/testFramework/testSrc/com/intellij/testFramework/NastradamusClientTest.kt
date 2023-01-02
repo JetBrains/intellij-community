@@ -11,16 +11,22 @@ import com.intellij.util.io.readText
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.*
+import org.junit.rules.Timeout
 import java.io.File
 import java.net.URI
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class NastradamusClientTest {
   init {
     Cache.eraseCache()
   }
+
+  @JvmField
+  @Rule
+  val timeoutRule = Timeout(30, TimeUnit.SECONDS)
 
   private val jacksonMapper = jacksonObjectMapper()
   private val tcMockServer = MockWebServer()
