@@ -193,10 +193,10 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
 
     fun testLanguageVersionsViaFacets() {
         val m1 = module("m1").setupKotlinFacet {
-            settings.languageLevel = LanguageVersion.KOTLIN_1_1
+            settings.languageLevel = LanguageVersion.KOTLIN_1_6
         }
         val m2 = module("m2").setupKotlinFacet {
-            settings.languageLevel = LanguageVersion.KOTLIN_1_0
+            settings.languageLevel = LanguageVersion.KOTLIN_1_7
         }
 
         m1.addDependency(m2)

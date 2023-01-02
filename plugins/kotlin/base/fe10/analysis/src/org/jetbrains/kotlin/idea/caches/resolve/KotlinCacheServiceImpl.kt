@@ -122,7 +122,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         val settings = PlatformAnalysisSettingsImpl(
             platform,
             moduleInfo.sdk(),
-            moduleInfo.supportsAdditionalBuiltInsMembers(project)
+            isAdditionalBuiltInFeaturesSupported = true
         )
 
         if (!canGetFacadeWithForcedPlatform(elements, files, moduleInfo, platform)) {
@@ -289,7 +289,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
 
     private fun IdeaModuleInfo.platformSettings(targetPlatform: TargetPlatform) = createPlatformAnalysisSettings(
         this@KotlinCacheServiceImpl.project, targetPlatform, sdk(),
-        supportsAdditionalBuiltInsMembers(this@KotlinCacheServiceImpl.project)
+        isAdditionalBuiltInFeaturesSupported = true
     )
 
     private fun facadeForModules(settings: PlatformAnalysisSettings) =
