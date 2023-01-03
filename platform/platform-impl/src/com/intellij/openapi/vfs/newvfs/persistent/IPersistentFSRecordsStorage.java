@@ -14,7 +14,7 @@ import java.io.IOException;
  */
 public interface IPersistentFSRecordsStorage extends Forceable, AutoCloseable {
 
-  public int recordsCount();
+  int recordsCount();
 
   /** Allows reader to read fields of the record[recordId], while holding appropriate locks */
   <R, E extends Throwable> R readRecord(final int recordId,
