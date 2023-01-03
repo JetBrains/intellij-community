@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports switch expressions and statements where every branch has a common subexpression, so the <code>switch</code> could be moved inside.
+Reports switch expressions and statements where every branch has a common subexpression, and the <code>switch</code> can be moved inside.
 This action shortens the code. In many cases, it's reasonable to extract the resulting switch expression to a separate variable or
 method.
 <p>Example:</p>
@@ -23,7 +23,7 @@ method.
 </code></pre>
 <!-- tooltip end -->
 <p>
-  This inspection is applicable only to enhanced switches with arrow syntax.
+  This inspection is applicable only for enhanced switches with arrow syntax.
 </p>
 <p><small>New in 2022.3</small></p>
 </body>
