@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.impl
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemProvider
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
@@ -13,11 +14,11 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.PsiUtilCore.getVirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import java.util.*
-import kotlin.collections.ArrayList
 
 
 /**
@@ -72,8 +73,10 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
   private fun originalParent(parent: PsiElement): PsiElement {
     val originalElement = parent.originalElement
     if (originalElement !is PsiCompiledElement || parent is PsiCompiledElement) {
+      ensurePsiFromExtensionIsValid("Original parent is invalid", originalElement)
       return originalElement
-    } else {
+    }
+    else {
       return parent
     }
   }
@@ -81,6 +84,7 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
   private fun adjustedParent(parent: PsiElement, ownerExtension: NavBarModelExtension?): PsiElement? {
     val originalParent = originalParent(parent)
     val adjustedByOwner = ownerExtension?.adjustElement(originalParent)
+    ensurePsiFromExtensionIsValid("Owner extension returned invalid psi after adjustment", adjustedByOwner, ownerExtension)
     val adjustedWithAll = adjustedByOwner ?: adjustWithAllExtensions(originalParent)
     return adjustedWithAll
   }
@@ -140,9 +144,11 @@ fun <T> fromOldExtensions(selector: (ext: NavBarModelExtension) -> T?, predicate
 }
 
 fun adjustWithAllExtensions(element: PsiElement?): PsiElement? {
+  ensurePsiFromExtensionIsValid("Invalid psi passed to be adjusted", element)
   var result = element
   for (ext in NavBarModelExtension.EP_NAME.extensionList) {
     result = result?.let { ext.adjustElement(it) }
+    ensurePsiFromExtensionIsValid("Invalid psi returned from ${ext::class.java} while adjusting", result, ext)
   }
   return null
 }
@@ -153,4 +159,21 @@ private fun additionalRoots(project: Project): Iterable<VirtualFile> {
     resultRoots.addAll(ext.additionalRoots(project))
   }
   return resultRoots
+}
+
+private fun ensurePsiFromExtensionIsValid(message: String, psi: PsiElement?, ext: NavBarModelExtension? = null) {
+  if (psi == null) {
+    return
+  }
+  try {
+    PsiUtilCore.ensureValid(psi)
+  }
+  catch (t: Throwable) {
+    if (ext != null) {
+      throw PluginException.createByClass(message, t, ext::class.java)
+    }
+    else {
+      throw t
+    }
+  }
 }
