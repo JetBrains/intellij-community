@@ -14,9 +14,11 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import java.awt.Color
 import javax.swing.JComponent
@@ -71,11 +73,15 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
           }
 
           val filename = VfsPresentationUtil.getUniquePresentableNameForUI(project, file)
-          component.foreground = fg
           component.isOpaque = false
-          component.append(filename)
+          val hasProblems = WolfTheProblemSolver.getInstance(project).isProblemFile(file)
+          val effectColor = if (hasProblems) JBColor.red else null
+          val style = when (effectColor) {
+            null -> SimpleTextAttributes.STYLE_PLAIN
+            else -> SimpleTextAttributes.STYLE_PLAIN or SimpleTextAttributes.STYLE_WAVED
+          }
 
-
+          component.append(filename, SimpleTextAttributes(style, fg, effectColor))
         }
       }
     }
