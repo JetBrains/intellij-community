@@ -4,8 +4,8 @@ class SeveralEmptyString {
     void m(String version) {
         /* hello */
         String s = "t1" +
-                "t2" +
-                "t3";
+                   "t2"+
+                   "t3";
         String s2 = "";
         /* hello2 */
         /* hello3 */

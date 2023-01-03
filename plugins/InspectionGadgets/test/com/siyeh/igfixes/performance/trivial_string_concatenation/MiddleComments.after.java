@@ -5,7 +5,7 @@ class StartComments {
         /* hello3 */
         /* hello4 */
         String s1 = /* hello1 */ "test1" // hello2
-                +
-                "test2";
+                    +
+                       "test2";
     }
 }

@@ -19,7 +19,9 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -98,7 +100,16 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
     if(!seenStringBefore){
       text = "String.valueOf(" + text + ')';
     }
-    final PsiElement replacementExpression = generalCommentTracker.replaceAndRestoreComments(polyadicExpression, text);
+
+    String finalText = text;
+    final PsiElement replacementExpression =
+      CodeStyleManager.getInstance(polyadicExpression.getProject()).performActionWithFormatterDisabled(new Computable<>() {
+        @Override
+        public PsiElement compute() {
+          return generalCommentTracker.replaceAndRestoreComments(polyadicExpression, finalText);
+        }
+      });
+
     if (replacementExpression instanceof PsiPolyadicExpression psiPolyadicExpression) {
       PsiExpression[] expressionOperands = psiPolyadicExpression.getOperands();
       if (expressionOperands.length == 0) {
@@ -196,7 +207,13 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
         generalTracker.markUnchanged(child);
       }
     }
-    final PsiElement replacementExpression = generalTracker.replaceAndRestoreComments(polyadicExpression, builder.toString().trim());
+    final PsiElement replacementExpression =
+      CodeStyleManager.getInstance(polyadicExpression.getProject()).performActionWithFormatterDisabled(new Computable<>() {
+        @Override
+        public PsiElement compute() {
+          return generalTracker.replaceAndRestoreComments(polyadicExpression, builder.toString().trim());
+        }
+      });
     if (replacementExpression instanceof PsiPolyadicExpression psiPolyadicExpression) {
       PsiExpression[] expressionOperands = psiPolyadicExpression.getOperands();
       if (expressionOperands.length - 1 < position) {
@@ -215,7 +232,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
         return "null";
       }
       else {
-        return "String.valueOf((Object)null)";
+        return "String.valueOf((Object) null)";
       }
     }
     if (seenString || ExpressionUtils.hasStringType(operandToReplace)) {
