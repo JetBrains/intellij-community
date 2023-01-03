@@ -4,6 +4,7 @@ import com.intellij.cce.actions.selectedWithoutPrefix
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.core.SuggestionKind
+import com.intellij.cce.metric.*
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import kotlinx.html.*
@@ -32,16 +33,17 @@ class CompletionGolfFileReportGenerator(
       div {
         label("labelText") { +"With delimiter:" }
         select("delimiter-pick") {
-          delOption("delimiter", "&int;")
-          delOption("del-box-small", "&#10073;")
-          delOption("del-box-big", "&#10074;")
-          delOption("del-none", "empty")
+          delOption("cg-delimiter-integral", "&int;")
+          delOption("cg-delimiter-box-small", "&#10073;")
+          delOption("cg-delimiter-box-big", "&#10074;")
+          delOption("cg-delimiter-underscore", "_")
+          delOption("cg-delimiter-none", "none")
         }
       }
-      code {
+      code("cg cg-delimiter-integral") {
         table {
           fileEvaluations.forEach {
-            getTable(it.sessionsInfo.sessions, text, it.evaluationType)
+            getTable(it, text, it.evaluationType)
           }
         }
       }
@@ -67,12 +69,12 @@ class CompletionGolfFileReportGenerator(
     }
   }
 
-  private fun TABLE.getTable(sessions: List<Session>, fullText: String, evaluationId: String) {
+  private fun TABLE.getTable(info: FileEvaluationInfo, fullText: String, evaluationId: String) {
     tbody("evalContent") {
       id = evaluationId
       var offset = 0
       var lineNumbers = 0
-      sessions.forEach { session ->
+      info.sessionsInfo.sessions.forEach { session ->
         val text = fullText.substring(offset, session.offset)
         val tab = text.lines().last().dropWhile { it == '\n' }
         val tail = fullText.drop(session.offset + session.expectedText.length).takeWhile { it != '\n' }
@@ -84,9 +86,10 @@ class CompletionGolfFileReportGenerator(
             attributes["data-line-numbers"] = lineNumbers.toString()
           }
           td("code-line") {
-            prepareLine(session.expectedText, session.lookups, tab, session.id)
+            val metricsPerSession = MetricsEvaluator.withDefaultMetrics(info.evaluationType, true).evaluate(listOf(session))
+            prepareLine(session, tab, metricsPerSession)
             if (tail.isNotEmpty()) {
-              span { +tail }
+              pre("ib") { +tail }
             }
           }
         }
@@ -100,33 +103,48 @@ class CompletionGolfFileReportGenerator(
     }
   }
 
-  private fun FlowContent.prepareLine(expectedText: String, lookups: List<Lookup>, tab: String, id: String) {
-    consumer.onTagContentUnsafe { +StringEscapeUtils.escapeHtml(tab) }
+  private fun FlowContent.prepareLine(session: Session, tab: String, metrics: List<MetricInfo>) {
+    val expectedText = session.expectedText
+    val lookups = session.lookups
+
     var offset = 0
 
-    lookups.forEachIndexed { index, lookup ->
-      val currentChar = expectedText[offset]
-      val delimiter = mutableListOf<String>().apply {
-        if (index != lookups.size - 1) {
-          add("delimiter")
-        }
-        if (currentChar.isWhitespace()) {
-          consumer.onTagContentUnsafe { +currentChar.toString() }
-          offset++
-          add("delimiter-pre")
-        }
-      }.joinToString(" ")
+    div("line-code") {
+      pre("ib") { +StringEscapeUtils.escapeHtml(tab) }
+      lookups.forEachIndexed { index, lookup ->
+        offset = prepareSpan(expectedText, lookup, session.id, index, offset)
+      }
+    }
 
-      offset = prepareSpan(expectedText, lookup, id, index, offset, delimiter)
+    div("line-stats") {
+      val movesAction = metrics.findByName(MovesCount.NAME)
+      val movesNormalisedAction = metrics.findByName(MovesCountNormalised.NAME)
+      val totalLatencyAction = metrics.findByName(TotalLatencyMetric.NAME)
+
+      val info = mutableListOf<String>()
+      if (movesNormalisedAction != null) info.add("%.2f".format(movesNormalisedAction.value * 100) + "%")
+      if (movesAction != null) info.add("${movesAction.value.toInt()} act")
+      if (totalLatencyAction != null) info.add("%.2f".format(totalLatencyAction.value / 1000) + "s")
+
+      if (info.isNotEmpty()) {
+        i {
+          pre {
+            +StringEscapeUtils.escapeHtml(
+              info.joinToString(separator = ",\t", prefix = "    #  ")
+            )
+          }
+        }
+      }
     }
   }
 
-  private fun FlowContent.prepareSpan(expectedText: String,
-                                      lookup: Lookup,
-                                      uuid: String,
-                                      columnId: Int,
-                                      offset: Int,
-                                      delimiter: String = ""): Int {
+  private fun FlowContent.prepareSpan(
+    expectedText: String,
+    lookup: Lookup,
+    uuid: String,
+    columnId: Int,
+    offset: Int,
+  ): Int {
     val kinds = lookup.suggestions.map { suggestion -> suggestion.kind }
     val kindClass = when {
       SuggestionKind.LINE in kinds -> "cg-line"
@@ -136,8 +154,7 @@ class CompletionGolfFileReportGenerator(
 
     val text = lookup.selectedWithoutPrefix() ?: expectedText[offset].toString()
 
-    span("completion $kindClass $delimiter") {
-      id = uuid
+    span("completion $kindClass delimiter") {
       attributes["data-cl"] = "$columnId"
       attributes["data-id"] = uuid
       +text
@@ -154,10 +171,19 @@ class CompletionGolfFileReportGenerator(
             attributes["data-line-numbers"] = (lineNumbers + i).toString()
           }
           td("code-line") {
-            span { +line }
+            style = "white-space: normal;"
+            pre("ib") { +line }
           }
           lineNumbers + i
         }
       }.size
+  }
+
+  companion object {
+    fun List<MetricInfo>.findByName(name: String): MetricInfo? {
+      //format name same as in MetricInfo$name
+      val formattedName = name.filter { it.isLetterOrDigit() }
+      return find { it.name == formattedName }
+    }
   }
 }
