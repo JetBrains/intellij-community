@@ -19,6 +19,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, MeasurableIndexStore {
@@ -27,8 +28,8 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   protected ValueContainerMap<Key, Value> myMap;
 
-  protected SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
-  protected final ReentrantLock myCacheAccessLock = new ReentrantLock();
+  private SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
+  private final ReentrantLock myCacheAccessLock = new ReentrantLock();
 
   protected final Path myBaseStorageFile;
   protected final KeyDescriptor<Key> myKeyDescriptor;
@@ -344,14 +345,19 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   }
 
   @ApiStatus.Internal
-  public void clearCachedMappings() {
-    myCacheAccessLock.lock();
+  public final void clearCachedMappings() {
+    lockCancellable(myCacheAccessLock);
     try {
       myCache.clear(); // this will ensure that all new keys are made into the map
     }
     finally {
       myCacheAccessLock.unlock();
     }
+  }
+
+  @ApiStatus.Internal
+  protected void lockCancellable(Lock lock) {
+    lock.lock();
   }
 
   protected static <T> T unwrapCauseAndRethrow(RuntimeException e) throws StorageException {

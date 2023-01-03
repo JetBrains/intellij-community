@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
   private final boolean myBuildKeyHashToVirtualFileMapping;
@@ -126,15 +127,8 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
   }
 
   @Override
-  public void clearCachedMappings() {
-    // cancellable version of super.clearCachedMappings()
-    ProgressIndicatorUtils.awaitWithCheckCanceled(myCacheAccessLock, 10, TimeUnit.MILLISECONDS);
-    try {
-      myCache.clear();
-    }
-    finally {
-      myCacheAccessLock.unlock();
-    }
+  protected void lockCancellable(Lock lock) {
+    ProgressIndicatorUtils.awaitWithCheckCanceled(lock, 10, TimeUnit.MILLISECONDS);
   }
 
   @Override
