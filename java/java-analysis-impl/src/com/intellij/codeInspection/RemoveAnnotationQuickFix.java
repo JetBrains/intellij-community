@@ -7,7 +7,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.nullable.AnnotateOverriddenMethodParameterFix;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.lang.jvm.JvmAnnotation;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -28,10 +27,6 @@ import java.util.function.Consumer;
 public class RemoveAnnotationQuickFix implements LocalQuickFix {
   private final SmartPsiElementPointer<PsiAnnotation> myAnnotation;
   private final SmartPsiElementPointer<PsiModifierListOwner> myListOwner;
-
-  public RemoveAnnotationQuickFix(@NotNull JvmAnnotation annotation) {
-    this((PsiAnnotation)annotation, PsiTreeUtil.getParentOfType((PsiAnnotation)annotation, PsiModifierListOwner.class));
-  }
 
   public RemoveAnnotationQuickFix(@NotNull PsiAnnotation annotation, @Nullable PsiModifierListOwner listOwner) {
     Project project = annotation.getProject();
@@ -94,7 +89,7 @@ public class RemoveAnnotationQuickFix implements LocalQuickFix {
       }
     }
 
-    if (!FileModificationService.getInstance().prepareFileForWrite(annotation.getContainingFile())) {
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(physical)) {
       return;
     }
     WriteAction.run(() -> {
