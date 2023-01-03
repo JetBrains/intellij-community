@@ -33,15 +33,11 @@ import java.util.List;
 
 public abstract class ExecutionTestCase extends JavaProjectTestCase {
   private OutputChecker myChecker;
-  private int myTimeoutMillis;
+  private int myTimeoutMillis = 300_000;
   private static Path ourOutputRoot;
   private Path myModuleOutputDir;
 
   protected static final String SOURCES_DIRECTORY_NAME = "src";
-
-  public ExecutionTestCase() {
-    setTimeout(300000); //30 seconds
-  }
 
   public final void setTimeout(int timeoutMillis) {
     myTimeoutMillis = timeoutMillis;
