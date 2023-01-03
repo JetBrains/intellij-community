@@ -431,7 +431,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
   private fun getTrackerProvider(virtualFile: VirtualFile, document: Document): LocalLineStatusTrackerProvider? {
-    SlowOperations.allowSlowOperations("LineStatusTracker.getTrackerProvider").use {
+    SlowOperations.allowSlowOperations("vcs.line-status-tracker-provider").use {
       if (!canCreateTrackerFor(virtualFile, document)) {
         return null
       }
