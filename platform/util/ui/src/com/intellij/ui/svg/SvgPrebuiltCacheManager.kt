@@ -1,11 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.ui.svg
 
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ui.icons.IconLoadMeasurer
+import org.h2.mvstore.DataUtils
 import org.jetbrains.ikv.Ikv
 import java.awt.Image
-import java.nio.ByteBuffer
 import java.nio.file.Path
 
 internal class SvgPrebuiltCacheManager(dbDir: Path) {
@@ -29,22 +30,22 @@ internal class SvgPrebuiltCacheManager(dbDir: Path) {
     val actualWidth: Int
     val actualHeight: Int
     val format = data.get().toInt() and 0xff
+    @Suppress("DuplicatedCode")
     if (format < 254) {
       actualWidth = format
       actualHeight = format
     }
     else if (format == 255) {
-      actualWidth = readVar(data)
+      actualWidth = DataUtils.readVarInt(data)
       actualHeight = actualWidth
     }
     else {
-      actualWidth = readVar(data)
-      actualHeight = readVar(data)
+      actualWidth = DataUtils.readVarInt(data)
+      actualHeight = DataUtils.readVarInt(data)
     }
 
     mapper.docSize?.setSize((actualWidth / mapper.scale).toDouble(), (actualHeight / mapper.scale).toDouble())
-
-    val image = SvgCacheManager.readImage(data, actualWidth, actualHeight)
+    val image = readImage(buffer = data, w = actualWidth, h = actualHeight)
     IconLoadMeasurer.svgPreBuiltLoad.end(start)
     return image
   }
@@ -76,23 +77,3 @@ private class StoreContainer(private val dbDir: Path, private val scale: Float, 
   }
 }
 
-private fun readVar(buf: ByteBuffer): Int {
-  var aByte = buf.get().toInt()
-  var value: Int = aByte and 127
-  if (aByte and 128 != 0) {
-    aByte = buf.get().toInt()
-    value = value or (aByte and 127 shl 7)
-    if (aByte and 128 != 0) {
-      aByte = buf.get().toInt()
-      value = value or (aByte and 127 shl 14)
-      if (aByte and 128 != 0) {
-        aByte = buf.get().toInt()
-        value = value or (aByte and 127 shl 21)
-        if (aByte and 128 != 0) {
-          value = value or (buf.get().toInt() shl 28)
-        }
-      }
-    }
-  }
-  return value
-}

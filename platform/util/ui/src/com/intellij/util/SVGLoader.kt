@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.util
@@ -430,7 +430,7 @@ private object SvgCache {
 
     prebuiltPersistentCache = prebuiltCache
     persistentCache = try {
-      if (USE_CACHE) SvgCacheManager(Path.of(PathManager.getSystemPath(), "icons-v6.db")) else null
+      if (USE_CACHE) SvgCacheManager(Path.of(PathManager.getSystemPath(), "icon-v7.db")) else null
     }
     catch (e: Exception) {
       logger<SVGLoader>().error(e)

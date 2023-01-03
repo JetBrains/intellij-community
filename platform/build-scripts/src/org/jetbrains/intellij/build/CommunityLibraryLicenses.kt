@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build
@@ -646,6 +646,9 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/morfologik/morfologik-stemming").simplifiedBsd(),
     LibraryLicense(name = "Moshi", libraryName = "moshi", url = "https://github.com/square/moshi")
       .apache("https://github.com/square/moshi/blob/master/LICENSE.txt"),
+    LibraryLicense(libraryName = "mvstore", url = "https://github.com/h2database/h2database")
+      .eplV1("https://github.com/h2database/h2database/blob/master/LICENSE.txt"),
+
     LibraryLicense(libraryName = "NanoXML", license = "zlib/libpng",
                    url = "https://mvnrepository.com/artifact/be.cyberelf.nanoxml/nanoxml/2.2.3",
                    licenseUrl = "https://www.opensource.org/licenses/zlib-license.html"),
