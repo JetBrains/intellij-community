@@ -261,7 +261,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
    * @param psiElement an element to highlight
    * @return range to highlight for named element
    */
-  private static @NotNull TextRange getNameElementTextRange(@NotNull PsiElement psiElement) {
+  public static @NotNull TextRange getNameElementTextRange(@NotNull PsiElement psiElement) {
     PsiFile psiFile = psiElement.getContainingFile();
     PsiElement nameElement = psiFile.findElementAt(psiElement.getTextOffset());
     if (nameElement != null) {
