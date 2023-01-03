@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.wm.impl
@@ -114,10 +114,6 @@ class DesktopLayout(
       if (id == null) {
         LOG.warn("Skip invalid window info (no id): ${JDOMUtil.writeElement(element)}")
         continue
-      }
-
-      if (isNewUi && info.isSplit && info.anchor != ToolWindowAnchor.BOTTOM) {
-        info.isSplit = false
       }
 
       idToInfo.put(id, info)
