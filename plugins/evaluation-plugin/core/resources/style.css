@@ -117,6 +117,7 @@ button:focus {
   font-weight: normal;
   background-color: #fff;
   border-bottom: 1px solid #d4d4d4;
+  white-space: nowrap;
 }
 
 .autocomplete-items div:hover {
