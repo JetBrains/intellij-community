@@ -27,7 +27,6 @@ job("Mermaid / Build for 231") {
 job("Mermaid / Build for 223") {
   container("openjdk:17") {
     productionBuild()
-    platformVersion("223-EAP-SNAPSHOT")
     shellScript {
       content = "./gradlew build"
     }
