@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.diagnostic.telemetry.TraceManager;
@@ -40,7 +40,7 @@ import java.util.concurrent.*;
 
 import static com.intellij.diagnostic.telemetry.TraceKt.runSpanWithScope;
 
-public class VcsLogData implements Disposable, VcsLogDataProvider {
+public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
   public static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
   public static final VcsLogProgress.ProgressKey DATA_PACK_REFRESH = new VcsLogProgress.ProgressKey("data pack");
@@ -52,7 +52,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull private final CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
 
   /**
-   * Current user name, as specified in the VCS settings.
+   * Current username, as specified in the VCS settings.
    * It can be configured differently for different roots => store in a map.
    */
   private final Map<VirtualFile, VcsUser> myCurrentUser = new ConcurrentHashMap<>();
@@ -176,7 +176,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
               // Here be dragons:
               // VcsLogProgressManager can cancel us when it's getting disposed,
               // and we can also get cancelled by invalid git executable.
-              // Since we do not know what's up, we just restore the state
+              // Since we do not know what's up, we just restore the state,
               // and it is entirely possible to start another initialization after that.
               // Eventually, everything gets cancelled for good in VcsLogData.dispose.
               // But still.
