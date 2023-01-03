@@ -172,6 +172,7 @@ fun appendToPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String
 fun appendToPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,
                        paths: Collection<TargetEnvironmentFunction<String>>,
                        targetPlatform: TargetPlatform) {
+  if (paths.isEmpty()) return
   val value = paths.joinToPathValue(targetPlatform)
   envs.merge(PYTHONPATH_ENV, value) { whole, suffix ->
     listOf(whole, suffix).joinToPathValue(targetPlatform)
