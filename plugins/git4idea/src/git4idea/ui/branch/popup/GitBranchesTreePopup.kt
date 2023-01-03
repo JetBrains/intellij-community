@@ -18,7 +18,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.PopupStep
+import com.intellij.openapi.ui.popup.TreePopup
 import com.intellij.openapi.util.*
 import com.intellij.ui.*
 import com.intellij.ui.popup.NextStepHandler
@@ -46,21 +48,23 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchPopup
 import git4idea.ui.branch.GitBranchPopupFetchAction
+import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SPEED_SEARCH_DEFAULT_ACTIONS_GROUP
+import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchTypeUnderRepository
+import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchUnderRepository
+import git4idea.ui.branch.tree.GitBranchesTreeRenderer
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.overrideBuiltInAction
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectFirstLeaf
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectLastLeaf
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectNextLeaf
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectPrevLeaf
-import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SPEED_SEARCH_DEFAULT_ACTIONS_GROUP
-import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchTypeUnderRepository
-import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchUnderRepository
-import git4idea.ui.branch.tree.GitBranchesTreeRenderer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
-import java.awt.*
+import java.awt.AWTEvent
+import java.awt.Cursor
+import java.awt.Point
 import java.awt.datatransfer.DataFlavor
 import java.awt.event.*
 import java.util.function.Function
@@ -534,7 +538,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   }
 
   private inner class SelectOnClickListener : MouseAdapter() {
-    override fun mousePressed(e: MouseEvent) {
+    override fun mouseClicked(e: MouseEvent) {
       if (e.button != MouseEvent.BUTTON1) return
       val path = getPath(e) ?: return
       val selected = path.lastPathComponent
