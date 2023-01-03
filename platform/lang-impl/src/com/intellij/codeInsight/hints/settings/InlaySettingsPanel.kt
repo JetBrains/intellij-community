@@ -160,7 +160,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     var nodeToSelect: CheckedTreeNode? = selected
     model.onChangeListener = object : ChangeListener {
       override fun settingsChanged() {
-        currentEditor?.let { updateHints(it, model) }
+        currentEditor?.let {
+          val case = (it.getUserData(PREVIEW_KEY) as? CaseCheckedNode)?.userObject as? ImmediateConfigurable.Case
+          updateHints(it, model, case)
+        }
       }
     }
     val node = object: CheckedTreeNode(model) {
@@ -172,21 +175,27 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     }
     parent.add(node)
     model.cases.forEach {
-      val caseNode = object: CheckedTreeNode(it) {
-        override fun setChecked(checked: Boolean) {
-          super.setChecked(checked)
-          it.value = checked
-          if (PREVIEW_KEY.get(currentEditor) == this) {
-            model.onChangeListener?.settingsChanged()
-          }
-        }
-      }
+      val caseNode = CaseCheckedNode(it, { currentEditor }, model)
       node.add(caseNode)
       if (nodeToSelect == null && getProviderId(caseNode) == lastId) {
         nodeToSelect = caseNode
       }
     }
     return if (nodeToSelect == null && getProviderId(node) == lastId) node else nodeToSelect
+  }
+
+  private class CaseCheckedNode(
+    private val case: ImmediateConfigurable.Case,
+    private val editorProvider: () -> Editor?,
+    private val model: InlayProviderSettingsModel
+  ) : CheckedTreeNode(case) {
+    override fun setChecked(checked: Boolean) {
+      super.setChecked(checked)
+      case.value = checked
+      if (PREVIEW_KEY.get(editorProvider()) == this) {
+        model.onChangeListener?.settingsChanged()
+      }
+    }
   }
 
   private fun updateRightPanel(treeNode: CheckedTreeNode?) {
@@ -269,7 +278,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         currentEditor = editor
         PREVIEW_KEY.set(editor, treeNode)
         CASE_KEY.set(editor, case)
-        updateHints(editor, model)
+        updateHints(editor, model, case)
       }
       editorTextField.text = previewText
       editorTextField.addSettingsProvider {
@@ -285,10 +294,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     }
   }
 
-  private fun updateHints(editor: Editor, model: InlayProviderSettingsModel) {
+  private fun updateHints(editor: Editor, model: InlayProviderSettingsModel, case: ImmediateConfigurable.Case?) {
     val fileType = getFileTypeForPreview(model)
     ReadAction.nonBlocking(Callable {
-      val file = model.createFile(project, fileType, editor.document)
+      val file = model.createFile(project, fileType, editor.document, case?.id)
       val continuation = model.collectData(editor, file)
       continuation
     })

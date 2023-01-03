@@ -60,6 +60,13 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
 
   }
 
+  /**
+   * In case when [caseId] is null, it is required to create file not for the case, but for the whole provider
+   */
+  open fun createFile(project: Project, fileType: FileType, document: Document, caseId: String?) : PsiFile {
+    return createFile(project, fileType, document)
+  }
+
   open fun createFile(project: Project, fileType: FileType, document: Document): PsiFile {
     val factory = PsiFileFactory.getInstance(project)
     return factory.createFileFromText("dummy", fileType, document.text)

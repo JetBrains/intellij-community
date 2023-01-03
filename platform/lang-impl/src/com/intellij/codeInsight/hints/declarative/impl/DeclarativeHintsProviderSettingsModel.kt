@@ -24,7 +24,7 @@ class DeclarativeHintsProviderSettingsModel(
   private val project: Project
 ) : InlayProviderSettingsModel(isEnabled, providerDescription.requiredProviderId(), language) {
   companion object {
-    private val PREVIEW_ENTRIES : Key<List<Pair<Int, String>>> = Key.create("declarative.inlays.preview.entries")
+    private val PREVIEW_ENTRIES : Key<PreviewEntries> = Key.create("declarative.inlays.preview.entries")
   }
 
   val provider: InlayHintsProvider
@@ -40,7 +40,7 @@ class DeclarativeHintsProviderSettingsModel(
     .map {
       val enabledByDefault = it.enabledByDefault
       val enabled = settings.isOptionEnabled(it.requireOptionId(), providerDescription.requiredProviderId()) ?: enabledByDefault
-      MutableOption(it, enabled, enabledByDefault)
+      MutableOption(it, enabled)
     }
 
   private val _cases: List<ImmediateConfigurable.Case> = options.map { option ->
@@ -73,19 +73,25 @@ class DeclarativeHintsProviderSettingsModel(
       return InlayDumpUtil.removeHints(previewTextWithInlayPlaceholders)
     }
 
-  override fun createFile(project: Project, fileType: FileType, document: Document): PsiFile {
+  override fun createFile(project: Project, fileType: FileType, document: Document, caseId: String?): PsiFile {
     val file = super.createFile(project, fileType, document)
-    val previewTextWithInlayPlaceholders = DeclarativeHintsPreviewProvider.getPreview(language, id, providerDescription.instance)
+    val previewTextWithInlayPlaceholders = if (caseId == null) {
+      DeclarativeHintsPreviewProvider.getPreview(language, id, providerDescription.instance)
+    } else {
+      DeclarativeHintsPreviewProvider.getOptionPreview(language, id, caseId, providerDescription.instance)
+    }
     if (previewTextWithInlayPlaceholders != null) {
       val inlayEntries: List<Pair<Int, String>> = InlayDumpUtil.extractEntries(previewTextWithInlayPlaceholders)
-      file.putUserData(PREVIEW_ENTRIES, inlayEntries)
+      file.putUserData(PREVIEW_ENTRIES, PreviewEntries(caseId, inlayEntries))
     }
     return file
   }
 
   override fun getCasePreview(case: ImmediateConfigurable.Case?): String? {
     if (case == null) return previewText
-    return DeclarativeHintsPreviewProvider.getOptionPreview(language, id, case.id, providerDescription.instance)
+    val preview = DeclarativeHintsPreviewProvider.getOptionPreview(language, id, case.id, providerDescription.instance)
+    if (preview == null) return null
+    return InlayDumpUtil.removeHints(preview)
   }
 
   override fun getCasePreviewLanguage(case: ImmediateConfigurable.Case?): Language = language
@@ -95,13 +101,22 @@ class DeclarativeHintsProviderSettingsModel(
 
     val enabledOptions = providerDescription.options.associateBy(keySelector = { it.requireOptionId() },
                                                                  valueTransform = { true }) // we enable all the options
-    val previewEntries = file.getUserData(PREVIEW_ENTRIES) ?: emptyList()
+    val previewEntries = file.getUserData(PREVIEW_ENTRIES)
+
+    val caseId = previewEntries?.caseId
+    val enabled = if (caseId != null) {
+      options.find { it.description.optionId == caseId }!!.isEnabled
+    }
+    else {
+      isEnabled
+    }
 
     val pass = DeclarativeInlayHintsPass(file, editor, listOf(InlayProviderPassInfo(object : InlayHintsProvider {
       override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector {
         return object: OwnBypassCollector {
           override fun collectHintsForFile(file: PsiFile, sink: InlayTreeSink) {
-            for ((offset, content) in previewEntries) {
+            if (previewEntries == null) return
+            for ((offset, content) in previewEntries.offsetToContent) {
               sink.addPresentation(InlineInlayPosition(offset, true), hasBackground = true) {
                 text(content)
               }
@@ -109,7 +124,8 @@ class DeclarativeHintsProviderSettingsModel(
           }
         }
       }
-    }, providerId, enabledOptions)), false, !isEnabled)
+    }, providerId, enabledOptions)), false, !enabled)
+
 
     pass.doCollectInformation(EmptyProgressIndicator())
     return Runnable {
@@ -178,7 +194,9 @@ class DeclarativeHintsProviderSettingsModel(
   override val cases: List<ImmediateConfigurable.Case>
     get() = _cases
 
-  private class MutableOption(val description: InlayProviderOption, var isEnabled: Boolean, val isEnabledByDefault: Boolean)
+  private class MutableOption(val description: InlayProviderOption, var isEnabled: Boolean)
+
+  private class PreviewEntries(val caseId: String?, val offsetToContent: List<Pair<Int, String>>)
 
   private class DefaultSettingsProvider : InlayHintsCustomSettingsProvider<Unit> {
     private val component by lazy { JPanel() }
