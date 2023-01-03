@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.properties
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.common.runAll
 import org.junit.Test
 import java.io.File
 import java.util.*
@@ -14,13 +13,6 @@ class LocalPropertiesFileTest : LightPlatformTestCase() {
   private val projectPath by lazy { project.basePath.orEmpty() }
   private val externalProjectPath by lazy { Path(projectPath) }
   private val localPropertiesPath by lazy { externalProjectPath.resolve(LOCAL_PROPERTIES_FILE_NAME).toString() }
-
-  override fun tearDown() {
-    runAll(
-      { super.tearDown() },
-      { closeAndDeleteProject() }
-    )
-  }
 
   @Test
   fun testDefaultLocalProperties() {
@@ -98,5 +90,6 @@ class LocalPropertiesFileTest : LightPlatformTestCase() {
       }
     }
     assertion()
+    localPropertiesFile.delete()
   }
 }
