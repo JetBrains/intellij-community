@@ -56,7 +56,7 @@ private val ALLOWED_LABEL_COMPONENTS = listOf(
 /**
  * See [DslComponentProperty.INTERACTIVE_COMPONENT]
  */
-internal val JComponent.interactiveComponent: JComponent
+val JComponent.interactiveComponent: JComponent
   @ApiStatus.Internal
   get() {
     val interactiveComponent = getClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT) as JComponent?
