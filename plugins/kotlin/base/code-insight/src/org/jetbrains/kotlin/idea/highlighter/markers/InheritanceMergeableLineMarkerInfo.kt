@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import javax.swing.Icon
 
-class OverriddenMergeableLineMarkerInfo(
+class InheritanceMergeableLineMarkerInfo(
     element: PsiElement,
     textRange: TextRange,
     icon: Icon,
@@ -19,7 +19,7 @@ class OverriddenMergeableLineMarkerInfo(
     accessibleNameProvider: () -> String
 ) : MergeableLineMarkerInfo<PsiElement>(element, textRange, icon, tooltip, navigationHandler, alignment, accessibleNameProvider) {
 
-    override fun canMergeWith(info: MergeableLineMarkerInfo<*>): Boolean = info is OverriddenMergeableLineMarkerInfo && info.icon == icon
+    override fun canMergeWith(info: MergeableLineMarkerInfo<*>): Boolean = info is InheritanceMergeableLineMarkerInfo && info.icon == icon
 
     override fun getCommonIcon(infos: List<MergeableLineMarkerInfo<*>>): Icon = infos.first().icon
 }

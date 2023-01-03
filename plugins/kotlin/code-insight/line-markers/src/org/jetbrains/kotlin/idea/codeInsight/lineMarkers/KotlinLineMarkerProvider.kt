@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinGutterTooltipHelper
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
-import org.jetbrains.kotlin.idea.highlighter.markers.OverriddenMergeableLineMarkerInfo
+import org.jetbrains.kotlin.idea.highlighter.markers.InheritanceMergeableLineMarkerInfo
 import org.jetbrains.kotlin.idea.k2.codeinsight.KotlinGoToSuperDeclarationsHandler
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isInheritable
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isOverridable
@@ -83,7 +83,7 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
         val gutter = if (isAbstract) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
         val icon = gutter.icon ?: return
 
-        val lineMarkerInfo = OverriddenMergeableLineMarkerInfo(
+        val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(
             anchor,
             anchor.textRange,
             icon,
@@ -113,7 +113,7 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
                     allOverriddenSymbols.all { it is KtSymbolWithModality && it.modality == Modality.ABSTRACT }
             val gutter = if (implements) KotlinLineMarkerOptions.implementingOption else KotlinLineMarkerOptions.overridingOption
             val anchor = declaration.nameIdentifier ?: declaration
-            val lineMarkerInfo = LineMarkerInfo(
+            val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(
                 anchor,
                 anchor.textRange,
                 gutter.icon!!,
@@ -148,7 +148,7 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
         val gutter = if (isInterface) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
         val icon = gutter.icon ?: return
 
-        val lineMarkerInfo = OverriddenMergeableLineMarkerInfo(
+        val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(
             anchor,
             anchor.textRange,
             icon,

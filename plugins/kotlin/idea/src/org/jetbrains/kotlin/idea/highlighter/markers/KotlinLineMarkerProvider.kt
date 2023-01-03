@@ -236,7 +236,7 @@ private fun collectSuperDeclarationMarkers(declaration: KtDeclaration, result: L
     // clearing the whole BindingTrace.
 
     val gutter = if (implements) KotlinLineMarkerOptions.implementingOption else KotlinLineMarkerOptions.overridingOption
-    val lineMarkerInfo = LineMarkerInfo(
+    val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(
         anchor,
         anchor.textRange,
         gutter.icon!!,
@@ -270,7 +270,7 @@ private fun collectInheritedClassMarker(element: KtClass, result: LineMarkerInfo
     val anchor = element.nameIdentifier ?: element
     val gutter = if (element.isInterface()) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
     val icon = gutter.icon ?: return
-    val lineMarkerInfo = OverriddenMergeableLineMarkerInfo(
+    val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(
         anchor,
         anchor.textRange,
         icon,
@@ -311,7 +311,7 @@ private fun collectOverriddenPropertyAccessors(
 
         val anchor = (property as? PsiNameIdentifierOwner)?.nameIdentifier ?: property
         val gutter = if (isImplemented(property)) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
-        val lineMarkerInfo = OverriddenMergeableLineMarkerInfo(
+        val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(
             anchor,
             anchor.textRange,
             gutter.icon!!,

@@ -122,6 +122,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             runTest("testData/codeInsight/lineMarker/overrideImplement/FakeOverridesForInterfaceFunWithImpl.kt");
         }
 
+        @TestMetadata("ImplementedAndOverriddenPropertiesInCtr.kt")
+        public void testImplementedAndOverriddenPropertiesInCtr() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/ImplementedAndOverriddenPropertiesInCtr.kt");
+        }
+
         @TestMetadata("Interface.kt")
         public void testInterface() throws Exception {
             runTest("testData/codeInsight/lineMarker/overrideImplement/Interface.kt");
@@ -180,6 +185,16 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
         @TestMetadata("PrimaryConstructorOverride.kt")
         public void testPrimaryConstructorOverride() throws Exception {
             runTest("testData/codeInsight/lineMarker/overrideImplement/PrimaryConstructorOverride.kt");
+        }
+
+        @TestMetadata("PropertiesImplementedInCtr.kt")
+        public void testPropertiesImplementedInCtr() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/PropertiesImplementedInCtr.kt");
+        }
+
+        @TestMetadata("PropertiesOverriddenInCtr.kt")
+        public void testPropertiesOverriddenInCtr() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/PropertiesOverriddenInCtr.kt");
         }
 
         @TestMetadata("PropertyOverride.kt")

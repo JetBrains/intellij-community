@@ -258,6 +258,11 @@ public abstract class LineMarkerTestGenerated extends AbstractLineMarkerTest {
             performTest();
         }
 
+        @TestMetadata("ImplementedAndOverriddenPropertiesInCtr.kt")
+        public void testImplementedAndOverriddenPropertiesInCtr() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("Interface.kt")
         public void testInterface() throws Exception {
             performTest();
@@ -315,6 +320,16 @@ public abstract class LineMarkerTestGenerated extends AbstractLineMarkerTest {
 
         @TestMetadata("PrimaryConstructorOverride.kt")
         public void testPrimaryConstructorOverride() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("PropertiesImplementedInCtr.kt")
+        public void testPropertiesImplementedInCtr() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("PropertiesOverriddenInCtr.kt")
+        public void testPropertiesOverriddenInCtr() throws Exception {
             performTest();
         }
 
