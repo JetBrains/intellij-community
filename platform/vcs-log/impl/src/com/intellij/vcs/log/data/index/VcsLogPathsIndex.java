@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
@@ -68,9 +68,8 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
                                       AbstractStorage.PAGE_SIZE, storageLockContext, storageId.getVersion());
   }
 
-  @NotNull
-  private static PersistentHashMap<Couple<Integer>, Collection<Couple<Integer>>> createRenamesMap(@NotNull StorageId storageId,
-                                                                                                  @Nullable StorageLockContext storageLockContext)
+  private static @NotNull PersistentHashMap<int[], Collection<Couple<Integer>>> createRenamesMap(@NotNull StorageId storageId,
+                                                                                                 @Nullable StorageLockContext storageLockContext)
     throws IOException {
     Path storageFile = storageId.getStorageFile(RENAMES_MAP);
     return new PersistentHashMap<>(storageFile, new CoupleKeyDescriptor(), new CollectionDataExternalizer(), AbstractStorage.PAGE_SIZE,
@@ -98,7 +97,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
   @Nullable
   public EdgeData<FilePath> findRename(int parent, int child, @NotNull VirtualFile root, @NotNull FilePath path, boolean isChildPath)
     throws IOException {
-    Collection<Couple<Integer>> renames = myPathsIndexer.myRenamesMap.get(Couple.of(parent, child));
+    Collection<Couple<Integer>> renames = myPathsIndexer.myRenamesMap.get(new int[]{parent, child});
     if (renames == null) return null;
     int pathId = myPathsIndexer.myPathsEnumerator.enumerate(new LightFilePath(root, path));
     for (Couple<Integer> rename : renames) {
@@ -157,11 +156,11 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
   private static final class PathsIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> {
     @NotNull private final VcsLogStorage myStorage;
     @NotNull private final PersistentEnumerator<LightFilePath> myPathsEnumerator;
-    @NotNull private final PersistentHashMap<Couple<Integer>, Collection<Couple<Integer>>> myRenamesMap;
+    @NotNull private final PersistentHashMap<int[], Collection<Couple<Integer>>> myRenamesMap;
     @NotNull private Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
 
     private PathsIndexer(@NotNull VcsLogStorage storage, @NotNull PersistentEnumerator<LightFilePath> enumerator,
-                         @NotNull PersistentHashMap<Couple<Integer>, Collection<Couple<Integer>>> renamesMap) {
+                         @NotNull PersistentHashMap<int[], Collection<Couple<Integer>>> renamesMap) {
       myStorage = storage;
       myPathsEnumerator = enumerator;
       myRenamesMap = renamesMap;
@@ -176,7 +175,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     public Map<Integer, List<ChangeKind>> map(@NotNull VcsLogIndexer.CompressedDetails inputData) {
       Int2ObjectMap<List<ChangeKind>> result = new Int2ObjectOpenHashMap<>();
 
-      // its not exactly parents count since it is very convenient to assume that initial commit has one parent
+      // it's not exactly parents count since it is very convenient to assume that initial commit has one parent
       int parentsCount = inputData.getParents().isEmpty() ? 1 : inputData.getParents().size();
       for (int parentIndex = 0; parentIndex < parentsCount; parentIndex++) {
         try {
@@ -190,7 +189,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
           if (renames.size() > 0) {
             int commit = myStorage.getCommitIndex(inputData.getId(), inputData.getRoot());
             int parent = myStorage.getCommitIndex(inputData.getParents().get(parentIndex), inputData.getRoot());
-            myRenamesMap.put(Couple.of(parent, commit), renames);
+            myRenamesMap.put(new int[]{parent, commit}, renames);
           }
 
           for (Int2ObjectMap.Entry<Change.Type> entry : inputData.getModifiedPaths(parentIndex).int2ObjectEntrySet()) {
@@ -368,26 +367,26 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     }
   }
 
-  private static class CoupleKeyDescriptor implements KeyDescriptor<Couple<Integer>> {
+  private static final class CoupleKeyDescriptor implements KeyDescriptor<int[]> {
     @Override
-    public int getHashCode(Couple<Integer> value) {
-      return value.hashCode();
+    public int getHashCode(int[] value) {
+      return Arrays.hashCode(value);
     }
 
     @Override
-    public boolean isEqual(@Nullable Couple<Integer> val1, @Nullable Couple<Integer> val2) {
-      return Objects.equals(val1, val2);
+    public boolean isEqual(int @Nullable [] val1, int @Nullable [] val2) {
+      return Arrays.equals(val1, val2);
     }
 
     @Override
-    public void save(@NotNull DataOutput out, Couple<Integer> value) throws IOException {
-      out.writeInt(value.first);
-      out.writeInt(value.second);
+    public void save(@NotNull DataOutput out, int[] value) throws IOException {
+      out.writeInt(value[0]);
+      out.writeInt(value[1]);
     }
 
     @Override
-    public Couple<Integer> read(@NotNull DataInput in) throws IOException {
-      return Couple.of(in.readInt(), in.readInt());
+    public int[] read(@NotNull DataInput in) throws IOException {
+      return new int[]{in.readInt(), in.readInt()};
     }
   }
 
