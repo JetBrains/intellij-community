@@ -124,9 +124,7 @@ public final class RegExpPredicate extends MatchPredicate {
   public boolean match(@NotNull String text) {
     if (simpleString) return matchesSimpleString(text);
     setMultilineIfApplicable(text);
-    final Matcher matcher = pattern.matcher(text);
-    if (!matcher.matches()) return false;
-    return true;
+    return pattern.matcher(text).matches();
   }
 
   private boolean matchesSimpleString(@NotNull String text) {
