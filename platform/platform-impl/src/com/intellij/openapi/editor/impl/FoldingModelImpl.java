@@ -605,7 +605,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     return myFoldTree.intersectsRegion(startOffset, endOffset);
   }
 
-  FoldRegion @Nullable [] fetchVisible() {
+  @ApiStatus.Internal
+  public FoldRegion @Nullable [] fetchVisible() {
     return myFoldTree.fetchVisible();
   }
 
