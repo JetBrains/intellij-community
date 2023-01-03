@@ -848,11 +848,32 @@
         <constraint name="Type" within="" contains="" />
         <constraint name="elements" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Arrays.asList() is not immutable" text="val $Field$ = java.util.Arrays.asList($elements$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="val $Field$ = com.intellij.util.containers.ContainerUtil.immutableList($elements$)">
+      <replaceConfiguration name="Arrays.asList() is not immutable" text="val $Field$ = java.util.Arrays.asList($elements$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="val $Field$ = listOf($elements$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Field" within="" contains="" />
         <constraint name="elements" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="Avoid usage of Optional in Kotlin" text="$Expression$.ofNullable($params$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Expression" nameOfExprType="java\.util\.Optional" exprTypeWithinHierarchy="true" target="true" within="" contains="" />
+        <constraint name="params" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Avoid usage of Optional in Kotlin" text="$Expression$.of($params$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Expression" nameOfExprType="java\.util\.Optional" exprTypeWithinHierarchy="true" target="true" within="" contains="" />
+        <constraint name="params" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Avoid usage of Stream API in Kotlin" uuid="1a82ef49-d1d4-3d41-aa2e-acf65abc4fc9" description="Usage of Java Stream API should be converted to Kotlin sequences or collection extensions, with exception of Stream usage for parallel processing." suppressId="NoStreamApiInKotlin" text="$Expression$.$stream$($ARGUMENTS$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Expression" within="" contains="" />
+        <constraint name="stream" regexp="stream" target="true" within="" contains="" />
+        <constraint name="ARGUMENTS" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Avoid usage of Stream API in Kotlin" uuid="1a82ef49-d1d4-3d41-aa2e-acf65abc4fc9" text="$Expression$.of($params$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Expression" nameOfExprType="java\.util\.stream\.Stream" exprTypeWithinHierarchy="true" target="true" within="" contains="" />
+        <constraint name="params" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
       <replaceConfiguration name="can be simplified to ReadAction.compute()" uuid="44cf5267-e665-3ff5-9d2f-0de5c6983156" text="$application$.runReadAction(new $Computable$() {&#10;  public $SearchScope$ compute() {&#10;    return $e$;&#10;  }&#10;})" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.compute(()-&gt;$e$)">
         <constraint name="SearchScope" within="" contains="" />
         <constraint name="e" within="" contains="" />
@@ -875,9 +896,10 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="project" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="can simplify to getInstanceEx()" uuid="83b2549d-3689-355b-bb4a-b2b6d2dad4fc" text="PsiManager.getInstance($project$) as PsiManagerEx" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="PsiManagerEx.getInstanceEx($project$)">
+      <replaceConfiguration name="can simplify to getInstanceEx()" uuid="83b2549d-3689-355b-bb4a-b2b6d2dad4fc" text="$PsiManager$.getInstance($project$) as PsiManagerEx" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.psi.impl.PsiManagerEx.getInstanceEx($project$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="project" within="" contains="" />
+        <constraint name="PsiManager" nameOfExprType="com\.intellij\.psi\.PsiManager" minCount="0" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="can use ArrayUtil" uuid="d28d1bfc-45ff-3472-864c-6e13c1d1688d" description="emptyCollection.toArray() creates new array whereas ArrayUtil.toArray() methods don't&#10;similarly, ArrayUtil.EMPTY_*_ARRAY don't allocate  " problemDescriptor="can use ArrayUtil" text="$collection$.toArray(new Object[$collection$.size()])" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.ArrayUtil.toObjectArray($collection$)">
         <constraint name="collection" within="" contains="" />
@@ -1155,10 +1177,11 @@
         <constraint name="prefix" within="" contains="" />
         <constraint name="suffix" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="File.createTempFile()" uuid="dee96c73-c402-36ca-a972-4b6641585bc0" text="java.io.File.createTempFile($prefix$, $suffix$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.io.FileUtil.createTempFile($prefix$, $suffix$)">
+      <replaceConfiguration name="File.createTempFile()" uuid="dee96c73-c402-36ca-a972-4b6641585bc0" text="$File$.createTempFile($prefix$, $suffix$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.io.FileUtil.createTempFile($prefix$, $suffix$)">
         <constraint name="prefix" within="" contains="" />
         <constraint name="suffix" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
+        <constraint name="File" nameOfExprType="java\.io\.File" minCount="0" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="File.createTempFile()" uuid="dee96c73-c402-36ca-a972-4b6641585bc0" text="java.io.File.createTempFile($prefix$, $suffix$, $dir$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.io.FileUtil.createTempFile($dir$, $prefix$, $suffix$, true)">
         <constraint name="prefix" within="" contains="" />
@@ -1166,11 +1189,12 @@
         <constraint name="dir" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="File.createTempFile()" uuid="dee96c73-c402-36ca-a972-4b6641585bc0" text="java.io.File.createTempFile($prefix$, $suffix$, $dir$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.io.FileUtil.createTempFile($dir$, $prefix$, $suffix$, true)">
+      <replaceConfiguration name="File.createTempFile()" uuid="dee96c73-c402-36ca-a972-4b6641585bc0" text="$File$.createTempFile($prefix$, $suffix$, $dir$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.io.FileUtil.createTempFile($dir$, $prefix$, $suffix$, true)">
         <constraint name="prefix" within="" contains="" />
         <constraint name="suffix" within="" contains="" />
         <constraint name="dir" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
+        <constraint name="File" nameOfExprType="java\.io\.File" minCount="0" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="findAnnotation(name) != null -&gt; hasAnnotation(name)" text="$Instance$.findAnnotation($Parameter$) != null" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.hasAnnotation($Parameter$)">
         <constraint name="Instance" nameOfExprType="com\.intellij\.psi\.PsiAnnotationOwner" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
@@ -1224,10 +1248,11 @@
         <constraint name="t" within="" contains="" />
         <constraint name="e" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="invalid use of ArrayUtil.contains(): always returns false" uuid="676e5e3d-30ef-3f51-88a6-6366b80d5d76" text="com.intellij.util.ArrayUtil.contains($t$, $e$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$e$.contains($t$)">
+      <replaceConfiguration name="invalid use of ArrayUtil.contains(): always returns false" uuid="676e5e3d-30ef-3f51-88a6-6366b80d5d76" text="$ArrayUtil$.contains($t$, $e$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$e$.contains($t$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="t" within="" contains="" />
         <constraint name="e" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="ArrayUtil" nameOfExprType="com\.intellij\.util\.ArrayUtil" minCount="0" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="invalid use of ArrayUtil.contains(): always returns false" uuid="676e5e3d-30ef-3f51-88a6-6366b80d5d76" text="com.intellij.util.ArrayUtil.contains($t$, $e$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.ArrayUtil.contains($e$, $t$)">
         <constraint name="__context__" within="" contains="" />
@@ -1263,9 +1288,10 @@
         <constraint name="LOG" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Logger expression can be simplified" uuid="0befec03-d2b3-3838-ada0-363adc05fac7" text="com.intellij.openapi.diagnostic.Logger.getInstance(&quot;#${$c$::class.java.name}&quot;)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.diagnostic.Logger.getInstance($c$::class.java)">
+      <replaceConfiguration name="Logger expression can be simplified" uuid="0befec03-d2b3-3838-ada0-363adc05fac7" text="$Logger$.getInstance(&quot;#${$c$::class.java.name}&quot;)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.diagnostic.Logger.getInstance($c$::class.java)">
         <constraint name="c" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
+        <constraint name="Logger" nameOfExprType="com\.intellij\.openapi\.diagnostic\.Logger" minCount="0" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="Logger expression can be simplified" uuid="0befec03-d2b3-3838-ada0-363adc05fac7" text="$LOG$.assertTrue(false, $e$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$LOG$.error($e$)">
         <constraint name="e" within="" contains="" />
@@ -1322,10 +1348,6 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="s" within="" contains="" />
         <constraint name="l" regexp="^$" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="notNullize(s,&quot;&quot;) can be simplified" text="com.intellij.openapi.util.text.StringUtil.notNullize($s$, &quot;&quot;)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.text.StringUtil.notNullize($s$)">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="s" within="" contains="" />
       </replaceConfiguration>
       <searchConfiguration name="nullability for array elements specified, probably nullability for the array itself was intended" text="@$Anno$ $Type$ $x$;" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
@@ -1421,9 +1443,10 @@
       <replaceConfiguration name="PsiManager.getInstance(psiElement.getProject())" text="com.intellij.psi.PsiManager.getInstance($psiElement$.getProject())" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="$psiElement$.getManager()">
         <constraint name="psiElement" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="PsiManager.getInstance(psiElement.getProject())" text="com.intellij.psi.PsiManager.getInstance($psiElement$.project)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$psiElement$.manager">
+      <replaceConfiguration name="PsiManager.getInstance(psiElement.getProject())" text="$QUALIFIER$.getInstance($psiElement$.project)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$psiElement$.manager">
         <constraint name="psiElement" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
+        <constraint name="QUALIFIER" nameOfExprType="com\.intellij\.psi\.PsiManager" minCount="0" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="Raw runBlocking" description="Standard library `runBlocking` may block indefinitely because does not take thread context `Job` or thread `ProgressIndicator` into account.&#10;Use `com.intellij.openapi.progress.runBlockingCancellable` instead. Read its doc if it fails with an error that there is no job or indicator in the current thread." suppressId="RAW_RUN_BLOCKING" problemDescriptor="Use `runBlockingCancellable` instead" text="runBlocking {&#10;  $statement$&#10;}&#10;" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.openapi.progress.runBlockingCancellable {&#10;  $statement$&#10;}&#10;">
         <constraint name="__context__" within="" contains="" />
@@ -1585,17 +1608,7 @@
         <constraint name="f" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="m" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="$f$.stream().map { $m$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$f$.stream().map { $m$ }.collect(Collectors.toList())">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="f" within="" contains="" />
-        <constraint name="m" within="" contains="" />
-      </replaceConfiguration>
       <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($f$).map($m$).collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$, $m$)">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="f" within="" contains="" />
-        <constraint name="m" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($f$).map { $m$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$) { $m$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" within="" contains="" />
         <constraint name="m" within="" contains="" />
@@ -1605,17 +1618,7 @@
         <constraint name="f" within="" contains="" />
         <constraint name="m" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Stream.of($f$).map { $m$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$) { $m$ }">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="f" within="" contains="" />
-        <constraint name="m" within="" contains="" />
-      </replaceConfiguration>
       <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($f$).map($m$).collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$, $m$)">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="f" within="" contains="" />
-        <constraint name="m" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($f$).map { $m$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$) { $m$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" within="" contains="" />
         <constraint name="m" within="" contains="" />
@@ -1625,17 +1628,7 @@
         <constraint name="l" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="f" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="$l$.stream().filter { $f$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filter($l$) { $f$ }">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="l" within="" contains="" />
-        <constraint name="f" within="" contains="" />
-      </replaceConfiguration>
       <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($l$).filter($f$).collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filter($l$, $f$)">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="l" within="" contains="" />
-        <constraint name="f" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($l$).filter { $f$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filter($l$) { $f$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="l" within="" contains="" />
         <constraint name="f" within="" contains="" />
@@ -1645,27 +1638,12 @@
         <constraint name="l" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="f" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="$l$.stream().filter { $f$ }.findAny().orElse(null)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$) { $f$ }">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="l" within="" contains="" />
-        <constraint name="f" within="" contains="" />
-      </replaceConfiguration>
       <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="$l$.stream().filter($f$).findFirst().orElse(null)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$, $f$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="l" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="f" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="$l$.stream().filter { $f$ }.findFirst().orElse(null)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$) { $f$ }">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="l" within="" contains="" />
-        <constraint name="f" within="" contains="" />
-      </replaceConfiguration>
       <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($l$).filter($f$).findAny().orElse(null)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$, $f$)">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="l" within="" contains="" />
-        <constraint name="f" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($l$).filter { $f$ }.findAny().orElse(null)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$) { $f$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="l" within="" contains="" />
         <constraint name="f" within="" contains="" />
@@ -1674,56 +1652,6 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="l" within="" contains="" />
         <constraint name="f" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($l$).filter { $f$ }.findFirst().orElse(null)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$) { $f$ }">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="l" within="" contains="" />
-        <constraint name="f" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($m$).allMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.and($m$) { $p$ }">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="m" within="" contains="" />
-        <constraint name="p" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($m$).anyMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.exists($m$) { $p$ }">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="m" within="" contains="" />
-        <constraint name="p" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Arrays.stream($m$).noneMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$) { $p$ }">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="m" within="" contains="" />
-        <constraint name="p" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Stream.of($m$).allMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.and($m$) { $p$ }">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="m" within="" contains="" />
-        <constraint name="p" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Stream.of($m$).anyMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.or($m$) { $p$ }">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="m" within="" contains="" />
-        <constraint name="p" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="Stream.of($m$).noneMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$) { $p$ }">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="m" within="" contains="" />
-        <constraint name="p" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($m$).allMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.and($m$) { $p$ }">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="m" within="" contains="" />
-        <constraint name="p" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($m$).anyMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.or($m$) { $p$ }">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="m" within="" contains="" />
-        <constraint name="p" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($m$).noneMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$) { $p$ }">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="m" within="" contains="" />
-        <constraint name="p" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="$m$.stream().noneMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$, $p$)">
         <constraint name="__context__" within="" contains="" />
@@ -1771,17 +1699,19 @@
         <constraint name="s" nameOfExprType="java.lang.String" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="c" nameOfExprType="char" exprTypeWithinHierarchy="true" within="" contains="" />
       </replaceConfiguration>
-      <searchConfiguration name="StringUtil.indexOf(String, char) -&gt; String.indexOf(char)" text="com.intellij.openapi.util.text.StringUtil.indexOf($s$, $c$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default">
+      <replaceConfiguration name="StringUtil.indexOf(String, char) -&gt; String.indexOf(char)" text="$StringUtil$.indexOf($s$, $c$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$s$.indexOf($c$)">
         <constraint name="s" nameOfExprType="java.lang.String" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="c" nameOfExprType="char" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
-      </searchConfiguration>
+        <constraint name="StringUtil" nameOfExprType="com\.intellij\.openapi\.util\.text\.StringUtil" minCount="0" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="StringUtil.stripQuotesAroundValue()" uuid="c6a8c3bf-5d86-3fd2-875a-ddbd9c98648a" text="com.intellij.openapi.util.text.StringUtil.stripQuotesAroundValue($Parameter$)" recursive="false" caseInsensitive="false" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.text.StringUtil.unquoteString($Parameter$)">
         <constraint name="Parameter" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="StringUtil.stripQuotesAroundValue()" uuid="c6a8c3bf-5d86-3fd2-875a-ddbd9c98648a" text="com.intellij.openapi.util.text.StringUtil.stripQuotesAroundValue($Parameter$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.text.StringUtil.unquoteString($Parameter$)">
+      <replaceConfiguration name="StringUtil.stripQuotesAroundValue()" uuid="c6a8c3bf-5d86-3fd2-875a-ddbd9c98648a" text="$StringUtil$.stripQuotesAroundValue($Parameter$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.text.StringUtil.unquoteString($Parameter$)">
         <constraint name="Parameter" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
+        <constraint name="StringUtil" nameOfExprType="com\.intellij\.openapi\.util\.text\.StringUtil" minCount="0" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="submit() creates unnecessary Future" text="$e$.submit($d$);" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$e$.execute($d$);">
         <constraint name="__context__" within="" contains="" />
@@ -1841,8 +1771,9 @@
         <constraint name="p" minCount="0" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
       <replaceConfiguration name="TokenSet.create(TokenType.WHITE_SPACE) -&gt; TokenSet.WHITE_SPACE" text="com.intellij.psi.tree.TokenSet.create(com.intellij.psi.TokenType.WHITE_SPACE)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.psi.tree.TokenSet.WHITE_SPACE" />
-      <replaceConfiguration name="TokenSet.create(TokenType.WHITE_SPACE) -&gt; TokenSet.WHITE_SPACE" text="com.intellij.psi.tree.TokenSet.create(com.intellij.psi.TokenType.WHITE_SPACE)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.psi.tree.TokenSet.WHITE_SPACE">
+      <replaceConfiguration name="TokenSet.create(TokenType.WHITE_SPACE) -&gt; TokenSet.WHITE_SPACE" text="$TokenSet$.create(com.intellij.psi.TokenType.WHITE_SPACE)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.psi.tree.TokenSet.WHITE_SPACE">
         <constraint name="__context__" within="" contains="" />
+        <constraint name="TokenSet" nameOfExprType="com\.intellij\.psi\.tree\.TokenSet" minCount="0" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="Too concrete fastutil class" text="Object2IntOpenHashMap&lt;$e$&gt; $p$;" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="it.unimi.dsi.fastutil.objects.Object2IntMap&lt;$e$&gt; $p$;">
         <constraint name="__context__" within="" contains="" />
@@ -1900,6 +1831,330 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="class" within="" contains="" />
         <constraint name="collection" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
+      </replaceConfiguration>
+      <searchConfiguration name="Use Kotlin sequences instead of JBIterable" uuid="6db0f481-2d17-3ff3-9051-2d8f6c0734a9" text="JBIterable" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+      </searchConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="java.lang.Boolean.TRUE" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="true">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="java.lang.Boolean.FALSE" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="false">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="Arrays.stream($m$).allMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$m$.all { $p$ }">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="m" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="Arrays.stream($m$).anyMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$m$.any { $p$ }">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="m" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="Arrays.stream($m$).noneMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$m$.none { $p$ }">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="m" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="Arrays.stream($f$).map{$m$}.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$f$.map{$m$}">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+        <constraint name="m" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="Arrays.stream($l$).filter { $f$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$l$.filter { $f$ }">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="l" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="Arrays.stream($l$).filter { $f$ }.findFirst().orElse(null)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$l$.find { $f$ }">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="l" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="Arrays.stream($l$).filter { $f$ }.findAny().orElse(null)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$l$.find { $f$ }">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="l" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="Stream.of($m$).allMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$m$.all { $p$ }">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="m" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="Stream.of($m$).anyMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$m$.any { $p$ }">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="m" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="Stream.of($m$).noneMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="$m$.none { $p$ }">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="m" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="Stream.of($f$).map { $m$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$f$.map { $m$ }">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+        <constraint name="m" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="StreamEx.of($m$).allMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$m$.all { $p$ }">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="m" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="StreamEx.of($m$).anyMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$m$.any { $p$ }">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="m" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="StreamEx.of($m$).noneMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$m$.none { $p$ }">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="m" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$f$.stream().map { $m$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$f$.map { $m$ }.toList()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+        <constraint name="m" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$l$.stream().filter { $f$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$l$.filter { $f$ }">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="l" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$l$.stream().filter { $f$ }.findAny().orElse(null)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$l$.find { $f$ }">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="l" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$l$.stream().filter { $f$ }.findFirst().orElse(null)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$l$.find { $f$ }">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="l" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$Optional$.ofNullable($nullable$).$map$($mapper$).orElse($orElse$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$nullable$?.let($mapper$) ?: $orElse$">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="map" regexp="map" within="" contains="" _kotlinMatchCallSemantics="enabled" />
+        <constraint name="mapper" within="" contains="" />
+        <constraint name="orElse" within="" contains="" />
+        <constraint name="Optional" nameOfExprType="java\.util\.Optional" minCount="0" within="" contains="" />
+        <constraint name="nullable" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$Objects$.requireNonNull($expression$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$expression$!!">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="expression" within="" contains="" />
+        <constraint name="Objects" nameOfExprType="java\.util\.Objects" minCount="0" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$StringUtil$.notNullize($s$, &quot;&quot;)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="($s$ ?: &quot;&quot;)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="s" within="" contains="" />
+        <constraint name="StringUtil" nameOfExprType="com\.intellij\.openapi\.util\.text\.StringUtil" minCount="0" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$StringUtil$.notNullize($s$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="($s$ ?: &quot;&quot;)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="s" within="" contains="" />
+        <constraint name="StringUtil" nameOfExprType="com\.intellij\.openapi\.util\.text\.StringUtil" minCount="0" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$StringUtil$.endsWith($string1$, $string2$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$string1$.endsWith($string2$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="string1" within="" contains="" />
+        <constraint name="string2" within="" contains="" />
+        <constraint name="StringUtil" nameOfExprType="com\.intellij\.openapi\.util\.text\.StringUtil" minCount="0" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$StringUtil$.trimEnd($string$, $suffix$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$string$.removeSuffix($suffix$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="string" within="" contains="" />
+        <constraint name="suffix" within="" contains="" />
+        <constraint name="StringUtil" nameOfExprType="com\.intellij\.openapi\.util\.text\.StringUtil" minCount="0" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$StringUtil$.trimStart($string$, $prefix$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$string$.removePrefix($prefix$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="string" within="" contains="" />
+        <constraint name="StringUtil" nameOfExprType="com\.intellij\.openapi\.util\.text\.StringUtil" minCount="0" within="" contains="" />
+        <constraint name="prefix" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$StringUtil$.isEmptyOrSpaces($str$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$str$.isNullOrBlank()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="str" within="" contains="" />
+        <constraint name="StringUtil" nameOfExprType="com\.intellij\.openapi\.util\.text\.StringUtil" minCount="0" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ObjectUtils$.doIfNotNull($Parameter$){$param$ -&gt; $param$.$Action$}" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$Parameter$?.$Action$">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Parameter" within="" contains="" />
+        <constraint name="Action" within="" contains="" />
+        <constraint name="param" within="" contains="" />
+        <constraint name="ObjectUtils" nameOfExprType="com\.intellij\.util\.ObjectUtils" minCount="0" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ObjectUtils$.doIfNotNull($Parameter$){$param$ -&gt; $Action$}" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$Parameter$?.let{$param$ -&gt; $Action$}">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Parameter" within="" contains="" />
+        <constraint name="Action" within="" contains="" />
+        <constraint name="ObjectUtils" nameOfExprType="com\.intellij\.util\.ObjectUtils" minCount="0" within="" contains="" />
+        <constraint name="param" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ObjectUtils$.doIfNotNull($Parameter$, {$param$ -&gt; $param$.$Action$})" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$Parameter$?.$Action$">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Parameter" within="" contains="" />
+        <constraint name="Action" within="" contains="" />
+        <constraint name="param" within="" contains="" />
+        <constraint name="ObjectUtils" nameOfExprType="com\.intellij\.util\.ObjectUtils" minCount="0" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ObjectUtils$.doIfNotNull($Parameter$, {$param$ -&gt; $Action$})" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$Parameter$?.let{$param$ -&gt; $Action$}">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Parameter" within="" contains="" />
+        <constraint name="Action" within="" contains="" />
+        <constraint name="ObjectUtils" nameOfExprType="com\.intellij\.util\.ObjectUtils" minCount="0" within="" contains="" />
+        <constraint name="param" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ObjectUtils$.doIfNotNull($Parameter$, Function {$param$ -&gt; $param$.$Action$})" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$Parameter$?.$Action$">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Parameter" within="" contains="" />
+        <constraint name="Action" within="" contains="" />
+        <constraint name="param" within="" contains="" />
+        <constraint name="ObjectUtils" nameOfExprType="com\.intellij\.util\.ObjectUtils" minCount="0" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ObjectUtils$.doIfNotNull($Parameter$, Function {$param$ -&gt; $Action$})" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$Parameter$?.let{$param$ -&gt; $Action$}">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Parameter" within="" contains="" />
+        <constraint name="Action" within="" contains="" />
+        <constraint name="ObjectUtils" nameOfExprType="com\.intellij\.util\.ObjectUtils" minCount="0" within="" contains="" />
+        <constraint name="param" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ObjectUtils$.doIfNotNull($Parameter$, Function {$Action$})" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$Parameter$?.let{$Action$}">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Parameter" within="" contains="" />
+        <constraint name="Action" within="" contains="" />
+        <constraint name="ObjectUtils" nameOfExprType="com\.intellij\.util\.ObjectUtils" minCount="0" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ObjectUtils$.tryCast($Expression$, $clazz$::class.java)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="($Expression$ as? $clazz$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ObjectUtils" nameOfExprType="com.intellij.util.ObjectUtils" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="clazz" within="" contains="" />
+        <constraint name="Expression" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ObjectUtils$.notNull($expr$, { $notNullExpr$ })" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="(($expr$) ?: $notNullExpr$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="expr" within="" contains="" />
+        <constraint name="notNullExpr" within="" contains="" />
+        <constraint name="ObjectUtils" nameOfExprType="com\.intellij\.util\.ObjectUtils" minCount="0" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ObjectUtils$.notNull($expr$, NotNullFactory { $notNullExpr$ })" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="(($expr$) ?: $notNullExpr$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="expr" within="" contains="" />
+        <constraint name="notNullExpr" within="" contains="" />
+        <constraint name="ObjectUtils" nameOfExprType="com\.intellij\.util\.ObjectUtils" minCount="0" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ObjectUtils$.notNull($expression$, $orElse$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="(($expression$) ?: $orElse$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ObjectUtils" nameOfExprType="com\.intellij\.util\.ObjectUtils" minCount="0" within="" contains="" />
+        <constraint name="expression" within="" contains="" />
+        <constraint name="orElse" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ArrayUtil$.indexOf($array$, $element$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$array$.indexOf($element$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ArrayUtil" nameOfExprType="com\.intellij\.util\.ArrayUtil" minCount="0" within="" contains="" />
+        <constraint name="array" within="" contains="" />
+        <constraint name="element" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ArrayUtil$.getFirstElement($array$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$array$.firstOrNull()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ArrayUtil" nameOfExprType="com\.intellij\.util\.ArrayUtil" minCount="0" within="" contains="" />
+        <constraint name="array" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ArrayUtil$.getLastElement($array$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$array$.lastOrNull()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ArrayUtil" nameOfExprType="com\.intellij\.util\.ArrayUtil" minCount="0" within="" contains="" />
+        <constraint name="array" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ContainerUtil$.$find$($container$, $expr$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$container$.find($expr$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ContainerUtil" nameOfExprType="com\.intellij\.util\.containers\.ContainerUtil" minCount="0" within="" contains="" />
+        <constraint name="find" regexp="find" within="" contains="" _kotlinMatchCallSemantics="enabled" />
+        <constraint name="container" within="" contains="" />
+        <constraint name="expr" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ContainerUtil$.getFirstItem($container$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$container$.firstOrNull()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="container" within="" contains="" />
+        <constraint name="ContainerUtil" nameOfExprType="com\.intellij\.util\.containers\.ContainerUtil" minCount="0" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ContainerUtil$.getLastItem($container$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$container$.lastOrNull()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="container" within="" contains="" />
+        <constraint name="ContainerUtil" nameOfExprType="com\.intellij\.util\.containers\.ContainerUtil" minCount="0" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ContainerUtil$.$all$($container$, $condition$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$container$.all($condition$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="container" within="" contains="" />
+        <constraint name="condition" within="" contains="" />
+        <constraint name="ContainerUtil" nameOfExprType="com\.intellij\.util\.containers\.ContainerUtil" minCount="0" within="" contains="" />
+        <constraint name="all" regexp="all" within="" contains="" _kotlinMatchCallSemantics="enabled" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ContainerUtil$.$map2Array$($Expression$, $anArray$, $Mapper$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$Expression$.map($Mapper$).toTypedArray()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Expression" within="" contains="" />
+        <constraint name="Mapper" within="" contains="" />
+        <constraint name="ContainerUtil" nameOfExprType="com\.intellij\.util\.containers\.ContainerUtil" minCount="0" within="" contains="" />
+        <constraint name="map2Array" regexp="map2Array" within="" contains="" _kotlinMatchCallSemantics="enabled" />
+        <constraint name="anArray" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ContainerUtil$.$filter$($Collection$, $Filter$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$Collection$.filter($Filter$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ContainerUtil" nameOfExprType="com\.intellij\.util\.containers\.ContainerUtil" minCount="0" within="" contains="" />
+        <constraint name="filter" regexp="filter" within="" contains="" _kotlinMatchCallSemantics="enabled" />
+        <constraint name="Collection" within="" contains="" />
+        <constraint name="Filter" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ContainerUtil$.packNullables($Nullable$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="listOfNotNull($Nullable$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ContainerUtil" nameOfExprType="com\.intellij\.util\.containers\.ContainerUtil" minCount="0" within="" contains="" />
+        <constraint name="Nullable" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ContainerUtil$.$and$($container$, $expr$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$container$.all($expr$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ContainerUtil" nameOfExprType="com\.intellij\.util\.containers\.ContainerUtil" minCount="0" within="" contains="" />
+        <constraint name="container" within="" contains="" />
+        <constraint name="expr" within="" contains="" />
+        <constraint name="and" regexp="and" within="" contains="" _kotlinMatchCallSemantics="enabled" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ContainerUtil$.$or$($container$, $expr$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$container$.any($expr$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ContainerUtil" nameOfExprType="com\.intellij\.util\.containers\.ContainerUtil" minCount="0" within="" contains="" />
+        <constraint name="container" within="" contains="" />
+        <constraint name="expr" within="" contains="" />
+        <constraint name="or" regexp="or" within="" contains="" _kotlinMatchCallSemantics="enabled" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ContainerUtil$.$map$($container$, $expr$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$container$.map($expr$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ContainerUtil" nameOfExprType="com\.intellij\.util\.containers\.ContainerUtil" minCount="0" within="" contains="" />
+        <constraint name="container" within="" contains="" />
+        <constraint name="expr" within="" contains="" />
+        <constraint name="map" regexp="map" within="" contains="" _kotlinMatchCallSemantics="enabled" />
+      </replaceConfiguration>
+      <searchConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ContainerUtil$.notNullize($container$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ContainerUtil" nameOfExprType="com\.intellij\.util\.containers\.ContainerUtil" minCount="0" within="" contains="" />
+        <constraint name="container" within="" contains="" />
+      </searchConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ContainerUtil$.$exists$($container$, $expr$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$container$.any($expr$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ContainerUtil" nameOfExprType="com\.intellij\.util\.containers\.ContainerUtil" minCount="0" within="" contains="" />
+        <constraint name="container" within="" contains="" />
+        <constraint name="expr" within="" contains="" />
+        <constraint name="exists" regexp="exists" within="" contains="" _kotlinMatchCallSemantics="enabled" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ContainerUtil$.$mapNotNull$($container$, $expr$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$container$.mapNotNull($expr$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ContainerUtil" nameOfExprType="com\.intellij\.util\.containers\.ContainerUtil" minCount="0" within="" contains="" />
+        <constraint name="container" within="" contains="" />
+        <constraint name="expr" within="" contains="" />
+        <constraint name="mapNotNull" regexp="mapNotNull" within="" contains="" _kotlinMatchCallSemantics="enabled" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="$ContainerUtil$.$findAll$($container$, $expr$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$container$.filter($expr$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ContainerUtil" nameOfExprType="com\.intellij\.util\.containers\.ContainerUtil" minCount="0" within="" contains="" />
+        <constraint name="container" within="" contains="" />
+        <constraint name="expr" within="" contains="" />
+        <constraint name="findAll" regexp="findAll" within="" contains="" _kotlinMatchCallSemantics="enabled" />
       </replaceConfiguration>
       <searchConfiguration name="use NotificationGroup.toolWindowGroup().createNotification().notify() instead" text="$Instance$.notifyByBalloon($Parameter$)" recursive="false" caseInsensitive="false" type="JAVA">
         <constraint name="Instance" nameOfExprType="com.intellij.openapi.wm.ToolWindowManager" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
