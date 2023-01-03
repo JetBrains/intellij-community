@@ -27,12 +27,6 @@ import java.io.File
 class MavenWslTargetConfigurator : MavenImporter("", ""),
                                    MavenWorkspaceConfigurator {
 
-  private val MAVEN_HOME_DIR = Key.create<File>("MAVEN_HOME_DIR")
-  private val MAVEN_HOME_VERSION = Key.create<String>("MAVEN_WSL_HOME_VERSION")
-  private val MAVEN_TARGET_PATH = Key.create<String>("MAVEN_TARGET_PATH")
-  private val WSL_DISTRIBUTION = Key.create<WSLDistribution>("WSL_DISTRIBUTION")
-  private val JDK_PATH = Key.create<String>("JDK_PATH")
-
   override fun isMigratedToConfigurator(): Boolean {
     return true
   }
@@ -148,4 +142,12 @@ class MavenWslTargetConfigurator : MavenImporter("", ""),
     return configuration
   }
 
+
+  companion object {
+    private val MAVEN_HOME_DIR = Key.create<File>("MAVEN_HOME_DIR")
+    private val MAVEN_HOME_VERSION = Key.create<String>("MAVEN_WSL_HOME_VERSION")
+    private val MAVEN_TARGET_PATH = Key.create<String>("MAVEN_TARGET_PATH")
+    private val WSL_DISTRIBUTION = Key.create<WSLDistribution>("WSL_DISTRIBUTION")
+    private val JDK_PATH = Key.create<String>("JDK_PATH")
+  }
 }
