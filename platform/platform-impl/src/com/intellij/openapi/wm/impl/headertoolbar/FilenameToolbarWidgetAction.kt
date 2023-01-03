@@ -32,7 +32,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
 
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = UISettings.getInstance().editorTabPlacement == UISettings.TABS_NONE
