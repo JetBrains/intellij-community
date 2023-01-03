@@ -134,6 +134,7 @@ abstract class DistributedTestHostBase() {
 
             val action = queue.remove()
             actionTitle = action.title
+            logger.info("'$actionTitle': preparing to start action")
             showNotification(actionTitle)
 
             // Flush all events to process pending protocol events and other things
@@ -150,12 +151,12 @@ abstract class DistributedTestHostBase() {
 
             projectOrNull?.let {
               // Sync state across all IDE agents to maintain proper order in protocol events
-              logger.info("Sync protocol events after execution...")
+              logger.info("'$actionTitle': Sync protocol events after execution...")
               val elapsedSync = measureTimeMillis {
                 DistributedTestBridge.getInstance(it).syncProtocolEvents()
                 IdeEventQueue.getInstance().flushQueue()
               }
-              logger.info("Protocol state sync completed in ${elapsedSync}ms")
+              logger.info("'$actionTitle': Protocol state sync completed in ${elapsedSync}ms")
             }
 
             // Assert state
