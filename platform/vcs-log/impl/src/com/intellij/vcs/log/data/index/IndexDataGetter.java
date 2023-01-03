@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -337,9 +337,11 @@ public final class IndexDataGetter {
       return IndexDataGetter.this.getAffectedCommits(path);
     }
 
-    @Nullable
     @Override
-    public EdgeData<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
+    public @Nullable EdgeData<FilePath> findRename$intellij_platform_vcs_log_impl(int parent,
+                                                                                  int child,
+                                                                                  @NotNull FilePath path,
+                                                                                  boolean isChildPath) {
       VirtualFile root = Objects.requireNonNull(getRoot(path));
       return executeAndCatch(() -> {
         return myIndexStorage.paths.findRename(parent, child, root, path, isChildPath);
@@ -356,11 +358,11 @@ public final class IndexDataGetter {
       for (Map.Entry<EdgeData<CommitId>, EdgeData<FilePath>> entry : myDirectoryRenamesProvider.getRenamesMap().entrySet()) {
         EdgeData<CommitId> commits = entry.getKey();
         EdgeData<FilePath> rename = entry.getValue();
-        if (VcsFileUtil.isAncestor(rename.getChild(), startPath, false)) {
-          FilePath renamedPath = VcsUtil.getFilePath(rename.getParent().getPath() + "/" +
-                                                     VcsFileUtil.relativePath(rename.getChild(), startPath), true);
-          renamesMap.put(new EdgeData<>(myLogStorage.getCommitIndex(commits.getParent().getHash(), commits.getParent().getRoot()),
-                                        myLogStorage.getCommitIndex(commits.getChild().getHash(), commits.getChild().getRoot())),
+        if (VcsFileUtil.isAncestor(rename.child, startPath, false)) {
+          FilePath renamedPath = VcsUtil.getFilePath(rename.parent.getPath() + "/" +
+                                                     VcsFileUtil.relativePath(rename.child, startPath), true);
+          renamesMap.put(new EdgeData<>(myLogStorage.getCommitIndex(commits.parent.getHash(), commits.parent.getRoot()),
+                                        myLogStorage.getCommitIndex(commits.child.getHash(), commits.child.getRoot())),
                          new EdgeData<>(renamedPath, startPath));
         }
       }
@@ -378,15 +380,15 @@ public final class IndexDataGetter {
     private void hackAffectedCommits(@NotNull FilePath path,
                                      @NotNull Int2ObjectMap<Int2ObjectMap<VcsLogPathsIndex.ChangeKind>> affectedCommits) {
       for (Map.Entry<EdgeData<Integer>, EdgeData<FilePath>> entry : renamesMap.entrySet()) {
-        int childCommit = entry.getKey().getChild();
+        int childCommit = entry.getKey().child;
         if (affectedCommits.containsKey(childCommit)) {
           EdgeData<FilePath> rename = entry.getValue();
 
           VcsLogPathsIndex.ChangeKind newKind;
-          if (FILE_PATH_HASHING_STRATEGY.equals(rename.getChild(), path)) {
+          if (FILE_PATH_HASHING_STRATEGY.equals(rename.child, path)) {
             newKind = VcsLogPathsIndex.ChangeKind.ADDED;
           }
-          else if (FILE_PATH_HASHING_STRATEGY.equals(rename.getParent(), path)) {
+          else if (FILE_PATH_HASHING_STRATEGY.equals(rename.parent, path)) {
             newKind = VcsLogPathsIndex.ChangeKind.REMOVED;
           }
           else {
@@ -401,18 +403,19 @@ public final class IndexDataGetter {
       }
     }
 
-    @Nullable
     @Override
-    public EdgeData<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
+    public @Nullable EdgeData<FilePath> findRename$intellij_platform_vcs_log_impl(int parent,
+                                                                                  int child,
+                                                                                  @NotNull FilePath path,
+                                                                                  boolean isChildPath) {
       if (path.isDirectory()) return findFolderRename(parent, child, path, isChildPath);
-      return super.findRename(parent, child, path, isChildPath);
+      return super.findRename$intellij_platform_vcs_log_impl(parent, child, path, isChildPath);
     }
 
-    @Nullable
-    private EdgeData<FilePath> findFolderRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
+    private @Nullable EdgeData<FilePath> findFolderRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
       EdgeData<FilePath> rename = renamesMap.get(new EdgeData<>(parent, child));
       if (rename == null) return null;
-      return FILE_PATH_HASHING_STRATEGY.equals(isChildPath ? rename.getChild() : rename.getParent(), path) ? rename : null;
+      return FILE_PATH_HASHING_STRATEGY.equals(isChildPath ? rename.child : rename.parent, path) ? rename : null;
     }
   }
 

@@ -3,7 +3,6 @@ package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -68,8 +67,8 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
                                       AbstractStorage.PAGE_SIZE, storageLockContext, storageId.getVersion());
   }
 
-  private static @NotNull PersistentHashMap<int[], Collection<Couple<Integer>>> createRenamesMap(@NotNull StorageId storageId,
-                                                                                                 @Nullable StorageLockContext storageLockContext)
+  private static @NotNull PersistentHashMap<int[], Collection<int[]>> createRenamesMap(@NotNull StorageId storageId,
+                                                                                       @Nullable StorageLockContext storageLockContext)
     throws IOException {
     Path storageFile = storageId.getStorageFile(RENAMES_MAP);
     return new PersistentHashMap<>(storageFile, new CoupleKeyDescriptor(), new CollectionDataExternalizer(), AbstractStorage.PAGE_SIZE,
@@ -97,14 +96,14 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
   @Nullable
   public EdgeData<FilePath> findRename(int parent, int child, @NotNull VirtualFile root, @NotNull FilePath path, boolean isChildPath)
     throws IOException {
-    Collection<Couple<Integer>> renames = myPathsIndexer.myRenamesMap.get(new int[]{parent, child});
+    Collection<int[]> renames = myPathsIndexer.myRenamesMap.get(new int[]{parent, child});
     if (renames == null) return null;
     int pathId = myPathsIndexer.myPathsEnumerator.enumerate(new LightFilePath(root, path));
-    for (Couple<Integer> rename : renames) {
-      if ((isChildPath && rename.second == pathId) ||
-          (!isChildPath && rename.first == pathId)) {
-        FilePath path1 = getPath(rename.first, path.isDirectory());
-        FilePath path2 = getPath(rename.second, path.isDirectory());
+    for (int[] rename : renames) {
+      if ((isChildPath && rename[1] == pathId) ||
+          (!isChildPath && rename[0] == pathId)) {
+        FilePath path1 = getPath(rename[0], path.isDirectory());
+        FilePath path2 = getPath(rename[1], path.isDirectory());
         return new EdgeData<>(path1, path2);
       }
     }
@@ -156,11 +155,11 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
   private static final class PathsIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> {
     @NotNull private final VcsLogStorage myStorage;
     @NotNull private final PersistentEnumerator<LightFilePath> myPathsEnumerator;
-    @NotNull private final PersistentHashMap<int[], Collection<Couple<Integer>>> myRenamesMap;
+    @NotNull private final PersistentHashMap<int[], Collection<int[]>> myRenamesMap;
     @NotNull private Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
 
     private PathsIndexer(@NotNull VcsLogStorage storage, @NotNull PersistentEnumerator<LightFilePath> enumerator,
-                         @NotNull PersistentHashMap<int[], Collection<Couple<Integer>>> renamesMap) {
+                         @NotNull PersistentHashMap<int[], Collection<int[]>> renamesMap) {
       myStorage = storage;
       myPathsEnumerator = enumerator;
       myRenamesMap = renamesMap;
@@ -179,14 +178,14 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
       int parentsCount = inputData.getParents().isEmpty() ? 1 : inputData.getParents().size();
       for (int parentIndex = 0; parentIndex < parentsCount; parentIndex++) {
         try {
-          Collection<Couple<Integer>> renames = new SmartList<>();
+          Collection<int[]> renames = new SmartList<>();
           for (Int2IntMap.Entry entry : inputData.getRenamedPaths(parentIndex).int2IntEntrySet()) {
-            renames.add(Couple.of(entry.getIntKey(), entry.getIntValue()));
+            renames.add(new int[]{entry.getIntKey(), entry.getIntValue()});
             getOrCreateChangeKindList(result, entry.getIntKey(), parentsCount).set(parentIndex, ChangeKind.REMOVED);
             getOrCreateChangeKindList(result, entry.getIntValue(), parentsCount).set(parentIndex, ChangeKind.ADDED);
           }
 
-          if (renames.size() > 0) {
+          if (!renames.isEmpty()) {
             int commit = myStorage.getCommitIndex(inputData.getId(), inputData.getRoot());
             int parent = myStorage.getCommitIndex(inputData.getParents().get(parentIndex), inputData.getRoot());
             myRenamesMap.put(new int[]{parent, commit}, renames);
@@ -390,24 +389,24 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     }
   }
 
-  private static class CollectionDataExternalizer implements DataExternalizer<Collection<Couple<Integer>>> {
+  private static final class CollectionDataExternalizer implements DataExternalizer<Collection<int[]>> {
     @Override
-    public void save(@NotNull DataOutput out, Collection<Couple<Integer>> value) throws IOException {
+    public void save(@NotNull DataOutput out, Collection<int[]> value) throws IOException {
       out.writeInt(value.size());
-      for (Couple<Integer> v : value) {
-        out.writeInt(v.first);
-        out.writeInt(v.second);
+      for (int[] v : value) {
+        out.writeInt(v[0]);
+        out.writeInt(v[1]);
       }
     }
 
     @Override
-    public Collection<Couple<Integer>> read(@NotNull DataInput in) throws IOException {
-      List<Couple<Integer>> result = new SmartList<>();
+    public Collection<int[]> read(@NotNull DataInput in) throws IOException {
       int size = in.readInt();
+      var result = new int[size][];
       for (int i = 0; i < size; i++) {
-        result.add(Couple.of(in.readInt(), in.readInt()));
+        result[i] = new int[]{in.readInt(), in.readInt()};
       }
-      return result;
+      return Arrays.asList(result);
     }
   }
 }
