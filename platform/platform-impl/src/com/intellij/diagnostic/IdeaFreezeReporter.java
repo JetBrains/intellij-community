@@ -17,6 +17,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,8 @@ import java.util.function.Function;
 final class IdeaFreezeReporter implements IdePerformanceListener {
   private static final ExtensionPointName<FreezeProfiler> EP_NAME = new ExtensionPointName<>("com.intellij.diagnostic.freezeProfiler");
 
-  private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 10 : 20; // seconds
+  private static final int FREEZE_THRESHOLD = SystemProperties.getIntProperty(
+    "freeze.reporter.threshold.s", ApplicationManager.getApplication().isInternal() ? 10 : 20);
   private static final String REPORT_PREFIX = "report";
   private static final String DUMP_PREFIX = "dump";
   private static final String MESSAGE_FILE_NAME = ".message";
