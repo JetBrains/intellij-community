@@ -114,7 +114,7 @@ class CompletionGolfFileReportGenerator(
       lookups.forEachIndexed { i, lookup ->
         val currentChar = expectedText[offset]
         val delimiter = mutableListOf<String>().apply {
-          if (lookups.size > 1) {
+          if (lookups.size > 1 && i != 0) {
             add("delimiter")
           }
           if (currentChar.isWhitespace()) {
