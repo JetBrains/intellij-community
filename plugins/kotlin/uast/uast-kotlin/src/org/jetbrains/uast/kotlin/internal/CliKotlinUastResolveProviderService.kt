@@ -33,7 +33,11 @@ class CliKotlinUastResolveProviderService : KotlinUastResolveProviderService {
         @Suppress("DEPRECATION")
         return element.project.analysisCompletedHandler?.getTypeMapper()
     }
-
+    @Deprecated(
+        "Do not use the old frontend, retroactively named as FE1.0, since K2 with the new frontend is coming.\n" +
+                "Please use analysis API: https://github.com/JetBrains/kotlin/blob/master/docs/analysis/analysis-api/analysis-api.md",
+        replaceWith = ReplaceWith("analyze(element) { }", "org.jetbrains.kotlin.analysis.api.analyze")
+    )
     override fun getBindingContext(element: KtElement): BindingContext {
         return element.project.analysisCompletedHandler?.getBindingContext() ?: BindingContext.EMPTY
     }
