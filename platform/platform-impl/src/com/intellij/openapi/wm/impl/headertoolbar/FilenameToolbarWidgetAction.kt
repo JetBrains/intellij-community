@@ -35,7 +35,14 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = UISettings.getInstance().editorTabPlacement == UISettings.TABS_NONE
+    val project = e.project
+    if (project != null) {
+      val noTabs = UISettings.getInstance().editorTabPlacement == UISettings.TABS_NONE
+      val hasOpenedFiles = FileEditorManager.getInstance(project).selectedFiles.isNotEmpty()
+      e.presentation.isEnabledAndVisible = noTabs && hasOpenedFiles
+    } else {
+      e.presentation.isEnabledAndVisible = false
+    }
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
