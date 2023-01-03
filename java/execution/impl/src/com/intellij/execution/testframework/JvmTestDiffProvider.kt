@@ -9,13 +9,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.uast.UMethod
-import org.jetbrains.uast.getParentOfType
-import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.*
 
 abstract class JvmTestDiffProvider<E : PsiElement> : TestDiffProvider {
   final override fun findExpected(project: Project, stackTrace: String): PsiElement? {
-    var expectedParamIndex: Int? = null
+    var expectedParam: UParameter? = null
     var enclosingMethod: UMethod? = null
     val lineParser = ExceptionLineParserFactory.getInstance().create(ExceptionInfoCache(project, GlobalSearchScope.allScope(project)))
     stackTrace.lineSequence().forEach { line ->
@@ -29,10 +27,10 @@ abstract class JvmTestDiffProvider<E : PsiElement> : TestDiffProvider {
       val startOffset = document.getLineStartOffset(lineNumber - 1)
       val endOffset = document.getLineEndOffset(lineNumber - 1)
       val failedCall = failedCall(file, startOffset, endOffset, enclosingMethod) ?: return@forEach
-      val expected = getExpected(failedCall, expectedParamIndex) ?: return@forEach
+      val expected = getExpected(failedCall, expectedParam) ?: return@forEach
       enclosingMethod = failedCall.toUElement()?.getParentOfType<UMethod>(true)
-      expectedParamIndex = getParamIndex(expected)
-      if (expectedParamIndex == null) return expected
+      expectedParam = expected.toUElementOfType<UParameter>()
+      if (expectedParam == null) return expected
     }
     return null
   }
@@ -41,7 +39,5 @@ abstract class JvmTestDiffProvider<E : PsiElement> : TestDiffProvider {
 
   abstract fun failedCall(file: PsiFile, startOffset: Int, endOffset: Int, method: UMethod?): E?
 
-  abstract fun getParamIndex(param: PsiElement): Int?
-
-  abstract fun getExpected(call: E, argIndex: Int?): PsiElement?
+  abstract fun getExpected(call: E, param: UParameter?): PsiElement?
 }

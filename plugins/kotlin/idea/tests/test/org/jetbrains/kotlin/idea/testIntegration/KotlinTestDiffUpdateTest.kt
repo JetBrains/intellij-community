@@ -30,7 +30,7 @@ class KotlinTestDiffUpdateTest : JvmTestDiffUpdateTest() {
         change: (Document) -> Unit
     ) = checkPhysicalDiff(before, after, diffAfter, testClass, testName, expected, actual, stackTrace, "kt", change)
 
-    fun `test string literal diff`() {
+    fun `test accept string literal diff`() {
         checkAcceptFullDiff(
             """
                   import org.junit.Assert
@@ -120,7 +120,7 @@ class KotlinTestDiffUpdateTest : JvmTestDiffUpdateTest() {
         }
     }
 
-    fun `test string literal diff with escape`() {
+    fun `test accept string literal diff with escape`() {
         checkAcceptFullDiff(
             """
                   import org.junit.Assert
@@ -150,7 +150,7 @@ class KotlinTestDiffUpdateTest : JvmTestDiffUpdateTest() {
         )
     }
 
-    fun `test parameter reference diff`() {
+    fun `test accept parameter reference diff`() {
         checkAcceptFullDiff(
             """
                   import org.junit.Assert
@@ -189,7 +189,46 @@ class KotlinTestDiffUpdateTest : JvmTestDiffUpdateTest() {
         )
     }
 
-    fun `test parameter reference diff multiple calls on same line`() {
+    fun `test accept parameter reference diff in named call`() {
+        checkAcceptFullDiff(
+            """
+                  import org.junit.Assert
+                  import org.junit.Test
+                  
+                  class MyJUnitTest {
+                      @Test
+                      fun testFoo() {
+                          doTest(ex = "expected", other = 0)
+                      }
+                  
+                      private fun doTest(other: Int, ex: String) {
+                          Assert.assertEquals(ex, "actual")
+                      }
+                  }
+              """.trimIndent(), """
+                  import org.junit.Assert
+                  import org.junit.Test
+                  
+                  class MyJUnitTest {
+                      @Test
+                      fun testFoo() {
+                          doTest(ex = "actual", other = 0)
+                      }
+                  
+                      private fun doTest(other: Int, ex: String) {
+                          Assert.assertEquals(ex, "actual")
+                      }
+                  }
+              """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+                  at org.junit.Assert.assertEquals(Assert.java:117)
+                  at org.junit.Assert.assertEquals(Assert.java:146)
+                  at MyJUnitTest.doTest(MyJUnitTest.kt:11)
+                  at MyJUnitTest.testFoo(MyJUnitTest.kt:7)
+              """.trimIndent()
+        )
+    }
+
+    fun `test accept parameter reference diff with multiple calls on same line`() {
         checkAcceptFullDiff(
             """
                   import org.junit.Assert
@@ -232,7 +271,7 @@ class KotlinTestDiffUpdateTest : JvmTestDiffUpdateTest() {
         )
     }
 
-    fun `test local variable reference diff`() {
+    fun `test accept local variable reference diff`() {
         checkAcceptFullDiff(
             """
                   import org.junit.Assert
@@ -264,7 +303,7 @@ class KotlinTestDiffUpdateTest : JvmTestDiffUpdateTest() {
         )
     }
 
-    fun `test field reference diff`() {
+    fun `test accept field reference diff`() {
         checkAcceptFullDiff(
             """
                   import org.junit.Assert
@@ -298,7 +337,7 @@ class KotlinTestDiffUpdateTest : JvmTestDiffUpdateTest() {
         )
     }
 
-    fun `_test polyadic string literal diff`() {
+    fun `_test accept polyadic string literal diff`() {
         checkAcceptFullDiff(
             """
                   import org.junit.Assert

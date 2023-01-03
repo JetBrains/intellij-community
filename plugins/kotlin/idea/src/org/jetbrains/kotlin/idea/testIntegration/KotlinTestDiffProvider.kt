@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.testIntegration
 import com.intellij.execution.testframework.JvmTestDiffProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.asSafely
 import com.siyeh.ig.testFrameworks.UAssertHint
 import org.jetbrains.kotlin.backend.jvm.ir.psiElement
@@ -13,18 +14,12 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UParameter
 import org.jetbrains.uast.toUElementOfType
 
 class KotlinTestDiffProvider : JvmTestDiffProvider<KtCallExpression>() {
     override fun isCompiled(file: PsiFile): Boolean {
         return file.safeAs<KtFile>()?.isCompiled == true
-    }
-
-    override fun getParamIndex(param: PsiElement): Int? {
-        if (param is KtParameter) {
-            return param.parent.asSafely<KtParameterList>()?.parameters?.indexOf<PsiElement>(param)
-        }
-        return null
     }
 
     override fun failedCall(file: PsiFile, startOffset: Int, endOffset: Int, method: UMethod?): KtCallExpression? {
@@ -36,12 +31,18 @@ class KotlinTestDiffProvider : JvmTestDiffProvider<KtCallExpression>() {
         return failedCalls.firstOrNull { it.resolveToCall()?.resultingDescriptor?.psiElement?.isEquivalentTo(method.sourcePsi) == true }
     }
 
-    override fun getExpected(call: KtCallExpression, argIndex: Int?): PsiElement? {
-        val expr = if (argIndex == null) {
+    override fun getExpected(call: KtCallExpression, param: UParameter?): PsiElement? {
+        val expr = if (param == null) {
             val uCallElement = call.toUElementOfType<UCallExpression>() ?: return null
             UAssertHint.createAssertEqualsUHint(uCallElement)?.expected?.sourcePsi ?: return null
         } else {
-            call.valueArguments.getOrNull(argIndex)?.getArgumentExpression() ?: return null
+            val argument = call.valueArguments.firstOrNull {it.getArgumentName()?.asName?.asString() == param.name } ?: let {
+                val srcParam = param.sourcePsi?.asSafely<KtParameter>()
+                val paramList = srcParam?.parentOfType<KtParameterList>()
+                val argIndex = paramList?.parameters?.indexOf<PsiElement>(srcParam)
+                if (argIndex != null && argIndex != -1) call.valueArguments.getOrNull(argIndex) else null
+            }
+            argument?.getArgumentExpression()
         }
         if (expr is KtStringTemplateExpression && expr.entries.size == 1) return expr
         if (expr is KtStringTemplateEntry) return expr.parent
