@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.application.runReadAction
@@ -15,6 +15,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.origin.LibraryOriginImpl
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.annotations.Nls
 
 class LibraryIndexableFilesIteratorImpl
@@ -76,6 +77,16 @@ private constructor(private val libraryName: @NlsSafe String?,
         LibraryIndexableFilesIteratorImpl(library.name, library.presentableName,
                                           collectFiles(library, OrderRootType.CLASSES, roots),
                                           collectFiles(library, OrderRootType.SOURCES, roots))
+
+    @RequiresReadLock
+    @JvmStatic
+    fun createIterator(entity: WorkspaceEntity,
+                       roots: List<VirtualFile>,
+                       sourceRoots: List<VirtualFile>): LibraryIndexableFilesIteratorImpl =
+      if (entity is Library)
+        LibraryIndexableFilesIteratorImpl(entity.name, entity.presentableName, roots, sourceRoots)
+      else
+        LibraryIndexableFilesIteratorImpl(null, entity.toString(), roots, sourceRoots)
 
     @JvmStatic
     fun createIteratorList(library: Library): List<IndexableFilesIterator> =

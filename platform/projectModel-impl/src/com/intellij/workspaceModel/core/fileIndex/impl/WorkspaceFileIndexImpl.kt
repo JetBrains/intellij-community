@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.injected.editor.VirtualFileWindow
@@ -20,7 +20,9 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.CollectionQuery
 import com.intellij.util.Query
 import com.intellij.workspaceModel.core.fileIndex.*
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntityReference
+import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 
 class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexEx {
   companion object {
@@ -100,6 +102,10 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     return getOrCreateIndexData(unwrappedFile).getFileInfo(unwrappedFile, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets)
   }
 
+  override fun visitFileSets(visitor: WorkspaceFileSetVisitor) {
+    getOrCreateMainIndexData().visitFileSets(visitor)
+  }
+
   override fun getPackageName(directory: VirtualFile): String? {
     return getOrCreateIndexData(directory).getPackageName(directory)
   }
@@ -138,7 +144,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     return data
   }
 
-  private val contributors: List<WorkspaceFileIndexContributor<*>>
+  val contributors: List<WorkspaceFileIndexContributor<*>>
     get() = EP_NAME.extensionList + CustomEntityProjectModelInfoProvider.EP.extensionList.map { CustomEntityProjectModelInfoProviderBridge(it) }
 
   private fun obtainBranchIndexData(branch: ModelBranch): WorkspaceFileIndexData {

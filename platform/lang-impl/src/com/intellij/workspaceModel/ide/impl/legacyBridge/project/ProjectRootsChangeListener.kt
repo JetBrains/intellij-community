@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.project
 
 import com.intellij.openapi.application.ApplicationManager
@@ -7,9 +7,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.util.indexing.EntityIndexingServiceEx
-import com.intellij.util.indexing.IndexableFilesIndex
 import com.intellij.util.indexing.roots.IndexableEntityProvider
-import com.intellij.util.indexing.roots.IndexableFilesIndexImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleDependencyIndexImpl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.storage.EntityChange
@@ -30,10 +28,7 @@ internal class ProjectRootsChangeListener(private val project: Project) {
   fun changed(event: VersionedStorageChange) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
-    (ModuleDependencyIndex.getInstance(project) as ModuleDependencyIndexImpl).workspaceModelChanged(event);
-    if (IndexableFilesIndex.shouldBeUsed()) {
-      IndexableFilesIndexImpl.getInstanceImpl(project).workspaceModelChanged(event)
-    }
+    (ModuleDependencyIndex.getInstance(project) as ModuleDependencyIndexImpl).workspaceModelChanged(event)
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager !is ProjectRootManagerBridge) return
     val performUpdate = shouldFireRootsChanged(event, project)

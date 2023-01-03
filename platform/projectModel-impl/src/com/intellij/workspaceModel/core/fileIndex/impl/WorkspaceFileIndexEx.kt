@@ -1,17 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Query
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
+import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import org.jetbrains.annotations.ApiStatus
 
 interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   /**
@@ -67,6 +65,12 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
    */
   fun ensureInitialized()
 
+  /**
+   * There may be thousands of file sets in index, so visiting them all is generally discouraged.
+   */
+  @ApiStatus.Internal
+  fun visitFileSets(visitor: WorkspaceFileSetVisitor)
+
   companion object {
     @JvmField
     val IS_ENABLED: Boolean = Registry.`is`("platform.projectModel.workspace.model.file.index")
@@ -96,4 +100,10 @@ sealed interface WorkspaceFileInternalInfo {
 internal sealed interface MultipleWorkspaceFileSets : WorkspaceFileInternalInfo {
   val fileSets: List<WorkspaceFileSetWithCustomData<*>>
   fun find(acceptedCustomDataClass: Class<out WorkspaceFileSetData>?): WorkspaceFileSetWithCustomData<*>?
+}
+
+@ApiStatus.Experimental
+@ApiStatus.Internal
+interface WorkspaceFileSetVisitor {
+  fun visitIncludedRoot(fileSet: WorkspaceFileSet)
 }

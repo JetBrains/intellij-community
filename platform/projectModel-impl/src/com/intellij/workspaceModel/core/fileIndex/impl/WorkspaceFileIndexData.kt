@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.application.ApplicationManager
@@ -64,11 +64,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
                   includeExternalSets: Boolean,
                   includeExternalSourceSets: Boolean): WorkspaceFileInternalInfo {
     if (!file.isValid) return WorkspaceFileInternalInfo.NonWorkspace.INVALID
-    if (hasDirtyEntities && ApplicationManager.getApplication().isWriteAccessAllowed) {
-      updateDirtyEntities()
-    }
-    ApplicationManager.getApplication().assertReadAccessAllowed()
-    nonIncrementalContributors.updateIfNeeded(fileSets, fileSetsByPackagePrefix)
+    ensureIsUpToDate()
 
     val originalAcceptedKindMask = 
       (if (includeContentSets) WorkspaceFileKindMask.CONTENT else 0) or 
@@ -97,7 +93,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
             val acceptedFileSets = ArrayList<WorkspaceFileSetImpl>()
             //copy a mutable variable used from lambda to a 'val' to ensure that kotlinc won't wrap it into IntRef
             val currentKindMask = acceptedKindsMask 
-            //this should be a rare case so it's ok to use less optimal code here and check 'isUnloaded' again
+            //this should be a rare case, so it's ok to use less optimal code here and check 'isUnloaded' again
             storedFileSets.forEach { fileSet ->
               if (fileSet is WorkspaceFileSetImpl && fileSet.kind.toMask() and currentKindMask != 0 && !fileSet.isUnloaded(project)) {
                 acceptedFileSets.add(fileSet)
@@ -119,6 +115,28 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
       return WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
     }
     return WorkspaceFileInternalInfo.NonWorkspace.NOT_UNDER_ROOTS
+  }
+
+  private fun ensureIsUpToDate() {
+    if (hasDirtyEntities && ApplicationManager.getApplication().isWriteAccessAllowed) {
+      updateDirtyEntities()
+    }
+    ApplicationManager.getApplication().assertReadAccessAllowed()
+    nonIncrementalContributors.updateIfNeeded(fileSets, fileSetsByPackagePrefix)
+  }
+
+  fun visitFileSets(visitor: WorkspaceFileSetVisitor) {
+    ensureIsUpToDate()
+    for (value in fileSets.values) {
+      value.forEach { storedFileSet ->
+        when (storedFileSet) {
+          is WorkspaceFileSetImpl -> {
+            visitor.visitIncludedRoot(storedFileSet)
+          }
+          is ExcludedFileSet -> Unit
+        }
+      }
+    }
   }
 
   private fun <E : WorkspaceEntity> getContributors(entityClass: Class<out E>, storageKind: EntityStorageKind): List<WorkspaceFileIndexContributor<E>> {

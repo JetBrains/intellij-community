@@ -16,6 +16,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.isModuleUnloaded
 import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
@@ -37,14 +38,14 @@ object IndexableEntityProviderMethods {
   fun createIterators(entity: ModuleEntity, entityStorage: EntityStorage, project: Project): Collection<IndexableFilesIterator> {
     if (shouldIndexProjectBasedOnIndexableEntityProviders()) {
       if (entity.isModuleUnloaded(entityStorage)) return emptyList()
+      if (IndexableFilesIndex.isIntegrationFullyEnabled()) {
+        return IndexableFilesIndex.getInstance(project).getModuleIndexingIterators(entity, entityStorage)
+      }
       val builders = mutableListOf<IndexableEntityProvider.IndexableIteratorBuilder>()
       for (provider in IndexableEntityProvider.EP_NAME.extensionList) {
         if (provider is IndexableEntityProvider.Existing) {
           builders.addAll(provider.getIteratorBuildersForExistingModule(entity, entityStorage, project))
         }
-      }
-      if (IndexableFilesIndex.isIntegrationFullyEnabled()) {
-        return IndexableFilesIndex.getInstance(project).getModuleIndexingIterators(entity, entityStorage)
       }
       return IndexableIteratorBuilders.instantiateBuilders(builders, project, entityStorage)
     }
@@ -80,5 +81,18 @@ object IndexableEntityProviderMethods {
 
   fun getExcludedFiles(entity: ContentRootEntity): List<VirtualFile> {
     return ContainerUtil.mapNotNull(entity.excludedUrls) { param -> param.url.virtualFile }
+  }
+
+  fun createExternalEntityIterators(reference: EntityReference<*>,
+                                    roots: Collection<VirtualFile>,
+                                    sourceRoots: Collection<VirtualFile>): Collection<IndexableFilesIterator> {
+    if (roots.isEmpty() && sourceRoots.isEmpty()) return emptyList()
+    return listOf(ExternalWorkspaceEntityIteratorImpl(reference, roots, sourceRoots))
+  }
+
+  fun createModuleUnawareContentEntityIterators(reference: EntityReference<*>,
+                                                roots: Collection<VirtualFile>): Collection<IndexableFilesIterator> {
+    if (roots.isEmpty()) return emptyList()
+    return listOf(ModuleUnawareContentEntityIteratorImpl(reference, roots))
   }
 }

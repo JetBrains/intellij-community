@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import org.jetbrains.annotations.NotNull;
@@ -26,8 +27,9 @@ public interface IndexableFilesIndex {
    */
   static boolean shouldBeUsed() {
    return (Registry.is("indexing.use.indexable.files.index") ||
-            (ApplicationManager.getApplication().isUnitTestMode() && TestModeFlags.is(ENABLE_IN_TESTS))) &&
-           Registry.is("indexing.enable.entity.provider.based.indexing");
+           (ApplicationManager.getApplication().isUnitTestMode() && TestModeFlags.is(ENABLE_IN_TESTS))) &&
+          WorkspaceFileIndexEx.IS_ENABLED &&
+          Registry.is("indexing.enable.entity.provider.based.indexing");
   }
 
   static boolean isIntegrationFullyEnabled(){
