@@ -30,20 +30,37 @@ class CompletionGolfFileReportGenerator(
           }
         }
       }
-      div {
-        label("labelText") { +"With delimiter:" }
-        select("delimiter-pick") {
-          delOption("cg-delimiter-integral", "&int;")
-          delOption("cg-delimiter-box-small", "&#10073;")
-          delOption("cg-delimiter-box-big", "&#10074;")
-          delOption("cg-delimiter-underscore", "_")
-          delOption("cg-delimiter-none", "none")
+      div("cg") {
+        div {
+          style = "display: flex; gap: 12px;"
+          div {
+            label("labelText") { +"With delimiter:" }
+            select("delimiter-pick") {
+              delOption("cg-delimiter-integral", "&int;")
+              delOption("cg-delimiter-box-small", "&#10073;")
+              delOption("cg-delimiter-box-big", "&#10074;")
+              delOption("cg-delimiter-underscore", "_")
+              delOption("cg-delimiter-none", "none")
+            }
+          }
+          div("thresholds") {
+            label("labelText") { +"Threshold grades:" }
+            Threshold.values().forEach {
+              val statsClass = Threshold.getClass(it)
+              span(statsClass) {
+                button(classes = "stats-value") {
+                  onClick = "invertRows(event, '$statsClass')"
+                  +((it.value * 100).format()+"%")
+                }
+              }
+            }
+          }
         }
-      }
-      code("cg cg-delimiter-integral") {
-        table {
-          fileEvaluations.forEach {
-            getTable(it, text, it.evaluationType)
+        code("cg-file cg-delimiter-integral") {
+          table {
+            fileEvaluations.forEach {
+              getTable(it, text, it.evaluationType)
+            }
           }
         }
       }
@@ -80,13 +97,15 @@ class CompletionGolfFileReportGenerator(
         val tail = fullText.drop(session.offset + session.expectedText.length).takeWhile { it != '\n' }
 
         lineNumbers += defaultText(text, lineNumbers)
+        val metricsPerSession = MetricsEvaluator.withDefaultMetrics(info.evaluationType, true).evaluate(listOf(session))
+        val movesCountNormalised = metricsPerSession.findByName(MovesCountNormalised.NAME)
 
-        tr {
+        val statsClass = Threshold.getClass(movesCountNormalised?.value)
+        tr(statsClass) {
           td("line-numbers") {
             attributes["data-line-numbers"] = lineNumbers.toString()
           }
           td("code-line") {
-            val metricsPerSession = MetricsEvaluator.withDefaultMetrics(info.evaluationType, true).evaluate(listOf(session))
             prepareLine(session, tab, metricsPerSession)
             if (tail.isNotEmpty()) {
               pre("ib") { +tail }
@@ -128,22 +147,26 @@ class CompletionGolfFileReportGenerator(
     }
 
     div("line-stats") {
+      val movesCountNormalised = metrics.findByName(MovesCountNormalised.NAME)
+      val movesCount = metrics.findByName(MovesCount.NAME)
+      val totalLatency = metrics.findByName(TotalLatencyMetric.NAME)
+
       val info = mutableListOf<String>().apply {
-        metrics.findByName(MovesCountNormalised.NAME)
-          ?.let { add("%.2f".format(it.value * 100) + "%") }
-
-        metrics.findByName(MovesCount.NAME)
-          ?.let { add("${it.value.toInt()} act") }
-
-        metrics.findByName(TotalLatencyMetric.NAME)
-          ?.let { add("%.2f".format(it.value / 1000) + "s") }
+        if (movesCountNormalised != null) add((movesCountNormalised.value * 100).format() + "%")
+        if (movesCount != null) add("${movesCount.value.toInt()} act")
+        if (totalLatency != null) add((totalLatency.value / 1000).format() + "s")
       }
 
       if (info.isNotEmpty()) {
         i {
-          pre {
+          style = "display: flex;"
+          pre("no-select") { +"    #  " }
+          pre("stats-value") {
+            style = "padding-inline: 4px;"
             +StringEscapeUtils.escapeHtml(
-              info.joinToString(separator = ",\t", prefix = "    #  ")
+              info.joinToString(separator = "\t", prefix = "", postfix = "\t") {
+                it.padEnd(4, ' ')
+              }
             )
           }
         }
@@ -193,7 +216,38 @@ class CompletionGolfFileReportGenerator(
       }.size
   }
 
+  private fun Double.format(): String {
+    return "%.2f".format(this)
+      .dropLastWhile { it == '0' }
+      .dropLastWhile { it == '.' }
+  }
+
   companion object {
+    private enum class Threshold(val value: Double) {
+      EXCELLENT(System.getenv("CG_THRESHOLD_EXCELLENT")?.toDouble() ?: 0.15),
+      GOOD(System.getenv("CG_THRESHOLD_GOOD")?.toDouble() ?: 0.25),
+      SATISFACTORY(System.getenv("CG_THRESHOLD_SATISFACTORY")?.toDouble() ?: 0.5),
+      BAD(System.getenv("CG_THRESHOLD_BAD")?.toDouble() ?: 0.8),
+      VERY_BAD(System.getenv("CG_THRESHOLD_VERY_BAD")?.toDouble() ?: 1.0);
+
+      operator fun Double.compareTo(t: Threshold) = compareTo(t.value)
+      operator fun compareTo(d: Double) = value.compareTo(d)
+
+      companion object {
+        fun getClass(threshold: Threshold) = getClass(threshold.value)
+        fun getClass(value: Double?) = value?.let {
+          when {
+            EXCELLENT >= value -> "stats-excellent"
+            GOOD >= value -> "stats-good"
+            SATISFACTORY >= value -> "stats-satisfactory"
+            BAD >= value -> "stats-bad"
+            VERY_BAD >= value -> "stats-very_bad"
+            else -> "stats-unknown"
+          }
+        } ?: "stats-unknown"
+      }
+    }
+
     fun List<MetricInfo>.findByName(name: String): MetricInfo? {
       //format name same as in MetricInfo$name
       val formattedName = name.filter { it.isLetterOrDigit() }

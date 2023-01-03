@@ -218,7 +218,7 @@ selectElement.addEventListener('change', event => changeDelType(event.target.val
 
 function changeDelType(type) {
   localStorage.setItem(LC_KEYS.delimiter, type)
-  const code = document.querySelector(".cg")
+  const code = document.querySelector(".cg-file")
   code.className = code.className.replace(allStyles, type)
 }
 
@@ -233,6 +233,33 @@ function showSession(event, evaluation) {
   }
   document.getElementById(evaluation).style.display = "block"
   event.currentTarget.className += " active"
+}
+
+const hiddenRows = {}
+
+function invertRows(event, key) {
+  if (hiddenRows[key]) {
+    delete hiddenRows[key]
+    document.querySelectorAll("." + key).forEach(el => {
+      if (el.tagName === "TR") {
+        el.classList.remove("stats-hidden")
+      } else {
+
+      }
+    })
+    event.currentTarget.classList.remove("stats-hidden")
+  }
+  else {
+    hiddenRows[key] = true
+    document.querySelectorAll("." + key).forEach(el => {
+      if (el.tagName === "TR") {
+        el.classList.add("stats-hidden")
+      } else {
+
+      }
+    })
+    event.currentTarget.classList.add("stats-hidden")
+  }
 }
 
 document.getElementById("defaultTabOpen")?.click()

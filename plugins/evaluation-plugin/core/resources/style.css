@@ -23,7 +23,10 @@ body {
   padding-right: 12px;
   padding-left: 12px;
   text-align: right;
+}
 
+.no-select,
+.line-numbers {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   -khtml-user-select: none;
@@ -284,9 +287,14 @@ input[type=checkbox], input[type=radio] {
   display: flex;
   gap: 16px;
   white-space: normal;
+  margin-top: 2px;
 }
 
-.cg table,
+.cg table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
 .cg tbody {
   width: 100%;
 }
@@ -297,4 +305,57 @@ pre {
 
 .cg pre.ib {
   display: inline-block;
+}
+
+.cg .stats-excellent .stats-value {
+  background-color: rgba(44, 229, 116, 0.25);
+}
+
+.cg .stats-good .stats-value {
+  background-color: rgba(205, 240, 58, 0.3);
+}
+
+.cg .stats-satisfactory .stats-value {
+  background-color: rgba(255, 229, 0, 0.3);
+}
+
+.cg .stats-bad .stats-value {
+  background-color: rgba(255, 150, 0, 0.25);
+}
+
+.cg .stats-very_bad .stats-value {
+  background-color: rgba(255, 57, 36, 0.25);
+}
+
+.cg .stats-unknown .stats-value {
+  background-color: rgba(33, 19, 13, 0.25);
+}
+
+.cg tr.stats-hidden {
+  opacity: 0.2;
+}
+
+.thresholds > button {
+  border: none;
+  padding: 0;
+  background: none;
+}
+
+.thresholds .stats-value.stats-hidden {
+  border-color: #d9d9d9;
+  color: rgba(0, 0, 0, .25);
+  background-color: rgba(0, 0, 0, .04);
+}
+
+.thresholds .stats-value {
+  cursor: pointer;
+  padding: 4px 8px;
+  border: none;
+  font-size: 14px;
+  font-family: Arial, sans-serif;
+}
+
+.cg tr,
+.thresholds .stats-value {
+  transition: all .2s cubic-bezier(.645,.045,.355,1);
 }
