@@ -64,7 +64,7 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
       public class MyTest extends junit.framework.TestCase {
         public void testFoo() { }
       }
-    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Test' annotation")
+    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Test' annotation", testPreview = true)
   }
 
   fun `test junit 3 test case with junit 4 test remove test annotation and rename quickfix`() {
@@ -77,7 +77,7 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
       public class MyTest extends junit.framework.TestCase {
         public void testFoo() { }
       }
-    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Test' annotation")
+    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Test' annotation", testPreview = true)
   }
 
   fun `test junit 3 test case with junit 4 test remove ignore annotation and rename quickfix`() {
@@ -90,7 +90,7 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
       public class MyTest extends junit.framework.TestCase {
         public void _testFoo() { }
       }
-    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Ignore' annotation")
+    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Ignore' annotation", testPreview = true)
   }
 
   fun `test highlighting junit 4 test case with junit 5 test`() {
