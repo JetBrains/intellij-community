@@ -68,6 +68,7 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
                     }
 
                     doTestWithTextLoaded(
+                        fileText,
                         myFixture,
                         completionType,
                         invocationCount,

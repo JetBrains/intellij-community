@@ -5,3 +5,5 @@ package classCompletionImport
 import java.util.SortedSet
 
 fun other() : SortedSet
+
+// AUTOCOMPLETE_SETTING: true

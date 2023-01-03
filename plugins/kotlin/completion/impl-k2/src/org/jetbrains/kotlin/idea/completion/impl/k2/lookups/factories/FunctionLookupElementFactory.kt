@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
+import org.jetbrains.kotlin.idea.completion.KotlinCompletionCharFilter
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
@@ -33,18 +34,19 @@ internal class FunctionLookupElementFactory {
         options: CallableInsertionOptions,
         substitutor: KtSubstitutor,
     ): LookupElementBuilder {
+        val insertEmptyLambda = insertLambdaBraces(symbol)
         val lookupObject = FunctionCallLookupObject(
             name,
             options,
             renderFunctionParameters(symbol, substitutor),
             inputValueArguments = symbol.valueParameters.isNotEmpty(),
-            insertEmptyLambda = insertLambdaBraces(symbol),
+            insertEmptyLambda,
         )
 
         val builder = LookupElementBuilder.create(lookupObject, name.asString())
             .withTailText(getTailText(symbol, substitutor))
             .let { withSymbolInfo(symbol, it, substitutor) }
-
+            .also { it.putUserData(KotlinCompletionCharFilter.ACCEPT_OPENING_BRACE, Unit) }
         return updateLookupElementBuilder(options, builder)
     }
 

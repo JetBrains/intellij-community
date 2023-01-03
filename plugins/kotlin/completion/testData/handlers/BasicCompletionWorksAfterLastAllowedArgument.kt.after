@@ -6,3 +6,5 @@ fun test() {
     val variable = 1
     foo("", variable)
 }
+
+// AUTOCOMPLETE_SETTING: true

@@ -6,4 +6,4 @@ fun other() {
     SortedS<caret>
 }
 
-// INSERT: SortedSet
+// ELEMENT: SortedSet
