@@ -1072,6 +1072,11 @@ private class NotificationComponent(val project: Project,
           })
           return popup
         }
+
+        override fun getPopState(): Int {
+          myRollover = false
+          return super.getPopState()
+        }
       }
       button.border = JBUI.Borders.emptyRight(5)
       button.isVisible = false
@@ -1096,13 +1101,12 @@ private class NotificationComponent(val project: Project,
       timeComponents.add(timeComponent)
 
       if (NotificationsConfigurationImpl.getInstanceImpl().isRegistered(notification.groupId)) {
-        val button = object : InplaceButton(IdeBundle.message("tooltip.turn.notification.off"), AllIcons.Ide.Notification.Gear,
+        val button = object : InplaceButton(IdeBundle.message("tooltip.turn.notification.off"), AllIcons.Actions.More,
                                             ActionListener { doShowSettings() }) {
           override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
             super.setBounds(x, y - 1, width, height)
           }
         }
-        button.setIcons(AllIcons.Ide.Notification.Gear, null, AllIcons.Ide.Notification.GearHover)
         myMoreButton = button
 
         val buttonWrapper = JPanel(BorderLayout())

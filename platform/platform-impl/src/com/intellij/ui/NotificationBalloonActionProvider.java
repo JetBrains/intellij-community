@@ -59,7 +59,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
     }
     else {
       mySettingButton = myBalloon.new ActionButton(
-        AllIcons.Ide.Notification.Gear, AllIcons.Ide.Notification.GearHover,
+        AllIcons.Actions.More, null,
         IdeBundle.message("tooltip.turn.notification.off"),
         event -> myBalloon.runWithSmartFadeoutPause(() -> {
           NotificationCollector.getInstance().logNotificationSettingsClicked(myNotificationId, myNotificationDisplayId, myDisplayGroupId);
