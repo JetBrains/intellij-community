@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -115,12 +115,10 @@ public final class ImmutableZipFile implements ZipFile {
     }
 
     int minNameLength = dir.length() + 2;
-    for (int i = 0, n = names.length; i < n; i++) {
-      String name = names[i];
+    for (String name : names) {
       if (name.length() >= minNameLength && name.charAt(dir.length()) == '/' && name.startsWith(dir) && nameFilter.test(name)) {
-        try (InputStream stream = new DirectByteBufferBackedInputStream(ikv.getByteBufferByValue(i), false)) {
-          consumer.accept(name, stream);
-        }
+        // DirectByteBufferBackedInputStream is not pooled - no need to close
+        consumer.accept(name, getInputStream(name));
       }
     }
   }
