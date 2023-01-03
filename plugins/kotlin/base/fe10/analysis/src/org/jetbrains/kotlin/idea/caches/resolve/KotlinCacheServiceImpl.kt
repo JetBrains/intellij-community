@@ -68,7 +68,6 @@ internal val LOG = Logger.getInstance(KotlinCacheService::class.java)
 data class PlatformAnalysisSettingsImpl(
     val platform: TargetPlatform,
     val sdk: Sdk?,
-    val isAdditionalBuiltInFeaturesSupported: Boolean,
 ) : PlatformAnalysisSettings
 
 object CompositeAnalysisSettings : PlatformAnalysisSettings
@@ -77,12 +76,11 @@ fun createPlatformAnalysisSettings(
     project: Project,
     platform: TargetPlatform,
     sdk: Sdk?,
-    isAdditionalBuiltInFeaturesSupported: Boolean
 ): PlatformAnalysisSettings {
     return if (project.useCompositeAnalysis) {
         CompositeAnalysisSettings
     } else {
-        PlatformAnalysisSettingsImpl(platform, sdk, isAdditionalBuiltInFeaturesSupported)
+        PlatformAnalysisSettingsImpl(platform, sdk)
     }
 }
 
@@ -145,7 +143,6 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService, ModuleR
         val settings = PlatformAnalysisSettingsImpl(
             platform,
             moduleInfo.sdk(),
-            isAdditionalBuiltInFeaturesSupported = true
         )
 
         if (!canGetFacadeWithForcedPlatform(elements, files, moduleInfo, platform)) {
@@ -265,7 +262,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService, ModuleR
     ): ProjectResolutionFacade {
         val sdk = dependenciesModuleInfo.sdk
         val platform = JvmPlatforms.defaultJvmPlatform // TODO: Js scripts?
-        val settings = createPlatformAnalysisSettings(project, platform, sdk, true)
+        val settings = createPlatformAnalysisSettings(project, platform, sdk)
 
         val dependenciesForScriptDependencies = listOf(
             LibraryModificationTracker.getInstance(project),
@@ -341,8 +338,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService, ModuleR
     }
 
     private fun IdeaModuleInfo.platformSettings(targetPlatform: TargetPlatform) = createPlatformAnalysisSettings(
-        this@KotlinCacheServiceImpl.project, targetPlatform, sdk(),
-        isAdditionalBuiltInFeaturesSupported = true
+        this@KotlinCacheServiceImpl.project, targetPlatform, sdk()
     )
 
     private fun facadeForModules(settings: PlatformAnalysisSettings) =
