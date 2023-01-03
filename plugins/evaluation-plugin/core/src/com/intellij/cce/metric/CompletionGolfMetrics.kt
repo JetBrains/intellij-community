@@ -15,7 +15,7 @@ internal fun createCompletionGolfMetrics(): List<Metric> =
     RecallAt(5)
   )
 
-private abstract class CompletionGolfMetric<T : Number> : Metric {
+internal abstract class CompletionGolfMetric<T : Number> : Metric {
   protected var sample = Sample()
 
   private fun T.alsoAddToSample(): T = also { sample.add(it.toDouble()) }
@@ -25,26 +25,17 @@ private abstract class CompletionGolfMetric<T : Number> : Metric {
   abstract fun compute(sessions: List<Session>, comparator: SuggestionsComparator): T
 }
 
-private fun Session.totalSkippableChars() = expectedText.count { it.isWhitespace() }
-
-private fun Session.completedSkippableChars() = lookups.sumOf {
-  if (it.selectedPosition < 0) 0
-  else it.suggestions[it.selectedPosition].text.count { it.isWhitespace() }
-}
-
-private class MovesCount : CompletionGolfMetric<Int>() {
-  override val name: String = "Total Moves"
-
+internal class MovesCount : CompletionGolfMetric<Int>() {
+  override val name = NAME
   override val valueType = MetricValueType.INT
+  override val value: Double
+    get() = sample.sum()
 
   private val metrics = listOf(
     TypingsCount(),
     NavigationsCount(),
     CompletionInvocationsCount()
   )
-
-  override val value: Double
-    get() = sample.sum()
 
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int {
     // Add x2 amount of lookups, assuming that before each action we call code completion
@@ -54,62 +45,66 @@ private class MovesCount : CompletionGolfMetric<Int>() {
     // navigation to the suggestion (if it fits) (N points, based on suggestion index, assuming first index is 0)
     return metrics.sumOf { it.compute(sessions, comparator) }
   }
+
+  companion object {
+    const val NAME = "Total Moves"
+  }
 }
 
-private class TypingsCount : CompletionGolfMetric<Int>() {
-  override val name: String = "Typings"
-
+internal class TypingsCount : CompletionGolfMetric<Int>() {
+  override val name = NAME
   override val valueType = MetricValueType.INT
-
+  override val showByDefault = false
   override val value: Double
     get() = sample.sum()
-
-  override val showByDefault: Boolean = false
 
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
     sessions.sumOf { it.lookups.count() + it.totalSkippableChars() - it.completedSkippableChars() }
+
+  companion object {
+    const val NAME = "Typings"
+  }
 }
 
-private class NavigationsCount : CompletionGolfMetric<Int>() {
-  override val name: String = "Navigations"
-
+internal class NavigationsCount : CompletionGolfMetric<Int>() {
+  override val name = NAME
   override val valueType = MetricValueType.INT
-
+  override val showByDefault = false
   override val value: Double
     get() = sample.sum()
 
-  override val showByDefault: Boolean = false
+  override fun compute(sessions: List<Session>, comparator: SuggestionsComparator) = sessions.sumOf { computeMoves(it) }
 
-  override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
-    sessions.sumOf { computeMoves(it) }
+  private fun computeMoves(session: Session) = session.lookups.sumOf { if (it.selectedPosition >= 0) it.selectedPosition else 0 }
 
-  private fun computeMoves(session: Session): Int = session.lookups.sumOf { if (it.selectedPosition >= 0) it.selectedPosition else 0 }
+  companion object {
+    const val NAME = "Navigations"
+  }
 }
 
 
-private class CompletionInvocationsCount : CompletionGolfMetric<Int>() {
-  override val name: String = "Completion Invocations"
-
+internal class CompletionInvocationsCount : CompletionGolfMetric<Int>() {
+  override val name = NAME
   override val valueType = MetricValueType.INT
-
-  override val showByDefault: Boolean = false
-
+  override val showByDefault = false
   override val value: Double
     get() = sample.sum()
 
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
     sessions.sumOf { it.lookups.count { lookup -> lookup.isNew } }
+
+  companion object {
+    const val NAME = "Completion Invocations"
+  }
 }
 
-private class MovesCountNormalised : Metric {
+internal class MovesCountNormalised : Metric {
   private var movesCountTotal: Int = 0
   private var minPossibleMovesTotal: Int = 0
   private var maxPossibleMovesTotal: Int = 0
 
-  override val name: String = "Moves Count Normalised"
-
+  override val name = NAME
   override val valueType = MetricValueType.DOUBLE
-
   override val value: Double
     get() = (movesCountTotal - minPossibleMovesTotal).toDouble() / (maxPossibleMovesTotal - minPossibleMovesTotal)
 
@@ -128,28 +123,31 @@ private class MovesCountNormalised : Metric {
     // >100% is possible, when navigation in completion takes too many moves
     return ((movesCount - minPossibleMoves).toDouble() / (maxPossibleMoves - minPossibleMoves))
   }
+
+  companion object {
+    const val NAME = "Moves Count Normalised"
+  }
 }
 
-private class PerfectLine : CompletionGolfMetric<Int>() {
-  override val name: String = "Perfect Line"
-
+internal class PerfectLine : CompletionGolfMetric<Int>() {
+  override val name = NAME
   override val valueType = MetricValueType.INT
-
   override val value: Double
     get() = sample.sum()
 
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int {
     return sessions.count { it.success }
   }
+
+  companion object {
+    const val NAME = "Perfect Line"
+  }
 }
 
-private class RecallAt(private val n: Int) : Metric {
+internal class RecallAt(private val n: Int) : Metric {
   private val sample = Sample()
-
-  override val name: String = "RecallAt$n"
-
+  override val name = NAME_PREFIX + n
   override val valueType = MetricValueType.DOUBLE
-
   override val value: Double
     get() = sample.mean()
 
@@ -160,11 +158,23 @@ private class RecallAt(private val n: Int) : Metric {
       if (lookup.selectedPosition in 0 until n) {
         fileSample.add(1.0)
         sample.add(1.0)
-      } else {
+      }
+      else {
         fileSample.add(0.0)
         sample.add(0.0)
       }
     }
     return fileSample.mean()
   }
+
+  companion object {
+    const val NAME_PREFIX = "RecallAt"
+  }
+}
+
+private fun Session.totalSkippableChars() = expectedText.count { it.isWhitespace() }
+
+private fun Session.completedSkippableChars() = lookups.sumOf {
+  if (it.selectedPosition < 0) 0
+  else it.suggestions[it.selectedPosition].text.count { it.isWhitespace() }
 }

@@ -125,7 +125,7 @@ class ReportGenerationStep(
     strategies: List<CompletionStrategy>,
   ): List<ReportInfo> {
     val title2evaluator = evaluationTitles.mapIndexed { index, title ->
-      title to MetricsEvaluator.withDefaultMetrics(title, strategies[index])
+      title to MetricsEvaluator.withDefaultMetrics(title, strategies[index].completionGolf)
     }.toMap()
     for (sessionFile in sessionFiles.filter { it.value.size == sessionStorages.size }) {
       val fileEvaluations = mutableListOf<FileEvaluationInfo>()
