@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.debugger.impl.OutputChecker;
@@ -33,7 +33,7 @@ import java.util.List;
 
 public abstract class ExecutionTestCase extends JavaProjectTestCase {
   private OutputChecker myChecker;
-  private int myTimeout;
+  private int myTimeoutMillis;
   private static Path ourOutputRoot;
   private Path myModuleOutputDir;
 
@@ -43,8 +43,8 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
     setTimeout(300000); //30 seconds
   }
 
-  public final void setTimeout(int timeout) {
-    myTimeout = timeout;
+  public final void setTimeout(int timeoutMillis) {
+    myTimeoutMillis = timeoutMillis;
   }
 
   protected abstract OutputChecker initOutputChecker();
@@ -187,9 +187,9 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
       }
       if (b) {
         processHandler.destroyProcess();
-        LOG.error("process was running over " + myTimeout / 1000 + " seconds. Interrupted. ");
+        LOG.error("process was running over " + myTimeoutMillis / 1000 + " seconds. Interrupted. ");
       }
-    }, myTimeout);
+    }, myTimeoutMillis);
     processHandler.waitFor();
     synchronized (isRunning) {
       isRunning[0] = false;
@@ -209,9 +209,9 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
       }
       if (b) {
         thread.interrupt();
-        LOG.error("test was running over " + myTimeout / 1000 + " seconds. Interrupted. ");
+        LOG.error("test was running over " + myTimeoutMillis / 1000 + " seconds. Interrupted. ");
       }
-    }, myTimeout);
+    }, myTimeoutMillis);
     r.run();
     synchronized (isRunning) {
       isRunning[0] = false;
