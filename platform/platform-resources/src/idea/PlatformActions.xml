@@ -930,7 +930,9 @@
     <group id="MainToolbarLeft" searchable="false">
       <action id="main.toolbar.Project" class="com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction"/>
     </group>
-    <group id="MainToolbarCenter" searchable="false"/>
+    <group id="MainToolbarCenter" searchable="false">
+      <action id="main.toolbar.Filename" class="com.intellij.openapi.wm.impl.headertoolbar.FilenameToolbarWidgetAction"/>
+    </group>
     <group id="MainToolbarRight" searchable="false">
       <reference ref="SearchEverywhere"/>
       <reference ref="SettingsEntryPoint"/>
