@@ -111,20 +111,33 @@ class CompletionGolfFileReportGenerator(
 
     div("line-code") {
       pre("ib") { +StringEscapeUtils.escapeHtml(tab) }
-      lookups.forEachIndexed { index, lookup ->
-        offset = prepareSpan(expectedText, lookup, session.id, index, offset)
+      lookups.forEachIndexed { i, lookup ->
+        val currentChar = expectedText[offset]
+        val delimiter = mutableListOf<String>().apply {
+          if (lookups.size > 1) {
+            add("delimiter")
+          }
+          if (currentChar.isWhitespace()) {
+            consumer.onTagContentUnsafe { +currentChar.toString() }
+            offset++
+            add("delimiter-pre")
+          }
+        }.joinToString(" ")
+        offset = prepareSpan(expectedText, lookup, session.id, i, offset, delimiter)
       }
     }
 
     div("line-stats") {
-      val movesAction = metrics.findByName(MovesCount.NAME)
-      val movesNormalisedAction = metrics.findByName(MovesCountNormalised.NAME)
-      val totalLatencyAction = metrics.findByName(TotalLatencyMetric.NAME)
+      val info = mutableListOf<String>().apply {
+        metrics.findByName(MovesCountNormalised.NAME)
+          ?.let { add("%.2f".format(it.value * 100) + "%") }
 
-      val info = mutableListOf<String>()
-      if (movesNormalisedAction != null) info.add("%.2f".format(movesNormalisedAction.value * 100) + "%")
-      if (movesAction != null) info.add("${movesAction.value.toInt()} act")
-      if (totalLatencyAction != null) info.add("%.2f".format(totalLatencyAction.value / 1000) + "s")
+        metrics.findByName(MovesCount.NAME)
+          ?.let { add("${it.value.toInt()} act") }
+
+        metrics.findByName(TotalLatencyMetric.NAME)
+          ?.let { add("%.2f".format(it.value / 1000) + "s") }
+      }
 
       if (info.isNotEmpty()) {
         i {
@@ -144,6 +157,7 @@ class CompletionGolfFileReportGenerator(
     uuid: String,
     columnId: Int,
     offset: Int,
+    delimiter: String = "",
   ): Int {
     val kinds = lookup.suggestions.map { suggestion -> suggestion.kind }
     val kindClass = when {
@@ -154,7 +168,7 @@ class CompletionGolfFileReportGenerator(
 
     val text = lookup.selectedWithoutPrefix() ?: expectedText[offset].toString()
 
-    span("completion $kindClass delimiter") {
+    span("completion $kindClass $delimiter") {
       attributes["data-cl"] = "$columnId"
       attributes["data-id"] = uuid
       +text
