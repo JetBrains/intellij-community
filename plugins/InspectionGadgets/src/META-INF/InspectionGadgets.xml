@@ -740,7 +740,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.SwitchStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="LocalVariableUsedAndDeclaredInDifferentSwitchBranches" shortName="SwitchStatementWithConfusingDeclaration"
                      bundle="messages.InspectionGadgetsBundle" key="switch.statement.with.confusing.declaration.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.SwitchStatementWithConfusingDeclarationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SwitchStatementWithTooFewBranches"
                      bundle="messages.InspectionGadgetsBundle"
