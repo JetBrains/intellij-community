@@ -2,9 +2,11 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader
@@ -12,9 +14,11 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.util.IconUtil
+import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
@@ -25,6 +29,8 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
   override fun actionPerformed(e: AnActionEvent) {
 
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = UISettings.getInstance().editorTabPlacement == UISettings.TABS_NONE
@@ -48,16 +54,28 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
         val file = openFiles[0]
         if (file != null) {
           component.clear()
-          var fg = FileStatusManager.getInstance(project).getStatus(file).color
+          val status = FileStatusManager.getInstance(project).getStatus(file)
+          var fg:Color?
+
+          val icon = IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, project)
+          if (JBColor.isBright() && ColorUtil.isDark(JBColor.namedColor("MainToolbar.background", Color.WHITE))) {
+            component.icon = IconLoader.getDarkIcon(icon, true)
+            fg = EditorColorsManager.getInstance().getScheme("Dark").getColor(status.colorKey)
+          } else {
+            component.icon = icon
+            fg = status.color
+          }
+
           if (fg == null) {
             fg = JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground())
           }
+
           val filename = VfsPresentationUtil.getUniquePresentableNameForUI(project, file)
           component.foreground = fg
           component.isOpaque = false
           component.append(filename)
-          val icon = IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, project)
-          component.icon = IconLoader.getDarkIcon(icon, true)
+
+
         }
       }
     }
