@@ -205,16 +205,22 @@ function saveFavoriteFeaturesToCookie() {
   document.cookie = `favoriteFeatures = ${JSON.stringify(favoriteFeatures)}; path=/; expires=${expiryDate.toGMTString()}`
 }
 
-const selectElement = document.querySelector(".delimiter-pick");
-const allStyles = new RegExp(`(${Array.apply(null, selectElement.options).map(option => option.value).join("|")})`);
+const selectElement = document.querySelector(".delimiter-pick")
+const allStyles = new RegExp(`(${Array.apply(null, selectElement.options).map(option => option.value).join("|")})`)
 
-selectElement.addEventListener('change', event => {
-    const newStyle = event.target.value
-    const all = document.getElementsByClassName("completion")
-    for (let i = 0; i < all.length; i++) {
-        all[i].className = all[i].className.replace(allStyles, newStyle);
-    }
-});
+const defType = localStorage.getItem(LC_KEYS.delimiter)
+if (defType) {
+  selectElement.value = defType ?? "delimiter"
+  changeDelType(defType)
+}
+
+selectElement.addEventListener('change', event => changeDelType(event.target.value))
+
+function changeDelType(type) {
+  localStorage.setItem(LC_KEYS.delimiter, type)
+  const code = document.querySelector(".cg")
+  code.className = code.className.replace(allStyles, type)
+}
 
 function showSession(event, evaluation) {
   const evalContent = document.getElementsByClassName("evalContent")

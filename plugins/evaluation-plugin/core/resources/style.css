@@ -159,27 +159,40 @@ td {
 }
 
 /*∫*/
-.delimiter:after,
-.delimiter-pre:before {
-    font-weight: normal;
-    color: #333333;
-    content: "\222B";
+.cg-delimiter-integral .delimiter:not(.cg-none)::before,
+.cg-delimiter-integral .delimiter-pre:not(.cg-none)::before {
+  font-weight: normal;
+  color: #333333;
+  content: "\222B";
 }
 
 /*❙*/
-.del-box-small:after,
-.del-box-small.delimiter-pre:before {
-    font-weight: normal;
-    color: #333333;
-    content: "\2759";
+.cg-delimiter-box-small .delimiter:not(.cg-none)::before,
+.cg-delimiter-box-small .delimiter.delimiter-pre:not(.cg-none)::before {
+  font-weight: normal;
+  color: #333333;
+  content: "\2759";
 }
 
 /*❚*/
-.del-box-big:after,
-.del-box-big.delimiter-pre:before {
-    font-weight: normal;
-    color: #333333;
-    content: "\275A";
+.cg-delimiter-box-big .delimiter:not(.cg-none)::before,
+.cg-delimiter-box-big .delimiter.delimiter-pre:not(.cg-none)::before {
+  font-weight: normal;
+  color: #333333;
+  content: "\275A";
+}
+
+/*_*/
+.cg-delimiter-underscore .delimiter:not(.cg-none)::before,
+.cg-delimiter-underscore .delimiter.delimiter-pre:not(.cg-none)::before {
+  position: absolute;
+  content: '';
+  border-left: 1.5px solid dimgray;
+  border-bottom: 1.5px solid dimgray;
+  width: 8px;
+  height: 2px;
+  bottom: 1px;
+  left: 0;
 }
 
 .code-line {
@@ -252,4 +265,35 @@ input[type=checkbox], input[type=radio] {
   font-family: 'JetBrainsMono', monospace;
   line-height: 150%;
   font-size: 13px;
+}
+
+.cg .line-code {
+  display: inline-block;
+  /*flex: 1 0;*/
+  min-width: calc(7.8 * 80px);
+}
+
+.cg .line-stats {
+  display: inline-block;
+  flex: 0 0 25%;
+  max-width: 25%;
+}
+
+.cg .code-line {
+  display: flex;
+  gap: 16px;
+  white-space: normal;
+}
+
+.cg table,
+.cg tbody{
+  width: 100%;
+}
+
+pre {
+  margin: 0;
+}
+
+.cg pre.ib {
+  display: inline-block;
 }
