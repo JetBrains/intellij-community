@@ -58,6 +58,7 @@ abstract class FileReportGenerator(
 
   private fun HTML.createHead(reportTitle: String, resourcePath: Path) {
     head {
+      meta(charset = "UTF-8")
       title(reportTitle)
       script { src = "../res/pako.min.js" }
       script { src = dirs.filesDir.relativize(resourcePath).toString() }
