@@ -14,11 +14,13 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 
 @ApiStatus.Internal
-fun KtAnalysisSession.isEnumValuesMethod(symbol: KtCallableSymbol): Boolean {
-    return KtClassKind.ENUM_CLASS == (symbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.classKind &&
+fun KtAnalysisSession.isSoftDeprecatedEnumValuesMethod(symbol: KtCallableSymbol): Boolean {
+    val containingClass = (symbol.getContainingSymbol() as? KtClassOrObjectSymbol) ?: return false
+    return KtClassKind.ENUM_CLASS == containingClass.classKind &&
             StandardNames.ENUM_VALUES == symbol.callableIdIfNonLocal?.callableName &&
             // Don't touch user-declared methods with the name "values"
-            symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED
+            symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED &&
+            containingClass.getStaticMemberScope().getCallableSymbols { it == StandardNames.ENUM_ENTRIES }.any()
 }
 
 @ApiStatus.Internal
