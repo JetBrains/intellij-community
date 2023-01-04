@@ -170,7 +170,7 @@ final class ActionUpdater {
     boolean shallAsync = updateThread == ActionUpdateThread.BGT;
     boolean isEDT = EDT.isCurrentThreadEdt();
     boolean shallEDT = !(canAsync && shallAsync);
-    if (isEDT && !shallEDT && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM) &&
+    if (isEDT && !shallEDT && !SlowOperations.isInSection(SlowOperations.ACTION_PERFORM) &&
         !ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error("Calling on EDT " + operationName + " that requires " + updateThread +
                 (myForcedUpdateThread != null ? " (forced)" : ""));
@@ -387,7 +387,7 @@ final class ActionUpdater {
       };
     };
     ourPromises.add(promise);
-    boolean isFastTrack = myLaterInvocator != null && SlowOperations.isInsideActivity(SlowOperations.FAST_TRACK);
+    boolean isFastTrack = myLaterInvocator != null && SlowOperations.isInSection(SlowOperations.FAST_TRACK);
     Executor executor = isFastTrack ? ourFastTrackExecutor : ourCommonExecutor;
     executor.execute(Context.current().wrap(() -> {
       Ref<Computable<Void>> applyRunnableRef = Ref.create();

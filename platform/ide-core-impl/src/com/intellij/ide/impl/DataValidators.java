@@ -67,7 +67,7 @@ public abstract class DataValidators {
   private static boolean isDataValid(@NotNull Object data, @NotNull String dataId, @NotNull Object source) {
     if (isPsiElementProvided(data) &&
         EDT.isCurrentThreadEdt() &&
-        SlowOperations.isInsideActivity(SlowOperations.FORCE_ASSERT)) {
+        SlowOperations.isInSection(SlowOperations.FORCE_ASSERT)) {
       reportPsiElementOnEdt(dataId, source);
     }
     //noinspection unchecked

@@ -175,8 +175,8 @@ public final class ActionUtil {
         }
       };
       boolean isLikeUpdate = !beforeActionPerformed && Registry.is("actionSystem.update.actions.async");
-      try (AccessToken ignore = SlowOperations.allowSlowOperations(isLikeUpdate ? SlowOperations.ACTION_UPDATE
-                                                                                : SlowOperations.ACTION_PERFORM)) {
+      try (AccessToken ignore = SlowOperations.startSection(isLikeUpdate ? SlowOperations.ACTION_UPDATE
+                                                                         : SlowOperations.ACTION_PERFORM)) {
         long startTime = System.nanoTime();
         runnable.run();
         long duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
@@ -270,7 +270,7 @@ public final class ActionUtil {
   public static boolean lastUpdateAndCheckDumb(@NotNull AnAction action, @NotNull AnActionEvent e, boolean visibilityMatters) {
     Project project = e.getProject();
     if (project != null && PerformWithDocumentsCommitted.isPerformWithDocumentsCommitted(action)) {
-      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
         PsiDocumentManager.getInstance(project).commitAllDocuments();
       }
     }
@@ -353,7 +353,7 @@ public final class ActionUtil {
       return;
     }
     AnActionResult result = null;
-    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       performRunnable.run();
       result = AnActionResult.PERFORMED;
     }

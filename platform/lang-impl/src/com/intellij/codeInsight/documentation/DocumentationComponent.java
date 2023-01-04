@@ -139,8 +139,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   ) {
     if (isDocumentationV2Enabled() && Registry.is("documentation.v2.component")) {
       DocumentationRequest request;
-      try (AccessToken ignored = SlowOperations.allowSlowOperations("old API fallback")) {
-        request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element));
+      try (AccessToken ignored = SlowOperations.allowSlowOperations(SlowOperations.GENERIC)) {
+        request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element)); // old API fallback
       }
       return DocumentationUtil.documentationComponent(project, request, disposable);
     }

@@ -624,7 +624,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   @Override
   public final void run() {
     Runnable baseRunnable = () -> {
-      try (var ignored = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+      try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
         doRun();
       }
     };

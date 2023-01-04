@@ -460,7 +460,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     try (
-      AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RESET);
+      AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET);
       AccessToken ignore2 = ThreadContext.resetThreadContext()
     ) {
       myDialog.show();

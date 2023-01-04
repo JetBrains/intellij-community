@@ -69,7 +69,7 @@ public class RenameElementAction extends AnAction {
     }
 
     List<Renamer> renamers;
-    try (var ignored = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+    try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       renamers = getAvailableRenamers(dataContext).collect(Collectors.toList());
     }
     if (renamers.isEmpty()) {

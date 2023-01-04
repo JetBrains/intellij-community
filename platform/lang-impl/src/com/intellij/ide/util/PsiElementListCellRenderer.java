@@ -231,7 +231,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     myRightComponentWidth = 0;
 
     final TextWithIcon itemLocation;
-    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RENDERING)) {
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RENDERING)) {
       itemLocation = getItemLocation(value);
     }
     final JLabel locationComponent;
@@ -256,7 +256,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
     ListCellRenderer<Object> leftRenderer = new LeftRenderer(value == null ? new ItemMatchers(null, null) : getItemMatchers(list, value));
     Component result;
-    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RENDERING)) {
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RENDERING)) {
       result = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     }
     final Component leftCellRendererComponent = result;

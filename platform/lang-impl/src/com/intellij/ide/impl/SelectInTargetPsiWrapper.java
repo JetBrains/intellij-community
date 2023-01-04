@@ -73,7 +73,7 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
       if (original != null && !original.isValid()) {
         throw new PsiInvalidElementAccessException(original, "Returned by " + selector + " of " + selector.getClass());
       }
-      try (var ignored = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+      try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
         select(original, requestFocus);
       }
     }
