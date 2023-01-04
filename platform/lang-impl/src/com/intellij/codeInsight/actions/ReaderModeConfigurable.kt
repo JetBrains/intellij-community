@@ -77,32 +77,30 @@ internal class ReaderModeConfigurable(private val project: Project) : BoundSearc
         row {
           visualFormattingEnabled = checkBox(cdVisualFormatting)
         }
-        panel {
-          indent {
-            buttonsGroup {
-              row {
-                radioButton("", true).apply {
-                  onReset {
-                    component.text = (LangBundle.message("radio.reader.mode.use.active.scheme.visual.formatting",
-                                                         getCurrentCodeStyleSchemeName(project)))
-                  }
+        indent {
+          buttonsGroup {
+            row {
+              radioButton("", true).apply {
+                onReset {
+                  component.text = (LangBundle.message("radio.reader.mode.use.active.scheme.visual.formatting",
+                                                       getCurrentCodeStyleSchemeName(project)))
                 }
-                // ensure label is updated when active code style scheme changes
-                val listener = { e: CodeStyleSettingsChangeEvent -> if (e.virtualFile == null) reset() }
-                CodeStyleSettingsManager.getInstance(project).subscribe(listener, disposable!!)
               }
-              row {
-                val radio = radioButton(LangBundle.message("radio.reader.mode.choose.visual.formatting.scheme"), false)
-                val combo = VisualFormattingSchemesCombo(project)
-                cell(combo)
-                  .onReset { combo.onReset(settings) }
-                  .onIsModified { combo.onIsModified(settings) }
-                  .onApply { combo.onApply(settings) }
-                  .enabledIf(radio.selected)
-              }
-            }.bind(settings::useActiveSchemeForVisualFormatting)
-          }
-        }.enabledIf(visualFormattingEnabled.selected) // this panel is a temporary workaround for IDEA-307815
+              // ensure label is updated when active code style scheme changes
+              val listener = { e: CodeStyleSettingsChangeEvent -> if (e.virtualFile == null) reset() }
+              CodeStyleSettingsManager.getInstance(project).subscribe(listener, disposable!!)
+            }
+            row {
+              val radio = radioButton(LangBundle.message("radio.reader.mode.choose.visual.formatting.scheme"), false)
+              val combo = VisualFormattingSchemesCombo(project)
+              cell(combo)
+                .onReset { combo.onReset(settings) }
+                .onIsModified { combo.onIsModified(settings) }
+                .onApply { combo.onApply(settings) }
+                .enabledIf(radio.selected)
+            }
+          }.bind(settings::useActiveSchemeForVisualFormatting)
+        }.enabledIf(visualFormattingEnabled.selected)
       }.enabledIf(enabled.selected)
     }
   }
