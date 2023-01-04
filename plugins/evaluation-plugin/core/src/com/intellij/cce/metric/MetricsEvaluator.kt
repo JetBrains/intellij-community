@@ -1,13 +1,14 @@
 package com.intellij.cce.metric
 
+import com.intellij.cce.actions.CompletionStrategy
 import com.intellij.cce.core.Session
 
 class MetricsEvaluator private constructor(private val evaluationType: String) {
   companion object {
-    fun withDefaultMetrics(evaluationType: String, isCompletionGolf: Boolean): MetricsEvaluator {
+    fun withDefaultMetrics(evaluationType: String, strategy: CompletionStrategy): MetricsEvaluator {
       val evaluator = MetricsEvaluator(evaluationType)
 
-      if (isCompletionGolf) {
+      if (strategy.completionGolf) {
         evaluator.registerCompletionGolfMetrics()
       }
       else {

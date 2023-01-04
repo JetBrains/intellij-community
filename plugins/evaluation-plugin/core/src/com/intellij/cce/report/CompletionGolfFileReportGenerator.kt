@@ -50,7 +50,7 @@ class CompletionGolfFileReportGenerator(
               span(statsClass) {
                 button(classes = "stats-value") {
                   onClick = "invertRows(event, '$statsClass')"
-                  +((it.value * 100).format()+"%")
+                  +((it.value * 100).format() + "%")
                 }
               }
             }
@@ -97,21 +97,21 @@ class CompletionGolfFileReportGenerator(
         val tail = fullText.drop(session.offset + session.expectedText.length).takeWhile { it != '\n' }
 
         lineNumbers += defaultText(text, lineNumbers)
-        val metricsPerSession = MetricsEvaluator.withDefaultMetrics(info.evaluationType, true).evaluate(listOf(session))
-        val movesCountNormalised = metricsPerSession.findByName(MovesCountNormalised.NAME)
 
-        val statsClass = Threshold.getClass(movesCountNormalised?.value)
+        val movesNormalised = MovesCountNormalised().evaluate(listOf(session))
+        val statsClass = Threshold.getClass(movesNormalised)
         tr(statsClass) {
           td("line-numbers") {
             attributes["data-line-numbers"] = lineNumbers.toString()
           }
           td("code-line") {
-            prepareLine(session, tab, metricsPerSession)
+            prepareLine(session, tab, movesNormalised)
             if (tail.isNotEmpty()) {
               pre("ib") { +tail }
             }
           }
         }
+
         offset = session.offset + session.expectedText.length
         lineNumbers++
       }
@@ -122,7 +122,7 @@ class CompletionGolfFileReportGenerator(
     }
   }
 
-  private fun FlowContent.prepareLine(session: Session, tab: String, metrics: List<MetricInfo>) {
+  private fun FlowContent.prepareLine(session: Session, tab: String, movesNormalised: Double) {
     val expectedText = session.expectedText
     val lookups = session.lookups
 
@@ -147,14 +147,13 @@ class CompletionGolfFileReportGenerator(
     }
 
     div("line-stats") {
-      val movesCountNormalised = metrics.findByName(MovesCountNormalised.NAME)
-      val movesCount = metrics.findByName(MovesCount.NAME)
-      val totalLatency = metrics.findByName(TotalLatencyMetric.NAME)
+      val movesCount = MovesCount().evaluate(listOf(session))
+      val totalLatency = TotalLatencyMetric().evaluate(listOf(session))
 
       val info = mutableListOf<String>().apply {
-        if (movesCountNormalised != null) add((movesCountNormalised.value * 100).format() + "%")
-        if (movesCount != null) add("${movesCount.value.toInt()} act")
-        if (totalLatency != null) add((totalLatency.value / 1000).format() + "s")
+        add((movesNormalised * 100).format() + "%")
+        add("$movesCount act")
+        add((totalLatency / 1000).format() + "s")
       }
 
       if (info.isNotEmpty()) {
