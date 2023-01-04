@@ -40,10 +40,7 @@ import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.ImportedFromObjectCallableDescriptor
+import org.jetbrains.kotlin.resolve.*
 import org.jetbrains.kotlin.resolve.calls.inference.model.TypeVariableTypeConstructor
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
@@ -296,6 +293,11 @@ internal fun resolveToPsiMethod(
 
     if (descriptor is TypeAliasConstructorDescriptor) {
         return resolveToPsiMethod(context, descriptor.underlyingConstructorDescriptor)
+    }
+
+    // import pkg.to.Object.member
+    if (descriptor is FunctionImportedFromObject) {
+        return resolveToPsiMethod(context, descriptor.callableFromObject)
     }
 
     // For synthetic members in enum classes, `source` points to their containing enum class.

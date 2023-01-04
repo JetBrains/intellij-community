@@ -1064,6 +1064,30 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             return true
         }
     }
+
+    fun checkResolveStaticImportFromObject(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                package test.pkg
+                
+                import test.pkg.Foo.bar
+                
+                object Foo {
+                    fun bar() {}
+                }
+                
+                fun test() {
+                    ba<caret>r()
+                }
+            """.trimIndent()
+        )
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val bar = uCallExpression.resolve()
+            .orFail("cant resolve $uCallExpression")
+        TestCase.assertEquals("bar", bar.name)
+        TestCase.assertEquals("Foo", bar.containingClass?.name)
+    }
     
     fun checkResolveToSubstituteOverride(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
