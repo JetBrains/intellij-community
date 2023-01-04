@@ -46,6 +46,7 @@ internal abstract class AfterResolveHighlighter(
             FunctionCallHighlighter(holder, project),
             ExpressionsSmartcastHighlighter(holder, project),
             VariableReferenceHighlighter(holder, project),
+            DslHighlighter(holder, project),
         )
     }
 }
