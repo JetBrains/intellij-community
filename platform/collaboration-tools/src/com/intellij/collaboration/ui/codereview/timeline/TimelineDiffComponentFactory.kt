@@ -29,6 +29,7 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.NonNls
+import java.awt.Dimension
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -140,7 +141,7 @@ object TimelineDiffComponentFactory {
 
       if (!path.isBlank()) add(JLabel(path).apply {
         foreground = UIUtil.getContextHelpForeground()
-      })
+      }, CC().minWidth("0"))
 
       add(expandCollapseButton, CC().hideMode(3).gapLeft("10:push"))
     }
