@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.analysis-project-structure" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-project-structure-for-ide:1.8.20-dev-4420" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-project-structure-for-ide:1.8.20-dev-4548" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-project-structure-for-ide/1.8.20-dev-4420/analysis-project-structure-for-ide-1.8.20-dev-4420.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-project-structure-for-ide/1.8.20-dev-4548/analysis-project-structure-for-ide-1.8.20-dev-4548.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-project-structure-for-ide/1.8.20-dev-4420/analysis-project-structure-for-ide-1.8.20-dev-4420-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-project-structure-for-ide/1.8.20-dev-4548/analysis-project-structure-for-ide-1.8.20-dev-4548-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
