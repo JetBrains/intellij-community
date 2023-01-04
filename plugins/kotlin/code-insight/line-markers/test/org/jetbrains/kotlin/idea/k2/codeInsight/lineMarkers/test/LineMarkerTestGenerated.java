@@ -353,4 +353,13 @@ public abstract class LineMarkerTestGenerated extends AbstractLineMarkerTest {
             performTest();
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/codeInsight/lineMarker/dslMarker")
+    public static class DslMarker extends AbstractLineMarkerTest {
+        @TestMetadata("markerAnnotationDeclaration.kt")
+        public void testMarkerAnnotationDeclaration() throws Exception {
+            performTest();
+        }
+    }
 }
