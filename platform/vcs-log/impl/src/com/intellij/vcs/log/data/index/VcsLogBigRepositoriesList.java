@@ -70,7 +70,7 @@ public final class VcsLogBigRepositoriesList implements PersistentStateComponent
     }
   }
 
-  public int getRepositoriesCount() {
+  public int getRepositoryCount() {
     synchronized (myLock) {
       return myState.repositories.size();
     }

@@ -464,7 +464,7 @@ public final class IndexDataGetter {
     }
   }
 
-  private static class CorruptedDataException extends RuntimeException {
+  private static final class CorruptedDataException extends RuntimeException {
     CorruptedDataException(@NotNull String message) {
       super(message);
     }

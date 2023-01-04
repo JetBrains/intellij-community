@@ -59,7 +59,7 @@ import java.util.stream.IntStream;
 import static com.intellij.vcs.log.data.index.VcsLogFullDetailsIndex.INDEX;
 import static com.intellij.vcs.log.util.PersistentUtil.calcIndexId;
 
-public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
+public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
   private static final int VERSION = 18;
   public static final VcsLogProgress.ProgressKey INDEXING = new VcsLogProgress.ProgressKey("index");
@@ -353,9 +353,9 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       try {
         StorageLockContext storageLockContext = new StorageLockContext();
 
-        Path commitsStorage = indexStorageId.getStorageFile(COMMITS);
-        myIsFresh = !Files.exists(commitsStorage);
-        commits = new PersistentSetImpl<>(commitsStorage, EnumeratorIntegerDescriptor.INSTANCE, AbstractStorage.PAGE_SIZE,
+        Path commitStorage = indexStorageId.getStorageFile(COMMITS);
+        myIsFresh = !Files.exists(commitStorage);
+        commits = new PersistentSetImpl<>(commitStorage, EnumeratorIntegerDescriptor.INSTANCE, AbstractStorage.PAGE_SIZE,
                                           storageLockContext, indexStorageId.getVersion());
         Disposer.register(this, () -> catchAndWarn(commits::close));
 
@@ -374,8 +374,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                           storageLockContext);
         Disposer.register(this, () -> catchAndWarn(parents::close));
 
-        Path committersStorage = indexStorageId.getStorageFile(COMMITTERS);
-        committers = new PersistentHashMap<>(committersStorage, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE,
+        Path committerStorage = indexStorageId.getStorageFile(COMMITTERS);
+        committers = new PersistentHashMap<>(committerStorage, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE,
                                              AbstractStorage.PAGE_SIZE, indexStorageId.getVersion(), storageLockContext);
         Disposer.register(this, () -> catchAndWarn(committers::close));
 
@@ -608,7 +608,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       }
     }
 
-    private long getCurrentTimeMillis() {
+    private static long getCurrentTimeMillis() {
       return TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
     }
 
