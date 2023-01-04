@@ -10,9 +10,6 @@ import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
-import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
-import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.fileClasses.JvmMultifileClassPartInfo
@@ -276,23 +273,11 @@ object SourceNavigationHelper {
 
         when (navigationKind) {
             NavigationKind.CLASS_FILES_TO_SOURCES -> if (!from.containingKtFile.isCompiled) return from
-            NavigationKind.SOURCES_TO_CLASS_FILES -> kotlin.run {
+            NavigationKind.SOURCES_TO_CLASS_FILES -> {
                 val file = from.containingFile
                 if (file is KtFile && file.isCompiled) return from
                 if (!RootKindFilter.librarySources.matches(from)) return from
                 if (KtPsiUtil.isLocal(from)) return from
-
-                val fileClassInfo = (file as? KtFile)?.fileClassInfo as? JvmMultifileClassPartInfo ?: return@run
-                val scopes = targetScopes(from, navigationKind)
-                for (scope in scopes) {
-                    val classes = KotlinAsJavaSupport.getInstance(project).getKotlinInternalClasses(fileClassInfo.fileClassFqName, scope)
-                    if (classes.isNotEmpty()) {
-                        val decompiledDeclaration = classes.first() as KtLightClassForDecompiledDeclaration
-                        (decompiledDeclaration.navigationElement as? KtClsFile)?.declarations?.firstOrNull()?.let {
-                            return it
-                        }
-                    }
-                }
             }
         }
 
