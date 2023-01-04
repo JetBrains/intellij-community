@@ -11,9 +11,9 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 object Versions {
     val KOTLIN = version("1.5.0") // used as fallback version
     val GRADLE = version("7.5.1")
-    val KTOR = version("2.1.1")
+    val KTOR = version("2.2.1")
     val JUNIT = version("4.13.2")
-    val JUNIT5 = version("5.9.0")
+    val JUNIT5 = version("5.9.1")
     val JETBRAINS_COMPOSE = version("1.1.1")
 
     val KOTLIN_VERSION_FOR_COMPOSE = version("1.6.10")
@@ -26,31 +26,31 @@ object Versions {
     }
 
     object ANDROID {
-        val ANDROID_MATERIAL = version("1.6.1")
+        val ANDROID_MATERIAL = version("1.7.0")
         val ANDROIDX_APPCOMPAT = version("1.5.1")
         val ANDROIDX_CONSTRAINTLAYOUT = version("2.1.4")
         val ANDROIDX_KTX = version("1.9.0")
     }
 
     object KOTLINX {
-        val KOTLINX_HTML = version("0.7.2")
+        val KOTLINX_HTML = version("0.8.1")
         val KOTLINX_NODEJS: Version = version("0.0.7")
     }
 
     object JS_WRAPPERS {
         val KOTLIN_REACT = wrapperVersion("18.2.0")
         val KOTLIN_REACT_DOM = KOTLIN_REACT
-        val KOTLIN_EMOTION = wrapperVersion("11.10.4")
+        val KOTLIN_EMOTION = wrapperVersion("11.10.5")
         val KOTLIN_REACT_ROUTER_DOM = wrapperVersion("6.3.0")
         val KOTLIN_REDUX = wrapperVersion("4.1.2")
         val KOTLIN_REACT_REDUX = wrapperVersion("7.2.6")
 
         private fun wrapperVersion(version: String): Version =
-            version("$version-pre.385")
+            version("$version-pre.467")
     }
 
     object GRADLE_PLUGINS {
-        val ANDROID = version("7.2.2")
+        val ANDROID = version("7.3.1")
     }
 
     object MAVEN_PLUGINS {
