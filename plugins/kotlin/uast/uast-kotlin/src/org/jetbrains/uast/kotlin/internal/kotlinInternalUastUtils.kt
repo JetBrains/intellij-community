@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.descriptors.impl.EnumEntrySyntheticClassDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.synthetic.SyntheticMemberDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.core.unwrapIfFakeOverride
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaPackageFragment
 import org.jetbrains.kotlin.load.java.sam.SamAdapterDescriptor
@@ -330,7 +331,10 @@ internal fun resolveToPsiMethod(
             else // UltraLightMembersCreator.createMethods() returns nothing for JVM-invisible methods, so fake it if we get null here
                 LightClassUtil.getLightClassMethod(source) ?: getContainingLightClass(source)?.let { UastFakeLightMethod(source, it) }
         is PsiMethod -> source
-        null -> resolveDeserialized(context, descriptor) as? PsiMethod
+        null -> {
+            val unwrapped = descriptor.unwrapIfFakeOverride() as? DeserializedCallableMemberDescriptor ?: descriptor
+            resolveDeserialized(context, unwrapped) as? PsiMethod
+        }
         else -> null
     }
 }
