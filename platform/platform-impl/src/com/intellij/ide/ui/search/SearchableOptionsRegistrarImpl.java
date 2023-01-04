@@ -153,7 +153,8 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
             consumer.accept(name, JDOMUtil.load(stream));
           }
           catch (IOException | JDOMException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(String.format("Can't parse searchable options '%s' for plugin '%s'",
+                                                     name, plugin.getPluginId().getIdString()), e);
           }
         });
       }
