@@ -23,8 +23,6 @@ import javax.swing.JComponent
 
 internal object GHPRTimelineItemUIUtil {
 
-  val TIMELINE_ITEM_WIDTH = TEXT_CONTENT_WIDTH + FULL.contentLeftShift + (CodeReviewTimelineUIUtil.ITEM_HOR_PADDING * 2)
-
   fun createTitleTextPane(actor: GHActor, date: Date?): HtmlEditorPane {
     val userNameLink = HtmlChunk.link(actor.url, actor.getPresentableName())
       .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(UIUtil.getLabelForeground())))
