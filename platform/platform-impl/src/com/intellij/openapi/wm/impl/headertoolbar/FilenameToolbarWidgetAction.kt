@@ -28,6 +28,7 @@ import javax.swing.SwingUtilities
  * @author Konstantin Bulenkov
  */
 class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
+
   override fun actionPerformed(e: AnActionEvent) {
 
   }
@@ -35,25 +36,16 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val project = e.project
-    if (project != null) {
-      val noTabs = UISettings.getInstance().editorTabPlacement == UISettings.TABS_NONE
-      val hasOpenedFiles = FileEditorManager.getInstance(project).selectedFiles.isNotEmpty()
-      e.presentation.isEnabledAndVisible = noTabs && hasOpenedFiles
-    } else {
-      e.presentation.isEnabledAndVisible = false
-    }
+    val hasOpenedFiles = e.project?.let { FileEditorManager.getInstance(it).selectedFiles.isNotEmpty() } ?: false
+    val noTabs = UISettings.getInstance().editorTabPlacement == UISettings.TABS_NONE
+    e.presentation.isEnabledAndVisible = noTabs && hasOpenedFiles
   }
 
-  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    val editorTab = SimpleColoredComponent()
-    editorTab.append(presentation.text)
-    editorTab.icon = presentation.icon
-    return editorTab
-  }
+  override fun createCustomComponent(presentation: Presentation, place: String) = SimpleColoredComponent()
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
     component as SimpleColoredComponent
+    component.clear()
 
     val window = SwingUtilities.windowForComponent(component)
     val project = ProjectFrameHelper.getFrameHelper(window)?.project
@@ -62,7 +54,6 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
       if (openFiles.isNotEmpty()) {
         val file = openFiles[0]
         if (file != null) {
-          component.clear()
           val status = FileStatusManager.getInstance(project).getStatus(file)
           var fg:Color?
 
