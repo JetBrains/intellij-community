@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
 import com.intellij.diagnostic.telemetry.TraceManager
@@ -37,14 +37,16 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.*
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
 
-
-class FileHistoryFilterer(private val logData: VcsLogData, private val logId: String) : VcsLogFilterer, Disposable {
+internal class FileHistoryFilterer(private val logData: VcsLogData, private val logId: String) : VcsLogFilterer, Disposable {
   private val project = logData.project
   private val logProviders = logData.logProviders
   private val storage = logData.storage
@@ -118,9 +120,9 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
     cancelLastTask(true)
   }
 
-  private inner class MyWorker constructor(private val root: VirtualFile,
-                                           private val filePath: FilePath,
-                                           private val hash: Hash?) {
+  private inner class MyWorker(private val root: VirtualFile,
+                               private val filePath: FilePath,
+                               private val hash: Hash?) {
 
     fun filter(dataPack: DataPack,
                oldVisiblePack: VisiblePack,
@@ -200,12 +202,12 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
       if (revisions.isEmpty()) return VisiblePack.EMPTY
 
       if (dataPack.isFull && !isFastStart) {
-        val pathsMap = revisions.associate { Pair(it.commit, it.path) }
-        val visibleGraph = createVisibleGraph(dataPack, sortType, null, pathsMap.keys)
+        val pathMap = revisions.associate { Pair(it.commit, it.path) }
+        val visibleGraph = createVisibleGraph(dataPack, sortType, null, pathMap.keys)
         return VisiblePack(dataPack, visibleGraph, !isDone, filters)
-          .withFileHistory(FileHistory(pathsMap))
+          .withFileHistory(FileHistory(pathMap))
           .apply {
-            putUserData(FileHistorySpeedSearch.COMMIT_METADATA, revisions.associate { Pair(it.commit, it.metadata) })
+            putUserData(FileHistorySpeedSearch.COMMIT_METADATA, toCommitMetadata(revisions))
           }
       }
 
@@ -219,8 +221,20 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
         .withFileHistory(FileHistory(revisions.associate { Pair(it.commit, it.path) }))
         .apply {
           putUserData(VisiblePack.NO_GRAPH_INFORMATION, true)
-          putUserData(FileHistorySpeedSearch.COMMIT_METADATA, revisions.associate { Pair(it.commit, it.metadata) })
+          putUserData(FileHistorySpeedSearch.COMMIT_METADATA, toCommitMetadata(revisions))
         }
+    }
+
+    private fun toCommitMetadata(revisions: List<CommitMetadataWithPath>): Int2ObjectMap<VcsCommitMetadata> {
+      if (revisions.isEmpty()) {
+        return Int2ObjectMaps.emptyMap()
+      }
+
+      val result = Int2ObjectOpenHashMap<VcsCommitMetadata>(revisions.size)
+      for (revision in revisions) {
+        result.put(revision.commit, revision.metadata)
+      }
+      return result
     }
 
     private fun getFilteredRefs(dataPack: DataPack): Map<VirtualFile, CompressedRefs> {
@@ -364,7 +378,7 @@ private fun <K : Any, V : Any?> MultiMap<K, V>.union(map: MultiMap<K, V>): Multi
   return result
 }
 
-private data class CommitMetadataWithPath(val commit: Int, val metadata: VcsCommitMetadata, val path: MaybeDeletedFilePath)
+private data class CommitMetadataWithPath(@JvmField val commit: Int, @JvmField val metadata: VcsCommitMetadata, @JvmField val path: MaybeDeletedFilePath)
 
 private abstract class FileHistoryTask(val vcs: AbstractVcs, val filePath: FilePath, val hash: Hash?, val indicator: ProgressIndicator) {
   private val revisionNumber = if (hash != null) VcsLogUtil.convertToRevisionNumber(hash) else null

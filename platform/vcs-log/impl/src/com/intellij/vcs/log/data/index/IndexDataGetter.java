@@ -144,7 +144,7 @@ public final class IndexDataGetter {
     });
   }
 
-  public @NotNull Set<Integer> filter(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
+  public @NotNull IntSet filter(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
     return filter(detailsFilters, null);
   }
 
