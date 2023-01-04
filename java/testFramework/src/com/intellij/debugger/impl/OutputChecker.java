@@ -179,7 +179,7 @@ public class OutputChecker {
     for (Key key : OUTPUT_ORDER) {
       StringBuffer buffer = myBuffers.get(key);
       if (buffer != null) {
-        result.append(buffer.toString());
+        result.append(buffer);
       }
     }
     return result.toString();
