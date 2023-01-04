@@ -39,6 +39,24 @@ import java.util.regex.Pattern;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
+/**
+ * Provides 3 streams of output named system, stdout and stderr,
+ * which are independent of but analogous to Java's {@link System#out} and {@link System#err}.
+ * <p>
+ * This output can be validated against prerecorded output in <tt>{@link #myAppPath}/outs</tt>.
+ * The output files are named <i>testName[.platform][.jdkX].out</i>,
+ * where <i>platform</i> is either {@code unx} or {@code win}
+ * and <i>jdkX</i> tries all Java versions from the current SDK version down to 7.
+ * The output files contain the messages from the system, stdout and stderr streams,
+ * in this order, without any separators.
+ * <p>
+ * Call {@link #init(String)} to provide the test name,
+ * then write output using {@link #print(String, Key)} and {@link #println(String, Key)}
+ * and finally validate using {@link #checkValid(Sdk)}.
+ * <p>
+ * The output is filtered and normalized to make it platform-independent.
+ * To add custom normalization, override {@link #replaceAdditionalInOutput(String)}.
+ */
 public class OutputChecker {
   public static final Key[] OUTPUT_ORDER = {ProcessOutputTypes.SYSTEM, ProcessOutputTypes.STDOUT, ProcessOutputTypes.STDERR};
 
