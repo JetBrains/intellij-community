@@ -10,6 +10,7 @@ import com.intellij.cce.workspace.storages.FeaturesStorage
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import org.apache.commons.lang.StringEscapeUtils
+import java.text.DecimalFormat
 
 class CompletionGolfFileReportGenerator(
   filterName: String,
@@ -215,11 +216,7 @@ class CompletionGolfFileReportGenerator(
       }.size
   }
 
-  private fun Double.format(): String {
-    return "%.2f".format(this)
-      .dropLastWhile { it == '0' }
-      .dropLastWhile { it == '.' }
-  }
+  private fun Double.format() = DecimalFormat("0.##").format(this)
 
   companion object {
     private enum class Threshold(val value: Double) {
@@ -245,12 +242,6 @@ class CompletionGolfFileReportGenerator(
           }
         } ?: "stats-unknown"
       }
-    }
-
-    fun List<MetricInfo>.findByName(name: String): MetricInfo? {
-      //format name same as in MetricInfo$name
-      val formattedName = name.filter { it.isLetterOrDigit() }
-      return find { it.name == formattedName }
     }
   }
 }
