@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.storage.EntityStorage;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
@@ -19,12 +20,27 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-class ContentRootIndexableEntityProvider implements IndexableEntityProvider.ParentEntityDependent<ContentRootEntity, ModuleEntity>,
-                                                    IndexableEntityProvider.Existing<ContentRootEntity> {
+class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Existing<ContentRootEntity> {
 
   @Override
   public @NotNull Class<ContentRootEntity> getEntityClass() {
     return ContentRootEntity.class;
+  }
+
+  @Override
+  public @NotNull Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
+    return Collections.singletonList(new DependencyOnParent<ModuleEntity>() {
+      @Override
+      public @NotNull Class<ModuleEntity> getParentClass() {
+        return ModuleEntity.class;
+      }
+
+      @Override
+      public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ModuleEntity oldEntity,
+                                                                                                       @NotNull ModuleEntity newEntity) {
+        return getReplacedParentEntityIteratorBuilder(oldEntity, newEntity);
+      }
+    });
   }
 
   @Override
@@ -86,15 +102,8 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
     return Collections.emptyList();
   }
 
-  @Override
-  public @NotNull Class<ModuleEntity> getParentEntityClass() {
-    return ModuleEntity.class;
-  }
-
-  @Override
-  public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedParentEntityIteratorBuilder(@NotNull ModuleEntity oldEntity,
-                                                                                                        @NotNull ModuleEntity newEntity,
-                                                                                                        @NotNull Project project) {
+  private static @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedParentEntityIteratorBuilder(@NotNull ModuleEntity oldEntity,
+                                                                                                                @NotNull ModuleEntity newEntity) {
     List<VirtualFileUrl> newRoots = collectRootUrls(newEntity.getContentRoots());
     List<VirtualFileUrl> oldRoots = collectRootUrls(oldEntity.getContentRoots());
     return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getSymbolicId(), newRoots, oldRoots);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.ide.lightEdit.LightEdit;
@@ -199,11 +199,13 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
         builders.addAll(
           ((IndexableEntityProvider<E>)provider).getReplacedEntityIteratorBuilders(oldEntity, newEntity, project));
       }
-      if (provider instanceof IndexableEntityProvider.ParentEntityDependent &&
-          entityClass == ((IndexableEntityProvider.ParentEntityDependent<?, ?>)provider).getParentEntityClass()) {
-        //noinspection unchecked
-        builders.addAll(((IndexableEntityProvider.ParentEntityDependent<?, E>)provider).
-                          getReplacedParentEntityIteratorBuilder(oldEntity, newEntity, project));
+
+      for (IndexableEntityProvider.DependencyOnParent<? extends WorkspaceEntity> dependency : provider.getDependencies()) {
+        if (entityClass == dependency.getParentClass()) {
+          //noinspection unchecked
+          builders.addAll(((IndexableEntityProvider.DependencyOnParent<E>)dependency).
+                            getReplacedEntityIteratorBuilders(oldEntity, newEntity));
+        }
       }
     }
   }

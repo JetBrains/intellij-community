@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -29,7 +29,7 @@ import java.util.Collections;
  *     For entities with bidirectional reference between, like {@link ModuleEntity} and
  *     {@link com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity}, Workspace model allows changing that reference
  *     on any of the sides, but issues Replace event only for that side. To enforce handling both cases, consider using
- *     {@link ParentEntityDependent} interface for such entities.
+ *     {@link IndexableEntityProvider::getDependencies} for such entities.
  *    </li></ul>
  *    </li>
  *   </ul></il>
@@ -48,6 +48,11 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
 
   @NotNull
   Class<E> getEntityClass();
+
+  @NotNull
+  default Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
+    return Collections.emptyList();
+  }
 
   /**
    * Provides builders of iterators to index files after {@code entity} was added
@@ -79,17 +84,15 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
    * editing this reference on any side, and Replaced event would happen for that side only.
    * To support both ways of changing, consider using this interface.
    *
-   * @param <E> entity class
    * @param <P> parent entity class
    */
-  interface ParentEntityDependent<E extends WorkspaceEntity, P extends WorkspaceEntity> extends IndexableEntityProvider<E> {
+  interface DependencyOnParent<P extends WorkspaceEntity> {
     @NotNull
-    Class<P> getParentEntityClass();
+    Class<P> getParentClass();
 
     @NotNull
-    Collection<? extends IndexableIteratorBuilder> getReplacedParentEntityIteratorBuilder(@NotNull P oldEntity,
-                                                                                          @NotNull P newEntity,
-                                                                                          @NotNull Project project);
+    Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull P oldEntity,
+                                                                                     @NotNull P newEntity);
   }
 
   interface Existing<E extends WorkspaceEntity> extends IndexableEntityProvider<E> {

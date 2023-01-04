@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot;
@@ -20,6 +21,11 @@ class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryE
   @Override
   public @NotNull Class<LibraryEntity> getEntityClass() {
     return LibraryEntity.class;
+  }
+
+  @Override
+  public @NotNull Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
+    return Collections.emptyList();
   }
 
   @Override
