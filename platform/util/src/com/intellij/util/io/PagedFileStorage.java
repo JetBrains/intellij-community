@@ -8,7 +8,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.pagecache.PagedStorage;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NotNull;
@@ -379,14 +378,14 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
     long delta = newSize - oldSize;
     mySize = -1;
     if (delta > 0) {
-      try (FileChannel channel = FileChannel.open(myFile, WRITE_OPTION)) {
+      try (FileChannel channel = new UnInterruptibleFileChannel(myFile, WRITE_OPTION)) {
         channel.write(ByteBuffer.allocate(1), newSize - 1);
       }
       mySize = newSize;
       fillWithZeros(oldSize, delta);
     }
     else {
-      try (FileChannel channel = FileChannel.open(myFile, WRITE_OPTION)) {
+      try (FileChannel channel = new UnInterruptibleFileChannel(myFile, WRITE_OPTION)) {
         channel.truncate(newSize);
       }
       mySize = newSize;
