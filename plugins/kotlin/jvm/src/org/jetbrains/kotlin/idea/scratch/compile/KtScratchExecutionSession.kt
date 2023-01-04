@@ -86,7 +86,7 @@ class KtScratchExecutionSession(
         }
     }
 
-    fun reportError(result: Result.OK, e: Throwable, psiFile: KtFile) {
+    private fun reportError(result: Result.OK, e: Throwable, psiFile: KtFile) {
         LOG.printDebugMessage(result.code)
         executor.errorOccurs(e.message ?: KotlinJvmBundle.message("couldn.t.compile.0", psiFile.name), e, isFatal = true)
     }

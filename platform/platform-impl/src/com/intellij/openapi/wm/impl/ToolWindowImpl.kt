@@ -531,7 +531,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     createContentIfNeeded()
   }
 
-  internal fun createContentIfNeeded() {
+  private fun createContentIfNeeded() {
     val currentContentFactory = contentFactory ?: return
     // clear it first to avoid SOE
     this.contentFactory = null

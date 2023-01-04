@@ -27,7 +27,7 @@ private val LOG = logger<ClientSessionImpl>()
 abstract class ClientSessionImpl(
   final override val clientId: ClientId,
   final override val type: ClientType,
-  protected val sharedComponentManager: ClientAwareComponentManager
+  private val sharedComponentManager: ClientAwareComponentManager
 ) : ComponentManagerImpl(null, false), ClientSession {
 
   override val isLightServiceSupported = false

@@ -32,7 +32,7 @@ class IdeaKotlinSerializedDependenciesContainer(
 
     private var deserializedDependencies: IdeaKotlinDependenciesContainer? = null
 
-    val isDeserialized: Boolean get() = readWriteLock.read { deserializedDependencies != null }
+    private val isDeserialized: Boolean get() = readWriteLock.read { deserializedDependencies != null }
 
     override fun get(sourceSetName: String): Set<IdeaKotlinDependency> = readWriteLock.read {
         val deserializedDependencies = this.deserializedDependencies

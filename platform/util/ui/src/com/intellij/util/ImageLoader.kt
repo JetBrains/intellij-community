@@ -311,7 +311,7 @@ object ImageLoader {
                      isUpScaleNeeded = !path.endsWith(".svg"))
   }
 
-  fun adjustScaleFactor(allowFloatScaling: Boolean, scale: Float): Float {
+  private fun adjustScaleFactor(allowFloatScaling: Boolean, scale: Float): Float {
     return if (allowFloatScaling) scale else if (isHiDPI(scale.toDouble())) 2f else 1f
   }
 

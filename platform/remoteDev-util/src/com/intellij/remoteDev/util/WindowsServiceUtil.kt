@@ -15,7 +15,7 @@ object WindowsServiceUtil {
     print(serviceExists)
   }
 
-  fun serviceExists(serviceName: String): Boolean {
+  private fun serviceExists(serviceName: String): Boolean {
     thisLogger().info("Checking if $serviceName service exists")
     //val svcGenericRead = STANDARD_RIGHTS_READ or SC_MANAGER_ENUMERATE_SERVICE or SC_MANAGER_QUERY_LOCK_STATUS
     val svcManager = Advapi32.INSTANCE.OpenSCManager(null, null, SC_MANAGER_CONNECT)

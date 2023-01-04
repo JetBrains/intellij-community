@@ -4,7 +4,7 @@ package com.intellij.collaboration.api
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import org.jetbrains.annotations.Nls
 
-class HttpStatusErrorException(val requestName: String,
+class HttpStatusErrorException(private val requestName: String,
                                val statusCode: Int,
                                val body: String?)
   : RuntimeException("HTTP Request $requestName failed with status code ${statusCode} and response body: ${body}") {

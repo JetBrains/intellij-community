@@ -1,14 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement
 
-import com.intellij.application.options.CodeStyle
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.FileEncodingProvider
 import org.editorconfig.Utils
-import org.jetbrains.annotations.TestOnly
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 
@@ -25,7 +21,7 @@ class ConfigEncodingManager : FileEncodingProvider {
     // Handles the following EditorConfig settings:
     const val charsetKey = "charset"
     const val UTF8_BOM_ENCODING = "utf-8-bom"
-    const val UTF8_ENCODING = "utf-8"
+    private const val UTF8_ENCODING = "utf-8"
 
     // @formatter:off
     private val encodingMap = mapOf(

@@ -14,7 +14,7 @@ class RangeCodeVisionModel(
   val project: Project,
   val editor: Editor,
   lensMap: Map<CodeVisionAnchorKind, List<CodeVisionEntry>>,
-  val anchoringRange: TextRange,
+  private val anchoringRange: TextRange,
   @NlsSafe
   val name: String = "Code Vision"
 ) {

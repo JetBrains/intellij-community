@@ -23,7 +23,7 @@ class IncorrectFormattingInspection(
   @JvmField var kotlinOnly: Boolean = false  // process kotlin files normally even in silent mode, compatibility
 ) : LocalInspectionTool() {
 
-  val isKotlinPlugged: Boolean by lazy { PluginManagerCore.getPlugin(PluginId.getId("org.jetbrains.kotlin")) != null }
+  private val isKotlinPlugged: Boolean by lazy { PluginManagerCore.getPlugin(PluginId.getId("org.jetbrains.kotlin")) != null }
 
   override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
 

@@ -137,7 +137,7 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     launchAction(action)
   }
 
-  protected fun JavaCodeInsightTestFixture.getIntention(hint: String): IntentionAction {
+  private fun JavaCodeInsightTestFixture.getIntention(hint: String): IntentionAction {
     return getAvailableIntention(hint) ?: throw AssertionError("Quickfix '$hint' is not available")
   }
 

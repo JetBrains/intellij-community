@@ -60,7 +60,7 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
     }
   }
 
-  protected fun keysEqual(k1: RAW?, k2: RAW?): Boolean = (k1 == k2)
+  private fun keysEqual(k1: RAW?, k2: RAW?): Boolean = (k1 == k2)
 
   protected fun readValue(virtualFile: VirtualFile): RAW? {
     if (virtualFile !is VirtualFileWithId) {

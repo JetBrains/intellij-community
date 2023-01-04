@@ -48,7 +48,7 @@ sealed interface PluginAdvertiserService {
     val ideaUltimate = SuggestedIde("IntelliJ IDEA Ultimate", "https://www.jetbrains.com/idea/download/")
 
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
-    internal val pyCharmProfessional = SuggestedIde("PyCharm Professional", "https://www.jetbrains.com/pycharm/download/")
+    private val pyCharmProfessional = SuggestedIde("PyCharm Professional", "https://www.jetbrains.com/pycharm/download/")
 
     @Suppress("HardCodedStringLiteral")
     internal val ides: Map<String, SuggestedIde> = linkedMapOf(

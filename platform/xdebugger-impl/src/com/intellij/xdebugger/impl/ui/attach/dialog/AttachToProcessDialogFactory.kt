@@ -12,9 +12,10 @@ import com.intellij.xdebugger.impl.util.isAlive
 import com.intellij.xdebugger.impl.util.onTermination
 
 class AttachToProcessDialogFactory(private val project: Project) {
-
   companion object {
-    val IS_LOCAL_VIEW_DEFAULT_KEY = DataKey.create<Boolean>("ATTACH_DIALOG_VIEW_TYPE")
+    // used externally
+    @Suppress("MemberVisibilityCanBePrivate")
+    val IS_LOCAL_VIEW_DEFAULT_KEY: DataKey<Boolean> = DataKey.create("ATTACH_DIALOG_VIEW_TYPE")
     private fun isLocalViewDefault(dataContext: DataContext): Boolean = dataContext.getData(IS_LOCAL_VIEW_DEFAULT_KEY) ?: true
   }
 

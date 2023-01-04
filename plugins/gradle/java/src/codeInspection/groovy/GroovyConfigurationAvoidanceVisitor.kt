@@ -37,7 +37,7 @@ class GroovyConfigurationAvoidanceVisitor(val holder: ProblemsHolder) : GroovyEl
     processMethod(method, elementToHighlight, holder, expression.isReturnTypeValueUsed())
   }
 
-  fun processMethod(method: PsiMethod, elementToHighlight: PsiElement, holder: ProblemsHolder, isReturnTypeValueUsed: Boolean) {
+  private fun processMethod(method: PsiMethod, elementToHighlight: PsiElement, holder: ProblemsHolder, isReturnTypeValueUsed: Boolean) {
     val containingClass = method.containingClass ?: return
     if (isInheritor(containingClass, GRADLE_API_TASK_CONTAINER)) processTaskContainer(method, elementToHighlight, holder, isReturnTypeValueUsed)
     if (isInheritor(containingClass, GRADLE_API_DOMAIN_OBJECT_COLLECTION)) processDomainObjectCollection(method, elementToHighlight,
