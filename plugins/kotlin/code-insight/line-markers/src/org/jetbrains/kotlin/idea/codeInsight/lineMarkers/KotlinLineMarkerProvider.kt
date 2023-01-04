@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.dsl.collectHighlightingDslMarkers
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinGutterTooltipHelper
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
 import org.jetbrains.kotlin.idea.highlighter.markers.InheritanceMergeableLineMarkerInfo
@@ -55,6 +56,7 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
             when (declaration) {
                 is KtClass -> {
                     collectInheritedClassMarker(declaration, result)
+                    collectHighlightingDslMarkers(declaration, result)
                 }
 
                 is KtCallableDeclaration -> {
