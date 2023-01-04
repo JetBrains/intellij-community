@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Provides a framework for compiling Java code, for running or debugging it, and for capturing the output.
@@ -180,46 +181,33 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
     return getModuleOutputDir().toString();
   }
 
-  public void waitProcess(@NotNull final ProcessHandler processHandler) {
+  public void waitProcess(@NotNull ProcessHandler processHandler) {
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
 
-    final boolean[] isRunning = {true};
+    AtomicBoolean isRunning = new AtomicBoolean(true);
     alarm.addRequest(() -> {
-      boolean b;
-      synchronized (isRunning) {
-        b = isRunning[0];
-      }
-      if (b) {
+      if (isRunning.get()) {
         processHandler.destroyProcess();
         LOG.error("process was running over " + myTimeoutMillis / 1000 + " seconds. Interrupted. ");
       }
     }, myTimeoutMillis);
     processHandler.waitFor();
-    synchronized (isRunning) {
-      isRunning[0] = false;
-    }
+    isRunning.set(false);
     Disposer.dispose(alarm);
   }
 
   public void waitFor(Runnable r) {
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    final Thread thread = Thread.currentThread();
-
-    final boolean[] isRunning = {true};
+    Thread thread = Thread.currentThread();
+    AtomicBoolean isRunning = new AtomicBoolean(true);
     alarm.addRequest(() -> {
-      boolean b;
-      synchronized (isRunning) {
-        b = isRunning[0];
-      }
-      if (b) {
+      if (isRunning.get()) {
         thread.interrupt();
         LOG.error("test was running over " + myTimeoutMillis / 1000 + " seconds. Interrupted. ");
       }
     }, myTimeoutMillis);
     r.run();
-    synchronized (isRunning) {
-      isRunning[0] = false;
-    }
+    isRunning.set(false);
     Thread.interrupted();
   }
 }
