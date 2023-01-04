@@ -151,6 +151,6 @@ internal fun createStatusResponse(responseStatus: HttpResponseStatus,
 
   val content = ByteBufUtil.encodeString(ByteBufAllocator.DEFAULT, CharBuffer.wrap(builder), Charsets.UTF_8)
   val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, responseStatus, content)
-  response.headers().set(HttpHeaderNames.CONTENT_TYPE, if (usePlainText) "text/plain" else "text/html")
+  response.headers().set(HttpHeaderNames.CONTENT_TYPE, if (usePlainText) HttpHeaderValues.TEXT_PLAIN else HttpHeaderValues.TEXT_HTML)
   return response
 }
