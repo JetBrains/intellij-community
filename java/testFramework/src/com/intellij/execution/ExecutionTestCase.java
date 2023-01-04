@@ -31,6 +31,14 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Provides a framework for compiling Java code, for running or debugging it, and for capturing the output.
+ * <p>
+ * The output is recorded using {@link #print(String, Key)} and {@link #println(String, Key)},
+ * and at the end of the test, it can be validated against prerecorded output files, as described in {@link OutputChecker}.
+ * This validation needs to be triggered explicitly using {@link #getChecker()} and {@link OutputChecker#checkValid(Sdk)};
+ * by default, the output is discarded.
+ */
 public abstract class ExecutionTestCase extends JavaProjectTestCase {
   private OutputChecker myChecker;
   private int myTimeoutMillis = 300_000;
