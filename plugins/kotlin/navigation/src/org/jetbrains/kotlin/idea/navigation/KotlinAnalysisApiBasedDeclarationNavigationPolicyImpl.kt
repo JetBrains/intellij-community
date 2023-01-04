@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
@@ -180,7 +180,6 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         firstTypeParamOwner: KtTypeParameterListOwner,
         secondTypeParamOwner: KtTypeParameterListOwner
     ): Boolean {
-        val a = PI
         val firstTypeParameters = firstTypeParamOwner.typeParameters
         val secondTypeParameters = secondTypeParamOwner.typeParameters
         if (firstTypeParameters.size != secondTypeParameters.size) return false
@@ -220,7 +219,7 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
                     append('.')
                 }
                 if (symbol is KtFunctionLikeSymbol) {
-                    symbol.valueParameters.joinTo(this) { it.returnType.render(typeRenderingOptions) }
+                    symbol.valueParameters.joinTo(this) { it.returnType.render(renderer, position = Variance.INVARIANT) }
                 }
             }
         }
@@ -251,6 +250,6 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
     }
 
     companion object {
-        private val typeRenderingOptions = KtTypeRendererOptions.DEFAULT
+        private val renderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES
     }
 }
