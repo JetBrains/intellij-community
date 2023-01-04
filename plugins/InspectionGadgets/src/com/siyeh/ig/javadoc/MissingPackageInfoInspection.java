@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
 import com.intellij.analysis.AnalysisScope;
@@ -47,7 +47,7 @@ public class MissingPackageInfoInspection extends PackageGlobalInspection {
     final Project project = globalInspectionContext.getProject();
     final PsiPackage aPackage = ReadAction.compute(() -> JavaPsiFacade.getInstance(project).findPackage(packageName));
     boolean needsPackageInfo =
-      ReadAction.compute(() -> aPackage == null ||
+      ReadAction.compute(() -> aPackage != null &&
                                MoveAnnotationToPackageInfoFileFix.getPackageInfoFile(aPackage) == null && aPackage.getClasses().length > 0);
     if (!needsPackageInfo) {
       return null;
