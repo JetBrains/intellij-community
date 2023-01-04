@@ -83,5 +83,7 @@
   <projectListeners>
     <listener class="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSynchronizerListener"
               topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
+    <listener class="com.intellij.workspaceModel.ide.OrphanListener"
+              topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
   </projectListeners>
 </idea-plugin>
