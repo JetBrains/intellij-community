@@ -73,12 +73,30 @@ fun runTestBuild(
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   communityHomePath: BuildDependenciesCommunityRoot = BuildDependenciesCommunityRoot(homePath.resolve("community")),
   traceSpanName: String? = null,
+  isReproducibilityTestAllowed: Boolean = true,
   build: suspend (context: BuildContext) -> Unit = { buildDistributions(it) },
   onSuccess: suspend (context: BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
 ) {
   runBlocking(Dispatchers.Default) {
     asSingleTraceFile(productProperties.baseFileName + (traceSpanName?.let { "-$it" } ?: "")) {
+      if (!isReproducibilityTestAllowed) {
+        doRunTestBuild(
+          context = createBuildContext(
+            homePath = homePath,
+            productProperties = productProperties,
+            buildTools = buildTools,
+            communityHomePath = communityHomePath,
+            buildOptionsCustomizer = buildOptionsCustomizer,
+          ),
+          traceSpanName = traceSpanName,
+          build = { context ->
+            build(context)
+            onSuccess(context)
+          }
+        )
+        return@asSingleTraceFile
+      }
       val reproducibilityTest = BuildArtifactsReproducibilityTest()
       repeat(reproducibilityTest.iterations) { iterationNumber ->
         launch {
