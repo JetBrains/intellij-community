@@ -140,6 +140,7 @@ internal class NotificationContent(val project: Project,
     autoProportionController = AutoProportionController(splitter, suggestions, timeline)
 
     suggestions.setRemoveCallback(Consumer(::remove))
+    timeline.setRemoveCallback(Consumer(::remove))
     timeline.setClearCallback(::clear)
 
     Disposer.register(toolWindow.disposable, this)
@@ -646,16 +647,14 @@ private class NotificationGroupComponent(private val myMainContent: Notification
 
     updateContent()
 
-    if (mySuggestionType) {
-      component.setDoNotAskHandler { forProject ->
-        component.myNotificationWrapper.notification!!
-          .setDoNotAskFor(if (forProject) myProject else null)
-          .also { myRemoveCallback.accept(it) }
-          .hideBalloon()
-      }
-
-      component.setRemoveCallback(myRemoveCallback)
+    component.setDoNotAskHandler { forProject ->
+      component.myNotificationWrapper.notification!!
+        .setDoNotAskFor(if (forProject) myProject else null)
+        .also { myRemoveCallback.accept(it) }
+        .hideBalloon()
     }
+
+    component.setRemoveCallback(myRemoveCallback)
   }
 
   private fun updateLayout() {
@@ -1015,69 +1014,7 @@ private class NotificationComponent(val project: Project,
     add(centerPanel)
 
     if (notification.isSuggestionType) {
-      val group = MyActionGroup()
-
-      if (NotificationsConfigurationImpl.getInstanceImpl().isRegistered(notification.groupId)) {
-        group.add(object : DumbAwareAction(IdeBundle.message("notification.settings.action.text")) {
-          override fun actionPerformed(e: AnActionEvent) {
-            doShowSettings()
-          }
-        })
-        group.addSeparator()
-      }
-
-      val remindAction = RemindLaterManager.createAction(notification, DateFormatUtil.DAY)
-      if (remindAction != null) {
-        @Suppress("DialogTitleCapitalization")
-        group.add(object : DumbAwareAction(IdeBundle.message("notifications.toolwindow.remind.tomorrow")) {
-          override fun actionPerformed(e: AnActionEvent) {
-            remindAction.run()
-            myRemoveCallback.accept(myNotificationWrapper.notification!!)
-            myNotificationWrapper.notification!!.hideBalloon()
-          }
-        })
-      }
-
-      @Suppress("DialogTitleCapitalization")
-      group.add(object : DumbAwareAction(IdeBundle.message("notifications.toolwindow.dont.show.again.for.this.project")) {
-        override fun actionPerformed(e: AnActionEvent) {
-          myDoNotAskHandler.invoke(true)
-        }
-      })
-      @Suppress("DialogTitleCapitalization")
-      group.add(object : DumbAwareAction(IdeBundle.message("notifications.toolwindow.dont.show.again")) {
-        override fun actionPerformed(e: AnActionEvent) {
-          myDoNotAskHandler.invoke(false)
-        }
-      })
-
-      val presentation = Presentation()
-      presentation.description = IdeBundle.message("tooltip.turn.notification.off")
-      presentation.icon = AllIcons.Actions.More
-      presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, java.lang.Boolean.TRUE)
-
-      val button = object : ActionButton(group, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
-        override fun createAndShowActionGroupPopup(actionGroup: ActionGroup, event: AnActionEvent): JBPopup {
-          myMorePopupVisible = true
-          val popup = super.createAndShowActionGroupPopup(actionGroup, event)
-          myMorePopup = popup
-          popup.addListener(object : JBPopupListener {
-            override fun onClosed(event: LightweightWindowEvent) {
-              myMorePopup = null
-              ApplicationManager.getApplication().invokeLater {
-                myMorePopupVisible = false
-                isVisible = myHoverState
-              }
-            }
-          })
-          return popup
-        }
-
-        override fun getPopState(): Int {
-          myRollover = false
-          return super.getPopState()
-        }
-      }
+      val button = createPopupAction(notification)
       button.border = JBUI.Borders.emptyRight(5)
       button.isVisible = false
       myMoreButton = button
@@ -1091,8 +1028,6 @@ private class NotificationComponent(val project: Project,
     else {
       val timeComponent = JBLabel(DateFormatUtil.formatPrettyDateTime(notification.timestamp))
       timeComponent.putClientProperty(TIME_KEY, notification.timestamp)
-      timeComponent.verticalAlignment = SwingConstants.TOP
-      timeComponent.verticalTextPosition = SwingConstants.TOP
       timeComponent.toolTipText = DateFormatUtil.formatDateTime(notification.timestamp)
       timeComponent.border = JBUI.Borders.emptyRight(10)
       timeComponent.smallFontFunction()
@@ -1101,12 +1036,7 @@ private class NotificationComponent(val project: Project,
       timeComponents.add(timeComponent)
 
       if (NotificationsConfigurationImpl.getInstanceImpl().isRegistered(notification.groupId)) {
-        val button = object : InplaceButton(IdeBundle.message("tooltip.turn.notification.off"), AllIcons.Actions.More,
-                                            ActionListener { doShowSettings() }) {
-          override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
-            super.setBounds(x, y - 1, width, height)
-          }
-        }
+        val button = createPopupAction(notification)
         myMoreButton = button
 
         val buttonWrapper = JPanel(BorderLayout())
@@ -1146,6 +1076,71 @@ private class NotificationComponent(val project: Project,
     }
   }
 
+  private fun createPopupAction(notification: Notification): JComponent {
+    val group = MyActionGroup()
+
+    if (NotificationsConfigurationImpl.getInstanceImpl().isRegistered(notification.groupId)) {
+      group.add(object : DumbAwareAction(IdeBundle.message("notification.settings.action.text")) {
+        override fun actionPerformed(e: AnActionEvent) {
+          doShowSettings()
+        }
+      })
+      group.addSeparator()
+    }
+
+    if (notification.isSuggestionType) {
+      val remindAction = RemindLaterManager.createAction(notification, DateFormatUtil.DAY)
+      if (remindAction != null) {
+        @Suppress("DialogTitleCapitalization")
+        group.add(object : DumbAwareAction(IdeBundle.message("notifications.toolwindow.remind.tomorrow")) {
+          override fun actionPerformed(e: AnActionEvent) {
+            remindAction.run()
+            myRemoveCallback.accept(myNotificationWrapper.notification!!)
+            myNotificationWrapper.notification!!.hideBalloon()
+          }
+        })
+      }
+    }
+
+    @Suppress("DialogTitleCapitalization")
+    group.add(object : DumbAwareAction(IdeBundle.message("notifications.toolwindow.dont.show.again.for.this.project")) {
+      override fun actionPerformed(e: AnActionEvent) {
+        myDoNotAskHandler.invoke(true)
+      }
+    })
+    @Suppress("DialogTitleCapitalization")
+    group.add(object : DumbAwareAction(IdeBundle.message("notifications.toolwindow.dont.show.again")) {
+      override fun actionPerformed(e: AnActionEvent) {
+        myDoNotAskHandler.invoke(false)
+      }
+    })
+
+    val presentation = Presentation()
+    presentation.description = IdeBundle.message("tooltip.turn.notification.off")
+    presentation.icon = AllIcons.Actions.More
+    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, java.lang.Boolean.TRUE)
+
+    val button = object : ActionButton(group, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+      override fun createAndShowActionGroupPopup(actionGroup: ActionGroup, event: AnActionEvent): JBPopup {
+        myMorePopupVisible = true
+        val popup = super.createAndShowActionGroupPopup(actionGroup, event)
+        myMorePopup = popup
+        popup.addListener(object : JBPopupListener {
+          override fun onClosed(event: LightweightWindowEvent) {
+            myMorePopup = null
+            ApplicationManager.getApplication().invokeLater {
+              myMorePopupVisible = false
+              isVisible = myHoverState
+            }
+          }
+        })
+        return popup
+      }
+    }
+
+    return button
+  }
+
   private fun doShowSettings() {
     NotificationCollector.getInstance().logNotificationSettingsClicked(myNotificationWrapper.id, myNotificationWrapper.displayId,
                                                                        myNotificationWrapper.groupId)
@@ -1175,6 +1170,10 @@ private class NotificationComponent(val project: Project,
     val dropDownAction = UIUtil.findComponentOfType(this, MyDropDownAction::class.java)
     if (dropDownAction != null) {
       DataManager.removeDataProvider(dropDownAction)
+    }
+
+    if (myMoreButton != null) {
+      myMoreButton.isVisible = false
     }
   }
 
@@ -1260,7 +1259,7 @@ private class NotificationComponent(val project: Project,
     myHoverState = state
     if (myMoreButton != null) {
       if (!myMorePopupVisible) {
-        myMoreButton.isVisible = state
+        myMoreButton.isVisible = state && myNotificationWrapper.notification != null
       }
     }
     updateColor()

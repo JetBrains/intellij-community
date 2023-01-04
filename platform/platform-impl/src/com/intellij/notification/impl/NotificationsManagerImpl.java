@@ -706,8 +706,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       }
 
       if (!layoutData.welcomeScreen) {
-        balloonImpl.setActionProvider(new NotificationBalloonActionProvider(
-          balloonImpl, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id, notification.getDisplayId()));
+        balloonImpl.setActionProvider(new NotificationBalloonActionProvider(balloonImpl, centerPanel.getTitle(), layoutData, notification));
       }
 
       if (layoutData.fadeoutTime != 0) {
