@@ -132,7 +132,7 @@ public final class DirectByteBufferAllocator {
   }
 
   public Statistics getStatistics() {
-    return new Statistics(hits, misses, reclaimed, disposed);
+    return new Statistics(hits, misses, reclaimed, disposed, mySize.get());
   }
 
   public static class Statistics {
@@ -144,15 +144,19 @@ public final class DirectByteBufferAllocator {
     public final int reclaimed;
     /** Buffers released by releasing them to JVM (because too many such buffers are already pooled) */
     public final int disposed;
+    /** Total size of all buffers cached at the moment (bytes) */
+    public final int totalSizeOfBuffersCachedInBytes;
 
-    public Statistics(final int hits,
-                      final int misses,
-                      final int reclaimed,
-                      final int disposed) {
+    private Statistics(final int hits,
+                       final int misses,
+                       final int reclaimed,
+                       final int disposed,
+                       final int totalSizeOfBuffersCachedInBytes) {
       this.hits = hits;
       this.misses = misses;
       this.reclaimed = reclaimed;
       this.disposed = disposed;
+      this.totalSizeOfBuffersCachedInBytes = totalSizeOfBuffersCachedInBytes;
     }
   }
 }
