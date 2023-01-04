@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInspection.BatchQuickFix;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 public class ProtectedMemberInFinalClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -67,7 +69,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection implem
 
     @Override
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      applyFix(project, new CommonProblemDescriptor[] {descriptor}, List.of(), null);
+      performFix(descriptor.getPsiElement());
     }
 
     @Override
@@ -75,21 +77,22 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection implem
                          CommonProblemDescriptor @NotNull [] descriptors,
                          @NotNull List<PsiElement> psiElementsToIgnore,
                          @Nullable Runnable refreshViews) {
+      List<PsiElement> elements = Stream.of(descriptors).map(d -> ((ProblemDescriptor)d).getPsiElement()).toList();
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        for (CommonProblemDescriptor descriptor : descriptors) {
-          performFix((ProblemDescriptor)descriptor);
-        }
+        WriteCommandAction.writeCommandAction(project, elements)
+          .withName(InspectionGadgetsBundle.message("make.static.quickfix"))
+          .withGlobalUndo()
+          .run(() -> elements.forEach(e -> performFix(e)));
       }, InspectionGadgetsBundle.message("weaken.visibility.quickfix"), true, project);
     }
 
     @Override
     public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      performFix(previewDescriptor);
+      performFix(previewDescriptor.getPsiElement());
       return IntentionPreviewInfo.DIFF;
     }
 
-    private static void performFix(ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    private static void performFix(PsiElement element) {
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
       if (!(grandParent instanceof PsiMember)) return;
