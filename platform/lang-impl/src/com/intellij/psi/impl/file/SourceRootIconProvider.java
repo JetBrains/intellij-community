@@ -73,7 +73,7 @@ public final class SourceRootIconProvider {
           // but mark file if they are under different root type (e.g. test root file under source root dir)
           if (parentSourceRoot == null || !sourceRoot.equals(parentSourceRoot)) {
             JpsModuleSourceRootType<?> rootType = index.getContainingSourceRootType(vFile);
-            return SourceRootPresentation.getSourceRootFileLayerIcon(rootType);
+            return rootType != null ? SourceRootPresentation.getSourceRootFileLayerIcon(rootType) : null;
           }
         }
       }
