@@ -22,7 +22,9 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.io.*;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogProperties;
@@ -140,8 +142,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     return Math.max(1, Registry.intValue("vcs.log.index.limit.minutes"));
   }
 
-  protected IndexStorage createIndexStorage(@NotNull StorageId indexStorageId, @NotNull VcsLogErrorHandler errorHandler,
-                                            @NotNull VcsUserRegistry registry) {
+  private IndexStorage createIndexStorage(@NotNull StorageId indexStorageId, @NotNull VcsLogErrorHandler errorHandler,
+                                          @NotNull VcsUserRegistry registry) {
     try {
       return IOUtil.openCleanOrResetBroken(() -> new IndexStorage(indexStorageId, myStorage, registry, myRoots, errorHandler, this),
                                            () -> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -58,12 +58,12 @@ public final class CompactGroupHelper {
     return ContainerUtil.filter(parentTextOrig.split("/"), s -> !s.isEmpty());
   }
 
-  protected static @NotNull String pathListToPath(@NotNull List<String> textArr) {
+  private static @NotNull String pathListToPath(@NotNull List<String> textArr) {
     Optional<String> path = textArr.stream().reduce((s1, s2) -> s1 + "/" + s2);
     return path.map(s -> "/" + s).orElse("");
   }
 
-  protected static @NotNull String getRelativePath(@NotNull String fullPath, @NotNull String path) {
+  private static @NotNull String getRelativePath(@NotNull String fullPath, @NotNull String path) {
     if (path.length() >= fullPath.length()) {
       return "";
     }

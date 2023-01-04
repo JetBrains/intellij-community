@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,10 +16,10 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import static java.util.Comparator.comparing;
-import static java.util.stream.Collectors.joining;
 
 /**
  * Maintains 'pages' of data (in the form of {@linkplain PageImpl}), from file storages {@linkplain PagedFileStorageLockFree}.
@@ -75,6 +75,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
   private final AtomicLong totalHeapBytesCached = new AtomicLong(0);
 
   //@GuardedBy("pagesPerStorage")
+  @SuppressWarnings("SSBasedInspection")
   private final Object2ObjectOpenHashMap<Path, PagesTable> pagesPerFile = new Object2ObjectOpenHashMap<>();
 
   /**
@@ -157,7 +158,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     }
   }
 
-  protected Future<?> enqueueStoragePagesClosing(final @NotNull PagedFileStorageLockFree storage,
+  Future<?> enqueueStoragePagesClosing(final @NotNull PagedFileStorageLockFree storage,
                                                  final @NotNull CompletableFuture<Object> finish) {
     checkNotClosed();
     final CloseStorageCommand task = new CloseStorageCommand(storage, finish);
@@ -418,8 +419,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     return successfullyCleaned;
   }
 
-  @NotNull
-  private Map<Path, PagesTable> threadSafeCopyOfPagesPerStorage() {
+  private @NotNull Map<Path, PagesTable> threadSafeCopyOfPagesPerStorage() {
     synchronized (pagesPerFile) {
       return new HashMap<>(pagesPerFile);
     }
@@ -432,7 +432,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
    * Pages with usageCount > 0 are not reclaimed, and method returns false if there is at least one
    * such a page. Method is designed to be called repeatedly, until all pages are reclaimed.
    */
-  protected boolean tryToReclaimAll(final @NotNull PagesTable pagesTable) {
+  boolean tryToReclaimAll(final @NotNull PagesTable pagesTable) {
     pagesTable.pagesLock().writeLock().lock();
     try {
       final AtomicReferenceArray<PageImpl> pages = pagesTable.pages();
@@ -546,8 +546,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     pageToReclaim.entomb();
   }
 
-  @NotNull
-  protected ByteBuffer allocatePageBuffer(final int bufferSize) {
+  @NotNull ByteBuffer allocatePageBuffer(final int bufferSize) {
     checkNotClosed();
     final boolean reclaimedSuccessfully = tryReclaimEnoughPages(bufferSize, MAX_PAGES_TO_RECLAIM_AT_ONCE);
     if (reclaimedSuccessfully) {
@@ -621,7 +620,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
    * RC: Class is empty, since now there is only one impl of this class, and I'm not yet sure
    * which API is worth to have in a base class.
    */
-  protected static abstract class Command {
+  protected abstract static class Command {
   }
 
   /**

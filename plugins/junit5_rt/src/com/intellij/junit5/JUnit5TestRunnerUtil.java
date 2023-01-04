@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
 import org.junit.platform.commons.support.ReflectionSupport;
@@ -185,7 +185,7 @@ public final class JUnit5TestRunnerUtil {
    * Unique id is prepended with prefix: @see com.intellij.execution.junit.TestUniqueId#getUniqueIdPresentation()
    * Method contains ','
    */
-  protected static DiscoverySelector createSelector(String line, String[] packageNameRef) {
+  private static DiscoverySelector createSelector(String line, String[] packageNameRef) {
     if (line.startsWith("\u001B")) {
       String uniqueId = line.substring("\u001B".length());
       return DiscoverySelectors.selectUniqueId(uniqueId);
