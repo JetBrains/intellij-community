@@ -43,6 +43,10 @@ class RecursionVisitor extends JavaRecursiveElementWalkingVisitor {
       return;
     }
     super.visitMethodCallExpression(call);
+    if (RecursionUtils.methodCallExpressionIndirectDefinitelyRecurses(call, method)) {
+      recursive = true;
+      return;
+    }
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
     final String calledMethodName = methodExpression.getReferenceName();
     if (!methodName.equals(calledMethodName)) {

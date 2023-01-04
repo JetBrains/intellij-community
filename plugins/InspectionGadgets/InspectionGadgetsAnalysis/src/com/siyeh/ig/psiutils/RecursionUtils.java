@@ -17,7 +17,11 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.siyeh.ig.callMatcher.CallMapper;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.BiPredicate;
 
 public final class RecursionUtils {
 
@@ -91,7 +95,7 @@ public final class RecursionUtils {
         (PsiTryStatement)statement, method);
     }
     else if (statement instanceof PsiSwitchStatement) {
-      return switchStatementMayReturnBeforeRecursing(
+      return switchBlockMayReturnBeforeRecursing(
         (PsiSwitchStatement)statement, method);
     }
     else {
@@ -141,8 +145,8 @@ public final class RecursionUtils {
     return statementMayReturnBeforeRecursing(body, method);
   }
 
-  private static boolean switchStatementMayReturnBeforeRecursing(
-    PsiSwitchStatement switchStatement, PsiMethod method) {
+  private static boolean switchBlockMayReturnBeforeRecursing(
+    PsiSwitchBlock switchStatement, PsiMethod method) {
 
     final PsiCodeBlock body = switchStatement.getBody();
     if (body == null) {
@@ -150,6 +154,15 @@ public final class RecursionUtils {
     }
     final PsiStatement[] statements = body.getStatements();
     for (final PsiStatement statement : statements) {
+      if (statement instanceof PsiSwitchLabelStatement) {
+        continue;
+      }
+      if (statement instanceof PsiSwitchLabeledRuleStatement labeledRuleStatement) {
+        if (statementMayReturnBeforeRecursing(labeledRuleStatement.getBody(), method)) {
+          return true;
+        }
+        continue;
+      }
       if (statementMayReturnBeforeRecursing(statement, method)) {
         return true;
       }
@@ -405,6 +418,9 @@ public final class RecursionUtils {
     if (referencedMethod == null) {
       return false;
     }
+    if (methodCallExpressionIndirectDefinitelyRecurses(exp, method)) {
+      return true;
+    }
     if (referencedMethod.equals(method)) {
       if (method.hasModifierProperty(PsiModifier.STATIC) ||
           method.hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -482,6 +498,9 @@ public final class RecursionUtils {
         }
       }
       return false;
+    }
+    else if (statement instanceof PsiYieldStatement) {
+      return expressionDefinitelyRecurses(((PsiYieldStatement)statement).getExpression(), method);
     }
     else if (statement instanceof PsiReturnStatement) {
       final PsiReturnStatement returnStatement =
@@ -659,5 +678,33 @@ public final class RecursionUtils {
     final PsiCodeBlock body = method.getBody();
     return body != null &&
            !codeBlockMayReturnBeforeRecursing(body, method, true);
+  }
+
+  static boolean methodCallExpressionIndirectDefinitelyRecurses(
+    PsiMethodCallExpression exp, PsiMethod method) {
+    BiPredicate<PsiMethodCallExpression, PsiMethod> predicate = MAY_CAUSE_INDIRECT_RECURSION.mapFirst(exp);
+    if(predicate==null) return false;
+    return predicate.test(exp, method);
+  }
+
+  private static final CallMapper<BiPredicate<PsiMethodCallExpression, PsiMethod>> MAY_CAUSE_INDIRECT_RECURSION =
+    new CallMapper<BiPredicate<PsiMethodCallExpression, PsiMethod>>()
+    .register(CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OBJECTS, "hashCode", "hash"),
+              (callExpression, method) ->  MethodUtils.isHashCode(method) && useThisAsArgument(callExpression))
+    .register(CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OBJECTS, "toString"),
+              (callExpression, method) ->  MethodUtils.isToString(method) && useThisAsArgument(callExpression))
+    .register(CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf"),
+              (callExpression, method) ->  MethodUtils.isToString(method) && useThisAsArgument(callExpression))
+    .register(CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OBJECTS, "equals", "deepEquals"),
+              (callExpression, method) ->  MethodUtils.isEquals(method) && useThisAsArgument(callExpression));
+
+  private static boolean useThisAsArgument(PsiMethodCallExpression expression) {
+    PsiExpression[] expressions = expression.getArgumentList().getExpressions();
+    for (PsiExpression psiExpression : expressions) {
+      if (psiExpression instanceof PsiThisExpression) {
+        return true;
+      }
+    }
+    return false;
   }
 }
