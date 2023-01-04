@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -533,7 +533,12 @@ public class SwitchBlockHighlightingModel {
       checkDuplicates(elementsToCheckDuplicates, holder);
       if (holder.hasErrorResults()) return;
 
-      checkFallThroughFromToPattern(elementsToCheckFallThroughLegality, holder);
+      if (PsiUtil.getLanguageLevel(holder.getProject()).isAtLeast(LanguageLevel.JDK_20_PREVIEW)) {
+        checkFallThroughFromToPatternJava20(elementsToCheckFallThroughLegality, holder);
+      }
+      else {
+        checkFallThroughFromToPattern(elementsToCheckFallThroughLegality, holder);
+      }
       if (holder.hasErrorResults()) return;
 
       checkDominance(elementsToCheckDominance, holder);
@@ -810,6 +815,53 @@ public class SwitchBlockHighlightingModel {
       checkFallThroughInSwitchLabels(switchBlockGroup, holder, alreadyFallThroughElements);
     }
 
+    private static void checkFallThroughFromToPatternJava20(@NotNull List<? extends List<PsiSwitchLabelStatementBase>> switchBlockGroup,
+                                                            @NotNull HighlightInfoHolder holder) {
+      if (switchBlockGroup.isEmpty()) return;
+      Set<PsiElement> alreadyFallThroughElements = new HashSet<>();
+      for (var switchLabel : switchBlockGroup) {
+        boolean canPrecedingStatementCompleteNormally = false;
+        for (PsiSwitchLabelStatementBase switchLabelElement : switchLabel) {
+          PsiCaseLabelElementList labelElementList = switchLabelElement.getCaseLabelElementList();
+          if (labelElementList == null) continue;
+          boolean existPattern = false;
+          boolean existsConst = false;
+          boolean existsNull = false;
+          PsiCaseLabelElement[] elements = labelElementList.getElements();
+          for (int i = 0; i < elements.length; i++) {
+            PsiCaseLabelElement currentElement = elements[i];
+            if (isInCaseNullDefaultLabel(currentElement)) continue;
+            if (currentElement instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr) && i != 0 && !existPattern ||
+                existsConst && !isConstantLabelElement(currentElement) ||
+                existsNull) {
+              addIllegalFallThroughError(currentElement, "invalid.case.label.combination", holder, alreadyFallThroughElements);
+              break;
+            }
+            if (containsPatternVariable(currentElement)) {
+              if (existPattern || PsiTreeUtil.skipWhitespacesAndCommentsForward(switchLabelElement) instanceof PsiSwitchLabelStatement) {
+                addIllegalFallThroughError(currentElement, "switch.illegal.fall.through.from", holder, alreadyFallThroughElements);
+                break;
+              }
+              else if (canPrecedingStatementCompleteNormally ||
+                       PsiTreeUtil.skipWhitespacesAndCommentsBackward(switchLabelElement) instanceof PsiSwitchLabelStatement) {
+                addIllegalFallThroughError(currentElement, "switch.illegal.fall.through.to", holder, alreadyFallThroughElements);
+                break;
+              }
+            }
+            if (existPattern) {
+              addIllegalFallThroughError(currentElement, "switch.illegal.fall.through.from", holder, alreadyFallThroughElements);
+              break;
+            }
+            existPattern = currentElement instanceof PsiPattern || currentElement instanceof PsiPatternGuard;
+            existsConst |= isConstantLabelElement(currentElement);
+            existsNull = currentElement instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr);
+          }
+          canPrecedingStatementCompleteNormally = true;
+        }
+      }
+      checkFallThroughInSwitchLabels(switchBlockGroup, holder, alreadyFallThroughElements);
+    }
+
     private static void addIllegalFallThroughError(@NotNull PsiElement element,
                                                    @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key,
                                                    @NotNull HighlightInfoHolder holder,
@@ -832,8 +884,7 @@ public class SwitchBlockHighlightingModel {
           PsiCaseLabelElementList labelElementList = switchLabel.getCaseLabelElementList();
           if (labelElementList == null) continue;
           List<PsiCaseLabelElement> patternElements = ContainerUtil.filter(labelElementList.getElements(),
-             labelElement -> labelElement instanceof PsiPattern || labelElement instanceof PsiPatternGuard
-          );
+                                                                           labelElement -> containsPatternVariable(labelElement));
           if (patternElements.isEmpty()) continue;
           PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(firstSwitchLabelInGroup, PsiStatement.class);
           if (prevStatement == null) continue;
@@ -843,6 +894,28 @@ public class SwitchBlockHighlightingModel {
           }
         }
       }
+    }
+
+    private static boolean containsPatternVariable(@NotNull PsiCaseLabelElement element) {
+      if (element instanceof PsiPatternGuard patternGuard) {
+        return containsPatternVariable(patternGuard.getPattern());
+      }
+      else if (element instanceof PsiGuardedPattern guardedPattern) {
+        return containsPatternVariable(guardedPattern.getPrimaryPattern());
+      }
+      else if (element instanceof PsiTypeTestPattern typeTestPattern) {
+        return typeTestPattern.getPatternVariable() != null;
+      }
+      else if (element instanceof PsiParenthesizedPattern parenthesizedPattern) {
+        PsiPattern pattern = parenthesizedPattern.getPattern();
+        return pattern != null && containsPatternVariable(pattern);
+      }
+      else if (element instanceof PsiDeconstructionPattern deconstructionPattern) {
+        return deconstructionPattern.getPatternVariable() != null ||
+               ContainerUtil.exists(deconstructionPattern.getDeconstructionList().getDeconstructionComponents(),
+                                    pattern -> containsPatternVariable(pattern));
+      }
+      return false;
     }
 
     /**
