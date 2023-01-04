@@ -51,34 +51,24 @@ object MapIndexStorageCacheSlruProvider: MapIndexStorageCacheProvider {
   }
 }
 
-private class MapIndexStorageSlruCache<Key, Value>(val keyReader: Function<Key, ChangeTrackingValueContainer<Value>>,
+private class MapIndexStorageSlruCache<Key, Value>(val valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
                                                    val evictionListener: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
                                                    hashingStrategy: EqualityPolicy<Key>,
                                                    cacheSize: Int): MapIndexStorageCache<Key, Value> {
   private val cache = object : SLRUCache<Key, ChangeTrackingValueContainer<Value>?>(
     cacheSize, ceil(cacheSize * 0.25).toInt(), hashingStrategy) {
-    override fun createValue(key: Key): ChangeTrackingValueContainer<Value> {
-      return keyReader.apply(key)
-    }
+    override fun createValue(key: Key): ChangeTrackingValueContainer<Value> = valueReader.apply(key)
 
     override fun onDropFromCache(key: Key, valueContainer: ChangeTrackingValueContainer<Value>) {
       assert(cacheAccessLock.isHeldByCurrentThread)
       evictionListener.accept(key, valueContainer)
     }
-
-    override fun getIfCached(key: Key): ChangeTrackingValueContainer<Value>? = cacheAccessLock.withLock {
-      return super.getIfCached(key)
-    }
-
-    override fun put(key: Key, value: ChangeTrackingValueContainer<Value>) = cacheAccessLock.withLock {
-      super.put(key, value)
-    }
   }
   private val cacheAccessLock = ReentrantLock()
 
-  override fun read(key: Key): ChangeTrackingValueContainer<Value> = cache.get(key)
+  override fun read(key: Key): ChangeTrackingValueContainer<Value> = cacheAccessLock.withLock { cache.get(key) }
 
-  override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? = cache.getIfCached(key)
+  override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? = cacheAccessLock.withLock { cache.getIfCached(key) }
 
   override fun processCachedValues(processor: Consumer<ChangeTrackingValueContainer<Value>>) = cacheAccessLock.withLock {
     for ((_, valueContainer) in cache.entrySet()) {
