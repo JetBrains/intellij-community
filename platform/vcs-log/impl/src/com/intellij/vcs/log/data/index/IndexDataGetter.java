@@ -4,7 +4,6 @@ package com.intellij.vcs.log.data.index;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -90,17 +89,15 @@ public final class IndexDataGetter {
 
   public @Nullable Long getAuthorTime(int commit) {
     return executeAndCatch(() -> {
-      Pair<Long, Long> time = myIndexStorage.timestamps.get(commit);
-      if (time == null) return null;
-      return time.first;
+      long[] time = myIndexStorage.timestamps.get(commit);
+      return time == null ? null : time[0];
     });
   }
 
   public @Nullable Long getCommitTime(int commit) {
     return executeAndCatch(() -> {
-      Pair<Long, Long> time = myIndexStorage.timestamps.get(commit);
-      if (time == null) return null;
-      return time.second;
+      long[] time = myIndexStorage.timestamps.get(commit);
+      return time == null ? null : time[1];
     });
   }
 

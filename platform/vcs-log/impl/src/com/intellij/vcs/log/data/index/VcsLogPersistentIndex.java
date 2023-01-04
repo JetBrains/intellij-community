@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
@@ -229,7 +228,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       if (!detail.getAuthor().equals(detail.getCommitter())) {
         myIndexStorage.committers.put(index, myIndexStorage.users.getUserId(detail.getCommitter()));
       }
-      myIndexStorage.timestamps.put(index, Pair.create(detail.getAuthorTime(), detail.getCommitTime()));
+      myIndexStorage.timestamps.put(index, new long[]{detail.getAuthorTime(), detail.getCommitTime()});
 
       myIndexStorage.commits.put(index);
     }
@@ -331,7 +330,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     return getAvailableIndexers(providers).keySet();
   }
 
-  static class IndexStorage implements Disposable {
+  static final class IndexStorage implements Disposable {
     private static final String COMMITS = "commits";
     private static final String MESSAGES = "messages";
     private static final String PARENTS = "parents";
@@ -341,7 +340,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     public final @NotNull PersistentMap<Integer, String> messages;
     public final @NotNull PersistentMap<Integer, int[]> parents;
     public final @NotNull PersistentMap<Integer, Integer> committers;
-    public final @NotNull PersistentMap<Integer, Pair<Long, Long>> timestamps;
+    public final @NotNull PersistentMap<Integer, long[]> timestamps;
     public final @NotNull VcsLogMessagesTrigramIndex trigrams;
     public final @NotNull VcsLogUserIndex users;
     public final @NotNull VcsLogPathsIndex paths;
