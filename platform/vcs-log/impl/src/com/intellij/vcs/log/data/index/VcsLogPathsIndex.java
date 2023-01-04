@@ -25,6 +25,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,8 +67,8 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
                                       AbstractStorage.PAGE_SIZE, storageLockContext, storageId.getVersion());
   }
 
-  private static @NotNull PersistentHashMap<int[], Collection<int[]>> createRenamesMap(@NotNull StorageId storageId,
-                                                                                       @Nullable StorageLockContext storageLockContext)
+  private static @NotNull PersistentHashMap<int[], int[]> createRenamesMap(@NotNull StorageId storageId,
+                                                                           @Nullable StorageLockContext storageLockContext)
     throws IOException {
     Path storageFile = storageId.getStorageFile(RENAMES_MAP);
     return new PersistentHashMap<>(storageFile, new CoupleKeyDescriptor(), new CollectionDataExternalizer(), AbstractStorage.PAGE_SIZE,
@@ -93,14 +94,18 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
   public @Nullable EdgeData<FilePath> findRename(int parent, int child, @NotNull VirtualFile root, @NotNull FilePath path, boolean isChildPath)
     throws IOException {
-    Collection<int[]> renames = myPathsIndexer.myRenamesMap.get(new int[]{parent, child});
-    if (renames == null) return null;
+    int[] renames = myPathsIndexer.myRenamesMap.get(new int[]{parent, child});
+    if (renames == null) {
+      return null;
+    }
+
     int pathId = myPathsIndexer.myPathsEnumerator.enumerate(new LightFilePath(root, path));
-    for (int[] rename : renames) {
-      if ((isChildPath && rename[1] == pathId) ||
-          (!isChildPath && rename[0] == pathId)) {
-        FilePath path1 = getPath(rename[0], path.isDirectory());
-        FilePath path2 = getPath(rename[1], path.isDirectory());
+    for (int i = 0; i < renames.length; i += 2) {
+      int first = renames[i];
+      int second = renames[i + 1];
+      if ((isChildPath && second == pathId) || (!isChildPath && first == pathId)) {
+        FilePath path1 = getPath(first, path.isDirectory());
+        FilePath path2 = getPath(second, path.isDirectory());
         return new EdgeData<>(path1, path2);
       }
     }
@@ -151,11 +156,11 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
   private static final class PathIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> {
     private final @NotNull VcsLogStorage myStorage;
     private final @NotNull PersistentEnumerator<LightFilePath> myPathsEnumerator;
-    private final @NotNull PersistentHashMap<int[], Collection<int[]>> myRenamesMap;
+    private final @NotNull PersistentHashMap<int[], int[]> myRenamesMap;
     private @NotNull Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
 
     private PathIndexer(@NotNull VcsLogStorage storage, @NotNull PersistentEnumerator<LightFilePath> enumerator,
-                        @NotNull PersistentHashMap<int[], Collection<int[]>> renamesMap) {
+                        @NotNull PersistentHashMap<int[], int[]> renamesMap) {
       myStorage = storage;
       myPathsEnumerator = enumerator;
       myRenamesMap = renamesMap;
@@ -173,14 +178,17 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
       int parentsCount = inputData.getParents().isEmpty() ? 1 : inputData.getParents().size();
       for (int parentIndex = 0; parentIndex < parentsCount; parentIndex++) {
         try {
-          Collection<int[]> renames = new SmartList<>();
-          for (Int2IntMap.Entry entry : inputData.getRenamedPaths(parentIndex).int2IntEntrySet()) {
-            renames.add(new int[]{entry.getIntKey(), entry.getIntValue()});
-            getOrCreateChangeKindList(result, entry.getIntKey(), parentsCount).set(parentIndex, ChangeKind.REMOVED);
-            getOrCreateChangeKindList(result, entry.getIntValue(), parentsCount).set(parentIndex, ChangeKind.ADDED);
-          }
+          ObjectSet<Int2IntMap.Entry> entries = inputData.getRenamedPaths(parentIndex).int2IntEntrySet();
+          if (!entries.isEmpty()) {
+            int[] renames = new int[entries.size() * 2];
+            int index = 0;
+            for (Int2IntMap.Entry entry : entries) {
+              renames[index++] = entry.getIntKey();
+              renames[index++] = entry.getIntValue();
+              getOrCreateChangeKindList(result, entry.getIntKey(), parentsCount).set(parentIndex, ChangeKind.REMOVED);
+              getOrCreateChangeKindList(result, entry.getIntValue(), parentsCount).set(parentIndex, ChangeKind.ADDED);
+            }
 
-          if (!renames.isEmpty()) {
             int commit = myStorage.getCommitIndex(inputData.getId(), inputData.getRoot());
             int parent = myStorage.getCommitIndex(inputData.getParents().get(parentIndex), inputData.getRoot());
             myRenamesMap.put(new int[]{parent, commit}, renames);
@@ -378,24 +386,23 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     }
   }
 
-  private static final class CollectionDataExternalizer implements DataExternalizer<Collection<int[]>> {
+  private static final class CollectionDataExternalizer implements DataExternalizer<int[]> {
     @Override
-    public void save(@NotNull DataOutput out, Collection<int[]> value) throws IOException {
-      out.writeInt(value.size());
-      for (int[] v : value) {
-        out.writeInt(v[0]);
-        out.writeInt(v[1]);
+    public void save(@NotNull DataOutput out, int[] value) throws IOException {
+      out.writeInt(value.length);
+      for (int v : value) {
+        out.writeInt(v);
       }
     }
 
     @Override
-    public Collection<int[]> read(@NotNull DataInput in) throws IOException {
+    public int[] read(@NotNull DataInput in) throws IOException {
       int size = in.readInt();
-      var result = new int[size][];
+      var result = new int[size];
       for (int i = 0; i < size; i++) {
-        result[i] = new int[]{in.readInt(), in.readInt()};
+        result[i] = in.readInt();
       }
-      return Arrays.asList(result);
+      return result;
     }
   }
 }
