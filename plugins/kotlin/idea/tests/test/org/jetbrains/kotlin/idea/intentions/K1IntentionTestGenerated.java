@@ -4463,6 +4463,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/conventionNameCalls/replaceInvoke/invokeInExpression.kt");
             }
 
+            @TestMetadata("invokeVariable.kt")
+            public void testInvokeVariable() throws Exception {
+                runTest("testData/intentions/conventionNameCalls/replaceInvoke/invokeVariable.kt");
+            }
+
             @TestMetadata("java.kt")
             public void testJava() throws Exception {
                 runTest("testData/intentions/conventionNameCalls/replaceInvoke/java.kt");

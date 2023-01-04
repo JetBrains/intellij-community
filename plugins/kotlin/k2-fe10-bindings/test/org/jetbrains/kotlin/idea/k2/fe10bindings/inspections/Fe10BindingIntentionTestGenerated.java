@@ -259,6 +259,11 @@ public abstract class Fe10BindingIntentionTestGenerated extends AbstractFe10Bind
                 runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/invokeInExpression.kt");
             }
 
+            @TestMetadata("invokeVariable.kt")
+            public void testInvokeVariable() throws Exception {
+                runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/invokeVariable.kt");
+            }
+
             @TestMetadata("java.kt")
             public void testJava() throws Exception {
                 runTest("../idea/tests/testData/intentions/conventionNameCalls/replaceInvoke/java.kt");
