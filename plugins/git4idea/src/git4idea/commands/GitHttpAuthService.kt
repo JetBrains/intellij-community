@@ -40,7 +40,7 @@ abstract class GitHttpAuthService : ExternalProcessHandlerService<GitAskPassAppH
    * Creates new [GitHttpAuthenticator] that will be requested to handle username and password requests from Git.
    */
   abstract fun createAuthenticator(project: Project,
-                                   urls: Collection<String?>,
+                                   urls: Collection<String>,
                                    workingDirectory: File,
                                    authenticationGate: AuthenticationGate,
                                    authenticationMode: AuthenticationMode): GitHttpAuthenticator
