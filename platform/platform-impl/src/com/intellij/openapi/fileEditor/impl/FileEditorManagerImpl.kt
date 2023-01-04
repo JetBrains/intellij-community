@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("OVERRIDE_DEPRECATION", "ReplaceGetOrSet", "LeakingThis")
 @file:OptIn(FlowPreview::class, FlowPreview::class, FlowPreview::class)
 
@@ -1542,6 +1542,10 @@ open class FileEditorManagerImpl(private val project: Project) : FileEditorManag
   }
 
   override fun getState(): Element? {
+    if (!isInitialized.get()) {
+      return null
+    }
+
     val state = Element("state")
     mainSplitters.writeExternal(state)
     return state
