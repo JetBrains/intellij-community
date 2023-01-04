@@ -26,6 +26,7 @@ import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.UriUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -49,7 +50,8 @@ public class OutputChecker {
   private static final Pattern JDI_BUG_OUTPUT_PATTERN_2 =
     Pattern.compile("JDWP\\s+exit\\s+error\\s+AGENT_ERROR_NO_JNI_ENV.*]\n");
 
-  private static final String[] IGNORED_PATTERNS_IN_STDERR = {"Picked up _JAVA_OPTIONS:", "Picked up JAVA_TOOL_OPTIONS:"};
+  /** If a string containing one of the listed strings is written to {@link ProcessOutputTypes#STDERR}, the whole string is ignored. */
+  private static final String[] IGNORED_IN_STDERR = {"Picked up _JAVA_OPTIONS:", "Picked up JAVA_TOOL_OPTIONS:"};
 
   private final Producer<String> myAppPath;
   private final Producer<String> myOutputPath;
@@ -88,7 +90,7 @@ public class OutputChecker {
   public void print(String s, Key outputType) {
     synchronized (this) {
       if (myBuffers != null) {
-        if (outputType == ProcessOutputTypes.STDERR && Arrays.stream(IGNORED_PATTERNS_IN_STDERR).anyMatch(s::contains)) {
+        if (outputType == ProcessOutputTypes.STDERR && ContainerUtil.exists(IGNORED_IN_STDERR, s::contains)) {
           return;
         }
         myBuffers.computeIfAbsent(outputType, k -> new StringBuffer()).append(s);
