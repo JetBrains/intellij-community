@@ -225,7 +225,7 @@ public class OutputChecker {
       result = StringUtil.replace(result, "Process finished with exit code 255", "Process finished with exit code -1");
 
       result = result.replaceAll(" -javaagent:.*debugger-agent\\.jar", "");
-      result = result.replaceAll(" -agentpath:[^\\s]*memory_agent([\\w^\\s]*)?\\.[^\\s]+", "");
+      result = result.replaceAll(" -agentpath:\\S*memory_agent([\\w^\\s]*)?\\.\\S+", "");
       result = result.replaceAll("!HOST_NAME!:\\d*", "!HOST_NAME!:!HOST_PORT!");
       result = result.replaceAll("at '.*?'", "at '!HOST_NAME!:PORT_NAME!'");
       result = result.replaceAll("address: '.*?'", "address: '!HOST_NAME!:PORT_NAME!'");
@@ -234,7 +234,7 @@ public class OutputChecker {
       result = result.replaceAll("\"(!APP_PATH!.*?)\"", "$1");
       result = result.replaceAll("\"(-D.*?)\"", "$1");  // unquote extra params
       result = result.replaceAll("-Didea.launcher.port=\\d*", "-Didea.launcher.port=!IDEA_LAUNCHER_PORT!");
-      result = result.replaceAll("-Dfile.encoding=[\\w\\d-]*", "-Dfile.encoding=!FILE_ENCODING!");
+      result = result.replaceAll("-Dfile.encoding=[\\w-]*", "-Dfile.encoding=!FILE_ENCODING!");
       result = result.replaceAll("\\((.*):\\d+\\)", "($1:!LINE_NUMBER!)");
 
       result = fixSlashes(result, JDK_HOME_STR);
