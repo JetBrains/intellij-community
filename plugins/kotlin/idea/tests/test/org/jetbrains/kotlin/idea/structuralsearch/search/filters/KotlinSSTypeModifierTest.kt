@@ -194,7 +194,7 @@ class KotlinSSTypeModifierTest : KotlinStructuralSearchTest() {
         val y = { f: String -> f }
     """.trimIndent()) }
 
-    fun testTypeArrayAccessArrayExpression() { doTest("'_:[exprtype(Array)]['_]", """
+    fun testTypeArrayAccessArrayExpression() { doTest("'_:[exprtype(Array<Int>)]['_]", """
         val x = Array( 1, { 1 })
         val y = "hello"
 

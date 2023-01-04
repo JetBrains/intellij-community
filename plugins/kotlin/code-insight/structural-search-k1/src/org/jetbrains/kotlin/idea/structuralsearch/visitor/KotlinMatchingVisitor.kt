@@ -321,7 +321,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         if (receiverHandler is SubstitutionHandler && receiverHandler.minOccurs == 0 && other !is KtDotQualifiedExpression) { // can match without receiver
             val receiverType = other.resolveExprType()
             val receiverTypeMatches = if (receiverType != null) {
-                receiverHandler.findPredicate(KotlinExprTypePredicate::class.java)?.match(other.project, receiverType) ?: true
+                receiverHandler.findPredicate(KotlinExprTypePredicate::class.java)?.match(receiverType) ?: true
             } else true
             myMatchingVisitor.result = other.parent !is KtDotQualifiedExpression
                     && other.parent !is KtCallExpression // don't match name reference of calls
