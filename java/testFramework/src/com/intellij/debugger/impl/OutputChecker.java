@@ -193,8 +193,8 @@ public class OutputChecker {
     return ReadAction.compute(() -> {
       String result = buffer;
 
-      result = StringUtil.replace(result, "\r\n", "\n");
-      result = StringUtil.replace(result, "\r", "\n");
+      result = result.replace("\r\n", "\n");
+      result = result.replace('\r', '\n');
       result = replaceAdditionalInOutput(result);
       result = replacePath(result, myAppPath.produce(), "!APP_PATH!");
       result = replacePath(result, myOutputPath.produce(), "!OUTPUT_PATH!");
@@ -212,7 +212,7 @@ public class OutputChecker {
       if (!StringUtil.isEmpty(HOST_NAME)) {
         result = StringUtil.replace(result, HOST_NAME, "!HOST_NAME!", true);
       }
-      result = StringUtil.replace(result, "127.0.0.1", "!HOST_NAME!", false);
+      result = result.replace("127.0.0.1", "!HOST_NAME!");
 
       VirtualFile homeDirectory = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomeDirectory();
       assertNotNull(homeDirectory);
@@ -224,7 +224,7 @@ public class OutputChecker {
       }
 
       result = replacePath(result, PathManager.getHomePath(), "!IDEA_HOME!");
-      result = StringUtil.replace(result, "Process finished with exit code 255", "Process finished with exit code -1");
+      result = result.replace("Process finished with exit code 255", "Process finished with exit code -1");
 
       result = result.replaceAll(" -javaagent:.*debugger-agent\\.jar", "");
       result = result.replaceAll(" -agentpath:\\S*memory_agent([\\w^\\s]*)?\\.\\S+", "");
@@ -240,7 +240,7 @@ public class OutputChecker {
       result = result.replaceAll("\\((.*):\\d+\\)", "($1:!LINE_NUMBER!)");
 
       result = fixSlashes(result, JDK_HOME_STR);
-      result = result.replaceAll("!JDK_HOME!\\\\bin\\\\java.exe", "!JDK_HOME!\\\\bin\\\\java");
+      result = result.replace("!JDK_HOME!\\bin\\java.exe", "!JDK_HOME!\\bin\\java");
 
       result = stripQuotesAroundClasspath(result);
 
@@ -269,7 +269,7 @@ public class OutputChecker {
         }
 
         String sortedPath = StringUtil.join(classpathRes, ";");
-        result = StringUtil.replace(result, " " + classPath + " ", " " + sortedPath + " ");
+        result = result.replace(" " + classPath + " ", " " + sortedPath + " ");
       }
 
       result = JDI_BUG_OUTPUT_PATTERN_1.matcher(result).replaceAll("");
