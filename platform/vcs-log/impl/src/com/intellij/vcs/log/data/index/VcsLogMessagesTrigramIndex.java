@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.Map;
 
 public final class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void, VcsCommitMetadata> {
-  @NonNls private static final String TRIGRAMS = "trigrams";
+  private static final @NonNls String TRIGRAMS = "trigrams";
 
   public VcsLogMessagesTrigramIndex(@NotNull StorageId storageId,
                                     @Nullable StorageLockContext storageLockContext,
@@ -29,16 +29,14 @@ public final class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Voi
           storageLockContext, errorHandler, disposableParent);
   }
 
-  @Nullable
-  public IntSet getCommitsForSubstring(@NotNull CharSequence string) throws StorageException {
+  public @Nullable IntSet getCommitsForSubstring(@NotNull CharSequence string) throws StorageException {
     IntSet trigrams = TrigramBuilder.getTrigrams(string);
     return trigrams.isEmpty() ? null : getCommitsWithAllKeys(trigrams);
   }
 
   public static final class TrigramMessageIndexer implements DataIndexer<Integer, Void, VcsCommitMetadata> {
-    @NotNull
     @Override
-    public Map<Integer, Void> map(@NotNull VcsCommitMetadata inputData) {
+    public @NotNull Map<Integer, Void> map(@NotNull VcsCommitMetadata inputData) {
       return TrigramBuilder.getTrigramsAsMap(inputData.getFullMessage());
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -43,13 +43,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
-  @NonNls private static final String HELP_ID = "reference.changesToolWindow.log";
+  private static final @NonNls String HELP_ID = "reference.changesToolWindow.log";
 
-  @NotNull private final MainVcsLogUiProperties myUiProperties;
-  @NotNull private final MainFrame myMainFrame;
-  @NotNull private final MyVcsLogUiPropertiesListener myPropertiesListener;
-  @NotNull private final History myHistory;
-  @NotNull private final LinkedHashMap<String, VcsLogHighlighter> myHighlighters = new LinkedHashMap<>();
+  private final @NotNull MainVcsLogUiProperties myUiProperties;
+  private final @NotNull MainFrame myMainFrame;
+  private final @NotNull MyVcsLogUiPropertiesListener myPropertiesListener;
+  private final @NotNull History myHistory;
+  private final @NotNull LinkedHashMap<String, VcsLogHighlighter> myHighlighters = new LinkedHashMap<>();
 
   public VcsLogUiImpl(@NotNull String id,
                       @NotNull VcsLogData logData,
@@ -91,10 +91,9 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     return new MainFrame(logData, this, uiProperties, filterUi, isEditorDiffPreview, this);
   }
 
-  @NotNull
-  protected VcsLogFilterUiEx createFilterUi(@NotNull Consumer<VcsLogFilterCollection> filterConsumer,
-                                            @Nullable VcsLogFilterCollection filters,
-                                            @NotNull Disposable parentDisposable) {
+  protected @NotNull VcsLogFilterUiEx createFilterUi(@NotNull Consumer<VcsLogFilterCollection> filterConsumer,
+                                                     @Nullable VcsLogFilterCollection filters,
+                                                     @NotNull Disposable parentDisposable) {
     return new VcsLogClassicFilterUi(myLogData, filterConsumer, myUiProperties, myColorManager, filters, parentDisposable);
   }
 
@@ -104,8 +103,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     myPropertiesListener.onShowLongEdgesChanged();
   }
 
-  @NotNull
-  protected MainFrame getMainFrame() {
+  protected @NotNull MainFrame getMainFrame() {
     return myMainFrame;
   }
 
@@ -157,21 +155,18 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     toolbar.repaint();
   }
 
-  @NotNull
   @Override
-  public VcsLogGraphTable getTable() {
+  public @NotNull VcsLogGraphTable getTable() {
     return myMainFrame.getGraphTable();
   }
 
-  @NotNull
   @Override
-  public JComponent getMainComponent() {
+  public @NotNull JComponent getMainComponent() {
     return myMainFrame;
   }
 
-  @NotNull
   @Override
-  public VcsLogFilterUiEx getFilterUi() {
+  public @NotNull VcsLogFilterUiEx getFilterUi() {
     return myMainFrame.getFilterUi();
   }
 
@@ -181,26 +176,22 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   }
 
   @Override
-  @NotNull
-  public JComponent getToolbar() {
+  public @NotNull JComponent getToolbar() {
     return myMainFrame.getToolbar();
   }
 
   @Override
-  @NotNull
-  public MainVcsLogUiProperties getProperties() {
+  public @NotNull MainVcsLogUiProperties getProperties() {
     return myUiProperties;
   }
 
-  @Nullable
   @Override
-  public String getHelpId() {
+  public @Nullable String getHelpId() {
     return HELP_ID;
   }
 
-  @Nullable
   @Override
-  public History getNavigationHistory() {
+  public @Nullable History getNavigationHistory() {
     return myHistory;
   }
 

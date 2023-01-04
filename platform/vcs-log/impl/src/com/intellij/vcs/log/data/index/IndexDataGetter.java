@@ -40,12 +40,12 @@ import java.util.stream.Collectors;
 import static com.intellij.vcs.log.history.FileHistoryKt.FILE_PATH_HASHING_STRATEGY;
 
 public final class IndexDataGetter {
-  @NotNull private final Project myProject;
-  @NotNull private final Map<VirtualFile, VcsLogProvider> myProviders;
-  @NotNull private final VcsLogPersistentIndex.IndexStorage myIndexStorage;
-  @NotNull private final VcsLogStorage myLogStorage;
-  @NotNull private final VcsLogErrorHandler myErrorHandler;
-  @NotNull private final VcsDirectoryRenamesProvider myDirectoryRenamesProvider;
+  private final @NotNull Project myProject;
+  private final @NotNull Map<VirtualFile, VcsLogProvider> myProviders;
+  private final @NotNull VcsLogPersistentIndex.IndexStorage myIndexStorage;
+  private final @NotNull VcsLogStorage myLogStorage;
+  private final @NotNull VcsLogErrorHandler myErrorHandler;
+  private final @NotNull VcsDirectoryRenamesProvider myDirectoryRenamesProvider;
   private final boolean myIsProjectLog;
 
   public IndexDataGetter(@NotNull Project project,
@@ -71,13 +71,11 @@ public final class IndexDataGetter {
   // Getters from forward index
   //
 
-  @Nullable
-  public VcsUser getAuthor(int commit) {
+  public @Nullable VcsUser getAuthor(int commit) {
     return executeAndCatch(() -> myIndexStorage.users.getAuthorForCommit(commit));
   }
 
-  @Nullable
-  public VcsUser getCommitter(int commit) {
+  public @Nullable VcsUser getCommitter(int commit) {
     return executeAndCatch(() -> {
       Integer committer = myIndexStorage.committers.get(commit);
       if (committer != null) {
@@ -90,8 +88,7 @@ public final class IndexDataGetter {
     });
   }
 
-  @Nullable
-  public Long getAuthorTime(int commit) {
+  public @Nullable Long getAuthorTime(int commit) {
     return executeAndCatch(() -> {
       Pair<Long, Long> time = myIndexStorage.timestamps.get(commit);
       if (time == null) return null;
@@ -99,8 +96,7 @@ public final class IndexDataGetter {
     });
   }
 
-  @Nullable
-  public Long getCommitTime(int commit) {
+  public @Nullable Long getCommitTime(int commit) {
     return executeAndCatch(() -> {
       Pair<Long, Long> time = myIndexStorage.timestamps.get(commit);
       if (time == null) return null;
@@ -108,13 +104,11 @@ public final class IndexDataGetter {
     });
   }
 
-  @Nullable
-  public String getFullMessage(int index) {
+  public @Nullable String getFullMessage(int index) {
     return executeAndCatch(() -> myIndexStorage.messages.get(index));
   }
 
-  @Nullable
-  public List<Hash> getParents(int index) {
+  public @Nullable List<Hash> getParents(int index) {
     return executeAndCatch(() -> {
       List<Integer> parentsIndexes = myIndexStorage.parents.get(index);
       if (parentsIndexes == null) return null;
@@ -148,13 +142,11 @@ public final class IndexDataGetter {
     });
   }
 
-  @NotNull
-  public Set<Integer> filter(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
+  public @NotNull Set<Integer> filter(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
     return filter(detailsFilters, null);
   }
 
-  @NotNull
-  public IntSet filter(@NotNull List<VcsLogDetailsFilter> detailsFilters, @Nullable IntSet candidates) {
+  public @NotNull IntSet filter(@NotNull List<VcsLogDetailsFilter> detailsFilters, @Nullable IntSet candidates) {
     VcsLogTextFilter textFilter = ContainerUtil.findInstance(detailsFilters, VcsLogTextFilter.class);
     VcsLogUserFilter userFilter = ContainerUtil.findInstance(detailsFilters, VcsLogUserFilter.class);
     VcsLogStructureFilter pathFilter = ContainerUtil.findInstance(detailsFilters, VcsLogStructureFilter.class);
@@ -181,13 +173,11 @@ public final class IndexDataGetter {
     return filterMessages(textFilter, filteredByUserAndPath);
   }
 
-  @NotNull
-  private IntSet filterUsers(@NotNull Set<? extends VcsUser> users) {
+  private @NotNull IntSet filterUsers(@NotNull Set<? extends VcsUser> users) {
     return executeAndCatch(() -> myIndexStorage.users.getCommitsForUsers(users), new IntOpenHashSet());
   }
 
-  @NotNull
-  private IntSet filterPaths(@NotNull Collection<? extends FilePath> paths) {
+  private @NotNull IntSet filterPaths(@NotNull Collection<? extends FilePath> paths) {
     return executeAndCatch(() -> {
       IntSet result = new IntOpenHashSet();
       for (FilePath path : paths) {
@@ -197,8 +187,7 @@ public final class IndexDataGetter {
     }, new IntOpenHashSet());
   }
 
-  @NotNull
-  private IntSet filterMessages(@NotNull VcsLogTextFilter filter, @Nullable IntSet candidates) {
+  private @NotNull IntSet filterMessages(@NotNull VcsLogTextFilter filter, @Nullable IntSet candidates) {
     IntSet result = new IntOpenHashSet();
     filterMessages(filter, candidates, result::add);
     return result;
@@ -272,8 +261,7 @@ public final class IndexDataGetter {
   // File history
   //
 
-  @NotNull
-  private Int2ObjectMap<Int2ObjectMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
+  private @NotNull Int2ObjectMap<Int2ObjectMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
     Int2ObjectMap<Int2ObjectMap<VcsLogPathsIndex.ChangeKind>> affectedCommits = new Int2ObjectOpenHashMap<>();
 
     VirtualFile root = getRoot(path);
@@ -309,13 +297,11 @@ public final class IndexDataGetter {
     return affectedCommits;
   }
 
-  @NotNull
-  public FileHistoryData createFileHistoryData(@NotNull FilePath path) {
+  public @NotNull FileHistoryData createFileHistoryData(@NotNull FilePath path) {
     return createFileHistoryData(Collections.singletonList(path));
   }
 
-  @NotNull
-  public FileHistoryData createFileHistoryData(@NotNull Collection<? extends FilePath> paths) {
+  public @NotNull FileHistoryData createFileHistoryData(@NotNull Collection<? extends FilePath> paths) {
     if (paths.size() == 1 && ContainerUtil.getFirstItem(paths).isDirectory()) {
       return new DirectoryHistoryData(ContainerUtil.getFirstItem(paths));
     }
@@ -331,9 +317,8 @@ public final class IndexDataGetter {
       super(startPaths);
     }
 
-    @NotNull
     @Override
-    public Int2ObjectMap<Int2ObjectMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
+    public @NotNull Int2ObjectMap<Int2ObjectMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
       return IndexDataGetter.this.getAffectedCommits(path);
     }
 
@@ -368,9 +353,8 @@ public final class IndexDataGetter {
       }
     }
 
-    @NotNull
     @Override
-    public Int2ObjectMap<Int2ObjectMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
+    public @NotNull Int2ObjectMap<Int2ObjectMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
       Int2ObjectMap<Int2ObjectMap<VcsLogPathsIndex.ChangeKind>> affectedCommits = super.getAffectedCommits(path);
       if (!path.isDirectory()) return affectedCommits;
       hackAffectedCommits(path, affectedCommits);
@@ -423,13 +407,11 @@ public final class IndexDataGetter {
   // Util
   //
 
-  @NotNull
-  public VcsLogStorage getLogStorage() {
+  public @NotNull VcsLogStorage getLogStorage() {
     return myLogStorage;
   }
 
-  @Nullable
-  private VirtualFile getRoot(@NotNull FilePath path) {
+  private @Nullable VirtualFile getRoot(@NotNull FilePath path) {
     if (myIsProjectLog) return VcsLogUtil.getActualRoot(myProject, path);
     return VcsLogUtil.getActualRoot(myProject, myProviders, path);
   }
@@ -451,15 +433,13 @@ public final class IndexDataGetter {
     }, null);
   }
 
-  @Nullable
-  private <T> T executeAndCatch(@NotNull Throwable2Computable<T, IOException, StorageException> computable) {
+  private @Nullable <T> T executeAndCatch(@NotNull Throwable2Computable<T, IOException, StorageException> computable) {
     return executeAndCatch(computable, null);
   }
 
   @Contract("_, !null -> !null")
-  @Nullable
-  private <T> T executeAndCatch(@NotNull Throwable2Computable<? extends T, IOException, StorageException> computable,
-                                @Nullable T defaultValue) {
+  private @Nullable <T> T executeAndCatch(@NotNull Throwable2Computable<? extends T, IOException, StorageException> computable,
+                                          @Nullable T defaultValue) {
     try {
       return computable.compute();
     }

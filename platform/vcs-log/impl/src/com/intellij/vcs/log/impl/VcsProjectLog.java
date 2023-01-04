@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.ide.caches.CachesInvalidator;
@@ -60,15 +60,15 @@ public final class VcsProjectLog implements Disposable {
   public static final Topic<ProjectLogListener> VCS_PROJECT_LOG_CHANGED = new Topic<>(ProjectLogListener.class,
                                                                                       Topic.BroadcastDirection.NONE,
                                                                                       true);
-  @NotNull private final Project myProject;
-  @NotNull private final VcsLogTabsProperties myUiProperties;
-  @NotNull private final VcsLogTabsManager myTabsManager;
-  @NotNull private final VcsProjectLogErrorHandler myErrorHandler;
+  private final @NotNull Project myProject;
+  private final @NotNull VcsLogTabsProperties myUiProperties;
+  private final @NotNull VcsLogTabsManager myTabsManager;
+  private final @NotNull VcsProjectLogErrorHandler myErrorHandler;
 
-  @NotNull private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
-  @NotNull private final Disposable myDisposable = Disposer.newDisposable();
-  @NotNull private final ExecutorService myExecutor;
-  @NotNull private final AtomicBoolean myDisposeStarted = new AtomicBoolean(false);
+  private final @NotNull LazyVcsLogManager myLogManager = new LazyVcsLogManager();
+  private final @NotNull Disposable myDisposable = Disposer.newDisposable();
+  private final @NotNull ExecutorService myExecutor;
+  private final @NotNull AtomicBoolean myDisposeStarted = new AtomicBoolean(false);
 
   public VcsProjectLog(@NotNull Project project) {
     myProject = project;
@@ -119,8 +119,7 @@ public final class VcsProjectLog implements Disposable {
     connection.subscribe(DynamicPluginListener.TOPIC, new MyDynamicPluginUnloader());
   }
 
-  @Nullable
-  public VcsLogData getDataManager() {
+  public @Nullable VcsLogData getDataManager() {
     VcsLogManager cached = myLogManager.getCached();
     if (cached == null) return null;
     return cached.getDataManager();
@@ -129,33 +128,28 @@ public final class VcsProjectLog implements Disposable {
   /**
    * The instance of the {@link MainVcsLogUi} or null if the log was not initialized yet.
    */
-  @Nullable
-  public VcsLogUiImpl getMainLogUi() {
+  public @Nullable VcsLogUiImpl getMainLogUi() {
     VcsLogContentProvider logContentProvider = VcsLogContentProvider.getInstance(myProject);
     if (logContentProvider == null) return null;
     return (VcsLogUiImpl)logContentProvider.getUi();
   }
 
-  @Nullable
-  public VcsLogManager getLogManager() {
+  public @Nullable VcsLogManager getLogManager() {
     return myLogManager.getCached();
   }
 
-  @NotNull
-  public VcsLogTabsManager getTabsManager() {
+  public @NotNull VcsLogTabsManager getTabsManager() {
     return myTabsManager;
   }
 
   @RequiresEdt
-  @Nullable
-  public MainVcsLogUi openLogTab(@NotNull VcsLogFilterCollection filters) {
+  public @Nullable MainVcsLogUi openLogTab(@NotNull VcsLogFilterCollection filters) {
     return openLogTab(filters, VcsLogTabLocation.TOOL_WINDOW);
   }
 
   @RequiresEdt
-  @Nullable
-  public MainVcsLogUi openLogTab(@NotNull VcsLogFilterCollection filters,
-                                 @NotNull VcsLogTabLocation location) {
+  public @Nullable MainVcsLogUi openLogTab(@NotNull VcsLogFilterCollection filters,
+                                           @NotNull VcsLogTabLocation location) {
     VcsLogManager logManager = getLogManager();
     if (logManager == null) return null;
     return myTabsManager.openAnotherLogTab(logManager, filters, location);
@@ -219,9 +213,8 @@ public final class VcsProjectLog implements Disposable {
     return CompletableFuture.supplyAsync(() -> createLog(forceInit), myExecutor).thenApply(Objects::nonNull);
   }
 
-  @Nullable
   @RequiresBackgroundThread
-  private VcsLogManager createLog(boolean forceInit) {
+  private @Nullable VcsLogManager createLog(boolean forceInit) {
     if (isDisposing()) return null;
     Map<VirtualFile, VcsLogProvider> logProviders = getLogProviders(myProject);
     if (!logProviders.isEmpty()) {
@@ -254,8 +247,7 @@ public final class VcsProjectLog implements Disposable {
     }, getModality());
   }
 
-  @NotNull
-  public static Map<VirtualFile, VcsLogProvider> getLogProviders(@NotNull Project project) {
+  public static @NotNull Map<VirtualFile, VcsLogProvider> getLogProviders(@NotNull Project project) {
     return VcsLogManager.findLogProviders(Arrays.asList(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()), project);
   }
 
@@ -273,8 +265,7 @@ public final class VcsProjectLog implements Disposable {
     return result.get();
   }
 
-  @NotNull
-  private static ModalityState getModality() {
+  private static @NotNull ModalityState getModality() {
     /*
      Using "any" modality specifically is required in order to be able to wait for log initialization or disposal under modal progress.
      Otherwise, methods such as "VcsProjectLog#runWhenLogIsReady" or "VcsProjectLog.shutDown" won't be able to work
@@ -350,11 +341,10 @@ public final class VcsProjectLog implements Disposable {
   }
 
   private class LazyVcsLogManager {
-    @Nullable private volatile VcsLogManager myValue;
+    private volatile @Nullable VcsLogManager myValue;
 
-    @NotNull
     @RequiresBackgroundThread
-    public VcsLogManager getValue(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+    public @NotNull VcsLogManager getValue(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
       if (myValue == null) {
         LOG.debug("Creating Vcs Log for " + VcsLogUtil.getProvidersMapText(logProviders));
         VcsLogManager value = new VcsLogManager(myProject, myUiProperties, logProviders, false,
@@ -367,9 +357,8 @@ public final class VcsProjectLog implements Disposable {
       return requireNonNull(myValue);
     }
 
-    @Nullable
     @RequiresEdt
-    public VcsLogManager dropValue() {
+    public @Nullable VcsLogManager dropValue() {
       ApplicationManager.getApplication().assertIsDispatchThread();
       if (myValue != null) {
         VcsLogManager oldValue = myValue;
@@ -383,8 +372,7 @@ public final class VcsProjectLog implements Disposable {
       return null;
     }
 
-    @Nullable
-    public VcsLogManager getCached() {
+    public @Nullable VcsLogManager getCached() {
       return myValue;
     }
   }

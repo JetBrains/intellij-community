@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,16 +19,15 @@ import static com.intellij.util.containers.ContainerUtil.map2List;
 public final class VcsLogProjectTabsProperties implements PersistentStateComponent<VcsLogProjectTabsProperties.State>,
                                                           VcsLogTabsProperties {
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
-  @NotNull private final VcsLogApplicationSettings myAppSettings;
-  @NotNull private State myState = new State();
+  private final @NotNull VcsLogApplicationSettings myAppSettings;
+  private @NotNull State myState = new State();
 
   public VcsLogProjectTabsProperties() {
     myAppSettings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
   }
 
-  @NotNull
   @Override
-  public State getState() {
+  public @NotNull State getState() {
     return myState;
   }
 
@@ -38,8 +37,7 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
   }
 
   @Override
-  @NotNull
-  public MainVcsLogUiProperties createProperties(@NotNull final String id) {
+  public @NotNull MainVcsLogUiProperties createProperties(final @NotNull String id) {
     myState.TAB_STATES.putIfAbsent(id, new MyState());
     return new MyVcsLogUiPropertiesImpl(id);
   }
@@ -56,8 +54,7 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
     myState.TAB_STATES.put(tabId, null);
   }
 
-  @NotNull
-  public Map<String, VcsLogTabLocation> getTabs() {
+  public @NotNull Map<String, VcsLogTabLocation> getTabs() {
     return myState.OPEN_GENERIC_TABS;
   }
 
@@ -77,8 +74,7 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
     }
   }
 
-  @NotNull
-  public static List<List<String>> getRecentGroup(@NotNull Map<String, List<RecentGroup>> stateField, @NotNull String filterName) {
+  public static @NotNull List<List<String>> getRecentGroup(@NotNull Map<String, List<RecentGroup>> stateField, @NotNull String filterName) {
     List<RecentGroup> values = stateField.get(filterName);
     if (values == null) {
       return emptyList();
@@ -125,9 +121,8 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
       myId = id;
     }
 
-    @NotNull
     @Override
-    public MyState getState() {
+    public @NotNull MyState getState() {
       MyState state = myState.TAB_STATES.get(myId);
       if (state == null) {
         state = new MyState();
@@ -174,9 +169,8 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
       addRecentGroup(myState.RECENT_FILTERS, filterName, values);
     }
 
-    @NotNull
     @Override
-    public List<List<String>> getRecentlyFilteredGroups(@NotNull String filterName) {
+    public @NotNull List<List<String>> getRecentlyFilteredGroups(@NotNull String filterName) {
       return getRecentGroup(myState.RECENT_FILTERS, filterName);
     }
   }
@@ -191,8 +185,7 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
       super(name);
     }
 
-    @NotNull
-    public Boolean defaultValue(@NotNull String logId) {
+    public @NotNull Boolean defaultValue(@NotNull String logId) {
       return Boolean.FALSE;
     }
   }

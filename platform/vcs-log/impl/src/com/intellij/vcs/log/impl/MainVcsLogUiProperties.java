@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -33,20 +33,18 @@ public interface MainVcsLogUiProperties extends VcsLogUiProperties {
 
   class VcsLogHighlighterProperty extends VcsLogUiProperty<Boolean> {
     private static final Map<String, VcsLogHighlighterProperty> ourProperties = new HashMap<>();
-    @NotNull private final String myId;
+    private final @NotNull String myId;
 
     public VcsLogHighlighterProperty(@NotNull String name) {
       super("Highlighter." + name);
       myId = name;
     }
 
-    @NotNull
-    public String getId() {
+    public @NotNull String getId() {
       return myId;
     }
 
-    @NotNull
-    public static VcsLogHighlighterProperty get(@NotNull String id) {
+    public static @NotNull VcsLogHighlighterProperty get(@NotNull String id) {
       VcsLogHighlighterProperty property = ourProperties.get(id);
       if (property == null) {
         property = new VcsLogHighlighterProperty(id);

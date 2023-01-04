@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -64,33 +64,33 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   private static final int VERSION = 18;
   public static final VcsLogProgress.ProgressKey INDEXING = new VcsLogProgress.ProgressKey("index");
 
-  @NotNull private final Project myProject;
-  @NotNull private final VcsLogErrorHandler myErrorHandler;
-  @NotNull private final VcsLogProgress myProgress;
-  @NotNull private final Map<VirtualFile, VcsLogIndexer> myIndexers;
-  @NotNull private final VcsLogStorage myStorage;
-  @NotNull private final Set<VirtualFile> myRoots;
-  @NotNull private final VcsLogBigRepositoriesList myBigRepositoriesList;
-  @NotNull private final VcsLogIndexCollector myIndexCollector;
-  @NotNull private final CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
+  private final @NotNull Project myProject;
+  private final @NotNull VcsLogErrorHandler myErrorHandler;
+  private final @NotNull VcsLogProgress myProgress;
+  private final @NotNull Map<VirtualFile, VcsLogIndexer> myIndexers;
+  private final @NotNull VcsLogStorage myStorage;
+  private final @NotNull Set<VirtualFile> myRoots;
+  private final @NotNull VcsLogBigRepositoriesList myBigRepositoriesList;
+  private final @NotNull VcsLogIndexCollector myIndexCollector;
+  private final @NotNull CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
 
-  @NotNull private final StorageId myIndexStorageId;
+  private final @NotNull StorageId myIndexStorageId;
 
-  @Nullable private final IndexStorage myIndexStorage;
-  @Nullable private final IndexDataGetter myDataGetter;
+  private final @Nullable IndexStorage myIndexStorage;
+  private final @Nullable IndexDataGetter myDataGetter;
 
-  @NotNull private final SingleTaskController<IndexingRequest, Void> mySingleTaskController;
-  @NotNull private final MyHeavyAwareListener myHeavyAwareListener;
-  @NotNull private final AtomicReference<Boolean> myPostponedIndex = new AtomicReference<>(null);
+  private final @NotNull SingleTaskController<IndexingRequest, Void> mySingleTaskController;
+  private final @NotNull MyHeavyAwareListener myHeavyAwareListener;
+  private final @NotNull AtomicReference<Boolean> myPostponedIndex = new AtomicReference<>(null);
 
-  @NotNull private final Map<VirtualFile, AtomicInteger> myNumberOfTasks = new HashMap<>();
-  @NotNull private final Map<VirtualFile, AtomicLong> myIndexingTime = new HashMap<>();
-  @NotNull private final Map<VirtualFile, AtomicInteger> myIndexingLimit = new HashMap<>();
-  @NotNull private final Map<VirtualFile, ConcurrentIntObjectMap<Integer>> myIndexingErrors = new HashMap<>();
+  private final @NotNull Map<VirtualFile, AtomicInteger> myNumberOfTasks = new HashMap<>();
+  private final @NotNull Map<VirtualFile, AtomicLong> myIndexingTime = new HashMap<>();
+  private final @NotNull Map<VirtualFile, AtomicInteger> myIndexingLimit = new HashMap<>();
+  private final @NotNull Map<VirtualFile, ConcurrentIntObjectMap<Integer>> myIndexingErrors = new HashMap<>();
 
-  @NotNull private final List<IndexingFinishedListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final @NotNull List<IndexingFinishedListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @NotNull private Map<VirtualFile, IntSet> myCommitsToIndex = new HashMap<>();
+  private @NotNull Map<VirtualFile, IntSet> myCommitsToIndex = new HashMap<>();
 
   public VcsLogPersistentIndex(@NotNull Project project,
                                @NotNull VcsLogStorage storage,
@@ -283,9 +283,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     IntCollectionUtil.add(myCommitsToIndex, root, index);
   }
 
-  @Nullable
   @Override
-  public IndexDataGetter getDataGetter() {
+  public @Nullable IndexDataGetter getDataGetter() {
     if (myIndexStorage == null) return null;
     return myDataGetter;
   }
@@ -300,8 +299,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     myListeners.remove(l);
   }
 
-  @NotNull
-  public StorageId getIndexStorageId() {
+  public @NotNull StorageId getIndexStorageId() {
     return myIndexStorageId;
   }
 
@@ -310,8 +308,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     myPostponedIndex.set(null);
   }
 
-  @NotNull
-  private static Map<VirtualFile, VcsLogIndexer> getAvailableIndexers(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
+  private static @NotNull Map<VirtualFile, VcsLogIndexer> getAvailableIndexers(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
     Map<VirtualFile, VcsLogIndexer> indexers = new LinkedHashMap<>();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
       VirtualFile root = entry.getKey();
@@ -323,8 +320,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     return indexers;
   }
 
-  @NotNull
-  public static Set<VirtualFile> getRootsForIndexing(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
+  public static @NotNull Set<VirtualFile> getRootsForIndexing(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
     return getAvailableIndexers(providers).keySet();
   }
 
@@ -334,14 +330,14 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     private static final String PARENTS = "parents";
     private static final String COMMITTERS = "committers";
     private static final String TIMESTAMPS = "timestamps";
-    @NotNull public final PersistentSet<Integer> commits;
-    @NotNull public final PersistentMap<Integer, String> messages;
-    @NotNull public final PersistentMap<Integer, List<Integer>> parents;
-    @NotNull public final PersistentMap<Integer, Integer> committers;
-    @NotNull public final PersistentMap<Integer, Pair<Long, Long>> timestamps;
-    @NotNull public final VcsLogMessagesTrigramIndex trigrams;
-    @NotNull public final VcsLogUserIndex users;
-    @NotNull public final VcsLogPathsIndex paths;
+    public final @NotNull PersistentSet<Integer> commits;
+    public final @NotNull PersistentMap<Integer, String> messages;
+    public final @NotNull PersistentMap<Integer, List<Integer>> parents;
+    public final @NotNull PersistentMap<Integer, Integer> committers;
+    public final @NotNull PersistentMap<Integer, Pair<Long, Long>> timestamps;
+    public final @NotNull VcsLogMessagesTrigramIndex trigrams;
+    public final @NotNull VcsLogUserIndex users;
+    public final @NotNull VcsLogPathsIndex paths;
 
     private volatile boolean myIsFresh;
 
@@ -462,9 +458,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       super("index", EmptyConsumer.getInstance(), parent);
     }
 
-    @NotNull
     @Override
-    protected SingleTask startNewBackgroundTask() {
+    protected @NotNull SingleTask startNewBackgroundTask() {
       ProgressIndicator indicator = myProgress.createProgressIndicator(true, INDEXING);
       Consumer<ProgressIndicator> task = progressIndicator -> {
         int previousPriority = setMinimumPriority();
@@ -517,13 +512,13 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     private static final int FLUSHED_COMMITS_NUMBER = 15000;
     private static final int LOGGED_ERRORS_COUNT = 5;
     private static final int STOPPING_ERROR_COUNT = 30;
-    @NotNull private final VirtualFile myRoot;
-    @NotNull private final IntSet myCommits;
-    @NotNull private final VcsLogIndexer.PathsEncoder myPathsEncoder;
+    private final @NotNull VirtualFile myRoot;
+    private final @NotNull IntSet myCommits;
+    private final @NotNull VcsLogIndexer.PathsEncoder myPathsEncoder;
     private final boolean myFull;
 
-    @NotNull private final AtomicInteger myNewIndexedCommits = new AtomicInteger();
-    @NotNull private final AtomicInteger myOldCommits = new AtomicInteger();
+    private final @NotNull AtomicInteger myNewIndexedCommits = new AtomicInteger();
+    private final @NotNull AtomicInteger myOldCommits = new AtomicInteger();
     private volatile long myStartTime;
     private Span mySpan;
     private Scope myScope;

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible;
 
 import com.intellij.openapi.util.Key;
@@ -21,8 +21,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class VisiblePack implements VcsLogDataPack, UserDataHolder {
-  @NotNull
-  public static final VisiblePack EMPTY =
+  public static final @NotNull VisiblePack EMPTY =
     new VisiblePack(DataPack.EMPTY, EmptyVisibleGraph.getInstance(), false, VcsLogFilterObject.EMPTY_COLLECTION) {
       @Override
       public String toString() {
@@ -30,14 +29,13 @@ public class VisiblePack implements VcsLogDataPack, UserDataHolder {
       }
     };
 
-  @NotNull
-  public static final Key<Boolean> NO_GRAPH_INFORMATION = Key.create("NO_GRAPH_INFORMATION");
+  public static final @NotNull Key<Boolean> NO_GRAPH_INFORMATION = Key.create("NO_GRAPH_INFORMATION");
 
-  @NotNull private final DataPackBase myDataPack;
-  @NotNull private final VisibleGraph<Integer> myVisibleGraph;
+  private final @NotNull DataPackBase myDataPack;
+  private final @NotNull VisibleGraph<Integer> myVisibleGraph;
   private final boolean myCanRequestMore;
-  @NotNull private final VcsLogFilterCollection myFilters;
-  @NotNull private final Map<Key, Object> myAdditionalData = new ConcurrentHashMap<>();
+  private final @NotNull VcsLogFilterCollection myFilters;
+  private final @NotNull Map<Key, Object> myAdditionalData = new ConcurrentHashMap<>();
 
   public VisiblePack(@NotNull DataPackBase dataPack,
                      @NotNull VisibleGraph<Integer> graph,
@@ -58,13 +56,11 @@ public class VisiblePack implements VcsLogDataPack, UserDataHolder {
     myAdditionalData.putAll(additionalData);
   }
 
-  @NotNull
-  public VisibleGraph<Integer> getVisibleGraph() {
+  public @NotNull VisibleGraph<Integer> getVisibleGraph() {
     return myVisibleGraph;
   }
 
-  @NotNull
-  public DataPackBase getDataPack() {
+  public @NotNull DataPackBase getDataPack() {
     return myDataPack;
   }
 
@@ -72,15 +68,13 @@ public class VisiblePack implements VcsLogDataPack, UserDataHolder {
     return myCanRequestMore;
   }
 
-  @NotNull
   @Override
-  public Map<VirtualFile, VcsLogProvider> getLogProviders() {
+  public @NotNull Map<VirtualFile, VcsLogProvider> getLogProviders() {
     return myDataPack.getLogProviders();
   }
 
-  @NotNull
   @Override
-  public VcsLogRefs getRefs() {
+  public @NotNull VcsLogRefs getRefs() {
     return myDataPack.getRefsModel();
   }
 
@@ -89,8 +83,7 @@ public class VisiblePack implements VcsLogDataPack, UserDataHolder {
   }
 
   @Override
-  @NotNull
-  public VcsLogFilterCollection getFilters() {
+  public @NotNull VcsLogFilterCollection getFilters() {
     return myFilters;
   }
 
@@ -115,14 +108,12 @@ public class VisiblePack implements VcsLogDataPack, UserDataHolder {
     myAdditionalData.put(key, value);
   }
 
-  @NotNull
-  public Map<Key, Object> getAdditionalData() {
+  public @NotNull Map<Key, Object> getAdditionalData() {
     return myAdditionalData;
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "VisiblePack{size=" +
            myVisibleGraph.getVisibleCommitCount() +
            ", filters=" +
@@ -132,15 +123,14 @@ public class VisiblePack implements VcsLogDataPack, UserDataHolder {
   }
 
   public static class ErrorVisiblePack extends VisiblePack {
-    @NotNull private final Throwable myError;
+    private final @NotNull Throwable myError;
 
     public ErrorVisiblePack(@NotNull DataPackBase dataPack, @NotNull VcsLogFilterCollection filters, @NotNull Throwable error) {
       super(dataPack, EmptyVisibleGraph.getInstance(), false, filters);
       myError = error;
     }
 
-    @NotNull
-    public Throwable getError() {
+    public @NotNull Throwable getError() {
       return myError;
     }
   }

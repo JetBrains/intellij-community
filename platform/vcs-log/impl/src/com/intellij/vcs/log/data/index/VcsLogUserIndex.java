@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
@@ -41,9 +41,9 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitDetails> {
   private static final Logger LOG = Logger.getInstance(VcsLogUserIndex.class);
-  @NonNls private static final String USERS = "users";
-  @NonNls private static final String USERS_IDS = "users-ids";
-  @NotNull private final UserIndexer myUserIndexer;
+  private static final @NonNls String USERS = "users";
+  private static final @NonNls String USERS_IDS = "users-ids";
+  private final @NotNull UserIndexer myUserIndexer;
 
   public VcsLogUserIndex(@NotNull StorageId storageId,
                          @Nullable StorageLockContext storageLockContext,
@@ -62,10 +62,9 @@ public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShort
                       new KeyCollectionForwardIndexAccessor<>(new IntCollectionDataExternalizer()));
   }
 
-  @NotNull
-  private static PersistentEnumerator<VcsUser> createUsersEnumerator(@NotNull StorageId storageId,
-                                                                     @Nullable StorageLockContext storageLockContext,
-                                                                     @NotNull VcsUserRegistry userRegistry) throws IOException {
+  private static @NotNull PersistentEnumerator<VcsUser> createUsersEnumerator(@NotNull StorageId storageId,
+                                                                              @Nullable StorageLockContext storageLockContext,
+                                                                              @NotNull VcsUserRegistry userRegistry) throws IOException {
     Path storageFile = storageId.getStorageFile(USERS_IDS);
     return new PersistentEnumerator<>(storageFile, new VcsUserKeyDescriptor(userRegistry), AbstractStorage.PAGE_SIZE, storageLockContext,
                                       storageId.getVersion());
@@ -79,8 +78,7 @@ public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShort
     return getCommitsWithAnyKey(ids);
   }
 
-  @Nullable
-  public VcsUser getAuthorForCommit(int commit) throws IOException {
+  public @Nullable VcsUser getAuthorForCommit(int commit) throws IOException {
     Collection<Integer> userIds = getKeysForCommit(commit);
     if (userIds == null || userIds.isEmpty()) return null;
     LOG.assertTrue(userIds.size() == 1);
@@ -91,8 +89,7 @@ public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShort
     return myUserIndexer.getUserId(user);
   }
 
-  @Nullable
-  public VcsUser getUserById(int id) throws IOException {
+  public @Nullable VcsUser getUserById(int id) throws IOException {
     return myUserIndexer.getUserById(id);
   }
 
@@ -114,16 +111,15 @@ public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShort
   }
 
   private static final class UserIndexer implements DataIndexer<Integer, Void, VcsShortCommitDetails> {
-    @NotNull private final PersistentEnumerator<VcsUser> myUserEnumerator;
-    @NotNull private Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
+    private final @NotNull PersistentEnumerator<VcsUser> myUserEnumerator;
+    private @NotNull Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
 
     UserIndexer(@NotNull PersistentEnumerator<VcsUser> userEnumerator) {
       myUserEnumerator = userEnumerator;
     }
 
-    @NotNull
     @Override
-    public Map<Integer, Void> map(@NotNull VcsShortCommitDetails inputData) {
+    public @NotNull Map<Integer, Void> map(@NotNull VcsShortCommitDetails inputData) {
       Int2ObjectMap<Void> result = new Int2ObjectOpenHashMap<>();
       try {
         result.put(myUserEnumerator.enumerate(inputData.getAuthor()), null);
@@ -134,8 +130,7 @@ public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShort
       return result;
     }
 
-    @Nullable
-    public VcsUser getUserById(int id) throws IOException {
+    public @Nullable VcsUser getUserById(int id) throws IOException {
       return myUserEnumerator.valueOf(id);
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -42,16 +42,16 @@ import java.util.*;
 import static com.intellij.ui.JBColor.namedColor;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
-  @NotNull @NonNls private static final String HELP_ID = "reference.versionControl.toolwindow.history";
-  @NotNull private final FilePath myPath;
-  @Nullable private final Hash myRevision;
+  private static final @NotNull @NonNls String HELP_ID = "reference.versionControl.toolwindow.history";
+  private final @NotNull FilePath myPath;
+  private final @Nullable Hash myRevision;
 
-  @NotNull private final FileHistoryModel myFileHistoryModel;
-  @NotNull private final FileHistoryUiProperties myUiProperties;
-  @NotNull private final FileHistoryFilterUi myFilterUi;
-  @NotNull private final FileHistoryPanel myFileHistoryPanel;
-  @NotNull private final MyPropertiesChangeListener myPropertiesChangeListener;
-  @NotNull private final History myHistory;
+  private final @NotNull FileHistoryModel myFileHistoryModel;
+  private final @NotNull FileHistoryUiProperties myUiProperties;
+  private final @NotNull FileHistoryFilterUi myFilterUi;
+  private final @NotNull FileHistoryPanel myFileHistoryPanel;
+  private final @NotNull MyPropertiesChangeListener myPropertiesChangeListener;
+  private final @NotNull History myHistory;
 
   public FileHistoryUi(@NotNull VcsLogData logData,
                        @NotNull FileHistoryUiProperties uiProperties,
@@ -71,9 +71,8 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     myUiProperties = uiProperties;
 
     myFileHistoryModel = new FileHistoryModel(logData, vcsLogDiffHandler, root) {
-      @NotNull
       @Override
-      protected VisiblePack getVisiblePack() {
+      protected @NotNull VisiblePack getVisiblePack() {
         return myVisiblePack;
       }
     };
@@ -95,8 +94,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     myHistory = VcsLogUiUtil.installNavigationHistory(this);
   }
 
-  @NotNull
-  public static String getFileHistoryLogId(@NotNull FilePath path, @Nullable Hash revision) {
+  public static @NotNull String getFileHistoryLogId(@NotNull FilePath path, @Nullable Hash revision) {
     return path.getPath() + (revision == null ? "" : ":" + revision.asString());
   }
 
@@ -109,13 +107,11 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     }
   }
 
-  @Nullable
-  public VcsFileRevision createRevision(@Nullable VcsCommitMetadata commit) {
+  public @Nullable VcsFileRevision createRevision(@Nullable VcsCommitMetadata commit) {
     return myFileHistoryModel.createRevision(commit);
   }
 
-  @Nullable
-  public FilePath getPathInCommit(@NotNull Hash hash) {
+  public @Nullable FilePath getPathInCommit(@NotNull Hash hash) {
     return myFileHistoryModel.getPathInCommit(hash);
   }
 
@@ -156,9 +152,8 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return myPath.equals(targetPath) && Objects.equals(myRevision, targetRevision);
   }
 
-  @NotNull
   @Override
-  public VcsLogFilterUi getFilterUi() {
+  public @NotNull VcsLogFilterUi getFilterUi() {
     return myFilterUi;
   }
 
@@ -169,33 +164,28 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     myFileHistoryPanel.getGraphTable().rootColumnUpdated();
   }
 
-  @NotNull
   @Override
-  public VcsLogGraphTable getTable() {
+  public @NotNull VcsLogGraphTable getTable() {
     return myFileHistoryPanel.getGraphTable();
   }
 
-  @NotNull
   @Override
-  public JComponent getMainComponent() {
+  public @NotNull JComponent getMainComponent() {
     return myFileHistoryPanel;
   }
 
-  @Nullable
   @Override
-  public String getHelpId() {
+  public @Nullable String getHelpId() {
     return HELP_ID;
   }
 
   @Override
-  @NotNull
-  public FileHistoryUiProperties getProperties() {
+  public @NotNull FileHistoryUiProperties getProperties() {
     return myUiProperties;
   }
 
-  @Nullable
   @Override
-  public History getNavigationHistory() {
+  public @Nullable History getNavigationHistory() {
     return myHistory;
   }
 
@@ -224,14 +214,14 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   private static class RevisionHistoryHighlighter implements VcsLogHighlighter {
-    @NotNull private final JBColor myBgColor = namedColor("VersionControl.FileHistory.Commit.selectedBranchBackground",
+    private final @NotNull JBColor myBgColor = namedColor("VersionControl.FileHistory.Commit.selectedBranchBackground",
                                                           new JBColor(new Color(0xfffee4), new Color(0x49493f)));
-    @NotNull private final VcsLogStorage myStorage;
-    @NotNull private final Hash myRevision;
-    @NotNull private final VirtualFile myRoot;
+    private final @NotNull VcsLogStorage myStorage;
+    private final @NotNull Hash myRevision;
+    private final @NotNull VirtualFile myRoot;
 
-    @Nullable private Condition<Integer> myCondition;
-    @NotNull private VcsLogDataPack myVisiblePack = VisiblePack.EMPTY;
+    private @Nullable Condition<Integer> myCondition;
+    private @NotNull VcsLogDataPack myVisiblePack = VisiblePack.EMPTY;
 
     RevisionHistoryHighlighter(@NotNull VcsLogStorage storage, @NotNull Hash revision, @NotNull VirtualFile root) {
       myStorage = storage;
@@ -239,9 +229,8 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       myRoot = root;
     }
 
-    @NotNull
     @Override
-    public VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails commitDetails, int column, boolean isSelected) {
+    public @NotNull VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails commitDetails, int column, boolean isSelected) {
       if (isSelected) return VcsCommitStyle.DEFAULT;
 
       if (myCondition == null) {
@@ -254,8 +243,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       return VcsCommitStyle.DEFAULT;
     }
 
-    @NotNull
-    private Condition<Integer> getCondition() {
+    private @NotNull Condition<Integer> getCondition() {
       if (!(myVisiblePack instanceof VisiblePack)) return Conditions.alwaysFalse();
       DataPackBase dataPack = ((VisiblePack)myVisiblePack).getDataPack();
       if (!(dataPack instanceof DataPack)) return Conditions.alwaysFalse();

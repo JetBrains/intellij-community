@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -53,20 +53,20 @@ import java.util.Objects;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class FileHistoryPanel extends JPanel implements DataProvider, Disposable {
-  @NotNull private final Project myProject;
-  @NotNull private final FilePath myFilePath;
-  @NotNull private final VirtualFile myRoot;
+  private final @NotNull Project myProject;
+  private final @NotNull FilePath myFilePath;
+  private final @NotNull VirtualFile myRoot;
 
-  @NotNull private final FileHistoryModel myFileHistoryModel;
-  @NotNull private final VcsLogUiProperties myProperties;
+  private final @NotNull FileHistoryModel myFileHistoryModel;
+  private final @NotNull VcsLogUiProperties myProperties;
 
-  @NotNull private final VcsLogGraphTable myGraphTable;
-  @NotNull private final FileHistorySpeedSearch mySpeedSearch;
+  private final @NotNull VcsLogGraphTable myGraphTable;
+  private final @NotNull FileHistorySpeedSearch mySpeedSearch;
 
-  @NotNull private final CommitDetailsListPanel myDetailsPanel;
-  @NotNull private final JBSplitter myDetailsSplitter;
+  private final @NotNull CommitDetailsListPanel myDetailsPanel;
+  private final @NotNull JBSplitter myDetailsSplitter;
 
-  @Nullable private FileHistoryEditorDiffPreview myEditorDiffPreview;
+  private @Nullable FileHistoryEditorDiffPreview myEditorDiffPreview;
 
   public FileHistoryPanel(@NotNull AbstractVcsLogUi logUi, @NotNull FileHistoryModel fileHistoryModel, @NotNull VcsLogData logData,
                           @NotNull FilePath filePath, @NotNull VirtualFile root, @NotNull Disposable disposable) {
@@ -170,8 +170,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     }.registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, component);
   }
 
-  @NotNull
-  private JComponent createActionsToolbar() {
+  private @NotNull JComponent createActionsToolbar() {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     AnAction toolbarActions = CustomActionsSchema.getInstance().getCorrectedAction(VcsLogActionIds.FILE_HISTORY_TOOLBAR_ACTION_GROUP);
     toolbarGroup.add(Objects.requireNonNull(toolbarActions));
@@ -182,8 +181,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     return toolbar.getComponent();
   }
 
-  @NotNull
-  public VcsLogGraphTable getGraphTable() {
+  public @NotNull VcsLogGraphTable getGraphTable() {
     return myGraphTable;
   }
 
@@ -220,9 +218,8 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     return diffPreview;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     return ValueKey.match(dataId)
       .ifEq(VcsDataKeys.CHANGES).or(VcsDataKeys.SELECTED_CHANGES).thenGet(() -> {
         Change change = getSelectedChange();

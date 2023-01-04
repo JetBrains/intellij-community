@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table;
 
 import org.jetbrains.annotations.NotNull;
@@ -12,8 +12,7 @@ import javax.swing.*;
  * @see com.intellij.vcs.log.ui.table.column.VcsLogColumn#createTableCellRenderer
  */
 public interface VcsLogCellRenderer {
-  @Nullable
-  default VcsLogCellController getCellController() {
+  default @Nullable VcsLogCellController getCellController() {
     return null;
   }
 
@@ -23,8 +22,7 @@ public interface VcsLogCellRenderer {
    * in {@link com.intellij.vcs.log.ui.table.column.VcsLogColumn#getValue} then Log will calculate the width of column using some top rows,
    * otherwise preferred width will be used.
    */
-  @Nullable
-  default Integer getPreferredWidth(@NotNull JTable table) {
+  default @Nullable Integer getPreferredWidth(@NotNull JTable table) {
     return null;
   }
 }

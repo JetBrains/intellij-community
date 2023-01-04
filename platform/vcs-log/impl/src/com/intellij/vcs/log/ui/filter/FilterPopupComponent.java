@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -22,7 +22,7 @@ abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> e
 
   protected static final Supplier<@Nls String> ALL_ACTION_TEXT = VcsLogBundle.messagePointer("vcs.log.filter.all");
 
-  @NotNull protected final Model myFilterModel;
+  protected final @NotNull Model myFilterModel;
 
   FilterPopupComponent(@NotNull Supplier<@NlsContexts.Label @NotNull String> displayName, @NotNull Model filterModel) {
     super(displayName);
@@ -35,9 +35,8 @@ abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> e
     return filter == null ? getEmptyFilterValue() : getText(filter);
   }
 
-  @Nls
   @Override
-  public @NotNull String getEmptyFilterValue() {
+  public @Nls @NotNull String getEmptyFilterValue() {
     return EMPTY_FILTER_TEXT.get();
   }
 
@@ -51,17 +50,12 @@ abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> e
     myFilterModel.addSetFilterListener(onChange);
   }
 
-  @NotNull
-  @Nls
-  protected abstract String getText(@NotNull Filter filter);
+  protected abstract @NotNull @Nls String getText(@NotNull Filter filter);
 
-  @Nullable
-  @NlsContexts.Tooltip
-  protected abstract String getToolTip(@NotNull Filter filter);
+  protected abstract @Nullable @NlsContexts.Tooltip String getToolTip(@NotNull Filter filter);
 
   @Override
-  @NlsContexts.Tooltip
-  public String getToolTipText() {
+  public @NlsContexts.Tooltip String getToolTipText() {
     Filter filter = myFilterModel.getFilter();
     return filter == null ? null : getToolTip(filter);
   }

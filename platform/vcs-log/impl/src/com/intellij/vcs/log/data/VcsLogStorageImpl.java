@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
@@ -12,8 +12,8 @@ import com.intellij.util.Function;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.StorageId;
@@ -36,22 +36,22 @@ import java.util.function.Predicate;
  * Supports the int <-> Hash and int <-> VcsRef persistent mappings.
  */
 public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
-  @NotNull private static final Logger LOG = Logger.getInstance(VcsLogStorage.class);
-  @NotNull @NonNls private static final String HASHES_STORAGE = "hashes";
-  @NotNull @NonNls private static final String REFS_STORAGE = "refs";
-  @NotNull @NonNls private static final String STORAGE = "storage";
-  @NotNull public static final VcsLogStorage EMPTY = new EmptyLogStorage();
+  private static final @NotNull Logger LOG = Logger.getInstance(VcsLogStorage.class);
+  private static final @NotNull @NonNls String HASHES_STORAGE = "hashes";
+  private static final @NotNull @NonNls String REFS_STORAGE = "refs";
+  private static final @NotNull @NonNls String STORAGE = "storage";
+  public static final @NotNull VcsLogStorage EMPTY = new EmptyLogStorage();
 
   public static final int VERSION = 8;
   public static final int NO_INDEX = -1;
   private static final int REFS_VERSION = 2;
 
-  @NotNull private final StorageId myHashesStorageId;
-  @NotNull private final StorageId myRefsStorageId;
+  private final @NotNull StorageId myHashesStorageId;
+  private final @NotNull StorageId myRefsStorageId;
 
-  @NotNull private final MyPersistentBTreeEnumerator myCommitIdEnumerator;
-  @NotNull private final PersistentEnumerator<VcsRef> myRefsEnumerator;
-  @NotNull private final VcsLogErrorHandler myErrorHandler;
+  private final @NotNull MyPersistentBTreeEnumerator myCommitIdEnumerator;
+  private final @NotNull PersistentEnumerator<VcsRef> myRefsEnumerator;
+  private final @NotNull VcsLogErrorHandler myErrorHandler;
   private volatile boolean myDisposed = false;
 
   public VcsLogStorageImpl(@NotNull Project project,
@@ -81,8 +81,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     Disposer.register(parent, this);
   }
 
-  @NotNull
-  public static Function<Integer, Hash> createHashGetter(@NotNull VcsLogStorage storage) {
+  public static @NotNull Function<Integer, Hash> createHashGetter(@NotNull VcsLogStorage storage) {
     return commitIndex -> {
       CommitId commitId = storage.getCommitId(commitIndex);
       if (commitId == null) return null;
@@ -90,8 +89,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     };
   }
 
-  @Nullable
-  private CommitId doGetCommitId(int index) throws IOException {
+  private @Nullable CommitId doGetCommitId(int index) throws IOException {
     return myCommitIdEnumerator.valueOf(index);
   }
 
@@ -112,8 +110,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   }
 
   @Override
-  @Nullable
-  public CommitId getCommitId(int commitIndex) {
+  public @Nullable CommitId getCommitId(int commitIndex) {
     checkDisposed();
     try {
       CommitId commitId = doGetCommitId(commitIndex);
@@ -168,9 +165,8 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     return NO_INDEX;
   }
 
-  @Nullable
   @Override
-  public VcsRef getVcsRef(int refIndex) {
+  public @Nullable VcsRef getVcsRef(int refIndex) {
     checkDisposed();
     try {
       return myRefsEnumerator.valueOf(refIndex);
@@ -213,8 +209,8 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   }
 
   private static class MyCommitIdKeyDescriptor implements KeyDescriptor<CommitId> {
-    @NotNull private final List<? extends VirtualFile> myRoots;
-    @NotNull private final Object2IntMap<VirtualFile> myRootsReversed;
+    private final @NotNull List<? extends VirtualFile> myRoots;
+    private final @NotNull Object2IntMap<VirtualFile> myRootsReversed;
 
     MyCommitIdKeyDescriptor(@NotNull List<? extends VirtualFile> roots) {
       myRoots = roots;
@@ -261,9 +257,8 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
       return 0;
     }
 
-    @NotNull
     @Override
-    public CommitId getCommitId(int commitIndex) {
+    public @NotNull CommitId getCommitId(int commitIndex) {
       throw new UnsupportedOperationException("Illegal access to empty hash map by index " + commitIndex);
     }
 
@@ -281,9 +276,8 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
       return 0;
     }
 
-    @Nullable
     @Override
-    public VcsRef getVcsRef(int refIndex) {
+    public @Nullable VcsRef getVcsRef(int refIndex) {
       throw new UnsupportedOperationException("Illegal access to empty ref map by index " + refIndex);
     }
 
@@ -293,8 +287,8 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   }
 
   private static class VcsRefKeyDescriptor implements KeyDescriptor<VcsRef> {
-    @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
-    @NotNull private final KeyDescriptor<CommitId> myCommitIdKeyDescriptor;
+    private final @NotNull Map<VirtualFile, VcsLogProvider> myLogProviders;
+    private final @NotNull KeyDescriptor<CommitId> myCommitIdKeyDescriptor;
 
     VcsRefKeyDescriptor(@NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                         @NotNull KeyDescriptor<CommitId> commitIdKeyDescriptor) {

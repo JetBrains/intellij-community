@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible;
 
 import com.intellij.openapi.util.Key;
@@ -25,14 +25,13 @@ import java.util.Set;
 
 public class SnapshotVisiblePackBuilder {
   private static final int VISIBLE_RANGE = 1000;
-  @NotNull private final VcsLogStorage myStorage;
+  private final @NotNull VcsLogStorage myStorage;
 
   public SnapshotVisiblePackBuilder(@NotNull VcsLogStorage storage) {
     myStorage = storage;
   }
 
-  @NotNull
-  public VisiblePack build(@NotNull VisiblePack visiblePack) {
+  public @NotNull VisiblePack build(@NotNull VisiblePack visiblePack) {
     DataPackBase dataPack = visiblePack.getDataPack();
     if (dataPack instanceof DataPack.ErrorDataPack) {
       return visiblePack;
@@ -52,11 +51,10 @@ public class SnapshotVisiblePackBuilder {
                  visiblePack.getAdditionalData());
   }
 
-  @NotNull
-  private VisiblePack build(@NotNull DataPackBase oldPack,
-                            @NotNull VisibleGraphImpl<Integer> oldGraph,
-                            @NotNull VcsLogFilterCollection filters,
-                            @Nullable Map<Key, Object> data) {
+  private @NotNull VisiblePack build(@NotNull DataPackBase oldPack,
+                                     @NotNull VisibleGraphImpl<Integer> oldGraph,
+                                     @NotNull VcsLogFilterCollection filters,
+                                     @Nullable Map<Key, Object> data) {
     int visibleRow = VISIBLE_RANGE;
     int visibleRange = VISIBLE_RANGE;
     PermanentGraphInfo<Integer> info = oldGraph.buildSimpleGraphInfo(visibleRow, visibleRange);

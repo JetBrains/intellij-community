@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -19,8 +20,7 @@ public interface VcsLogColorManager {
   /**
    * Returns the color assigned to the given repository root.
    */
-  @NotNull
-  default Color getRootColor(@NotNull VirtualFile root) {
+  default @NotNull Color getRootColor(@NotNull VirtualFile root) {
     return getPathColor(VcsUtil.getFilePath(root));
   }
 
@@ -46,9 +46,7 @@ public interface VcsLogColorManager {
   /**
    * Returns long name for this file path (to be shown in the tooltip, etc.).
    */
-  @NotNull
-  @NlsSafe
-  default String getLongName(@NotNull FilePath path) {
+  default @NotNull @NlsSafe String getLongName(@NotNull FilePath path) {
     return path.getPresentableUrl();
   }
 }
