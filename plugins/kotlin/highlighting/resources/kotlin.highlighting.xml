@@ -4,6 +4,7 @@
     <problemFileHighlightFilter implementation="org.jetbrains.kotlin.idea.highlighting.KotlinProblemFileHighlightFilter"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.KotlinDiagnosticHighlightVisitor"/>
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.highlighting.KotlinSemanticHighlightingPassFactory"/>
+    <colorSettingsPage implementation="org.jetbrains.kotlin.idea.highlighter.KotlinColorSettingsPage"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
