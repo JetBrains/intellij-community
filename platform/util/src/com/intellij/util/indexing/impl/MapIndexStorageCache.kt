@@ -96,7 +96,6 @@ private class MapIndexStorageSlruCache<Key, Value>(val keyReader: Function<Key, 
     finally {
       cacheAccessLock.unlock()
     }
-    cacheAccessLock.withLock { cache.clear() }
   }
 
 }
