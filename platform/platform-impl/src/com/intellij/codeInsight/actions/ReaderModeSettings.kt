@@ -22,6 +22,7 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
@@ -109,6 +110,7 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
       return getInstance(project).enabled && matchMode(project, file, editor)
     }
 
+    @RequiresReadLock
     fun matchMode(project: Project?, file: VirtualFile?, editor: Editor? = null): Boolean {
       if (project == null || file == null) return false
       if (PsiManager.getInstance(project).findFile(file) == null) return false
@@ -117,6 +119,7 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
       return matchMode(project, file, editor, getInstance(project).mode)
     }
 
+    @RequiresReadLock
     private fun matchMode(project: Project, file: VirtualFile, editor: Editor?, mode: ReaderMode): Boolean {
       for (m in EP_READER_MODE_MATCHER.lazySequence()) {
         val matched = m.matches(project, file, editor, mode)
