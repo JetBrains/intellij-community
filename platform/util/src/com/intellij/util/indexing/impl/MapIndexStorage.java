@@ -2,12 +2,10 @@
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
 import com.intellij.util.io.PersistentHashMapValueStorage.CreationTimeOptions;
@@ -18,9 +16,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Map;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(MapIndexStorage.class);
@@ -28,8 +23,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   protected ValueContainerMap<Key, Value> myMap;
 
-  private SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
-  private final ReentrantLock myCacheAccessLock = new ReentrantLock();
+  private MapIndexStorageCache<Key, Value> myCache;
 
   protected final Path myBaseStorageFile;
   protected final KeyDescriptor<Key> myKeyDescriptor;
@@ -76,37 +70,33 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   protected void initMapAndCache() throws IOException {
     ValueContainerMap<Key, Value> map = createValueContainerMap();
-    myCache = new SLRUCache<Key, ChangeTrackingValueContainer<Value>>(myCacheSize, (int)(Math.ceil(myCacheSize * 0.25)) /* 25% from the main cache size*/, myKeyDescriptor) {
-      @Override
-      @NotNull
-      public ChangeTrackingValueContainer<Value> createValue(final Key key) {
-        return map.getModifiableValueContainer(key);
-      }
+    myCache = MapIndexStorageCacheProvider.getActualProvider().createCache(
+      key -> map.getModifiableValueContainer(key),
+      (key, container) -> onDropFromCache(key, container),
+      myKeyDescriptor,
+      myCacheSize
+    );
+    myMap = map;
+  }
 
-      @Override
-      protected void onDropFromCache(final Key key, @NotNull ChangeTrackingValueContainer<Value> valueContainer) {
-        assert myCacheAccessLock.isHeldByCurrentThread();
-        try {
-          if (!myReadOnly && valueContainer.isDirty()) {
-            if (myKeyIsUniqueForIndexedFile) {
-              if (valueContainer.containsOnlyInvalidatedChange()) {
-                map.remove(key);
-                return;
-              }
-              else if (valueContainer.containsCachedMergedData()) {
-                valueContainer.setNeedsCompacting(true);
-              }
-            }
-            map.merge(key, valueContainer);
+  private void onDropFromCache(Key key, @NotNull ChangeTrackingValueContainer<Value> valueContainer) {
+    try {
+      if (!myReadOnly && valueContainer.isDirty()) {
+        if (myKeyIsUniqueForIndexedFile) {
+          if (valueContainer.containsOnlyInvalidatedChange()) {
+            myMap.remove(key);
+            return;
+          }
+          else if (valueContainer.containsCachedMergedData()) {
+            valueContainer.setNeedsCompacting(true);
           }
         }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+        myMap.merge(key, valueContainer);
       }
-    };
-
-    myMap = map;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected @NotNull PersistentMapBase<Key, UpdatableValueContainer<Value>> createPersistentMap(
@@ -262,15 +252,11 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   @Override
   @NotNull
   public ChangeTrackingValueContainer<Value> read(final Key key) throws StorageException {
-    myCacheAccessLock.lock();
     try {
-      return myCache.get(key);
+      return myCache.read(key);
     }
     catch (RuntimeException e) {
       return unwrapCauseAndRethrow(e);
-    }
-    finally {
-      myCacheAccessLock.unlock();
     }
   }
 
@@ -318,13 +304,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   @Nullable
   private ChangeTrackingValueContainer<Value> readIfCached(Key key) {
-    myCacheAccessLock.lock();
-    try {
-      return myCache.getIfCached(key);
-    }
-    finally {
-      myCacheAccessLock.unlock();
-    }
+    return myCache.readIfCached(key);
   }
 
   private static void assertKeyInputIdConsistency(@NotNull Object key, int inputId) {
@@ -333,31 +313,12 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   @Override
   public void clearCaches() {
-    myCacheAccessLock.lock();
-    try {
-      for(Map.Entry<Key, ChangeTrackingValueContainer<Value>> entry:myCache.entrySet()) {
-        entry.getValue().dropMergedData();
-      }
-    }
-    finally {
-      myCacheAccessLock.unlock();
-    }
+    myCache.processCachedValues(container -> container.dropMergedData());
   }
 
   @ApiStatus.Internal
   public final void clearCachedMappings() {
-    lockCancellable(myCacheAccessLock);
-    try {
-      myCache.clear(); // this will ensure that all new keys are made into the map
-    }
-    finally {
-      myCacheAccessLock.unlock();
-    }
-  }
-
-  @ApiStatus.Internal
-  protected void lockCancellable(Lock lock) {
-    lock.lock();
+    myCache.invalidateAll();
   }
 
   protected static <T> T unwrapCauseAndRethrow(RuntimeException e) throws StorageException {

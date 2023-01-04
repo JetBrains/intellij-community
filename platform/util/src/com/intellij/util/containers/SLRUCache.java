@@ -25,7 +25,7 @@ public abstract class SLRUCache<K, V> extends SLRUMap<K, V> {
   @Override
   @NotNull
   public V get(K key) {
-    V value = super.get(key);
+    V value = getIfCached(key);
     if (value != null) {
       return value;
     }
