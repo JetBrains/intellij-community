@@ -1,7 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview.comment
 
-import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.JBColor
+import com.intellij.ui.RoundedLineBorder
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
@@ -14,7 +15,7 @@ class RoundedPanel(layout: LayoutManager?, private val arc: Int = 8) : JPanel(la
 
   init {
     cursor = Cursor.getDefaultCursor()
-    border = IdeBorderFactory.createRoundedBorder(arc + 2)
+    border = RoundedLineBorder(DEFAULT_BORDER_COLOR, arc + 2)
   }
 
   override fun paintChildren(g: Graphics) {
@@ -47,5 +48,11 @@ class RoundedPanel(layout: LayoutManager?, private val arc: Int = 8) : JPanel(la
     return RoundRectangle2D.Float(rect.x.toFloat(), rect.y.toFloat(),
                                   rect.width.toFloat(), rect.height.toFloat(),
                                   arc.toFloat(), arc.toFloat())
+  }
+
+  companion object {
+    private val DEFAULT_BORDER_COLOR = JBColor.namedColor("Review.ChatItem.BubblePanel.Border",
+                                                          JBColor.namedColor("EditorTabs.underTabsBorderColor",
+                                                                             JBColor.border()))
   }
 }
