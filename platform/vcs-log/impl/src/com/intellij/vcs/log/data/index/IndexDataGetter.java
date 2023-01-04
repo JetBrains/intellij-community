@@ -110,12 +110,17 @@ public final class IndexDataGetter {
 
   public @Nullable List<Hash> getParents(int index) {
     return executeAndCatch(() -> {
-      List<Integer> parentsIndexes = myIndexStorage.parents.get(index);
-      if (parentsIndexes == null) return null;
-      List<Hash> result = new ArrayList<>();
+      int[] parentsIndexes = myIndexStorage.parents.get(index);
+      if (parentsIndexes == null) {
+        return null;
+      }
+
+      List<Hash> result = new ArrayList<>(parentsIndexes.length);
       for (int parentIndex : parentsIndexes) {
         CommitId id = myLogStorage.getCommitId(parentIndex);
-        if (id == null) return null;
+        if (id == null) {
+          return null;
+        }
         result.add(id.getHash());
       }
       return result;
@@ -268,26 +273,26 @@ public final class IndexDataGetter {
     if (myProviders.containsKey(root) && root != null) {
       executeAndCatch(() -> {
         myIndexStorage.paths.iterateCommits(root, path, (changes, commit) -> executeAndCatch(() -> {
-          List<Integer> parents = myIndexStorage.parents.get(commit);
+          int[] parents = myIndexStorage.parents.get(commit);
           if (parents == null) {
             throw new CorruptedDataException("No parents for commit " + commit);
           }
 
-          Int2ObjectMap<VcsLogPathsIndex.ChangeKind> changesMap = new Int2ObjectOpenHashMap<>();
-          if (parents.size() == 0 && !changes.isEmpty()) {
-            changesMap.put(commit, ContainerUtil.getFirstItem(changes));
+          Int2ObjectMap<VcsLogPathsIndex.ChangeKind> changeMap = new Int2ObjectOpenHashMap<>(parents.length);
+          if (parents.length == 0 && !changes.isEmpty()) {
+            changeMap.put(commit, ContainerUtil.getFirstItem(changes));
           }
           else {
-            if (parents.size() != changes.size()) {
-              throw new CorruptedDataException("Commit " + commit + " has " + parents.size() +
+            if (parents.length != changes.size()) {
+              throw new CorruptedDataException("Commit " + commit + " has " + parents.length +
                                                " parents, but " + changes.size() + " changes.");
             }
-            for (Pair<Integer, VcsLogPathsIndex.ChangeKind> parentAndChanges : ContainerUtil.zip(parents, changes)) {
-              changesMap.put((int)parentAndChanges.first, parentAndChanges.second);
+            for (int i = 0, length = parents.length; i < length; i++) {
+              changeMap.put(parents[i], changes.get(i));
             }
           }
 
-          affectedCommits.put(commit, changesMap);
+          affectedCommits.put(commit, changeMap);
 
           return null;
         }));

@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.AbstractStorage;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsUserRegistry;
@@ -217,7 +218,13 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       myIndexStorage.trigrams.update(index, detail);
       myIndexStorage.users.update(index, detail);
       myIndexStorage.paths.update(index, detail);
-      myIndexStorage.parents.put(index, ContainerUtil.map(detail.getParents(), p -> myStorage.getCommitIndex(p, detail.getRoot())));
+
+      List<Hash> parents = detail.getParents();
+      int[] result = new int[parents.size()];
+      for (int i = 0, size = parents.size(); i < size; i++) {
+        result[i] = myStorage.getCommitIndex(parents.get(i), detail.getRoot());
+      }
+      myIndexStorage.parents.put(index, result);
       // we know the whole graph without timestamps now
       if (!detail.getAuthor().equals(detail.getCommitter())) {
         myIndexStorage.committers.put(index, myIndexStorage.users.getUserId(detail.getCommitter()));
@@ -332,7 +339,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     private static final String TIMESTAMPS = "timestamps";
     public final @NotNull PersistentSet<Integer> commits;
     public final @NotNull PersistentMap<Integer, String> messages;
-    public final @NotNull PersistentMap<Integer, List<Integer>> parents;
+    public final @NotNull PersistentMap<Integer, int[]> parents;
     public final @NotNull PersistentMap<Integer, Integer> committers;
     public final @NotNull PersistentMap<Integer, Pair<Long, Long>> timestamps;
     public final @NotNull VcsLogMessagesTrigramIndex trigrams;
