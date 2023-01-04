@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -55,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
-public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
+public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance(GeneralHighlightingPass.class);
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
   static final Predicate<PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> {
