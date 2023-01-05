@@ -20,6 +20,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.util.indexing.roots.IndexableEntityProvider.DependencyOnParent.create;
+
 class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Existing<ContentRootEntity> {
 
   @Override
@@ -29,18 +31,7 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Exis
 
   @Override
   public @NotNull Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
-    return Collections.singletonList(new DependencyOnParent<ModuleEntity>() {
-      @Override
-      public @NotNull Class<ModuleEntity> getParentClass() {
-        return ModuleEntity.class;
-      }
-
-      @Override
-      public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ModuleEntity oldEntity,
-                                                                                                       @NotNull ModuleEntity newEntity) {
-        return getReplacedParentEntityIteratorBuilder(oldEntity, newEntity);
-      }
-    });
+    return Collections.singletonList(create(ModuleEntity.class, ContentRootIndexableEntityProvider::getReplacedParentEntityIteratorBuilder));
   }
 
   @Override

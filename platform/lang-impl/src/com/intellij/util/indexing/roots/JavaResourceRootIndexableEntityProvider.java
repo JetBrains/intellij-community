@@ -25,18 +25,8 @@ class JavaResourceRootIndexableEntityProvider implements IndexableEntityProvider
 
   @Override
   public @NotNull Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
-    return Collections.singletonList(new DependencyOnParent<SourceRootEntity>() {
-      @Override
-      public @NotNull Class<SourceRootEntity> getParentClass() {
-        return SourceRootEntity.class;
-      }
-
-      @Override
-      public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull SourceRootEntity oldEntity,
-                                                                                                       @NotNull SourceRootEntity newEntity) {
-        return getReplacedParentEntityIteratorBuilder(oldEntity, newEntity);
-      }
-    });
+    return Collections.singletonList(
+      DependencyOnParent.create(SourceRootEntity.class, JavaResourceRootIndexableEntityProvider::getReplacedParentEntityIteratorBuilder));
   }
 
   @Override

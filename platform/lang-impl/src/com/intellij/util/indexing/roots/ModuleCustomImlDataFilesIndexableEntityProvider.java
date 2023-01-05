@@ -20,18 +20,8 @@ public class ModuleCustomImlDataFilesIndexableEntityProvider implements Indexabl
 
   @Override
   public @NotNull Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
-    return Collections.singletonList(new DependencyOnParent<ModuleEntity>() {
-      @Override
-      public @NotNull Class<ModuleEntity> getParentClass() {
-        return ModuleEntity.class;
-      }
-
-      @Override
-      public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ModuleEntity oldEntity,
-                                                                                                       @NotNull ModuleEntity newEntity) {
-        return getReplacedParentEntityIteratorBuilder(oldEntity, newEntity);
-      }
-    });
+    return Collections.singletonList(DependencyOnParent.create(
+      ModuleEntity.class, ModuleCustomImlDataFilesIndexableEntityProvider::getReplacedParentEntityIteratorBuilder));
   }
 
   @Override

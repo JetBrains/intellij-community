@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.BiFunction;
 
 /**
  * This extension point together with  {@link com.intellij.util.indexing.roots.builders.IndexableIteratorBuilderHandler} allows to control
@@ -93,6 +94,23 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
     @NotNull
     Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull P oldEntity,
                                                                                      @NotNull P newEntity);
+
+    static <E extends WorkspaceEntity> DependencyOnParent<E> create(@NotNull Class<E> parentClass,
+                                                                    @NotNull BiFunction<? super E, ? super E, @NotNull Collection<? extends IndexableIteratorBuilder>> replacedIteratorsCreator) {
+      class MyDependency implements DependencyOnParent<E> {
+        @Override
+        public @NotNull Class<E> getParentClass() {
+          return parentClass;
+        }
+
+        @Override
+        public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull E oldEntity,
+                                                                                                         @NotNull E newEntity) {
+          return replacedIteratorsCreator.apply(oldEntity, newEntity);
+        }
+      }
+      return new MyDependency();
+    }
   }
 
   interface Existing<E extends WorkspaceEntity> extends IndexableEntityProvider<E> {
