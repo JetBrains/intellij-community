@@ -38,12 +38,15 @@ import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
+import java.util.function.Function;
 
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Nullable protected volatile PyType myType;
@@ -89,9 +92,11 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         }
         return true;
       });
+      TypeEvalContext typeEvalContext = TypeEvalContext.codeInsightFallback(getProject());
       for (List<PsiNamedElement> elements : myNamedElements.values()) {
-        Collections.reverse(elements);
+        prioritizeNameRedefinitions(elements, typeEvalContext);
       }
+
       Collections.reverse(myImportedNameDefiners);
     }
 
@@ -171,6 +176,17 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     public long getModificationStamp() {
       return myModificationStamp;
     }
+  }
+
+  protected void prioritizeNameRedefinitions(@NotNull List<PsiNamedElement> definitions, @NotNull TypeEvalContext typeEvalContext) {
+    // Group overloads with their respective implementations
+    List<List<PsiNamedElement>> grouped = StreamEx.of(definitions)
+      .groupRuns((e1, e2) -> PyiUtil.isOverload(e1, typeEvalContext) && e2 instanceof PyFunction)
+      .toList();
+    definitions.clear();
+    StreamEx.ofReversed(grouped)
+      .flatCollection(Function.identity())
+      .into(definitions);
   }
 
   public PyFileImpl(FileViewProvider viewProvider) {

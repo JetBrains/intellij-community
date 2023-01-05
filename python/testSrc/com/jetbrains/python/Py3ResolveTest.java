@@ -465,7 +465,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-22971
   public void testOverloadsAndNoImplementationInImportedModule() {
-    // resolve to the last overload
+    // resolve to the first overload
     myFixture
       .copyDirectoryToProject("resolve/OverloadsAndNoImplementationInImportedModuleDep", "OverloadsAndNoImplementationInImportedModuleDep");
     final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
@@ -475,7 +475,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
       .getOverloads(foo, context)
       .forEach(
         overload -> {
-          if (overload != foo) assertTrue(PyPsiUtils.isBefore(overload, foo));
+          if (overload != foo) assertTrue(PyPsiUtils.isBefore(foo, overload));
         }
       );
   }

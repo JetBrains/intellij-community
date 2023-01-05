@@ -23,6 +23,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,6 +69,13 @@ public class PyiTypeProvider extends PyTypeProviderBase {
   public Ref<PyType> getReferenceType(@NotNull PsiElement target, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
     if (target instanceof PyElement) {
       final PsiElement pythonStub = PyiUtil.getPythonStub((PyElement)target);
+      if (pythonStub instanceof PyFunction pyFunction) {
+        PyType allSignatures = StreamEx.ofNullable(PyiUtil.getImplementation(pyFunction, context))
+          .prepend(PyiUtil.getOverloads(pyFunction, context))
+          .map(context::getType)
+          .collect(PyTypeUtil.toUnion());
+        return PyTypeUtil.notNullToRef(allSignatures);
+      }
       if (pythonStub instanceof PyTypedElement) {
         return PyTypeUtil.notNullToRef(context.getType((PyTypedElement)pythonStub));
       }

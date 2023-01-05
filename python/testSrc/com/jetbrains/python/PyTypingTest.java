@@ -2540,7 +2540,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testDefaultDictFromDict() {
-    doTest("defaultdict[Any, dict] | defaultdict[str, dict]",
+    doTest("defaultdict[Any, dict]",
            "from collections import defaultdict\n" +
            "expr = defaultdict(dict)");
   }

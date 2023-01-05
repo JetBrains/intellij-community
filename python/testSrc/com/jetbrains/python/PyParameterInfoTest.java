@@ -478,8 +478,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testOverloadsInImportedModule() {
     final int offset = loadMultiFileTest(1).get("<arg1>").getTextOffset();
 
-    final List<String> texts = Arrays.asList("a: int, b: int", "a: str, b: str");
-    final List<String[]> highlighted = Arrays.asList(new String[]{"a: int, "}, new String[]{"a: str, "});
+    final List<String> texts = Arrays.asList("a: str, b: str", "a: int, b: int");
+    final List<String[]> highlighted = Arrays.asList(new String[]{"a: str, "}, new String[]{"a: int, "});
 
     feignCtrlP(offset).check(texts, highlighted, Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY));
   }
@@ -497,8 +497,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testOverloadsWithDifferentNumberOfArgumentsInImportedModule() {
     final int offset = loadMultiFileTest(1).get("<arg1>").getTextOffset();
 
-    final List<String> texts = Arrays.asList("a: int", "a: str, b: str");
-    final List<String[]> highlighted = Arrays.asList(new String[]{"a: int"}, new String[]{"a: str, "});
+    final List<String> texts = Arrays.asList("a: str, b: str", "a: int");
+    final List<String[]> highlighted = Arrays.asList(new String[]{"a: str, "}, new String[]{"a: int"});
 
     feignCtrlP(offset).check(texts, highlighted, Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY));
   }
@@ -529,8 +529,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testOverloadsAndImplementationInImportedModule() {
     final int offset = loadMultiFileTest(1).get("<arg1>").getTextOffset();
 
-    final List<String> texts = Arrays.asList("value: str", "value: int", "value: None");
-    final List<String[]> highlighted = Arrays.asList(new String[]{"value: str"}, new String[]{"value: int"}, new String[]{"value: None"});
+    final List<String> texts = Arrays.asList("value: None", "value: int", "value: str");
+    final List<String[]> highlighted = Arrays.asList(new String[]{"value: None"}, new String[]{"value: int"}, new String[]{"value: str"});
 
     feignCtrlP(offset).check(texts, highlighted, Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY,
                                                                ArrayUtilRt.EMPTY_STRING_ARRAY));
