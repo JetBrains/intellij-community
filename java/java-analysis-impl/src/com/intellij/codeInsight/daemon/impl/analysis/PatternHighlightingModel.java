@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -32,7 +32,7 @@ final class PatternHighlightingModel {
     var resolveResult = recordType instanceof PsiClassType classType ? classType.resolveGenerics() : ClassResolveResult.EMPTY;
     PsiClass recordClass = resolveResult.getElement();
     if (recordClass == null || !recordClass.isRecord()) {
-      String message = JavaErrorBundle.message("switch.record.required", typeElement.getText());
+      String message = JavaErrorBundle.message("deconstruction.pattern.requires.record", JavaHighlightUtil.formatType(recordType));
       var info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message).create();
       holder.add(info);
       return;

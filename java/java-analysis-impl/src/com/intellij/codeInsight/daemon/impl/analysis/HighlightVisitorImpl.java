@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel;
 import com.intellij.codeInsight.daemon.impl.quickfix.AdjustFunctionContextFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -1986,6 +1987,40 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitDeconstructionPattern(@NotNull PsiDeconstructionPattern deconstructionPattern) {
     super.visitDeconstructionPattern(deconstructionPattern);
     add(checkFeature(deconstructionPattern, HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS));
+    if (myHolder.hasErrorResults()) return;
+    PsiElement parent = deconstructionPattern.getParent();
+    if (parent instanceof PsiForeachStatement forEach) {
+      PsiTypeElement typeElement = JavaPsiPatternUtil.getPatternTypeElement(deconstructionPattern);
+      if (typeElement == null) return;
+      PsiType patternType = typeElement.getType();
+      PsiExpression iteratedValue = forEach.getIteratedValue();
+      PsiType itemType = iteratedValue == null ? null : JavaGenericsUtil.getCollectionItemType(iteratedValue);
+      if (itemType == null) return;
+      checkForEachPatternApplicable(deconstructionPattern, patternType, itemType);
+      if (!myHolder.hasErrorResults()) {
+        if (!PatternsInSwitchBlockHighlightingModel.checkRecordExhaustiveness(Collections.singletonList(deconstructionPattern))) {
+          String description = JavaErrorBundle.message("pattern.is.not.exhaustive", JavaHighlightUtil.formatType(patternType),
+                                                       JavaHighlightUtil.formatType(itemType));
+          add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(deconstructionPattern).descriptionAndTooltip(description));
+        }
+      }
+    }
+  }
+
+  private void checkForEachPatternApplicable(@NotNull PsiDeconstructionPattern pattern,
+                                             @NotNull PsiType patternType,
+                                             @NotNull PsiType itemType) {
+    if (!TypeConversionUtil.areTypesConvertible(itemType, patternType)) {
+      add(HighlightUtil.createIncompatibleTypeHighlightInfo(itemType, patternType, pattern.getTextRange(), 0));
+    }
+    else if (JavaGenericsUtil.isUncheckedCast(patternType, itemType)) {
+      String message = JavaErrorBundle.message("unsafe.cast.in.instanceof", JavaHighlightUtil.formatType(itemType),
+                                               JavaHighlightUtil.formatType(patternType));
+      add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern).descriptionAndTooltip(message));
+    }
+    else {
+      PatternHighlightingModel.createDeconstructionErrors(pattern, myHolder);
+    }
   }
 
   @Override

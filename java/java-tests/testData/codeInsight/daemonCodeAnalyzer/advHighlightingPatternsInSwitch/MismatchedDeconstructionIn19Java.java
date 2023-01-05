@@ -26,7 +26,7 @@ public class Incompatible {
       case RecordWithInterface(<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'I'">Integer x</error>, <error descr="Incompatible types. Found: 'java.lang.Integer', required: 'I'">Integer y</error>) s when true -> {}
       case RecordWithInterface(<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'I'">Integer x</error>, D y) s when true -> {}
       case RecordWithInterface(I x, D y) s when true -> {}
-      case <error descr="Deconstruction pattern can only be applied to a record">Integer</error>(double x) -> {}
+      case <error descr="Deconstruction pattern can only be applied to a record, 'java.lang.Integer' is not a record">Integer</error>(double x) -> {}
       case PrimitiveRecord(<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'int'">Integer x</error>) s when true -> {}
       case PrimitiveRecord(int x) s when true -> {}
       case IntegerRecord(Integer x) s when true -> {}

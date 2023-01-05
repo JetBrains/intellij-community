@@ -1066,7 +1066,7 @@ public class SwitchBlockHighlightingModel {
       return info;
     }
 
-    private static boolean checkRecordExhaustiveness(@NotNull List<? extends PsiCaseLabelElement> caseElements) {
+    static boolean checkRecordExhaustiveness(@NotNull List<? extends PsiCaseLabelElement> caseElements) {
       List<PsiDeconstructionPattern> deconstructions =
         ContainerUtil.mapNotNull(caseElements, element -> findUnconditionalDeconstruction(element));
       MultiMap<PsiType, PsiDeconstructionPattern> deconstructionGroups =

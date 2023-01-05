@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class EvaluatorBuilderImpl
@@ -1087,7 +1087,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
           throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.unknown.type", type.getCanonicalText()));
         }
         if (!recordClass.isRecord()) {
-          throwEvaluateException(JavaErrorBundle.message("switch.record.required"));
+          throwEvaluateException(JavaErrorBundle.message("deconstruction.pattern.requires.record", JavaHighlightUtil.formatType(type)));
         }
         List<PatternEvaluator> componentEvaluators = new ArrayList<>();
         PsiPattern[] components = ((PsiDeconstructionPattern)pattern).getDeconstructionList().getDeconstructionComponents();
