@@ -82,4 +82,9 @@ public class YamlBuildFileGenerationTestGenerated extends AbstractYamlBuildFileG
     public void testSinglePlatformJsNode() throws Exception {
         runTest("testData/buildFileGeneration/singlePlatformJsNode/");
     }
+
+    @TestMetadata("wasmTarget")
+    public void testWasmTarget() throws Exception {
+        runTest("testData/buildFileGeneration/wasmTarget/");
+    }
 }
