@@ -30,6 +30,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.content.*;
 import com.intellij.util.SmartList;
@@ -103,7 +104,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     CUSTOMIZER_EP_NAME.addExtensionPointListener(dashboardUpdater, myProject);
     GROUPING_RULE_EP_NAME.addExtensionPointListener(dashboardUpdater, myProject);
 
-    DEFAULT_TYPES_PROVIDER_EP_NAME.addExtensionPointListener(new ExtensionPointListener<RunDashboardDefaultTypesProvider>() {
+    DEFAULT_TYPES_PROVIDER_EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(RunDashboardDefaultTypesProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
         Set<String> types = new HashSet<>(getTypes());
@@ -119,7 +120,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         dashboardUpdater.extensionRemoved(extension, pluginDescriptor);
       }
     }, myProject);
-    ConfigurationType.CONFIGURATION_TYPE_EP.addExtensionPointListener(new ExtensionPointListener<ConfigurationType>() {
+    ConfigurationType.CONFIGURATION_TYPE_EP.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(ConfigurationType extension, @NotNull PluginDescriptor pluginDescriptor) {
         setTypes(new HashSet<>(getTypes()));
@@ -253,7 +254,24 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
   @Override
   public boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration) {
+    if (isShown(runConfiguration)) return true;
+
+    RunConfiguration baseConfiguration = getBaseConfiguration(runConfiguration);
+    if (baseConfiguration != null) {
+      return isShown(baseConfiguration);
+    }
+    return false;
+  }
+
+  private boolean isShown(@NotNull RunConfiguration runConfiguration) {
     return myTypes.contains(runConfiguration.getType().getId()) && !myHiddenConfigurations.contains(runConfiguration);
+  }
+
+  private static @Nullable RunConfiguration getBaseConfiguration(@NotNull RunConfiguration runConfiguration) {
+    if (runConfiguration instanceof UserDataHolder dataHolder) {
+      return dataHolder.getUserData(RunDashboardManager.BASE_CONFIGURATION_KEY);
+    }
+    return null;
   }
 
   @Override
@@ -282,12 +300,24 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
     syncConfigurations();
     if (!removed.isEmpty()) {
-      moveRemovedContent(settings -> removed.contains(settings.getType().getId()));
+      moveRemovedContent(getContainsTypeIdCondition(removed));
     }
     if (!added.isEmpty()) {
-      moveAddedContent(settings -> added.contains(settings.getType().getId()));
+      moveAddedContent(getContainsTypeIdCondition(added));
     }
     updateDashboard(true);
+  }
+
+  private static Condition<? super RunnerAndConfigurationSettings> getContainsTypeIdCondition(Collection<String> types) {
+    return settings -> {
+      if (types.contains(settings.getType().getId())) return true;
+
+      RunConfiguration baseConfiguration = getBaseConfiguration(settings.getConfiguration());
+      if (baseConfiguration != null) {
+        return types.contains(baseConfiguration.getType().getId());
+      }
+      return false;
+    };
   }
 
   private void moveRemovedContent(Condition<? super RunnerAndConfigurationSettings> condition) {
@@ -332,7 +362,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     myHiddenConfigurations.addAll(configurations);
     syncConfigurations();
     if (!configurations.isEmpty()) {
-      moveRemovedContent(settings -> configurations.contains(settings.getConfiguration()));
+      moveRemovedContent(settings -> configurations.contains(settings.getConfiguration()) ||
+                                     configurations.contains(getBaseConfiguration(settings.getConfiguration())));
     }
     updateDashboard(true);
   }
@@ -341,7 +372,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     myHiddenConfigurations.removeAll(configurations);
     syncConfigurations();
     if (!configurations.isEmpty()) {
-      moveAddedContent(settings -> configurations.contains(settings.getConfiguration()));
+      moveAddedContent(settings -> configurations.contains(settings.getConfiguration()) ||
+                                   configurations.contains(getBaseConfiguration(settings.getConfiguration())));
     }
     updateDashboard(true);
   }
@@ -373,10 +405,15 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
   private void updateDashboardIfNeeded(@NotNull RunConfiguration configuration, boolean withStructure) {
     if (isShowInDashboard(configuration) ||
-        !filterByContent(ExecutionManagerImpl.getInstance(myProject).getDescriptors(s -> configuration.equals(s.getConfiguration())))
-          .isEmpty()) {
+        !filterByContent(getConfigurationDescriptors(configuration)).isEmpty()) {
       updateDashboard(withStructure);
     }
+  }
+
+  private List<RunContentDescriptor> getConfigurationDescriptors(@NotNull RunConfiguration configuration) {
+    return ExecutionManagerImpl.getInstance(myProject).getDescriptors(s -> configuration.equals(s.getConfiguration()) ||
+                                                                           configuration.equals(
+                                                                             getBaseConfiguration(s.getConfiguration())));
   }
 
   @Override
@@ -535,6 +572,21 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
     if (descriptor == null) return null;
 
+    RunnerAndConfigurationSettings settings = findSettings(descriptor);
+    if (settings == null) return null;
+
+    RunConfiguration baseConfiguration = getBaseConfiguration(settings.getConfiguration());
+    if (baseConfiguration != null) {
+      RunnerAndConfigurationSettings baseSettings = RunManager.getInstance(myProject).findSettings(baseConfiguration);
+      if (baseSettings != null) {
+        return baseSettings;
+      }
+    }
+
+    return settings;
+  }
+
+  private @Nullable RunnerAndConfigurationSettings findSettings(@NotNull RunContentDescriptor descriptor) {
     Set<RunnerAndConfigurationSettings> settingsSet = ExecutionManagerImpl.getInstance(myProject).getConfigurations(descriptor);
     RunnerAndConfigurationSettings result = ContainerUtil.getFirstItem(settingsSet);
     if (result != null) return result;

@@ -9,6 +9,8 @@ import com.intellij.execution.Executor
 import com.intellij.execution.JavaRunConfigurationBase
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.JavaRunConfigurationModule
+import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -121,6 +123,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
                                         runAppTaskName, mainClass, javaExePath, sourceSetName, javaModuleName)
     gradleRunConfiguration.putUserData<String>(GradleTaskManager.INIT_SCRIPT_KEY, initScript)
     gradleRunConfiguration.putUserData<String>(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, runAppTaskName)
+    gradleRunConfiguration.putUserData<RunConfiguration>(RunDashboardManager.BASE_CONFIGURATION_KEY, runProfile)
     (gradleRunConfiguration as GradleRunConfiguration).isScriptDebugEnabled = false
 
     // reuse all before tasks except 'Make' as it doesn't make sense for delegated run
