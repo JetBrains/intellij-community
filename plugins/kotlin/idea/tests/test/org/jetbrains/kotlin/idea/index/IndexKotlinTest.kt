@@ -45,7 +45,7 @@ class IndexKotlinTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.createFile("1.kt", "fun foo() = Unit")
     }
 
-    @Bombed(year = 2023, month = 1, day = 31, user = "Yuriy Artamonov")
+    @Bombed(year = 2023, month = 4, day = 3, user = "Yuriy Artamonov")
     fun testKotlinFileIsKnownDuplicatedIdViolation() {
         assertFalse("KtStubElementTypes must not declare FILE field",
                     KtStubElementTypes::class.staticProperties.any { it.name == "FILE" })
