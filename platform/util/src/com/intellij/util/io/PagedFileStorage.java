@@ -378,6 +378,9 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
     long delta = newSize - oldSize;
     mySize = -1;
     if (delta > 0) {
+      //CHANNELS_CACHE.useChannel(myFile, channel -> {
+      //  channel.write(ByteBuffer.allocate(1), newSize - 1);
+      //});
       try (FileChannel channel = new UnInterruptibleFileChannel(myFile, WRITE_OPTION)) {
         channel.write(ByteBuffer.allocate(1), newSize - 1);
       }

@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTest.AttributeRecord;
-import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTest.Attributes;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
+import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfStreamlinedBlobStorageTest.AttributeRecord;
+import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfStreamlinedBlobStorageTest.Attributes;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SmallStreamlinedBlobStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.StorageLockContext;
@@ -27,7 +27,7 @@ import static org.junit.Assert.*;
 /**
  *
  */
-public class AttributesStorageOnTheTopOfBlobStoragePropertyBasedTest {
+public class AttributesStorageOnTheTopOfStreamlinedBlobStoragePropertyBasedTest {
 
   private static final int PAGE_SIZE = 1 << 14;
   private static final StorageLockContext LOCK_CONTEXT = new StorageLockContext(true, true);
@@ -50,7 +50,7 @@ public class AttributesStorageOnTheTopOfBlobStoragePropertyBasedTest {
       true,
       true
     );
-    final StreamlinedBlobStorage storage = new StreamlinedBlobStorage(
+    final SmallStreamlinedBlobStorage storage = new SmallStreamlinedBlobStorage(
       pagedStorage,
       new DataLengthPlusFixedPercentStrategy(256, 64, 30)
     );

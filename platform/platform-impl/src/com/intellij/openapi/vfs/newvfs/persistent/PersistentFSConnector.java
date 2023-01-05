@@ -6,8 +6,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.OffsetBasedNonStrictStringsEnumerator;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SmallStreamlinedBlobStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -226,7 +227,7 @@ final class PersistentFSConnector {
         true
       );
       return new AttributesStorageOnTheTopOfBlobStorage(
-        new StreamlinedBlobStorage(
+        new SmallStreamlinedBlobStorage(
           pagedStorage,
           //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2 minCapacity
           new DataLengthPlusFixedPercentStrategy(128, 64, 30)

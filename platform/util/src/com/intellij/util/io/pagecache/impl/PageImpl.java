@@ -614,7 +614,8 @@ public class PageImpl implements Page {
           final int maxOffsetModifiedExclusive = unpackMaxOffsetModifiedExclusive(modifiedRegion);
 
           //we won the CAS competition: execute the flush
-          final ByteBuffer sliceToSave = data.duplicate();
+          final ByteBuffer sliceToSave = data.duplicate()
+            .order(data.order());
           sliceToSave.position(minOffsetModified)
             .limit(maxOffsetModifiedExclusive);
 
@@ -630,8 +631,9 @@ public class PageImpl implements Page {
   }
 
   //@GuardedBy(pageLock.writeLock)
-  private void regionModified(final int startOffsetModified,
-                              final int length) {
+  @Override
+  public void regionModified(final int startOffsetModified,
+                             final int length) {
     assert pageLock.writeLock().isHeldByCurrentThread() : "writeLock must be held while calling this method";
 
     final long modifiedRegionNew;
@@ -680,7 +682,7 @@ public class PageImpl implements Page {
   //    per-page locks, read/write methods are a natural fit.
 
   @Override
-  public <OUT, E extends Exception> OUT read(final int startOffset,
+  public <OUT, E extends Exception> OUT read(final int startOffsetOnPage,
                                              final int length,
                                              final ThrowableNotNullFunction<ByteBuffer, OUT, E> reader) throws E {
     pageLock.readLock().lock();
@@ -689,9 +691,10 @@ public class PageImpl implements Page {
 
       //RC: need to upgrade language level to 13 to use .slice(index, length)
       final ByteBuffer slice = data.duplicate()
+        .order(data.order())
         .asReadOnlyBuffer();
-      slice.position(startOffset)
-        .limit(startOffset + length);
+      slice.position(startOffsetOnPage)
+        .limit(startOffsetOnPage + length);
       return reader.fun(slice);
     }
     finally {
@@ -700,7 +703,7 @@ public class PageImpl implements Page {
   }
 
   @Override
-  public <OUT, E extends Exception> OUT write(final int startOffset,
+  public <OUT, E extends Exception> OUT write(final int startOffsetOnPage,
                                               final int length,
                                               final ThrowableNotNullFunction<ByteBuffer, OUT, E> writer) throws E {
     pageLock.writeLock().lock();
@@ -708,14 +711,15 @@ public class PageImpl implements Page {
       checkPageIsValidForAccess();
 
       //RC: need to upgrade language level to 13 to use .slice(index, length)
-      final ByteBuffer slice = data.duplicate();
-      slice.position(startOffset)
-        .limit(startOffset + length);
+      final ByteBuffer slice = data.duplicate()
+        .order(data.order());
+      slice.position(startOffsetOnPage)
+        .limit(startOffsetOnPage + length);
       try {
         return writer.fun(slice);
       }
       finally {
-        regionModified(startOffset, length);
+        regionModified(startOffsetOnPage, length);
         checkPageIsValidForAccess();
       }
     }
@@ -834,9 +838,12 @@ public class PageImpl implements Page {
 
       //RC: since java16 may use this.data.put(offsetInPage, data, 0, data.remaining());
       final int length = data.remaining();
-      final ByteBuffer buf = this.data.duplicate();
-      buf.position(offsetInPage);
-      buf.put(data);
+      final ByteBuffer slice = this.data.duplicate()
+        .order(data.order());
+
+      slice.position(offsetInPage);
+      slice.put(data);
+
       regionModified(offsetInPage, length);
     }
     finally {
@@ -853,7 +860,8 @@ public class PageImpl implements Page {
     try {
       checkPageIsValidForAccess();
 
-      final ByteBuffer buf = data.duplicate();
+      final ByteBuffer buf = data.duplicate()
+        .order(data.order());
       buf.position(offsetInPage);
       buf.put(source, offsetInArray, length);
       regionModified(offsetInPage, length);
@@ -863,19 +871,28 @@ public class PageImpl implements Page {
     }
   }
 
+  //TODO RC: probably, it is better to return .duplicate()-ed buffer -- to avoid at least some
+  //         errors causes. The performance cost should be negligible, and outweighed by the
+  //         reduced chances of errors with buffer position/limit cursors manipulation
+  @Override
+  public ByteBuffer pageBufferUnsafe() {
+    checkPageIsValidForAccess();
+    return pageBufferRaw();
+  }
+
   //BEWARE: access without any locks and state checking!
-  public ByteBuffer data() {
+  public ByteBuffer pageBufferRaw() {
     return data;
   }
 
   //TODO RC: IntToIntBTree uses direct access to page buffer to copy range of bytes during node
-  //         resize -- on split, or regular insert. Better to have dedicated .copyRange() method
+  //         resize -- on split, or regular insert. Better to have dedicated Page.copyRangeTo(Page) method
   //         for that, since now one need to acquire page locks, and they must be acquired in
   //         stable order to avoid deadlocks
   @Deprecated
   protected ByteBuffer duplicate() {
     checkPageIsValidForAccess();
-    return data.duplicate();
+    return data.duplicate().order(data.order());
   }
 
   /**

@@ -336,7 +336,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
         break;
       }
       if (candidate.isUsable() && candidate.usageCount() == 0) {
-        final ByteBuffer data = candidate.data();
+        final ByteBuffer data = candidate.pageBufferRaw();
         if (data != null && !data.isDirect()) {
           final boolean succeed = candidate.tryMoveTowardsPreTombstone(/*entombYoung: */false);
           if (succeed) {
@@ -478,7 +478,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
                 //If we just entomb NOT_READY_YET page => it has .data=null
                 //   but page could be already promoted to USABLE, in which case .data != null, and
                 //   should be reclaimed:
-                if (page.data() != null) {
+                if (page.pageBufferRaw() != null) {
                   unmapPageAndReclaimBuffer(page);
                 }
                 else {

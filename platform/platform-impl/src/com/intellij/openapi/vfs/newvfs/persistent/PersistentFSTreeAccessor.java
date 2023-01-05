@@ -88,8 +88,8 @@ final class PersistentFSTreeAccessor {
     }
   }
 
-  boolean wereChildrenAccessed(int id) throws IOException {
-    return myAttributeAccessor.hasAttributePage(id, CHILDREN_ATTR);
+  boolean wereChildrenAccessed(final int fileId) throws IOException {
+    return myAttributeAccessor.hasAttributePage(fileId, CHILDREN_ATTR);
   }
 
   int @NotNull [] listRoots() throws IOException {

@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.StorageLockContext;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -11,21 +10,20 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID;
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.NULL_ID;
+import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SmallStreamlinedBlobStorage.NULL_ID;
 import static org.junit.Assert.*;
 
 /**
- *
+ * Superclass for tests different implementations of blob storages -- i.e. storages of
+ * (id, byte[])-kind records.
  */
-public abstract class StorageTestBase<S> {
+public abstract class BlobStorageTestBase<S> {
   static {
     IndexDebugProperties.DEBUG = true;
   }
@@ -42,7 +40,7 @@ public abstract class StorageTestBase<S> {
 
   // =============================================================================
   // RC: storages share no common interface, so the test itself used as an adapter,
-  //    adopting them to the common interface:
+  //    adapting them to the common interface:
   protected abstract S openStorage(final Path pathToStorage) throws Exception;
 
   protected abstract void closeStorage(final S storage) throws Exception;
@@ -81,16 +79,16 @@ public abstract class StorageTestBase<S> {
 
   @Test
   public void singleWrittenRecord_CouldBeReadBackUnchanged() throws Exception {
-    final StorageRecord recordToWrite = new StorageRecord("ABC")
+    final StorageRecord recordWritten = new StorageRecord("ABC")
       .writeIntoStorage(this, storage);
     assertNotEquals(
       NULL_ID,
-      recordToWrite.recordId
+      recordWritten.recordId
     );
 
-    final StorageRecord recordRead = StorageRecord.readFromStorage(this, storage, recordToWrite.recordId);
+    final StorageRecord recordRead = StorageRecord.readFromStorage(this, storage, recordWritten.recordId);
     assertEquals(
-      recordToWrite.payload,
+      recordWritten.payload,
       recordRead.payload
     );
   }
@@ -114,7 +112,7 @@ public abstract class StorageTestBase<S> {
 
   @Test
   public void manyRecordsWritten_CouldAllBeReadBackUnchanged() throws Exception {
-    final StorageRecord[] recordsToWrite = StorageTestBase.generateRecords(ENOUGH_RECORDS);
+    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS);
     for (int i = 0; i < recordsToWrite.length; i++) {
       recordsToWrite[i] = recordsToWrite[i].writeIntoStorage(this, storage);
     }
@@ -133,7 +131,7 @@ public abstract class StorageTestBase<S> {
 
   @Test
   public void manyRecordsWritten_CouldAllBeReadBackUnchanged_EvenAfterStorageReopened() throws Exception {
-    final StorageRecord[] recordsToWrite = StorageTestBase.generateRecords(ENOUGH_RECORDS);
+    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS);
     for (int i = 0; i < recordsToWrite.length; i++) {
       recordsToWrite[i] = recordsToWrite[i].writeIntoStorage(this, storage);
     }
@@ -155,7 +153,7 @@ public abstract class StorageTestBase<S> {
 
   @Test
   public void manyRecordsWritten_ReWrittenWithSmallerSize_CouldAllBeReadBackUnchanged() throws Exception {
-    final StorageRecord[] recordsToWrite = StorageTestBase.generateRecords(ENOUGH_RECORDS);
+    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS);
 
     //write initial records
     for (int i = 0; i < recordsToWrite.length; i++) {
@@ -169,6 +167,16 @@ public abstract class StorageTestBase<S> {
       recordsToReWrite[i] = recordWritten
         .withRandomPayloadOfSize(recordWritten.payload.length() / 2 + 1)
         .writeIntoStorage(this, storage);
+
+      final StorageRecord recordReadBack = StorageRecord.readFromStorage(this, storage, recordsToReWrite[i].recordId);
+      assertEquals(
+        "Record[" + i + "][#" + recordsToReWrite[i].recordId + "]: " +
+        "written[" + recordWritten.payload + "], " +
+        "re-written[" + recordsToReWrite[i].payload + "], " +
+        "read back[" + recordReadBack.payload + "]",
+        recordsToReWrite[i].payload,
+        recordReadBack.payload
+      );
     }
 
     for (int i = 0; i < recordsToReWrite.length; i++) {
@@ -188,7 +196,7 @@ public abstract class StorageTestBase<S> {
 
   @Test
   public void manyRecordsWritten_AndReWrittenWithLargerSize_AndCouldAllBeReadBackUnchanged() throws Exception {
-    final StorageRecord[] recordsToWrite = StorageTestBase.generateRecords(ENOUGH_RECORDS);
+    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS);
 
     //write initial records
     for (int i = 0; i < recordsToWrite.length; i++) {
@@ -216,7 +224,7 @@ public abstract class StorageTestBase<S> {
 
   @Test
   public void manyRecordsWritten_AndReWrittenWithLargerSize_AndCouldAllBeReadBackUnchanged_EventAfterStorageReopened() throws Exception {
-    final StorageRecord[] recordsToWrite = StorageTestBase.generateRecords(ENOUGH_RECORDS);
+    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS);
 
     //write initial records
     for (int i = 0; i < recordsToWrite.length; i++) {
@@ -256,7 +264,7 @@ public abstract class StorageTestBase<S> {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     return Stream.generate(() -> {
         final int payloadSize = (int)Math.max(Math.min(rnd.nextExponential() * 30, 2000), 0);
-        return StorageTestBase.randomString(rnd, payloadSize);
+        return BlobStorageTestBase.randomString(rnd, payloadSize);
       })
       .limit(count)
       .map(StorageRecord::new)
@@ -294,15 +302,15 @@ public abstract class StorageTestBase<S> {
     }
 
     public StorageRecord withRandomPayloadOfSize(final int size) {
-      return withPayload(StorageTestBase.randomString(ThreadLocalRandom.current(), size));
+      return withPayload(BlobStorageTestBase.randomString(ThreadLocalRandom.current(), size));
     }
 
-    public <S> StorageRecord writeIntoStorage(final StorageTestBase<S> test,
+    public <S> StorageRecord writeIntoStorage(final BlobStorageTestBase<S> test,
                                               final S storage) throws Exception {
       return test.writeRecord(this, storage);
     }
 
-    public <S> StorageRecord readFromStorage(final StorageTestBase<S> test,
+    public <S> StorageRecord readFromStorage(final BlobStorageTestBase<S> test,
                                              final S storage) throws Exception {
       return test.readRecord(storage, recordId);
     }
@@ -313,7 +321,7 @@ public abstract class StorageTestBase<S> {
     }
 
 
-    public static <S> StorageRecord readFromStorage(final StorageTestBase<S> test,
+    public static <S> StorageRecord readFromStorage(final BlobStorageTestBase<S> test,
                                                     final S storage,
                                                     final int recordId) throws Exception {
       return new StorageRecord(recordId, "").readFromStorage(test, storage);

@@ -1,8 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SmallStreamlinedBlobStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.IntPair;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.PagedFileStorage;
@@ -23,14 +24,14 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.INLINE_ATTRIBUTE_SMALLER_THAN;
-import static com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTest.AttributeRecord.*;
+import static com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfStreamlinedBlobStorageTest.AttributeRecord.*;
 import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID;
 import static org.junit.Assert.*;
 
 /**
  *
  */
-public class AttributesStorageOnTheTopOfBlobStorageTest {
+public class AttributesStorageOnTheTopOfStreamlinedBlobStorageTest {
 
   private static final int PAGE_SIZE = 1 << 15;
   private static final StorageLockContext LOCK_CONTEXT = new StorageLockContext(true, true);
@@ -54,7 +55,7 @@ public class AttributesStorageOnTheTopOfBlobStorageTest {
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private Path storagePath;
-  private StreamlinedBlobStorage storage;
+  private SmallStreamlinedBlobStorage storage;
 
   private AttributesStorageOnTheTopOfBlobStorage attributesStorage;
 
@@ -390,7 +391,7 @@ public class AttributesStorageOnTheTopOfBlobStorageTest {
       true,
       true
     );
-    storage = new StreamlinedBlobStorage(
+    storage = new SmallStreamlinedBlobStorage(
       pagedStorage,
       new DataLengthPlusFixedPercentStrategy(256, 64, 30)
     );

@@ -1,17 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.openapi.util.IntRef;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.SpaceAllocationStrategy;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.SpaceAllocationStrategy.WriterDecidesStrategy;
 import com.intellij.util.io.PagedFileStorage;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.Test;
 import org.junit.experimental.theories.DataPoints;
-import org.junit.experimental.theories.Theories;
-import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -22,55 +17,27 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID;
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.NULL_ID;
+import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage.NULL_ID;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assume.assumeTrue;
 
 /**
- *
+ * FIXME type something meaningful here
  */
-@RunWith(Theories.class)
-public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobStorage> {
+public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobStorage> extends BlobStorageTestBase<S> {
 
-  @DataPoints
-  public static List<SpaceAllocationStrategy> allocationStrategiesToTry() {
-    return Arrays.asList(
-      new WriterDecidesStrategy(1024),
-      new WriterDecidesStrategy(512),
-      new WriterDecidesStrategy(256),
-      new DataLengthPlusFixedPercentStrategy(1024, 256, 30),
-      new DataLengthPlusFixedPercentStrategy(512, 128, 30),
-      new DataLengthPlusFixedPercentStrategy(256, 64, 30),
+  protected final int pageSize;
+  protected final SpaceAllocationStrategy allocationStrategy;
 
-      //put stress on allocation/reallocation code paths
-      new DataLengthPlusFixedPercentStrategy(128, 64, 0),
-      new DataLengthPlusFixedPercentStrategy(2, 2, 0)
-    );
-  }
-
-  @DataPoints
-  public static Integer[] pageSizesToTry() {
-    return new Integer[]{
-      //Try quite small pages, so issues on the page borders have chance to manifest themselves
-      1 << 14,
-      1 << 18,
-      1 << 22
-    };
-  }
-
-
-  private final int pageSize;
-  private final SpaceAllocationStrategy allocationStrategy;
-
-  public StreamlinedBlobStorageTest(final @NotNull Integer pageSize,
-                                    final @NotNull SpaceAllocationStrategy strategy) {
+  public StreamlinedBlobStorageTestBase(final @NotNull Integer pageSize,
+                                        final @NotNull SpaceAllocationStrategy strategy) {
     this.pageSize = pageSize;
     this.allocationStrategy = strategy;
   }
 
   /* ======================== TESTS (specific for this impl) ===================================== */
-
   @Test
   public void emptyStorageHasNoRecords() throws Exception {
     final IntArrayList nonExistentIds = new IntArrayList();
@@ -95,7 +62,7 @@ public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobS
     assertEquals(
       "New storage version == STORAGE_VERSION_CURRENT",
       storage.getStorageVersion(),
-      StreamlinedBlobStorage.STORAGE_VERSION_CURRENT
+      SmallStreamlinedBlobStorage.STORAGE_VERSION_CURRENT
     );
   }
 
@@ -122,7 +89,7 @@ public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobS
 
   @Test
   public void manyRecordsWritten_CouldAllBeReadBackUnchanged_ViaForEach() throws Exception {
-    final StorageRecord[] recordsToWrite = StorageTestBase.generateRecords(ENOUGH_RECORDS);
+    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS);
     for (int i = 0; i < recordsToWrite.length; i++) {
       recordsToWrite[i] = recordsToWrite[i].writeIntoStorage(this, storage);
     }
@@ -130,7 +97,7 @@ public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobS
     final Int2ObjectMap<StorageRecord> recordsById = new Int2ObjectOpenHashMap<>();
     storage.forEach((recordId, recordCapacity, recordLength, payload) -> {
       if (storage.isRecordActual(recordLength)) {
-        final StorageRecord record = new StorageRecord(recordId, stringFromBuffer(payload));
+        final StorageRecord record = new StorageRecord(recordId, StreamlinedBlobStorageTestBase.stringFromBuffer(payload));
         recordsById.put(recordId, record);
       }
       return true;
@@ -188,7 +155,7 @@ public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobS
     final List<StorageRecord> recordsReadBack = new ArrayList<>();
     storage.forEach((recordId, recordCapacity, recordLength, payload) -> {
       if (storage.isRecordActual(recordLength)) {
-        final StorageRecord recordRead = new StorageRecord(recordId, stringFromBuffer(payload));
+        final StorageRecord recordRead = new StorageRecord(recordId, StreamlinedBlobStorageTestBase.stringFromBuffer(payload));
         recordsReadBack.add(recordRead);
       }
       return true;
@@ -203,7 +170,7 @@ public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobS
 
   @Test
   public void reallocatedRecordCouldStillBeReadByOriginalId() throws Exception {
-    final StorageRecord[] recordsToWrite = StorageTestBase.generateRecords(ENOUGH_RECORDS);
+    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS);
     for (int i = 0; i < recordsToWrite.length; i++) {
       recordsToWrite[i] = recordsToWrite[i].writeIntoStorage(this, storage);
     }
@@ -265,63 +232,35 @@ public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobS
     }
   }
 
+  //TODO test write/read records of size=0
 
-  //TODO write/read records of size=0
-  //TODO delete records
+  //TODO test delete records
 
-  /* ========================= adapter implementation ========================================= */
-  @Override
-  protected StreamlinedBlobStorage openStorage(final Path pathToStorage) throws IOException {
-    final PagedFileStorage pagedStorage = new PagedFileStorage(
-      pathToStorage,
-      LOCK_CONTEXT,
-      pageSize,
-      true,
-      true
-    );
-    return new StreamlinedBlobStorage(
-      pagedStorage,
-      allocationStrategy
-    );
-  }
+
+  /* ========================= adapter implementation: ========================================= */
 
   @Override
-  protected void closeStorage(final StreamlinedBlobStorage storage) throws Exception {
+  protected abstract S openStorage(final Path pathToStorage) throws IOException;
+
+  @Override
+  protected void closeStorage(final S storage) throws Exception {
     storage.close();
   }
 
   @Override
-  public void tearDown() throws Exception {
-    if (storage != null) {
-      System.out.printf("Storage after test: %d records allocated, %d deleted, %d relocated, live records %.1f%% of total \n",
-                        storage.recordsAllocated(),
-                        storage.recordsDeleted(),
-                        storage.recordsRelocated(),
-                        storage.liveRecordsCount() * 100.0 / storage.recordsAllocated()
-      );
-      System.out.printf("                    %d bytes live payload, %d live capacity, live payload %.1f%% of total storage size \n",
-                        storage.totalLiveRecordsPayloadBytes(),
-                        storage.totalLiveRecordsCapacityBytes(),
-                        storage.totalLiveRecordsPayloadBytes() * 100.0 / storage.sizeInBytes() //including _storage_ header
-      );
-    }
-    super.tearDown();
-  }
-
-  @Override
-  protected boolean hasRecord(final StreamlinedBlobStorage storage,
+  protected boolean hasRecord(final S storage,
                               final int recordId) throws Exception {
     return storage.hasRecord(recordId);
   }
 
   @Override
-  protected StorageRecord readRecord(final StreamlinedBlobStorage storage,
+  protected StorageRecord readRecord(final S storage,
                                      final int recordId) throws Exception {
     final IntRef redirectedIdRef = new IntRef();
     final String newPayload = storage.readRecord(
       recordId,
       buffer -> {
-        return stringFromBuffer(buffer);
+        return StreamlinedBlobStorageTestBase.stringFromBuffer(buffer);
       },
       redirectedIdRef
     );
@@ -331,7 +270,7 @@ public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobS
 
   @Override
   protected StorageRecord writeRecord(final StorageRecord record,
-                                      final StreamlinedBlobStorage storage) throws Exception {
+                                      final S storage) throws Exception {
     final byte[] payloadBytes = record.payload.getBytes(US_ASCII);
     final int recordId = record.recordId;
     final int newRecordId = storage.writeToRecord(
@@ -354,8 +293,34 @@ public class StreamlinedBlobStorageTest extends StorageTestBase<StreamlinedBlobS
 
   @Override
   protected void deleteRecord(final int recordId,
-                              final StreamlinedBlobStorage storage) throws Exception {
+                              final S storage) throws Exception {
     storage.deleteRecord(recordId);
+  }
+
+  @DataPoints
+  public static List<SpaceAllocationStrategy> allocationStrategiesToTry() {
+    return Arrays.asList(
+      new SpaceAllocationStrategy.WriterDecidesStrategy(1024),
+      new SpaceAllocationStrategy.WriterDecidesStrategy(512),
+      new SpaceAllocationStrategy.WriterDecidesStrategy(256),
+      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(1024, 256, 30),
+      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(512, 128, 30),
+      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(256, 64, 30),
+
+      //put stress on allocation/reallocation code paths
+      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(128, 64, 0),
+      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(2, 2, 0)
+    );
+  }
+
+  @DataPoints
+  public static Integer[] pageSizesToTry() {
+    return new Integer[]{
+      //Try quite small pages, so issues on the page borders have chance to manifest themselves
+      1 << 14,
+      1 << 18,
+      1 << 22
+    };
   }
 
   @NotNull
