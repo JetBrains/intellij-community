@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.JavaTestUtil;
@@ -54,6 +54,7 @@ import com.intellij.xdebugger.*;
 import com.sun.jdi.Location;
 import com.sun.jdi.Value;
 import com.sun.jdi.VirtualMachine;
+import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -269,20 +270,19 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
         .asyncAgent(true)
         .create(javaParameters);
 
-    final DebuggerSession[] debuggerSession = {null};
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    DebuggerSession debuggerSession = UIUtil.invokeAndWaitIfNeeded(() -> {
       try {
         ExecutionEnvironment env = myExecutionEnvironment;
         env.putUserData(DefaultDebugEnvironment.DEBUGGER_TRACE_MODE, getTraceMode());
-        debuggerSession[0] = attachVirtualMachine(myRunnableState, env, debugParameters, false);
+        return attachVirtualMachine(myRunnableState, env, debugParameters, false);
       }
       catch (ExecutionException e) {
-        fail(e.getMessage());
+        throw new AssertionFailedError(e.getMessage());
       }
     });
 
-    final ProcessHandler processHandler = debuggerSession[0].getProcess().getProcessHandler();
-    debuggerSession[0].getProcess().addProcessListener(new ProcessAdapter() {
+    final ProcessHandler processHandler = debuggerSession.getProcess().getProcessHandler();
+    debuggerSession.getProcess().addProcessListener(new ProcessAdapter() {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         print(event.getText(), outputType);
@@ -292,7 +292,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     DebugProcessImpl process =
       (DebugProcessImpl)DebuggerManagerEx.getInstanceEx(myProject).getDebugProcess(processHandler);
     assertNotNull(process);
-    return debuggerSession[0];
+    return debuggerSession;
   }
 
   protected DebuggerSession createRemoteProcess(final int transport, final boolean serverMode, JavaParameters javaParameters)
