@@ -131,6 +131,7 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
       for (cell in row.cells) {
         when (cell) {
           is CellImpl<*> -> UiSwitcher.append(cell.viewComponent, uiSwitcher)
+          is PlaceholderImpl -> cell.appendUiSwitcher(uiSwitcher)
           is PanelImpl -> applyUiSwitcher(cell, uiSwitcher)
           else -> {}
         }

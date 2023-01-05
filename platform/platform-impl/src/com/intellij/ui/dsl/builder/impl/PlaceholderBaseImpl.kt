@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.UiSwitcher
 import com.intellij.ui.dsl.builder.CellBase
 import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.gridLayout.Constraints
@@ -14,6 +15,7 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
   private var placeholderCellData: PlaceholderCellData? = null
   private var visible = true
   private var enabled = true
+  private val uiSwitchers = LinkedHashSet<UiSwitcher>()
   private var componentField: JComponent? = null
 
   var component: JComponent?
@@ -74,6 +76,8 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
 
     componentField = null
 
+    UiSwitcher.removeAll(installedComponent, uiSwitchers)
+
     placeholderCellData?.let {
       if (installedComponent is DialogPanel) {
         it.panel.unregisterIntegratedPanel(installedComponent)
@@ -87,6 +91,8 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
     checkNotNull(placeholderCellData)
     val installedComponent = checkNotNull(componentField)
 
+    UiSwitcher.appendAll(installedComponent, uiSwitchers)
+
     placeholderCellData?.let {
       val gaps = customGaps ?: getComponentGaps(it.constraints.gaps.left, it.constraints.gaps.right, installedComponent, it.spacing)
       it.constraints = it.constraints.copy(
@@ -99,6 +105,13 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
       }
 
       invalidate()
+    }
+  }
+
+  fun appendUiSwitcher(uiSwitcher: UiSwitcher) {
+    uiSwitchers.add(uiSwitcher)
+    component?.let {
+      UiSwitcher.append(it, uiSwitcher)
     }
   }
 
