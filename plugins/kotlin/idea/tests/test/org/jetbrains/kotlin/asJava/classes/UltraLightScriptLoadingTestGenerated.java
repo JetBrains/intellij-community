@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.asJava.classes;
 
@@ -19,29 +19,6 @@ import static org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifact
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/ultraLightScripts")
-public class UltraLightScriptLoadingTestGenerated extends AbstractUltraLightScriptLoadingTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-    }
+public abstract class UltraLightScriptLoadingTestGenerated extends AbstractUltraLightScriptLoadingTest {
 
-    @Override
-    protected void setUp() {
-        compilerTestData("compiler/testData/asJava/ultraLightScripts");
-        super.setUp();
-    }
-
-    @TestMetadata("FunsPropsAndFields.kts")
-    public void testFunsPropsAndFields() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightScripts/FunsPropsAndFields.kts"));
-    }
-
-    @TestMetadata("HelloWorld.kts")
-    public void testHelloWorld() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightScripts/HelloWorld.kts"));
-    }
-
-    @TestMetadata("InnerClasses.kts")
-    public void testInnerClasses() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightScripts/InnerClasses.kts"));
-    }
 }
