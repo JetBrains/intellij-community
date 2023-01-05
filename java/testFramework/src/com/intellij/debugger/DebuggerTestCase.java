@@ -124,14 +124,14 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     JavaTestUtil.setupInternalJdkAsTestJDK(getTestRootDisposable(), TEST_JDK_NAME);
     DebuggerSettings.getInstance().setTransport(DebuggerSettings.SOCKET_TRANSPORT);
     DebuggerSettings.getInstance().SKIP_CONSTRUCTORS = false;
-    DebuggerSettings.getInstance().SKIP_GETTERS      = false;
+    DebuggerSettings.getInstance().SKIP_GETTERS = false;
     NodeRendererSettings.getInstance().getClassRenderer().SHOW_DECLARED_TYPE = true;
   }
 
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     super.runTestRunnable(testRunnable);
-    if(getDebugProcess() != null) {
+    if (getDebugProcess() != null) {
       getDebugProcess().getProcessHandler().startNotify();
       waitProcess(getDebugProcess().getProcessHandler());
       waitForCompleted();
@@ -296,7 +296,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   protected DebuggerSession createRemoteProcess(final int transport, final boolean serverMode, JavaParameters javaParameters)
-          throws ExecutionException {
+    throws ExecutionException {
     RemoteConnection remoteConnection =
       new RemoteConnectionBuilder(serverMode, transport, null)
         .suspend(true)
@@ -329,9 +329,10 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     final DebuggerSession[] debuggerSession = new DebuggerSession[1];
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
-        debuggerSession[0] = attachVirtualMachine(remoteState, new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
+        ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
           .runProfile(new MockConfiguration(myProject))
-          .build(), remoteConnection, pollConnection);
+          .build();
+        debuggerSession[0] = attachVirtualMachine(remoteState, environment, remoteConnection, pollConnection);
       }
       catch (ExecutionException e) {
         fail(e.getMessage());
@@ -387,7 +388,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     s.down();
 
     final InvokeThread.WorkerThreadRequest request = getDebugProcess().getManagerThread().getCurrentRequest();
-    final Thread thread = new Thread("Joining "+request) {
+    final Thread thread = new Thread("Joining " + request) {
       @Override
       public void run() {
         try {
@@ -398,16 +399,16 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       }
     };
     thread.start();
-    if(request.isDone()) {
+    if (request.isDone()) {
       thread.interrupt();
     }
-      waitFor(() -> {
-        try {
-          thread.join();
-        }
-        catch (InterruptedException ignored) {
-        }
-      });
+    waitFor(() -> {
+      try {
+        thread.join();
+      }
+      catch (InterruptedException ignored) {
+      }
+    });
 
     invokeRatherLater(new DebuggerCommandImpl() {
       @Override
@@ -440,13 +441,15 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   private DebuggerContextImpl createDebuggerContext(final SuspendContextImpl suspendContext, StackFrameProxyImpl stackFrame) {
     final DebuggerSession[] session = new DebuggerSession[1];
 
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> session[0] = DebuggerManagerEx.getInstanceEx(myProject).getSession(suspendContext.getDebugProcess()));
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      session[0] = DebuggerManagerEx.getInstanceEx(myProject).getSession(suspendContext.getDebugProcess());
+    });
 
     DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(
-            session[0],
-            suspendContext,
-            stackFrame != null ? stackFrame.threadProxy() : null,
-            stackFrame);
+      session[0],
+      suspendContext,
+      stackFrame != null ? stackFrame.threadProxy() : null,
+      stackFrame);
     debuggerContext.initCaches();
     return debuggerContext;
   }
@@ -503,8 +506,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
                                                  ExecutionEnvironment environment,
                                                  RemoteConnection remoteConnection,
                                                  boolean pollConnection) throws ExecutionException {
-    final DebuggerSession debuggerSession =
-      DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(new DefaultDebugEnvironment(environment, state, remoteConnection, pollConnection));
+    final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject)
+      .attachVirtualMachine(new DefaultDebugEnvironment(environment, state, remoteConnection, pollConnection));
     XDebuggerManager.getInstance(myProject).startSession(environment, new XDebugProcessStarter() {
       @Override
       @NotNull

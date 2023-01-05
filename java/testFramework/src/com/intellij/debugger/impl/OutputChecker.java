@@ -63,7 +63,8 @@ public class OutputChecker {
   private static final String JDK_HOME_STR = "!JDK_HOME!";
   //ERROR: JDWP Unable to get JNI 1.2 environment, jvm->GetEnv() return code = -2
   private static final Pattern JDI_BUG_OUTPUT_PATTERN_1 =
-    Pattern.compile("ERROR:\\s+JDWP\\s+Unable\\s+to\\s+get\\s+JNI\\s+1\\.2\\s+environment,\\s+jvm->GetEnv\\(\\)\\s+return\\s+code\\s+=\\s+-2\n");
+    Pattern.compile(
+      "ERROR:\\s+JDWP\\s+Unable\\s+to\\s+get\\s+JNI\\s+1\\.2\\s+environment,\\s+jvm->GetEnv\\(\\)\\s+return\\s+code\\s+=\\s+-2\n");
   //JDWP exit error AGENT_ERROR_NO_JNI_ENV(183):  [../../../src/share/back/util.c:820]
   private static final Pattern JDI_BUG_OUTPUT_PATTERN_2 =
     Pattern.compile("JDWP\\s+exit\\s+error\\s+AGENT_ERROR_NO_JNI_ENV.*]\n");
@@ -124,21 +125,20 @@ public class OutputChecker {
     checkValid(jdk, false);
   }
 
-  private File getOutFile(File outs, Sdk jdk, @Nullable File current, String prefix) {
+  private File getOutFile(File outsDir, Sdk jdk, @Nullable File current, String prefix) {
     String name = myTestName + prefix;
-    File res = new File(outs, name + ".out");
+    File res = new File(outsDir, name + ".out");
     if (current == null || res.exists()) {
       current = res;
     }
     JavaSdkVersion version = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
-    int feature = version.getMaxLanguageLevel().toJavaVersion().feature;
-    do {
-      File outFile = new File(outs, name + ".jdk" + feature + ".out");
+    for (int feature = version.getMaxLanguageLevel().toJavaVersion().feature; feature > 6; feature--) {
+      File outFile = new File(outsDir, name + ".jdk" + feature + ".out");
       if (outFile.exists()) {
         current = outFile;
         break;
       }
-    } while (--feature > 6);
+    }
     return current;
   }
 
@@ -150,16 +150,16 @@ public class OutputChecker {
 
     String actual = preprocessBuffer(buildOutputString(), sortClassPath);
 
-    File outs = new File(myAppPath.produce() + File.separator + "outs");
-    assert outs.exists() || outs.mkdirs() : outs;
+    File outsDir = new File(myAppPath.produce(), "outs");
+    assert outsDir.exists() || outsDir.mkdirs() : outsDir;
 
-    File outFile = getOutFile(outs, jdk, null, "");
+    File outFile = getOutFile(outsDir, jdk, null, "");
     if (!outFile.exists()) {
       if (SystemInfo.isWindows) {
-        outFile = getOutFile(outs, jdk, outFile, ".win");
+        outFile = getOutFile(outsDir, jdk, outFile, ".win");
       }
       else if (SystemInfo.isUnix) {
-        outFile = getOutFile(outs, jdk, outFile, ".unx");
+        outFile = getOutFile(outsDir, jdk, outFile, ".unx");
       }
     }
 
@@ -333,7 +333,10 @@ public class OutputChecker {
       if (cpIdx == -1) break;
       int spaceIdx = result.indexOf(" ", cpIdx + cp.length());
       if (spaceIdx == -1) break;
-      result = result.substring(0, cpIdx) + cp + StringUtil.unquoteString(result.substring(cpIdx + cp.length(), spaceIdx)) + result.substring(spaceIdx);
+      result = result.substring(0, cpIdx) +
+               cp +
+               StringUtil.unquoteString(result.substring(cpIdx + cp.length(), spaceIdx)) +
+               result.substring(spaceIdx);
       cpIdx += cp.length();
     }
     return result;

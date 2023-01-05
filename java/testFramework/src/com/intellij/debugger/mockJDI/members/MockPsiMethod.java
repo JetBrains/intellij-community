@@ -39,7 +39,10 @@ public class MockPsiMethod extends MockMirror implements Method {
 
   @Override
   public List<Type> argumentTypes() {
-    return ContainerUtil.map(myPsiMethod.getParameterList().getParameters(), parameter -> MockType.createType(myVirtualMachine, parameter.getType()));
+    return ContainerUtil.map(
+      myPsiMethod.getParameterList().getParameters(),
+      parameter -> MockType.createType(myVirtualMachine, parameter.getType())
+    );
   }
 
   @Override

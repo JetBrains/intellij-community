@@ -157,7 +157,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     if (toolWindow == null) { // TODO: compatibility mode for Rider where there's no problems view; remove in 2021.2
       toolWindow = toolWindowManager.getToolWindow(ToolWindowId.INSPECTION);
     }
-    if (toolWindow != null) toolWindow.activate(null);
+    if (toolWindow != null) {
+      view.addAdditionalGearActions(toolWindow);
+      toolWindow.activate(null);
+    }
   }
 
   public void addView(@NotNull InspectionResultsView view) {

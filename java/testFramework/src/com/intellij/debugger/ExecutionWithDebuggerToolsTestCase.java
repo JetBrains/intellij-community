@@ -220,8 +220,11 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
         CharSequence text = Objects.requireNonNull(document).getImmutableCharSequence();
         String positionText = "";
         if (offset > -1) {
-          positionText = StringUtil.escapeLineBreak(" [" + text.subSequence(Math.max(0, offset - 20), offset) + "<*>"
-          + text.subSequence(offset, Math.min(offset + 20, text.length())) + "]");
+          positionText = StringUtil.escapeLineBreak(
+            " [" + text.subSequence(Math.max(0, offset - 20), offset)
+            + "<*>"
+            + text.subSequence(offset, Math.min(offset + 20, text.length()))
+            + "]");
         }
 
         println(toDisplayableString(sourcePosition) + positionText, ProcessOutputTypes.SYSTEM);
@@ -254,30 +257,30 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
     if (request.myDebuggerCommand instanceof SuspendContextCommandImpl) {
       request.myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(
-          ((SuspendContextCommandImpl)request.myDebuggerCommand).getSuspendContext()) {
-          @Override
-          public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-            pumpDebuggerThread(request);
-          }
+        ((SuspendContextCommandImpl)request.myDebuggerCommand).getSuspendContext()) {
+        @Override
+        public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+          pumpDebuggerThread(request);
+        }
 
-          @Override
-          protected void commandCancelled() {
-            pumpDebuggerThread(request);
-          }
-        });
+        @Override
+        protected void commandCancelled() {
+          pumpDebuggerThread(request);
+        }
+      });
     }
     else {
       request.myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
-          @Override
-          protected void action() {
-            pumpDebuggerThread(request);
-          }
+        @Override
+        protected void action() {
+          pumpDebuggerThread(request);
+        }
 
-          @Override
-          protected void commandCancelled() {
-            pumpDebuggerThread(request);
-          }
-        });
+        @Override
+        protected void commandCancelled() {
+          pumpDebuggerThread(request);
+        }
+      });
     }
   }
 
@@ -327,7 +330,8 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       if (s.startsWith("-")) {
         exclude.add(filter);
         s = s.substring(1);
-      } else {
+      }
+      else {
         include.add(filter);
       }
       filter.setPattern(s);

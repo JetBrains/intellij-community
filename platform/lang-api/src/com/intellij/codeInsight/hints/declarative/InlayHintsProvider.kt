@@ -27,9 +27,4 @@ interface InlayHintsProvider {
    * Creates collector for given file and editor if it may create inlays, or null otherwise.
    */
   fun createCollector(file: PsiFile, editor: Editor) : InlayHintsCollector?
-
-  /**
-   * Creates collector for preview (in settings).
-   */
-  fun createCollectorForPreview(file: PsiFile, editor: Editor) : InlayHintsCollector?
 }

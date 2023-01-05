@@ -29,8 +29,6 @@ abstract class ToolbarComboWidget: JComponent() {
     isOpaque = false
   }
 
-  open fun updateWidget() {}
-
   abstract fun doExpand(e: InputEvent?)
 
   override fun getUIClassID(): String {

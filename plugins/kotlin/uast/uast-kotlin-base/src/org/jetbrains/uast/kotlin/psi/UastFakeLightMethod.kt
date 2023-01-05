@@ -172,7 +172,8 @@ abstract class UastFakeLightMethodBase<T: KtDeclaration>(
                 parent = original,
             )
         }
-        annotations.toTypedArray()
+
+        if (annotations.isNotEmpty()) annotations.toTypedArray() else PsiAnnotation.EMPTY_ARRAY
     }
 
     override fun getAnnotations(): Array<PsiAnnotation> {

@@ -212,13 +212,22 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   private boolean shouldIncludePackage(PsiPackage aPackage, GlobalSearchScope searchScope) {
-    return ReadAction.compute(() -> isInCoverageScope(aPackage)
-                                    && (myAnnotator.isLoading() || getPackageCoverageInfo(aPackage) != null)
-                                    && (!myStateBean.myFlattenPackages || aPackage.getClasses(searchScope).length != 0));
+    return ReadAction.compute(() -> {
+      if (!isInCoverageScope(aPackage)) return false;
+      if (!myAnnotator.isLoading()) {
+        final PackageAnnotator.PackageCoverageInfo info = getPackageCoverageInfo(aPackage);
+        if (info == null || myStateBean.myHideFullyCovered && info.isFullyCovered()) return false;
+      }
+      return !myStateBean.myFlattenPackages || aPackage.getClasses(searchScope).length != 0;
+    });
   }
 
   private boolean shouldIncludeClass(PsiClass aClass) {
-    return myAnnotator.isLoading() || getClassCoverageInfo(aClass) != null;
+    if (!myAnnotator.isLoading()) {
+      final PackageAnnotator.ClassCoverageInfo info = getClassCoverageInfo(aClass);
+      if (info == null || myStateBean.myHideFullyCovered && info.isFullyCovered()) return false;
+    }
+    return true;
   }
 
   @Override

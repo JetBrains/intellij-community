@@ -1,8 +1,8 @@
 abstract class Foo<T> {
   void main() {
-    listOf(1, 2, 3).filter(it -> it % 2 == 0)
-      .map(it -> it * 2)
-      .map(it -> "item: " + it)
+    listOf(1, 2, 3).filter(it -> it % 2 == 0)<# Foo<Integer> #>
+      .map(it -> it * 2)<# Foo<int> #>
+      .map(it -> "item: " + it)<# Foo<Object> #>
       .forEach(this::println);
   }
 

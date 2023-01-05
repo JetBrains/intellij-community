@@ -211,16 +211,21 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
     applyFilter(searchField.text, onlyShowModified)
   }
 
+  private fun resetFilter() {
+    for (settingsGroup in settingsGroups) {
+      settingsGroup.groupRow.visible(true)
+      updateMatchText(settingsGroup.title, settingsGroup.text, null)
+      for (settingsRow in settingsGroup.settingsRows) {
+        settingsRow.setVisible(true)
+        updateMatchText(settingsRow.component, settingsRow.text, null)
+      }
+    }
+    nothingFoundRow.visible(false)
+  }
+
   private fun applyFilter(searchText: String?, onlyShowModified: Boolean) {
     if (searchText.isNullOrBlank() && !onlyShowModified) {
-      for (groupPanel in settingsGroups) {
-        groupPanel.groupRow.visible(true)
-        for (settingsRow in groupPanel.settingsRows) {
-          settingsRow.setVisible(true)
-          updateMatchText(settingsRow.component, settingsRow.text, null)
-        }
-      }
-      nothingFoundRow.visible(false)
+      resetFilter()
       return
     }
 

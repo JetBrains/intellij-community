@@ -74,11 +74,18 @@ public class FrugalQuantileEstimatorTest {
                                                     final int[] samples,
                                                     final double estimationTolerance) {
     final int percentileToEstimate = estimator.percentileToEstimate();
-    //By definition: Nth percentile is the value at index=[Nth % of SIZE] of sorted samples
-    final int truePercentileValue =
-      IntStream.of(samples).sorted().skip((long)(samples.length * percentileToEstimate / 100.0)).findFirst().getAsInt();
 
-    final int[] diffs = IntStream.of(samples).map(sample -> (int)(estimator.updateEstimation(sample) - truePercentileValue)).toArray();
+    //By definition: Nth percentile is the value at index=[Nth % of SIZE] of sorted samples
+    final int samplesBelowPercentile = (int)(samples.length * percentileToEstimate / 100.0);
+    final int truePercentileValue = IntStream.of(samples)
+      .sorted()
+      .skip(samplesBelowPercentile)
+      .findFirst().getAsInt();
+
+    //apply esimator along with the samples, and diff its estimation against true percentile:
+    final int[] diffs = IntStream.of(samples)
+      .map(sample -> (int)(estimator.updateEstimation(sample) - truePercentileValue))
+      .toArray();
 
     final double averageDivergence = IntStream.of(diffs).average().getAsDouble();
 

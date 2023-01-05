@@ -22,8 +22,8 @@ import javax.swing.JPanel
 internal class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
     return when {
-      file.fileType.isMarkdownType() -> null
-      else -> Collector(editor)
+      file.fileType.isMarkdownType() -> Collector(editor)
+      else -> null
     }
   }
 

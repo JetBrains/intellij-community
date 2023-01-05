@@ -9,7 +9,7 @@ import com.sun.jdi.TypeComponent;
 import java.lang.reflect.Member;
 import java.lang.reflect.Modifier;
 
-public class MockTypeComponent extends MockAccessibleMirror implements TypeComponent{
+public class MockTypeComponent extends MockAccessibleMirror implements TypeComponent {
   protected Member myMember;
 
   public MockTypeComponent(Member member, final MockVirtualMachine virtualMachine) {

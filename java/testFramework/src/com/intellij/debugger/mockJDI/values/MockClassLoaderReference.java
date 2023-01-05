@@ -13,7 +13,7 @@ public class MockClassLoaderReference extends MockObjectReference implements Cla
   }
 
   public ClassLoader getLoader() {
-    return (ClassLoader) getValue();
+    return (ClassLoader)getValue();
   }
 
   @Override

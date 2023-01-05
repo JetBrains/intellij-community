@@ -30,7 +30,7 @@
     <advancedSetting default="true" id="searcheverywhere.ml.sort.files"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
                      bundle="messages.searchEverywhereMlBundle"/>
-    <advancedSetting default="false" id="searcheverywhere.ml.sort.classes"
+    <advancedSetting default="true" id="searcheverywhere.ml.sort.classes"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
                      bundle="messages.searchEverywhereMlBundle"/>
     <advancedSetting default="false" id="searcheverywhere.ml.sort.all"

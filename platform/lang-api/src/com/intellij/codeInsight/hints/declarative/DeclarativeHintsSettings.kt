@@ -2,12 +2,12 @@
 package com.intellij.codeInsight.hints.declarative
 
 import com.intellij.openapi.components.*
-import com.intellij.openapi.project.Project
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 
 @State(name = "DeclarativeInlayHintsSettings", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
-class DeclarativeInlayHintsSettings(private val project: Project) : SimplePersistentStateComponent<DeclarativeInlayHintsSettings.HintsState>(
+class DeclarativeInlayHintsSettings : SimplePersistentStateComponent<DeclarativeInlayHintsSettings.HintsState>(
   HintsState()) {
 
   class HintsState : BaseState() {
@@ -18,8 +18,8 @@ class DeclarativeInlayHintsSettings(private val project: Project) : SimplePersis
 
 
   companion object {
-    fun getInstance(project: Project): DeclarativeInlayHintsSettings {
-      return project.service()
+    fun getInstance(): DeclarativeInlayHintsSettings {
+      return application.service()
     }
   }
 

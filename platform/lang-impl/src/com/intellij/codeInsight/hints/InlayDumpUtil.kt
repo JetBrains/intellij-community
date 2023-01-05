@@ -1,25 +1,31 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.testFramework.utils.inlays
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.hints.LinearOrderInlayRenderer
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.regex.Pattern
 
-internal object InlayTestUtil {
+object InlayDumpUtil {
   val inlayPattern: Pattern = Pattern.compile("<# block ([^#]*)#>(\r\n|\r|\n)|<#([^#]*)#>")
 
-  internal fun dumpHintsInternal(
+  fun removeHints(text: String) : String {
+    return inlayPattern.matcher(text).replaceAll("")
+  }
+
+  @Internal
+  fun dumpHintsInternal(
     sourceText: String,
-    fixture: CodeInsightTestFixture,
     filter: ((Inlay<*>) -> Boolean)? = null,
-    renderer: (EditorCustomElementRenderer, Inlay<*>) -> String = { r, _ -> r.toString() }
+    renderer: (EditorCustomElementRenderer, Inlay<*>) -> String = { r, _ -> r.toString() },
+    file: PsiFile,
+    editor: Editor,
+    document: Document
   ): String {
-    val file = fixture.file!!
-    val editor = fixture.editor
     val model = editor.inlayModel
     val range = file.textRange
     val inlineElements = model.getInlineElementsInRange(range.startOffset, range.endOffset)
@@ -29,7 +35,6 @@ internal object InlayTestUtil {
     inlineElements.mapTo(inlays) { InlayData(it, InlayType.Inline) }
     afterLineElements.mapTo(inlays) { InlayData(it, InlayType.Inline) }
     blockElements.mapTo(inlays) { InlayData(it, InlayType.Block) }
-    val document = fixture.getDocument(file)
     inlays.sortBy { it.effectiveOffset(document) }
     return buildString {
       var currentOffset = 0
@@ -46,6 +51,27 @@ internal object InlayTestUtil {
       }
       append(sourceText.substring(currentOffset, sourceText.length))
     }
+  }
+
+  @Internal
+  fun extractEntries(text: String) : List<Pair<Int, String>> {
+    val matcher = inlayPattern.matcher(text)
+    val offsetToContent = ArrayList<Pair<Int, String>>()
+    var previousOffsetWithoutInlays = 0
+    var previousOffsetWithInlays = 0
+    while (matcher.find()) {
+      val startOffset = matcher.start()
+      val endOffset = matcher.end()
+      previousOffsetWithoutInlays += startOffset - previousOffsetWithInlays
+      previousOffsetWithInlays = endOffset
+      val content = text.subSequence(startOffset, endOffset)
+      if (content.startsWith("<# block")) {
+        throw NotImplementedError("Block inlays are not yet supported")
+      }
+      val strippedContent = content.substring(3, content.length - 3)
+      offsetToContent.add(previousOffsetWithoutInlays to strippedContent)
+    }
+    return offsetToContent
   }
 
   internal data class InlayData(val inlay: Inlay<*>, val type: InlayType) {

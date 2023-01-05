@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,14 +28,16 @@ public class EditSettingsAction extends InspectionViewActionBase {
   private static final Logger LOG = Logger.getInstance(EditSettingsAction.class);
 
   public EditSettingsAction() {
-    super(InspectionsBundle.messagePointer("inspection.action.edit.settings"), Presentation.NULL_STRING, AllIcons.General.Settings);
+    super(InspectionsBundle.messagePointer(
+            ExperimentalUI.isNewUI() ? "inspection.action.edit.settings.new" : "inspection.action.edit.settings"),
+          Presentation.NULL_STRING, AllIcons.General.Settings);
   }
 
   @Override
   protected boolean isEnabled(@NotNull InspectionResultsView view, AnActionEvent e) {
     boolean enabled = view.areSettingsEnabled();
     e.getPresentation().setDescription(enabled
-                                       ? InspectionsBundle.message("inspection.action.edit.settings")
+                                       ? InspectionsBundle.message(ExperimentalUI.isNewUI() ? "inspection.action.edit.settings.new" : "inspection.action.edit.settings")
                                        : InspectionsBundle.message("inspection.tool.window.dialog.no.options", getSingleTool(view).getDisplayName()));
     return enabled;
   }

@@ -30,10 +30,7 @@ import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigT
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.SmartExpander;
-import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.UIBundle;
+import com.intellij.ui.*;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreeCollector.TreePathRoots;
 import com.intellij.ui.tree.TreePathUtil;
@@ -641,13 +638,13 @@ public class InspectionTree extends Tree {
     @NotNull
     @Override
     public String getNextOccurenceActionName() {
-      return InspectionsBundle.message("inspection.action.go.next");
+      return InspectionsBundle.message(ExperimentalUI.isNewUI() ? "inspection.action.go.next.new" : "inspection.action.go.next");
     }
 
     @NotNull
     @Override
     public String getPreviousOccurenceActionName() {
-      return InspectionsBundle.message("inspection.action.go.prev");
+      return InspectionsBundle.message(ExperimentalUI.isNewUI() ? "inspection.action.go.prev.new" : "inspection.action.go.prev");
     }
 
     private InspectionTreeNode getNextNode(boolean next) {

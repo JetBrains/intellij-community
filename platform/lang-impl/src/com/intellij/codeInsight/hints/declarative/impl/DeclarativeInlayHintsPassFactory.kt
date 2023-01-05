@@ -57,7 +57,7 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
       return null
     }
 
-    val declarativeInlayHintsSettings = DeclarativeInlayHintsSettings.getInstance(file.project)
+    val declarativeInlayHintsSettings = DeclarativeInlayHintsSettings.getInstance()
     val passProviders = getSuitableToFileProviders(file)
       .filter {
         declarativeInlayHintsSettings.isProviderEnabled(it.providerId) ?: it.isEnabledByDefault

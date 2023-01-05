@@ -37,8 +37,4 @@ class JavaImplicitTypeDeclarativeInlayHintsProvider : InlayHintsProvider {
       }
     }
   }
-
-  override fun createCollectorForPreview(file: PsiFile, editor: Editor): InlayHintsCollector {
-    return Collector()
-  }
 }
