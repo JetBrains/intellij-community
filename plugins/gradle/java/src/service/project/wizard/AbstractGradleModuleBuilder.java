@@ -64,6 +64,7 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionUtil;
 import org.jetbrains.plugins.gradle.service.project.open.GradleProjectImportUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
+import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -122,7 +123,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   private final List<Consumer<GradleBuildScriptBuilder<?>>> buildScriptConfigurators = new ArrayList<>();
 
   public AbstractGradleModuleBuilder() {
-    super(GradleConstants.SYSTEM_ID, new GradleProjectSettings());
+    super(GradleConstants.SYSTEM_ID, GradleDefaultProjectSettings.createProjectSettings(""));
   }
 
   @NotNull

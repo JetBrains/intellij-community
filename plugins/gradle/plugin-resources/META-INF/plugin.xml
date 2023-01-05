@@ -127,6 +127,7 @@
                     serviceImplementation="org.jetbrains.plugins.gradle.service.project.GradleTasksIndicesImpl"/>
     <createDirectoryCompletionContributor implementation="org.jetbrains.plugins.gradle.GradleDirectoryCompletionContributor"/>
     <externalSystemContentRootContributor implementation="org.jetbrains.plugins.gradle.GradleContentRootContributor"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings$Service"/>
 
     <stepsBeforeRunProvider implementation="org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider" />
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer"/>

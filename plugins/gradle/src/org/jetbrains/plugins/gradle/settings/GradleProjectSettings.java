@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,23 +34,43 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   public static final boolean DEFAULT_DELEGATE = true;
   public static final @NotNull TestRunner DEFAULT_TEST_RUNNER = TestRunner.GRADLE;
 
+  private @Nullable String myGradleJvm;
+  private @Nullable DistributionType myDistributionType;
   private @Nullable String myGradleHome;
-  private @Nullable String myGradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK;
-  private @Nullable DistributionType distributionType;
   private boolean disableWrapperSourceDistributionNotification;
-  private boolean resolveModulePerSourceSet = true;
-  private boolean resolveExternalAnnotations = true;
+  private boolean resolveModulePerSourceSet;
+  private boolean resolveExternalAnnotations;
   private @Nullable CompositeBuild myCompositeBuild;
 
-  private @Nullable Boolean delegatedBuild;
-  private @Nullable TestRunner testRunner;
+  private @NotNull Boolean delegatedBuild;
+  private @NotNull TestRunner testRunner;
 
-  public @Nullable @NlsSafe String getGradleHome() {
-    return myGradleHome;
+  public GradleProjectSettings(@NotNull String externalProjectPath) {
+    this();
+    this.setExternalProjectPath(externalProjectPath);
   }
 
-  public void setGradleHome(@Nullable String gradleHome) {
-    myGradleHome = gradleHome;
+  public GradleProjectSettings() {
+    myGradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK;
+    myDistributionType = DistributionType.DEFAULT_WRAPPED;
+    myGradleHome = null;
+    disableWrapperSourceDistributionNotification = false;
+    resolveModulePerSourceSet = true;
+    resolveExternalAnnotations = true;
+    delegatedBuild = DEFAULT_DELEGATE;
+    testRunner = DEFAULT_TEST_RUNNER;
+    setupHeadlessProjectSettings();
+  }
+
+  private void setupHeadlessProjectSettings() {
+    var distributionType = GradleEnvironment.Headless.GRADLE_DISTRIBUTION_TYPE;
+    if (distributionType != null) {
+      myDistributionType = DistributionType.valueOf(distributionType);
+    }
+    var gradleHome = GradleEnvironment.Headless.GRADLE_HOME;
+    if (gradleHome != null) {
+      myGradleHome = gradleHome;
+    }
   }
 
   public @Nullable @NlsSafe String getGradleJvm() {
@@ -60,12 +81,20 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     myGradleJvm = gradleJvm;
   }
 
+  public @Nullable @NlsSafe String getGradleHome() {
+    return myGradleHome;
+  }
+
+  public void setGradleHome(@Nullable String gradleHome) {
+    myGradleHome = gradleHome;
+  }
+
   public @Nullable DistributionType getDistributionType() {
-    return distributionType;
+    return myDistributionType;
   }
 
   public void setDistributionType(@Nullable DistributionType distributionType) {
-    this.distributionType = distributionType;
+    myDistributionType = distributionType;
   }
 
   public boolean isDisableWrapperSourceDistributionNotification() {
@@ -120,7 +149,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   }
 
   public void setDirectDelegatedBuild(@Nullable Boolean state) {
-    this.delegatedBuild = state;
+    delegatedBuild = ObjectUtils.notNull(state, DEFAULT_DELEGATE);
   }
 
   public static boolean isDelegatedBuildEnabled(@NotNull Project project, @Nullable String gradleProjectPath) {
@@ -159,7 +188,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   }
 
   public void setDirectTestRunner(@Nullable TestRunner testRunner) {
-    this.testRunner = testRunner;
+    this.testRunner = ObjectUtils.notNull(testRunner, DEFAULT_TEST_RUNNER);
   }
 
   public static @NotNull TestRunner getTestRunner(@NotNull Project project, @Nullable String gradleProjectPath) {
@@ -193,9 +222,9 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   public @NotNull GradleProjectSettings clone() {
     GradleProjectSettings result = new GradleProjectSettings();
     copyTo(result);
-    result.myGradleHome = myGradleHome;
     result.myGradleJvm = myGradleJvm;
-    result.distributionType = distributionType;
+    result.myDistributionType = myDistributionType;
+    result.myGradleHome = myGradleHome;
     result.disableWrapperSourceDistributionNotification = disableWrapperSourceDistributionNotification;
     result.resolveModulePerSourceSet = resolveModulePerSourceSet;
     result.resolveExternalAnnotations = resolveExternalAnnotations;

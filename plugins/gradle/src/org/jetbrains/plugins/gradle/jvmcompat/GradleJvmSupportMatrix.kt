@@ -28,7 +28,7 @@ class GradleJvmSupportMatrix : PersistentStateComponent<JvmCompatibilityState?> 
 
   private fun parseMyState() {
     val data = state?.data ?: DEFAULT_DATA
-    myCompatibility = CompatibilityDataParser(ApplicationInfo.getInstance().fullVersion).getCompatibilityRanges(data);
+    myCompatibility = CompatibilityDataParser(ApplicationInfo.getInstance().fullVersion).getCompatibilityRanges(data)
     mySupportedGradleVersions = data.supportedGradleVersions.map(GradleVersion::version)
     mySupportedJavaVersions = data.supportedJavaVersions.map(JavaVersion::parse)
   }
@@ -37,12 +37,12 @@ class GradleJvmSupportMatrix : PersistentStateComponent<JvmCompatibilityState?> 
     parseMyState()
   }
 
-  fun getSupportedGradleVersions(javaVersion: JavaVersion): List<GradleVersion> {
-    return mySupportedGradleVersions.filter { isSupported(it, javaVersion) }
+  fun getAllSupportedGradleVersions(): List<GradleVersion> {
+    return mySupportedGradleVersions
   }
 
-  fun getSupportedJavaVersions(gradleVersion: GradleVersion): List<JavaVersion> {
-    return mySupportedJavaVersions.filter { isSupported(gradleVersion, it) }
+  fun getAllSupportedJavaVersions(): List<JavaVersion> {
+    return mySupportedJavaVersions
   }
 
   fun isSupported(gradleVersion: GradleVersion, javaVersion: JavaVersion): Boolean {
@@ -51,35 +51,15 @@ class GradleJvmSupportMatrix : PersistentStateComponent<JvmCompatibilityState?> 
     }
   }
 
-  fun suggestGradleVersion(javaVersion: JavaVersion): GradleVersion? {
-    val gradleVersion = GradleVersion.current()
-    if (isSupported(gradleVersion, javaVersion)) {
-      return gradleVersion
-    }
-    return getSupportedGradleVersions(javaVersion).lastOrNull()
-  }
-
-  fun suggestJavaVersion(gradleVersion: GradleVersion): JavaVersion? {
-    return getSupportedJavaVersions(gradleVersion).lastOrNull()
-  }
-
-  fun suggestOldestCompatibleGradleVersion(javaVersion: JavaVersion): GradleVersion? {
-    return getSupportedGradleVersions(javaVersion).firstOrNull()
-  }
-
-  fun suggestOldestCompatibleJavaVersion(gradleVersion: GradleVersion): JavaVersion? {
-    return getSupportedJavaVersions(gradleVersion).firstOrNull()
-  }
-
   fun setStateAsString(json: String) {
     val parser = CompatibilityDataParser(ApplicationInfo.getInstance().fullVersion)
-    val compatibilityData = parser.parseJson(json);
+    val compatibilityData = parser.parseJson(json)
     if (compatibilityData != null) {
-      val newState = JvmCompatibilityState();
-      newState.data = compatibilityData;
+      val newState = JvmCompatibilityState()
+      newState.data = compatibilityData
       newState.isDefault = false
       newState.ideVersion = ApplicationInfo.getInstance().fullVersion
-      newState.lastUpdateTime = System.currentTimeMillis();
+      newState.lastUpdateTime = System.currentTimeMillis()
       myState = newState
       parseMyState()
     }
