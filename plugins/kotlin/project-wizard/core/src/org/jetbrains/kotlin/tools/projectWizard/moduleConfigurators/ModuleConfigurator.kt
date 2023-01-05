@@ -303,6 +303,7 @@ interface ModuleConfigurator : DisplayableSettingItem, EntitiesOwnerDescriptor {
                 +JsBrowserTargetConfigurator
                 +MppLibJsBrowserTargetConfigurator
                 +JsNodeTargetConfigurator
+                +WasmTargetConfigurator
                 +CommonTargetConfigurator
                 +JvmTargetConfigurator
                 +AndroidTargetConfigurator
