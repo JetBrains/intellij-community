@@ -42,6 +42,11 @@ class PropertyGraph(debugName: String? = null, private val isBlockPropagation: B
   fun <T> lazyProperty(initial: () -> T): GraphProperty<T> = GraphPropertyImpl(this, initial)
 
   /**
+   * Creates graph builder property which will be explicitly initialized.
+   */
+  fun <T> lateinitProperty(): GraphProperty<T> = lazyProperty { throw UninitializedPropertyAccessException() }
+
+  /**
    * Creates dependency between [child] and [parent] properties.
    * @param deleteWhenChildModified if true then property changes propagation will be blocked when [child] is modified.
    * @param update, result of this function will be applied into [child] when [parent] is modified.
