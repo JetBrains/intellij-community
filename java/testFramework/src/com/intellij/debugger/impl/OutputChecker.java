@@ -150,7 +150,7 @@ public class OutputChecker {
 
     String actual = preprocessBuffer(buildOutputString(), sortClassPath);
 
-    File outsDir = new File(myAppPath.produce() + File.separator + "outs");
+    File outsDir = new File(myAppPath.produce(), "outs");
     assert outsDir.exists() || outsDir.mkdirs() : outsDir;
 
     File outFile = getOutFile(outsDir, jdk, null, "");
