@@ -1,12 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.caches.resolve
+package org.jetbrains.kotlin.asJava.classes
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightModifierList
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.caches.resolve.AssertionErrorWithCause
 import org.junit.Assert
 
 object PsiElementChecker {

@@ -1,22 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.perf
+package org.jetbrains.kotlin.asJava.classes
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Conditions
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.PairProcessor
 import com.intellij.util.ref.DebugReflectionUtil
-import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupportBase
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
-import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
 import org.jetbrains.kotlin.idea.asJava.renderClass
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -24,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.junit.Assert
 import java.io.File
+import kotlin.test.fail
 
 object UltraLightChecker {
     fun checkClassEquivalence(file: KtFile) {
@@ -32,19 +29,10 @@ object UltraLightChecker {
         }
     }
 
-    fun checkForReleaseCoroutine(sourceFileText: String, module: Module) {
-        if (sourceFileText.contains("//RELEASE_COROUTINE_NEEDED")) {
-            TestCase.assertTrue(
-                "Test should be runned under language version that supports released coroutines",
-                module.languageVersionSettings.supportsFeature(LanguageFeature.ReleaseCoroutines)
-            )
-        }
-    }
-
     fun allClasses(file: KtFile): List<KtClassOrObject> =
         SyntaxTraverser.psiTraverser(file).filter(KtClassOrObject::class.java).toList()
 
-    fun checkByJavaFile(testDataPath: String, lightClasses: List<KtLightClass>) {
+    fun checkByJavaFile(testDataPath: String, lightClasses: List<PsiClass>) {
         val expectedTextFile = getJavaFileForTest(testDataPath)
         val renderedResult = renderLightClasses(testDataPath, lightClasses)
         KotlinTestUtils.assertEqualsToFile(expectedTextFile, renderedResult)
@@ -56,25 +44,25 @@ object UltraLightChecker {
         return expectedTextFile
     }
 
-    fun renderLightClasses(testDataPath: String, lightClasses: List<KtLightClass>): String {
+    fun renderLightClasses(testDataPath: String, lightClasses: List<PsiClass>): String {
         val extendedTypeRendererOld = PsiClassRenderer.extendedTypeRenderer
         return try {
             PsiClassRenderer.extendedTypeRenderer = testDataPath.endsWith("typeAnnotations.kt")
-            lightClasses.joinToString("\n\n") { it.renderClass() }
+            lightClasses.sortedBy { it.name }.joinToString("\n\n") { it.renderClass() }
         } finally {
             PsiClassRenderer.extendedTypeRenderer = extendedTypeRendererOld
         }
     }
 
-    fun checkClassEquivalence(ktClass: KtClassOrObject): KtUltraLightClass? {
+    fun checkClassEquivalence(ktClass: KtClassOrObject): PsiClass? {
         val javaSupport = KotlinAsJavaSupport.getInstance(ktClass.project).cast<KotlinAsJavaSupportBase<*>>()
-        val ultraLightClass = javaSupport.createLightClass(ktClass)?.value?.cast<KtUltraLightClass>() ?: return null
-        val secondULInstance = javaSupport.createLightClass(ktClass)?.value?.cast<KtUltraLightClass>()
+        val ultraLightClass = javaSupport.createLightClass(ktClass)?.value ?: return null
+        val secondULInstance = javaSupport.createLightClass(ktClass)?.value
         Assert.assertNotNull(secondULInstance)
         Assert.assertTrue(ultraLightClass !== secondULInstance)
         secondULInstance!!
-        Assert.assertEquals(ultraLightClass.ownMethods.size, secondULInstance.ownMethods.size)
-        Assert.assertTrue(ultraLightClass.ownMethods.containsAll(secondULInstance.ownMethods))
+        Assert.assertEquals(ultraLightClass.methods.size, secondULInstance.methods.size)
+        Assert.assertTrue(ultraLightClass.methods.asList().containsAll(secondULInstance.methods.asList()))
 
         return ultraLightClass
     }
@@ -83,13 +71,15 @@ object UltraLightChecker {
         DebugReflectionUtil.walkObjects(
             10,
             mapOf(element to element.javaClass.name),
-            Any::class.java,
+            DeclarationDescriptor::class.java,
             Conditions.alwaysTrue<Any>()::value,
-            PairProcessor.alwaysTrue(),
+            PairProcessor { value, backLink ->
+                fail("Leaked descriptor ${value.javaClass.name} in ${element.javaClass.name}\n$backLink")
+            }
         )
     }
 
-    fun checkDescriptorsLeak(lightClass: KtLightClass) {
+    fun checkDescriptorsLeak(lightClass: PsiClass) {
         checkDescriptorLeakOnElement(lightClass)
         lightClass.methods.forEach {
             checkDescriptorLeakOnElement(it)

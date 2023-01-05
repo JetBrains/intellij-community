@@ -21,10 +21,7 @@ import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenc
 import org.jetbrains.kotlin.idea.caches.project.binariesScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.decompiler.navigation.MemberMatching.*
-import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
+import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -54,13 +51,14 @@ object SourceNavigationHelper {
         SourceNavigationHelper.forceResolve = forceResolve
     }
 
-    private fun targetScopes(declaration: KtNamedDeclaration, navigationKind: NavigationKind): List<GlobalSearchScope> {
+    private fun targetScopes(declaration: KtElement, navigationKind: NavigationKind): List<GlobalSearchScope> {
         val containingFile = declaration.containingKtFile
         val vFile = containingFile.virtualFile ?: return emptyList()
 
+        val project = declaration.project
         return when (navigationKind) {
             NavigationKind.CLASS_FILES_TO_SOURCES -> {
-                val binaryModuleInfos = ModuleInfoProvider.getInstance(declaration.project)
+                val binaryModuleInfos = ModuleInfoProvider.getInstance(project)
                     .collectLibraryBinariesModuleInfos(vFile)
                     .toList()
 
@@ -85,14 +83,14 @@ object SourceNavigationHelper {
                     // acceptOverrides). That's why we include only .class jar in the scope.
                     val psiClass = containingFile.findFacadeClass()
                     if (psiClass != null) {
-                        return ModuleInfoProvider.getInstance(declaration.project)
+                        return ModuleInfoProvider.getInstance(project)
                             .collectLibraryBinariesModuleInfos(psiClass.containingFile.virtualFile)
                             .map { it.binariesScope }
                             .toList()
                             .union()
                     }
                 }
-                ModuleInfoProvider.getInstance(declaration.project)
+                ModuleInfoProvider.getInstance(project)
                     .collectLibrarySourcesModuleInfos(vFile)
                     .map { it.binariesModuleInfo.binariesScope }
                     .toList()
@@ -270,7 +268,8 @@ object SourceNavigationHelper {
         from: KtDeclaration,
         navigationKind: NavigationKind
     ): KtDeclaration {
-        if (DumbService.isDumb(from.project)) return from
+        val project = from.project
+        if (DumbService.isDumb(project)) return from
 
         when (navigationKind) {
             NavigationKind.CLASS_FILES_TO_SOURCES -> if (!from.containingKtFile.isCompiled) return from
