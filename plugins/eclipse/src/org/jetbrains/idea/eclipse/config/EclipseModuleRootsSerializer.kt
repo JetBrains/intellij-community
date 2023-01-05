@@ -346,7 +346,12 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
       }
       dependencies.add(0, ModuleDependencyItem.InheritedSdkDependency)
     }
-    storeSourceRootsOrder(sourceRoots, contentRootEntity, builder)
+
+    createSourceRootsOrder(sourceRoots, contentRootEntity.entitySource)?.let { sourceRootsOrder ->
+      (sourceRootsOrder as SourceRootOrderEntity.Builder).contentRootEntity = contentRootEntity
+      builder addEntity sourceRootsOrder
+    }
+
     return builder.modifyEntity(moduleEntity) {
       this.dependencies = dependencies
     }

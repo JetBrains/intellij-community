@@ -64,11 +64,9 @@ fun MutableEntityStorage.addSourceRootEntity(contentRoot: ContentRootEntity,
                                              url: VirtualFileUrl,
                                              rootType: @NonNls String,
                                              source: EntitySource): SourceRootEntity {
-  val entity = SourceRootEntity(url, rootType, source) {
+  return this addEntity SourceRootEntity(url, rootType, source) {
     this.contentRoot = contentRoot
   }
-  this.addEntity(entity)
-  return entity
 }
 
 /**
@@ -79,30 +77,24 @@ fun MutableEntityStorage.addSourceRootEntity(contentRoot: ContentRootEntity,
 fun MutableEntityStorage.addJavaSourceRootEntity(sourceRoot: SourceRootEntity,
                                                  generated: Boolean,
                                                  packagePrefix: @NlsSafe String): JavaSourceRootPropertiesEntity {
-  val entity = JavaSourceRootPropertiesEntity(generated, packagePrefix, sourceRoot.entitySource) {
+  return this addEntity JavaSourceRootPropertiesEntity(generated, packagePrefix, sourceRoot.entitySource) {
     this.sourceRoot = sourceRoot
   }
-  this.addEntity(entity)
-  return entity
 }
 
 fun MutableEntityStorage.addJavaResourceRootEntity(sourceRoot: SourceRootEntity,
                                                    generated: Boolean,
                                                    relativeOutputPath: @NlsSafe String): JavaResourceRootPropertiesEntity {
-  val entity = JavaResourceRootPropertiesEntity(generated, relativeOutputPath, sourceRoot.entitySource) {
+  return this addEntity JavaResourceRootPropertiesEntity(generated, relativeOutputPath, sourceRoot.entitySource) {
     this.sourceRoot = sourceRoot
   }
-  this.addEntity(entity)
-  return entity
 }
 
 fun MutableEntityStorage.addCustomSourceRootPropertiesEntity(sourceRoot: SourceRootEntity,
                                                              propertiesXmlTag: @NonNls String): CustomSourceRootPropertiesEntity {
-  val entity = CustomSourceRootPropertiesEntity(propertiesXmlTag, sourceRoot.entitySource) {
+  return this addEntity CustomSourceRootPropertiesEntity(propertiesXmlTag, sourceRoot.entitySource) {
     this.sourceRoot = sourceRoot
   }
-  this.addEntity(entity)
-  return entity
 }
 
 fun MutableEntityStorage.addContentRootEntity(url: VirtualFileUrl,

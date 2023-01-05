@@ -55,6 +55,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                                     internal val externalModuleListSerializer: JpsModuleListSerializer? = null,
                                                     private val externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null)
   : JpsFileEntitiesSerializer<ModuleEntity> {
+
   override val mainEntityClass: Class<ModuleEntity>
     get() = ModuleEntity::class.java
 
@@ -272,8 +273,33 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                                    moduleEntity, contentRotEntitySource)
       }
 
-      loadSourceRoots(contentElement, virtualFileManager, builder, contentRoot, contentRotEntitySource)
-      loadContentRootExcludes(contentElement, virtualFileManager, builder, contentRoot, contentRotEntitySource)
+      // Load SOURCE ROOTS
+      val sourceRoots = loadSourceRoots(contentElement, virtualFileManager, contentRotEntitySource)
+      builder.modifyEntity(contentRoot) {
+        this.sourceRoots = this.sourceRoots + sourceRoots
+      }
+      createSourceRootsOrder(sourceRoots.map { it.url }, contentRotEntitySource)
+        ?.let { sourceRootsOrder ->
+          (sourceRootsOrder as SourceRootOrderEntity.Builder).contentRootEntity = contentRoot
+          builder addEntity sourceRootsOrder
+        }
+
+      // Load EXCLUDES
+      val excludes = loadContentRootExcludes(contentElement, virtualFileManager, contentRotEntitySource)
+      builder.modifyEntity(contentRoot) {
+        this.excludedUrls = this.excludedUrls + excludes
+      }
+      val existingOrder = contentRoot.excludeUrlOrder
+      if (existingOrder != null) {
+        builder.modifyEntity(existingOrder) {
+          this.order.addAll(excludes.map { it.url })
+        }
+      }
+      else {
+        builder addEntity ExcludeUrlOrderEntity(excludes.map { it.url }, contentRoot.entitySource) {
+          this.contentRoot = contentRoot
+        }
+      }
     }
     fun Element.readScope(): ModuleDependencyItem.DependencyScope {
       val attributeValue = getAttributeValue(SCOPE_ATTRIBUTE) ?: return ModuleDependencyItem.DependencyScope.COMPILE
@@ -355,65 +381,61 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   private fun loadContentRootExcludes(
     contentElement: Element,
     virtualFileManager: VirtualFileUrlManager,
-    builder: MutableEntityStorage,
-    contentRootEntity: ContentRootEntity,
     entitySource: EntitySource,
-  ) {
-    val roots = contentElement
+  ): List<ExcludeUrlEntity> {
+    return contentElement
       .getChildren(EXCLUDE_FOLDER_TAG)
       .map { virtualFileManager.fromUrl(it.getAttributeValueStrict(URL_ATTRIBUTE)) }
-      .onEach { exclude ->
-        builder addEntity ExcludeUrlEntity(exclude, entitySource) {
-          this.contentRoot = contentRootEntity
-        }
+      .map { exclude ->
+        ExcludeUrlEntity(exclude, entitySource)
       }
-    val existingOrder = contentRootEntity.excludeUrlOrder
-    if (existingOrder != null) {
-      builder.modifyEntity(existingOrder) {
-        this.order.addAll(roots)
-      }
-    }
-    else {
-      builder addEntity ExcludeUrlOrderEntity(roots, entitySource) {
-        this.contentRoot = contentRootEntity
-      }
-    }
   }
 
-  private fun loadSourceRoots(contentElement: Element,
-                              virtualFileManager: VirtualFileUrlManager,
-                              builder: MutableEntityStorage,
-                              contentRootEntity: ContentRootEntity,
-                              sourceRootSource: EntitySource) {
-    val orderOfItems = mutableListOf<VirtualFileUrl>()
-    for (sourceRootElement in contentElement.getChildren(SOURCE_FOLDER_TAG)) {
-      val url = sourceRootElement.getAttributeValueStrict(URL_ATTRIBUTE)
+  private fun loadSourceRoots(
+    contentElement: Element,
+    virtualFileManager: VirtualFileUrlManager,
+    sourceRootSource: EntitySource,
+  ): List<SourceRootEntity> {
+
+    return contentElement.getChildren(SOURCE_FOLDER_TAG).map { sourceRootElement ->
       val isTestSource = sourceRootElement.getAttributeValue(IS_TEST_SOURCE_ATTRIBUTE)?.toBoolean() == true
       val type = sourceRootElement.getAttributeValue(SOURCE_ROOT_TYPE_ATTRIBUTE)
                  ?: (if (isTestSource) JAVA_TEST_ROOT_TYPE_ID else JAVA_SOURCE_ROOT_TYPE_ID)
-      val virtualFileUrl = virtualFileManager.fromUrl(url)
-      orderOfItems += virtualFileUrl
-      val sourceRoot = builder.addSourceRootEntity(contentRootEntity, virtualFileUrl,
-                                                   type, sourceRootSource)
+
+      val sourceRoot = SourceRootEntity(
+        url = virtualFileManager.fromUrl(sourceRootElement.getAttributeValueStrict(URL_ATTRIBUTE)),
+        rootType = type,
+        entitySource = sourceRootSource
+      )
+
+      // Attach different attribute entities to the source root
       if (type == JAVA_SOURCE_ROOT_TYPE_ID || type == JAVA_TEST_ROOT_TYPE_ID) {
-        builder.addJavaSourceRootEntity(sourceRoot, sourceRootElement.getAttributeValue(IS_GENERATED_ATTRIBUTE)?.toBoolean() ?: false,
-                                        sourceRootElement.getAttributeValue(PACKAGE_PREFIX_ATTRIBUTE) ?: "")
+        val generated = sourceRootElement.getAttributeValue(IS_GENERATED_ATTRIBUTE)?.toBoolean() ?: false
+        val packagePrefix = sourceRootElement.getAttributeValue(PACKAGE_PREFIX_ATTRIBUTE) ?: ""
+        JavaSourceRootPropertiesEntity(generated, packagePrefix, sourceRootSource) {
+          this.sourceRoot = sourceRoot
+        }
       }
       else if (type == JAVA_RESOURCE_ROOT_ID || type == JAVA_TEST_RESOURCE_ROOT_ID) {
-        builder.addJavaResourceRootEntity(sourceRoot, sourceRootElement.getAttributeValue(IS_GENERATED_ATTRIBUTE)?.toBoolean() ?: false,
-                                          sourceRootElement.getAttributeValue(RELATIVE_OUTPUT_PATH_ATTRIBUTE) ?: "")
+        val generated = sourceRootElement.getAttributeValue(IS_GENERATED_ATTRIBUTE)?.toBoolean() ?: false
+        val relativeOutputPath = sourceRootElement.getAttributeValue(RELATIVE_OUTPUT_PATH_ATTRIBUTE) ?: ""
+        JavaResourceRootPropertiesEntity(generated, relativeOutputPath, sourceRootSource) {
+          this.sourceRoot = sourceRoot
+        }
       }
       else {
         val elem = sourceRootElement.clone()
         elem.removeAttribute(URL_ATTRIBUTE)
         elem.removeAttribute(SOURCE_ROOT_TYPE_ATTRIBUTE)
         if (!JDOMUtil.isEmpty(elem)) {
-          builder.addCustomSourceRootPropertiesEntity(sourceRoot, JDOMUtil.write(elem))
+          CustomSourceRootPropertiesEntity(JDOMUtil.write(elem), sourceRoot.entitySource) {
+            this.sourceRoot = sourceRoot
+          }
         }
       }
-    }
 
-    storeSourceRootsOrder(orderOfItems, contentRootEntity, builder)
+      sourceRoot
+    }
   }
 
   private fun loadTestModuleProperty(builder: MutableEntityStorage, moduleEntity: ModuleEntity, reader: JpsFileContentReader,
@@ -865,23 +887,10 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
   override fun toString(): String = "ModuleListSerializerImpl($fileUrl)"
 }
 
-fun storeSourceRootsOrder(orderOfItems: MutableList<VirtualFileUrl>,
-                          contentRootEntity: ContentRootEntity,
-                          builder: MutableEntityStorage) {
-  if (orderOfItems.size > 1) {
-    // Save the order in which sourceRoots appear in the module
-    val orderingEntity = contentRootEntity.sourceRootOrder
-    if (orderingEntity == null) {
-      builder.addEntity(SourceRootOrderEntity(orderOfItems, contentRootEntity.entitySource) {
-        this.contentRootEntity = contentRootEntity
-      })
-    }
-    else {
-      builder.modifyEntity(orderingEntity) {
-        orderOfSourceRoots = orderOfItems
-      }
-    }
-  }
+fun createSourceRootsOrder(orderOfItems: List<VirtualFileUrl>, entitySource: EntitySource): SourceRootOrderEntity? {
+  if (orderOfItems.size <= 1) return null
+
+  return SourceRootOrderEntity(orderOfItems, entitySource)
 }
 
 fun ContentRootEntity.getSourceRootsComparator(): Comparator<SourceRootEntity> {
