@@ -165,7 +165,7 @@ private fun unTar(archive: Path, destination: Path) {
     throw IllegalStateException("Unable to detect root dir of $archive")
   }
 
-  ArchiveUtils.unTar(archive, destination, if (rootDir.startsWith("jbr")) rootDir else null)
+  unTar(archive, destination, if (rootDir.startsWith("jbr")) rootDir else null)
 }
 
 private fun createTarGzInputStream(archive: Path): TarArchiveInputStream {

@@ -4,67 +4,84 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.Decompressor
+import com.intellij.util.io.PosixFilePermissionsUtil
+import java.io.InputStream
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.PathMatcher
+import java.nio.file.attribute.PosixFilePermission
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.isDirectory
 
-object ArchiveUtils {
-  fun tar(archive: Path, rootDir: String, paths: List<String>, buildDateInSeconds: Long) {
-    val normalizedRootDir = rootDir.removeSuffix("/")
-    Compressor.Tar(archive.toFile(), Compressor.Tar.Compression.GZIP).use { compressor ->
-      for (it in paths) {
-        val path = Path.of(it)
-        if (Files.isDirectory(path)) {
-          compressor.addDirectory(normalizedRootDir, path, buildDateInSeconds)
-        }
-        else {
-          compressor.addFile("$normalizedRootDir/${path.fileName}", path, buildDateInSeconds)
-        }
-      }
+fun tar(archive: Path, rootDir: String, directories: List<Path>, executableFileMatchers: List<PathMatcher>, buildDateInSeconds: Long) {
+  val normalizedRootDir = rootDir.removeSuffix("/")
+  FileSystemIndependentTarGzCompressor(archive) { entryName: String, fileSystemMode: Int ->
+    val relativePath = Path.of(entryName.removePrefix(rootDir).removePrefix("/"))
+    if (executableFileMatchers.any { it.matches(relativePath) } ||
+        PosixFilePermission.OWNER_EXECUTE in PosixFilePermissionsUtil.fromUnixMode(fileSystemMode)) {
+      executableFileUnixMode
+    }
+    else 0
+  }.use { compressor ->
+    directories.forEach {
+      require(it.isDirectory())
+      compressor.addDirectory(normalizedRootDir, it, buildDateInSeconds)
     }
   }
+}
 
-  fun unTar(archive: Path, destination: Path, rootDirToBeStripped: String? = null) {
-    if (SystemInfoRt.isWindows) {
-      val decompressor = Decompressor.Tar(archive)
-      if (rootDirToBeStripped != null) {
-        decompressor.removePrefixPath(rootDirToBeStripped)
-      }
-      decompressor.extract(destination)
+private class FileSystemIndependentTarGzCompressor(archive: Path, val mode: (String, Int) -> Int) : Compressor.Tar(archive.toFile(),
+                                                                                                                   Compression.GZIP) {
+  override fun writeFileEntry(name: String,
+                              source: InputStream,
+                              length: Long,
+                              timestamp: Long,
+                              fileSystemMode: Int,
+                              symlinkTarget: String?) {
+    super.writeFileEntry(name, source, length, timestamp, mode(name, fileSystemMode), symlinkTarget)
+  }
+}
+
+fun unTar(archive: Path, destination: Path, rootDirToBeStripped: String? = null) {
+  if (SystemInfoRt.isWindows) {
+    val decompressor = Decompressor.Tar(archive)
+    if (rootDirToBeStripped != null) {
+      decompressor.removePrefixPath(rootDirToBeStripped)
     }
-    else {
-      // 'tar' command is used for performance reasons
-      // both GNU Tar and BSD Tar will suffice
-      Files.createDirectories(destination)
-      val args = ArrayList<String>()
-      args.add("tar")
-      args.add("--extract")
-      args.add("--gzip")
-      args.add("--file=${archive.fileName}")
-      if (rootDirToBeStripped != null) {
-        args.add("--strip")
-        args.add("1")
-      }
-      args.add("--directory")
-      args.add(destination.toString())
-      callProcess(args, archive.parent)
+    decompressor.extract(destination)
+  }
+  else {
+    // 'tar' command is used for performance reasons
+    // both GNU Tar and BSD Tar will suffice
+    Files.createDirectories(destination)
+    val args = ArrayList<String>()
+    args.add("tar")
+    args.add("--extract")
+    args.add("--gzip")
+    args.add("--file=${archive.fileName}")
+    if (rootDirToBeStripped != null) {
+      args.add("--strip")
+      args.add("1")
     }
+    args.add("--directory")
+    args.add(destination.toString())
+    callProcess(args, archive.parent)
+  }
+}
+
+private fun callProcess(args: List<String>, workDir: Path) {
+  val builder = ProcessBuilder(args)
+    .directory(workDir.toFile())
+    .inheritIO()
+  val process = builder.start()
+  if (!process.waitFor(10, TimeUnit.MINUTES)) {
+    process.destroyForcibly().waitFor()
+    throw IllegalStateException("Cannot execute $args: 10 min timeout")
   }
 
-  private fun callProcess(args: List<String>, workDir: Path) {
-    val builder = ProcessBuilder(args)
-      .directory(workDir.toFile())
-      .inheritIO()
-    val process = builder.start()
-    if (!process.waitFor(10, TimeUnit.MINUTES)) {
-      process.destroyForcibly().waitFor()
-      throw IllegalStateException("Cannot execute $args: 10 min timeout")
-    }
-
-    val exitCode = process.exitValue()
-    check(exitCode == 0) {
-      "Cannot execute $args (exitCode=$exitCode)"
-    }
+  val exitCode = process.exitValue()
+  check(exitCode == 0) {
+    "Cannot execute $args (exitCode=$exitCode)"
   }
 }

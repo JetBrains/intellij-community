@@ -19,7 +19,10 @@ import org.jetbrains.intellij.build.impl.BundledRuntimeImpl.Companion.getProduct
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermissions
 import kotlin.io.path.name
 import kotlin.time.Duration.Companion.minutes
@@ -102,7 +105,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
       if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
         val tempTar = Files.createTempDirectory(context.paths.tempDir, "tar-")
         try {
-          ArchiveUtils.unTar(tarGzPath, tempTar)
+          unTar(tarGzPath, tempTar)
           RepairUtilityBuilder.generateManifest(context = context,
                                                 unpackedDistribution = tempTar.resolve(rootDirectoryName),
                                                 os = OsFamily.LINUX,
@@ -148,7 +151,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
   private val rootDirectoryName: String
     get() = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
 
-  private fun buildTarGz(arch: JvmArchitecture, runtimeDir: Path?, unixDistPath: Path, suffix: String): Path {
+  private suspend fun buildTarGz(arch: JvmArchitecture, runtimeDir: Path?, unixDistPath: Path, suffix: String): Path = withContext(Dispatchers.IO) {
     val tarRoot = rootDirectoryName
     val tarName = artifactName(context, suffix)
     val tarPath = context.paths.artifactDir.resolve(tarName)
@@ -167,19 +170,12 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     val executableFilesPatterns = generateExecutableFilesPatterns(runtimeDir != null)
     spanBuilder("build Linux tar.gz")
       .setAttribute("runtimeDir", runtimeDir?.toString() ?: "")
-      .useWithScope {
-        synchronized(context.paths.distAllDir) {
-          // Sync to prevent concurrent context.paths.distAllDir modification and reading from two Linux builders,
-          // otherwise tar building may fail due to FS change (changed attributes) while reading a file
-          for (dir in paths) {
-            updateExecutablePermissions(dir, executableFilesPatterns)
-          }
-          ArchiveUtils.tar(tarPath, tarRoot, paths.map(Path::toString), context.options.buildDateInSeconds)
-        }
+      .useWithScope2 {
+        tar(tarPath, tarRoot, paths, context.options.buildDateInSeconds)
         checkInArchive(tarPath, tarRoot, context)
         context.notifyArtifactBuilt(tarPath)
       }
-    return tarPath
+    tarPath
   }
 
   private suspend fun buildSnapPackage(runtimeDir: Path, unixDistPath: Path, arch: JvmArchitecture) {

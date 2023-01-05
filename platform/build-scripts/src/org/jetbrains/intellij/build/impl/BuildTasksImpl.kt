@@ -46,9 +46,9 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.*
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
-import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.PathMatcher
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.FileTime
@@ -126,7 +126,7 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
                                        os = currentOs,
                                        destinationDir = targetDirectory.resolve("jbr"),
                                        arch = arch)
-      updateExecutablePermissions(targetDirectory, builder.generateExecutableFilesPatterns(true))
+      updateExecutablePermissions(targetDirectory, builder.generateExecutableFilesMatchers(true))
       builder.checkExecutablePermissions(targetDirectory, root = "")
     }
     else {
@@ -273,14 +273,13 @@ private fun findBrandingResource(relativePath: String, context: BuildContext): P
                          "nor in ${context.productProperties.brandingResourcePaths}")
 }
 
-internal fun updateExecutablePermissions(destinationDir: Path, executableFilesPatterns: List<String>) {
+private fun updateExecutablePermissions(destinationDir: Path, executableFilesMatchers: List<PathMatcher>) {
   val executable = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
                               PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_READ,
                               PosixFilePermission.GROUP_EXECUTE, PosixFilePermission.OTHERS_READ,
                               PosixFilePermission.OTHERS_EXECUTE)
   val regular = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
                            PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ)
-  val executableFilesMatchers = executableFilesPatterns.map { FileSystems.getDefault().getPathMatcher("glob:$it") }
   Files.walk(destinationDir).use { stream ->
     for (file in stream) {
       if (Files.isDirectory(file)) {
@@ -959,7 +958,7 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
     targetFile = targetFile,
     executableName = executableName,
     productJson = productJson.encodeToByteArray(),
-    executablePatterns = distResults.flatMap { it.builder.generateExecutableFilesPatterns(includeRuntime = false) },
+    executablePatterns = distResults.flatMap { it.builder.generateExecutableFilesMatchers(includeRuntime = false) },
     distFiles = context.getDistFiles(os = null, arch = null),
     extraFiles = mapOf("dependencies.txt" to dependenciesFile),
     distAllDir = context.paths.distAllDir,
@@ -1026,7 +1025,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
                              targetFile: Path,
                              executableName: String,
                              productJson: ByteArray,
-                             executablePatterns: List<String>,
+                             executablePatterns: List<PathMatcher>,
                              distFiles: Collection<DistFile>,
                              extraFiles: Map<String, Path>,
                              distAllDir: Path,
@@ -1094,12 +1093,9 @@ private fun crossPlatformZip(macX64DistDir: Path,
         }
       }
 
-      val patterns = executablePatterns.map {
-        FileSystems.getDefault().getPathMatcher("glob:$it")
-      }
       val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, _, relativePathString ->
         val relativePath = Path.of(relativePathString)
-        if (patterns.any { it.matches(relativePath) }) {
+        if (executablePatterns.any { it.matches(relativePath) }) {
           entry.unixMode = executableFileUnixMode
         }
       }

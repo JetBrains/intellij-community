@@ -29,13 +29,17 @@ interface OsSpecificDistributionBuilder {
   suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture)
 
   fun generateExecutableFilesPatterns(includeRuntime: Boolean): List<String> = emptyList()
+  fun generateExecutableFilesMatchers(includeRuntime: Boolean): List<PathMatcher> {
+    val fileSystem = FileSystems.getDefault()
+    return generateExecutableFilesPatterns(includeRuntime).map {
+      fileSystem.getPathMatcher("glob:$it")
+    }
+  }
 
   fun checkExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true) {
     TraceManager.spanBuilder("Permissions check for ${distribution.name}").useWithScope {
       val executableFilesPatterns = generateExecutableFilesPatterns(includeRuntime)
-      val patterns = executableFilesPatterns.map {
-        FileSystems.getDefault().getPathMatcher("glob:$it")
-      }
+      val patterns = generateExecutableFilesMatchers(includeRuntime)
       try {
         val entries = when {
           patterns.isEmpty() -> return
