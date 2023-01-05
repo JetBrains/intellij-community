@@ -57,7 +57,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.shareIn
@@ -322,9 +321,9 @@ suspend fun ProducerScope<Unit>.send() = send(Unit)
 internal fun <T> Flow<T>.collectIn(coroutineScope: CoroutineScope, sendChannel: SendChannel<T>) =
     onEach { sendChannel.send(it) }.launchIn(coroutineScope)
 
-internal fun <T> Flow<T>.replayOn(vararg replayFlows: Flow<*>) = channelFlow {
+internal fun <T> Flow<T>.replayOn(replayFlow: Flow<*>) = channelFlow {
     val mutex = Mutex()
     var last: T? = null
     onEach { mutex.withLock { last = it } }.collectIn(this, this)
-    merge(*replayFlows).collect { mutex.withLock { last?.let { send(it) } } }
+    replayFlow.collect { mutex.withLock { last?.let { send(it) } } }
 }
