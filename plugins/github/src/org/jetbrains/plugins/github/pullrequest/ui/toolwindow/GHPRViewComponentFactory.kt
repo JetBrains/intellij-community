@@ -9,8 +9,6 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -21,27 +19,20 @@ import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.ED
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.util.containers.TreeTraversal
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.log.VcsCommitMetadata
-import com.intellij.vcs.log.VcsLogObjectsFactory
-import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.repo.GitRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestFileViewedState
-import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase.Companion.createAndSetupDiffPreview
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
@@ -55,8 +46,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.*
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.*
-import org.jetbrains.plugins.github.pullrequest.ui.getResultFlow
-import org.jetbrains.plugins.github.ui.HtmlInfoPanel
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import javax.swing.JComponent
 import javax.swing.JList
@@ -139,33 +128,15 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   }
 
   fun create(): JComponent {
-    val infoComponent = createInfoComponent()
-
-    val filesComponent = createFilesComponent()
-    val filesCountModel = createFilesCountModel()
-    val notViewedFilesCountModel = createNotViewedFilesCountModel()
-
-    val commitsComponent = createCommitsComponent()
-    val commitsCountModel = createCommitsCountModel()
-
-    val tabs = GHPRViewTabsFactory(project, viewController::viewList, uiDisposable)
-      .create(infoComponent,
-              diffBridge,
-              filesComponent, filesCountModel, notViewedFilesCountModel,
-              commitsComponent, commitsCountModel)
-      .apply {
-        setDataProvider { dataId ->
-          when {
-            GHPRActionKeys.GIT_REPOSITORY.`is`(dataId) -> repository
-            GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> this@GHPRViewComponentFactory.dataProvider
-            DiffRequestChainProducer.DATA_KEY.`is`(dataId) -> diffRequestProducer
-            else -> null
-          }
+    return createInfoComponent().apply {
+      DataManager.registerDataProvider(this) { dataId ->
+        when {
+          GHPRActionKeys.GIT_REPOSITORY.`is`(dataId) -> repository
+          GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> this@GHPRViewComponentFactory.dataProvider
+          DiffRequestChainProducer.DATA_KEY.`is`(dataId) -> diffRequestProducer
+          else -> null
         }
       }
-    val controller = Controller(tabs, filesComponent, commitsComponent)
-    return tabs.component.also {
-      UIUtil.putClientProperty(it, GHPRViewComponentController.KEY, controller)
     }
   }
 
@@ -268,75 +239,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }
   }
 
-  private fun createCommitsComponent(): JComponent {
-    val splitter = OnePixelSplitter(true, "Github.PullRequest.Commits.Component", 0.4f).apply {
-      isOpaque = true
-      background = UIUtil.getListBackground()
-    }.also {
-      reloadChangesAction.registerCustomShortcutSet(it, uiDisposable)
-    }
-
-    val commitSelectionListener = CommitSelectionListener()
-
-    val commitsLoadingPanel = GHLoadingPanelFactory(commitsLoadingModel,
-                                                    null, GithubBundle.message("cannot.load.commits"),
-                                                    changesLoadingErrorHandler)
-      .createWithUpdatesStripe(uiDisposable) { _, model ->
-        val commitsModel = model.map { list ->
-          val logObjectsFactory = project.service<VcsLogObjectsFactory>()
-          list.map { commit ->
-            logObjectsFactory.createCommitMetadata(
-              HashImpl.build(commit.oid),
-              commit.parents.map { HashImpl.build(it.oid) },
-              commit.committer?.date?.time ?: 0L,
-              repository.root,
-              commit.messageHeadline,
-              commit.author?.name ?: "unknown user",
-              commit.author?.email ?: "",
-              commit.messageHeadlineHTML + if (commit.messageBodyHTML.isEmpty()) "" else "\n\n${commit.messageBodyHTML}",
-              commit.committer?.name ?: "unknown user",
-              commit.committer?.email ?: "",
-              commit.author?.date?.time ?: 0L
-            )
-          }
-        }
-
-        CommitsBrowserComponentBuilder(project, commitsModel)
-          .installPopupActions(DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")), "GHPRCommitsPopup")
-          .setEmptyCommitListText(GithubBundle.message("pull.request.does.not.contain.commits"))
-          .onCommitSelected(commitSelectionListener)
-          .create()
-      }
-
-    val changesLoadingPanel = GHLoadingPanelFactory(changesLoadingModel,
-                                                    GithubBundle.message("pull.request.select.commit.to.view.changes"),
-                                                    GithubBundle.message("cannot.load.changes"),
-                                                    changesLoadingErrorHandler)
-      .withContentListener {
-        diffBridge.commitsTree = UIUtil.findComponentOfType(it, ChangesTree::class.java)
-      }
-      .createWithUpdatesStripe(uiDisposable) { parent, model ->
-        val reviewUnsupportedWarning = createReviewUnsupportedPlaque(model)
-        JBUI.Panels.simplePanel(createChangesTree(parent, createCommitChangesModel(model, commitSelectionListener),
-                                                  GithubBundle.message("pull.request.commit.does.not.contain.changes")))
-          .addToTop(reviewUnsupportedWarning)
-          .andTransparent()
-      }.apply {
-        border = IdeBorderFactory.createBorder(SideBorder.TOP)
-      }
-    val toolbar = GHPRChangesTreeFactory.createTreeToolbar(actionManager, changesLoadingPanel)
-    val changesBrowser = BorderLayoutPanel().andTransparent()
-      .addToTop(toolbar)
-      .addToCenter(changesLoadingPanel)
-
-    return splitter.apply {
-      firstComponent = commitsLoadingPanel
-      secondComponent = changesBrowser
-    }
-  }
-
-  private fun createCommitsCountModel(): Flow<Int?> = commitsLoadingModel.getResultFlow().map { it?.size }
-
   private fun createFilesComponent(): JComponent {
     val panel = BorderLayoutPanel().withBackground(UIUtil.getListBackground())
     val changesLoadingPanel = GHLoadingPanelFactory(changesLoadingModel, null,
@@ -360,20 +262,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       }
     val toolbar = GHPRChangesTreeFactory.createTreeToolbar(actionManager, changesLoadingPanel)
     return panel.addToTop(toolbar).addToCenter(changesLoadingPanel)
-  }
-
-  private fun createFilesCountModel(): Flow<Int?> = changesLoadingModel.getResultFlow().map { it?.changes?.size }
-
-  private fun createNotViewedFilesCountModel(): Flow<Int?> =
-    viewedStateLoadingModel.getResultFlow().map { it?.count { (_, state) -> !state.isViewed() } }
-
-  private fun createReviewUnsupportedPlaque(model: SingleValueModel<GHPRChangesProvider>) = HtmlInfoPanel().apply {
-    setInfo(GithubBundle.message("pull.request.review.not.supported.non.linear"), HtmlInfoPanel.Severity.WARNING)
-    border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
-
-    model.addAndInvokeListener {
-      isVisible = !model.value.linearHistory
-    }
   }
 
   private fun createCommitChangesModel(changesModel: SingleValueModel<GHPRChangesProvider>,
