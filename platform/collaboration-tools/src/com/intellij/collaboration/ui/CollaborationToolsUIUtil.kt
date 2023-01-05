@@ -10,10 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.ClientProperty
-import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.ScrollingUtil
-import com.intellij.ui.SearchTextField
+import com.intellij.ui.*
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.content.Content
 import com.intellij.ui.speedSearch.NameFilteringListModel
@@ -170,6 +167,13 @@ object CollaborationToolsUIUtil {
       add(component)
     }
   }
+
+  /**
+   * Use method for different sizes depending on the type of UI (old/new).
+   *
+   * Must be used only as a property: `get()`
+   */
+  fun getSize(oldUI: Int, newUI: Int): Int = if (ExperimentalUI.isNewUI()) newUI else oldUI
 }
 
 @Suppress("FunctionName")

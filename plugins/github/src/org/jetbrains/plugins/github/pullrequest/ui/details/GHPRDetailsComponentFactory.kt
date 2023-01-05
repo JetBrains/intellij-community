@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.panels.HorizontalLayout
 import kotlinx.coroutines.CoroutineScope
@@ -80,17 +80,17 @@ internal object GHPRDetailsComponentFactory {
     }
   }
 
-  private val indentTop get() = if (ExperimentalUI.isNewUI()) 16 else 12
-  private val indentBottom get() = if (ExperimentalUI.isNewUI()) 18 else 15
-  private val indentLeft get() = if (ExperimentalUI.isNewUI()) 17 else 13
-  private val indentRight get() = if (ExperimentalUI.isNewUI()) 13 else 13
+  private val indentTop: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 12, newUI = 16)
+  private val indentBottom: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 15, newUI = 18)
+  private val indentLeft: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 13, newUI = 17)
+  private val indentRight: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 13, newUI = 13)
 
-  private val gapBetweenTitleAndDescription get() = if (ExperimentalUI.isNewUI()) 8 else 8
-  private val gapBetweenDescriptionAndCommits get() = if (ExperimentalUI.isNewUI()) 22 else 18
-  private val gapBetweenCommitsAndCommitInfo get() = if (ExperimentalUI.isNewUI()) 15 else 9
-  private val gapBetweenCommitInfoAndCommitsBrowser get() = if (ExperimentalUI.isNewUI()) 12 else 12
-  private val gapBetweenCheckAndActions get() = if (ExperimentalUI.isNewUI()) 10 else 10
+  private val gapBetweenTitleAndDescription: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 8, newUI = 8)
+  private val gapBetweenDescriptionAndCommits: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 18, newUI = 22)
+  private val gapBetweenCommitsAndCommitInfo: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 9, newUI = 15)
+  private val gapBetweenCommitInfoAndCommitsBrowser: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 12, newUI = 12)
+  private val gapBetweenCheckAndActions: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 10, newUI = 10)
 
-  private val commitInfoMaxHeight get() = if (ExperimentalUI.isNewUI()) 100 else 100
-  private val statusChecksMaxHeight: Int get() = if (ExperimentalUI.isNewUI()) 143 else 143
+  private val commitInfoMaxHeight: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 100, newUI = 100)
+  private val statusChecksMaxHeight: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 143, newUI = 143)
 }
