@@ -10,7 +10,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -20,6 +19,8 @@ public class PageTest {
 
   /** All available CPUs -- except 1 which runs 'main' anyway */
   public static final int THREADS = Runtime.getRuntime().availableProcessors() - 1;
+
+  public static final int ENOUGH_TRIES = 100_000;
 
   @Test
   public void dirtyRegionUpdatesDoesNotMissUpdatesUnderConcurrentExecution() throws Exception {
@@ -48,10 +49,10 @@ public class PageTest {
     final Collection<Callable<Void>> tasks = IntStream.range(0, threadsCount)
       .mapToObj(threadNo -> (Callable<Void>)() -> {
                   //each thread writes blocksPerThread blocks, but starting with own offset, so
-                  // blocks of different threads not overlap
+                  // blocks of different threads do not overlap
                   for (int blockNo = 0; blockNo < blocksPerThread; blockNo++) {
-                    final int offset = ((blockNo * threadsCount) + threadNo) * blockSize;
-                    page.write(offset, blockSize,
+                    final int offsetOnPage = ((blockNo * threadsCount) + threadNo) * blockSize;
+                    page.write(offsetOnPage, blockSize,
                                pageBuffer -> pageBuffer.put(block));
                   }
                   return null;
@@ -61,7 +62,7 @@ public class PageTest {
 
     final ExecutorService pool = Executors.newFixedThreadPool(threadsCount);
     try {
-      for (int turn = 0; turn < 100_000; turn++) {
+      for (int turn = 0; turn < ENOUGH_TRIES; turn++) {
         final List<Future<Void>> futures = ContainerUtil.map(tasks, pool::submit);
         do {
           page.flush();
@@ -118,7 +119,7 @@ public class PageTest {
         flushingTasks.add(flushingTask);
       }
 
-      for (int turn = 0; turn < 100_000; turn++) {
+      for (int turn = 0; turn < ENOUGH_TRIES; turn++) {
         page.putLong(0, Long.MAX_VALUE);    //make the page dirty
 
         final List<Future<Void>> futures = pool.invokeAll(flushingTasks);
@@ -148,6 +149,9 @@ public class PageTest {
   }
 
 
+
+  // =================== infrastructure: ============================================================================ //
+
   private static byte[] generateRandomByteArray(final int length) {
     final byte[] array = new byte[length];
     for (int i = 0; i < array.length; i++) {
@@ -158,12 +162,10 @@ public class PageTest {
 
   private static class DirtyStatusCounter extends PageStorageHandleHelper {
     private final AtomicInteger dirtyPagesCount = new AtomicInteger(0);
-    private final AtomicReference<Thread> cleaningThread = new AtomicReference<>();
 
     @Override
     public void pageBecomeDirty() {
       final int dirtyPages = dirtyPagesCount.incrementAndGet();
-      cleaningThread.set(null);
       if (dirtyPages != 1) {
         throw new AssertionError("Should be only one dirty page: " + dirtyPages);
       }
@@ -172,7 +174,6 @@ public class PageTest {
     @Override
     public void pageBecomeClean() {
       final int dirtyPages = dirtyPagesCount.decrementAndGet();
-      cleaningThread.set(Thread.currentThread());
       if (dirtyPages != 0) {
         throw new AssertionError("Should be 0 dirty pages: " + dirtyPages);
       }
