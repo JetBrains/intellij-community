@@ -83,6 +83,11 @@ public class PyRefactoringProvider extends RefactoringSupportProvider {
     return false;
   }
 
+  @Override
+  public boolean isMemberInplaceRenameAvailable(@NotNull PsiElement element, @Nullable PsiElement context) {
+    return true;
+  }
+
   @Nullable
   @Override
   public ChangeSignatureHandler getChangeSignatureHandler() {
