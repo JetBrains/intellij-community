@@ -42,6 +42,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,6 +85,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     myModel = new CoverageTableModel(suitesBundle, stateBean, project, myTreeStructure);
     Disposer.register(this, myModel);
     myTable = new JBTreeTable(myModel);
+    TreeUtil.expand(myTable.getTree(), 2);
     myTable.getTree().setCellRenderer(new NodeRenderer() {
       @Override
       protected @NotNull SimpleTextAttributes getSimpleTextAttributes(@NotNull PresentationData presentation,
