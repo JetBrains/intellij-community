@@ -1,4 +1,3 @@
-// IGNORE_FIR
 package test
 
 annotation class Annotation(val name: String)

@@ -312,6 +312,11 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 runTest("../completion/testData/basic/common/boldOrGrayed/AfterNullable.kt");
             }
 
+            @TestMetadata("AfterNullable2.kt")
+            public void testAfterNullable2() throws Exception {
+                runTest("../completion/testData/basic/common/boldOrGrayed/AfterNullable2.kt");
+            }
+
             @TestMetadata("AfterNullableAutoCast.kt")
             public void testAfterNullableAutoCast() throws Exception {
                 runTest("../completion/testData/basic/common/boldOrGrayed/AfterNullableAutoCast.kt");
