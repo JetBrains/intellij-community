@@ -689,17 +689,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
-    add(checkFeature(statement, HighlightingFeature.FOR_EACH));
-    if (!myHolder.hasErrorResults()) {
-      PsiForeachDeclarationElement iterationDeclaration = statement.getIterationDeclaration();
-      if (iterationDeclaration instanceof PsiPattern) {
-        add(checkFeature(iterationDeclaration, HighlightingFeature.RECORD_PATTERNS_IN_FOR_EACH));
-      }
-    }
-  }
-
-  @Override
   public void visitImportStaticStatement(@NotNull PsiImportStaticStatement statement) {
     add(checkFeature(statement, HighlightingFeature.STATIC_IMPORTS));
     if (!myHolder.hasErrorResults()) add(ImportsHighlightUtil.checkStaticOnDemandImportResolvesToClass(statement));
@@ -1095,7 +1084,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!myHolder.hasErrorResults()) GenericsHighlightUtil.checkCatchParameterIsClass(parameter, myHolder);
       if (!myHolder.hasErrorResults()) HighlightUtil.checkCatchTypeIsDisjoint(parameter, myHolder);
     }
-    else if (parent instanceof PsiForeachStatement) {
+    else if (parent instanceof PsiForeachStatement forEach) {
+      add(checkFeature(forEach, HighlightingFeature.FOR_EACH));
       if (!myHolder.hasErrorResults()) add(GenericsHighlightUtil.checkForEachParameterType((PsiForeachStatement)parent, parameter));
     }
   }
@@ -1990,18 +1980,21 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (myHolder.hasErrorResults()) return;
     PsiElement parent = deconstructionPattern.getParent();
     if (parent instanceof PsiForeachStatement forEach) {
-      PsiTypeElement typeElement = JavaPsiPatternUtil.getPatternTypeElement(deconstructionPattern);
-      if (typeElement == null) return;
-      PsiType patternType = typeElement.getType();
-      PsiExpression iteratedValue = forEach.getIteratedValue();
-      PsiType itemType = iteratedValue == null ? null : JavaGenericsUtil.getCollectionItemType(iteratedValue);
-      if (itemType == null) return;
-      checkForEachPatternApplicable(deconstructionPattern, patternType, itemType);
+      add(checkFeature(deconstructionPattern, HighlightingFeature.RECORD_PATTERNS_IN_FOR_EACH));
       if (!myHolder.hasErrorResults()) {
-        if (!PatternsInSwitchBlockHighlightingModel.checkRecordExhaustiveness(Collections.singletonList(deconstructionPattern))) {
-          String description = JavaErrorBundle.message("pattern.is.not.exhaustive", JavaHighlightUtil.formatType(patternType),
-                                                       JavaHighlightUtil.formatType(itemType));
-          add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(deconstructionPattern).descriptionAndTooltip(description));
+        PsiTypeElement typeElement = JavaPsiPatternUtil.getPatternTypeElement(deconstructionPattern);
+        if (typeElement == null) return;
+        PsiType patternType = typeElement.getType();
+        PsiExpression iteratedValue = forEach.getIteratedValue();
+        PsiType itemType = iteratedValue == null ? null : JavaGenericsUtil.getCollectionItemType(iteratedValue);
+        if (itemType == null) return;
+        checkForEachPatternApplicable(deconstructionPattern, patternType, itemType);
+        if (!myHolder.hasErrorResults()) {
+          if (!PatternsInSwitchBlockHighlightingModel.checkRecordExhaustiveness(Collections.singletonList(deconstructionPattern))) {
+            String description = JavaErrorBundle.message("pattern.is.not.exhaustive", JavaHighlightUtil.formatType(patternType),
+                                                         JavaHighlightUtil.formatType(itemType));
+            add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(deconstructionPattern).descriptionAndTooltip(description));
+          }
         }
       }
     }
