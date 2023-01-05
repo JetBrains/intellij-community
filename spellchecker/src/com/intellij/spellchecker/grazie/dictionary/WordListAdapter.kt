@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.grazie.dictionary
 
 import ai.grazie.nlp.similarity.Levenshtein
@@ -26,6 +26,9 @@ internal class WordListAdapter : WordList, EditableWordListAdapter() {
     val result = LinkedHashSet<String>()
     for (dictionary in dictionaries.values) {
       dictionary.consumeSuggestions(word) {
+        if (it.isEmpty()) {
+          return@consumeSuggestions
+        }
         val distance = Levenshtein.distance(word, it, SimpleWordList.MAX_LEVENSHTEIN_DISTANCE + 1)
         if (distance <= SimpleWordList.MAX_LEVENSHTEIN_DISTANCE) {
           result.add(it)
@@ -34,6 +37,7 @@ internal class WordListAdapter : WordList, EditableWordListAdapter() {
     }
 
     result.addAll(aggregator.suggest(word))
+    result.remove("")
     return result
   }
 }
