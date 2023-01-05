@@ -3,13 +3,13 @@ package org.jetbrains.idea.maven.wizards.archetype
 
 import com.intellij.openapi.ui.validation.validationErrorFor
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import java.net.URL
 import kotlin.io.path.Path
+import kotlin.io.path.exists
 import kotlin.io.path.name
 
 

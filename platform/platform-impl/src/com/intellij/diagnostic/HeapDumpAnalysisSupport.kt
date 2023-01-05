@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
-import com.intellij.util.io.exists
 import java.awt.Component
 import java.io.File
 import java.io.FileOutputStream
@@ -22,6 +21,7 @@ import java.io.OutputStreamWriter
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.exists
 
 open class HeapDumpAnalysisSupport {
   companion object {

@@ -72,7 +72,6 @@ import com.intellij.util.Restarter
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -81,10 +80,14 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.InvalidPathException
+import java.nio.file.LinkOption
+import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
+import kotlin.io.path.exists
 
 @Suppress("OVERRIDE_DEPRECATION")
 @Internal

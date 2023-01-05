@@ -13,7 +13,6 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.util.io.exists
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
@@ -23,6 +22,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.exists
 
 class RepositoryLibraryTest {
   companion object {

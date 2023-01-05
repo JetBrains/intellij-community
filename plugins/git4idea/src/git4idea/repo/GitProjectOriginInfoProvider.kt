@@ -3,8 +3,8 @@ package git4idea.repo
 
 import com.intellij.ide.impl.ProjectOriginInfoProvider
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.io.exists
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 class GitProjectOriginInfoProvider : ProjectOriginInfoProvider {
   override fun getOriginUrl(projectDir: Path): String? {

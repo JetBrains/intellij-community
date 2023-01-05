@@ -7,7 +7,9 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.util.onTerminationOrNow
-import com.intellij.util.io.*
+import com.intellij.util.io.inputStream
+import com.intellij.util.io.isFile
+import com.intellij.util.io.size
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.Signal
 import com.sun.net.httpserver.HttpHandler
@@ -18,7 +20,6 @@ import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 import kotlin.io.path.*
 
 // If you want to provide a custom url:

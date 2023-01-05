@@ -54,13 +54,13 @@ import java.io.IOException
 import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.FileTime
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.*
+import kotlin.io.path.exists
 import kotlin.math.min
 
 @ApiStatus.Experimental

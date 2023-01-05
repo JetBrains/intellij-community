@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.util.io.exists
 import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.JpsPluginSettings
@@ -26,6 +25,7 @@ import org.jetbrains.kotlin.config.toKotlinVersion
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import java.nio.file.Path
 import kotlin.io.path.bufferedReader
+import kotlin.io.path.exists
 
 @State(name = KOTLIN_JPS_PLUGIN_SETTINGS_SECTION, storages = [(Storage(SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE))])
 class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<JpsPluginSettings>(project) {

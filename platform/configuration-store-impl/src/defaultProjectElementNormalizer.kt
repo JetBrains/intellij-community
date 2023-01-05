@@ -10,13 +10,13 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
-import com.intellij.util.io.exists
 import com.intellij.util.io.outputStream
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.nio.file.Path
 import kotlin.collections.component1
 import kotlin.collections.component2
+import kotlin.io.path.exists
 
 internal fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, projectConfigDir: Path) {
   // first, process all known in advance components, because later all not known component names will be moved to misc.xml

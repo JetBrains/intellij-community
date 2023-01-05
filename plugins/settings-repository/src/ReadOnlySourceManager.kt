@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.AtomicClearableLazyValue
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.mapSmartNotNull
-import com.intellij.util.io.exists
 import kotlinx.coroutines.ensureActive
 import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.diff.DiffFormatter
@@ -15,6 +14,7 @@ import org.eclipse.jgit.util.io.DisabledOutputStream
 import org.jetbrains.settingsRepository.git.*
 import java.nio.file.Path
 import kotlin.coroutines.coroutineContext
+import kotlin.io.path.exists
 
 class ReadOnlySourceManager(private val icsManager: IcsManager, val rootDir: Path) {
   private val repositoryList = object : AtomicClearableLazyValue<List<Repository>>() {

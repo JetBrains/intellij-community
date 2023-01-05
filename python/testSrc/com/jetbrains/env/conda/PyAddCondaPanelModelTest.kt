@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressSink
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ProjectRule
-import com.intellij.util.io.exists
 import com.jetbrains.getPythonVersion
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.LanguageLevel
@@ -28,6 +27,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 
 @RunWith(Parameterized::class)

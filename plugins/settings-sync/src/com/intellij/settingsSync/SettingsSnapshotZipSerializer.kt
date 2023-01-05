@@ -17,6 +17,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.stream.Collectors
 import kotlin.io.path.div
+import kotlin.io.path.exists
 import kotlin.io.path.name
 
 internal object SettingsSnapshotZipSerializer {

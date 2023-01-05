@@ -6,12 +6,12 @@ package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.exists
 import org.jetbrains.kotlin.konan.file.unzipTo
 import java.io.File
 import java.io.FileInputStream
 import java.nio.file.Paths
 import java.util.*
+import kotlin.io.path.exists
 
 object KotlinNativeVersion {
     /** This field is automatically setup from project-module-updater.

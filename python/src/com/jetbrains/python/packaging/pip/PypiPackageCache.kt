@@ -8,7 +8,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.io.SafeFileOutputStream
-import com.intellij.util.io.exists
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.packaging.common.PythonRankingAwarePackageNameComparator
@@ -22,6 +21,7 @@ import java.nio.file.Paths
 import java.time.Duration
 import java.time.Instant
 import java.util.*
+import kotlin.io.path.exists
 
 @ApiStatus.Experimental
 @Service

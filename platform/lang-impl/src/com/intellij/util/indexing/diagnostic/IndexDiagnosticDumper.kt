@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -21,16 +21,16 @@ import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.jacksonM
 import com.intellij.util.indexing.diagnostic.dto.*
 import com.intellij.util.indexing.diagnostic.presentation.createAggregateHtml
 import com.intellij.util.indexing.diagnostic.presentation.generateHtml
-import com.intellij.util.io.*
+import com.intellij.util.io.createDirectories
+import com.intellij.util.io.delete
+import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.io.sizeOrNull
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.bufferedReader
-import kotlin.io.path.bufferedWriter
-import kotlin.io.path.extension
-import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.*
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.streams.asSequence

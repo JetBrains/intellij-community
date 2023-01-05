@@ -10,11 +10,11 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemPr
 import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
-import com.intellij.util.io.exists
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.exists
 
 /**
  * For now, relies on projects exposing and properly configuring the

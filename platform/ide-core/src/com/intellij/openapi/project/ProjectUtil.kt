@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.text.trimMiddle
@@ -37,6 +36,7 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.*
 import javax.swing.JComponent
+import kotlin.io.path.exists
 
 val NOTIFICATIONS_SILENT_MODE = Key.create<Boolean>("NOTIFICATIONS_SILENT_MODE")
 

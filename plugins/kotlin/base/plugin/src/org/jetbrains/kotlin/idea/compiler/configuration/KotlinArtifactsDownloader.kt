@@ -7,7 +7,6 @@ import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.util.io.exists
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -34,6 +33,7 @@ import java.io.InputStream
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.io.path.exists
 
 object KotlinArtifactsDownloader {
     fun getUnpackedKotlinDistPath(version: String): File =

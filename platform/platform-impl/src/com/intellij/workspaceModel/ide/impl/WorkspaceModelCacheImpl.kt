@@ -10,7 +10,6 @@ import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.openapi.project.projectsDataDir
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.SingleAlarm
-import com.intellij.util.io.exists
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.EntityStorageSnapshot
@@ -23,6 +22,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.exists
 
 @ApiStatus.Internal
 class WorkspaceModelCacheImpl(private val project: Project) : AbstractWorkspaceModelCache(WorkspaceModelCacheImpl::collectExternalCacheVersions),

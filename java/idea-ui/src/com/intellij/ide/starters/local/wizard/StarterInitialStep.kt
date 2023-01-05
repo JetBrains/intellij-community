@@ -20,7 +20,6 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
-import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil.invokeLaterIfNeeded
 import org.jdom.Element
@@ -30,6 +29,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
+import kotlin.io.path.exists
 
 open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonStarterInitialStep(
   contextProvider.wizardContext,

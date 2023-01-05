@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.gradle.newTests.testServices
 
 import com.intellij.testFramework.TestDataPath
-import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.test.TestMetadata
@@ -11,6 +10,7 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.junit.runner.Description
 import java.io.File
 import kotlin.io.path.Path
+import kotlin.io.path.exists
 
 /**
  * This service provides discovery of test-related folders.

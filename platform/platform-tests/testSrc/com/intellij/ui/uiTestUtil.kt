@@ -21,7 +21,6 @@ import com.intellij.ui.scale.TestScaleHelper
 import com.intellij.ui.scale.paint.ImageComparator
 import com.intellij.util.SVGLoader
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
@@ -41,6 +40,7 @@ import javax.swing.AbstractButton
 import javax.swing.JLabel
 import javax.swing.UIManager
 import javax.swing.plaf.metal.MetalLookAndFeel
+import kotlin.io.path.exists
 
 internal val isUpdateSnapshotsGlobal by lazy { SystemProperties.getBooleanProperty("test.update.snapshots", false) }
 

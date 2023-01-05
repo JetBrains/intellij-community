@@ -17,13 +17,13 @@ import com.intellij.util.Function
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import com.intellij.util.text.trimMiddle
 import com.intellij.util.ui.table.TableModelEditor
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.settingsRepository.git.cloneBare
 import org.jetbrains.settingsRepository.git.progressMonitor
+import kotlin.io.path.exists
 import kotlin.properties.Delegates.notNull
 
 private val COLUMNS = arrayOf(object : TableModelEditor.EditableColumnInfo<ReadonlySource, Boolean>() {

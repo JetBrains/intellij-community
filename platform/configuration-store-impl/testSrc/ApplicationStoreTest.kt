@@ -12,7 +12,6 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.io.exists
 import com.intellij.util.io.lastModified
 import com.intellij.util.io.write
 import com.intellij.util.io.writeChild
@@ -32,6 +31,7 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.exists
 import kotlin.properties.Delegates
 
 internal class ApplicationStoreTest {

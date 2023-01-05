@@ -9,8 +9,6 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.ThrowableRunnable
-import com.intellij.util.io.exists
-import org.jetbrains.kotlin.idea.checkers.API_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.checkers.diagnostics.factories.DebugInfoDiagnosticFactory0
 import org.jetbrains.kotlin.checkers.diagnostics.factories.SyntaxErrorDiagnosticFactory
 import org.jetbrains.kotlin.checkers.utils.CheckerTestUtil
@@ -21,22 +19,20 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.KotlinMultiplatformAnalysisModeComponent
-import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromTextFile
+import org.jetbrains.kotlin.idea.checkers.API_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.codeMetaInfo.AbstractDiagnosticCodeMetaInfoTest
+import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromTextFile
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.allKotlinFiles
-import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.Directives
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Paths
 import java.util.regex.Pattern
+import kotlin.io.path.exists
 
 abstract class AbstractMultiModuleIdeResolveTest : AbstractMultiModuleTest() {
     fun doTest(testDataPath: String) {

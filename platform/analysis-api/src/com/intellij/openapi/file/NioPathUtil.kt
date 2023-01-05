@@ -1,19 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("MemberVisibilityCanBePrivate", "unused")
 
 package com.intellij.openapi.file
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.file.CanonicalPathUtil.getAbsoluteNioPath
 import com.intellij.openapi.file.CanonicalPathUtil.getAbsolutePath
 import com.intellij.openapi.file.CanonicalPathUtil.getRelativeNioPath
 import com.intellij.openapi.file.CanonicalPathUtil.getRelativePath
 import com.intellij.openapi.file.CanonicalPathUtil.isAncestor
 import com.intellij.openapi.file.system.NioPathSystemUtil
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.writeText
 
 @ApiStatus.Experimental

@@ -11,7 +11,6 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.projectModel.ProjectModelBundle
-import com.intellij.util.io.exists
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
@@ -32,7 +31,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.StringReader
 import java.nio.file.Path
 import java.util.*
-import kotlin.collections.HashMap
+import kotlin.io.path.exists
 
 internal const val DEPRECATED_MODULE_MANAGER_COMPONENT_NAME = "DeprecatedModuleOptionManager"
 internal const val TEST_MODULE_PROPERTIES_COMPONENT_NAME = "TestModuleProperties"

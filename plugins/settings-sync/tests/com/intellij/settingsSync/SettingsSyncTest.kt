@@ -17,7 +17,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.config.EDITOR_FONT_SUBCATEGORY_ID
 import com.intellij.testFramework.replaceService
-import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Attribute
@@ -33,6 +32,7 @@ import java.nio.file.Path
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
 import kotlin.io.path.div
+import kotlin.io.path.exists
 
 @RunWith(JUnit4::class)
 internal class SettingsSyncTest : SettingsSyncTestBase() {

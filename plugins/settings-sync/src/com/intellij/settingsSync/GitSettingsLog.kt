@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.util.io.createFile
-import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import kotlinx.serialization.decodeFromString
@@ -26,6 +25,7 @@ import java.nio.file.Path
 import java.time.Instant
 import java.util.regex.Pattern
 import kotlin.io.path.div
+import kotlin.io.path.exists
 
 internal class GitSettingsLog(private val settingsSyncStorage: Path,
                               private val rootConfigPath: Path,

@@ -4,7 +4,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstalledDependency
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
@@ -15,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
+import kotlin.io.path.exists
 
 internal class PackageSearchProjectCachesService(project: Project) {
 

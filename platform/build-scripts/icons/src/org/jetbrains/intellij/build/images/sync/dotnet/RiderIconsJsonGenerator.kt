@@ -2,9 +2,9 @@ package org.jetbrains.intellij.build.images.sync.dotnet
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
-import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.name
 import kotlin.io.path.relativeTo
 import kotlin.io.path.writeText

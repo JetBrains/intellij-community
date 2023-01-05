@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -8,7 +8,10 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.*
+import com.intellij.util.io.basicAttributesIfExists
+import com.intellij.util.io.inputStream
+import com.intellij.util.io.lastModified
+import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.storage.*
@@ -21,6 +24,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.exists
 
 @ApiStatus.Internal
 abstract class AbstractWorkspaceModelCache(cacheVersionsContributor: () -> Map<String, String> = { emptyMap() }) {

@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.*
 import com.intellij.util.Consumer
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
 import training.lang.LangManager
 import training.lang.LangSupport
@@ -36,6 +35,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
+import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.name
 

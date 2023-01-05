@@ -10,7 +10,6 @@ import com.intellij.testFramework.common.runAllCatching
 import com.intellij.util.SmartList
 import com.intellij.util.io.Ksuid
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
 import org.jetbrains.annotations.ApiStatus
 import org.junit.jupiter.api.extension.AfterEachCallback
@@ -24,6 +23,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.function.Predicate
+import kotlin.io.path.exists
 import kotlin.properties.Delegates
 
 /**

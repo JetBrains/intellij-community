@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace
 
 import com.fasterxml.jackson.core.type.TypeReference
@@ -43,6 +43,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
+import kotlin.io.path.exists
 
 private val LOG = logger<MarketplaceRequests>()
 private const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"

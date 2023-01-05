@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.build.BuildProgressListener;
@@ -76,6 +76,7 @@ import org.jetbrains.idea.maven.utils.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -359,7 +360,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     if (tryToLoadExisting) {
       Path file = getProjectsTreeFile();
       try {
-        if (PathKt.exists(file)) {
+        if (Files.exists(file)) {
           myProjectsTree = MavenProjectsTree.read(myProject, file);
         }
       }

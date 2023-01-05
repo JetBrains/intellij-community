@@ -6,7 +6,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.util.io.exists
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
@@ -20,10 +19,7 @@ import java.io.FileNotFoundException
 import java.lang.reflect.Modifier
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.extension
-import kotlin.io.path.nameWithoutExtension
-import kotlin.io.path.writeText
+import kotlin.io.path.*
 
 abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFixtureTestCase() {
     protected abstract val pluginKind: KotlinPluginKind

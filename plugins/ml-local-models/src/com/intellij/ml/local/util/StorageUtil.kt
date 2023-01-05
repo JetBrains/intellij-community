@@ -5,9 +5,13 @@ import com.intellij.lang.Language
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.io.*
+import com.intellij.util.io.PersistentHashMap
+import com.intellij.util.io.createDirectories
+import com.intellij.util.io.delete
+import com.intellij.util.io.readText
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.writeText
 
 object StorageUtil {

@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.project.Project
-import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.isFile
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
@@ -14,6 +13,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import kotlin.io.path.exists
 
 const val USER_HOME = "user.home"
 const val GRADLE_CACHE_DIR_NAME = ".gradle"
