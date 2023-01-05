@@ -297,7 +297,7 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
         }
 
         fun compileSingleFile(ktFile: KtFile, initialConfiguration: CompilerConfiguration): GenerationState? {
-            return KotlinCompilerIde(ktFile, initialConfiguration, ClassBuilderFactories.TEST).compile()
+            return KotlinCompilerIde(ktFile, initialConfiguration, ClassBuilderFactories.TEST, shouldStubUnboundIrSymbols = true).compile()
         }
 
         private fun mapLines(text: String, startLine: Int, endLine: Int): Pair<Int, Int> {

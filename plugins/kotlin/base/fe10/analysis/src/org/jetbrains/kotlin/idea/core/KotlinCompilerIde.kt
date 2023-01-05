@@ -3,8 +3,7 @@ package org.jetbrains.kotlin.idea.core
 
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
-import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
-import org.jetbrains.kotlin.backend.jvm.jvmPhases
+import org.jetbrains.kotlin.backend.jvm.*
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.ClassBuilderFactory
 import org.jetbrains.kotlin.codegen.DefaultCodegenFactory
@@ -14,24 +13,35 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.load.kotlin.toSourceElement
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.source.PsiSourceFile
+import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 import java.io.File
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
+/**
+ * @param shouldStubUnboundIrSymbols Whether unbound IR symbols should be stubbed instead of linked. This should be enabled if the [file]
+ * could refer to symbols defined in another file of the same module. Such symbols are not compiled by [KotlinCompilerIde] (only [file]
+ * itself is compiled) and cannot be linked from a dependency. [shouldStubUnboundIrSymbols] only has an effect if [JVMConfigurationKeys.IR]
+ * is set to `true` in [initialConfiguration].
+ */
 class KotlinCompilerIde(
     private val file: KtFile,
     private val initialConfiguration: CompilerConfiguration = getDefaultCompilerConfiguration(file),
     private val factory: ClassBuilderFactory = ClassBuilderFactories.BINARIES,
     private val resolutionFacadeProvider: (KtFile) -> ResolutionFacade? = { file.getResolutionFacade() },
-    private val classFilesOnly: Boolean = false
+    private val classFilesOnly: Boolean = false,
+    private val shouldStubUnboundIrSymbols: Boolean = false,
 ) {
     companion object {
         private fun getDefaultCompilerConfiguration(file: KtFile): CompilerConfiguration {
@@ -128,7 +138,7 @@ class KotlinCompilerIde(
         }
 
         val codegenFactory = when {
-            configuration.getBoolean(JVMConfigurationKeys.IR) -> JvmIrCodegenFactory(configuration, PhaseConfig(jvmPhases))
+            configuration.getBoolean(JVMConfigurationKeys.IR) -> createJvmIrCodegenFactory(configuration)
             else -> DefaultCodegenFactory
         }
 
@@ -139,6 +149,31 @@ class KotlinCompilerIde(
 
         KotlinCodegenFacade.compileCorrectFiles(state)
         return state
+    }
+
+    /**
+     * Creates a [JvmIrCodegenFactory] that stubs unbound symbols if [shouldStubUnboundIrSymbols] is enabled.
+     */
+    private fun createJvmIrCodegenFactory(compilerConfiguration: CompilerConfiguration): JvmIrCodegenFactory {
+        val jvmGeneratorExtensions = if (shouldStubUnboundIrSymbols) {
+            object : JvmGeneratorExtensionsImpl(compilerConfiguration) {
+                override fun getContainerSource(descriptor: DeclarationDescriptor): DeserializedContainerSource? {
+                    // Stubbed top-level function IR symbols (from other source files in the module) require a parent facade class to be
+                    // generated, which requires a container source to be provided. Without a facade class, function IR symbols will have
+                    // an `IrExternalPackageFragment` parent, which trips up code generation during IR lowering.
+                    val psiSourceFile =
+                        descriptor.toSourceElement.containingFile as? PsiSourceFile ?: return super.getContainerSource(descriptor)
+                    return FacadeClassSourceShimForFragmentCompilation(psiSourceFile)
+                }
+            }
+        } else JvmGeneratorExtensionsImpl(compilerConfiguration)
+
+        return JvmIrCodegenFactory(
+            compilerConfiguration,
+            PhaseConfig(jvmPhases),
+            jvmGeneratorExtensions = jvmGeneratorExtensions,
+            shouldStubAndNotLinkUnboundSymbols = shouldStubUnboundIrSymbols,
+        )
     }
 
     private fun getFiles(state: GenerationState): List<OutputFile> {
