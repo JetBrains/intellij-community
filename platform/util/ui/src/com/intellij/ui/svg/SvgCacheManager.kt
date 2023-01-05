@@ -4,11 +4,15 @@
 package com.intellij.ui.svg
 
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.mvstore.openOrRecreateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.ImageLoader
-import org.h2.mvstore.*
+import org.h2.mvstore.DataUtils
+import org.h2.mvstore.MVMap
+import org.h2.mvstore.MVStore
+import org.h2.mvstore.WriteBuffer
 import org.h2.mvstore.type.BasicDataType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.xxh3.Xxh3
@@ -17,7 +21,6 @@ import java.awt.Image
 import java.awt.Point
 import java.awt.image.*
 import java.nio.ByteBuffer
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -48,30 +51,11 @@ class SvgCacheManager(dbFile: Path) {
   private val mapBuilder: MVMap.Builder<LongArray, ImageValue>
 
   init {
-    val storeErrorHandler = StoreErrorHandler(dbFile)
-    store = try {
-      openStore(dbFile, storeErrorHandler)
-    }
-    catch (e: MVStoreException) {
-      LOG.warn("Icon cache will be recreated or previous version of data reused, (db=$dbFile)", e)
-      Files.deleteIfExists(dbFile)
-      openStore(dbFile, storeErrorHandler)
-    }
-    storeErrorHandler.isStoreOpened = true
+    store = openOrRecreateStore(dbFile) { LOG }
     val mapBuilder = MVMap.Builder<LongArray, ImageValue>()
     mapBuilder.keyType(ImageKeyDescriptor)
     mapBuilder.valueType(ImageValueExternalizer)
     this.mapBuilder = mapBuilder
-  }
-
-  @Throws(MVStoreException::class)
-  private fun openStore(dbFile: Path, storeErrorHandler: StoreErrorHandler): MVStore {
-    return MVStore.Builder()
-      .fileName(dbFile.toString())
-      .backgroundExceptionHandler(storeErrorHandler)
-      // avoid extra thread - IconDbMaintainer uses coroutines
-      .autoCommitDisabled()
-      .open()
   }
 
   fun close() {
@@ -241,21 +225,6 @@ private object ImageValueExternalizer : BasicDataType<ImageValue>() {
 }
 
 private class ImageValue(@JvmField val data: IntArray, @JvmField val w: Int, @JvmField val h: Int)
-
-private class StoreErrorHandler(private val dbFile: Path) : Thread.UncaughtExceptionHandler {
-  var isStoreOpened = false
-
-  override fun uncaughtException(t: Thread, e: Throwable) {
-    val log = LOG
-    if (isStoreOpened) {
-      log.error("Icon cache error (db=$dbFile)")
-    }
-    else {
-      log.warn("Icon cache will be recreated or previous version of data reused, (db=$dbFile)")
-    }
-    log.debug(e)
-  }
-}
 
 private fun <K, V> getMap(mapper: SvgCacheMapper,
                           classifierToMap: MutableMap<Float, MVMap<K, V>>,

@@ -50,10 +50,15 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
                           @NotNull Set<VirtualFile> roots,
                           @Nullable StorageLockContext storageLockContext,
                           @NotNull VcsLogErrorHandler errorHandler,
+                          @NotNull VcsLogStore store,
                           @NotNull Disposable disposableParent) throws IOException {
-    super(storageId, PATHS, new PathIndexer(storage, createPathsEnumerator(roots, storageId, storageLockContext),
-                                            createRenamesMap(storageId, storageLockContext)),
-          new ChangeKindListKeyDescriptor(), storageLockContext, errorHandler, disposableParent);
+    super(storageId,
+          PATHS,
+          new PathIndexer(storage, createPathsEnumerator(roots, storageId, storageLockContext), store),
+          new ChangeKindListKeyDescriptor(),
+          storageLockContext,
+          errorHandler,
+          disposableParent);
 
     myPathsIndexer = (PathIndexer)myIndexer;
     myPathsIndexer.setFatalErrorConsumer(e -> errorHandler.handleError(VcsLogErrorHandler.Source.Index, e));
@@ -65,14 +70,6 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     Path storageFile = storageId.getStorageFile(INDEX_PATHS_IDS);
     return new PersistentEnumerator<>(storageFile, new LightFilePathKeyDescriptor(roots),
                                       AbstractStorage.PAGE_SIZE, storageLockContext, storageId.getVersion());
-  }
-
-  private static @NotNull PersistentHashMap<int[], int[]> createRenamesMap(@NotNull StorageId storageId,
-                                                                           @Nullable StorageLockContext storageLockContext)
-    throws IOException {
-    Path storageFile = storageId.getStorageFile(RENAMES_MAP);
-    return new PersistentHashMap<>(storageFile, new CoupleKeyDescriptor(), new CollectionDataExternalizer(), AbstractStorage.PAGE_SIZE,
-                                   storageId.getVersion(), storageLockContext);
   }
 
   private @Nullable FilePath getPath(int pathId, boolean isDirectory) {
@@ -88,14 +85,14 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
   @Override
   public void flush() throws StorageException {
     super.flush();
-    myPathsIndexer.myRenamesMap.force();
+    myPathsIndexer.store.forceRenameMap();
     myPathsIndexer.getPathsEnumerator().force();
   }
 
   public @Nullable EdgeData<FilePath> findRename(int parent, int child, @NotNull VirtualFile root, @NotNull FilePath path, boolean isChildPath)
     throws IOException {
-    int[] renames = myPathsIndexer.myRenamesMap.get(new int[]{parent, child});
-    if (renames == null) {
+    int[] renames = myPathsIndexer.store.getRename(parent, child);
+    if (renames == null || renames.length == 0) {
       return null;
     }
 
@@ -139,7 +136,6 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
   public void dispose() {
     super.dispose();
     try {
-      myPathsIndexer.myRenamesMap.close();
       myPathsIndexer.getPathsEnumerator().close();
     }
     catch (IOException e) {
@@ -156,14 +152,15 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
   private static final class PathIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> {
     private final @NotNull VcsLogStorage myStorage;
     private final @NotNull PersistentEnumerator<LightFilePath> myPathsEnumerator;
-    private final @NotNull PersistentHashMap<int[], int[]> myRenamesMap;
+    private final VcsLogStore store;
     private @NotNull Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
 
-    private PathIndexer(@NotNull VcsLogStorage storage, @NotNull PersistentEnumerator<LightFilePath> enumerator,
-                        @NotNull PersistentHashMap<int[], int[]> renamesMap) {
+    private PathIndexer(@NotNull VcsLogStorage storage,
+                        @NotNull PersistentEnumerator<LightFilePath> enumerator,
+                        @NotNull VcsLogStore store) {
       myStorage = storage;
       myPathsEnumerator = enumerator;
-      myRenamesMap = renamesMap;
+      this.store = store;
     }
 
     public void setFatalErrorConsumer(@NotNull Consumer<? super Exception> fatalErrorConsumer) {
@@ -191,7 +188,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
             int commit = myStorage.getCommitIndex(inputData.getId(), inputData.getRoot());
             int parent = myStorage.getCommitIndex(inputData.getParents().get(parentIndex), inputData.getRoot());
-            myRenamesMap.put(new int[]{parent, commit}, renames);
+            store.putRename(parent, commit, renames);
           }
 
           for (Int2ObjectMap.Entry<Change.Type> entry : inputData.getModifiedPaths(parentIndex).int2ObjectEntrySet()) {
@@ -338,7 +335,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     }
 
     @Override
-    public int getHashCode(LightFilePath path) {
+    public int getHashCode(@NotNull LightFilePath path) {
       return path.hashCode();
     }
 
@@ -360,49 +357,6 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
       if (root == null) throw new IOException("Can not read root for index " + rootIndex + ". All roots " + myRoots);
       String path = IOUtil.readUTF(in);
       return new LightFilePath(root, path);
-    }
-  }
-
-  private static final class CoupleKeyDescriptor implements KeyDescriptor<int[]> {
-    @Override
-    public int getHashCode(int[] value) {
-      return Arrays.hashCode(value);
-    }
-
-    @Override
-    public boolean isEqual(int @Nullable [] val1, int @Nullable [] val2) {
-      return Arrays.equals(val1, val2);
-    }
-
-    @Override
-    public void save(@NotNull DataOutput out, int[] value) throws IOException {
-      out.writeInt(value[0]);
-      out.writeInt(value[1]);
-    }
-
-    @Override
-    public int[] read(@NotNull DataInput in) throws IOException {
-      return new int[]{in.readInt(), in.readInt()};
-    }
-  }
-
-  private static final class CollectionDataExternalizer implements DataExternalizer<int[]> {
-    @Override
-    public void save(@NotNull DataOutput out, int[] value) throws IOException {
-      out.writeInt(value.length);
-      for (int v : value) {
-        out.writeInt(v);
-      }
-    }
-
-    @Override
-    public int[] read(@NotNull DataInput in) throws IOException {
-      int size = in.readInt();
-      var result = new int[size];
-      for (int i = 0; i < size; i++) {
-        result[i] = in.readInt();
-      }
-      return result;
     }
   }
 }

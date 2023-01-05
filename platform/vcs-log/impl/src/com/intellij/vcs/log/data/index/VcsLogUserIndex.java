@@ -21,6 +21,7 @@ import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.VcsUserKeyDescriptor;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
+import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.util.StorageId;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
@@ -39,21 +41,31 @@ import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
-public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitDetails> {
+final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitDetails> implements VcsLogUserBiMap {
   private static final Logger LOG = Logger.getInstance(VcsLogUserIndex.class);
   private static final @NonNls String USERS = "users";
   private static final @NonNls String USERS_IDS = "users-ids";
   private final @NotNull UserIndexer myUserIndexer;
 
-  public VcsLogUserIndex(@NotNull StorageId storageId,
+  VcsLogUserIndex(@NotNull StorageId storageId,
                          @Nullable StorageLockContext storageLockContext,
                          @NotNull VcsUserRegistry userRegistry,
                          @NotNull VcsLogErrorHandler errorHandler,
                          @NotNull Disposable disposableParent) throws IOException {
-    super(storageId, USERS, new UserIndexer(createUsersEnumerator(storageId, storageLockContext, userRegistry)),
-          VoidDataExternalizer.INSTANCE, storageLockContext, errorHandler, disposableParent);
+    super(storageId,
+          USERS,
+          new UserIndexer(createUsersEnumerator(storageId, storageLockContext, userRegistry)),
+          VoidDataExternalizer.INSTANCE,
+          storageLockContext,
+          errorHandler,
+          disposableParent);
     myUserIndexer = (UserIndexer)myIndexer;
     ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> errorHandler.handleError(VcsLogErrorHandler.Source.Index, e));
+  }
+
+  @Override
+  public void update(int index, @NotNull VcsLogIndexer.CompressedDetails detail) {
+    super.update(index, detail);
   }
 
   @Override
@@ -70,6 +82,7 @@ public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShort
                                       storageId.getVersion());
   }
 
+  @Override
   public IntSet getCommitsForUsers(@NotNull Set<? extends VcsUser> users) throws IOException, StorageException {
     IntSet ids = new IntOpenHashSet();
     for (VcsUser user : users) {
@@ -78,6 +91,7 @@ public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShort
     return getCommitsWithAnyKey(ids);
   }
 
+  @Override
   public @Nullable VcsUser getAuthorForCommit(int commit) throws IOException {
     Collection<Integer> userIds = getKeysForCommit(commit);
     if (userIds == null || userIds.isEmpty()) return null;
@@ -85,10 +99,17 @@ public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShort
     return myUserIndexer.getUserById(Objects.requireNonNull(getFirstItem(userIds)));
   }
 
-  public int getUserId(@NotNull VcsUser user) throws IOException {
-    return myUserIndexer.getUserId(user);
+  @Override
+  public int getUserId(@NotNull VcsUser user) {
+    try {
+      return myUserIndexer.getUserId(user);
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
+  @Override
   public @Nullable VcsUser getUserById(int id) throws IOException {
     return myUserIndexer.getUserById(id);
   }

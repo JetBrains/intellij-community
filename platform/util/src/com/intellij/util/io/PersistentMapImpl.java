@@ -624,7 +624,8 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     }
   }
 
-  private void markCorrupted() {
+  @Override
+  public void markCorrupted() {
     if (!myStorageFile.getFileSystem().isReadOnly()) {
       try {
         myEnumerator.markCorrupted();

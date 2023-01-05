@@ -165,6 +165,10 @@ public final class PersistentHashMap<Key, Value> implements AppendablePersistent
     myImpl.markDirty();
   }
 
+  public void markCorrupted() {
+    myImpl.markCorrupted();
+  }
+
   /**
    * @deprecated use {@link PersistentHashMap#processKeysWithExistingMapping(Processor)} instead.
    */

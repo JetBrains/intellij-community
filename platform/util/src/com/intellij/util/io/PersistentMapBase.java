@@ -1,13 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.Processor;
 import com.intellij.util.io.AppendablePersistentMap.ValueDataAppender;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -92,6 +94,9 @@ public interface PersistentMapBase<Key, Value> {
    * or write in progress.
    */
   void markDirty() throws IOException;
+
+  default void markCorrupted() {
+  }
 
   /**
    * Force all transient changes to disk.

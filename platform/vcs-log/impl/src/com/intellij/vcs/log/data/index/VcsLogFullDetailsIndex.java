@@ -163,7 +163,7 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
     }
   }
 
-  private static class MyMapIndexStorage<T> extends MapIndexStorage<Integer, T> {
+  private static final class MyMapIndexStorage<T> extends MapIndexStorage<Integer, T> {
     private final @NotNull String myName;
 
     MyMapIndexStorage(@NotNull String name, @NotNull StorageId storageId, @NotNull DataExternalizer<T> externalizer)
@@ -172,7 +172,7 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
       myName = name;
     }
 
-    protected boolean isEmpty() throws IOException {
+    boolean isEmpty() throws IOException {
       Ref<Boolean> isEmpty = new Ref<>(true);
       doProcessKeys(key -> {
         isEmpty.set(false);
@@ -188,7 +188,7 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
     }
   }
 
-  private static class MyIndexExtension<T, D> extends IndexExtension<Integer, T, D> {
+  private static final class MyIndexExtension<T, D> extends IndexExtension<Integer, T, D> {
     private final @NotNull IndexId<Integer, T> myID;
     private final @NotNull DataIndexer<Integer, T, D> myIndexer;
     private final @NotNull DataExternalizer<T> myExternalizer;
