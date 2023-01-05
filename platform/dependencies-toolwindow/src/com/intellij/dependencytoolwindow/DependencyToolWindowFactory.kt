@@ -5,15 +5,15 @@ package com.intellij.dependencytoolwindow
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ex.ToolWindowEx
-import kotlinx.coroutines.Dispatchers
+import com.intellij.util.PlatformUtils.*
+import com.intellij.util.concurrency.AppExecutorUtil
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 
-class DependencyToolWindowFactory : ToolWindowFactory {
+class DependencyToolWindowFactory : StartupActivity {
 
   companion object {
 
@@ -29,53 +29,21 @@ class DependencyToolWindowFactory : ToolWindowFactory {
         ?.provideTab(project)
         ?.let { toolWindow.contentManager.setSelectedContent(it) }
     }
-
-
   }
 
-  override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+  override fun runActivity(project: Project) {
+    val scope = CoroutineScope(
+      AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher() + CoroutineName(this::class.qualifiedName!!)
+    )
 
-    toolWindow.contentManager.addSelectionChangedListener { event ->
-      val actionToolWindow = event.content.component as? HasToolWindowActions
-      if (toolWindow is ToolWindowEx) {
-        toolWindow.setAdditionalGearActions(null)
-        actionToolWindow?.also { toolWindow.setAdditionalGearActions(it.gearActions) }
+    project.beforeDispose { scope.cancel("Disposing project") }
+
+    scope.launch {
+      DependenciesToolWindowTabProvider.awaitFirstAvailable(project)
+      ToolWindowManager.awaitToolWindows(project)
+      withContext(Dispatchers.EDT) {
+        project.createDependenciesToolwindow().initialize(scope)
       }
-      toolWindow.setTitleActions(emptyList())
-      actionToolWindow?.titleActions
-        ?.also { toolWindow.setTitleActions(it.toList()) }
     }
-
-    toolWindow.contentManager.removeAllContents(true)
-
-    DependenciesToolWindowTabProvider.availableTabsFlow(project)
-      .flowOn(project.lifecycleScope.dispatcher)
-      .map { it.map { provider -> provider.provideTab(project) } }
-      .onEach { change ->
-        val removedContent = toolWindow.contentManager.contents.filter { it !in change }.toSet()
-        val newContent = change.filter { it !in toolWindow.contentManager.contents }
-        val contentOrder = toolWindow.contentManager
-          .contents
-          .toList()
-          .minus(removedContent)
-          .plus(newContent)
-          .sortedBy { it.toolwindowTitle }
-          .mapIndexed { index, content -> content to index }
-          .toMap()
-        removedContent.forEach { toolWindow.contentManager.removeContent(it, true) }
-        newContent.forEach { content ->
-          contentOrder[content]?.let { order -> toolWindow.contentManager.addContent(content, order) }
-          ?: toolWindow.contentManager.addContent(content)
-        }
-      }
-      .flowOn(Dispatchers.EDT)
-      .launchIn(project.lifecycleScope)
-
-    project.lookAndFeelFlow
-      .onEach { toolWindow.contentManager.component.invalidate() }
-      .onEach { toolWindow.contentManager.component.repaint() }
-      .flowOn(Dispatchers.EDT)
-      .launchIn(project.lifecycleScope)
   }
-
 }

@@ -342,26 +342,22 @@ internal class PackagesListPanel(
                 )
             )
         }
-            .flowOn(project.lifecycleScope.coroutineDispatcher)
             .onEach { (targetModules, headerData, packagesTableViewModel) ->
                 val renderingTime = measureTime {
-                    updateListEmptyState(targetModules, project.loadingContainer.loadingFlow.value)
-
-                    headerPanel.display(headerData)
-
-                    packagesTable.display(packagesTableViewModel)
-
-                    tableScrollPane.isVisible = packagesTableViewModel.items.isNotEmpty()
-
-                    listPanel.updateAndRepaint()
-                    packagesTable.updateAndRepaint()
-                    packagesPanel.updateAndRepaint()
+                    withContext(Dispatchers.EDT) {
+                        updateListEmptyState(targetModules, project.loadingContainer.loadingFlow.value)
+                        headerPanel.display(headerData)
+                        packagesTable.display(packagesTableViewModel)
+                        tableScrollPane.isVisible = packagesTableViewModel.items.isNotEmpty()
+                        listPanel.updateAndRepaint()
+                        packagesTable.updateAndRepaint()
+                        packagesPanel.updateAndRepaint()
+                    }
                 }
                 logTrace("PackagesListPanel main flow") {
                     "Rendering took $renderingTime for ${packagesTableViewModel.items.size} items"
                 }
             }
-            .flowOn(Dispatchers.EDT)
             .catch {
                 logDebug("Error in PackagesListPanel main flow", it)
             }

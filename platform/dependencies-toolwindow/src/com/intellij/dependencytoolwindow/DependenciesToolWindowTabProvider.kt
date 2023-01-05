@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.ui.content.Content
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.transformLatest
 
@@ -14,6 +15,10 @@ interface DependenciesToolWindowTabProvider {
 
   companion object {
     private val extensionPointName = ExtensionPointName<DependenciesToolWindowTabProvider>("com.intellij.dependenciesToolWindow.tabProvider")
+
+    internal suspend fun awaitFirstAvailable(project: Project) = availableTabsFlow(project)
+      .first { it.isNotEmpty() }
+      .first()
 
     internal fun availableTabsFlow(project: Project): Flow<List<DependenciesToolWindowTabProvider>> {
       return extensionPointName.extensionsFlow.transformLatest { extensions ->

@@ -169,7 +169,7 @@ internal class PackageManagementPanel(private val project: Project) : PackageSea
                 onlyStable = onlyStable,
                 invokeLaterScope = project.lifecycleScope
             )
-        }.flowOn(project.lifecycleScope.coroutineDispatcher)
+        }
             .onEach { packageDetailsPanel.display(it) }
             .flowOn(Dispatchers.EDT)
             .launchIn(project.lifecycleScope)
