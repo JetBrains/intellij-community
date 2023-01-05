@@ -32,12 +32,17 @@ object IOSSinglePlatformCocoaPodsModuleConfigurator : IOSSinglePlatformModuleCon
     override val canContainSubModules: Boolean
         get() = false
 
-    override fun Writer.runArbitraryTask(
+    override fun doRunArbitraryTask(
+        writer: Writer,
         configurationData: ModulesToIrConversionData,
         module: Module,
         modulePath: Path
-    ): TaskResult<Unit> =
-        GradlePlugin.gradleProperties.addValues("kotlin.native.cocoapods.generate.wrapper" to true)
+    ): TaskResult<Unit> = compute {
+        super.doRunArbitraryTask(writer, configurationData, module, modulePath)
+        with(writer) {
+            GradlePlugin.gradleProperties.addValues("kotlin.native.cocoapods.generate.wrapper" to true)
+        }
+    }
 
     override fun Reader.createTemplates(
         configurationData: ModulesToIrConversionData,
@@ -122,6 +127,23 @@ abstract class IOSSinglePlatformModuleConfiguratorBase : SinglePlatformModuleCon
             "moduleName" to module.name,
             "sharedModuleName" to dependentModule?.name
         )
+    }
+
+    final override fun Writer.runArbitraryTask(
+        configurationData: ModulesToIrConversionData,
+        module: Module,
+        modulePath: Path
+    ): TaskResult<Unit> = doRunArbitraryTask(this, configurationData, module, modulePath)
+
+    protected open fun doRunArbitraryTask(
+        writer: Writer, configurationData: ModulesToIrConversionData,
+        module: Module,
+        modulePath: Path
+    ): TaskResult<Unit> = compute {
+        with(writer) {
+            GradlePlugin.gradleProperties.addValues("org.gradle.jvmargs" to "-Xmx2048M -Dfile.encoding=UTF-8 -Dkotlin.daemon.jvm.options\\=\"-Xmx2048M\"")
+            GradlePlugin.gradleProperties.addValues("kotlin.mpp.enableCInteropCommonization" to true)
+        }
     }
 
     protected open fun descriptor(path: Path, moduleName: String) =
