@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.PopupHandler
+import com.intellij.ui.components.panels.HorizontalLayout
 import kotlinx.coroutines.CoroutineScope
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -16,26 +17,36 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataS
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.*
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTitleComponent
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal object GHPRDetailsComponentFactory {
 
-  fun create(project: Project,
-             scope: CoroutineScope,
-             reviewDetailsVm: GHPRDetailsViewModel,
-             reviewFlowVm: GHPRReviewFlowViewModel,
-             dataProvider: GHPRDataProvider,
-             repositoryDataService: GHPRRepositoryDataService,
-             securityService: GHPRSecurityService,
-             avatarIconsProvider: GHAvatarIconsProvider,
-             branchesModel: GHPRBranchesModel,
-             metadataModel: GHPRMetadataModel,
-             stateModel: GHPRStateModel): JComponent {
+  fun create(
+    project: Project,
+    scope: CoroutineScope,
+    reviewDetailsVm: GHPRDetailsViewModel,
+    reviewFlowVm: GHPRReviewFlowViewModel,
+    commitsVm: GHPRCommitsViewModel,
+    dataProvider: GHPRDataProvider,
+    repositoryDataService: GHPRRepositoryDataService,
+    securityService: GHPRSecurityService,
+    avatarIconsProvider: GHAvatarIconsProvider,
+    branchesModel: GHPRBranchesModel,
+    metadataModel: GHPRMetadataModel,
+    stateModel: GHPRStateModel,
+    commitFilesBrowserComponent: JComponent,
+    diffBridge: GHPRDiffController
+  ): JComponent {
     val title = GHPRTitleComponent.create(scope, reviewDetailsVm)
     val description = GHPRDetailsDescriptionComponentFactory.create(scope, reviewDetailsVm)
-    val branches = GHPRDetailsBranchesComponentFactory.create(project, repositoryDataService, branchesModel)
+    val commitsAndBranches = JPanel(HorizontalLayout(0)).apply {
+      isOpaque = false
+      add(GHPRDetailsCommitsComponentFactory.create(scope, commitsVm, diffBridge), HorizontalLayout.LEFT)
+      add(GHPRDetailsBranchesComponentFactory.create(project, repositoryDataService, branchesModel), HorizontalLayout.RIGHT)
+    }
     val statusChecks = GHPRStatusChecksComponentFactory.create(scope, reviewDetailsVm, reviewFlowVm, securityService, avatarIconsProvider)
     val state = GHPRStatePanel(
       scope,
@@ -52,12 +63,14 @@ internal object GHPRDetailsComponentFactory {
         .gridGap("0", "0")
         .fill()
         .flowY()
+        .hideMode(3)
     )).apply {
       isOpaque = false
 
       add(title, CC().growX().gapBottom("$gapBetweenTitleAndDescription"))
       add(description, CC().growX().gapBottom("$gapBetweenDescriptionAndCommits"))
-      add(branches, CC().growY().push())
+      add(commitsAndBranches, CC().growX().gapBottom("$gapBetweenCommitsAndCommitInfo"))
+      add(commitFilesBrowserComponent, CC().grow().push())
       add(statusChecks, CC().growX().gapBottom("$gapBetweenCheckAndActions").maxHeight("$statusChecksMaxHeight"))
       add(state, CC().growX().pushX().minHeight("pref"))
 
@@ -72,6 +85,7 @@ internal object GHPRDetailsComponentFactory {
 
   private val gapBetweenTitleAndDescription get() = if (ExperimentalUI.isNewUI()) 8 else 8
   private val gapBetweenDescriptionAndCommits get() = if (ExperimentalUI.isNewUI()) 22 else 18
+  private val gapBetweenCommitsAndCommitInfo get() = if (ExperimentalUI.isNewUI()) 15 else 9
   private val gapBetweenCheckAndActions get() = if (ExperimentalUI.isNewUI()) 10 else 10
 
   private val statusChecksMaxHeight: Int get() = if (ExperimentalUI.isNewUI()) 143 else 143

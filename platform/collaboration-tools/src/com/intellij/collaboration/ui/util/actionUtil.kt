@@ -52,8 +52,11 @@ fun createHoveredRoundedIconButton(icon: Icon, actionListener: ActionListener, a
   return RoundedPanel(HorizontalLayout(0), arc).apply {
     border = JBUI.Borders.empty()
     background = UIUtil.getListBackground()
+    addPropertyChangeListener {
+      UIUtil.setEnabledRecursively(this, isEnabled)
+    }
     addHoverAndPressStateListener(comp = this, hoveredStateCallback = { component, isHovered ->
-      component.background = if (isHovered && iconButton.isEnabled) UIUtil.getLabelBackground() else UIUtil.getListBackground()
+      component.background = if (isHovered && isEnabled) UIUtil.getLabelBackground() else UIUtil.getListBackground()
     })
     add(iconButton, HorizontalLayout.LEFT)
   }
