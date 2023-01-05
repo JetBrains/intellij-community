@@ -50,31 +50,34 @@ public abstract class GradleSettingsControlProvider {
         result = provider;
       }
     }
-    return ObjectUtils.notNull(result, new GradleSettingsControlProvider() {
-      @Override
-      public String getPlatformPrefix() {
-        return null;
-      }
+    return ObjectUtils.notNull(result, new DefaultProvider());
+  }
 
-      @Override
-      public GradleSystemSettingsControlBuilder getSystemSettingsControlBuilder(@NotNull GradleSettings initialSettings) {
-        return new IdeaGradleSystemSettingsControlBuilder(initialSettings).
-          // always use external storage for project files
-          dropStoreExternallyCheckBox();
-      }
+  private static class DefaultProvider extends GradleSettingsControlProvider {
+    @Override
+    public String getPlatformPrefix() {
+      return null;
+    }
 
-      @Override
-      public GradleProjectSettingsControlBuilder getProjectSettingsControlBuilder(@NotNull GradleProjectSettings initialSettings) {
-        return new IdeaGradleProjectSettingsControlBuilder(initialSettings)
-          // hide java-specific option
-          .dropResolveModulePerSourceSetCheckBox()
-          .dropDelegateBuildCombobox()
-          .dropTestRunnerCombobox()
-          // hide this confusing option
-          .dropCustomizableWrapperButton()
-          // Hide bundled distribution option for a while
-          .dropUseBundledDistributionButton();
-      }
-    });
+    @Override
+    public GradleSystemSettingsControlBuilder getSystemSettingsControlBuilder(@NotNull GradleSettings initialSettings) {
+      return new IdeaGradleSystemSettingsControlBuilder(initialSettings)
+        // always use external storage for project files
+        .dropStoreExternallyCheckBox()
+        .dropDefaultProjectSettings();
+    }
+
+    @Override
+    public GradleProjectSettingsControlBuilder getProjectSettingsControlBuilder(@NotNull GradleProjectSettings initialSettings) {
+      return new IdeaGradleProjectSettingsControlBuilder(initialSettings)
+        // hide java-specific option
+        .dropResolveModulePerSourceSetCheckBox()
+        .dropDelegateBuildCombobox()
+        .dropTestRunnerCombobox()
+        // hide this confusing option
+        .dropCustomizableWrapperButton()
+        // Hide bundled distribution option for a while
+        .dropUseBundledDistributionButton();
+    }
   }
 }

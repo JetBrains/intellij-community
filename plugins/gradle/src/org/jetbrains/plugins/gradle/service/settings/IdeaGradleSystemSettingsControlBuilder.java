@@ -53,6 +53,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
 
   private boolean dropVmOptions;
   private boolean dropStoreExternallyCheckBox;
+  private boolean dropDefaultProjectSettings;
 
   @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
   private @Nullable JBLabel myServiceDirectoryLabel;
@@ -65,6 +66,8 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   private @Nullable JBCheckBox myGenerateImlFilesCheckBox;
   @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
   private @Nullable JBLabel myGenerateImlFilesHint;
+
+  private final @NotNull GradleSettingsControl myDefaultProjectSettingsControl = new IdeaGradleDefaultProjectSettingsControl();
 
   public IdeaGradleSystemSettingsControlBuilder(@NotNull GradleSettings initialSettings) {
     myInitialSettings = initialSettings;
@@ -80,16 +83,29 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     return this;
   }
 
+  public IdeaGradleSystemSettingsControlBuilder dropDefaultProjectSettings() {
+    dropDefaultProjectSettings = true;
+    return this;
+  }
+
   @Override
   public void fillUi(@NotNull PaintAwarePanel canvas, int indentLevel) {
     addServiceDirectoryControl(canvas, indentLevel);
-    addVMOptionsControl(canvas, indentLevel);
-    addStoreExternallyCheckBox(canvas, indentLevel);
+    if (!dropVmOptions) {
+      addVMOptionsControl(canvas, indentLevel);
+    }
+    if (!dropStoreExternallyCheckBox) {
+      addStoreExternallyCheckBox(canvas, indentLevel);
+    }
+    if (!dropDefaultProjectSettings) {
+      myDefaultProjectSettingsControl.fillUi(canvas, indentLevel);
+    }
   }
 
   @Override
   public void showUi(boolean show) {
     ExternalSystemUiUtil.showUi(this, show);
+    myDefaultProjectSettingsControl.showUi(show);
   }
 
   @Override
@@ -113,6 +129,8 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     if (myGenerateImlFilesCheckBox != null) {
       myGenerateImlFilesCheckBox.setSelected(!myInitialSettings.getStoreProjectFilesExternally());
     }
+
+    myDefaultProjectSettingsControl.reset();
   }
 
   @Override
@@ -128,7 +146,12 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
       return true;
     }
 
-    if (myGenerateImlFilesCheckBox != null && myGenerateImlFilesCheckBox.isSelected() == myInitialSettings.getStoreProjectFilesExternally()) {
+    if (myGenerateImlFilesCheckBox != null &&
+        myGenerateImlFilesCheckBox.isSelected() == myInitialSettings.getStoreProjectFilesExternally()) {
+      return true;
+    }
+
+    if (myDefaultProjectSettingsControl.isModified()) {
       return true;
     }
 
@@ -147,16 +170,18 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     if (myGenerateImlFilesCheckBox != null) {
       settings.setStoreProjectFilesExternally(!myGenerateImlFilesCheckBox.isSelected());
     }
+    myDefaultProjectSettingsControl.apply();
   }
 
   @Override
   public boolean validate(@NotNull GradleSettings settings) {
-    return true;
+    return myDefaultProjectSettingsControl.validate();
   }
 
   @Override
   public void disposeUIResources() {
     ExternalSystemUiUtil.disposeUi(this);
+    myDefaultProjectSettingsControl.disposeUiResources();
   }
 
   @NotNull
@@ -184,72 +209,68 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   }
 
   private void addVMOptionsControl(@NotNull PaintAwarePanel canvas, int indentLevel) {
-    if (!dropVmOptions) {
-      JBLabel label = new JBLabel(GradleBundle.message("gradle.settings.text.vm.options"));
-      canvas.add(label, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
-      myGradleVmOptionsComponents.add(label);
+    JBLabel label = new JBLabel(GradleBundle.message("gradle.settings.text.vm.options"));
+    canvas.add(label, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
+    myGradleVmOptionsComponents.add(label);
 
-      myGradleVmOptionsField = new JBTextField();
-      canvas.add(myGradleVmOptionsField, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
-      myGradleVmOptionsComponents.add(myGradleVmOptionsField);
+    myGradleVmOptionsField = new JBTextField();
+    canvas.add(myGradleVmOptionsField, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+    myGradleVmOptionsComponents.add(myGradleVmOptionsField);
 
-      label.setLabelFor(myGradleVmOptionsField);
+    label.setLabelFor(myGradleVmOptionsField);
 
-      Component glue = Box.createGlue();
-      canvas.add(glue, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
-      myGradleVmOptionsComponents.add(glue);
+    Component glue = Box.createGlue();
+    canvas.add(glue, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
+    myGradleVmOptionsComponents.add(glue);
 
-      HyperlinkLabel fixLabel = new HyperlinkLabel();
-      fixLabel.setFontSize(UIUtil.FontSize.SMALL);
-      fixLabel.setForeground(UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER));
-      fixLabel.setIcon(AllIcons.General.BalloonWarning12);
-      label.setVerticalTextPosition(SwingConstants.TOP);
-      GridBag constraints = ExternalSystemUiUtil.getFillLineConstraints(indentLevel);
-      constraints.insets.top = 0;
-      canvas.add(fixLabel, constraints);
-      myGradleVmOptionsComponents.add(fixLabel);
+    HyperlinkLabel fixLabel = new HyperlinkLabel();
+    fixLabel.setFontSize(UIUtil.FontSize.SMALL);
+    fixLabel.setForeground(UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER));
+    fixLabel.setIcon(AllIcons.General.BalloonWarning12);
+    label.setVerticalTextPosition(SwingConstants.TOP);
+    GridBag constraints = ExternalSystemUiUtil.getFillLineConstraints(indentLevel);
+    constraints.insets.top = 0;
+    canvas.add(fixLabel, constraints);
+    myGradleVmOptionsComponents.add(fixLabel);
 
-      myGradleVmOptionsField.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(@NotNull DocumentEvent e) {
-          boolean showMigration = e.getDocument().getLength() > 0;
-          fixLabel.setHyperlinkText(
-            GradleBundle.message("gradle.settings.text.vm.options.link.tooltip") + " ",
-            showMigration ? GradleBundle.message("gradle.settings.text.vm.options.link.text") : "  ", "");
+    myGradleVmOptionsField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
+        boolean showMigration = e.getDocument().getLength() > 0;
+        fixLabel.setHyperlinkText(
+          GradleBundle.message("gradle.settings.text.vm.options.link.tooltip") + " ",
+          showMigration ? GradleBundle.message("gradle.settings.text.vm.options.link.text") : "  ", "");
+      }
+    });
+    myGradleVmOptionsField.setText(" "); // trigger listener
+
+    fixLabel.addHyperlinkListener(new HyperlinkAdapter() {
+      @Override
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
+        String jvmArgs = myGradleVmOptionsField.getText().trim();
+        if (jvmArgs.isEmpty()) return;
+
+        if (moveVMOptionsToGradleProperties(jvmArgs, myInitialSettings)) {
+          myGradleVmOptionsField.setText(null);
+          myGradleVmOptionsField.getEmptyText().setText(GradleBundle.message("gradle.settings.text.vm.options.empty.text"));
         }
-      });
-      myGradleVmOptionsField.setText(" "); // trigger listener
-
-      fixLabel.addHyperlinkListener(new HyperlinkAdapter() {
-        @Override
-        protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
-          String jvmArgs = myGradleVmOptionsField.getText().trim();
-          if (jvmArgs.isEmpty()) return;
-
-          if (moveVMOptionsToGradleProperties(jvmArgs, myInitialSettings)) {
-            myGradleVmOptionsField.setText(null);
-            myGradleVmOptionsField.getEmptyText().setText(GradleBundle.message("gradle.settings.text.vm.options.empty.text"));
-          }
-        }
-      });
-    }
+      }
+    });
   }
 
   private void addStoreExternallyCheckBox(@NotNull PaintAwarePanel canvas, int indentLevel) {
-    if (!dropStoreExternallyCheckBox) {
-      myGenerateImlFilesCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.generate.iml.files"));
-      canvas.add(myGenerateImlFilesCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+    myGenerateImlFilesCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.generate.iml.files"));
+    canvas.add(myGenerateImlFilesCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
 
-      myGenerateImlFilesHint = new JBLabel(
-        XmlStringUtil.wrapInHtml(GradleBundle.message("gradle.settings.text.generate.iml.files.hint", getIDEName())),
-        UIUtil.ComponentStyle.SMALL);
-      myGenerateImlFilesHint.setForeground(UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER));
+    myGenerateImlFilesHint = new JBLabel(
+      XmlStringUtil.wrapInHtml(GradleBundle.message("gradle.settings.text.generate.iml.files.hint", getIDEName())),
+      UIUtil.ComponentStyle.SMALL);
+    myGenerateImlFilesHint.setForeground(UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER));
 
-      GridBag constraints = ExternalSystemUiUtil.getFillLineConstraints(indentLevel);
-      constraints.insets.left += UIUtil.getCheckBoxTextHorizontalOffset(myGenerateImlFilesCheckBox);
-      constraints.insets.top = 0;
-      canvas.add(myGenerateImlFilesHint, constraints);
-    }
+    GridBag constraints = ExternalSystemUiUtil.getFillLineConstraints(indentLevel);
+    constraints.insets.left += UIUtil.getCheckBoxTextHorizontalOffset(myGenerateImlFilesCheckBox);
+    constraints.insets.top = 0;
+    canvas.add(myGenerateImlFilesHint, constraints);
   }
 
   @Nullable
