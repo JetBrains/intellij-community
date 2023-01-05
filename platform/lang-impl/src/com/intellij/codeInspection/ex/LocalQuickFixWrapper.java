@@ -18,10 +18,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class LocalQuickFixWrapper extends QuickFixAction {
   private final QuickFix<?> myFix;
@@ -117,7 +114,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
                                      @NotNull GlobalInspectionContextImpl context,
                                      Set<? super PsiElement> ignoredElements) {
     if (myFix instanceof BatchQuickFix) {
-      applyFix(project, context, BatchModeDescriptorsUtil.flattenDescriptors(descriptors), ignoredElements);
+      super.performFixesInBatch(project, Collections.singletonList(BatchModeDescriptorsUtil.flattenDescriptors(descriptors)), context, ignoredElements);
     }
     else {
       super.performFixesInBatch(project, descriptors, context, ignoredElements);
