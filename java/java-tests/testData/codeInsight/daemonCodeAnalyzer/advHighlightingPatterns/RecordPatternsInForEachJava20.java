@@ -2,6 +2,7 @@ import java.util.List;
 import java.util.Set;
 
 class Main {
+  record EmptyBox() {}
   record Point(int x, int y) {}
   record Rect(Point point1, Point point2) {}
   record Pair<T, U>(T t, U u) {}
@@ -9,6 +10,18 @@ class Main {
 
   Point[] getPoints(int x) {
     return new Point[0];
+  }
+
+  void ok1(Point[] points) {
+    for (Point(int x, int y) : points) {
+      System.out.println(x + y);
+    }
+  }
+
+  void ok2(EmptyBox[] emptyBoxes) {
+    for (EmptyBox() : emptyBoxes) {
+      System.out.println("Fill it up and send it back");
+    }
   }
 
   void test1(Point[] points) {

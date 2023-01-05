@@ -185,14 +185,6 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
   }
 
-  public void testRecordPatternsInForEachJava19() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
-  }
-
-  public void testRecordPatternsInForEachJava20() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
-  }
-
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();

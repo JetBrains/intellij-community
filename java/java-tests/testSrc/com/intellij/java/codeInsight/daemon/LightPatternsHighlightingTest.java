@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -70,7 +70,11 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
     doTest();
   }
 
-  public void testRecordPatternsInForEach() {
+  public void testRecordPatternsInForEachJava19() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+  }
+
+  public void testRecordPatternsInForEachJava20() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
   }
 
