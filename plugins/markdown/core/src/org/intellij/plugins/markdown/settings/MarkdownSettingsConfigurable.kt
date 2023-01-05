@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings
 
+import com.intellij.ide.DataManager
 import com.intellij.ide.highlighter.HighlighterFactory
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.application.runReadAction
@@ -15,6 +16,7 @@ import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -119,6 +121,21 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
         customCssRow()
       }
       pandocSettingsRow()
+      row {
+        configureSmartKeysLinkComment()
+      }
+    }
+  }
+
+  private fun Row.configureSmartKeysLinkComment() {
+    comment(comment = MarkdownBundle.message("markdown.settings.smart.keys.comment")) {
+      DataManager.getInstance().dataContextFromFocusAsync.onSuccess { context ->
+        if (context == null) {
+          return@onSuccess
+        }
+        val settings = context.getData(Settings.KEY) ?: return@onSuccess
+        settings.select(settings.find(MarkdownSmartKeysConfigurable.ID))
+      }
     }
   }
 

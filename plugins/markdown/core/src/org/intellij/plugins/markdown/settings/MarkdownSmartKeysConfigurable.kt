@@ -16,7 +16,7 @@ internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(),
   }
 
   override fun getId(): String {
-    return "Settings.Markdown.SmartKeys"
+    return ID
   }
 
   override fun Panel.createContent() {
@@ -82,5 +82,9 @@ internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(),
           )
       }
     }
+  }
+
+  companion object {
+    internal const val ID = "Settings.Markdown.SmartKeys"
   }
 }
