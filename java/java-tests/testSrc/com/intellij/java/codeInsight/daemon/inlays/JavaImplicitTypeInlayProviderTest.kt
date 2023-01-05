@@ -82,7 +82,7 @@ class Demo {
     doTestPreview("""
 class ImplicitType {
   void test() {
-    var x<# : |ImplicitType #> = someMethod();
+    var x<# : ImplicitType #> = someMethod();
   }
 
   ImplicitType someMethod() {
