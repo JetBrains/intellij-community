@@ -182,11 +182,8 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection imp
       final PsiElement ancestor = PsiTreeUtil.skipParentsOfType(
         typeElement, PsiTypeElement.class, PsiJavaCodeReferenceElement.class, PsiReferenceParameterList.class);
       if (ancestor instanceof PsiDeconstructionPattern deconstructionPattern) {
-        PsiForeachStatement parentForEach = PsiTreeUtil.getParentOfType(deconstructionPattern, PsiForeachStatement.class);
+        PsiForeachStatement parentForEach = PsiTreeUtil.getParentOfType(deconstructionPattern, PsiForeachStatement.class, false, PsiStatement.class);
         if (parentForEach == null) {
-          return false;
-        }
-        if (!PsiTreeUtil.isAncestor(parentForEach.getIterationDeclaration(), deconstructionPattern, false)) {
           return false;
         }
         if (ancestor.getParent() instanceof PsiForeachStatement foreachStatement) {

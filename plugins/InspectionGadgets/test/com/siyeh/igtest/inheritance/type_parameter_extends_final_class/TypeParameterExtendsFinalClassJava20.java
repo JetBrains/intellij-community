@@ -17,6 +17,12 @@ public class TypeParameterExtendsFinalClassJava20{
     }
   }
 
+  public static void testGenericWithoutWildcard2(List<RecordWithGeneric<RecordWithGeneric<String>>> list){
+    for (RecordWithGeneric<RecordWithGeneric<String>>(RecordWithGeneric<<warning descr="Wildcard type argument '?' extends 'final' class 'String'">?</warning> extends String>(var x)): list) {
+      System.out.println(x);
+    }
+  }
+
   public static void testRecordWithWildcard(){
     List<RecordWithWildcard> lists2 = List.of(new RecordWithWildcard(List.of("1"), "2"));
     for (RecordWithWildcard(List<? extends String> x, var y ) : lists2) {
