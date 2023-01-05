@@ -47,6 +47,7 @@ internal object GHPRDetailsComponentFactory {
       add(GHPRDetailsCommitsComponentFactory.create(scope, commitsVm, diffBridge), HorizontalLayout.LEFT)
       add(GHPRDetailsBranchesComponentFactory.create(project, repositoryDataService, branchesModel), HorizontalLayout.RIGHT)
     }
+    val commitInfo = GHPRDetailsCommitInfoComponentFactory.create(scope, commitsVm)
     val statusChecks = GHPRStatusChecksComponentFactory.create(scope, reviewDetailsVm, reviewFlowVm, securityService, avatarIconsProvider)
     val state = GHPRStatePanel(
       scope,
@@ -70,6 +71,7 @@ internal object GHPRDetailsComponentFactory {
       add(title, CC().growX().gapBottom("$gapBetweenTitleAndDescription"))
       add(description, CC().growX().gapBottom("$gapBetweenDescriptionAndCommits"))
       add(commitsAndBranches, CC().growX().gapBottom("$gapBetweenCommitsAndCommitInfo"))
+      add(commitInfo, CC().growX().maxHeight("$commitInfoMaxHeight").gapBottom("$gapBetweenCommitInfoAndCommitsBrowser"))
       add(commitFilesBrowserComponent, CC().grow().push())
       add(statusChecks, CC().growX().gapBottom("$gapBetweenCheckAndActions").maxHeight("$statusChecksMaxHeight"))
       add(state, CC().growX().pushX().minHeight("pref"))
@@ -86,7 +88,9 @@ internal object GHPRDetailsComponentFactory {
   private val gapBetweenTitleAndDescription get() = if (ExperimentalUI.isNewUI()) 8 else 8
   private val gapBetweenDescriptionAndCommits get() = if (ExperimentalUI.isNewUI()) 22 else 18
   private val gapBetweenCommitsAndCommitInfo get() = if (ExperimentalUI.isNewUI()) 15 else 9
+  private val gapBetweenCommitInfoAndCommitsBrowser get() = if (ExperimentalUI.isNewUI()) 12 else 12
   private val gapBetweenCheckAndActions get() = if (ExperimentalUI.isNewUI()) 10 else 10
 
+  private val commitInfoMaxHeight get() = if (ExperimentalUI.isNewUI()) 100 else 100
   private val statusChecksMaxHeight: Int get() = if (ExperimentalUI.isNewUI()) 143 else 143
 }

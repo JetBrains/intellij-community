@@ -98,6 +98,15 @@ fun JTextComponent.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) 
   }
 }
 
+fun JEditorPane.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    textFlow.collect {
+      text = it
+      setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
+    }
+  }
+}
+
 fun JLabel.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
