@@ -11,6 +11,6 @@ public class MockStringReference extends MockObjectReference implements StringRe
 
   @Override
   public String value() {
-    return (String) getValue();
+    return (String)getValue();
   }
 }

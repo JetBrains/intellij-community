@@ -14,7 +14,7 @@ public class MockField extends MockTypeComponent implements Field {
   }
 
   public java.lang.reflect.Field getField() {
-    return (java.lang.reflect.Field) myMember;
+    return (java.lang.reflect.Field)myMember;
   }
 
   @Override

@@ -143,7 +143,10 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
     boolean shouldExpand(TreeNode node);
   }
 
-  protected void expandAll(final DebuggerTree tree, final Runnable runnable, final Set<? super Value> alreadyExpanded, final NodeFilter filter) {
+  protected void expandAll(final DebuggerTree tree,
+                           final Runnable runnable,
+                           final Set<? super Value> alreadyExpanded,
+                           final NodeFilter filter) {
     expandAll(tree, runnable, alreadyExpanded, filter, tree.getDebuggerContext().getSuspendContext());
   }
 
@@ -154,9 +157,9 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
                            final SuspendContextImpl context) {
     invokeRatherLater(context, () -> {
       boolean anyCollapsed = false;
-      for(int i = 0; i < tree.getRowCount(); i++) {
+      for (int i = 0; i < tree.getRowCount(); i++) {
         final TreeNode treeNode = (TreeNode)tree.getPathForRow(i).getLastPathComponent();
-        if(tree.isCollapsed(i) && !treeNode.isLeaf()) {
+        if (tree.isCollapsed(i) && !treeNode.isLeaf()) {
           NodeDescriptor nodeDescriptor = null;
           if (treeNode instanceof DebuggerTreeNodeImpl) {
             nodeDescriptor = ((DebuggerTreeNodeImpl)treeNode).getDescriptor();

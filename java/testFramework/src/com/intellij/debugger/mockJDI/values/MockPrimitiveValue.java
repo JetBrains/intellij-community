@@ -6,7 +6,7 @@ import com.sun.jdi.PrimitiveValue;
 
 import java.util.Objects;
 
-public abstract class MockPrimitiveValue extends MockValue implements PrimitiveValue{
+public abstract class MockPrimitiveValue extends MockValue implements PrimitiveValue {
   protected MockPrimitiveValue(final MockVirtualMachine virtualMachine) {
     super(virtualMachine);
   }
