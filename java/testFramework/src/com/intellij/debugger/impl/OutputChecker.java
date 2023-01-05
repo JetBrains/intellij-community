@@ -124,16 +124,16 @@ public class OutputChecker {
     checkValid(jdk, false);
   }
 
-  private File getOutFile(File outs, Sdk jdk, @Nullable File current, String prefix) {
+  private File getOutFile(File outsDir, Sdk jdk, @Nullable File current, String prefix) {
     String name = myTestName + prefix;
-    File res = new File(outs, name + ".out");
+    File res = new File(outsDir, name + ".out");
     if (current == null || res.exists()) {
       current = res;
     }
     JavaSdkVersion version = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
     int feature = version.getMaxLanguageLevel().toJavaVersion().feature;
     do {
-      File outFile = new File(outs, name + ".jdk" + feature + ".out");
+      File outFile = new File(outsDir, name + ".jdk" + feature + ".out");
       if (outFile.exists()) {
         current = outFile;
         break;
@@ -150,16 +150,16 @@ public class OutputChecker {
 
     String actual = preprocessBuffer(buildOutputString(), sortClassPath);
 
-    File outs = new File(myAppPath.produce() + File.separator + "outs");
-    assert outs.exists() || outs.mkdirs() : outs;
+    File outsDir = new File(myAppPath.produce() + File.separator + "outs");
+    assert outsDir.exists() || outsDir.mkdirs() : outsDir;
 
-    File outFile = getOutFile(outs, jdk, null, "");
+    File outFile = getOutFile(outsDir, jdk, null, "");
     if (!outFile.exists()) {
       if (SystemInfo.isWindows) {
-        outFile = getOutFile(outs, jdk, outFile, ".win");
+        outFile = getOutFile(outsDir, jdk, outFile, ".win");
       }
       else if (SystemInfo.isUnix) {
-        outFile = getOutFile(outs, jdk, outFile, ".unx");
+        outFile = getOutFile(outsDir, jdk, outFile, ".unx");
       }
     }
 
