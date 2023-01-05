@@ -132,14 +132,13 @@ public class OutputChecker {
       current = res;
     }
     JavaSdkVersion version = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
-    int feature = version.getMaxLanguageLevel().toJavaVersion().feature;
-    do {
+    for (int feature = version.getMaxLanguageLevel().toJavaVersion().feature; feature > 6; feature--) {
       File outFile = new File(outsDir, name + ".jdk" + feature + ".out");
       if (outFile.exists()) {
         current = outFile;
         break;
       }
-    } while (--feature > 6);
+    }
     return current;
   }
 
