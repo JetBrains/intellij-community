@@ -103,7 +103,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       return myAnnotator.getPackageCoverageInfo("", myStateBean.myFlattenPackages);
     }
     final JavaCoverageNode javaNode = (JavaCoverageNode)node;
-    if (javaNode.isClassCoverage()) {
+    if (javaNode.isLeaf()) {
       return myAnnotator.getClassCoverageInfo(javaNode.getQualifiedName());
     }
     else {

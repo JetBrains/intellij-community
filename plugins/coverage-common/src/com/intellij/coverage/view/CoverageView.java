@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -307,6 +308,11 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       actionGroup.add(new FlattenPackagesAction());
       actionGroup.add(new HideFullyCoveredAction());
     }
+    if (ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
+      actionGroup.add(new ShowOnlyModifiedAction());
+    } else {
+      myStateBean.myShowOnlyModified = false;
+    }
 
     installAutoScrollToSource(actionGroup);
     installAutoScrollFromSource(actionGroup);
@@ -438,7 +444,32 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myStateBean.myHideFullyCovered = state;
-      myModel.reset(true);
+      resetView();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+  }
+
+  private final class ShowOnlyModifiedAction extends ToggleAction {
+
+    private ShowOnlyModifiedAction() {
+      super(CoverageBundle.messagePointer("coverage.show.only.modified.elements"),
+            CoverageBundle.messagePointer("coverage.show.only.modified.elements.comment"),
+            AllIcons.Vcs.Branch);
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return myStateBean.myShowOnlyModified;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      myStateBean.myShowOnlyModified = state;
+      resetView();
     }
 
     @Override

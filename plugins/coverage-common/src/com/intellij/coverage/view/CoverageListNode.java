@@ -26,24 +26,57 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   protected CoverageSuitesBundle myBundle;
   protected CoverageViewManager.StateBean myStateBean;
   private final FileStatusManager myFileStatusManager;
+  private final boolean myIsLeaf;
 
   public CoverageListNode(Project project,
                           @NotNull PsiNamedElement classOrPackage,
                           CoverageSuitesBundle bundle,
                           CoverageViewManager.StateBean stateBean) {
+    this(project, classOrPackage, bundle, stateBean, false);
+  }
+
+  public CoverageListNode(Project project,
+                          @NotNull PsiNamedElement classOrPackage,
+                          CoverageSuitesBundle bundle,
+                          CoverageViewManager.StateBean stateBean,
+                          boolean isLeaf) {
     super(project, classOrPackage);
 
     myName = ReadAction.compute(() -> classOrPackage.getName());
     myBundle = bundle;
     myStateBean = stateBean;
     myFileStatusManager = FileStatusManager.getInstance(myProject);
+    myIsLeaf = isLeaf;
+  }
+
+  public boolean isLeaf() {
+    return myIsLeaf;
   }
 
   @NotNull
   @Override
   public List<? extends AbstractTreeNode<?>> getChildren() {
-    return myBundle.getCoverageEngine().createCoverageViewExtension(myProject, myBundle, myStateBean)
+    final var nodes = myBundle.getCoverageEngine().createCoverageViewExtension(myProject, myBundle, myStateBean)
       .getChildrenNodes(this);
+    return filterChildren(nodes);
+  }
+
+  protected List<AbstractTreeNode<?>> filterChildren(List<AbstractTreeNode<?>> nodes) {
+    if (myStateBean.myShowOnlyModified) {
+      nodes = nodes.stream().filter((node) -> {
+        if (node instanceof CoverageListNode) {
+          if (!((CoverageListNode)node).isLeaf()) return true;
+        }
+        final FileStatus status = node.getFileStatus();
+        return status == FileStatus.MODIFIED || status == FileStatus.ADDED || status == FileStatus.UNKNOWN;
+      }).toList();
+    }
+    return nodes.stream().filter((node) -> {
+      if (node instanceof CoverageListNode) {
+        if (((CoverageListNode)node).isLeaf()) return true;
+      }
+      return !node.getChildren().isEmpty();
+    }).toList();
   }
 
   @Override
