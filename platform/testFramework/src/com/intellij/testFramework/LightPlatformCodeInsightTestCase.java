@@ -54,6 +54,15 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+/**
+ * Provides a framework for testing the behavior of the editor.
+ * <p>
+ * To load some text into the editor, use {@link #configureByFile(String)}
+ * or {@link #configureFromFileText(String, String)}.
+ * <p>
+ * To perform editor actions, use {@link #right()}, {@link #deleteLine()},
+ * {@link #executeAction(String)} or the related methods.
+ */
 public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTestCase implements TestIndexingModeSupporter {
   private Editor myEditor;
   private PsiFile myFile;
@@ -86,11 +95,13 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   /**
-   * Configure test from data file. Data file is usual java, xml or whatever file that needs to be tested except it
-   * has &lt;caret&gt; marker where caret should be placed when file is loaded in editor and &lt;selection&gt;&lt;/selection&gt;
-   * denoting selection bounds.
+   * Configure the test from a data file.
+   * <p>
+   * The data file is usually a Java, XML or any other file that needs to be tested,
+   * except it has a &lt;caret&gt; marker where the caret should be placed when the file is loaded in the editor,
+   * and &lt;selection&gt;&lt;/selection&gt; denoting selection bounds.
    *
-   * @param relativePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
+   * @param relativePath relative path from %IDEA_INSTALLATION_HOME%/testData/
    */
   protected void configureByFile(@TestDataFile @NonNls @NotNull String relativePath) {
     try {
@@ -129,10 +140,10 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   /**
-   * Same as configureByFile but text is provided directly.
+   * Same as {@link #configureByFile(String)}, but the text is provided directly.
    *
-   * @param fileName - name of the file.
-   * @param fileText - data file text.
+   * @param fileName name of the file.
+   * @param fileText data file text.
    */
   @NotNull
   protected Document configureFromFileText(@NonNls @NotNull String fileName, @NonNls @NotNull String fileText) {
@@ -140,11 +151,11 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   /**
-   * Same as configureByFile but text is provided directly.
+   * Same as {@link #configureByFile(String)}, but the text is provided directly.
    *
-   * @param fileName   - name of the file.
-   * @param fileText   - data file text.
-   * @param checkCaret - if true, it will be verified that file contains at least one caret or selection marker
+   * @param fileName   name of the file.
+   * @param fileText   data file text.
+   * @param checkCaret if true, it will be verified that file contains at least one caret or selection marker
    */
   @NotNull
   protected Document configureFromFileText(@NonNls @NotNull String fileName,
@@ -300,22 +311,25 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   /**
-   * Validates that content of the editor as well as caret and selection matches one specified in data file that
-   * should be formed with the same format as one used in configureByFile
+   * Validates that the content of the editor, the caret and the selection
+   * all match the ones specified in the data file,
+   * using the format described in {@link #configureByFile(String)}.
    *
-   * @param expectedFilePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
+   * @param expectedFilePath relative path from %IDEA_INSTALLATION_HOME%/testData/
    */
   protected void checkResultByFile(@TestDataFile @NonNls @NotNull String expectedFilePath) {
     checkResultByFile(null, expectedFilePath, false);
   }
 
   /**
-   * Validates that content of the editor as well as caret and selection matches one specified in data file that
-   * should be formed with the same format as one used in configureByFile
+   * Validates that the content of the editor, the caret and the selection
+   * all match the ones specified in the data file,
+   * using the format described in {@link #configureByFile(String)}.
    *
-   * @param message              - this check specific message. Added to text, caret position, selection checking. May be null
-   * @param expectedFilePath     - relative path from %IDEA_INSTALLATION_HOME%/testData/
-   * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
+   * @param message              additional information to identify the specific check,
+   *                             in case the checks for the text, caret position or selection fail
+   * @param expectedFilePath     relative path from %IDEA_INSTALLATION_HOME%/testData/
+   * @param ignoreTrailingSpaces whether trailing spaces in the editor of the data file should be stripped prior to comparing
    */
   protected void checkResultByFile(@Nullable String message, @TestDataFile @NotNull String expectedFilePath, boolean ignoreTrailingSpaces) {
     bringRealEditorBack();
@@ -347,27 +361,29 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   /**
-   * Same as checkResultByFile but text is provided directly.
+   * Same as {@link #checkResultByFile(String)}, but the text is provided directly.
    */
   protected void checkResultByText(@NonNls @NotNull String expectedFileText) {
     checkResultByText(null, expectedFileText, false, null);
   }
 
   /**
-   * Same as checkResultByFile but text is provided directly.
+   * Same as {@link #checkResultByFile(String)}, but the text is provided directly.
    *
-   * @param message              - this check specific message. Added to text, caret position, selection checking. May be null
-   * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
+   * @param message              additional information to identify the specific check,
+   *                             in case the checks for the text, caret position or selection fail
+   * @param ignoreTrailingSpaces whether trailing spaces in the editor of the data file should be stripped prior to comparing
    */
   protected void checkResultByText(@Nullable String message, @NotNull String expectedFileText, boolean ignoreTrailingSpaces) {
     checkResultByText(message, expectedFileText, ignoreTrailingSpaces, null);
   }
 
   /**
-   * Same as checkResultByFile but text is provided directly.
+   * Same as {@link #checkResultByFile(String)}, but the text is provided directly.
    *
-   * @param message              - this check specific message. Added to text, caret position, selection checking. May be null
-   * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
+   * @param message              additional information to identify the specific check,
+   *                             in case the checks for the text, caret position or selection fail
+   * @param ignoreTrailingSpaces whether trailing spaces in the editor of the data file should be stripped prior to comparing
    */
   protected void checkResultByText(@Nullable String message,
                                    @NotNull String expectedFileText,
@@ -432,14 +448,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   /**
-   * @return Editor used in test.
+   * @return the editor that is used in the test
    */
   protected Editor getEditor() {
     return myEditor;
   }
 
   /**
-   * @return PsiFile opened in editor used in test
+   * @return the file that is opened in the editor used in the test
    */
   protected PsiFile getFile() {
     return myFile;
