@@ -8,6 +8,7 @@ import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 
 
@@ -29,12 +30,21 @@ class Orphanage {
 
 class OrphanListener(val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
-    event.getChanges(ModuleEntity::class.java)
+    val modules = event.getChanges(ModuleEntity::class.java)
       .filterIsInstance<EntityChange.Added<ModuleEntity>>()
-      .forEach {
-        project.workspaceModel.currentSnapshot.resolve(it.entity.symbolicId)?.let { moduleEntity ->
-          // TODO: Implement copy with parents
+      .mapNotNull {
+        project.workspaceModel.currentSnapshot.resolve(it.entity.symbolicId)
+      }
+
+    // This is important to use invokeLater in order not to update the project model inside of the listeners
+    ApplicationManager.getApplication().invokeLater {
+      WorkspaceModel.getInstance(project).updateProjectModel("") {
+        for (module in modules) {
+          it.modifyEntity(module) {
+            // TODO: Implement copy with parents
+          }
         }
       }
+    }
   }
 }
