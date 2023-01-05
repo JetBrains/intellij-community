@@ -148,12 +148,6 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
   protected void tearDown() throws Exception {
     myChecker = null;
     EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
-    //myChecker.checkValid(getTestProjectJdk());
-    //probably some thread is destroyed right now because of log exception
-    //wait a little bit
-    synchronized (this) {
-      wait(300);
-    }
   }
 
   protected JavaParameters createJavaParameters(String mainClass) {
