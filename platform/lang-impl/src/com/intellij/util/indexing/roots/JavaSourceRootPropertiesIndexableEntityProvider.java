@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 
-class JavaSourceRootIndexableEntityProvider implements IndexableEntityProvider<JavaSourceRootPropertiesEntity> {
+class JavaSourceRootPropertiesIndexableEntityProvider implements IndexableEntityProvider<JavaSourceRootPropertiesEntity> {
 
   @Override
   public @NotNull Class<JavaSourceRootPropertiesEntity> getEntityClass() {
@@ -25,13 +25,13 @@ class JavaSourceRootIndexableEntityProvider implements IndexableEntityProvider<J
   @Override
   public @NotNull Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
     return Collections.singletonList(
-      DependencyOnParent.create(SourceRootEntity.class, JavaSourceRootIndexableEntityProvider::getReplacedParentEntityIteratorBuilder));
+      DependencyOnParent.create(SourceRootEntity.class, JavaSourceRootPropertiesIndexableEntityProvider::getReplacedParentEntityIteratorBuilder));
   }
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull JavaSourceRootPropertiesEntity entity,
                                                                                                 @NotNull Project project) {
-    return collectBuildersOnAddedEntityWithDataExtractor(entity, JavaSourceRootIndexableEntityProvider::getDataForBuilders);
+    return collectBuildersOnAddedEntityWithDataExtractor(entity, JavaSourceRootPropertiesIndexableEntityProvider::getDataForBuilders);
   }
 
   @Override
@@ -39,7 +39,7 @@ class JavaSourceRootIndexableEntityProvider implements IndexableEntityProvider<J
                                                                                                    @NotNull JavaSourceRootPropertiesEntity newEntity,
                                                                                                    @NotNull Project project) {
     return collectBuildersOnReplacedEntityWithDataExtractor(oldEntity, newEntity,
-                                                            JavaSourceRootIndexableEntityProvider::getDataForBuilders);
+                                                            JavaSourceRootPropertiesIndexableEntityProvider::getDataForBuilders);
   }
 
   static <E extends WorkspaceEntity> Collection<IndexableIteratorBuilder> collectBuildersOnAddedEntityWithDataExtractor(@NotNull E entity,
