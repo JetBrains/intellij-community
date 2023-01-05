@@ -146,6 +146,13 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
   @Override
   public void setSelection(int startOffset, int endOffset) {
     if (startOffset < 0) throw new IllegalArgumentException();
+    // mimicking CaretImpl's doSetSelection: removing selection if startOffset == endOffset
+    if (startOffset == endOffset) {
+      myStart = myPos;
+      myEnd = myPos;
+      return;
+    }
+
     if (startOffset > endOffset) {
       myStart = endOffset;
       myEnd = startOffset;
