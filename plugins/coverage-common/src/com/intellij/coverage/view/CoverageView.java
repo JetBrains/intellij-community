@@ -303,6 +303,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     if (myViewExtension.supportFlattenPackages()) {
       actionGroup.add(new FlattenPackagesAction());
+      actionGroup.add(new HideFullyCoveredAction());
     }
 
     installAutoScrollToSource(actionGroup);
@@ -411,6 +412,31 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myStateBean.myFlattenPackages = state;
       myModel.reset(false);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+  }
+
+  private final class HideFullyCoveredAction extends ToggleAction {
+
+    private HideFullyCoveredAction() {
+      super(CoverageBundle.messagePointer("coverage.hide.fully.covered.elements"),
+            CoverageBundle.messagePointer("coverage.hide.fully.covered.elements.comment"),
+            AllIcons.General.Filter);
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return myStateBean.myHideFullyCovered;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      myStateBean.myHideFullyCovered = state;
+      myModel.reset(true);
     }
 
     @Override

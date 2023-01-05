@@ -92,6 +92,13 @@ public final class PackageAnnotator {
 
     public int coveredBranchCount;
     public int totalBranchCount;
+
+    public boolean isFullyCovered() {
+      return totalBranchCount == coveredBranchCount
+        && totalLineCount == getCoveredLineCount()
+        && totalMethodCount == coveredMethodCount
+        && totalClassCount == coveredClassCount;
+    }
   }
 
   public static class ClassCoverageInfo extends SummaryCoverageInfo {
