@@ -6,7 +6,6 @@ import com.intellij.ide.impl.TrustedPathsSettings
 import com.intellij.ide.impl.TrustedProjectSettings
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.ThreeState
@@ -64,7 +63,6 @@ internal object TrustedProjects {
 
   fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
                                  ApplicationManager.getApplication().isHeadlessEnvironment ||
-                                 ApplicationManagerEx.isInIntegrationTest() ||
                                  java.lang.Boolean.getBoolean("idea.trust.all.projects")
 
   private fun isTrustedCheckDisabledForProduct(): Boolean = java.lang.Boolean.getBoolean("idea.trust.disabled")
