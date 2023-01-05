@@ -58,7 +58,7 @@ internal object GHPRDetailsComponentFactory {
       add(title, CC().growX().gapBottom("$gapBetweenTitleAndDescription"))
       add(description, CC().growX().gapBottom("$gapBetweenDescriptionAndCommits"))
       add(branches, CC().growY().push())
-      add(statusChecks, CC().growX().gapBottom("$gapBetweenCheckAndActions"))
+      add(statusChecks, CC().growX().gapBottom("$gapBetweenCheckAndActions").maxHeight("$statusChecksMaxHeight"))
       add(state, CC().growX().pushX().minHeight("pref"))
 
       PopupHandler.installPopupMenu(this, DefaultActionGroup(GHPRReloadDetailsAction()), "GHPRDetailsPopup")
@@ -73,4 +73,6 @@ internal object GHPRDetailsComponentFactory {
   private val gapBetweenTitleAndDescription get() = if (ExperimentalUI.isNewUI()) 8 else 8
   private val gapBetweenDescriptionAndCommits get() = if (ExperimentalUI.isNewUI()) 22 else 18
   private val gapBetweenCheckAndActions get() = if (ExperimentalUI.isNewUI()) 10 else 10
+
+  private val statusChecksMaxHeight: Int get() = if (ExperimentalUI.isNewUI()) 143 else 143
 }
