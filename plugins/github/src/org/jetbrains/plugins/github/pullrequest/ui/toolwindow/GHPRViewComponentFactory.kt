@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 import com.intellij.collaboration.async.DisposingScope
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.ReturnToListComponent
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
@@ -47,6 +48,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.changes.*
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.*
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
+import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JPanel
@@ -128,7 +130,17 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   }
 
   fun create(): JComponent {
-    return createInfoComponent().apply {
+    val returnToListActionComponent = ReturnToListComponent.createReturnToListSideComponent(
+      GithubBundle.message("pull.request.back.to.list"),
+      onClick = { viewController.viewList() }
+    )
+    val infoComponent = createInfoComponent()
+
+    return JPanel(BorderLayout()).apply {
+      isOpaque = false
+      add(returnToListActionComponent, BorderLayout.NORTH)
+      add(infoComponent, BorderLayout.CENTER)
+    }.apply {
       DataManager.registerDataProvider(this) { dataId ->
         when {
           GHPRActionKeys.GIT_REPOSITORY.`is`(dataId) -> repository
