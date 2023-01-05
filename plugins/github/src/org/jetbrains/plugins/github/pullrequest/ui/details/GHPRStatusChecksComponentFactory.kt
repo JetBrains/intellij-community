@@ -13,6 +13,7 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.childScope
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
@@ -37,7 +38,8 @@ import javax.swing.JPanel
 internal object GHPRStatusChecksComponentFactory {
   private const val STATUSES_GAP = 10
   private const val STATUS_COMPONENTS_GAP = 8
-  private const val AVATAR_SIZE = 20
+  private const val STATUS_COMPONENT_BORDER = 5
+  private const val AVATAR_SIZE = 24
 
   fun create(
     parentScope: CoroutineScope,
@@ -87,7 +89,7 @@ internal object GHPRStatusChecksComponentFactory {
       bindText(scope, reviewDetailsVm.mergeabilityState.map { getCheckStatusText(it) })
     }
     val detailsLink = ActionLink(CollaborationToolsBundle.message("review.details.status.ci.link.details")) {
-      BrowserUtil.browse("${reviewDetailsVm.urlState.value}/checks")
+      BrowserUtil.browse("${reviewDetailsVm.url}/checks")
     }.apply {
       bindVisibility(scope, reviewDetailsVm.mergeabilityState.map { mergeability ->
         mergeability != null && (mergeability.pendingChecks != 0 || mergeability.failedChecks != 0)
@@ -97,6 +99,7 @@ internal object GHPRStatusChecksComponentFactory {
     return JPanel(HorizontalLayout(STATUS_COMPONENTS_GAP)).apply {
       isOpaque = false
       name = "CI statuses panel"
+      border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       bindVisibility(scope, reviewDetailsVm.checksState.map { it != ChecksState.NONE })
       add(checkStatus)
       add(detailsLink)
@@ -107,6 +110,7 @@ internal object GHPRStatusChecksComponentFactory {
     return JLabel().apply {
       isOpaque = false
       name = "Review conflicts label"
+      border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = AllIcons.RunConfigurations.TestError
       text = GithubBundle.message("pull.request.conflicts.must.be.resolved")
       bindVisibility(scope, reviewDetailsVm.hasConflictsState.map { it == true })
@@ -117,8 +121,8 @@ internal object GHPRStatusChecksComponentFactory {
     return JLabel().apply {
       isOpaque = false
       name = "Required reviews label"
+      border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = AllIcons.RunConfigurations.TestError
-
       bindVisibility(scope, combine(
         reviewDetailsVm.requiredApprovingReviewsCountState,
         reviewDetailsVm.isDraftState
@@ -133,7 +137,9 @@ internal object GHPRStatusChecksComponentFactory {
 
   private fun createRestrictionsLabel(scope: CoroutineScope, reviewDetailsVm: GHPRDetailsViewModel): JComponent {
     return JLabel().apply {
+      isOpaque = false
       name = "Restricted rights label"
+      border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = AllIcons.RunConfigurations.TestError
       text = GithubBundle.message("pull.request.not.authorized.to.merge")
       bindVisibility(scope, combine(reviewDetailsVm.isRestrictedState, reviewDetailsVm.isDraftState) { isRestricted, isDraft ->
@@ -144,7 +150,7 @@ internal object GHPRStatusChecksComponentFactory {
 
   private fun createAccessDeniedLabel(reviewDetailsVm: GHPRDetailsViewModel, securityService: GHPRSecurityService): JComponent {
     val isDraft = reviewDetailsVm.isDraftState.value
-    val viewerDidAuthor = reviewDetailsVm.viewerDidAuthorState
+    val viewerDidAuthor = reviewDetailsVm.viewerDidAuthor
 
     val mergeForbidden = securityService.isMergeForbiddenForProject()
     val canMerge = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE)
@@ -152,7 +158,9 @@ internal object GHPRStatusChecksComponentFactory {
     val canMarkReadyForReview = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE) || viewerDidAuthor
 
     return JLabel().apply {
+      isOpaque = false
       name = "Access denied label"
+      border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       when {
         !canClose -> {
           icon = AllIcons.RunConfigurations.TestError
@@ -179,7 +187,9 @@ internal object GHPRStatusChecksComponentFactory {
 
   private fun createNeedReviewerLabel(scope: CoroutineScope, reviewFlowVm: GHPRReviewFlowViewModel): JComponent {
     return JLabel().apply {
+      isOpaque = false
       name = "Need reviewer label"
+      border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = AllIcons.RunConfigurations.TestError
       text = CollaborationToolsBundle.message("review.details.status.reviewer.missing")
       bindVisibility(scope, reviewFlowVm.reviewerAndReviewState.map { it.isEmpty() })
@@ -194,6 +204,7 @@ internal object GHPRStatusChecksComponentFactory {
     val panel = JPanel(VerticalLayout(STATUSES_GAP)).apply {
       isOpaque = false
       name = "Reviewers statuses panel"
+      border = JBUI.Borders.empty(1, 0)
       bindVisibility(scope, reviewFlowVm.reviewerAndReviewState.map { it.isNotEmpty() })
     }
 

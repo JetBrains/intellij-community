@@ -7,13 +7,13 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 
 internal interface GHPRDetailsViewModel {
   val titleState: StateFlow<String>
-  val numberState: StateFlow<String>
-  val urlState: StateFlow<String>
   val descriptionState: StateFlow<String>
   val reviewMergeState: StateFlow<GHPullRequestState>
-
   val isDraftState: StateFlow<Boolean>
-  val viewerDidAuthorState: Boolean
+
+  val number: String
+  val url: String
+  val viewerDidAuthor: Boolean
 
   val mergeabilityState: StateFlow<GHPRMergeabilityState?>
   val hasConflictsState: StateFlow<Boolean?>

@@ -20,12 +20,6 @@ internal class GHPRDetailsViewModelImpl(
   private val _titleState: MutableStateFlow<String> = MutableStateFlow(detailsModel.title)
   override val titleState: StateFlow<String> = _titleState.asStateFlow()
 
-  private val _numberState: MutableStateFlow<String> = MutableStateFlow(detailsModel.number)
-  override val numberState: StateFlow<String> = _numberState.asStateFlow()
-
-  private val _urlState: MutableStateFlow<String> = MutableStateFlow(detailsModel.url)
-  override val urlState: StateFlow<String> = _urlState.asStateFlow()
-
   private val _descriptionState: MutableStateFlow<String> = MutableStateFlow(detailsModel.description)
   override val descriptionState: StateFlow<String> = _descriptionState.asStateFlow()
 
@@ -35,7 +29,9 @@ internal class GHPRDetailsViewModelImpl(
   private val _isDraftState: MutableStateFlow<Boolean> = MutableStateFlow(stateModel.isDraft)
   override val isDraftState: StateFlow<Boolean> = _isDraftState.asStateFlow()
 
-  override val viewerDidAuthorState: Boolean = stateModel.viewerDidAuthor
+  override val number: String = detailsModel.number
+  override val url: String = detailsModel.url
+  override val viewerDidAuthor: Boolean = stateModel.viewerDidAuthor
 
   private val _mergeabilityState: MutableStateFlow<GHPRMergeabilityState?> = MutableStateFlow(stateModel.mergeabilityState)
   override val mergeabilityState: StateFlow<GHPRMergeabilityState?> = _mergeabilityState.asStateFlow()
@@ -59,8 +55,6 @@ internal class GHPRDetailsViewModelImpl(
   init {
     detailsModel.addAndInvokeDetailsChangedListener {
       _titleState.value = detailsModel.title
-      _numberState.value = detailsModel.number
-      _urlState.value = detailsModel.url
       _descriptionState.value = detailsModel.description
       _reviewMergeState.value = detailsModel.state
     }

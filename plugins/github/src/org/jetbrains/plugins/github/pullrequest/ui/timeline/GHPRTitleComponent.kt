@@ -10,7 +10,7 @@ import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsViewModel
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
@@ -31,7 +31,9 @@ internal object GHPRTitleComponent {
   fun create(scope: CoroutineScope, reviewDetailsVM: GHPRDetailsViewModel): JComponent {
     val titleLabel = HtmlEditorPane().apply {
       font = JBFont.h2().asBold()
-      bindText(scope, combine(reviewDetailsVM.titleState, reviewDetailsVM.numberState, reviewDetailsVM.urlState, ::createTitleText))
+      bindText(scope, reviewDetailsVM.titleState.map { title ->
+        createTitleText(title, reviewDetailsVM.number, reviewDetailsVM.url)
+      })
     }
 
     return titleLabel
