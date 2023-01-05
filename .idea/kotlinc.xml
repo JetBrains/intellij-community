@@ -11,6 +11,6 @@
     <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -opt-in=org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction" />
   </component>
   <component name="KotlinJpsPluginSettings">
-    <option name="version" value="1.7.22" />
+    <option name="version" value="1.8.0" />
   </component>
 </project>
