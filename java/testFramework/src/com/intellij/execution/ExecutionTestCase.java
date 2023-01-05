@@ -209,5 +209,6 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
     r.run();
     isRunning.set(false);
     Thread.interrupted();
+    Disposer.dispose(alarm);
   }
 }
