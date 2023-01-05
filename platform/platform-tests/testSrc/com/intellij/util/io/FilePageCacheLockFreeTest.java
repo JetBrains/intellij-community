@@ -31,11 +31,8 @@ public class FilePageCacheLockFreeTest {
   @Test
   public void housekeeperThreadNotStartUntilFirstStorageRegistered() throws Exception {
     final FilePageCacheLockFree fpCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES);
-    try {
+    try (fpCache) {
       Thread.sleep(1000L);
-    }
-    finally {
-      fpCache.close();
     }
     assertEquals(
       "Housekeeper thread shouldn't start until first storage registered",
@@ -49,14 +46,11 @@ public class FilePageCacheLockFreeTest {
     final File file = tmpDirectory.newFile();
 
     final FilePageCacheLockFree fpCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES);
-    try {
+    try (fpCache) {
       final StorageLockContext storageContext = new StorageLockContext(fpCache, true, true, true);
       try (final PagedFileStorageLockFree storage = new PagedFileStorageLockFree(file.toPath(), storageContext, PAGE_SIZE, true)) {
         Thread.sleep(1000L);
       }
-    }
-    finally {
-      fpCache.close();
     }
     assertTrue(
       "Housekeeper thread shouldn't start until first storage registered",
@@ -74,6 +68,7 @@ public class FilePageCacheLockFreeTest {
   @Test
   public void openTheStorageWithClosedCacheFails() throws Exception {
     final File file = tmpDirectory.newFile();
+
     final FilePageCacheLockFree fpCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES);
     fpCache.close();
 
@@ -82,7 +77,8 @@ public class FilePageCacheLockFreeTest {
       "Open storage with closed FilePageCache is prohibited",
       IllegalStateException.class,
       () -> {
-        try (final PagedFileStorageLockFree storage = new PagedFileStorageLockFree(file.toPath(), storageContext, PAGE_SIZE, true)) {
+        //noinspection EmptyTryBlock
+        try (PagedFileStorageLockFree storage = new PagedFileStorageLockFree(file.toPath(), storageContext, PAGE_SIZE, true)) {
         }
       });
   }

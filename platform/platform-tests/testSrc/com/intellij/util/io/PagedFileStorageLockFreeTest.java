@@ -54,7 +54,8 @@ public class PagedFileStorageLockFreeTest {
       assertThatExceptionOfType(IOException.class)
         .describedAs(new TextDescription("Attempt to open second PagedStorage for the same file must fail"))
         .isThrownBy(() -> {
-          openFile(file);
+          final PagedFileStorageLockFree secondStorageForSameFile = openFile(file);
+          secondStorageForSameFile.close();
         });
     }
   }
@@ -77,12 +78,11 @@ public class PagedFileStorageLockFreeTest {
   public void closedStorageCouldBeReopenedAgainImmediately() throws Exception {
     final File file = tmpDirectory.newFile();
     for (int tryNo = 0; tryNo < 1000; tryNo++) {
-      try (PagedFileStorageLockFree storage = new PagedFileStorageLockFree(file.toPath(), storageContext, PAGE_SIZE, true)) {
-      }
+      final PagedFileStorageLockFree storage = new PagedFileStorageLockFree(file.toPath(), storageContext, PAGE_SIZE, true);
+      storage.close();
     }
   }
 
-  //FIXME RC: test is flaky due to racy .flush() which competes with eager flushes in housekeeper thread
   @Test
   public void storageBecomesDirty_AsValueWrittenToIt_AndBecomeNotDirtyAfterFlush() throws Exception {
     final File file = tmpDirectory.newFile();
@@ -94,6 +94,11 @@ public class PagedFileStorageLockFreeTest {
 
       pagedStorage.putLong(0, Long.MAX_VALUE);
 
+      //RC: housekeeper thread is allowed to flush pages to unmap & reclaim the buffers, so it _could
+      //    be_ pagedStorage is !dirty even though something was just written into it.
+      //    But FilePageCache _should not_ unmap page without reason, and in this case there is no
+      //    competing pressure on the FPC that could create such a reason -- so I expect the invariant
+      //    to hold
       assertThat(pagedStorage.isDirty())
         .describedAs("Storage must be dirty as value was written into it")
         .isTrue();
@@ -264,6 +269,7 @@ public class PagedFileStorageLockFreeTest {
     }
   }
 
+  @SuppressWarnings("IntegerMultiplicationImplicitCastToLong")
   @Test
   public void uncontendedMultiThreadedWrites_ReadBackUnchanged_Playground() throws IOException, InterruptedException {
     final long cacheCapacityBytes = storageContext.pageCache().getCacheCapacityBytes();
@@ -285,6 +291,7 @@ public class PagedFileStorageLockFreeTest {
       try {
         final List<Future<Void>> futures = IntStream.range(0, threads)
           .mapToObj(threadNo -> (Callable<Void>)() -> {
+
             for (long offset = threadNo * blockSize;
                  offset < fileSize;
                  offset += threads * blockSize) {
@@ -339,6 +346,7 @@ public class PagedFileStorageLockFreeTest {
   }
 
 
+  @SuppressWarnings("IntegerMultiplicationImplicitCastToLong")
   @Test
   public void uncontendedMultiThreadedWrites_ReadBackUnchanged() throws IOException, InterruptedException {
     final int pagesInCache = (int)(storageContext.pageCache().getCacheCapacityBytes() / PAGE_SIZE);
