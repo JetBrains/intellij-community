@@ -66,7 +66,9 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   override fun hashCode() = modulePath.hashCode()
 
   override fun loadEntities(builder: MutableEntityStorage,
-                            reader: JpsFileContentReader, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager) {
+                            reader: JpsFileContentReader,
+                            errorReporter: ErrorReporter,
+                            virtualFileManager: VirtualFileUrlManager) {
     val externalStorageEnabled = externalStorageConfigurationManager?.isEnabled ?: false
     if (!externalStorageEnabled) {
       val moduleLoadedInfo = loadModuleEntity(reader, builder, errorReporter, virtualFileManager)

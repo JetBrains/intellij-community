@@ -11,6 +11,7 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
@@ -92,24 +93,33 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
 
     LOG.debug { "Reload entities from changed files:\n$changes" }
+
     val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
-    val reloadingResult = loadAndReportErrors { serializers.reloadFromChangedFiles(changes, fileContentReader, unloadedModuleNames, it) }
+    val reloadingResult = loadAndReportErrors {
+      serializers.reloadFromChangedFiles(changes, fileContentReader, unloadedModuleNames, it)
+    }
+
     fileContentReader.clearCache()
     LOG.debugValues("Changed entity sources", reloadingResult.affectedSources)
+
     if (reloadingResult.affectedSources.isEmpty() && !reloadingResult.builder.hasChanges() && !reloadingResult.unloadedEntityBuilder.hasChanges()) return
 
     withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().runWriteAction {
+      runWriteAction {
         val affectedEntityFilter: (EntitySource) -> Boolean = {
-          it in reloadingResult.affectedSources || (it is JpsImportedEntitySource && !it.storedExternally && it.internalFile in reloadingResult.affectedSources)
+          it in reloadingResult.affectedSources
+          || (it is JpsImportedEntitySource && !it.storedExternally && it.internalFile in reloadingResult.affectedSources)
           || it is DummyParentEntitySource
         }
         val description = "Reload entities after changes in JPS configuration files"
+
+        // Update builder of unloaded entities
         if (reloadingResult.unloadedEntityBuilder.hasChanges()) {
           WorkspaceModel.getInstance(project).updateUnloadedEntities(description) { builder ->
             builder.replaceBySource(affectedEntityFilter, reloadingResult.unloadedEntityBuilder.toSnapshot())
           }
         }
+
         val unloadedBuilder = MutableEntityStorage.from(WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities)
         WorkspaceModel.getInstance(project).updateProjectModel(description) { updater ->
           val storage = reloadingResult.builder.toSnapshot()
