@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints.settings
 import com.intellij.codeInsight.codeVision.CodeVisionProvider
 import com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider
 import com.intellij.codeInsight.hints.*
+import com.intellij.diagnostic.PluginException
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
 import com.intellij.lang.Language
@@ -28,7 +29,9 @@ private class InlayHintsSettingsSearchableContributor : SearchableOptionContribu
       val providerWithSettings = provider.withSettings(providerInfo.language, InlayHintsSettings.instance())
       val configurable = providerWithSettings.configurable
       @Suppress("SENSELESS_COMPARISON") // for some reason (kotlin bug?) there is no check between kotlin and java and sometimes here comes null
-      require (configurable != null) { "Configurable must not be null, provider: ${provider.key.id}" }
+      if (configurable == null) {
+        PluginException.createByClass("Configurable must not be null, provider: ${provider.key.id}", null, provider.javaClass)
+      }
       for (case in configurable.cases) {
         addOption(processor, case.name, id)
       }
