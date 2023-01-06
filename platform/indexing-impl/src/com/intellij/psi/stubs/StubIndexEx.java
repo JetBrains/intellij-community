@@ -2,6 +2,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.model.ModelBranch;
 import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -181,12 +182,18 @@ public abstract class StubIndexEx extends StubIndex {
       trace.stubTreesDeserializingStarted();
 
       try {
+        Collection<ModelBranch> branches = null;
         while (fileStream.hasNext()) {
           VirtualFile file = fileStream.next();
           assert file != null;
-
-          List<VirtualFile> filesInScope =
-            scope != null ? FileBasedIndexEx.filesInScopeWithBranches(scope, file) : Collections.singletonList(file);
+          List<VirtualFile> filesInScope;
+          if (scope != null) {
+            if (branches == null) branches = scope.getModelBranchesAffectingScope();
+            filesInScope = FileBasedIndexEx.filesInScopeWithBranches(scope, file, branches);
+          }
+          else {
+            filesInScope = Collections.singletonList(file);
+          }
           if (filesInScope.isEmpty()) {
             continue;
           }
