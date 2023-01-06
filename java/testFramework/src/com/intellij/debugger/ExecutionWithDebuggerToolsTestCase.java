@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.debugger.engine.*;
@@ -189,7 +189,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     int frameIndex = frameProxy.getFrameIndex();
     Method method = frameProxy.location().method();
 
-    println("frameProxy(" + frameIndex + ") = " + method, ProcessOutputTypes.SYSTEM);
+    systemPrintln("frameProxy(" + frameIndex + ") = " + method);
   }
 
   protected static String toDisplayableString(SourcePosition sourcePosition) {
@@ -203,10 +203,10 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   protected void printContext(final StackFrameContext context) {
     ApplicationManager.getApplication().runReadAction(() -> {
       if (context.getFrameProxy() != null) {
-        println(toDisplayableString(Objects.requireNonNull(PositionUtil.getSourcePosition(context))), ProcessOutputTypes.SYSTEM);
+        systemPrintln(toDisplayableString(Objects.requireNonNull(PositionUtil.getSourcePosition(context))));
       }
       else {
-        println("Context thread is null", ProcessOutputTypes.SYSTEM);
+        systemPrintln("Context thread is null");
       }
     });
   }
@@ -227,10 +227,10 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
             + "]");
         }
 
-        println(toDisplayableString(sourcePosition) + positionText, ProcessOutputTypes.SYSTEM);
+        systemPrintln(toDisplayableString(sourcePosition) + positionText);
       }
       else {
-        println("Context thread is null", ProcessOutputTypes.SYSTEM);
+        systemPrintln("Context thread is null");
       }
     });
   }
@@ -386,45 +386,43 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
         if (comment.contains("Method")) {
           breakpoint = breakpointManager.addMethodBreakpoint(document, commentLine + 1);
           if (breakpoint != null) {
-            println("MethodBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2),
-                    ProcessOutputTypes.SYSTEM);
+            systemPrintln("MethodBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2));
 
             String emulated = readValue(comment, "Emulated");
             if (emulated != null) {
               ((JavaMethodBreakpointProperties)breakpoint.getXBreakpoint().getProperties()).EMULATED = Boolean.parseBoolean(emulated);
-              println("Emulated = " + emulated, ProcessOutputTypes.SYSTEM);
+              systemPrintln("Emulated = " + emulated);
             }
 
             String entry = readValue(comment, "OnEntry");
             if (entry != null) {
               ((JavaMethodBreakpointProperties)breakpoint.getXBreakpoint().getProperties()).WATCH_ENTRY = Boolean.parseBoolean(entry);
-              println("On Entry = " + entry, ProcessOutputTypes.SYSTEM);
+              systemPrintln("On Entry = " + entry);
             }
 
             String exit = readValue(comment, "OnExit");
             if (exit != null) {
               ((JavaMethodBreakpointProperties)breakpoint.getXBreakpoint().getProperties()).WATCH_EXIT = Boolean.parseBoolean(exit);
-              println("On Exit = " + exit, ProcessOutputTypes.SYSTEM);
+              systemPrintln("On Exit = " + exit);
             }
           }
         }
         else if (comment.contains("Field")) {
           breakpoint = breakpointManager.addFieldBreakpoint(document, commentLine + 1, readValue(comment, "Field"));
           if (breakpoint != null) {
-            println("FieldBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2), ProcessOutputTypes.SYSTEM);
+            systemPrintln("FieldBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2));
           }
         }
         else if (comment.contains("Exception")) {
           breakpoint = breakpointManager.addExceptionBreakpoint(readValue(comment, "Exception"), "");
           if (breakpoint != null) {
-            println("ExceptionBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2),
-                    ProcessOutputTypes.SYSTEM);
+            systemPrintln("ExceptionBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2));
           }
         }
         else {
           breakpoint = breakpointManager.addLineBreakpoint(document, commentLine + 1);
           if (breakpoint != null) {
-            println("LineBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2), ProcessOutputTypes.SYSTEM);
+            systemPrintln("LineBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2));
           }
         }
 
@@ -437,26 +435,26 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
         if (suspendPolicy != null) {
           //breakpoint.setSuspend(!DebuggerSettings.SUSPEND_NONE.equals(suspendPolicy));
           breakpoint.setSuspendPolicy(suspendPolicy);
-          println("SUSPEND_POLICY = " + suspendPolicy, ProcessOutputTypes.SYSTEM);
+          systemPrintln("SUSPEND_POLICY = " + suspendPolicy);
         }
         String condition = readValue(comment, "Condition");
         if (condition != null) {
           //breakpoint.CONDITION_ENABLED = true;
           breakpoint.setCondition(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, condition));
-          println("Condition = " + condition, ProcessOutputTypes.SYSTEM);
+          systemPrintln("Condition = " + condition);
         }
 
         String logExpression = readValue(comment, "LogExpression");
         if (logExpression != null) {
           breakpoint.getXBreakpoint().setLogExpression(logExpression);
-          println("LogExpression = " + logExpression, ProcessOutputTypes.SYSTEM);
+          systemPrintln("LogExpression = " + logExpression);
         }
 
         String passCount = readValue(comment, "Pass count");
         if (passCount != null) {
           breakpoint.setCountFilterEnabled(true);
           breakpoint.setCountFilter(Integer.parseInt(passCount));
-          println("Pass count = " + passCount, ProcessOutputTypes.SYSTEM);
+          systemPrintln("Pass count = " + passCount);
         }
 
         String classFilters = readValue(comment, "Class filters");
@@ -465,7 +463,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           Pair<ClassFilter[], ClassFilter[]> filters = readClassFilters(classFilters);
           breakpoint.setClassFilters(filters.first);
           breakpoint.setClassExclusionFilters(filters.second);
-          println("Class filters = " + classFilters, ProcessOutputTypes.SYSTEM);
+          systemPrintln("Class filters = " + classFilters);
         }
 
         String catchClassFilters = readValue(comment, "Catch class filters");
@@ -475,7 +473,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           Pair<ClassFilter[], ClassFilter[]> filters = readClassFilters(catchClassFilters);
           exceptionBreakpoint.setCatchClassFilters(filters.first);
           exceptionBreakpoint.setCatchClassExclusionFilters(filters.second);
-          println("Catch class filters = " + catchClassFilters, ProcessOutputTypes.SYSTEM);
+          systemPrintln("Catch class filters = " + catchClassFilters);
         }
       }
     };

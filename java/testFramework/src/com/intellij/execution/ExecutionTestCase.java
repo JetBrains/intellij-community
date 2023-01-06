@@ -4,6 +4,7 @@ package com.intellij.execution;
 import com.intellij.debugger.impl.OutputChecker;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -123,6 +124,11 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
   @Override
   protected Sdk getTestProjectJdk() {
     return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+  }
+
+  /** Adds the message to a buffer that can later be validated using {@link #getChecker()}. */
+  protected final void systemPrintln(@NotNull @NonNls String msg) {
+    println(msg, ProcessOutputType.SYSTEM);
   }
 
   public void println(@NonNls String s, Key outputType) {
