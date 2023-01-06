@@ -1335,7 +1335,8 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
      * - array dimension expressions
      * - array index expression
      * - unary +, -, and ~ operations
-     * @param operandEvaluator  @return operandEvaluator possibly 'wrapped' with necessary unboxing and type-casting evaluators to make returning value
+     *
+     * @return operandEvaluator, possibly 'wrapped' with necessary unboxing and type-casting evaluators to make returning value
      * suitable for mentioned contexts
      */
     private static Evaluator handleUnaryNumericPromotion(final PsiType operandExpressionType, Evaluator operandEvaluator) {
