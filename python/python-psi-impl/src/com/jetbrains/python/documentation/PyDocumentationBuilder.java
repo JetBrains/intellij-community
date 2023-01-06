@@ -99,7 +99,6 @@ public class PyDocumentationBuilder {
     }
 
     if (!mySectionsMap.isEmpty()) {
-      mySections.appendRaw(DocumentationMarkup.SECTIONS_START);
       final String[] firstSections =
         {PyPsiBundle.message("QDOC.attributes"), PyPsiBundle.message("QDOC.params"), PyPsiBundle.message("QDOC.keyword.args"),
           PyPsiBundle.message("QDOC.returns"), PyPsiBundle.message("QDOC.raises")};
@@ -112,13 +111,10 @@ public class PyDocumentationBuilder {
 
       // FactoryMap's entrySet() returns pairs without particular order even for LinkedHashMap
       for (@NlsSafe String header : ContainerUtil.concat(firstSectionsList, remainingSections)) {
-        mySections.appendRaw(DocumentationMarkup.SECTION_HEADER_START);
-        mySections.appendRaw(header);
-        mySections.appendRaw(DocumentationMarkup.SECTION_SEPARATOR);
-        mySections.append(mySectionsMap.get(header));
-        mySections.appendRaw(DocumentationMarkup.SECTION_END);
+        mySections.append(HtmlChunk.tag("tr"));
+        mySections.append(HtmlChunk.text(header).wrapWith(DocumentationMarkup.SECTION_HEADER_CELL));
+        mySections.append(mySectionsMap.get(header).wrapWith(DocumentationMarkup.SECTION_CONTENT_CELL));
       }
-      mySections.appendRaw(DocumentationMarkup.SECTIONS_END);
     }
 
     if (myBody.isEmpty() && myContent.isEmpty()) {
@@ -127,19 +123,20 @@ public class PyDocumentationBuilder {
     else {
       final HtmlBuilder result = new HtmlBuilder();
       if (!myProlog.isEmpty() || !myBody.isEmpty()) {
-        result.appendRaw(DocumentationMarkup.DEFINITION_START).append(myProlog);
-
+        final HtmlBuilder definitionBuilder = new HtmlBuilder();
+        definitionBuilder.append(myProlog);
         if (!myBody.isEmpty() && !myProlog.isEmpty()) {
-          result.br();
+          definitionBuilder.br();
         }
-
-        result.append(myBody).appendRaw(DocumentationMarkup.DEFINITION_END);
+        definitionBuilder.append(myBody);
+        result.append(definitionBuilder.wrapWith("pre").wrapWith(DocumentationMarkup.DEFINITION_ELEMENT));
       }
       if (!myContent.isEmpty()) {
-        result.appendRaw(DocumentationMarkup.CONTENT_START).append(myContent).appendRaw(DocumentationMarkup.CONTENT_END);
+        result.append(myContent.wrapWith(DocumentationMarkup.CONTENT_ELEMENT));
       }
-      result.append(mySections); // pre-assemble; then add stuff to individual cats as needed
-
+      if (!mySectionsMap.isEmpty()) {
+        result.append(mySections.wrapWith(DocumentationMarkup.SECTIONS_TABLE));
+      }
       return result.wrapWithHtmlBody().toString();
     }
   }
