@@ -18,7 +18,6 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,14 +31,13 @@ import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
 public class TooBroadThrowsInspection extends BaseInspection {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean onlyWarnOnRootExceptions = false;
 
   @SuppressWarnings({"PublicField", "UnusedDeclaration"})
@@ -50,6 +48,8 @@ public class TooBroadThrowsInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreThrown = false;
+  @SuppressWarnings("PublicField")
+  public int hiddenExceptionsThreshold = 100;
 
   @Override
   @NotNull
@@ -86,7 +86,9 @@ public class TooBroadThrowsInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox("onlyWarnOnRootExceptions", InspectionGadgetsBundle.message("too.broad.catch.option")),
+      number("hiddenExceptionsThreshold", InspectionGadgetsBundle.message("overly.broad.throws.clause.threshold.option"),
+             1, 100),
+     checkbox("onlyWarnOnRootExceptions", InspectionGadgetsBundle.message("too.broad.catch.option")),
       checkbox("ignoreLibraryOverrides", InspectionGadgetsBundle.message("ignore.exceptions.declared.on.library.override.option")),
       checkbox("ignoreThrown", InspectionGadgetsBundle.message("overly.broad.throws.clause.ignore.thrown.option")));
   }
@@ -210,6 +212,10 @@ public class TooBroadThrowsInspection extends BaseInspection {
           }
         }
         if (!exceptionsMasked.isEmpty()) {
+          int numberOfHiddenExceptions = exceptionsMasked.size();
+          if (numberOfHiddenExceptions > hiddenExceptionsThreshold) {
+            continue;
+          }
           final PsiJavaCodeReferenceElement throwsReference = throwsReferences[i];
           final boolean originalNeeded = exceptionsThrown.contains(referencedException);
           if (ignoreThrown && originalNeeded) {
