@@ -121,7 +121,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       customRootsSerializer = moduleOptions[JpsProjectLoader.CLASSPATH_ATTRIBUTE]?.let { customSerializerId ->
         val serializer = CustomModuleRootsSerializer.EP_NAME.extensionList.firstOrNull { it.id == customSerializerId }
         if (serializer == null) {
-          errorReporter.reportError(ProjectModelBundle.message("error.message.unknown.classpath.provider", fileUrl.fileName, customSerializerId), fileUrl)
+          errorReporter.reportError(
+            ProjectModelBundle.message("error.message.unknown.classpath.provider", fileUrl.fileName, customSerializerId), fileUrl)
         }
         return@let serializer
       }
@@ -129,7 +130,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       customDir = moduleOptions[JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE]
       val externalSystemEntitySource = createEntitySource(externalSystemId)
       val moduleEntitySource = customRootsSerializer?.createEntitySource(fileUrl, internalEntitySource, customDir, virtualFileManager)
-                                ?: externalSystemEntitySource
+                               ?: externalSystemEntitySource
       if (moduleEntitySource is DummyParentEntitySource) {
         Pair(moduleEntitySource, externalSystemEntitySource)
       }
@@ -138,37 +139,44 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       }
     }
     catch (e: JDOMException) {
-      builder.addModuleEntity(modulePath.moduleName, listOf(ModuleDependencyItem.ModuleSourceDependency), internalEntitySource)
+      // TODO: Handle loading with exceptions
+      //builder.addModuleEntity(modulePath.moduleName, listOf(ModuleDependencyItem.ModuleSourceDependency), internalEntitySource)
       throw e
     }
 
-    val moduleEntity = builder.addModuleEntity(modulePath.moduleName, listOf(ModuleDependencyItem.ModuleSourceDependency),
-                                               entitySourceForModuleAndOtherEntities.first)
+    val moduleEntity = ModuleEntity(modulePath.moduleName, listOf(ModuleDependencyItem.ModuleSourceDependency),
+                                    entitySourceForModuleAndOtherEntities.first)
 
     val entitySource = entitySourceForModuleAndOtherEntities.second
     val moduleGroup = modulePath.group
     if (moduleGroup != null) {
-      builder.addModuleGroupPathEntity(moduleGroup.split('/'), moduleEntity, entitySource)
+      ModuleGroupPathEntity(moduleGroup.split('/'), entitySource) {
+        this.module = moduleEntity
+      }
     }
 
     val moduleType = moduleOptions["type"]
     if (moduleType != null) {
-      builder.modifyEntity(moduleEntity) {
-        type = moduleType
-      }
+      (moduleEntity as ModuleEntity.Builder).type = moduleType
     }
     @Suppress("UNCHECKED_CAST")
     val customModuleOptions =
       moduleOptions.filter { (key, value) -> key != null && value != null && key !in STANDARD_MODULE_OPTIONS } as Map<String, String>
     if (customModuleOptions.isNotEmpty()) {
-      builder.addModuleCustomImlDataEntity(null, customModuleOptions, moduleEntity, entitySource)
+      ModuleCustomImlDataEntity(customModuleOptions, entitySource) {
+        this.rootManagerTagCustomData = null
+        this.module = moduleEntity
+      }
     }
 
     CUSTOM_MODULE_COMPONENT_SERIALIZER_EP.extensionList.forEach {
-      it.loadComponent(builder, moduleEntity, reader, fileUrl, errorReporter, virtualFileManager)
+      it.loadComponent(moduleEntity, reader, fileUrl, errorReporter, virtualFileManager)
     }
     // Don't forget to load external system options even if custom root serializer exist
-    loadExternalSystemOptions(builder, moduleEntity, reader, externalSystemOptions, externalSystemId, entitySource)
+    loadExternalSystemOptions(moduleEntity, reader, externalSystemOptions, externalSystemId, entitySource)
+
+    builder addEntity moduleEntity
+
     loadContentRoots(customRootsSerializer, builder, moduleEntity, reader, customDir, errorReporter, virtualFileManager,
                      moduleEntity.entitySource, false)
     loadTestModuleProperty(builder, moduleEntity, reader, entitySource)
@@ -223,15 +231,14 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                                        { it.getAttributeValue("value") })
   }
 
-  protected open fun loadExternalSystemOptions(builder: MutableEntityStorage,
-                                               module: ModuleEntity,
+  protected open fun loadExternalSystemOptions(module: ModuleEntity,
                                                reader: JpsFileContentReader,
                                                externalSystemOptions: Map<String?, String?>,
                                                externalSystemId: String?,
                                                entitySource: EntitySource) {
     if (!shouldCreateExternalSystemModuleOptions(externalSystemId, externalSystemOptions, MODULE_OPTIONS_TO_CHECK)) return
-    val optionsEntity = builder.getOrCreateExternalSystemModuleOptions(module, entitySource)
-    builder.modifyEntity(optionsEntity) {
+    ExternalSystemModuleOptionsEntity(entitySource) {
+      this.module = module
       externalSystem = externalSystemId
       externalSystemModuleVersion = externalSystemOptions["external.system.module.version"]
       linkedProjectPath = externalSystemOptions["external.linked.project.path"]

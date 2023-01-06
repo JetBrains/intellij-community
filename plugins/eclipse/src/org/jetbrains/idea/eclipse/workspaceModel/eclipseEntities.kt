@@ -104,11 +104,9 @@ data class EclipseProjectFile(
 }
 
 fun MutableEntityStorage.addEclipseProjectPropertiesEntity(module: ModuleEntity, source: EntitySource): EclipseProjectPropertiesEntity {
-  val entity = EclipseProjectPropertiesEntity(LinkedHashMap(), ArrayList(), ArrayList(), ArrayList(), false, 0, LinkedHashMap(), source) {
+  return this addEntity EclipseProjectPropertiesEntity(LinkedHashMap(), ArrayList(), ArrayList(), ArrayList(), false, 0, LinkedHashMap(), source) {
     this.module = module
-}
-  this.addEntity(entity)
-  return entity
+  }
 }
 
 

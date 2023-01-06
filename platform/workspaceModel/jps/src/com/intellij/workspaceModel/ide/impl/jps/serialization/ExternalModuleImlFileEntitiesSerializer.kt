@@ -12,13 +12,11 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.getOrCreateExternalSystemModuleOptions
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.util.JpsPathUtil
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 
 private val MODULE_OPTIONS_TO_CHECK = setOf(
   "externalSystemModuleVersion", "linkedProjectPath", "linkedProjectId", "rootProjectPath", "externalSystemModuleGroup",
@@ -51,15 +49,14 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
     return Pair(options, options["externalSystem"])
   }
 
-  override fun loadExternalSystemOptions(builder: MutableEntityStorage,
-                                         module: ModuleEntity,
+  override fun loadExternalSystemOptions(module: ModuleEntity,
                                          reader: JpsFileContentReader,
                                          externalSystemOptions: Map<String?, String?>,
                                          externalSystemId: String?,
                                          entitySource: EntitySource) {
     if (!shouldCreateExternalSystemModuleOptions(externalSystemId, externalSystemOptions, MODULE_OPTIONS_TO_CHECK)) return
-    val optionsEntity = builder.getOrCreateExternalSystemModuleOptions(module, entitySource)
-    builder.modifyEntity(optionsEntity) {
+    ExternalSystemModuleOptionsEntity(entitySource) {
+      this.module = module
       externalSystem = externalSystemId
       externalSystemModuleVersion = externalSystemOptions["externalSystemModuleVersion"]
       linkedProjectPath = externalSystemOptions["linkedProjectPath"]

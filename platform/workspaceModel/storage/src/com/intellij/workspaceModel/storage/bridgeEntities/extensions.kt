@@ -14,11 +14,9 @@ fun MutableEntityStorage.addModuleEntity(name: @NlsSafe String,
                                          dependencies: List<ModuleDependencyItem>,
                                          source: EntitySource,
                                          type: @NonNls String? = null): ModuleEntity {
-  val entity = ModuleEntity(name, dependencies, source) {
+  return this addEntity ModuleEntity(name, dependencies, source) {
     this.type = type
   }
-  this.addEntity(entity)
-  return entity
 }
 
 fun MutableEntityStorage.addJavaModuleSettingsEntity(inheritedCompilerOutput: Boolean,
@@ -49,11 +47,9 @@ fun MutableEntityStorage.addModuleCustomImlDataEntity(rootManagerTagCustomData: 
 fun MutableEntityStorage.addModuleGroupPathEntity(path: List<@NlsSafe String>,
                                                   module: ModuleEntity,
                                                   source: EntitySource): ModuleGroupPathEntity {
-  val entity = ModuleGroupPathEntity(path, source) {
+  return this addEntity ModuleGroupPathEntity(path, source) {
     this.module = module
   }
-  this.addEntity(entity)
-  return entity
 }
 
 fun MutableEntityStorage.addSourceRootEntity(contentRoot: ContentRootEntity,
