@@ -7,6 +7,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.Disposable;
@@ -44,8 +45,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.FontUtil;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,6 +69,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public final class NotificationsManagerImpl extends NotificationsManager {
   public static final Color DEFAULT_TEXT_COLOR = new JBColor(Gray._0, Gray._191);
@@ -462,15 +466,22 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       text.addHyperlinkListener(listener);
     }
 
-    String fontStyle = NotificationsUtil.getFontStyle();
-    int prefSize = new JLabel(NotificationsUtil.buildHtml(notification, null, true, null, fontStyle)).getPreferredSize().width;
-    String style = prefSize > BalloonLayoutConfiguration.MaxWidth() ? BalloonLayoutConfiguration.MaxWidthStyle() : null;
+    Supplier<@Nls String> textBuilder = () -> {
+      String fontStyle = NotificationsUtil.getFontStyle();
+      int prefSize = new JLabel(NotificationsUtil.buildHtml(notification, null, true, null, fontStyle)).getPreferredSize().width;
+      String style;
 
-    if (layoutData.showFullContent) {
-      style = prefSize > BalloonLayoutConfiguration.MaxFullContentWidth() ? BalloonLayoutConfiguration.MaxFullContentWidthStyle() : null;
-    }
+      if (layoutData.showFullContent) {
+        style = prefSize > BalloonLayoutConfiguration.MaxFullContentWidth() ? BalloonLayoutConfiguration.MaxFullContentWidthStyle() : null;
+      }
+      else {
+        style = prefSize > BalloonLayoutConfiguration.MaxWidth() ? BalloonLayoutConfiguration.MaxWidthStyle() : null;
+      }
 
-    String textContent = NotificationsUtil.buildHtml(notification, style, true, null, fontStyle);
+      return NotificationsUtil.buildHtml(notification, style, true, null, fontStyle);
+    };
+
+    String textContent = textBuilder.get();
     text.setText(textContent);
     setTextAccessibleName(text, textContent);
     text.setEditable(false);
@@ -599,7 +610,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     content.add(centerPanel, BorderLayout.CENTER);
 
     if (notification.hasTitle()) {
-      String titleStyle = StringUtil.defaultIfEmpty(fontStyle, "") + "white-space:nowrap;";
+      String titleStyle = StringUtil.defaultIfEmpty(NotificationsUtil.getFontStyle(), "") + "white-space:nowrap;";
       JLabel title = new JLabel();
       String titleContent = NotificationsUtil.buildHtml(notification, titleStyle, false, null, null);
       title.setText(titleContent);
@@ -715,12 +726,24 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
     notification.setBalloon(balloon);
 
-    ApplicationManager.getApplication().getMessageBus().connect(balloon).subscribe(LafManagerListener.TOPIC, source -> {
+    Runnable lafCallback = () -> {
       NotificationsUtil.configureHtmlEditorKit(text, true);
-      text.setText(textContent);
+      text.setText(textBuilder.get());
       text.revalidate();
       text.repaint();
-    });
+
+      Container parent = content.getParent();
+      if (parent == null) {
+        parent = content;
+      }
+      parent.doLayout();
+      parent.revalidate();
+      parent.repaint();
+    };
+
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(balloon);
+    connection.subscribe(LafManagerListener.TOPIC, source -> lafCallback.run());
+    connection.subscribe(UISettingsListener.TOPIC, uiSettings -> lafCallback.run());
 
     Disposer.register(parentDisposable, balloon);
     return balloon;
