@@ -90,11 +90,12 @@ internal fun loadProject(configLocation: JpsProjectConfigLocation, originalBuild
                          unloadedModuleNames: Set<String> = emptySet(),
                          unloadedEntitiesBuilder: MutableEntityStorage = MutableEntityStorage.create(),
                          fileInDirectorySourceNames: FileInDirectorySourceNames = FileInDirectorySourceNames.empty(),
-                         externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null): JpsProjectSerializers {
+                         externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null,
+                         errorReporter: ErrorReporter = TestErrorReporter): JpsProjectSerializers {
   val cacheDirUrl = configLocation.baseDirectoryUrl.append("cache")
   return runUnderModalProgressIfIsEdt {
     JpsProjectEntitiesLoader.loadProject(configLocation, originalBuilder, File(VfsUtil.urlToPath(cacheDirUrl.url)).toPath(),
-                                         TestErrorReporter, virtualFileManager, unloadedModuleNames, unloadedEntitiesBuilder, fileInDirectorySourceNames,
+                                         errorReporter, virtualFileManager, unloadedModuleNames, unloadedEntitiesBuilder, fileInDirectorySourceNames,
                                          externalStorageConfigurationManager)
   }
 }
@@ -302,6 +303,12 @@ internal class JpsFileContentWriterImpl(private val configLocation: JpsProjectCo
 internal object TestErrorReporter : ErrorReporter {
   override fun reportError(message: String, file: VirtualFileUrl) {
     throw AssertionFailedError("Failed to load ${file.url}: $message")
+  }
+}
+
+internal object SilentErrorReporter : ErrorReporter {
+  override fun reportError(message: String, file: VirtualFileUrl) {
+    // Nothing here
   }
 }
 
