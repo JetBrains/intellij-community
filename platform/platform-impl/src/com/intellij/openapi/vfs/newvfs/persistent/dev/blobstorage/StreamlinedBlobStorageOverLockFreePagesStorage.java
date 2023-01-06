@@ -23,18 +23,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Store blobs, like {@link com.intellij.util.io.storage.AbstractStorage}, but tries to be faster:
- * remove intermediate mapping (id -> offset,length), and directly use offset as recordId.
- * Also, read/write methods have direct access to underlying ByteBuffers, to reduce memcopy-ing
- * overhead.
+ * Implements {@link StreamlinedBlobStorage} blobs over {@link PagedFileStorageLockFree} storage.
+ * Implementation is thread-safe, and mostly relies on page-level locks to protect data access.
  * <br/>
- * <br/>
- * Storage is designed for performance, hence API is quite low-level, and needs care to be used correctly.
- * I've tried to hide implementation details AMAP, but some of them are visible through API anyway, because
- * hiding them (seems to) will cost performance.
- * <br/>
- * <br/>
- * Not thread safe: requires external synchronization if used from multiple threads
  */
 public class StreamlinedBlobStorageOverLockFreePagesStorage implements StreamlinedBlobStorage {
   private static final Logger LOG = Logger.getInstance(StreamlinedBlobStorageOverLockFreePagesStorage.class);
@@ -288,7 +279,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
       final int offsetOnPage = pagedStorage.toOffsetInPage(recordOffset);
       page.lockPageForRead();
       try {
-        final ByteBuffer buffer = page.pageBufferUnsafe();
+        final ByteBuffer buffer = page.rawPageBuffer();
         final int recordActualLength = readRecordLength(buffer, offsetOnPage);
         final int recordRedirectedToId = readRecordRedirectToId(buffer, offsetOnPage);
 
@@ -335,7 +326,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
       final int offsetOnPage = pagedStorage.toOffsetInPage(recordOffset);
       page.lockPageForRead();
       try {
-        final ByteBuffer buffer = page.pageBufferUnsafe();
+        final ByteBuffer buffer = page.rawPageBuffer();
         final int recordCapacity = readRecordCapacity(buffer, offsetOnPage);
         final int recordActualLength = readRecordLength(buffer, offsetOnPage);
         final int recordRedirectedToId = readRecordRedirectToId(buffer, offsetOnPage);
@@ -437,7 +428,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
       final int offsetOnPage = pagedStorage.toOffsetInPage(recordOffset);
       page.lockPageForWrite();
       try {
-        final ByteBuffer buffer = page.pageBufferUnsafe();
+        final ByteBuffer buffer = page.rawPageBuffer();
         final int recordCapacity = readRecordCapacity(buffer, offsetOnPage);
         final int recordActualLength = readRecordLength(buffer, offsetOnPage);
         final int recordRedirectedToId = readRecordRedirectToId(buffer, offsetOnPage);
@@ -539,7 +530,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
       final int offsetOnPage = pagedStorage.toOffsetInPage(recordOffset);
       page.lockPageForWrite();
       try {
-        final ByteBuffer buffer = page.pageBufferUnsafe();
+        final ByteBuffer buffer = page.rawPageBuffer();
         final int recordCapacity = readRecordCapacity(buffer, offsetOnPage);
         final int recordActualLength = readRecordLength(buffer, offsetOnPage);
         final int recordRedirectedToId = readRecordRedirectToId(buffer, offsetOnPage);
@@ -585,7 +576,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
         final int offsetOnPage = pagedStorage.toOffsetInPage(recordOffset);
         page.lockPageForRead();
         try {
-          final ByteBuffer buffer = page.pageBufferUnsafe();
+          final ByteBuffer buffer = page.rawPageBuffer();
           final int recordCapacity = readRecordCapacity(buffer, offsetOnPage);
           final int recordActualLength = readRecordLength(buffer, offsetOnPage);
           if (!isCorrectCapacity(recordCapacity)) {
@@ -684,20 +675,19 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
         putHeaderInt(HEADER_OFFSET_RECORDS_DELETED, recordsDeleted.get());
         putHeaderLong(HEADER_OFFSET_RECORDS_LIVE_TOTAL_PAYLOAD_SIZE, totalLiveRecordsPayloadBytes.get());
         putHeaderLong(HEADER_OFFSET_RECORDS_LIVE_TOTAL_CAPACITY_SIZE, totalLiveRecordsCapacityBytes.get());
-
-        pagedStorage.force();
       }
       finally {
-        headerPage.lockPageForWrite();
+        headerPage.unlockPageForWrite();
       }
     }
+    pagedStorage.force();
   }
 
   @Override
   public void close() throws IOException {
     //.close() methods are better to be idempotent, i.e. not throw exceptions on repeating calls,
-    // but just silently ignore attempts to close already closed. And pagedStorage conforms with
-    // that. But here we try to write file status and other header fields, and without .close
+    // but just silently ignore attempts to 'close already closed'. And pagedStorage conforms with
+    // that. But in .force() we write file status and other header fields, and without .closed
     // flag we'll do that even on already closed pagedStorage, which leads to exception.
     if (!closed.get()) {
       force();
@@ -820,7 +810,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
       final int offsetInPage = pagedStorage.toOffsetInPage(recordOffset);
       page.lockPageForWrite();
       try {
-        final ByteBuffer buffer = page.pageBufferUnsafe();
+        final ByteBuffer buffer = page.rawPageBuffer();
         final int remainingOnPage = pageSize - offsetInPage;
         if (remainingOnPage >= RECORD_HEADER_SIZE) {
           putRecordCapacity(buffer, offsetInPage, (remainingOnPage - RECORD_HEADER_SIZE));

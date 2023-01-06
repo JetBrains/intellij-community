@@ -12,17 +12,25 @@ import java.nio.ByteBuffer;
 
 /**
  * Store blobs, like {@link com.intellij.util.io.storage.AbstractStorage}, but tries to be faster:
- * remove intermediate mapping (id -> offset,length), and directly use offset as recordId.
+ * remove intermediate mapping (id -> offset,length), and recordId directly mapped to the record
+ * offset in file.
  * Also, read/write methods have direct access to underlying ByteBuffers, to reduce memcopy-ing
  * overhead.
  * <br/>
+ * Direct mapping between recordId and offsets means that recordId changes if record is relocated
+ * (e.g. because its content after update does not fit currently allocated space). This opens the
+ * concept of record redirection (redirect-to pointers): if record is relocated to a new location,
+ * the old location gets special mark 'redirected', and keeps the new recordId. Clients could
+ * still access relocated record by that old recordId -- storage follows the redirection chain
+ * internally. But storage also returns new (actual) recordId via redirectToIdRef out-param, so
+ * clients could update their links, and not bear the cost of redirection next time.
  * <br/>
  * Storage is designed for performance, hence API is quite low-level, and needs care to be used correctly.
- * I've tried to hide implementation details AMAP, but some of them are visible through API anyway, because
- * hiding them (seems to) will cost performance.
+ * I've tried to hide implementation details AMAP, but some of them are visible through API anyway,
+ * because hiding them (seems to) will cost performance.
  * <br/>
  * <br/>
- * Not thread safe: requires external synchronization if used from multiple threads
+ * Thread safety is a property of specific implementation
  */
 public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forceable {
   int NULL_ID = 0;
@@ -69,22 +77,26 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
    * Writer is called with writeable ByteBuffer represented current record content (payload).
    * Buffer is prepared for read: position=0, limit=payload.length, capacity=[current record capacity].
    * <br> <br>
-   * Writer is free to read and/or modify the buffer, and return it in a 'after puts' state, i.e.
+   * Writer is free to read and/or modify the buffer, and return it in an 'after puts' state, i.e.
    * position=[#last byte of payload], new payload content = buffer[0..position].
    * <br> <br>
-   * NOTE: this implies that even if writer writes nothing, only reads -- it must set
+   * NOTE: this implies that even if the writer writes nothing, only reads -- it must set
    * buffer.position=limit, because otherwise storage will treat it as if record should be set length=0
-   * For simplicity, if writer change nothing, it could return null.
+   * To avoid this complication, if the writer changes nothing, it could return null.
    * <br> <br>
-   * Capacity: if new payload fits into buffer passed in -> it could be written right into it. If new
-   * payload requires more space, writer should allocate its own buffer with enough capacity, write
-   * new payload into it, and return that buffer (in a 'after puts' state), instead of buffer passed
-   * in. Storage will re-allocate space for the record with capacity >= returned buffer capacity.
+   * Capacity: if new payload fits into buffer passed in -> it could be written right into it. If the
+   * new payload requires more space, the writer should allocate its own buffer with enough capacity,
+   * write new payload into it, and return that buffer (in a 'after puts' state), instead of buffer
+   * passed in. Storage will re-allocate space for the record with capacity >= returned buffer capacity.
    *
-   * @param expectedRecordSizeHint          hint to a storage about how big data writer intend to write. May be used for allocating buffer
-   *                                        of that size. <=0 means 'no hints, use default buffer allocation strategy'
-   * @param leaveRedirectOnRecordRelocation if current record is relocated during writing, old record could be either removed right now,
-   *                                        or remain as 'redirect-to' record, so new content could still be accesses by old recordId.
+   * @param expectedRecordSizeHint          hint to a storage about how big data the writer intends to
+   *                                        write. May be used for allocating buffer of that size.
+   *                                        value <=0 means 'no hints, use default buffer allocation
+   *                                        strategy'
+   * @param leaveRedirectOnRecordRelocation if current record is relocated during writing, old record
+   *                                        could be either removed right now, or left as 'redirect-to'
+   *                                        record, so new content could still be accesses via old
+   *                                        recordId.
    */
   int writeToRecord(final int recordId,
                     final @NotNull Writer writer,
@@ -135,11 +147,11 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
 
 
   interface Reader<T> {
-    T read(@NotNull final ByteBuffer data) throws IOException;
+    T read(final @NotNull ByteBuffer data) throws IOException;
   }
 
   interface Writer {
-    ByteBuffer write(@NotNull final ByteBuffer data) throws IOException;
+    ByteBuffer write(final @NotNull ByteBuffer data) throws IOException;
   }
 
   interface Processor<E extends Exception> {

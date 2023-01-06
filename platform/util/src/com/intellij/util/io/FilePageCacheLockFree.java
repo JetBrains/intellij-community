@@ -16,8 +16,8 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.concurrent.atomic.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static java.util.Comparator.comparing;
 
@@ -158,7 +158,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     }
   }
 
-  Future<?> enqueueStoragePagesClosing(final @NotNull PagedFileStorageLockFree storage,
+  protected Future<?> enqueueStoragePagesClosing(final @NotNull PagedFileStorageLockFree storage,
                                                  final @NotNull CompletableFuture<Object> finish) {
     checkNotClosed();
     final CloseStorageCommand task = new CloseStorageCommand(storage, finish);
@@ -336,7 +336,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
         break;
       }
       if (candidate.isUsable() && candidate.usageCount() == 0) {
-        final ByteBuffer data = candidate.pageBufferRaw();
+        final ByteBuffer data = candidate.pageBufferUnchecked();
         if (data != null && !data.isDirect()) {
           final boolean succeed = candidate.tryMoveTowardsPreTombstone(/*entombYoung: */false);
           if (succeed) {
@@ -419,7 +419,8 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     return successfullyCleaned;
   }
 
-  private @NotNull Map<Path, PagesTable> threadSafeCopyOfPagesPerStorage() {
+  @NotNull
+  private Map<Path, PagesTable> threadSafeCopyOfPagesPerStorage() {
     synchronized (pagesPerFile) {
       return new HashMap<>(pagesPerFile);
     }
@@ -432,7 +433,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
    * Pages with usageCount > 0 are not reclaimed, and method returns false if there is at least one
    * such a page. Method is designed to be called repeatedly, until all pages are reclaimed.
    */
-  boolean tryToReclaimAll(final @NotNull PagesTable pagesTable) {
+  protected boolean tryToReclaimAll(final @NotNull PagesTable pagesTable) {
     pagesTable.pagesLock().writeLock().lock();
     try {
       final AtomicReferenceArray<PageImpl> pages = pagesTable.pages();
@@ -471,14 +472,15 @@ public final class FilePageCacheLockFree implements AutoCloseable {
           //          Maybe I'll reconsider usefulness of all this in the future.
 
           //Acquire page.writeLock to stop page from being promoted to USABLE (if it hasn't been yet):
-          if (page.pageLock().writeLock().tryLock()) {
+          final ReentrantReadWriteLock.WriteLock pageWriteLock = page.pageLock().writeLock();
+          if (pageWriteLock.tryLock()) {
             try {
               final boolean succeed = page.tryMoveTowardsPreTombstone(/*entombYoung: */ true);
               if (succeed) {
                 //If we just entomb NOT_READY_YET page => it has .data=null
                 //   but page could be already promoted to USABLE, in which case .data != null, and
                 //   should be reclaimed:
-                if (page.pageBufferRaw() != null) {
+                if (page.pageBufferUnchecked() != null) {
                   unmapPageAndReclaimBuffer(page);
                 }
                 else {
@@ -487,7 +489,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
               }
             }
             finally {
-              page.pageLock().writeLock().unlock();
+              pageWriteLock.unlock();
             }
           }
           else {
@@ -546,7 +548,8 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     pageToReclaim.entomb();
   }
 
-  @NotNull ByteBuffer allocatePageBuffer(final int bufferSize) {
+  @NotNull
+  protected ByteBuffer allocatePageBuffer(final int bufferSize) {
     checkNotClosed();
     final boolean reclaimedSuccessfully = tryReclaimEnoughPages(bufferSize, MAX_PAGES_TO_RECLAIM_AT_ONCE);
     if (reclaimedSuccessfully) {
@@ -620,7 +623,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
    * RC: Class is empty, since now there is only one impl of this class, and I'm not yet sure
    * which API is worth to have in a base class.
    */
-  protected abstract static class Command {
+  protected static abstract class Command {
   }
 
   /**
@@ -641,7 +644,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
   private static class PagesForReclaimCollector {
 
     private static final Comparator<PageImpl> BY_USEFULNESS = comparing(page -> page.localTokensOfUsefulness());
-    
+
     /**
      * Keeps and updates a 'low-usefulness' threshold: i.e. which value of page.tokensOfUsefulness
      * considered 'low', so the pages with usefulness below it are considered candidates for reclamation.
@@ -728,10 +731,23 @@ public final class FilePageCacheLockFree implements AutoCloseable {
             continue;
           }
           try {
-            //TODO RC: flush() could be off-loaded to IO thread pool, instead of slowing down housekeeper
-            //         thread
-            page.flush();
-            actuallyFlushed++;
+            //Why readLock.tryLock():
+            // 1) .flush() acquires readLock inside, hence we could be blocked on that lock
+            //    -- which is undesirable: housekeeper thread shouldn't be blocked on the
+            //    single page, there are enough other pages to work on.
+            // 2) if .tryLock() failed -> it means page is writeLock-ed -> which means page
+            //    is _in use_ -> which makes page a bad candidate for reclamation anyway.
+            if (page.pageLock().readLock().tryLock()) {
+              try {
+                //MAYBE RC: flush() could be off-loaded to IO thread pool, instead of slowing down housekeeper
+                //         thread
+                page.flush();
+                actuallyFlushed++; //not strictly true, since flush could be bypassed?
+              }
+              finally {
+                page.pageLock().readLock().unlock();
+              }
+            }//MAYBE RC: else -> remove page from candidates for reclamation, since it is IN USE now?
           }
           catch (IOException e) {
             LOG.warn("Can't flush page " + page, e);

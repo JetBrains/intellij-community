@@ -875,13 +875,13 @@ public class PageImpl implements Page {
   //         errors causes. The performance cost should be negligible, and outweighed by the
   //         reduced chances of errors with buffer position/limit cursors manipulation
   @Override
-  public ByteBuffer pageBufferUnsafe() {
+  public ByteBuffer rawPageBuffer() {
     checkPageIsValidForAccess();
-    return pageBufferRaw();
+    return pageBufferUnchecked();
   }
 
   //BEWARE: access without any locks and state checking!
-  public ByteBuffer pageBufferRaw() {
+  public ByteBuffer pageBufferUnchecked() {
     return data;
   }
 

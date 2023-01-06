@@ -20,14 +20,6 @@ public class FilePageCacheLockFreeTest {
   @Rule
   public final TemporaryFolder tmpDirectory = new TemporaryFolder();
 
-  @BeforeClass
-  public static void beforeClass() throws Exception {
-    assumeTrue(
-      "LockFree FilePageCache must be enabled: see PageCacheUtils.LOCK_FREE_VFS_ENABLED",
-      PageCacheUtils.LOCK_FREE_VFS_ENABLED
-    );
-  }
-
   @Test
   public void housekeeperThreadNotStartUntilFirstStorageRegistered() throws Exception {
     final FilePageCacheLockFree fpCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES);

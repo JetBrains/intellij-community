@@ -30,6 +30,7 @@ public final class StorageLockContext {
   @NotNull
   private final FilePageCache myFilePageCache;
 
+  /** In general, null if {@link PageCacheUtils#LOCK_FREE_VFS_ENABLED} is false */
   @Nullable
   private final FilePageCacheLockFree myFilePageCacheLockFree;
 
@@ -123,17 +124,21 @@ public final class StorageLockContext {
     return myFilePageCache;
   }
 
-  /** @throws UnsupportedOperationException if new FilePageCache implementation is disabled */
+  /** @throws UnsupportedOperationException if new FilePageCache implementation is absent (disabled) */
   @ApiStatus.Internal
   @NotNull
   public FilePageCacheLockFree pageCache() {
-    if (PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
-      assert myFilePageCacheLockFree != null;
-      return myFilePageCacheLockFree;
+    if (myFilePageCacheLockFree == null) {
+      if (PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
+        throw new UnsupportedOperationException(
+          "lock-free FilePageCache is not available in this storageLockContext."
+        );
+      }
+      throw new UnsupportedOperationException(
+        "lock-free FilePageCache is not available: PageCacheUtils.ENABLE_LOCK_FREE_VFS=false."
+      );
     }
-    else {
-      throw new UnsupportedOperationException("lock-free FilePageCache is not available if PageCacheUtils.ENABLE_LOCK_FREE_VFS=false");
-    }
+    return myFilePageCacheLockFree;
   }
 
   @ApiStatus.Internal

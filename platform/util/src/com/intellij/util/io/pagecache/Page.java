@@ -81,10 +81,10 @@ public interface Page extends AutoCloseable, Flushable {
    * If caller modifies content of the returned buffer, the caller must inform page about
    * modifications via approriate {@link #regionModified(int, int)} call.
    */
-  ByteBuffer pageBufferUnsafe();
+  ByteBuffer rawPageBuffer();
 
   /**
-   * Must be called only under page writeLock. To be used only with writes via {@link #pageBufferUnsafe()}
+   * Must be called only under page writeLock. To be used only with writes via {@link #rawPageBuffer()}
    * as a way to inform page about a buffer region that was really modified.
    */
   void regionModified(final int startOffsetModified,

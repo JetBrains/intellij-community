@@ -1,8 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
 import com.intellij.util.io.pagecache.Page;
 import org.assertj.core.description.TextDescription;
+import org.hamcrest.CoreMatchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
@@ -15,6 +18,8 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.IntStream;
 
+import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.*;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -22,30 +27,41 @@ import static org.junit.Assume.assumeTrue;
 
 
 public class PagedFileStorageLockFreeTest {
-  public static final int PAGE_SIZE = 8192;
+  private static final int THREADS = Runtime.getRuntime().availableProcessors() - 1;//leave 1 CPU for 'main'
+
+  private static final int CACHE_CAPACITY_BYTES = 100 << 20;//100Mb
+
+  private static final int PAGE_SIZE = 8192;
+
+  private static final int ENOUGH_TRIES = 10_000;
+
 
   @Rule
   public final TemporaryFolder tmpDirectory = new TemporaryFolder();
+
+
+  private static FilePageCacheLockFree filePageCache;
 
   private StorageLockContext storageContext;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    assumeTrue(
-      "LockFree FilePageCache must be enabled: see PageCacheUtils.LOCK_FREE_VFS_ENABLED",
-      PageCacheUtils.LOCK_FREE_VFS_ENABLED
-    );
+    filePageCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES);
+  }
+
+  @AfterClass
+  public static void afterClass() throws Exception {
+    if (filePageCache != null) {
+      filePageCache.close();
+    }
   }
 
   @Before
   public void setUp() throws Exception {
-    storageContext = new StorageLockContext();
+    storageContext = new StorageLockContext(filePageCache, true, true, false);
   }
 
-  @After
-  public void tearDown() throws Exception {
-    //storageContext.pageCache().close();
-  }
+  // ====================== tests:     ==============================================================
 
   @Test
   public void attemptToCreate_SecondStorageForSameFile_ThrowsException() throws Exception {
@@ -77,7 +93,7 @@ public class PagedFileStorageLockFreeTest {
   @Test
   public void closedStorageCouldBeReopenedAgainImmediately() throws Exception {
     final File file = tmpDirectory.newFile();
-    for (int tryNo = 0; tryNo < 1000; tryNo++) {
+    for (int tryNo = 0; tryNo < ENOUGH_TRIES; tryNo++) {
       final PagedFileStorageLockFree storage = new PagedFileStorageLockFree(file.toPath(), storageContext, PAGE_SIZE, true);
       storage.close();
     }
@@ -271,159 +287,156 @@ public class PagedFileStorageLockFreeTest {
 
   @SuppressWarnings("IntegerMultiplicationImplicitCastToLong")
   @Test
-  public void uncontendedMultiThreadedWrites_ReadBackUnchanged_Playground() throws IOException, InterruptedException {
-    final long cacheCapacityBytes = storageContext.pageCache().getCacheCapacityBytes();
-    final int pagesInCache = (int)(cacheCapacityBytes / PAGE_SIZE);
-    final int fileSize = (2 * pagesInCache + 20) * PAGE_SIZE;
-    final int blockSize = 64;
-    final int threads = Runtime.getRuntime().availableProcessors() - 1;
-
-    final ExecutorService pool = Executors.newFixedThreadPool(threads);
-
-    assertEquals(
-      "N stamps must fit into a page",
-      0,
-      PAGE_SIZE % blockSize
-    );
-
-    final File file = tmpDirectory.newFile();
-    try (final PagedFileStorageLockFree pagedStorage = openFile(file)) {
-      try {
-        final List<Future<Void>> futures = IntStream.range(0, threads)
-          .mapToObj(threadNo -> (Callable<Void>)() -> {
-
-            for (long offset = threadNo * blockSize;
-                 offset < fileSize;
-                 offset += threads * blockSize) {
-              try (final Page page = pagedStorage.pageByOffset(offset, true)) {
-                final int offsetOnPage = pagedStorage.toOffsetInPage(offset);
-                page.putLong(offsetOnPage, threadNo + 1);
-              }
-            }
-            return null;
-          })
-          .map(pool::submit)
-          .toList();
-      }
-      finally {
-        pool.shutdown();
-        assertTrue(
-          "Must terminated in 10 min",
-          pool.awaitTermination(10, TimeUnit.MINUTES)
-        );
-      }
-    }
-
-    try (final PagedFileStorageLockFree pagedStorage = openFile(file)) {
-      //now try to read it back:
-      boolean fail = false;
-      for (long offset = 0; offset < fileSize; offset += blockSize) {
-        try (final Page page = pagedStorage.pageByOffset(offset, false)) {
-          final int offsetInPage = pagedStorage.toOffsetInPage(offset);
-          final long value = page.getLong(offsetInPage);
-          final long expectedValue = (offset / blockSize) % threads + 1;
-          if (value != expectedValue) {
-            final String fullPageContent = page.read(
-              offsetInPage, blockSize,
-              pageBuffer -> {
-                return IOUtil.toHexString(pageBuffer, /*paginate: */ blockSize);
-              }
-            );
-            fail = true;
-            System.out.println("page[" + page.pageIndex() + " x " + PAGE_SIZE + " +" + offsetInPage + " = " + offset + "]: \n" +
-                               "expected: " + expectedValue + "\n" +
-                               " but was: " + value + "\n" +
-                               "storage.length: " + pagedStorage.length() + "\n" +
-                               "cacheCapacity:  " + cacheCapacityBytes + "\n" +
-                               "full page content: \n" + fullPageContent);
-          }
-        }
-      }
-      if (fail) {
-        fail("");
-      }
-    }
-  }
-
-
-  @SuppressWarnings("IntegerMultiplicationImplicitCastToLong")
-  @Test
   public void uncontendedMultiThreadedWrites_ReadBackUnchanged() throws IOException, InterruptedException {
     final int pagesInCache = (int)(storageContext.pageCache().getCacheCapacityBytes() / PAGE_SIZE);
     final int fileSize = (2 * pagesInCache + 20) * PAGE_SIZE;
     final int blockSize = 64;
-    final int threads = Runtime.getRuntime().availableProcessors() - 1;
-
-    final ExecutorService pool = Executors.newFixedThreadPool(threads);
-
-    final byte[] stamp = generateRandomByteArray(blockSize);
-    assertEquals(
-      "N stamps must fit into a page",
-      0,
-      PAGE_SIZE % stamp.length
-    );
-
     final File file = tmpDirectory.newFile();
-    try (final PagedFileStorageLockFree pagedStorage = openFile(file)) {
-      try {
-        final List<Future<Void>> futures = IntStream.range(0, threads)
-          .mapToObj(threadNo -> (Callable<Void>)() -> {
-            for (long offset = threadNo * stamp.length;
-                 offset < fileSize;
-                 offset += threads * stamp.length) {
-              try (final Page page = pagedStorage.pageByOffset(offset, true)) {
-                final int offsetOnPage = pagedStorage.toOffsetInPage(offset);
-                page.write(
-                  offsetOnPage, stamp.length,
-                  pageBuffer -> {
-                    return pageBuffer.put(stamp);
-                  });
-              }
-            }
-            return null;
-          })
-          .map(pool::submit)
-          .toList();
-      }
-      finally {
-        pool.shutdown();
-        assertTrue(
-          "Must terminated in 10 min",
-          pool.awaitTermination(10, TimeUnit.MINUTES)
-        );
-      }
 
-      //now try to read it back:
-      final byte[] buffer = new byte[stamp.length];
-      for (long offset = 0; offset < fileSize; offset += stamp.length) {
-        try (final Page page = pagedStorage.pageByOffset(offset, false)) {
-          final int offsetInPage = pagedStorage.toOffsetInPage(offset);
-          page.read(
-            offsetInPage, stamp.length,
-            pageBuffer -> {
-              return pageBuffer.get(buffer);
-            }
+    final ExecutorService pool = Executors.newFixedThreadPool(THREADS);
+    try {
+      final byte[] stamp = generateRandomByteArray(blockSize);
+      assertEquals("N stamps must fit into a page", 0, PAGE_SIZE % stamp.length);
+
+      try (final PagedFileStorageLockFree pagedStorage = openFile(file)) {
+        try {
+          final List<Future<Void>> futures = IntStream.range(0, THREADS)
+            .mapToObj(threadNo -> (Callable<Void>)() -> {
+              for (long offset = threadNo * stamp.length;
+                   offset < fileSize;
+                   offset += THREADS * stamp.length) {
+                try (final Page page = pagedStorage.pageByOffset(offset, true)) {
+                  final int offsetOnPage = pagedStorage.toOffsetInPage(offset);
+                  page.write(
+                    offsetOnPage, stamp.length,
+                    pageBuffer -> {
+                      return pageBuffer.put(stamp);
+                    });
+                }
+              }
+              return null;
+            })
+            .map(pool::submit)
+            .toList();
+        }
+        finally {
+          pool.shutdown();
+          assertTrue(
+            "Must terminated in 10 min",
+            pool.awaitTermination(10, TimeUnit.MINUTES)
           );
-          if (!Arrays.equals(buffer, stamp)) {
-            final String fullPageContent = page.read(
+        }
+
+        //now try to read it back:
+        final byte[] buffer = new byte[stamp.length];
+        for (long offset = 0; offset < fileSize; offset += stamp.length) {
+          try (final Page page = pagedStorage.pageByOffset(offset, false)) {
+            final int offsetInPage = pagedStorage.toOffsetInPage(offset);
+            page.read(
               offsetInPage, stamp.length,
               pageBuffer -> {
-                return IOUtil.toHexString(pageBuffer, /*paginate: */ blockSize);
+                return pageBuffer.get(buffer);
               }
             );
-            fail("page[" + page.pageIndex() + " x " + PAGE_SIZE + " +" + offsetInPage + " = " + offset + "]: \n" +
-                 "expected: " + IOUtil.toHexString(stamp) + "\n" +
-                 " but was: " + IOUtil.toHexString(buffer) + "\n" +
-                 "storage.length: " + pagedStorage.length() + "\n" +
-                 "full page content: \n" + fullPageContent);
+            if (!Arrays.equals(buffer, stamp)) {
+              final String fullPageContent = page.read(
+                offsetInPage, stamp.length,
+                pageBuffer -> {
+                  return IOUtil.toHexString(pageBuffer, /*paginate: */ blockSize);
+                }
+              );
+              fail("page[" +
+                   page.pageIndex() +
+                   " x " +
+                   PAGE_SIZE +
+                   " +" +
+                   offsetInPage +
+                   " = " +
+                   offset +
+                   "]: \n" +
+                   "expected: " +
+                   IOUtil.toHexString(stamp) +
+                   "\n" +
+                   " but was: " +
+                   IOUtil.toHexString(buffer) +
+                   "\n" +
+                   "storage.length: " +
+                   pagedStorage.length() +
+                   "\n" +
+                   "full page content: \n" +
+                   fullPageContent);
+            }
+            //clean buffer before next turn:
+            Arrays.fill(buffer, (byte)0);
           }
-          //clean buffer before next turn:
-          Arrays.fill(buffer, (byte)0);
         }
       }
     }
+    finally {
+      pool.shutdown();
+      assertTrue(
+        "Pool must terminate in 1 sec",
+        pool.awaitTermination(1, SECONDS)
+      );
+    }
   }
 
+  @Test
+  public void closeOfStorage_SuccessfullyClosesPages_EvenInTheMiddleOfPageInitialization() throws Exception {
+    final int threads = Runtime.getRuntime().availableProcessors() - 1;
+    final File file = tmpDirectory.newFile();
+
+    final ExecutorService pool = Executors.newFixedThreadPool(threads);
+    try {
+      for (int tryNo = 0; tryNo < ENOUGH_TRIES; tryNo++) {
+        final List<Future<Void>> futures;
+        try (PagedFileStorageLockFree storage = openFile(file)) {
+          final CountDownLatch latch = new CountDownLatch(1);
+          futures = IntStream.range(0, threads)
+            .<Callable<Void>>mapToObj(pageNo -> () -> {
+              latch.await();
+              try (Page page = storage.pageByIndex(pageNo, true)) {
+                //do nothing, just get the page from storage
+                page.isUsable();
+              }
+              return null;
+            })
+            .map(pool::submit)
+            .toList();
+
+          latch.countDown();
+        }
+        // -> Now storage is closed, and we should get _no_ AssertionErrors or IllegalStateExceptions
+        //    from futures. But we _could- get ~ IOException("...already closed")
+        for (Future<Void> future : futures) {
+          try {
+            future.get();
+          }
+          catch (ExecutionException e) {
+            final Throwable cause = e.getCause();
+            if (cause instanceof IOException) {
+              IOException exception = (IOException)cause;
+              if (exception.getMessage().contains("already closed")) {
+                //ok, executable
+                continue;
+              }
+            }
+            throw e;
+          }
+        }
+      }
+    }
+    finally {
+      pool.shutdown();
+      assertTrue(
+        "Pool must terminate in 1 sec",
+        pool.awaitTermination(1, SECONDS)
+      );
+    }
+  }
+
+
+  // ====================== infrastructure:  ==============================================================
 
   @NotNull
   private PagedFileStorageLockFree openFile(final @NotNull File file) throws IOException {
