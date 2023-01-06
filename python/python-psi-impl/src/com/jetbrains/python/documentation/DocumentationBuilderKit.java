@@ -1,17 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xml.CommonXmlStrings;
 import com.intellij.xml.util.XmlStringUtil;
-import com.jetbrains.python.toolbox.ChainIterable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.function.Function;
 
 final class DocumentationBuilderKit {
@@ -33,48 +28,8 @@ final class DocumentationBuilderKit {
   @NotNull
   static final Function<String, String> WRAP_IN_BOLD = s -> "<b>" + s + "</b>";
 
-  private DocumentationBuilderKit() {
-  }
-
-  static ChainIterable<String> wrapInTag(String tag, Iterable<String> content) {
-    return new ChainIterable<>("<" + tag + ">").add(content).addItem("</" + tag + ">");
-  }
-
-  static ChainIterable<String> wrapInTag(String tag, List<? extends Pair<String, String>> attributes, Iterable<String> content) {
-    if (attributes.size() == 0) {
-      return wrapInTag(tag, content);
-    } else {
-      StringBuilder s = new StringBuilder("<" + tag);
-      for (Pair<String, String> attr: attributes) {
-        s.append(" ").append(attr.first).append("=\"").append(attr.second).append("\"");
-      }
-      s.append(">");
-      return new ChainIterable<>(s.toString()).add(content).addItem("</" + tag + ">");
-    }
-  }
-
   @NonNls
   static String combUp(@NonNls String what) {
     return XmlStringUtil.escapeString(what).replace("\n", BR).replace(" ", "&nbsp;");
-  }
-
-  static ChainIterable<String> $(String... content) {
-    return new ChainIterable<>(Arrays.asList(content));
-  }
-
-  // make a first-order curried objects out of wrapInTag()
-  static class TagWrapper implements Function<Iterable<String>, Iterable<String>> {
-    private final String myTag;
-    private final List<Pair<String, String>> myAttributes = new ArrayList<>();
-
-    TagWrapper(String tag) {
-      myTag = tag;
-    }
-
-    @Override
-    public Iterable<String> apply(Iterable<String> contents) {
-      return wrapInTag(myTag, myAttributes, contents);
-    }
-
   }
 }
