@@ -217,7 +217,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
                 evaluators.add(new CatchEvaluator(psiType.getCanonicalText(), parameter.getName(), myCurrentFragmentEvaluator));
               }
             }
-            finally{
+            finally {
               myCurrentFragmentEvaluator = oldFragmentEvaluator;
             }
           }
@@ -389,7 +389,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
         PsiStatement elseBranch = statement.getElseBranch();
         Evaluator elseEvaluator = null;
-        if(elseBranch != null){
+        if(elseBranch != null) {
           elseBranch.accept(this);
           elseEvaluator = myResult;
         }
@@ -705,7 +705,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       // concat with a String
       if (opCode == JavaTokenType.PLUS) {
         if ((lType instanceof PsiClassType && lType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) ||
-            (rType instanceof PsiClassType && rType.equalsToText(CommonClassNames.JAVA_LANG_STRING))){
+            (rType instanceof PsiClassType && rType.equalsToText(CommonClassNames.JAVA_LANG_STRING))) {
           return false;
         }
       }
@@ -800,7 +800,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       final PsiType expectedType = expression.getType();
       final PsiExpression thenExpression = expression.getThenExpression();
       final PsiExpression elseExpression = expression.getElseExpression();
-      if (thenExpression == null || elseExpression == null){
+      if (thenExpression == null || elseExpression == null) {
         throwExpressionInvalid(expression);
       }
       PsiExpression condition = expression.getCondition();
@@ -1110,7 +1110,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         LOG.debug("visitParenthesizedExpression " + expression);
       }
       PsiExpression expr = expression.getExpression();
-      if (expr != null){
+      if (expr != null) {
         expr.accept(this);
       }
     }
@@ -1515,7 +1515,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (expressionPsiType instanceof PsiArrayType) {
         Evaluator dimensionEvaluator = null;
         PsiExpression[] dimensions = expression.getArrayDimensions();
-        if (dimensions.length == 1){
+        if (dimensions.length == 1) {
           PsiExpression dimensionExpression = dimensions[0];
           dimensionExpression.accept(this);
           if (myResult != null) {
@@ -1526,7 +1526,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
               JavaDebuggerBundle.message("evaluation.error.invalid.array.dimension.expression", dimensionExpression.getText()));
           }
         }
-        else if (dimensions.length > 1){
+        else if (dimensions.length > 1) {
           throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.multi.dimensional.arrays.creation.not.supported"));
         }
 

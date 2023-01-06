@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -79,7 +79,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     return request != null? (Requestor)request.getProperty(REQUESTOR) : null;
   }
 
-  private static void addClassFilter(EventRequest request, String pattern){
+  private static void addClassFilter(EventRequest request, String pattern) {
     if (request instanceof ExceptionRequest) {
       ((ExceptionRequest)request).addClassFilter(pattern);
     }
@@ -94,7 +94,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
-  private static void addClassExclusionFilter(EventRequest request, String pattern){
+  private static void addClassExclusionFilter(EventRequest request, String pattern) {
     if (request instanceof ExceptionRequest) {
       ((ExceptionRequest)request).addClassExclusionFilter(pattern);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerManager;
@@ -63,7 +63,7 @@ public final class JVMNameUtil {
     return null;
   }
 
-  private static void appendJVMSignature(JVMNameBuffer buffer , PsiType type){
+  private static void appendJVMSignature(JVMNameBuffer buffer , PsiType type) {
     if (type == null) {
       return;
     }
@@ -108,15 +108,15 @@ public final class JVMNameUtil {
   private static class JVMNameBuffer {
     private final List<JVMName> myList = new ArrayList<>();
 
-    public void append(@NotNull JVMName evaluator){
+    public void append(@NotNull JVMName evaluator) {
       myList.add(evaluator);
     }
 
-    public void append(char name){
+    public void append(char name) {
       append(Character.toString(name));
     }
 
-    public void append(String text){
+    public void append(String text) {
       myList.add(getJVMRawText(text));
     }
 
@@ -139,7 +139,7 @@ public final class JVMNameUtil {
         String myName = null;
         @Override
         public String getName(DebugProcessImpl process) throws EvaluateException {
-          if(myName == null){
+          if(myName == null) {
             String name = "";
             for (JVMName nameEvaluator : optimised) {
               name += nameEvaluator.getName(process);

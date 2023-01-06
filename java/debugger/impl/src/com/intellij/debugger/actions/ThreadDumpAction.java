@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.actions;
 
@@ -272,7 +272,7 @@ public final class ThreadDumpAction extends DumbAwareAction {
 
 
   @Override
-  public void update(@NotNull AnActionEvent e){
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     if (project == null) {

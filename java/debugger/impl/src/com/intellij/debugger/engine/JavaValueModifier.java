@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -108,7 +108,7 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
     }
     if (value instanceof DoubleValue) {
       double dValue = ((DoubleValue) value).doubleValue();
-      if(varType instanceof FloatType && Float.MIN_VALUE <= dValue && dValue <= Float.MAX_VALUE){
+      if(varType instanceof FloatType && Float.MIN_VALUE <= dValue && dValue <= Float.MAX_VALUE) {
         value = context.getDebugProcess().getVirtualMachineProxy().mirrorOf((float)dValue);
       }
     }

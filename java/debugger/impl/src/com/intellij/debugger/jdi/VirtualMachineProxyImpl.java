@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -230,7 +230,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return ContainerUtil.map(getVirtualMachine().topLevelThreadGroups(), this::getThreadGroupReferenceProxy);
   }
 
-  public void threadGroupCreated(ThreadGroupReference threadGroupReference){
+  public void threadGroupCreated(ThreadGroupReference threadGroupReference) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if(!isJ2ME()) {
       ThreadGroupReferenceProxyImpl proxy = new ThreadGroupReferenceProxyImpl(this, threadGroupReference);
@@ -246,7 +246,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return virtualMachine.version().startsWith("1.0");
   }
 
-  public void threadGroupRemoved(ThreadGroupReference threadGroupReference){
+  public void threadGroupRemoved(ThreadGroupReference threadGroupReference) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myThreadGroups.remove(threadGroupReference);
   }

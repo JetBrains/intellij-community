@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
@@ -68,7 +68,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
   }
 
   @Override
-  public void update(@NotNull AnActionEvent event){
+  public void update(@NotNull AnActionEvent event) {
     SourcePosition place = getPlace(event);
     boolean toEnable = place != null;
 
@@ -140,7 +140,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
         FileType fileType = virtualFile != null ? virtualFile.getFileType() : null;
         if (JavaFileType.INSTANCE == fileType || JavaClassFileType.INSTANCE == fileType) {
           final PsiField field = FieldBreakpoint.findField(project, document, editor.getCaretModel().getOffset());
-          if(field != null){
+          if(field != null) {
             return SourcePosition.createFromElement(field);
           }
         }

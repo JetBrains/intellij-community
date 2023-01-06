@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -335,7 +335,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
     }
   }
 
-  public interface CapturePointsSettingsListener extends EventListener{
+  public interface CapturePointsSettingsListener extends EventListener {
     void capturePointsChanged();
   }
 

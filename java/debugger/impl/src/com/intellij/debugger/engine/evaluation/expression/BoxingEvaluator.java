@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
-public class BoxingEvaluator implements Evaluator{
+public class BoxingEvaluator implements Evaluator {
   private final Evaluator myOperand;
 
   public BoxingEvaluator(Evaluator operand) {

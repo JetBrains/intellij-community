@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.debugger.breakpoints;
 
 import com.intellij.debugger.InstanceFilter;
@@ -283,8 +283,8 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
     for (Iterator iterator = s.iterator(); iterator.hasNext(); i++) {
       String str = (String) iterator.next();
       result.append(str);
-      if(iterator.hasNext()){
-        if(i % N == 0){
+      if(iterator.hasNext()) {
+        if(i % N == 0) {
           result.append(NthConcator);
         }
         else {
