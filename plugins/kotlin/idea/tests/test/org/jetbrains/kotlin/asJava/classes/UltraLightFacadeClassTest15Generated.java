@@ -18,7 +18,7 @@ import static org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifact
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/ultraLightFacades")
+@TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/ultraLightFacades")
 public abstract class UltraLightFacadeClassTest15Generated extends AbstractUltraLightFacadeClassTest15 {
 
 }
