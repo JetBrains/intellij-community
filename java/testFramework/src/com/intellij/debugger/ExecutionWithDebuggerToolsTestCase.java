@@ -70,35 +70,6 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     return myDebugProcess;
   }
 
-  protected String readValue(String comment, String valueName) {
-    int valueStart = comment.indexOf(valueName);
-    if (valueStart == -1) {
-      return null;
-    }
-
-    valueStart += valueName.length();
-    return comment.substring(valueStart + 1, findMatchingParenthesis(comment, valueStart));
-  }
-
-  private static int findMatchingParenthesis(String input, int startPos) {
-    int depth = 0;
-    while (startPos < input.length()) {
-      switch (input.charAt(startPos)) {
-        case '(' -> depth++;
-        case ')' -> {
-          if (depth == 1) {
-            return startPos;
-          }
-          else {
-            depth--;
-          }
-        }
-      }
-      startPos++;
-    }
-    return -1;
-  }
-
   protected void resume(SuspendContextImpl context) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
     debugProcess.getManagerThread().schedule(debugProcess.createResumeCommand(context, PrioritizedTask.Priority.LOWEST));
@@ -321,24 +292,6 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     fail(StringUtil.getThrowableText(th));
   }
 
-  private static Pair<ClassFilter[], ClassFilter[]> readClassFilters(String filtersString) {
-    ArrayList<ClassFilter> include = new ArrayList<>();
-    ArrayList<ClassFilter> exclude = new ArrayList<>();
-    for (String s : filtersString.split(",")) {
-      ClassFilter filter = new ClassFilter();
-      filter.setEnabled(true);
-      if (s.startsWith("-")) {
-        exclude.add(filter);
-        s = s.substring(1);
-      }
-      else {
-        include.add(filter);
-      }
-      filter.setPattern(s);
-    }
-    return Pair.create(include.toArray(ClassFilter.EMPTY_ARRAY), exclude.toArray(ClassFilter.EMPTY_ARRAY));
-  }
-
   /**
    * A breakpoint comment has the form &#x201C;[<i>kind</i>] Breakpoint! [<i>property</i>...]&#x201D;.
    * <p>
@@ -371,59 +324,72 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     Runnable runnable = () -> {
       BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+      assert document != null;
       String text = document.getText();
-      int offset = -1;
-      while (true) {
-        offset = text.indexOf("Breakpoint!", offset + 1);
-        if (offset == -1) break;
 
+      for (int offset = -1; (offset = text.indexOf("Breakpoint!", offset + 1)) != -1; ) {
         int commentLine = document.getLineNumber(offset);
+        String fileName = file.getVirtualFile().getName();
+        String breakpointLocation = fileName + ":" + (commentLine + 1 + 1);
 
-        String comment = text.substring(document.getLineStartOffset(commentLine), document.getLineEndOffset(commentLine));
+        String commentText = text.substring(document.getLineStartOffset(commentLine), document.getLineEndOffset(commentLine));
+        BreakpointComment comment = BreakpointComment.parse(commentText, fileName, commentLine + 1);
 
         Breakpoint breakpoint;
 
-        if (comment.contains("Method")) {
-          breakpoint = breakpointManager.addMethodBreakpoint(document, commentLine + 1);
-          if (breakpoint != null) {
-            systemPrintln("MethodBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2));
+        String kind = comment.readKind();
+        switch (kind) {
+          case "Method" -> {
+            breakpoint = breakpointManager.addMethodBreakpoint(document, commentLine + 1);
+            if (breakpoint != null) {
+              systemPrintln("MethodBreakpoint created at " + breakpointLocation);
 
-            String emulated = readValue(comment, "Emulated");
-            if (emulated != null) {
-              ((JavaMethodBreakpointProperties)breakpoint.getXBreakpoint().getProperties()).EMULATED = Boolean.parseBoolean(emulated);
-              systemPrintln("Emulated = " + emulated);
-            }
+              Boolean emulated = comment.readBooleanValue("Emulated");
+              if (emulated != null) {
+                ((JavaMethodBreakpointProperties)breakpoint.getXBreakpoint().getProperties()).EMULATED = emulated;
+                systemPrintln("Emulated = " + emulated);
+              }
 
-            String entry = readValue(comment, "OnEntry");
-            if (entry != null) {
-              ((JavaMethodBreakpointProperties)breakpoint.getXBreakpoint().getProperties()).WATCH_ENTRY = Boolean.parseBoolean(entry);
-              systemPrintln("On Entry = " + entry);
-            }
+              Boolean entry = comment.readBooleanValue("OnEntry");
+              if (entry != null) {
+                ((JavaMethodBreakpointProperties)breakpoint.getXBreakpoint().getProperties()).WATCH_ENTRY = entry;
+                systemPrintln("On Entry = " + entry);
+              }
 
-            String exit = readValue(comment, "OnExit");
-            if (exit != null) {
-              ((JavaMethodBreakpointProperties)breakpoint.getXBreakpoint().getProperties()).WATCH_EXIT = Boolean.parseBoolean(exit);
-              systemPrintln("On Exit = " + exit);
+              Boolean exit = comment.readBooleanValue("OnExit");
+              if (exit != null) {
+                ((JavaMethodBreakpointProperties)breakpoint.getXBreakpoint().getProperties()).WATCH_EXIT = exit;
+                systemPrintln("On Exit = " + exit);
+              }
             }
           }
-        }
-        else if (comment.contains("Field")) {
-          breakpoint = breakpointManager.addFieldBreakpoint(document, commentLine + 1, readValue(comment, "Field"));
-          if (breakpoint != null) {
-            systemPrintln("FieldBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2));
+          case "Field" -> {
+            breakpoint = breakpointManager.addFieldBreakpoint(document, commentLine + 1, comment.readKindValue());
+            if (breakpoint != null) {
+              systemPrintln("FieldBreakpoint created at " + breakpointLocation);
+            }
           }
-        }
-        else if (comment.contains("Exception")) {
-          breakpoint = breakpointManager.addExceptionBreakpoint(readValue(comment, "Exception"), "");
-          if (breakpoint != null) {
-            systemPrintln("ExceptionBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2));
+          case "Exception" -> {
+            breakpoint = breakpointManager.addExceptionBreakpoint(comment.readKindValue(), "");
+            if (breakpoint == null) break;
+            systemPrintln("ExceptionBreakpoint created at " + breakpointLocation);
+            String catchClassFiltersStr = comment.readValue("Catch class filters");
+            if (catchClassFiltersStr != null) {
+              Pair<ClassFilter[], ClassFilter[]> filters = BreakpointComment.parseClassFilters(catchClassFiltersStr);
+              ExceptionBreakpoint exceptionBreakpoint = (ExceptionBreakpoint)breakpoint;
+              exceptionBreakpoint.setCatchFiltersEnabled(true);
+              exceptionBreakpoint.setCatchClassFilters(filters.first);
+              exceptionBreakpoint.setCatchClassExclusionFilters(filters.second);
+              systemPrintln("Catch class filters = " + catchClassFiltersStr);
+            }
           }
-        }
-        else {
-          breakpoint = breakpointManager.addLineBreakpoint(document, commentLine + 1);
-          if (breakpoint != null) {
-            systemPrintln("LineBreakpoint created at " + file.getVirtualFile().getName() + ":" + (commentLine + 2));
+          case "Line" -> {
+            breakpoint = breakpointManager.addLineBreakpoint(document, commentLine + 1);
+            if (breakpoint != null) {
+              systemPrintln("LineBreakpoint created at " + breakpointLocation);
+            }
           }
+          default -> throw new IllegalArgumentException("Invalid kind '" + kind + "' at " + fileName + ":" + (commentLine + 1));
         }
 
         if (breakpoint == null) {
@@ -431,50 +397,43 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           continue;
         }
 
-        String suspendPolicy = readValue(comment, "suspendPolicy");
+        String suspendPolicy = comment.readValue("suspendPolicy");
         if (suspendPolicy != null) {
           //breakpoint.setSuspend(!DebuggerSettings.SUSPEND_NONE.equals(suspendPolicy));
           breakpoint.setSuspendPolicy(suspendPolicy);
           systemPrintln("SUSPEND_POLICY = " + suspendPolicy);
         }
-        String condition = readValue(comment, "Condition");
+
+        String condition = comment.readValue("Condition");
         if (condition != null) {
           //breakpoint.CONDITION_ENABLED = true;
           breakpoint.setCondition(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, condition));
           systemPrintln("Condition = " + condition);
         }
 
-        String logExpression = readValue(comment, "LogExpression");
+        String logExpression = comment.readValue("LogExpression");
         if (logExpression != null) {
           breakpoint.getXBreakpoint().setLogExpression(logExpression);
           systemPrintln("LogExpression = " + logExpression);
         }
 
-        String passCount = readValue(comment, "Pass count");
+        String passCount = comment.readValue("Pass count");
         if (passCount != null) {
           breakpoint.setCountFilterEnabled(true);
           breakpoint.setCountFilter(Integer.parseInt(passCount));
           systemPrintln("Pass count = " + passCount);
         }
 
-        String classFilters = readValue(comment, "Class filters");
-        if (classFilters != null) {
+        String classFiltersStr = comment.readValue("Class filters");
+        if (classFiltersStr != null) {
           breakpoint.setClassFiltersEnabled(true);
-          Pair<ClassFilter[], ClassFilter[]> filters = readClassFilters(classFilters);
+          Pair<ClassFilter[], ClassFilter[]> filters = BreakpointComment.parseClassFilters(classFiltersStr);
           breakpoint.setClassFilters(filters.first);
           breakpoint.setClassExclusionFilters(filters.second);
-          systemPrintln("Class filters = " + classFilters);
+          systemPrintln("Class filters = " + classFiltersStr);
         }
 
-        String catchClassFilters = readValue(comment, "Catch class filters");
-        if (catchClassFilters != null && breakpoint instanceof ExceptionBreakpoint) {
-          ExceptionBreakpoint exceptionBreakpoint = (ExceptionBreakpoint)breakpoint;
-          exceptionBreakpoint.setCatchFiltersEnabled(true);
-          Pair<ClassFilter[], ClassFilter[]> filters = readClassFilters(catchClassFilters);
-          exceptionBreakpoint.setCatchClassFilters(filters.first);
-          exceptionBreakpoint.setCatchClassExclusionFilters(filters.second);
-          systemPrintln("Catch class filters = " + catchClassFilters);
-        }
+        comment.done();
       }
     };
     if (!SwingUtilities.isEventDispatchThread()) {
