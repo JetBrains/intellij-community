@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.psi.impl.source.codeStyle.lineIndent;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.formatting.FormattingMode;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,16 +20,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-public final class FormatterBasedIndentAdjuster  {
-
+final class FormatterBasedIndentAdjuster  {
   private final static int MAX_SYNCHRONOUS_ADJUSTMENT_DOC_SIZE = 100000;
 
   private FormatterBasedIndentAdjuster() {
   }
 
-  public static void scheduleIndentAdjustment(@NotNull Project project,
-                                              @NotNull Document document,
-                                              int offset) {
+  static void scheduleIndentAdjustment(@NotNull Project project,
+                                       @NotNull Document document,
+                                       int offset) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file != null) {
       IndentAdjusterRunnable fixer = new IndentAdjusterRunnable(project, document, file, offset);
@@ -46,16 +45,16 @@ public final class FormatterBasedIndentAdjuster  {
            document.getTextLength() <= MAX_SYNCHRONOUS_ADJUSTMENT_DOC_SIZE && !BlockSupport.isTooDeep(file);
   }
 
-  public static class IndentAdjusterRunnable implements Runnable {
+  static class IndentAdjusterRunnable implements Runnable {
     private final Project myProject;
     private final int myLine;
     private final Document myDocument;
     private final PsiFile myFile;
 
-    public IndentAdjusterRunnable(@NotNull Project project,
-                                  @NotNull Document document,
-                                  @NotNull PsiFile file,
-                                  int offset) {
+    IndentAdjusterRunnable(@NotNull Project project,
+                           @NotNull Document document,
+                           @NotNull PsiFile file,
+                           int offset) {
       myProject = project;
       myDocument = document;
       myLine = myDocument.getLineNumber(offset);
@@ -91,7 +90,5 @@ public final class FormatterBasedIndentAdjuster  {
             }));
       }
     }
-
   }
-
 }
