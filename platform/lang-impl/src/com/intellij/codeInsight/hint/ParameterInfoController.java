@@ -95,6 +95,11 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
       }
 
       @Override
+      public void lookupCanceled(@NotNull LookupEvent event) {
+        activeLookup = null;
+      }
+
+      @Override
       public void uiRefreshed() {
         queue.queue(new Update("PI update") {
           @Override
