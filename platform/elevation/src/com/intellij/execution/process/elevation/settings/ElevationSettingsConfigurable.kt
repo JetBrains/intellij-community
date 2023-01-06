@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.elevation.settings
 
 import com.intellij.execution.process.elevation.ElevationBundle
@@ -15,9 +15,8 @@ import java.awt.Component
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JList
 import javax.swing.ListCellRenderer
-import kotlin.time.ExperimentalTime
-import kotlin.time.hours
-import kotlin.time.minutes
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
 class ElevationSettingsConfigurable : BoundConfigurable(ElevationBundle.message("elevation.settings.configurable")),
                                       Configurable.NoScroll {
@@ -56,8 +55,6 @@ class ElevationSettingsConfigurable : BoundConfigurable(ElevationBundle.message(
     }
   }
 
-  @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
-  @OptIn(ExperimentalTime::class)
   private fun getTimeLimitItems(currentDurationMs: Long = 0): List<Long> {
     return mutableListOf(
       5.minutes,
@@ -67,7 +64,7 @@ class ElevationSettingsConfigurable : BoundConfigurable(ElevationBundle.message(
       3.hours,
       10.hours,
     ).map {
-      it.toLongMilliseconds()
+      it.inWholeMilliseconds
     }.toMutableList().apply {
       if (currentDurationMs > 0 && currentDurationMs !in this) {
         add(currentDurationMs)
