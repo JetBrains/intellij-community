@@ -659,9 +659,6 @@ override fun saveEntities(mainEntities: Collection<ModuleEntity>,
   protected open fun createExternalEntitySource(externalSystemId: String): EntitySource
     = JpsImportedEntitySource(internalEntitySource, externalSystemId, false)
 
-
-  private fun javaPluginPresent() = PluginManagerCore.getPlugin(PluginId.findId("com.intellij.java")) != null
-
   private fun saveDependencyItem(dependencyItem: ModuleDependencyItem, moduleLibraries: Map<String, LibraryEntity>)
     = when (dependencyItem) {
     is ModuleDependencyItem.ModuleSourceDependency -> createOrderEntryTag(SOURCE_FOLDER_TYPE).setAttribute("forTests", "false")
