@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -40,7 +40,7 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   @Override
   public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-    final DebuggerTreeNodeImpl node = (DebuggerTreeNodeImpl) value;
+    final DebuggerTreeNodeImpl node = (DebuggerTreeNodeImpl)value;
 
     if (node != null) {
       final SimpleColoredText text = node.getText();

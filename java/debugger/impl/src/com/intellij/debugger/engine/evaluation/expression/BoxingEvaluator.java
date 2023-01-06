@@ -43,7 +43,7 @@ public class BoxingEvaluator implements Evaluator {
   }
 
   private static Value convertToWrapper(EvaluationContextImpl context, PrimitiveValue value, String wrapperTypeName) throws
-                                                                                                                            EvaluateException {
+                                                                                                                     EvaluateException {
     final DebugProcessImpl process = context.getDebugProcess();
     final ClassType wrapperClass = (ClassType)process.findClass(context, wrapperTypeName, null);
     final String methodSignature = "(" + JVMNameUtil.getPrimitiveSignature(value.type().name()) + ")L" + wrapperTypeName.replace('.', '/') + ";";

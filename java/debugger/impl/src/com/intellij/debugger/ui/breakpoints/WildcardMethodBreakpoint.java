@@ -132,9 +132,9 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
 
       Pattern pattern = PatternUtil.fromMask(getClassPattern());
       debugProcess.getVirtualMachineProxy().allClasses().stream()
-                  .filter(c -> pattern.matcher(c.name()).matches())
-                  .filter(ReferenceType::isPrepared)
-                  .forEach(aList -> processClassPrepare(debugProcess, aList));
+        .filter(c -> pattern.matcher(c.name()).matches())
+        .filter(ReferenceType::isPrepared)
+        .forEach(aList -> processClassPrepare(debugProcess, aList));
     }
     else {
       try {

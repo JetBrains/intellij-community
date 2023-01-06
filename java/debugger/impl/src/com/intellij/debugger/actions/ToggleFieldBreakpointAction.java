@@ -49,7 +49,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
         DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(project);
         BreakpointManager manager = debuggerManager.getBreakpointManager();
         final int offset = place.getOffset();
-        final Breakpoint breakpoint = offset >= 0? manager.findBreakpoint(document, offset, FieldBreakpoint.CATEGORY) : null;
+        final Breakpoint breakpoint = offset >= 0 ? manager.findBreakpoint(document, offset, FieldBreakpoint.CATEGORY) : null;
 
         if (breakpoint == null) {
           FieldBreakpoint fieldBreakpoint = manager.addFieldBreakpoint(document, offset);
@@ -74,8 +74,8 @@ public class ToggleFieldBreakpointAction extends AnAction {
 
     Presentation presentation = event.getPresentation();
     if (ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
-       ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
-       ActionPlaces.BOOKMARKS_VIEW_POPUP.equals(event.getPlace())) {
+        ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
+        ActionPlaces.BOOKMARKS_VIEW_POPUP.equals(event.getPlace())) {
       presentation.setVisible(toEnable);
     }
     presentation.setVisible(toEnable);
@@ -148,5 +148,4 @@ public class ToggleFieldBreakpointAction extends AnAction {
     }
     return null;
   }
-
 }

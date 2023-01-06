@@ -139,8 +139,8 @@ public abstract class ArrayAction extends DebuggerAction {
         int index = parent.getIndex(node);
         return createNodeTitle(prefix, parent) + "[" + index + "]";
       }
-      String name = (node.getDescriptor() != null)? node.getDescriptor().getName() : null;
-      return (name != null)? prefix + " " + name : prefix;
+      String name = (node.getDescriptor() != null) ? node.getDescriptor().getName() : null;
+      return (name != null) ? prefix + " " + name : prefix;
     }
     return prefix;
   }

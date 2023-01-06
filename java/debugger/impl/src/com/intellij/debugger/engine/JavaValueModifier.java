@@ -107,7 +107,7 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
       }
     }
     if (value instanceof DoubleValue) {
-      double dValue = ((DoubleValue) value).doubleValue();
+      double dValue = ((DoubleValue)value).doubleValue();
       if (varType instanceof FloatType && Float.MIN_VALUE <= dValue && dValue <= Float.MAX_VALUE) {
         value = context.getDebugProcess().getVirtualMachineProxy().mirrorOf((float)dValue);
       }

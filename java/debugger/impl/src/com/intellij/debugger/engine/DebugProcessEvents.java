@@ -85,7 +85,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
   }
 
-  private static void showStatusText(DebugProcessEvents debugProcess,  Event event) {
+  private static void showStatusText(DebugProcessEvents debugProcess, Event event) {
     Requestor requestor = RequestManagerImpl.findRequestor(event.request());
     Breakpoint breakpoint = null;
     if (requestor instanceof Breakpoint) {
@@ -661,14 +661,14 @@ public class DebugProcessEvents extends DebugProcessImpl {
           if (!stepEvents.isEmpty()) {
             resumePreferred = resumePreferred ||
                               stepEvents.stream()
-                                        .map(DebugProcessEvents::getRequestHint)
-                                        .allMatch(h -> {
-                                          if (h != null) {
-                                            Integer depth = h.checkCurrentPosition(suspendContext, event.location());
-                                            return depth != null && depth != RequestHint.STOP;
-                                          }
-                                          return false;
-                                        });
+                                .map(DebugProcessEvents::getRequestHint)
+                                .allMatch(h -> {
+                                  if (h != null) {
+                                    Integer depth = h.checkCurrentPosition(suspendContext, event.location());
+                                    return depth != null && depth != RequestHint.STOP;
+                                  }
+                                  return false;
+                                });
           }
         }
 

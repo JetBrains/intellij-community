@@ -175,7 +175,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
             rEvaluator = new UnBoxingEvaluator(rEvaluator);
           }
           final PsiPrimitiveType unboxedRType = PsiPrimitiveType.getUnboxedType(rType);
-          final PsiType _rType = unboxedRType != null? unboxedRType : rType;
+          final PsiType _rType = unboxedRType != null ? unboxedRType : rType;
           if (_rType instanceof PsiPrimitiveType && !PsiType.NULL.equals(_rType)) {
             if (!lType.equals(_rType)) {
               rEvaluator = createTypeCastEvaluator(rEvaluator, lType);
@@ -344,7 +344,8 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
           myResult =
             new ForStatementEvaluator(initializerEvaluator, conditionEvaluator, updateEvaluator, bodyEvaluator, getLabel(statement));
         }
-      } finally {
+      }
+      finally {
         myCurrentFragmentEvaluator = oldFragmentEvaluator;
       }
     }
@@ -364,7 +365,8 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         if (bodyEvaluator != null) {
           myResult = new ForeachStatementEvaluator(iterationParameterEvaluator, iteratedValueEvaluator, bodyEvaluator, getLabel(statement));
         }
-      } finally {
+      }
+      finally {
         myCurrentFragmentEvaluator = oldFragmentEvaluator;
       }
     }
@@ -579,11 +581,11 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     // constructs binary evaluator handling unboxing and numeric promotion issues
     private static Evaluator createBinaryEvaluator(Evaluator lResult,
-                                                                   PsiType lType,
-                                                                   Evaluator rResult,
-                                                                   @NotNull PsiType rType,
-                                                                   @NotNull IElementType operation,
-                                                                   @NotNull PsiType expressionExpectedType) {
+                                                   PsiType lType,
+                                                   Evaluator rResult,
+                                                   @NotNull PsiType rType,
+                                                   @NotNull IElementType operation,
+                                                   @NotNull PsiType expressionExpectedType) {
       // handle unboxing if necessary
       if (isUnboxingInBinaryExpressionApplicable(lType, rType, operation)) {
         if (rType instanceof PsiClassType && UnBoxingEvaluator.isTypeUnboxable(rType.getCanonicalText())) {
@@ -679,18 +681,17 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
 
       return opType == JavaTokenType.ASTERISK ||
-          opType == JavaTokenType.DIV         ||
-          opType == JavaTokenType.PERC        ||
-          opType == JavaTokenType.PLUS        ||
-          opType == JavaTokenType.MINUS       ||
-          opType == JavaTokenType.LT          ||
-          opType == JavaTokenType.LE          ||
-          opType == JavaTokenType.GT          ||
-          opType == JavaTokenType.GE          ||
-          opType == JavaTokenType.AND         ||
-          opType == JavaTokenType.XOR         ||
-          opType == JavaTokenType.OR;
-
+             opType == JavaTokenType.DIV ||
+             opType == JavaTokenType.PERC ||
+             opType == JavaTokenType.PLUS ||
+             opType == JavaTokenType.MINUS ||
+             opType == JavaTokenType.LT ||
+             opType == JavaTokenType.LE ||
+             opType == JavaTokenType.GT ||
+             opType == JavaTokenType.GE ||
+             opType == JavaTokenType.AND ||
+             opType == JavaTokenType.XOR ||
+             opType == JavaTokenType.OR;
     }
 
     private static boolean isUnboxingInBinaryExpressionApplicable(PsiType lType, PsiType rType, IElementType opCode) {
@@ -700,7 +701,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       // handle '==' and '!=' separately
       if (opCode == JavaTokenType.EQEQ || opCode == JavaTokenType.NE) {
         return lType instanceof PsiPrimitiveType && rType instanceof PsiClassType ||
-               lType instanceof PsiClassType     && rType instanceof PsiPrimitiveType;
+               lType instanceof PsiClassType && rType instanceof PsiPrimitiveType;
       }
       // concat with a String
       if (opCode == JavaTokenType.PLUS) {
@@ -787,7 +788,8 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         CodeFragmentEvaluator codeFragmentEvaluator = new CodeFragmentEvaluator(myCurrentFragmentEvaluator);
         codeFragmentEvaluator.setStatements(evaluators.toArray(new Evaluator[0]));
         myResult = codeFragmentEvaluator;
-      } else {
+      }
+      else {
         myResult = null;
       }
     }
@@ -953,6 +955,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     private static Evaluator createFallbackEvaluator(final Evaluator primary, final Evaluator fallback) {
       return new Evaluator() {
         private boolean myIsFallback;
+
         @Override
         public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
           try {
@@ -1134,7 +1137,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         operandEvaluator, operandType,
         new LiteralEvaluator(1, "int"), PsiType.INT,
         operation == JavaTokenType.PLUSPLUS ? JavaTokenType.PLUS : JavaTokenType.MINUS,
-        unboxedOperandType!= null? unboxedOperandType : operandType
+        unboxedOperandType != null ? unboxedOperandType : operandType
       );
       if (unboxedOperandType != null) {
         incrementImpl = new BoxingEvaluator(incrementImpl);
@@ -1159,8 +1162,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       // handle unboxing issues
       final PsiType operandType = operandExpression.getType();
-      @Nullable
-      final PsiType unboxedOperandType = PsiPrimitiveType.getUnboxedType(operandType);
+      @Nullable final PsiType unboxedOperandType = PsiPrimitiveType.getUnboxedType(operandType);
 
       final IElementType operation = expression.getOperationTokenType();
 
@@ -1170,16 +1172,16 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
             operandEvaluator, operandType,
             new LiteralEvaluator(Integer.valueOf(1), "int"), PsiType.INT,
             operation == JavaTokenType.PLUSPLUS ? JavaTokenType.PLUS : JavaTokenType.MINUS,
-            unboxedOperandType!= null? unboxedOperandType : operandType
+            unboxedOperandType != null ? unboxedOperandType : operandType
           );
-          myResult = new AssignmentEvaluator(operandEvaluator, unboxedOperandType != null? new BoxingEvaluator(rightEval) : rightEval);
+          myResult = new AssignmentEvaluator(operandEvaluator, unboxedOperandType != null ? new BoxingEvaluator(rightEval) : rightEval);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
         }
       }
       else {
-        if (JavaTokenType.PLUS.equals(operation) || JavaTokenType.MINUS.equals(operation)|| JavaTokenType.TILDE.equals(operation)) {
+        if (JavaTokenType.PLUS.equals(operation) || JavaTokenType.MINUS.equals(operation) || JavaTokenType.TILDE.equals(operation)) {
           operandEvaluator = handleUnaryNumericPromotion(operandType, operandEvaluator);
         }
         else {
@@ -1220,11 +1222,11 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       if (psiMethod != null) {
         PsiClass methodPsiClass = psiMethod.getContainingClass();
-        contextClass =  JVMNameUtil.getJVMQualifiedName(methodPsiClass);
+        contextClass = JVMNameUtil.getJVMQualifiedName(methodPsiClass);
         if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
           objectEvaluator = new TypeEvaluator(contextClass);
         }
-        else if (qualifier != null ) {
+        else if (qualifier != null) {
           qualifier.accept(this);
           objectEvaluator = myResult;
         }
@@ -1343,7 +1345,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
 
       // handle numeric promotion
-      final PsiType _unboxedIndexType = unboxedType != null? unboxedType : operandExpressionType;
+      final PsiType _unboxedIndexType = unboxedType != null ? unboxedType : operandExpressionType;
       if (_unboxedIndexType instanceof PsiPrimitiveType) {
         final PsiType promotionType = calcUnaryNumericPromotionType((PsiPrimitiveType)_unboxedIndexType);
         if (promotionType != null) {
@@ -1375,7 +1377,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         throw new EvaluateRuntimeException(
           new EvaluateException(
             JavaErrorBundle.message("inconvertible.type.cast", JavaHighlightUtil.formatType(operandType), JavaHighlightUtil
-            .formatType(castType)))
+              .formatType(castType)))
         );
       }
 
@@ -1477,7 +1479,8 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
                 bidStr +
                 "MethodHandleProxies.asInterfaceInstance(" + interfaceType.getCanonicalText() + ".class, mh);";
             }
-          } else if (PsiUtil.isArrayClass(resolved)) {
+          }
+          else if (PsiUtil.isArrayClass(resolved)) {
             code =
               "MethodType mt = MethodType.methodType(Object.class, Class.class, int.class);\n" +
               "MethodHandle mh = MethodHandles.publicLookup().findStatic(Array.class, \"newInstance\", mt);\n" +
@@ -1567,7 +1570,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
           initializerEvaluator
         );
       }
-      else if (expressionPsiType instanceof PsiClassType){ // must be a class ref
+      else if (expressionPsiType instanceof PsiClassType) { // must be a class ref
         PsiClass aClass = CompilingEvaluatorTypesUtil.getClass((PsiClassType)expressionPsiType);
         if (aClass instanceof PsiAnonymousClass) {
           throw new EvaluateRuntimeException(new UnsupportedExpressionException(

@@ -4,6 +4,7 @@ package com.intellij.debugger.engine.evaluation.expression;
 import com.sun.jdi.ArrayReference;
 
 public interface InspectArrayItem extends InspectEntity {
-  ArrayReference getArray    ();
-  int            getItemIndex();
+  ArrayReference getArray();
+
+  int getItemIndex();
 }

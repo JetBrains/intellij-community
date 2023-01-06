@@ -59,7 +59,6 @@ public class FreezeThreadAction extends DebuggerAction {
           break;
         }
       }
-
     }
 
     e.getPresentation().setVisible(visible);

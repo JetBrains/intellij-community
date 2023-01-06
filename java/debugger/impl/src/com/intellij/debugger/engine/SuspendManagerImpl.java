@@ -28,7 +28,7 @@ public class SuspendManagerImpl implements SuspendManager {
    * "paused at breakpoint" and JDI prohibits data queries on its stack frames
    */
   private final Deque<SuspendContextImpl> myPausedContexts = new ConcurrentLinkedDeque<>();
-  private final Set<ThreadReferenceProxyImpl>  myFrozenThreads  = Collections.synchronizedSet(new HashSet<>());
+  private final Set<ThreadReferenceProxyImpl> myFrozenThreads = Collections.synchronizedSet(new HashSet<>());
 
   private final DebugProcessImpl myDebugProcess;
 
@@ -221,7 +221,7 @@ public class SuspendManagerImpl implements SuspendManager {
     suspendContext.myVotesToVote--;
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("myVotesToVote = " +  suspendContext.myVotesToVote);
+      LOG.debug("myVotesToVote = " + suspendContext.myVotesToVote);
     }
     if (suspendContext.myVotesToVote == 0) {
       if (suspendContext.myIsVotedForResume) {

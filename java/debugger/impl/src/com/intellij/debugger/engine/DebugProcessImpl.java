@@ -269,8 +269,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             // TODO: may add a new (possibly incorrect) value after the cleanup in reloadRenderers
             myNodeRenderersMap.put(type, r);
           }
-        return r;
-      });
+          return r;
+        });
       // check if future is already done
       myNodeRenderersMap.putIfAbsent(type, res);
       return res;
@@ -710,7 +710,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       catch (Error e) {
         throw new ExecutionException(JavaDebuggerBundle.message("debugger.jdi.bootstrap.error",
-                                                            e.getClass().getName() + " : " + e.getLocalizedMessage()));
+                                                                e.getClass().getName() + " : " + e.getLocalizedMessage()));
       }
     }
     return StreamEx.of(virtualMachineManager.allConnectors())
@@ -734,14 +734,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           .sorted(Comparator.comparing(sdk -> !(sdk.getSdkType() instanceof JavaSdk))) // prefer regular jdks
           .filter(sdk -> versionMatch(sdk, version))
           .findFirst().ifPresent(sdk -> {
-          XDebuggerManagerImpl.getNotificationGroup().createNotification(
-            JavaDebuggerBundle.message("message.remote.jre.version.mismatch",
-                                       versionString,
-                                   runjre != null ? runjre.getVersionString() : "unknown",
-                                       sdk.getName())
-            , MessageType.INFO).notify(myProject);
-          getSession().setAlternativeJre(sdk);
-        });
+            XDebuggerManagerImpl.getNotificationGroup().createNotification(
+              JavaDebuggerBundle.message("message.remote.jre.version.mismatch",
+                                         versionString,
+                                         runjre != null ? runjre.getVersionString() : "unknown",
+                                         sdk.getName())
+              , MessageType.INFO).notify(myProject);
+            getSession().setAlternativeJre(sdk);
+          });
       }
     }
   }
@@ -782,7 +782,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void addProcessListener(ProcessListener processListener) {
-    synchronized(myProcessListeners) {
+    synchronized (myProcessListeners) {
       if (getProcessHandler() != null) {
         getProcessHandler().addProcessListener(processListener);
       }
@@ -1075,7 +1075,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myWaitFor.waitFor(timeout);
   }
 
-  private abstract class InvokeCommand <E extends Value> {
+  private abstract class InvokeCommand<E extends Value> {
     private final Method myMethod;
     private final List<Value> myArgs;
 
@@ -1159,7 +1159,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         return invokeMethodAndFork(suspendContext);
       }
       catch (InvocationException | InternalException | UnsupportedOperationException | ObjectCollectedException |
-        InvalidTypeException | IncompatibleThreadStateException e) {
+             InvalidTypeException | IncompatibleThreadStateException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
       finally {
@@ -1352,7 +1352,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                             ClassType classType,
                             Method method,
                             List<? extends Value> args) throws EvaluateException {
-    return invokeMethod(evaluationContext, classType, method, args, 0,false);
+    return invokeMethod(evaluationContext, classType, method, args, 0, false);
   }
 
   public Value invokeMethod(@NotNull EvaluationContext evaluationContext,
@@ -1856,7 +1856,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           Messages.showErrorDialog(
             JavaDebuggerBundle.message("error.running.to.cursor.no.executable.code",
                                        myRunToCursorBreakpoint.getSourcePosition().getFile().getName(),
-                                   myRunToCursorBreakpoint.getLineIndex() + 1),
+                                       myRunToCursorBreakpoint.getLineIndex() + 1),
             UIUtil.removeMnemonic(ActionsBundle.actionText(XDebuggerActions.RUN_TO_CURSOR)));
           DebuggerSession session = debugProcess.getSession();
           session.getContextManager().setState(DebuggerContextUtil.createDebuggerContext(session, context),
@@ -1908,7 +1908,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     public ResumeCommand(SuspendContextImpl suspendContext) {
       super(suspendContext);
       final ThreadReferenceProxyImpl contextThread = getDebuggerContext().getThreadProxy();
-      myContextThread = contextThread != null ? contextThread : (suspendContext != null? suspendContext.getThread() : null);
+      myContextThread = contextThread != null ? contextThread : (suspendContext != null ? suspendContext.getThread() : null);
     }
 
     @Override
@@ -2074,7 +2074,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           myStashedVirtualMachines.addFirst(vmData);
           myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject);
         });
-      } else {
+      }
+      else {
         closeProcess(false);
       }
     }, vmReadyCallback);
@@ -2183,7 +2184,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     if (myConnection instanceof DelayedRemoteConnection) {
       ((DelayedRemoteConnection)myConnection).setAttachRunnable(() -> createVirtualMachine(environment));
-    } else if (!(myConnection instanceof RemoteConnectionStub) && !myConnection.isServerMode()) {
+    }
+    else if (!(myConnection instanceof RemoteConnectionStub) && !myConnection.isServerMode()) {
       createVirtualMachine(environment);
       if (myIsFailed.get()) {
         myExecutionResult = null;
@@ -2272,7 +2274,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             protected void action() {
               try {
                 commitVM(vm1);
-              } catch (VMDisconnectedException e) {
+              }
+              catch (VMDisconnectedException e) {
                 fail();
               }
             }

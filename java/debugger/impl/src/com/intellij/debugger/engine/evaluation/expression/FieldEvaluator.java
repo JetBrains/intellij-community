@@ -33,6 +33,7 @@ public class FieldEvaluator implements Evaluator {
 
   public interface TargetClassFilter {
     TargetClassFilter ALL = refType -> true;
+
     boolean acceptClass(ReferenceType refType);
   }
 
@@ -62,13 +63,13 @@ public class FieldEvaluator implements Evaluator {
       return new LocalClassFilter(psiClass.getName());
     }
     final String name = JVMNameUtil.getNonAnonymousClassName(psiClass);
-    return name != null? new FQNameClassFilter(name) : TargetClassFilter.ALL;
+    return name != null ? new FQNameClassFilter(name) : TargetClassFilter.ALL;
   }
 
   @Nullable
   private Field findField(@Nullable Type t) {
     if (t instanceof ClassType) {
-      ClassType cls = (ClassType) t;
+      ClassType cls = (ClassType)t;
       if (myTargetClassFilter.acceptClass(cls)) {
         return cls.fieldByName(myFieldName);
       }
@@ -81,7 +82,7 @@ public class FieldEvaluator implements Evaluator {
       return findField(cls.superclass());
     }
     else if (t instanceof InterfaceType) {
-      InterfaceType iface = (InterfaceType) t;
+      InterfaceType iface = (InterfaceType)t;
       if (myTargetClassFilter.acceptClass(iface)) {
         return iface.fieldByName(myFieldName);
       }
@@ -102,7 +103,6 @@ public class FieldEvaluator implements Evaluator {
     Object object = myObjectEvaluator.evaluate(context);
 
     return evaluateField(object, context);
-
   }
 
   private Object evaluateField(Object object, EvaluationContextImpl context) throws EvaluateException {
@@ -143,7 +143,7 @@ public class FieldEvaluator implements Evaluator {
       }
       myEvaluatedQualifier = field.isStatic() ? refType : objRef;
       myEvaluatedField = field;
-      return field.isStatic()? refType.getValue(field) : objRef.getValue(field);
+      return field.isStatic() ? refType.getValue(field) : objRef.getValue(field);
     }
 
     if (object == null) {
@@ -189,7 +189,8 @@ public class FieldEvaluator implements Evaluator {
         public NodeDescriptorImpl getInspectItem(Project project) {
           if (myEvaluatedQualifier instanceof ObjectReference) {
             return new FieldDescriptorImpl(project, (ObjectReference)myEvaluatedQualifier, myEvaluatedField);
-          } else
+          }
+          else
             return null;
         }
       };

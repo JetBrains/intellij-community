@@ -121,7 +121,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
     Project project = getDebugProcess().getProject();
     PsiFile psiFile = getPsiFileByLocation(project, location);
-    if (psiFile == null ) {
+    if (psiFile == null) {
       return null;
     }
 
@@ -404,8 +404,8 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   @NotNull
   public List<ReferenceType> getAllClasses(@NotNull final SourcePosition position) throws NoDataException {
     return ReadAction.compute(() -> StreamEx.of(getLineClasses(position.getFile(), position.getLine()))
-                                            .flatMap(aClass -> getClassReferences(aClass, position))
-                                            .toList());
+      .flatMap(aClass -> getClassReferences(aClass, position))
+      .toList());
   }
 
   private StreamEx<ReferenceType> getClassReferences(@NotNull final PsiClass psiClass, SourcePosition position) {
@@ -584,7 +584,8 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       myMethodSignature = methodSignature;
     }
 
-    @Override public void visitClass(@NotNull PsiClass aClass) {
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
       if (myCompiledMethod == null) {
         if (getClassReferences(aClass, SourcePosition.createFromElement(aClass)).anyMatch(referenceType -> referenceType.name().equals(myClassName))) {
           myCompiledClass = aClass;
@@ -594,7 +595,8 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       }
     }
 
-    @Override public void visitMethod(@NotNull PsiMethod method) {
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
       if (myCompiledMethod == null) {
         try {
           PsiClass containingClass = method.getContainingClass();

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings
 
 import com.intellij.debugger.JavaDebuggerBundle
@@ -44,11 +44,11 @@ class JavaHotSwapConfigurableUi : ConfigurableUi<DebuggerSettings> {
       buttonsGroup {
         row(JavaDebuggerBundle.message("label.debugger.hotswap.configurable.reload.classes")) {
           radioButton(JavaDebuggerBundle.message("label.debugger.hotswap.configurable.always"),
-            DebuggerSettings.RUN_HOTSWAP_ALWAYS)
+                      DebuggerSettings.RUN_HOTSWAP_ALWAYS)
           radioButton(JavaDebuggerBundle.message("label.debugger.hotswap.configurable.never"),
-            DebuggerSettings.RUN_HOTSWAP_NEVER)
+                      DebuggerSettings.RUN_HOTSWAP_NEVER)
           radioButton(JavaDebuggerBundle.message("label.debugger.hotswap.configurable.ask"),
-            DebuggerSettings.RUN_HOTSWAP_ASK)
+                      DebuggerSettings.RUN_HOTSWAP_ASK)
         }
       }.bind(settings::RUN_HOTSWAP_AFTER_COMPILE)
     }

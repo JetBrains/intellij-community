@@ -25,12 +25,12 @@ public class AutoRendererAction extends AnAction {
         debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
           @Override
           public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-              for (JavaValue selectedValue : selectedValues) {
-                selectedValue.getDescriptor().setRenderer(null);
-              }
-              DebuggerAction.refreshViews(e);
+            for (JavaValue selectedValue : selectedValues) {
+              selectedValue.getDescriptor().setRenderer(null);
             }
-          });
+            DebuggerAction.refreshViews(e);
+          }
+        });
       }
     }
   }

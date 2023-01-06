@@ -37,7 +37,7 @@ public class AnonymousClassMethodFilter extends BasicStepMethodFilter implements
       }
     }
     myBreakpointPosition = firstStatementPosition;
-    myLastStatementLine = lastStatementPosition != null? lastStatementPosition.getLine() : -1;
+    myLastStatementLine = lastStatementPosition != null ? lastStatementPosition.getLine() : -1;
   }
 
   @Override

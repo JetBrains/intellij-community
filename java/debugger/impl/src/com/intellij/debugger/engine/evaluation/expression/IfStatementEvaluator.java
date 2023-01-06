@@ -32,7 +32,8 @@ public class IfStatementEvaluator implements Evaluator {
     Object value = myConditionEvaluator.evaluate(context);
     if (!(value instanceof BooleanValue)) {
       throw EvaluateExceptionUtil.BOOLEAN_EXPECTED;
-    } else {
+    }
+    else {
       if (((BooleanValue)value).booleanValue()) {
         value = myThenEvaluator.evaluate(context);
         myModifier = myThenEvaluator.getModifier();
@@ -41,7 +42,8 @@ public class IfStatementEvaluator implements Evaluator {
         if (myElseEvaluator != null) {
           value = myElseEvaluator.evaluate(context);
           myModifier = myElseEvaluator.getModifier();
-        } else {
+        }
+        else {
           value = context.getDebugProcess().getVirtualMachineProxy().mirrorOfVoid();
           myModifier = null;
         }
@@ -49,5 +51,4 @@ public class IfStatementEvaluator implements Evaluator {
     }
     return value;
   }
-
 }

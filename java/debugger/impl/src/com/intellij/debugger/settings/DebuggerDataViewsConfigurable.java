@@ -189,12 +189,12 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     final ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 
-    generalSettings.AUTOSCROLL_TO_NEW_LOCALS  = myCbAutoscroll.isSelected();
-    generalSettings.USE_DFA_ASSIST  = myCbDfaAssist.isSelected();
-    generalSettings.USE_DFA_ASSIST_GRAY_OUT  = myCbDfaAssistGrayOut.isSelected();
+    generalSettings.AUTOSCROLL_TO_NEW_LOCALS = myCbAutoscroll.isSelected();
+    generalSettings.USE_DFA_ASSIST = myCbDfaAssist.isSelected();
+    generalSettings.USE_DFA_ASSIST_GRAY_OUT = myCbDfaAssistGrayOut.isSelected();
     rendererSettings.setAlternateCollectionViewsEnabled(myCbEnableAlternateViews.isSelected());
-    generalSettings.HIDE_NULL_ARRAY_ELEMENTS  = myCbHideNullArrayElements.isSelected();
-    generalSettings.POPULATE_THROWABLE_STACKTRACE  = myCbPopulateThrowableStack.isSelected();
+    generalSettings.HIDE_NULL_ARRAY_ELEMENTS = myCbHideNullArrayElements.isSelected();
+    generalSettings.POPULATE_THROWABLE_STACKTRACE = myCbPopulateThrowableStack.isSelected();
 
     final ClassRenderer classRenderer = rendererSettings.getClassRenderer();
     classRenderer.SHOW_STATIC = myCbShowStatic.isSelected();
@@ -283,15 +283,15 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 
     final ClassRenderer classRenderer = rendererSettings.getClassRenderer();
-    final boolean isClassRendererModified=
-    (classRenderer.SHOW_STATIC != myCbShowStatic.isSelected()) ||
-    (classRenderer.SHOW_STATIC_FINAL != myCbShowStaticFinalFields.isSelectedWhenSelectable()) ||
-    (classRenderer.SHOW_SYNTHETICS != myCbShowSyntheticFields.isSelected()) ||
-    (classRenderer.SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES != myCbShowValFieldsAsLocalVariables.isSelectedWhenSelectable()) ||
-    (classRenderer.SHOW_DECLARED_TYPE != myCbShowDeclaredType.isSelected()) ||
-    (classRenderer.SHOW_FQ_TYPE_NAMES != myCbShowFQNames.isSelected()) ||
-    (classRenderer.SHOW_OBJECT_ID != myCbShowObjectId.isSelected()) ||
-    (classRenderer.SHOW_STRINGS_TYPE != myCbShowStringsType.isSelected());
+    final boolean isClassRendererModified =
+      (classRenderer.SHOW_STATIC != myCbShowStatic.isSelected()) ||
+      (classRenderer.SHOW_STATIC_FINAL != myCbShowStaticFinalFields.isSelectedWhenSelectable()) ||
+      (classRenderer.SHOW_SYNTHETICS != myCbShowSyntheticFields.isSelected()) ||
+      (classRenderer.SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES != myCbShowValFieldsAsLocalVariables.isSelectedWhenSelectable()) ||
+      (classRenderer.SHOW_DECLARED_TYPE != myCbShowDeclaredType.isSelected()) ||
+      (classRenderer.SHOW_FQ_TYPE_NAMES != myCbShowFQNames.isSelected()) ||
+      (classRenderer.SHOW_OBJECT_ID != myCbShowObjectId.isSelected()) ||
+      (classRenderer.SHOW_STRINGS_TYPE != myCbShowStringsType.isSelected());
 
     if (isClassRendererModified) {
       return true;

@@ -45,7 +45,7 @@ public final class TextWithImportsImpl implements TextWithImports {
     }
   }
 
-  public TextWithImportsImpl (CodeFragmentKind kind, @NotNull String text, @NotNull String imports, @Nullable FileType fileType) {
+  public TextWithImportsImpl(CodeFragmentKind kind, @NotNull String text, @NotNull String imports, @Nullable FileType fileType) {
     myKind = kind;
     myText = text;
     myImports = imports;
@@ -128,7 +128,7 @@ public final class TextWithImportsImpl implements TextWithImports {
     if (text != null && !text.getText().isEmpty()) {
       FileType fileType = text.getFileType();
       return new XExpressionImpl(text.getText(),
-                                 fileType == null ? null :LanguageUtil.getFileTypeLanguage(fileType),
+                                 fileType == null ? null : LanguageUtil.getFileTypeLanguage(fileType),
                                  StringUtil.nullize(text.getImports()),
                                  getMode(text.getKind()));
     }

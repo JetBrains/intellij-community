@@ -63,14 +63,14 @@ public final class JVMNameUtil {
     return null;
   }
 
-  private static void appendJVMSignature(JVMNameBuffer buffer , PsiType type) {
+  private static void appendJVMSignature(JVMNameBuffer buffer, PsiType type) {
     if (type == null) {
       return;
     }
     final PsiType psiType = TypeConversionUtil.erasure(type);
     if (psiType instanceof PsiArrayType) {
       buffer.append(new JVMRawText("["));
-      appendJVMSignature(buffer, ((PsiArrayType) psiType).getComponentType());
+      appendJVMSignature(buffer, ((PsiArrayType)psiType).getComponentType());
     }
     else if (psiType instanceof PsiClassType) {
       final JVMName jvmName = getJVMQualifiedName(psiType);
@@ -87,13 +87,13 @@ public final class JVMNameUtil {
   private static void appendJvmClassQualifiedName(JVMNameBuffer buffer, final JVMName jvmName) {
     buffer.append("L");
     if (jvmName instanceof JVMRawText) {
-      buffer.append(((JVMRawText)jvmName).getName().replace('.','/'));
+      buffer.append(((JVMRawText)jvmName).getName().replace('.', '/'));
     }
     else {
       buffer.append(new JVMName() {
         @Override
         public String getName(DebugProcessImpl process) throws EvaluateException {
-          return jvmName.getName(process).replace('.','/');
+          return jvmName.getName(process).replace('.', '/');
         }
 
         @Override
@@ -137,6 +137,7 @@ public final class JVMNameUtil {
 
       return new JVMName() {
         String myName = null;
+
         @Override
         public String getName(DebugProcessImpl process) throws EvaluateException {
           if (myName == null) {
@@ -392,7 +393,7 @@ public final class JVMNameUtil {
 
   static String calcClassDisplayName(final PsiClass aClass) {
     final String qName = aClass.getQualifiedName();
-    if (qName != null)  {
+    if (qName != null) {
       return qName;
     }
     final PsiClass parent = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
@@ -407,18 +408,18 @@ public final class JVMNameUtil {
 
     final Ref<Integer> classIndex = new Ref<>(0);
     try {
-        parent.accept(new JavaRecursiveElementVisitor() {
-          @Override
-          public void visitAnonymousClass(@NotNull PsiAnonymousClass cls) {
-            classIndex.set(classIndex.get() + 1);
-            if (aClass.equals(cls)) {
-              throw new ProcessCanceledException();
-            }
+      parent.accept(new JavaRecursiveElementVisitor() {
+        @Override
+        public void visitAnonymousClass(@NotNull PsiAnonymousClass cls) {
+          classIndex.set(classIndex.get() + 1);
+          if (aClass.equals(cls)) {
+            throw new ProcessCanceledException();
           }
-        });
-      }
-      catch (ProcessCanceledException ignored) {
-      }
+        }
+      });
+    }
+    catch (ProcessCanceledException ignored) {
+    }
     return calcClassDisplayName(parent) + "$" + classIndex.get();
   }
 

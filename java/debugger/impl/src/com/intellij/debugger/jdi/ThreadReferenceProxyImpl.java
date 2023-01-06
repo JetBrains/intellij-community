@@ -61,7 +61,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   @Override
   public VirtualMachineProxyImpl getVirtualMachine() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    return (VirtualMachineProxyImpl) myTimer;
+    return (VirtualMachineProxyImpl)myTimer;
   }
 
   public String name() {
@@ -166,7 +166,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       try {
         myFrameCount = threadReference.frameCount();
       }
-      catch(ObjectCollectedException ignored) {
+      catch (ObjectCollectedException ignored) {
         myFrameCount = 0;
       }
       catch (IncompatibleThreadStateException e) {
@@ -326,7 +326,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       }
 
       int index = myFramesFromBottom.size() + 1;
-      for (ListIterator<StackFrame> iterator = frames.listIterator(frameCount - myFramesFromBottom.size()); iterator.hasPrevious();) {
+      for (ListIterator<StackFrame> iterator = frames.listIterator(frameCount - myFramesFromBottom.size()); iterator.hasPrevious(); ) {
         myFramesFromBottom.add(new StackFrameProxyImpl(this, iterator.previous(), index));
         index++;
       }
@@ -351,7 +351,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       if (frameCount == 0) {
         return null;
       }
-      return myFramesFromBottom.get(frameCount - i  - 1);
+      return myFramesFromBottom.get(frameCount - i - 1);
     }
     catch (ObjectCollectedException | IllegalThreadStateException ignored) {
       return null;
@@ -410,7 +410,8 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     catch (IllegalThreadStateException e) {
       // must be zombie thread
       LOG.info(e);
-    } catch (ObjectCollectedException ignored) {
+    }
+    catch (ObjectCollectedException ignored) {
     }
 
     return false;
@@ -419,9 +420,11 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   public boolean isAtBreakpoint() {
     try {
       return getThreadReference().isAtBreakpoint();
-    } catch (InternalException e) {
+    }
+    catch (InternalException e) {
       LOG.info(e);
-    } catch (ObjectCollectedException ignored) {
+    }
+    catch (ObjectCollectedException ignored) {
     }
     return false;
   }

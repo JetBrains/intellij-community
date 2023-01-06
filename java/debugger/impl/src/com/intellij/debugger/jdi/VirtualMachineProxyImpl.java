@@ -60,8 +60,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     canWatchFieldModification(); // fetch capabilities
 
     if (canBeModified()) { // no need to spend time here for read only sessions
-        // this will cache classes inside JDI and enable faster search of classes later
-        DebuggerUtilsAsync.allCLasses(virtualMachine);
+      // this will cache classes inside JDI and enable faster search of classes later
+      DebuggerUtilsAsync.allCLasses(virtualMachine);
     }
 
     virtualMachine.topLevelThreadGroups().forEach(this::threadGroupCreated);
@@ -352,7 +352,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public boolean canGetMonitorFrameInfo() {
-      return myVirtualMachine.canGetMonitorFrameInfo();
+    return myVirtualMachine.canGetMonitorFrameInfo();
   }
 
   public boolean canGetCurrentContendedMonitor() {

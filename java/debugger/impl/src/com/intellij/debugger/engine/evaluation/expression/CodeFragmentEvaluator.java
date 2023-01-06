@@ -34,7 +34,8 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator {
     if (!mySyntheticLocals.containsKey(localName)) {
       if (myParentFragmentEvaluator != null) {
         return myParentFragmentEvaluator.getValue(localName, vm);
-      } else {
+      }
+      else {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.variable.not.declared", localName));
       }
     }
@@ -82,10 +83,12 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator {
     if (!mySyntheticLocals.containsKey(localName)) {
       if (myParentFragmentEvaluator != null) {
         return myParentFragmentEvaluator.hasValue(localName);
-      } else {
+      }
+      else {
         return false;
       }
-    } else {
+    }
+    else {
       return true;
     }
   }
@@ -103,7 +106,8 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator {
     if (!mySyntheticLocals.containsKey(localName)) {
       if (myParentFragmentEvaluator != null) {
         myParentFragmentEvaluator.setValue(localName, value);
-      } else {
+      }
+      else {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.variable.not.declared", localName));
       }
     }

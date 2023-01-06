@@ -124,7 +124,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
         myKeptReferences.clear();
       }
 
-      for(SuspendContextCommandImpl cmd = pollPostponedCommand(); cmd != null; cmd = pollPostponedCommand()) {
+      for (SuspendContextCommandImpl cmd = pollPostponedCommand(); cmd != null; cmd = pollPostponedCommand()) {
         cmd.notifyCancelled();
       }
       if (callResume) {
@@ -294,8 +294,8 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
         CompletableFuture.completedFuture(pausedThreads)
           .thenCompose(tds -> addThreads(tds, THREAD_NAME_COMPARATOR, false))
           .thenCompose(res -> res
-                 ? getDebugProcess().getVirtualMachineProxy().allThreadsAsync()
-                 : CompletableFuture.completedFuture(Collections.emptyList()))
+                              ? getDebugProcess().getVirtualMachineProxy().allThreadsAsync()
+                              : CompletableFuture.completedFuture(Collections.emptyList()))
           .thenAccept(tds -> addThreads(tds, THREADS_SUSPEND_AND_NAME_COMPARATOR, true))
           .exceptionally(throwable -> DebuggerUtilsAsync.logError(throwable));
       }

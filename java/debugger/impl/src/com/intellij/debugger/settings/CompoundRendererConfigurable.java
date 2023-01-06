@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -266,9 +266,9 @@ class CompoundRendererConfigurable extends JPanel {
       }
     };
     editorComponent.registerKeyboardAction(e -> editor.stopCellEditing(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+                                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     editorComponent.registerKeyboardAction(e -> editor.cancelCellEditing(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+                                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     TableColumn exprColumn = myTable.getColumnModel().getColumn(EXPRESSION_TABLE_COLUMN);
     exprColumn.setCellEditor(editor);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.dfaassist;
 
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
@@ -24,7 +24,7 @@ public interface DebuggerDfaListener extends DfaListener {
   @NotNull Map<PsiElement, DfaHint> computeHints();
 
   /**
-   * @param startAnchor an anchor returned from {@link DfaAssistProvider#getAnchor(PsiElement)}, which created this listener
+   * @param startAnchor         an anchor returned from {@link DfaAssistProvider#getAnchor(PsiElement)}, which created this listener
    * @param unreachableElements list of all {@link PsiElement} which were never visited during IR interpretation. This means that no
    *                            instruction between {@link ControlFlow#startElement(PsiElement)} and
    *                            {@link ControlFlow#finishElement(PsiElement)} was reached. Elements before startAnchor in IR are not

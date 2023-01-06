@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class MethodBreakpoint
@@ -205,8 +205,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       return;
     }
     StreamEx<Method> methods = lambdaMethod != null
-                       ? StreamEx.of(lambdaMethod)
-                       : breakpoint.matchingMethods(StreamEx.of(classType.methods()).filter(m -> base || !m.isAbstract()), debugProcess);
+                               ? StreamEx.of(lambdaMethod)
+                               : breakpoint.matchingMethods(StreamEx.of(classType.methods()).filter(m -> base || !m.isAbstract()), debugProcess);
     boolean found = false;
     for (Method method : methods) {
       found = true;

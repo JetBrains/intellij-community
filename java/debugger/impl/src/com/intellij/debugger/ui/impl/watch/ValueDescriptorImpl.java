@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
@@ -582,8 +582,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     }
     catch (Exception wrapper) {
       if (!(wrapper.getCause() instanceof EvaluateException)) throw wrapper;
-      if (!(wrapper.getCause() instanceof NeedMarkException)) throw (EvaluateException) wrapper.getCause();
-      NeedMarkException e = (NeedMarkException) wrapper.getCause();
+      if (!(wrapper.getCause() instanceof NeedMarkException)) throw (EvaluateException)wrapper.getCause();
+      NeedMarkException e = (NeedMarkException)wrapper.getCause();
 
       XValueMarkers<?, ?> markers = DebuggerUtilsImpl.getValueMarkers(context.getDebugProcess());
       if (markers != null) {

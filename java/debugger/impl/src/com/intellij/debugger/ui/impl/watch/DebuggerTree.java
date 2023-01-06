@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class DebuggerTree
@@ -398,7 +398,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
 
       final DebuggerContextImpl debuggerContext = getDebuggerContext();
       final SuspendContextImpl suspendContext = debuggerContext.getSuspendContext();
-      final EvaluationContextImpl evaluationContext = suspendContext != null && !suspendContext.isResumed()? debuggerContext.createEvaluationContext() : null;
+      final EvaluationContextImpl evaluationContext = suspendContext != null && !suspendContext.isResumed() ? debuggerContext.createEvaluationContext() : null;
 
       boolean showCurrent = ThreadsViewSettings.getInstance().SHOW_CURRENT_THREAD;
 

@@ -33,7 +33,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   }
 
   public VirtualMachineProxyImpl getVirtualMachineProxy() {
-    return (VirtualMachineProxyImpl) myTimer;
+    return (VirtualMachineProxyImpl)myTimer;
   }
 
   public ReferenceType referenceType() {
@@ -55,7 +55,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   @NonNls
   public String toString() {
     final ObjectReference objectReference = getObjectReference();
-    final String objRefString = objectReference != null? objectReference.toString() : "[referenced object collected]";
+    final String objRefString = objectReference != null ? objectReference.toString() : "[referenced object collected]";
     return "ObjectReferenceProxyImpl: " + objRefString + " " + super.toString();
   }
 

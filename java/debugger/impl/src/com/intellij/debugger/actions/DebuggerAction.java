@@ -78,7 +78,7 @@ public abstract class DebuggerAction extends AnAction {
     for (TreePath path : paths) {
       Object component = path.getLastPathComponent();
       if (component instanceof DebuggerTreeNodeImpl) {
-        nodes.add((DebuggerTreeNodeImpl) component);
+        nodes.add((DebuggerTreeNodeImpl)component);
       }
     }
     return nodes.toArray(new DebuggerTreeNodeImpl[0]);
@@ -89,7 +89,8 @@ public abstract class DebuggerAction extends AnAction {
     DebuggerTreePanel panel = getPanel(dataContext);
     if (panel != null) {
       return panel.getContext();
-    } else {
+    }
+    else {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       return project != null ? (DebuggerManagerEx.getInstanceEx(project)).getContext() : DebuggerContextImpl.EMPTY_CONTEXT;
     }

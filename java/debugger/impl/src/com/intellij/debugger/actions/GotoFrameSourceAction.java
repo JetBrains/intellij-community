@@ -86,5 +86,4 @@ public abstract class GotoFrameSourceAction extends DebuggerAction {
     if (selectedNode.getDescriptor() == null || !(selectedNode.getDescriptor() instanceof StackFrameDescriptorImpl)) return null;
     return (StackFrameDescriptorImpl)selectedNode.getDescriptor();
   }
-
 }

@@ -262,8 +262,8 @@ public final class ThreadDumpAction extends DumbAwareAction {
   }
 
   public static @NonNls String renderLocation(final Location location) {
-    return "at "+DebuggerUtilsEx.getLocationMethodQName(location)+
-           "("+DebuggerUtilsEx.getSourceName(location, e -> "Unknown Source")+":"+DebuggerUtilsEx.getLineNumber(location, false)+")";
+    return "at " + DebuggerUtilsEx.getLocationMethodQName(location) +
+           "(" + DebuggerUtilsEx.getSourceName(location, e -> "Unknown Source") + ":" + DebuggerUtilsEx.getLineNumber(location, false) + ")";
   }
 
   private static String threadName(ThreadReference threadReference) {

@@ -75,8 +75,8 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
       }
     }
 
-    renderer.START_INDEX   = newStartIndex;
-    renderer.END_INDEX     = newEndIndex;
+    renderer.START_INDEX = newStartIndex;
+    renderer.END_INDEX = newEndIndex;
     renderer.ENTRIES_LIMIT = newLimit;
   }
 
@@ -131,16 +131,19 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
           myIndexUpdateEnabled = state;
         }
       }
+
       @Override
       public void changedUpdate(DocumentEvent e) {
         updateEntriesLimit();
       }
+
       @Override
-      public void insertUpdate (DocumentEvent e) {
+      public void insertUpdate(DocumentEvent e) {
         updateEntriesLimit();
       }
+
       @Override
-      public void removeUpdate (DocumentEvent e) {
+      public void removeUpdate(DocumentEvent e) {
         updateEntriesLimit();
       }
     };
@@ -159,6 +162,7 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
           myEntriesLimitUpdateEnabled = state;
         }
       }
+
       @Override
       public void insertUpdate(DocumentEvent e) {
         updateEndIndex();

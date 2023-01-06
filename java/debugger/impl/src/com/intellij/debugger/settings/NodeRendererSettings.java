@@ -125,7 +125,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   @Override
-  public Element getState()  {
+  public Element getState() {
     final Element element = new Element("state");
     if (myHexRenderer.isEnabled()) {
       JDOMExternalizerUtil.writeField(element, HEX_VIEW_ENABLED, "true");
@@ -266,18 +266,18 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     try {
       visitAnnotatedElements(Debug.Renderer.class.getName().replace("$", "."), project, (e, annotation) -> {
         if (e instanceof PsiClass) {
-            String text = getAttributeValue(annotation, "text");
-            LabelRenderer labelRenderer = StringUtil.isEmpty(text) ? null : createLabelRenderer(null, text);
-            String childrenArray = getAttributeValue(annotation, "childrenArray");
-            String isLeaf = getAttributeValue(annotation, "hasChildren");
-            ExpressionChildrenRenderer childrenRenderer =
-              StringUtil.isEmpty(childrenArray) ? null : createExpressionArrayChildrenRenderer(childrenArray, isLeaf, myArrayRenderer);
+          String text = getAttributeValue(annotation, "text");
+          LabelRenderer labelRenderer = StringUtil.isEmpty(text) ? null : createLabelRenderer(null, text);
+          String childrenArray = getAttributeValue(annotation, "childrenArray");
+          String isLeaf = getAttributeValue(annotation, "hasChildren");
+          ExpressionChildrenRenderer childrenRenderer =
+            StringUtil.isEmpty(childrenArray) ? null : createExpressionArrayChildrenRenderer(childrenArray, isLeaf, myArrayRenderer);
           PsiClass cls = ((PsiClass)e);
-            CompoundReferenceRenderer renderer = createCompoundReferenceRenderer(
+          CompoundReferenceRenderer renderer = createCompoundReferenceRenderer(
             cls.getQualifiedName(), cls.getQualifiedName(), labelRenderer, childrenRenderer);
-            renderer.setEnabled(true);
-            renderers.add(renderer);
-          }
+          renderer.setEnabled(true);
+          renderers.add(renderer);
+        }
       });
     }
     catch (IndexNotReadyException | ProcessCanceledException ignore) {
@@ -370,7 +370,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
   public CompoundReferenceRenderer createCompoundReferenceRenderer(
     @NonNls final String rendererName, @NonNls final String className, final ValueLabelRenderer labelRenderer, final ChildrenRenderer childrenRenderer
-    ) {
+  ) {
     CompoundReferenceRenderer renderer = new CompoundReferenceRenderer(this, rendererName, labelRenderer, childrenRenderer);
     renderer.setClassName(className);
     renderer.setIsApplicableChecker(type -> DebuggerUtilsAsync.instanceOf(type, renderer.getClassName()));
@@ -386,7 +386,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   public static ExpressionChildrenRenderer createExpressionChildrenRenderer(@NonNls String expressionText,
-                                                                             @NonNls String childrenExpandableText) {
+                                                                            @NonNls String childrenExpandableText) {
     final ExpressionChildrenRenderer childrenRenderer = new ExpressionChildrenRenderer();
     childrenRenderer.setChildrenExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText, "", JavaFileType.INSTANCE));
     if (childrenExpandableText != null) {

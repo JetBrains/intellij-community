@@ -247,7 +247,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
 
     @Override
     public JToolTip createToolTip() {
-      JToolTip toolTip = new JToolTip(){{
+      JToolTip toolTip = new JToolTip() {{
         setUI(new MultiLineTooltipUI());
       }};
       toolTip.setComponent(this);
@@ -260,14 +260,14 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
 
     ArrayList<InstanceFilter> idxs = new ArrayList<>();
     int startNumber = -1;
-    for(int i = 0; i <= filtersText.length(); i++) {
+    for (int i = 0; i <= filtersText.length(); i++) {
       if (i < filtersText.length() && Character.isDigit(filtersText.charAt(i))) {
         if (startNumber == -1) {
           startNumber = i;
         }
       }
       else {
-        if (startNumber >=0) {
+        if (startNumber >= 0) {
           idxs.add(InstanceFilter.create(filtersText.substring(startNumber, i)));
           startNumber = -1;
         }
@@ -281,7 +281,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
     StringBuilder result = new StringBuilder();
     int i = 1;
     for (Iterator iterator = s.iterator(); iterator.hasNext(); i++) {
-      String str = (String) iterator.next();
+      String str = (String)iterator.next();
       result.append(str);
       if (iterator.hasNext()) {
         if (i % N == 0) {
@@ -323,7 +323,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
     myClassFiltersCheckBox.setEnabled(!passCountSelected);
 
     myPassCountField.setEditable(myPassCountCheckbox.isSelected());
-    myPassCountField.setEnabled (myPassCountCheckbox.isSelected());
+    myPassCountField.setEnabled(myPassCountCheckbox.isSelected());
 
     myInstanceFiltersField.setEnabled(myInstanceFiltersCheckBox.isSelected());
     myInstanceFiltersField.getTextField().setEditable(myInstanceFiltersCheckBox.isSelected());

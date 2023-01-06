@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.DebuggerManager;
@@ -121,6 +121,7 @@ class InstancesWithStackFrameView {
       list.setFrameItems(Collections.emptyList());
     });
   }
+
   @Nullable
   private static ObjectReference getSelectedReference(InstancesTree tree) {
     TreePath selectionPath = tree.getSelectionPath();

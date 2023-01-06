@@ -223,16 +223,16 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     if (command instanceof SuspendContextCommand) {
       SuspendContextCommand suspendContextCommand = (SuspendContextCommand)command;
       schedule(new SuspendContextCommandImpl((SuspendContextImpl)suspendContextCommand.getSuspendContext()) {
-          @Override
-          public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-            command.action();
-          }
+        @Override
+        public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+          command.action();
+        }
 
-          @Override
-          protected void commandCancelled() {
-            command.commandCancelled();
-          }
-        });
+        @Override
+        protected void commandCancelled() {
+          command.commandCancelled();
+        }
+      });
     }
     else {
       schedule(new DebuggerCommandImpl() {
@@ -247,7 +247,6 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
         }
       });
     }
-
   }
 
   public boolean isIdle() {

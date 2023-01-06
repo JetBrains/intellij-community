@@ -76,7 +76,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   @Nullable
   public static Requestor findRequestor(EventRequest request) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    return request != null? (Requestor)request.getProperty(REQUESTOR) : null;
+    return request != null ? (Requestor)request.getProperty(REQUESTOR) : null;
   }
 
   private static void addClassFilter(EventRequest request, String pattern) {
@@ -124,7 +124,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       request.addCountFilter(requestor.getCountFilter());
     }
 
-    if (requestor.isClassFiltersEnabled() && !(request instanceof BreakpointRequest) /*no built-in class filters support for breakpoint requests*/ ) {
+    if (requestor.isClassFiltersEnabled() && !(request instanceof BreakpointRequest) /*no built-in class filters support for breakpoint requests*/) {
       addClassFilters(request, requestor.getClassFilters(), requestor.getClassExclusionFilters());
     }
 
@@ -362,7 +362,8 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         }
       }
       return enabler.apply(request);
-    } catch (InternalException e) {
+    }
+    catch (InternalException e) {
       switch (e.errorCode()) {
         case JvmtiError.DUPLICATE : LOG.info(e); break;
 

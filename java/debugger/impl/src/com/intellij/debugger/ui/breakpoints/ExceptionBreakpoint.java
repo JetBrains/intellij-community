@@ -155,8 +155,8 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
   @Override
   public String getEventMessage(LocatableEvent event) {
-    String exceptionName = (getQualifiedName() != null)? getQualifiedName() : CommonClassNames.JAVA_LANG_THROWABLE;
-    String threadName    = null;
+    String exceptionName = (getQualifiedName() != null) ? getQualifiedName() : CommonClassNames.JAVA_LANG_THROWABLE;
+    String threadName = null;
     if (event instanceof ExceptionEvent) {
       ExceptionEvent exceptionEvent = (ExceptionEvent)event;
       try {
@@ -192,8 +192,8 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     if (getProperties().isCatchFiltersEnabled() && event instanceof ExceptionEvent) {
       Location location = ((ExceptionEvent)event).catchLocation();
       if (location != null && !typeMatchesClassFilters(location.declaringType().name(),
-                                   getProperties().getCatchClassFilters(),
-                                   getProperties().getCatchClassExclusionFilters())) {
+                                                       getProperties().getCatchClassFilters(),
+                                                       getProperties().getCatchClassExclusionFilters())) {
         return false;
       }
     }
