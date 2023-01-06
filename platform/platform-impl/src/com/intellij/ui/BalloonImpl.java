@@ -7,8 +7,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.RemoteDesktopService;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.PopupLocationTracker;
 import com.intellij.ide.ui.ScreenAreaConsumer;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.internal.statistic.collectors.fus.ui.BalloonUsageCollector;
 import com.intellij.notification.ActionCenter;
 import com.intellij.openapi.MnemonicHelper;
@@ -36,6 +38,7 @@ import com.intellij.ui.jcef.HwFacadeNonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -770,7 +773,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     myComp.clear();
     myComp.myAlpha = isAnimationEnabled() ? 0f : -1;
 
-    myComp.setBorder(new EmptyBorder(getShadowBorderInsets()));
+    createComponentBorder();
 
     myLayeredPane.add(myComp);
     if (myZeroPositionInLayer) {
@@ -798,8 +801,19 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
         }
       });
     }
+
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
+    connection.subscribe(LafManagerListener.TOPIC, source -> updateComponent());
+    connection.subscribe(UISettingsListener.TOPIC, uiSettings -> updateComponent());
   }
 
+  private void createComponentBorder() {
+    myComp.setBorder(new EmptyBorder(getShadowBorderInsets()));
+  }
+
+  private void updateComponent() {
+    createComponentBorder();
+  }
 
   @NotNull
   @Override

@@ -637,8 +637,10 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       }
     };
     iconComponent.setOpaque(false);
-    iconComponent.setPreferredSize(
+
+    Runnable iconSizeRunnable = () -> iconComponent.setPreferredSize(
       new Dimension(layoutData.configuration.iconPanelWidth, 2 * layoutData.configuration.iconOffset.height + icon.getIconHeight()));
+    iconSizeRunnable.run();
 
     content.add(iconComponent, BorderLayout.WEST);
 
@@ -678,14 +680,17 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     text.setSize(text.getPreferredSize());
 
-    Dimension paneSize = new Dimension(text.getPreferredSize());
-    int maxWidth = JBUIScale.scale(600);
-    if (windowComponent != null) {
-      maxWidth = Math.min(maxWidth, windowComponent.getWidth() - 20);
-    }
-    if (paneSize.width > maxWidth) {
-      pane.setPreferredSize(new Dimension(maxWidth, paneSize.height + UIUtil.getScrollBarWidth()));
-    }
+    Runnable paneSizeRunnable = () -> {
+      Dimension paneSize = new Dimension(text.getPreferredSize());
+      int maxWidth = JBUIScale.scale(600);
+      if (windowComponent != null) {
+        maxWidth = Math.min(maxWidth, windowComponent.getWidth() - 20);
+      }
+      if (paneSize.width > maxWidth) {
+        pane.setPreferredSize(new Dimension(maxWidth, paneSize.height + UIUtil.getScrollBarWidth()));
+      }
+    };
+    paneSizeRunnable.run();
 
     content.putClientProperty(NOTIFICATION_BALLOON_FLAG, new Object());
 
@@ -726,11 +731,48 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
     notification.setBalloon(balloon);
 
+    int _lines = lines;
     Runnable lafCallback = () -> {
       NotificationsUtil.configureHtmlEditorKit(text, true);
       text.setText(textBuilder.get());
+
+      text.setPreferredSize(null);
+      Dimension size = text.getPreferredSize();
+
+      layoutData.fullHeight = size.height;
+      layoutData.twoLineHeight = calculateContentHeight(_lines);
+      layoutData.maxScrollHeight = Math.min(layoutData.fullHeight, calculateContentHeight(10));
+      layoutData.configuration = BalloonLayoutConfiguration.create(notification, layoutData, actions);
+
+      if (layoutData.welcomeScreen) {
+        layoutData.maxScrollHeight = layoutData.fullHeight;
+      }
+
+      if (showFullContent) {
+        if (windowComponent == null) {
+          pane.setPreferredSize(size);
+        }
+        else {
+          pane.setPreferredSize(new Dimension(size.width, (int)Math.min(layoutData.fullHeight, windowComponent.getHeight() * 0.75)));
+        }
+      }
+      else if (layoutData.twoLineHeight < layoutData.fullHeight) {
+        size.height = layoutData.twoLineHeight;
+        text.setPreferredSize(size);
+        text.setSize(size);
+        layoutData.showMinSize = true;
+
+        pane.setPreferredSize(size);
+      }
+
       text.revalidate();
       text.repaint();
+
+      iconSizeRunnable.run();
+      paneSizeRunnable.run();
+
+      content.doLayout();
+      layoutData.doLayout.run();
 
       Container parent = content.getParent();
       if (parent == null) {
