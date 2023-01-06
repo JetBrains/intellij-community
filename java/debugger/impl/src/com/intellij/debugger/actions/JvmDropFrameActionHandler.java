@@ -83,7 +83,9 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
                                       showError(project, JavaDebuggerBundle.message("error.executing.finally", errorMessage),
                                                 UIUtil.removeMnemonic(ActionsBundle.actionText(ACTION_NAME)));
                                     }
-                                  })) return;
+                                  })) {
+          return;
+        }
         popFrame(debugProcess, debuggerContext, stackFrame);
       }
       catch (NativeMethodException e2) {

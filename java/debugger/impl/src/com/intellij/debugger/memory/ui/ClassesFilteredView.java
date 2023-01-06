@@ -77,8 +77,9 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
       public void classChanged(@NotNull String name, @NotNull TrackingType type) {
         ClassesTable table = getTable();
         TypeInfo typeInfo = table.getClassByName(name);
-        if (typeInfo == null)
+        if (typeInfo == null) {
           return;
+        }
         ReferenceType ref = ((JavaTypeInfo)typeInfo).getReferenceType();
         final boolean activated = myIsTrackersActivated.get();
         managerThread.schedule(new DebuggerCommandImpl() {
@@ -94,8 +95,9 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
       public void classRemoved(@NotNull String name) {
         ClassesTable table = getTable();
         TypeInfo ref = table.getClassByName(name);
-        if (ref == null)
+        if (ref == null) {
           return;
+        }
         JavaTypeInfo javaTypeInfo = (JavaTypeInfo) ref;
         if (myConstructorTrackedClasses.containsKey(javaTypeInfo.getReferenceType())) {
           ConstructorInstancesTracker removed = myConstructorTrackedClasses.remove(javaTypeInfo.getReferenceType());

@@ -190,8 +190,9 @@ public class FieldEvaluator implements Evaluator {
           if (myEvaluatedQualifier instanceof ObjectReference) {
             return new FieldDescriptorImpl(project, (ObjectReference)myEvaluatedQualifier, myEvaluatedField);
           }
-          else
+          else {
             return null;
+          }
         }
       };
     }

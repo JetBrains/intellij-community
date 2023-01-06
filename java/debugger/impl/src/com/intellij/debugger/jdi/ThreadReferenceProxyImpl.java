@@ -369,7 +369,9 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       if (e.errorCode() == JvmtiError.OPAQUE_FRAME) {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("drop.frame.error.no.information"));
       }
-      else throw EvaluateExceptionUtil.createEvaluateException(e);
+      else {
+        throw EvaluateExceptionUtil.createEvaluateException(e);
+      }
     }
     catch (IncompatibleThreadStateException e) {
       throw EvaluateExceptionUtil.createEvaluateException(e);

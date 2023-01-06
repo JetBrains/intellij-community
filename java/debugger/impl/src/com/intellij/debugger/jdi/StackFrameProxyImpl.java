@@ -410,7 +410,9 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
         if (e.errorCode() == JvmtiError.INVALID_SLOT || e.errorCode() == JvmtiError.ABSENT_INFORMATION) {
           throw new EvaluateException(JavaDebuggerBundle.message("error.corrupt.debug.info", e.getMessage()), e);
         }
-        else throw e;
+        else {
+          throw e;
+        }
       }
       catch (Exception e) {
         if (!getVirtualMachine().canBeModified()) { // do not care in read only vms
@@ -459,7 +461,9 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
           LOG.info(e);
           myAllValues = new HashMap<>();
         }
-        else throw e;
+        else {
+          throw e;
+        }
       }
       catch (Exception e) {
         if (!getVirtualMachine().canBeModified()) { // do not care in read only vms
