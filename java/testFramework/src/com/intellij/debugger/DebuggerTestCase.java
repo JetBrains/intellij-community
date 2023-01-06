@@ -475,7 +475,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass("HelloWorld", GlobalSearchScope.allScope(myProject));
       assertNotNull(psiClass);
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiClass.getContainingFile());
-      breakpointManager.addLineBreakpoint(document, 3);
+      assertNotNull(breakpointManager.addLineBreakpoint(document, 3));
     }, ApplicationManager.getApplication().getDefaultModalityState());
   }
 
