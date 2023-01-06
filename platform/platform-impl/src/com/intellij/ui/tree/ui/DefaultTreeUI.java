@@ -262,7 +262,11 @@ public class DefaultTreeUI extends BasicTreeUI {
           Color background = isSeparator(value) ? null : getBackground(tree, path, row, selected);
           if (background != null) {
             g.setColor(background);
-            if (g instanceof Graphics2D && ExperimentalUI.isNewUI() && is("ide.experimental.ui.tree.selection") && (selected || row == TreeHoverListener.getHoveredRow(tree))) {
+            if (g instanceof Graphics2D &&
+                ExperimentalUI.isNewUI() &&
+                is("ide.experimental.ui.tree.selection") &&
+                !(tree instanceof PlainSelectionTree) &&
+                (selected || row == TreeHoverListener.getHoveredRow(tree))) {
               int borderOffset = JBUI.scale(12);
               Control control = getControl(c, path);
               int rendererOffset = painter.getRendererOffset(control, depth, leaf);
