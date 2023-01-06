@@ -3,6 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.util.emptyBorders
+import com.intellij.collaboration.ui.util.emptyGap
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -18,8 +20,10 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
@@ -190,7 +194,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
           font = font.deriveFont(font.style or Font.BOLD)
         }
         val titlePanel = HorizontalBox().apply {
-          border = JBUI.Borders.empty(4, 4, 4, 4)
+          border = JBUI.Borders.empty(4)
 
           add(titleLabel)
           if (pendingReview != null) {
@@ -219,17 +223,13 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
           add(commentButton)
         }
 
-        return JPanel(MigLayout(LC().gridGap("0", "0")
-                                  .insets("0", "0", "0", "0")
-                                  .fill().flowY().noGrid())).apply {
+        return JPanel(MigLayout(LC().emptyBorders().fill().flowY().noGrid())).apply {
           isOpaque = false
           preferredSize = JBDimension(450, 165)
 
           add(titlePanel, CC().growX())
-          add(editor, CC().growX().growY()
-            .gap("0", "0", "0", "0"))
-          add(errorPanel, CC().minHeight("32").growY().growPrioY(0).hideMode(3)
-            .gap("0", "0", "0", "0"))
+          add(editor, CC().growX().growY().emptyGap())
+          add(errorPanel, CC().minHeight("32").growY().growPrioY(0).hideMode(3).emptyGap())
           add(buttonsPanel, CC().alignX("right"))
         }
       }
@@ -256,12 +256,12 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
 
   override fun updateButtonFromPresentation(button: JButton, presentation: Presentation) {
     super.updateButtonFromPresentation(button, presentation)
-    val prefix = presentation.getClientProperty(PROP_PREFIX) as? String ?: GithubBundle.message("pull.request.review.submit.review")
+    val prefix = presentation.getClientProperty(PROP_PREFIX) ?: GithubBundle.message("pull.request.review.submit.review")
     button.text = prefix + presentation.text
-    UIUtil.putClientProperty(button, DarculaButtonUI.DEFAULT_STYLE_KEY, presentation.getClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY))
+    ClientProperty.put(button, DarculaButtonUI.DEFAULT_STYLE_KEY, presentation.getClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY))
   }
 
   companion object {
-    private const val PROP_PREFIX = "PREFIX"
+    private val PROP_PREFIX: Key<String> = Key("PREFIX")
   }
 }
