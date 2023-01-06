@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerManagerEx;
@@ -61,30 +61,21 @@ class ReloadClassesWorker {
       return;
     }
 
-    if (e instanceof UnsupportedOperationException) {
-      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, JavaDebuggerBundle.message("error.operation.not.supported.by.vm"));
-    }
-    else if (e instanceof NoClassDefFoundError) {
-      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, JavaDebuggerBundle.message("error.class.def.not.found", e.getLocalizedMessage()));
-    }
-    else if (e instanceof VerifyError) {
-      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, JavaDebuggerBundle.message("error.verification.error", e.getLocalizedMessage()));
-    }
-    else if (e instanceof UnsupportedClassVersionError) {
-      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, JavaDebuggerBundle.message("error.unsupported.class.version", e.getLocalizedMessage()));
-    }
-    else if (e instanceof ClassFormatError) {
-      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, JavaDebuggerBundle.message("error.class.format.error", e.getLocalizedMessage()));
-    }
-    else if (e instanceof ClassCircularityError) {
-      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, JavaDebuggerBundle.message("error.class.circularity.error", e.getLocalizedMessage()));
-    }
-    else {
-      myProgress.addMessage(
-        myDebuggerSession, MessageCategory.ERROR,
-        JavaDebuggerBundle.message("error.exception.while.reloading", e.getClass().getName(), e.getLocalizedMessage())
-      );
-    }
+    String message =
+      e instanceof UnsupportedOperationException
+      ? JavaDebuggerBundle.message("error.operation.not.supported.by.vm")
+      : e instanceof NoClassDefFoundError
+        ? JavaDebuggerBundle.message("error.class.def.not.found", e.getLocalizedMessage())
+        : e instanceof VerifyError
+          ? JavaDebuggerBundle.message("error.verification.error", e.getLocalizedMessage())
+          : e instanceof UnsupportedClassVersionError
+            ? JavaDebuggerBundle.message("error.unsupported.class.version", e.getLocalizedMessage())
+            : e instanceof ClassFormatError
+              ? JavaDebuggerBundle.message("error.class.format.error", e.getLocalizedMessage())
+              : e instanceof ClassCircularityError
+                ? JavaDebuggerBundle.message("error.class.circularity.error", e.getLocalizedMessage())
+                : JavaDebuggerBundle.message("error.exception.while.reloading", e.getClass().getName(), e.getLocalizedMessage());
+    myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, message);
   }
 
   public void reloadClasses(final Map<String, HotSwapFile> modifiedClasses) {
