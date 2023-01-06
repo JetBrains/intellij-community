@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
@@ -53,24 +54,54 @@ abstract class KotlinStringStubIndexExtension<PsiNav : NavigatablePsiElement>(pr
         val stubIndex = StubIndex.getInstance()
         val indexKey = key
 
-        // collect all keys, collect all values those fulfill filter into a single collection, process values after that
+        if (isNestedIndexAccessEnabled) {
+            processAllKeys(project, CancelableDelegateFilterProcessor(filter) { key ->
+                // process until the 1st negative result of processor
+                stubIndex.processElements(indexKey, key, project, scope, valueClass, processor)
+            })
+        } else {
+            // collect all keys, collect all values those fulfill filter into a single collection, process values after that
 
-        val allKeys = HashSet<String>()
-        if (!processAllKeys(project, CancelableCollectFilterProcessor(allKeys, filter))) return
+            val allKeys = HashSet<String>()
+            if (!processAllKeys(project, CancelableCollectFilterProcessor(allKeys, filter))) return
 
-        if (allKeys.isNotEmpty()) {
-            val values = HashSet<PsiNav>(allKeys.size)
-            val collectProcessor = Processors.cancelableCollectProcessor(values)
-            allKeys.forEach { s ->
-                if (!stubIndex.processElements(indexKey, s, project, scope, valueClass, collectProcessor)) return
+            if (allKeys.isNotEmpty()) {
+                val values = HashSet<PsiNav>(allKeys.size)
+                val collectProcessor = Processors.cancelableCollectProcessor(values)
+                allKeys.forEach { s ->
+                    if (!stubIndex.processElements(indexKey, s, project, scope, valueClass, collectProcessor)) return
+                }
+                // process until the 1st negative result of processor
+                values.all(processor::process)
             }
-            // process until the 1st negative result of processor
-            values.all(processor::process)
         }
     }
 
     fun processAllKeys(scope: GlobalSearchScope, filter: IdFilter? = null, processor: Processor<in String>): Boolean =
         StubIndex.getInstance().processAllKeys(key, processor, scope, filter)
+
+    companion object {
+        val isNestedIndexAccessEnabled: Boolean by lazy {
+            Registry.`is`("kotlin.indices.nested.access.enabled")
+        }
+    }
+}
+
+class CancelableDelegateFilterProcessor<T>(
+    private val filter: (T) -> Boolean,
+    private val delegate: Processor<T>
+) : Processor<T> {
+    override fun process(t: T): Boolean {
+        ProgressManager.checkCanceled()
+        return if (filter(t)) {
+            delegate.process(t)
+        } else {
+            true
+        }
+    }
+    companion object {
+        val ALWAYS_TRUE: (Any) -> Boolean = { true }
+    }
 }
 
 class CancelableCollectFilterProcessor<T>(
