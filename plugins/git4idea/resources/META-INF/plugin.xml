@@ -542,9 +542,6 @@
                  description="Do not record stage operations in the undo stack of the document"/>
     <registryKey key="git.stage.navigate.to.index.file" defaultValue="false"
                  description="Navigate to the staging area content from diff instead of the local file" />
-    <registryKey key="git.show.full.branch.name.instead.current.selected"
-                 description="Show full branch names instead of Current/Selected"
-                 defaultValue="true"/>
     <registryKey key="git.branches.panel.persist.tree.state" defaultValue="true"
                  description="Persist branches panel tree state between restarts"/>
     <registryKey key="git.do.not.swap.merge.conflict.sides" defaultValue="false"

@@ -17,7 +17,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.ui.ExperimentalUI;
@@ -224,22 +223,14 @@ public class GitBranchPopupActions {
   @NotNull
   private static String getCurrentBranchTruncatedName(@NlsSafe @NotNull String branchName,
                                                       @NotNull Project project) {
-    return showFullBranchNamesInsteadOfCurrentSelected()
-           ? wrapWithQuotes(StringUtil.escapeMnemonics(truncateBranchName(branchName, project)))
-           : GitBundle.message("branches.current.branch.name");
+    return wrapWithQuotes(StringUtil.escapeMnemonics(truncateBranchName(branchName, project)));
   }
 
   @NlsSafe
   @NotNull
   public static String getSelectedBranchTruncatedPresentation(@NotNull Project project,
                                                               @NlsSafe @NotNull String branchName) {
-    return showFullBranchNamesInsteadOfCurrentSelected()
-           ? wrapWithQuotes(StringUtil.escapeMnemonics(truncateBranchName(branchName, project)))
-           : GitBundle.message("branches.selected.branch.name");
-  }
-
-  private static boolean showFullBranchNamesInsteadOfCurrentSelected() {
-    return Registry.is("git.show.full.branch.name.instead.current.selected");
+    return wrapWithQuotes(StringUtil.escapeMnemonics(truncateBranchName(branchName, project)));
   }
 
   @NlsSafe
