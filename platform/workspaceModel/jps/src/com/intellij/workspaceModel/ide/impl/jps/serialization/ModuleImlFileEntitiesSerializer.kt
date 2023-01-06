@@ -295,7 +295,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           val name = LibraryNameGenerator.generateUniqueLibraryName(originalName) { it in moduleLibraryNames }
           moduleLibraryNames.add(name)
           val tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.symbolicId)
-          loadLibrary(name, libraryElement, tableId, builder, contentRootEntitySource, virtualFileManager, false)
+          val library = loadLibrary(name, libraryElement, tableId, contentRootEntitySource, virtualFileManager)
+          builder addEntity library
           val libraryId = LibraryId(name, tableId)
           ModuleDependencyItem.Exportable.LibraryDependency(libraryId, dependencyElement.isExported(), dependencyElement.readScope())
         }

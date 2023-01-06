@@ -130,12 +130,10 @@ fun MutableEntityStorage.addLibraryEntityWithExcludes(name: @NlsSafe String, tab
 fun MutableEntityStorage.addLibraryPropertiesEntity(library: LibraryEntity,
                                                     libraryType: @NonNls String,
                                                     propertiesXmlTag: @NonNls String?): LibraryPropertiesEntity {
-  val entity = LibraryPropertiesEntity(libraryType, library.entitySource) {
+  return this addEntity LibraryPropertiesEntity(libraryType, library.entitySource) {
     this.library = library
     this.propertiesXmlTag = propertiesXmlTag
   }
-  this.addEntity(entity)
-  return entity
 }
 
 fun MutableEntityStorage.addSdkEntity(library: LibraryEntity,

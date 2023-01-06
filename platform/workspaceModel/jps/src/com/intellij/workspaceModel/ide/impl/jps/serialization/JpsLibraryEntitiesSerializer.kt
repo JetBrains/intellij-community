@@ -23,7 +23,6 @@ import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.*
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
-import java.io.File
 
 internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl: String) : JpsDirectoryEntitiesSerializerFactory<LibraryEntity> {
   override val componentName: String
@@ -146,7 +145,8 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
         """.trimMargin())
       }
 
-      loadLibrary(name, libraryTag, libraryTableId, builder, source, virtualFileManager, isExternalStorage)
+      val library = loadLibrary(name, libraryTag, libraryTableId, source, virtualFileManager)
+      builder addEntity  library
     }
   }
 
@@ -174,8 +174,11 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
 
 private const val DEFAULT_JAR_DIRECTORY_TYPE = "CLASSES"
 
-internal fun loadLibrary(name: String, libraryElement: Element, libraryTableId: LibraryTableId, builder: MutableEntityStorage,
-                         source: EntitySource, virtualFileManager: VirtualFileUrlManager, isExternalStorage: Boolean): LibraryEntity {
+internal fun loadLibrary(name: String,
+                         libraryElement: Element,
+                         libraryTableId: LibraryTableId,
+                         source: EntitySource,
+                         virtualFileManager: VirtualFileUrlManager): LibraryEntity {
   val roots = ArrayList<LibraryRoot>()
   val excludedRoots = ArrayList<VirtualFileUrl>()
   val jarDirectories = libraryElement.getChildren(JAR_DIRECTORY_TAG).associateBy(
@@ -213,9 +216,15 @@ internal fun loadLibrary(name: String, libraryElement: Element, libraryTableId: 
       }
     }
   }
-  val libraryEntity = builder.addLibraryEntity(name, libraryTableId, roots, excludedRoots, source)
-  if (type != null) {
-    builder.addLibraryPropertiesEntity(libraryEntity, type, properties)
+  val libProperties = type?.let {
+    LibraryPropertiesEntity(type, source) {
+      this.propertiesXmlTag = properties
+    }
+  }
+  val excludes = excludedRoots.map { ExcludeUrlEntity(it, source) }
+  val libraryEntity = LibraryEntity(name, libraryTableId, roots, source) {
+    this.excludedRoots = excludes
+    this.libraryProperties = libProperties
   }
 
   return libraryEntity
