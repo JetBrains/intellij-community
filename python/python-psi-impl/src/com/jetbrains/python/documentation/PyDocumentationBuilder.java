@@ -102,7 +102,7 @@ public class PyDocumentationBuilder {
       mySections.appendRaw(DocumentationMarkup.SECTIONS_START);
       final String[] firstSections =
         {PyPsiBundle.message("QDOC.attributes"), PyPsiBundle.message("QDOC.params"), PyPsiBundle.message("QDOC.keyword.args"),
-         PyPsiBundle.message("QDOC.returns"), PyPsiBundle.message("QDOC.raises")};
+          PyPsiBundle.message("QDOC.returns"), PyPsiBundle.message("QDOC.raises")};
 
       final List<String> firstSectionsList = new ArrayList<>(Arrays.asList(firstSections));
       firstSectionsList.retainAll(mySectionsMap.keySet());
@@ -320,8 +320,8 @@ public class PyDocumentationBuilder {
   }
 
   private void buildFromDocstring(@NotNull final PyDocStringOwner elementDefinition, boolean isProperty) {
-    final PyStringLiteralExpression originalDocstring = getEffectiveDocStringExpression(elementDefinition);
-    final PyStringLiteralExpression effectiveDocstring = modifyDocStringByOwnerType(originalDocstring, elementDefinition, isProperty);
+    final PyStringLiteralExpression ownDocstring = getEffectiveDocStringExpression(elementDefinition);
+    final PyStringLiteralExpression effectiveDocstring = modifyDocStringByOwnerType(ownDocstring, elementDefinition, isProperty);
 
     if (PyUtil.isTopLevel(elementDefinition)) {
       final PsiFile containing = elementDefinition.getContainingFile();
@@ -338,13 +338,15 @@ public class PyDocumentationBuilder {
       myBody.append(
         PythonDocumentationProvider.describeClass(pyClass, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, true, myContext));
       if (effectiveDocstring != null) {
+        // add class attributes described either in the init doc or class doc
         addAttributesSection(effectiveDocstring);
-      }
-      if (originalDocstring != null) {
-        final PyFunction init = pyClass.findMethodByName(PyNames.INIT, false, myContext);
-        if (init != null) {
-          // add init parameters described in the class doc
-          addFunctionSpecificSections(originalDocstring, init);
+
+        if (effectiveDocstring == ownDocstring) {
+          final PyFunction init = pyClass.findMethodByName(PyNames.INIT, false, myContext);
+          if (init != null) {
+            // add init parameters described in the class doc
+            addFunctionSpecificSections(effectiveDocstring, init);
+          }
         }
       }
     }
@@ -362,10 +364,10 @@ public class PyDocumentationBuilder {
       }
       if (effectiveDocstring != null) {
         addFunctionSpecificSections(effectiveDocstring, pyFunction);
-      }
-      // if function is init without doc we will take attributes from the class doc
-      if (pyClass != null && originalDocstring == null && effectiveDocstring != null && PyUtil.isInitOrNewMethod(pyFunction)) {
-        addAttributesSection(effectiveDocstring);
+        // if function is init without doc we will take attributes from the class doc
+        if (effectiveDocstring != ownDocstring && PyUtil.isInitOrNewMethod(pyFunction)) {
+          addAttributesSection(effectiveDocstring);
+        }
       }
     }
     else if (elementDefinition instanceof PyFile pyFile) {
@@ -399,7 +401,9 @@ public class PyDocumentationBuilder {
   private @Nullable PyStringLiteralExpression modifyDocStringByOwnerType(@Nullable PyStringLiteralExpression docstring,
                                                                          @NotNull PyDocStringOwner owner,
                                                                          boolean isProperty) {
-    if (docstring == null && owner instanceof PyClass pyClass) {
+    if (docstring != null) return docstring;
+
+    if (owner instanceof PyClass pyClass) {
       final PyFunction init = pyClass.findMethodByName(PyNames.INIT, false, myContext);
       // if class doesn't have any doc return init doc
       if (init != null) {
@@ -408,11 +412,9 @@ public class PyDocumentationBuilder {
     }
     else if (owner instanceof PyFunction pyFunction) {
       final PyClass containingClass = pyFunction.getContainingClass();
-      if (docstring == null && containingClass != null) {
-        if (!isProperty) {
-          // add docstring from the parent class or function
-          return addFunctionInheritedDocString(pyFunction, containingClass);
-        }
+      if (containingClass != null && !isProperty) {
+        // add docstring from the parent class or function
+        return addFunctionInheritedDocString(pyFunction, containingClass);
       }
     }
     return docstring;
