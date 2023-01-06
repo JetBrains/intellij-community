@@ -23,6 +23,7 @@ public interface DfaAssistProvider {
 
   /**
    * A sentinel to represent null constant.
+   *
    * @see #getJdiValueForDfaVariable(StackFrameProxyEx, DfaVariableValue, PsiElement)
    */
   Value NullConst = new Value() {
@@ -38,6 +39,7 @@ public interface DfaAssistProvider {
 
   /**
    * Quick check whether code location matches the source code in the editor
+   *
    * @param element  PsiElement in the editor
    * @param location location reported by debugger
    * @return true if debugger location likely matches to the editor location;

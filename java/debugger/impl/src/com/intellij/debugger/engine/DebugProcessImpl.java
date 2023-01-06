@@ -420,7 +420,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   /**
-   *
    * @param size the step size. One of {@link StepRequest#STEP_LINE} or {@link StepRequest#STEP_MIN}
    * @param hint may be null
    */

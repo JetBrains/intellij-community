@@ -285,6 +285,7 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
 
   /**
    * Install dataflow assistant to the specified debugging session
+   *
    * @param javaSession JVM debugger session to install an assistant to
    * @param session     X debugger session
    */
