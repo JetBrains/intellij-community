@@ -247,6 +247,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     document = null;
 
     myDocumentManager.saveAllDocuments();
+    UIUtil.dispatchAllInvocationEvents();
 
     GCWatcher.tracking(myDocumentManager.getDocument(file)).ensureCollected();
 
