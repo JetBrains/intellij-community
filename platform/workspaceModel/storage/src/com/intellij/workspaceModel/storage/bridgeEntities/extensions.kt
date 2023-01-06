@@ -40,12 +40,10 @@ fun MutableEntityStorage.addModuleCustomImlDataEntity(rootManagerTagCustomData: 
                                                       customModuleOptions: Map<String, String>,
                                                       module: ModuleEntity,
                                                       source: EntitySource): ModuleCustomImlDataEntity {
-  val entity = ModuleCustomImlDataEntity(HashMap(customModuleOptions), source) {
+  return this addEntity ModuleCustomImlDataEntity(HashMap(customModuleOptions), source) {
     this.rootManagerTagCustomData = rootManagerTagCustomData
     this.module = module
   }
-  this.addEntity(entity)
-  return entity
 }
 
 fun MutableEntityStorage.addModuleGroupPathEntity(path: List<@NlsSafe String>,

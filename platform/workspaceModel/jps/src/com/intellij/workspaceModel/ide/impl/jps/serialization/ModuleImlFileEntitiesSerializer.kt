@@ -260,6 +260,45 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       this.contentRoots = this.contentRoots + contentRoots
     }
 
+    val dependencyItems = loadModuleDependencies(rootManagerElement, contentRootEntitySource, virtualFileManager, builder,
+                                                 moduleEntity.symbolicId)
+    if (!loadingAdditionalRoots) {
+      builder.modifyEntity(moduleEntity) {
+        dependencies = dependencyItems
+      }
+    }
+
+    if (!loadingAdditionalRoots) {
+      val javaModuleSettings = JavaSettingsSerializer.loadJavaModuleSettings(rootManagerElement, virtualFileManager, contentRootEntitySource)
+      if (javaModuleSettings != null) {
+        builder.modifyEntity(moduleEntity) {
+          this.javaSettings = javaModuleSettings
+        }
+      }
+    }
+    if (!JDOMUtil.isEmpty(rootManagerElement)) {
+      val customImlData = moduleEntity.customImlData
+      if (customImlData == null) {
+        val imlData = ModuleCustomImlDataEntity(emptyMap(), contentRootEntitySource) {
+          this.rootManagerTagCustomData = JDOMUtil.write(rootManagerElement)
+        }
+        builder.modifyEntity(moduleEntity) {
+          this.customImlData = imlData
+        }
+      }
+      else {
+        builder.modifyEntity(customImlData) {
+          rootManagerTagCustomData = JDOMUtil.write(rootManagerElement)
+        }
+      }
+    }
+  }
+
+  private fun loadModuleDependencies(rootManagerElement: Element,
+                                     contentRootEntitySource: EntitySource,
+                                     virtualFileManager: VirtualFileUrlManager,
+                                     builder: MutableEntityStorage,
+                                     moduleId: ModuleId): ArrayList<ModuleDependencyItem> {
     fun Element.readScope(): ModuleDependencyItem.DependencyScope {
       val attributeValue = getAttributeValue(SCOPE_ATTRIBUTE) ?: return ModuleDependencyItem.DependencyScope.COMPILE
       return try {
@@ -292,7 +331,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           val originalName = nameAttributeValue ?: "${LibraryNameGenerator.UNNAMED_LIBRARY_NAME_PREFIX}${nextUnnamedLibraryIndex++}"
           val name = LibraryNameGenerator.generateUniqueLibraryName(originalName) { it in moduleLibraryNames }
           moduleLibraryNames.add(name)
-          val tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.symbolicId)
+          val tableId = LibraryTableId.ModuleLibraryTableId(moduleId)
           val library = loadLibrary(name, libraryElement, tableId, contentRootEntitySource, virtualFileManager)
           builder addEntity library
           val libraryId = LibraryId(name, tableId)
@@ -312,35 +351,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       dependencyItems.add(ModuleDependencyItem.ModuleSourceDependency)
     }
 
-    if (!loadingAdditionalRoots) {
-      val javaModuleSettings = JavaSettingsSerializer.loadJavaModuleSettings(rootManagerElement, virtualFileManager, contentRootEntitySource)
-      if (javaModuleSettings != null) {
-        builder.modifyEntity(moduleEntity) {
-          this.javaSettings = javaModuleSettings
-        }
-      }
-    }
-    if (!JDOMUtil.isEmpty(rootManagerElement)) {
-      val customImlData = moduleEntity.customImlData
-      if (customImlData == null) {
-        builder.addModuleCustomImlDataEntity(
-          rootManagerTagCustomData = JDOMUtil.write(rootManagerElement),
-          customModuleOptions = emptyMap(),
-          module = moduleEntity,
-          source = contentRootEntitySource
-        )
-      }
-      else {
-        builder.modifyEntity(customImlData) {
-          rootManagerTagCustomData = JDOMUtil.write(rootManagerElement)
-        }
-      }
-    }
-    if (!loadingAdditionalRoots) {
-      builder.modifyEntity(moduleEntity) {
-        dependencies = dependencyItems
-      }
-    }
+    return dependencyItems
   }
 
   private fun loadContentRootEntities(moduleEntity: ModuleEntity,
