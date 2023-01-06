@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataOperationsListener
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
@@ -82,13 +83,13 @@ internal class GHPRReviewFlowViewModelImpl(
   init {
     metadataModel.addAndInvokeChangesListener {
       _requestedReviewersState.value = metadataModel.reviewers
-      pullRequestReviewState.value = metadataModel.reviews.associate { it.author!! as GHUser to it.state }
+      pullRequestReviewState.value = metadataModel.reviews.associate { (it.author as? GHUser ?: ghostUser) to it.state }
     }
 
     with(detailsDataProvider) {
       addDetailsLoadedListener(disposable) {
         _requestedReviewersState.value = loadedDetails!!.reviewRequests.mapNotNull { it.requestedReviewer }
-        pullRequestReviewState.value = loadedDetails!!.reviews.associate { it.author!! as GHUser to it.state }
+        pullRequestReviewState.value = loadedDetails!!.reviews.associate { (it.author as? GHUser ?: ghostUser) to it.state }
       }
     }
 
@@ -97,5 +98,13 @@ internal class GHPRReviewFlowViewModelImpl(
         _pendingCommentsState.value = pendingComments?.comments?.totalCount ?: 0
       }
     }
+
+    reviewDataProvider.messageBus
+      .connect(scope)
+      .subscribe(GHPRDataOperationsListener.TOPIC, object : GHPRDataOperationsListener {
+        override fun onReviewsChanged() {
+          detailsDataProvider.reloadDetails()
+        }
+      })
   }
 }
