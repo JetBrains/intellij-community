@@ -106,16 +106,19 @@ class KotlinCompilerIde(
         if (!platform.isCommon() && !platform.isJvm()) return null
 
         val resolutionFacade = resolutionFacadeProvider(file) ?: return null
-        val bindingContextForFiles = resolutionFacade.analyzeWithAllCompilerChecks(file).bindingContext
-
         val configuration = initialConfiguration.copy().apply {
             put(JVMConfigurationKeys.DO_NOT_CLEAR_BINDING_CONTEXT, true)
         }
 
-        val (bindingContext, toProcess) = analyzeInlinedFunctions(
-            resolutionFacade, file, configuration.getBoolean(CommonConfigurationKeys.DISABLE_INLINE),
-            bindingContextForFiles
-        )
+        // The binding context needs to be built from all files with reachable inline functions, as such files may contain classes whose
+        // descriptors must be available in the binding context for the IR backend. Note that the full bytecode is only generated for
+        // `file` because of filtering in `generateClassFilter`, regardless of classes defined in other files.
+        val toProcess = analyzeInlinedFunctions(
+            resolutionFacade,
+            file,
+            configuration.getBoolean(CommonConfigurationKeys.DISABLE_INLINE)
+        ).second
+        val bindingContext = resolutionFacade.analyzeWithAllCompilerChecks(toProcess).bindingContext
 
         val generateClassFilter = object : GenerationState.GenerateClassFilter() {
             override fun shouldGeneratePackagePart(ktFile: KtFile): Boolean {
