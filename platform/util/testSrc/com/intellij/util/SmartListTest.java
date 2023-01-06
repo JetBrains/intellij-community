@@ -339,4 +339,60 @@ public class SmartListTest {
     list.forEach(integer -> checkList.add(integer));
     assertThat(list).isEqualTo(checkList);
   }
+
+  @Test
+  public void removeRange() throws Exception {
+    SmartList<Integer> list = new SmartList<>();
+    assertThat(getModificationCount(list)).isEqualTo(0);
+
+    removeRange(list, 0, 0);
+    assertThat(list).isEqualTo(Collections.emptyList());
+
+    int expectedMC = getModificationCount(list);
+    list.add(0);
+    assertThat(getModificationCount(list)).isEqualTo(++expectedMC);
+    assertThat(list).isEqualTo(Collections.singletonList(0));
+
+    removeRange(list, 0, 0);
+    assertThat(list).isEqualTo(Collections.singletonList(0));
+
+    removeRange(list, 1, 1);
+    expectedMC = getModificationCount(list); // it's a moot point whether we should increment modCount on idempotent removeRange()
+    assertThat(list).isEqualTo(Collections.singletonList(0));
+
+    removeRange(list, 0, 1);
+    assertThat(list).isEmpty();
+    assertThat(getModificationCount(list)).isGreaterThan(expectedMC++);
+    assertThat(list).isEqualTo(Collections.emptyList());
+
+    list.addAll(Arrays.asList(0, 1));
+    assertThat(getModificationCount(list)).isGreaterThan(expectedMC);
+    expectedMC = getModificationCount(list);
+    assertThat(list).isEqualTo(Arrays.asList(0,1));
+
+    removeRange(list, 0, 1);
+    assertThat(getModificationCount(list)).isGreaterThan(expectedMC++);
+    assertThat(list).isEqualTo(Collections.singletonList(1));
+
+    list.add(0, 0);
+    assertThat(getModificationCount(list)).isEqualTo(++expectedMC);
+    assertThat(list).isEqualTo(Arrays.asList(0,1));
+
+    removeRange(list, 1, 2);
+    assertThat(getModificationCount(list)).isGreaterThan(expectedMC++);
+    assertThat(list).isEqualTo(Collections.singletonList(0));
+
+    list.addAll(Arrays.asList(1, 2, 3));
+    assertThat(getModificationCount(list)).isGreaterThan(expectedMC);
+    expectedMC = getModificationCount(list);
+    assertThat(list).isEqualTo(Arrays.asList(0,1,2,3));
+
+    removeRange(list, 1, 3);
+    assertThat(getModificationCount(list)).isGreaterThan(expectedMC);
+    assertThat(list).isEqualTo(Arrays.asList(0, 3));
+  }
+
+  private static void removeRange(SmartList<Integer> list, int fromIndex, int toIndex) {
+    list.subList(fromIndex, toIndex).clear();
+  }
 }
