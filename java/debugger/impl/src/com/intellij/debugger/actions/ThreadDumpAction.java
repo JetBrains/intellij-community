@@ -42,7 +42,7 @@ public final class ThreadDumpAction extends DumbAwareAction {
     DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(project)).getContext();
 
     final DebuggerSession session = context.getDebuggerSession();
-    if(session != null && session.isAttached()) {
+    if (session != null && session.isAttached()) {
       final DebugProcessImpl process = context.getDebugProcess();
       process.getManagerThread().invoke(new DebuggerCommandImpl() {
         @Override

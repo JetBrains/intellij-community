@@ -94,7 +94,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myCbShowStatic.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
-        if(myCbShowStatic.isSelected()) {
+        if (myCbShowStatic.isSelected()) {
           myCbShowStaticFinalFields.makeSelectable();
         }
         else {
@@ -105,7 +105,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myCbShowSyntheticFields.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
-        if(myCbShowSyntheticFields.isSelected()) {
+        if (myCbShowSyntheticFields.isSelected()) {
           myCbShowValFieldsAsLocalVariables.makeSelectable();
         }
         else {
@@ -238,7 +238,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     }
     myCbShowStatic.setSelected(classRenderer.SHOW_STATIC);
     myCbShowStaticFinalFields.setSelected(classRenderer.SHOW_STATIC_FINAL);
-    if(!classRenderer.SHOW_STATIC) {
+    if (!classRenderer.SHOW_STATIC) {
       myCbShowStaticFinalFields.makeUnselectable(false);
     }
     myCbShowDeclaredType.setSelected(classRenderer.SHOW_DECLARED_TYPE);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -115,7 +115,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     DebuggerManagerThreadImpl.assertIsManagerThread();
     //JDI clears all caches on thread resume !!
     final ThreadReference threadRef = getThreadReference();
-    if(LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled()) {
       LOG.debug("before resume" + threadRef);
     }
     getVirtualMachineProxy().clearCaches();
@@ -144,7 +144,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   public ThreadGroupReferenceProxyImpl threadGroupProxy() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     checkValid();
-    if(myThreadGroupProxy == null) {
+    if (myThreadGroupProxy == null) {
       ThreadGroupReference threadGroupRef;
       try {
         threadGroupRef = getThreadReference().threadGroup();
@@ -343,7 +343,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final ThreadReference threadReference = getThreadReference();
     try {
-      if(!threadReference.isSuspended()) {
+      if (!threadReference.isSuspended()) {
         return null;
       }
       checkFrames(threadReference);

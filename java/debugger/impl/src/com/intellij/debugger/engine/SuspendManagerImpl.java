@@ -142,7 +142,7 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   void pushPausedContext(SuspendContextImpl suspendContext) {
-    if(LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled()) {
       LOG.assertTrue(myEventContexts.contains(suspendContext));
     }
 
@@ -174,7 +174,7 @@ public class SuspendManagerImpl implements SuspendManager {
     }
 
     //bug in JDI : newly created thread may be resumed even when suspendPolicy == SUSPEND_ALL
-    //if(LOG.isDebugEnabled() && suspended) {
+    //if (LOG.isDebugEnabled() && suspended) {
     //  LOG.assertTrue(thread.suspends(), thread.name());
     //}
     return suspended && (thread == null || thread.isSuspended());
@@ -184,7 +184,7 @@ public class SuspendManagerImpl implements SuspendManager {
   public void suspendThread(SuspendContextImpl context, ThreadReferenceProxyImpl thread) {
     LOG.assertTrue(thread != context.getThread(), "Thread is already suspended at the breakpoint");
 
-    if(context.isExplicitlyResumed(thread)) {
+    if (context.isExplicitlyResumed(thread)) {
       context.myResumedThreads.remove(thread);
       thread.suspend();
     }
@@ -195,7 +195,7 @@ public class SuspendManagerImpl implements SuspendManager {
     //LOG.assertTrue(thread != context.getThread(), "Use resume() instead of resuming breakpoint thread");
     LOG.assertTrue(!context.isExplicitlyResumed(thread));
 
-    if(context.myResumedThreads == null) {
+    if (context.myResumedThreads == null) {
       context.myResumedThreads = new HashSet<>();
     }
     context.myResumedThreads.add(thread);
@@ -223,8 +223,8 @@ public class SuspendManagerImpl implements SuspendManager {
     if (LOG.isDebugEnabled()) {
       LOG.debug("myVotesToVote = " +  suspendContext.myVotesToVote);
     }
-    if(suspendContext.myVotesToVote == 0) {
-      if(suspendContext.myIsVotedForResume) {
+    if (suspendContext.myVotesToVote == 0) {
+      if (suspendContext.myIsVotedForResume) {
         // resume in a separate request to allow other requests be processed (e.g. dependent bpts enable)
         myDebugProcess.getManagerThread().schedule(PrioritizedTask.Priority.HIGH, () -> resume(suspendContext));
       }

@@ -37,7 +37,7 @@ public abstract class GotoFrameSourceAction extends DebuggerAction {
 
   public static void doAction(DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if(project == null) return;
+    if (project == null) return;
     StackFrameDescriptorImpl stackFrameDescriptor = getStackFrameDescriptor(dataContext);
     XDebugSession session = XDebugSession.DATA_KEY.getData(dataContext);
     if (stackFrameDescriptor != null && session != null) {
@@ -82,8 +82,8 @@ public abstract class GotoFrameSourceAction extends DebuggerAction {
 
   private static StackFrameDescriptorImpl getStackFrameDescriptor(DataContext dataContext) {
     DebuggerTreeNodeImpl selectedNode = getSelectedNode(dataContext);
-    if(selectedNode == null) return null;
-    if(selectedNode.getDescriptor() == null || !(selectedNode.getDescriptor() instanceof StackFrameDescriptorImpl)) return null;
+    if (selectedNode == null) return null;
+    if (selectedNode.getDescriptor() == null || !(selectedNode.getDescriptor() instanceof StackFrameDescriptorImpl)) return null;
     return (StackFrameDescriptorImpl)selectedNode.getDescriptor();
   }
 

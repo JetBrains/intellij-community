@@ -26,7 +26,7 @@ public class AssignmentEvaluator implements Evaluator {
     final Modifier modifier = myLeftEvaluator.getModifier();
 
     final Object right = myRightEvaluator.evaluate(context);
-    if(right != null && !(right instanceof Value)) {
+    if (right != null && !(right instanceof Value)) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.not.rvalue"));
     }
 
@@ -36,7 +36,7 @@ public class AssignmentEvaluator implements Evaluator {
   }
 
   static void assign(Modifier modifier, Object right, EvaluationContextImpl context) throws EvaluateException {
-    if(modifier == null) {
+    if (modifier == null) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.not.lvalue"));
     }
     try {

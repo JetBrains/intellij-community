@@ -53,7 +53,7 @@ public class ResumeThreadAction extends DebuggerAction {
     boolean enabled = false;
     String text = JavaDebuggerBundle.message("action.resume.thread.text.resume");
 
-    if(selectedNodes != null && selectedNodes.length > 0) {
+    if (selectedNodes != null && selectedNodes.length > 0) {
       visible = true;
       enabled = true;
       for (DebuggerTreeNodeImpl selectedNode : selectedNodes) {

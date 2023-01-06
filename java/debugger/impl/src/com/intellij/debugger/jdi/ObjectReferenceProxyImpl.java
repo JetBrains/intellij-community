@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -103,7 +103,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
     if (!(o instanceof ObjectReferenceProxyImpl)) {
       return false;
     }
-    if(this == o) return true;
+    if (this == o) return true;
 
     return myObjectReference.equals(((ObjectReferenceProxyImpl)o).myObjectReference);
   }

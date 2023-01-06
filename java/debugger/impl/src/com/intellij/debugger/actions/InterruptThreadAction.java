@@ -70,7 +70,7 @@ final class InterruptThreadAction extends DebuggerAction {
     boolean visible = false;
     boolean enabled = false;
 
-    if(selectedNodes != null && selectedNodes.length > 0) {
+    if (selectedNodes != null && selectedNodes.length > 0) {
       visible = true;
       enabled = true;
       for (DebuggerTreeNodeImpl selectedNode : selectedNodes) {

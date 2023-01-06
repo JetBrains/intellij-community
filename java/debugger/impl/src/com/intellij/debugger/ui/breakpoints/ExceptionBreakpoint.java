@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class ExceptionBreakpoint
@@ -207,10 +207,10 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
   //@SuppressWarnings({"HardCodedStringLiteral"}) public void writeExternal(Element parentNode) throws WriteExternalException {
   //  super.writeExternal(parentNode);
-  //  if(getQualifiedName() != null) {
+  //  if (getQualifiedName() != null) {
   //    parentNode.setAttribute("class_name", getQualifiedName());
   //  }
-  //  if(getPackageName() != null) {
+  //  if (getPackageName() != null) {
   //    parentNode.setAttribute("package_name", getPackageName());
   //  }
   //}

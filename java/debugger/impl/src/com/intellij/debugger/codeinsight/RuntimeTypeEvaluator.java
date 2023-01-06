@@ -61,7 +61,7 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiTy
     });
 
     final Value value = evaluator.evaluate(evaluationContext);
-    if(value != null) {
+    if (value != null) {
       return getCastableRuntimeType(project, value);
     }
 

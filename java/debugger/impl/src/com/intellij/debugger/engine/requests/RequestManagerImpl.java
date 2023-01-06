@@ -110,7 +110,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   private void addLocatableRequest(FilteredRequestor requestor, EventRequest request) {
-    if(DebuggerSettings.SUSPEND_ALL.equals(requestor.getSuspendPolicy())) {
+    if (DebuggerSettings.SUSPEND_ALL.equals(requestor.getSuspendPolicy())) {
       request.setSuspendPolicy(EventRequest.SUSPEND_ALL);
     }
     else {
@@ -239,11 +239,11 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   public void deleteRequest(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myRequestWarnings.remove(requestor);
-    if(!myDebugProcess.isAttached()) {
+    if (!myDebugProcess.isAttached()) {
       return;
     }
     final Set<EventRequest> requests = myRequestorToBelongedRequests.remove(requestor);
-    if(requests == null) {
+    if (requests == null) {
       return;
     }
     for (final EventRequest request : requests) {

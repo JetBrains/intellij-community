@@ -23,7 +23,7 @@ public class HotSwapAction extends AnAction {
     DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(project);
     DebuggerSession session = debuggerManager.getContext().getDebuggerSession();
 
-    if(session != null && session.isAttached()) {
+    if (session != null && session.isAttached()) {
       HotSwapUI.getInstance(project).reloadChangedClasses(session, DebuggerSettings.getInstance().COMPILE_BEFORE_HOTSWAP);
     }
   }

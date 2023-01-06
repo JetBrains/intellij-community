@@ -43,7 +43,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
     }
     final SourcePosition place = getPlace(e);
 
-    if(place != null) {
+    if (place != null) {
       Document document = PsiDocumentManager.getInstance(project).getDocument(place.getFile());
       if (document != null) {
         DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(project);
@@ -51,7 +51,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
         final int offset = place.getOffset();
         final Breakpoint breakpoint = offset >= 0? manager.findBreakpoint(document, offset, FieldBreakpoint.CATEGORY) : null;
 
-        if(breakpoint == null) {
+        if (breakpoint == null) {
           FieldBreakpoint fieldBreakpoint = manager.addFieldBreakpoint(document, offset);
           if (fieldBreakpoint != null) {
             final Editor editor = e.getData(CommonDataKeys.EDITOR);
@@ -73,7 +73,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
     boolean toEnable = place != null;
 
     Presentation presentation = event.getPresentation();
-    if(ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
+    if (ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
        ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
        ActionPlaces.BOOKMARKS_VIEW_POPUP.equals(event.getPlace())) {
       presentation.setVisible(toEnable);
@@ -90,14 +90,14 @@ public class ToggleFieldBreakpointAction extends AnAction {
   private SourcePosition getPlace(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final Project project = event.getData(CommonDataKeys.PROJECT);
-    if(project == null) {
+    if (project == null) {
       return null;
     }
     if (ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.BOOKMARKS_VIEW_POPUP.equals(event.getPlace())) {
       final PsiElement psiElement = event.getData(CommonDataKeys.PSI_ELEMENT);
-      if(psiElement instanceof PsiField) {
+      if (psiElement instanceof PsiField) {
         return SourcePosition.createFromElement(psiElement);
       }
       return null;
@@ -140,7 +140,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
         FileType fileType = virtualFile != null ? virtualFile.getFileType() : null;
         if (JavaFileType.INSTANCE == fileType || JavaClassFileType.INSTANCE == fileType) {
           final PsiField field = FieldBreakpoint.findField(project, document, editor.getCaretModel().getOffset());
-          if(field != null) {
+          if (field != null) {
             return SourcePosition.createFromElement(field);
           }
         }

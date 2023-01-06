@@ -32,7 +32,7 @@ public final class TextWithImportsImpl implements TextWithImports {
     myKind = CodeFragmentKind.EXPRESSION;
     final String text = expression.getText();
     PsiFile containingFile = expression.getContainingFile();
-    if(containingFile instanceof PsiExpressionCodeFragment) {
+    if (containingFile instanceof PsiExpressionCodeFragment) {
       myText = text;
       myImports = ((JavaCodeFragment)containingFile).importsToString();
       myFileType = JavaFileType.INSTANCE;
@@ -81,7 +81,7 @@ public final class TextWithImportsImpl implements TextWithImports {
   }
 
   public boolean equals(Object object) {
-    if(!(object instanceof TextWithImportsImpl)) {
+    if (!(object instanceof TextWithImportsImpl)) {
       return false;
     }
     TextWithImportsImpl item = ((TextWithImportsImpl)object);

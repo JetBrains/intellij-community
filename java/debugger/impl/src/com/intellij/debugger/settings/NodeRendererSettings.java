@@ -115,7 +115,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   public boolean equals(Object o) {
-    if(!(o instanceof NodeRendererSettings)) return false;
+    if (!(o instanceof NodeRendererSettings)) return false;
 
     return DebuggerUtilsEx.elementsEqual(getState(), ((NodeRendererSettings)o).getState());
   }
@@ -311,12 +311,12 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
 
     final String rendererId = root.getAttributeValue(RENDERER_ID);
-    if(rendererId == null) {
+    if (rendererId == null) {
       throw new InvalidDataException("unknown renderer ID: " + rendererId);
     }
 
     final Renderer renderer = createRenderer(rendererId);
-    if(renderer == null) {
+    if (renderer == null) {
       throw new InvalidDataException("unknown renderer ID: " + rendererId);
     }
 
@@ -345,16 +345,16 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     else if (PrimitiveRenderer.UNIQUE_ID.equals(rendererId)) {
       return myPrimitiveRenderer;
     }
-    else if(HexRenderer.UNIQUE_ID.equals(rendererId)) {
+    else if (HexRenderer.UNIQUE_ID.equals(rendererId)) {
       return myHexRenderer;
     }
-    else if(rendererId.equals(ExpressionChildrenRenderer.UNIQUE_ID)) {
+    else if (rendererId.equals(ExpressionChildrenRenderer.UNIQUE_ID)) {
       return new ExpressionChildrenRenderer();
     }
-    else if(rendererId.equals(LabelRenderer.UNIQUE_ID)) {
+    else if (rendererId.equals(LabelRenderer.UNIQUE_ID)) {
       return new LabelRenderer();
     }
-    else if(rendererId.equals(EnumerationChildrenRenderer.UNIQUE_ID)) {
+    else if (rendererId.equals(EnumerationChildrenRenderer.UNIQUE_ID)) {
       return new EnumerationChildrenRenderer();
     }
     else if (rendererId.equals(ToStringRenderer.UNIQUE_ID)) {
@@ -482,7 +482,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       }
       try {
         final ExpressionEvaluator evaluator = cachedEvaluator.getEvaluator(debugProcess.getProject());
-        if(!debugProcess.isAttached()) {
+        if (!debugProcess.isAttached()) {
           throw EvaluateExceptionUtil.PROCESS_EXITED;
         }
         final EvaluationContext thisEvaluationContext = evaluationContext.createEvaluationContext(originalValue);

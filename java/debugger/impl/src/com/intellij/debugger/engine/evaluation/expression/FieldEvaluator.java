@@ -44,7 +44,7 @@ public class FieldEvaluator implements Evaluator {
 
   @NotNull
   public static TargetClassFilter createClassFilter(@Nullable PsiType psiType) {
-    if(psiType == null || psiType instanceof PsiArrayType) {
+    if (psiType == null || psiType instanceof PsiArrayType) {
       return TargetClassFilter.ALL;
     }
     PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
@@ -67,9 +67,9 @@ public class FieldEvaluator implements Evaluator {
 
   @Nullable
   private Field findField(@Nullable Type t) {
-    if(t instanceof ClassType) {
+    if (t instanceof ClassType) {
       ClassType cls = (ClassType) t;
-      if(myTargetClassFilter.acceptClass(cls)) {
+      if (myTargetClassFilter.acceptClass(cls)) {
         return cls.fieldByName(myFieldName);
       }
       for (final InterfaceType interfaceType : cls.interfaces()) {
@@ -80,9 +80,9 @@ public class FieldEvaluator implements Evaluator {
       }
       return findField(cls.superclass());
     }
-    else if(t instanceof InterfaceType) {
+    else if (t instanceof InterfaceType) {
       InterfaceType iface = (InterfaceType) t;
-      if(myTargetClassFilter.acceptClass(iface)) {
+      if (myTargetClassFilter.acceptClass(iface)) {
         return iface.fieldByName(myFieldName);
       }
       for (final InterfaceType interfaceType : iface.superinterfaces()) {
@@ -146,7 +146,7 @@ public class FieldEvaluator implements Evaluator {
       return field.isStatic()? refType.getValue(field) : objRef.getValue(field);
     }
 
-    if(object == null) {
+    if (object == null) {
       throw EvaluateExceptionUtil.createEvaluateException(new NullPointerException());
     }
 
@@ -187,7 +187,7 @@ public class FieldEvaluator implements Evaluator {
 
         @Override
         public NodeDescriptorImpl getInspectItem(Project project) {
-          if(myEvaluatedQualifier instanceof ObjectReference) {
+          if (myEvaluatedQualifier instanceof ObjectReference) {
             return new FieldDescriptorImpl(project, (ObjectReference)myEvaluatedQualifier, myEvaluatedField);
           } else
             return null;

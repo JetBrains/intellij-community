@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -60,17 +60,17 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
       throw new ConfigurationException(JavaDebuggerBundle.message("error.array.renderer.configurable.end.index.less.than.start"));
     }
 
-    if(newLimit <= 0) {
+    if (newLimit <= 0) {
       newLimit = 1;
     }
 
-    if(showBigRangeWarning && (newEndIndex - newStartIndex > 10000)) {
+    if (showBigRangeWarning && (newEndIndex - newStartIndex > 10000)) {
       final int answer = Messages.showOkCancelDialog(
         myPanel.getRootPane(),
         JavaDebuggerBundle.message("warning.range.too.big", ApplicationNamesInfo.getInstance().getProductName()),
         JavaDebuggerBundle.message("title.range.too.big"),
         Messages.getWarningIcon());
-      if(answer != Messages.OK) {
+      if (answer != Messages.OK) {
         return;
       }
     }

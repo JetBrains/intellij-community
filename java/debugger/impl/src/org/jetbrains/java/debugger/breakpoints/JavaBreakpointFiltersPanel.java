@@ -261,13 +261,13 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
     ArrayList<InstanceFilter> idxs = new ArrayList<>();
     int startNumber = -1;
     for(int i = 0; i <= filtersText.length(); i++) {
-      if(i < filtersText.length() && Character.isDigit(filtersText.charAt(i))) {
-        if(startNumber == -1) {
+      if (i < filtersText.length() && Character.isDigit(filtersText.charAt(i))) {
+        if (startNumber == -1) {
           startNumber = i;
         }
       }
       else {
-        if(startNumber >=0) {
+        if (startNumber >=0) {
           idxs.add(InstanceFilter.create(filtersText.substring(startNumber, i)));
           startNumber = -1;
         }
@@ -283,8 +283,8 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
     for (Iterator iterator = s.iterator(); iterator.hasNext(); i++) {
       String str = (String) iterator.next();
       result.append(str);
-      if(iterator.hasNext()) {
-        if(i % N == 0) {
+      if (iterator.hasNext()) {
+        if (i % N == 0) {
           result.append(NthConcator);
         }
         else {
@@ -297,7 +297,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
 
   protected ClassFilter createClassConditionFilter() {
     ClassFilter classFilter;
-    if(myBreakpointPsiClass != null) {
+    if (myBreakpointPsiClass != null) {
       classFilter = new ClassFilter() {
         @Override
         public boolean isAccepted(PsiClass aClass) {

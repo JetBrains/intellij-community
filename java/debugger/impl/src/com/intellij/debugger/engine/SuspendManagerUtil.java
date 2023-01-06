@@ -40,7 +40,7 @@ public final class SuspendManagerUtil {
   }
 
   public static void assertSuspendContext(SuspendContextImpl context) {
-    if(LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled()) {
       LOG.assertTrue(context.myInProgress, "You can invoke methods only inside commands invoked for SuspendContext");
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -292,12 +292,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     final NodeRendererSettings settings = NodeRendererSettings.getInstance();
 
     final PrimitiveRenderer primitiveRenderer = settings.getPrimitiveRenderer();
-    if(primitiveRenderer.isApplicable(type)) {
+    if (primitiveRenderer.isApplicable(type)) {
       return primitiveRenderer;
     }
 
     final ArrayRenderer arrayRenderer = settings.getArrayRenderer();
-    if(arrayRenderer.isApplicable(type)) {
+    if (arrayRenderer.isApplicable(type)) {
       return arrayRenderer;
     }
 
@@ -652,7 +652,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       throw new CantRunException(e.getLocalizedMessage());
     }
     finally {
-      if(myArguments != null) {
+      if (myArguments != null) {
         try {
           connector.stopListening(myArguments);
         }
@@ -783,7 +783,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public void addProcessListener(ProcessListener processListener) {
     synchronized(myProcessListeners) {
-      if(getProcessHandler() != null) {
+      if (getProcessHandler() != null) {
         getProcessHandler().addProcessListener(processListener);
       }
       else {
@@ -794,7 +794,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public void removeProcessListener(ProcessListener processListener) {
     synchronized (myProcessListeners) {
-      if(getProcessHandler() != null) {
+      if (getProcessHandler() != null) {
         getProcessHandler().removeProcessListener(processListener);
       }
       else {
@@ -1341,7 +1341,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private static ThreadReference getEvaluationThread(final EvaluationContext evaluationContext) throws EvaluateException {
     ThreadReferenceProxy evaluationThread = evaluationContext.getSuspendContext().getThread();
-    if(evaluationThread == null) {
+    if (evaluationThread == null) {
       throw EvaluateExceptionUtil.NULL_STACK_FRAME;
     }
     return evaluationThread.getThreadReference();
@@ -1539,7 +1539,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     StringBuilder buffer = new StringBuilder();
     StringUtil.repeatSymbol(buffer, '[', dims);
     String primitiveSignature = JVMNameUtil.getPrimitiveSignature(className);
-    if(primitiveSignature != null) {
+    if (primitiveSignature != null) {
       buffer.append(primitiveSignature);
     }
     else {
@@ -2302,7 +2302,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       private boolean alreadyRun = false;
 
       public synchronized void run() {
-        if(!alreadyRun) {
+        if (!alreadyRun) {
           alreadyRun = true;
           run.run();
         }

@@ -56,7 +56,7 @@ public class RemoteDebugProcessHandler extends ProcessHandler {
   protected void destroyProcessImpl() {
     myClosedByUser.set(true);
     DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(this);
-    if(debugProcess != null) {
+    if (debugProcess != null) {
       debugProcess.stop(true);
     }
   }
@@ -65,7 +65,7 @@ public class RemoteDebugProcessHandler extends ProcessHandler {
   protected void detachProcessImpl() {
     myClosedByUser.set(true);
     DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(this);
-    if(debugProcess != null) {
+    if (debugProcess != null) {
       debugProcess.stop(false);
     }
   }

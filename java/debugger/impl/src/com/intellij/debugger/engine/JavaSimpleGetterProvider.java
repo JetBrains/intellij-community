@@ -16,37 +16,37 @@ public class JavaSimpleGetterProvider implements SimplePropertyGetterProvider {
     if (method == null) return false;
 
     final PsiCodeBlock body = method.getBody();
-    if(body == null) {
+    if (body == null) {
       return false;
     }
 
     final PsiStatement[] statements = body.getStatements();
-    if(statements.length != 1) {
+    if (statements.length != 1) {
       return false;
     }
 
     final PsiStatement statement = statements[0];
-    if(!(statement instanceof PsiReturnStatement)) {
+    if (!(statement instanceof PsiReturnStatement)) {
       return false;
     }
 
     final PsiExpression value = ((PsiReturnStatement)statement).getReturnValue();
-    if(!(value instanceof PsiReferenceExpression)) {
+    if (!(value instanceof PsiReferenceExpression)) {
       return false;
     }
 
     final PsiReferenceExpression reference = (PsiReferenceExpression)value;
     final PsiExpression qualifier = reference.getQualifierExpression();
-    if(qualifier != null && !"this".equals(qualifier.getText())) {
+    if (qualifier != null && !"this".equals(qualifier.getText())) {
       return false;
     }
 
     final PsiElement referent = reference.resolve();
-    if(referent == null) {
+    if (referent == null) {
       return false;
     }
 
-    if(!(referent instanceof PsiField)) {
+    if (!(referent instanceof PsiField)) {
       return false;
     }
 

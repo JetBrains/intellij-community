@@ -232,7 +232,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   public void threadGroupCreated(ThreadGroupReference threadGroupReference) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(!isJ2ME()) {
+    if (!isJ2ME()) {
       ThreadGroupReferenceProxyImpl proxy = new ThreadGroupReferenceProxyImpl(this, threadGroupReference);
       myThreadGroups.put(threadGroupReference, proxy);
     }
@@ -426,13 +426,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   public ThreadGroupReferenceProxyImpl getThreadGroupReferenceProxy(ThreadGroupReference group) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(group == null) {
+    if (group == null) {
       return null;
     }
 
     ThreadGroupReferenceProxyImpl proxy = myThreadGroups.get(group);
-    if(proxy == null) {
-      if(!isJ2ME()) {
+    if (proxy == null) {
+      if (!isJ2ME()) {
         proxy = new ThreadGroupReferenceProxyImpl(this, group);
         myThreadGroups.put(group, proxy);
       }

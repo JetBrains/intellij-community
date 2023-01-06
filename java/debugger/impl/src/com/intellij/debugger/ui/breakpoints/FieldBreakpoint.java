@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class FieldBreakpoint
@@ -277,13 +277,13 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
   //  Document document = null;
   //  try {
   //    List locations = field.declaringType().allLineLocations();
-  //    if(!locations.isEmpty()) {
+  //    if (!locations.isEmpty()) {
   //      Location location = (Location)locations.get(0);
   //      line = location.lineNumber();
   //      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(location.sourcePath());
-  //      if(file != null) {
+  //      if (file != null) {
   //        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-  //        if(psiFile != null) {
+  //        if (psiFile != null) {
   //          document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
   //        }
   //      }
@@ -296,7 +296,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
   //    LOG.debug(e);
   //  }
   //
-  //  if(document == null) return null;
+  //  if (document == null) return null;
   //
   //  FieldBreakpoint fieldBreakpoint = new FieldBreakpoint(project, createHighlighter(project, document, line), fieldName, xBreakpoint);
   //  if (!fieldBreakpoint.isStatic()) {

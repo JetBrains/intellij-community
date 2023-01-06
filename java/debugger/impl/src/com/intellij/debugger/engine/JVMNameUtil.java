@@ -33,7 +33,7 @@ public final class JVMNameUtil {
 
   @Nullable
   public static String getPrimitiveSignature(String typeName) {
-    if(PsiType.BOOLEAN.getCanonicalText().equals(typeName)) {
+    if (PsiType.BOOLEAN.getCanonicalText().equals(typeName)) {
       return "Z";
     }
     else if (PsiType.BYTE.getCanonicalText().equals(typeName)) {
@@ -86,7 +86,7 @@ public final class JVMNameUtil {
 
   private static void appendJvmClassQualifiedName(JVMNameBuffer buffer, final JVMName jvmName) {
     buffer.append("L");
-    if(jvmName instanceof JVMRawText) {
+    if (jvmName instanceof JVMRawText) {
       buffer.append(((JVMRawText)jvmName).getName().replace('.','/'));
     }
     else {
@@ -132,14 +132,14 @@ public final class JVMNameUtil {
         }
       }
 
-      if(optimised.size() == 1) return optimised.get(0);
-      if(optimised.isEmpty()) return new JVMRawText("");
+      if (optimised.size() == 1) return optimised.get(0);
+      if (optimised.isEmpty()) return new JVMRawText("");
 
       return new JVMName() {
         String myName = null;
         @Override
         public String getName(DebugProcessImpl process) throws EvaluateException {
-          if(myName == null) {
+          if (myName == null) {
             String name = "";
             for (JVMName nameEvaluator : optimised) {
               name += nameEvaluator.getName(process);
@@ -151,7 +151,7 @@ public final class JVMNameUtil {
 
         @Override
         public String getDisplayName(DebugProcessImpl debugProcess) {
-          if(myName == null) {
+          if (myName == null) {
             String displayName = "";
             for (JVMName nameEvaluator : optimised) {
               displayName += nameEvaluator.getDisplayName(debugProcess);
@@ -233,7 +233,7 @@ public final class JVMNameUtil {
   }
 
   public static JVMName getJVMQualifiedName(PsiType psiType) {
-    if(psiType instanceof PsiArrayType) {
+    if (psiType instanceof PsiArrayType) {
       final PsiArrayType arrayType = (PsiArrayType)psiType;
       JVMName jvmName = getJVMQualifiedName(arrayType.getComponentType());
       JVMNameBuffer buffer = new JVMNameBuffer();
@@ -459,7 +459,7 @@ public final class JVMNameUtil {
 
     if (res == null && debugProcess != null && debugProcess.isAttached()) {
       List<ReferenceType> allClasses = debugProcess.getPositionManager().getAllClasses(position);
-      if(!allClasses.isEmpty()) {
+      if (!allClasses.isEmpty()) {
         final String className = allClasses.get(0).name();
         int dotIndex = className.lastIndexOf('.');
         if (dotIndex >= 0) {

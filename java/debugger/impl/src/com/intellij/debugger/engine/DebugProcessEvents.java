@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.*;
@@ -88,7 +88,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
   private static void showStatusText(DebugProcessEvents debugProcess,  Event event) {
     Requestor requestor = RequestManagerImpl.findRequestor(event.request());
     Breakpoint breakpoint = null;
-    if(requestor instanceof Breakpoint) {
+    if (requestor instanceof Breakpoint) {
       breakpoint = (Breakpoint)requestor;
     }
     String text = debugProcess.getEventText(Pair.create(breakpoint, event));
@@ -306,7 +306,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     ThreadReferenceProxyImpl oldThread = suspendContext.getThread();
     suspendContext.setThread(thread);
 
-    if(oldThread == null) {
+    if (oldThread == null) {
       //this is the first event in the eventSet that we process
       suspendContext.getDebugProcess().beforeSuspend(suspendContext);
     }
@@ -672,7 +672,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           }
         }
 
-        if(!requestHit || resumePreferred) {
+        if (!requestHit || resumePreferred) {
           suspendManager.voteResume(suspendContext);
         }
         else {

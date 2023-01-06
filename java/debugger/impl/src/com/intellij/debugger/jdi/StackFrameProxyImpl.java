@@ -284,7 +284,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
     try {
       for (int attempt = 0; attempt < 2; attempt++) {
         try {
-          if(myThisReference == null) {
+          if (myThisReference == null) {
             myThisReference = getStackFrame().thisObject();
           }
           break;
@@ -506,7 +506,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
       return false;
     }
     StackFrameProxyImpl frameProxy = (StackFrameProxyImpl)obj;
-    if(frameProxy == this)return true;
+    if (frameProxy == this)return true;
 
     return (myFrameFromBottomIndex == frameProxy.myFrameFromBottomIndex)  &&
            (myThreadProxy.equals(frameProxy.myThreadProxy));
@@ -524,7 +524,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
 
   @Override
   public ClassLoaderReference getClassLoader() throws EvaluateException {
-    if(myClassLoader == null) {
+    if (myClassLoader == null) {
       myClassLoader = location().declaringType().classLoader();
     }
     return myClassLoader;

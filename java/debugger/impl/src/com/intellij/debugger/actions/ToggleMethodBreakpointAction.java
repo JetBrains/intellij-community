@@ -57,9 +57,9 @@ public class ToggleMethodBreakpointAction extends AnAction {
     }
     final BreakpointManager manager = debugManager.getBreakpointManager();
     final PlaceInDocument place = getPlace(e);
-    if(place != null && DocumentUtil.isValidOffset(place.getOffset(), place.getDocument())) {
+    if (place != null && DocumentUtil.isValidOffset(place.getOffset(), place.getDocument())) {
       Breakpoint breakpoint = manager.findBreakpoint(place.getDocument(), place.getOffset(), MethodBreakpoint.CATEGORY);
-      if(breakpoint == null) {
+      if (breakpoint == null) {
         manager.addMethodBreakpoint(place.getDocument(), place.getDocument().getLineNumber(place.getOffset()));
       }
       else {
@@ -71,7 +71,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
   @Nullable
   private static PlaceInDocument getPlace(AnActionEvent event) {
     final Project project = event.getData(CommonDataKeys.PROJECT);
-    if(project == null) {
+    if (project == null) {
       return null;
     }
 
@@ -83,7 +83,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
         ActionPlaces.BOOKMARKS_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.NAVIGATION_BAR_POPUP.equals(event.getPlace())) {
       final PsiElement psiElement = event.getData(CommonDataKeys.PSI_ELEMENT);
-      if(psiElement instanceof PsiMethod) {
+      if (psiElement instanceof PsiMethod) {
         final PsiFile containingFile = psiElement.getContainingFile();
         if (containingFile != null) {
           method = psiElement;
@@ -121,7 +121,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
       return null;
     }
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if(psiFile == null) {
+    if (psiFile == null) {
       return null;
     }
     final int offset = CharArrayUtil.shiftForward(editor.getDocument().getCharsSequence(), editor.getCaretModel().getOffset(), " \t");

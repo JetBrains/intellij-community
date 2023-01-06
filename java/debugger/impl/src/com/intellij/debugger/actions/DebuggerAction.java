@@ -51,7 +51,7 @@ public abstract class DebuggerAction extends AnAction {
   @Nullable
   public static DebuggerTreeNodeImpl getSelectedNode(DataContext dataContext) {
     DebuggerTree tree = getTree(dataContext);
-    if(tree == null) return null;
+    if (tree == null) return null;
 
     if (tree.getSelectionCount() != 1) {
       return null;
@@ -69,7 +69,7 @@ public abstract class DebuggerAction extends AnAction {
 
   public static DebuggerTreeNodeImpl @Nullable [] getSelectedNodes(DataContext dataContext) {
     DebuggerTree tree = getTree(dataContext);
-    if(tree == null) return null;
+    if (tree == null) return null;
     TreePath[] paths = tree.getSelectionPaths();
     if (paths == null || paths.length == 0) {
       return Holder.EMPTY_TREE_NODE_ARRAY;
@@ -87,7 +87,7 @@ public abstract class DebuggerAction extends AnAction {
   @NotNull
   public static DebuggerContextImpl getDebuggerContext(DataContext dataContext) {
     DebuggerTreePanel panel = getPanel(dataContext);
-    if(panel != null) {
+    if (panel != null) {
       return panel.getContext();
     } else {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);

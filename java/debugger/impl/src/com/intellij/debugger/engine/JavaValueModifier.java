@@ -87,7 +87,7 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
   @Override
   public void setValue(@NotNull XExpression expression, @NotNull XModificationCallback callback) {
     final ValueDescriptorImpl descriptor = myJavaValue.getDescriptor();
-    if(!descriptor.canSetValue()) {
+    if (!descriptor.canSetValue()) {
       return;
     }
 
@@ -108,7 +108,7 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
     }
     if (value instanceof DoubleValue) {
       double dValue = ((DoubleValue) value).doubleValue();
-      if(varType instanceof FloatType && Float.MIN_VALUE <= dValue && dValue <= Float.MAX_VALUE) {
+      if (varType instanceof FloatType && Float.MIN_VALUE <= dValue && dValue <= Float.MAX_VALUE) {
         value = context.getDebugProcess().getVirtualMachineProxy().mirrorOf((float)dValue);
       }
     }

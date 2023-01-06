@@ -19,7 +19,7 @@ public class AutoRendererAction extends AnAction {
     final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
 
     final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-    if(debugProcess != null) {
+    if (debugProcess != null) {
       final List<JavaValue> selectedValues = ViewAsGroup.getSelectedValues(e);
       if (!selectedValues.isEmpty()) {
         debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
