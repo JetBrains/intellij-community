@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -76,12 +76,11 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
   // used externally
   protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
-    if (state instanceof JavaCommandLine && 
-        !JavaProgramPatcher.patchJavaCommandLineParamsUnderProgress(env.getProject(), 
-                                                                    () -> JavaProgramPatcher.runCustomPatchers(((JavaCommandLine)state).getJavaParameters(), 
-                                                                                                               env.getExecutor(), 
-                                                                                                               env.getRunProfile()))) {
-        return null;
+    if (state instanceof JavaCommandLine &&
+        !JavaProgramPatcher.patchJavaCommandLineParamsUnderProgress(env.getProject(), () -> {
+          JavaProgramPatcher.runCustomPatchers(((JavaCommandLine)state).getJavaParameters(), env.getExecutor(), env.getRunProfile());
+        })) {
+      return null;
     }
     return createContentDescriptor(state, env);
   }
@@ -91,7 +90,7 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
                                                                    @NotNull ExecutionEnvironment env)
     throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
-    return state.prepareTargetToCommandExecution(env, LOG,"Failed to execute debug configuration async", () -> {
+    return state.prepareTargetToCommandExecution(env, LOG, "Failed to execute debug configuration async", () -> {
       if (state instanceof JavaCommandLine) {
         JavaProgramPatcher.runCustomPatchers(((JavaCommandLine)state).getJavaParameters(), env.getExecutor(), env.getRunProfile());
       }
@@ -100,7 +99,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
   }
 
   @Nullable
-  protected RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+  protected RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state,
+                                                         @NotNull ExecutionEnvironment environment) throws ExecutionException {
     if (state instanceof JavaCommandLine) {
       JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
       boolean isPollConnection = true;
@@ -172,7 +172,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
           }
         }).getRunContentDescriptor());
       }
-      catch (ProcessCanceledException ignored) { }
+      catch (ProcessCanceledException ignored) {
+      }
       catch (ExecutionException e) {
         ex.set(e);
       }

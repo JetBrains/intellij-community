@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.DebugProcess;
@@ -26,7 +26,8 @@ import java.util.List;
 public final class ClassLoadingUtils {
   private static final Logger LOG = Logger.getInstance(ClassLoadingUtils.class);
   private static final int BATCH_SIZE = 4096;
-  private ClassLoadingUtils() {}
+
+  private ClassLoadingUtils() { }
 
   public static ClassLoaderReference getClassLoader(EvaluationContext context, DebugProcess process) throws EvaluateException {
     try {
@@ -81,7 +82,8 @@ public final class ClassLoadingUtils {
     DebugProcess process = evaluationContext.getDebugProcess();
     try {
       return (ClassType)process.findClass(evaluationContext, name, evaluationContext.getClassLoader());
-    } catch (EvaluateException e) {
+    }
+    catch (EvaluateException e) {
       Throwable cause = e.getCause();
       if (cause instanceof InvocationException) {
         if ("java.lang.ClassNotFoundException".equals(((InvocationException)cause).exception().type().name())) {

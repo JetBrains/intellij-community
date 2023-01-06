@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -191,10 +191,12 @@ public class RemoteConnectionBuilder {
             if (PluginManagerCore.isRunningFromSources()) {
               try {
                 // The agent file must have a fixed name (AGENT_JAR_NAME) which is mentioned in MANIFEST.MF inside
-                Path debuggerAgentDir = FileUtil.createTempDirectory(new File(PathManager.getTempPath()), "debugger-agent", "",true).toPath();
+                Path debuggerAgentDir =
+                  FileUtil.createTempDirectory(new File(PathManager.getTempPath()), "debugger-agent", "", true).toPath();
                 agentArtifactPath = debuggerAgentDir.resolve(AGENT_JAR_NAME);
 
-                BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
+                BuildDependenciesCommunityRoot communityRoot =
+                  new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
                 Path downloadedAgent = DebuggerAgentDownloader.INSTANCE.downloadDebuggerAgent(communityRoot);
                 Files.copy(downloadedAgent, agentArtifactPath);
               }

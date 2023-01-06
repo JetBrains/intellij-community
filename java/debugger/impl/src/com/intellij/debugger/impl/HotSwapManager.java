@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -178,7 +178,8 @@ public final class HotSwapManager {
     }
   }
 
-  public static void reloadModifiedClasses(@NotNull Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses, @NotNull HotSwapProgress reloadClassesProgress) {
+  public static void reloadModifiedClasses(@NotNull Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses,
+                                           @NotNull HotSwapProgress reloadClassesProgress) {
     MultiProcessCommand reloadClassesCommand = new MultiProcessCommand();
     reloadClassesProgress.setCancelWorker(() -> reloadClassesCommand.cancel());
     for (DebuggerSession debuggerSession : modifiedClasses.keySet()) {

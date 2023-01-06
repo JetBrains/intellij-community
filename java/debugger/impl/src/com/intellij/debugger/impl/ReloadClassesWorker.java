@@ -39,8 +39,8 @@ import java.util.stream.IntStream;
  */
 class ReloadClassesWorker {
   private static final Logger LOG = Logger.getInstance(ReloadClassesWorker.class);
-  private final DebuggerSession  myDebuggerSession;
-  private final HotSwapProgress  myProgress;
+  private final DebuggerSession myDebuggerSession;
+  private final HotSwapProgress myProgress;
 
   ReloadClassesWorker(DebuggerSession session, HotSwapProgress progress) {
     myDebuggerSession = session;
@@ -81,7 +81,7 @@ class ReloadClassesWorker {
   public void reloadClasses(final Map<String, HotSwapFile> modifiedClasses) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
-    if(modifiedClasses == null || modifiedClasses.size() == 0) {
+    if (modifiedClasses == null || modifiedClasses.size() == 0) {
       myProgress.addMessage(myDebuggerSession, MessageCategory.INFORMATION, JavaDebuggerBundle
         .message("status.hotswap.loaded.classes.up.to.date"));
       return;
@@ -217,7 +217,7 @@ class ReloadClassesWorker {
 
   private void reportProblem(final String qualifiedName, @Nullable Exception ex) {
     String reason = null;
-    if (ex != null)  {
+    if (ex != null) {
       reason = ex.getLocalizedMessage();
     }
     if (reason == null || reason.length() == 0) {

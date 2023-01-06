@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Interface DebuggerContextImpl
@@ -98,7 +98,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
   public PsiElement getContextElement() {
     LOG.assertTrue(myInitialized);
     PsiElement contextElement = myContextElement;
-    if(contextElement != null && !contextElement.isValid()) {
+    if (contextElement != null && !contextElement.isValid()) {
       myContextElement = ContextUtil.getContextElement(mySourcePosition);
     }
     return myContextElement;
@@ -126,11 +126,11 @@ public final class DebuggerContextImpl implements DebuggerContext {
   }
 
   public void initCaches() {
-    if(myInitialized) return;
+    if (myInitialized) return;
 
     myInitialized = true;
-    if(myFrameProxy == null) {
-      if(myThreadProxy != null) {
+    if (myFrameProxy == null) {
+      if (myThreadProxy != null) {
         if (mySuspendContext != null && myThreadProxy.equals(mySuspendContext.getThread())) {
           myFrameProxy = mySuspendContext.getFrameProxy();
         }
