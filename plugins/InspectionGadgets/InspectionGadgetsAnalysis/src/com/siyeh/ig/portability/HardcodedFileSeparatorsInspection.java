@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.portability.mediatype.*;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -43,6 +44,14 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
 
   private static final char BACKSLASH = '\\';
   private static final char SLASH = '/';
+  private static final CallMatcher IGNORED_CALLS = CallMatcher.anyOf(
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, "getResource", "getResourceAsStream"),
+    CallMatcher.instanceCall("java.lang.ClassLoader", "findResource", "getResource", "getResources",
+                             "resources"),
+    CallMatcher.staticCall("java.lang.ClassLoader", "getSystemResource", "getSystemResources",
+                           "getSystemResourceAsStream")
+  );
+
   private static class Holder {
   /**
    * The regular expression pattern that matches strings which are likely to
@@ -65,7 +74,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
     Pattern.compile("^[a-z][a-z0-9+\\-:]+://.*$");
 
   /**
-   * All mimetypes, see http://www.iana.org/assignments/media-types/
+   * All mimetypes, see <a href="http://www.iana.org/assignments/media-types/">IANA</a>
    */
   private static final Set<String> mimeTypes = new HashSet<>();
 
@@ -155,9 +164,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
           final PsiElement grandParent = parent.getParent();
           if (grandParent instanceof PsiMethodCallExpression) {
             final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
-            if (MethodCallUtils.isCallToRegexMethod(methodCallExpression) ||
-                MethodCallUtils.isCallToMethod(methodCallExpression, "java.lang.Class", null, "getResource", (PsiType[])null) ||
-                MethodCallUtils.isCallToMethod(methodCallExpression, "java.lang.Class", null, "getResourceAsStream", (PsiType[])null)) {
+            if (MethodCallUtils.isCallToRegexMethod(methodCallExpression) || IGNORED_CALLS.test(methodCallExpression)) {
               return;
             }
           }
@@ -252,7 +259,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
      * @return {@code true} if the string is likely to be an XML
      *         fragment, or {@code false} if not.
      */
-    private boolean isXMLString(String string) {
+    private static boolean isXMLString(String string) {
       return string.contains("</") || string.contains("/>");
     }
 
@@ -264,7 +271,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
      * @return {@code true} if the string is likely to be a date
      *         string, {@code false} if not.
      */
-    private boolean isDateFormatString(String string) {
+    private static boolean isDateFormatString(String string) {
       if (string.length() < 3) {
         // A string this short is very unlikely to be a date format.
         return false;
@@ -293,7 +300,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
      * @return {@code true} if the string is likely to be a URL,
      *         {@code false} if not.
      */
-    private boolean isURLString(String string) {
+    private static boolean isURLString(String string) {
       final Matcher urlMatcher = Holder.URL_PATTERN.matcher(string);
       return urlMatcher.find();
     }
@@ -341,7 +348,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
      * @return {@code true} if the string is likely to be a
      *         TimeZone ID, {@code false} if not.
      */
-    private boolean isTimeZoneIdString(String string) {
+    private static boolean isTimeZoneIdString(String string) {
       return Holder.timeZoneIds.contains(string);
     }
   }
