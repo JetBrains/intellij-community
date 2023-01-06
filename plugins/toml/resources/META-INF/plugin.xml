@@ -2,6 +2,7 @@
     <id>org.toml.lang</id>
     <name>Toml</name>
     <vendor>JetBrains</vendor>
+    <category>Languages</category>
 
     <description><![CDATA[
       TOML language support
