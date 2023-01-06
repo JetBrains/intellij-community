@@ -524,4 +524,37 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightJav
               }
              }""");
   }
-}
+
+  public void testManyVariables() {
+    doTest("""
+             import org.slf4j.*;
+             import java.util.Random;
+             class X {
+              Logger LOGGER = LoggerFactory.getLogger(X.class);
+              
+                  void m(String s) {
+                      String a1 = " {} " + s;
+                      String a2 = a1 + a1 + a1 + a1 + a1 + a1 + a1 + a1 + a1;
+                      String a3 = a2 + a2 + a2 + a2 + a2 + a2 + a2 + a2 + a2;
+                      String a4 = a3 + a3 + a3 + a3 + a3 + a3 + a3 + a3 + a3;
+                      String a5 = a4 + a4 + a4 + a4 + a4 + a4 + a4 + a4 + a4;
+                      String a6 = a5 + a5 + a5 + a5 + a5 + a5 + a5 + a5 + a5;
+                      String a7 = a6 + a6 + a6 + a6 + a6 + a6 + a6 + a6 + a6;
+                      String a8 = a7 + a7 + a7 + a7 + a7 + a7 + a7 + a7 + a7;
+                      String a9 = a8 + a8 + a8 + a8 + a8 + a8 + a8 + a8 + a8;
+                      String a10 = a9 + a9 + a9 + a9 + a9+ a9 + a9 + a9 + a9;
+                      LOGGER.info(/*Fewer arguments provided (1) than placeholders specified (at least 10)*/"abd" + a10/**/, 1);
+                      LOGGER.info(/*Fewer arguments provided (1) than placeholders specified (at least 10)*/"abd" + a10/**/, 1);
+                      LOGGER.info(/*Fewer arguments provided (1) than placeholders specified (at least 10)*/"abd" + a10/**/, 1);
+                      LOGGER.info(/*Fewer arguments provided (1) than placeholders specified (at least 10)*/"abd" + a10/**/, 1);
+                      LOGGER.info(/*Fewer arguments provided (1) than placeholders specified (at least 10)*/"abd" + a10/**/, 1);
+                      LOGGER.info(/*Fewer arguments provided (1) than placeholders specified (at least 10)*/"abd" + a10/**/, 1);
+                      LOGGER.info(/*Fewer arguments provided (1) than placeholders specified (at least 10)*/"abd" + a10/**/, 1);
+                      LOGGER.info(/*Fewer arguments provided (1) than placeholders specified (at least 10)*/"abd" + a10/**/, 1);
+                      LOGGER.info(/*Fewer arguments provided (1) than placeholders specified (at least 10)*/"abd" + a10/**/, 1);
+                      LOGGER.info(/*Fewer arguments provided (1) than placeholders specified (at least 10)*/"abd" + a10/**/, 1);
+                  }
+             }""");
+    
+  }
+  }
