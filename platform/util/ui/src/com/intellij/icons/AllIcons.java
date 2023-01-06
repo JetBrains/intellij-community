@@ -258,6 +258,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon CwmJump = load("codeWithMe/cwmJump.svg", 1936920267, 2);
     /** 16x16 */ public static final @NotNull Icon CwmKick = load("codeWithMe/cwmKick.svg", 1109127728, 2);
     /** 16x16 */ public static final @NotNull Icon CwmLeaveCall = load("codeWithMe/cwmLeaveCall.svg", -1192147167, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmLogoToolbar = load("codeWithMe/cwmLogoToolbar.svg", 1578799311, 0);
     /** 16x16 */ public static final @NotNull Icon CwmMicOff = load("codeWithMe/cwmMicOff.svg", 1405002362, 2);
     /** 16x16 */ public static final @NotNull Icon CwmMicOn = load("codeWithMe/cwmMicOn.svg", -633257639, 2);
     /** 16x16 */ public static final @NotNull Icon CwmPermissionEdit = load("codeWithMe/cwmPermissionEdit.svg", -1418202572, 2);
