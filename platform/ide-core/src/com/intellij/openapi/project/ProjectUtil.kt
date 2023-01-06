@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProjectUtil")
 package com.intellij.openapi.project
 
@@ -66,7 +66,7 @@ fun calcRelativeToProjectPath(file: VirtualFile,
 fun guessProjectForFile(file: VirtualFile): Project? = ProjectLocator.getInstance().guessProjectForFile(file)
 
 /**
- * guessProjectForFile works incorrectly - even if file is config (idea config file) first opened project will be returned
+ * guessProjectForFile works incorrectly - even if file is config (idea config file) a first opened project will be returned
  */
 @JvmOverloads
 fun guessProjectForContentFile(file: VirtualFile,
@@ -130,7 +130,7 @@ private val BASE_DIRECTORY_SUGGESTER_EP_NAME = ExtensionPointName.create<BaseDir
  *  There is no strict definition of what is a project directory, since a project can contain multiple modules located in different places,
  *  and the `.idea` directory can be located elsewhere (making the popular [Project.getBaseDir] method not applicable to get the "project
  *  directory"). This method should be preferred, although it can't provide perfect accuracy either. So its results shouldn't be used for
- *  real actions as is, user should be able to review and change it. For example, it can be used as a default selection in a file chooser.
+ *  real actions as is, the user should be able to review and change it. For example, it can be used as a default selection in a file chooser.
  */
 fun Project.guessProjectDir() : VirtualFile? {
   if (isDefault) {
@@ -153,11 +153,13 @@ fun Project.guessProjectDir() : VirtualFile? {
 
 /**
  * Returns some directory which is located near module files.
+ * There is no such thing as "base directory" for a module in the IntelliJ project model.
+ * A module may have multiple content roots, or not have content roots at all.
+ * The module configuration file (.iml) may be located far away from the module files or doesn't exist at all.
  *
- * There is no such thing as "base directory" for a module in IntelliJ project model. A module may have multiple content roots, or not have
- * content roots at all. The module configuration file (.iml) may be located far away from the module files or doesn't exist at all. So this
- * method tries to suggest some directory which is related to the module but due to its heuristic nature its result shouldn't be used for
- * real actions as is, user should be able to review and change it. For example, it can be used as a default selection in a file chooser.
+ * So this method tries to suggest some directories which are related to the module,
+ * but due to its heuristic nature, its result shouldn't be used for real actions as is, user should be able to review and change it.
+ * For example, it can be used as a default selection in a file chooser.
  */
 fun Module.guessModuleDir(): VirtualFile? {
   val contentRoots = rootManager.contentRoots.filter { it.isDirectory }
@@ -166,7 +168,11 @@ fun Module.guessModuleDir(): VirtualFile? {
 
 @JvmOverloads
 fun Project.getProjectCacheFileName(isForceNameUse: Boolean = false, hashSeparator: String = ".", extensionWithDot: String = ""): String {
-  return getProjectCacheFileName(presentableUrl, name, isForceNameUse, hashSeparator, extensionWithDot)
+  return getProjectCacheFileName(presentableUrl = presentableUrl,
+                                 projectName = name,
+                                 isForceNameUse = isForceNameUse,
+                                 hashSeparator = hashSeparator,
+                                 extensionWithDot = extensionWithDot)
 }
 
 /**
@@ -185,11 +191,15 @@ private fun getProjectCacheFileName(presentableUrl: String?,
   val name = when {
     isForceNameUse || presentableUrl == null -> projectName
     else -> {
-      // lower case here is used for cosmetic reasons (develar - discussed with jeka - leave it as it was, user projects will not have long names as in our tests
+      // the lower case here is used for cosmetic reasons (develar - discussed with jeka - leave it as it was,
+      // user projects will not have long names as in our tests
       PathUtilRt.getFileName(presentableUrl).lowercase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
     }
   }
-  return doGetProjectFileName(presentableUrl, sanitizeFileName(name, truncateIfNeeded = false), hashSeparator, extensionWithDot)
+  return doGetProjectFileName(presentableUrl = presentableUrl,
+                              name = sanitizeFileName(name, truncateIfNeeded = false),
+                              hashSeparator = hashSeparator,
+                              extensionWithDot = extensionWithDot)
 }
 
 @ApiStatus.Internal
@@ -214,15 +224,16 @@ fun Project.getProjectCachePath(@NonNls cacheDirName: String, isForceNameUse: Bo
 }
 
 /**
- * Returns path to a directory which can be used to store project-specific caches. Caches for different projects are stored under different
- * directories, [dataDirName] is used to provide different directories for different kinds of caches in the same project.
+ * Returns a path to a directory which can be used to store project-specific caches.
+ * Caches for different projects are stored under different
+ * directories, [name] is used to provide different directories for different kinds of caches in the same project.
  *
- * The function is similar to [getProjectCachePath], but all paths returned by this function for the same project are located under the same directory,
+ * The function is similar to [getProjectCachePath], but all paths returned by this function for the same project
+ * are located under the same directory,
  * and if a new project is created with the same name and location as some previously deleted project, it won't reuse its caches.
  */
-@ApiStatus.Experimental
-fun Project.getProjectDataPath(@NonNls dataDirName: String): Path {
-  return getProjectDataPathRoot(this).resolve(dataDirName)
+fun Project.getProjectDataPath(@NonNls name: String): Path {
+  return getProjectDataPathRoot(this).resolve(name)
 }
 
 /**
@@ -259,7 +270,7 @@ fun Project.getExternalConfigurationDir(): Path {
 }
 
 /**
- * Use parameters only for migration purposes, once all usages will be migrated, parameters will be removed
+ * Use parameters only for migration purposes; once all usages will be migrated, parameters will be removed.
  */
 @JvmOverloads
 fun Project.getProjectCachePath(baseDir: Path, forceNameUse: Boolean = false, hashSeparator: String = "."): Path {
