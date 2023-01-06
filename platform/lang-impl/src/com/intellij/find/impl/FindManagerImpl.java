@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -890,7 +890,7 @@ public final class FindManagerImpl extends FindManager {
       isTailLower = Character.isLetter(firstChar) && Character.isLowerCase(firstChar);
     }
 
-    if (isTailUpper && (isReplacementLowercase || isReplacementUppercase)) {
+    if (isTailUpper && (isReplacementLowercase || !isReplacementUppercase)) {
       buffer.append(StringUtil.toUpperCase(toReplace.substring(1)));
     }
     else if (isTailLower && (isReplacementLowercase || isReplacementUppercase)) {

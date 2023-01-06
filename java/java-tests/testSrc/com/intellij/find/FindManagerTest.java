@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.JavaTestUtil;
@@ -625,29 +625,28 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testReplacePreserveCase() {
+    checkReplacement("Bar bar BAR", "bar", "foo", "Foo foo FOO");
+    checkReplacement("Bar bar BAR", "Bar", "Foo", "Foo foo FOO");
+    checkReplacement("Bar bar BAR", "BAR", "FOO", "Foo foo FOO");
+    checkReplacement("Bar bar", "bar", "fooBar", "FooBar fooBar");
+    checkReplacement("abc1 Abc1 ABC1", "ABC1", "DEF1", "def1 Def1 DEF1");
+    checkReplacement("a1, a1", "a1", "abc", "abc, abc");
+    checkReplacement("A1, A1", "a1", "abc", "ABC, ABC");
+    checkReplacement("display preferences, DISPLAY PREFERENCES, display Preferences, Display preferences",
+                     "display preferences", "Report",
+                     "report, REPORT, report, Report");
+    checkReplacement("USERCODE UserCode userCode", "UserCode", "MyTest", "MYTEST MyTest myTest");
+  }
+
+  private void checkReplacement(String initialText, String toFind, String toReplace, String expectedResult) {
     FindModel model = new FindModel();
     model.setPromptOnReplace(false);
     model.setPreserveCase(true);
-    checkReplacement(model,"Bar bar BAR", "bar", "foo", "Foo foo FOO");
-    checkReplacement(model, null, "Foo", "Bar", "Bar bar BAR");
-    checkReplacement(model, "Bar bar", "bar", "fooBar", "FooBar fooBar");
-    checkReplacement(model, "abc1 Abc1 ABC1", "ABC1", "DEF1", "def1 Def1 DEF1");
-    checkReplacement(model, "a1, a1", "a1", "abc", "abc, abc");
-    checkReplacement(model, "A1, A1", "a1", "abc", "ABC, ABC");
-    checkReplacement(model,
-                     "display preferences, DISPLAY PREFERENCES, display Preferences, Display preferences",
-                     "display preferences", "Report",
-                     "report, REPORT, report, Report");
-  }
-  private void checkReplacement(FindModel model, String initialText, String toFind, String toReplace, String expectedResult) {
-    if (initialText != null) {
-      configureByText(FileTypes.PLAIN_TEXT, initialText);
-    }
+    configureByText(FileTypes.PLAIN_TEXT, initialText);
     model.setStringToFind(toFind);
     model.setStringToReplace(toReplace);
     FindUtil.replace(myProject, myEditor, 0, model);
     assertEquals(expectedResult, myEditor.getDocument().getText());
-
   }
 
   public void testFindWholeWords() {
