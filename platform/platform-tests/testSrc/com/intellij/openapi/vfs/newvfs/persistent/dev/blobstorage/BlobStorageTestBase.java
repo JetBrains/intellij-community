@@ -259,7 +259,6 @@ public abstract class BlobStorageTestBase<S> {
   //TODO RC: test space reclamation (not implemented yet): add/delete records multiple time, check storage.size is not
   //         growing infinitely
 
-  @NotNull
   protected static StorageRecord[] generateRecords(final int count) {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     return Stream.generate(() -> {

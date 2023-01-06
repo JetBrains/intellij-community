@@ -2,13 +2,11 @@
 package com.intellij.util.io;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.junit.Assert.*;
 
 import org.junit.*;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.concurrent.*;
 
 /**

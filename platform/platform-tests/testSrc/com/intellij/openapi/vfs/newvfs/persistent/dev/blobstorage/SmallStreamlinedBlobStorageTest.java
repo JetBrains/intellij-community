@@ -3,12 +3,10 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.util.io.PagedFileStorage;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
 import org.junit.experimental.theories.Theories;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
 

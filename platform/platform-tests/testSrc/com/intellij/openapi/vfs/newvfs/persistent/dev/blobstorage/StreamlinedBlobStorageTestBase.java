@@ -2,11 +2,12 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.openapi.util.IntRef;
-import com.intellij.util.io.PagedFileStorage;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.experimental.theories.DataPoints;
+import org.junit.experimental.theories.Theories;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -23,13 +24,38 @@ import static org.junit.Assert.*;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assume.assumeTrue;
 
-/**
- * FIXME type something meaningful here
- */
+@RunWith(Theories.class)
 public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobStorage> extends BlobStorageTestBase<S> {
 
   protected final int pageSize;
   protected final SpaceAllocationStrategy allocationStrategy;
+
+  @DataPoints
+  public static List<SpaceAllocationStrategy> allocationStrategiesToTry() {
+    return Arrays.asList(
+      new SpaceAllocationStrategy.WriterDecidesStrategy(1024),
+      new SpaceAllocationStrategy.WriterDecidesStrategy(512),
+      new SpaceAllocationStrategy.WriterDecidesStrategy(256),
+      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(1024, 256, 30),
+      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(512, 128, 30),
+      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(256, 64, 30),
+
+      //put stress on allocation/reallocation code paths
+      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(128, 64, 0),
+      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(2, 2, 0)
+    );
+  }
+
+  @DataPoints
+  public static Integer[] pageSizesToTry() {
+    return new Integer[]{
+      //Try quite small pages, so issues on the page borders have chance to manifest themselves
+      1 << 14,
+      1 << 18,
+      1 << 22
+    };
+  }
+
 
   public StreamlinedBlobStorageTestBase(final @NotNull Integer pageSize,
                                         final @NotNull SpaceAllocationStrategy strategy) {
@@ -225,7 +251,7 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
 
     try {
       final StorageRecord recordRead = StorageRecord.readFromStorage(this, storage, recordWritten.recordId);
-      fail("Read of deleted record should throw IOException");
+      fail("Read of deleted record should throw IOException, but: " + recordRead);
     }
     catch (IOException e) {
       //ok
@@ -295,32 +321,6 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   protected void deleteRecord(final int recordId,
                               final S storage) throws Exception {
     storage.deleteRecord(recordId);
-  }
-
-  @DataPoints
-  public static List<SpaceAllocationStrategy> allocationStrategiesToTry() {
-    return Arrays.asList(
-      new SpaceAllocationStrategy.WriterDecidesStrategy(1024),
-      new SpaceAllocationStrategy.WriterDecidesStrategy(512),
-      new SpaceAllocationStrategy.WriterDecidesStrategy(256),
-      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(1024, 256, 30),
-      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(512, 128, 30),
-      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(256, 64, 30),
-
-      //put stress on allocation/reallocation code paths
-      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(128, 64, 0),
-      new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(2, 2, 0)
-    );
-  }
-
-  @DataPoints
-  public static Integer[] pageSizesToTry() {
-    return new Integer[]{
-      //Try quite small pages, so issues on the page borders have chance to manifest themselves
-      1 << 14,
-      1 << 18,
-      1 << 22
-    };
   }
 
   @NotNull

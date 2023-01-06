@@ -1,30 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
-import com.intellij.openapi.util.IntRef;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.WriterDecidesStrategy;
-import com.intellij.util.io.PagedFileStorage;
+import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.PagedFileStorageLockFree;
-import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
-import org.junit.experimental.theories.DataPoints;
+import org.junit.Assume;
+import org.junit.BeforeClass;
 import org.junit.experimental.theories.Theories;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID;
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SmallStreamlinedBlobStorage.NULL_ID;
-import static java.nio.charset.StandardCharsets.US_ASCII;
-import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
 /**
@@ -33,6 +20,15 @@ import static org.junit.Assume.assumeTrue;
 @RunWith(Theories.class)
 public class StreamlinedBlobStorageOverLockFreePagedStorageTest
   extends StreamlinedBlobStorageTestBase<StreamlinedBlobStorageOverLockFreePagesStorage> {
+
+  @BeforeClass
+  public static void beforeClass() throws Exception {
+    assumeTrue(
+      "PageCacheUtils.LOCK_FREE_VFS_ENABLED must be true for this test to run",
+      PageCacheUtils.LOCK_FREE_VFS_ENABLED
+    );
+  }
+
   public StreamlinedBlobStorageOverLockFreePagedStorageTest(final @NotNull Integer pageSize,
                                                             final @NotNull SpaceAllocationStrategy strategy) {
     super(pageSize, strategy);

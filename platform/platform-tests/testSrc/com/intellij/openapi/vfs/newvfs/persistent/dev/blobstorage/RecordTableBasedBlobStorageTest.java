@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.io.storage.Storage;
 
@@ -16,13 +17,14 @@ import static java.nio.charset.StandardCharsets.US_ASCII;
  */
 public class RecordTableBasedBlobStorageTest extends BlobStorageTestBase<Storage> {
 
+  @Override
   protected Storage openStorage(final Path pathToStorage) throws IOException {
     return new Storage(pathToStorage);
   }
 
   @Override
   protected void closeStorage(final Storage storage) throws Exception {
-    storage.dispose();
+    Disposer.dispose(storage);
   }
 
   @Override
