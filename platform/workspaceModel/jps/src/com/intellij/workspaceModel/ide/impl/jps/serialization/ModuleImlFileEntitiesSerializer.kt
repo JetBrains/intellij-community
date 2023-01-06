@@ -255,51 +255,13 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                               moduleEntity: ModuleEntity,
                               builder: MutableEntityStorage,
                               virtualFileManager: VirtualFileUrlManager,
-                              contentRotEntitySource: EntitySource,
+                              contentRootEntitySource: EntitySource,
                               loadingAdditionalRoots: Boolean) {
-    val alreadyLoadedContentRoots = moduleEntity.contentRoots.associateBy { it.url.url }
-    for (contentElement in rootManagerElement.getChildrenAndDetach(CONTENT_TAG)) {
-      val contentRootUrlString = contentElement.getAttributeValueStrict(URL_ATTRIBUTE)
-
-      // Either we'll load content root right now, or it was already loaded from an external storage
-      var contentRoot = alreadyLoadedContentRoots[contentRootUrlString]
-      if (contentRoot == null) {
-        val contentRootUrl = contentRootUrlString
-          .let { virtualFileManager.fromUrl(it) }
-        val excludePatterns = contentElement.getChildren(EXCLUDE_PATTERN_TAG)
-          .map { it.getAttributeValue(EXCLUDE_PATTERN_ATTRIBUTE) }
-        contentRoot = builder.addContentRootEntity(contentRootUrl, emptyList(), excludePatterns,
-                                                   moduleEntity, contentRotEntitySource)
-      }
-
-      // Load SOURCE ROOTS
-      val sourceRoots = loadSourceRoots(contentElement, virtualFileManager, contentRotEntitySource)
-      builder.modifyEntity(contentRoot) {
-        this.sourceRoots = this.sourceRoots + sourceRoots
-      }
-      createSourceRootsOrder(sourceRoots.map { it.url }, contentRotEntitySource)
-        ?.let { sourceRootsOrder ->
-          (sourceRootsOrder as SourceRootOrderEntity.Builder).contentRootEntity = contentRoot
-          builder addEntity sourceRootsOrder
-        }
-
-      // Load EXCLUDES
-      val excludes = loadContentRootExcludes(contentElement, virtualFileManager, contentRotEntitySource)
-      builder.modifyEntity(contentRoot) {
-        this.excludedUrls = this.excludedUrls + excludes
-      }
-      val existingOrder = contentRoot.excludeUrlOrder
-      if (existingOrder != null) {
-        builder.modifyEntity(existingOrder) {
-          this.order.addAll(excludes.map { it.url })
-        }
-      }
-      else {
-        builder addEntity ExcludeUrlOrderEntity(excludes.map { it.url }, contentRoot.entitySource) {
-          this.contentRoot = contentRoot
-        }
-      }
+    val contentRoots = loadContentRootEntities(moduleEntity, rootManagerElement, virtualFileManager, builder, contentRootEntitySource)
+    builder.modifyEntity(moduleEntity) {
+      this.contentRoots = this.contentRoots + contentRoots
     }
+
     fun Element.readScope(): ModuleDependencyItem.DependencyScope {
       val attributeValue = getAttributeValue(SCOPE_ATTRIBUTE) ?: return ModuleDependencyItem.DependencyScope.COMPILE
       return try {
@@ -333,7 +295,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           val name = LibraryNameGenerator.generateUniqueLibraryName(originalName) { it in moduleLibraryNames }
           moduleLibraryNames.add(name)
           val tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.symbolicId)
-          loadLibrary(name, libraryElement, tableId, builder, contentRotEntitySource, virtualFileManager, false)
+          loadLibrary(name, libraryElement, tableId, builder, contentRootEntitySource, virtualFileManager, false)
           val libraryId = LibraryId(name, tableId)
           ModuleDependencyItem.Exportable.LibraryDependency(libraryId, dependencyElement.isExported(), dependencyElement.readScope())
         }
@@ -352,7 +314,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     }
 
     if (!loadingAdditionalRoots) {
-      JavaSettingsSerializer.loadJavaModuleSettings(rootManagerElement, builder, virtualFileManager, moduleEntity, contentRotEntitySource)
+      JavaSettingsSerializer.loadJavaModuleSettings(rootManagerElement, builder, virtualFileManager, moduleEntity, contentRootEntitySource)
     }
     if (!JDOMUtil.isEmpty(rootManagerElement)) {
       val customImlData = moduleEntity.customImlData
@@ -361,7 +323,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           rootManagerTagCustomData = JDOMUtil.write(rootManagerElement),
           customModuleOptions = emptyMap(),
           module = moduleEntity,
-          source = contentRotEntitySource
+          source = contentRootEntitySource
         )
       }
       else {
@@ -373,6 +335,72 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     if (!loadingAdditionalRoots) {
       builder.modifyEntity(moduleEntity) {
         dependencies = dependencyItems
+      }
+    }
+  }
+
+  private fun loadContentRootEntities(moduleEntity: ModuleEntity,
+                                      rootManagerElement: Element,
+                                      virtualFileManager: VirtualFileUrlManager,
+                                      builder: MutableEntityStorage,
+                                      contentRootEntitySource: EntitySource): List<ContentRootEntity> {
+    val alreadyLoadedContentRoots = moduleEntity.contentRoots.associateBy { it.url.url }
+    return rootManagerElement.getChildrenAndDetach(CONTENT_TAG).mapNotNull { contentElement ->
+
+      // Load SOURCE ROOTS
+      val sourceRoots = loadSourceRoots(contentElement, virtualFileManager, contentRootEntitySource)
+      val sourceRootOrder = createSourceRootsOrder(sourceRoots.map { it.url }, contentRootEntitySource)
+
+
+      // Load EXCLUDES
+      val excludes = loadContentRootExcludes(contentElement, virtualFileManager, contentRootEntitySource)
+
+
+      val contentRootUrlString = contentElement.getAttributeValueStrict(URL_ATTRIBUTE)
+      val contentRoot = alreadyLoadedContentRoots[contentRootUrlString]
+      if (contentRoot == null) {
+        val contentRootUrl = contentRootUrlString.let { virtualFileManager.fromUrl(it) }
+        val excludePatterns = contentElement.getChildren(EXCLUDE_PATTERN_TAG).map { it.getAttributeValue(EXCLUDE_PATTERN_ATTRIBUTE) }
+        ContentRootEntity(contentRootUrl, excludePatterns, contentRootEntitySource) {
+          this.sourceRoots = sourceRoots
+          this.sourceRootOrder = sourceRootOrder
+          this.excludedUrls = excludes
+          this.excludeUrlOrder = if (excludes.size > 1) ExcludeUrlOrderEntity(excludes.map { it.url }, contentRootEntitySource) else null
+        }
+      } else {
+
+        builder.modifyEntity(contentRoot) {
+          this.sourceRoots = this.sourceRoots + sourceRoots
+          this.excludedUrls = this.excludedUrls + excludes
+        }
+        // Add order of source roots
+        if (sourceRootOrder != null) {
+          val existingOrder = contentRoot.sourceRootOrder
+          if (existingOrder != null) {
+            builder.modifyEntity(existingOrder) {
+              this.orderOfSourceRoots.addAll(sourceRootOrder.orderOfSourceRoots)
+            }
+          } else {
+            builder.modifyEntity(contentRoot) {
+              this.sourceRootOrder = sourceRootOrder
+            }
+          }
+        }
+        // Add order of excludes
+        if (excludes.size > 1) {
+          val existingExcludesOrder = contentRoot.excludeUrlOrder
+          if (existingExcludesOrder != null) {
+            builder.modifyEntity(existingExcludesOrder) {
+              this.order.addAll(excludes.map { it.url })
+            }
+          } else {
+            builder.modifyEntity(contentRoot) {
+              this.excludeUrlOrder = ExcludeUrlOrderEntity(excludes.map { it.url }, contentRootEntitySource)
+            }
+          }
+        }
+
+        null
       }
     }
   }
