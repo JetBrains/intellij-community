@@ -401,6 +401,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(project);
 
     return processValueIterator(indexId, dataKey, null, scope, valueIt -> {
+      Collection<ModelBranch> branches = null;
       while (valueIt.hasNext()) {
         final V value = valueIt.next();
         for (final ValueContainer.IntIterator inputIdsIterator = valueIt.getInputIdsIterator(); inputIdsIterator.hasNext(); ) {
@@ -408,7 +409,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
           if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) continue;
           VirtualFile file = findFileById(id);
           if (file != null) {
-            for (VirtualFile eachFile : filesInScopeWithBranches(scope, file)) {
+            if (branches == null) branches = scope.getModelBranchesAffectingScope();
+            for (VirtualFile eachFile : filesInScopeWithBranches(scope, file, branches)) {
               if (!processor.process(eachFile, value)) {
                 return false;
               }
@@ -654,12 +656,14 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     IntList sortedIds = new IntArrayList(ids);
     sortedIds.sort(null);
 
+    Collection<ModelBranch> branches = null;
     for (IntIterator iterator = sortedIds.iterator(); iterator.hasNext(); ) {
       ProgressManager.checkCanceled();
       int id = iterator.nextInt();
       VirtualFile file = findFileById(id);
       if (file != null) {
-        for (VirtualFile fileInBranch : filesInScopeWithBranches(filter, file)) {
+        if (branches == null) branches = filter.getModelBranchesAffectingScope();
+        for (VirtualFile fileInBranch : filesInScopeWithBranches(filter, file, branches)) {
           boolean processNext = processor.process(fileInBranch);
           ProgressManager.checkCanceled();
           if (!processNext) {
@@ -744,12 +748,14 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   @NotNull
   @ApiStatus.Internal
-  public static List<VirtualFile> filesInScopeWithBranches(@NotNull GlobalSearchScope scope, @NotNull VirtualFile file) {
+  public static List<VirtualFile> filesInScopeWithBranches(@NotNull GlobalSearchScope scope,
+                                                           @NotNull VirtualFile file,
+                                                           @NotNull Collection<ModelBranch> branchesAffectingScope) {
     List<VirtualFile> filesInScope;
     filesInScope = new SmartList<>();
     if (scope.contains(file)) filesInScope.add(file);
     ProgressManager.checkCanceled();
-    for (ModelBranch branch : scope.getModelBranchesAffectingScope()) {
+    for (ModelBranch branch : branchesAffectingScope) {
       VirtualFile copy = branch.findFileCopy(file);
       if (!((ModelBranchImpl)branch).hasModifications(copy) && scope.contains(copy)) {
         filesInScope.add(copy);
