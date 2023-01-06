@@ -1,0 +1,450 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInspection;
+
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaPsiPatternUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+
+public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBaseJavaLocalInspectionTool {
+
+  @SuppressWarnings("PublicField")
+  public boolean tryToPreserveUnusedVariables = true;
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(checkbox("tryToPreserveUnusedVariables",
+                                 JavaBundle.message("inspection.message.pattern.variables.can.be.replaced.with.cast.preserve.option")));
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!HighlightingFeature.PATTERNS.isAvailable(holder.getFile())) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+    return new JavaElementVisitor() {
+      @Override
+      public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
+        PsiPrimaryPattern pattern = expression.getPattern();
+        if (pattern == null) {
+          return;
+        }
+
+        if (pattern instanceof PsiDeconstructionPattern &&
+            !(HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(holder.getFile()))) {
+          return;
+        }
+
+        LocalQuickFix quickFix = null;
+
+        //without support deconstruction
+        if (!assignedVariablesInCondition(expression) &&
+            pattern instanceof PsiTypeTestPattern typeTestPattern &&
+            typeTestPattern.getPatternVariable()!=null) {
+          quickFix = new ConvertInstanceOfPatternToCastFix(pattern, tryToPreserveUnusedVariables);
+        }
+
+        if (InspectionProjectProfileManager.isInformationLevel(getShortName(), pattern)) {
+          holder.registerProblem(expression, TextRange.create(expression.getOperand().getStartOffsetInParent(),
+                                                              pattern.getStartOffsetInParent() + pattern.getTextLength()),
+                                 JavaBundle.message("inspection.message.pattern.variables.can.be.replaced.with.cast"), quickFix);
+        }
+        else {
+          holder.registerProblem(expression, TextRange.create(pattern.getStartOffsetInParent(),
+                                                              pattern.getStartOffsetInParent() + pattern.getTextLength()),
+                                 JavaBundle.message("inspection.message.pattern.variables.can.be.replaced.with.cast"), quickFix);
+        }
+      }
+
+      private static boolean assignedVariablesInCondition(PsiInstanceOfExpression psiInstanceOfExpression) {
+        List<PsiPatternVariable> variables = JavaPsiPatternUtil.getExposedPatternVariables(psiInstanceOfExpression);
+        PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(psiInstanceOfExpression, PsiIfStatement.class);
+        if (ifStatement != null) {
+          PsiExpression condition = ifStatement.getCondition();
+          if (PsiTreeUtil.isAncestor(condition, psiInstanceOfExpression, false)) {
+            for (PsiPatternVariable variable : variables) {
+              if (VariableAccessUtils.variableIsAssigned(variable, condition)) {
+                return true;
+              }
+            }
+          }
+        }
+
+        PsiConditionalLoopStatement conditionalLoopStatement =
+          PsiTreeUtil.getParentOfType(psiInstanceOfExpression, PsiConditionalLoopStatement.class);
+        if (conditionalLoopStatement != null) {
+          PsiExpression condition = conditionalLoopStatement.getCondition();
+          if (PsiTreeUtil.isAncestor(condition, psiInstanceOfExpression, false)) {
+            for (PsiPatternVariable variable : variables) {
+              if (VariableAccessUtils.variableIsAssigned(variable, condition)) {
+                return true;
+              }
+            }
+          }
+          if (conditionalLoopStatement instanceof PsiForStatement forStatement) {
+            PsiStatement update = forStatement.getUpdate();
+            for (PsiPatternVariable variable : variables) {
+              if (VariableAccessUtils.variableIsAssigned(variable, update)) {
+                return true;
+              }
+            }
+          }
+        }
+        return false;
+      }
+    };
+  }
+
+  private static boolean canCompleteNormally(@NotNull PsiStatement parent, @Nullable PsiStatement statement) {
+    ControlFlow flow;
+    try {
+      flow = ControlFlowFactory.getControlFlow(parent, new LocalsControlFlowPolicy(parent),
+                                               ControlFlowOptions.NO_CONST_EVALUATE);
+    }
+    catch (AnalysisCanceledException e) {
+      return true;
+    }
+
+    if (statement == null) return true;
+    int startOffset = flow.getStartOffset(statement);
+    int endOffset = flow.getEndOffset(statement);
+    return startOffset != -1 && endOffset != -1 && ControlFlowUtil.canCompleteNormally(flow, startOffset, endOffset);
+  }
+
+  private enum ConditionState {
+    TRUE, FALSE, UNKNOWN
+  }
+
+  private static class ConvertInstanceOfPatternToCastFix implements LocalQuickFix {
+
+    private final String myName;
+    private final boolean tryToPreserveUnusedVariables;
+
+    private ConvertInstanceOfPatternToCastFix(@NotNull PsiElement psiElement, boolean tryToPreserveUnusedVariables) {
+      myName = psiElement.getText();
+      this.tryToPreserveUnusedVariables = tryToPreserveUnusedVariables;
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getName() {
+      return JavaBundle.message("inspection.message.pattern.variables.can.be.replaced.with.cast.fix.name", myName);
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return JavaBundle.message("inspection.message.pattern.variables.can.be.replaced.with.cast.family.name");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      if (!(descriptor.getPsiElement() instanceof PsiInstanceOfExpression expression)) {
+        return;
+      }
+      PsiPrimaryPattern pattern = expression.getPattern();
+      if (!(pattern instanceof PsiTypeTestPattern typeTestPattern)) {
+        return;
+      }
+      PsiPatternVariable variable = typeTestPattern.getPatternVariable();
+      if (variable == null) {
+        return;
+      }
+
+      List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable, variable.getDeclarationScope());
+      processReferences(references, variable, expression);
+      deletePatternFromInstanceOf(expression);
+    }
+
+    private void processReferences(@NotNull List<PsiReferenceExpression> references,
+                                   @NotNull PsiPatternVariable variable,
+                                   @NotNull PsiInstanceOfExpression psiInstanceOfExpression) {
+      PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(psiInstanceOfExpression, PsiIfStatement.class);
+      if (ifStatement != null &&
+          isPartOfCondition(psiInstanceOfExpression, ifStatement.getCondition())) {
+        processReferencesForIfStatement(ifStatement, variable, psiInstanceOfExpression, references);
+        return;
+      }
+
+      PsiConditionalLoopStatement conditionalLoopStatement =
+        PsiTreeUtil.getParentOfType(psiInstanceOfExpression, PsiConditionalLoopStatement.class);
+      if (conditionalLoopStatement != null &&
+          isPartOfCondition(psiInstanceOfExpression, conditionalLoopStatement.getCondition())) {
+        processReferencesForLoopStatement(conditionalLoopStatement, variable, psiInstanceOfExpression, references);
+        return;
+      }
+
+      replaceWithCast(variable, references);
+    }
+
+    private void processReferencesForIfStatement(@NotNull PsiIfStatement ifStatement,
+                                                 @NotNull PsiPatternVariable variable,
+                                                 @NotNull PsiInstanceOfExpression psiInstanceOfExpression,
+                                                 @NotNull List<PsiReferenceExpression> references) {
+      List<PsiReferenceExpression> unusedReferences = new ArrayList<>(references);
+
+      PsiStatement thenBranch = ifStatement.getThenBranch();
+      if (this.tryToPreserveUnusedVariables) {
+        //trivial cases
+        ConditionState conditionState = getConditionIfInstanceOfTrue(psiInstanceOfExpression, ifStatement.getCondition());
+
+        if (conditionState==ConditionState.TRUE &&
+            thenBranch!=null && !(thenBranch instanceof PsiEmptyStatement) &&
+            ifStatement.getElseBranch()==null)  {
+          List<PsiReferenceExpression> referencesForThenBranch =
+            ContainerUtil.filter(unusedReferences, t -> PsiTreeUtil.isAncestor(thenBranch, t, false));
+          unusedReferences.removeAll(referencesForThenBranch);
+          addDeclarationInsideBlock(thenBranch, variable);
+        }
+
+        if (conditionState.equals(ConditionState.FALSE) && !canCompleteNormally(ifStatement, thenBranch) &&
+            ifStatement.getElseBranch() == null &&
+            !(ifStatement.getParent() instanceof PsiIfStatement parentIf && parentIf.getElseBranch() == ifStatement)) {
+
+          List<PsiReferenceExpression> referencesForOutsideIf =
+            ContainerUtil.filter(unusedReferences, t -> !PsiTreeUtil.isAncestor(ifStatement, t, false));
+          unusedReferences.removeAll(referencesForOutsideIf);
+          addDeclarationOutsideBlock(ifStatement, variable);
+        }
+      }
+
+      //insert statements and casts in place
+      Map<Boolean, List<PsiReferenceExpression>> collectedInsideThenBranch = unusedReferences.stream()
+        .collect(
+          Collectors.groupingBy(referenceExpression -> PsiTreeUtil.isAncestor(thenBranch, referenceExpression, false)));
+      if (thenBranch != null && !(thenBranch instanceof PsiEmptyStatement) && collectedInsideThenBranch.get(Boolean.TRUE) != null) {
+        addDeclarationInsideBlock(thenBranch, variable);
+      }
+
+
+      //in else branch
+      PsiStatement elseBranch = ifStatement.getElseBranch();
+      Map<Boolean, List<PsiReferenceExpression>> collectedInsideElseBlock = collectedInsideThenBranch.getOrDefault(Boolean.FALSE, List.of()).stream()
+        .collect(Collectors.groupingBy(referenceExpression -> PsiTreeUtil.isAncestor(elseBranch, referenceExpression, false)));
+
+      if (elseBranch != null && collectedInsideElseBlock.get(Boolean.TRUE) != null) {
+        if (elseBranch instanceof PsiIfStatement elseIfStatement) {
+          processReferencesForIfStatement(elseIfStatement, variable, psiInstanceOfExpression, collectedInsideElseBlock.get(Boolean.TRUE));
+        }
+        else {
+          addDeclarationInsideBlock(elseBranch, variable);
+        }
+      }
+
+      //outside
+      Map<Boolean, List<PsiReferenceExpression>> collectedOutside = collectedInsideElseBlock.getOrDefault(Boolean.FALSE, List.of()).stream()
+        .collect(Collectors.groupingBy(referenceExpression -> !PsiTreeUtil.isAncestor(ifStatement, referenceExpression, false)));
+
+      if (collectedOutside.get(Boolean.TRUE) != null) {
+        addDeclarationOutsideBlock(ifStatement, variable);
+      }
+
+      //typeCast - for example in Conditions
+      replaceWithCast(variable, collectedOutside.get(Boolean.FALSE));
+    }
+
+    private void processReferencesForLoopStatement(PsiConditionalLoopStatement statement,
+                                                   PsiPatternVariable variable,
+                                                   PsiInstanceOfExpression psiInstanceOfExpression,
+                                                   List<PsiReferenceExpression> references) {
+
+      //trivial cases
+      ConditionState conditionState = getConditionIfInstanceOfTrue(psiInstanceOfExpression, statement.getCondition());
+      List<PsiReferenceExpression> unusedReferences = new ArrayList<>(references);
+      List<PsiReferenceExpression> referencesForInsideBlock =
+        ContainerUtil.filter(unusedReferences, t -> PsiTreeUtil.isAncestor(statement.getBody(), t, false));
+
+      unusedReferences.removeAll(referencesForInsideBlock);
+      if (statement.getBody()!=null && !(statement.getBody() instanceof PsiEmptyStatement) &&
+          ((this.tryToPreserveUnusedVariables && conditionState == ConditionState.TRUE && !(statement instanceof PsiDoWhileStatement)) ||
+          !referencesForInsideBlock.isEmpty())) {
+        addDeclarationInsideBlock(statement.getBody(), variable);
+      }
+
+      List<PsiReferenceExpression> referencesOutsideLoop =
+        ContainerUtil.filter(unusedReferences, t -> !PsiTreeUtil.isAncestor(statement, t, false));
+      unusedReferences.removeAll(referencesOutsideLoop);
+
+      boolean noBreak = PsiTreeUtil.processElements(statement,
+                                              e -> !(e instanceof PsiBreakStatement) ||
+                                                   ((PsiBreakStatement)e).findExitedStatement() != statement);
+
+      if ((this.tryToPreserveUnusedVariables && conditionState == ConditionState.FALSE && noBreak) ||
+          !referencesOutsideLoop.isEmpty()) {
+        addDeclarationOutsideBlock(statement, variable);
+      }
+
+      //other cases
+      replaceWithCast(variable, unusedReferences);
+    }
+
+    private static boolean isPartOfCondition(PsiInstanceOfExpression expression, @Nullable PsiExpression condition) {
+      return condition!=null && PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class, PsiPrefixExpression.class,
+                                           PsiPolyadicExpression.class) == condition.getParent();
+    }
+
+    private static ConditionState getConditionIfInstanceOfTrue(PsiInstanceOfExpression expression, PsiExpression condition) {
+      if (!isPartOfCondition(expression, condition)) {
+        return ConditionState.UNKNOWN;
+      }
+      PsiElement current = expression.getParent();
+      boolean currentState = true;
+      while (current != condition.getParent()) {
+        if (current instanceof PsiParenthesizedExpression) {
+          current = current.getParent();
+          continue;
+        }
+        if (current instanceof PsiPrefixExpression prefixExpression) {
+          if (!prefixExpression.getOperationTokenType().equals(JavaTokenType.EXCL)) {
+            return ConditionState.UNKNOWN;
+          }
+          currentState = !currentState;
+          current = current.getParent();
+          continue;
+        }
+        if (current instanceof PsiPolyadicExpression polyadicExpression) {
+          IElementType tokenType = polyadicExpression.getOperationTokenType();
+          if (tokenType.equals(JavaTokenType.ANDAND) && currentState) {
+            current = current.getParent();
+            continue;
+          }
+          if (tokenType.equals(JavaTokenType.OROR) && !currentState) {
+            current = current.getParent();
+            continue;
+          }
+          return ConditionState.UNKNOWN;
+        }
+      }
+      return currentState ? ConditionState.TRUE : ConditionState.FALSE;
+    }
+
+
+    private static void addDeclarationOutsideBlock(PsiStatement statement, PsiPatternVariable variable) {
+
+      if (statement.getNextSibling() == null) {
+        return;
+      }
+      String text = getDeclarationStatement(variable);
+      if (text == null) {
+        return;
+      }
+
+      PsiElement parent = statement.getParent();
+      if (parent == null) {
+        return;
+      }
+
+      Project project = statement.getProject();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      PsiStatement declarationStatement = factory.createStatementFromText(text, statement.getNextSibling());
+
+      PsiElement newDeclarationStatement = parent.addAfter(declarationStatement, statement);
+      CodeStyleManager.getInstance(project).reformat(newDeclarationStatement);
+    }
+
+    private static void addDeclarationInsideBlock(PsiStatement statement, PsiPatternVariable variable) {
+      String text = getDeclarationStatement(variable);
+      if (text == null) {
+        return;
+      }
+      Project project = statement.getProject();
+      if (statement instanceof PsiBlockStatement blockStatement) {
+        PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+        PsiElement firstChild = codeBlock.getFirstBodyElement();
+        PsiElement context = firstChild;
+        if (context == null) {
+          context = codeBlock;
+        }
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+        PsiStatement declarationStatement = factory.createStatementFromText(text, context);
+        PsiElement newDeclarationStatement;
+        if (firstChild == null) {
+          newDeclarationStatement = codeBlock.add(declarationStatement);
+        }
+        else {
+          newDeclarationStatement = codeBlock.addBefore(declarationStatement, firstChild);
+        }
+        CodeStyleManager.getInstance(project).reformat(newDeclarationStatement);
+      }else{
+        text = "{\n" + text + "\n" + statement.getText() + "\n" + "}";
+        CommentTracker tracker = new CommentTracker();
+        tracker.markUnchanged(statement);
+        PsiElement codeBlock = tracker.replaceAndRestoreComments(statement, text);
+        CodeStyleManager.getInstance(project).reformat(codeBlock);
+      }
+    }
+
+    @Nullable
+    private static String getDeclarationStatement(PsiPatternVariable variable) {
+      String text = JavaPsiPatternUtil.getEffectiveInitializerText(variable);
+      if (text == null) {
+        return null;
+      }
+      text = variable.getTypeElement().getText() + " " + variable.getName() + " = " + text + ";";
+      if(variable.hasModifierProperty(PsiModifier.FINAL)){
+        text = "final " + text;
+      }
+      return text;
+    }
+
+    private static void deletePatternFromInstanceOf(PsiInstanceOfExpression expression) {
+      if (!(expression.getPattern() instanceof PsiTypeTestPattern typeTestPattern)) {
+        return;
+      }
+      PsiPatternVariable variable = typeTestPattern.getPatternVariable();
+      if (variable == null) {
+        return;
+      }
+      String text = expression.getText();
+      text = text.substring(0, text.length() - typeTestPattern.getTextLength()) + variable.getTypeElement().getText();
+
+      CommentTracker tracker = new CommentTracker();
+      for (PsiElement element : expression.getChildren()) {
+        if (element == typeTestPattern) {
+          continue;
+        }
+        tracker.markUnchanged(element);
+      }
+      PsiReplacementUtil.replaceExpression(expression, text, tracker);
+    }
+
+    private static void replaceWithCast(@NotNull PsiPatternVariable variable, @Nullable List<PsiReferenceExpression> references) {
+      if (references == null || references.isEmpty()) {
+        return;
+      }
+
+      String text = JavaPsiPatternUtil.getEffectiveInitializerText(variable);
+      if (text == null) {
+        return;
+      }
+
+      references.forEach(reference->{
+        PsiReplacementUtil.replaceExpression(reference, text, new CommentTracker());
+      });
+    }
+  }
+}
