@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.util.graph.DirectedGraph
 import org.jetbrains.kotlin.util.graph.sortTopologically
-import org.jetbrains.kotlin.util.sortedConservativelyBy
 
 class ReorderParametersFix(
     element: KtNamedFunction,
@@ -80,7 +79,9 @@ class ReorderParametersFix(
                 .associate { (topologicalIndex, parameterName) -> parameterName to topologicalIndex }
             val sortedParameters = parameters.asSequence()
                 .mapNotNull(KtParameter::getName)
-                .sortedConservativelyBy(parameterToTopologicalIndex::getValue)
+                // `sortedBy` is stable (It's written in the KDoc).
+                // It means that equal elements preserve their order relative to each other after sorting.
+                .sortedBy(parameterToTopologicalIndex::getValue)
                 .toList()
             if (sortedParameters.size != parameters.size) return null
             return ReorderParametersFix(function, sortedParameters)
