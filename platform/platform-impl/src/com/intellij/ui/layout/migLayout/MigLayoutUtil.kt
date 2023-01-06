@@ -4,8 +4,10 @@ package com.intellij.ui.layout.migLayout
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.LC
 import net.miginfocom.layout.UnitValue
+import org.jetbrains.annotations.ApiStatus
 
 @Deprecated("Mig Layout is going to be removed, IDEA-306719")
+@ApiStatus.Internal
 fun createLayoutConstraints(horizontalGap: Int, verticalGap: Int): LC {
   val lc = LC()
   lc.gridGapX = gapToBoundSize(horizontalGap, isHorizontal = true)
@@ -39,6 +41,7 @@ internal fun LC.setInsets(topBottom: Int, leftRight: Int) {
 }
 
 @Deprecated("Mig Layout is going to be removed, IDEA-306719")
+@ApiStatus.Internal
 fun createUnitValue(value: Int, isHorizontal: Boolean): UnitValue {
   return UnitValue(value.toFloat(), "px", isHorizontal, UnitValue.STATIC, null)
 }

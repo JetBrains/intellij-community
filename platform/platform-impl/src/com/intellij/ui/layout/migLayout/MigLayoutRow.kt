@@ -26,6 +26,7 @@ import javax.swing.text.JTextComponent
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 internal class MigLayoutRow(private val parent: MigLayoutRow?,
                             override val builder: MigLayoutBuilder,
                             val labeled: Boolean = false,
@@ -505,12 +506,15 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     return row
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
+  @ApiStatus.Internal
   override fun radioButton(text: String, comment: String?): CellBuilder<JBRadioButton> {
     val result = super.radioButton(text, comment)
     attachSubRowsEnabled(result.component)
     return result
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   override fun radioButton(text: String, prop: KMutableProperty0<Boolean>, comment: String?): CellBuilder<JBRadioButton> {
     return super.radioButton(text, prop, comment).also { attachSubRowsEnabled(it.component) }
   }
@@ -673,3 +677,8 @@ private val JComponent.origin: JComponent
       else -> this
     }
   }
+
+private fun Row.attachSubRowsEnabled(component: AbstractButton) {
+  subRowsEnabled = component.selected()
+  component.selected.addListener { subRowsEnabled = it }
+}

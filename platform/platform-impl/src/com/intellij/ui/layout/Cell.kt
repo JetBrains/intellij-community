@@ -101,6 +101,7 @@ class ValidationInfoBuilder(val component: JComponent) {
 }
 
 @JvmDefaultWithCompatibility
+@Deprecated("Use Kotlin UI DSL Version 2")
 interface CellBuilder<out T : JComponent> {
   val component: T
 
@@ -169,6 +170,7 @@ interface CellBuilder<out T : JComponent> {
 
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun <T : JComponent> CellBuilder<T>.applyToComponent(task: T.() -> Unit): CellBuilder<T> {
   return also { task(component) }
 }
@@ -188,10 +190,11 @@ val CellBuilder<AbstractButton>.selected
   get() = component.selected
 
 @Deprecated("Use Kotlin UI DSL Version 2")
-const val UNBOUND_RADIO_BUTTON = "unbound.radio.button"
+internal const val UNBOUND_RADIO_BUTTON = "unbound.radio.button"
 
 // separate class to avoid row related methods in the `cell { } `
 @CellMarker
+@Deprecated("Use Kotlin UI DSL Version 2")
 abstract class Cell : BaseBuilder {
   /**
    * Sets how keen the component should be to grow in relation to other component **in the same cell**. Use `push` in addition if need.
@@ -215,6 +218,7 @@ abstract class Cell : BaseBuilder {
   val push = CCFlags.push
 
   @Deprecated("Use Kotlin UI DSL Version 2")
+  @ApiStatus.Internal
   fun label(@Label text: String,
             style: UIUtil.ComponentStyle? = null,
             fontColor: UIUtil.FontColor? = null,
@@ -224,6 +228,7 @@ abstract class Cell : BaseBuilder {
   }
 
   @Deprecated("Use Kotlin UI DSL Version 2")
+  @ApiStatus.Internal
   fun label(@Label text: String,
             font: JBFont,
             fontColor: UIUtil.FontColor? = null): CellBuilder<JLabel> {
@@ -263,6 +268,7 @@ abstract class Cell : BaseBuilder {
   }
 
   @JvmOverloads
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun checkBox(@Checkbox text: String,
                isSelected: Boolean = false,
                @DetailedDescription comment: String? = null): CellBuilder<JBCheckBox> {
@@ -270,6 +276,7 @@ abstract class Cell : BaseBuilder {
     return result(comment = comment)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun checkBox(@Checkbox text: String, prop: KMutableProperty0<Boolean>, @DetailedDescription comment: String? = null): CellBuilder<JBCheckBox> {
     return checkBox(text, prop.toBinding(), comment)
   }
@@ -287,6 +294,7 @@ abstract class Cell : BaseBuilder {
   }
 
   @Deprecated("Use Kotlin UI DSL Version 2")
+  @ApiStatus.Internal
   open fun radioButton(@RadioButton text: String, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text)
     component.putClientProperty(UNBOUND_RADIO_BUTTON, true)
@@ -294,7 +302,7 @@ abstract class Cell : BaseBuilder {
   }
 
   @Deprecated("Use Kotlin UI DSL Version 2")
-  open fun radioButton(@RadioButton text: String, prop: KMutableProperty0<Boolean>, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
+  internal open fun radioButton(@RadioButton text: String, prop: KMutableProperty0<Boolean>, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get())
     return component(comment = comment).withSelectedBinding(prop.toBinding())
   }
@@ -329,6 +337,7 @@ abstract class Cell : BaseBuilder {
     return comboBox(model, prop.toBinding().toNullable(), renderer)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun <T> comboBox(
     model: ComboBoxModel<T>,
     property: GraphProperty<T>,
@@ -350,6 +359,7 @@ abstract class Cell : BaseBuilder {
   }
 
   @Deprecated("Use Kotlin UI DSL Version 2")
+  @ApiStatus.Internal
   fun textField(property: GraphProperty<String>, columns: Int? = null): CellBuilder<JBTextField> {
     return textField(property::get, property::set, columns)
       .withGraphProperty(property)
@@ -357,6 +367,7 @@ abstract class Cell : BaseBuilder {
   }
 
   @Deprecated("Use Kotlin UI DSL Version 2")
+  @ApiStatus.Internal
   fun scrollableTextArea(getter: () -> String, setter: (String) -> Unit, rows: Int? = null) = scrollableTextArea(PropertyBinding(getter, setter), rows)
 
   private fun scrollableTextArea(binding: PropertyBinding<String>, rows: Int? = null): CellBuilder<JBTextArea> {
@@ -379,6 +390,7 @@ abstract class Cell : BaseBuilder {
   }
 
   @Deprecated("Use Kotlin UI DSL Version 2")
+  @ApiStatus.Internal
   fun textFieldWithHistoryWithBrowseButton(
     getter: () -> String,
     setter: (String) -> Unit,
@@ -409,6 +421,7 @@ abstract class Cell : BaseBuilder {
   }
 
   @Deprecated("Use Kotlin UI DSL Version 2")
+  @ApiStatus.Internal
   fun textFieldWithBrowseButton(
     getter: () -> String,
     setter: (String) -> Unit,
@@ -422,6 +435,7 @@ abstract class Cell : BaseBuilder {
   }
 
   @Deprecated("Use Kotlin UI DSL Version 2")
+  @ApiStatus.Internal
   fun textFieldWithBrowseButton(
     modelBinding: PropertyBinding<String>,
     @DialogTitle browseDialogTitle: String? = null,
@@ -437,6 +451,7 @@ abstract class Cell : BaseBuilder {
   }
 
   @Deprecated("Use Kotlin UI DSL Version 2")
+  @ApiStatus.Internal
   fun textFieldWithBrowseButton(
     property: GraphProperty<String>,
     @DialogTitle browseDialogTitle: String? = null,
@@ -498,6 +513,7 @@ abstract class Cell : BaseBuilder {
   @Deprecated("Use Kotlin UI DSL Version 2")
   abstract fun <T : JComponent> component(component: T, viewComponent: JComponent): CellBuilder<T>
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   operator fun <T : JComponent> T.invoke(
     vararg constraints: CCFlags,
     growPolicy: GrowPolicy? = null,
@@ -509,11 +525,13 @@ abstract class Cell : BaseBuilder {
   }
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 class InnerCell(val cell: Cell) : Cell() {
   override fun <T : JComponent> component(component: T): CellBuilder<T> {
     return cell.component(component)
   }
 
+  @Deprecated("Use Kotlin UI DSL Version 2")
   override fun <T : JComponent> component(component: T, viewComponent: JComponent): CellBuilder<T> {
     return cell.component(component, viewComponent)
   }

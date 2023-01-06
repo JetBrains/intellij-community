@@ -202,7 +202,10 @@ interface Row {
   fun checkBox(@NlsContexts.Checkbox text: String): Cell<JBCheckBox>
 
   /**
-   * Adds radio button. [Panel.buttonsGroup] must be defined above hierarchy before adding radio buttons.
+   * Adds radio button. [Panel.buttonsGroup] must be defined above hierarchy before adding radio buttons (and therefore there is no need
+   * to create [ButtonGroup] and register the radio button there).
+   *
+   *
    * If there is a binding [ButtonsGroup.bind] for the buttons group then:
    * * [value] must be provided with correspondent to binding type for all radio buttons in the group
    * * it's possible to mark default radio button by [JRadioButton.isSelected] = true. Such button will be selected by default in case

@@ -38,6 +38,7 @@ interface BaseBuilder {
 }
 
 @JvmDefaultWithCompatibility
+@Deprecated("Use Kotlin UI DSL Version 2")
 interface RowBuilder : BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -117,6 +118,7 @@ interface RowBuilder : BaseBuilder {
   fun onGlobalIsModified(callback: () -> Boolean): Row
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 abstract class Row : Cell(), RowBuilder {
   abstract var enabled: Boolean
 
