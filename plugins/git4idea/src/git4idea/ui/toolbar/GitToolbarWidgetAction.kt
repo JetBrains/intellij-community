@@ -22,8 +22,10 @@ import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopup
+import git4idea.ui.branch.GitBranchPopupActions
 import git4idea.ui.branch.popup.GitBranchesTreePopup
 import icons.DvcsImplIcons
+import java.util.function.Function
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -76,7 +78,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
 
     e.presentation.putClientProperty(projectKey, project)
     e.presentation.putClientProperty(repositoryKey, repository)
-    e.presentation.text = repository?.calcText() ?: GitBundle.message("git.toolbar.widget.no.repo")
+    e.presentation.text = calcText(project, repository)
     e.presentation.icon = repository?.calcIcon()
     e.presentation.description = repository?.calcTooltip() ?: GitBundle.message("git.toolbar.widget.no.repo.tooltip")
 
@@ -88,8 +90,13 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
   }
 
   @NlsSafe
-  private fun GitRepository.calcText(): String {
-    return StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(this, ::cutText))
+  private fun calcText(project: Project?, repository: GitRepository?): String {
+    project ?: return  GitBundle.message("git.toolbar.widget.no.repo")
+    repository ?: return  GitBundle.message("git.toolbar.widget.no.repo")
+
+    return StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(repository, Function { branchName ->
+      GitBranchPopupActions.truncateBranchName(branchName, project)
+    }))
   }
 
   private fun GitRepository?.calcIcon(): Icon {
@@ -114,20 +121,6 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
       message += DvcsBundle.message("tooltip.branch.widget.root.name.text", root.name)
     }
     return message
-  }
-
-  private val MAX_TEXT_LENGTH = 24
-  private val SHORTENED_BEGIN_PART = 16
-  private val SHORTENED_END_PART = 8
-
-
-  @NlsSafe
-  private fun cutText(value: @NlsSafe String): String {
-    if (value.length <= MAX_TEXT_LENGTH) return value
-
-    val beginRange = IntRange(0, SHORTENED_BEGIN_PART - 1)
-    val endRange = IntRange(value.length - SHORTENED_END_PART, value.length - 1)
-    return value.substring(beginRange) + "..." + value.substring(endRange)
   }
 }
 

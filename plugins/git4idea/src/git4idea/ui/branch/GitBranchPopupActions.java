@@ -235,7 +235,7 @@ public class GitBranchPopupActions {
 
   @NlsSafe
   @NotNull
-  static String truncateBranchName(@NotNull @NlsSafe String branchName, @NotNull Project project) {
+  public static String truncateBranchName(@NotNull @NlsSafe String branchName, @NotNull Project project) {
     int branchNameLength = branchName.length();
 
     if (branchNameLength <= MAX_BRANCH_NAME_LENGTH + BRANCH_NAME_LENGHT_DELTA) {
