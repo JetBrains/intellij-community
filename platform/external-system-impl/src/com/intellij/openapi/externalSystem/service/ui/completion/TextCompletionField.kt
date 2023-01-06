@@ -130,7 +130,7 @@ abstract class TextCompletionField<T>(private val project: Project?) : Extendabl
       }
       popup = TextCompletionPopup(project, this, contributor, renderer)
         .also { Disposer.register(it, Disposable { popup = null }) }
-        .also { it.showUnderneathOf(this) }
+        .apply { showUnderneathOfTextComponent() }
     }
     updatePopup()
   }
