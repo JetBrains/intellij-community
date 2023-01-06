@@ -71,7 +71,7 @@ private val libsThatUsedInJps = java.util.Set.of(
   "commons-codec",
   "commons-logging",
   "commons-lang3",
-  "kotlin-stdlib-jdk8",
+  "kotlin-stdlib",
   // see ConsoleProcessListFetcher.getConsoleProcessCount
   "pty4j",
 )

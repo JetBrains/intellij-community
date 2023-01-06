@@ -552,8 +552,8 @@ object CommunityLibraryLicenses {
                    libraryName = "kotlin-reflect",
                    url = "https://github.com/JetBrains/kotlin")
       .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt"),
-    LibraryLicense(name = "Kotlin Standard Library for JDK 8",
-                   libraryName = "kotlin-stdlib-jdk8",
+    LibraryLicense(name = "Kotlin Standard Library",
+                   libraryName = "kotlin-stdlib",
                    url = "https://github.com/JetBrains/kotlin")
       .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt"),
     LibraryLicense(name = "kotlinx-datetime-jvm",

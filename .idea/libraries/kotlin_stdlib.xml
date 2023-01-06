@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="kotlin-stdlib-jdk8" type="repository">
+  <library name="kotlin-stdlib" type="repository">
     <properties maven-id="org.jetbrains.kotlin:kotlin-stdlib:1.8.0">
       <exclude>
         <dependency maven-id="org.jetbrains:annotations" />
